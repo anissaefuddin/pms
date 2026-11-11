@@ -1,0 +1,4 @@
+.DS_Store
+# third-party reference material: kept local, not distributed
+*.zip
+docs/screens/
