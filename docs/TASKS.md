@@ -33,7 +33,7 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 13 | S0.4.2 | Observabilitas | 0.5 | 13.5–14 | 3 | DONE |
 | 14 | S0.5.1 | Spike Gantt (SVAR) dan penjadwalan di Go | 1 | 14–15 | 3 | DONE |
 | 15 | S1.1.1 | Data Space dan CRUD | 2 | 15–17 | 4 | DONE |
-| 16 | S1.1.2 | Paket `policy` (mesin otorisasi) | 3 | 17–20 | 4 | IN_PROGRESS |
+| 16 | S1.1.2 | Paket `policy` (mesin otorisasi) | 3 | 17–20 | 4 | DONE |
 | 17 | S1.1.3 | API sharing dan ShareDialog | 3 | 20–23 | 5 | IN_PROGRESS |
 | 18 | S1.2.1 | Skema item dan workflow default | 2 | 23–25 | 5 | DONE |
 | 19 | S1.2.2 | Item service (create, get, patch) | 4 | 25–29 | 6 | DONE |
@@ -178,14 +178,14 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Personal space saat aktivasi; guard hapus/bagikan
 
 **S1.1.2 Paket `policy`**
-- [ ] Definisi tunggal matriks (share role, user type, kemampuan) sebagai data
-- [ ] Query CTE rekursif akses (leluhur lewat semua lokasi + share user/grup)
-- [ ] `Can()` + filter SQL untuk daftar; aturan 404 vs 403
-- [ ] Tes unit tabel-driven untuk seluruh kombinasi matriks
+- [x] Definisi tunggal matriks (share role, user type, kemampuan) sebagai data
+- [x] Query CTE rekursif akses (leluhur lewat semua lokasi + share user/grup)
+- [x] `Can()` + filter SQL untuk daftar; aturan 404 vs 403
+- [x] Tes unit tabel-driven untuk seluruh kombinasi matriks
 
 **S1.1.3 API sharing dan ShareDialog**
 - [ ] `GET/PUT` shares Space dan item (+ share diwarisi dengan asal)
-- [ ] ShareDialog (cari, role, peringatan hapus akses sendiri)
+- [x] ShareDialog (cari, role, peringatan hapus akses sendiri)
 - [ ] Alur "undang sebagai external" dari dialog (admin)
 
 **S1.1.4 Matriks tes otorisasi**
