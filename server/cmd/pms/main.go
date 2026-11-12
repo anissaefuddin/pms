@@ -1,0 +1,122 @@
+package main
+
+import (
+	"context"
+	"flag"
+	"fmt"
+	"log/slog"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
+
+	"github.com/anissaefuddin/pms/server/internal/bootstrap"
+	"github.com/anissaefuddin/pms/server/internal/config"
+	"github.com/anissaefuddin/pms/server/internal/database"
+	"github.com/anissaefuddin/pms/server/internal/httpserver"
+	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+var version = "dev"
+
+func main() {
+	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	if err := run(); err != nil {
+		slog.Error("command failed", "error", err)
+		os.Exit(1)
+	}
+}
+
+func run() error {
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
+	defer stop()
+	command := "serve"
+	if len(os.Args) > 1 {
+		command = os.Args[1]
+	}
+	if command == "version" {
+		fmt.Println(version)
+		return nil
+	}
+	cfg, err := config.Load()
+	if err != nil {
+		return err
+	}
+	pool, err := database.Open(ctx, cfg.DatabaseURL)
+	if err != nil {
+		return err
+	}
+	defer pool.Close()
+	switch command {
+	case "serve":
+		return serve(ctx, pool, cfg)
+	case "migrate":
+		// database.Open above already applied pending migrations; running it again is a no-op.
+		slog.Info("migrations are up to date")
+		return nil
+	case "bootstrap":
+		flags := flag.NewFlagSet("bootstrap", flag.ContinueOnError)
+		account := flags.String("account", "", "account name")
+		email := flags.String("admin-email", "", "administrator email")
+		if err := flags.Parse(os.Args[2:]); err != nil {
+			return err
+		}
+		queue, err := mailqueue.New(pool, cfg)
+		if err != nil {
+			return err
+		}
+		result, err := bootstrap.Run(ctx, pool, *account, *email, func(ctx context.Context, tx pgx.Tx, to, token string) error {
+			return queue.SendTx(ctx, tx, mailqueue.Args{To: to, Template: "set_password", URL: fmt.Sprintf("%s/invitations/%s", cfg.PublicURL, token), Locale: "en"})
+		})
+		if err != nil {
+			return err
+		}
+		slog.Info("instance bootstrapped", "admin_id", result.AdminID, "admin_email", *email)
+		if cfg.SMTPHost == "" {
+			slog.Warn("SMTP is not configured: give the administrator this link to activate the account (valid 7 days)", "url", fmt.Sprintf("%s/invitations/%s", cfg.PublicURL, result.InviteToken))
+		}
+		return nil
+	default:
+		return fmt.Errorf("unknown command %q (use serve, migrate, bootstrap, or version)", command)
+	}
+}
+
+func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
+	queue, err := mailqueue.New(pool, cfg)
+	if err != nil {
+		return err
+	}
+	if err := queue.Start(ctx); err != nil {
+		return fmt.Errorf("start job queue: %w", err)
+	}
+	server := &http.Server{Addr: cfg.ListenAddress, Handler: httpserver.New(pool, cfg, queue),
+		ReadHeaderTimeout: 5 * time.Second,
+		// shortcut: fixed limits; M1 file uploads and the SSE stream need per-handler deadlines via http.ResponseController.
+		ReadTimeout: 30 * time.Second, WriteTimeout: 60 * time.Second, IdleTimeout: 120 * time.Second,
+	}
+	// Metrics listen on an internal port that Traefik never routes to (compose does not publish it).
+	metrics := &http.Server{Addr: cfg.MetricsAddress, Handler: httpserver.Metrics(), ReadHeaderTimeout: 5 * time.Second}
+	errors := make(chan error, 2)
+	go func() {
+		slog.Info("server started", "address", cfg.ListenAddress, "metrics_address", cfg.MetricsAddress, "version", version)
+		errors <- server.ListenAndServe()
+	}()
+	go func() { errors <- metrics.ListenAndServe() }()
+	select {
+	case err := <-errors:
+		if err != http.ErrServerClosed {
+			return err
+		}
+	case <-ctx.Done():
+	}
+	shutdownCtx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
+	defer cancel()
+	_ = metrics.Shutdown(shutdownCtx)
+	if err := server.Shutdown(shutdownCtx); err != nil {
+		return err
+	}
+	return queue.Stop(shutdownCtx)
+}
