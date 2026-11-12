@@ -1,6 +1,6 @@
 # PMS
 
-PMS is a self-hosted, single-tenant project and work management system. Milestone M0 provides the secure account, authentication, UI shell, jobs, observability, and deployment foundation described in [`docs/PRD_PMS.md`](docs/PRD_PMS.md).
+PMS is a self-hosted, single-tenant project and work management system. Milestone M0 provides the secure account, authentication, UI shell, jobs, observability, and deployment foundation described in [`docs/PRD.md`](docs/PRD.md).
 
 ## Local setup
 

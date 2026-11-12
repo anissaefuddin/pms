@@ -5,7 +5,7 @@
 | **Versi** | 0.1 (draft) |
 | **Cakupan** | Layar untuk M0 + M1. Layar M2+ ditulis saat milestone-nya dimulai |
 | **Bahasa UI** | English (label di bawah ditulis sebagaimana tampil); dokumen ini Bahasa Indonesia |
-| **Terkait** | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (komponen), [../api/openapi.yaml](../api/openapi.yaml) (endpoint), [WORKFLOWS.md](WORKFLOWS.md) (aturan status), [PRD_PMS.md](PRD_PMS.md) |
+| **Terkait** | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md) (komponen), [../api/openapi.yaml](../api/openapi.yaml) (endpoint), [WORKFLOWS.md](WORKFLOWS.md) (aturan status), [PRD.md](PRD.md) |
 
 > Referensi layar Wrike dipakai hanya untuk fungsi. Tata letak di bawah dirancang untuk PMS.
 
@@ -399,3 +399,5 @@ flowchart TD
 1. Sidebar NAV-01 memuat "Shared with me" tetapi belum ada endpoint → ditambahkan `GET /me/shared` ke `openapi.yaml`.
 2. "Hidden spaces" (NAV-01) tidak punya requirement turunan; **ditunda** sampai ada kebutuhan nyata.
 3. Sort "Priority" dan "Importance" di My to-do (NAV-05) bergantung custom field (M2); opsinya disembunyikan di M1.
+
+> **Penyimpangan yang diterima (D-31):** pesan 429 login belum menyebut waktu tunggu sampai backend mengirim `Retry-After`, dan banner "Your session expired" dikerjakan di S1.5.1. Rute undangan memakai `/invitations/<token>`.

@@ -76,6 +76,13 @@
 - **Blocker:** S0.1.2 dan S0.1.3 menunggu izin push untuk menjalankan GitHub Actions dan GHCR; S0.3.2 menunggu keputusan G-14; semua story M1 `PROPOSED` (dokumen D-20..D-25 belum disetujui) dan S1.1.2 menunggu P-02.
 - **Next READY:** tidak ada task M0 yang bisa maju tanpa izin atau keputusan. Pilihan berikutnya: (1) izinkan commit dan push untuk menjalankan CI, (2) putuskan G-14, (3) setujui D-20..D-25 dan P-01/P-02 agar M1 (mulai S1.1.1) bisa dimulai. Stack lokal: image `pms:m0-fe3`, admin `admin@pms.local`.
 
+### Keputusan disetujui 12 Nov 2026 ("Setujui semua")
+
+D-20..D-25 disetujui; P-01..P-08 ditutup (D-16..D-19, D-26..D-28, D-35); G-07, G-10, G-12, G-13, G-14 ditangani (D-29, D-31..D-34). PRD diganti nama menjadi `docs/PRD.md` (v0.3.2: M1 12 minggu, GA minggu 39). **Tidak ada keputusan yang menunggu user.**
+
+- **Kepemilikan direktori (D-29):** `server/` dan `docs/` = sesi backend/dokumen yang aktif; `web/` = sesi frontend yang aktif. Tulis pemilik aktif di sini sebelum memulai batch dan jangan mengedit direktori yang dimiliki sesi lain.
+- **Next READY:** M0: S0.1.2 dan S0.1.3 menunggu hasil CI GitHub (push setelah repo privat, D-26/D-27). M1: **S1.1.1 Data Space dan CRUD** (2 hari, dep. S0.1.2, praktis tidak terblokir), lalu S1.1.2 (policy, admin `full` sesuai D-17), S1.2.1.
+
 ## 3. Blocker dan keputusan yang dibutuhkan dari user
 
 Rincian di [DECISIONS.md](DECISIONS.md) §3–4. Yang paling berdampak:
@@ -98,4 +105,4 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 
 1. File ini → [DECISIONS.md](DECISIONS.md) → [TASKS.md](TASKS.md) → [TESTING.md](TESTING.md)
 2. `git status` dan `git log -3`; bandingkan dengan §Git di atas
-3. [PRD_PMS.md](PRD_PMS.md) dan [ARCHITECTURE.md](ARCHITECTURE.md) bila menyentuh scope atau desain
+3. [PRD.md](PRD.md) dan [ARCHITECTURE.md](ARCHITECTURE.md) bila menyentuh scope atau desain

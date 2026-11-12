@@ -134,6 +134,12 @@ Cacat nyata yang baru ditemukan lewat uji di stack nyata (lolos dari tes subagen
 2. Berkas statis tanpa header cache dan `/assets/` yang hilang dijawab `index.html` (galat MIME membingungkan setelah update). Perbaikan: `index.html` `no-cache`, `/assets/` `immutable`, aset hilang 404 (`TestStaticCachingAndMissingAssets`, mutasi → FAIL); SPA memuat ulang sekali pada `vite:preloadError`.
 3. Tombol submit berjenis `button` bawaan Base UI sehingga form tidak bisa dikirim dengan klik (ditemukan subagent dan diperbaiki: `type="submit"`).
 
+## 3d. Penutupan keputusan (12 Nov 2026)
+
+- G-12 / D-32: `login while holding a session` — login menghapus sesi yang dibawa request, token baru diterbitkan, sesi di browser lain tidak terpengaruh; mutasi (tidak menghapus) → FAIL. `go test ./...` (10 paket) PASS.
+- Tes sesi bersama disesuaikan: sesi "browser lain" kini memakai klien tanpa cookie jar.
+- S0.3.2 `DONE` setelah penyimpangan G-14 diterima (D-31).
+
 ## 4. Skenario wajib berikutnya (belum ditulis)
 
 | ID | Skenario | Terkait |

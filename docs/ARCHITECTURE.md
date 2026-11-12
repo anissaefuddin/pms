@@ -4,7 +4,7 @@
 |---|---|
 | **Versi** | 0.1 (draft) |
 | **Cakupan detail** | M0 + M1 (47 requirement). Modul M2–M7 hanya digambarkan sebagai titik ekstensi (§12) |
-| **Sumber** | [PRD_PMS.md](PRD_PMS.md) §4, §6, §10 |
+| **Sumber** | [PRD.md](PRD.md) §4, §6, §10 |
 | **Dokumen terkait** | [DATABASE.md](DATABASE.md), [WORKFLOWS.md](WORKFLOWS.md), [../api/openapi.yaml](../api/openapi.yaml), [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), [UI_SPEC.md](UI_SPEC.md), [BACKLOG.md](BACKLOG.md) |
 
 ---
@@ -255,11 +255,11 @@ web/src/
 | Pencarian | Postgres FTS `simple` | Relevansi buruk atau > 100 ribu item |
 | Notifikasi email | Satu email per notifikasi | Keluhan volume → digest (backlog) |
 
-## 14. Keputusan terbuka (perlu konfirmasi)
+## 14. Keputusan yang sebelumnya terbuka (ditutup 12 Nov 2026)
 
-1. Admin otomatis `full` di semua Space `shared` (§6.2 butir 5). Alternatif: admin harus menambahkan dirinya sendiri, lebih privat tetapi merepotkan operasional.
-2. Penghapusan item permanen otomatis setelah N hari di Recycle bin, atau hanya manual (BIN-03)? Rancangan saat ini: hanya manual.
-3. Bahasa isi email undangan untuk user baru: memakai `PMS_DEFAULT_LOCALE` karena locale user belum ada.
+1. Admin otomatis `full` di semua Space `shared`: **ya** (D-17). Personal space tetap privat; flag Space "restricted" bisa ditambahkan nanti.
+2. Penghapusan permanen otomatis dari Recycle bin: **tidak di M1**, hanya manual (D-18); opsi `BIN_RETENTION_DAYS` di M6.
+3. Bahasa isi email undangan: **`PMS_DEFAULT_LOCALE`**, default `en` (D-19).
 
 ## 15. Titik ekstensi untuk M2–M7
 

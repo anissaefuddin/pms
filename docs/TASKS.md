@@ -28,7 +28,7 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 8 | S0.2.4 | Undangan dan penerimaan undangan | 1 | 8.5–9.5 | 2 | DONE |
 | 9 | S0.2.5 | Perintah bootstrap | 0.5 | 9.5–10 | 2 | DONE |
 | 10 | S0.3.1 | Setup frontend | 1 | 10–11 | 3 | DONE |
-| 11 | S0.3.2 | Layar autentikasi dan shell kosong | 1 | 11–12 | 3 | IN_PROGRESS |
+| 11 | S0.3.2 | Layar autentikasi dan shell kosong | 1 | 11–12 | 3 | DONE |
 | 12 | S0.4.1 | Compose klien, update, dan backup | 1.5 | 12–13.5 | 3 | DONE |
 | 13 | S0.4.2 | Observabilitas | 0.5 | 13.5–14 | 3 | DONE |
 | 14 | S0.5.1 | Spike Gantt (SVAR) dan penjadwalan di Go | 1 | 14–15 | 3 | DONE |

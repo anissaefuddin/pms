@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Versi** | 0.3.1 (draft) — revisi hasil review: ketergantungan antar milestone, pemisahan requirement, keamanan & operasional. 0.3.1: AUTH-03 (min. 8 karakter) dan SEC-04 (ganti password) diselaraskan dengan `api/openapi.yaml` (keputusan D-11) |
+| **Versi** | 0.3.1 (draft) — revisi hasil review: ketergantungan antar milestone, pemisahan requirement, keamanan & operasional. 0.3.1: AUTH-03 (min. 8 karakter) dan SEC-04 (ganti password) diselaraskan dengan `api/openapi.yaml` (keputusan D-11) 0.3.2: baseline M1 12 minggu, GA minggu 39 (D-16). |
 | **Tanggal** | 12 November 2026 |
 | **Status** | Draft untuk review |
 | **Repo** | [github.com/anissaefuddin/pms](https://github.com/anissaefuddin/pms) |
@@ -313,18 +313,18 @@ Tiga hal yang dibedakan:
 
 ## 8. Milestone
 
-Estimasi mengasumsikan **satu developer dibantu AI**, dengan siklus kerja 2 mingguan. Durasi bersifat indikatif dan dikalibrasi ulang di akhir M1 berdasarkan kecepatan nyata.
+Estimasi mengasumsikan **satu developer dibantu AI**, dengan siklus kerja 2 mingguan. Durasi bersifat indikatif. **Baseline M1 diubah dari 8 ke 12 minggu (keputusan D-16, 12 Nov 2026)** berdasarkan estimasi bottom-up 59 hari di [BACKLOG.md](BACKLOG.md); kalibrasi ulang dilakukan setelah epic E1.1 selesai berdasarkan kecepatan nyata, dan jangan menjanjikan tanggal ke klien sebelum itu.
 
 | Milestone | Durasi | Isi (ID requirement) | Exit criteria |
 |---|---|---|---|
 | **M0 — Fondasi** | 3 minggu (Mgg 1–3) | Kerangka repo sesuai §10 (Go + Vite di-embed, alur OpenAPI → kode Go + tipe TS, goose, sqlc); CI GitHub Actions + push image ke GHCR; template Compose klien + script backup; i18n setup; design system shadcn (sidebar, modal, dropdown, date picker, toast); spike SVAR Gantt + penjadwalan di Go; AUTH-01..04, AUTH-06, AUTH-09; SET-01 shell, SET-10; SEC-04; OPS-01..03 | `pms bootstrap` → login → sidebar dengan Space default berjalan dari image GHCR di Compose klien uji; update dengan backup pre-deploy dan restore teruji sekali; alert backup gagal terkirim |
-| **M1 — Core Work Management (MVP)** | 8 minggu (Mgg 4–11) | SPC-01, 02, 04..09, 11, 17; TASK-01..04, TASK-05A, TASK-06, 07, TASK-08A; VIEW-01, 02, 08; WF-01; NAV-01, 03, 05, 06; USR-01..03; BIN-01..02; SET-02; SEC-01..03; real-time SSE | Tim internal bisa menjalankan 1 proyek nyata end-to-end di Table + Board; matriks otorisasi dan tes negatif SEC-02 hijau; **pilot internal dimulai** |
-| **M2 — Planning & Scheduling** | 6 minggu (Mgg 12–17) | VIEW-05A, VIEW-05B, VIEW-03, 04, 06, 09; TASK-05B, TASK-09, 10, TASK-11A; SET-07; SPC-03, 10 | Proyek bisa dijadwalkan penuh di Gantt dengan dependensi; durasi menghormati work schedule; custom field tampil di semua view |
-| **M3 — Workflow, Approval & Intake** | 5 minggu (Mgg 18–22) | WF-02, WF-03A; SPC-12, 13; FORM-01..03, 05, 06, 08; NAV-02, 04, 07; AUTH-05; SEC-05 | Permintaan masuk via form → menjadi task berstatus sesuai workflow → approval berjalan → requester melihat status request-nya |
-| **M4 — Time & Budget** | 3 minggu (Mgg 23–25) | TASK-12, 13; VIEW-07; SPC-15 (export/import Excel) | Timesheet mingguan terisi dan tampil di Timelog; panel project menampilkan budget (rencana) dan total jam aktual. Actual cost tidak termasuk (TASK-14, P2) |
-| **M5 — Dashboard & Reporting** | 5 minggu (Mgg 26–30) | DASH-01, 02, DASH-03A, DASH-06; RPT-01..03 | PM bisa membangun dashboard dan report tanpa bantuan developer; angka cocok dengan data mentah (diuji otomatis) |
-| **M6 — Admin, Onboarding & Hardening** | 4 minggu (Mgg 31–34) | SPC-18 (template space); AUTH-07; SET-03..05; USR-04 (prosedur + runbook); BIN-03; uji restore OPS-01 terhadap target RTO; uji performa & keamanan, perbaikan bug | Seluruh P0 + P1 lulus UAT dan 5 flow Playwright hijau; pentest internal tanpa temuan high; target NFR §6 tercapai |
-| **GA — Rilis 1.0** | Mgg 35 | Deploy instance klien pertama, migrasi data pilot, dokumentasi user, pelatihan | Klien pertama go-live |
+| **M1 — Core Work Management (MVP)** | 12 minggu (Mgg 4–15) | SPC-01, 02, 04..09, 11, 17; TASK-01..04, TASK-05A, TASK-06, 07, TASK-08A; VIEW-01, 02, 08; WF-01; NAV-01, 03, 05, 06; USR-01..03; BIN-01..02; SET-02; SEC-01..03; real-time SSE | Tim internal bisa menjalankan 1 proyek nyata end-to-end di Table + Board; matriks otorisasi dan tes negatif SEC-02 hijau; **pilot internal dimulai** |
+| **M2 — Planning & Scheduling** | 6 minggu (Mgg 16–21) | VIEW-05A, VIEW-05B, VIEW-03, 04, 06, 09; TASK-05B, TASK-09, 10, TASK-11A; SET-07; SPC-03, 10 | Proyek bisa dijadwalkan penuh di Gantt dengan dependensi; durasi menghormati work schedule; custom field tampil di semua view |
+| **M3 — Workflow, Approval & Intake** | 5 minggu (Mgg 22–26) | WF-02, WF-03A; SPC-12, 13; FORM-01..03, 05, 06, 08; NAV-02, 04, 07; AUTH-05; SEC-05 | Permintaan masuk via form → menjadi task berstatus sesuai workflow → approval berjalan → requester melihat status request-nya |
+| **M4 — Time & Budget** | 3 minggu (Mgg 27–29) | TASK-12, 13; VIEW-07; SPC-15 (export/import Excel) | Timesheet mingguan terisi dan tampil di Timelog; panel project menampilkan budget (rencana) dan total jam aktual. Actual cost tidak termasuk (TASK-14, P2) |
+| **M5 — Dashboard & Reporting** | 5 minggu (Mgg 30–34) | DASH-01, 02, DASH-03A, DASH-06; RPT-01..03 | PM bisa membangun dashboard dan report tanpa bantuan developer; angka cocok dengan data mentah (diuji otomatis) |
+| **M6 — Admin, Onboarding & Hardening** | 4 minggu (Mgg 35–38) | SPC-18 (template space); AUTH-07; SET-03..05; USR-04 (prosedur + runbook); BIN-03; uji restore OPS-01 terhadap target RTO; uji performa & keamanan, perbaikan bug | Seluruh P0 + P1 lulus UAT dan 5 flow Playwright hijau; pentest internal tanpa temuan high; target NFR §6 tercapai |
+| **GA — Rilis 1.0** | Mgg 39 | Deploy instance klien pertama, migrasi data pilot, dokumentasi user, pelatihan | Klien pertama go-live |
 | **M7 — Post-GA (P2)** | Backlog | AUTH-08; NAV-08, 09; SPC-14, 16; VIEW-05C, VIEW-10; TASK-08B, TASK-11B, TASK-14; WF-03B; DASH-03B; FORM-04, 07; DASH-04, 05, 07, 08; RPT-04; CUST-01; SET-06, 08, 09; item di luar lingkup §3 | Diprioritaskan ulang berdasarkan feedback pilot |
 
 ```mermaid
@@ -333,7 +333,7 @@ gantt
     dateFormat YYYY-MM-DD
     section Build
     M0 Fondasi                 :m0, 2026-11-23, 3w
-    M1 Core Work Mgmt (MVP)    :m1, after m0, 8w
+    M1 Core Work Mgmt (MVP)    :m1, after m0, 12w
     M2 Planning & Scheduling   :m2, after m1, 6w
     M3 Workflow & Intake       :m3, after m2, 5w
     M4 Time & Budget           :m4, after m3, 3w

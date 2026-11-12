@@ -24,9 +24,23 @@
 | D-13 | Keputusan G-06: selaraskan schema ke D-01/DATABASE sebelum M1. Gunakan singleton `account(id=1)` hanya untuk metadata workspace; tanpa `account_id` pada tabel domain. Rewrite baseline migration karena belum ada data klien/commit, lalu recreate stack lokal dengan backup dan review independen | chat ("putuskan untuk G-06/G-08 berdasarkan rekomendasi anda") |
 | D-14 | Keputusan G-08: pertahankan kebijakan WORKFLOWS. Tolak 10 password umum dan rotasi token session caller saat change password; session lain dicabut dan absolute expiry caller tidak diperpanjang | chat ("putuskan untuk G-06/G-08 berdasarkan rekomendasi anda") |
 | D-15 | **DISETUJUI user (12 Nov 2026):** `pms bootstrap` dengan email yang sama selagi admin masih `invited` menerbitkan token undangan baru (pemulihan setelah kedaluwarsa 7 hari); selain itu tetap ditolak. Berasal dari review independen #1 (temuan M-3); implementasi dan tes sudah ada | chat ("Setujui D-15"), [MIGRATION_PLAN_G06.md](MIGRATION_PLAN_G06.md) §8 |
+| D-16 | **P-01:** baseline M1 diubah ke **12 minggu** (opsi A); GA minggu 39; PRD §8 sudah diubah (v0.3.2). Kalibrasi ulang setelah epic E1.1; jangan menjanjikan tanggal ke klien sebelum itu | chat ("Setujui semua", 12 Nov 2026) |
+| D-17 | **P-02:** admin otomatis `full` di semua Space `shared` (bukan Personal space); flag Space "restricted" dapat ditambahkan nanti tanpa memutus kompatibilitas | chat (12 Nov 2026) |
+| D-18 | **P-03:** Recycle bin hanya dibersihkan manual di M1; opsi `BIN_RETENTION_DAYS` (default mati) di M6 | chat (12 Nov 2026) |
+| D-19 | **P-04:** bahasa email undangan memakai `PMS_DEFAULT_LOCALE` (default `en`) | chat (12 Nov 2026) |
+| D-26 | **P-05:** repo GitHub dijadikan **privat** sebelum push | chat (12 Nov 2026) |
+| D-27 | Push `main` setelah D-26 dan jalankan CI GitHub; uji GHCR dengan tag `v0.1.0` terpisah | chat (12 Nov 2026) |
+| D-28 | **P-06:** `docs/PRD_PMS.md` diganti nama menjadi `docs/PRD.md` (tautan sudah diperbaiki) | chat (12 Nov 2026) |
+| D-29 | **G-10:** satu pemilik per direktori kerja; pemilik tercatat di HANDOVER, sesi lain tidak mengedit direktori itu selama batch | chat (12 Nov 2026) |
+| D-30 | Build cache Docker dibersihkan (`docker builder prune`) | chat (12 Nov 2026) |
+| D-31 | **G-14:** terima penyimpangan UI_SPEC §4.1; S0.3.2 `DONE`; `Retry-After` pada 429 ditambahkan di backend (tambahan kontrak) dan banner "Your session expired" dikerjakan di S1.5.1 | chat (12 Nov 2026) |
+| D-32 | **G-12:** login menghapus sesi yang dibawa request; dikerjakan sebelum M1 (selesai, bertes) | chat (12 Nov 2026) |
+| D-33 | **G-13:** URL sekali pakai di `river_job.args` diterima untuk M0; di S1.6.1 worker membuat token saat mengirim sehingga URL tidak lagi masuk argumen job | chat (12 Nov 2026) |
+| D-34 | **G-07:** `account_name` ditambahkan ke `Me` (tambahan kontrak) di S1.5.1 | chat (12 Nov 2026) |
+| D-35 | **P-07:** warna status vs aksen diputuskan di awal M3; usulan default: palet tetap, kategori status menentukan ikon | chat (12 Nov 2026) |
 | D-10 | Cakupan detail design dan backlog saat ini: **M0 + M1** (47 requirement) | chat ("lanjut kerjakan m1") |
 
-## 2. PROPOSED (dokumen buatan AI, belum disetujui user)
+## 2. Disetujui 12 Nov 2026 (sebelumnya PROPOSED, dokumen buatan AI)
 
 | ID | Keputusan | Lokasi |
 |---|---|---|
@@ -37,20 +51,22 @@
 | D-24 | Design system (token `ui-kit`, kepadatan compact, Base UI) dan spesifikasi layar | [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md), [UI_SPEC.md](UI_SPEC.md) |
 | D-25 | Backlog 41 story dan urutan kerja | [BACKLOG.md](BACKLOG.md), [TASKS.md](TASKS.md) |
 
-Dokumen D-20..D-25 sudah ada di `main` (commit `36d0c6e`) tetapi **belum disetujui user secara eksplisit**. Implementasi mengikutinya sebagai kontrak kerja sementara.
+**Seluruh D-20..D-25 DISETUJUI user** ("Setujui semua", 12 Nov 2026), dengan catatan: D-21 menyimpang pada UUID v4 untuk tabel M0 dan `groups` ditunda ke S1.1.3; D-23 menerima tambahan yang sifatnya menambah (`Retry-After`, 429 pada reset/accept, `account_name` di `Me`), sedangkan mengubah atau menghapus tetap butuh persetujuan; D-24 dengan penyimpangan D-31; D-25 dengan baseline D-16.
 
 ## 3. PENDING (perlu keputusan user)
 
-| ID | Pertanyaan | Opsi / rekomendasi | Yang terblokir |
-|---|---|---|---|
-| P-01 | Estimasi M1: backlog ±59 hari vs 40 hari di PRD | A re-baseline (rekomendasi, GA ≈ minggu 39) · B pangkas cakupan (hemat ±3 hari) · C pecah M1a/M1b. Lihat BACKLOG §Gap | Perubahan PRD §8 |
-| P-02 | Admin otomatis `full` di semua Space `shared`? | Ya (usulan) atau admin harus menambah diri sendiri | S1.1.2 (policy) |
-| P-03 | Recycle bin dibersihkan otomatis setelah N hari? | Rancangan: hanya manual | S1.7.1 |
-| P-04 | Bahasa email undangan untuk user baru | Pakai `PMS_DEFAULT_LOCALE` (usulan) | Template email undangan |
-| P-05 | Visibilitas repo GitHub: saat ini **PUBLIC** | Ubah ke private bila PRD/rancangan tidak boleh terbuka | Tidak ada, tetapi bersifat segera |
-| P-06 | Nama berkas PRD: standar tim `PRD.md`, aktual `PRD_PMS.md` | Rename memutus tautan di README dan dokumen lain; belum dilakukan | Kepatuhan struktur docs |
-| P-07 | Status warna accent vs status (DESIGN_SYSTEM) | Diputuskan sebelum M3 | M3 |
-| P-08 | Commit/push untuk kode M0 yang belum di-track (`server/`, `web/`, `deploy/`, `.github/`, dll.) | Perlu review user dulu | Handover bersih |
+Tidak ada keputusan yang menunggu user. Semua P-01..P-08 ditutup pada 12 Nov 2026:
+
+| ID | Hasil |
+|---|---|
+| P-01 | Disetujui → D-16 |
+| P-02 | Disetujui → D-17 |
+| P-03 | Disetujui → D-18 |
+| P-04 | Disetujui → D-19 |
+| P-05 | Disetujui → D-26 |
+| P-06 | Disetujui → D-28 |
+| P-07 | Ditunda ke awal M3 → D-35 |
+| P-08 | Selesai: kode M0 sudah di-commit (lima commit lokal); push → D-27 |
 
 ## 4. Temuan konflik dokumen vs kode
 
@@ -62,11 +78,11 @@ Dokumen D-20..D-25 sudah ada di `main` (commit `36d0c6e`) tetapi **belum disetuj
 | G-04 | `.gitignore` dimodifikasi di working tree, belum di-commit | Tunggu keputusan P-08 |
 | G-05 | ~~Panjang minimum password PRD 6 vs kontrak 8~~ **SELESAI**: PRD AUTH-03 diubah ke 8 dan SEC-04 (ganti password: session lain dicabut) diselaraskan dengan kontrak, sesuai D-11 (PRD v0.3.1, 12 Nov 2026) | Selesai; tolong tinjau teks PRD |
 | G-06 | ~~Skema DB M0 menyimpang dari DATABASE.md/D-01~~ **SELESAI** (D-13, 12 Nov 2026): baseline ditulis ulang menjadi `00001_extensions`, `00002_identity`, `00003_spaces_workflows` — singleton `account(id=1)`, tanpa `account_id`, `users.status/user_type`, `first_name/last_name`, session idle+absolut, `user_tokens`, `statuses` bertoken warna. Direncanakan di [MIGRATION_PLAN_G06.md](MIGRATION_PLAN_G06.md), direview independen dua kali, diterapkan ke stack lokal dengan backup dan rollback teruji | Penyimpangan yang diterima: UUID v4 (bukan v7) di tabel M0, `groups` ditunda ke S1.1.3, kolom profil `company/country/location/phone` ditunda ke S1.6.2 |
-| G-07 | `Me` pada kontrak tidak memuat nama akun/organisasi, sehingga sidebar M0 kini menampilkan nama user dan bagian Spaces dihapus sampai S1.5.1 | Bila nama akun perlu tampil, kontrak harus ditambah (butuh persetujuan) |
+| G-07 | ~~`Me` tidak memuat nama workspace~~ **DITERIMA** (D-34): `account_name` ditambahkan di S1.5.1 | Dikerjakan di S1.5.1 |
 | G-08 | ~~Common password dan rotasi token session~~ **SELESAI** (D-14): 10 password umum ditolak setelah trim dan lowercase (422); ganti password mencabut sesi lain, mengganti token sesi pemanggil tanpa memperpanjang batas absolut, dan mencabut link reset; panjang password dihitung per karakter | Daftar hanya 10 entri (`shortcut:` di kode); daftar lebih besar bila klien meminta |
 | G-09 | ~~Kode web memakai Tailwind 3.4 dan Radix, dokumen menetapkan Tailwind v4 dan Base UI~~ **SELESAI** (D-12, 12 Nov 2026): web kini Tailwind 4.2.2 (plugin Vite, token `@theme inline` dari `ui-kit`), Base UI 1.3.0, font Inter dan JetBrains Mono lokal (`@fontsource-variable`), komponen `button`, `input`, `dialog`, `dropdown-menu`, `popover`, `toaster` disalin dari `apps/ui-kit` | Selesai; `tailwind.config.ts` dan PostCSS dihapus, dependensi `@radix-ui/*`, `autoprefixer`, `postcss` dihapus |
-| G-10 | Sesi lain mengedit file yang sama (`server_integration_test.go`, `mail_test.go`, `schedule*.go`, `database.go`) bersamaan dengan sesi ini; satu blok tes saya terduplikasi dan password uji sempat bentrok sampai disatukan | Disarankan satu penulis per file; tidak ada kehilangan data yang diketahui |
+| G-10 | ~~Dua sesi menulis ke file yang sama~~ **DITERIMA** (D-29): satu pemilik per direktori, dicatat di HANDOVER | Berlaku mulai sekarang |
 | G-11 | ~~INSIDEN disk `/Volumes/MyHDD` penuh, Docker I/O error~~ **TERATASI** (12 Nov 2026): user mengosongkan disk (kini ±11 GB bebas) dan me-restart Docker Desktop; Postgres uji pulih otomatis lewat replay WAL tanpa kehilangan data; semua image dan volume lain terlihat utuh; satu image Grafana yang terpotong saat disk penuh (binary 20 MiB) dihapus dan ditarik ulang | **Risiko tersisa:** `Docker.raw` (48 GB) tetap di disk yang hampir penuh (96%); build cache Docker 20 GB (13,5 GB dapat dibersihkan lewat `docker builder prune`, belum dijalankan sesi ini) |
-| G-12 | Login tidak menghapus sesi yang sedang dibawa request (SEC-04 "ID dirotasi saat login"); token baru selalu dibuat server sehingga session fixation tidak mungkin, tetapi sesi lama hidup sampai kedaluwarsa | Ditunda; perbaikan memengaruhi tes sesi bersama. Kerjakan bila diminta |
-| G-13 | URL sekali pakai (undangan/reset) tersimpan di `river_job.args`; retensi job selesai 1 jam, job *discarded* dan backup tetap memuatnya; mode log SMTP kosong mencetak URL | Risiko diterima untuk M0; enkripsi args atau token pendek bila klien meminta |
-| G-14 | UI menyimpang dari UI_SPEC §4.1 pada dua hal kecil: (a) pesan 429 login tanpa "dalam N menit" (server hanya mengirim 429, belum `Retry-After`); (b) banner "Your session expired" belum ada (shell tidak membedakan sesi kedaluwarsa dari kunjungan pertama). Rute undangan memakai `/invitations/<token>` mengikuti tautan email, dan UI_SPEC diperbarui | Butuh keputusan user: terima penyimpangan (rekomendasi untuk (a), karena menambah `Retry-After` menyentuh kontrak) dan kerjakan (b) di M1 dengan parameter `?reason=expired` dari guard, atau blokir S0.3.2 sampai keduanya selesai |
+| G-12 | ~~Login tidak menghapus sesi yang dibawa~~ **SELESAI** (D-32): login menghapus sesi yang dibawa request; tes `login while holding a session` (mutasi → FAIL) | Selesai |
+| G-13 | URL sekali pakai di `river_job.args` dan backup. **DITERIMA untuk M0, perbaikan dijadwalkan** (D-33): di S1.6.1 worker membuat token saat mengirim; retensi job selesai 1 jam tetap berlaku | Dikerjakan di S1.6.1 |
+| G-14 | ~~Penyimpangan UI_SPEC §4.1~~ **DITERIMA** (D-31): 429 tanpa waktu (menunggu `Retry-After`) dan banner sesi kedaluwarsa dijadwalkan di S1.5.1; S0.3.2 `DONE` | `Retry-After` dan banner dikerjakan di M1 |

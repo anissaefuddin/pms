@@ -281,10 +281,34 @@ func TestAuthContract(t *testing.T) {
 	for i := 0; i < 12; i++ {
 		resp, out = do("POST", "/auth/login", map[string]string{"email": "admin@example.com", "password": "new password 123"}, true)
 		expect("repeated successful login", resp, out, 200, "")
-		if i < 2 {
-			adminSessions = append(adminSessions, resp.Cookies()[0])
-		}
 	}
+	// Two more sessions from separate browsers (no shared cookie jar), so a login does not replace them.
+	for i := 0; i < 2; i++ {
+		b, _ := json.Marshal(map[string]string{"email": "admin@example.com", "password": "new password 123"})
+		req, _ := http.NewRequest("POST", srv.URL+"/api/v1/auth/login", bytes.NewReader(b))
+		req.Header.Set("Content-Type", "application/json")
+		req.Header.Set("Origin", publicURL)
+		other, err := http.DefaultClient.Do(req)
+		if err != nil || other.StatusCode != 200 || len(other.Cookies()) == 0 {
+			t.Fatalf("login from a separate browser: %v %v", other, err)
+		}
+		other.Body.Close()
+		adminSessions = append(adminSessions, other.Cookies()[0])
+	}
+
+	// SEC-04: logging in again from the same browser replaces its previous session; other browsers keep theirs.
+	oldBrowserSession := sessionValue()
+	resp, out = do("POST", "/auth/login", map[string]string{"email": "admin@example.com", "password": "new password 123"}, true)
+	expect("login while holding a session", resp, out, 200, "")
+	if sessionValue() == oldBrowserSession {
+		t.Fatal("a new login must issue a new session token")
+	}
+	staleLogin, _ := http.NewRequest("GET", srv.URL+"/api/v1/me", nil)
+	staleLogin.AddCookie(&http.Cookie{Name: "pms_session", Value: oldBrowserSession})
+	if r, err := http.DefaultClient.Do(staleLogin); err != nil || r.StatusCode != 401 {
+		t.Fatalf("the session replaced by a new login must stop working: %v %v", r, err)
+	}
+
 	// Five failures lock that email for a while, even for the right password; other emails are unaffected.
 	for i := 0; i < 5; i++ {
 		resp, out = do("POST", "/auth/login", map[string]string{"email": "victim@example.com", "password": "wrong password"}, true)

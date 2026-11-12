@@ -198,6 +198,10 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.loginAcctFails.clear(account)
+	// SEC-04: a fresh login replaces the session the browser was holding instead of leaving it alive until it expires.
+	if presented, err := r.Cookie("pms_session"); err == nil {
+		_, _ = s.pool.Exec(r.Context(), "DELETE FROM sessions WHERE token_hash=$1", security.TokenHash(presented.Value))
+	}
 	if !s.startSession(w, r, id) {
 		return
 	}

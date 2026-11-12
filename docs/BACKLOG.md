@@ -5,7 +5,7 @@
 | **Versi** | 0.1 (draft) |
 | **Cakupan** | Epic dan user story untuk M0 + M1 (47 requirement PRD). M2–M7 ditulis saat milestone dimulai |
 | **Satuan estimasi** | **Hari ideal** satu developer dibantu AI (hari fokus penuh, termasuk tes dan review sendiri; di luar rapat/gangguan). Estimasi kasar dari bawah ke atas, **belum dikalibrasi** dengan kecepatan nyata |
-| **Terkait** | [PRD_PMS.md](PRD_PMS.md), [TASKS.md](TASKS.md) (urutan kerja dan tugas teknis), [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE.md](DATABASE.md), [UI_SPEC.md](UI_SPEC.md) |
+| **Terkait** | [PRD.md](PRD.md), [TASKS.md](TASKS.md) (urutan kerja dan tugas teknis), [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE.md](DATABASE.md), [UI_SPEC.md](UI_SPEC.md) |
 
 **Definition of Done (berlaku untuk semua story):** kode ter-merge dengan CI hijau (lint, typecheck, `go test`, build); migrasi diuji maju pada database kosong; endpoint baru ada di `openapi.yaml` sebelum implementasi; tes otorisasi untuk setiap endpoint baru; teks UI lewat `t()`; keyboard dan label ARIA diperiksa; tidak ada `shortcut:` tanpa catatan batas dan kapan diganti.
 
@@ -213,6 +213,7 @@ flowchart LR
   - `Can(user, capability, target)` dan filter SQL untuk daftar, sesuai ARCHITECTURE §6 (union share lewat semua lokasi dan leluhur, ∩ plafon user type, Personal space privat, admin `full` di Space `shared`).
   - Jawaban tanpa akses selalu 404; aksi tidak diizinkan pada item terlihat → 403.
   - Definisi matriks (share role, user type) berada di satu tempat dan dipakai juga oleh endpoint matriks UI (USR-02).
+  - **Catatan keputusan 12 Nov:** admin otomatis `full` di semua Space `shared`, bukan Personal space (D-17); sertakan dalam matriks tes S1.1.4.
 
 ### S1.1.3 — API sharing dan ShareDialog
 - **Sebagai** pemilik, **saya ingin** membagikan Space/project/folder ke user atau grup dengan role, **agar** kolaborator mendapat akses yang tepat.
@@ -369,6 +370,7 @@ flowchart LR
 - **Acceptance criteria:**
   - Pohon Space → project/folder (dapat dibuka-tutup, urutan `rank`), Personal space, Shared with me (`GET /me/shared`), menu More, Recycle bin.
   - Dapat diciutkan; pilihan diingat per user; navigasi keyboard.
+  - **Catatan keputusan 12 Nov:** tambahkan `account_name` ke `Me` (D-34, tambahan kontrak) untuk header sidebar, dan banner "Your session expired" lewat parameter `?reason=expired` dari guard (D-31).
 
 ### S1.5.2 — Notifikasi dan Inbox
 - **PRD:** NAV-03
@@ -406,6 +408,7 @@ flowchart LR
   - Invite (cek `PMS_MAX_SEATS`, 422 `seats_exhausted`), resend, deactivate (session dicabut, seat bebas), reactivate, ubah user type; guard `last_admin`.
   - UI `/settings/users` (tab Users dan Groups, ringkasan seat) dan `/settings/users/types` (matriks dari definisi `policy`).
   - Non-admin tidak melihat menu; URL langsung → 404.
+  - **Catatan keputusan 12 Nov:** URL undangan tidak boleh disimpan di argumen job: worker email membuat token saat mengirim (D-33); seat dicek saat undang dan aktifkan kembali (WORKFLOWS §3).
 
 ### S1.6.2 — Profil dan pengaturan workspace
 - **PRD:** SET-02
@@ -425,6 +428,7 @@ flowchart LR
   - Hapus item menandai item dan turunan tanpa lokasi hidup lain dengan `deleted_root_id` yang sama (DATABASE §5); restore memulihkan semuanya; lokasi orang tua yang hilang → pulih ke root Space.
   - Toast **Undo** 8 detik; halaman Recycle bin dengan alasan bila tidak bisa dipulihkan.
   - Item terhapus tidak muncul di pencarian, My to-do, atau notifikasi baru; tes cascade dengan item multi-lokasi.
+  - **Catatan keputusan 12 Nov:** Recycle bin hanya dibersihkan manual di M1 (D-18); tidak ada penghapusan otomatis.
 
 ## E1.8 Hardening dan kesiapan pilot
 
@@ -470,5 +474,5 @@ Estimasi bottom-up di atas dibandingkan dengan rencana PRD §8 (5 hari kerja per
 | B. Pangkas cakupan M1 | Tunda grup di Share/Users, Shared with me, duplicate dan urut view, edit/hapus komentar, hasil pencarian per grup (±3 hari) | Masih ±56 hari; **tidak cukup** untuk mencapai 40 tanpa memindahkan satu epic penuh |
 | C. Pecah M1 menjadi M1a dan M1b | M1a = E1.1, E1.2, E1.3, E1.6, E1.7, S1.4.3 (**41 hari** ≈ rencana 40). M1b = komentar, file, realtime, Inbox, To-do, pencarian, hardening (**18 hari**) | Pilot dimulai di akhir M1a **tanpa komentar dan file**, sehingga belum bisa menjalankan proyek sungguhan; hanya menguji alur inti dan otorisasi |
 
-PRD belum diubah. Keputusan opsi dan pembaruan §8 menunggu konfirmasi pemilik produk.
+**Keputusan (D-16, 12 Nov 2026): opsi A dipilih** dan PRD §8 sudah diubah (M1 12 minggu, GA minggu 39). Kalibrasi ulang setelah epic E1.1.
 <!-- GAP:END -->
