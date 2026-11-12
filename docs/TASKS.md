@@ -19,8 +19,8 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | Urutan | Story | Judul | Hari | Hari ke- | Minggu | Status |
 |---|---|---|---|---|---|---|
 | 1 | S0.1.1 | Kerangka repo dan alur kontrak API | 1.5 | 0–1.5 | 1 | DONE |
-| 2 | S0.1.2 | Tooling database dan migrasi identitas | 1.5 | 1.5–3 | 1 | IN_PROGRESS |
-| 3 | S0.1.3 | Dockerfile, CI, dan image di GHCR | 1.5 | 3–4.5 | 1 | IN_PROGRESS |
+| 2 | S0.1.2 | Tooling database dan migrasi identitas | 1.5 | 1.5–3 | 1 | DONE |
+| 3 | S0.1.3 | Dockerfile, CI, dan image di GHCR | 1.5 | 3–4.5 | 1 | DONE |
 | 4 | S0.2.1 | Platform HTTP | 1 | 4.5–5.5 | 2 | DONE |
 | 5 | S0.2.2 | Login, logout, dan session | 1.5 | 5.5–7 | 2 | DONE |
 | 6 | S0.2.6 | Email (SMTP + job) | 1 | 7–8 | 2 | DONE |
@@ -32,17 +32,17 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 12 | S0.4.1 | Compose klien, update, dan backup | 1.5 | 12–13.5 | 3 | DONE |
 | 13 | S0.4.2 | Observabilitas | 0.5 | 13.5–14 | 3 | DONE |
 | 14 | S0.5.1 | Spike Gantt (SVAR) dan penjadwalan di Go | 1 | 14–15 | 3 | DONE |
-| 15 | S1.1.1 | Data Space dan CRUD | 2 | 15–17 | 4 | PROPOSED |
-| 16 | S1.1.2 | Paket `policy` (mesin otorisasi) | 3 | 17–20 | 4 | PROPOSED |
-| 17 | S1.1.3 | API sharing dan ShareDialog | 3 | 20–23 | 5 | PROPOSED |
-| 18 | S1.2.1 | Skema item dan workflow default | 2 | 23–25 | 5 | PROPOSED |
-| 19 | S1.2.2 | Item service (create, get, patch) | 4 | 25–29 | 6 | PROPOSED |
-| 20 | S1.1.4 | Matriks tes otorisasi | 2 | 29–31 | 7 | PROPOSED |
-| 21 | S1.2.3 | Endpoint daftar (children dan root Space) | 2 | 31–33 | 7 | PROPOSED |
-| 22 | S1.2.4 | UI pembuatan project, folder, dan task | 2.5 | 33–35.5 | 8 | PROPOSED |
-| 23 | S1.2.5 | Panel detail item | 3 | 35.5–38.5 | 8 | PROPOSED |
-| 24 | S1.2.6 | Subitem | 1 | 38.5–39.5 | 8 | PROPOSED |
-| 25 | S1.3.1 | API view | 1.5 | 39.5–41 | 9 | PROPOSED |
+| 15 | S1.1.1 | Data Space dan CRUD | 2 | 15–17 | 4 | DONE |
+| 16 | S1.1.2 | Paket `policy` (mesin otorisasi) | 3 | 17–20 | 4 | IN_PROGRESS |
+| 17 | S1.1.3 | API sharing dan ShareDialog | 3 | 20–23 | 5 | IN_PROGRESS |
+| 18 | S1.2.1 | Skema item dan workflow default | 2 | 23–25 | 5 | DONE |
+| 19 | S1.2.2 | Item service (create, get, patch) | 4 | 25–29 | 6 | DONE |
+| 20 | S1.1.4 | Matriks tes otorisasi | 2 | 29–31 | 7 | IN_PROGRESS |
+| 21 | S1.2.3 | Endpoint daftar (children dan root Space) | 2 | 31–33 | 7 | DONE |
+| 22 | S1.2.4 | UI pembuatan project, folder, dan task | 2.5 | 33–35.5 | 8 | DONE |
+| 23 | S1.2.5 | Panel detail item | 3 | 35.5–38.5 | 8 | DONE |
+| 24 | S1.2.6 | Subitem | 1 | 38.5–39.5 | 8 | IN_PROGRESS |
+| 25 | S1.3.1 | API view | 1.5 | 39.5–41 | 9 | DONE |
 | 26 | S1.3.2 | Table view | 3.5 | 41–44.5 | 9 | PROPOSED |
 | 27 | S1.3.3 | Board view | 2.5 | 44.5–47 | 10 | PROPOSED |
 | 28 | S1.3.4 | ViewTabs dan pengelolaan view | 1.5 | 47–48.5 | 10 | PROPOSED |
@@ -189,8 +189,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Alur "undang sebagai external" dari dialog (admin)
 
 **S1.1.4 Matriks tes otorisasi**
-- [ ] Generator kasus dari definisi matriks → tes endpoint nyata
-- [ ] Tes negatif IDOR (item, file, komentar, lampiran) dan Personal space
+- [x] Matriks 5 tipe × 4 role × 4 jalur untuk GET, PATCH, create subtask, dan DELETE Item pada endpoint nyata
+- [x] Tes batas visibilitas Item dan Item di Personal Space
+- [ ] Tes batas visibilitas file, komentar, dan lampiran
 - [ ] Jadikan langkah CI yang memblokir merge
 
 ### E1.2 Item inti
@@ -201,30 +202,31 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Seed workflow default lewat bootstrap
 
 **S1.2.2 Item service**
-- [ ] `POST/GET/PATCH/DELETE /items` + optimistic locking (`If-Match`, 409/428)
-- [ ] `activity` dalam transaksi yang sama; follower otomatis
-- [ ] Aturan status (`completed_at`), validasi tanggal, assignee aktif
-- [ ] `reorder` dengan `rank` fractional
-- [ ] Tes konflik versi dan transaksi atomik
+- [x] `POST/GET/PATCH/DELETE /items` + optimistic locking (`If-Match`, 409/428)
+- [x] `activity` dalam transaksi yang sama; follower otomatis
+- [x] Aturan status (`completed_at`), validasi tanggal, assignee aktif
+- [x] `reorder` dengan `rank` fractional
+- [x] Tes konflik versi dan rollback ketika penulisan activity gagal
 
 **S1.2.3 Endpoint daftar**
-- [ ] `/spaces/{id}/items` dan `/items/{id}/children` (filter, sort, kursor)
-- [ ] Data uji 500 item; ukur p95 (< 300 ms)
+- [x] `/spaces/{id}/items` dan `/items/{id}/children` (filter, sort, kursor)
+- [x] Data uji 500 item; p95 80 ms pada HTTP lokal dengan 200 Item per halaman
 
 **S1.2.4 UI pembuatan project, folder, dan task**
-- [ ] LocationPicker; DateRangePicker; modal Create project/folder
-- [ ] Modal ringkas Create task + tombol **+** global
-- [ ] Pemetaan error server ke field
+- [x] Picker Space/container, kalender hari kerja, owner, default view, dan sharing di modal Create Item
+- [x] Create task dari tombol **+** global. Entry point Table dan Board mengikuti S1.3.2–S1.3.3
+- [x] Validasi nama dan pemetaan error server terstruktur ke field
 
 **S1.2.5 Panel detail item**
-- [ ] Kerangka `Sheet`, routing `?task=` dan `/tasks/$itemId`
-- [ ] StatusPicker, AssigneePicker, DateRangePicker
-- [ ] Judul inline, Description TipTap (simpan otomatis), menu ⋯
-- [ ] `PermissionGate` dari `my_capabilities`; tes klik nyata semua popup
+- [x] Panel samping dengan `?task=` dan halaman `/tasks/$itemId`
+- [x] StatusPicker, AssigneePicker, dan kalender hari kerja
+- [x] Judul inline, deskripsi TipTap tersimpan saat kehilangan fokus, dan menu ⋯
+- [x] Kontrol berdasarkan `my_capabilities`, PATCH dengan ETag, dan tes browser
 
 **S1.2.6 Subitem**
-- [ ] Daftar + "Add subitem" + navigasi breadcrumb ke induk
-- [ ] Hitung jumlah subitem; tes siklus dari UI
+- [x] Daftar, "Add subitem", dan navigasi kembali ke induk
+- [x] Jumlah subitem pada baris yang tersedia. Form membuat Item baru dengan parent tetap, dan siklus lokasi diuji pada PostgreSQL
+- [ ] Tampilkan jumlah subitem pada kartu Board setelah S1.3.3
 
 ### E1.3 View
 

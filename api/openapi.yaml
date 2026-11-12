@@ -432,7 +432,11 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Space' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
     delete:
       tags: [spaces]
@@ -441,6 +445,7 @@ paths:
       responses:
         '204': { description: Dihapus }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/shares:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -448,20 +453,27 @@ paths:
       tags: [spaces]
       operationId: listSpaceShares
       responses:
-        '200': { $ref: '#/components/responses/ShareList' }
+        '200': { $ref: '#/components/responses/VersionedShareList' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
     put:
       tags: [spaces]
       operationId: replaceSpaceShares
       summary: Ganti seluruh daftar share Space (SPC-11)
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/ShareReplace' }
       responses:
-        '200': { $ref: '#/components/responses/ShareList' }
+        '200': { $ref: '#/components/responses/VersionedShareList' }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/items:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -478,6 +490,8 @@ paths:
         - { $ref: '#/components/parameters/ItemSort' }
       responses:
         '200': { $ref: '#/components/responses/ItemPage' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/views:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -486,6 +500,7 @@ paths:
       operationId: listSpaceViews
       responses:
         '200': { $ref: '#/components/responses/ViewList' }
+        '404': { $ref: '#/components/responses/Problem' }
 
   # ───────────────────────── ITEMS ─────────────────────────
   /items:
@@ -510,6 +525,7 @@ paths:
               schema: { $ref: '#/components/schemas/Item' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
   /items/{itemId}:
     parameters:
@@ -560,6 +576,7 @@ paths:
         '204': { description: Dipindahkan ke Recycle bin }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/children:
     parameters:
       - { $ref: '#/components/parameters/ItemId' }
@@ -577,6 +594,7 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/ItemPage' }
         '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/reorder:
     post:
       tags: [items]
@@ -605,7 +623,10 @@ paths:
                   description: Taruh setelah item ini; null berarti paling atas
       responses:
         '204': { description: Diurutkan }
+        '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/locations:
     parameters:
       - { $ref: '#/components/parameters/ItemId' }
@@ -662,6 +683,7 @@ paths:
       operationId: listItemViews
       responses:
         '200': { $ref: '#/components/responses/ViewList' }
+        '404': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/followers:
     parameters:
       - { $ref: '#/components/parameters/ItemId' }
@@ -700,6 +722,9 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/View' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
   /views/{viewId}:
     parameters:
@@ -719,12 +744,18 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/View' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
     delete:
       tags: [views]
       operationId: deleteView
       summary: Hapus view; view default tidak bisa dihapus
       responses:
         '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
   /views/{viewId}/duplicate:
     post:
@@ -749,6 +780,10 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/View' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
 
   # ───────────────────────── COLLABORATION ─────────────────────────
   /items/{itemId}/comments:
@@ -1178,6 +1213,19 @@ components:
               items:
                 type: array
                 items: { $ref: '#/components/schemas/View' }
+    VersionedShareList:
+      description: OK
+      headers:
+        ETag: { $ref: '#/components/headers/ETag' }
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items]
+            properties:
+              items:
+                type: array
+                items: { $ref: '#/components/schemas/Share' }
     ShareList:
       description: OK
       content:
@@ -1378,6 +1426,7 @@ components:
         description: { type: string, maxLength: 1000 }
         shares:
           type: array
+          maxItems: 500
           items: { $ref: '#/components/schemas/ShareInput' }
     SpaceUpdate:
       type: object
@@ -1421,6 +1470,7 @@ components:
       properties:
         shares:
           type: array
+          maxItems: 500
           items: { $ref: '#/components/schemas/ShareInput' }
 
     # ── Item ──

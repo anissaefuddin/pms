@@ -19,7 +19,9 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
+import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces.$spaceId'
 import { Route as AppSpikesGanttRouteImport } from './routes/_app/spikes.gantt'
+import { Route as AppTasksItemIdRouteImport } from './routes/_app/tasks.$itemId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -70,9 +72,19 @@ const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
   path: '/security',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
+  id: '/spaces/$spaceId',
+  path: '/spaces/$spaceId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSpikesGanttRoute = AppSpikesGanttRouteImport.update({
   id: '/spikes/gantt',
   path: '/spikes/gantt',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppTasksItemIdRoute = AppTasksItemIdRouteImport.update({
+  id: '/tasks/$itemId',
+  path: '/tasks/$itemId',
   getParentRoute: () => AppRoute,
 } as any)
 
@@ -85,7 +97,9 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRouteWithChildren
   '/invitations/$token': typeof InvitationsTokenRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
+  '/tasks/$itemId': typeof AppTasksItemIdRoute
   '/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesByTo {
@@ -96,7 +110,9 @@ export interface FileRoutesByTo {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
+  '/tasks/$itemId': typeof AppTasksItemIdRoute
   '/settings': typeof AppSettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -110,7 +126,9 @@ export interface FileRoutesById {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
+  '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spikes/gantt': typeof AppSpikesGanttRoute
+  '/_app/tasks/$itemId': typeof AppTasksItemIdRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
 }
 export interface FileRouteTypes {
@@ -124,7 +142,9 @@ export interface FileRouteTypes {
     | '/settings'
     | '/invitations/$token'
     | '/settings/security'
+    | '/spaces/$spaceId'
     | '/spikes/gantt'
+    | '/tasks/$itemId'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -135,7 +155,9 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/'
     | '/settings/security'
+    | '/spaces/$spaceId'
     | '/spikes/gantt'
+    | '/tasks/$itemId'
     | '/settings'
   id:
     | '__root__'
@@ -148,7 +170,9 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/_app/'
     | '/_app/settings/security'
+    | '/_app/spaces/$spaceId'
     | '/_app/spikes/gantt'
+    | '/_app/tasks/$itemId'
     | '/_app/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -233,11 +257,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsSecurityRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/spaces/$spaceId': {
+      id: '/_app/spaces/$spaceId'
+      path: '/spaces/$spaceId'
+      fullPath: '/spaces/$spaceId'
+      preLoaderRoute: typeof AppSpacesSpaceIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/spikes/gantt': {
       id: '/_app/spikes/gantt'
       path: '/spikes/gantt'
       fullPath: '/spikes/gantt'
       preLoaderRoute: typeof AppSpikesGanttRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/tasks/$itemId': {
+      id: '/_app/tasks/$itemId'
+      path: '/tasks/$itemId'
+      fullPath: '/tasks/$itemId'
+      preLoaderRoute: typeof AppTasksItemIdRouteImport
       parentRoute: typeof AppRoute
     }
   }
@@ -260,13 +298,17 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppIndexRoute: typeof AppIndexRoute
+  AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpikesGanttRoute: typeof AppSpikesGanttRoute
+  AppTasksItemIdRoute: typeof AppTasksItemIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppIndexRoute: AppIndexRoute,
+  AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpikesGanttRoute: AppSpikesGanttRoute,
+  AppTasksItemIdRoute: AppTasksItemIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

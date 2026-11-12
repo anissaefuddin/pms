@@ -11,6 +11,177 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type ItemType string
+
+const (
+	ItemTypeProject ItemType = "project"
+	ItemTypeFolder  ItemType = "folder"
+	ItemTypeTask    ItemType = "task"
+)
+
+func (e *ItemType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ItemType(s)
+	case string:
+		*e = ItemType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ItemType: %T", src)
+	}
+	return nil
+}
+
+type NullItemType struct {
+	ItemType ItemType `json:"item_type"`
+	Valid    bool     `json:"valid"` // Valid is true if ItemType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullItemType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ItemType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ItemType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullItemType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ItemType), nil
+}
+
+type PrincipalType string
+
+const (
+	PrincipalTypeUser  PrincipalType = "user"
+	PrincipalTypeGroup PrincipalType = "group"
+)
+
+func (e *PrincipalType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PrincipalType(s)
+	case string:
+		*e = PrincipalType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PrincipalType: %T", src)
+	}
+	return nil
+}
+
+type NullPrincipalType struct {
+	PrincipalType PrincipalType `json:"principal_type"`
+	Valid         bool          `json:"valid"` // Valid is true if PrincipalType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPrincipalType) Scan(value interface{}) error {
+	if value == nil {
+		ns.PrincipalType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PrincipalType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPrincipalType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PrincipalType), nil
+}
+
+type ShareRole string
+
+const (
+	ShareRoleRead    ShareRole = "read"
+	ShareRoleLimited ShareRole = "limited"
+	ShareRoleEditor  ShareRole = "editor"
+	ShareRoleFull    ShareRole = "full"
+)
+
+func (e *ShareRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ShareRole(s)
+	case string:
+		*e = ShareRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ShareRole: %T", src)
+	}
+	return nil
+}
+
+type NullShareRole struct {
+	ShareRole ShareRole `json:"share_role"`
+	Valid     bool      `json:"valid"` // Valid is true if ShareRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullShareRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.ShareRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ShareRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullShareRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ShareRole), nil
+}
+
+type ShareTarget string
+
+const (
+	ShareTargetSpace ShareTarget = "space"
+	ShareTargetItem  ShareTarget = "item"
+)
+
+func (e *ShareTarget) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ShareTarget(s)
+	case string:
+		*e = ShareTarget(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ShareTarget: %T", src)
+	}
+	return nil
+}
+
+type NullShareTarget struct {
+	ShareTarget ShareTarget `json:"share_target"`
+	Valid       bool        `json:"valid"` // Valid is true if ShareTarget is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullShareTarget) Scan(value interface{}) error {
+	if value == nil {
+		ns.ShareTarget, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ShareTarget.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullShareTarget) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ShareTarget), nil
+}
+
 type SpaceKind string
 
 const (
@@ -227,11 +398,161 @@ func (ns NullUserType) Value() (driver.Value, error) {
 	return string(ns.UserType), nil
 }
 
+type ViewType string
+
+const (
+	ViewTypeTable ViewType = "table"
+	ViewTypeBoard ViewType = "board"
+)
+
+func (e *ViewType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ViewType(s)
+	case string:
+		*e = ViewType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ViewType: %T", src)
+	}
+	return nil
+}
+
+type NullViewType struct {
+	ViewType ViewType `json:"view_type"`
+	Valid    bool     `json:"valid"` // Valid is true if ViewType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullViewType) Scan(value interface{}) error {
+	if value == nil {
+		ns.ViewType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ViewType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullViewType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ViewType), nil
+}
+
+type ViewVisibility string
+
+const (
+	ViewVisibilityPublic   ViewVisibility = "public"
+	ViewVisibilityPersonal ViewVisibility = "personal"
+)
+
+func (e *ViewVisibility) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = ViewVisibility(s)
+	case string:
+		*e = ViewVisibility(s)
+	default:
+		return fmt.Errorf("unsupported scan type for ViewVisibility: %T", src)
+	}
+	return nil
+}
+
+type NullViewVisibility struct {
+	ViewVisibility ViewVisibility `json:"view_visibility"`
+	Valid          bool           `json:"valid"` // Valid is true if ViewVisibility is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullViewVisibility) Scan(value interface{}) error {
+	if value == nil {
+		ns.ViewVisibility, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.ViewVisibility.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullViewVisibility) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.ViewVisibility), nil
+}
+
 type Account struct {
 	ID        int16              `json:"id"`
 	Name      string             `json:"name"`
 	Settings  []byte             `json:"settings"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Activity struct {
+	ID        int64              `json:"id"`
+	ItemID    pgtype.UUID        `json:"item_id"`
+	ActorID   pgtype.UUID        `json:"actor_id"`
+	Action    string             `json:"action"`
+	Changes   []byte             `json:"changes"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Group struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type GroupMember struct {
+	GroupID pgtype.UUID `json:"group_id"`
+	UserID  pgtype.UUID `json:"user_id"`
+}
+
+type Item struct {
+	ID                pgtype.UUID        `json:"id"`
+	Seq               pgtype.Int8        `json:"seq"`
+	Type              ItemType           `json:"type"`
+	Title             string             `json:"title"`
+	Description       []byte             `json:"description"`
+	DescriptionText   string             `json:"description_text"`
+	StatusID          pgtype.UUID        `json:"status_id"`
+	OwnerID           pgtype.UUID        `json:"owner_id"`
+	DefaultWorkflowID pgtype.UUID        `json:"default_workflow_id"`
+	DefaultViewType   pgtype.Text        `json:"default_view_type"`
+	StartDate         pgtype.Date        `json:"start_date"`
+	DueDate           pgtype.Date        `json:"due_date"`
+	DurationDays      pgtype.Int4        `json:"duration_days"`
+	IsMilestone       bool               `json:"is_milestone"`
+	CompletedAt       pgtype.Timestamptz `json:"completed_at"`
+	Version           int32              `json:"version"`
+	Fields            []byte             `json:"fields"`
+	CreatedBy         pgtype.UUID        `json:"created_by"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt         pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt         pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy         pgtype.UUID        `json:"deleted_by"`
+	DeletedRootID     pgtype.UUID        `json:"deleted_root_id"`
+	Search            interface{}        `json:"search"`
+}
+
+type ItemAssignee struct {
+	ItemID pgtype.UUID `json:"item_id"`
+	UserID pgtype.UUID `json:"user_id"`
+}
+
+type ItemFollower struct {
+	ItemID pgtype.UUID `json:"item_id"`
+	UserID pgtype.UUID `json:"user_id"`
+}
+
+type ItemLocation struct {
+	ItemID        pgtype.UUID `json:"item_id"`
+	SpaceID       pgtype.UUID `json:"space_id"`
+	ParentItemID  pgtype.UUID `json:"parent_item_id"`
+	Rank          string      `json:"rank"`
+	DeletedRootID pgtype.UUID `json:"deleted_root_id"`
 }
 
 type Session struct {
@@ -240,6 +561,17 @@ type Session struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	ExpiresAt         pgtype.Timestamptz `json:"expires_at"`
 	AbsoluteExpiresAt pgtype.Timestamptz `json:"absolute_expires_at"`
+}
+
+type Share struct {
+	ID            pgtype.UUID        `json:"id"`
+	TargetType    ShareTarget        `json:"target_type"`
+	TargetID      pgtype.UUID        `json:"target_id"`
+	PrincipalType PrincipalType      `json:"principal_type"`
+	PrincipalID   pgtype.UUID        `json:"principal_id"`
+	Role          ShareRole          `json:"role"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
 
 type Space struct {
@@ -251,6 +583,8 @@ type Space struct {
 	Version     int32              `json:"version"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy   pgtype.UUID        `json:"deleted_by"`
 }
 
 type Status struct {
@@ -290,6 +624,19 @@ type UserToken struct {
 	UsedAt    pgtype.Timestamptz `json:"used_at"`
 	CreatedBy pgtype.UUID        `json:"created_by"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type View struct {
+	ID           pgtype.UUID    `json:"id"`
+	ScopeSpaceID pgtype.UUID    `json:"scope_space_id"`
+	ScopeItemID  pgtype.UUID    `json:"scope_item_id"`
+	Type         ViewType       `json:"type"`
+	Name         string         `json:"name"`
+	Config       []byte         `json:"config"`
+	Visibility   ViewVisibility `json:"visibility"`
+	OwnerID      pgtype.UUID    `json:"owner_id"`
+	Position     int32          `json:"position"`
+	IsDefault    bool           `json:"is_default"`
 }
 
 type Workflow struct {

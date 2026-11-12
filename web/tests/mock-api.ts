@@ -16,9 +16,10 @@ export const me = {
   capabilities: { manage_users: true, create_space: true },
 };
 
-export type Reply = { status?: number; body?: unknown };
-export type Handler = Reply | ((body: any) => Reply);
-export type Calls = { method: string; path: string; body: any }[];
+export type Reply = { status?: number; body?: unknown; headers?: Record<string, string> };
+export type Req = { query: URLSearchParams; headers: Record<string, string> };
+export type Handler = Reply | ((body: any, req: Req) => Reply);
+export type Calls = { method: string; path: string; body: any; query: URLSearchParams; headers: Record<string, string> }[];
 
 export function problem(status: number, detail: string, code = "problem"): Reply {
   return { status, body: { type: "about:blank", title: detail, status, code, detail, request_id: "req-test" } };
@@ -29,15 +30,18 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>): Pr
   const calls: Calls = [];
   await page.route(/\/api\/v1\//, async (route: Route) => {
     const request = route.request();
-    const path = new URL(request.url()).pathname.replace("/api/v1", "");
+    const url = new URL(request.url());
+    const path = url.pathname.replace("/api/v1", "");
     let body: any;
     try { body = request.postDataJSON(); } catch { body = undefined; }
-    calls.push({ method: request.method(), path, body });
+    const req: Req = { query: url.searchParams, headers: request.headers() };
+    calls.push({ method: request.method(), path, body, ...req });
     const handler = handlers[`${request.method()} ${path}`];
-    const reply = handler === undefined ? problem(404, "not mocked") : typeof handler === "function" ? handler(body) : handler;
+    const reply = handler === undefined ? problem(404, "not mocked") : typeof handler === "function" ? handler(body, req) : handler;
     const status = reply.status ?? 200;
     await route.fulfill({
       status,
+      headers: reply.headers,
       contentType: status >= 400 ? "application/problem+json" : "application/json",
       body: reply.body === undefined || status === 204 ? undefined : JSON.stringify(reply.body),
     });

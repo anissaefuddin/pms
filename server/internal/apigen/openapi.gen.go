@@ -1234,6 +1234,11 @@ type ShareList struct {
 	Items []Share `json:"items"`
 }
 
+// VersionedShareList defines model for VersionedShareList.
+type VersionedShareList struct {
+	Items []Share `json:"items"`
+}
+
 // ViewList defines model for ViewList.
 type ViewList struct {
 	Items []View `json:"items"`
@@ -1418,6 +1423,12 @@ type ListSpaceRootItemsParams struct {
 
 // ListSpaceRootItemsParamsSort defines parameters for ListSpaceRootItems.
 type ListSpaceRootItemsParamsSort string
+
+// ReplaceSpaceSharesParams defines parameters for ReplaceSpaceShares.
+type ReplaceSpaceSharesParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
 
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
@@ -1763,7 +1774,7 @@ type ServerInterface interface {
 	ListSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ReplaceSpaceShares Ganti seluruh daftar share Space (SPC-11)
 	// (PUT /spaces/{spaceId}/shares)
-	ReplaceSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	ReplaceSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ReplaceSpaceSharesParams)
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -3475,8 +3486,36 @@ func (siw *ServerInterfaceWrapper) ReplaceSpaceShares(w http.ResponseWriter, r *
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReplaceSpaceSharesParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ReplaceSpaceShares(w, r, spaceId)
+		siw.Handler.ReplaceSpaceShares(w, r, spaceId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4044,6 +4083,17 @@ type ProblemApplicationProblemPlusJSONResponse Problem
 
 type ShareListJSONResponse struct {
 	Items []Share `json:"items"`
+}
+
+type VersionedShareListResponseHeaders struct {
+	ETag *string
+}
+type VersionedShareListJSONResponse struct {
+	Body struct {
+		Items []Share `json:"items"`
+	}
+
+	Headers VersionedShareListResponseHeaders
 }
 
 type ViewListJSONResponse struct {
@@ -4687,6 +4737,20 @@ func (response CreateItem404ApplicationProblemPlusJSONResponse) VisitCreateItemR
 	return err
 }
 
+type CreateItem409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateItem409ApplicationProblemPlusJSONResponse) VisitCreateItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateItem422ApplicationProblemPlusJSONResponse Problem
 
 func (response CreateItem422ApplicationProblemPlusJSONResponse) VisitCreateItemResponse(w http.ResponseWriter) error {
@@ -4743,6 +4807,20 @@ func (response DeleteItem404ApplicationProblemPlusJSONResponse) VisitDeleteItemR
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteItem409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteItem409ApplicationProblemPlusJSONResponse) VisitDeleteItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5054,6 +5132,20 @@ func (response ListItemChildren404ApplicationProblemPlusJSONResponse) VisitListI
 	return err
 }
 
+type ListItemChildren422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListItemChildren422ApplicationProblemPlusJSONResponse) VisitListItemChildrenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCommentsRequestObject struct {
 	ItemId ItemId `json:"itemId"`
 	Params ListCommentsParams
@@ -5213,9 +5305,23 @@ func (response ReorderItem204Response) VisitReorderItemResponse(w http.ResponseW
 	return nil
 }
 
-type ReorderItem404ApplicationProblemPlusJSONResponse struct {
+type ReorderItem403ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
+
+func (response ReorderItem403ApplicationProblemPlusJSONResponse) VisitReorderItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReorderItem404ApplicationProblemPlusJSONResponse Problem
 
 func (response ReorderItem404ApplicationProblemPlusJSONResponse) VisitReorderItemResponse(w http.ResponseWriter) error {
 
@@ -5225,6 +5331,34 @@ func (response ReorderItem404ApplicationProblemPlusJSONResponse) VisitReorderIte
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReorderItem409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReorderItem409ApplicationProblemPlusJSONResponse) VisitReorderItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReorderItem422ApplicationProblemPlusJSONResponse Problem
+
+func (response ReorderItem422ApplicationProblemPlusJSONResponse) VisitReorderItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5322,6 +5456,22 @@ func (response ListItemViews200JSONResponse) VisitListItemViewsResponse(w http.R
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemViews404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListItemViews404ApplicationProblemPlusJSONResponse) VisitListItemViewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5777,6 +5927,20 @@ func (response DeleteSpace403ApplicationProblemPlusJSONResponse) VisitDeleteSpac
 	return err
 }
 
+type DeleteSpace404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteSpace404ApplicationProblemPlusJSONResponse) VisitDeleteSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetSpaceRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -5859,9 +6023,51 @@ func (response UpdateSpace200JSONResponse) VisitUpdateSpaceResponse(w http.Respo
 	return err
 }
 
-type UpdateSpace409ApplicationProblemPlusJSONResponse struct {
+type UpdateSpace400ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
+
+func (response UpdateSpace400ApplicationProblemPlusJSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateSpace403ApplicationProblemPlusJSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateSpace404ApplicationProblemPlusJSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace409ApplicationProblemPlusJSONResponse Problem
 
 func (response UpdateSpace409ApplicationProblemPlusJSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
 
@@ -5871,6 +6077,20 @@ func (response UpdateSpace409ApplicationProblemPlusJSONResponse) VisitUpdateSpac
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpace422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateSpace422ApplicationProblemPlusJSONResponse) VisitUpdateSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5912,6 +6132,36 @@ func (response ListSpaceRootItems200JSONResponse) VisitListSpaceRootItemsRespons
 	return err
 }
 
+type ListSpaceRootItems404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceRootItems404ApplicationProblemPlusJSONResponse) VisitListSpaceRootItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceRootItems422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceRootItems422ApplicationProblemPlusJSONResponse) VisitListSpaceRootItemsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceSharesRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -5920,22 +6170,56 @@ type ListSpaceSharesResponseObject interface {
 	VisitListSpaceSharesResponse(w http.ResponseWriter) error
 }
 
-type ListSpaceShares200JSONResponse struct{ ShareListJSONResponse }
+type ListSpaceShares200JSONResponse struct{ VersionedShareListJSONResponse }
 
 func (response ListSpaceShares200JSONResponse) VisitListSpaceSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceShares403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceShares403ApplicationProblemPlusJSONResponse) VisitListSpaceSharesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceShares404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceShares404ApplicationProblemPlusJSONResponse) VisitListSpaceSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
 
 type ReplaceSpaceSharesRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
+	Params  ReplaceSpaceSharesParams
 	Body    *ReplaceSpaceSharesJSONRequestBody
 }
 
@@ -5943,15 +6227,18 @@ type ReplaceSpaceSharesResponseObject interface {
 	VisitReplaceSpaceSharesResponse(w http.ResponseWriter) error
 }
 
-type ReplaceSpaceShares200JSONResponse struct{ ShareListJSONResponse }
+type ReplaceSpaceShares200JSONResponse struct{ VersionedShareListJSONResponse }
 
 func (response ReplaceSpaceShares200JSONResponse) VisitReplaceSpaceSharesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -5973,6 +6260,34 @@ func (response ReplaceSpaceShares403ApplicationProblemPlusJSONResponse) VisitRep
 	return err
 }
 
+type ReplaceSpaceShares404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceSpaceShares404ApplicationProblemPlusJSONResponse) VisitReplaceSpaceSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceSpaceShares409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceSpaceShares409ApplicationProblemPlusJSONResponse) VisitReplaceSpaceSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReplaceSpaceShares422ApplicationProblemPlusJSONResponse Problem
 
 func (response ReplaceSpaceShares422ApplicationProblemPlusJSONResponse) VisitReplaceSpaceSharesResponse(w http.ResponseWriter) error {
@@ -5983,6 +6298,20 @@ func (response ReplaceSpaceShares422ApplicationProblemPlusJSONResponse) VisitRep
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceSpaceShares428ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceSpaceShares428ApplicationProblemPlusJSONResponse) VisitReplaceSpaceSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6005,6 +6334,22 @@ func (response ListSpaceViews200JSONResponse) VisitListSpaceViewsResponse(w http
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceViews404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceViews404ApplicationProblemPlusJSONResponse) VisitListSpaceViewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6302,9 +6647,51 @@ func (response CreateView201JSONResponse) VisitCreateViewResponse(w http.Respons
 	return err
 }
 
-type CreateView422ApplicationProblemPlusJSONResponse struct {
+type CreateView403ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
+
+func (response CreateView403ApplicationProblemPlusJSONResponse) VisitCreateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateView404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateView404ApplicationProblemPlusJSONResponse) VisitCreateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateView409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateView409ApplicationProblemPlusJSONResponse) VisitCreateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateView422ApplicationProblemPlusJSONResponse Problem
 
 func (response CreateView422ApplicationProblemPlusJSONResponse) VisitCreateViewResponse(w http.ResponseWriter) error {
 
@@ -6334,9 +6721,37 @@ func (response DeleteView204Response) VisitDeleteViewResponse(w http.ResponseWri
 	return nil
 }
 
-type DeleteView409ApplicationProblemPlusJSONResponse struct {
+type DeleteView403ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
+
+func (response DeleteView403ApplicationProblemPlusJSONResponse) VisitDeleteViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteView404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteView404ApplicationProblemPlusJSONResponse) VisitDeleteViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteView409ApplicationProblemPlusJSONResponse Problem
 
 func (response DeleteView409ApplicationProblemPlusJSONResponse) VisitDeleteViewResponse(w http.ResponseWriter) error {
 
@@ -6373,6 +6788,64 @@ func (response UpdateView200JSONResponse) VisitUpdateViewResponse(w http.Respons
 	return err
 }
 
+type UpdateView403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateView403ApplicationProblemPlusJSONResponse) VisitUpdateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateView404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateView404ApplicationProblemPlusJSONResponse) VisitUpdateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateView409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateView409ApplicationProblemPlusJSONResponse) VisitUpdateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateView422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateView422ApplicationProblemPlusJSONResponse) VisitUpdateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DuplicateViewRequestObject struct {
 	ViewId ViewId `json:"viewId"`
 	Body   *DuplicateViewJSONRequestBody
@@ -6392,6 +6865,64 @@ func (response DuplicateView201JSONResponse) VisitDuplicateViewResponse(w http.R
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateView403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DuplicateView403ApplicationProblemPlusJSONResponse) VisitDuplicateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateView404ApplicationProblemPlusJSONResponse Problem
+
+func (response DuplicateView404ApplicationProblemPlusJSONResponse) VisitDuplicateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateView409ApplicationProblemPlusJSONResponse Problem
+
+func (response DuplicateView409ApplicationProblemPlusJSONResponse) VisitDuplicateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateView422ApplicationProblemPlusJSONResponse Problem
+
+func (response DuplicateView422ApplicationProblemPlusJSONResponse) VisitDuplicateViewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -8153,10 +8684,11 @@ func (sh *strictHandler) ListSpaceShares(w http.ResponseWriter, r *http.Request,
 }
 
 // ReplaceSpaceShares operation middleware
-func (sh *strictHandler) ReplaceSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+func (sh *strictHandler) ReplaceSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ReplaceSpaceSharesParams) {
 	var request ReplaceSpaceSharesRequestObject
 
 	request.SpaceId = spaceId
+	request.Params = params
 
 	var body ReplaceSpaceSharesJSONRequestBody
 	if err := runtime.BindJSONBody(r, &body); err != nil {

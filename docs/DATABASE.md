@@ -89,7 +89,7 @@ Tabel bantu yang tidak digambar agar ERD terbaca: `group_members`, `item_assigne
 | Tabel | Keputusan |
 |---|---|
 | `spaces` | `kind` = `shared` atau `personal`. Satu Personal space per user, dibuat saat aktivasi (`owner_id` unik untuk `personal`). Space default "General" dibuat oleh `pms bootstrap` |
-| `shares` | Satu tabel untuk Space dan item: `(target_type, target_id, principal_type, principal_id, role)`. `principal_type` = `user` atau `group`. Unik pada kelimanya. `role` = `read`/`limited`/`editor`/`full`. Share pada container berlaku untuk seluruh turunannya (pewarisan dihitung saat query, tidak disalin) |
+| `shares` | Satu tabel untuk Space dan item. Kombinasi `(target_type, target_id, principal_type, principal_id)` unik. `principal_type` = `user` atau `group`. `role` = `read`/`limited`/`editor`/`full`. Share user nonaktif dipertahankan dan berlaku lagi setelah reaktivasi. Share pada container berlaku untuk seluruh turunannya (pewarisan dihitung saat query, tidak disalin) |
 
 FK pada `shares.target_id` tidak bisa dibuat langsung karena targetnya polimorfik. Konsistensinya dijaga oleh trigger `BEFORE INSERT` yang memeriksa keberadaan target, dan oleh job pembersih yang menghapus share yatim.
 

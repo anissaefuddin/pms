@@ -1,6 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test, type Page } from "@playwright/test";
 import { me, mockApi } from "./mock-api";
+import { extra, marketing, mockSpaces } from "./spaces-mock";
 
 test.use({ colorScheme: "light" });
 
@@ -63,5 +64,54 @@ test("security page has no violations, also with the dialog and profile menu ope
 
   await page.getByRole("button", { name: "Account menu" }).click();
   await expect(page.getByRole("menuitem", { name: "Log out" })).toBeVisible();
+  await expectNoViolations(page);
+});
+
+test("space page has no violations, also with the actions menu and the dialogs open", async ({ page }) => {
+  await mockSpaces(page, { extra: extra() });
+  await page.goto(`/spaces/${marketing.id}`);
+  await expect(page.getByRole("heading", { name: "Marketing", level: 1 })).toBeVisible();
+  await expect(page.getByRole("navigation", { name: "Spaces" }).getByRole("link", { name: "Personal" })).toBeVisible();
+  await expectNoViolations(page);
+
+  await page.getByRole("button", { name: "Space actions" }).click();
+  await expect(page.getByRole("menuitem", { name: "Rename" })).toBeVisible();
+  await expectNoViolations(page);
+  await page.getByRole("menuitem", { name: "Rename" }).click();
+  await expect(page.getByRole("dialog", { name: "Rename Space" })).toBeVisible();
+  await expectNoViolations(page);
+  await page.keyboard.press("Escape");
+
+  await page.getByRole("button", { name: "New Space" }).click();
+  await expect(page.getByRole("dialog", { name: "New Space" })).toBeVisible();
+  await expectNoViolations(page);
+});
+
+test("not-found Space has no violations", async ({ page }) => {
+  await mockSpaces(page);
+  await page.goto("/spaces/99999999-9999-4999-8999-999999999999");
+  await expect(page.getByRole("heading", { name: "Space not found" })).toBeVisible();
+  await expectNoViolations(page);
+});
+
+test("share dialog has no violations, with results, an unknown email and the self warning", async ({ page }) => {
+  await mockSpaces(page, { extra: extra() });
+  await page.goto(`/spaces/${marketing.id}`);
+  await page.getByRole("button", { name: "Share" }).click();
+  const dialog = page.getByRole("dialog", { name: "Share “Marketing”" });
+  await expect(dialog.getByText("Linus Pauling")).toBeVisible();
+  await expectNoViolations(page);
+
+  await dialog.getByLabel("Add people or groups").fill("gra");
+  await expect(dialog.getByText("grace@example.test")).toBeVisible();
+  await expectNoViolations(page);
+
+  await dialog.getByLabel("Add people or groups").fill("nobody@example.test");
+  await expect(dialog.getByRole("button", { name: "Invite as external user" })).toBeDisabled();
+  await expectNoViolations(page);
+
+  await dialog.getByLabel("Role for Ada Lovelace").selectOption("read");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog.getByText("lowers or removes your own access")).toBeVisible();
   await expectNoViolations(page);
 });

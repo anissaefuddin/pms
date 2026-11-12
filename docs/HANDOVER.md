@@ -83,6 +83,14 @@ D-20..D-25 disetujui; P-01..P-08 ditutup (D-16..D-19, D-26..D-28, D-35); G-07, G
 - **Kepemilikan direktori (D-29):** `server/` dan `docs/` = sesi backend/dokumen yang aktif; `web/` = sesi frontend yang aktif. Tulis pemilik aktif di sini sebelum memulai batch dan jangan mengedit direktori yang dimiliki sesi lain.
 - **Next READY:** M0: S0.1.2 dan S0.1.3 menunggu hasil CI GitHub (push setelah repo privat, D-26/D-27). M1: **S1.1.1 Data Space dan CRUD** (2 hari, dep. S0.1.2, praktis tidak terblokir), lalu S1.1.2 (policy, admin `full` sesuai D-17), S1.2.1.
 
+### Batch S0 + S1.1.1–S1.1.4 (batas penggunaan tercapai di tengah batch) — Status: PARTIAL, belum di-commit
+
+- **CI GitHub hijau** (run 43159032868: gofmt, vet, go test dengan Postgres, lint/typecheck/test web, drift generate, build container) → S0.1.2 `DONE`. S0.1.3 tinggal job GHCR: butuh push tag `v0.1.0`, yang **ditolak pengaman izin** ("Create Public Surface"); user perlu menjalankan `git tag -a v0.1.0 c39ad96 -m M0 && git push origin v0.1.0` atau memberi izin.
+- **BE (belum di-commit):** migrasi `00004_spaces_sharing.sql` (groups, group_members, shares, trigger, `spaces.deleted_at`), paket `server/internal/{policy,spaces,directory}`, handler `httpserver/spaces.go` (`/spaces`, `/spaces/{id}`, `/spaces/{id}/shares`, `/users`, `/groups`), housekeeping membersihkan share yatim. Tes: matriks 5 tipe × 4 role × 2 jalur (langsung, lewat grup) terhadap endpoint nyata, aturan akses, IDOR, share, direktori; 8 mutasi aturan otorisasi membuat tes gagal; `go test ./server/...` PASS. Review independen (opus): 0 BLOCKER; temuan sudah diperbaiki: PUT shares kini **wajib `If-Match`** (ETag dari GET shares, 409 bila basi, versi Space naik), creator selalu `full`, PATCH kosong 422, nama tanpa email untuk tipe yang tidak boleh menelusuri direktori, filter `/users`, trigger lebih ketat.
+- **FE (belum di-commit):** subagent menyelesaikan sidebar Spaces, halaman `/spaces/$spaceId`, dialog Space, ShareDialog; 52 tes Playwright PASS (diverifikasi ulang). **BELUM diperbarui untuk `If-Match` pada PUT shares**: ShareDialog harus membaca ETag dari GET shares, mengirimnya sebagai `If-Match`, menangani 409/428, dan me-refetch Space setelah simpan; mock dan tes ikut disesuaikan. Dialog "Create Space" belum punya bagian Sharing.
+- **Belum dikerjakan:** pembaruan `api/openapi.yaml` (tambahan: `If-Match` + 409/428 pada PUT shares, ETag pada GET shares, respons 403/404/422 pada operasi Space, `maxItems` 500) dan dokumen (ARCHITECTURE §6.2 butir 4: pemilik Personal space tetap dibatasi plafon user type; DATABASE §3.2: unik pada empat kolom; keputusan: share user nonaktif kembali aktif saat reaktivasi; boleh menghapus akses `full` terakhir karena admin tetap bisa memulihkan, D-17). S1.1.4 hanya sebagian: jalur "lewat leluhur" dan "lewat lokasi kedua" serta tes IDOR item/file/komentar/lampiran menunggu S1.2.x. S1.1.2 baru mencakup Space (CTE item di S1.2.x).
+- Stack lokal: image `pms:m1-spaces` (migrasi 00004 sudah terpasang di DB lokal; fungsi trigger diperbarui manual sama dengan migrasi yang belum di-commit).
+
 ## 3. Blocker dan keputusan yang dibutuhkan dari user
 
 Rincian di [DECISIONS.md](DECISIONS.md) §3–4. Yang paling berdampak:
@@ -106,3 +114,33 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 1. File ini → [DECISIONS.md](DECISIONS.md) → [TASKS.md](TASKS.md) → [TESTING.md](TESTING.md)
 2. `git status` dan `git log -3`; bandingkan dengan §Git di atas
 3. [PRD.md](PRD.md) dan [ARCHITECTURE.md](ARCHITECTURE.md) bila menyentuh scope atau desain
+### Lanjutan frontend Sharing
+
+- ShareDialog membaca ETag dari GET shares dan mengirimkannya sebagai If-Match saat PUT. Konflik ditampilkan di dialog. Setelah simpan, query Space diinvalidasi.
+- Create Space dapat menambahkan user atau grup beserta role melalui payload POST yang sama.
+- OpenAPI Space shares mencatat ETag, If-Match, dan respons 409/428. Stub Go dan tipe TypeScript telah digenerate.
+- S1.1.4 masih menunggu jalur leluhur/lokasi kedua dan resource item, file, komentar, serta lampiran. Status story M1 tetap mengikuti TASKS.
+
+### Checkpoint M0 dan M1
+
+- Semua story M0 tercatat DONE pada tabel TASKS. S1.2.1 DONE dengan bukti migrasi dan tes siklus di TESTING.
+- S1.2.2 IN_PROGRESS. Migrasi `00006_item_activity.sql` menambahkan tabel activity dan indeks riwayat Item. Model sqlc telah diregenerasi. Tes database dan bootstrap dengan Postgres lulus.
+- Lanjut dari policy Item untuk lokasi dan leluhur, lalu CRUD/reorder dengan If-Match dan activity dalam transaksi. Selesaikan matriks S1.1.4 seiring endpoint terkait tersedia. Stack manual belum menerima migrasi baru.
+
+- Checkpoint berikutnya: `policy.ItemCaps` tersedia di `server/internal/policy/item.go`. Tes database/policy lulus. Sambungkan ke Item service setelah menambah bukti integrasi pewarisan dan meninjau aturan lokasi. Endpoint Item dan matriks S1.1.4 masih terbuka.
+
+- Checkpoint S1.2.2: `GET /api/v1/items/{itemId}` terhubung ke `ItemCaps` melalui `server/internal/items/read.go`. Keputusan akses dan pembacaan detail memakai snapshot yang sama. Metadata lokasi difilter sesuai akses ke Space dan parent. Tes HTTP dengan PostgreSQL mencakup akses grup pada lokasi kedua dan plafon viewer. Lanjutkan POST, PATCH, DELETE dan reorder, lalu perluas matriks S1.1.4 sebelum S1.2.3. Status S1.2.2 tetap IN_PROGRESS.
+
+- Checkpoint berikutnya: S1.2.2 DONE setelah operasi tulis Item dan regresi lulus di PostgreSQL. Migrasi 00007 menambahkan siklus hidup lokasi dan validasi share Item. S1.1.4 IN_PROGRESS dengan matriks 80 kasus Item yang lulus. Lanjut S1.2.3 dan lengkapi S1.1.4 seiring endpoint komentar, file, lampiran dan sharing Item tersedia.
+
+### Checkpoint terbaru — Item API dan daftar
+
+- S1.2.2 dan S1.2.3 DONE. Implementasi di `server/internal/items/`, routing di `server/internal/httpserver/items.go`, dan tes di `items_integration_test.go` serta `item_list_integration_test.go`. Migrasi 00007 dan generator OpenAPI/sqlc sudah diuji secara lokal.
+- S1.1.4 IN_PROGRESS. Matriks 80 kombinasi lulus untuk operasi Item yang tersedia. Lengkapi cek resource komentar/file/lampiran dan operasi sharing saat endpoint tersedia. Status required check pada pengaturan branch GitHub belum diverifikasi.
+- Lanjut S1.2.4 dengan API create Item yang sudah tersedia. Frontend dapat memakai endpoint root/children untuk memilih lokasi. Jangan anggap stack manual sudah menjalankan migrasi 00007. Bukti pengujian ada di TESTING.
+
+### Checkpoint terbaru — UI Item
+
+- S1.2.4 dan S1.2.5 DONE. `create-item-dialog.tsx` memakai API Item dan membuka panel `?task=`. `item-detail.tsx` juga dipakai oleh `/tasks/$itemId`. Edit memakai ETag dan deskripsi TipTap dimuat terpisah. Workflow tersedia melalui `GET /api/v1/workflows`.
+- S1.2.6 IN_PROGRESS. Daftar dan Add subitem, parent tetap, navigasi ke induk, dan jumlah pada baris sudah tersedia. Tampilkan jumlah pada kartu saat Board dibangun. Tombol tambah dari Table/Board dan penerapan default view juga mengikuti S1.3.2/S1.3.3.
+- Lanjut S1.3.1 (API View), lalu Table dan Board. Bukti browser dan PostgreSQL tercatat di TESTING. Perubahan belum diterapkan ke stack manual.

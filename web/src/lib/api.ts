@@ -12,11 +12,19 @@ export async function checkHealth() {
 }
 
 export class ApiError extends Error {
-  constructor(message: string, readonly status: number, readonly code?: string) { super(message); }
+  constructor(message: string, readonly status: number, readonly code?: string,
+    readonly fields: { field: string; message: string }[] = []) { super(message); }
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
+export async function api<T>(path: string, init?: RequestInit, onHeaders?: (headers: Headers) => void): Promise<T> {
   const response = await fetch(path, { credentials: "same-origin", ...init, headers: { "Content-Type": "application/json", ...init?.headers } });
-  if (!response.ok) { const body = await response.json().catch(() => ({})); throw new ApiError(body.detail ?? body.title ?? "Request failed", response.status, body.code); }
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    const fields = Array.isArray(body.errors) ? body.errors.filter((entry: unknown) =>
+      !!entry && typeof entry === "object" && "field" in entry && "message" in entry
+      && typeof entry.field === "string" && typeof entry.message === "string") : [];
+    throw new ApiError(body.detail ?? body.title ?? "Request failed", response.status, body.code, fields);
+  }
+  onHeaders?.(response.headers);
   return response.status === 204 || response.status === 202 ? (undefined as T) : response.json();
 }

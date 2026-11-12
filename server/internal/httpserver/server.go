@@ -19,8 +19,10 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/database"
+	"github.com/anissaefuddin/pms/server/internal/directory"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/security"
+	"github.com/anissaefuddin/pms/server/internal/spaces"
 	"github.com/anissaefuddin/pms/server/web"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -32,6 +34,8 @@ type Server struct {
 	pool           *pgxpool.Pool
 	cfg            config.Config
 	mail           *mailqueue.Queue
+	spaces         *spaces.Service
+	directory      *directory.Service
 	loginIPFails   *limiter // failed logins per IP
 	loginAcctFails *limiter // failed logins per email: temporary lockout
 	dummyHash      string   // checked when the email is unknown, so timing does not reveal which emails exist
@@ -44,6 +48,7 @@ type Server struct {
 type contextKey string
 
 const userKey contextKey = "user_id"
+const userTypeKey contextKey = "user_type"
 
 // Me matches the OpenAPI `Me` schema.
 type me struct {
@@ -89,7 +94,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	if err != nil {
 		panic(err) // only fails if the system random source does
 	}
-	s := &Server{pool: pool, cfg: cfg, mail: mail, loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), requests: requests, duration: duration}
+	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), requests: requests, duration: duration}
 	mux := http.NewServeMux()
 	// Paths follow api/openapi.yaml (servers.url = /api/v1). Keep them in sync with the contract.
 	mux.HandleFunc("GET /api/v1/healthz", s.healthz)
@@ -102,6 +107,16 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("POST /api/v1/auth/password/change", s.requireUser(s.changePassword))
 	mux.HandleFunc("GET /api/v1/auth/invitations/{token}", s.getInvitation)
 	mux.HandleFunc("POST /api/v1/auth/invitations/accept", s.acceptInvitation)
+	s.spaceRoutes(mux)
+	s.viewRoutes(mux)
+	mux.HandleFunc("POST /api/v1/items", s.requireUser(s.createItem))
+	mux.HandleFunc("GET /api/v1/workflows", s.requireUser(s.listWorkflows))
+	mux.HandleFunc("GET /api/v1/items/{itemId}", s.requireUser(s.getItem))
+	mux.HandleFunc("GET /api/v1/items/{itemId}/children", s.requireUser(s.listChildItems))
+	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/items", s.requireUser(s.listRootItems))
+	mux.HandleFunc("PATCH /api/v1/items/{itemId}", s.requireUser(s.patchItem))
+	mux.HandleFunc("DELETE /api/v1/items/{itemId}", s.requireUser(s.deleteItem))
+	mux.HandleFunc("POST /api/v1/items/{itemId}/reorder", s.requireUser(s.reorderItem))
 	mux.Handle("/", static())
 	return s.observe(s.requestID(recoverPanic(s.csrf(mux))))
 }
@@ -501,9 +516,9 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 			writeError(w, 401, "authentication required")
 			return
 		}
-		var userID string
+		var userID, userType string
 		var idleExpires, absoluteExpires time.Time
-		err = s.pool.QueryRow(r.Context(), `SELECT u.id::text,s.expires_at,s.absolute_expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND u.status='active'`, security.TokenHash(cookie.Value)).Scan(&userID, &idleExpires, &absoluteExpires)
+		err = s.pool.QueryRow(r.Context(), `SELECT u.id::text,u.user_type::text,s.expires_at,s.absolute_expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND u.status='active'`, security.TokenHash(cookie.Value)).Scan(&userID, &userType, &idleExpires, &absoluteExpires)
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) { // a database hiccup must not log everyone out
 			writeError(w, 500, "could not check session")
 			return
@@ -523,7 +538,7 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 		if idleExpires.Before(target.Add(-5 * time.Minute)) {
 			_, _ = s.pool.Exec(r.Context(), "UPDATE sessions SET expires_at=$2 WHERE token_hash=$1", security.TokenHash(cookie.Value), target)
 		}
-		next(w, r.WithContext(context.WithValue(r.Context(), userKey, userID)))
+		next(w, r.WithContext(context.WithValue(context.WithValue(r.Context(), userKey, userID), userTypeKey, userType)))
 	}
 }
 
@@ -565,7 +580,7 @@ func decode(w http.ResponseWriter, r *http.Request, dst any) bool {
 }
 
 // problemCodes maps HTTP status to the stable error codes in WORKFLOWS §10.
-var problemCodes = map[int]string{400: "validation_failed", 401: "unauthenticated", 403: "forbidden", 404: "not_found", 410: "token_invalid", 422: "validation_failed", 429: "rate_limited"}
+var problemCodes = map[int]string{400: "validation_failed", 401: "unauthenticated", 403: "forbidden", 404: "not_found", 410: "token_invalid", 422: "validation_failed", 409: "version_conflict", 428: "precondition_required", 429: "rate_limited"}
 
 func writeError(w http.ResponseWriter, status int, message string) {
 	code := problemCodes[status]

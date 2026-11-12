@@ -8,6 +8,28 @@
 
 ## 1. Cara menjalankan
 
+S1.3.1: `TestViewLifecycle` PASS dengan PostgreSQL. Migrasi 00008, seed Table/Board, default Board sesuai input project, duplicate personal, visibilitas per pemilik, rename, posisi, pergantian default, dan proteksi hapus default diuji lewat HTTP.
+
+S1.2.1: migrasi Item, penolakan siklus lokasi, dan bootstrap workflow default lulus di PostgreSQL lokal melalui `go test -count=1 ./server/internal/database ./server/internal/bootstrap`.
+
+S1.2.2 (parsial): suite database dan bootstrap di atas tetap PASS setelah migrasi `00006_item_activity.sql`. Penulisan activity dari endpoint Item dan atomicity belum diuji.
+
+S1.1.2 (parsial): suite database dan policy PASS dengan PostgreSQL. Tes integrasi membuktikan kapabilitas edit admin melalui lokasi Shared Space. Jalur leluhur, grup, dan lokasi kedua belum punya bukti integrasi Item.
+
+S1.2.2 dan S1.1.4 (parsial): `TestGetItemDetail` PASS dengan PostgreSQL dan HTTP nyata. Viewer mendapat akses melalui share grup pada lokasi kedua, menerima ETag dan kapabilitas sesuai plafon tipe user, serta hanya menerima lokasi yang terlihat. Matriks endpoint lengkap dan operasi tulis belum tercakup.
+
+S1.2.2 DONE: `TestItemLifecycle` dan `go test -count=1 ./server/...` PASS dengan PostgreSQL setelah migrasi 00007. Bukti mencakup create, GET, PATCH (428/409/422 dan update sukses), completed_at, follower, activity, reorder, serta delete yang mempertahankan Item dengan lokasi hidup lain.
+
+S1.1.4 parsial: `TestItemAuthorizationMatrix` PASS pada 80 kombinasi (5 tipe × 4 role × 4 jalur). HTTP GET memeriksa semua kapabilitas yang dilaporkan. PATCH edit/status, create subtask, dan DELETE menguji keputusan endpoint. Workflow CI dikonfigurasi menjalankan suite ini dengan PostgreSQL. Matriks operasi komentar, file, lampiran, dan sharing Item masih memerlukan endpoint terkait.
+
+`TestItemVisibilityBoundaries` PASS. Pemilik bisa membaca Item di Personal Space. Anggota tanpa grant menerima 404 pada Item Shared Space dan admin menerima 404 pada Item di Personal Space orang lain.
+
+S1.2.2: uji tambahan memaksa INSERT activity gagal setelah update Item. Judul dan versi tetap pada nilai sebelumnya (rollback PASS).
+
+S1.2.3 DONE: `TestItemLists` dan `TestItemListFiveHundred` PASS di PostgreSQL. Root/children, filter status/assignee/tipe, urutan dengan tanggal null, dan kursor teruji. Sebanyak 500 Item terbaca dalam tiga halaman tanpa duplikat. p95 = 79,805 ms dari 20 request HTTP lokal pada halaman pertama (200 Item). Akses dan proyeksi diproses per halaman tanpa query policy per Item. Regresi Go, go vet, typecheck web, dan diff check PASS. CI remote untuk perubahan ini NOT RUN.
+
+S1.2.4–S1.2.6: suite Playwright Chrome 56/56 PASS. Suite Item terarah 3/3 PASS setelah penambahan uji field error dan clipboard. API browser memakai mock. Cakupan mencakup pembuatan dari + global, Sharing, kalender tanpa akhir pekan, PATCH dengan ETag, reload saat 409, penyimpanan TipTap saat blur, assignee, copy link, konfirmasi hapus, Add subitem dengan parent tetap, dan kembali ke induk. Build, lint, dan unit web PASS. Suite Go dengan PostgreSQL PASS, termasuk pengujian terarah `TestItemLifecycle` dan `TestItemLists` untuk respons workflow dan child_count.
+
 ```bash
 # Go (tes integrasi butuh Postgres; tanpa env ini tes tersebut SKIP)
 PMS_TEST_DATABASE_URL='postgres://pms:pms@localhost:55432/pms_test?sslmode=disable' go test -count=1 ./...
@@ -126,7 +148,7 @@ Regresi akhir batch: `go vet` + `go test ./...` (10 paket, Postgres 16.10) PASS;
 | S0.2.6 Email | **DONE** | Email `multipart/alternative` (teks + HTML) dengan tautan di kedua bagian (`TestMessageHasTextAndHTMLParts`, mutasi HTML tanpa escape → FAIL); header injection ditolak (`TestMessageRejectsHeaderInjection`, mutasi → FAIL); server SMTP tiruan menerima tepat satu pesan; penolakan penerima → error sehingga River mengulang, `max_attempts` 8; mode log saat SMTP kosong; timeout 30 s | Belum diuji dengan server SMTP sungguhan; perilaku retry River sendiri tidak diuji |
 | S0.3.1 Setup frontend | **DONE** | TanStack Router **file-based** (`src/routes`, `routeTree.gen.ts` di-commit karena `tsc -b` jalan sebelum `vite build`), Query, react-i18next, Tailwind v4, komponen ui-kit, font lokal, density compact, `data-brand`, terang/gelap, ESLint `no-literal-string`, Playwright + axe | Bundel utama ±700 kB; 3 temuan `npm audit` moderate pada tooling dev |
 | S0.3.2 Layar auth + shell | IN_PROGRESS | Login, Forgot, Reset, Accept invitation, `/settings/security`, shell dengan topbar kosong dan menu profil (Log out): 16 tes alur (API di-mock) + 6 tes axe terang, termasuk dialog dan menu; di stack nyata: kunjungan logout ke `/settings/security` → `/login?next=%2Fsettings%2Fsecurity` → login dengan klik → kembali ke `/settings/security` → menu profil → Log out → 401 | **Penyimpangan dari UI_SPEC §4.1** (butuh keputusan): pesan 429 tanpa "dalam N menit" (server tidak mengirim waktu), banner "Your session expired" belum ada (shell tidak bisa membedakan sesi kedaluwarsa dari kunjungan pertama). Rute undangan `/invitations/<token>` mengikuti tautan email server; UI_SPEC diperbarui |
-| S0.1.3 Dockerfile, CI, GHCR | IN_PROGRESS | Image dari source terbaru dibangun dan dijalankan: multi-stage, berisi satu binary dengan SPA tertanam, ±41 MB (`docker images`), pengguna non-root `pms` (uid 100), `/api/v1/healthz` dan `/readyz` 200, SPA di `/`, rute chunk `_app-*.js` 200 | GitHub Actions dan push GHCR **belum dijalankan** (belum ada izin push) |
+| S0.1.3 Dockerfile, CI, GHCR | DONE | Smoke lokal lulus untuk image non-root dengan SPA tertanam, health/ready 200 dan chunk SPA 200. GitHub Actions run 43168986660 untuk `v0.1.0` lulus pada job `test` dan `image`, termasuk build dan push GHCR | — |
 
 Cacat nyata yang baru ditemukan lewat uji di stack nyata (lolos dari tes subagent yang memakai server dev dan API tiruan), semuanya diperbaiki dan diberi tes:
 

@@ -1,4 +1,4 @@
-// Package housekeeping deletes rows nobody can use any more: expired sessions and spent or expired tokens.
+// Package housekeeping deletes rows nobody can use any more: expired sessions, spent or expired tokens and orphaned shares.
 // Invited users are kept on purpose: they hold a seat until an administrator cancels the invitation.
 package housekeeping
 
@@ -32,6 +32,16 @@ func Run(ctx context.Context, pool *pgxpool.Pool) error {
 	if err != nil {
 		return err
 	}
-	slog.Info("housekeeping", "sessions", sessions.RowsAffected(), "tokens", tokens.RowsAffected())
+	// Shares point at users, groups and Spaces without a foreign key (they are polymorphic), so clean up the orphans here.
+	// Soft-deleted Spaces keep their shares: the Recycle bin restores them.
+	shares, err := pool.Exec(ctx, `DELETE FROM shares sh WHERE
+		(sh.principal_type = 'group' AND NOT EXISTS (SELECT 1 FROM groups g WHERE g.id = sh.principal_id))
+		OR (sh.principal_type = 'user' AND NOT EXISTS (SELECT 1 FROM users u WHERE u.id = sh.principal_id))
+		OR (sh.target_type = 'space' AND NOT EXISTS (SELECT 1 FROM spaces s WHERE s.id = sh.target_id))
+		OR (sh.target_type = 'item' AND NOT EXISTS (SELECT 1 FROM items i WHERE i.id = sh.target_id))`)
+	if err != nil {
+		return err
+	}
+	slog.Info("housekeeping", "sessions", sessions.RowsAffected(), "tokens", tokens.RowsAffected(), "shares", shares.RowsAffected())
 	return nil
 }

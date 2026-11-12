@@ -1434,6 +1434,18 @@ export interface components {
             };
         };
         /** @description OK */
+        VersionedShareList: {
+            headers: {
+                ETag: components["headers"]["ETag"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": {
+                    items: components["schemas"]["Share"][];
+                };
+            };
+        };
+        /** @description OK */
         ShareList: {
             headers: {
                 [name: string]: unknown;
@@ -2074,6 +2086,7 @@ export interface operations {
                 content?: never;
             };
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     updateSpace: {
@@ -2104,7 +2117,11 @@ export interface operations {
                     "application/json": components["schemas"]["Space"];
                 };
             };
+            400: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
             428: components["responses"]["Problem"];
         };
     };
@@ -2119,13 +2136,18 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["ShareList"];
+            200: components["responses"]["VersionedShareList"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     replaceSpaceShares: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
             path: {
                 spaceId: components["parameters"]["SpaceId"];
             };
@@ -2137,9 +2159,12 @@ export interface operations {
             };
         };
         responses: {
-            200: components["responses"]["ShareList"];
+            200: components["responses"]["VersionedShareList"];
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
         };
     };
     listSpaceRootItems: {
@@ -2162,6 +2187,8 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["ItemPage"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listSpaceViews: {
@@ -2176,6 +2203,7 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["ViewList"];
+            404: components["responses"]["Problem"];
         };
     };
     createItem: {
@@ -2203,6 +2231,7 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
@@ -2250,6 +2279,7 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
         };
     };
     updateItem: {
@@ -2308,6 +2338,7 @@ export interface operations {
         responses: {
             200: components["responses"]["ItemPage"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     reorderItem: {
@@ -2345,7 +2376,10 @@ export interface operations {
                 };
                 content?: never;
             };
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     replaceItemLocations: {
@@ -2423,6 +2457,7 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["ViewList"];
+            404: components["responses"]["Problem"];
         };
     };
     replaceItemFollowers: {
@@ -2473,6 +2508,9 @@ export interface operations {
                     "application/json": components["schemas"]["View"];
                 };
             };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
@@ -2494,6 +2532,8 @@ export interface operations {
                 };
                 content?: never;
             };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
         };
     };
@@ -2521,6 +2561,10 @@ export interface operations {
                     "application/json": components["schemas"]["View"];
                 };
             };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     duplicateView: {
@@ -2550,6 +2594,10 @@ export interface operations {
                     "application/json": components["schemas"]["View"];
                 };
             };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listComments: {
