@@ -1,0 +1,13 @@
+# Example Prometheus scrape config for one PMS instance. Prometheus must reach the app's metrics port (9090 inside the
+# compose network, never published): attach Prometheus to the instance's compose network, or run it in the same stack.
+global:
+  scrape_interval: 30s
+scrape_configs:
+  - job_name: pms
+    static_configs:
+      - targets: ["app:9090"]
+  # Needed for the disk and backup alerts. The backup metric comes from node_exporter's textfile collector:
+  #   --collector.textfile.directory=<BACKUP_TEXTFILE_DIR from deploy/.env>
+  - job_name: node
+    static_configs:
+      - targets: ["node-exporter:9100"]

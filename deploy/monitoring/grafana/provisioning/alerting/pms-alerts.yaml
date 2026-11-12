@@ -1,0 +1,304 @@
+# Grafana alert rules for one PMS instance (provisioning file; mount into /etc/grafana/provisioning/alerting/).
+# Expects a Prometheus data source with UID `prometheus` (see ../datasources/) that scrapes job `pms` (see ../../prometheus.yml).
+# Replace the UID below if your Grafana already has a Prometheus data source with another UID.
+apiVersion: 1
+groups:
+- orgId: 1
+  name: pms
+  folder: PMS
+  interval: 1m
+  rules:
+  - uid: pms-http-5xx
+    title: PMS HTTP 5xx above 2%
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: sum(rate(pms_http_requests_total{status=~"5.."}[5m])) / clamp_min(sum(rate(pms_http_requests_total[5m])), 0.05)
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.02
+    noDataState: OK
+    execErrState: Error
+    for: 5m
+    annotations:
+      summary: More than 2% of requests failed with 5xx for 5 minutes (traffic below 0.05 req/s counts as 0.05, so a few errors on a quiet instance still alert)
+    labels:
+      severity: warning
+      app: pms
+  - uid: pms-jobs-failed
+    title: PMS background job failed
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: increase(pms_jobs_failed_total[15m])
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0
+    noDataState: OK
+    execErrState: Error
+    for: 0s
+    annotations:
+      summary: A background job (email, cleanup) was discarded after its retries in the last 15 minutes
+    labels:
+      severity: warning
+      app: pms
+  - uid: pms-jobs-backlog
+    title: PMS job queue backing up
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: pms_jobs_available
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 100
+    noDataState: OK
+    execErrState: Error
+    for: 10m
+    annotations:
+      summary: More than 100 jobs waiting for 10 minutes
+    labels:
+      severity: warning
+      app: pms
+  - uid: pms-backup-stale
+    title: PMS backup older than 26 hours
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: time() - pms_backup_last_success_timestamp_seconds
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 93600
+    noDataState: Alerting
+    execErrState: Error
+    for: 0s
+    annotations:
+      summary: No successful backup in 26 hours, or the backup metric is missing (is BACKUP_TEXTFILE_DIR set and node_exporter reading it?)
+    labels:
+      severity: critical
+      app: pms
+  - uid: pms-disk
+    title: PMS host disk above 85%
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: max(1 - node_filesystem_avail_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay|squashfs|ramfs"})
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: gt
+            params:
+            - 0.85
+    noDataState: OK
+    execErrState: Error
+    for: 15m
+    annotations:
+      summary: A filesystem on the PMS host is more than 85% full (needs node_exporter; silent without it)
+    labels:
+      severity: warning
+      app: pms
+  - uid: pms-down
+    title: PMS not responding
+    condition: C
+    data:
+    - refId: A
+      relativeTimeRange:
+        from: 600
+        to: 0
+      datasourceUid: prometheus
+      model:
+        refId: A
+        expr: min(up{job="pms"})
+        instant: true
+        intervalMs: 1000
+        maxDataPoints: 43200
+    - refId: B
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: B
+        type: reduce
+        expression: A
+        reducer: last
+        settings:
+          mode: dropNN
+    - refId: C
+      relativeTimeRange:
+        from: 0
+        to: 0
+      datasourceUid: __expr__
+      model:
+        refId: C
+        type: threshold
+        expression: B
+        conditions:
+        - evaluator:
+            type: lt
+            params:
+            - 1
+    noDataState: Alerting
+    execErrState: Error
+    for: 2m
+    annotations:
+      summary: Prometheus cannot scrape PMS metrics on :9090 for 2 minutes
+    labels:
+      severity: critical
+      app: pms

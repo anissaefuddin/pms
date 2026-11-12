@@ -2,3 +2,10 @@
 # third-party reference material: kept local, not distributed
 *.zip
 docs/screens/
+web/node_modules/
+web/dist/
+server/web/dist/assets/
+deploy/.env
+deploy/backups/
+/pms
+*.tsbuildinfo

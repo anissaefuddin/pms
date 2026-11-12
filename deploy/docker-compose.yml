@@ -1,0 +1,70 @@
+services:
+  app:
+    image: ${PMS_IMAGE:?Set PMS_IMAGE to an immutable GHCR tag}
+    restart: unless-stopped
+    environment:
+      DB_HOST: postgres
+      DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL}
+      COOKIE_SECURE: ${COOKIE_SECURE:-true}
+      MAX_SEATS: ${MAX_SEATS:-25}
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-PMS <noreply@localhost>}
+    volumes:
+      - pms_files:/data/files
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:8080/api/v1/readyz"]
+      interval: 15s
+      timeout: 3s
+      retries: 5
+    labels:
+      traefik.enable: "true"
+      traefik.http.routers.pms.rule: Host(`${PMS_HOST:?Set PMS_HOST}`)
+      traefik.http.routers.pms.entrypoints: websecure
+      traefik.http.routers.pms.tls.certresolver: letsencrypt
+      traefik.http.services.pms.loadbalancer.server.port: "8080"
+    networks: [default, proxy]
+
+  postgres:
+    image: postgres:16.10-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: pms
+      POSTGRES_USER: pms
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pms -d pms"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  backup:
+    image: alpine:3.23
+    profiles: [ops]
+    volumes:
+      - pms_files:/data/files:ro
+      - ${BACKUP_DIR:-./backups}:/backups
+
+  restore:
+    image: alpine:3.23
+    profiles: [ops]
+    volumes:
+      - pms_files:/data/files
+      - ${BACKUP_DIR:-./backups}:/backups:ro
+
+volumes:
+  postgres_data:
+  pms_files:
+
+networks:
+  proxy:
+    external: true
+    name: ${TRAEFIK_NETWORK:-proxy}

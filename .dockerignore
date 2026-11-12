@@ -1,0 +1,10 @@
+.git
+.github
+Archive.zip
+docs
+web/node_modules
+web/dist
+server/web/dist
+backups
+**/.env
+**/.env.*
