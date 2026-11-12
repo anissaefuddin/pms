@@ -208,3 +208,21 @@ Cacat nyata yang baru ditemukan lewat uji di stack nyata (lolos dari tes subagen
 | T-07 | Playwright 5 flow kritis + axe (M1) | S1.8.1 |
 
 S1.1.3 DONE (13 Nov 2026): `TestItemSharesVersionedReplace` (Postgres) untuk share Item; ShareDialog mengundang user external lewat `POST /users/invitations` (`email`, `user_type: external`), lalu user yang diundang muncul di hasil pencarian. `tests/share.spec.ts` 14/14 PASS di Chrome (hermetic mock); permintaan undangan diperiksa isinya. Belum diuji end-to-end terhadap backend nyata.
+
+## Latihan pilot lokal (13 Nov 2026) — BUKAN pilot sebenarnya
+
+Dijalankan di mesin pengembang dengan `deploy/` disalin ke scratchpad: Compose klien + Traefik v3.6 nyata (TLS bawaan, `https://pms.localtest.me:8443`), image dibangun lokal dan di-pull dari registry lokal `localhost:5000` (bukan GHCR), webhook alert tiruan. Sertifikat Let's Encrypt **tidak** diuji (ACME gagal tanpa DNS publik).
+
+| Langkah | Hasil | Bukti |
+|---|---|---|
+| `pms bootstrap` → terima undangan → login → sidebar | PASS | `/me` admin aktif; Space Personal dan General; SPA 200 lewat Traefik |
+| Update dengan backup pre-deploy (`update.sh`) | PASS | backup dibuat, `pull` dari registry, `up -d`, ready; dua kali (tag 2 dan 3) |
+| Restore (`restore.sh`) | PASS, **7 detik** | item yang dibuat setelah backup hilang (2 → 1), lampiran `note.txt` utuh, sesi tetap valid, `readyz` 200 |
+| Alert backup gagal | PASS | Postgres dimatikan, `backup.sh` keluar 1, webhook menerima `PMS backup failed on <host>`; metrik `pms_backup_last_success_timestamp_seconds` tidak berubah |
+
+Temuan:
+- `backup.sh` meninggalkan `*-database.dump` kosong saat gagal. Diperbaiki: set tanpa manifest dihapus di `alert_failure`; set dengan manifest (kegagalan salinan jarak jauh) tetap disimpan. Diuji dengan potongan fungsi, belum dijalankan ulang end-to-end.
+- Setelah container app dibuat ulang, Traefik mengembalikan 404 selama sekitar 10–20 detik (container belum `healthy`). Sekali tercatat 404 lebih lama setelah update pertama dan pulih setelah Traefik di-restart; tidak bisa direproduksi. Traefik v3.3 gagal terhubung ke Docker daemon ini (versi API); v3.6 berjalan.
+- `docker compose pull` gagal untuk image yang hanya ada lokal; alur update memang mengharuskan registry.
+
+**Belum terpenuhi untuk exit criteria M0/M1:** image dari GHCR, instance uji klien sungguhan, Traefik produksi dengan Let's Encrypt, SMTP asli, alert ke Grafana/Slack sungguhan, dan pilot internal.

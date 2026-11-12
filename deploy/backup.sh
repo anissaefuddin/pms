@@ -13,6 +13,8 @@ stamp=$(date -u +%Y%m%dT%H%M%SZ)
 mkdir -p "$backup_dir"
 
 alert_failure() {
+  # The manifest is written last: without it the set is partial. A failure after it (off-server copy) keeps the good local set.
+  [ -f "$backup_dir/$stamp-manifest.txt" ] || rm -f "$backup_dir/$stamp"-*
   [ -z "${BACKUP_ALERT_URL:-}" ] || curl -fsS --connect-timeout 5 --max-time 10 -X POST -H 'Content-Type: application/json' --data "{\"text\":\"PMS backup failed on $(hostname) at $stamp\"}" "$BACKUP_ALERT_URL" >/dev/null || true
 }
 trap alert_failure HUP INT TERM EXIT
