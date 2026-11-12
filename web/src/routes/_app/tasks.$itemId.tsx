@@ -8,7 +8,10 @@ import { ViewWorkspace } from "@/components/view-workspace";
 export const Route = createFileRoute("/_app/tasks/$itemId")({ component: ItemPage });
 
 function ItemPage() {
-  const { itemId } = Route.useParams();
+  return <ItemWorkspace itemId={Route.useParams().itemId} />;
+}
+
+export function ItemWorkspace({ itemId }: { itemId: string }) {
   const navigate = useNavigate();
   const me = useQueryClient().getQueryData<CurrentUser>(["me"]);
   const detail = useQuery({ queryKey: itemKeys.detail(itemId), queryFn: () => getItem(itemId), staleTime: Infinity });

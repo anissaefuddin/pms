@@ -156,7 +156,7 @@ test("Board rolls back conflict, supports drag and creates in the target column"
   const after = page.getByRole("region", { name: "Completed", exact: true });
   await expect(before.getByText("2 subitems")).toBeVisible();
   await before.getByRole("combobox", { name: "Move to status: Plan" }).selectOption(completed.id);
-  await expect(page.getByText("Version conflict", { exact: true })).toBeVisible();
+  await expect(page.getByText("Item was updated by someone else. Latest version loaded.", { exact: true })).toBeVisible();
   await expect(before.getByRole("button", { name: "Plan", exact: true })).toBeVisible();
   await expect(before.getByRole("combobox", { name: "Move to status: Plan" })).toBeEnabled();
   await before.getByRole("listitem").dragTo(after);

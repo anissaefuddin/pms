@@ -1,0 +1,19 @@
+{
+  "title": "Search",
+  "keyword": "Search query",
+  "placeholder": "Find tasks, projects, comments, or people",
+  "scope": "Search scope",
+  "everywhere": "Everywhere",
+  "space": "This space",
+  "project": "This project",
+  "tasks": "Tasks",
+  "projects": "Projects & folders",
+  "comments": "Comments",
+  "users": "Users",
+  "minimum": "Enter at least two characters.",
+  "loading": "Searching…",
+  "error": "Search could not be completed.",
+  "retry": "Try again",
+  "empty": "No results for “{{query}}”",
+  "showAll": "Show all results"
+}

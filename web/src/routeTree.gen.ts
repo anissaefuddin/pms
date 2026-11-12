@@ -15,13 +15,23 @@ import { Route as HelloRouteImport } from './routes/hello'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppInboxRouteImport } from './routes/_app/inbox'
+import { Route as AppMyTodoRouteImport } from './routes/_app/my-todo'
+import { Route as AppRecycleBinRouteImport } from './routes/_app/recycle-bin'
+import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
+import { Route as AppSharedWithMeRouteImport } from './routes/_app/shared-with-me'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
+import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
+import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
+import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces.$spaceId'
 import { Route as AppSpikesGanttRouteImport } from './routes/_app/spikes.gantt'
 import { Route as AppTasksItemIdRouteImport } from './routes/_app/tasks.$itemId'
+import { Route as AppSettingsUsersIndexRouteImport } from './routes/_app/settings/users/index'
+import { Route as AppSettingsUsersTypesRouteImport } from './routes/_app/settings/users/types'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -52,9 +62,34 @@ const AppIndexRoute = AppIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AppRoute,
 } as any)
+const AppInboxRoute = AppInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppMyTodoRoute = AppMyTodoRouteImport.update({
+  id: '/my-todo',
+  path: '/my-todo',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRecycleBinRoute = AppRecycleBinRouteImport.update({
+  id: '/recycle-bin',
+  path: '/recycle-bin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSearchRoute = AppSearchRouteImport.update({
+  id: '/search',
+  path: '/search',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsRoute = AppSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSharedWithMeRoute = AppSharedWithMeRouteImport.update({
+  id: '/shared-with-me',
+  path: '/shared-with-me',
   getParentRoute: () => AppRoute,
 } as any)
 const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
@@ -62,14 +97,29 @@ const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppItemsItemIdRoute = AppItemsItemIdRouteImport.update({
+  id: '/items/$itemId',
+  path: '/items/$itemId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
   id: '/security',
   path: '/security',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsUsersRoute = AppSettingsUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
@@ -87,6 +137,16 @@ const AppTasksItemIdRoute = AppTasksItemIdRouteImport.update({
   path: '/tasks/$itemId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsUsersIndexRoute = AppSettingsUsersIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AppSettingsUsersRoute,
+} as any)
+const AppSettingsUsersTypesRoute = AppSettingsUsersTypesRouteImport.update({
+  id: '/types',
+  path: '/types',
+  getParentRoute: () => AppSettingsUsersRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -94,26 +154,45 @@ export interface FileRoutesByFullPath {
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/inbox': typeof AppInboxRoute
+  '/my-todo': typeof AppMyTodoRoute
+  '/recycle-bin': typeof AppRecycleBinRoute
+  '/search': typeof AppSearchRoute
   '/settings': typeof AppSettingsRouteWithChildren
+  '/shared-with-me': typeof AppSharedWithMeRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/items/$itemId': typeof AppItemsItemIdRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
   '/settings/': typeof AppSettingsIndexRoute
+  '/settings/users/types': typeof AppSettingsUsersTypesRoute
+  '/settings/users/': typeof AppSettingsUsersIndexRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/inbox': typeof AppInboxRoute
+  '/my-todo': typeof AppMyTodoRoute
+  '/recycle-bin': typeof AppRecycleBinRoute
+  '/search': typeof AppSearchRoute
+  '/shared-with-me': typeof AppSharedWithMeRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
+  '/items/$itemId': typeof AppItemsItemIdRoute
+  '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
   '/settings': typeof AppSettingsIndexRoute
+  '/settings/users/types': typeof AppSettingsUsersTypesRoute
+  '/settings/users': typeof AppSettingsUsersIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -122,14 +201,24 @@ export interface FileRoutesById {
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/inbox': typeof AppInboxRoute
+  '/_app/my-todo': typeof AppMyTodoRoute
+  '/_app/recycle-bin': typeof AppRecycleBinRoute
+  '/_app/search': typeof AppSearchRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
+  '/_app/shared-with-me': typeof AppSharedWithMeRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/items/$itemId': typeof AppItemsItemIdRoute
+  '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
+  '/_app/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spikes/gantt': typeof AppSpikesGanttRoute
   '/_app/tasks/$itemId': typeof AppTasksItemIdRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
+  '/_app/settings/users/types': typeof AppSettingsUsersTypesRoute
+  '/_app/settings/users/': typeof AppSettingsUsersIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -139,26 +228,45 @@ export interface FileRouteTypes {
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/inbox'
+    | '/my-todo'
+    | '/recycle-bin'
+    | '/search'
     | '/settings'
+    | '/shared-with-me'
     | '/invitations/$token'
+    | '/items/$itemId'
+    | '/settings/profile'
     | '/settings/security'
+    | '/settings/users'
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
     | '/settings/'
+    | '/settings/users/types'
+    | '/settings/users/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/inbox'
+    | '/my-todo'
+    | '/recycle-bin'
+    | '/search'
+    | '/shared-with-me'
     | '/invitations/$token'
     | '/'
+    | '/items/$itemId'
+    | '/settings/profile'
     | '/settings/security'
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
     | '/settings'
+    | '/settings/users/types'
+    | '/settings/users'
   id:
     | '__root__'
     | '/_app'
@@ -166,14 +274,24 @@ export interface FileRouteTypes {
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/_app/inbox'
+    | '/_app/my-todo'
+    | '/_app/recycle-bin'
+    | '/_app/search'
     | '/_app/settings'
+    | '/_app/shared-with-me'
     | '/invitations/$token'
     | '/_app/'
+    | '/_app/items/$itemId'
+    | '/_app/settings/profile'
     | '/_app/settings/security'
+    | '/_app/settings/users'
     | '/_app/spaces/$spaceId'
     | '/_app/spikes/gantt'
     | '/_app/tasks/$itemId'
     | '/_app/settings/'
+    | '/_app/settings/users/types'
+    | '/_app/settings/users/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -229,11 +347,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppIndexRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/inbox': {
+      id: '/_app/inbox'
+      path: '/inbox'
+      fullPath: '/inbox'
+      preLoaderRoute: typeof AppInboxRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/my-todo': {
+      id: '/_app/my-todo'
+      path: '/my-todo'
+      fullPath: '/my-todo'
+      preLoaderRoute: typeof AppMyTodoRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/recycle-bin': {
+      id: '/_app/recycle-bin'
+      path: '/recycle-bin'
+      fullPath: '/recycle-bin'
+      preLoaderRoute: typeof AppRecycleBinRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/search': {
+      id: '/_app/search'
+      path: '/search'
+      fullPath: '/search'
+      preLoaderRoute: typeof AppSearchRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings': {
       id: '/_app/settings'
       path: '/settings'
       fullPath: '/settings'
       preLoaderRoute: typeof AppSettingsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/shared-with-me': {
+      id: '/_app/shared-with-me'
+      path: '/shared-with-me'
+      fullPath: '/shared-with-me'
+      preLoaderRoute: typeof AppSharedWithMeRouteImport
       parentRoute: typeof AppRoute
     }
     '/invitations/$token': {
@@ -243,6 +396,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/_app/items/$itemId': {
+      id: '/_app/items/$itemId'
+      path: '/items/$itemId'
+      fullPath: '/items/$itemId'
+      preLoaderRoute: typeof AppItemsItemIdRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/': {
       id: '/_app/settings/'
       path: '/'
@@ -250,11 +410,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsIndexRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/profile': {
+      id: '/_app/settings/profile'
+      path: '/profile'
+      fullPath: '/settings/profile'
+      preLoaderRoute: typeof AppSettingsProfileRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/security': {
       id: '/_app/settings/security'
       path: '/security'
       fullPath: '/settings/security'
       preLoaderRoute: typeof AppSettingsSecurityRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/users': {
+      id: '/_app/settings/users'
+      path: '/users'
+      fullPath: '/settings/users'
+      preLoaderRoute: typeof AppSettingsUsersRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/spaces/$spaceId': {
@@ -278,16 +452,47 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksItemIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/users/': {
+      id: '/_app/settings/users/'
+      path: '/'
+      fullPath: '/settings/users/'
+      preLoaderRoute: typeof AppSettingsUsersIndexRouteImport
+      parentRoute: typeof AppSettingsUsersRoute
+    }
+    '/_app/settings/users/types': {
+      id: '/_app/settings/users/types'
+      path: '/types'
+      fullPath: '/settings/users/types'
+      preLoaderRoute: typeof AppSettingsUsersTypesRouteImport
+      parentRoute: typeof AppSettingsUsersRoute
+    }
   }
 }
 
+interface AppSettingsUsersRouteChildren {
+  AppSettingsUsersTypesRoute: typeof AppSettingsUsersTypesRoute
+  AppSettingsUsersIndexRoute: typeof AppSettingsUsersIndexRoute
+}
+
+const AppSettingsUsersRouteChildren: AppSettingsUsersRouteChildren = {
+  AppSettingsUsersTypesRoute: AppSettingsUsersTypesRoute,
+  AppSettingsUsersIndexRoute: AppSettingsUsersIndexRoute,
+}
+
+const AppSettingsUsersRouteWithChildren =
+  AppSettingsUsersRoute._addFileChildren(AppSettingsUsersRouteChildren)
+
 interface AppSettingsRouteChildren {
+  AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
+  AppSettingsUsersRoute: typeof AppSettingsUsersRouteWithChildren
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
+  AppSettingsUsersRoute: AppSettingsUsersRouteWithChildren,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 
@@ -296,16 +501,28 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppInboxRoute: typeof AppInboxRoute
+  AppMyTodoRoute: typeof AppMyTodoRoute
+  AppRecycleBinRoute: typeof AppRecycleBinRoute
+  AppSearchRoute: typeof AppSearchRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
+  AppSharedWithMeRoute: typeof AppSharedWithMeRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppItemsItemIdRoute: typeof AppItemsItemIdRoute
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpikesGanttRoute: typeof AppSpikesGanttRoute
   AppTasksItemIdRoute: typeof AppTasksItemIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppInboxRoute: AppInboxRoute,
+  AppMyTodoRoute: AppMyTodoRoute,
+  AppRecycleBinRoute: AppRecycleBinRoute,
+  AppSearchRoute: AppSearchRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
+  AppSharedWithMeRoute: AppSharedWithMeRoute,
   AppIndexRoute: AppIndexRoute,
+  AppItemsItemIdRoute: AppItemsItemIdRoute,
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpikesGanttRoute: AppSpikesGanttRoute,
   AppTasksItemIdRoute: AppTasksItemIdRoute,

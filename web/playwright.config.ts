@@ -1,16 +1,18 @@
 import { defineConfig } from "@playwright/test";
 
-const baseURL = "http://127.0.0.1:4173";
+const port = Number(process.env.PMS_TEST_BROWSER_PORT ?? "4173");
+const baseURL = `http://127.0.0.1:${port}`;
 
 export default defineConfig({
   testDir: "./tests",
+  outputDir: port === 4173 ? "test-results" : `test-results/${port}`,
   use: {
     baseURL,
     channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
   },
   webServer: {
-    command: "npm run dev -- --host 127.0.0.1 --port 4173 --strictPort",
+    command: `npm run dev -- --host 127.0.0.1 --port ${port} --strictPort`,
     url: baseURL,
-    reuseExistingServer: !process.env.CI,
+    reuseExistingServer: !process.env.CI && !process.env.PMS_FIXTURE_API,
   },
 });

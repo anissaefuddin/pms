@@ -181,3 +181,32 @@ test.describe("Space page", () => {
   });
 });
 
+
+test("sidebar expands ranked containers by keyboard, remembers collapse and opens More destinations", async ({ page }) => {
+  const project = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+  const folder = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const { calls } = await mockSpaces(page, { extra: {
+    [`GET /spaces/${marketing.id}/items`]: { body: { items: [{ id: project, title: "Roadmap", type: "project" }] } },
+    [`GET /items/${project}/children`]: { body: { items: [{ id: folder, title: "Specs", type: "folder" }] } },
+    "GET /me/shared": { body: { items: [{ id: folder, title: "Shared specs", type: "folder" }] } },
+  } });
+  await page.goto(`/spaces/${marketing.id}`);
+  await expect(page.getByText("Acme Workspace")).toBeVisible();
+  const branch = page.getByRole("button", { name: "Expand Marketing" });
+  await branch.focus();
+  await branch.press("ArrowRight");
+  await expect(page.getByRole("link", { name: "Roadmap" })).toBeVisible();
+  await page.getByRole("button", { name: "Expand Roadmap" }).press("Enter");
+  await expect(page.getByRole("link", { name: "Specs", exact: true })).toHaveAttribute("href", `/items/${folder}`);
+  expect(calls.some((call) => call.path === `/items/${project}/children` && call.query.get("sort") === "manual"
+    && call.query.get("type") === "project,folder")).toBe(true);
+  await page.getByRole("button", { name: "Collapse sidebar" }).press("Enter");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
+  await page.getByRole("button", { name: "More", exact: true }).press("Enter");
+  await page.getByRole("menuitem", { name: "Shared with me" }).click();
+  await expect(page.getByRole("link", { name: "Shared specs" })).toHaveAttribute("href", `/items/${folder}`);
+  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Recycle bin" }).click();
+  await expect(page.getByRole("heading", { name: "Recycle bin" })).toBeVisible();
+});

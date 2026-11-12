@@ -4,7 +4,7 @@ import { useRouter, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { components } from "@/api/schema";
-import { api, type CurrentUser } from "@/lib/api";
+import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { itemKeys, listItems, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
 import { Input } from "@/components/ui/input";
 import { CreateItemDialog } from "@/components/create-item-dialog";
@@ -67,6 +67,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
     setPending(true);
     const snapshots = qc.getQueriesData<Item[]>(isList);
     const status = workflow?.statuses.find((candidate) => candidate.id === update.status_id);
+    let conflict = false;
     if (status) {
       qc.setQueriesData<Item[]>(isList, (list) => list?.map((entry) => entry.id === item.id ? { ...entry, status } : entry));
     }
@@ -78,9 +79,12 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
       await qc.invalidateQueries({ queryKey: itemKeys.detail(item.id), exact: true });
     } catch (err) {
       for (const [key, snapshot] of snapshots) qc.setQueryData(key, snapshot);
-      toast.error((err as Error).message);
+      conflict = err instanceof ApiError && (err.status === 409 || err.status === 428);
+      if (conflict) await qc.invalidateQueries({ queryKey: itemKeys.detail(item.id), exact: true });
+      else toast.error((err as Error).message);
     } finally {
       await qc.invalidateQueries(isList);
+      if (conflict) toast.error(t("items.statusConflict"));
       locked.current = false;
       setPending(false);
     }

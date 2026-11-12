@@ -2,12 +2,15 @@ import { useEffect, useState } from "react";
 import { Outlet, createFileRoute, useParams, useRouter } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { api, type CurrentUser } from "@/lib/api";
+import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { Sidebar } from "@/components/sidebar";
+import { SearchPalette } from "@/components/search-palette";
 import { Topbar } from "@/components/topbar";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { useSpaces } from "@/lib/space-queries";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { ProfileContext, useAppearance } from "@/lib/profile";
+import { useRealtime } from "@/lib/realtime";
 import { ItemDetail } from "@/components/item-detail";
 
 export const Route = createFileRoute("/_app")({
@@ -23,13 +26,22 @@ export const Route = createFileRoute("/_app")({
 
 function AppShell() {
   const { t } = useTranslation();
-  const me = useQuery({ queryKey: ["me"], queryFn: () => api<CurrentUser>("/api/v1/me") });
+  const me = useQuery({ queryKey: ["me"], queryFn: () => api<CurrentUser>("/api/v1/me"),
+    retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
+  });
+  useAppearance(me.data);
+  const live = useRealtime(!!me.data && !me.isError);
   const router = useRouter();
   const { task } = Route.useSearch();
-  const { spaceId } = useParams({ strict: false });
+  const { spaceId, itemId } = useParams({ strict: false });
   const spaces = useSpaces(!!me.data);
   const [creating, setCreating] = useState(false);
   const canCreate = spaces.data?.some((space) => space.my_capabilities?.includes("create"));
+  useEffect(() => {
+    if (me.data && spaceId && spaces.data?.some((space) => space.id === spaceId)) {
+      localStorage.setItem(`pms:last-space:${me.data.id}`, spaceId);
+    }
+  }, [me.data, spaceId, spaces.data]);
   function setTask(id?: string) {
     const url = new URL(window.location.href);
     if (id) url.searchParams.set("task", id);
@@ -39,17 +51,26 @@ function AppShell() {
     else router.history.replace(href);
   }
   useEffect(() => {
-    if (me.isError) {
-      const here = location.pathname + location.search;
-      location.replace(here === "/" ? "/login" : `/login?next=${encodeURIComponent(here)}`);
+    const expired = () => redirectToLogin(true);
+    window.addEventListener("pms:session-expired", expired);
+    return () => window.removeEventListener("pms:session-expired", expired);
+  }, []);
+  useEffect(() => {
+    if (me.error instanceof ApiError && me.error.status === 401) {
+      redirectToLogin(!!me.data || me.error.sessionExpired);
     }
-  }, [me.isError]);
+  }, [me.data, me.error]);
+  if (me.isError && !(me.error instanceof ApiError && me.error.status === 401)) {
+    return <main className="p-6"><p role="alert">{me.error.message}</p>
+      <button onClick={() => void me.refetch()}>{t("items.retry")}</button></main>;
+  }
   if (!me.data) return <div className="grid min-h-screen place-items-center" role="status">{t("workspace.home.loading")}</div>;
   return (
+    <ProfileContext.Provider value={me.data}>
     <div className="flex min-h-screen">
-      <Sidebar account={`${me.data.first_name} ${me.data.last_name}`.trim()} />
+      <Sidebar key={me.data.id} me={me.data} />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar onCreate={canCreate ? () => setCreating(true) : undefined} />
+        <Topbar live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? () => setCreating(true) : undefined} />
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       <CreateItemDialog open={creating} onOpenChange={setCreating} me={me.data}
@@ -65,5 +86,15 @@ function AppShell() {
         </DialogContent>
       </Dialog>
     </div>
+    </ProfileContext.Provider>
   );
+}
+
+
+function redirectToLogin(expired: boolean) {
+  const here = location.pathname + location.search + location.hash;
+  const params = new URLSearchParams();
+  if (here !== "/") params.set("next", here);
+  if (expired) params.set("reason", "expired");
+  location.replace(params.size ? `/login?${params}` : "/login");
 }

@@ -14,6 +14,7 @@ function Login() {
   const { t } = useTranslation();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const expired = new URLSearchParams(location.search).get("reason") === "expired";
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -25,7 +26,7 @@ function Login() {
       location.replace(safeNext(new URLSearchParams(location.search).get("next")));
     } catch (e) {
       const status = e instanceof ApiError ? e.status : 0;
-      setError(status === 401 ? t("auth.login.invalid") : status === 429 ? t("auth.login.rateLimited") : (e as Error).message);
+      setError(status === 401 ? t("auth.login.invalid") : status === 429 ? (e instanceof ApiError && e.retryAfter ? t("auth.login.retryAfter", { count: e.retryAfter }) : t("auth.login.rateLimited")) : (e as Error).message);
     } finally {
       setBusy(false);
     }
@@ -33,6 +34,7 @@ function Login() {
 
   return (
     <AuthCard title={t("auth.login.title")}>
+      {expired && <p role="status" className="mb-4 rounded border border-warning bg-warning-subtle p-3 text-sm">{t("auth.login.expired")}</p>}
       <form className="space-y-4" onSubmit={submit}>
         <TextField label={t("auth.fields.email")} name="email" type="email" autoComplete="email" required autoFocus />
         <TextField label={t("auth.fields.password")} name="password" type="password" autoComplete="current-password" required />

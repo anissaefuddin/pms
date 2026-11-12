@@ -1,9 +1,11 @@
-import { lazy, Suspense, useId, useRef, useState, type FormEvent } from "react";
+import { formatDate } from "@/lib/profile";
+import { lazy, Suspense, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { components } from "@/api/schema";
+import { recycleKey, restoreItem } from "@/lib/recycle";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { getItem, isWorkday, itemKeys, listItems, type Item, type ItemUpdate } from "@/lib/items";
 import { Button } from "@/components/ui/button";
@@ -14,7 +16,9 @@ import { FormError } from "@/components/auth/form-error";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { ItemDates } from "@/components/item-dates";
+import { ItemAttachments } from "@/components/item-attachments";
 const ItemDescription = lazy(async () => ({ default: (await import("@/components/item-description")).ItemDescription }));
+const ItemComments = lazy(async () => ({ default: (await import("@/components/item-comments")).ItemComments }));
 
 type Props = { id: string; me: CurrentUser; onOpen: (id: string) => void; onDeleted: () => void };
 
@@ -30,20 +34,26 @@ export function ItemDetail(props: Props) {
     <FormError message={t("items.loadError")} />
     <Button variant="outline" onClick={() => void query.refetch()}>{t("items.retry")}</Button>
   </div>;
-  return <ItemEditor key={`${props.id}:${revision}`} {...props} detail={query.data} reload={async () => {
-    const next = await query.refetch();
-    if (next.isSuccess) setRevision((value) => value + 1);
-  }} />;
+  return <ItemEditor key={`${props.id}:${revision}`} {...props} detail={query.data}
+    reset={() => setRevision((value) => value + 1)} />;
 }
 
-function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id"> & {
+function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> & {
   detail: Awaited<ReturnType<typeof getItem>>;
-  reload: () => Promise<void>;
+  reset: () => void;
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const statusInput = useId();
   const { item, etag } = detail;
+  const titleInput = useRef<HTMLInputElement>(null);
+  const draftVersions = useRef<Partial<Record<keyof ItemUpdate, string>>>({});
+  function beginDraft(field: keyof ItemUpdate) {
+    if (etag) draftVersions.current[field] ??= etag;
+  }
+  useEffect(() => {
+    if (titleInput.current && !draftVersions.current.title) titleInput.current.value = item.title;
+  }, [item.title]);
   const caps = new Set(item.my_capabilities);
   const canEdit = caps.has("edit") && !!etag;
   const canStatus = caps.has("change_status") && !!etag;
@@ -52,10 +62,12 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id">
   const [busy, setBusy] = useState(false);
   const saving = useRef(false);
   const [error, setError] = useState("");
-  const [stale, setStale] = useState(false);
+  const [conflictDraft, setConflictDraft] = useState<ItemUpdate>();
+  const stale = !!conflictDraft;
   const [deleting, setDeleting] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [assignees, setAssignees] = useState<PersonOption[]>(item.assignees);
+  const [assigneeDraft, setAssigneeDraft] = useState<PersonOption[]>();
+  const assignees = assigneeDraft ?? item.assignees;
   const path = `/api/v1/items/${item.id}`;
   const children = useQuery({ queryKey: itemKeys.children(item.id), queryFn: () => listItems(path + "/children") });
   const parentId = item.locations.find((loc) => loc.parent_item_id)?.parent_item_id;
@@ -70,23 +82,35 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id">
     ?? workflows.data?.items.find((workflow) => workflow.is_default))?.statuses ?? [];
   const childLocation = item.locations[0] && { space_id: item.locations[0].space_id, parent_item_id: item.id };
 
-  async function save(update: ItemUpdate) {
-    if (saving.current || stale || !etag) return false;
+  async function save(update: ItemUpdate, reapply = false) {
+    if (saving.current || (!reapply && (stale || !etag))) return false;
     saving.current = true;
     setBusy(true);
     setError("");
     try {
+      const fields = Object.keys(update) as (keyof ItemUpdate)[];
+      const expected = reapply ? (await getItem(item.id)).etag : draftVersions.current[fields[0]] ?? etag;
+      if (!expected) throw new Error(t("items.stale"));
       let tag: string | null = null;
       const updated = await api<Item>(path, {
-        method: "PATCH", headers: { "If-Match": etag }, body: JSON.stringify(update),
+        method: "PATCH", headers: { "If-Match": expected }, body: JSON.stringify(update),
       }, (headers) => { tag = headers.get("ETag"); });
+      for (const field of fields) delete draftVersions.current[field];
+      if (update.assignee_ids) setAssigneeDraft(undefined);
       qc.setQueryData(itemKeys.detail(item.id), { item: updated, etag: tag });
       await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+      setConflictDraft(undefined);
+      if (reapply) reset();
       return true;
     } catch (err) {
       if (err instanceof ApiError && (err.status === 409 || err.status === 428)) {
-        setStale(true);
-        setError(t("items.stale"));
+        const statusOnly = !!update.status_id;
+        if (!statusOnly) setConflictDraft(update);
+        try {
+          qc.setQueryData(itemKeys.detail(item.id), await getItem(item.id));
+          await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+          if (statusOnly) toast.error(t("items.statusConflict"));
+        } catch (refreshError) { setError((refreshError as Error).message); }
       } else setError((err as Error).message);
       return false;
     } finally {
@@ -104,6 +128,14 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id">
       await api(path, { method: "DELETE" });
       await qc.invalidateQueries({ queryKey: itemKeys.detail(item.id), exact: true, refetchType: "none" });
       await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+      void qc.invalidateQueries({ queryKey: recycleKey });
+      toast.success(t("nav.recycle.deleted"), { duration: 8000, action: {
+        label: t("nav.recycle.undo"),
+        onClick: () => void restoreItem(qc, item.id).then(
+          () => toast.success(t("nav.recycle.restored")),
+          (err: Error) => toast.error(err.message),
+        ),
+      } });
       onDeleted();
     } catch (err) {
       setError((err as Error).message);
@@ -144,7 +176,13 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id">
       </DropdownMenu>
     </div>
     <FormError message={error} />
-    {stale && <Button variant="outline" onClick={() => void reload()}>{t("items.retry")}</Button>}
+    {conflictDraft && <div className="space-y-2 rounded border border-warning bg-warning-subtle p-2">
+      <p role="alert">{t("items.stale")}</p>
+      <div className="flex flex-wrap gap-2">
+        <Button disabled={busy} onClick={() => void save(conflictDraft, true)}>{t("items.reapply")}</Button>
+        <Button variant="outline" disabled={busy} onClick={reset}>{t("items.discardChanges")}</Button>
+      </div>
+    </div>}
     {canEdit && <form className="flex items-end gap-2" onSubmit={(event) => {
       event.preventDefault();
       const title = String(new FormData(event.currentTarget).get("title") ?? "").trim();
@@ -152,7 +190,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id">
       if (title !== item.title) void save({ title });
     }}>
       <label className="min-w-0 flex-1 space-y-1"><span>{t("items.name")}</span>
-        <Input name="title" defaultValue={item.title} maxLength={500} required /></label>
+        <Input ref={titleInput} name="title" defaultValue={item.title} onChange={() => beginDraft("title")} maxLength={500} required /></label>
       <Button disabled={busy || stale}>{t("items.save")}</Button>
     </form>}
     <div className="space-y-1">
@@ -165,18 +203,23 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id">
       </select>
     </div>
     {canEdit ? <form className="space-y-2" onSubmit={saveDates}>
-      <ItemDates initialStart={item.start_date} initialDue={item.due_date} />
+      <ItemDates key={draftVersions.current.start_date ?? etag} initialStart={item.start_date}
+        initialDue={item.due_date} onEdit={() => beginDraft("start_date")} />
       <Button className="w-fit" variant="outline" disabled={busy || stale}>{t("items.save")}</Button>
     </form> : <dl className="grid grid-cols-2 gap-2">
-      {item.start_date && <div><dt>{t("items.start")}</dt><dd>{item.start_date}</dd></div>}
-      {item.due_date && <div><dt>{t("items.due")}</dt><dd>{item.due_date}</dd></div>}
+      {item.start_date && <div><dt>{t("items.start")}</dt><dd>{formatDate(item.start_date, me)}</dd></div>}
+      {item.due_date && <div><dt>{t("items.due")}</dt><dd>{formatDate(item.due_date, me)}</dd></div>}
     </dl>}
     {canEdit ? <div className="space-y-2">
-      <ItemUserPicker multiple label={t("items.assignees")} selected={assignees} onChange={setAssignees} />
+      <ItemUserPicker multiple label={t("items.assignees")} selected={assignees} onChange={(people) => {
+        beginDraft("assignee_ids");
+        setAssigneeDraft(people);
+      }} />
       <Button variant="outline" disabled={busy || stale} onClick={() => void save({ assignee_ids: assignees.map((person) => person.id) })}>{t("items.save")}</Button>
     </div> : <section><h3>{t("items.assignees")}</h3><p>{item.assignees.map((person) => person.name).join(", ")}</p></section>}
     <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
-      <ItemDescription description={item.description} editable={canEdit && !stale} busy={busy} save={save} />
+      <ItemDescription description={item.description} editable={canEdit && !stale} busy={busy} save={save}
+        onEdit={() => beginDraft("description")} />
     </Suspense>
     <section className="space-y-2 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
@@ -193,6 +236,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reload }: Omit<Props, "id">
         </Button>
       </li>)}</ul>
     </section>
+    <Suspense fallback={null}><ItemComments item={item} userId={me.id} /></Suspense>
+    <ItemAttachments item={item} userId={me.id} />
     {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
     <ConfirmDialog open={deleting} onOpenChange={setDeleting} title={t("items.delete")} description={t("items.deleteDescription")}
       confirmLabel={t("items.delete")} cancelLabel={t("items.cancel")} onConfirm={remove} busy={busy} error={error} />

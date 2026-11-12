@@ -4,7 +4,9 @@ import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tan
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { isWorkday, itemKeys, listItems, type Item } from "@/lib/items";
+import { formatDate, useProfile } from "@/lib/profile";
+import { DatePicker, calendarDate, dateValue } from "@/components/ui/date-picker";
+import { itemKeys, listItems, type Item } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -21,10 +23,11 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
   onReorder: (item: Item, parent: string | undefined, after: string | null) => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const profile = useProfile();
   const [expanded, setExpanded] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);
   const [editing, setEditing] = useState<{ id: string; field: "title" | "assignees" }>();
-  const [dragging, setDragging] = useState<string>();
+  const dragging = useRef<string | undefined>(undefined);
   const viewport = useRef<HTMLDivElement>(null);
   const children = useQueries({
     queries: expanded.map((id) => ({
@@ -109,15 +112,11 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
       id: field, header: t(`views.${field}`), cell: ({ row }) => {
         const { item } = row.original;
         const canEdit = item.my_capabilities.includes("edit");
-        return canEdit ? <Input type="date" key={item[field] ?? ""} aria-label={`${t(`views.${field}`)}: ${item.title}`}
-          defaultValue={item[field] ?? ""} disabled={pending} onBlur={(event) => {
-            const value = event.target.value;
-            if (value && !isWorkday(value)) {
-              event.target.value = item[field] ?? "";
-              return;
-            }
-            if ((value || null) !== (item[field] ?? null)) void onPatch(item, { [field]: value || null });
-          }} /> : <span>{item[field]}</span>;
+        return canEdit ? <DatePicker value={calendarDate(item[field])} label={`${t(`views.${field}`)}: ${item.title}`}
+          workingDays disabled={pending} onChange={(date) => {
+            const value = dateValue(date) || null;
+            if (value !== (item[field] ?? null)) void onPatch(item, { [field]: value });
+          }} /> : <span>{formatDate(item[field], profile)}</span>;
       },
     })),
     { id: "actions", header: t("views.actions"), cell: ({ row }) => {
@@ -183,14 +182,14 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
             className={`${grid} absolute inset-x-0 border-b ${selected === entry.index ? "bg-muted/60" : ""}`}
             style={{ height: entry.size, transform: `translateY(${entry.start}px)` }}
             draggable={canDrag} onMouseDown={() => setSelected(entry.index)}
-            onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); setDragging(item.id); }}
-            onDragEnd={() => setDragging(undefined)}
-            onDragOver={(event) => { if (dragging && manual && !pending) event.preventDefault(); }}
+            onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); dragging.current = item.id; }}
+            onDragEnd={() => { dragging.current = undefined; }}
+            onDragOver={(event) => { if (dragging.current && manual && !pending) event.preventDefault(); }}
             onDrop={(event) => {
               event.preventDefault();
-              const source = rows.find((entry) => entry.item.id === dragging && entry.parent === parent);
+              const source = rows.find((entry) => entry.item.id === dragging.current && entry.parent === parent);
               if (source && source.item.id !== item.id && inLocation(item, parent)) void onReorder(source.item, parent, item.id);
-              setDragging(undefined);
+              dragging.current = undefined;
             }}>
             {row.getVisibleCells().map((cell) => <div role="cell" key={cell.id} className="flex min-w-0 items-center px-2">
               {flexRender(cell.column.columnDef.cell, cell.getContext())}

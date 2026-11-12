@@ -158,6 +158,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/users/types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Matriks izin dari policy (USR-02); admin saja */
+        get: operations["listUserTypes"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/invitations": {
         parameters: {
             query?: never;
@@ -640,7 +657,7 @@ export interface paths {
         delete: operations["deleteComment"];
         options?: never;
         head?: never;
-        /** Edit komentar sendiri */
+        /** Edit komentar sendiri (atau semua bila `full`) */
         patch: operations["updateComment"];
         trace?: never;
     };
@@ -894,9 +911,10 @@ export interface paths {
         };
         /**
          * Aliran event realtime (SSE)
-         * @description `text/event-stream`. Nama event: `item.created`, `item.updated`, `item.deleted`, `comment.created`,
+         * @description `text/event-stream`. Nama event: `item.created`, `item.updated`, `item.deleted`, `item.restored`, `comment.created`,
          *     `notification.created`, `resync`. Data hanya berisi ID, tipe, dan versi (lihat `RealtimeEvent`);
          *     klien mengambil data lengkap lewat REST. `Last-Event-ID` didukung untuk menyambung ulang.
+         *     Koneksi baru menerima `ready` sebagai penanda cursor awal. Heartbeat dikirim sebagai komentar SSE setiap 25 detik.
          */
         get: operations["streamEvents"];
         put?: never;
@@ -1033,6 +1051,23 @@ export interface components {
             time_format: "12h" | "24h";
             /** @enum {string} */
             week_start: "monday" | "sunday" | "saturday";
+            /**
+             * @default compact
+             * @enum {string}
+             */
+            density: "compact" | "comfortable";
+            /**
+             * @default system
+             * @enum {string}
+             */
+            theme: "light" | "dark" | "system";
+            /**
+             * @default mod_enter
+             * @enum {string}
+             */
+            comment_shortcut: "mod_enter" | "enter";
+            /** @description Nama workspace */
+            account_name: string;
             /** Format: uuid */
             personal_space_id: string;
             /** @description Kemampuan global; kemampuan per item dihitung server */
@@ -1059,6 +1094,12 @@ export interface components {
             time_format?: "12h" | "24h";
             /** @enum {string} */
             week_start?: "monday" | "sunday" | "saturday";
+            /** @enum {string} */
+            density?: "compact" | "comfortable";
+            /** @enum {string} */
+            theme?: "light" | "dark" | "system";
+            /** @enum {string} */
+            comment_shortcut?: "mod_enter" | "enter";
         };
         InviteRequest: {
             /** Format: email */
@@ -1155,6 +1196,7 @@ export interface components {
         Location: {
             /** Format: uuid */
             space_id: string;
+            space_name?: string;
             /**
              * Format: uuid
              * @description null berarti langsung di root Space
@@ -1204,6 +1246,9 @@ export interface components {
             updated_at: string;
             /** Format: date-time */
             deleted_at?: string | null;
+            deleted_by?: components["schemas"]["UserRef"] | null;
+            /** @enum {string|null} */
+            restore_blocked_reason?: "space_deleted" | "forbidden" | null;
             my_capabilities: components["schemas"]["Capability"][];
         };
         ItemPage: components["schemas"]["Page"] & {
@@ -1360,6 +1405,9 @@ export interface components {
             /** Format: uuid */
             item_id?: string | null;
             item_title?: string | null;
+            /** Format: uuid */
+            space_id?: string | null;
+            space_title?: string | null;
             snippet?: string | null;
             /** Format: date-time */
             read_at?: string | null;
@@ -1387,7 +1435,7 @@ export interface components {
         };
         RealtimeEvent: {
             /** @enum {string} */
-            type: "item.created" | "item.updated" | "item.deleted" | "comment.created" | "notification.created" | "resync";
+            type: "item.created" | "item.updated" | "item.deleted" | "item.restored" | "comment.created" | "notification.created" | "resync";
             /**
              * Format: uuid
              * @description ID entitas yang berubah
@@ -1404,6 +1452,17 @@ export interface components {
         };
     };
     responses: {
+        /** @description Batas percobaan tercapai */
+        RateLimited: {
+            headers: {
+                /** @description Detik sebelum percobaan berikutnya */
+                "Retry-After"?: number;
+                [name: string]: unknown;
+            };
+            content: {
+                "application/problem+json": components["schemas"]["Problem"];
+            };
+        };
         /** @description Error */
         Problem: {
             headers: {
@@ -1504,7 +1563,7 @@ export interface operations {
                 };
             };
             401: components["responses"]["Problem"];
-            429: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
         };
     };
     logout: {
@@ -1548,7 +1607,7 @@ export interface operations {
                 };
                 content?: never;
             };
-            429: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
         };
     };
     resetPassword: {
@@ -1577,6 +1636,7 @@ export interface operations {
             };
             410: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
         };
     };
     changePassword: {
@@ -1606,6 +1666,7 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
         };
     };
     getInvitation: {
@@ -1655,6 +1716,7 @@ export interface operations {
             };
             410: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
         };
     };
     getMe: {
@@ -1728,6 +1790,34 @@ export interface operations {
                     "application/json": components["schemas"]["UserPage"];
                 };
             };
+        };
+    };
+    listUserTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        roles: {
+                            [key: string]: components["schemas"]["Capability"][];
+                        };
+                        user_types: {
+                            [key: string]: components["schemas"]["Capability"][];
+                        };
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
         };
     };
     inviteUser: {
@@ -2422,13 +2512,17 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            200: components["responses"]["ShareList"];
+            200: components["responses"]["VersionedShareList"];
+            404: components["responses"]["Problem"];
         };
     };
     replaceItemShares: {
         parameters: {
             query?: never;
-            header?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
             path: {
                 itemId: components["parameters"]["ItemId"];
             };
@@ -2440,9 +2534,12 @@ export interface operations {
             };
         };
         responses: {
-            200: components["responses"]["ShareList"];
+            200: components["responses"]["VersionedShareList"];
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
         };
     };
     listItemViews: {
@@ -2623,6 +2720,8 @@ export interface operations {
                     "application/json": components["schemas"]["CommentPage"];
                 };
             };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     createComment: {
@@ -2653,6 +2752,7 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
@@ -2674,6 +2774,8 @@ export interface operations {
                 };
                 content?: never;
             };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     updateComment: {
@@ -2699,13 +2801,18 @@ export interface operations {
             /** @description OK */
             200: {
                 headers: {
+                    ETag: components["headers"]["ETag"];
                     [name: string]: unknown;
                 };
                 content: {
                     "application/json": components["schemas"]["Comment"];
                 };
             };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
         };
     };
     listAttachments: {
@@ -2726,10 +2833,13 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** Format: int64 */
+                        max_upload_bytes: number;
                         items: components["schemas"]["Attachment"][];
                     };
                 };
             };
+            404: components["responses"]["Problem"];
         };
     };
     uploadAttachment: {
@@ -2760,6 +2870,7 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             413: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
@@ -2781,6 +2892,8 @@ export interface operations {
                     /** @description Selalu `attachment` */
                     "Content-Disposition"?: string;
                     "X-Content-Type-Options"?: "nosniff";
+                    "Content-Security-Policy"?: "sandbox";
+                    "Cache-Control"?: "private, no-store";
                     [name: string]: unknown;
                 };
                 content: {
@@ -2809,6 +2922,7 @@ export interface operations {
                 content?: never;
             };
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     listActivity: {
@@ -2858,6 +2972,7 @@ export interface operations {
                     "application/json": components["schemas"]["NotificationPage"];
                 };
             };
+            422: components["responses"]["Problem"];
         };
     };
     markAllNotificationsRead: {
@@ -2923,6 +3038,8 @@ export interface operations {
                     "application/json": components["schemas"]["Notification"];
                 };
             };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listMyTodo: {
@@ -2940,6 +3057,7 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["ItemPage"];
+            422: components["responses"]["Problem"];
         };
     };
     listSharedWithMe: {
@@ -2981,6 +3099,8 @@ export interface operations {
                     "application/json": components["schemas"]["SearchResults"];
                 };
             };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listRecycleBin: {
@@ -2988,6 +3108,8 @@ export interface operations {
             query?: {
                 limit?: components["parameters"]["Limit"];
                 cursor?: components["parameters"]["Cursor"];
+                type?: components["schemas"]["ItemType"];
+                sort?: "deleted_at" | "title";
             };
             header?: never;
             path?: never;
@@ -2996,6 +3118,7 @@ export interface operations {
         requestBody?: never;
         responses: {
             200: components["responses"]["ItemPage"];
+            422: components["responses"]["Problem"];
         };
     };
     restoreItem: {
@@ -3018,6 +3141,7 @@ export interface operations {
                     "application/json": components["schemas"]["Item"];
                 };
             };
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
         };
@@ -3064,6 +3188,7 @@ export interface operations {
                     "text/event-stream": components["schemas"]["RealtimeEvent"];
                 };
             };
+            401: components["responses"]["Problem"];
         };
     };
     healthz: {

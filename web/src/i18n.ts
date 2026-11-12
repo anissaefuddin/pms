@@ -5,6 +5,7 @@ import common from "./i18n/en/common.json";
 import gantt from "./i18n/en/gantt.json";
 import items from "./i18n/en/items.json";
 import nav from "./i18n/en/nav.json";
+import search from "./i18n/en/search.json";
 import settings from "./i18n/en/settings.json";
 import share from "./i18n/en/share.json";
 import spaces from "./i18n/en/spaces.json";
@@ -17,7 +18,7 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   resources: {
     en: {
-      translation: { auth, common, gantt, items, nav, settings, share, spaces, views, workspace },
+      translation: { auth, common, gantt, items, nav, search, settings, share, spaces, views, workspace },
     },
   },
 });

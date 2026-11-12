@@ -112,13 +112,15 @@ test("detail actions use latest ETag and add a subitem with a parent link", asyn
   await expect(page.getByRole("button", { name: "Outline" })).toBeVisible();
 });
 
-test("a stale title edit needs reload and Delete opens a confirmation", async ({ page }) => {
+test("a stale title edit can be discarded and Delete opens a confirmation", async ({ page }) => {
   await page.context().grantPermissions(["clipboard-read", "clipboard-write"]);
   let item = baseItem;
   let rejectPatch = true;
   const { calls } = await mockSpaces(page, { extra: {
     [`GET ${itemPath}`]: () => ({ headers: { ETag: `"${item.version}"` }, body: item }),
     [`GET ${itemPath}/children`]: { body: { items: [] } },
+    [`GET ${itemPath}/comments`]: { body: { items: [], next_cursor: null } },
+    [`GET ${itemPath}/attachments`]: { body: { items: [], max_upload_bytes: 104857600 } },
     [`PATCH ${itemPath}`]: (body, req) => {
       if (rejectPatch) {
         rejectPatch = false;
@@ -134,8 +136,8 @@ test("a stale title edit needs reload and Delete opens a confirmation", async ({
   await page.goto(`/tasks/${parentId}`);
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("My draft");
   await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
-  await expect(page.getByRole("alert")).toContainText("Reload before saving again");
-  await page.getByRole("button", { name: "Reload" }).click();
+  await expect(page.getByRole("alert").filter({ hasText: "Review the latest version" })).toBeVisible();
+  await page.getByRole("button", { name: "Discard my changes" }).click();
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Updated by teammate");
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("Reviewed");
   await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
@@ -149,6 +151,31 @@ test("a stale title edit needs reload and Delete opens a confirmation", async ({
   await expect(confirmation).toBeVisible();
   expect(calls.some((call) => call.method === "DELETE")).toBe(false);
   await confirmation.getByRole("button", { name: "Delete item" }).click();
-  await expect(page).toHaveURL("/");
+  await expect(page).toHaveURL(`/spaces/${me.personal_space_id}`);
   expect(calls.filter((call) => call.method === "DELETE")).toHaveLength(1);
+});
+
+test("conflicted draft reapplies against the current ETag", async ({ page }) => {
+  let item = baseItem;
+  const { calls } = await mockSpaces(page, { extra: {
+    [`GET ${itemPath}`]: () => ({ headers: { ETag: `"${item.version}"` }, body: item }),
+    [`GET ${itemPath}/children`]: { body: { items: [] } },
+    [`PATCH ${itemPath}`]: (body, req) => {
+      if (item.version === 1) {
+        item = { ...item, version: 2, title: "Teammate's edit" };
+        return problem(409, "version conflict", "version_conflict");
+      }
+      if (req.headers["if-match"] !== '"2"') return problem(409, "wrong version");
+      item = { ...item, title: body.title, version: 3 };
+      return { body: item, headers: { ETag: '"3"' } };
+    },
+  } });
+  await page.goto(`/tasks/${parentId}`);
+  const title = page.getByRole("textbox", { name: "Name", exact: true });
+  await title.fill("My draft");
+  await title.press("Enter");
+  await page.getByRole("button", { name: "Reapply my changes" }).click();
+  await expect(page.getByRole("heading", { name: "My draft" })).toBeVisible();
+  expect(calls.filter((call) => call.method === "PATCH").map((call) => [call.headers["if-match"], call.body.title]))
+    .toEqual([['"1"', "My draft"], ['"2"', "My draft"]]);
 });

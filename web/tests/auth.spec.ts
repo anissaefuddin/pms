@@ -35,7 +35,7 @@ test.describe("login", () => {
   });
 
   for (const [next, expected] of [["/settings/security", "/settings/security"], ["//evil.test", "/"]] as const) {
-    test(`next=${next} ${expected === "/" ? "is ignored" : "is honored"}`, async ({ page }) => {
+    test(`next=${next} ${expected === "/" ? "is ignored" : "is honored"}`, async ({ page, baseURL }) => {
       let signedIn = false;
       await mockApi(page, {
         "POST /auth/login": () => { signedIn = true; return { body: me }; },
@@ -47,7 +47,7 @@ test.describe("login", () => {
       await page.getByRole("button", { name: "Log in" }).click();
       await expect(page.getByRole("button", { name: "Account menu" })).toBeVisible();
       const url = new URL(page.url());
-      expect(url.origin).toBe("http://127.0.0.1:4173");
+      expect(url.origin).toBe(new URL(baseURL!).origin);
       expect(url.pathname).toBe(expected);
     });
   }
@@ -191,4 +191,18 @@ test.describe("app shell", () => {
     await expect(page).toHaveURL(/\/login$/);
     expect(calls.some((c) => c.method === "POST" && c.path === "/auth/logout")).toBe(true);
   });
+});
+
+test("expired guard preserves the destination and login shows Retry-After", async ({ page }) => {
+  await mockApi(page, {
+    "GET /me": problem(401, "session expired", "unauthenticated"),
+    "POST /auth/login": { ...problem(429, "try later", "rate_limited"), headers: { "Retry-After": "30" } },
+  });
+  await page.goto("/settings/security");
+  await expect(page).toHaveURL(/\/login\?next=%2Fsettings%2Fsecurity&reason=expired$/);
+  await expect(page.getByText("Your session expired. Log in to continue.")).toBeVisible();
+  await page.getByRole("textbox", { name: "Email" }).fill("ada@example.test");
+  await page.getByLabel("Password").fill("correct horse");
+  await page.getByRole("button", { name: "Log in" }).click();
+  await expect(page.getByRole("alert")).toHaveText("Too many attempts. Try again in 30 seconds.");
 });

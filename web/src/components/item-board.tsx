@@ -1,3 +1,4 @@
+import { formatNumber, formatDate, useProfile } from "@/lib/profile";
 import { useState } from "react";
 import { CalendarDays, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -6,6 +7,7 @@ import type { ItemCollectionProps } from "./item-collection-types";
 
 export function ItemBoard({ items, statuses, canCreate, pending, onOpen, onAdd, onPatch }: ItemCollectionProps) {
   const { t } = useTranslation();
+  const profile = useProfile();
   const [dragging, setDragging] = useState<string>();
   const known = new Set(statuses.map((status) => status.id));
   const unlisted = items.filter((item) => !item.status || !known.has(item.status.id));
@@ -24,7 +26,7 @@ export function ItemBoard({ items, statuses, canCreate, pending, onOpen, onAdd, 
         }
         setDragging(undefined);
       }}>
-      <h3 className="font-semibold">{column.name} <span className="text-muted-foreground">{column.items.length}</span></h3>
+      <h3 className="font-semibold">{column.name} <span className="text-muted-foreground">{formatNumber(column.items.length, profile)}</span></h3>
       <ul className="space-y-2">
         {column.items.map((item) => {
           const canMove = item.my_capabilities.includes("change_status");
@@ -34,7 +36,7 @@ export function ItemBoard({ items, statuses, canCreate, pending, onOpen, onAdd, 
             <Button variant="ghost" size="sm" className="h-auto max-w-full justify-start whitespace-normal text-left" onClick={() => onOpen(item)}>{item.title}</Button>
             {!!item.assignees.length && <p className="text-xs text-muted-foreground">{item.assignees.map((person) => person.name).join(", ")}</p>}
             {(item.start_date || item.due_date) && <p className="flex items-center gap-1 text-xs text-muted-foreground">
-              <CalendarDays className="size-3" />{[item.start_date, item.due_date].filter(Boolean).join(" – ")}
+              <CalendarDays className="size-3" />{[item.start_date, item.due_date].filter(Boolean).map((date) => formatDate(date, profile)).join(" – ")}
             </p>}
             <p className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               {item.child_count !== undefined && <span>{t("items.childCount", { count: item.child_count })}</span>}

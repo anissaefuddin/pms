@@ -24,7 +24,7 @@ export async function getItem(id: string) {
   return { item, etag };
 }
 
-export async function listItems(path: string, sort?: string): Promise<Item[]> {
+export async function listItems(path: string, sort?: string, type?: string): Promise<Item[]> {
   const items: Item[] = [];
   const seen = new Set<string>();
   let cursor: string | null | undefined;
@@ -32,6 +32,7 @@ export async function listItems(path: string, sort?: string): Promise<Item[]> {
     const params: URLSearchParams = new URLSearchParams();
     if (cursor) params.set("cursor", cursor);
     if (sort) params.set("sort", sort);
+    if (type) params.set("type", type);
     const query = params.size ? `?${params.toString()}` : "";
     const page: ItemPage = await api<ItemPage>(path + query);
     items.push(...page.items);
