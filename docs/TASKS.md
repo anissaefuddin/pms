@@ -1,4 +1,4 @@
-# TASKS — PMS (M0 – M2)
+# TASKS — PMS (M0 – M6 dan GA)
 
 | | |
 |---|---|
@@ -60,7 +60,7 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 40 | S1.8.1 | Tes E2E dan aksesibilitas | 2 | 70.5–72.5 | 15 | DONE |
 | 41 | S1.8.2 | Performa dan kesiapan pilot | 1.5 | 72.5–74 | 15 | DONE |
 | 42 | S2.1.1 | Work schedule (SET-07) | 2.5 | 74–76.5 | 16 | DONE |
-| 43 | S2.1.2 | Dependensi item (data dan API) | 2.5 | 76.5–79 | 16 | PROPOSED |
+| 43 | S2.1.2 | Dependensi item (data dan API) | 2.5 | 76.5–79 | 16 | DONE |
 | 44 | S2.1.3 | Mesin penjadwalan di Go | 4.0 | 79–83 | 17 | PROPOSED |
 | 45 | S2.2.1 | Effort dan allocation (TASK-05B) | 2.5 | 83–85.5 | 18 | PROPOSED |
 | 46 | S2.2.2 | Progress project (TASK-09) | 2.0 | 85.5–87.5 | 18 | PROPOSED |
@@ -75,6 +75,51 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 55 | S2.5.3 | Preset filter dan sort Space (SPC-03) | 1.5 | 110–111.5 | 23 | PROPOSED |
 | 56 | S2.5.4 | UI multi-lokasi (SPC-10) | 1.5 | 111.5–113 | 23 | PROPOSED |
 | 57 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2.0 | 113–115 | 23 | PROPOSED |
+| 58 | S3.1.1 | Editor workflow dan status (WF-02, WF-03A) | 4 | 115–119 | 24 | PROPOSED |
+| 59 | S3.2.1 | Approval pada item (SPC-12) | 3.5 | 119–122.5 | 25 | PROPOSED |
+| 60 | S3.2.2 | Blueprint (SPC-13) | 3 | 122.5–125.5 | 26 | PROPOSED |
+| 61 | S3.3.1 | Skema form dan API pembuat form (FORM-01, FORM-02) | 3.5 | 125.5–129 | 26 | PROPOSED |
+| 62 | S3.3.2 | UI form builder | 4 | 129–133 | 27 | PROPOSED |
+| 63 | S3.3.3 | Sharing form dan Manage forms (FORM-03, FORM-05) | 2 | 133–135 | 28 | PROPOSED |
+| 64 | S3.3.4 | Submit form internal menjadi item (FORM-06) | 2.5 | 135–137.5 | 28 | PROPOSED |
+| 65 | S3.3.5 | Form publik dan keamanan (SEC-05) | 3 | 137.5–140.5 | 29 | PROPOSED |
+| 66 | S3.3.6 | Pelacakan request (FORM-08) | 2.5 | 140.5–143 | 29 | PROPOSED |
+| 67 | S3.4.1 | Kustomisasi sidebar (NAV-02) | 1.5 | 143–144.5 | 29 | PROPOSED |
+| 68 | S3.4.2 | Stream aktivitas (NAV-04) | 2.5 | 144.5–147 | 30 | PROPOSED |
+| 69 | S3.4.3 | Halaman hasil pencarian (NAV-07) | 2 | 147–149 | 30 | PROPOSED |
+| 70 | S3.5.1 | 2FA TOTP (AUTH-05) | 3 | 149–152 | 31 | PROPOSED |
+| 71 | S3.6.1 | E2E, aksesibilitas, dan keamanan M3 | 2 | 152–154 | 31 | PROPOSED |
+| 72 | S4.1.1 | Skema time entry dan API | 2.5 | 154–156.5 | 32 | PROPOSED |
+| 73 | S4.1.2 | Timesheet mingguan (TASK-13) | 3.5 | 156.5–160 | 33 | PROPOSED |
+| 74 | S4.1.3 | Timelog view (VIEW-07) | 2.5 | 160–162.5 | 33 | PROPOSED |
+| 75 | S4.2.1 | Budget project (TASK-12) | 1.5 | 162.5–164 | 33 | PROPOSED |
+| 76 | S4.3.1 | Export project ke Excel (SPC-15) | 2.5 | 164–166.5 | 34 | PROPOSED |
+| 77 | S4.3.2 | Import dari Excel (SPC-15) | 3 | 166.5–169.5 | 34 | PROPOSED |
+| 78 | S4.4.1 | E2E dan regresi M4 | 1.5 | 169.5–171 | 35 | PROPOSED |
+| 79 | S5.1.1 | Skema dashboard dan widget (DASH-01, DASH-06) | 3 | 171–174 | 35 | PROPOSED |
+| 80 | S5.1.2 | Mesin data widget (DASH-02) | 4 | 174–178 | 36 | PROPOSED |
+| 81 | S5.1.3 | Widget daftar task dan template (DASH-01, DASH-02) | 3 | 178–181 | 37 | PROPOSED |
+| 82 | S5.1.4 | Widget visual (DASH-03A) | 4 | 181–185 | 38 | PROPOSED |
+| 83 | S5.1.5 | UI dashboard | 3 | 185–188 | 38 | PROPOSED |
+| 84 | S5.2.1 | Skema report dan daftar report (RPT-03) | 2.5 | 188–190.5 | 39 | PROPOSED |
+| 85 | S5.2.2 | Editor dan eksekusi report (RPT-02) | 4 | 190.5–194.5 | 39 | PROPOSED |
+| 86 | S5.2.3 | Template report (RPT-01) | 3 | 194.5–197.5 | 40 | PROPOSED |
+| 87 | S5.3.1 | Uji kecocokan angka dan E2E | 2.5 | 197.5–200 | 41 | PROPOSED |
+| 88 | S6.1.1 | Template Space (SPC-18) | 4 | 200–204 | 41 | PROPOSED |
+| 89 | S6.1.2 | Wizard first-run (AUTH-07) | 2.5 | 204–206.5 | 42 | PROPOSED |
+| 90 | S6.2.1 | Pengaturan workspace per user dan info akun (SET-03, SET-04) | 2 | 206.5–208.5 | 42 | PROPOSED |
+| 91 | S6.2.2 | Preferensi email notifikasi (SET-05) | 2 | 208.5–210.5 | 43 | PROPOSED |
+| 92 | S6.2.3 | Kosongkan Recycle bin (BIN-03) | 1 | 210.5–211.5 | 43 | PROPOSED |
+| 93 | S6.3.1 | Prosedur penghentian instance (USR-04) | 1.5 | 211.5–213 | 43 | PROPOSED |
+| 94 | S6.3.2 | Uji restore terhadap RTO (OPS-01) | 2 | 213–215 | 44 | PROPOSED |
+| 95 | S6.3.3 | Uji keamanan internal | 4 | 215–219 | 44 | PROPOSED |
+| 96 | S6.3.4 | Uji performa target NFR | 2.5 | 219–221.5 | 45 | PROPOSED |
+| 97 | S6.3.5 | UAT P0 + P1 dan lima flow Playwright | 3 | 221.5–224.5 | 45 | PROPOSED |
+| 98 | S6.3.6 | Perbaikan bug dan stabilisasi | 3 | 224.5–227.5 | 46 | PROPOSED |
+| 99 | GA.1 | Deploy instance klien pertama | 2 | 227.5–229.5 | 46 | PROPOSED |
+| 100 | GA.2 | Migrasi data pilot | 2 | 229.5–231.5 | 47 | PROPOSED |
+| 101 | GA.3 | Dokumentasi user | 2.5 | 231.5–234 | 47 | PROPOSED |
+| 102 | GA.4 | Pelatihan dan serah terima | 1.5 | 234–235.5 | 48 | PROPOSED |
 <!-- SCHEDULE:END -->
 
 **Gelombang M2.** Gelombang berjalan berurutan; story yang tidak saling bergantung di dalam satu gelombang boleh paralel hanya oleh sesi terpisah dengan kepemilikan file yang jelas. `api/openapi.yaml`, nomor migrasi, `schedule`, dan `items/patch.go` dipegang satu sesi pada satu waktu.
@@ -88,6 +133,8 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | E. Penutup | S2.6.1 | 2 |
 
 Aturan: S2.1.3 titik risiko tertinggi (tes tabel ≥ 20 kasus lebih dulu, review independen, jangan mulai S2.4.3 sebelum benchmark 500 task lulus); ukur SVAR dengan 500 task di awal S2.4.2; setiap akhir gelombang jalankan seluruh suite Go dengan PostgreSQL nyata dan catat di TESTING; kalibrasi estimasi 41 hari setelah gelombang A. Jalur kritis M2: S2.1.1 → S2.1.2 → S2.1.3 → S2.4.2 → S2.4.3 → S2.6.1.
+
+**Cakupan M3–GA (ditambahkan 13 Nov 2026).** Story M3 sampai GA di bawah baru berisi tugas teknis dan estimasi kasar; kriteria penerimaan lengkap ditulis di [BACKLOG.md](BACKLOG.md) saat milestone dimulai, dan estimasi dikalibrasi ulang dari kecepatan nyata M2. Total estimasi: M3 39 hari (rencana PRD 25), M4 17 (15), M5 29 (25), M6 27.5 (20), GA 8 (5), jadi **120.5 hari** melawan 90 hari di PRD (selisih +30.5). Selisih ini belum diputuskan.
 
 ## 2. Jalur kritis
 
@@ -366,11 +413,11 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Layar pengaturan + tes Playwright
 
 **S2.1.2 Dependensi item (data dan API)**
-- [ ] `openapi.yaml`: `GET/POST /items/{id}/dependencies`, `DELETE /dependencies/{id}`
-- [ ] Migrasi `item_dependencies` (predecessor, successor, type, lag) dengan unik dan CHECK bukan diri sendiri
-- [ ] Deteksi siklus (CTE rekursif) dalam transaksi Serializable
-- [ ] Policy: butuh hak edit pada penerus dan hak lihat pada pendahulu
-- [ ] Tes integrasi dengan PostgreSQL, termasuk soft delete dan restore
+- [x] `openapi.yaml`: `GET/POST /items/{id}/dependencies`, `DELETE /dependencies/{id}`
+- [x] Migrasi `00016` menambah `item_dependencies`, unik per pasangan terarah dan CHECK bukan diri sendiri
+- [x] Deteksi siklus (CTE rekursif) dalam transaksi Serializable
+- [x] Policy: butuh hak edit pada penerus dan hak lihat pada pendahulu
+- [x] Tes integrasi PostgreSQL untuk izin, siklus, request bersamaan, soft delete, dan restore
 
 **S2.1.3 Mesin penjadwalan di Go**
 - [ ] Perluas `schedule`: empat tipe, lag, kalender dari S2.1.1 (tes tabel ≥ 20 kasus)
@@ -470,3 +517,283 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Perluasan matriks otorisasi
 - [ ] Benchmark dan pencatatan p95
 - [ ] Perbarui `PILOT_RUNBOOK.md`, `TESTING.md`, `HANDOVER.md`
+
+## M3
+
+### E3.1 Workflow
+
+**S3.1.1 Editor workflow dan status (WF-02, WF-03A)**
+- [ ] `openapi.yaml`: CRUD workflow dan status, `auto_assign`, daftar transisi, opsi `locked`
+- [ ] Migrasi kolom status (auto-assign, transisi, lock) dan tabel `status_transitions`; aman untuk data M1
+- [ ] Terapkan transisi di `PATCH /items/{id}` dan drag Board: transisi tak sah 422 dengan pesan jelas
+- [ ] Auto-assign saat masuk status (pengguna yang mengubah atau assignee tetap) dicatat di aktivitas
+- [ ] UI editor workflow: grup Active/Completed/Deferred/Cancelled, warna dari palet token, urutkan, hapus dengan pemindahan item
+- [ ] Tes: matriks transisi, lock, hapus status yang dipakai, dan otorisasi (hanya admin Space)
+
+### E3.2 Approval dan blueprint
+
+**S3.2.1 Approval pada item (SPC-12)**
+- [ ] `openapi.yaml`: `/items/{id}/approvals`, keputusan approve/reject dengan komentar
+- [ ] Migrasi `approvals` dan `approval_decisions`; penghitung (0/2) dihitung di server
+- [ ] Approver menerima notifikasi dan Inbox; hasil memengaruhi status sesuai pengaturan
+- [ ] Policy: hanya approver yang memutuskan; edit setelah ada keputusan memerlukan reset
+- [ ] UI panel approval dan tes otorisasi + Playwright
+
+**S3.2.2 Blueprint (SPC-13)**
+- [ ] `openapi.yaml`: simpan item sebagai blueprint dan buat item dari blueprint
+- [ ] Migrasi `blueprints` (struktur item jsonb dengan status, assignee, tanggal relatif)
+- [ ] Pembuatan item dari blueprint dalam satu transaksi (hierarki, dependensi, field kustom)
+- [ ] UI simpan dan pakai blueprint; tes bahwa hasil tidak berbagi data dengan sumber
+
+### E3.3 Formulir permintaan
+
+**S3.3.1 Skema form dan API pembuat form (FORM-01, FORM-02)**
+- [ ] `openapi.yaml`: CRUD form, halaman, pertanyaan, response settings
+- [ ] Migrasi `request_forms`, `form_questions`, `form_response_settings`
+- [ ] Validasi definisi: tipe pertanyaan, field wajib, multi-halaman, section header
+- [ ] Response settings: buat task/project, status awal, lokasi, assign to, buat approval
+- [ ] Tes integrasi dan otorisasi
+
+**S3.3.2 UI form builder**
+- [ ] Editor pertanyaan dengan drag urutan dan pratinjau (semua tipe FORM-01)
+- [ ] Multi-halaman dan section header; pengaturan wajib per pertanyaan
+- [ ] Layar response settings dan penyimpanan dengan `If-Match`
+- [ ] Aksesibilitas keyboard dan axe; tes Playwright
+
+**S3.3.3 Sharing form dan Manage forms (FORM-03, FORM-05)**
+- [ ] Akses internal (seluruh akun) dan eksternal (tautan publik dengan token acak)
+- [ ] Halaman Manage forms: nama, milik, akses, tautan, diubah oleh
+- [ ] Cabut dan rotasi tautan publik; tes bahwa tautan lama ditolak
+
+**S3.3.4 Submit form internal menjadi item (FORM-06)**
+- [ ] Pemilih form di menu dan layar pengisian; validasi di server
+- [ ] Endpoint submit membuat item sesuai response settings dalam satu transaksi
+- [ ] Lampiran dari form memakai batas dan penyimpanan S1.4.2
+- [ ] Tes: field wajib, tipe salah, lokasi tanpa hak tulis
+
+**S3.3.5 Form publik dan keamanan (SEC-05)**
+- [ ] Endpoint publik tanpa sesi dengan CSRF-aman dan token tautan
+- [ ] Rate limit per IP (memakai pengaturan proxy tepercaya), honeypot, batas jumlah dan ukuran lampiran
+- [ ] Item hasil memiliki pembuat khusus (requester eksternal); tidak ada data internal bocor di respons
+- [ ] Tes keamanan: spam, lampiran besar, tipe terblokir, tautan dicabut
+
+**S3.3.6 Pelacakan request (FORM-08)**
+- [ ] Requester internal otomatis follower; daftar "My requests" beserta status
+- [ ] Akses terbatas pada item hasil form (bukan seluruh project) kecuali punya akses lain; tes IDOR
+- [ ] Email konfirmasi dan email saat status berubah untuk requester eksternal
+- [ ] UI My requests dan tes Playwright
+
+### E3.4 Navigasi lanjutan
+
+**S3.4.1 Kustomisasi sidebar (NAV-02)**
+- [ ] Pengaturan show/hide per user (Created by me, Workload, Calendars, Dashboards, My to-do, Request forms, Timesheets, Reports, Stream, Starred)
+- [ ] Search dan Inbox selalu tampil; item untuk fitur yang belum aktif disembunyikan
+- [ ] Simpan di profil dan tes
+
+**S3.4.2 Stream aktivitas (NAV-04)**
+- [ ] `openapi.yaml`: `GET /stream` dengan filter Everything, Followed, Assigned to me, My conversations
+- [ ] Opsi "Hide auto updates"; paginasi cursor; hanya aktivitas yang boleh dilihat user
+- [ ] UI Stream dan tes otorisasi
+
+**S3.4.3 Halaman hasil pencarian (NAV-07)**
+- [ ] Halaman penuh dengan preset filter, keyword, filter tambahan, dan sort Relevance
+- [ ] Memakai Search S1.5.4; tidak membocorkan hasil di luar hak
+- [ ] Tes dan axe
+
+### E3.5 Keamanan akun
+
+**S3.5.1 2FA TOTP (AUTH-05)**
+- [ ] Migrasi secret TOTP terenkripsi dan kode cadangan; kunci enkripsi dari konfigurasi
+- [ ] Setup: QR dan secret, verifikasi kode 6 digit; status aktif dan tanggalnya
+- [ ] Login meminta kode kedua; rate limit percobaan; pencabutan sesi saat 2FA diaktifkan
+- [ ] Reset 2FA oleh admin lewat prosedur tercatat; tes dan Playwright
+
+### E3.6 Hardening M3
+
+**S3.6.1 E2E, aksesibilitas, dan keamanan M3**
+- [ ] Alur Playwright: workflow dengan transisi, form publik → item → approval, My requests
+- [ ] Perluas matriks otorisasi (approval, form, stream) dan tes keamanan form publik
+- [ ] Perbarui `PILOT_RUNBOOK.md` (migrasi, kunci 2FA), `TESTING.md`, `HANDOVER.md`
+
+
+## M4
+
+### E4.1 Time tracking
+
+**S4.1.1 Skema time entry dan API**
+- [ ] `openapi.yaml`: `/time-entries`, kategori, billing type, kunci (lock)
+- [ ] Migrasi `time_entries` dan indeks (user, tanggal, item)
+- [ ] Validasi durasi, tanggal, dan hak; entry terkunci tidak bisa diubah; tes otorisasi
+
+**S4.1.2 Timesheet mingguan (TASK-13)**
+- [ ] Grid mingguan: baris per task (pin), sel durasi per hari, komentar, total
+- [ ] Simpan per sel dengan penanganan konflik; navigasi keyboard dan format durasi
+- [ ] Pin task dan pemilih task yang boleh dicatat; tes Playwright
+
+**S4.1.3 Timelog view (VIEW-07)**
+- [ ] Tipe view `timelog` (enum) dan daftar entry per project
+- [ ] Kolom user, tanggal, durasi, kategori, komentar, billing type, lock; filter dan sort server
+- [ ] Tes performa pada 10 ribu entry
+
+### E4.2 Budget
+
+**S4.2.1 Budget project (TASK-12)**
+- [ ] Field budget (currency) di panel detail project memakai custom field S2.3.2
+- [ ] Tampilkan total jam aktual berdampingan; actual cost tidak termasuk (TASK-14, P2)
+- [ ] Tes dan otorisasi
+
+### E4.3 Export dan import
+
+**S4.3.1 Export project ke Excel (SPC-15)**
+- [ ] Endpoint export berbasis job dengan batas ukuran; hasil .xlsx berisi item, hierarki, tanggal, field kustom
+- [ ] Sanitasi nilai agar tidak menjadi formula (CSV/Excel injection)
+- [ ] Tes isi berkas dan hak akses
+
+**S4.3.2 Import dari Excel (SPC-15)**
+- [ ] Unggah, pratinjau, dan pemetaan kolom; validasi per baris dengan laporan galat
+- [ ] Impor dalam satu transaksi atau per batch yang dapat dibatalkan; batas ukuran dan jumlah baris
+- [ ] Tes dengan berkas rusak, kolom tak dikenal, dan data besar
+
+### E4.4 Hardening M4
+
+**S4.4.1 E2E dan regresi M4**
+- [ ] Alur Playwright: isi timesheet → tampil di Timelog; export lalu import mengembalikan data sama
+- [ ] Matriks otorisasi time entry; perbarui TESTING dan HANDOVER
+
+
+## M5
+
+### E5.1 Dashboard
+
+**S5.1.1 Skema dashboard dan widget (DASH-01, DASH-06)**
+- [ ] `openapi.yaml`: CRUD dashboard per Space/user; rename, duplicate (nama + Space), move, delete
+- [ ] Migrasi `dashboards` dan `widgets` (konfigurasi jsonb tervalidasi)
+- [ ] Menghapus dashboard tidak menghapus data; tes otorisasi
+
+**S5.1.2 Mesin data widget (DASH-02)**
+- [ ] Definisi data source, reporting on, metrics, break by, group by, field, filter sebagai skema tertutup
+- [ ] Penerjemah ke SQL parameter (tanpa SQL bebas dari klien) dan penerapan policy akses
+- [ ] Indeks dan batas waktu kueri; tes kecocokan dengan data mentah
+
+**S5.1.3 Widget daftar task dan template (DASH-01, DASH-02)**
+- [ ] Widget to do this week, to review, completed, assigned to me
+- [ ] Template widget: my tasks, overdue, followed, backlog, starred
+- [ ] Pembuat widget custom dari mesin data; tes
+
+**S5.1.4 Widget visual (DASH-03A)**
+- [ ] Indicator, pie (classic/donut/ring), column, bar, line, table
+- [ ] Legend, label, sumbu, irisan "Others"; warna dari token dan kontras aksesibel
+- [ ] Pratinjau saat mengedit dan tes visual dasar
+
+**S5.1.5 UI dashboard**
+- [ ] Daftar dan tata letak dashboard, tambah/edit/hapus widget
+- [ ] Rename, duplicate, move, delete dengan konfirmasi
+- [ ] Tes Playwright dan axe
+
+### E5.2 Report
+
+**S5.2.1 Skema report dan daftar report (RPT-03)**
+- [ ] `openapi.yaml`: CRUD report, sharing, langganan
+- [ ] Migrasi `reports` (definisi jsonb) dan `report_subscriptions`
+- [ ] Daftar: nama, pembuat, Space, sharing, dibuat, diubah, langganan
+
+**S5.2.2 Editor dan eksekusi report (RPT-02)**
+- [ ] Editor: judul, lokasi, data source multi-Space/project, based on (projects/tasks/time entries), layout table/column
+- [ ] Filter (status, assignee, tipe, importance, effort, tanggal) dan group by
+- [ ] Eksekusi memakai mesin data S5.1.2 dan policy; ekspor hasil; tes
+
+**S5.2.3 Template report (RPT-01)**
+- [ ] Template: active tasks by assignee, weekly project status, overdue, due this month, unassigned, time spent, utilization
+- [ ] Report custom dari nol; tes angka per template
+- [ ] Pengiriman langganan lewat email memakai River
+
+### E5.3 Hardening M5
+
+**S5.3.1 Uji kecocokan angka dan E2E**
+- [ ] Tes otomatis: angka dashboard dan report cocok dengan data mentah pada fixture bervariasi
+- [ ] Alur Playwright membangun dashboard dan report tanpa developer
+- [ ] Ukur p95 widget dan report pada 10 ribu item; perbarui TESTING
+
+
+## M6
+
+### E6.1 Onboarding dan template
+
+**S6.1.1 Template Space (SPC-18)**
+- [ ] `openapi.yaml`: daftar template per kategori (Marketing, HR, IT, PM, …) dan pembuatan Space dari template
+- [ ] Format template memuat project, task, view, form, custom field, workflow; versi dan kompatibilitas
+- [ ] Pembuatan Space dari template dalam satu transaksi dan idempoten; tes
+- [ ] UI pemilih template di Space baru
+
+**S6.1.2 Wizard first-run (AUTH-07)**
+- [ ] Wizard untuk admin pertama: nama organisasi → proyek pertama + 3 task → pilih view → undang anggota
+- [ ] Hanya tampil sekali dan dapat dilewati; menyimpan status selesai di akun
+- [ ] Tes Playwright dan axe
+
+### E6.2 Pengaturan
+
+**S6.2.1 Pengaturan workspace per user dan info akun (SET-03, SET-04)**
+- [ ] Timezone, bahasa (hanya English), format tanggal/jam, awal minggu, default task, shortcut komentar
+- [ ] Account info: nama akun, status trial, role, tanggal bergabung, seat, daftar administrator
+- [ ] Tes dan axe
+
+**S6.2.2 Preferensi email notifikasi (SET-05)**
+- [ ] Preferensi per jenis event (mention, assign, share, report, perubahan task)
+- [ ] Worker email menghormati preferensi; tes bahwa event dimatikan tidak mengirim email
+- [ ] UI pengaturan
+
+**S6.2.3 Kosongkan Recycle bin (BIN-03)**
+- [ ] Hapus permanen dengan konfirmasi; hanya pemilik atau admin sesuai policy
+- [ ] File di penyimpanan ikut dibersihkan oleh housekeeping; tes tak ada yatim
+
+### E6.3 Hardening dan kesiapan rilis
+
+**S6.3.1 Prosedur penghentian instance (USR-04)**
+- [ ] Runbook: export data lengkap ke klien → backup akhir → hapus stack dan volume
+- [ ] Skrip export dan uji pada instance uji; tidak ada tombol hapus akun di UI
+
+**S6.3.2 Uji restore terhadap RTO (OPS-01)**
+- [ ] Restore penuh pada instance bersih dengan data mendekati ukuran pilot; catat waktu
+- [ ] Bandingkan dengan RPO/RTO di PRD dan catat hasil di TESTING
+
+**S6.3.3 Uji keamanan internal**
+- [ ] Pemeriksaan OWASP pada auth, sesi, upload, form publik, IDOR di semua endpoint
+- [ ] Pemindaian dependensi dan image; perbaiki temuan high
+- [ ] Laporan temuan dan bukti perbaikan
+
+**S6.3.4 Uji performa target NFR**
+- [ ] Ukur target NFR PRD §6 pada data skala klien; catat p95
+- [ ] Optimalkan kueri dan indeks yang melampaui target
+
+**S6.3.5 UAT P0 + P1 dan lima flow Playwright**
+- [ ] Daftar UAT dari PRD dan hasilnya; lima flow Playwright hijau di CI
+- [ ] Bukti per requirement P0 dan P1 di TESTING
+
+**S6.3.6 Perbaikan bug dan stabilisasi**
+- [ ] Triase temuan UAT dan keamanan; perbaiki sebelum rilis
+- [ ] Bekukan skema dan kontrak; tandai rilis kandidat
+
+
+## Rilis 1.0 (GA)
+
+### EGA Rilis 1.0
+
+**GA.1 Deploy instance klien pertama**
+- [ ] Provisioning host, domain, TLS, SMTP, dan backup luar server milik klien
+- [ ] Bootstrap, undang admin klien, dan uji dari image GHCR bertag
+
+**GA.2 Migrasi data pilot**
+- [ ] Skrip dan prosedur migrasi data pilot ke instance klien; uji pada salinan
+- [ ] Verifikasi jumlah data dan akses; rencana rollback
+
+**GA.3 Dokumentasi user**
+- [ ] Panduan penggunaan per fitur utama dalam English
+- [ ] Panduan admin: seat, backup, update, 2FA
+
+**GA.4 Pelatihan dan serah terima**
+- [ ] Sesi pelatihan admin dan pengguna; catat pertanyaan
+- [ ] Serah terima runbook dan kontak dukungan
+
+## M7 — Post-GA (P2)
+
+Belum dipecah menjadi story: AUTH-08; NAV-08, 09; SPC-14, 16; VIEW-05C, VIEW-10; TASK-08B, TASK-11B, TASK-14; WF-03B; DASH-03B; FORM-04, 07; DASH-04, 05, 07, 08; RPT-04; CUST-01; SET-06, 08, 09. Diprioritaskan ulang berdasarkan feedback pilot (PRD §8).
