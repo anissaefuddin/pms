@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Versi** | 0.3 (draft) — revisi hasil review: ketergantungan antar milestone, pemisahan requirement, keamanan & operasional |
+| **Versi** | 0.3.1 (draft) — revisi hasil review: ketergantungan antar milestone, pemisahan requirement, keamanan & operasional. 0.3.1: AUTH-03 (min. 8 karakter) dan SEC-04 (ganti password) diselaraskan dengan `api/openapi.yaml` (keputusan D-11) |
 | **Tanggal** | 12 November 2026 |
 | **Status** | Draft untuk review |
 | **Repo** | [github.com/anissaefuddin/pms](https://github.com/anissaefuddin/pms) |
@@ -99,7 +99,7 @@ Prioritas: **P0** wajib untuk MVP, **P1** diperlukan untuk rilis 1.0, **P2** bis
 |---|---|---|---|
 | AUTH-01 | Login email + password dan tautan lupa password. **Tidak ada public signup**: user masuk hanya lewat undangan (AUTH-06, USR-01) | P0 | Logging in |
 | AUTH-02 | Logout dari menu profil | P0 | Logging out |
-| AUTH-03 | Reset password via email; indikator kekuatan password, minimal 6 karakter | P0 | Resetting password |
+| AUTH-03 | Reset password via email; indikator kekuatan password, minimal 8 karakter | P0 | Resetting password |
 | AUTH-04 | Ganti password (lama/baru/ulang) | P0 | Changing password |
 | AUTH-05 | 2FA TOTP: QR + secret key, verifikasi kode 6 digit, status aktif dan tanggalnya | P1 | Setting up two-factor authentication |
 | AUTH-06 | Terima undangan tim: nama, password, departemen, jabatan, persetujuan ToS | P0 | Accepting a team invitation |
@@ -273,7 +273,7 @@ Prioritas: **P0** wajib untuk MVP, **P1** diperlukan untuk rilis 1.0, **P2** bis
 | SEC-01 | File upload: batas ukuran per file (env, default 100 MB), tolak tipe executable berdasarkan isi file (bukan hanya ekstensi), download hanya lewat endpoint yang mengecek izin atas item, header `Content-Disposition: attachment` + `X-Content-Type-Options: nosniff`. File disimpan dengan nama acak dan tidak pernah ditimpa | P0 | Adding a file |
 | SEC-02 | Tes negatif otorisasi: IDOR (akses item, file, dan komentar dengan ID milik orang lain), akses lintas Space, dan item multi-lokasi. Aturan multi-lokasi: akses user ke item = gabungan izin dari semua lokasi item tersebut | P0 | Sharing a project, Adding a project location |
 | SEC-03 | Optimistic locking: setiap item punya `version`; update dengan versi lama ditolak (HTTP 409) dan UI memuat ulang data terbaru dengan pesan konflik | P0 | Editing an item |
-| SEC-04 | Session: idle timeout 14 hari, batas absolut 30 hari; ID session dirotasi saat login dan saat hak akses berubah; semua session dicabut saat ganti/reset password atau user dinonaktifkan; proteksi CSRF (cookie SameSite=Lax + cek header `Origin` pada request yang mengubah data) | P0 | Logging in, Changing password |
+| SEC-04 | Session: idle timeout 14 hari, batas absolut 30 hari; ID session dirotasi saat login dan saat hak akses berubah; saat ganti password semua session lain dicabut (yang sedang dipakai tetap berlaku), saat reset password atau user dinonaktifkan semua session dicabut; proteksi CSRF (cookie SameSite=Lax + cek header `Origin` pada request yang mengubah data) | P0 | Logging in, Changing password |
 | SEC-05 | Form publik: rate limit per IP, honeypot anti-spam, batas jumlah dan ukuran lampiran. Scan malware (ClamAV) untuk lampiran dari form publik ditunda ke P2 | P1 | Creating a request form |
 | OPS-01 | Backup: RPO ≤ 24 jam, RTO ≤ 4 jam per klien. Database di-dump lebih dulu, lalu file. Karena file tidak pernah ditimpa (SEC-01), setiap file yang dirujuk database pasti ikut di backup. Restore penuh diuji sebelum GA dan setiap bulan setelahnya | P0 | — (operasional) |
 | OPS-02 | Update & migrasi: script update menjalankan backup pre-deploy otomatis → pull image versi baru → start. Migrasi hanya maju (forward-only), dan setiap migrasi berjalan dalam transaksi. Jika migrasi gagal, app menolak start; pemulihan dilakukan dengan restore dump pre-deploy dan kembali ke image versi lama | P0 | — (operasional) |

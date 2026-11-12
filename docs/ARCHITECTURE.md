@@ -205,8 +205,8 @@ type Storage interface {
 | Aspek | Rancangan |
 |---|---|
 | Log | `slog` JSON ke stdout: `time, level, msg, request_id, user_id, route, status, duration_ms`. Request ID dibuat middleware (atau diambil dari `X-Request-Id` Traefik) dan dikembalikan di header respons dan di body error |
-| Metrik | `/metrics` (hanya jaringan internal, bukan lewat Traefik publik): `http_requests_total{route,status}`, `http_request_duration_seconds`, `sse_connections`, `river_queue_depth`, `river_jobs_failed_total`, `db_pool_*`, `backup_last_success_timestamp` (ditulis oleh script backup lewat textfile collector) |
-| Alert (Grafana) | error 5xx > 2% selama 5 menit; job gagal > 0 selama 15 menit; backup terakhir > 26 jam; disk volume > 85%; app tidak sehat |
+| Metrik | `/metrics` (hanya jaringan internal, bukan lewat Traefik publik): `pms_http_requests_total{method,route,status}`, `pms_http_request_duration_seconds{method,route}`, `pms_jobs_available`, `pms_jobs_failed_total`, `pms_db_pool_{acquired,idle,total,max}_conns`, `pms_db_pool_{acquire,empty_acquire}_total`, `pms_backup_last_success_timestamp_seconds` (ditulis `backup.sh` lewat textfile collector node_exporter bila `BACKUP_TEXTFILE_DIR` diisi); `pms_sse_connections` ditambahkan di S1.4.4. Metrik dilayani di port internal `METRICS_ADDRESS` (default `:9090`) |
+| Alert (Grafana, `deploy/monitoring/grafana/provisioning/alerting/pms-alerts.yaml`) | error 5xx > 2% selama 5 menit; job gagal > 0 selama 15 menit; backup terakhir > 26 jam; disk volume > 85%; app tidak sehat |
 | Health | `GET /healthz` (proses hidup), `GET /readyz` (database dapat dijangkau dan migrasi terbaru terpasang) |
 | Migrasi | `pms migrate up` dijalankan otomatis saat start; app menolak start bila gagal (OPS-02) |
 | Update | `deploy/update.sh <versi>`: backup pre-deploy → `pull` image → `up -d` → tunggu `/readyz` → jika gagal tampilkan perintah restore ke dump pre-deploy |

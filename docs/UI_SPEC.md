@@ -18,7 +18,7 @@ flowchart TD
     subgraph Publik
       L[/login/] --- FP[/forgot-password/]
       FP --- RP[/reset-password?token/]
-      INV[/invite/:token/]
+      INV[/invitations/:token/]
     end
     subgraph Aplikasi[App shell: sidebar + topbar]
       H[/ ➜ Personal space/]
@@ -50,7 +50,7 @@ flowchart TD
 | `/login` | Login | `next` (path internal) | AUTH-01 |
 | `/forgot-password` | Minta reset | – | AUTH-03 |
 | `/reset-password` | Set password baru | `token` | AUTH-03 |
-| `/invite/$token` | Terima undangan | – | AUTH-06 |
+| `/invitations/$token` | Terima undangan | – | AUTH-06 |
 | `/` | Redirect ke Space terakhir dipakai, atau Personal space | – | NAV-01 |
 | `/spaces/$spaceId` | Space overview | `view`, `task`, `q`, `status`, `assignee`, `type`, `sort`, `group` | SPC-02, SPC-04 |
 | `/items/$itemId` | Project / Folder | sama dengan di atas | SPC-04, VIEW-01/02/08 |
@@ -288,7 +288,7 @@ Project Alpha         [ Table ]  [ Board ]  [+ Add view]
 ```mermaid
 flowchart TD
     A[Operator: pms bootstrap] --> B[Admin menerima email undangan]
-    B --> C[/invite/:token: set nama + password/]
+    B --> C[/invitations/:token: set nama + password/]
     C --> D[App shell: Space General + Personal space]
     D --> E[Settings ▸ Users ▸ Invite anggota<br/>pilih user type, opsional Space]
     E --> F{Seat tersedia?}

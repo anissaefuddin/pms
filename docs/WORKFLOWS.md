@@ -98,7 +98,7 @@ stateDiagram-v2
     Aktif --> Aktif: request (perbarui last_seen ≤ 1x per 5 menit)
     Aktif --> KedaluwarsaIdle: tidak dipakai 14 hari
     Aktif --> KedaluwarsaAbsolut: umur 30 hari
-    Aktif --> Dicabut: logout / ganti password / reset password / user nonaktif / user type berubah
+    Aktif --> Dicabut: logout / ganti password (session lain) / reset password / user nonaktif / user type berubah
     KedaluwarsaIdle --> [*]
     KedaluwarsaAbsolut --> [*]
     Dicabut --> [*]
@@ -177,7 +177,7 @@ stateDiagram-v2
     Terbootstrap --> Operasional: admin menerima undangan dan set password
 ```
 
-`pms bootstrap` idempoten dan gagal dengan kode keluar ≠ 0 bila sudah ada user `admin`. Bila SMTP belum dikonfigurasi, link undangan dicetak ke log.
+`pms bootstrap` idempoten dan gagal dengan kode keluar ≠ 0 bila instance sudah dibootstrap. Satu-satunya pengulangan yang diizinkan adalah pemulihan: dengan email yang sama selagi admin itu masih `invited`, bootstrap menerbitkan token undangan baru (token lama dicabut) agar instance tidak terkunci setelah undangan kedaluwarsa. Bila SMTP belum dikonfigurasi, link undangan (`/invitations/<token>`, berlaku 7 hari) dicetak ke log.
 
 ## 9. Placeholder M3 (belum dirancang rinci)
 

@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Versi** | 0.1 (draft) |
+| **Versi** | 0.2 (kolom Status ditambahkan; lihat [HANDOVER.md](HANDOVER.md)) |
 | **Fungsi** | Urutan kerja berdasarkan dependensi dan daftar tugas teknis per story. Kriteria penerimaan lengkap ada di [BACKLOG.md](BACKLOG.md); dokumen ini tidak mengulanginya |
 | **Aturan ukuran** | Satu tugas ≤ 0.5 hari ideal. Tugas yang lebih besar dipecah sebelum dikerjakan |
 | **Cara dipakai** | Kerjakan story sesuai urutan di §1. Saat sebuah story dimulai, jadikan tugasnya **GitHub Issues** (satu issue per story, tugas sebagai checklist, label `M0`/`M1` dan nama epic) agar progres terhubung ke commit dan PR. Centang di file ini hanya untuk gambaran awal; sumber kebenaran progres adalah issue |
@@ -11,52 +11,54 @@
 
 ## 1. Urutan eksekusi (dihasilkan dari dependensi)
 
+**Status:** `DRAFT` `PROPOSED` `APPROVED` `IN_PROGRESS` `BLOCKED` `DONE`. `DONE` hanya dengan bukti di [TESTING.md](TESTING.md). `DONE` per 12 Nov 2026: S0.1.1, S0.2.1, S0.2.4, S0.4.1, S0.4.2, S0.5.1. Delapan story M0 lain masih `IN_PROGRESS` dengan kesenjangan yang tercatat di TESTING.md.
+
 Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu. **Jadwal ini akan bergeser**; kalibrasi ulang setelah M0 selesai.
 
 <!-- SCHEDULE:START -->
-| Urutan | Story | Judul | Hari | Hari ke- | Minggu |
-|---|---|---|---|---|---|
-| 1 | S0.1.1 | Kerangka repo dan alur kontrak API | 1.5 | 0–1.5 | 1 |
-| 2 | S0.1.2 | Tooling database dan migrasi identitas | 1.5 | 1.5–3 | 1 |
-| 3 | S0.1.3 | Dockerfile, CI, dan image di GHCR | 1.5 | 3–4.5 | 1 |
-| 4 | S0.2.1 | Platform HTTP | 1 | 4.5–5.5 | 2 |
-| 5 | S0.2.2 | Login, logout, dan session | 1.5 | 5.5–7 | 2 |
-| 6 | S0.2.6 | Email (SMTP + job) | 1 | 7–8 | 2 |
-| 7 | S0.2.3 | Reset dan ganti password | 0.5 | 8–8.5 | 2 |
-| 8 | S0.2.4 | Undangan dan penerimaan undangan | 1 | 8.5–9.5 | 2 |
-| 9 | S0.2.5 | Perintah bootstrap | 0.5 | 9.5–10 | 2 |
-| 10 | S0.3.1 | Setup frontend | 1 | 10–11 | 3 |
-| 11 | S0.3.2 | Layar autentikasi dan shell kosong | 1 | 11–12 | 3 |
-| 12 | S0.4.1 | Compose klien, update, dan backup | 1.5 | 12–13.5 | 3 |
-| 13 | S0.4.2 | Observabilitas | 0.5 | 13.5–14 | 3 |
-| 14 | S0.5.1 | Spike Gantt (SVAR) dan penjadwalan di Go | 1 | 14–15 | 3 |
-| 15 | S1.1.1 | Data Space dan CRUD | 2 | 15–17 | 4 |
-| 16 | S1.1.2 | Paket `policy` (mesin otorisasi) | 3 | 17–20 | 4 |
-| 17 | S1.1.3 | API sharing dan ShareDialog | 3 | 20–23 | 5 |
-| 18 | S1.2.1 | Skema item dan workflow default | 2 | 23–25 | 5 |
-| 19 | S1.2.2 | Item service (create, get, patch) | 4 | 25–29 | 6 |
-| 20 | S1.1.4 | Matriks tes otorisasi | 2 | 29–31 | 7 |
-| 21 | S1.2.3 | Endpoint daftar (children dan root Space) | 2 | 31–33 | 7 |
-| 22 | S1.2.4 | UI pembuatan project, folder, dan task | 2.5 | 33–35.5 | 8 |
-| 23 | S1.2.5 | Panel detail item | 3 | 35.5–38.5 | 8 |
-| 24 | S1.2.6 | Subitem | 1 | 38.5–39.5 | 8 |
-| 25 | S1.3.1 | API view | 1.5 | 39.5–41 | 9 |
-| 26 | S1.3.2 | Table view | 3.5 | 41–44.5 | 9 |
-| 27 | S1.3.3 | Board view | 2.5 | 44.5–47 | 10 |
-| 28 | S1.3.4 | ViewTabs dan pengelolaan view | 1.5 | 47–48.5 | 10 |
-| 29 | S1.4.1 | Komentar dan mention | 2.5 | 48.5–51 | 11 |
-| 30 | S1.4.2 | Lampiran file | 2.5 | 51–53.5 | 11 |
-| 31 | S1.4.3 | Optimistic locking end-to-end | 1 | 53.5–54.5 | 11 |
-| 32 | S1.4.4 | Realtime (SSE) | 2 | 54.5–56.5 | 12 |
-| 33 | S1.5.1 | Sidebar dan navigasi | 1.5 | 56.5–58 | 12 |
-| 34 | S1.5.2 | Notifikasi dan Inbox | 2.5 | 58–60.5 | 13 |
-| 35 | S1.5.3 | My to-do | 1 | 60.5–61.5 | 13 |
-| 36 | S1.5.4 | Pencarian global | 2.5 | 61.5–64 | 13 |
-| 37 | S1.6.1 | Manajemen user dan seat | 3 | 64–67 | 14 |
-| 38 | S1.6.2 | Profil dan pengaturan workspace | 1 | 67–68 | 14 |
-| 39 | S1.7.1 | Soft delete, restore, dan Recycle bin | 2.5 | 68–70.5 | 15 |
-| 40 | S1.8.1 | Tes E2E dan aksesibilitas | 2 | 70.5–72.5 | 15 |
-| 41 | S1.8.2 | Performa dan kesiapan pilot | 1.5 | 72.5–74 | 15 |
+| Urutan | Story | Judul | Hari | Hari ke- | Minggu | Status |
+|---|---|---|---|---|---|---|
+| 1 | S0.1.1 | Kerangka repo dan alur kontrak API | 1.5 | 0–1.5 | 1 | DONE |
+| 2 | S0.1.2 | Tooling database dan migrasi identitas | 1.5 | 1.5–3 | 1 | IN_PROGRESS |
+| 3 | S0.1.3 | Dockerfile, CI, dan image di GHCR | 1.5 | 3–4.5 | 1 | IN_PROGRESS |
+| 4 | S0.2.1 | Platform HTTP | 1 | 4.5–5.5 | 2 | DONE |
+| 5 | S0.2.2 | Login, logout, dan session | 1.5 | 5.5–7 | 2 | DONE |
+| 6 | S0.2.6 | Email (SMTP + job) | 1 | 7–8 | 2 | DONE |
+| 7 | S0.2.3 | Reset dan ganti password | 0.5 | 8–8.5 | 2 | DONE |
+| 8 | S0.2.4 | Undangan dan penerimaan undangan | 1 | 8.5–9.5 | 2 | DONE |
+| 9 | S0.2.5 | Perintah bootstrap | 0.5 | 9.5–10 | 2 | DONE |
+| 10 | S0.3.1 | Setup frontend | 1 | 10–11 | 3 | DONE |
+| 11 | S0.3.2 | Layar autentikasi dan shell kosong | 1 | 11–12 | 3 | IN_PROGRESS |
+| 12 | S0.4.1 | Compose klien, update, dan backup | 1.5 | 12–13.5 | 3 | DONE |
+| 13 | S0.4.2 | Observabilitas | 0.5 | 13.5–14 | 3 | DONE |
+| 14 | S0.5.1 | Spike Gantt (SVAR) dan penjadwalan di Go | 1 | 14–15 | 3 | DONE |
+| 15 | S1.1.1 | Data Space dan CRUD | 2 | 15–17 | 4 | PROPOSED |
+| 16 | S1.1.2 | Paket `policy` (mesin otorisasi) | 3 | 17–20 | 4 | PROPOSED |
+| 17 | S1.1.3 | API sharing dan ShareDialog | 3 | 20–23 | 5 | PROPOSED |
+| 18 | S1.2.1 | Skema item dan workflow default | 2 | 23–25 | 5 | PROPOSED |
+| 19 | S1.2.2 | Item service (create, get, patch) | 4 | 25–29 | 6 | PROPOSED |
+| 20 | S1.1.4 | Matriks tes otorisasi | 2 | 29–31 | 7 | PROPOSED |
+| 21 | S1.2.3 | Endpoint daftar (children dan root Space) | 2 | 31–33 | 7 | PROPOSED |
+| 22 | S1.2.4 | UI pembuatan project, folder, dan task | 2.5 | 33–35.5 | 8 | PROPOSED |
+| 23 | S1.2.5 | Panel detail item | 3 | 35.5–38.5 | 8 | PROPOSED |
+| 24 | S1.2.6 | Subitem | 1 | 38.5–39.5 | 8 | PROPOSED |
+| 25 | S1.3.1 | API view | 1.5 | 39.5–41 | 9 | PROPOSED |
+| 26 | S1.3.2 | Table view | 3.5 | 41–44.5 | 9 | PROPOSED |
+| 27 | S1.3.3 | Board view | 2.5 | 44.5–47 | 10 | PROPOSED |
+| 28 | S1.3.4 | ViewTabs dan pengelolaan view | 1.5 | 47–48.5 | 10 | PROPOSED |
+| 29 | S1.4.1 | Komentar dan mention | 2.5 | 48.5–51 | 11 | PROPOSED |
+| 30 | S1.4.2 | Lampiran file | 2.5 | 51–53.5 | 11 | PROPOSED |
+| 31 | S1.4.3 | Optimistic locking end-to-end | 1 | 53.5–54.5 | 11 | PROPOSED |
+| 32 | S1.4.4 | Realtime (SSE) | 2 | 54.5–56.5 | 12 | PROPOSED |
+| 33 | S1.5.1 | Sidebar dan navigasi | 1.5 | 56.5–58 | 12 | PROPOSED |
+| 34 | S1.5.2 | Notifikasi dan Inbox | 2.5 | 58–60.5 | 13 | PROPOSED |
+| 35 | S1.5.3 | My to-do | 1 | 60.5–61.5 | 13 | PROPOSED |
+| 36 | S1.5.4 | Pencarian global | 2.5 | 61.5–64 | 13 | PROPOSED |
+| 37 | S1.6.1 | Manajemen user dan seat | 3 | 64–67 | 14 | PROPOSED |
+| 38 | S1.6.2 | Profil dan pengaturan workspace | 1 | 67–68 | 14 | PROPOSED |
+| 39 | S1.7.1 | Soft delete, restore, dan Recycle bin | 2.5 | 68–70.5 | 15 | PROPOSED |
+| 40 | S1.8.1 | Tes E2E dan aksesibilitas | 2 | 70.5–72.5 | 15 | PROPOSED |
+| 41 | S1.8.2 | Performa dan kesiapan pilot | 1.5 | 72.5–74 | 15 | PROPOSED |
 <!-- SCHEDULE:END -->
 
 ## 2. Jalur kritis
@@ -92,10 +94,10 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E0.1 Fondasi repo dan pipeline
 
 **S0.1.1 Kerangka repo dan alur kontrak API**
-- [ ] Inisialisasi `server/` (go mod, `cmd/pms`), `web/` (Vite + TS), `Makefile` (`dev`, `gen`, `test`, `lint`)
-- [ ] Salin `api/openapi.yaml` (sudah ada) dan pasang `oapi-codegen` (konfigurasi strict server) + `openapi-typescript`
-- [ ] Tes `go list` untuk aturan ketergantungan paket; langkah CI "generate lalu `git diff --exit-code`"
-- [ ] Halaman hello memanggil `/healthz` lewat klien hasil generate
+- [x] Inisialisasi `server/` (go mod, `cmd/pms`), `web/` (Vite + TS), `Makefile` (`dev`, `gen`, `test`, `lint`)
+- [x] Salin `api/openapi.yaml` (sudah ada) dan pasang `oapi-codegen` (konfigurasi strict server) + `openapi-typescript`
+- [x] Tes `go list` untuk aturan ketergantungan paket; langkah CI "generate lalu `git diff --exit-code`"
+- [x] Halaman hello memanggil `/healthz` lewat klien hasil generate
 
 **S0.1.2 Tooling database dan migrasi identitas**
 - [ ] Pool `pgx`, konfigurasi `sqlc` (`queries/`, `gen/`), runner goose tertanam di `pms migrate`
@@ -104,9 +106,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Helper tes: database sementara per paket tes (template DB + clone)
 
 **S0.1.3 Dockerfile, CI, dan image di GHCR**
-- [ ] Dockerfile multi-stage (build web → build Go dengan `go:embed` → image minimal, user non-root)
-- [ ] Workflow Actions: lint, typecheck, `go test` + service Postgres, build; cache modul
-- [ ] Job rilis pada tag `v*` → push `ghcr.io/anissaefuddin/pms:<versi>` (private)
+- [x] Dockerfile multi-stage (build web → build Go dengan `go:embed` → image minimal, user non-root)
+- [x] Workflow Actions: lint, typecheck, `go test` + service Postgres, build; cache modul
+- [x] Job rilis pada tag `v*` → push `ghcr.io/anissaefuddin/pms:<versi>` (private)
 - [ ] Verifikasi: image berjalan dan melayani SPA + `/api/v1/healthz`
 
 **S0.2.1 Platform HTTP**
@@ -143,8 +145,8 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 
 **E0.3** · **S0.3.1 Setup frontend**
 - [ ] TanStack Router/Query, react-i18next (`en`), Tailwind v4, `data-brand`/`data-density`, mode gelap
-- [ ] Salin komponen `ui-kit`; ganti `LinkButton` ke adapter TanStack; font lokal
-- [ ] ESLint `no-literal-string`; Playwright + `axe` terpasang
+- [x] Salin komponen `ui-kit`; ganti `LinkButton` ke adapter TanStack; font lokal
+- [x] ESLint `no-literal-string`; Playwright + `axe` terpasang
 
 **S0.3.2 Layar autentikasi dan shell kosong**
 - [ ] Login, Forgot, Reset, Accept invitation, `/settings/security`
@@ -162,9 +164,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Provisioning alert Grafana (5xx, job gagal, backup basi, disk)
 
 **E0.5** · **S0.5.1 Spike Gantt dan penjadwalan**
-- [ ] Halaman SVAR dengan ±200 task dan dependensi dummy
-- [ ] Fungsi Go geser penerus FS dengan hari kerja Senin–Jumat + 3 tes
-- [ ] Tulis catatan keputusan di `docs/`
+- [x] Halaman SVAR dengan ±200 task dan dependensi dummy
+- [x] Fungsi Go geser penerus FS dengan hari kerja Senin–Jumat + 3 tes
+- [x] Tulis catatan keputusan di `docs/`
 
 ## M1
 

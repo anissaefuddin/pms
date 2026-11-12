@@ -13,7 +13,7 @@
 
 | Topik | Aturan |
 |---|---|
-| Primary key | `uuid` versi 7 dibuat di Go (urut waktu, indeks efisien). Tabel log memakai `bigint generated always as identity` |
+| Primary key | Target: `uuid` versi 7 dibuat di Go (urut waktu, indeks efisien); tabel log memakai `bigint generated always as identity`. **Penyimpangan M0 (G-06):** tabel M0 (`users`, `spaces`, `workflows`, `statuses`) memakai `gen_random_uuid()` (v4) karena volumenya rendah. Tabel bervolume tinggi (`items`, `activity`) memakai v7 dari Go sejak dibuat di M1. Postgres 16 tidak punya `uuidv7()` (baru ada di 18) |
 | ID yang terlihat user | `items.seq` (bigint identity) ditampilkan sebagai "ID" task/project |
 | Waktu | `timestamptz` (UTC). Tanggal jadwal item memakai `date` (tanpa jam) |
 | Teks | `text`; email memakai `citext` |
@@ -79,9 +79,9 @@ Tabel bantu yang tidak digambar agar ERD terbaca: `group_members`, `item_assigne
 | Tabel | Keputusan |
 |---|---|
 | `account` | Satu baris (`id smallint primary key check (id = 1)`). Menyimpan nama organisasi dan pengaturan. **Batas seat tidak disimpan di sini**, tetapi dibaca dari env `PMS_MAX_SEATS` (USR-03) |
-| `users` | `status`: `invited` → `active` → `deactivated`. Seat terpakai = jumlah `invited` + `active`; `deactivated` membebaskan seat. Pengaturan per user (locale, timezone, format tanggal/jam, awal minggu) disimpan di kolom langsung; tidak ada tabel prefs terpisah. Email unik tanpa memandang huruf besar-kecil (`citext`). User tidak pernah dihapus fisik; riwayat dan item yang dibuatnya tetap merujuk ke baris ini |
-| `sessions` | Hanya hash SHA-256 token yang disimpan. Kolom `expires_at` (idle) dan `absolute_expires_at` (30 hari). Dihapus oleh job harian dan saat password berubah |
-| `user_tokens` | Satu tabel untuk undangan (`invite`) dan reset password (`reset`); hash token, `expires_at`, `used_at`. Pemakaian token bersifat sekali pakai lewat `UPDATE … WHERE used_at IS NULL RETURNING` |
+| `users` | `status`: `invited` → `active` → `deactivated`. Seat terpakai = jumlah `invited` + `active`; `deactivated` membebaskan seat. Seat dijaga saat undang dan aktifkan kembali (S1.6.1); menerima undangan hanya mengubah seat yang sudah dihitung dari `invited` menjadi `active`. Nama disimpan sebagai `first_name` dan `last_name` (kontrak `Me`). Constraint: `invited` tidak punya password; `active` punya password dan nama Pengaturan per user (locale, timezone, format tanggal/jam, awal minggu) disimpan di kolom langsung; tidak ada tabel prefs terpisah. Email unik tanpa memandang huruf besar-kecil (`citext`). User tidak pernah dihapus fisik; riwayat dan item yang dibuatnya tetap merujuk ke baris ini |
+| `sessions` | Hanya hash SHA-256 token yang disimpan. Kolom `expires_at` (idle 14 hari, bergeser paling banyak sekali per 5 menit dan tidak melewati batas absolut) dan `absolute_expires_at` (30 hari, tetap); `CHECK (expires_at <= absolute_expires_at)`. Cookie berlaku sampai `absolute_expires_at`. Saat ganti password, session lain dihapus dan token session pemanggil diganti tanpa memperpanjang batas absolut (D-14); saat reset password semua session dihapus. Job harian menghapus yang kedaluwarsa |
+| `user_tokens` | Satu tabel untuk undangan (`invite`) dan reset password (`reset`); hash token, `expires_at`, `used_at`. Pemakaian token bersifat sekali pakai lewat `UPDATE … WHERE used_at IS NULL AND purpose = … RETURNING`; `purpose` selalu disaring. Masa berlaku: undangan 7 hari, reset 1 jam. Membatalkan undangan menghapus baris user `invited` (satu-satunya pengecualian aturan "user tidak dihapus fisik"; `user_tokens` ikut terhapus lewat `ON DELETE CASCADE`). Job harian menghapus token kedaluwarsa atau terpakai, **bukan** user `invited` |
 | `groups`, `group_members` | Grup sederhana (nama + anggota) untuk sharing dan mention. Grup bawaan "Everyone" tidak disimpan; dihitung dari user non-external |
 
 ### 3.2 Space dan sharing
@@ -175,8 +175,9 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 | `item_assignees` | `(user_id, item_id)` | My to-do |
 | `activity` | `(item_id, id DESC)` | Panel aktivitas |
 | `notifications` | `(user_id, created_at DESC) WHERE archived_at IS NULL` | Inbox |
-| `sessions` | `(user_id)`, `(absolute_expires_at)` | Revokasi, pembersihan |
-| `users` | GIN pada `to_tsvector('simple', name)`; `(status)` | Pencarian user, hitung seat |
+| `sessions` | `(user_id)`, `(expires_at)` | Revokasi, pembersihan (`expires_at <= absolute_expires_at`, jadi satu indeks melayani kedua batas) |
+| `users` | `(status)` (ada); GIN pada `to_tsvector('simple', first_name || ' ' || last_name)` ditambahkan bersama pencarian user (S1.5.4) | Pencarian user, hitung seat |
+| `user_tokens` | `(user_id, purpose)`, `(expires_at)` | Cari token user, pembersihan |
 
 ## 5. Soft delete dan Recycle bin
 
@@ -193,13 +194,16 @@ Item di Recycle bin tidak ikut hasil pencarian, My to-do, atau notifikasi baru, 
 
 | Aturan | Isi |
 |---|---|
-| Alat | goose, file SQL berurut `0001_*.sql`, dijalankan otomatis saat start (`pms migrate up`) |
+| Alat | goose, file SQL berurut `0000N_*.sql`, dijalankan otomatis saat start (`pms migrate`). `/readyz` memeriksa bahwa **setiap versi** berkas tertanam tercatat terpasang |
 | Arah | Hanya maju (forward-only). Tidak ada `down` di produksi; pemulihan = restore dump pre-deploy (OPS-02) |
 | Transaksi | Setiap migrasi dalam satu transaksi, kecuali `CREATE INDEX CONCURRENTLY` yang ditandai `-- +goose NO TRANSACTION` |
 | Kompatibilitas | Migrasi harus kompatibel mundur satu versi aplikasi (tambah kolom dulu, hapus kolom di rilis berikutnya) |
 | Seed | Data awal (workflow dan status default) dibuat oleh `pms bootstrap`, bukan migrasi, agar migrasi tetap murni skema |
-| Urutan M0 | `0001_extensions` (`citext`, `pgcrypto` bila perlu) → `0002_identity` → `0003_spaces_items` → `0004_workflow` → `0005_collab` → `0006_views_notifications` → River |
+| Urutan | **Sudah ada (baseline G-06):** `00001_extensions` (`citext`, `set_updated_at`) → `00002_identity` (`account`, `users`, `sessions`, `user_tokens`) → `00003_spaces_workflows` (`spaces`, `workflows`, `statuses`). **Berikutnya:** item dan lokasi (S1.2.1), `shares` dan `groups` (S1.1.3), kolaborasi, view dan notifikasi, River |
+| Baseline ditulis ulang | Baseline M0 ditulis ulang satu kali (keputusan D-13) sebelum ada data klien atau commit. Database yang dibuat oleh baseline lama **harus dibuat ulang**, jangan di-restore ke image baru: goose melacak versi, bukan isi berkas |
 
 ## 7. Data yang sengaja belum ada (M2+)
 
 `item_dependencies`, definisi custom field, `time_entries`, `approvals`, `request_forms`, `dashboards`, `widgets`, `reports`, `baselines`, `work_schedules`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
+
+Kolom profil `company`, `country`, `location`, `phone` (kontrak `Me`/`MeUpdate`) belum ada di `users`; ditambahkan lewat migrasi di S1.6.2 (`PATCH /me`).
