@@ -153,7 +153,7 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 | `comments` | `body jsonb` ProseMirror, `body_text` untuk pencarian, `version`, `edited_at`, soft delete. Mention diekstrak dari JSON saat simpan ke `comment_mentions(comment_id, mention_type, target_id)` — `user`, `group`, atau `followers` |
 | `attachments` | `storage_key` unik, `sha256`, `size_bytes`, `content_type` hasil deteksi server. Soft delete; file fisik dihapus oleh job (ARCHITECTURE §8) |
 | `activity` | Append-only: `(item_id, actor_id, action, changes jsonb, created_at)`. `changes` berisi pasangan `{field: {from, to}}`. Indeks `(item_id, id DESC)`. Tidak pernah diupdate atau dihapus selain bersama item yang dihapus permanen |
-| `notifications` | `kind` = `mention`, `assigned`, `status_changed`, `comment`, `shared`. `read_at` dan `archived_at` terpisah (NAV-03: Mark all as read vs Archive all). Indeks parsial `(user_id, created_at DESC) WHERE archived_at IS NULL` |
+| `notifications` | `kind` = `mention`, `assigned`, `status_changed`, `comment`, `shared`. Target tepat satu Item atau Space. `read_at` dan `archived_at` terpisah. Indeks parsial `(recipient_id, id DESC) WHERE archived_at IS NULL` untuk cursor UUIDv7. |
 
 ### 3.6 View
 
@@ -174,7 +174,7 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 | `shares` | `(target_type, target_id)`; `(principal_type, principal_id)` | Cek akses dan "Shared with me" |
 | `item_assignees` | `(user_id, item_id)` | My to-do |
 | `activity` | `(item_id, id DESC)` | Panel aktivitas |
-| `notifications` | `(user_id, created_at DESC) WHERE archived_at IS NULL` | Inbox |
+| `notifications` | `(recipient_id, id DESC) WHERE archived_at IS NULL` | Inbox |
 | `sessions` | `(user_id)`, `(expires_at)` | Revokasi, pembersihan (`expires_at <= absolute_expires_at`, jadi satu indeks melayani kedua batas) |
 | `users` | `(status)` (ada); GIN pada `to_tsvector('simple', first_name || ' ' || last_name)` ditambahkan bersama pencarian user (S1.5.4) | Pencarian user, hitung seat |
 | `user_tokens` | `(user_id, purpose)`, `(expires_at)` | Cari token user, pembersihan |

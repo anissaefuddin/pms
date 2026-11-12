@@ -57,7 +57,7 @@
 ### S0.4.2 Observabilitas — Status: DONE
 
 - Metrik DB pool, metrik backup (textfile), 6 aturan alert Grafana + datasource + contoh `prometheus.yml` di `deploy/monitoring/`; `alerts.yml` lama dihapus; ARCHITECTURE §11 diselaraskan. Bukti: TESTING §3 baris S0.4.2 (Grafana 11.6.0 memuat dan mengevaluasi 6 aturan, `pms-down` dan `pms-backup-stale` firing).
-- Catatan: `pms_sse_connections` menunggu S1.4.4; alert disk dan backup perlu node_exporter dengan `--collector.textfile.directory=$BACKUP_TEXTFILE_DIR`.
+- Catatan: `pms_sse_connections` tersedia sejak S1.4.4. Alert disk dan backup perlu node_exporter dengan `--collector.textfile.directory=$BACKUP_TEXTFILE_DIR`.
 - Insiden disk penuh (G-11) teratasi; stack uji berjalan lagi di `pms:m0-obs` (readyz 200). Jaga ruang disk: `Docker.raw` ada di `/Volumes/MyHDD` (96% terpakai).
 
 ### D-14/G-08 dan D-13/G-06 — Status: DONE (menunggu commit)
@@ -144,3 +144,36 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - S1.2.4 dan S1.2.5 DONE. `create-item-dialog.tsx` memakai API Item dan membuka panel `?task=`. `item-detail.tsx` juga dipakai oleh `/tasks/$itemId`. Edit memakai ETag dan deskripsi TipTap dimuat terpisah. Workflow tersedia melalui `GET /api/v1/workflows`.
 - S1.2.6 IN_PROGRESS. Daftar dan Add subitem, parent tetap, navigasi ke induk, dan jumlah pada baris sudah tersedia. Tampilkan jumlah pada kartu saat Board dibangun. Tombol tambah dari Table/Board dan penerapan default view juga mengikuti S1.3.2/S1.3.3.
 - Lanjut S1.3.1 (API View), lalu Table dan Board. Bukti browser dan PostgreSQL tercatat di TESTING. Perubahan belum diterapkan ke stack manual.
+### Checkpoint Subitem, View, dan Sharing Item
+
+- S1.2.6 DONE. Kartu Board menampilkan jumlah subitem, dan tes Item/View Chrome lulus 7/7. Table, Board, dan ViewTabs tersedia. Regresi Chrome penuh terakhir 59/60 sebelum perbaikan drag Table, kemudian suite terarah lulus.
+- S1.1.3 masih IN_PROGRESS. GET/PUT shares Item kini menangani daftar langsung dan ETag. Lanjutkan proyeksi share warisan, sambungan ShareDialog Item, dan undangan external melalui API manajemen user yang belum tersedia.
+- S1.1.4 masih IN_PROGRESS. CI menjalankan suite PostgreSQL pada pull request, termasuk tes akses komentar, metadata lampiran, dan unduhan. Pemeriksaan required check untuk `main` kembali mendapat HTTP 403 pada 12 November 2026 karena paket repo privat. Aktifkan required check saat paket mendukung fitur tersebut.
+### Checkpoint kolaborasi M1
+
+- S1.4.1 DONE. Migrasi 00009, API komentar, dan composer TipTap menangani mention user, grup, dan followers. Kebijakan edit/hapus mengikuti BACKLOG untuk penulis dan role `full`. Validasi URL, siklus komentar, dan posting mention via Chrome sudah diuji.
+- S1.4.2 DONE. Migrasi 00010, handler lampiran, LocalStorage, dan FileDropzone menangani multipart, batas ukuran, hash, unduh berizin, dan soft delete. API melaporkan batas unggah agar UI menampilkan nilai konfigurasi. Tipe yang didukung dicatat di ARCHITECTURE §8. Stack manual memerlukan build terbaru, migrasi 00009–00010, dan volume `PMS_FILES_DIR` yang dapat ditulis.
+- S1.4.3 DONE. Panel Item mengambil versi terbaru saat konflik, menyimpan draf di panel, dan menawarkan Reapply serta Discard. Status dan Board memakai rollback dan toast. Tes dua sesi Chrome memakai Go API dan PostgreSQL fixture.
+- S1.4.4 DONE. `GET /events` memakai buffer 1.000 event, heartbeat 25 detik, replay dan resync. Mutasi Item, komentar, dan lampiran memublikasikan setelah commit. Pengiriman dan replay memeriksa sesi, izin Item, dan izin container. Chrome membuktikan perubahan tampil di sesi kedua dalam batas tiga detik, dengan draf lokal tetap ber-ETag awal. Event notifikasi mengikuti S1.5.2.
+
+### Checkpoint navigasi M1
+
+- S1.5.1 DONE. Sidebar menampilkan nama workspace dari `Me.account_name`, pohon Space/project/folder menurut rank, dan menu More. Preferensi ciut dan Space terakhir disimpan per user. `/me/shared` memakai policy Item dan pagination. More membuka rute Recycle bin. Isi daftar, restore, dan Undo mengikuti S1.7.1. My to-do mengikuti S1.5.3.
+- Guard meneruskan tujuan internal ke login dan menambahkan `reason=expired` pada sesi kedaluwarsa. Respons 429 autentikasi mengirim `Retry-After` dalam detik. Login menampilkan waktu tunggu dari header.
+- Perubahan S1.4.4 dan S1.5.1 diverifikasi pada fixture lokal.
+
+### Checkpoint Inbox, My to-do, dan pencarian M1
+
+- S1.5.2 DONE. Migrasi `00011_notifications.sql` menambah Inbox. Notifikasi dan job River disimpan dalam transaksi mutasi, lalu SSE memublikasikan ke penerima setelah commit. REST, replay SSE, dan worker email memeriksa izin terkini. Job email memakai tautan Inbox, dengan pengecualian komentar biasa. Pengiriman eksternal belum diverifikasi. PostgreSQL dan dua sesi Chrome membuktikan aturan penerima, badge, dan penandaan read saat dibuka.
+- S1.5.3 DONE. `/me/todo` memfilter assignment pengguna dan akses Item. UI tersedia melalui More → My to-do. Overdue memakai tanggal lokal pengguna dan mengecualikan status Completed. Priority dan Importance menunggu custom fields M2.
+- S1.5.4 DONE. Migrasi `00012_search.sql` menambah indeks komentar dan pengguna di samping indeks Item yang ada. Command palette (Ctrl/Cmd+K) dan `/search` mendukung scope Everywhere, Space, dan Project. Bukti benchmark lokal 46,18 ms p95 pada 10.000 Item dan 500 komentar tercatat di TESTING.
+- Checkpoint tersebut memakai migrasi sampai `00012`. S1.1.4 tetap menunggu required check GitHub.
+
+### Checkpoint admin, Recycle bin, dan pilot M1
+
+- S1.6.1 DONE. Migrasi `00013_user_invitations.sql`, admin Users/Groups, seat summary, dan matriks policy. Mutasi seat/admin memakai lock account, menolak `last_admin`, dan mencabut sesi saat hak berubah. Worker membuat token undangan saat mengirim. Job reset password M0 masih mengikuti alur sebelumnya. SMTP loopback lulus.
+- S1.6.2 DONE. Migrasi `00014_profile.sql`, `PATCH /me`, Settings → Profile, tema/density, tanggal/angka, timezone, awal minggu, dan pintasan komentar.
+- S1.7.1 DONE. API dan UI Recycle bin, Undo 8 detik, restore kaskade, fallback parent ke root Space, dan alasan restore terblokir. Tidak ada purge otomatis.
+- S1.8.1 DONE. Workflow PR menjalankan Playwright/axe dan alur live PostgreSQL. Validasi lokal mencakup 83 tes Chrome standalone dan tiga skenario live. Workflow GitHub remote belum dijalankan dari checkout ini.
+- S1.8.2 DONE. Table, Board, dan pencarian memenuhi target p95. Latihan Docker terisolasi membuktikan restore serta rollback database dan file. [Runbook pilot](PILOT_RUNBOOK.md) memuat triase dan prosedur operasi. `PMS_SECRET_KEY` belum dipakai runtime M1.
+- Kesiapan pilot `READY WITH CONDITIONS`. Stack manual memerlukan build terbaru dan migrasi sampai `00014`. S1.1.3 masih memiliki gap integrasi ShareDialog walaupun API undangan tersedia. S1.1.4 menunggu required check GitHub. Verifikasi SMTP, backup/restore data pilot, dan hasil CI pada instance tujuan sebelum pembukaan pilot.

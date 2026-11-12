@@ -36,6 +36,17 @@ jobs:
         env: { PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable" }
       - run: npm ci && npm run generate && npm run lint && npm run typecheck && npm test
         working-directory: web
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+        working-directory: web
+      - name: Browser regression and accessibility
+        run: npm run test:e2e -- --workers=2
+        working-directory: web
+      - name: Pilot workflow with PostgreSQL
+        run: go test -count=1 ./server/internal/httpserver -run '^TestBrowserCollaboration$'
+        env:
+          PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable"
+          PMS_TEST_BROWSER: "1"
       - name: Generated code is up to date
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1

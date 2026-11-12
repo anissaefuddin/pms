@@ -400,4 +400,4 @@ flowchart TD
 2. "Hidden spaces" (NAV-01) tidak punya requirement turunan; **ditunda** sampai ada kebutuhan nyata.
 3. Sort "Priority" dan "Importance" di My to-do (NAV-05) bergantung custom field (M2); opsinya disembunyikan di M1.
 
-> **Penyimpangan yang diterima (D-31):** pesan 429 login belum menyebut waktu tunggu sampai backend mengirim `Retry-After`, dan banner "Your session expired" dikerjakan di S1.5.1. Rute undangan memakai `/invitations/<token>`.
+> **D-31:** S1.5.1 menampilkan waktu tunggu login dari `Retry-After` dan banner "Your session expired" dari `?reason=expired`. Rute undangan memakai `/invitations/<token>`.

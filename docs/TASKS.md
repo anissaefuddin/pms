@@ -41,24 +41,24 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 21 | S1.2.3 | Endpoint daftar (children dan root Space) | 2 | 31–33 | 7 | DONE |
 | 22 | S1.2.4 | UI pembuatan project, folder, dan task | 2.5 | 33–35.5 | 8 | DONE |
 | 23 | S1.2.5 | Panel detail item | 3 | 35.5–38.5 | 8 | DONE |
-| 24 | S1.2.6 | Subitem | 1 | 38.5–39.5 | 8 | IN_PROGRESS |
+| 24 | S1.2.6 | Subitem | 1 | 38.5–39.5 | 8 | DONE |
 | 25 | S1.3.1 | API view | 1.5 | 39.5–41 | 9 | DONE |
 | 26 | S1.3.2 | Table view | 3.5 | 41–44.5 | 9 | DONE |
 | 27 | S1.3.3 | Board view | 2.5 | 44.5–47 | 10 | DONE |
 | 28 | S1.3.4 | ViewTabs dan pengelolaan view | 1.5 | 47–48.5 | 10 | DONE |
-| 29 | S1.4.1 | Komentar dan mention | 2.5 | 48.5–51 | 11 | PROPOSED |
-| 30 | S1.4.2 | Lampiran file | 2.5 | 51–53.5 | 11 | PROPOSED |
-| 31 | S1.4.3 | Optimistic locking end-to-end | 1 | 53.5–54.5 | 11 | PROPOSED |
-| 32 | S1.4.4 | Realtime (SSE) | 2 | 54.5–56.5 | 12 | PROPOSED |
-| 33 | S1.5.1 | Sidebar dan navigasi | 1.5 | 56.5–58 | 12 | PROPOSED |
-| 34 | S1.5.2 | Notifikasi dan Inbox | 2.5 | 58–60.5 | 13 | PROPOSED |
-| 35 | S1.5.3 | My to-do | 1 | 60.5–61.5 | 13 | PROPOSED |
-| 36 | S1.5.4 | Pencarian global | 2.5 | 61.5–64 | 13 | PROPOSED |
-| 37 | S1.6.1 | Manajemen user dan seat | 3 | 64–67 | 14 | PROPOSED |
-| 38 | S1.6.2 | Profil dan pengaturan workspace | 1 | 67–68 | 14 | PROPOSED |
-| 39 | S1.7.1 | Soft delete, restore, dan Recycle bin | 2.5 | 68–70.5 | 15 | PROPOSED |
-| 40 | S1.8.1 | Tes E2E dan aksesibilitas | 2 | 70.5–72.5 | 15 | PROPOSED |
-| 41 | S1.8.2 | Performa dan kesiapan pilot | 1.5 | 72.5–74 | 15 | PROPOSED |
+| 29 | S1.4.1 | Komentar dan mention | 2.5 | 48.5–51 | 11 | DONE |
+| 30 | S1.4.2 | Lampiran file | 2.5 | 51–53.5 | 11 | DONE |
+| 31 | S1.4.3 | Optimistic locking end-to-end | 1 | 53.5–54.5 | 11 | DONE |
+| 32 | S1.4.4 | Realtime (SSE) | 2 | 54.5–56.5 | 12 | DONE |
+| 33 | S1.5.1 | Sidebar dan navigasi | 1.5 | 56.5–58 | 12 | DONE |
+| 34 | S1.5.2 | Notifikasi dan Inbox | 2.5 | 58–60.5 | 13 | DONE |
+| 35 | S1.5.3 | My to-do | 1 | 60.5–61.5 | 13 | DONE |
+| 36 | S1.5.4 | Pencarian global | 2.5 | 61.5–64 | 13 | DONE |
+| 37 | S1.6.1 | Manajemen user dan seat | 3 | 64–67 | 14 | DONE |
+| 38 | S1.6.2 | Profil dan pengaturan workspace | 1 | 67–68 | 14 | DONE |
+| 39 | S1.7.1 | Soft delete, restore, dan Recycle bin | 2.5 | 68–70.5 | 15 | DONE |
+| 40 | S1.8.1 | Tes E2E dan aksesibilitas | 2 | 70.5–72.5 | 15 | DONE |
+| 41 | S1.8.2 | Performa dan kesiapan pilot | 1.5 | 72.5–74 | 15 | DONE |
 <!-- SCHEDULE:END -->
 
 ## 2. Jalur kritis
@@ -191,8 +191,8 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 **S1.1.4 Matriks tes otorisasi**
 - [x] Matriks 5 tipe × 4 role × 4 jalur untuk GET, PATCH, create subtask, dan DELETE Item pada endpoint nyata
 - [x] Tes batas visibilitas Item dan Item di Personal Space
-- [ ] Tes batas visibilitas file, komentar, dan lampiran
-- [ ] Jadikan langkah CI yang memblokir merge
+- [x] Tes batas visibilitas file, komentar, dan lampiran
+- [ ] Jadikan langkah CI yang memblokir merge. GitHub menolak akses pengaturan required check pada paket repo privat saat ini (HTTP 403).
 
 ### E1.2 Item inti
 
@@ -226,7 +226,7 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 **S1.2.6 Subitem**
 - [x] Daftar, "Add subitem", dan navigasi kembali ke induk
 - [x] Jumlah subitem pada baris yang tersedia. Form membuat Item baru dengan parent tetap, dan siklus lokasi diuji pada PostgreSQL
-- [ ] Tampilkan jumlah subitem pada kartu Board setelah S1.3.3
+- [x] Tampilkan jumlah subitem pada kartu Board. Playwright memverifikasi angka pada kartu
 
 ### E1.3 View
 
@@ -252,70 +252,71 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E1.4 Kolaborasi
 
 **S1.4.1 Komentar dan mention**
-- [ ] Skema `comments`, `comment_mentions`; validator JSON ProseMirror (allowlist node/mark)
-- [ ] Endpoint komentar + ekstraksi mention
-- [ ] CommentThread + editor mention; tes XSS
+- [x] Skema `comments`, `comment_mentions`; validator JSON ProseMirror (allowlist node/mark)
+- [x] Endpoint komentar + ekstraksi mention
+- [x] CommentThread + editor mention; tes XSS
 
 **S1.4.2 Lampiran file**
-- [ ] Interface `Storage` + `LocalStorage` (+ komentar `shortcut:`)
-- [ ] Upload: batas ukuran, deteksi tipe, tolak executable, SHA-256, nama acak
-- [ ] Download berizin + header aman; FileDropzone + pesan penolakan
-- [ ] Tes file palsu (`.png` berisi ELF)
+- [x] Interface `Storage` + `LocalStorage` (+ komentar `shortcut:`)
+- [x] Upload: batas ukuran, deteksi tipe, tolak executable, SHA-256, nama acak
+- [x] Download berizin + header aman; FileDropzone + batas ukuran dan pesan penolakan
+- [x] Tes file palsu (`.png` berisi ELF)
 
 **S1.4.3 Optimistic locking end-to-end**
-- [ ] ConflictBanner + simpan draf lokal + "Reapply"
-- [ ] Tes E2E dua sesi
+- [x] ConflictBanner + draf lokal + Reapply dan Discard; rollback dan toast untuk status
+- [x] Tes E2E dua sesi
 
 **S1.4.4 Realtime (SSE)**
-- [ ] Hub memori, heartbeat, `Last-Event-ID`, `resync`
-- [ ] Publikasi event setelah commit; hitung penerima
-- [ ] `lib/realtime.ts` + invalidasi query + `LiveIndicator`
-- [ ] Tes E2E ≤ 3 detik
+- [x] Hub memori, heartbeat, `Last-Event-ID`, `resync`
+- [x] Publikasi event setelah commit; izin penerima diperiksa saat pengiriman dan replay
+- [x] `lib/realtime.ts` + invalidasi query + indikator koneksi
+- [x] Tes E2E ≤ 3 detik
 
 ### E1.5 Navigasi dan pencarian
 
 **S1.5.1 Sidebar dan navigasi**
-- [ ] Pohon Space/project/folder, Personal, Shared with me (`/me/shared`), More, Recycle bin
-- [ ] Ciut/lebar tersimpan; navigasi keyboard
+- [x] Pohon Space/project/folder, Personal, Shared with me (`/me/shared`), serta rute Recycle bin melalui More. Daftar dan restore Recycle bin mengikuti S1.7.1.
+- [x] Ciut/lebar per user, navigasi keyboard, dan Space terakhir dengan fallback Personal
+- [x] `account_name` di `Me`, banner sesi kedaluwarsa, dan `Retry-After` pada 429 autentikasi
 
 **S1.5.2 Notifikasi dan Inbox**
-- [ ] Migrasi `notifications`; pembuat notifikasi (satu tempat, aturan WORKFLOWS §6)
-- [ ] Inbox UI + Mark all as read + Archive all; badge realtime
-- [ ] Email notifikasi lewat job
+- [x] Migrasi `notifications`; pembuat notifikasi mengikuti WORKFLOWS §6
+- [x] Inbox dengan filter Unread only, Mark all as read, Archive all, dan badge realtime
+- [x] Job email transaksional untuk event selain komentar biasa
 
 **S1.5.3 My to-do**
-- [ ] `GET /me/todo` + filter/sort; halaman UI
+- [x] `GET /me/todo` dan UI dengan filter, sort, pagination, dan perubahan status ber-ETag
 
 **S1.5.4 Pencarian global**
-- [ ] Kolom `tsvector` + indeks GIN; query berfilter akses
-- [ ] CommandPalette + `/search`; scope
-- [ ] Ukur p95 pada 10 ribu item
+- [x] Kolom `tsvector` + indeks GIN; query berfilter akses
+- [x] CommandPalette + `/search`; scope Everywhere, Space, dan Project
+- [x] p95 HTTP lokal 46,18 ms pada 10.000 Item dan 500 komentar
 
 ### E1.6 Admin user
 
 **S1.6.1 Manajemen user dan seat**
-- [ ] Invite/resend/deactivate/reactivate/ubah type + guard `last_admin` + hitung seat
-- [ ] UI Users + Groups + ringkasan seat; matriks `/settings/users/types`
-- [ ] Tes `seats_exhausted`, `last_admin`, pencabutan session saat nonaktif
+- [x] Invite/resend/deactivate/reactivate/ubah type + guard `last_admin` + hitung seat
+- [x] UI Users + Groups + ringkasan seat; matriks `/settings/users/types`
+- [x] Tes `seats_exhausted`, `last_admin`, pencabutan sesi, dan pembuatan token oleh worker undangan
 
 **S1.6.2 Profil dan pengaturan workspace**
-- [ ] `GET/PATCH /me`; halaman profil + workspace (density, tema)
-- [ ] Format tanggal/zona waktu diterapkan di UI
+- [x] `GET/PATCH /me`; halaman profil, density, tema, dan pintasan komentar
+- [x] Format tanggal, angka, zona waktu, dan awal minggu diterapkan di UI
 
 ### E1.7 Recycle bin
 
 **S1.7.1 Soft delete, restore, dan Recycle bin**
-- [ ] Hapus kaskade dengan `deleted_root_id`; restore + fallback ke root Space
-- [ ] Halaman Recycle bin + toast Undo
-- [ ] Pastikan item terhapus dikecualikan dari pencarian/to-do/notifikasi; tes multi-lokasi
+- [x] Hapus kaskade dengan `deleted_root_id`; restore + fallback ke root Space
+- [x] Halaman Recycle bin + toast Undo 8 detik
+- [x] Item terhapus dikecualikan dari pencarian/to-do/notifikasi; tes multi-lokasi
 
 ### E1.8 Hardening dan kesiapan pilot
 
 **S1.8.1 Tes E2E dan aksesibilitas**
-- [ ] 5 alur Playwright (login, buat proyek, buat task, drag status, komentar+mention → Inbox)
-- [ ] `axe` pada layar utama terang/gelap; masukkan ke CI
+- [x] 5 alur Playwright dengan PostgreSQL (login, buat proyek, buat task, drag status, komentar+mention → Inbox)
+- [x] `axe` pada layar utama terang/gelap; workflow CI setiap PR
 
 **S1.8.2 Performa dan kesiapan pilot**
-- [ ] Data uji 500/10 ribu item; ukur dan catat
-- [ ] Runbook (bootstrap, update, backup, restore, rotasi kunci, tambah seat)
-- [ ] Triase bug terbuka; pastikan tidak ada bug otorisasi/kehilangan data
+- [x] Data uji 500/10 ribu item; p95 dicatat di TESTING
+- [x] [Runbook pilot](PILOT_RUNBOOK.md) mencakup bootstrap, update, backup, restore, rotasi kunci, dan seat
+- [x] Triase pilot dan latihan rollback DB + file; regresi otorisasi dan pemulihan lulus pada fixture

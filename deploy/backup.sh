@@ -18,6 +18,7 @@ alert_failure() {
 trap alert_failure HUP INT TERM EXIT
 
 # Database first: files are immutable, so the following file snapshot is consistent with this dump.
+# Keep it so: a purge job (S1.7.1) must never delete stored files, or a restore can reference a file missing from this archive. Purge only after the retention window and outside backups.
 docker compose exec -T postgres pg_dump -U pms -d pms -Fc > "$backup_dir/$stamp-database.dump"
 docker compose --profile ops run --rm backup tar -czf "/backups/$stamp-files.tar.gz" -C /data/files .
 printf '%s\n' "image=${PMS_IMAGE:-unknown}" "created_at=$stamp" > "$backup_dir/$stamp-manifest.txt"

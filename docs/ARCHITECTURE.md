@@ -163,7 +163,7 @@ sequenceDiagram
 ```
 
 - Event hanya membawa **ID, tipe, versi**, tidak membawa isi data. Isi selalu diambil ulang lewat REST sehingga otorisasi ditegakkan di satu tempat.
-- Penerima dihitung saat publish: assignee, follower, dan user yang punya akses ke container item (jumlahnya kecil per instance).
+- Mutasi memublikasikan event setelah commit. Saat pengiriman langsung dan replay, server mengecek sesi aktif dan izin Item. Setiap ID container memerlukan izin baca pada container tersebut.
 - Klien yang terputus menyambung ulang dengan `Last-Event-ID`; hub menyimpan 1.000 event terakhir di memori. Jika ID terlalu lama, klien menerima event `resync` lalu membuang seluruh cache.
 - Target latensi PRD: ≤ 3 detik.
 - `shortcut: hub di memori, satu replika; ganti ke Postgres LISTEN/NOTIFY bila replika > 1`.
@@ -171,17 +171,17 @@ sequenceDiagram
 ## 8. Penyimpanan file
 
 ```go
-// server/internal/file/storage.go
+// server/internal/storage/local.go
 type Storage interface {
-    Put(ctx context.Context, key string, r io.Reader) (size int64, err error)
-    Get(ctx context.Context, key string) (io.ReadCloser, error)
-    Delete(ctx context.Context, key string) error
+    Put(io.Reader, int64) (File, error)
+    Open(string) (Reader, error)
+    Remove(string) error
 }
 ```
 
 - MVP: `LocalStorage` menulis ke `PMS_FILES_DIR`. Key berupa `ab/cd/<uuid>` (dua level direktori dari UUID). Nama file asli hanya disimpan di database.
 - **File tidak pernah ditimpa**; tiap upload mendapat key baru. Karena itu backup database lebih dulu lalu file selalu konsisten (OPS-01).
-- **Upload (SEC-01):** batas ukuran `PMS_MAX_UPLOAD_MB` (default 100) dicek lewat `http.MaxBytesReader`; tipe dideteksi dari isi (`http.DetectContentType` + sniff tambahan), ekstensi dan MIME dari klien diabaikan; ditolak jika termasuk executable (PE, ELF, Mach-O, script shell) atau arsip yang berisi executable tingkat atas. SHA-256 dihitung saat streaming dan disimpan.
+- **Upload (SEC-01):** batas ukuran `PMS_MAX_UPLOAD_MB` (default 100) dicek lewat `http.MaxBytesReader` dan batas byte file saat streaming. Tipe konten ditentukan oleh isi file. Format yang diterima adalah PDF, PNG, JPEG, GIF, WebP, teks biasa, dan ZIP. Pemeriksaan executable memakai nama dan isi, termasuk isi entri ZIP tingkat atas. SHA-256 dihitung saat streaming dan disimpan.
 - **Download:** hanya lewat `GET /attachments/{id}/download` yang memanggil `policy.Can(view)` atas item pemiliknya. Header `Content-Disposition: attachment`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy: sandbox`.
 - **Penghapusan:** hapus attachment = soft delete; file fisik dihapus oleh job River `purge_file` hanya ketika item dihapus permanen (BIN-03) atau saat attachment dihapus dan sudah melewati masa Recycle bin.
 - Titik ekstensi: `PydioStorage`, `S3Storage` (TASK-08B) cukup mengimplementasikan interface ini.
@@ -219,11 +219,11 @@ type Storage interface {
 |---|---|---|
 | `PMS_BASE_URL` | – (wajib) | URL publik; dipakai CSRF dan link email |
 | `PMS_DATABASE_URL` | – (wajib) | DSN Postgres |
-| `PMS_MAX_SEATS` | – (wajib) | Batas seat (USR-03) |
+| `MAX_SEATS` | 25 | Batas seat (USR-03, D-02) |
 | `PMS_FILES_DIR` | `/data/files` | Volume file |
 | `PMS_MAX_UPLOAD_MB` | `100` | SEC-01 |
 | `PMS_SMTP_HOST/PORT/USER/PASS/FROM` | kosong | Kosong → mode log |
-| `PMS_SECRET_KEY` | – (wajib) | Enkripsi rahasia TOTP (M3) dan tanda tangan |
+| `PMS_SECRET_KEY` | Belum dipakai di M1 | Direncanakan untuk enkripsi rahasia TOTP (M3) dan tanda tangan |
 | `PMS_DEFAULT_LOCALE` | `en` | Locale user baru |
 | `PMS_LOG_LEVEL` | `info` | |
 

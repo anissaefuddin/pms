@@ -4,9 +4,42 @@
 |---|---|
 | **Fungsi** | Skenario pengujian dan bukti validasi. Story hanya boleh `DONE` di [TASKS.md](TASKS.md) bila ada baris `PASS` di sini |
 | **Hasil** | `PASS` · `FAIL` · `SKIP` (tidak dijalankan atau di-skip oleh tes) · `N/A` |
-| **Terakhir dijalankan** | 12 November 2026, working tree `main` @ `36d0c6e` + file M0 belum ter-commit |
+| **Terakhir dijalankan** | 13 November 2026, working tree `main` @ `55d4723` dengan perubahan lokal |
 
 ## 1. Cara menjalankan
+
+| Story | Hasil | Bukti |
+|---|---|---|
+| S1.4.1 | PASS | `TestCommentLifecycle` menjalankan create/list, ekstraksi mention, penolakan URL rich text yang tidak aman, PATCH ber-ETag, konflik dan soft delete. Chrome memposting mention followers melalui API nyata. |
+| S1.4.2 | PASS | `TestLocalStorageLimitAndDigest` memeriksa hash, batas, dan cleanup. `TestCollaborationAccessAndAttachmentLifecycle` memeriksa multipart, hash database, ELF tersamar, ZIP berisi ELF, batas ukuran, header unduh, dan soft delete. Chrome memeriksa batas ukuran dan upload dari panel Item. |
+| S1.4.3 | PASS | `TestBrowserCollaboration` memakai dua sesi Chrome dan API nyata. Sesi kedua mendapat 409, melihat judul terbaru sambil mempertahankan draf, lalu Reapply berhasil dengan ETag baru. |
+| S1.1.4 | PASS | Suite Go memverifikasi akses komentar, metadata lampiran, dan file unduhan. Pengguna tanpa akses mendapat 404. Pengaturan required check pada GitHub terblokir dengan HTTP 403 karena paket repo privat. |
+| S1.4.4 | PASS | `TestEventReplayRespectsCurrentAccess` memeriksa replay, grant dicabut, dan resync setelah pergantian proses. `TestEventHeartbeat` mengamati heartbeat setelah 25 detik. Dua sesi Chrome di `TestBrowserCollaboration` memverifikasi perubahan judul tampil tanpa reload dalam batas tiga detik dan draf lokal tetap memakai ETag awal. |
+| S1.5.1 | PASS | `TestSharedNavigationFiltersAndPaginates` memeriksa nama workspace, batas akses dan cursor `/me/shared`. `TestRateLimitResponseIncludesRetryAfter` memeriksa detik tunggu pada 429. Chrome memverifikasi pohon keyboard, persistensi sidebar, menu More, tujuan login, banner expired, dan teks Retry-After. |
+| S1.5.2 | PASS | `TestNotificationWorkflow` memeriksa aturan penerima, deduplikasi mention/komentar, edit usang, antrean email, kepemilikan, filter, pagination, read dan archive. `TestNotificationReplayChecksCurrentAccess` memeriksa replay setelah grant dicabut. Dua sesi Chrome membuktikan badge naik tanpa reload dan notifikasi ditandai dibaca ketika Item dibuka. |
+| S1.5.2 SMTP eksternal | NOT RUN | Job River dan transport SMTP lokal diuji. Pengiriman melalui SMTP deployment belum diverifikasi. |
+| S1.5.3 | PASS | `TestMyTodoOnlyReturnsVisibleAssignedTasks` memeriksa akses, status, tanggal, sort, dan cursor. Chrome memeriksa filter/sort URL, halaman lanjutan, dan perubahan status melalui `If-Match`. |
+| S1.5.4 | PASS | Tes PostgreSQL memeriksa prefix dan batas izin hasil. Chrome memeriksa Ctrl/Cmd+K, scope, navigasi panah, sorotan, dan Show all. `TestSearchTenThousandItemsP95` mencatat p95 46,18 ms dan maksimum 50,24 ms dari 24 request HTTP setelah 4 pemanasan pada 10.000 Item dan 500 komentar. |
+| S1.6.1 | PASS | PostgreSQL memeriksa seat penuh, guard admin terakhir, sesi dicabut, resend, reaktivasi, dan grup. SMTP loopback membuktikan worker melewati job undangan lama dan menghasilkan token saat mengirim. Chrome memeriksa seat, form undangan, matriks policy, dan rute admin bagi non-admin. |
+| S1.6.2 | PASS | PostgreSQL memeriksa persistensi profil, validasi timezone, dan penolakan atribut admin. Chrome memeriksa tema, density, preferensi yang dimuat ulang, dan shortcut Enter. |
+| S1.7.1 | PASS | PostgreSQL memeriksa cascade, restore ke root, penempatan multi-lokasi, filter daftar, dan penolakan restore tanpa izin atau dari Space terhapus. Item terhapus dikecualikan dari pencarian, My to-do, dan mutasi yang membuat notifikasi. Chrome memeriksa Undo dan alasan restore terblokir. |
+| S1.8.1 | PASS | Playwright + Go API + PostgreSQL membuktikan login, buat project, buat task, drag status Board, dan mention masuk ke Inbox pengguna kedua. Axe terang/gelap memeriksa login, workspace, Settings, Table/Board, panel item, Inbox, My to-do, pencarian, dan Recycle bin. Workflow CI mengonfigurasi kedua suite untuk setiap PR. |
+| S1.8.2 | PASS | Table **897,5 ms** dan Board **491,8 ms** p95 dari 20 navigasi Chrome per tampilan setelah 2 pemanasan, 500 task pada project dan 10.000 task dalam PostgreSQL. Pencarian p95 **42,96 ms** pada 10.000 Item dan 500 komentar. Restore serta rollback DB dan file lulus di Compose terisolasi dengan kegagalan pemulihan file yang disuntikkan. |
+| Pilot deployment | NOT RUN | Workflow GitHub remote, SMTP instance, dan restore data pilot belum dijalankan pada checkpoint ini. |
+
+Jalankan regresi Go dengan PostgreSQL fixture. Set `PMS_TEST_BROWSER=1` dan `PLAYWRIGHT_CHANNEL=chrome` untuk menambahkan `TestBrowserCollaboration`. Set `PMS_TEST_PILOT_PERFORMANCE=1` untuk benchmark `TestBrowserPilotPerformance`. Instal dependensi `web`. Port Vite default 4173 dapat diubah dengan `PMS_TEST_BROWSER_PORT`. Suite Playwright standalone melewati tes live dan benchmark fixture.
+
+Set `PMS_TEST_SSE_HEARTBEAT=1` untuk menjalankan pengujian interval heartbeat 25 detik pada HTTP nyata.
+
+Regresi S1.4.4/S1.5.1 **PASS** untuk suite Go dengan PostgreSQL, heartbeat HTTP, kedua skenario Chrome live, 66 skenario Chrome standalone, dan rerun terarah 37 skenario Auth/Spaces/Items. Dua skenario live **SKIP** pada run standalone dan **PASS** lewat fixture Go.
+
+Regresi S1.5.2–S1.5.4 **PASS** untuk suite Go/PostgreSQL, 68 skenario Chrome standalone, dan kedua skenario Chrome live. Tes heartbeat periodik **SKIP** pada run ini, sesuai pengaturan opt-in.
+
+Regresi S1.6.1–S1.8.2 **PASS** untuk suite Go/PostgreSQL, SMTP loopback, 83 skenario Chrome standalone, tiga skenario live, dan dua benchmark browser. Lima tes fixture **SKIP** pada suite Chrome standalone dan dijalankan melalui harness Go.
+
+S1.2.6 DONE: suite Chrome Item/View 7/7 PASS, termasuk jumlah subitem pada kartu Board, pembuatan dengan parent tetap, dan navigasi kembali ke induk. Pengukuran Table pada fixture 500 Item dengan mock API mencatat p95 334 ms.
+
+S1.1.3 parsial: `TestItemSharesVersionedReplace` PASS di PostgreSQL untuk GET, replace dengan ETag, penolakan versi usang, dan akses hasil grant.
 
 S1.3.1: `TestViewLifecycle` PASS dengan PostgreSQL. Migrasi 00008, seed Table/Board, default Board sesuai input project, duplicate personal, visibilitas per pemilik, rename, posisi, pergantian default, dan proteksi hapus default diuji lewat HTTP.
 

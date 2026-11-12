@@ -62,7 +62,7 @@ stateDiagram-v2
 | Pemicu | Guard | Efek | Error |
 |---|---|---|---|
 | Hapus | Kemampuan `delete` (role `full`, plafon admin/regular) | `deleted_at/by/root_id` pada item dan turunan yang tidak punya lokasi hidup lain (DATABASE §5); lampiran tetap ada di disk; tidak ada notifikasi (hanya tercatat di `activity` container induk) | 403 tanpa `delete`; 404 tanpa akses |
-| Restore | Pelaku punya `delete` pada item atau `full` pada Space asal; parent-nya tidak berada di bin | `deleted_*` dikosongkan untuk seluruh `deleted_root_id` yang sama; lokasi dipulihkan, atau ke root Space asal bila parent sudah hilang | 409 jika Space asal juga terhapus |
+| Restore | Pelaku punya `delete` pada item. Jika parent sudah tidak hidup, diperlukan `create` di root Space asal | `deleted_*` dikosongkan untuk seluruh `deleted_root_id` yang sama. Lokasi kembali ke parent yang masih hidup atau dipulihkan bersama item. Lokasi lain jatuh ke root Space asal | 403 jika izin kurang; 409 jika Space asal juga terhapus |
 | Hapus permanen (M6) | Admin atau pemilik `full` | Baris dan lampiran dihapus; job `purge_file` menghapus file fisik | – |
 
 **Selesai ≠ hapus.** Item `Completed`/`Cancelled` tetap Aktif dan bisa dicari; hanya `DELETE` yang memindahkannya ke Recycle bin (PRD §7).
@@ -82,7 +82,7 @@ stateDiagram-v2
 
 | Pemicu | Guard | Efek | Error |
 |---|---|---|---|
-| Undang (USR-01) | Admin; email belum terdaftar; `seat terpakai < PMS_MAX_SEATS`; user type valid | Buat `users(status=invited)` + `user_tokens(invite, 7 hari)`; job `send_email` | 403 bukan admin; 409 email sudah ada; 422 `seats_exhausted` |
+| Undang (USR-01) | Admin; email belum terdaftar; `seat terpakai < MAX_SEATS`; user type valid | Buat `users(status=invited)` dan job `send_invitation_email`. Worker membuat token undangan berlaku 7 hari saat mengirim | 403 bukan admin; 409 email sudah ada; 422 `seats_exhausted` |
 | Terima undangan (AUTH-06) | Token valid, belum dipakai, belum kedaluwarsa; password lolos kebijakan (≥ 8 karakter, bukan 10 password umum terburuk); persetujuan ToS | `status=active`, simpan hash argon2id, token ditandai terpakai, buat Personal space, buat session | 410 token kedaluwarsa/terpakai; 422 password lemah |
 | Nonaktifkan (USR-03) | Admin; bukan admin aktif terakhir; bukan dirinya sendiri bila dia admin terakhir | `status=deactivated`; semua session dihapus; assignment dan item tetap; seat dibebaskan; follower di-skip saat notifikasi | 409 `last_admin` |
 | Aktifkan kembali | Admin; seat tersedia | `status=active`; user harus login ulang | 422 `seats_exhausted` |
