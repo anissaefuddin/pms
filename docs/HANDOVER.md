@@ -4,8 +4,8 @@
 |---|---|
 | **Dibaca pertama oleh AI berikutnya.** Verifikasi kondisi aktual (git, tes) sebelum melanjutkan; dokumen ini bisa usang |
 | **Sesi terakhir** | 12 November 2026 (Codex, melanjutkan handover Claude) |
-| **Git** | branch `main`, HEAD `36d0c6e` (sudah di-push ke `origin/main`) |
-| **Working tree** | Belum ter-commit: `docs/DECISIONS.md`, `docs/TESTING.md`, `docs/HANDOVER.md`, `docs/GANTT_SPIKE.md`, perubahan `docs/PRD_PMS.md`, `docs/TASKS.md`, `docs/WORKFLOWS.md`; **plus kode M0** (`server/`, `web/`, `deploy/`, `.github/`, `Dockerfile`, `Makefile`, `README.md`, `go.mod`, `go.sum`, `sqlc.yaml`, `api/oapi-codegen.yaml`, `.dockerignore`) dan `.gitignore` yang dimodifikasi |
+| **Git** | branch `main`; commit M0: `d2c9785` (server), `f831d5e` (web), `bf851a6` (build/deploy), `2eee4fe` (docs) + satu commit handover; **4–5 commit lokal di depan `origin/main`, belum di-push** |
+| **Working tree** | Bersih setelah commit handover (file lokal di luar git: `deploy/backups/`, `deploy/.env`, `web/node_modules`, `web/dist`) |
 
 ## 1. Status aktual
 
