@@ -1,0 +1,10 @@
+{
+  "nav.personal": "Personal settings",
+  "security.title": "Sign-in & security",
+  "nav.accountManagement": "Account management",
+  "nav.gantt": "Gantt spike",
+  "security.description": "Security settings for your account.",
+  "security.changePassword": "Change password",
+  "security.passwordChanged": "Password updated. Other sessions were signed out.",
+  "nav.label": "Settings navigation"
+}

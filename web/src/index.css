@@ -1,0 +1,237 @@
+/* Light tokens from ui-kit, with PMS density and dark overrides. */
+
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "./shadcn-tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-mono);
+  --font-heading: var(--font-sans);
+
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-border-subtle: var(--border-subtle);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+
+  --color-success: var(--success);
+  --color-success-subtle: var(--success-subtle);
+  --color-warning: var(--warning);
+  --color-warning-subtle: var(--warning-subtle);
+  --color-danger: var(--destructive);
+  --color-danger-subtle: var(--danger-subtle);
+  --color-info: var(--info);
+  --color-info-subtle: var(--info-subtle);
+
+  /* primitive.color.accent — named "cat" (categorical) here, not "accent", so
+     it can't be confused with shadcn's own --accent (the hover-surface color
+     used by menus/select items, e.g. --color-accent above). This set is for
+     color-coding identity/data (avatars, category tags, chart series) — never
+     status, never swapped per tenant. */
+  --color-cat-1: var(--cat-1); --color-cat-1-subtle: var(--cat-1-subtle);
+  --color-cat-2: var(--cat-2); --color-cat-2-subtle: var(--cat-2-subtle);
+  --color-cat-3: var(--cat-3); --color-cat-3-subtle: var(--cat-3-subtle);
+  --color-cat-4: var(--cat-4); --color-cat-4-subtle: var(--cat-4-subtle);
+  --color-cat-5: var(--cat-5); --color-cat-5-subtle: var(--cat-5-subtle);
+  --color-cat-6: var(--cat-6); --color-cat-6-subtle: var(--cat-6-subtle);
+
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+
+  /* primitive.radius, by name — not derived from one base multiplier */
+  --radius-sm: 4px;
+  --radius-md: 6px;   /* == control */
+  --radius-lg: 6px;   /* control: button / input / select / textarea */
+  --radius-xl: 8px;   /* card */
+  --radius-2xl: 8px;
+  --radius-3xl: 12px; /* modal: reserved for dialog/sheet, session 5 */
+  --radius-4xl: 999px; /* full: badge pill */
+}
+
+:root {
+  color-scheme: light;
+
+  /* semantic.color.background / surface / border / text */
+  --background: #F9FAFB;
+  --foreground: #111827;
+  --card: #FFFFFF;
+  --card-foreground: #111827;
+  --popover: #FFFFFF;
+  --popover-foreground: #111827;
+  --border: #E5E7EB;
+  --border-subtle: #F3F4F6; /* component.card.border, component.table.border */
+  --input: #E5E7EB;
+
+  /* semantic.color.background.subtle used for both "muted" and "secondary" —
+     design-tokens.json's component.button only defines primary/secondary/danger;
+     "secondary" there maps to shadcn's "outline" variant (white + border), so
+     shadcn's own filled "secondary" variant borrows background.subtle instead
+     of a token value that doesn't exist yet. */
+  --muted: #F3F4F6;
+  --muted-foreground: #6B7280;
+  --secondary: #F3F4F6;
+  --secondary-foreground: #111827;
+  --accent: #F3F4F6;
+  --accent-foreground: #111827;
+
+  /* semantic.color.status */
+  --destructive: #DC2626;
+  --destructive-foreground: #FFFFFF;
+  --danger-subtle: #FEF2F2;
+  --success: #16A34A;
+  --success-subtle: #F0FDF4;
+  --warning: #D97706;
+  --warning-subtle: #FFFBEB;
+  --info: #2563EB;
+  --info-subtle: #EFF6FF;
+
+  /* semantic.color.accent (primitive.color.accent.*) — categorical, not swapped per tenant */
+  --cat-1: #7C3AED; --cat-1-subtle: #F5F3FF; /* violet */
+  --cat-2: #0D9488; --cat-2-subtle: #F0FDFA; /* teal */
+  --cat-3: #E11D48; --cat-3-subtle: #FFF1F2; /* rose */
+  --cat-4: #EA580C; --cat-4-subtle: #FFF7ED; /* orange */
+  --cat-5: #0891B2; --cat-5-subtle: #ECFEFF; /* cyan */
+  --cat-6: #C026D3; --cat-6-subtle: #FDF4FF; /* fuchsia */
+
+  /* brand: the one block meant to change per tenant, see [data-brand] below */
+  --brand-primary: #2563EB;
+  --brand-primary-hover: #1D4ED8;
+  --brand-primary-subtle: #EFF6FF;
+  --primary: var(--brand-primary);
+  --brand-primary-foreground: #FFFFFF;
+  --primary-foreground: var(--brand-primary-foreground);
+  --ring: var(--brand-primary);
+
+  /* semantic.density — compact is the admin/internal default */
+  --row-h: 32px;
+  --density-padding: 8px;
+  --density-font-size: 13px;
+
+  /* sidebar: no dedicated token group in design-tokens.json — reuses
+     surface/background.subtle/border.subtle/brand, same as the Portal
+     Akademika test screen's sidebar (white bg, subtle border, brand active
+     state), so it stays consistent with what you already reviewed there. */
+  --sidebar: #FFFFFF;
+  --sidebar-foreground: #111827;
+  --sidebar-primary: var(--brand-primary);
+  --sidebar-primary-foreground: var(--brand-primary-foreground);
+  --sidebar-accent: #F3F4F6;
+  --sidebar-accent-foreground: #111827;
+  --sidebar-border: #F3F4F6;
+  --sidebar-ring: var(--brand-primary);
+
+  --font-sans: 'Inter Variable', 'Inter', system-ui, sans-serif;
+  --font-mono: 'JetBrains Mono Variable', 'JetBrains Mono', monospace;
+}
+
+.dark {
+  color-scheme: dark;
+  --background: #111827;
+  --foreground: #F9FAFB;
+  --card: #1F2937;
+  --card-foreground: var(--foreground);
+  --popover: var(--card);
+  --popover-foreground: var(--foreground);
+  --border: #4B5563;
+  --border-subtle: #374151;
+  --input: #6B7280;
+
+  --muted: #374151;
+  --muted-foreground: #D1D5DB;
+  --secondary: var(--muted);
+  --secondary-foreground: var(--foreground);
+  --accent: var(--muted);
+  --accent-foreground: var(--foreground);
+
+  --destructive: #FCA5A5;
+  --destructive-foreground: #450A0A;
+  --danger-subtle: #450A0A;
+  --success: #86EFAC;
+  --success-subtle: #052E16;
+  --warning: #FCD34D;
+  --warning-subtle: #451A03;
+  --info: #93C5FD;
+  --info-subtle: #172554;
+
+  --brand-primary: #93C5FD;
+  --brand-primary-hover: #BFDBFE;
+  --brand-primary-subtle: #172554;
+  --brand-primary-foreground: #111827;
+
+  --sidebar: var(--card);
+  --sidebar-foreground: var(--foreground);
+  --sidebar-accent: var(--muted);
+  --sidebar-accent-foreground: var(--foreground);
+  --sidebar-border: var(--border-subtle);
+}
+
+/* Tenant brand override example. */
+[data-brand="maloka"] {
+  --brand-primary: #0369A1;
+  --brand-primary-hover: #075985;
+  --brand-primary-subtle: #F0F9FF;
+}
+
+.dark[data-brand="maloka"] {
+  --brand-primary: #7DD3FC;
+  --brand-primary-hover: #BAE6FD;
+  --brand-primary-subtle: #0C4A6E;
+}
+
+.rdp-root {
+  --rdp-accent-color: var(--primary);
+  --rdp-accent-background-color: var(--brand-primary-subtle);
+}
+
+/* semantic.density.comfortable — end-user-facing portals */
+[data-density="comfortable"] {
+  --row-h: 40px;
+  --density-padding: 16px;
+  --density-font-size: 14px;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  html {
+    @apply font-sans scroll-smooth;
+  }
+  body {
+    @apply bg-background text-foreground antialiased overflow-x-hidden;
+    font-size: var(--density-font-size);
+    min-width: 320px;
+  }
+}
+
+@keyframes fade-in-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fade-in-up {
+  animation: fade-in-up 0.3s ease-out forwards;
+}

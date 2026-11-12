@@ -1,0 +1,13 @@
+{
+  "settings.label": "Settings",
+  "main.label": "Main navigation",
+  "search.label": "Search",
+  "inbox.label": "Inbox",
+  "more.label": "More",
+  "help.label": "Help",
+  "help.shortcuts": "Keyboard shortcuts",
+  "help.documentation": "Documentation",
+  "profile.label": "Account menu",
+  "profile.security": "Security",
+  "profile.logout": "Log out"
+}

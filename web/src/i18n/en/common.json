@@ -1,0 +1,10 @@
+{
+  "app.name": "PMS",
+  "health.title": "Hello",
+  "health.checking": "Checking server…",
+  "health.unavailable": "Server unavailable",
+  "health.running": "Server is running",
+  "feedback.loading": "Loading…",
+  "datePicker.placeholder": "Pick a date",
+  "dialog.close": "Close"
+}
