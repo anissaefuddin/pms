@@ -1,4 +1,4 @@
-# Runbook pilot M1
+# Runbook pilot M1 dan M2
 
 ## Bootstrap
 
@@ -16,6 +16,25 @@
 ## Update
 
 Dari `deploy`, jalankan `./update.sh ghcr.io/anissaefuddin/pms:vX.Y.Z` pada jendela pemeliharaan. Script membuat backup sebelum menarik image dan memeriksa readiness setelah start. Validasi login, proyek, Inbox, dan unduh lampiran, lalu catat tag baru di `PMS_IMAGE`. Jika migrasi gagal, pulihkan backup pra-update dengan tag lama dari manifest. Migrasi hanya maju.
+
+## Update ke M2 (migrasi 00015–00023)
+
+M2 menambah sembilan migrasi maju. Semuanya aditif dan mempertahankan data M1, tetapi tidak ada migrasi turun: satu-satunya jalan mundur adalah memulihkan backup pra-update (`./restore.sh` dengan timestamp dan tag M1 dari manifest). Karena itu `./backup.sh` harus selesai dan arsipnya diperiksa sebelum `./update.sh` dijalankan, dan jendela pemeliharaan harus cukup untuk restore.
+
+| Migrasi | Isi | Dampak ke data M1 |
+|---|---|---|
+| `00015` work schedule | tabel `work_schedules` (satu baris bawaan Senin–Jumat, 8 jam) dan `work_schedule_exceptions` | tidak ada |
+| `00016` dependensi | tabel `item_dependencies` | tidak ada |
+| `00017`, `00020` custom field | tabel `custom_fields` dan tipe lengkap | nilai disimpan di `items.fields` yang sudah ada |
+| `00018` tipe view | `gantt` dan `calendar` pada enum `view_type` | view Table dan Board tidak berubah |
+| `00019` effort | kolom effort dan alokasi | tanggal dan durasi lama dipertahankan |
+| `00021` progres project | kolom metode dan persen | project lama memakai metode bawaan |
+| `00022` | `items.status_changed_at`, diisi dari `updated_at` | "days in status" lama memakai tanggal ubah terakhir, bukan tanggal status berubah |
+| `00023` | `items.importance`, bawaan `normal` | semua item menjadi Normal |
+
+Setelah update, periksa berurutan: readiness; login; Settings → Work schedule memuat Senin–Jumat dan 8 jam; Space lama masih menampilkan Table dan Board dengan item yang sama; buka panel Item (Importance Normal, Locations berisi lokasi lama); tambah view Gantt dan Calendar lalu buka keduanya; buat satu custom field Number, isi nilai, dan tampilkan sebagai kolom; unduh satu lampiran. Pada instance dengan data besar, jalankan `./backup.sh` kedua setelah update untuk mendapat titik pulih bersih pada skema M2.
+
+Rollback: hentikan app, `./restore.sh <timestamp pra-update> --force`, lalu mulai dengan `PMS_IMAGE` M1. Data yang dibuat setelah update (dependensi, custom field, view Gantt/Calendar) hilang bersama restore. Jika hanya satu fitur bermasalah, lebih baik tidak rollback: hentikan pemakaian view atau field yang bermasalah dan laporkan. Kompatibilitas image M1 terhadap skema M2 belum diuji, dan view bertipe `gantt` atau `calendar` kemungkinan tidak dikenal image M1, jadi jangan menjalankan image M1 di atas database M2 tanpa restore.
 
 ## Backup dan restore
 

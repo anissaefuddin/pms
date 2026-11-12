@@ -62,6 +62,9 @@ test("view-only users cannot move items; axe is clean", async ({ page }) => {
   await cell(page, 10).getByRole("button", { name: /Launch prep/ }).focus();
   await page.keyboard.press("Alt+ArrowRight");
   expect(calls.some((call) => call.method === "PATCH")).toBe(false);
-  const found = await new AxeBuilder({ page }).include('[role="grid"]').analyze();
-  expect(found.violations).toEqual([]);
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.evaluate((dark) => document.documentElement.classList.toggle("dark", dark), scheme === "dark");
+    expect((await new AxeBuilder({ page }).include('[role="grid"]').analyze()).violations).toEqual([]);
+  }
 });

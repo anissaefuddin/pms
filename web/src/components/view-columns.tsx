@@ -7,8 +7,8 @@ import { Input } from "@/components/ui/input";
 import type { CustomField } from "@/lib/custom-fields";
 import { cardFieldGroups, columnGroups, fieldColumn, fieldFilterRef } from "@/lib/view-columns";
 
-export function ColumnPicker({ board, selected, fields, canSave, saving, onSave }: {
-  board?: boolean; selected: string[]; fields: CustomField[]; canSave: boolean; saving: boolean; onSave: (columns: string[]) => void;
+export function ColumnPicker({ board, fieldsOnly, selected, fields, canSave, saving, onSave }: {
+  board?: boolean; fieldsOnly?: boolean; selected: string[]; fields: CustomField[]; canSave: boolean; saving: boolean; onSave: (columns: string[]) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -24,7 +24,7 @@ export function ColumnPicker({ board, selected, fields, canSave, saving, onSave 
         <DialogTitle>{t(board ? "views.columns.cardTitle" : "views.columns.title")}</DialogTitle>
         <p className="text-sm text-muted-foreground">{t("views.columns.hint")}</p>
         <div className="max-h-[60vh] space-y-3 overflow-y-auto">
-          {(board ? cardFieldGroups : columnGroups).map((group) => <fieldset key={group.id} className="space-y-1">
+          {(fieldsOnly ? [] : board ? cardFieldGroups : columnGroups).map((group) => <fieldset key={group.id} className="space-y-1">
             <legend className="font-medium">{t(`views.columns.${group.id}`)}</legend>
             {group.columns.map((id) => box(id, t(`views.columns.${id}`)))}
           </fieldset>)}
@@ -32,7 +32,7 @@ export function ColumnPicker({ board, selected, fields, canSave, saving, onSave 
             <legend className="font-medium">{t("views.columns.custom")}</legend>
             {fields.length ? fields.map((field) => box(fieldColumn(field.id), field.name)) : <p className="text-sm text-muted-foreground">{t("views.columns.noFields")}</p>}
           </fieldset>
-          {!board && <fieldset disabled className="space-y-1">
+          {!board && !fieldsOnly && <fieldset disabled className="space-y-1">
             <legend className="font-medium">{t("views.columns.baselines")} <span className="text-xs font-normal text-muted-foreground">{t("views.columns.soon")}</span></legend>
             <p className="text-sm text-muted-foreground">{t("views.columns.baselineNote")}</p>
           </fieldset>}

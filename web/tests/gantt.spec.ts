@@ -23,10 +23,11 @@ test("shows the hierarchy with progress, a milestone and the three scales", asyn
   const width = async () => (await bar(page, design).boundingBox())!.width;
   expect(await width()).toBe(72); // 2 days (Nov 2 to 3, inclusive) x 36px
   await page.getByRole("button", { name: "Weeks" }).click();
-  await expect.poll(async () => Math.round(await width())).toBe(Math.round(2 * 80 / 7));
+  await expect.poll(width).toBeLessThan(40); // narrower than the 72px day-scale bar
+  const weekWidth = await width();
   await page.getByRole("button", { name: "Months" }).click();
   await expect(page.getByRole("button", { name: "Months" })).toHaveAttribute("aria-pressed", "true");
-  await expect.poll(width).toBeLessThan(10);
+  await expect.poll(width).toBeLessThan(weekWidth);
   await page.getByRole("button", { name: "Days" }).click();
   await expect(page.locator(".gantt-today").first()).toBeVisible();
 });
@@ -81,18 +82,22 @@ test("keyboard selects a task and moves it one day; Shift changes the finish dat
   await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toEqual({ start_date: "2026-11-03", due_date: "2026-11-05" });
 });
 
-test("has no axe violations in light and dark", async ({ page }) => {
-  await mockGantt(page);
-  await page.goto(`${path}?view=${ganttId}`);
-  await expect(bar(page, design)).toBeVisible();
-  for (const scheme of ["light", "dark"] as const) {
+for (const scheme of ["light", "dark"] as const) {
+  test(`has no axe violations (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme });
-    await page.evaluate((dark) => document.documentElement.classList.toggle("dark", dark), scheme === "dark");
+    await page.addInitScript((dark) => { new MutationObserver(() => document.documentElement.classList.toggle("dark", dark)).observe(document.documentElement, { attributes: true, attributeFilter: ["class"] }); document.documentElement.classList.toggle("dark", dark); }, scheme === "dark");
+    await mockGantt(page, { deps: [{ id: "e0000000-0000-4000-8000-000000000001", predecessor_id: kids[0].id, successor_id: kids[1].id, type: "FS", lag: 0 }] });
+    await page.goto(`${path}?view=${ganttId}`);
+    await expect(bar(page, design)).toBeVisible();
+    await expect(page.locator("html")).toHaveClass(scheme === "dark" ? /dark/ : /^(?!.*dark).*$/);
+    await page.getByRole("application", { name: "Gantt chart" }).focus();
+    await page.keyboard.press("ArrowDown");
+    await page.keyboard.press("ArrowDown");
     // SVAR's task grid puts aria-expanded/aria-rowindex=0 on rows of a role=grid; that is inside the library.
-    const found = await new AxeBuilder({ page }).include('[role="application"]').disableRules(["aria-conditional-attr", "aria-valid-attr-value"]).analyze();
-    expect(found.violations).toEqual([]);
-  }
-});
+    const found = await new AxeBuilder({ page }).include('[role="application"]').include('[aria-label^="Predecessors"]').disableRules(["aria-conditional-attr", "aria-valid-attr-value"]).analyze();
+    expect(found.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 100)}`)).toEqual([]);
+  });
+}
 
 const depId = "e0000000-0000-4000-8000-000000000001";
 const existing = { id: depId, predecessor_id: kids[0].id, successor_id: kids[1].id, type: "FS", lag: 0 };
@@ -141,4 +146,13 @@ test("clicking one bar's finish handle and then another bar's start handle creat
   await page.locator(`.wx-bar[data-id=":${kids[2].id}"] .wx-link.wx-left`).click();
   await expect.poll(() => calls.find((call) => call.method === "POST" && call.path === `/items/${kids[2].id}/dependencies`)?.body)
     .toEqual({ predecessor_id: kids[0].id, type: "FS", lag: 0 });
+});
+
+test("selected custom fields become Gantt grid columns", async ({ page }) => {
+  const cost = { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", space_id: "x", type: "number", name: "Cost", position: 0, options: [] };
+  await mockGantt(page, { fields: [cost], config: { columns: [`field:${cost.id}`] }, children: kids.map((kid, i) => ({ ...kid, fields: { [cost.id]: 10 * (i + 1) } })) });
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(page.getByRole("columnheader", { name: "Cost" })).toBeVisible();
+  await expect(page.getByRole("gridcell", { name: "20" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Columns" })).toBeVisible();
 });

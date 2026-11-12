@@ -10,6 +10,8 @@ import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
 import { itemKeys, listItems, type Item } from "@/lib/items";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
+import { customFieldText, type CustomField } from "@/lib/custom-fields";
+import { fieldColumn } from "@/lib/view-columns";
 
 type Dependency = components["schemas"]["ItemDependency"];
 type DependencyType = Dependency["type"];
@@ -29,8 +31,10 @@ export function ganttTask(item: Item, parent?: string): ITask {
   };
 }
 
-export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch }: {
+export function ItemGantt({ items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch }: {
   items: Item[];
+  customFields: CustomField[];
+  columns: string[];
   spaceId: string;
   parentId?: string;
   readonly: boolean;
@@ -48,6 +52,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
     queries: parents.map((id) => ({ queryKey: itemKeys.children(id), queryFn: () => listItems(`/api/v1/items/${id}/children`) })),
     combine: (results) => results.map((result) => result.data),
   });
+  const shownFields = useMemo(() => customFields.filter((field) => columns.includes(fieldColumn(field.id))), [customFields, columns]);
   const { tasks, byId } = useMemo(() => {
     const children = new Map(parents.map((id, index) => [id, branches[index] ?? []]));
     const out: ITask[] = [];
@@ -56,14 +61,14 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
       for (const item of list) {
         if (ancestors.has(item.id) || lookup.has(item.id)) continue;
         lookup.set(item.id, item);
-        out.push(ganttTask(item, parent));
+        out.push({ ...ganttTask(item, parent), ...Object.fromEntries(shownFields.map((field) => [`cf_${field.id}`, customFieldText(field, item.fields?.[field.id], i18n.language, item.field_people)])) });
         visit((children.get(item.id) ?? []).filter((child) => child.locations.some((loc) => loc.space_id === spaceId && loc.parent_item_id === item.id)),
           item.id, new Set([...ancestors, item.id]));
       }
     }
     visit(items, parentId, new Set());
     return { tasks: out, byId: lookup };
-  }, [items, parents, branches, spaceId, parentId]);
+  }, [items, parents, branches, spaceId, parentId, shownFields, i18n.language]);
   useEffect(() => {
     const wanted = [...byId.values()].filter((item) => item.child_count).map((item) => item.id).filter((id) => !parents.includes(id));
     if (wanted.length) setParents((list) => [...list, ...wanted]);
@@ -96,6 +101,15 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
   const changeDependency = (id: string, type: DependencyType) => mutate(() =>
     api(`/api/v1/dependencies/${id}`, { method: "PATCH", body: JSON.stringify({ type }) }));
   const removeDependency = (id: string) => mutate(() => api(`/api/v1/dependencies/${id}`, { method: "DELETE" }));
+
+  // SVAR only auto-sizes to a default window, so a plan months away from today would be off screen.
+  const range = useMemo(() => {
+    const dated = tasks.filter((task) => task.start && task.end);
+    if (!dated.length) return {};
+    const first = Math.min(...dated.map((task) => task.start!.getTime()));
+    const last = Math.max(...dated.map((task) => task.end!.getTime()));
+    return { start: addDays(new Date(first), -3), end: addDays(new Date(last), 21) };
+  }, [tasks]);
 
   const ref = useRef({ byId, readonly, onPatch, t, addDependency, removeDependency });
   ref.current = { byId, readonly, onPatch, t, addDependency, removeDependency };
@@ -184,13 +198,13 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
     <div role="application" aria-label={t("views.gantt.label")} tabIndex={0} onKeyDown={keyboard}
       className="gantt-chart h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
       <Theme>
-        <Gantt tasks={tasks} links={links} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
+        <Gantt tasks={tasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
           highlightTime={(date, unit) => unit === "day" && date.getTime() === today.getTime() ? "gantt-today" : ""} schedule={{ auto: false }} unscheduledTasks
-          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }]} />
+          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 }))]} />
       </Theme>
     </div>
     {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">
-      <h3 className="font-medium">{t("views.gantt.dependencies", { name: current.title })}</h3>
+      <h2 className="font-medium">{t("views.gantt.dependencies", { name: current.title })}</h2>
       <ul className="space-y-1">
         {deps.filter((dep) => dep.successor_id === current.id).map((dep) => <li key={dep.id} className="flex flex-wrap items-center gap-2">
           <span>{byId.get(dep.predecessor_id)?.title ?? dep.predecessor_id}</span>

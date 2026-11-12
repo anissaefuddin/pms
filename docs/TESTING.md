@@ -349,3 +349,17 @@ Batas: Gantt memuat anak per level lewat `GET /items/{id}/children` (satu reques
 
 Batas: sort Predecessors hanya menghitung jumlah pendahulu (belum kedalaman rantai). Calendar dan Gantt memuat seluruh daftar akar. Swimlane dikelompokkan di klien. Lag dependensi belum bisa diubah di UI. Filter People hanya lewat API. Tombol panah Gantt yang ditekan beruntun dijatuhkan selama PATCH sebelumnya berjalan.
 
+## M2 / S2.6.1 E2E, aksesibilitas, dan performa (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Tiga alur browser dengan Go API dan PostgreSQL | PASS | `PMS_TEST_BROWSER=1 go test -run TestBrowserM2Flows` 3/3 di Chrome. (1) libur 3 Mar 2027 ditambah lewat layar work schedule, pendahulu digeser dengan keyboard di Gantt dari 1 ke 2 Mar, penerus pindah ke 4 Mar (melewati libur), link tergambar dari server. (2) field Number dibuat lewat dialog, nilai diisi di panel, tampil di Table, kartu Board, dan kolom Gantt. (3) drag Calendar mengubah `start_date` dan `due_date`, drag swimlane dengan konfirmasi mengganti assignee lewat API. Tes dimasukkan ke CI. |
+| Matriks otorisasi | PASS | `TestM2AuthorizationMatrix`, 23 probe untuk pemilik, editor, pembaca, dan orang luar: 403 untuk pembaca, 404 untuk orang luar, predecessor tersembunyi terlihat seperti tidak ada, id field Space lain ditolak, definisi dan dependensi tidak berubah setelah panggilan yang ditolak. Tidak ada temuan IDOR. |
+| Axe | PASS | Gantt (bagan dan panel pendahulu) terang dan gelap dengan tema bagan yang benar-benar berganti, Calendar terang dan gelap, dialog custom field terang dan gelap (tes yang ada), layar work schedule. Pengecualian Gantt sama seperti S2.4.2 (`aria-conditional-attr`, `aria-valid-attr-value` milik SVAR). Judul panel pendahulu diperbaiki dari h3 ke h2 (heading-order). |
+| Performa | PASS | Rantai 500 task, PostgreSQL: p95 156 ms (batas 300 ms). Gantt 500 task: p95 953 sampai 1273 ms pada tiga kali jalan, batas 1,5 detik. Table 500 item: p95 366 ms. Sort dan filter field 500 item × 10 field di server: p95 96,5 ms. Tiga pengukuran UI memakai mock API lokal dan memuat aplikasi dari awal. |
+| Regresi | PASS dengan catatan | Seluruh suite Go dengan PostgreSQL dan `go vet` lulus. Chrome mock: 123 lulus, 2 gagal (Share dialog axe lama, commit `ad98a49`), 3 dilewati. Typecheck, lint, dan 8 tes unit lulus. |
+| Update migrasi 00015–00023 pada instance pilot | NOT RUN | Runbook diperbarui, tetapi urutan update dan rollback belum dilatih pada instance dengan data M1. Image M1 di atas skema M2 tidak diuji. |
+| Pilot Traefik dengan image GHCR | NOT RUN | Masih membutuhkan host, domain, dan akses. |
+
+Perubahan lain dalam story ini: Gantt memakai rentang tanggal dari data (sebelumnya jendela bawaan SVAR membuat rencana di luar bulan ini tidak terlihat) dan menyembunyikan bar item tanpa tanggal.
+

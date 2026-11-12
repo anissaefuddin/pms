@@ -74,7 +74,7 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 54 | S2.5.2 | Calendar (VIEW-06) | 2.5 | 107.5–110 | 22 | DONE |
 | 55 | S2.5.3 | Preset filter dan sort Space (SPC-03) | 1.5 | 110–111.5 | 23 | DONE |
 | 56 | S2.5.4 | UI multi-lokasi (SPC-10) | 1.5 | 111.5–113 | 23 | DONE |
-| 57 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2.0 | 113–115 | 23 | PROPOSED |
+| 57 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2.0 | 113–115 | 23 | DONE |
 | 58 | S3.1.1 | Editor workflow dan status (WF-02, WF-03A) | 4 | 115–119 | 24 | PROPOSED |
 | 59 | S3.2.1 | Approval pada item (SPC-12) | 3.5 | 119–122.5 | 25 | PROPOSED |
 | 60 | S3.2.2 | Blueprint (SPC-13) | 3 | 122.5–125.5 | 26 | PROPOSED |
@@ -513,10 +513,10 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E2.6 Hardening
 
 **S2.6.1 E2E, aksesibilitas, dan performa M2**
-- [ ] Tiga alur Playwright dan fixture data
-- [ ] Perluasan matriks otorisasi
-- [ ] Benchmark dan pencatatan p95
-- [ ] Perbarui `PILOT_RUNBOOK.md`, `TESTING.md`, `HANDOVER.md`
+- [x] Tiga alur Playwright dengan Go API dan PostgreSQL (`TestBrowserM2Flows`, `m2-live.spec.ts`), masuk CI
+- [x] Perluasan matriks otorisasi (`TestM2AuthorizationMatrix`: dependensi, custom field, lokasi, importance, IDOR)
+- [x] Benchmark dan pencatatan p95 di TESTING
+- [x] Perbarui `PILOT_RUNBOOK.md`, `TESTING.md`, `HANDOVER.md`. Gantt kini juga menampilkan custom field sebagai kolom
 
 ## M3
 

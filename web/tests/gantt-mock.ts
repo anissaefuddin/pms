@@ -10,9 +10,9 @@ export const kids = ["Design", "Build", "Ship"].map((title, i) => ({ ...base, id
   start_date: `2026-11-0${i * 2 + 2}`, due_date: `2026-11-0${i * 2 + 3}`, progress_percent: 25 * i, child_count: 0, locations: loc(project.id) }));
 export const milestone = { ...base, id: "c0000000-0000-4000-8000-000000000001", seq: 9, type: "task", title: "Go live", is_milestone: true, start_date: "2026-11-13", due_date: "2026-11-13", child_count: 0, locations: loc(project.id) };
 
-export function mockGantt(page: import("@playwright/test").Page, opts: { root?: object[]; children?: object[]; space?: string[]; conflict?: boolean; deps?: any[] } = {}) {
+export function mockGantt(page: import("@playwright/test").Page, opts: { root?: object[]; children?: object[]; space?: string[]; conflict?: boolean; deps?: any[]; fields?: any[]; config?: object } = {}) {
   let views = [{ id: "44444444-4444-4444-8444-444444444441", type: "table", name: "Table", visibility: "public", position: 0, is_default: true, config: {} },
-    { id: ganttId, type: "gantt", name: "Gantt", visibility: "public", position: 1, is_default: false, config: {} }];
+    { id: ganttId, type: "gantt", name: "Gantt", visibility: "public", position: 1, is_default: false, config: opts.config ?? {} }];
   const deps: any[] = [...(opts.deps ?? [])];
   const store = new Map<string, any>([project, ...kids, milestone].map((item) => [item.id, { ...item }]));
   return mockSpaces(page, { spaces: [{ ...marketing, my_capabilities: opts.space ?? ALL }], extra: {
@@ -20,6 +20,7 @@ export function mockGantt(page: import("@playwright/test").Page, opts: { root?: 
     [`GET ${path}/items`]: () => ({ body: { items: opts.root ?? [store.get(project.id)] } }),
     [`GET /items/${project.id}/children`]: () => ({ body: { items: opts.children ?? [...kids.map((k) => store.get(k.id)), store.get(milestone.id)] } }),
     "GET /workflows": { body: { items: [] } },
+    [`GET /spaces/${marketing.id}/custom-fields`]: { body: { items: opts.fields ?? [] } },
     "POST /dependencies/query": () => ({ body: { items: deps } }),
     ...Object.fromEntries([...store.keys()].map((id) => [`POST /items/${id}/dependencies`, (body: any) => {
       if (body.predecessor_id === milestone.id) return problem(422, "This link would create a cycle", "validation_failed");

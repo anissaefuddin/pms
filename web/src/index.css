@@ -246,3 +246,5 @@
   --wx-gantt-summary-border-color: #065f46;
 }
 .gantt-chart .gantt-today { background: rgb(220 38 38 / .18); }
+/* Items without dates get a row but no bar; SVAR draws them as a stray bar at the left edge. */
+.gantt-chart .wx-bar:not([style*="left"]) { display: none; }

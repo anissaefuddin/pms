@@ -83,3 +83,14 @@ export function aggregateCustomField(field: NumericField, values: readonly (Cust
     case "max": return numbers.reduce((highest, value) => Math.max(highest, value));
   }
 }
+
+/** Plain text for places that cannot render the editor's display (Gantt grid). */
+export function customFieldText(field: CustomField, value: CustomFieldValue | undefined, locale: string, people: Record<string, { name: string }> = {}) {
+  if (value == null || value === "") return "";
+  if (typeof value === "number") return formatCustomNumber(field, value, locale);
+  if (typeof value === "boolean") return value ? "✓" : "";
+  const ids = Array.isArray(value) ? value : [value];
+  if (field.type === "single_select" || field.type === "multi_select") return field.options.filter((option) => ids.includes(option.id)).map((option) => option.label).join(", ");
+  if (field.type === "people") return ids.map((id) => people[id]?.name ?? "").filter(Boolean).join(", ");
+  return String(value);
+}

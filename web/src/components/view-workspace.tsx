@@ -57,7 +57,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
     queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, undefined, fieldFilter || undefined, preset || undefined),
   });
   const fieldQueries = useQuery({
-    queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar) && !!spaceId,
+    queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/custom-fields`),
   });
   const customFields = (fieldQueries.data?.items ?? []).filter((field) => !field.archived_at);
@@ -154,10 +154,13 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
       scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
     {isGantt ? <>
+      {!!spaceId && customFields.length > 0 && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
+        fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
         <ItemGantt items={items.data} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen}
+          customFields={customFields} columns={visibleColumns(active.config, false)}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
     </> : isCalendar ? <>
