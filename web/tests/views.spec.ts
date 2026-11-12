@@ -63,7 +63,13 @@ test("Table keyboard edit and reorder, and URL restores the view state", async (
   });
   const source = grid.getByRole("row").filter({ has: page.getByRole("button", { name: "Roadmap", exact: true }) });
   await expect(source).toHaveAttribute("draggable", "true");
-  await source.dragTo(grid.getByRole("row").filter({ has: page.getByRole("button", { name: "Checklist", exact: true }) }));
+  // Drive the HTML5 drag events directly: native dragTo is unreliable on the absolutely positioned, virtualized rows.
+  const target = grid.getByRole("row").filter({ has: page.getByRole("button", { name: "Checklist", exact: true }) });
+  const data = await page.evaluateHandle(() => new DataTransfer());
+  await source.dispatchEvent("dragstart", { dataTransfer: data });
+  await target.dispatchEvent("dragover", { dataTransfer: data });
+  await target.dispatchEvent("drop", { dataTransfer: data });
+  await source.dispatchEvent("dragend", { dataTransfer: data });
   await expect.poll(() => calls.filter((call) => call.path.endsWith("/reorder")).at(-1)?.body.after_item_id).toBe(sibling.id);
   await page.getByRole("button", { name: "Table options" }).click();
   await page.getByRole("menuitem", { name: "Rename view" }).click();

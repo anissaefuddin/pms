@@ -43,9 +43,9 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 23 | S1.2.5 | Panel detail item | 3 | 35.5–38.5 | 8 | DONE |
 | 24 | S1.2.6 | Subitem | 1 | 38.5–39.5 | 8 | IN_PROGRESS |
 | 25 | S1.3.1 | API view | 1.5 | 39.5–41 | 9 | DONE |
-| 26 | S1.3.2 | Table view | 3.5 | 41–44.5 | 9 | PROPOSED |
-| 27 | S1.3.3 | Board view | 2.5 | 44.5–47 | 10 | PROPOSED |
-| 28 | S1.3.4 | ViewTabs dan pengelolaan view | 1.5 | 47–48.5 | 10 | PROPOSED |
+| 26 | S1.3.2 | Table view | 3.5 | 41–44.5 | 9 | DONE |
+| 27 | S1.3.3 | Board view | 2.5 | 44.5–47 | 10 | DONE |
+| 28 | S1.3.4 | ViewTabs dan pengelolaan view | 1.5 | 47–48.5 | 10 | DONE |
 | 29 | S1.4.1 | Komentar dan mention | 2.5 | 48.5–51 | 11 | PROPOSED |
 | 30 | S1.4.2 | Lampiran file | 2.5 | 51–53.5 | 11 | PROPOSED |
 | 31 | S1.4.3 | Optimistic locking end-to-end | 1 | 53.5–54.5 | 11 | PROPOSED |
