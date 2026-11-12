@@ -1,0 +1,1717 @@
+openapi: 3.0.3
+info:
+  title: PMS API
+  version: 0.1.0
+  description: |
+    Kontrak API PMS untuk milestone M0 + M1 (rilis 1.0 bertahap). Sumber kebenaran:
+    kode Go server stub (`oapi-codegen`) dan tipe TypeScript (`openapi-typescript`) dihasilkan dari file ini.
+
+    **Konvensi**
+    - Base path `/api/v1`. Autentikasi: cookie session `pms_session` (httpOnly). Tidak ada Bearer token.
+    - Request yang mengubah data wajib berasal dari origin yang sama (CSRF: pemeriksaan header `Origin`).
+    - Update item/komentar memakai optimistic locking: kirim `If-Match: "<version>"`. Versi usang → 409 `version_conflict`; tanpa header → 428 `precondition_required`. Setiap respons objek berversi memuat `ETag: "<version>"`.
+    - Item tanpa akses mengembalikan **404**, bukan 403 (lihat ARCHITECTURE §6.2).
+    - Daftar memakai pagination kursor: `?limit=` (default 50, maks 200) dan `?cursor=`; respons `{ items, next_cursor }`.
+    - Error memakai `application/problem+json` dengan `code` stabil (lihat WORKFLOWS §10).
+    - Rich text (deskripsi, komentar) adalah dokumen ProseMirror JSON, bukan HTML.
+servers:
+  - url: /api/v1
+tags:
+  - { name: auth, description: "Login, session, password, undangan" }
+  - { name: users, description: "Profil, user, grup, seat" }
+  - { name: spaces, description: "Space dan sharing" }
+  - { name: items, description: "Project, folder, task" }
+  - { name: views, description: "Definisi view Table dan Board" }
+  - { name: collaboration, description: "Komentar, lampiran, aktivitas" }
+  - { name: inbox, description: "Notifikasi, My to-do, pencarian" }
+  - { name: recycle, description: "Recycle bin" }
+  - { name: system, description: "Workflow, realtime, health" }
+
+security:
+  - cookieAuth: []
+
+paths:
+  # ───────────────────────── AUTH (M0) ─────────────────────────
+  /auth/login:
+    post:
+      tags: [auth]
+      operationId: login
+      summary: Login dengan email dan password (AUTH-01)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Berhasil; cookie session diset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /auth/logout:
+    post:
+      tags: [auth]
+      operationId: logout
+      summary: Logout dan cabut session ini (AUTH-02)
+      responses:
+        '204': { description: Berhasil }
+  /auth/password/forgot:
+    post:
+      tags: [auth]
+      operationId: forgotPassword
+      summary: Minta link reset password (AUTH-03); respons selalu sama
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email]
+              properties:
+                email: { type: string, format: email }
+      responses:
+        '202': { description: Diterima }
+        '429': { $ref: '#/components/responses/Problem' }
+  /auth/password/reset:
+    post:
+      tags: [auth]
+      operationId: resetPassword
+      summary: Set password baru dengan token reset (AUTH-03)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [token, password]
+              properties:
+                token: { type: string }
+                password: { type: string, format: password, minLength: 8 }
+      responses:
+        '204': { description: Password diganti; semua session dicabut }
+        '410': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /auth/password/change:
+    post:
+      tags: [auth]
+      operationId: changePassword
+      summary: Ganti password (AUTH-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [current_password, new_password]
+              properties:
+                current_password: { type: string, format: password }
+                new_password: { type: string, format: password, minLength: 8 }
+      responses:
+        '204': { description: Berhasil; session lain dicabut }
+        '401': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /auth/invitations/{token}:
+    get:
+      tags: [auth]
+      operationId: getInvitation
+      summary: Periksa token undangan (AUTH-06)
+      security: []
+      parameters:
+        - { name: token, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: Token valid
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/InvitationInfo' }
+        '410': { $ref: '#/components/responses/Problem' }
+  /auth/invitations/accept:
+    post:
+      tags: [auth]
+      operationId: acceptInvitation
+      summary: Terima undangan dan aktifkan akun (AUTH-06)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AcceptInvitationRequest' }
+      responses:
+        '200':
+          description: Akun aktif; cookie session diset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '410': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+
+  # ───────────────────────── PROFIL & USER ─────────────────────────
+  /me:
+    get:
+      tags: [users]
+      operationId: getMe
+      summary: User yang sedang login beserta pengaturan (SET-02)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '401': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [users]
+      operationId: updateMe
+      summary: Ubah profil dan pengaturan workspace (SET-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MeUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /users:
+    get:
+      tags: [users]
+      operationId: listUsers
+      summary: Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { name: q, in: query, schema: { type: string }, description: Cari nama atau email }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/UserStatus' } }
+        - { name: user_type, in: query, schema: { $ref: '#/components/schemas/UserType' } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/UserPage' }
+  /users/invitations:
+    post:
+      tags: [users]
+      operationId: inviteUser
+      summary: Undang user via email (USR-01); admin saja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/InviteRequest' }
+      responses:
+        '201':
+          description: Undangan dibuat dan email dijadwalkan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /users/{userId}:
+    parameters:
+      - { $ref: '#/components/parameters/UserId' }
+    get:
+      tags: [users]
+      operationId: getUser
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [users]
+      operationId: updateUser
+      summary: Ubah user type (USR-02); admin saja
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                user_type: { $ref: '#/components/schemas/UserType' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /users/{userId}/deactivate:
+    post:
+      tags: [users]
+      operationId: deactivateUser
+      summary: Nonaktifkan user dan bebaskan seat (USR-03)
+      parameters:
+        - { $ref: '#/components/parameters/UserId' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /users/{userId}/reactivate:
+    post:
+      tags: [users]
+      operationId: reactivateUser
+      summary: Aktifkan kembali user (USR-03)
+      parameters:
+        - { $ref: '#/components/parameters/UserId' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/User' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /users/{userId}/invitation/resend:
+    post:
+      tags: [users]
+      operationId: resendInvitation
+      summary: Kirim ulang atau perbarui undangan (USR-01)
+      parameters:
+        - { $ref: '#/components/parameters/UserId' }
+      responses:
+        '204': { description: Email dijadwalkan }
+  /seats:
+    get:
+      tags: [users]
+      operationId: getSeats
+      summary: Penggunaan seat (USR-03)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Seats' }
+  /groups:
+    get:
+      tags: [users]
+      operationId: listGroups
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Group' }
+    post:
+      tags: [users]
+      operationId: createGroup
+      summary: Buat grup (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80 }
+                member_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Group' }
+  /groups/{groupId}:
+    parameters:
+      - { name: groupId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [users]
+      operationId: replaceGroup
+      summary: Ganti nama dan anggota grup (admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, member_ids]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80 }
+                member_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Group' }
+    delete:
+      tags: [users]
+      operationId: deleteGroup
+      responses:
+        '204': { description: Dihapus }
+
+  # ───────────────────────── SPACES ─────────────────────────
+  /spaces:
+    get:
+      tags: [spaces]
+      operationId: listSpaces
+      summary: Space yang bisa diakses, termasuk Personal space (SPC-01, NAV-01)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Space' }
+    post:
+      tags: [spaces]
+      operationId: createSpace
+      summary: Buat Space (SPC-01)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SpaceCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Space' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: getSpace
+      responses:
+        '200':
+          description: OK
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Space' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [spaces]
+      operationId: updateSpace
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SpaceUpdate' }
+      responses:
+        '200':
+          description: OK
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Space' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [spaces]
+      operationId: deleteSpace
+      summary: Hapus Space beserta isinya ke Recycle bin; Personal space tidak bisa dihapus
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/shares:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: listSpaceShares
+      responses:
+        '200': { $ref: '#/components/responses/ShareList' }
+    put:
+      tags: [spaces]
+      operationId: replaceSpaceShares
+      summary: Ganti seluruh daftar share Space (SPC-11)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShareReplace' }
+      responses:
+        '200': { $ref: '#/components/responses/ShareList' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/items:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: listSpaceRootItems
+      summary: Item di root Space (SPC-02, SPC-04)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/ItemFilterType' }
+        - { $ref: '#/components/parameters/ItemFilterStatusGroup' }
+        - { $ref: '#/components/parameters/ItemFilterAssignee' }
+        - { $ref: '#/components/parameters/ItemSort' }
+      responses:
+        '200': { $ref: '#/components/responses/ItemPage' }
+  /spaces/{spaceId}/views:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [views]
+      operationId: listSpaceViews
+      responses:
+        '200': { $ref: '#/components/responses/ViewList' }
+
+  # ───────────────────────── ITEMS ─────────────────────────
+  /items:
+    post:
+      tags: [items]
+      operationId: createItem
+      summary: Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
+      description: |
+        `locations` wajib berisi minimal satu lokasi. Untuk subtask, isi `parent_item_id` dengan task induk.
+        `default_view_type` hanya berlaku untuk project/folder.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [items]
+      operationId: getItem
+      summary: Detail item (SPC-07, TASK-03)
+      responses:
+        '200':
+          description: OK
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [items]
+      operationId: updateItem
+      summary: Ubah item (nama, status, tanggal, deskripsi, assignee, milestone)
+      description: |
+        Field yang dikirim saja yang diubah. `status_id` memerlukan kemampuan `change_status`; field lain memerlukan `edit`.
+        Pergeseran urutan memakai endpoint `reorder`.
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemUpdate' }
+      responses:
+        '200':
+          description: OK
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [items]
+      operationId: deleteItem
+      summary: Pindahkan item dan turunannya ke Recycle bin (BIN-01)
+      responses:
+        '204': { description: Dipindahkan ke Recycle bin }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/children:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [items]
+      operationId: listItemChildren
+      summary: Anak langsung item (project/folder/task) untuk Table dan Board (VIEW-01, VIEW-02)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { $ref: '#/components/parameters/ItemFilterType' }
+        - { $ref: '#/components/parameters/ItemFilterStatusGroup' }
+        - { $ref: '#/components/parameters/ItemFilterAssignee' }
+        - { $ref: '#/components/parameters/ItemSort' }
+      responses:
+        '200': { $ref: '#/components/responses/ItemPage' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/reorder:
+    post:
+      tags: [items]
+      operationId: reorderItem
+      summary: Ubah urutan item di dalam satu lokasi (drag di Table/Board)
+      parameters:
+        - { $ref: '#/components/parameters/ItemId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [parent_item_id]
+              properties:
+                space_id: { type: string, format: uuid }
+                parent_item_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Lokasi yang diurutkan; null berarti root Space
+                after_item_id:
+                  type: string
+                  format: uuid
+                  nullable: true
+                  description: Taruh setelah item ini; null berarti paling atas
+      responses:
+        '204': { description: Diurutkan }
+        '404': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/locations:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    put:
+      tags: [items]
+      operationId: replaceItemLocations
+      summary: Ganti seluruh lokasi item (multi-lokasi)
+      description: Minimal satu lokasi. Menambah lokasi yang membentuk siklus ditolak dengan 422.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [locations]
+              properties:
+                locations:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/Location' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/shares:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [items]
+      operationId: listItemShares
+      responses:
+        '200': { $ref: '#/components/responses/ShareList' }
+    put:
+      tags: [items]
+      operationId: replaceItemShares
+      summary: Ganti seluruh daftar share item (SPC-11)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShareReplace' }
+      responses:
+        '200': { $ref: '#/components/responses/ShareList' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/views:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [views]
+      operationId: listItemViews
+      responses:
+        '200': { $ref: '#/components/responses/ViewList' }
+  /items/{itemId}/followers:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    put:
+      tags: [items]
+      operationId: replaceItemFollowers
+      summary: Ganti daftar follower (user yang menerima notifikasi item)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_ids]
+              properties:
+                user_ids:
+                  type: array
+                  items: { type: string, format: uuid }
+      responses:
+        '204': { description: OK }
+
+  # ───────────────────────── VIEWS ─────────────────────────
+  /views:
+    post:
+      tags: [views]
+      operationId: createView
+      summary: Tambah view (VIEW-08)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ViewCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/View' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /views/{viewId}:
+    parameters:
+      - { $ref: '#/components/parameters/ViewId' }
+    patch:
+      tags: [views]
+      operationId: updateView
+      summary: Rename, ubah visibilitas, urutan, atau set default (VIEW-08)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ViewUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/View' }
+    delete:
+      tags: [views]
+      operationId: deleteView
+      summary: Hapus view; view default tidak bisa dihapus
+      responses:
+        '204': { description: Dihapus }
+        '409': { $ref: '#/components/responses/Problem' }
+  /views/{viewId}/duplicate:
+    post:
+      tags: [views]
+      operationId: duplicateView
+      summary: Duplikat view (VIEW-08)
+      parameters:
+        - { $ref: '#/components/parameters/ViewId' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, visibility]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 80 }
+                visibility: { $ref: '#/components/schemas/ViewVisibility' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/View' }
+
+  # ───────────────────────── COLLABORATION ─────────────────────────
+  /items/{itemId}/comments:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [collaboration]
+      operationId: listComments
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CommentPage' }
+    post:
+      tags: [collaboration]
+      operationId: createComment
+      summary: Tambah komentar dengan @mention (TASK-07); memerlukan `comment`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { $ref: '#/components/schemas/RichText' }
+      responses:
+        '201':
+          description: Dibuat
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comment' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /comments/{commentId}:
+    parameters:
+      - { name: commentId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [collaboration]
+      operationId: updateComment
+      summary: Edit komentar sendiri
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [body]
+              properties:
+                body: { $ref: '#/components/schemas/RichText' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comment' }
+        '409': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [collaboration]
+      operationId: deleteComment
+      summary: Hapus komentar sendiri (atau semua bila `full`)
+      responses:
+        '204': { description: Dihapus }
+  /items/{itemId}/attachments:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [collaboration]
+      operationId: listAttachments
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Attachment' }
+    post:
+      tags: [collaboration]
+      operationId: uploadAttachment
+      summary: Unggah file (TASK-08A, SEC-01); memerlukan `attach`
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Attachment' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}/download:
+    get:
+      tags: [collaboration]
+      operationId: downloadAttachment
+      summary: Unduh file; izin dicek terhadap item pemilik (SEC-01)
+      parameters:
+        - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Isi file
+          headers:
+            Content-Disposition: { schema: { type: string }, description: Selalu `attachment` }
+            X-Content-Type-Options: { schema: { type: string, enum: [nosniff] } }
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}:
+    delete:
+      tags: [collaboration]
+      operationId: deleteAttachment
+      parameters:
+        - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/activity:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [collaboration]
+      operationId: listActivity
+      summary: Riwayat perubahan item (SPC-07)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ActivityPage' }
+
+  # ───────────────────────── INBOX, TO-DO, SEARCH ─────────────────────────
+  /notifications:
+    get:
+      tags: [inbox]
+      operationId: listNotifications
+      summary: Inbox (NAV-03)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { name: unread_only, in: query, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/NotificationPage' }
+  /notifications/read-all:
+    post:
+      tags: [inbox]
+      operationId: markAllNotificationsRead
+      summary: Mark all as read (NAV-03)
+      responses:
+        '204': { description: OK }
+  /notifications/archive-all:
+    post:
+      tags: [inbox]
+      operationId: archiveAllNotifications
+      summary: Archive all (NAV-03)
+      responses:
+        '204': { description: OK }
+  /notifications/{notificationId}:
+    patch:
+      tags: [inbox]
+      operationId: updateNotification
+      summary: Tandai dibaca atau arsipkan satu notifikasi
+      parameters:
+        - { name: notificationId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                read: { type: boolean }
+                archived: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Notification' }
+  /me/todo:
+    get:
+      tags: [inbox]
+      operationId: listMyTodo
+      summary: My to-do (NAV-05)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - name: filter
+          in: query
+          schema: { type: string, enum: [all, active, overdue], default: active }
+        - name: sort
+          in: query
+          schema:
+            type: string
+            enum: [priority, date, date_modified, date_created, status, importance, title]
+            default: date
+      responses:
+        '200': { $ref: '#/components/responses/ItemPage' }
+  /me/shared:
+    get:
+      tags: [inbox]
+      operationId: listSharedWithMe
+      summary: Item yang dibagikan langsung ke saya dan tidak berada di Space yang bisa saya akses (NAV-01)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200': { $ref: '#/components/responses/ItemPage' }
+  /search:
+    get:
+      tags: [inbox]
+      operationId: search
+      summary: Pencarian global (NAV-06)
+      parameters:
+        - { name: q, in: query, required: true, schema: { type: string, minLength: 1, maxLength: 200 } }
+        - { name: space_id, in: query, schema: { type: string, format: uuid } }
+        - { name: container_id, in: query, schema: { type: string, format: uuid } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 }, description: Maksimum per grup }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SearchResults' }
+
+  # ───────────────────────── RECYCLE ─────────────────────────
+  /recycle-bin:
+    get:
+      tags: [recycle]
+      operationId: listRecycleBin
+      summary: Item yang dihapus dan masih bisa dipulihkan (BIN-01)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200': { $ref: '#/components/responses/ItemPage' }
+  /recycle-bin/{itemId}/restore:
+    post:
+      tags: [recycle]
+      operationId: restoreItem
+      summary: Pulihkan item beserta turunannya (BIN-02)
+      parameters:
+        - { $ref: '#/components/parameters/ItemId' }
+      responses:
+        '200':
+          description: Dipulihkan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+
+  # ───────────────────────── SYSTEM ─────────────────────────
+  /workflows:
+    get:
+      tags: [system]
+      operationId: listWorkflows
+      summary: Workflow dan statusnya (WF-01; hanya baca di M1)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Workflow' }
+  /events:
+    get:
+      tags: [system]
+      operationId: streamEvents
+      summary: Aliran event realtime (SSE)
+      description: |
+        `text/event-stream`. Nama event: `item.created`, `item.updated`, `item.deleted`, `comment.created`,
+        `notification.created`, `resync`. Data hanya berisi ID, tipe, dan versi (lihat `RealtimeEvent`);
+        klien mengambil data lengkap lewat REST. `Last-Event-ID` didukung untuk menyambung ulang.
+      parameters:
+        - { name: Last-Event-ID, in: header, schema: { type: string } }
+      responses:
+        '200':
+          description: Aliran event
+          content:
+            text/event-stream:
+              schema: { $ref: '#/components/schemas/RealtimeEvent' }
+  /healthz:
+    get:
+      tags: [system]
+      operationId: healthz
+      summary: Proses hidup
+      security: []
+      responses:
+        '200': { description: OK }
+  /readyz:
+    get:
+      tags: [system]
+      operationId: readyz
+      summary: Database terjangkau dan migrasi terpasang
+      security: []
+      responses:
+        '200': { description: Siap }
+        '503': { description: Belum siap }
+
+components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: pms_session
+
+  headers:
+    ETag:
+      description: Versi objek dalam tanda kutip, mis. `"7"`
+      schema: { type: string }
+
+  parameters:
+    Limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+    Cursor:
+      name: cursor
+      in: query
+      schema: { type: string }
+    IfMatch:
+      name: If-Match
+      in: header
+      required: true
+      description: Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+      schema: { type: string }
+    SpaceId:
+      name: spaceId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ItemId:
+      name: itemId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    UserId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ViewId:
+      name: viewId
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    ItemFilterType:
+      name: type
+      in: query
+      schema:
+        type: array
+        items: { $ref: '#/components/schemas/ItemType' }
+      style: form
+      explode: false
+    ItemFilterStatusGroup:
+      name: status_group
+      in: query
+      schema:
+        type: array
+        items: { $ref: '#/components/schemas/StatusGroup' }
+      style: form
+      explode: false
+    ItemFilterAssignee:
+      name: assignee
+      in: query
+      description: ID user, atau `me`, atau `none` untuk belum ditugaskan
+      schema: { type: string }
+    ItemSort:
+      name: sort
+      in: query
+      schema:
+        type: string
+        enum: [manual, title, status, due_date, start_date, created_at, updated_at]
+        default: manual
+
+  responses:
+    Problem:
+      description: Error
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    ItemPage:
+      description: OK
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/ItemPage' }
+    ViewList:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items]
+            properties:
+              items:
+                type: array
+                items: { $ref: '#/components/schemas/View' }
+    ShareList:
+      description: OK
+      content:
+        application/json:
+          schema:
+            type: object
+            required: [items]
+            properties:
+              items:
+                type: array
+                items: { $ref: '#/components/schemas/Share' }
+
+  schemas:
+    # ── Umum ──
+    Problem:
+      type: object
+      required: [type, title, status, code, request_id]
+      properties:
+        type: { type: string, example: about:blank }
+        title: { type: string }
+        status: { type: integer }
+        code:
+          type: string
+          description: Kode stabil, lihat WORKFLOWS §10
+          example: version_conflict
+        detail: { type: string }
+        request_id: { type: string }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [field, message]
+            properties:
+              field: { type: string }
+              message: { type: string }
+    RichText:
+      type: object
+      description: Dokumen ProseMirror JSON (TipTap). Server memvalidasi node dan mark yang diizinkan.
+      required: [type]
+      properties:
+        type: { type: string, enum: [doc] }
+        content:
+          type: array
+          items: { type: object }
+      additionalProperties: true
+    Page:
+      type: object
+      properties:
+        next_cursor: { type: string, nullable: true }
+
+    # ── Auth & user ──
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email: { type: string, format: email }
+        password: { type: string, format: password }
+    InvitationInfo:
+      type: object
+      required: [email, expires_at]
+      properties:
+        email: { type: string, format: email }
+        invited_by_name: { type: string }
+        expires_at: { type: string, format: date-time }
+    AcceptInvitationRequest:
+      type: object
+      required: [token, first_name, last_name, password, accept_terms]
+      properties:
+        token: { type: string }
+        first_name: { type: string, minLength: 1, maxLength: 80 }
+        last_name: { type: string, minLength: 1, maxLength: 80 }
+        password: { type: string, format: password, minLength: 8 }
+        department: { type: string, maxLength: 80 }
+        job_title: { type: string, maxLength: 80 }
+        accept_terms: { type: boolean, enum: [true] }
+    UserType:
+      type: string
+      enum: [admin, regular, external, collaborator, viewer]
+    UserStatus:
+      type: string
+      enum: [invited, active, deactivated]
+    User:
+      type: object
+      required: [id, email, first_name, last_name, user_type, status]
+      properties:
+        id: { type: string, format: uuid }
+        email: { type: string, format: email }
+        first_name: { type: string }
+        last_name: { type: string }
+        user_type: { $ref: '#/components/schemas/UserType' }
+        status: { $ref: '#/components/schemas/UserStatus' }
+        job_title: { type: string, nullable: true }
+        department: { type: string, nullable: true }
+        last_login_at: { type: string, format: date-time, nullable: true }
+    UserPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/User' }
+    Me:
+      allOf:
+        - $ref: '#/components/schemas/User'
+        - type: object
+          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, capabilities]
+          properties:
+            company: { type: string, nullable: true }
+            country: { type: string, nullable: true }
+            location: { type: string, nullable: true }
+            phone: { type: string, nullable: true }
+            locale: { type: string, example: en }
+            timezone: { type: string, example: Asia/Jakarta }
+            date_format: { type: string, enum: [dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd] }
+            time_format: { type: string, enum: ['12h', '24h'] }
+            week_start: { type: string, enum: [monday, sunday, saturday] }
+            personal_space_id: { type: string, format: uuid }
+            capabilities:
+              type: object
+              description: Kemampuan global; kemampuan per item dihitung server
+              properties:
+                manage_users: { type: boolean }
+                create_space: { type: boolean }
+    MeUpdate:
+      type: object
+      properties:
+        first_name: { type: string, minLength: 1, maxLength: 80 }
+        last_name: { type: string, minLength: 1, maxLength: 80 }
+        company: { type: string, maxLength: 120 }
+        job_title: { type: string, maxLength: 80 }
+        department: { type: string, maxLength: 80 }
+        country: { type: string, maxLength: 2 }
+        location: { type: string, maxLength: 120 }
+        phone: { type: string, maxLength: 32 }
+        locale: { type: string, enum: [en] }
+        timezone: { type: string }
+        date_format: { type: string, enum: [dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd] }
+        time_format: { type: string, enum: ['12h', '24h'] }
+        week_start: { type: string, enum: [monday, sunday, saturday] }
+    InviteRequest:
+      type: object
+      required: [email, user_type]
+      properties:
+        email: { type: string, format: email }
+        user_type: { $ref: '#/components/schemas/UserType' }
+        message: { type: string, maxLength: 500 }
+        share:
+          type: array
+          description: Space atau item yang langsung dibagikan ke user baru
+          items:
+            type: object
+            required: [target_type, target_id, role]
+            properties:
+              target_type: { $ref: '#/components/schemas/ShareTargetType' }
+              target_id: { type: string, format: uuid }
+              role: { $ref: '#/components/schemas/ShareRole' }
+    Seats:
+      type: object
+      required: [max, used, pending, available]
+      properties:
+        max: { type: integer, description: Dari env PMS_MAX_SEATS }
+        used: { type: integer, description: User berstatus active }
+        pending: { type: integer, description: User berstatus invited }
+        available: { type: integer }
+    Group:
+      type: object
+      required: [id, name, member_ids]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        member_ids:
+          type: array
+          items: { type: string, format: uuid }
+
+    # ── Space & share ──
+    SpaceKind:
+      type: string
+      enum: [shared, personal]
+    Space:
+      type: object
+      required: [id, name, kind, version]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string, nullable: true }
+        kind: { $ref: '#/components/schemas/SpaceKind' }
+        version: { type: integer }
+        my_capabilities:
+          type: array
+          items: { $ref: '#/components/schemas/Capability' }
+    SpaceCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 1000 }
+        shares:
+          type: array
+          items: { $ref: '#/components/schemas/ShareInput' }
+    SpaceUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 1000, nullable: true }
+    Capability:
+      type: string
+      enum: [view, comment, change_status, attach, edit, create, delete, share]
+    ShareRole:
+      type: string
+      enum: [read, limited, editor, full]
+    ShareTargetType:
+      type: string
+      enum: [space, item]
+    PrincipalType:
+      type: string
+      enum: [user, group]
+    ShareInput:
+      type: object
+      required: [principal_type, principal_id, role]
+      properties:
+        principal_type: { $ref: '#/components/schemas/PrincipalType' }
+        principal_id: { type: string, format: uuid }
+        role: { $ref: '#/components/schemas/ShareRole' }
+    Share:
+      allOf:
+        - $ref: '#/components/schemas/ShareInput'
+        - type: object
+          required: [principal_name]
+          properties:
+            principal_name: { type: string }
+            inherited_from:
+              type: string
+              format: uuid
+              nullable: true
+              description: Container tempat share ini berasal bila diwarisi
+    ShareReplace:
+      type: object
+      required: [shares]
+      properties:
+        shares:
+          type: array
+          items: { $ref: '#/components/schemas/ShareInput' }
+
+    # ── Item ──
+    ItemType:
+      type: string
+      enum: [project, folder, task]
+    StatusGroup:
+      type: string
+      enum: [active, completed, deferred, cancelled]
+    Status:
+      type: object
+      required: [id, name, color, group]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        color: { type: string, description: "Nama token warna, bukan hex" }
+        group: { $ref: '#/components/schemas/StatusGroup' }
+    Workflow:
+      type: object
+      required: [id, name, is_default, statuses]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        is_default: { type: boolean }
+        statuses:
+          type: array
+          items: { $ref: '#/components/schemas/Status' }
+    Location:
+      type: object
+      required: [space_id]
+      properties:
+        space_id: { type: string, format: uuid }
+        parent_item_id:
+          type: string
+          format: uuid
+          nullable: true
+          description: null berarti langsung di root Space
+    UserRef:
+      type: object
+      required: [id, name]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+    Item:
+      type: object
+      required: [id, seq, type, title, version, locations, assignees, created_at, updated_at, my_capabilities]
+      properties:
+        id: { type: string, format: uuid }
+        seq: { type: integer, format: int64, description: ID yang ditampilkan ke user }
+        type: { $ref: '#/components/schemas/ItemType' }
+        title: { type: string }
+        description: { $ref: '#/components/schemas/RichText' }
+        status: { $ref: '#/components/schemas/Status' }
+        start_date: { type: string, format: date, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+        duration_days: { type: integer, nullable: true }
+        is_milestone: { type: boolean }
+        owner: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
+        default_workflow_id: { type: string, format: uuid, nullable: true }
+        default_view_type: { type: string, enum: [table, board], nullable: true }
+        assignees:
+          type: array
+          items: { $ref: '#/components/schemas/UserRef' }
+        locations:
+          type: array
+          items: { $ref: '#/components/schemas/Location' }
+        child_count: { type: integer }
+        attachment_count: { type: integer }
+        comment_count: { type: integer }
+        completed_at: { type: string, format: date-time, nullable: true }
+        version: { type: integer }
+        created_by: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        deleted_at: { type: string, format: date-time, nullable: true }
+        my_capabilities:
+          type: array
+          items: { $ref: '#/components/schemas/Capability' }
+    ItemPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Item' }
+    ItemCreate:
+      type: object
+      required: [type, title, locations]
+      properties:
+        type: { $ref: '#/components/schemas/ItemType' }
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { $ref: '#/components/schemas/RichText' }
+        status_id: { type: string, format: uuid, description: Default status pertama workflow container }
+        start_date: { type: string, format: date, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+        duration_days: { type: integer, minimum: 0, nullable: true }
+        is_milestone: { type: boolean }
+        owner_id: { type: string, format: uuid, description: Hanya project }
+        default_workflow_id: { type: string, format: uuid, description: Hanya project/folder }
+        default_view_type: { type: string, enum: [table, board], description: Hanya project/folder }
+        assignee_ids:
+          type: array
+          items: { type: string, format: uuid }
+        locations:
+          type: array
+          minItems: 1
+          items: { $ref: '#/components/schemas/Location' }
+        shares:
+          type: array
+          description: Hanya project/folder (SPC-05 Sharing)
+          items: { $ref: '#/components/schemas/ShareInput' }
+    ItemUpdate:
+      type: object
+      properties:
+        title: { type: string, minLength: 1, maxLength: 500 }
+        description: { $ref: '#/components/schemas/RichText' }
+        status_id: { type: string, format: uuid }
+        start_date: { type: string, format: date, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+        duration_days: { type: integer, minimum: 0, nullable: true }
+        is_milestone: { type: boolean }
+        owner_id: { type: string, format: uuid }
+        assignee_ids:
+          type: array
+          items: { type: string, format: uuid }
+
+    # ── View ──
+    ViewType:
+      type: string
+      enum: [table, board]
+    ViewVisibility:
+      type: string
+      enum: [public, personal]
+    View:
+      type: object
+      required: [id, type, name, visibility, position, is_default]
+      properties:
+        id: { type: string, format: uuid }
+        scope_space_id: { type: string, format: uuid, nullable: true }
+        scope_item_id: { type: string, format: uuid, nullable: true }
+        type: { $ref: '#/components/schemas/ViewType' }
+        name: { type: string }
+        visibility: { $ref: '#/components/schemas/ViewVisibility' }
+        position: { type: integer }
+        is_default: { type: boolean }
+        config:
+          type: object
+          description: Kolom, urutan kolom, grouping, dan preset bawaan view
+          additionalProperties: true
+    ViewCreate:
+      type: object
+      required: [type, name, visibility]
+      properties:
+        scope_space_id: { type: string, format: uuid }
+        scope_item_id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/ViewType' }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        visibility: { $ref: '#/components/schemas/ViewVisibility' }
+        config: { type: object, additionalProperties: true }
+    ViewUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        visibility: { $ref: '#/components/schemas/ViewVisibility' }
+        position: { type: integer }
+        is_default: { type: boolean }
+        config: { type: object, additionalProperties: true }
+
+    # ── Kolaborasi ──
+    Comment:
+      type: object
+      required: [id, item_id, author, body, version, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        author: { $ref: '#/components/schemas/UserRef' }
+        body: { $ref: '#/components/schemas/RichText' }
+        version: { type: integer }
+        created_at: { type: string, format: date-time }
+        edited_at: { type: string, format: date-time, nullable: true }
+    CommentPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Comment' }
+    Attachment:
+      type: object
+      required: [id, item_id, filename, content_type, size_bytes, uploader, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        filename: { type: string }
+        content_type: { type: string, description: Hasil deteksi server }
+        size_bytes: { type: integer, format: int64 }
+        uploader: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
+    Activity:
+      type: object
+      required: [id, actor, action, changes, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        actor: { $ref: '#/components/schemas/UserRef' }
+        action:
+          type: string
+          example: item.updated
+        changes:
+          type: object
+          description: 'Pasangan `{field: {from, to}}`'
+          additionalProperties:
+            type: object
+            properties:
+              from: {}
+              to: {}
+        created_at: { type: string, format: date-time }
+    ActivityPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Activity' }
+
+    # ── Inbox & search ──
+    NotificationKind:
+      type: string
+      enum: [mention, assigned, status_changed, comment, shared]
+    Notification:
+      type: object
+      required: [id, kind, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { $ref: '#/components/schemas/NotificationKind' }
+        actor: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
+        item_id: { type: string, format: uuid, nullable: true }
+        item_title: { type: string, nullable: true }
+        snippet: { type: string, nullable: true }
+        read_at: { type: string, format: date-time, nullable: true }
+        archived_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    NotificationPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          required: [items, unread_count]
+          properties:
+            unread_count: { type: integer }
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/Notification' }
+    SearchResults:
+      type: object
+      required: [items, comments, users]
+      properties:
+        items:
+          type: array
+          description: Task, project, dan folder
+          items: { $ref: '#/components/schemas/Item' }
+        comments:
+          type: array
+          items:
+            type: object
+            required: [comment_id, item_id, item_title, snippet]
+            properties:
+              comment_id: { type: string, format: uuid }
+              item_id: { type: string, format: uuid }
+              item_title: { type: string }
+              snippet: { type: string }
+        users:
+          type: array
+          items: { $ref: '#/components/schemas/UserRef' }
+
+    # ── Realtime ──
+    RealtimeEvent:
+      type: object
+      required: [type, id]
+      properties:
+        type:
+          type: string
+          enum: [item.created, item.updated, item.deleted, comment.created, notification.created, resync]
+        id: { type: string, format: uuid, description: ID entitas yang berubah }
+        item_id: { type: string, format: uuid, description: Untuk event komentar }
+        version: { type: integer }
+        container_ids:
+          type: array
+          description: Container yang daftarnya perlu dimuat ulang
+          items: { type: string, format: uuid }
