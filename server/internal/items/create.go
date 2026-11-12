@@ -153,7 +153,7 @@ VALUES($1,$2::item_type,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN 
 		}
 	}
 	sort.Strings(keys)
-	if err := applyFields(ctx, tx, id.String(), kind, fields, keys, false); err != nil {
+	if err := applyFields(ctx, tx, actor, id.String(), kind, fields, keys, false); err != nil {
 		return Detail{}, err
 	}
 	for _, loc := range locations {

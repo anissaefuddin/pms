@@ -103,8 +103,10 @@ Satu tabel `items` untuk semua tipe (PRD §4). `type` = `project` | `folder` | `
 | `status_id` | FK ke `statuses`. Grup status (Active/Completed/Deferred/Cancelled) diturunkan lewat join, tidak disalin ke item |
 | `start_date`, `due_date`, `duration_days` | `date` dan `integer`. `CHECK (due_date >= start_date)`. Perhitungan hari kerja dilakukan aplikasi, bukan database (M2) |
 | `is_milestone` | `boolean`; milestone selalu `duration_days = 0` |
+| `effort_minutes` | Menit kerja sebagai `integer` nonnegatif. `NULL` berarti effort belum ditetapkan. Migrasi `00019` mempertahankan tanggal dan durasi lama |
+| `progress_method`, `progress_percent` | Migrasi `00021`. Metode tersimpan hanya pada Project dengan default baca `task_count`. Persen manual 0–100 tersimpan hanya pada Task. Persen dan risiko Project dihitung saat baca mengikuti WORKFLOWS §1.1 |
 | `description` | `jsonb` ProseMirror; teks datar untuk pencarian diekstrak aplikasi ke kolom `description_text` |
-| `fields` | `jsonb default '{}'` — disiapkan untuk custom field M2; tidak dipakai M1 |
+| `fields` | `jsonb default '{}'` — berkunci UUID definisi `custom_fields`. Nilai select berupa UUID opsi atau array UUID opsi. PATCH menggabungkan kunci yang dikirim dan `null` menghapus nilai. |
 | `version` | Optimistic locking (SEC-03): `UPDATE … WHERE id = $1 AND version = $2`, nol baris terpengaruh → 409 |
 | `search` | `tsvector` generated: `setweight(to_tsvector('simple', title),'A') \|\| setweight(to_tsvector('simple', description_text),'B')`; indeks GIN |
 | `completed_at` | Diisi saat status masuk grup Completed, dikosongkan bila keluar |
@@ -150,6 +152,7 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 | Tabel | Keputusan |
 |---|---|
 | `item_assignees`, `item_followers` | Tabel penghubung `(item_id, user_id)`. Pembuat dan assignee otomatis menjadi follower. Indeks `(user_id, item_id)` mendukung My to-do |
+| `item_assignees.allocation_unit`, `allocation_value` | Pasangan nullable `percent` atau `minutes_per_day` dengan nilai integer nonnegatif. Alokasi tersimpan selama keanggotaan dipertahankan. Menghapus assignee menghapus alokasinya |
 | `comments` | `body jsonb` ProseMirror, `body_text` untuk pencarian, `version`, `edited_at`, soft delete. Mention diekstrak dari JSON saat simpan ke `comment_mentions(comment_id, mention_type, target_id)` — `user`, `group`, atau `followers` |
 | `attachments` | `storage_key` unik, `sha256`, `size_bytes`, `content_type` hasil deteksi server. Soft delete; file fisik dihapus oleh job (ARCHITECTURE §8) |
 | `activity` | Append-only: `(item_id, actor_id, action, changes jsonb, created_at)`. `changes` berisi pasangan `{field: {from, to}}`. Indeks `(item_id, id DESC)`. Tidak pernah diupdate atau dihapus selain bersama item yang dihapus permanen |
@@ -159,7 +162,7 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 
 `views(id, scope_space_id NULL, scope_item_id NULL, type, name, config jsonb, visibility, owner_id, position, is_default)` dengan `CHECK` tepat satu dari kedua scope terisi.
 
-- `type`: `table`, `board` (M1). `gantt`, `calendar`, `timelog` ditambahkan ke enum oleh migrasi milestone terkait.
+- `type`: `table`, `board` (M1), `gantt`, `calendar` (S2.4.1, migrasi maju `00018`). `timelog` mengikuti milestone terkait.
 - `visibility`: `public` (semua yang punya akses ke scope) atau `personal` (hanya `owner_id`).
 - `config` (jsonb) menyimpan kolom yang tampil, urutan, grouping, dan preset filter bawaan. **State sementara** (filter yang sedang dipakai) tidak disimpan di database, tetapi di URL (UI_SPEC §3).
 - Hanya satu view `is_default` per scope (indeks unik parsial).
@@ -202,8 +205,16 @@ Item di Recycle bin tidak ikut hasil pencarian, My to-do, atau notifikasi baru, 
 | Urutan | **Sudah ada (baseline G-06):** `00001_extensions` (`citext`, `set_updated_at`) → `00002_identity` (`account`, `users`, `sessions`, `user_tokens`) → `00003_spaces_workflows` (`spaces`, `workflows`, `statuses`). **Berikutnya:** item dan lokasi (S1.2.1), `shares` dan `groups` (S1.1.3), kolaborasi, view dan notifikasi, River |
 | Baseline ditulis ulang | Baseline M0 ditulis ulang satu kali (keputusan D-13) sebelum ada data klien atau commit. Database yang dibuat oleh baseline lama **harus dibuat ulang**, jangan di-restore ke image baru: goose melacak versi, bukan isi berkas |
 
-## 7. Data yang sengaja belum ada (M2+)
+## 7. Custom field (M2)
 
-`item_dependencies`, definisi custom field, `time_entries`, `approvals`, `request_forms`, `dashboards`, `widgets`, `reports`, `baselines`, `work_schedules`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
+`custom_fields` menyimpan definisi per Space, tipe, pilihan berwarna, urutan, dan waktu arsip. Pengarsipan mempertahankan nilai item. Opsi yang dirujuk oleh item hidup maupun item dalam Recycle bin tidak dapat dihapus. Pembacaan nilai memerlukan akses ke item dan lokasi Space tempat definisinya berlaku.
+
+Migrasi `00020` menambah `config jsonb` dan memperluas tipe. Single dan Multiple select mempertahankan opsi lama. Tipe lain memakai daftar opsi kosong. Konfigurasi menyimpan kode mata uang ISO 4217 dan 0–6 desimal, pengaturan Percent di atas 100, serta marker dan agregasi default untuk tipe numerik. Kode mata uang, presisi, dan batas Percent tidak boleh diubah jika perubahan membuat nilai tersimpan tidak sah, termasuk nilai Item di Recycle bin.
+
+`items.fields` menyimpan Text dan Date sebagai string, Number/Currency/Percent sebagai angka JSON, Duration sebagai hari bulat, Checkbox sebagai boolean, serta People dan Multiple select sebagai array UUID. Single select tetap UUID string. Nilai `null` dalam PATCH menghapus kunci. Metadata `field_people` hanya diproyeksikan dari nilai People di lokasi Item yang dapat dilihat, dengan nama dan status.
+
+## 8. Data yang sengaja belum ada (M2+)
+
+`time_entries`, `approvals`, `request_forms`, `dashboards`, `widgets`, `reports`, dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
 
 Kolom profil `company`, `country`, `location`, `phone` (kontrak `Me`/`MeUpdate`) belum ada di `users`; ditambahkan lewat migrasi di S1.6.2 (`PATCH /me`).

@@ -12,12 +12,15 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { ProjectProgress } from "@/components/project-progress";
+import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
+import { fieldColumn } from "@/lib/view-columns";
+import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
 import type { ItemCollectionProps } from "./item-collection-types";
 
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string };
-const grid = "grid min-w-[45rem] grid-cols-[minmax(15rem,2fr)_minmax(8rem,1fr)_minmax(8rem,1fr)_8rem_8rem_2.5rem]";
 
-export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder }: ItemCollectionProps & {
+export function ItemTable({ items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder }: ItemCollectionProps & {
   group?: "status" | "type";
   manual: boolean;
   onReorder: (item: Item, parent: string | undefined, after: string | null) => Promise<void>;
@@ -26,7 +29,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
   const profile = useProfile();
   const [expanded, setExpanded] = useState<string[]>([]);
   const [selected, setSelected] = useState(0);
-  const [editing, setEditing] = useState<{ id: string; field: "title" | "assignees" }>();
+  const [editing, setEditing] = useState<{ id: string; field: "title" | "assignees" | `field:${string}` }>();
   const dragging = useRef<string | undefined>(undefined);
   const viewport = useRef<HTMLDivElement>(null);
   const children = useQueries({
@@ -58,7 +61,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
     return output;
   }, [items, expanded, children, group, spaceId, parentId, t]);
 
-  const columns: ColumnDef<TableRow>[] = [
+  const allColumns: ColumnDef<TableRow>[] = [
     { id: "name", header: t("items.name"), cell: ({ row }) => {
       const { item, depth, groupLabel } = row.original;
       const isExpanded = expanded.includes(item.id);
@@ -88,6 +91,9 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
         {!!item.child_count && <span className="shrink-0 text-xs text-muted-foreground">{t("items.childCount", { count: item.child_count })}</span>}
       </div>;
     } },
+    { id: "progress", header: t("items.progress.column"), cell: ({ row }) => (
+      <span className="text-sm"><ProjectProgress item={row.original.item} /></span>
+    ) },
     { id: "status", header: t("items.status"), cell: ({ row }) => {
       const { item } = row.original;
       const change = item.my_capabilities.includes("change_status");
@@ -119,6 +125,17 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
           }} /> : <span>{formatDate(item[field], profile)}</span>;
       },
     })),
+    ...customFields.filter((field) => shown.includes(fieldColumn(field.id))).map((field): ColumnDef<TableRow> => ({
+      id: fieldColumn(field.id), header: field.name, cell: ({ row }) => {
+        const { item } = row.original;
+        const value = item.fields?.[field.id];
+        const display = profile ? <CustomFieldDisplay field={field} value={value} people={peopleOf(item, field, value)} profile={profile} /> : null;
+        return item.my_capabilities.includes("edit") && !field.archived_at && profile
+          ? <Button variant="ghost" size="sm" className="max-w-full justify-start truncate" aria-label={`${field.name}: ${item.title}`}
+            onClick={() => setEditing({ id: item.id, field: fieldColumn(field.id) as `field:${string}` })}>{display}</Button>
+          : display;
+      },
+    })),
     { id: "actions", header: t("views.actions"), cell: ({ row }) => {
       const { item, parent } = row.original;
       if (!manual || !item.my_capabilities.includes("edit") || !inLocation(item, parent)) return null;
@@ -134,10 +151,18 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
       </DropdownMenu>;
     } },
   ];
+  const columns = allColumns.filter((column) => column.id === "name" || column.id === "actions" || shown.includes(column.id ?? ""));
+  const widths: Record<string, [string, number]> = { name: ["minmax(15rem,2fr)", 15], progress: ["8.5rem", 8.5], start_date: ["8rem", 8], due_date: ["8rem", 8], actions: ["2.5rem", 2.5] };
+  const sized = columns.map((column) => widths[column.id ?? ""] ?? ["minmax(8rem,1fr)", 8]);
+  const grid = "grid";
+  const minWidth = `${sized.reduce((total, [, rem]) => total + rem, 0)}rem`;
+  const gridStyle = { gridTemplateColumns: sized.map(([width]) => width).join(" "), minWidth };
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel(), autoResetAll: false });
   const model = table.getRowModel().rows;
   const virtual = useVirtualizer({ count: model.length, getScrollElement: () => viewport.current, estimateSize: () => 44, overscan: 8 });
   const editedItem = editing?.field === "assignees" ? rows.find((row) => row.item.id === editing.id)?.item : undefined;
+  const editedField = editing?.field.startsWith("field:") ? customFields.find((field) => fieldColumn(field.id) === editing.field) : undefined;
+  const editedFieldItem = editedField ? rows.find((row) => row.item.id === editing?.id)?.item : undefined;
   function inLocation(item: Item, parent?: string) {
     return item.locations.some((loc) => loc.space_id === spaceId && (loc.parent_item_id ?? undefined) === parent);
   }
@@ -167,20 +192,20 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
     <div ref={viewport} role="table" aria-label={t("items.table")} aria-rowcount={model.length + 1} tabIndex={0}
       onKeyDown={keyboard} className="max-h-[60vh] min-h-28 overflow-auto rounded border focus-visible:outline-ring">
       <div role="rowgroup" className="sticky top-0 z-10 bg-card">
-        {table.getHeaderGroups().map((header) => <div role="row" aria-rowindex={1} key={header.id} className={grid}>
+        {table.getHeaderGroups().map((header) => <div role="row" aria-rowindex={1} key={header.id} className={grid} style={gridStyle}>
           {header.headers.map((cell) => <div role="columnheader" key={cell.id} className="border-b px-2 py-2 font-medium">
             {flexRender(cell.column.columnDef.header, cell.getContext())}
           </div>)}
         </div>)}
       </div>
-      <div role="rowgroup" className="relative min-w-[45rem]" style={{ height: virtual.getTotalSize() }}>
+      <div role="rowgroup" className="relative" style={{ height: virtual.getTotalSize(), minWidth }}>
         {virtual.getVirtualItems().map((entry) => {
           const row = model[entry.index];
           const { item, parent } = row.original;
           const canDrag = manual && !pending && inLocation(item, parent) && item.my_capabilities.includes("edit");
           return <div key={row.id} role="row" aria-rowindex={entry.index + 2} data-index={entry.index}
             className={`${grid} absolute inset-x-0 border-b ${selected === entry.index ? "bg-muted/60" : ""}`}
-            style={{ height: entry.size, transform: `translateY(${entry.start}px)` }}
+            style={{ ...gridStyle, height: entry.size, transform: `translateY(${entry.start}px)` }}
             draggable={canDrag} onMouseDown={() => setSelected(entry.index)}
             onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); dragging.current = item.id; }}
             onDragEnd={() => { dragging.current = undefined; }}
@@ -200,11 +225,31 @@ export function ItemTable({ items, statuses, spaceId, parentId, canCreate, pendi
     </div>
     {model.length === 0 && <p className="text-muted-foreground">{t("views.empty")}</p>}
     {canCreate && <Button variant="outline" size="sm" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
+    {editedField && editedFieldItem && profile && <FieldEdit key={editedFieldItem.id + editedField.id} field={editedField} item={editedFieldItem}
+      locale={profile.locale} pending={pending} onCancel={() => setEditing(undefined)}
+      onSave={async (value) => { await onPatch(editedFieldItem, { fields: { [editedField.id]: value } }); setEditing(undefined); }} />}
     {editedItem && <AssigneeEdit key={editedItem.id} item={editedItem} onCancel={() => setEditing(undefined)} onSave={(people) => {
       void onPatch(editedItem, { assignee_ids: people.map((person) => person.id) });
       setEditing(undefined);
     }} />}
   </div>;
+}
+
+export function peopleOf(item: Item, field: CustomField, value: unknown) {
+  return field.type === "people" && Array.isArray(value) ? value.map((id: string) => item.field_people?.[id] ?? { id, name: id }) : [];
+}
+
+function FieldEdit({ field, item, locale, pending, onSave, onCancel }: {
+  field: CustomField; item: Item; locale: string; pending: boolean; onSave: (value: CustomFieldValue) => Promise<void>; onCancel: () => void;
+}) {
+  const value = item.fields?.[field.id];
+  return <Dialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
+    <DialogContent>
+      <DialogTitle>{field.name}: {item.title}</DialogTitle>
+      <CustomFieldEditor field={field} value={value} people={peopleOf(item, field, value)} locale={locale}
+        disabled={pending} onCancel={onCancel} onSave={onSave} />
+    </DialogContent>
+  </Dialog>;
 }
 
 function AssigneeEdit({ item, onSave, onCancel }: { item: Item; onSave: (people: PersonOption[]) => void; onCancel: () => void }) {

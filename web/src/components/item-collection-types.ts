@@ -1,3 +1,4 @@
+import type { CustomField } from "@/lib/custom-fields";
 import type { Item, ItemStatus, ItemUpdate } from "@/lib/items";
 
 export type ItemCollectionProps = {
@@ -9,5 +10,8 @@ export type ItemCollectionProps = {
   pending: boolean;
   onOpen: (item: Item) => void;
   onAdd: (status?: string) => void;
+  /** Space custom field definitions and the field ids the view shows (as `field:<id>` columns). */
+  customFields: CustomField[];
+  columns: string[];
   onPatch: (item: Item, update: ItemUpdate) => Promise<void>;
 };

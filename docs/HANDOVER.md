@@ -177,3 +177,52 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - S1.8.1 DONE. Workflow PR menjalankan Playwright/axe dan alur live PostgreSQL. Validasi lokal mencakup 83 tes Chrome standalone dan tiga skenario live. Workflow GitHub remote belum dijalankan dari checkout ini.
 - S1.8.2 DONE. Table, Board, dan pencarian memenuhi target p95. Latihan Docker terisolasi membuktikan restore serta rollback database dan file. [Runbook pilot](PILOT_RUNBOOK.md) memuat triase dan prosedur operasi. `PMS_SECRET_KEY` belum dipakai runtime M1.
 - Kesiapan pilot `READY WITH CONDITIONS`. Stack manual memerlukan build terbaru dan migrasi sampai `00014`. S1.1.3 masih memiliki gap integrasi ShareDialog walaupun API undangan tersedia. S1.1.4 menunggu required check GitHub. Verifikasi SMTP, backup/restore data pilot, dan hasil CI pada instance tujuan sebelum pembukaan pilot.
+
+### Checkpoint dependensi M2
+
+- S2.1.2 DONE. Migrasi `00016_item_dependencies.sql` dan tiga operasi dependensi sudah teruji di PostgreSQL. ID Item di URL `POST` adalah penerus. Body memuat `predecessor_id`, `type` (FS/SS/FF/SF), dan opsional `lag` (hari kerja, default 0). `GET` mengembalikan relasi masuk dan keluar yang kedua ujungnya terlihat. Duplikat pasangan menghasilkan 409 `dependency_exists`.
+- Deteksi siklus memeriksa graf tersimpan, termasuk relasi yang sementara tersembunyi karena Recycle bin. Dengan begitu restore mengaktifkan kembali relasi tanpa membentuk siklus. Konsumen penjadwalan perlu mengecualikan relasi sampai kedua ujungnya aktif.
+- Berikutnya S2.1.3 menghubungkan mutasi dependensi dan tanggal dengan mesin penjadwalan dalam satu transaksi. UI dependensi Gantt mengikuti S2.4.3. Stack manual memerlukan build baru dan migrasi `00016`.
+
+### Checkpoint definisi custom field M2
+
+- S2.3.1 DONE. Migrasi `00017_custom_fields.sql` menambah definisi single select dan multi select per Space dengan opsi UUID dan warna, urutan, serta arsip. Pengelolaan tersedia melalui Space actions → Custom fields untuk role penuh.
+- `TestBrowserCustomFields` lulus di Chrome dengan API dan PostgreSQL nyata. Workflow PR menjalankannya bersama skenario browser kolaborasi.
+- `PATCH /items/{id}` menerima `fields` dengan `If-Match`. Kunci yang dikirim digabung ke nilai yang sudah tersimpan. Nilai `null` menghapus satu kunci. Nilai hanya tersedia melalui lokasi Space yang dapat dilihat. Opsi yang masih dirujuk item, termasuk item di Recycle bin, tidak dapat dihapus. Arsip mempertahankan nilai lama.
+- S2.3.2 menambah tipe lanjutan dan perlu memperluas CHECK tipe di `custom_fields`. Editor nilai di panel, Table, dan Board mengikuti S2.3.3. Stack manual memerlukan build terbaru dan migrasi sampai `00017`.
+
+### Checkpoint tipe view Gantt dan Calendar M2
+
+- S2.4.1 DONE. `00018_view_types.sql` menambah dua nilai enum `view_type`. OpenAPI dan binding Go/TypeScript/sqlc sudah diperbarui. Table dan Board tetap menjadi view bawaan untuk project baru.
+- ViewTabs menyediakan Add view untuk Space dan container Item. Public memerlukan izin edit, Personal memakai izin baca. View baru memakai menu pengelolaan dan URL `?view=` yang sama dengan Table dan Board. Lihat `TestViewLifecycle` dan `web/tests/views.spec.ts` untuk bukti pengujian.
+- S2.4.2 mengisi placeholder Gantt setelah S2.2.2. S2.5.2 mengisi placeholder Calendar. Stack manual memerlukan build terbaru dan migrasi sampai `00018`.
+
+### Checkpoint mesin penjadwalan M2
+
+- S2.1.3 DONE di working tree `main` pada HEAD `076b3ab`. Codex menangani `server/`, `api/`, `docs/`, dan perubahan konsumen SSE pada `web/`. Agen QA menambahkan `scheduling_integration_test.go` dan agen lain mereview mesin, transaksi, serta penyaringan SSE secara independen.
+- `schedule` menghitung rantai penerus aktif berdasarkan kalender workspace. `items/scheduling.go` memuat graf dan menulis pergeseran, versi, serta aktivitas secara berkelompok. Relasi dengan endpoint di Recycle bin kembali tersedia setelah restore dan ikut dihitung pada perubahan jadwal berikutnya.
+- PATCH Item tetap memakai `If-Match`. POST/PATCH dependensi mengembalikan bentuk dependensi yang sama dengan tambahan `affected_items` jika tanggal bergeser. PATCH dependensi menerima `type` dan/atau `lag`. DELETE tetap 204. SSE `item.updated` memakai satu event untuk transaksi dan memeriksa izin penerima sebelum pengiriman atau replay.
+- Tidak perlu migrasi baru untuk S2.1.3. Stack manual perlu build terbaru dan migrasi yang sudah ada sampai `00018`. S2.4.3 dapat memakai respons ini setelah S2.4.2. Fitur Gantt interaktif masih bergantung pada S2.2.2 dan S2.4.2.
+
+### Checkpoint effort dan allocation M2
+
+- S2.2.1 DONE di working tree `main` pada HEAD `076b3ab`. Codex mengerjakan `server/`, `api/`, dan `docs/`. Agen FE mengerjakan panel Item, terjemahan, dan Playwright. Migrasi serta transaksi direview independen sebelum validasi di fixture lokal.
+- Migrasi maju `00019_item_effort.sql` menambah menit effort pada Item dan alokasi di baris assignee. Assignment yang dipertahankan menjaga alokasi. Penghapusan membership menghapus alokasi, termasuk saat membership dibuat kembali. Stack manual perlu build terbaru dan migrasi sampai `00019`. Untuk rollback setelah alokasi mulai ditulis, ikuti restore backup pre-deploy di runbook karena aplikasi lama membuat ulang semua baris assignee saat assignment berubah.
+- `PATCH /items/{id}` memakai `If-Match`. `assignee_allocations` hanya mengubah entri yang dikirim. `allocation: null` menghapus satu entri. `recalculate_duration: true` boleh dikirim bersama effort dan alokasi. Durasi, versi, aktivitas, dan dampak penjadwalan memakai transaksi Item yang sama. Gagal menghitung durasi membatalkan seluruh draf.
+- Durasi dibulatkan ke atas dari effort dibagi kapasitas gabungan per hari. Jika belum ada alokasi eksplisit, gunakan satu hari kerja workspace. Jika ada alokasi eksplisit, assignee tanpa alokasi menyumbang nol. Effort nol menghasilkan durasi nol. Effort positif dengan total kapasitas nol meminta pengguna memperbaiki alokasi. Berikutnya **S2.2.2 Progress project**.
+
+### Checkpoint tipe custom field M2
+
+- S2.3.2 DONE di working tree `main` pada HEAD `076b3ab`. Codex mengerjakan API, migrasi, validator, dan tes PostgreSQL. Cabang FE terpisah mengerjakan pengaturan definisi serta editor nilai. Review independen memeriksa migrasi, precision binding Go, dan otorisasi People.
+- `00020_custom_field_types.sql` mempertahankan definisi serta nilai select. `custom_field_types.go` memvalidasi sepuluh tipe dan pengaturan. Number, Currency, dan Percent dibatasi hingga magnitudo satu miliar dan enam desimal. Currency memakai dua desimal secara default dengan kode yang ditentukan saat membuat field. Duration berupa hari bulat nonnegatif hingga batas int32.
+- `PATCH /items/{id}` tetap memakai `If-Match`. People hanya bisa menambah pengguna aktif dari direktori. Pilihan tersimpan dapat dipertahankan atau dilepas setelah pengguna dinonaktifkan. Respons `field_people` terbatas pada lokasi Item yang dapat dilihat.
+- Editor dan tampilan nilai digunakan di panel Item. `web/src/lib/custom-fields.ts` menyediakan format locale, marker prioritas pertama, dan agregasi numerik. Settings profil tetap mengikuti opsi bahasa MVP. S2.3.3 memakai editor dan fungsi tersebut untuk kolom Table, kartu Board, pemilih kolom, filter/sort, dan pengukuran 500 Item. Stack manual perlu build terbaru dan migrasi sampai `00020`.
+
+### Checkpoint progres project M2
+
+- S2.2.2 DONE di working tree `main` pada HEAD `076b3ab`. Codex mengerjakan API, migrasi, perhitungan, dan tes PostgreSQL. Agen FE mengerjakan panel Project/Task, kolom Table, serta penyegaran cache SSE. Migrasi dan izin lokasi direview independen.
+- `00021_project_progress.sql` menambah metode Project (`task_count`, `weighted_duration`, `average_percent`) dan persen manual Task. Server menghitung `progress_percent` dan `progress_risk` Project dari turunan aktif di lokasi yang diizinkan. Aturan risiko memakai tanggal UTC dan ambang tiga hari di WORKFLOWS §1.1.
+- Perubahan nilai Task dapat mengubah respons Project tanpa mengubah versi Project. PATCH metode dan persen manual tetap memakai `If-Match`. Frontend menyegarkan cache Project setelah event Item, termasuk event task dalam folder bertingkat.
+- Stack manual perlu build terbaru dan migrasi sampai `00021`. S2.4.2 Gantt siap mengambil persen Project dari respons Item. Untuk tes lintas sesi, jalankan `TestBrowserProjectProgress` dengan `PMS_TEST_BROWSER=1` dan fixture PostgreSQL.
+- **S2.3.3 dan S2.4.2 (13 Nov 2026):** tidak ada migrasi baru. API list item menerima `sort=field:<id>` dan `field=<id>:<nilai>` (`server/internal/items/list_fields.go`). `views.config.columns` menyimpan kolom (`status`, `assignee`, `start_date`, `due_date`, `progress`, `field:<id>`). `web/src/components/item-gantt.tsx` dimuat lazy; SVAR hanya melaporkan sisi yang digeser dan `diff`, jadi tanggal baru dihitung dari item. S2.4.3 menambah link dan penjadwalan di komponen yang sama dan perlu mengaktifkan realtime Gantt. Tes timing 500 task: `PMS_PERF=1 npx playwright test tests/gantt-perf.spec.ts --workers=1`.
+

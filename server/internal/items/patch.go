@@ -7,11 +7,11 @@ import (
 	"fmt"
 	"sort"
 	"strings"
-	"time"
 	"unicode/utf8"
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/schedule"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -83,7 +83,6 @@ func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, versio
 	if len(fields) == 0 {
 		return Detail{}, Invalid("at least one editable field is required")
 	}
-	keys := make([]string, 0, len(fields))
 	for key := range fields {
 		need := policy.Edit
 		if key == "status_id" {
@@ -92,9 +91,7 @@ func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, versio
 		if !caps.Has(need) {
 			return Detail{}, ErrForbidden
 		}
-		keys = append(keys, key)
 	}
-	sort.Strings(keys)
 
 	var current int
 	var kind string
@@ -104,12 +101,58 @@ func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, versio
 	if current != version {
 		return Detail{}, ErrConflict
 	}
+	var recalculate bool
+	if raw, ok := fields["recalculate_duration"]; ok {
+		if json.Unmarshal(raw, &recalculate) != nil || !recalculate || schedulingField(fields) {
+			return Detail{}, InvalidField{"recalculate_duration", "send true without date, duration, or milestone fields"}
+		}
+		delete(fields, "recalculate_duration")
+	}
 	before, err := snapshot(ctx, tx, id)
 	if err != nil {
 		return Detail{}, err
 	}
-	if err := applyFields(ctx, tx, id, kind, fields, keys, true); err != nil {
+	var cal schedule.Calendar
+	var dateChanged bool
+	if schedulingField(fields) {
+		cal, dateChanged, err = prepareSchedulePatch(ctx, tx, id, fields, false)
+		if err != nil {
+			return Detail{}, err
+		}
+	}
+	keys := make([]string, 0, len(fields))
+	for key := range fields {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+	if err := applyFields(ctx, tx, actor, id, kind, fields, keys, true); err != nil {
 		return Detail{}, err
+	}
+	if recalculate {
+		days, err := effortDuration(ctx, tx, id)
+		if err != nil {
+			return Detail{}, err
+		}
+		raw, _ := json.Marshal(days)
+		dates := map[string]json.RawMessage{"duration_days": raw}
+		cal, dateChanged, err = prepareSchedulePatch(ctx, tx, id, dates, true)
+		if err != nil {
+			return Detail{}, err
+		}
+		keys = keys[:0]
+		for key := range dates {
+			keys = append(keys, key)
+		}
+		if err := applyFields(ctx, tx, actor, id, kind, dates, keys, false); err != nil {
+			return Detail{}, err
+		}
+	}
+	var affected []AffectedItem
+	if dateChanged {
+		affected, err = reschedule(ctx, tx, cal, actor.ID, id, true)
+		if err != nil {
+			return Detail{}, err
+		}
 	}
 	after, err := snapshot(ctx, tx, id)
 	if err != nil {
@@ -121,10 +164,29 @@ func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, versio
 	if err := notifyChanges(ctx, tx, batch, actor, id, before, after, false); err != nil {
 		return Detail{}, err
 	}
-	return readDetail(ctx, tx, actor, id)
+	item, err := readDetail(ctx, tx, actor, id)
+	if err != nil || len(affected) == 0 {
+		return item, err
+	}
+	item.ScheduleChanges = affected
+	visible, err := visibleAffected(ctx, tx, actor, affected, id)
+	if err != nil || len(visible) == 0 {
+		return item, err
+	}
+	encoded, err := json.Marshal(visible)
+	if err != nil {
+		return Detail{}, err
+	}
+	var body map[string]json.RawMessage
+	if err := json.Unmarshal(item.Body, &body); err != nil {
+		return Detail{}, err
+	}
+	body["affected_items"] = encoded
+	item.Body, err = json.Marshal(body)
+	return item, err
 }
 
-func applyFields(ctx context.Context, tx pgx.Tx, id, kind string, fields map[string]json.RawMessage, keys []string, incrementVersion bool) error {
+func applyFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, kind string, fields map[string]json.RawMessage, keys []string, incrementVersion bool) error {
 	sets := []string{}
 	if incrementVersion {
 		sets = append(sets, "version=version+1")
@@ -150,22 +212,37 @@ func applyFields(ctx context.Context, tx pgx.Tx, id, kind string, fields map[str
 			}
 			set(key, "", title)
 		case "start_date", "due_date":
-			var date *string
-			if json.Unmarshal(raw, &date) != nil {
-				return InvalidField{key, key + " must be a date or null"}
+			date, err := dateField(raw, key)
+			if err != nil {
+				return err
 			}
-			if date != nil {
-				if parsed, err := time.Parse("2006-01-02", *date); err != nil || parsed.Year() < 1 {
-					return InvalidField{key, key + " must be YYYY-MM-DD"}
-				}
-			}
-			set(key, "::text::date", date)
+			set(key, "::date", date)
 		case "duration_days":
 			var days *int32
 			if json.Unmarshal(raw, &days) != nil || (days != nil && *days < 0) {
 				return Invalid("duration_days must be a non-negative integer or null")
 			}
 			set(key, "", days)
+		case "effort_minutes":
+			var minutes *int32
+			if json.Unmarshal(raw, &minutes) != nil || (minutes != nil && *minutes < 0) {
+				return InvalidField{key, "effort_minutes must be a non-negative integer or null"}
+			}
+			set(key, "", minutes)
+		case "progress_method":
+			var method string
+			if kind != "project" || json.Unmarshal(raw, &method) != nil || !validProgressMethod(method) {
+				return InvalidField{key, "project progress method must be task_count, weighted_duration, or average_percent"}
+			}
+			set(key, "", method)
+		case "progress_percent":
+			var percent *int16
+			if kind != "task" || json.Unmarshal(raw, &percent) != nil || (percent != nil && (*percent < 0 || *percent > 100)) {
+				return InvalidField{key, "task progress must be a whole percentage from 0 to 100 or null"}
+			}
+			set(key, "", percent)
+		case "assignee_allocations":
+			// Applied after any membership change so retained and new assignees can both be updated.
 		case "is_milestone":
 			var value *bool
 			if json.Unmarshal(raw, &value) != nil || value == nil {
@@ -218,6 +295,15 @@ WHERE i.id=$2::uuid AND next.id=$1
 					return err
 				}
 			}
+		case "fields":
+			if !incrementVersion {
+				return Invalid("custom field values are set through PATCH after item creation")
+			}
+			updated, err := updateCustomFieldValues(ctx, tx, actor, id, raw)
+			if err != nil {
+				return err
+			}
+			set(key, "::jsonb", updated)
 		case "description":
 			plain, err := descriptionText(raw)
 			if err != nil {
@@ -235,7 +321,12 @@ WHERE i.id=$2::uuid AND next.id=$1
 		}
 	}
 	if replaceAssignees {
-		return setAssignees(ctx, tx, id, assignees)
+		if err := setAssignees(ctx, tx, id, assignees); err != nil {
+			return err
+		}
+	}
+	if raw, ok := fields["assignee_allocations"]; ok {
+		return updateAllocations(ctx, tx, id, raw)
 	}
 	return nil
 }
@@ -250,7 +341,7 @@ func lockActiveUser(ctx context.Context, tx pgx.Tx, id uuid.UUID) error {
 }
 
 func setAssignees(ctx context.Context, tx pgx.Tx, id string, assignees []uuid.UUID) error {
-	if _, err := tx.Exec(ctx, "DELETE FROM item_assignees WHERE item_id=$1::uuid", id); err != nil {
+	if _, err := tx.Exec(ctx, "DELETE FROM item_assignees WHERE item_id=$1::uuid AND user_id<>ALL($2::uuid[])", id, assignees); err != nil {
 		return err
 	}
 	for _, table := range []string{"item_assignees", "item_followers"} {
@@ -268,6 +359,12 @@ SELECT to_jsonb(i) - ARRAY['search','description_text','updated_at','version']
   || jsonb_build_object('assignee_ids', COALESCE((
        SELECT jsonb_agg(user_id ORDER BY user_id) FROM item_assignees WHERE item_id=i.id
      ), '[]'::jsonb))
+  || COALESCE((
+       SELECT jsonb_build_object('assignee_allocations', jsonb_object_agg(user_id,
+           jsonb_build_object('unit', allocation_unit, 'value', allocation_value)))
+       FROM item_assignees WHERE item_id=i.id AND allocation_unit IS NOT NULL
+       HAVING count(*) > 0
+     ), '{}'::jsonb)
 FROM items i WHERE i.id=$1::uuid`, id).Scan(&out)
 	return out, err
 }

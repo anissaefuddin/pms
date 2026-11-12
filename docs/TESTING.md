@@ -235,3 +235,101 @@ Temuan:
 
 Catatan: suite Playwright mock (tanpa live/perf) 85 lulus dan 2 gagal. Yang gagal adalah `screens.a11y` "share dialog" (terang dan gelap): tes mengharapkan tombol "Invite as external user" nonaktif, padahal komit `ad98a49` (S1.1.3) membuatnya aktif. Itu bukan dari S2.1.1; tes perlu diperbarui oleh pemilik S1.1.3. Belum diuji: UI terhadap backend nyata (hanya mock), dan `Calendar` belum dipakai oleh penjadwalan (S2.1.3).
 
+## M2 / S2.1.2 Dependensi (13 Nov 2026)
+
+| Story | Status | Bukti |
+|---|---|---|
+| S2.1.2 | **PASS** | `TestDependencyLifecycle` memeriksa empat tipe, lag negatif/default, 409 duplikat, 422 siklus langsung/tidak langsung, soft delete, dan restore. `TestDependencyAccess` memeriksa 404/penyaringan untuk ujung tersembunyi dan 403 untuk pengguna yang hanya bisa membaca. `TestConcurrentDependenciesCannotCreateCycle` memastikan hanya satu relasi berlawanan yang bisa commit. Seluruh tes terarah memakai PostgreSQL nyata dan migrasi `00016`. |
+
+Regresi Go seluruh server dengan PostgreSQL **PASS**. Setelah review independen, ketiga tes dependensi diulang tiga kali dan semuanya **PASS**. Go vet, typecheck, lint, dan unit test frontend juga lulus.
+
+## M2 / S2.3.1 Definisi custom field (13 Nov 2026)
+
+| Story | Status | Bukti |
+|---|---|---|
+| S2.3.1 | **PASS** | PostgreSQL memverifikasi definisi single/multi select, pengurutan, izin Space, validasi tipe/nilai dengan ETag, visibilitas item multi-lokasi, penolakan penghapusan opsi yang dipakai, arsip, restore, dan benturan penghapusan opsi dengan penulisan nilai. Empat tes Chrome dengan mock API mencakup dialog pengelolaan, draft saat API menolak, izin menu, dan axe pada tema terang/gelap. |
+
+Regresi Go seluruh server dengan PostgreSQL, Go vet, typecheck, lint, dan unit test frontend lulus. Tiga tes PostgreSQL terarah lulus dalam tiga pengulangan. Suite Chrome gabungan custom field dan Space lulus 20/20.
+
+`TestBrowserCustomFields` **PASS** memakai Chrome, Go API, dan PostgreSQL. Pengguna dengan akses penuh membuat serta mengurutkan field lewat dialog, menyimpan nilai item melalui PATCH ber-ETag, mendapat 422 saat mencoba menghapus opsi yang dipakai, lalu mengarsipkan field. Reload membuktikan urutan, arsip, dan nilai item tetap tersimpan. Tes ini terdaftar di workflow PR dan dapat dijalankan lokal dengan `PMS_TEST_BROWSER=1`.
+
+## M2 / S2.4.1 Tipe view Gantt dan Calendar (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| `TestViewLifecycle` dengan PostgreSQL | PASS | Migrasi `00018` terpasang. Space dan Project baru hanya mendapat Table dan Board. Gantt dan Calendar bisa dibuat, diduplikasi, diubah namanya, dijadikan default, dan dihapus setelah default dipindah. Pengguna dengan izin baca tidak bisa membuat view public. Salinan personal hanya muncul dalam daftar pemiliknya. |
+| Chrome `views.spec.ts` dengan mock API | PASS | 6/6, termasuk pembuatan Gantt public dan Calendar personal dari Add view, body POST, pemilihan tab, dan pemulihan placeholder dari URL setelah reload. |
+| Regresi Go dengan PostgreSQL, typecheck, lint, unit frontend | PASS | Seluruh `go test ./server/... -count=1` lulus. `npm run typecheck`, `npm run lint`, dan empat tes unit frontend lulus. |
+| Sesi browser dengan API nyata untuk kedua tipe baru | NOT RUN | Kontrak REST diuji langsung pada PostgreSQL dan interaksi browser diuji dengan mock API. |
+
+## M2 / S2.1.3 Mesin penjadwalan (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Unit `internal/schedule` | PASS | 27 kasus tabel FS/SS/FF/SF, lag positif dan negatif, akhir pekan/libur, milestone, dan tanggal parsial. Kasus tambahan mencakup graf berlian, batas dari pendahulu eksternal, siklus rusak, dan batas rentang tanggal. |
+| HTTP dan PostgreSQL | PASS | Perubahan tanggal/durasi dan POST/PATCH dependensi menggeser jadwal dalam satu transaksi. Tes mencakup rollback bila audit gagal, tidak maju ketika batas dilonggarkan, versi/If-Match, dua edit pada pendahulu berbeda dengan penerus bersama, serta relasi aktif kembali setelah restore. |
+| SSE dan izin | PASS | Satu event mencakup item yang bergeser. Pelanggan yang hanya melihat akar atau hanya melihat penerus menerima bentuk event biasa dengan ID dan container yang diizinkan. Respons HTTP menyaring item tersembunyi. Regresi replay memeriksa kembali akses terkini. |
+| Rantai 500 task pada PostgreSQL | PASS | Tiga pengukuran HTTP masing-masing memakai 20 sampel setelah satu warm-up. p95 setelah optimasi traversal adalah 252,11 ms, 225,09 ms, dan 222,58 ms terhadap batas 300 ms. Setiap request menggeser 499 penerus. Pengukuran pertama sebelum optimasi adalah 306,69 ms. Aktifkan `PMS_TEST_SCHEDULING_PERFORMANCE=1` dan jalankan `TestScheduling500TaskPerformance`. |
+| Regresi server dan frontend | PASS | Seluruh suite Go dengan PostgreSQL, Go vet, typecheck, lint, dan empat tes unit frontend lulus. Tiga alur kolaborasi/pilot lulus di Chrome dengan Go API dan PostgreSQL nyata. |
+
+Review independen memeriksa batas tanggal, isolasi transaksi, dan penyaringan SSE. Pengujian S2.1.3 memakai API nyata. Interaksi dengan bar Gantt mengikuti S2.4.3.
+
+## M2 / S2.2.1 Effort dan allocation (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Migrasi PostgreSQL `00018` → `00019` | PASS | `TestItemEffortMigration` mempertahankan Item, durasi, dan assignee yang sudah ada. CHECK menolak effort negatif, alokasi negatif, unit asing, dan kedua bentuk pasangan setengah kosong. |
+| Rumus durasi | PASS | `TestEffortDuration` menjalankan 10 kasus, termasuk kapasitas workspace 6 jam, satuan campuran, alokasi di atas 100%, nol, pembulatan, serta batas integer. |
+| HTTP dan PostgreSQL | PASS | `TestItemEffortAndAllocation` membuktikan penyimpanan 125% tanpa menggeser tanggal, hitung ulang melewati akhir pekan/libur yang menggeser penerus, `If-Match`, hak edit, audit, rollback, retensi dan penghapusan alokasi. `TestEffortDurationWithoutDates` memeriksa fallback pada Item tanpa tanggal. |
+| Chrome dengan mock API | PASS | Suite Item dan Effort 5/5. Panel menunjukkan peringatan, mengubah jam ke menit, mengirim perubahan dengan `If-Match`, dan menyimpan atau menghitung ulang sesuai tombol yang dipilih. |
+| Regresi Chrome work schedule dan axe | FAIL | 20 lulus dan 2 gagal pada pemeriksaan Share dialog yang sudah tercatat sebelumnya. Tes masih mengharapkan tombol external invite nonaktif. |
+| Regresi Go dan frontend | PASS | Seluruh suite Go dengan PostgreSQL, Go vet, typecheck, lint, dan empat tes unit frontend lulus. Benchmark 500 task mencatat p95 218,51 ms dari 20 sampel HTTP setelah pemanasan. |
+| Alur browser Effort dengan PostgreSQL | NOT RUN | Alur HTTP diuji dengan PostgreSQL dan antarmuka diuji dengan mock API. |
+
+## M2 / S2.3.2 Tipe custom field lengkap (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Migrasi PostgreSQL 19 → 20 | PASS | `TestCustomFieldTypesMigration` mempertahankan definisi, opsi, dan nilai select lama. CHECK menolak tipe asing, opsi yang tidak sesuai tipe, dan config non-object. |
+| Validator dan kontrak HTTP | PASS | 39 kasus tabel mencakup tipe, batas, format salah, serta nilai kosong. PostgreSQL menyimpan kesepuluh tipe dalam satu PATCH, mempertahankan Checkbox `false`, membersihkan kunci dengan `null`, serta menolak konfigurasi yang membuat Currency/Percent tersimpan tidak sah, termasuk pada Item di Recycle bin. |
+| People dan lokasi | PASS | Pengguna yang bisa melihat Item tetapi tidak bisa membuka direktori hanya dapat mempertahankan atau menghapus pilihan lama. Menambah pengguna nonaktif atau UUID asing ditolak. Lokasi tersembunyi menyembunyikan nilai dan metadata People yang terkait. |
+| Chrome dengan mock API | PASS | Regresi definisi, panel, Item, Effort, dan View 20/20. Currency diuji dalam id-ID dan en-US, termasuk separator salah, marker, hapus nilai dan konflik ETag. People menunjukkan pilihan lama nonaktif dan hanya menawarkan pengguna aktif. |
+| Chrome dengan API nyata | PASS | `TestBrowserCustomFields` 2/2. Alur select memverifikasi proteksi opsi. Editor menyimpan Currency dan People, memuat ulang halaman, lalu membaca nilai dan pilihan dari Go API/PostgreSQL. |
+| Regresi server dan frontend | PASS | Seluruh Go suite dengan PostgreSQL, Go vet, typecheck, lint, dan 8 tes unit frontend lulus. Unit frontend mencakup lima agregasi numerik dan urutan marker. |
+| Regresi axe di luar custom field | FAIL | Dua kasus Share dialog yang sudah tercatat sebelumnya masih mengharapkan tombol external invite nonaktif pada tema terang dan gelap. |
+
+## M2 / S2.2.2 Progres project (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Migrasi PostgreSQL 20 → 21 | PASS | `TestProjectProgressMigration` mempertahankan Project dan Task lama. CHECK menolak metode asing, metode pada Task, persen manual pada Project, serta persen di luar 0–100. |
+| Rumus dan risiko | PASS | `TestCalculateProjectProgress` mencakup 15 kasus, termasuk tiga metode, pembulatan, durasi maksimum, milestone, project kosong, batas tiga hari UTC, dan status Project terminal. |
+| HTTP dan otorisasi | PASS | `TestProjectProgressMethodsAndRisk` memeriksa nilai yang dihitung pada detail dan daftar Space, 403, 409, validasi tipe, penghapusan persen manual, status Cancelled, dan Recycle bin. `TestProjectProgressFollowsAuthorizedLiveLocations` memeriksa deduplikasi multi-lokasi, share langsung, Foreign Personal, dan task yang masih hidup di luar jalur yang terhapus. |
+| Chrome dengan mock API | PASS | 9/9 untuk Project Progress, Effort, dan View. Panel dan Table memperbarui persen serta label risiko setelah event task bertingkat. Tes juga memeriksa `If-Match` dan batas input Task. |
+| Chrome dengan API dan PostgreSQL | PASS | `TestBrowserProjectProgress` membuktikan edit task di sesi lain memperbarui panel Project dan baris Table tanpa reload. Lima alur dari `TestBrowserCollaboration` dan `TestBrowserCustomFields` juga lulus. |
+| Regresi server dan frontend | PASS | Seluruh Go suite dengan PostgreSQL, Go vet, typecheck, lint, dan 8 tes unit frontend lulus. |
+
+## M2 / S2.3.3 Custom field di Table, Board, dan pemilih kolom (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Filter dan sort server | PASS | `TestListFilterAndSortByCustomField` pada PostgreSQL: sort number (negatif, desimal, nilai kosong terakhir), single select (menurut label), filter select, multi select, text (`%` dan `_` literal), kombinasi AND, serta 422 untuk multi select, UUID salah, field Space lain, nilai bukan angka. |
+| 500 item × 10 field | PASS | `TestListByCustomFieldAt500Items`: sort+filter field, satu halaman 200 item, p50 24,5 ms, p95 96,5 ms dari 20 sampel HTTP (batas 1 detik). Tanpa indeks GIN atau ekspresi. Yang diukur sisi server. Render Table tidak diukur ulang, daftar tetap virtual. |
+| Chrome dengan mock API | PASS | `view-fields.spec.ts` 3/3: pemilih kolom menyimpan `config.columns` lewat `PATCH /views`, kolom tetap setelah reload, edit sel mengirim `{fields:{id:nilai}}` dengan `If-Match`, sort dan filter masuk URL dan query server, kartu Board hanya menampilkan field terpilih, pengguna baca-saja tidak bisa menyimpan. Axe dialog pemilih kolom bersih. |
+| Regresi | PASS | Seluruh Go suite dengan PostgreSQL, typecheck, lint. Suite Chrome mock tanpa `live`: 107 lulus, 2 gagal (Share dialog axe yang sudah tercatat), 3 dilewati (fixture/`PMS_PERF`). |
+
+Batas: filter People hanya lewat API (UI tidak punya pemilih). Satu filter field di URL. Pemilih kolom tidak menyimpan urutan antar kolom bawaan.
+
+## M2 / S2.4.2 Gantt dasar (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Chrome dengan mock API | PASS | `gantt.spec.ts` 6/6: hierarki project → task dengan bar ringkasan, progres 40%, milestone, skala hari/minggu/bulan (lebar bar sesuai), drag memindahkan tanggal dan resize mengubah tanggal selesai (`If-Match` "1" lalu "2", bar mengikuti respons server), 409 menyisakan bar semula dengan toast, pengguna baca-saja tidak bisa drag dan tidak ada PATCH, keyboard memilih dan menggeser sehari lalu Shift memperpanjang. |
+| Axe | PASS dengan pengecualian | Terang dan gelap bersih setelah warna bar diganti (kontras awal SVAR 2,48 dan 3,73). Dua aturan dimatikan hanya di dalam bagan: `aria-conditional-attr` dan `aria-valid-attr-value` (SVAR memberi `aria-expanded` dan `aria-rowindex="0"` pada baris role=grid). Perlu patch atau versi library untuk menutupnya. |
+| 500 task | PASS | `PMS_PERF=1 npx playwright test tests/gantt-perf.spec.ts --workers=1`: 500 task dalam satu project, termasuk memuat aplikasi, p95 953 ms dan 1273 ms pada dua kali jalan (batas 1,5 detik), 14 bar di DOM (virtual). Mock API lokal, bukan jaringan nyata. Tes itu dilewati tanpa `PMS_PERF` karena worker paralel mengubah angkanya. |
+| Drag pada 500 task | NOT RUN | Hanya render dan gulir awal yang diukur. Drag/resize diuji pada 4 task. |
+| Chrome dengan Go API dan PostgreSQL | NOT RUN | Hanya mock API. |
+| Regresi | PASS dengan catatan | Test Add view Gantt diperbarui (Gantt bukan lagi placeholder). Dua tes Share dialog axe yang sudah tercatat tetap gagal. |
+
+Batas: Gantt memuat anak per level lewat `GET /items/{id}/children` (satu request per induk yang punya anak). Penjadwalan SVAR dimatikan (`schedule.auto=false`), jadwal hanya dari backend. Dependensi, link, dan realtime Gantt mengikuti S2.4.3. Hari non-kerja belum disorot. Tombol panah cepat berturut-turut menjatuhkan penekanan saat PATCH sebelumnya belum selesai.
+

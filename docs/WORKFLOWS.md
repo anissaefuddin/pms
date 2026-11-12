@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Versi** | 0.1 (draft) |
-| **Cakupan** | M0 + M1. State machine approval dan request (M3) hanya ditandai sebagai placeholder di §9 |
+| **Cakupan** | M0 + M1 dan progres project (M2). State machine approval dan request (M3) hanya ditandai sebagai placeholder di §9 |
 | **Terkait** | [DATABASE.md](DATABASE.md), [ARCHITECTURE.md](ARCHITECTURE.md), [../api/openapi.yaml](../api/openapi.yaml) |
 
 Tiap state machine berisi: diagram, tabel transisi (pemicu, guard, efek), dan hasil error. **Guard** adalah syarat yang dicek server; transisi yang gagal guard menghasilkan error pada kolom terakhir.
@@ -47,6 +47,20 @@ Grup status menentukan perilaku, bukan nama statusnya:
 | `PATCH /items/{id}` dengan `status_id` | Punya kemampuan `change_status` (limited ke atas); `status_id` ada di workflow item; header `If-Match` sama dengan `version` | Update status, `version+1`, tulis `activity`, kirim notifikasi `status_changed` ke follower (kecuali pelaku), emit `item.updated` | 404 tanpa akses; 403 tanpa `change_status`; 422 status bukan milik workflow; 409 versi usang; 428 tanpa `If-Match` |
 | Drag kartu di Board ke kolom lain | Sama seperti di atas | UI memperbarui secara optimistis, memanggil PATCH yang sama dengan `rank` baru | Saat 409 UI memuat ulang dan menampilkan toast konflik |
 | Container (project/folder) diubah statusnya | Sama | Tidak mengubah status anak | – |
+
+### 1.1 Progres dan risiko project (TASK-09)
+
+Server menghitung progres dari task turunan yang dapat dijangkau melalui lokasi aktif project yang dapat dilihat pemanggil. Task dalam folder, subproject, dan subtask ikut dihitung. Setiap task dihitung sekali walaupun punya beberapa jalur atau lokasi. Task yang dihapus atau berstatus Cancelled dikecualikan. Jalur lokasi yang masuk Recycle bin juga dikecualikan.
+
+| Metode project | Perhitungan |
+|---|---|
+| `task_count` (default) | Jumlah task Completed dibagi jumlah task yang dihitung |
+| `weighted_duration` | Rata-rata persen task berbobot hari kerja. Bobot minimum satu untuk milestone dan task tanpa durasi |
+| `average_percent` | Rata-rata persen semua task yang dihitung |
+
+Persen task adalah 100 untuk Completed dan nilai manual 0–100 untuk status lain, dengan default 0 bila belum diisi. Persen project dibulatkan ke bilangan bulat terdekat. Project tanpa task yang dapat dihitung memiliki progres 0%. Metode project dan nilai manual task dapat diubah dengan kemampuan `edit` dan `If-Match`.
+
+Risiko memakai tanggal UTC server. Project Completed atau Cancelled berisiko hijau. Untuk project lain, due date project dan due date task yang belum Completed diperiksa. Risiko merah jika ada tanggal yang sudah lewat, kuning jika tanggal terdekat jatuh hari ini hingga tiga hari kalender ke depan, dan hijau pada kondisi lain. Status project tidak mengganti hasil perhitungan persen task. Persen dan risiko project dihitung saat dibaca.
 
 ## 2. Siklus hidup item (penghapusan)
 

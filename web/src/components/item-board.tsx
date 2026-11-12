@@ -3,12 +3,16 @@ import { useState } from "react";
 import { CalendarDays, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { CustomFieldDisplay } from "@/components/custom-field-editor";
+import { fieldColumn } from "@/lib/view-columns";
+import { peopleOf } from "@/components/item-table";
 import type { ItemCollectionProps } from "./item-collection-types";
 
-export function ItemBoard({ items, statuses, canCreate, pending, onOpen, onAdd, onPatch }: ItemCollectionProps) {
+export function ItemBoard({ items, statuses, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch }: ItemCollectionProps) {
   const { t } = useTranslation();
   const profile = useProfile();
   const [dragging, setDragging] = useState<string>();
+  const cardFields = customFields.filter((field) => shown.includes(fieldColumn(field.id)));
   const known = new Set(statuses.map((status) => status.id));
   const unlisted = items.filter((item) => !item.status || !known.has(item.status.id));
   const columns = [
@@ -38,6 +42,10 @@ export function ItemBoard({ items, statuses, canCreate, pending, onOpen, onAdd, 
             {(item.start_date || item.due_date) && <p className="flex items-center gap-1 text-xs text-muted-foreground">
               <CalendarDays className="size-3" />{[item.start_date, item.due_date].filter(Boolean).map((date) => formatDate(date, profile)).join(" – ")}
             </p>}
+            {profile && cardFields.map((field) => <p key={field.id} className="flex flex-wrap gap-1 text-xs">
+              <span className="text-muted-foreground">{field.name}:</span>
+              <CustomFieldDisplay field={field} value={item.fields?.[field.id]} people={peopleOf(item, field, item.fields?.[field.id])} profile={profile} />
+            </p>)}
             <p className="flex flex-wrap gap-2 text-xs text-muted-foreground">
               {item.child_count !== undefined && <span>{t("items.childCount", { count: item.child_count })}</span>}
               <span>{t("views.attachments", { count: item.attachment_count ?? 0 })}</span>

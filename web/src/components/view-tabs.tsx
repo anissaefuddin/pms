@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -11,14 +11,18 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormError } from "@/components/auth/form-error";
 
-export function ViewTabs({ views, selected, canEdit, onSelect, onRefresh }: {
+const viewTypes = ["table", "board", "gantt", "calendar"] as const satisfies readonly SavedView["type"][];
+
+export function ViewTabs({ views, selected, scope, canEdit, onSelect, onRefresh }: {
   views: SavedView[];
   selected: SavedView;
+  scope: { scope_space_id: string } | { scope_item_id: string };
   canEdit: boolean;
   onSelect: (id: string) => void;
   onRefresh: () => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const [adding, setAdding] = useState<SavedView["type"]>();
   const [renaming, setRenaming] = useState<SavedView>();
   const [deleting, setDeleting] = useState<SavedView>();
   const [error, setError] = useState("");
@@ -57,6 +61,20 @@ export function ViewTabs({ views, selected, canEdit, onSelect, onRefresh }: {
     const name = String(new FormData(event.currentTarget).get("name") ?? "").trim();
     if (name) void update(renaming.id, { name }, () => setRenaming(undefined));
   }
+  function create(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!adding) return;
+    const form = new FormData(event.currentTarget);
+    const name = String(form.get("name") ?? "").trim();
+    if (!name) return;
+    const visibility = canEdit && form.get("visibility") === "public" ? "public" : "personal";
+    void run(() => api<SavedView>("/api/v1/views", {
+      method: "POST", body: JSON.stringify({ ...scope, type: adding, name, visibility }),
+    }), (created) => {
+      setAdding(undefined);
+      onSelect(created.id);
+    });
+  }
   return <div className="space-y-2">
     <nav aria-label={t("views.views")} className="flex flex-wrap gap-2 border-b pb-2">
       {views.map((view) => {
@@ -84,8 +102,36 @@ export function ViewTabs({ views, selected, canEdit, onSelect, onRefresh }: {
           </DropdownMenu>
         </div>;
       })}
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button size="sm" variant="ghost" disabled={busy} />}>
+          <Plus /> {t("views.addView")}
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {viewTypes.map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
+            {t(`views.types.${type}`)}
+          </DropdownMenuItem>)}
+        </DropdownMenuContent>
+      </DropdownMenu>
     </nav>
-    {!renaming && !deleting && <FormError message={error} />}
+    {!adding && !renaming && !deleting && <FormError message={error} />}
+    <Dialog open={!!adding} onOpenChange={(open) => { if (!open) setAdding(undefined); }}>
+      <DialogContent>
+        <DialogTitle>{t("views.addView")}</DialogTitle>
+        {adding && <form className="space-y-3" onSubmit={create}>
+          <label className="block space-y-1"><span>{t("views.name")}</span>
+            <Input name="name" defaultValue={t(`views.types.${adding}`)} maxLength={80} required autoFocus />
+          </label>
+          {canEdit && <label className="block space-y-1"><span>{t("views.visibility")}</span>
+            <select name="visibility" className="block rounded border bg-background p-2">
+              <option value="public">{t("views.public")}</option>
+              <option value="personal">{t("views.personal")}</option>
+            </select>
+          </label>}
+          <FormError message={error} />
+          <DialogFooter><Button type="submit" disabled={busy}>{t("items.save")}</Button></DialogFooter>
+        </form>}
+      </DialogContent>
+    </Dialog>
     <Dialog open={!!renaming} onOpenChange={(open) => { if (!open) setRenaming(undefined); }}>
       <DialogContent>
         <DialogTitle>{t("views.rename")}</DialogTitle>

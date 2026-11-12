@@ -89,6 +89,7 @@ func (s *Server) listItems(w http.ResponseWriter, r *http.Request, container str
 	page, err := items.List(r.Context(), s.pool, actorOf(r), container, children, items.ListFilter{
 		Limit: limit, Types: split("type"), StatusGroups: split("status_group"),
 		Assignee: query.Get("assignee"), Sort: query.Get("sort"), Cursor: query.Get("cursor"),
+		Fields: query["field"],
 	})
 	if err != nil {
 		writeItemError(w, err)
@@ -151,7 +152,11 @@ func (s *Server) patchItem(w http.ResponseWriter, r *http.Request) {
 	if err == nil {
 		s.publishNotifications(batch)
 		id := r.PathValue("itemId")
-		s.publishItem(r, "item.updated", id, id, item.Version)
+		if len(item.ScheduleChanges) == 0 {
+			s.publishItem(r, "item.updated", id, id, item.Version)
+		} else {
+			s.publishSchedule(item.ScheduleChanges, id, item.Version)
+		}
 	}
 	writeItem(w, http.StatusOK, item, err)
 }

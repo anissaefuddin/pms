@@ -389,6 +389,47 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/custom-fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Daftar definisi custom field di Space, termasuk yang diarsipkan */
+        get: operations["listCustomFields"];
+        put?: never;
+        /** Tambahkan definisi custom field; perlu akses penuh di Space */
+        post: operations["createCustomField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/custom-fields/{fieldId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Arsipkan definisi dan pertahankan nilai yang sudah tersimpan */
+        delete: operations["archiveCustomField"];
+        options?: never;
+        head?: never;
+        /** Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan */
+        patch: operations["updateCustomField"];
+        trace?: never;
+    };
     "/spaces/{spaceId}/items": {
         parameters: {
             query?: never;
@@ -466,10 +507,51 @@ export interface paths {
         head?: never;
         /**
          * Ubah item (nama, status, tanggal, deskripsi, assignee, milestone)
-         * @description Field yang dikirim saja yang diubah. `status_id` memerlukan kemampuan `change_status`; field lain memerlukan `edit`.
+         * @description `status_id` memerlukan kemampuan `change_status`; field lain memerlukan `edit`.
+         *     Perubahan tanggal atau durasi dapat menggeser jadwal dalam transaksi yang sama.
+         *     Effort dan allocation mengubah jadwal hanya saat `recalculate_duration` bernilai true.
+         *     `affected_items` berisi penerus yang bergeser dan dapat dilihat pemanggil.
          *     Pergeseran urutan memakai endpoint `reorder`.
          */
         patch: operations["updateItem"];
+        trace?: never;
+    };
+    "/items/{itemId}/dependencies": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        /** Daftar dependensi masuk dan keluar dengan kedua ujung terlihat */
+        get: operations["listItemDependencies"];
+        put?: never;
+        /** Tambah pendahulu bagi Item penerus pada URL */
+        post: operations["createItemDependency"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dependencies/{dependencyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus dependensi dengan izin edit pada penerus */
+        delete: operations["deleteItemDependency"];
+        options?: never;
+        head?: never;
+        /** Ubah tipe atau lag dependensi dan geser penerus yang melanggar jadwal */
+        patch: operations["updateItemDependency"];
         trace?: never;
     };
     "/items/{itemId}/children": {
@@ -1240,7 +1322,99 @@ export interface components {
             id: string;
             name: string;
         };
+        AssigneeAllocation: {
+            /** @enum {string} */
+            unit: "percent" | "minutes_per_day";
+            /** Format: int32 */
+            value: number;
+        };
+        ItemAssignee: components["schemas"]["UserRef"] & {
+            allocation?: components["schemas"]["AssigneeAllocation"];
+        };
+        AssigneeAllocationUpdate: {
+            /** Format: uuid */
+            assignee_id: string;
+            /** @description null menghapus alokasi assignee */
+            allocation: {
+                /** @enum {string} */
+                unit: "percent" | "minutes_per_day";
+                /** Format: int32 */
+                value: number;
+            } | null;
+        };
+        /** @enum {string} */
+        CustomFieldType: "single_select" | "multi_select" | "text" | "number" | "currency" | "percent" | "people" | "date" | "duration" | "checkbox";
+        CustomFieldOption: {
+            /** Format: uuid */
+            id: string;
+            label: string;
+            color: string;
+        };
+        CustomFieldMarker: {
+            /** @enum {string} */
+            operator: "lt" | "lte" | "eq" | "gte" | "gt";
+            /** Format: double */
+            value: number;
+            color: string;
+        };
+        CustomFieldConfig: {
+            /** @description Kode ISO 4217 untuk Currency */
+            currency?: string;
+            /** @description Jumlah desimal untuk Currency dengan default 2 */
+            decimals?: number;
+            /** @description Izinkan nilai Percent melebihi 100 */
+            allow_over_100?: boolean;
+            /**
+             * @description Default untuk field numerik
+             * @enum {string}
+             */
+            aggregation?: "sum" | "average" | "min" | "max" | "count";
+            /** @description Aturan numerik dalam urutan prioritas, kecocokan pertama berlaku */
+            markers?: components["schemas"]["CustomFieldMarker"][];
+        };
+        CustomFieldCreate: {
+            name: string;
+            type: components["schemas"]["CustomFieldType"];
+            /** @description Wajib 1 sampai 100 opsi untuk tipe select, kosong atau dihilangkan untuk tipe lain */
+            options?: components["schemas"]["CustomFieldOption"][];
+            config?: components["schemas"]["CustomFieldConfig"];
+        };
+        CustomFieldUpdate: {
+            name?: string;
+            /** @description Indeks urutan berbasis nol dalam Space */
+            position?: number;
+            options?: components["schemas"]["CustomFieldOption"][];
+            /** @description Mengganti seluruh konfigurasi. Field yang dihilangkan memakai default */
+            config?: components["schemas"]["CustomFieldConfig"];
+        };
+        CustomField: components["schemas"]["CustomFieldCreate"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            space_id: string;
+            position: number;
+            /** Format: date-time */
+            archived_at?: string | null;
+            options: components["schemas"]["CustomFieldOption"][];
+        };
+        CustomFieldPerson: components["schemas"]["UserRef"] & {
+            /** @enum {string} */
+            status: "active" | "invited" | "deactivated";
+        };
+        /** @description Nilai berkunci UUID definisi. Text, Date (YYYY-MM-DD), dan Single select (UUID) memakai string. Multiple select dan People memakai array UUID. Number, Currency dan Percent memakai angka desimal. Duration adalah jumlah hari bulat nonnegatif. Checkbox memakai boolean. Pada PATCH, null menghapus nilai. */
+        CustomFieldValues: {
+            [key: string]: (string | null) | number | boolean | string[];
+        };
+        /** @enum {string} */
+        ProjectProgressMethod: "task_count" | "weighted_duration" | "average_percent";
+        /** @enum {string} */
+        ProjectProgressRisk: "green" | "yellow" | "red";
         Item: {
+            fields?: components["schemas"]["CustomFieldValues"];
+            /** @description Metadata orang yang sudah dipilih pada nilai People yang terlihat, berkunci UUID user */
+            field_people?: {
+                [key: string]: components["schemas"]["CustomFieldPerson"];
+            };
             /** Format: uuid */
             id: string;
             /**
@@ -1257,13 +1431,19 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             duration_days?: number | null;
+            /** Format: int32 */
+            effort_minutes?: number | null;
+            progress_method?: components["schemas"]["ProjectProgressMethod"];
+            /** @description Progres manual pada task atau progres hasil perhitungan pada project */
+            progress_percent?: number | null;
+            progress_risk?: components["schemas"]["ProjectProgressRisk"];
             is_milestone?: boolean;
             owner?: components["schemas"]["UserRef"] | null;
             /** Format: uuid */
             default_workflow_id?: string | null;
             /** @enum {string|null} */
             default_view_type?: "table" | "board" | null;
-            assignees: components["schemas"]["UserRef"][];
+            assignees: components["schemas"]["ItemAssignee"][];
             locations: components["schemas"]["Location"][];
             child_count?: number;
             attachment_count?: number;
@@ -1300,6 +1480,11 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             duration_days?: number | null;
+            /** Format: int32 */
+            effort_minutes?: number | null;
+            progress_method?: components["schemas"]["ProjectProgressMethod"];
+            /** @description Progres manual khusus task */
+            progress_percent?: number | null;
             is_milestone?: boolean;
             /**
              * Format: uuid
@@ -1317,11 +1502,46 @@ export interface components {
              */
             default_view_type?: "table" | "board";
             assignee_ids?: string[];
+            assignee_allocations?: components["schemas"]["AssigneeAllocationUpdate"][];
             locations: components["schemas"]["Location"][];
             /** @description Hanya project/folder (SPC-05 Sharing) */
             shares?: components["schemas"]["ShareInput"][];
         };
+        /** @enum {string} */
+        DependencyType: "FS" | "SS" | "FF" | "SF";
+        ItemDependency: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            predecessor_id: string;
+            /** Format: uuid */
+            successor_id: string;
+            type: components["schemas"]["DependencyType"];
+            /**
+             * Format: int32
+             * @description Lag dalam hari kerja
+             */
+            lag: number;
+        };
+        ScheduleItemVersion: {
+            /** Format: uuid */
+            id: string;
+            version: number;
+        };
+        ScheduleItemChange: components["schemas"]["ScheduleItemVersion"] & {
+            /** Format: date */
+            start_date: string | null;
+            /** Format: date */
+            due_date: string | null;
+        };
+        ItemDependencyMutation: components["schemas"]["ItemDependency"] & {
+            affected_items?: components["schemas"]["ScheduleItemChange"][];
+        };
+        ItemPatchResult: components["schemas"]["Item"] & {
+            affected_items?: components["schemas"]["ScheduleItemChange"][];
+        };
         ItemUpdate: {
+            fields?: components["schemas"]["CustomFieldValues"];
             title?: string;
             description?: components["schemas"]["RichText"];
             /** Format: uuid */
@@ -1331,13 +1551,25 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             duration_days?: number | null;
+            /** Format: int32 */
+            effort_minutes?: number | null;
+            progress_method?: components["schemas"]["ProjectProgressMethod"];
+            /** @description Progres manual khusus task */
+            progress_percent?: number | null;
+            /**
+             * @description Hitung durasi hari kerja dari effort dan alokasi terbaru. Kirim tanpa field tanggal, durasi, atau milestone.
+             * @enum {boolean}
+             */
+            recalculate_duration?: true;
             is_milestone?: boolean;
             /** Format: uuid */
             owner_id?: string;
             assignee_ids?: string[];
+            /** @description Ubah alokasi assignee yang tercantum setelah assignee_ids diterapkan */
+            assignee_allocations?: components["schemas"]["AssigneeAllocationUpdate"][];
         };
         /** @enum {string} */
-        ViewType: "table" | "board";
+        ViewType: "table" | "board" | "gantt" | "calendar";
         /** @enum {string} */
         ViewVisibility: "public" | "personal";
         View: {
@@ -1481,6 +1713,8 @@ export interface components {
             version?: number;
             /** @description Container yang daftarnya perlu dimuat ulang */
             container_ids?: string[];
+            /** @description Item yang dapat dilihat penerima dalam event item.updated untuk satu perubahan jadwal */
+            affected_items?: components["schemas"]["ScheduleItemVersion"][];
         };
     };
     responses: {
@@ -1561,7 +1795,10 @@ export interface components {
         ItemFilterStatusGroup: components["schemas"]["StatusGroup"][];
         /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
         ItemFilterAssignee: string;
-        ItemSort: "manual" | "title" | "status" | "due_date" | "start_date" | "created_at" | "updated_at";
+        /** @description Kunci urut, atau `field:<UUID definisi>` untuk custom field skalar dan select (bukan multi select atau People) */
+        ItemSort: string;
+        /** @description Filter custom field `<UUID definisi>:<nilai>`, dapat diulang (AND). Select memakai UUID opsi, Text mencari substring, angka/tanggal/checkbox mencocokkan nilai persis, Multiple select dan People memuat UUID tersebut. */
+        ItemFilterField: string[];
     };
     requestBodies: never;
     headers: {
@@ -2343,6 +2580,116 @@ export interface operations {
             428: components["responses"]["Problem"];
         };
     };
+    listCustomFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["CustomField"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldCreate"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    archiveCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Diarsipkan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    updateCustomField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomFieldUpdate"];
+            };
+        };
+        responses: {
+            /** @description Diperbarui */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
     listSpaceRootItems: {
         parameters: {
             query?: {
@@ -2352,7 +2699,10 @@ export interface operations {
                 status_group?: components["parameters"]["ItemFilterStatusGroup"];
                 /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
                 assignee?: components["parameters"]["ItemFilterAssignee"];
+                /** @description Kunci urut, atau `field:<UUID definisi>` untuk custom field skalar dan select (bukan multi select atau People) */
                 sort?: components["parameters"]["ItemSort"];
+                /** @description Filter custom field `<UUID definisi>:<nilai>`, dapat diulang (AND). Select memakai UUID opsi, Text mencari substring, angka/tanggal/checkbox mencocokkan nilai persis, Multiple select dan People memuat UUID tersebut. */
+                field?: components["parameters"]["ItemFilterField"];
             };
             header?: never;
             path: {
@@ -2483,7 +2833,7 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    "application/json": components["schemas"]["Item"];
+                    "application/json": components["schemas"]["ItemPatchResult"];
                 };
             };
             403: components["responses"]["Problem"];
@@ -2491,6 +2841,131 @@ export interface operations {
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             428: components["responses"]["Problem"];
+        };
+    };
+    listItemDependencies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ItemDependency"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createItemDependency: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    predecessor_id: string;
+                    type: components["schemas"]["DependencyType"];
+                    /**
+                     * Format: int32
+                     * @description Lag dalam hari kerja
+                     * @default 0
+                     */
+                    lag?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDependencyMutation"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteItemDependency: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dependencyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    updateItemDependency: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dependencyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    type?: components["schemas"]["DependencyType"];
+                    /**
+                     * Format: int32
+                     * @description Lag dalam hari kerja
+                     */
+                    lag?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Diperbarui */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemDependencyMutation"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listItemChildren: {
@@ -2502,7 +2977,10 @@ export interface operations {
                 status_group?: components["parameters"]["ItemFilterStatusGroup"];
                 /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
                 assignee?: components["parameters"]["ItemFilterAssignee"];
+                /** @description Kunci urut, atau `field:<UUID definisi>` untuk custom field skalar dan select (bukan multi select atau People) */
                 sort?: components["parameters"]["ItemSort"];
+                /** @description Filter custom field `<UUID definisi>:<nilai>`, dapat diulang (AND). Select memakai UUID opsi, Text mencari substring, angka/tanggal/checkbox mencocokkan nilai persis, Multiple select dan People memuat UUID tersebut. */
+                field?: components["parameters"]["ItemFilterField"];
             };
             header?: never;
             path: {

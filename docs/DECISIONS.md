@@ -45,6 +45,8 @@
 | D-40 | **M2-5:** nilai custom field disimpan di `items.fields` berkunci id definisi; kolom tampil bila definisi ada di Space yang sedang dilihat | chat (13 Nov 2026), [BACKLOG.md](BACKLOG.md) (M2) |
 | D-10 | Cakupan detail design dan backlog saat ini: **M0 + M1** (47 requirement) | chat ("lanjut kerjakan m1") |
 
+**Implementasi D-37 dan D-38 (S2.1.3).** PATCH Item yang mengubah tanggal atau durasi serta POST/PATCH dependensi menghitung ulang rantai aktif di transaksi yang sama. FS memakai hari kerja pertama setelah finish inklusif. SS, FF, dan SF memakai tanggal acuan yang dibulatkan ke hari kerja berikutnya bila perlu. Lag bertanda dihitung dari acuan itu. Penerus hanya bergeser ke tanggal yang lebih akhir saat melanggar batas, dan DELETE dependensi tetap 204 karena melepas batas tanpa memajukan penerus. Relasi yang sudah tersimpan berlaku untuk seluruh rantai aktif. Respons dan event hanya memuat item yang dapat dilihat penerima.
+
 ## 2. Disetujui 12 Nov 2026 (sebelumnya PROPOSED, dokumen buatan AI)
 
 | ID | Keputusan | Lokasi |

@@ -12,6 +12,12 @@ type Event struct {
 	RecipientID            string
 	Version                int
 	Locations              []Location
+	AffectedItems          []ItemVersion
+}
+
+type ItemVersion struct {
+	ID      string `json:"id"`
+	Version int    `json:"version"`
 }
 
 type Location struct{ SpaceID, ParentID string }

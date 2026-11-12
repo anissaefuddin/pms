@@ -401,8 +401,10 @@ func (ns NullUserType) Value() (driver.Value, error) {
 type ViewType string
 
 const (
-	ViewTypeTable ViewType = "table"
-	ViewTypeBoard ViewType = "board"
+	ViewTypeTable    ViewType = "table"
+	ViewTypeBoard    ViewType = "board"
+	ViewTypeGantt    ViewType = "gantt"
+	ViewTypeCalendar ViewType = "calendar"
 )
 
 func (e *ViewType) Scan(src interface{}) error {
@@ -530,6 +532,17 @@ type CommentMention struct {
 	TargetID    pgtype.UUID `json:"target_id"`
 }
 
+type CustomField struct {
+	ID         pgtype.UUID        `json:"id"`
+	SpaceID    pgtype.UUID        `json:"space_id"`
+	Name       string             `json:"name"`
+	Type       string             `json:"type"`
+	Options    []byte             `json:"options"`
+	Position   int32              `json:"position"`
+	ArchivedAt pgtype.Timestamptz `json:"archived_at"`
+	Config     []byte             `json:"config"`
+}
+
 type Group struct {
 	ID        pgtype.UUID        `json:"id"`
 	Name      string             `json:"name"`
@@ -567,11 +580,24 @@ type Item struct {
 	DeletedBy         pgtype.UUID        `json:"deleted_by"`
 	DeletedRootID     pgtype.UUID        `json:"deleted_root_id"`
 	Search            interface{}        `json:"search"`
+	EffortMinutes     pgtype.Int4        `json:"effort_minutes"`
+	ProgressMethod    pgtype.Text        `json:"progress_method"`
+	ProgressPercent   pgtype.Int2        `json:"progress_percent"`
 }
 
 type ItemAssignee struct {
-	ItemID pgtype.UUID `json:"item_id"`
-	UserID pgtype.UUID `json:"user_id"`
+	ItemID          pgtype.UUID `json:"item_id"`
+	UserID          pgtype.UUID `json:"user_id"`
+	AllocationUnit  pgtype.Text `json:"allocation_unit"`
+	AllocationValue pgtype.Int4 `json:"allocation_value"`
+}
+
+type ItemDependency struct {
+	ID            pgtype.UUID `json:"id"`
+	PredecessorID pgtype.UUID `json:"predecessor_id"`
+	SuccessorID   pgtype.UUID `json:"successor_id"`
+	Type          string      `json:"type"`
+	Lag           int32       `json:"lag"`
 }
 
 type ItemFollower struct {

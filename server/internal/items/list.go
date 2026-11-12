@@ -16,6 +16,7 @@ import (
 type ListFilter struct {
 	Types, StatusGroups    []string
 	Assignee, Sort, Cursor string
+	Fields                 []string // "<custom field id>:<value>", ANDed
 	Limit                  int
 }
 
@@ -59,6 +60,13 @@ func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, container
 	if err != nil {
 		return Page{}, err
 	}
+	fieldKey, fieldTerms, fieldArgs, err := resolveFields(ctx, tx, spaceIDs, filter)
+	if err != nil {
+		return Page{}, err
+	}
+	if fieldKey != "" {
+		key = fieldKey
+	}
 	rows, err := tx.Query(ctx, `
 WITH candidates AS (
  SELECT i.id, `+key+` AS key
@@ -73,7 +81,7 @@ WITH candidates AS (
      SELECT 1 FROM item_assignees a WHERE a.item_id=i.id
    ) ELSE EXISTS (
      SELECT 1 FROM item_assignees a WHERE a.item_id=i.id AND a.user_id::text=$5
-   ) END)
+   ) END)`+fieldTerms+`
  GROUP BY i.id,st.id
 )
 SELECT id::text,key FROM candidates
@@ -81,7 +89,7 @@ WHERE $6::uuid IS NULL OR
   (key IS NULL,COALESCE(key,'') COLLATE "C",id) >
   ($7::text IS NULL,COALESCE($7,'') COLLATE "C",$6::uuid)
 ORDER BY key COLLATE "C" NULLS LAST,id LIMIT $8`,
-		spaceIDs, parentID, filter.Types, filter.StatusGroups, filter.Assignee, cursorID(cursor), cursorKey(cursor), filter.Limit+1)
+		append([]any{spaceIDs, parentID, filter.Types, filter.StatusGroups, filter.Assignee, cursorID(cursor), cursorKey(cursor), filter.Limit + 1}, fieldArgs...)...)
 	if err != nil {
 		return Page{}, err
 	}
@@ -161,6 +169,9 @@ func validateFilter(actor policy.Actor, id string, children bool, filter *ListFi
 		filter.Sort = "manual"
 	}
 	key, ok := sortKeys[filter.Sort]
+	if !ok && strings.HasPrefix(filter.Sort, "field:") {
+		key, ok = "NULL::text", true // replaced by resolveFields
+	}
 	if !ok {
 		return "", nil, scope, Invalid("unknown sort")
 	}

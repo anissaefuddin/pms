@@ -136,8 +136,10 @@ func Create(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput) 
 	if err := checkVisibility(in.Visibility, caps); err != nil {
 		return View{}, err
 	}
-	if in.Type != "table" && in.Type != "board" {
-		return View{}, Invalid("type must be table or board")
+	switch in.Type {
+	case "table", "board", "gantt", "calendar":
+	default:
+		return View{}, Invalid("type must be table, board, gantt, or calendar")
 	}
 	name, err := cleanName(in.Name)
 	if err != nil {

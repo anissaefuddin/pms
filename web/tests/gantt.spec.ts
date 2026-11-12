@@ -1,0 +1,95 @@
+import { expect, test } from "@playwright/test";
+import AxeBuilder from "@axe-core/playwright";
+import { bar, design, ganttId, kids, milestone, mockGantt, path, project } from "./gantt-mock";
+
+async function drag(page: import("@playwright/test").Page, id: string, dx: number, edge: "move" | "end" = "move") {
+  const box = (await bar(page, id).boundingBox())!;
+  const x = edge === "end" ? box.x + box.width - 2 : box.x + box.width / 2;
+  const y = box.y + box.height / 2;
+  await page.mouse.move(x, y);
+  await page.mouse.down();
+  await page.mouse.move(x + dx / 2, y, { steps: 4 });
+  await page.mouse.move(x + dx, y, { steps: 4 });
+  await page.mouse.up();
+}
+
+test("shows the hierarchy with progress, a milestone and the three scales", async ({ page }) => {
+  await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(bar(page, project.id)).toHaveClass(/wx-summary/);
+  await expect(bar(page, project.id).locator(".wx-progress-marker")).toHaveText("40");
+  await expect(bar(page, milestone.id)).toHaveClass(/wx-milestone/);
+  await expect(bar(page, design)).toBeVisible();
+  const width = async () => (await bar(page, design).boundingBox())!.width;
+  expect(await width()).toBe(72); // 2 days (Nov 2 to 3, inclusive) x 36px
+  await page.getByRole("button", { name: "Weeks" }).click();
+  await expect.poll(async () => Math.round(await width())).toBe(Math.round(2 * 80 / 7));
+  await page.getByRole("button", { name: "Months" }).click();
+  await expect(page.getByRole("button", { name: "Months" })).toHaveAttribute("aria-pressed", "true");
+  await expect.poll(width).toBeLessThan(10);
+  await page.getByRole("button", { name: "Days" }).click();
+  await expect(page.locator(".gantt-today").first()).toBeVisible();
+});
+
+test("drag moves the item and resize changes the finish date, with If-Match and the server's answer", async ({ page }) => {
+  const { calls } = await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await drag(page, design, 72);
+  await expect.poll(() => calls.find((call) => call.method === "PATCH")?.body).toEqual({ start_date: "2026-11-04", due_date: "2026-11-05" });
+  expect(calls.find((call) => call.method === "PATCH")?.headers["if-match"]).toBe('"1"');
+  await expect.poll(async () => (await bar(page, design).boundingBox())!.x - (await bar(page, project.id).boundingBox())!.x).toBe(72 + 0);
+  const patches = () => calls.filter((call) => call.method === "PATCH");
+  await drag(page, design, 36, "end");
+  await expect.poll(() => patches().at(-1)?.body).toEqual({ start_date: "2026-11-04", due_date: "2026-11-06" });
+  expect(patches().at(-1)?.headers["if-match"]).toBe('"2"');
+});
+
+test("a conflict keeps the bar where it was and says so", async ({ page }) => {
+  const { calls } = await mockGantt(page, { conflict: true });
+  await page.goto(`${path}?view=${ganttId}`);
+  const before = (await bar(page, design).boundingBox())!.x;
+  await drag(page, design, 72);
+  await expect.poll(() => calls.some((call) => call.method === "PATCH")).toBe(true);
+  await expect(page.getByText("Item was updated by someone else")).toBeVisible();
+  expect((await bar(page, design).boundingBox())!.x).toBe(before);
+});
+
+test("view-only users cannot drag, and the chart says so", async ({ page }) => {
+  const { calls } = await mockGantt(page, { space: ["view"] });
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(page.getByText("You can view this chart but not change dates.")).toBeVisible();
+  const before = (await bar(page, design).boundingBox())!.x;
+  await drag(page, design, 72);
+  await page.waitForTimeout(300);
+  expect(calls.some((call) => call.method === "PATCH")).toBe(false);
+  expect((await bar(page, design).boundingBox())!.x).toBe(before);
+});
+
+test("keyboard selects a task and moves it one day; Shift changes the finish date", async ({ page }) => {
+  const { calls } = await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  const chart = page.getByRole("application", { name: "Gantt chart" });
+  await chart.focus();
+  await page.keyboard.press("ArrowDown"); // Launch
+  await page.keyboard.press("ArrowDown"); // Design
+  await expect(page.getByRole("status").filter({ hasText: "Design" })).toHaveText(/Design: .*2026.*–/);
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => calls.find((call) => call.method === "PATCH")?.body).toEqual({ start_date: "2026-11-03", due_date: "2026-11-04" });
+  await expect(page.getByRole("status").filter({ hasText: "Design" })).toContainText("2026-11-03");
+  await page.waitForTimeout(300); // the next key is ignored while the previous PATCH is still settling
+  await page.keyboard.press("Shift+ArrowRight");
+  await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toEqual({ start_date: "2026-11-03", due_date: "2026-11-05" });
+});
+
+test("has no axe violations in light and dark", async ({ page }) => {
+  await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(bar(page, design)).toBeVisible();
+  for (const scheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme: scheme });
+    await page.evaluate((dark) => document.documentElement.classList.toggle("dark", dark), scheme === "dark");
+    // SVAR's task grid puts aria-expanded/aria-rowindex=0 on rows of a role=grid; that is inside the library.
+    const found = await new AxeBuilder({ page }).include('[role="application"]').disableRules(["aria-conditional-attr", "aria-valid-attr-value"]).analyze();
+    expect(found.violations).toEqual([]);
+  }
+});

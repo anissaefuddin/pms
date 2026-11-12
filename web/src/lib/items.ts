@@ -1,4 +1,5 @@
 import type { components } from "@/api/schema";
+import type { Query } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 
 export type Item = components["schemas"]["Item"];
@@ -24,7 +25,12 @@ export async function getItem(id: string) {
   return { item, etag };
 }
 
-export async function listItems(path: string, sort?: string, type?: string): Promise<Item[]> {
+export function isProjectDetail(query: Query) {
+  return query.queryKey[0] === "items" && query.queryKey[1] === "detail"
+    && (query.state.data as Awaited<ReturnType<typeof getItem>> | undefined)?.item.type === "project";
+}
+
+export async function listItems(path: string, sort?: string, type?: string, field?: string): Promise<Item[]> {
   const items: Item[] = [];
   const seen = new Set<string>();
   let cursor: string | null | undefined;
@@ -33,6 +39,7 @@ export async function listItems(path: string, sort?: string, type?: string): Pro
     if (cursor) params.set("cursor", cursor);
     if (sort) params.set("sort", sort);
     if (type) params.set("type", type);
+    if (field) params.set("field", field);
     const query = params.size ? `?${params.toString()}` : "";
     const page: ItemPage = await api<ItemPage>(path + query);
     items.push(...page.items);

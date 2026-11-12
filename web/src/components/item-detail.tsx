@@ -7,7 +7,7 @@ import { toast } from "sonner";
 import type { components } from "@/api/schema";
 import { recycleKey, restoreItem } from "@/lib/recycle";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
-import { getItem, isWorkday, itemKeys, listItems, type Item, type ItemUpdate } from "@/lib/items";
+import { getItem, isProjectDetail, isWorkday, itemKeys, listItems, type Item, type ItemUpdate } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -16,7 +16,10 @@ import { FormError } from "@/components/auth/form-error";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { ItemDates } from "@/components/item-dates";
+import { ItemEffort } from "@/components/item-effort";
+import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
+import { ItemProgress } from "@/components/project-progress";
 const ItemDescription = lazy(async () => ({ default: (await import("@/components/item-description")).ItemDescription }));
 const ItemComments = lazy(async () => ({ default: (await import("@/components/item-comments")).ItemComments }));
 
@@ -82,23 +85,27 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
     ?? workflows.data?.items.find((workflow) => workflow.is_default))?.statuses ?? [];
   const childLocation = item.locations[0] && { space_id: item.locations[0].space_id, parent_item_id: item.id };
 
-  async function save(update: ItemUpdate, reapply = false) {
+  async function save(update: ItemUpdate, reapply = false, draftField?: keyof ItemUpdate) {
     if (saving.current || (!reapply && (stale || !etag))) return false;
     saving.current = true;
     setBusy(true);
     setError("");
     try {
       const fields = Object.keys(update) as (keyof ItemUpdate)[];
-      const expected = reapply ? (await getItem(item.id)).etag : draftVersions.current[fields[0]] ?? etag;
+      const draftKey = draftField ?? fields[0];
+      const expected = reapply ? (await getItem(item.id)).etag : draftVersions.current[draftKey] ?? etag;
       if (!expected) throw new Error(t("items.stale"));
       let tag: string | null = null;
       const updated = await api<Item>(path, {
         method: "PATCH", headers: { "If-Match": expected }, body: JSON.stringify(update),
       }, (headers) => { tag = headers.get("ETag"); });
       for (const field of fields) delete draftVersions.current[field];
+      delete draftVersions.current[draftKey];
       if (update.assignee_ids) setAssigneeDraft(undefined);
       qc.setQueryData(itemKeys.detail(item.id), { item: updated, etag: tag });
-      await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+      await qc.invalidateQueries({ queryKey: itemKeys.all,
+        predicate: (query) => query.queryKey[1] !== "detail" || (query.queryKey[2] !== item.id && isProjectDetail(query)),
+      });
       setConflictDraft(undefined);
       if (reapply) reset();
       return true;
@@ -127,7 +134,9 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
     try {
       await api(path, { method: "DELETE" });
       await qc.invalidateQueries({ queryKey: itemKeys.detail(item.id), exact: true, refetchType: "none" });
-      await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+      await qc.invalidateQueries({ queryKey: itemKeys.all,
+        predicate: (query) => query.queryKey[1] !== "detail" || (query.queryKey[2] !== item.id && isProjectDetail(query)),
+      });
       void qc.invalidateQueries({ queryKey: recycleKey });
       toast.success(t("nav.recycle.deleted"), { duration: 8000, action: {
         label: t("nav.recycle.undo"),
@@ -202,6 +211,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
         {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
       </select>
     </div>
+    <ItemProgress item={item} editable={canEdit} disabled={busy || stale}
+      onEdit={() => beginDraft("progress_percent")} onSave={(update) => save(update)} />
     {canEdit ? <form className="space-y-2" onSubmit={saveDates}>
       <ItemDates key={draftVersions.current.start_date ?? etag} initialStart={item.start_date}
         initialDue={item.due_date} onEdit={() => beginDraft("start_date")} />
@@ -217,6 +228,16 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
       }} />
       <Button variant="outline" disabled={busy || stale} onClick={() => void save({ assignee_ids: assignees.map((person) => person.id) })}>{t("items.save")}</Button>
     </div> : <section><h3>{t("items.assignees")}</h3><p>{item.assignees.map((person) => person.name).join(", ")}</p></section>}
+    <ItemEffort item={item} editable={canEdit} disabled={busy || stale}
+      onEdit={() => beginDraft("effort_minutes")}
+      onSave={(update) => save(update, false, "effort_minutes")} />
+    <ItemCustomFields item={item} profile={me} editable={canEdit} disabled={busy || stale}
+      onEdit={() => {
+        delete draftVersions.current.fields;
+        beginDraft("fields");
+      }}
+      onCancel={() => { delete draftVersions.current.fields; }}
+      onSave={(fieldId, value) => save({ fields: { [fieldId]: value } })} />
     <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
       <ItemDescription description={item.description} editable={canEdit && !stale} busy={busy} save={save}
         onEdit={() => beginDraft("description")} />

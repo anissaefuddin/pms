@@ -12,6 +12,7 @@ import type { Item } from "@/lib/items";
 import { can, sortSpaces, spaceKeys, type Share, type Space } from "@/lib/spaces";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ShareDialog } from "@/components/share-dialog";
+import { CustomFieldsDialog } from "@/components/custom-fields-dialog";
 import { SpaceDialog } from "@/components/space-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -49,6 +50,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState(false);
+  const [managingFields, setManagingFields] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
@@ -61,6 +63,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const canRename = shared && can(space, "edit");
   const canDelete = shared && can(space, "delete");
   const canCreate = can(space, "create");
+  const canManageFields = can(space, "share") && can(space, "delete");
   const personal = space.kind === "personal";
   function openItem(item: Item) {
     if (item.type === "task") void navigate({ to: "/spaces/$spaceId", params: { spaceId: space.id },
@@ -94,10 +97,11 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         <div className="flex shrink-0 items-center gap-2">
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
-          {(canRename || canDelete) && (
+          {(canRename || canDelete || canManageFields) && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
+                {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
                 {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
                 {canDelete && <DropdownMenuItem variant="destructive" onClick={() => { setDeleteError(""); setDeleting(true); }}>{t("spaces.menu.delete")}</DropdownMenuItem>}
               </DropdownMenuContent>
@@ -116,6 +120,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
 
       {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}
         onCreated={openItem} />}
+      {canManageFields && <CustomFieldsDialog open={managingFields} onOpenChange={setManagingFields} spaceId={space.id} />}
       <SpaceDialog open={renaming} onOpenChange={setRenaming} space={space} />
       {me && (
         <ShareDialog

@@ -27,6 +27,7 @@ export async function mockSpaces(page: Page, opts: { me?: typeof me; spaces?: Sp
   };
   for (const s of [...spaces, { id: NEW_ID }]) {
     handlers[`GET /spaces/${s.id}/items`] = { body: { items: [], next_cursor: null } };
+    handlers[`GET /spaces/${s.id}/custom-fields`] = { body: { items: [] } };
     handlers[`GET /spaces/${s.id}`] = () => {
       const current = spaces.find((x) => x.id === s.id);
       return current ? { body: current } : problem(404, "space not found", "not_found");

@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import type { components } from "@/api/schema";
 import { notificationKey } from "@/lib/notifications";
-import { itemKeys } from "@/lib/items";
+import { isProjectDetail, itemKeys, type Item } from "@/lib/items";
 
 const events = ["item.created", "item.updated", "item.deleted", "item.restored", "comment.created", "notification.created", "resync"];
 
@@ -26,8 +26,6 @@ export function useRealtime(enabled: boolean) {
         return;
       }
       const id = event.item_id ?? event.id;
-      if (event.type !== "comment.created") void client.invalidateQueries({ queryKey: ["items", "todo"] });
-      void client.invalidateQueries({ queryKey: itemKeys.detail(id) });
       void client.invalidateQueries({ queryKey: ["item-comments", id] });
       void client.invalidateQueries({ queryKey: ["item-attachments", id] });
       void client.invalidateQueries({ queryKey: ["shared-items"] });
@@ -37,11 +35,20 @@ export function useRealtime(enabled: boolean) {
         void client.invalidateQueries({ queryKey: ["recycle-bin"] });
         return;
       }
-      for (const container of event.container_ids ?? []) {
-        void client.invalidateQueries({ queryKey: itemKeys.root(container) });
-        void client.invalidateQueries({ queryKey: itemKeys.children(container) });
-        void client.invalidateQueries({ queryKey: itemKeys.detail(container) });
-      }
+      const itemChanged = event.type !== "comment.created";
+      const containers = new Set(event.container_ids ?? []);
+      const updatedItems = new Set([id, ...(event.affected_items ?? []).map((item) => item.id)]);
+      void client.invalidateQueries({ queryKey: itemKeys.all, predicate: (query) => {
+        const [, kind, key] = query.queryKey;
+        const inContainer = typeof key === "string" && containers.has(key);
+        if (kind === "todo") return itemChanged;
+        if (kind === "detail") {
+          return inContainer || (typeof key === "string" && updatedItems.has(key)) || (itemChanged && isProjectDetail(query));
+        }
+        if (kind !== "root" && kind !== "children") return false;
+        // SSE names direct containers. A deeper ancestor may exist outside the cached tree.
+        return inContainer || (itemChanged && ((query.state.data as Item[] | undefined)?.some((item) => item.type === "project") ?? false));
+      } });
     }
     function connect(restarted = false) {
       source = new EventSource("/api/v1/events");

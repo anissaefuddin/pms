@@ -1,16 +1,20 @@
-import { useRef, useState } from "react";
+import { Suspense, lazy, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { components } from "@/api/schema";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
-import { itemKeys, listItems, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
+import { isProjectDetail, itemKeys, listItems, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
 import { Input } from "@/components/ui/input";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
 import { ItemBoard } from "@/components/item-board";
+const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
 import { ViewTabs } from "@/components/view-tabs";
+import { ColumnPicker, FieldFilter } from "@/components/view-columns";
+import type { CustomField } from "@/lib/custom-fields";
+import { fieldSort, sortableField, visibleColumns } from "@/lib/view-columns";
 
 export const viewSorts = ["manual", "title", "status", "start_date", "due_date"] as const;
 const viewGroups = ["none", "status", "type"] as const;
@@ -30,19 +34,28 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
   const base = parent ? `/api/v1/items/${parent.id}` : `/api/v1/spaces/${spaceId}`;
   const sort = search.sort ?? "manual";
   const filter = search.filter ?? "";
+  const fieldFilter = search.field ?? "";
   const group = search.group === "status" || search.group === "type" ? search.group : undefined;
   const viewKey = ["views", base];
   const listKey = parent ? itemKeys.children(parent.id) : itemKeys.root(spaceId);
-  const sortedKey = sort === "manual" ? listKey : [...listKey, sort];
+  const sortedKey = sort === "manual" && !fieldFilter ? listKey : [...listKey, sort, fieldFilter];
   const views = useQuery({ queryKey: viewKey, queryFn: () => api<{ items: SavedView[] }>(base + "/views") });
   const available = views.data?.items ?? [];
   const active = available.find((view) => view.id === search.view) ?? available.find((view) => view.is_default) ?? available[0];
+  const isGantt = active?.type === "gantt";
+  const isCollection = active?.type === "table" || active?.type === "board";
   const items = useQuery({
-    queryKey: sortedKey,
-    queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort),
+    queryKey: sortedKey, enabled: !active || isCollection || isGantt,
+    queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, undefined, fieldFilter || undefined),
   });
+  const fieldQueries = useQuery({
+    queryKey: ["custom-fields", spaceId], enabled: isCollection && !!spaceId,
+    queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/custom-fields`),
+  });
+  const customFields = (fieldQueries.data?.items ?? []).filter((field) => !field.archived_at);
+  const [savingColumns, setSavingColumns] = useState(false);
   const workflows = useQuery({
-    queryKey: ["workflows"], enabled: !!active,
+    queryKey: ["workflows"], enabled: isCollection,
     queryFn: () => api<{ items: components["schemas"]["Workflow"][] }>("/api/v1/workflows"),
   });
   const workflow = workflows.data?.items.find((wf) => wf.id === parent?.default_workflow_id)
@@ -76,7 +89,9 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
         method: "PATCH", headers: { "If-Match": `"${item.version}"` }, body: JSON.stringify(update),
       });
       qc.setQueriesData<Item[]>(isList, (list) => list?.map((entry) => entry.id === item.id ? updated : entry));
-      await qc.invalidateQueries({ queryKey: itemKeys.detail(item.id), exact: true });
+      await qc.invalidateQueries({ queryKey: ["items", "detail"],
+        predicate: (query) => query.queryKey[2] === item.id || isProjectDetail(query),
+      });
     } catch (err) {
       for (const [key, snapshot] of snapshots) qc.setQueryData(key, snapshot);
       conflict = err instanceof ApiError && (err.status === 409 || err.status === 428);
@@ -88,6 +103,15 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
       locked.current = false;
       setPending(false);
     }
+  }
+  async function saveColumns(columns: string[]) {
+    if (!active) return;
+    setSavingColumns(true);
+    try {
+      await api(`/api/v1/views/${active.id}`, { method: "PATCH", body: JSON.stringify({ config: { ...active.config, columns } }) });
+      await qc.invalidateQueries({ queryKey: viewKey });
+    } catch { toast.error(t("views.columns.saveError")); }
+    finally { setSavingColumns(false); }
   }
   async function reorder(item: Item, parentId: string | undefined, after: string | null) {
     if (locked.current) return;
@@ -112,33 +136,51 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
       <button type="button" className="block w-full p-3 text-left" onClick={() => onOpen(item)}>{item.title}</button>
     </li>)}</ul> : null;
   const filtered = (items.data ?? []).filter((item) => item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
+  const columns = visibleColumns(active.config, (items.data ?? []).some((item) => item.type === "project"));
   const collection = {
-    items: filtered, statuses: workflow?.statuses ?? [], spaceId, parentId: parent?.id,
+    items: filtered, statuses: workflow?.statuses ?? [], spaceId, parentId: parent?.id, customFields, columns,
     canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string) => setCreating({ status }), onPatch: patch,
   };
   return <section className="min-w-0 space-y-3">
     <ViewTabs views={available} selected={active} canEdit={canEdit}
+      scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
-    <div className="flex flex-wrap items-end gap-3">
-      <label className="space-y-1"><span>{t("views.filter")}</span>
-        <Input value={filter} maxLength={120} onChange={(event) => setSearch("filter", event.target.value)} /></label>
-      <label className="space-y-1"><span>{t("views.sort")}</span>
-        <select aria-label={t("views.sort")} value={sort} onChange={(event) => setSearch("sort", event.target.value)}
-          className="block rounded border bg-background p-2">
-          {viewSorts.map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
-        </select></label>
-      <label className="space-y-1"><span>{t("views.group")}</span>
-        <select aria-label={t("views.group")} value={group ?? "none"} onChange={(event) => setSearch("group", event.target.value === "none" ? "" : event.target.value)}
-          className="block rounded border bg-background p-2">
-          {viewGroups.map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
-        </select></label>
-    </div>
-    {items.isPending && <p role="status">{t("items.loading")}</p>}
-    {items.isError && <p role="alert">{t("items.loadError")}</p>}
-    {items.isSuccess && (active.type === "board"
-      ? <ItemBoard {...collection} />
-      : <ItemTable {...collection} group={group} manual={!!spaceId && sort === "manual" && !group && !filter} onReorder={reorder} />)}
-    {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
+    {isGantt ? <>
+      {items.isPending && <p role="status">{t("items.loading")}</p>}
+      {items.isError && <p role="alert">{t("items.loadError")}</p>}
+      {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
+        <ItemGantt items={items.data} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen}
+          onPatch={(item, update) => patch(item, update)} />
+      </Suspense>}
+    </> : !isCollection ? <div className="space-y-1 rounded border p-4">
+      <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>
+      <p className="text-sm text-muted-foreground">{t("views.placeholder")}</p>
+    </div> : <>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="space-y-1"><span>{t("views.filter")}</span>
+          <Input value={filter} maxLength={120} onChange={(event) => setSearch("filter", event.target.value)} /></label>
+        <label className="space-y-1"><span>{t("views.sort")}</span>
+          <select aria-label={t("views.sort")} value={sort} onChange={(event) => setSearch("sort", event.target.value)}
+            className="block rounded border bg-background p-2">
+            {viewSorts.map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
+            {customFields.filter(sortableField).map((field) => <option value={fieldSort(field.id)} key={field.id}>{t("views.fieldSort", { name: field.name })}</option>)}
+          </select></label>
+        <FieldFilter fields={customFields.filter((field) => field.type !== "people")} value={fieldFilter}
+          onChange={(value) => setSearch("field", value)} />
+        {!!spaceId && <ColumnPicker key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
+        <label className="space-y-1"><span>{t("views.group")}</span>
+          <select aria-label={t("views.group")} value={group ?? "none"} onChange={(event) => setSearch("group", event.target.value === "none" ? "" : event.target.value)}
+            className="block rounded border bg-background p-2">
+            {viewGroups.map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
+          </select></label>
+      </div>
+      {items.isPending && <p role="status">{t("items.loading")}</p>}
+      {items.isError && <p role="alert">{t("items.loadError")}</p>}
+      {items.isSuccess && (active.type === "board"
+        ? <ItemBoard {...collection} />
+        : <ItemTable {...collection} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter} onReorder={reorder} />)}
+      {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
+        taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
+    </>}
   </section>;
 }

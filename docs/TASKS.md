@@ -11,7 +11,7 @@
 
 ## 1. Urutan eksekusi (dihasilkan dari dependensi)
 
-**Status:** `DRAFT` `PROPOSED` `APPROVED` `IN_PROGRESS` `BLOCKED` `DONE`. `DONE` hanya dengan bukti di [TESTING.md](TESTING.md). Per 13 Nov 2026: seluruh story M0 dan M1 `DONE` kecuali S1.1.4 (`IN_PROGRESS`: required check CI diblokir GitHub, HTTP 403). M2: S2.1.1 `DONE`; lainnya `PROPOSED`.
+**Status:** `DRAFT` `PROPOSED` `APPROVED` `IN_PROGRESS` `BLOCKED` `DONE`. `DONE` hanya dengan bukti di [TESTING.md](TESTING.md). Per 13 Nov 2026: seluruh story M0 dan M1 `DONE` kecuali S1.1.4 (`IN_PROGRESS`: required check CI diblokir GitHub, HTTP 403). Status per story M2 ada di tabel di bawah.
 
 Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu. **Jadwal ini akan bergeser**; kalibrasi ulang setelah M0 selesai.
 
@@ -61,15 +61,15 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 41 | S1.8.2 | Performa dan kesiapan pilot | 1.5 | 72.5–74 | 15 | DONE |
 | 42 | S2.1.1 | Work schedule (SET-07) | 2.5 | 74–76.5 | 16 | DONE |
 | 43 | S2.1.2 | Dependensi item (data dan API) | 2.5 | 76.5–79 | 16 | DONE |
-| 44 | S2.1.3 | Mesin penjadwalan di Go | 4.0 | 79–83 | 17 | PROPOSED |
-| 45 | S2.2.1 | Effort dan allocation (TASK-05B) | 2.5 | 83–85.5 | 18 | PROPOSED |
-| 46 | S2.2.2 | Progress project (TASK-09) | 2.0 | 85.5–87.5 | 18 | PROPOSED |
-| 47 | S2.3.1 | Definisi custom field dan API (TASK-10) | 3.0 | 87.5–90.5 | 19 | PROPOSED |
-| 48 | S2.3.2 | Tipe field lengkap (TASK-11A) | 3.0 | 90.5–93.5 | 19 | PROPOSED |
-| 49 | S2.4.1 | Tipe view Gantt dan Calendar | 1.0 | 93.5–94.5 | 19 | PROPOSED |
-| 50 | S2.4.2 | Gantt: bar, progres, drag/resize, milestone (VIEW-05A) | 4.0 | 94.5–98.5 | 20 | PROPOSED |
+| 44 | S2.1.3 | Mesin penjadwalan di Go | 4.0 | 79–83 | 17 | DONE |
+| 45 | S2.2.1 | Effort dan allocation (TASK-05B) | 2.5 | 83–85.5 | 18 | DONE |
+| 46 | S2.2.2 | Progress project (TASK-09) | 2.0 | 85.5–87.5 | 18 | DONE |
+| 47 | S2.3.1 | Definisi custom field dan API (TASK-10) | 3.0 | 87.5–90.5 | 19 | DONE |
+| 48 | S2.3.2 | Tipe field lengkap (TASK-11A) | 3.0 | 90.5–93.5 | 19 | DONE |
+| 49 | S2.4.1 | Tipe view Gantt dan Calendar | 1.0 | 93.5–94.5 | 19 | DONE |
+| 50 | S2.4.2 | Gantt: bar, progres, drag/resize, milestone (VIEW-05A) | 4.0 | 94.5–98.5 | 20 | DONE |
 | 51 | S2.4.3 | Gantt: dependensi dan penjadwalan (VIEW-05B) | 3.0 | 98.5–101.5 | 21 | PROPOSED |
-| 52 | S2.3.3 | Custom field di panel, Table, Board, dan pemilih kolom (VIEW-09) | 3.0 | 101.5–104.5 | 21 | PROPOSED |
+| 52 | S2.3.3 | Custom field di panel, Table, Board, dan pemilih kolom (VIEW-09) | 3.0 | 101.5–104.5 | 21 | DONE |
 | 53 | S2.5.1 | Board swimlane dan field kartu (VIEW-03, VIEW-04) | 3.0 | 104.5–107.5 | 22 | PROPOSED |
 | 54 | S2.5.2 | Calendar (VIEW-06) | 2.5 | 107.5–110 | 22 | PROPOSED |
 | 55 | S2.5.3 | Preset filter dan sort Space (SPC-03) | 1.5 | 110–111.5 | 23 | PROPOSED |
@@ -420,64 +420,64 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Tes integrasi PostgreSQL untuk izin, siklus, request bersamaan, soft delete, dan restore
 
 **S2.1.3 Mesin penjadwalan di Go**
-- [ ] Perluas `schedule`: empat tipe, lag, kalender dari S2.1.1 (tes tabel ≥ 20 kasus)
-- [ ] Topological order dan propagasi ke seluruh keturunan (tahan siklus data rusak: berhenti dan lapor)
-- [ ] Integrasikan ke `PATCH /items/{id}` dan ke endpoint dependensi (satu transaksi, `If-Match` tetap)
-- [ ] Respons memuat `affected_items` agar UI memperbarui bar tanpa memuat ulang
-- [ ] Benchmark 500 task dan tes konflik dua edit bersamaan
-- [ ] Catatan keputusan di `DECISIONS.md` untuk M2-2 dan M2-3
+- [x] Mesin menangani empat tipe, lag bertanda, hari kerja/libur, milestone, dan tanggal parsial dalam ≥ 20 kasus tabel
+- [x] Propagasi topologis memeriksa semua pendahulu aktif. Siklus pada data menyebabkan rollback
+- [x] PATCH Item serta POST/PATCH dependensi menyimpan pergeseran, versi, dan aktivitas dalam satu transaksi. PATCH Item tetap memakai `If-Match`
+- [x] Respons dan SSE mengirim `affected_items` sesuai izin baca. Satu event SSE diterbitkan setelah commit
+- [x] PostgreSQL menguji konflik edit bersamaan dan p95 ≤ 300 ms pada rantai 500 task
+- [x] Implementasi D-37/M2-2 dan D-38/M2-3 dicatat di `DECISIONS.md`
 
 ### E2.2 Effort dan progress
 
 **S2.2.1 Effort dan allocation (TASK-05B)**
-- [ ] `openapi.yaml`: kolom `effort_minutes` pada Item dan `allocation` pada assignee
-- [ ] Migrasi kolom dan CHECK nilai non-negatif
-- [ ] Rumus durasi dari effort (paket `schedule`) + tes
-- [ ] UI di panel detail dan tes Playwright
+- [x] OpenAPI dan binding Go/TypeScript memuat `effort_minutes`, alokasi per assignee, dan `recalculate_duration`
+- [x] Migrasi `00019` menambah kolom nullable dan CHECK nilai nonnegatif serta pasangan unit/nilai
+- [x] `schedule.EffortDuration` memakai kapasitas workspace dan membulatkan ke atas. Tes unit dan PostgreSQL lulus
+- [x] Panel Item mendukung jam, persen, jam/hari, peringatan di atas 100%, dan hitung ulang eksplisit. Tes Playwright lulus
 
 **S2.2.2 Progress project (TASK-09)**
-- [ ] Aturan perhitungan dan risiko ditulis di `WORKFLOWS.md` dahulu
-- [ ] Kolom metode di project; persen dan risiko dikembalikan oleh API (tidak disimpan)
-- [ ] Tes tabel untuk tiga metode dan kasus kosong
-- [ ] Tampilkan di panel project dan baris Table
+- [x] Aturan perhitungan, batas hari risiko, dan cakupan lokasi ditulis di `WORKFLOWS.md` §1.1
+- [x] Migrasi `00021` menyimpan metode Project dan persen manual Task. API menghitung persen dan risiko Project saat baca
+- [x] Tes tabel tiga metode, kasus kosong, ambang risiko, dan tes PostgreSQL untuk izin serta jalur lokasi
+- [x] Panel Project dan baris Table menampilkan progres dan risiko. Panel Task menyimpan persen manual dengan `If-Match`
 
 ### E2.3 Custom field
 
 **S2.3.1 Definisi custom field dan API (TASK-10)**
-- [ ] `openapi.yaml`: `/spaces/{id}/custom-fields` dan `fields` pada PATCH item
-- [ ] Migrasi `custom_fields` (space, nama, tipe, opsi jsonb, posisi, arsip)
-- [ ] Validasi nilai pada PATCH item dalam transaksi yang sama dengan `If-Match`
-- [ ] Policy: kelola field butuh hak admin Space; lihat nilai ikut hak lihat item
-- [ ] Layar pengelolaan di pengaturan Space dan tes
+- [x] `openapi.yaml`: `/spaces/{id}/custom-fields` dan `fields` pada PATCH item
+- [x] Migrasi `00017` menambah `custom_fields` (space, nama, tipe, opsi jsonb, posisi, arsip)
+- [x] Validasi nilai pada PATCH item dalam transaksi yang sama dengan `If-Match`
+- [x] Pengelolaan memerlukan akses penuh di Space. Nilai dibatasi ke lokasi Space yang terlihat pada item.
+- [x] Dialog pengelolaan dari Space actions dan tes PostgreSQL/Chrome
 
 **S2.3.2 Tipe field lengkap (TASK-11A)**
-- [ ] Validator per tipe (satu tabel tes, termasuk batas dan nilai kosong)
-- [ ] Format dan parsing locale (`Intl`) di web, uji id-ID dan en-US
-- [ ] Pengeditor sel per tipe (pakai komponen `ui-kit`)
-- [ ] Conditional marker dan agregasi
-- [ ] Tes Playwright untuk tipe yang paling berisiko (Currency, People)
+- [x] Migrasi `00020`, OpenAPI, dan validator untuk sepuluh tipe, dengan tes tabel untuk batas dan nilai kosong
+- [x] Format dan parsing locale dengan `Intl`, diuji untuk id-ID dan en-US
+- [x] Editor nilai per tipe memakai `ui-kit`, terhubung ke panel Item dengan `If-Match`
+- [x] Definisi menyimpan marker berurutan dan agregasi default. Panel menerapkan marker pertama yang cocok. Fungsi agregasi numerik diuji untuk konsumen view
+- [x] Chrome menguji Currency dan People dengan mock serta API Go dan PostgreSQL nyata
 
 **S2.3.3 Custom field di panel, Table, Board, dan pemilih kolom (VIEW-09)**
-- [ ] Pemilih kolom dan penyimpanan konfigurasi di `views.config`
-- [ ] Filter/sort server untuk `fields` (indeks GIN atau ekspresi, diukur)
-- [ ] Render dan edit sel per tipe di Table
-- [ ] Tampil di panel detail dan Board
-- [ ] Ukur 500 item dan catat di TESTING
+- [x] Pemilih kolom (Management, Schedule, Other, Custom fields; Baselines nonaktif "Coming soon") dan penyimpanan di `views.config.columns`
+- [x] Filter/sort server untuk `fields`: `sort=field:<id>` dan `field=<id>:<nilai>` (tanpa indeks tambahan, diukur). Multi select dan People tidak bisa diurut, People tidak punya filter di UI
+- [x] Render dan edit sel per tipe di Table (dialog editor yang sama dengan panel)
+- [x] Panel detail memuat semua field Space (S2.3.1/S2.3.2). Board menampilkan field yang dipilih pada kartu
+- [x] Ukur 500 item dan catat di TESTING (sisi server; Table tetap virtual)
 
 ### E2.4 Gantt
 
 **S2.4.1 Tipe view Gantt dan Calendar**
-- [ ] Migrasi menambah nilai enum (maju saja, kompatibel mundur satu versi)
-- [ ] `openapi.yaml` dan sqlc diregenerasi; tes `TestViewLifecycle` diperluas
-- [ ] ViewTabs dan placeholder layar
+- [x] Migrasi maju `00018` menambah `gantt` dan `calendar` pada enum `view_type` tanpa mengubah baris atau aturan seed yang ada
+- [x] OpenAPI, tipe klien dan sqlc diperbarui. `TestViewLifecycle` mencakup izin, duplikasi, rename, default, dan hapus untuk kedua tipe
+- [x] ViewTabs menawarkan Gantt dan Calendar. Chrome memverifikasi pembuatan view public dan personal serta placeholder setelah reload
 
 **S2.4.2 Gantt: bar, progres, drag/resize, milestone (VIEW-05A)**
-- [ ] Adaptor data Item → SVAR dan kembali (tanggal sebagai string `YYYY-MM-DD`, tanpa zona waktu)
-- [ ] Hierarki, lipat/buka, skala hari/minggu/bulan, garis hari ini
-- [ ] Drag/resize → PATCH optimistis + rollback + toast
-- [ ] Mode baca untuk pengguna tanpa hak edit
-- [ ] Ukur 500 task (Chrome) dan catat
-- [ ] Navigasi keyboard dan axe
+- [x] Adaptor data Item → SVAR dan kembali (tanggal sebagai `YYYY-MM-DD`, tengah malam lokal, tanpa zona waktu). SVAR hanya melaporkan sisi yang digeser dan `diff` hari, tanggal baru dihitung dari item
+- [x] Hierarki, lipat/buka, skala hari/minggu/bulan, sorotan hari ini
+- [x] Drag/resize → PATCH `If-Match`. Layar berubah hanya setelah respons server, gagal (409/403) menyisakan bar semula dan toast
+- [x] Mode baca untuk pengguna tanpa hak edit (`readonly` pada library)
+- [x] Ukur 500 task (Chrome) dan catat
+- [x] Navigasi keyboard dan axe (panah memilih, kiri/kanan menggeser sehari, Shift mengubah tanggal selesai)
 
 **S2.4.3 Gantt: dependensi dan penjadwalan (VIEW-05B)**
 - [ ] Render link dan pemilih tipe/lag

@@ -540,6 +540,77 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/custom-fields:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: listCustomFields
+      summary: Daftar definisi custom field di Space, termasuk yang diarsipkan
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CustomField' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [spaces]
+      operationId: createCustomField
+      summary: Tambahkan definisi custom field; perlu akses penuh di Space
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomFieldCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomField' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/custom-fields/{fieldId}:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+      - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [spaces]
+      operationId: updateCustomField
+      summary: Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomFieldUpdate' }
+      responses:
+        '200':
+          description: Diperbarui
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomField' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [spaces]
+      operationId: archiveCustomField
+      summary: Arsipkan definisi dan pertahankan nilai yang sudah tersimpan
+      responses:
+        '204': { description: Diarsipkan }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/items:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -554,6 +625,7 @@ paths:
         - { $ref: '#/components/parameters/ItemFilterStatusGroup' }
         - { $ref: '#/components/parameters/ItemFilterAssignee' }
         - { $ref: '#/components/parameters/ItemSort' }
+        - { $ref: '#/components/parameters/ItemFilterField' }
       responses:
         '200': { $ref: '#/components/responses/ItemPage' }
         '404': { $ref: '#/components/responses/Problem' }
@@ -613,7 +685,10 @@ paths:
       operationId: updateItem
       summary: Ubah item (nama, status, tanggal, deskripsi, assignee, milestone)
       description: |
-        Field yang dikirim saja yang diubah. `status_id` memerlukan kemampuan `change_status`; field lain memerlukan `edit`.
+        `status_id` memerlukan kemampuan `change_status`; field lain memerlukan `edit`.
+        Perubahan tanggal atau durasi dapat menggeser jadwal dalam transaksi yang sama.
+        Effort dan allocation mengubah jadwal hanya saat `recalculate_duration` bernilai true.
+        `affected_items` berisi penerus yang bergeser dan dapat dilihat pemanggil.
         Pergeseran urutan memakai endpoint `reorder`.
       parameters:
         - { $ref: '#/components/parameters/IfMatch' }
@@ -628,7 +703,7 @@ paths:
           headers: { ETag: { $ref: '#/components/headers/ETag' } }
           content:
             application/json:
-              schema: { $ref: '#/components/schemas/Item' }
+              schema: { $ref: '#/components/schemas/ItemPatchResult' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
@@ -640,6 +715,90 @@ paths:
       summary: Pindahkan item dan turunannya ke Recycle bin (BIN-01)
       responses:
         '204': { description: Dipindahkan ke Recycle bin }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/dependencies:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [items]
+      operationId: listItemDependencies
+      summary: Daftar dependensi masuk dan keluar dengan kedua ujung terlihat
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ItemDependency' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [items]
+      operationId: createItemDependency
+      summary: Tambah pendahulu bagi Item penerus pada URL
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [predecessor_id, type]
+              properties:
+                predecessor_id: { type: string, format: uuid }
+                type: { $ref: '#/components/schemas/DependencyType' }
+                lag: { type: integer, format: int32, default: 0, description: Lag dalam hari kerja, boleh negatif }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ItemDependencyMutation' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /dependencies/{dependencyId}:
+    patch:
+      tags: [items]
+      operationId: updateItemDependency
+      summary: Ubah tipe atau lag dependensi dan geser penerus yang melanggar jadwal
+      parameters:
+        - { name: dependencyId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              minProperties: 1
+              additionalProperties: false
+              properties:
+                type: { $ref: '#/components/schemas/DependencyType' }
+                lag: { type: integer, format: int32, description: Lag dalam hari kerja, boleh negatif }
+      responses:
+        '200':
+          description: Diperbarui
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ItemDependencyMutation' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [items]
+      operationId: deleteItemDependency
+      summary: Hapus dependensi dengan izin edit pada penerus
+      parameters:
+        - { name: dependencyId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Dihapus }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
@@ -657,6 +816,7 @@ paths:
         - { $ref: '#/components/parameters/ItemFilterStatusGroup' }
         - { $ref: '#/components/parameters/ItemFilterAssignee' }
         - { $ref: '#/components/parameters/ItemSort' }
+        - { $ref: '#/components/parameters/ItemFilterField' }
       responses:
         '200': { $ref: '#/components/responses/ItemPage' }
         '404': { $ref: '#/components/responses/Problem' }
@@ -1286,10 +1446,20 @@ components:
     ItemSort:
       name: sort
       in: query
+      description: Kunci urut, atau `field:<UUID definisi>` untuk custom field skalar dan select (bukan multi select atau People)
       schema:
         type: string
-        enum: [manual, title, status, due_date, start_date, created_at, updated_at]
+        pattern: '^(manual|title|status|due_date|start_date|created_at|updated_at|field:[0-9a-fA-F-]{36})$'
         default: manual
+    ItemFilterField:
+      name: field
+      in: query
+      description: >-
+        Filter custom field `<UUID definisi>:<nilai>`, dapat diulang (AND). Select memakai UUID opsi, Text mencari
+        substring, angka/tanggal/checkbox mencocokkan nilai persis, Multiple select dan People memuat UUID tersebut.
+      schema: { type: array, maxItems: 10, items: { type: string } }
+      style: form
+      explode: true
 
   responses:
     RateLimited:
@@ -1660,10 +1830,133 @@ components:
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
+    AssigneeAllocation:
+      type: object
+      required: [unit, value]
+      properties:
+        unit: { type: string, enum: [percent, minutes_per_day] }
+        value: { type: integer, format: int32, minimum: 0, maximum: 2147483647 }
+    ItemAssignee:
+      allOf:
+        - { $ref: '#/components/schemas/UserRef' }
+        - type: object
+          properties:
+            allocation: { $ref: '#/components/schemas/AssigneeAllocation' }
+    AssigneeAllocationUpdate:
+      type: object
+      required: [assignee_id, allocation]
+      properties:
+        assignee_id: { type: string, format: uuid }
+        allocation:
+          type: object
+          nullable: true
+          required: [unit, value]
+          properties:
+            unit: { type: string, enum: [percent, minutes_per_day] }
+            value: { type: integer, format: int32, minimum: 0, maximum: 2147483647 }
+          description: null menghapus alokasi assignee
+    CustomFieldType:
+      type: string
+      enum: [single_select, multi_select, text, number, currency, percent, people, date, duration, checkbox]
+    CustomFieldOption:
+      type: object
+      required: [id, label, color]
+      properties:
+        id: { type: string, format: uuid }
+        label: { type: string, minLength: 1, maxLength: 120 }
+        color: { type: string, pattern: '^#[0-9a-fA-F]{6}$' }
+    CustomFieldMarker:
+      type: object
+      required: [operator, value, color]
+      properties:
+        operator: { type: string, enum: [lt, lte, eq, gte, gt] }
+        value: { type: number, format: double, minimum: -1000000000, maximum: 2147483647 }
+        color: { type: string, pattern: '^#[0-9a-fA-F]{6}$' }
+    CustomFieldConfig:
+      type: object
+      properties:
+        currency: { type: string, pattern: '^[A-Z]{3}$', description: Kode ISO 4217 untuk Currency }
+        decimals: { type: integer, minimum: 0, maximum: 6, description: Jumlah desimal untuk Currency dengan default 2 }
+        allow_over_100: { type: boolean, description: Izinkan nilai Percent melebihi 100 }
+        aggregation: { type: string, enum: [sum, average, min, max, count], description: Default untuk field numerik }
+        markers:
+          type: array
+          maxItems: 10
+          description: Aturan numerik dalam urutan prioritas, kecocokan pertama berlaku
+          items: { $ref: '#/components/schemas/CustomFieldMarker' }
+    CustomFieldCreate:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        type: { $ref: '#/components/schemas/CustomFieldType' }
+        options:
+          type: array
+          maxItems: 100
+          description: Wajib 1 sampai 100 opsi untuk tipe select, kosong atau dihilangkan untuk tipe lain
+          items: { $ref: '#/components/schemas/CustomFieldOption' }
+        config: { $ref: '#/components/schemas/CustomFieldConfig' }
+    CustomFieldUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        position: { type: integer, minimum: 0, description: Indeks urutan berbasis nol dalam Space }
+        options:
+          type: array
+          maxItems: 100
+          items: { $ref: '#/components/schemas/CustomFieldOption' }
+        config:
+          allOf: [{ $ref: '#/components/schemas/CustomFieldConfig' }]
+          description: Mengganti seluruh konfigurasi. Field yang dihilangkan memakai default
+    CustomField:
+      allOf:
+        - $ref: '#/components/schemas/CustomFieldCreate'
+        - type: object
+          required: [id, space_id, position, options]
+          properties:
+            id: { type: string, format: uuid }
+            space_id: { type: string, format: uuid }
+            position: { type: integer, minimum: 0 }
+            archived_at: { type: string, format: date-time, nullable: true }
+            options:
+              type: array
+              items: { $ref: '#/components/schemas/CustomFieldOption' }
+    CustomFieldPerson:
+      allOf:
+        - { $ref: '#/components/schemas/UserRef' }
+        - type: object
+          required: [status]
+          properties:
+            status: { type: string, enum: [active, invited, deactivated] }
+    CustomFieldValues:
+      type: object
+      description: >-
+        Nilai berkunci UUID definisi. Text, Date (YYYY-MM-DD), dan Single select (UUID) memakai string.
+        Multiple select dan People memakai array UUID. Number, Currency dan Percent memakai angka desimal.
+        Duration adalah jumlah hari bulat nonnegatif. Checkbox memakai boolean. Pada PATCH, null menghapus nilai.
+      additionalProperties:
+        oneOf:
+          - { type: string, nullable: true }
+          - { type: number, format: double }
+          - { type: boolean }
+          - type: array
+            uniqueItems: true
+            items: { type: string, format: uuid }
+    ProjectProgressMethod:
+      type: string
+      enum: [task_count, weighted_duration, average_percent]
+    ProjectProgressRisk:
+      type: string
+      enum: [green, yellow, red]
     Item:
       type: object
       required: [id, seq, type, title, version, locations, assignees, created_at, updated_at, my_capabilities]
       properties:
+        fields: { $ref: '#/components/schemas/CustomFieldValues' }
+        field_people:
+          type: object
+          description: Metadata orang yang sudah dipilih pada nilai People yang terlihat, berkunci UUID user
+          additionalProperties: { $ref: '#/components/schemas/CustomFieldPerson' }
         id: { type: string, format: uuid }
         seq: { type: integer, format: int64, description: ID yang ditampilkan ke user }
         type: { $ref: '#/components/schemas/ItemType' }
@@ -1673,13 +1966,22 @@ components:
         start_date: { type: string, format: date, nullable: true }
         due_date: { type: string, format: date, nullable: true }
         duration_days: { type: integer, nullable: true }
+        effort_minutes: { type: integer, format: int32, minimum: 0, maximum: 2147483647, nullable: true }
+        progress_method: { $ref: '#/components/schemas/ProjectProgressMethod' }
+        progress_percent:
+          type: integer
+          minimum: 0
+          maximum: 100
+          nullable: true
+          description: Progres manual pada task atau progres hasil perhitungan pada project
+        progress_risk: { $ref: '#/components/schemas/ProjectProgressRisk' }
         is_milestone: { type: boolean }
         owner: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
         default_workflow_id: { type: string, format: uuid, nullable: true }
         default_view_type: { type: string, enum: [table, board], nullable: true }
         assignees:
           type: array
-          items: { $ref: '#/components/schemas/UserRef' }
+          items: { $ref: '#/components/schemas/ItemAssignee' }
         locations:
           type: array
           items: { $ref: '#/components/schemas/Location' }
@@ -1717,6 +2019,9 @@ components:
         start_date: { type: string, format: date, nullable: true }
         due_date: { type: string, format: date, nullable: true }
         duration_days: { type: integer, minimum: 0, nullable: true }
+        effort_minutes: { type: integer, format: int32, minimum: 0, maximum: 2147483647, nullable: true }
+        progress_method: { $ref: '#/components/schemas/ProjectProgressMethod' }
+        progress_percent: { type: integer, minimum: 0, maximum: 100, nullable: true, description: Progres manual khusus task }
         is_milestone: { type: boolean }
         owner_id: { type: string, format: uuid, description: Hanya project }
         default_workflow_id: { type: string, format: uuid, description: Hanya project/folder }
@@ -1724,6 +2029,9 @@ components:
         assignee_ids:
           type: array
           items: { type: string, format: uuid }
+        assignee_allocations:
+          type: array
+          items: { $ref: '#/components/schemas/AssigneeAllocationUpdate' }
         locations:
           type: array
           minItems: 1
@@ -1732,25 +2040,79 @@ components:
           type: array
           description: Hanya project/folder (SPC-05 Sharing)
           items: { $ref: '#/components/schemas/ShareInput' }
+    DependencyType:
+      type: string
+      enum: [FS, SS, FF, SF]
+    ItemDependency:
+      type: object
+      required: [id, predecessor_id, successor_id, type, lag]
+      properties:
+        id: { type: string, format: uuid }
+        predecessor_id: { type: string, format: uuid }
+        successor_id: { type: string, format: uuid }
+        type: { $ref: '#/components/schemas/DependencyType' }
+        lag: { type: integer, format: int32, description: Lag dalam hari kerja, boleh negatif }
+    ScheduleItemVersion:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+    ScheduleItemChange:
+      allOf:
+        - { $ref: '#/components/schemas/ScheduleItemVersion' }
+        - type: object
+          required: [start_date, due_date]
+          properties:
+            start_date: { type: string, format: date, nullable: true }
+            due_date: { type: string, format: date, nullable: true }
+    ItemDependencyMutation:
+      allOf:
+        - { $ref: '#/components/schemas/ItemDependency' }
+        - type: object
+          properties:
+            affected_items:
+              type: array
+              items: { $ref: '#/components/schemas/ScheduleItemChange' }
+    ItemPatchResult:
+      allOf:
+        - { $ref: '#/components/schemas/Item' }
+        - type: object
+          properties:
+            affected_items:
+              type: array
+              items: { $ref: '#/components/schemas/ScheduleItemChange' }
     ItemUpdate:
       type: object
       properties:
+        fields: { $ref: '#/components/schemas/CustomFieldValues' }
         title: { type: string, minLength: 1, maxLength: 500 }
         description: { $ref: '#/components/schemas/RichText' }
         status_id: { type: string, format: uuid }
         start_date: { type: string, format: date, nullable: true }
         due_date: { type: string, format: date, nullable: true }
         duration_days: { type: integer, minimum: 0, nullable: true }
+        effort_minutes: { type: integer, format: int32, minimum: 0, maximum: 2147483647, nullable: true }
+        progress_method: { $ref: '#/components/schemas/ProjectProgressMethod' }
+        progress_percent: { type: integer, minimum: 0, maximum: 100, nullable: true, description: Progres manual khusus task }
+        recalculate_duration:
+          type: boolean
+          enum: [true]
+          description: Hitung durasi hari kerja dari effort dan alokasi terbaru. Kirim tanpa field tanggal, durasi, atau milestone.
         is_milestone: { type: boolean }
         owner_id: { type: string, format: uuid }
         assignee_ids:
           type: array
           items: { type: string, format: uuid }
+        assignee_allocations:
+          type: array
+          description: Ubah alokasi assignee yang tercantum setelah assignee_ids diterapkan
+          items: { $ref: '#/components/schemas/AssigneeAllocationUpdate' }
 
     # ── View ──
     ViewType:
       type: string
-      enum: [table, board]
+      enum: [table, board, gantt, calendar]
     ViewVisibility:
       type: string
       enum: [public, personal]
@@ -1915,3 +2277,7 @@ components:
           type: array
           description: Container yang daftarnya perlu dimuat ulang
           items: { type: string, format: uuid }
+        affected_items:
+          type: array
+          description: Item yang dapat dilihat penerima dalam event item.updated untuk satu perubahan jadwal
+          items: { $ref: '#/components/schemas/ScheduleItemVersion' }

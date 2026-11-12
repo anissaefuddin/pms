@@ -125,6 +125,13 @@ func (s *Server) streamEvents(w http.ResponseWriter, r *http.Request) {
 				}
 				continue
 			}
+			if len(event.AffectedItems) > 0 {
+				data, err := s.scheduleEventData(r.Context(), actor, event)
+				if err != nil || (data != nil && !send(event.ID, event.Type, data)) {
+					return
+				}
+				continue
+			}
 			containers, visible, err := s.eventContainers(r, actor, event)
 			if err != nil {
 				return // reconnect and replay rather than dropping this event

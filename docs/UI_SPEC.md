@@ -156,11 +156,13 @@ Tabel item terhapus: nama, tipe, lokasi asal, dihapus oleh, dihapus pada. Aksi p
 **Table view** — VIEW-01 · M1 (wireframe di §5.1)
 Kolom bawaan: Name (hierarki, expand/collapse), Status, Assignee, Start date, Due date. Edit inline sel (status, assignee, tanggal, judul). Baris terakhir "+ Item" membuat task. Pilihan kolom di menu header (kolom lain menyusul di M2). Seret baris untuk mengurutkan (`reorder`). Baris divirtualisasi (> 100 baris). Pilihan baris dengan `J/K`.
 
+Jika ada baris Project, kolom **Progress** menampilkan persen dan label risiko Project.
+
 **Board view** — VIEW-02 · M1 (wireframe di §5.2)
 Kolom = status workflow item induk, urut `position`. Kartu: judul, avatar assignee, rentang tanggal, jumlah subitem, jumlah lampiran/komentar. Seret kartu antar kolom = ubah status (+ urutan); pembaruan optimistis; gagal/konflik → kartu kembali dan toast. Tombol "+ Add" di tiap kolom (membuat dengan status kolom itu). Pengelompokan (swimlane) menyusul M2.
 
 **View management** — VIEW-08, SPC-17 · M1
-Menu ⋯ pada tab view: **Copy link to this view** (menyalin URL saat ini), **Rename**, **Duplicate** (dialog: nama + Public/Personal), **Set as default** (satu per scope), **Move left/right**, **Delete** (view default tidak bisa dihapus; ConfirmDialog). **+ Add view** menawarkan Table dan Board (Gantt, Calendar menyusul).
+Menu ⋯ pada tab view: **Copy link to this view** (menyalin URL saat ini), **Rename**, **Duplicate** (nama + Public/Personal), **Set as default** (satu per scope), **Move left/right**, **Delete** (view default tidak bisa dihapus; ConfirmDialog). **+ Add view** menawarkan Table, Board, Gantt, dan Calendar. Pengguna dengan izin edit bisa memilih Public atau Personal. Pengguna dengan akses baca bisa membuat view Personal. Gantt menampilkan bagan (S2.4.2): hierarki project → task → subitem yang bisa dilipat, bar dengan progres, milestone, skala Days/Weeks/Months, drag dan resize, serta keyboard (panah atas/bawah memilih, kiri/kanan menggeser sehari, Shift+kiri/kanan mengubah tanggal selesai, Enter membuka item). Calendar masih placeholder sampai S2.5.2. Table dan Board punya tombol **Columns** (Management, Schedule, Other, Custom fields, Baselines nonaktif) yang disimpan di view, serta filter dan sort per custom field di URL (`field=<id>:<nilai>`, `sort=field:<id>`).
 
 **Item detail panel** — SPC-07, TASK-03, TASK-04, TASK-05A, TASK-06, TASK-07, TASK-08A · M1 (wireframe di §5.3; anatomi di DESIGN_SYSTEM §4.4)
 `GET /items/{id}`, `/comments`, `/attachments`, `/activity`. Semua edit memakai `PATCH` + `If-Match` (SEC-03). Bagian:
@@ -170,6 +172,9 @@ Menu ⋯ pada tab view: **Copy link to this view** (menyalin URL saat ini), **Re
 | Judul | Edit inline; Enter menyimpan, Esc membatalkan; wajib, ≤ 500 karakter |
 | Status | StatusPicker dari workflow item; hanya tampil untuk yang punya `change_status` |
 | Assignee | AssigneePicker multi; pencarian nama/email; hanya user aktif yang bisa dipilih |
+| Effort and allocation | Effort dalam jam. Alokasi assignee tersimpan sebagai persen atau jam per hari di panel. Total di atas satu hari kerja workspace memunculkan peringatan dan tetap bisa disimpan. **Recalculate duration** menerapkan draf sekaligus memperbarui durasi dan jadwal bila diperlukan. |
+| Progress | Panel Project menampilkan persen, label risiko, dan pilihan metode bagi pengguna dengan izin edit. Panel Task menyimpan persen manual 0–100, dengan input kosong untuk menghapus. Task Completed menampilkan 100% efektif dan tetap bisa menyimpan nilai manual. |
+| Custom fields | Panel Item menampilkan definisi dari lokasi Space yang terlihat. Currency dan angka memakai locale profil. Marker mengikuti aturan pertama yang cocok. People menampilkan pilihan lama yang nonaktif dan hanya menawarkan pengguna aktif dari direktori untuk pilihan baru. |
 | Tanggal | DateRangePicker: Start, Due, Duration, "Working days only" (default aktif; sebelum M2 berarti Senin–Jumat). Due tidak boleh sebelum Start |
 | Description | RichTextEditor, simpan otomatis saat blur dengan jeda 1 detik; konflik → ConflictBanner |
 | Subitems | Daftar subtask ringkas + "Add subitem"; klik membuka panel subtask (tumpuk, breadcrumb di header) |

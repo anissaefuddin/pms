@@ -235,3 +235,14 @@
 .animate-fade-in-up {
   animation: fade-in-up 0.3s ease-out forwards;
 }
+
+/* Gantt (S2.4.2): SVAR's default bar colours fail 4.5:1 against white labels. */
+.gantt-chart .wx-theme {
+  --wx-gantt-task-color: #1d4ed8;
+  --wx-gantt-task-fill-color: #1e3a8a;
+  --wx-gantt-task-border-color: #1e3a8a;
+  --wx-gantt-summary-color: #047857;
+  --wx-gantt-summary-fill-color: #065f46;
+  --wx-gantt-summary-border-color: #065f46;
+}
+.gantt-chart .gantt-today { background: rgb(220 38 38 / .18); }

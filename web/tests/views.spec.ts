@@ -135,6 +135,57 @@ test("ViewTabs duplicates, reorders, changes default, copies and deletes", async
   await expect(nav.getByRole("button", { name: "Copy of Board", exact: true })).toHaveCount(0);
 });
 
+for (const { type, label, visibility } of [
+  { type: "gantt", label: "Gantt", visibility: "public" },
+  { type: "calendar", label: "Calendar", visibility: "personal" },
+]) {
+  test(`Add view creates ${label} and restores its placeholder on reload`, async ({ page }) => {
+    const saved = [table, board];
+    const viewId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
+    const { calls } = await mockSpaces(page, { extra: {
+      [`GET ${path}/views`]: () => ({ body: { items: saved } }),
+      "GET /workflows": workflows,
+      "POST /views": (body) => {
+        const view = { ...body, id: viewId, position: saved.filter((entry) => entry.visibility === body.visibility).length, is_default: false };
+        saved.push(view);
+        return { status: 201, body: view };
+      },
+    } });
+    await page.goto(path);
+    const nav = page.getByRole("navigation", { name: "Views" });
+    await nav.getByRole("button", { name: "Add view" }).click();
+    await page.getByRole("menuitem", { name: label, exact: true }).click();
+    const form = page.getByRole("dialog", { name: "Add view" });
+    const name = `${label} plan`;
+    const input = form.getByRole("textbox", { name: "View name" });
+    await expect(input).toHaveValue(label);
+    await input.fill(name);
+    const visibilitySelect = form.getByRole("combobox", { name: "Visibility" });
+    await expect(visibilitySelect).toHaveValue("public");
+    if (visibility === "personal") await visibilitySelect.selectOption("personal");
+    await form.getByRole("button", { name: "Save" }).click();
+    await expect.poll(() => calls.find((call) => call.method === "POST" && call.path === "/views")?.body)
+      .toEqual({ scope_space_id: marketing.id, type, name, visibility });
+
+    const tab = nav.getByRole("button", { name, exact: true });
+    // Gantt is a real chart now (S2.4.2); Calendar is still a placeholder.
+    const heading = type === "gantt" ? page.getByRole("application", { name: "Gantt chart" }) : page.getByRole("heading", { name: label, exact: true });
+    const grid = page.getByRole("table", { name: "Table" });
+    await expect(tab).toHaveAttribute("aria-pressed", "true");
+    await expect(heading).toBeVisible();
+    await nav.getByRole("button", { name: "Table", exact: true }).click();
+    await expect(grid).toBeVisible();
+    await tab.click();
+    await expect(page).toHaveURL(`${path}?view=${viewId}`);
+    await page.reload();
+    await expect(tab).toHaveAttribute("aria-pressed", "true");
+    await expect(heading).toBeVisible();
+    if (type === "calendar") await expect(page.getByText("This view is not available yet.", { exact: true })).toBeVisible();
+    await expect(grid).toHaveCount(0);
+    await expect(page.getByLabel("Filter items")).toHaveCount(0);
+  });
+}
+
 test("Board rolls back conflict, supports drag and creates in the target column", async ({ page }) => {
   let item = task;
   let reject = true;
