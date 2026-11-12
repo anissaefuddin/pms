@@ -50,6 +50,26 @@ Satu developer, tidak paralel. Tiap baris memakai hasil baris di atasnya.
 | 16 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2 | semua |
 | | | **Total** | **41** | |
 
+## 2a. Urutan pengerjaan per gelombang
+
+Gelombang berjalan berurutan. Di dalam satu gelombang, story pada baris yang sama tidak saling bergantung dan boleh dikerjakan paralel **oleh sesi terpisah dengan kepemilikan file yang jelas**. `api/openapi.yaml` dan migrasi adalah titik tabrakan: satu sesi memegang kontrak dan nomor migrasi per gelombang, sesi lain menunggu atau menambah di akhir berkas.
+
+| Gelombang | Story | Hari | Keluaran yang membuka gelombang berikutnya |
+|---|---|---|---|
+| **A. Fondasi data** | S2.1.1 Work schedule · S2.1.2 Dependensi · S2.3.1 Definisi custom field · S2.4.1 Tipe view Gantt/Calendar | 2.5 + 2.5 + 3 + 1 = 9 | Kalender kerja, tabel dependensi, definisi field, enum view |
+| **B. Logika inti** | S2.1.3 Mesin penjadwalan · S2.2.1 Effort/allocation · S2.3.2 Tipe field lengkap | 4 + 2.5 + 3 = 9.5 | `affected_items` dari server, effort, validator tipe field |
+| **C. Gantt dan field di tampilan** | S2.2.2 Progress project → S2.4.2 Gantt dasar · S2.3.3 Field di panel/Table/Board + pemilih kolom | 2 + 4 + 3 = 9 | Gantt yang bisa drag, field tampil di semua view |
+| **D. Fitur turunan** | S2.4.3 Dependensi di Gantt · S2.5.1 Swimlane/kartu · S2.5.2 Calendar · S2.5.3 Preset dan sort · S2.5.4 Multi-lokasi | 3 + 3 + 2.5 + 1.5 + 1.5 = 11.5 | Semua requirement M2 berjalan |
+| **E. Penutup** | S2.6.1 E2E, axe, performa, runbook | 2 | Bukti untuk exit criteria |
+
+Aturan urutan:
+- **Mulai dari S2.1.1.** Libur dan hari kerja dipakai mesin penjadwalan, effort, Calendar, dan Gantt. Salah di sini mahal.
+- **S2.1.3 adalah titik risiko tertinggi.** Tulis tes tabel (≥ 20 kasus) sebelum kode, minta review independen, dan jangan mulai S2.4.3 sebelum benchmark 500 task lulus.
+- **Ukur SVAR di awal S2.4.2** dengan 500 task (bukan 200 seperti spike). Bila gagal, hentikan dan putuskan fallback sebelum S2.4.3.
+- **Hanya satu sesi** yang boleh mengubah `schedule`, `items/patch.go`, dan `openapi.yaml` pada satu waktu.
+- Setiap akhir gelombang: jalankan seluruh suite Go dengan PostgreSQL nyata (bukan SKIP), catat di TESTING, lalu commit per story.
+- Titik kalibrasi: setelah gelombang A, hitung kecepatan nyata dan perbarui estimasi 41 hari.
+
 **Selisih dengan rencana PRD:** PRD memberi 6 minggu = 30 hari. Estimasi bottom-up **41 hari** (≈ 8.2 minggu), selisih **+11 hari**. Penyebab terbesar: mesin penjadwalan (S2.1.3) dan Gantt (S2.4.2, S2.4.3). Kalibrasi ulang dengan kecepatan nyata M1 sebelum menjanjikan tanggal ke klien. Jalur kritis: S2.1.1 → S2.1.2 → S2.1.3 → S2.4.2 → S2.4.3 → S2.6.1.
 
 Pilihan bila 30 hari harus dipertahankan: geser SPC-10 (S2.5.4, 1.5 hari) dan VIEW-04 (bagian field kartu di S2.5.1, ±1 hari) ke M3 (hemat ±2.5 hari, belum cukup menutup 11 hari; sisanya perlu pemangkasan lain atau jadwal baru). Itu perubahan scope dan perlu persetujuan user.
