@@ -34,7 +34,7 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 14 | S0.5.1 | Spike Gantt (SVAR) dan penjadwalan di Go | 1 | 14–15 | 3 | DONE |
 | 15 | S1.1.1 | Data Space dan CRUD | 2 | 15–17 | 4 | DONE |
 | 16 | S1.1.2 | Paket `policy` (mesin otorisasi) | 3 | 17–20 | 4 | DONE |
-| 17 | S1.1.3 | API sharing dan ShareDialog | 3 | 20–23 | 5 | IN_PROGRESS |
+| 17 | S1.1.3 | API sharing dan ShareDialog | 3 | 20–23 | 5 | DONE |
 | 18 | S1.2.1 | Skema item dan workflow default | 2 | 23–25 | 5 | DONE |
 | 19 | S1.2.2 | Item service (create, get, patch) | 4 | 25–29 | 6 | DONE |
 | 20 | S1.1.4 | Matriks tes otorisasi | 2 | 29–31 | 7 | IN_PROGRESS |
@@ -184,9 +184,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Tes unit tabel-driven untuk seluruh kombinasi matriks
 
 **S1.1.3 API sharing dan ShareDialog**
-- [ ] `GET/PUT` shares Space dan item (+ share diwarisi dengan asal)
+- [x] `GET/PUT` shares Space dan item (+ share diwarisi dengan asal)
 - [x] ShareDialog (cari, role, peringatan hapus akses sendiri)
-- [ ] Alur "undang sebagai external" dari dialog (admin)
+- [x] Alur "undang sebagai external" dari dialog (admin)
 
 **S1.1.4 Matriks tes otorisasi**
 - [x] Matriks 5 tipe × 4 role × 4 jalur untuk GET, PATCH, create subtask, dan DELETE Item pada endpoint nyata

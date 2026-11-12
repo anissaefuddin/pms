@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
@@ -175,6 +175,13 @@ export function Search({ me, groups, taken, onAdd }: { me: CurrentUser; groups: 
   const [q, setQ] = useState("");
   const [roles, setRoles] = useState<Record<string, ShareRole>>({});
   const term = useDebounced(q.trim(), 200);
+  const queryClient = useQueryClient();
+  // The invited user then shows up in the search results and is added with the normal role picker.
+  const invite = useMutation({
+    mutationFn: () => api("/api/v1/users/invitations", { method: "POST", body: JSON.stringify({ email: term.toLowerCase(), user_type: "external" }) }),
+    onSuccess: () => { toast.success(t("share.search.invited", { email: term })); return queryClient.invalidateQueries({ queryKey: ["share-users"] }); },
+    onError: (error) => toast.error(error instanceof ApiError ? error.message : t("share.search.inviteError")),
+  });
   const active = term.length >= 2;
   const users = useQuery({ queryKey: ["share-users", term], enabled: active, queryFn: () => api<{ items: User[] }>(`/api/v1/users?q=${encodeURIComponent(term)}&limit=8`) });
 
@@ -217,8 +224,7 @@ export function Search({ me, groups, taken, onAdd }: { me: CurrentUser; groups: 
         <div className="flex items-center justify-between gap-2 rounded-lg border p-2 text-sm">
           <span role="alert">{t("share.search.noUser")}</span>
           {me.user_type === "admin" && (
-            // The invite endpoint ships with user management; a disabled button cannot show a tooltip, so the wrapper carries it.
-            <span title={t("share.search.inviteSoon")}><Button type="button" size="sm" variant="outline" disabled>{t("share.search.invite")}</Button></span>
+            <Button type="button" size="sm" variant="outline" disabled={invite.isPending} onClick={() => invite.mutate()}>{t("share.search.invite")}</Button>
           )}
         </div>
       )}

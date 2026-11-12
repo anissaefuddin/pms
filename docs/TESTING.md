@@ -206,3 +206,5 @@ Cacat nyata yang baru ditemukan lewat uji di stack nyata (lolos dari tes subagen
 | T-05 | Restore backup ke stack terpisah, data identik: **selesai** secara manual (skrip e2e di luar repo); belum otomatis di CI | S0.4.1 |
 | T-06 | Matriks otorisasi 5 user type × 4 share role (M1) | S1.1.4 |
 | T-07 | Playwright 5 flow kritis + axe (M1) | S1.8.1 |
+
+S1.1.3 DONE (13 Nov 2026): `TestItemSharesVersionedReplace` (Postgres) untuk share Item; ShareDialog mengundang user external lewat `POST /users/invitations` (`email`, `user_type: external`), lalu user yang diundang muncul di hasil pencarian. `tests/share.spec.ts` 14/14 PASS di Chrome (hermetic mock); permintaan undangan diperiksa isinya. Belum diuji end-to-end terhadap backend nyata.

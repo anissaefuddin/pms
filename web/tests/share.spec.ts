@@ -119,14 +119,15 @@ test("server 403 is shown too", async ({ page }) => {
   await expect(dialog.getByRole("alert")).toHaveText("you cannot grant a higher role");
 });
 
-test("unknown email: admin sees a disabled invite button with a tooltip", async ({ page }) => {
-  await mockSpaces(page, { extra: extra() });
+test("unknown email: admin invites an external user and the request carries only email and type", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: extra({ "POST /users/invitations": { status: 201, body: { id: "u-new" } } }) });
   const dialog = await openShare(page);
   await dialog.getByLabel("Add people or groups").fill("nobody@example.test");
   await expect(dialog.getByText("No user with this address")).toBeVisible();
-  const invite = dialog.getByRole("button", { name: "Invite as external user" });
-  await expect(invite).toBeDisabled();
-  await expect(dialog.getByTitle("Available after user management ships")).toBeVisible();
+  await dialog.getByRole("button", { name: "Invite as external user" }).click();
+  await expect(page.getByText("Invitation sent to nobody@example.test")).toBeVisible();
+  const call = calls.find((c) => c.path === "/users/invitations");
+  expect(call?.body).toEqual({ email: "nobody@example.test", user_type: "external" });
 });
 
 test("unknown email: non-admin gets no invite button", async ({ page }) => {
