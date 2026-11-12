@@ -1,17 +1,17 @@
-# TASKS — PMS (M0 + M1)
+# TASKS — PMS (M0 – M2)
 
 | | |
 |---|---|
 | **Versi** | 0.2 (kolom Status ditambahkan; lihat [HANDOVER.md](HANDOVER.md)) |
 | **Fungsi** | Urutan kerja berdasarkan dependensi dan daftar tugas teknis per story. Kriteria penerimaan lengkap ada di [BACKLOG.md](BACKLOG.md); dokumen ini tidak mengulanginya |
 | **Aturan ukuran** | Satu tugas ≤ 0.5 hari ideal. Tugas yang lebih besar dipecah sebelum dikerjakan |
-| **Cara dipakai** | Kerjakan story sesuai urutan di §1. Saat sebuah story dimulai, jadikan tugasnya **GitHub Issues** (satu issue per story, tugas sebagai checklist, label `M0`/`M1` dan nama epic) agar progres terhubung ke commit dan PR. Centang di file ini hanya untuk gambaran awal; sumber kebenaran progres adalah issue |
+| **Cara dipakai** | Kerjakan story sesuai urutan di §1. Saat sebuah story dimulai, jadikan tugasnya **GitHub Issues** (satu issue per story, tugas sebagai checklist, label `M0`/`M1`/`M2` dan nama epic) agar progres terhubung ke commit dan PR. Centang di file ini hanya untuk gambaran awal; sumber kebenaran progres adalah issue |
 
 ---
 
 ## 1. Urutan eksekusi (dihasilkan dari dependensi)
 
-**Status:** `DRAFT` `PROPOSED` `APPROVED` `IN_PROGRESS` `BLOCKED` `DONE`. `DONE` hanya dengan bukti di [TESTING.md](TESTING.md). `DONE` per 12 Nov 2026: S0.1.1, S0.2.1, S0.2.4, S0.4.1, S0.4.2, S0.5.1. Delapan story M0 lain masih `IN_PROGRESS` dengan kesenjangan yang tercatat di TESTING.md.
+**Status:** `DRAFT` `PROPOSED` `APPROVED` `IN_PROGRESS` `BLOCKED` `DONE`. `DONE` hanya dengan bukti di [TESTING.md](TESTING.md). Per 13 Nov 2026: seluruh story M0 dan M1 `DONE` kecuali S1.1.4 (`IN_PROGRESS`: required check CI diblokir GitHub, HTTP 403). M2: S2.1.1 `DONE`; lainnya `PROPOSED`.
 
 Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu. **Jadwal ini akan bergeser**; kalibrasi ulang setelah M0 selesai.
 
@@ -59,7 +59,35 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 39 | S1.7.1 | Soft delete, restore, dan Recycle bin | 2.5 | 68–70.5 | 15 | DONE |
 | 40 | S1.8.1 | Tes E2E dan aksesibilitas | 2 | 70.5–72.5 | 15 | DONE |
 | 41 | S1.8.2 | Performa dan kesiapan pilot | 1.5 | 72.5–74 | 15 | DONE |
+| 42 | S2.1.1 | Work schedule (SET-07) | 2.5 | 74–76.5 | 16 | DONE |
+| 43 | S2.1.2 | Dependensi item (data dan API) | 2.5 | 76.5–79 | 16 | PROPOSED |
+| 44 | S2.1.3 | Mesin penjadwalan di Go | 4.0 | 79–83 | 17 | PROPOSED |
+| 45 | S2.2.1 | Effort dan allocation (TASK-05B) | 2.5 | 83–85.5 | 18 | PROPOSED |
+| 46 | S2.2.2 | Progress project (TASK-09) | 2.0 | 85.5–87.5 | 18 | PROPOSED |
+| 47 | S2.3.1 | Definisi custom field dan API (TASK-10) | 3.0 | 87.5–90.5 | 19 | PROPOSED |
+| 48 | S2.3.2 | Tipe field lengkap (TASK-11A) | 3.0 | 90.5–93.5 | 19 | PROPOSED |
+| 49 | S2.4.1 | Tipe view Gantt dan Calendar | 1.0 | 93.5–94.5 | 19 | PROPOSED |
+| 50 | S2.4.2 | Gantt: bar, progres, drag/resize, milestone (VIEW-05A) | 4.0 | 94.5–98.5 | 20 | PROPOSED |
+| 51 | S2.4.3 | Gantt: dependensi dan penjadwalan (VIEW-05B) | 3.0 | 98.5–101.5 | 21 | PROPOSED |
+| 52 | S2.3.3 | Custom field di panel, Table, Board, dan pemilih kolom (VIEW-09) | 3.0 | 101.5–104.5 | 21 | PROPOSED |
+| 53 | S2.5.1 | Board swimlane dan field kartu (VIEW-03, VIEW-04) | 3.0 | 104.5–107.5 | 22 | PROPOSED |
+| 54 | S2.5.2 | Calendar (VIEW-06) | 2.5 | 107.5–110 | 22 | PROPOSED |
+| 55 | S2.5.3 | Preset filter dan sort Space (SPC-03) | 1.5 | 110–111.5 | 23 | PROPOSED |
+| 56 | S2.5.4 | UI multi-lokasi (SPC-10) | 1.5 | 111.5–113 | 23 | PROPOSED |
+| 57 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2.0 | 113–115 | 23 | PROPOSED |
 <!-- SCHEDULE:END -->
+
+**Gelombang M2.** Gelombang berjalan berurutan; story yang tidak saling bergantung di dalam satu gelombang boleh paralel hanya oleh sesi terpisah dengan kepemilikan file yang jelas. `api/openapi.yaml`, nomor migrasi, `schedule`, dan `items/patch.go` dipegang satu sesi pada satu waktu.
+
+| Gelombang | Story | Hari |
+|---|---|---|
+| A. Fondasi data | S2.1.1, S2.1.2, S2.3.1, S2.4.1 | 9 |
+| B. Logika inti | S2.1.3, S2.2.1, S2.3.2 | 9.5 |
+| C. Gantt dan field di tampilan | S2.2.2 → S2.4.2, S2.3.3 | 9 |
+| D. Fitur turunan | S2.4.3, S2.5.1, S2.5.2, S2.5.3, S2.5.4 | 11.5 |
+| E. Penutup | S2.6.1 | 2 |
+
+Aturan: S2.1.3 titik risiko tertinggi (tes tabel ≥ 20 kasus lebih dulu, review independen, jangan mulai S2.4.3 sebelum benchmark 500 task lulus); ukur SVAR dengan 500 task di awal S2.4.2; setiap akhir gelombang jalankan seluruh suite Go dengan PostgreSQL nyata dan catat di TESTING; kalibrasi estimasi 41 hari setelah gelombang A. Jalur kritis M2: S2.1.1 → S2.1.2 → S2.1.3 → S2.4.2 → S2.4.3 → S2.6.1.
 
 ## 2. Jalur kritis
 
@@ -83,6 +111,11 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 | Estimasi M1 terlalu rendah | Story M0 melewati estimasi > 20% | Pakai kecepatan nyata untuk menghitung ulang M1 sebelum S1.1.1 dimulai (lihat BACKLOG, bagian selisih) |
 | `policy` ternyata lambat | p95 daftar > 300 ms pada data uji (S1.2.3) | Aktifkan rencana tabel closure (ARCHITECTURE §13) |
 | SVAR tidak cukup | Hasil spike S0.5.1 negatif | Putuskan SVAR PRO atau library lain **sebelum** M2 direncanakan |
+| Penjadwalan berantai lebih rumit dari spike (SS/FF/SF, lag negatif, libur) | Tabel kasus S2.1.3 terus bertambah | Tes tabel lebih dulu; batasi ke aturan M2-3; jangan tambah mode jadwal lain |
+| SVAR MIT kurang untuk 500 task atau dependensi | Drag/link berhenti bekerja pada 500 task (S2.4.2) | Ukur di awal S2.4.2; fallback: tampilan baca-saja + edit lewat panel, catat sebagai keputusan baru |
+| Filter/sort custom field lambat di `jsonb` | p95 Table > 1 detik di 500 item (S2.3.3) | Indeks ekspresi per tipe populer; ukur sebelum memilih |
+| Perubahan jadwal berantai memicu banyak event SSE dan konflik versi | Toast konflik sering muncul saat dua orang mengedit | Satu event ringkas per transaksi (`affected_items`) |
+| Estimasi M2 41 hari melebihi 30 hari rencana | Story pertama M2 melewati estimasi > 20% | Hitung ulang dari kecepatan nyata; tawarkan penundaan SPC-10 dan sebagian VIEW-04 |
 | Bug popup Base UI | Dialog/menu gagal di browser nyata | Uji klik nyata di Playwright sejak S0.3.2 (DESIGN_SYSTEM §4.3) |
 
 ---
@@ -320,3 +353,120 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Data uji 500/10 ribu item; p95 dicatat di TESTING
 - [x] [Runbook pilot](PILOT_RUNBOOK.md) mencakup bootstrap, update, backup, restore, rotasi kunci, dan seat
 - [x] Triase pilot dan latihan rollback DB + file; regresi otorisasi dan pemulihan lulus pada fixture
+
+## M2
+
+### E2.1 Jadwal dan dependensi
+
+**S2.1.1 Work schedule (SET-07)**
+- [x] `openapi.yaml`: `GET/PUT /settings/work-schedule`
+- [x] Migrasi `work_schedules` (satu baris per account) dan `work_schedule_exceptions` (tanggal, nama)
+- [x] Paket `schedule`: kalender dari data (ganti asumsi Senin–Jumat tetap)
+- [x] Endpoint dan tes otorisasi (admin tulis, semua baca)
+- [x] Layar pengaturan + tes Playwright
+
+**S2.1.2 Dependensi item (data dan API)**
+- [ ] `openapi.yaml`: `GET/POST /items/{id}/dependencies`, `DELETE /dependencies/{id}`
+- [ ] Migrasi `item_dependencies` (predecessor, successor, type, lag) dengan unik dan CHECK bukan diri sendiri
+- [ ] Deteksi siklus (CTE rekursif) dalam transaksi Serializable
+- [ ] Policy: butuh hak edit pada penerus dan hak lihat pada pendahulu
+- [ ] Tes integrasi dengan PostgreSQL, termasuk soft delete dan restore
+
+**S2.1.3 Mesin penjadwalan di Go**
+- [ ] Perluas `schedule`: empat tipe, lag, kalender dari S2.1.1 (tes tabel ≥ 20 kasus)
+- [ ] Topological order dan propagasi ke seluruh keturunan (tahan siklus data rusak: berhenti dan lapor)
+- [ ] Integrasikan ke `PATCH /items/{id}` dan ke endpoint dependensi (satu transaksi, `If-Match` tetap)
+- [ ] Respons memuat `affected_items` agar UI memperbarui bar tanpa memuat ulang
+- [ ] Benchmark 500 task dan tes konflik dua edit bersamaan
+- [ ] Catatan keputusan di `DECISIONS.md` untuk M2-2 dan M2-3
+
+### E2.2 Effort dan progress
+
+**S2.2.1 Effort dan allocation (TASK-05B)**
+- [ ] `openapi.yaml`: kolom `effort_minutes` pada Item dan `allocation` pada assignee
+- [ ] Migrasi kolom dan CHECK nilai non-negatif
+- [ ] Rumus durasi dari effort (paket `schedule`) + tes
+- [ ] UI di panel detail dan tes Playwright
+
+**S2.2.2 Progress project (TASK-09)**
+- [ ] Aturan perhitungan dan risiko ditulis di `WORKFLOWS.md` dahulu
+- [ ] Kolom metode di project; persen dan risiko dikembalikan oleh API (tidak disimpan)
+- [ ] Tes tabel untuk tiga metode dan kasus kosong
+- [ ] Tampilkan di panel project dan baris Table
+
+### E2.3 Custom field
+
+**S2.3.1 Definisi custom field dan API (TASK-10)**
+- [ ] `openapi.yaml`: `/spaces/{id}/custom-fields` dan `fields` pada PATCH item
+- [ ] Migrasi `custom_fields` (space, nama, tipe, opsi jsonb, posisi, arsip)
+- [ ] Validasi nilai pada PATCH item dalam transaksi yang sama dengan `If-Match`
+- [ ] Policy: kelola field butuh hak admin Space; lihat nilai ikut hak lihat item
+- [ ] Layar pengelolaan di pengaturan Space dan tes
+
+**S2.3.2 Tipe field lengkap (TASK-11A)**
+- [ ] Validator per tipe (satu tabel tes, termasuk batas dan nilai kosong)
+- [ ] Format dan parsing locale (`Intl`) di web, uji id-ID dan en-US
+- [ ] Pengeditor sel per tipe (pakai komponen `ui-kit`)
+- [ ] Conditional marker dan agregasi
+- [ ] Tes Playwright untuk tipe yang paling berisiko (Currency, People)
+
+**S2.3.3 Custom field di panel, Table, Board, dan pemilih kolom (VIEW-09)**
+- [ ] Pemilih kolom dan penyimpanan konfigurasi di `views.config`
+- [ ] Filter/sort server untuk `fields` (indeks GIN atau ekspresi, diukur)
+- [ ] Render dan edit sel per tipe di Table
+- [ ] Tampil di panel detail dan Board
+- [ ] Ukur 500 item dan catat di TESTING
+
+### E2.4 Gantt
+
+**S2.4.1 Tipe view Gantt dan Calendar**
+- [ ] Migrasi menambah nilai enum (maju saja, kompatibel mundur satu versi)
+- [ ] `openapi.yaml` dan sqlc diregenerasi; tes `TestViewLifecycle` diperluas
+- [ ] ViewTabs dan placeholder layar
+
+**S2.4.2 Gantt: bar, progres, drag/resize, milestone (VIEW-05A)**
+- [ ] Adaptor data Item → SVAR dan kembali (tanggal sebagai string `YYYY-MM-DD`, tanpa zona waktu)
+- [ ] Hierarki, lipat/buka, skala hari/minggu/bulan, garis hari ini
+- [ ] Drag/resize → PATCH optimistis + rollback + toast
+- [ ] Mode baca untuk pengguna tanpa hak edit
+- [ ] Ukur 500 task (Chrome) dan catat
+- [ ] Navigasi keyboard dan axe
+
+**S2.4.3 Gantt: dependensi dan penjadwalan (VIEW-05B)**
+- [ ] Render link dan pemilih tipe/lag
+- [ ] Buat/hapus dependensi dengan pembaruan dari `affected_items`
+- [ ] Matikan penjadwalan otomatis bawaan library (jadwal hanya dari backend)
+- [ ] Tes Playwright: geser pendahulu → penerus bergeser; siklus ditolak; konflik 409
+- [ ] Realtime: penerima SSE memperbarui bar tanpa memuat ulang
+
+### E2.5 View lain dan Space
+
+**S2.5.1 Board swimlane dan field kartu (VIEW-03, VIEW-04)**
+- [ ] Pengelompokan di server atau klien (diputuskan setelah ukur 500 item)
+- [ ] Konfigurasi kartu di `views.config` dan layar pengaturan
+- [ ] `days in status` dari riwayat aktivitas (tambah indeks bila lambat)
+- [ ] Tes Playwright untuk swimlane dan drag lintas lajur
+
+**S2.5.2 Calendar (VIEW-06)**
+- [ ] Komponen kalender bulanan (tanpa dependensi baru bila cukup dengan CSS grid, sesuai ui-kit)
+- [ ] Pemuatan per rentang bulan dengan paginasi cursor
+- [ ] Drag → PATCH dan pembaruan penerus
+- [ ] Tes Playwright dan axe
+
+**S2.5.3 Preset filter dan sort Space (SPC-03)**
+- [ ] Migrasi kolom `importance` (bila M2-1 disetujui) dan field di panel detail
+- [ ] Preset dan sort di endpoint daftar dan `openapi.yaml`
+- [ ] UI preset dan tes
+
+**S2.5.4 UI multi-lokasi (SPC-10)**
+- [ ] UI di panel detail memakai `POST/DELETE /items/{id}/locations` yang sudah ada
+- [ ] Pemilih tujuan hanya menampilkan Space dan project yang boleh ditulis
+- [ ] Tes Playwright dan tes otorisasi lokasi
+
+### E2.6 Hardening
+
+**S2.6.1 E2E, aksesibilitas, dan performa M2**
+- [ ] Tiga alur Playwright dan fixture data
+- [ ] Perluasan matriks otorisasi
+- [ ] Benchmark dan pencatatan p95
+- [ ] Perbarui `PILOT_RUNBOOK.md`, `TESTING.md`, `HANDOVER.md`

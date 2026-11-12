@@ -38,11 +38,11 @@
 | D-33 | **G-13:** URL sekali pakai di `river_job.args` diterima untuk M0; di S1.6.1 worker membuat token saat mengirim sehingga URL tidak lagi masuk argumen job | chat (12 Nov 2026) |
 | D-34 | **G-07:** `account_name` ditambahkan ke `Me` (tambahan kontrak) di S1.5.1 | chat (12 Nov 2026) |
 | D-35 | **P-07:** warna status vs aksen diputuskan di awal M3; usulan default: palet tetap, kategori status menentukan ikon | chat (12 Nov 2026) |
-| D-36 | **M2-1:** prioritas disimpan sebagai kolom `importance` (`high`/`normal`/`low`) pada `items` | chat (13 Nov 2026), [M2_PLAN.md](M2_PLAN.md) |
-| D-37 | **M2-2:** penjadwalan otomatis berjalan saat tanggal atau dependensi berubah, dalam satu transaksi; tidak ada tombol "jadwal ulang semua" di M2 | chat (13 Nov 2026), [M2_PLAN.md](M2_PLAN.md) |
-| D-38 | **M2-3:** penerus digeser otomatis hanya bila melanggar dependensi, tidak pernah dimajukan | chat (13 Nov 2026), [M2_PLAN.md](M2_PLAN.md) |
-| D-39 | **M2-4:** satu work schedule per workspace; per user menunggu M4 | chat (13 Nov 2026), [M2_PLAN.md](M2_PLAN.md) |
-| D-40 | **M2-5:** nilai custom field disimpan di `items.fields` berkunci id definisi; kolom tampil bila definisi ada di Space yang sedang dilihat | chat (13 Nov 2026), [M2_PLAN.md](M2_PLAN.md) |
+| D-36 | **M2-1:** prioritas disimpan sebagai kolom `importance` (`high`/`normal`/`low`) pada `items` | chat (13 Nov 2026), [BACKLOG.md](BACKLOG.md) (M2) |
+| D-37 | **M2-2:** penjadwalan otomatis berjalan saat tanggal atau dependensi berubah, dalam satu transaksi; tidak ada tombol "jadwal ulang semua" di M2 | chat (13 Nov 2026), [BACKLOG.md](BACKLOG.md) (M2) |
+| D-38 | **M2-3:** penerus digeser otomatis hanya bila melanggar dependensi, tidak pernah dimajukan | chat (13 Nov 2026), [BACKLOG.md](BACKLOG.md) (M2) |
+| D-39 | **M2-4:** satu work schedule per workspace; per user menunggu M4 | chat (13 Nov 2026), [BACKLOG.md](BACKLOG.md) (M2) |
+| D-40 | **M2-5:** nilai custom field disimpan di `items.fields` berkunci id definisi; kolom tampil bila definisi ada di Space yang sedang dilihat | chat (13 Nov 2026), [BACKLOG.md](BACKLOG.md) (M2) |
 | D-10 | Cakupan detail design dan backlog saat ini: **M0 + M1** (47 requirement) | chat ("lanjut kerjakan m1") |
 
 ## 2. Disetujui 12 Nov 2026 (sebelumnya PROPOSED, dokumen buatan AI)

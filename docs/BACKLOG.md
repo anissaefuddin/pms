@@ -1,9 +1,9 @@
-# BACKLOG — PMS (M0 + M1)
+# BACKLOG — PMS (M0 – M2)
 
 | | |
 |---|---|
 | **Versi** | 0.1 (draft) |
-| **Cakupan** | Epic dan user story untuk M0 + M1 (47 requirement PRD). M2–M7 ditulis saat milestone dimulai |
+| **Cakupan** | Epic dan user story untuk M0, M1 (47 requirement PRD), dan M2 (13 requirement; ditulis 13 Nov 2026). M3–M7 ditulis saat milestone dimulai |
 | **Satuan estimasi** | **Hari ideal** satu developer dibantu AI (hari fokus penuh, termasuk tes dan review sendiri; di luar rapat/gangguan). Estimasi kasar dari bawah ke atas, **belum dikalibrasi** dengan kecepatan nyata |
 | **Terkait** | [PRD.md](PRD.md), [TASKS.md](TASKS.md) (urutan kerja dan tugas teknis), [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE.md](DATABASE.md), [UI_SPEC.md](UI_SPEC.md) |
 
@@ -29,9 +29,16 @@
 | E1.6 Admin user | 2 | 4 |
 | E1.7 Recycle bin | 1 | 2.5 |
 | E1.8 Hardening dan kesiapan pilot | 2 | 3.5 |
+| E2.1 Jadwal dan dependensi | 3 | 9 |
+| E2.2 Effort dan progress | 2 | 4.5 |
+| E2.3 Custom field | 3 | 9 |
+| E2.4 Gantt | 3 | 8 |
+| E2.5 View lain dan Space | 4 | 8.5 |
+| E2.6 Hardening | 1 | 2 |
 | **M0** | 14 | **15** |
 | **M1** | 27 | **59** |
-| **Total** | 41 | **74** |
+| **M2** | 16 | **41** |
+| **Total** | 57 | **115** |
 <!-- SUMMARY:END -->
 
 ## Peta epic dan dependensi
@@ -452,9 +459,198 @@ flowchart LR
 
 ---
 
-## Di luar M0 + M1 (rujukan)
+# MILESTONE M2 — Planning & Scheduling
 
-Semua requirement M2–M7 ada di PRD §5 dan §8; story-nya ditulis saat milestone dimulai. Yang paling mungkin berubah akibat pilot M1: Table (kolom custom), filter default, struktur panel detail, dan pengaturan notifikasi.
+**Cakupan:** VIEW-05A, VIEW-05B, VIEW-03, VIEW-04, VIEW-06, VIEW-09; TASK-05B, TASK-09, TASK-10, TASK-11A; SET-07; SPC-03, SPC-10 (PRD §8).
+**Exit criteria (PRD):** proyek bisa dijadwalkan penuh di Gantt dengan dependensi; durasi menghormati work schedule; custom field tampil di semua view.
+
+**Titik awal (dari M0/M1):** `items` sudah punya `start_date`, `due_date`, `duration_days`, `is_milestone`, dan `fields jsonb`; `item_locations` mendukung banyak lokasi dan `POST /items/{id}/locations` ada di kontrak. `views.type` baru `table`/`board`. `server/internal/schedule` kini punya `Calendar` (S2.1.1); propagasi berantai dan tipe SS/FF/SF belum ada. Sort `priority` dan `importance` sudah ada di kontrak daftar tetapi disembunyikan sampai M2. Keputusan spike: lanjut SVAR MIT ([GANTT_SPIKE.md](GANTT_SPIKE.md)); performa dan penyimpanan perubahan belum diuji.
+
+**Keputusan M2 (disetujui 13 Nov 2026):**
+
+| # | Keputusan | Ref | Mempengaruhi |
+|---|---|---|---|
+| M2-1 | Prioritas disimpan sebagai kolom `importance` (`high`/`normal`/`low`) pada `items`, bukan custom field | D-36 | S2.5.3 |
+| M2-2 | Penjadwalan otomatis berjalan saat tanggal atau dependensi berubah, dalam satu transaksi; tidak ada tombol "jadwal ulang semua" | D-37 | S2.1.3 |
+| M2-3 | Penerus digeser otomatis hanya bila melanggar dependensi, tidak pernah dimajukan | D-38 | S2.1.3 |
+| M2-4 | Satu work schedule per workspace; per user menunggu M4 | D-39 | S2.1.1 |
+| M2-5 | Nilai custom field disimpan di `items.fields` berkunci id definisi; kolom tampil bila definisi ada di Space yang sedang dilihat | D-40 | S2.3.x |
+
+**Di luar M2:** baseline (grup kolom hanya placeholder), actual cost, timesheet (M4), form dan approval (M3), dashboard dan report (M5), template Space (M6), work schedule per user, tombol "jadwal ulang semua".
+
+---
+
+## E2.1 Jadwal dan dependensi
+
+### S2.1.1 — Work schedule (SET-07)
+- **PRD:** SET-07
+- **Est:** 2.5 · **Dep:** M1
+- **Sebagai** admin, **saya ingin** menetapkan hari kerja, kapasitas harian, dan libur, **agar** durasi dan jadwal task mengikuti kalender kerja organisasi.
+- **Acceptance criteria:**
+  - Admin mengatur hari kerja (default Senin–Jumat), jam kerja per hari (default 8), dan daftar tanggal libur lewat `/settings/work-schedule`; non-admin hanya bisa membaca.
+  - Perubahan memakai `If-Match`; konflik memberi 409.
+  - Fungsi Go `workdays(start, duration)` dan `duration(start, finish)` memakai jadwal ini; kasus libur di tengah rentang, libur di akhir pekan, dan jadwal tanpa hari kerja ditolak (422) teruji.
+
+### S2.1.2 — Dependensi item (data dan API)
+- **PRD:** VIEW-05B
+- **Est:** 2.5 · **Dep:** M1
+- **Sebagai** user, **saya ingin** menghubungkan task dengan dependensi FS/SS/FF/SF, **agar** urutan kerja jelas.
+- **Acceptance criteria:**
+  - Dependensi dibuat dan dihapus lewat API antara dua item yang pembacanya sama-sama punya akses; tipe FS, SS, FF, SF dengan lag (hari kerja, boleh negatif).
+  - Siklus ditolak (422), juga siklus tidak langsung (A→B→C→A) dan dependensi ke diri sendiri.
+  - Item yang masuk Recycle bin tidak ikut perhitungan, dan dependensinya kembali bila direstore.
+  - Pengguna tanpa akses ke salah satu ujung tidak melihat ujung itu (404/disembunyikan), tes IDOR lulus.
+
+### S2.1.3 — Mesin penjadwalan di Go
+- **PRD:** VIEW-05B
+- **Est:** 4.0 · **Dep:** S2.1.1, S2.1.2
+- **Sebagai** PM, **saya ingin** task penerus bergeser otomatis ketika pendahulunya berubah, **agar** jadwal tetap konsisten tanpa hitung manual.
+- **Acceptance criteria:**
+  - Mengubah tanggal atau durasi sebuah task, atau menambah/mengubah dependensi, menghitung ulang seluruh rantai penerus dalam **satu transaksi** dan mengembalikan daftar item yang berubah.
+  - Keempat tipe (FS, SS, FF, SF) dan lag benar menurut tabel kasus; hasil mengikuti hari kerja dan libur dari S2.1.1.
+  - Keputusan M2-3 berlaku: penerus tidak pernah dimajukan, hanya digeser bila melanggar.
+  - Milestone (durasi 0) dan task tanpa tanggal ditangani tanpa galat.
+  - Rantai 500 task selesai dalam ≤ 300 ms (p95) pada PostgreSQL uji.
+  - Setiap item yang digeser mencatat aktivitas dan menaikkan `version`; klien lain menerima event SSE.
+
+## E2.2 Effort dan progress
+
+### S2.2.1 — Effort dan allocation (TASK-05B)
+- **PRD:** TASK-05B
+- **Est:** 2.5 · **Dep:** S2.1.1
+- **Sebagai** PM, **saya ingin** mengisi effort dan alokasi per orang, **agar** beban kerja dan durasi terhitung.
+- **Acceptance criteria:**
+  - Panel detail memuat effort (jam) dan alokasi per assignee (persen atau jam per hari); durasi dapat dihitung dari effort dan alokasi memakai kapasitas harian dari S2.1.1.
+  - Menghapus assignee menghapus alokasinya; total alokasi di atas 100% memberi peringatan, bukan galat.
+  - Mengubah effort tidak menggeser jadwal kecuali user memilih "hitung ulang durasi".
+
+### S2.2.2 — Progress project (TASK-09)
+- **PRD:** TASK-09
+- **Est:** 2.0 · **Dep:** S2.2.1
+- **Sebagai** PM, **saya ingin** melihat progres project dan risikonya, **agar** tahu mana yang terlambat.
+- **Acceptance criteria:**
+  - Metode progres dipilih per project: jumlah task selesai, durasi berbobot, atau rata-rata persen task; persen dihitung di server.
+  - Indikator risiko (hijau/kuning/merah) mengikuti aturan tertulis di `WORKFLOWS.md` (mis. terlambat bila `due_date` lewat dan belum selesai).
+  - Task di Recycle bin dan status `cancelled` tidak dihitung.
+
+## E2.3 Custom field
+
+### S2.3.1 — Definisi custom field dan API (TASK-10)
+- **PRD:** TASK-10
+- **Est:** 3.0 · **Dep:** M1
+- **Sebagai** admin Space, **saya ingin** membuat field kustom dengan pilihan berwarna, **agar** tim memakai atribut yang sesuai pekerjaannya.
+- **Acceptance criteria:**
+  - Admin atau pemilik Space membuat, mengubah, mengurutkan, dan mengarsipkan definisi field per Space; menghapus opsi yang sedang dipakai ditolak atau diarsipkan, tidak menghilangkan nilai item.
+  - Nilai disimpan di `items.fields` berkunci id definisi dan divalidasi server (id tak dikenal 422).
+  - Field berlaku untuk task, project, dan folder di Space itu; keputusan M2-5 berlaku untuk item multi-lokasi.
+
+### S2.3.2 — Tipe field lengkap (TASK-11A)
+- **PRD:** TASK-11A
+- **Est:** 3.0 · **Dep:** S2.3.1
+- **Sebagai** user, **saya ingin** tipe field yang sesuai datanya, **agar** angka, tanggal, dan orang tersimpan benar.
+- **Acceptance criteria:**
+  - Tipe: Text, Number, Currency, Percent, Single select, Multiple select, People, Date, Duration, Checkbox. Setiap tipe punya validasi server dan pesan galat jelas.
+  - Currency memiliki simbol, desimal, dan pemisah ribuan; Percent 0–100 atau lebih bila diizinkan; format mengikuti locale user.
+  - Conditional marker (aturan warna berdasarkan nilai) dan agregasi default (jumlah, rata-rata, min, maks, hitung) tersedia untuk tipe numerik.
+  - People hanya menerima user yang terlihat oleh pemilih; user nonaktif ditampilkan namun tidak bisa dipilih baru.
+
+### S2.3.3 — Custom field di panel, Table, Board, dan pemilih kolom (VIEW-09)
+- **PRD:** VIEW-09, TASK-10, TASK-11A
+- **Est:** 3.0 · **Dep:** S2.3.2
+- **Sebagai** user, **saya ingin** melihat dan mengedit custom field di semua tampilan, **agar** tidak berpindah layar.
+- **Acceptance criteria:**
+  - Panel detail memuat semua field Space; sel Table dapat diedit inline; kartu Board menampilkan field yang dipilih.
+  - Pemilih kolom mengelompokkan Management, Schedule, Other, dan Custom fields; pilihan disimpan per view. Grup Baselines tampil nonaktif ("segera hadir") karena baseline di luar M2.
+  - Filter dan sort berdasarkan custom field bekerja di URL dan di server (bukan hanya di klien) untuk tipe skalar dan select.
+  - Table dengan 500 item dan 10 kolom custom tetap p95 ≤ 1 detik.
+
+## E2.4 Gantt
+
+### S2.4.1 — Tipe view Gantt dan Calendar
+- **PRD:** VIEW-05A, VIEW-06
+- **Est:** 1.0 · **Dep:** M1
+- **Sebagai** user, **saya ingin** menambah view Gantt dan Calendar pada project, **agar** bisa memilih tampilan sesuai kebutuhan.
+- **Acceptance criteria:**
+  - Enum `view_type` memuat `gantt` dan `calendar`; ViewTabs menawarkan keduanya pada "Add view"; view bawaan project baru tetap Table dan Board.
+  - Duplikasi, rename, default, dan hapus bekerja seperti view lain.
+
+### S2.4.2 — Gantt: bar, progres, drag/resize, milestone (VIEW-05A)
+- **PRD:** VIEW-05A
+- **Est:** 4.0 · **Dep:** S2.4.1, S2.2.2
+- **Sebagai** PM, **saya ingin** melihat dan mengubah jadwal di bagan Gantt, **agar** perencanaan visual.
+- **Acceptance criteria:**
+  - Bar per item dengan hierarki project → task → subitem dapat dilipat; progres % tampil; milestone tampil sebagai penanda.
+  - Drag memindahkan tanggal dan resize mengubah durasi; keduanya memanggil `PATCH` dengan `If-Match` dan memperbarui dari respons server. Gagal (409/403) mengembalikan bar dan menampilkan toast.
+  - Pengguna dengan hak lihat saja tidak bisa drag (kontrol nonaktif, bukan hanya diabaikan).
+  - 500 task dirender dan digulir tanpa jeda yang terlihat (p95 render ≤ 1.5 detik).
+  - Bisa dipakai dengan keyboard untuk memilih bar dan menggeser per hari; label ARIA ada.
+
+### S2.4.3 — Gantt: dependensi dan penjadwalan (VIEW-05B)
+- **PRD:** VIEW-05B
+- **Est:** 3.0 · **Dep:** S2.4.2, S2.1.3
+- **Sebagai** PM, **saya ingin** menarik garis dependensi dan melihat penerus bergeser, **agar** jadwal terhubung.
+- **Acceptance criteria:**
+  - Garis dependensi (FS/SS/FF/SF) digambar dari data server; membuat dan menghapus garis lewat drag dan menu memanggil API S2.1.2.
+  - Setelah drag atau perubahan dependensi, bar penerus bergeser sesuai `affected_items` dari server; library tidak menghitung jadwal sendiri.
+  - Dependensi yang akan membuat siklus ditolak dengan pesan jelas dan tidak ada perubahan yang tersimpan.
+  - Dua pengguna mengedit bersamaan: yang kalah mendapat pesan konflik dan data segar (S1.4.3).
+
+## E2.5 View lain dan Space
+
+### S2.5.1 — Board swimlane dan field kartu (VIEW-03, VIEW-04)
+- **PRD:** VIEW-03, VIEW-04
+- **Est:** 3.0 · **Dep:** S2.3.3
+- **Sebagai** user, **saya ingin** mengelompokkan Board per assignee dan memilih isi kartu, **agar** papan sesuai cara tim bekerja.
+- **Acceptance criteria:**
+  - Group by None atau Assignee membuat swimlane; item tanpa assignee masuk "Unassigned"; item dengan banyak assignee muncul di tiap lajur dan drag di antara lajur mengubah assignee dengan konfirmasi.
+  - Kartu menampilkan field pilihan: cover image (dari lampiran gambar pertama), days in status, lokasi, author, ID, tipe item, tanggal, custom field; pilihan disimpan per view.
+  - Drag status tetap optimistis dengan rollback.
+
+### S2.5.2 — Calendar (VIEW-06)
+- **PRD:** VIEW-06
+- **Est:** 2.5 · **Dep:** S2.4.1
+- **Sebagai** user, **saya ingin** melihat task pada kalender bulanan, **agar** tenggat terlihat sekilas.
+- **Acceptance criteria:**
+  - Tampilan bulanan dengan Today, prev, next; filter sama dengan view lain; item tampil dari `start_date` sampai `due_date`; item tanpa tanggal ada di daftar "Unscheduled".
+  - Drag item ke hari lain mengubah tanggal (mengikuti S2.1.3); awal pekan mengikuti pengaturan user; libur dari S2.1.1 diberi tanda.
+  - Dapat dipakai dengan keyboard; hari dan item punya label ARIA.
+
+### S2.5.3 — Preset filter dan sort Space (SPC-03)
+- **PRD:** SPC-03
+- **Est:** 1.5 · **Dep:** S2.3.3
+- **Sebagai** user, **saya ingin** preset All tasks, All active, dan My active, **agar** tidak menyusun filter berulang.
+- **Acceptance criteria:**
+  - Tiga preset tersedia di Table/Board/Calendar; sort Priority, Due date, Status, Name, Predecessors, Manual order bekerja di server dan tercermin di URL.
+  - Sort Priority memakai keputusan M2-1 (kolom `importance`); Predecessors mengurutkan berdasarkan jumlah dan posisi dependensi.
+  - Opsi Priority/Importance yang disembunyikan di M1 sekarang tampil, termasuk di My to-do.
+
+### S2.5.4 — UI multi-lokasi (SPC-10)
+- **PRD:** SPC-10
+- **Est:** 1.5 · **Dep:** M1
+- **Sebagai** user, **saya ingin** menambahkan item ke project atau Space lain, **agar** satu pekerjaan muncul di beberapa tempat.
+- **Acceptance criteria:**
+  - Panel detail menampilkan daftar lokasi; "Add location" memilih Space atau project tujuan yang bisa diakses user; menghapus lokasi terakhir ditolak.
+  - Item muncul di Table dan Board setiap lokasi; perubahan di satu tempat terlihat di tempat lain (satu item, bukan salinan).
+  - Hapus lokasi tidak menghapus item; siklus hierarki yang dibuat lewat lokasi baru ditolak.
+
+## E2.6 Hardening
+
+### S2.6.1 — E2E, aksesibilitas, dan performa M2
+- **PRD:** — (kualitas; PRD §6)
+- **Est:** 2.0 · **Dep:** semua story M2
+- **Sebagai** tim, **saya ingin** bukti end-to-end, **agar** M2 bisa dinyatakan selesai.
+- **Acceptance criteria:**
+  - Tiga alur Playwright dengan PostgreSQL: (1) atur work schedule → buat task berdependensi → geser pendahulu → penerus bergeser mengikuti libur; (2) buat custom field → isi nilai → tampil di Table, Board, dan Gantt; (3) Calendar dan swimlane dengan drag.
+  - `axe` pada Gantt, Calendar, dan pengaturan custom field (terang dan gelap).
+  - Matriks otorisasi diperluas ke dependensi dan custom field; tes IDOR lulus.
+  - Gantt dan Table 500 task serta rantai dependensi 500 task diukur dan dicatat di TESTING.
+  - Runbook pilot diperbarui untuk migrasi M2 dan rollback.
+
+---
+
+## Di luar M0 – M2 (rujukan)
+
+Semua requirement M3–M7 ada di PRD §5 dan §8; story-nya ditulis saat milestone dimulai. Yang paling mungkin berubah akibat pilot M1: Table (kolom custom), filter default, struktur panel detail, dan pengaturan notifikasi.
 
 ## Selisih estimasi terhadap rencana PRD
 
@@ -465,6 +661,7 @@ Estimasi bottom-up di atas dibandingkan dengan rencana PRD §8 (5 hari kerja per
 |---|---|---|---|
 | M0 | 3 minggu = 15 hari | **15 hari** | +0 |
 | M1 | 8 minggu = 40 hari | **59 hari** (≈ 11.8 minggu) | +19 hari (≈ +3.8 minggu) |
+| M2 | 6 minggu = 30 hari | **41 hari** (≈ 8.2 minggu) | +11 hari (≈ +2.2 minggu) |
 
 **M0 sesuai rencana. M1 diperkirakan lebih lama dari rencana PRD.** Estimasi ini kasar dan belum dikalibrasi; angka sebenarnya baru diketahui setelah M0 selesai dan kecepatan nyata terukur. Pilihan yang tersedia:
 
@@ -475,4 +672,6 @@ Estimasi bottom-up di atas dibandingkan dengan rencana PRD §8 (5 hari kerja per
 | C. Pecah M1 menjadi M1a dan M1b | M1a = E1.1, E1.2, E1.3, E1.6, E1.7, S1.4.3 (**41 hari** ≈ rencana 40). M1b = komentar, file, realtime, Inbox, To-do, pencarian, hardening (**18 hari**) | Pilot dimulai di akhir M1a **tanpa komentar dan file**, sehingga belum bisa menjalankan proyek sungguhan; hanya menguji alur inti dan otorisasi |
 
 **Keputusan (D-16, 12 Nov 2026): opsi A dipilih** dan PRD §8 sudah diubah (M1 12 minggu, GA minggu 39). Kalibrasi ulang setelah epic E1.1.
+
+**M2 (13 Nov 2026):** selisih +11 hari terutama dari mesin penjadwalan (S2.1.3) dan Gantt (S2.4.2, S2.4.3). Menunda SPC-10 (S2.5.4, 1.5 hari) dan bagian field kartu VIEW-04 (±1 hari) ke M3 hanya menghemat ±2.5 hari, jadi tidak cukup menutup selisih; sisanya butuh pemangkasan lain atau jadwal baru. Keputusan belum diambil. Kalibrasi ulang dengan kecepatan nyata M1 dan setelah gelombang A M2.
 <!-- GAP:END -->
