@@ -60,7 +60,7 @@ export function extra(overrides: Record<string, any> = {}) {
     [`PUT /spaces/${marketing.id}/shares`]: (body: any, req) => {
       if (!req.headers["if-match"]) return problem(428, "If-Match required");
       if (req.headers["if-match"] !== '"7"') return problem(409, "version conflict");
-      return { body: { items: body.shares.map((s: any) => ({ ...s, principal_name: "x" })) } };
+      return { headers: { ETag: '"8"' }, body: { items: body.shares.map((s: any) => ({ ...s, principal_name: "x" })) } };
     },
     "GET /users": (_: unknown, req: { query: URLSearchParams }) => {
       const q = (req.query.get("q") ?? "").toLowerCase();

@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { Users, User as UserIcon } from "lucide-react";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { api, type CurrentUser } from "@/lib/api";
+import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { useDebounced } from "@/lib/space-queries";
 import { SHARE_ROLES, ownRank, type Group, type Share, type ShareInput, type ShareRole, type User } from "@/lib/spaces";
 import { FormError } from "@/components/auth/form-error";
@@ -53,11 +53,13 @@ function Loader(props: LoaderProps) {
   const shares = useQuery({ queryKey: [...props.queryKey, "shares"], queryFn: props.loadShares, gcTime: 0, staleTime: Infinity, refetchOnWindowFocus: false });
   if (shares.isError) return <FormError message={t("share.loadError")} />;
   if (!shares.data) return <p role="status" className="text-sm text-muted-foreground">{t("share.loading")}</p>;
-  return <Editor {...props} initial={shares.data.items} etag={shares.data.etag} />;
+  return <Editor {...props} first={shares.data} />;
 }
 
-function Editor({ initial, etag, saveShares, canShare, me, onSaved, onClose }: LoaderProps & { initial: Share[]; etag: string }) {
+function Editor({ first, loadShares, saveShares, canShare, me, onSaved, onClose }: LoaderProps & { first: { items: Share[]; etag: string } }) {
   const { t } = useTranslation();
+  const [{ items: initial, etag }, setLoaded] = useState(first);
+  const [stale, setStale] = useState<"conflict" | "missing" | null>(null);
   const [draft, setDraft] = useState(initial);
   const [error, setError] = useState("");
   const [confirming, setConfirming] = useState(false);
@@ -75,16 +77,29 @@ function Editor({ initial, etag, saveShares, canShare, me, onSaved, onClose }: L
   const add = (principal: Pick<Share, "principal_type" | "principal_id" | "principal_name">, role: ShareRole) =>
     setDraft((d) => [...d, { ...principal, role, inherited_from: null }]);
 
+  // Fresh ETag and inherited rows; the user's own direct edits stay in the draft.
+  async function reload() {
+    try {
+      const fresh = await loadShares();
+      setLoaded(fresh);
+      setDraft((d) => [...fresh.items.filter((r) => r.inherited_from), ...d.filter((r) => !r.inherited_from)]);
+      setStale(null);
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+
   async function save() {
-    setPending(true); setError("");
+    setPending(true); setError(""); setStale(null);
     try {
       await saveShares(direct.map(({ principal_type, principal_id, role }) => ({ principal_type, principal_id, role })), etag);
       toast.success(t("share.saved"));
       onSaved?.();
       onClose();
     } catch (e) {
-      setError((e as Error).message);
       setConfirming(false);
+      if (e instanceof ApiError && (e.status === 409 || e.status === 428)) setStale(e.status === 409 ? "conflict" : "missing");
+      else setError((e as Error).message);
     } finally {
       setPending(false);
     }
@@ -128,6 +143,12 @@ function Editor({ initial, etag, saveShares, canShare, me, onSaved, onClose }: L
         </section>
       )}
       <FormError message={error} />
+      {stale && (
+        <div role="alert" className="flex items-center justify-between gap-2 rounded-lg border border-warning bg-warning-subtle p-2 text-sm">
+          <span>{stale === "conflict" ? t("share.conflict.message") : t("share.conflict.missing")}</span>
+          <Button type="button" size="sm" variant="outline" onClick={reload}>{t("share.conflict.reload")}</Button>
+        </div>
+      )}
       {confirming && <p role="alert" className="rounded-lg border border-warning bg-warning-subtle p-2 text-sm">{t("share.self.warning")}</p>}
       <DialogFooter>
         {!canShare ? <Button variant="outline" onClick={onClose}>{t("share.close")}</Button>

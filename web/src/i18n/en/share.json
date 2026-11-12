@@ -38,5 +38,8 @@
   "self.warning": "This change lowers or removes your own access. You may not be able to open this again.",
   "self.confirm": "Save anyway",
   "self.back": "Go back",
-  "access.removeShort": "Remove"
+  "access.removeShort": "Remove",
+  "conflict.message": "Sharing changed since you opened this; reload",
+  "conflict.missing": "Sharing is out of date; reload",
+  "conflict.reload": "Reload"
 }

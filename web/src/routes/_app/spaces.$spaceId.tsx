@@ -134,7 +134,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
           saveShares={(shares, etag) => api(`/api/v1/spaces/${space.id}/shares`, { method: "PUT", headers: { "If-Match": etag }, body: JSON.stringify({ shares }) })}
           canShare={canShare}
           me={me}
-          onSaved={() => queryClient.invalidateQueries({ queryKey: spaceKeys.one(space.id) })}
+          onSaved={() => queryClient.invalidateQueries({ queryKey: spaceKeys.all })}
         />
       )}
       <ConfirmDialog

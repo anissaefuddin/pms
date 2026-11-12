@@ -1,6 +1,6 @@
 import { expect, test, type Page } from "@playwright/test";
 import { me, problem } from "./mock-api";
-import { extra, grace, marketing, mockSpaces, team } from "./spaces-mock";
+import { extra, grace, shareRows, marketing, mockSpaces, team } from "./spaces-mock";
 
 const url = `/spaces/${marketing.id}`;
 async function openShare(page: Page) {
@@ -151,4 +151,47 @@ test("without the share capability the dialog is a read-only list", async ({ pag
   await expect(dialog.getByRole("button", { name: /^Remove/ })).toHaveCount(0);
   await expect(dialog.getByRole("button", { name: "Save" })).toHaveCount(0);
   await expect(dialog.getByText("Linus Pauling")).toBeVisible();
+});
+
+test("409 offers Reload: it keeps the draft, takes the new ETag and the retry succeeds", async ({ page }) => {
+  let etag = '"7"';
+  const { calls } = await mockSpaces(page, { extra: extra({
+    [`GET /spaces/${marketing.id}/shares`]: () => ({ headers: { ETag: etag }, body: { items: shareRows } }),
+    [`PUT /spaces/${marketing.id}/shares`]: (body: any, req: any) =>
+      req.headers["if-match"] === etag ? { headers: { ETag: '"9"' }, body: { items: [] } } : problem(409, "version conflict", "version_conflict"),
+  }) });
+  const dialog = await openShare(page);
+  etag = '"8"'; // someone else saved meanwhile
+  await dialog.getByLabel("Role for Linus Pauling").selectOption("full");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Sharing changed since you opened this; reload");
+  await dialog.getByRole("button", { name: "Reload" }).click();
+  await expect(dialog.getByRole("alert")).toHaveCount(0);
+  await expect(dialog.getByLabel("Role for Linus Pauling")).toHaveValue("full");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog).toBeHidden();
+  expect(calls.filter((c) => c.method === "PUT").map((c) => c.headers["if-match"])).toEqual(['"7"', '"8"']);
+});
+
+test("428 asks for a reload too", async ({ page }) => {
+  await mockSpaces(page, { extra: extra({ [`PUT /spaces/${marketing.id}/shares`]: problem(428, "If-Match required", "precondition_required") }) });
+  const dialog = await openShare(page);
+  await dialog.getByLabel("Role for Linus Pauling").selectOption("full");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog.getByRole("alert")).toContainText("out of date");
+});
+
+test("a successful save refetches the Space so a later rename uses the new version", async ({ page }) => {
+  const { calls, spaces } = await mockSpaces(page, { extra: extra() });
+  const dialog = await openShare(page);
+  const before = calls.filter((c) => c.method === "GET" && c.path === `/spaces/${marketing.id}`).length;
+  spaces[1] = { ...spaces[1], version: spaces[1].version + 1 }; // the server bumped the Space version
+  await dialog.getByLabel("Role for Linus Pauling").selectOption("full");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  await expect(dialog).toBeHidden();
+  await expect.poll(() => calls.filter((c) => c.method === "GET" && c.path === `/spaces/${marketing.id}`).length).toBeGreaterThan(before);
+  await page.getByRole("button", { name: "Space actions" }).click();
+  await page.getByRole("menuitem", { name: "Rename" }).click();
+  await page.getByRole("dialog").getByRole("button", { name: "Save" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.headers["if-match"]).toBe(`"${marketing.version + 1}"`);
 });
