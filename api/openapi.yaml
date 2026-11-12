@@ -20,6 +20,7 @@ tags:
   - { name: auth, description: "Login, session, password, undangan" }
   - { name: users, description: "Profil, user, grup, seat" }
   - { name: spaces, description: "Space dan sharing" }
+  - { name: settings, description: "Pengaturan workspace" }
   - { name: items, description: "Project, folder, task" }
   - { name: views, description: "Definisi view Table dan Board" }
   - { name: collaboration, description: "Komentar, lampiran, aktivitas" }
@@ -182,6 +183,43 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Me' }
         '422': { $ref: '#/components/responses/Problem' }
+  /settings/work-schedule:
+    get:
+      tags: [settings]
+      operationId: getWorkSchedule
+      summary: Work schedule workspace (SET-07); semua user yang login boleh membaca
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkSchedule' }
+        '401': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [settings]
+      operationId: replaceWorkSchedule
+      summary: Ganti work schedule (admin saja, SET-07)
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkScheduleInput' }
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkSchedule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /users:
     get:
       tags: [users]
@@ -1542,6 +1580,35 @@ components:
               format: uuid
               nullable: true
               description: Container tempat share ini berasal bila diwarisi
+    WorkScheduleInput:
+      type: object
+      required: [working_days, daily_hours, exceptions]
+      properties:
+        working_days:
+          type: array
+          minItems: 1
+          maxItems: 7
+          uniqueItems: true
+          description: Hari kerja, 0 = Minggu sampai 6 = Sabtu
+          items: { type: integer, minimum: 0, maximum: 6 }
+        daily_hours: { type: integer, minimum: 1, maximum: 24 }
+        exceptions:
+          type: array
+          maxItems: 1000
+          description: Tanggal libur; tanggal harus unik
+          items:
+            type: object
+            required: [date, name]
+            properties:
+              date: { type: string, format: date }
+              name: { type: string, maxLength: 120 }
+    WorkSchedule:
+      allOf:
+        - $ref: '#/components/schemas/WorkScheduleInput'
+        - type: object
+          required: [version]
+          properties:
+            version: { type: integer }
     ShareReplace:
       type: object
       required: [shares]

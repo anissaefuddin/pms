@@ -226,3 +226,12 @@ Temuan:
 - `docker compose pull` gagal untuk image yang hanya ada lokal; alur update memang mengharuskan registry.
 
 **Belum terpenuhi untuk exit criteria M0/M1:** image dari GHCR, instance uji klien sungguhan, Traefik produksi dengan Let's Encrypt, SMTP asli, alert ke Grafana/Slack sungguhan, dan pilot internal.
+
+## M2 / S2.1.1 Work schedule (13 Nov 2026)
+
+| Story | Status | Bukti |
+|---|---|---|
+| S2.1.1 | **PASS** | `TestWorkSchedule` (PostgreSQL nyata): default `"1"` dengan Senin–Jumat dan 8 jam; non-admin PUT 403; tanpa `If-Match` 428; tujuh input tidak sah 422 dan versi tidak naik; simpan menaikkan versi dan mengurutkan libur; versi usang 409. Mutasi (hapus `AND version=$3`) membuat tes gagal di "stale version". `TestCalendar` (8 kasus tabel: akhir pekan, libur di tengah dan di hari terakhir, Sabtu kerja, Minggu–Senin, durasi 0) dan `Duration`; jadwal kosong dan hari 7 ditolak. Playwright 4/4: edit dengan `If-Match`, konflik 409 memuat ulang dengan pesan, tampilan baca-saja untuk non-admin, axe terang/gelap tanpa pelanggaran. Seluruh `go test ./server/...` hijau dengan `PMS_TEST_DATABASE_URL`; `tsc` dan `eslint` bersih. |
+
+Catatan: suite Playwright mock (tanpa live/perf) 85 lulus dan 2 gagal. Yang gagal adalah `screens.a11y` "share dialog" (terang dan gelap): tes mengharapkan tombol "Invite as external user" nonaktif, padahal komit `ad98a49` (S1.1.3) membuatnya aktif. Itu bukan dari S2.1.1; tes perlu diperbarui oleh pemilik S1.1.3. Belum diuji: UI terhadap backend nyata (hanya mock), dan `Calendar` belum dipakai oleh penjadwalan (S2.1.3).
+

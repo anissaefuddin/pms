@@ -695,6 +695,19 @@ type View struct {
 	IsDefault    bool           `json:"is_default"`
 }
 
+type WorkSchedule struct {
+	ID          int16              `json:"id"`
+	WorkingDays []int16            `json:"working_days"`
+	DailyHours  int16              `json:"daily_hours"`
+	Version     int32              `json:"version"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type WorkScheduleException struct {
+	Day  pgtype.Date `json:"day"`
+	Name string      `json:"name"`
+}
+
 type Workflow struct {
 	ID        pgtype.UUID        `json:"id"`
 	Name      string             `json:"name"`

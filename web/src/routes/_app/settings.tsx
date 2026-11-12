@@ -23,6 +23,8 @@ function SettingsLayout() {
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("settings.nav.accountManagement")}</h2>
             {me?.capabilities.manage_users && <Link to="/settings/users" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.users.title")}</Link>}
+            <Link to="/settings/work-schedule" className={linkClass}
+              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.workSchedule.title")}</Link>
             <Link to="/spikes/gantt" className={linkClass}>{t("settings.nav.gantt")}</Link>
           </section>
         </nav>

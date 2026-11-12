@@ -140,6 +140,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.spaceRoutes(mux)
 	s.viewRoutes(mux)
 	s.commentRoutes(mux)
+	s.workScheduleRoutes(mux)
 	s.attachmentRoutes(mux)
 	mux.HandleFunc("GET /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))
 	mux.HandleFunc("PUT /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))

@@ -1376,6 +1376,35 @@ type ViewUpdate struct {
 // ViewVisibility defines model for ViewVisibility.
 type ViewVisibility string
 
+// WorkSchedule defines model for WorkSchedule.
+type WorkSchedule struct {
+	DailyHours int `json:"daily_hours"`
+
+	// Exceptions Tanggal libur; tanggal harus unik
+	Exceptions []struct {
+		Date openapi_types.Date `json:"date"`
+		Name string             `json:"name"`
+	} `json:"exceptions"`
+	Version int `json:"version"`
+
+	// WorkingDays Hari kerja, 0 = Minggu sampai 6 = Sabtu
+	WorkingDays []int `json:"working_days"`
+}
+
+// WorkScheduleInput defines model for WorkScheduleInput.
+type WorkScheduleInput struct {
+	DailyHours int `json:"daily_hours"`
+
+	// Exceptions Tanggal libur; tanggal harus unik
+	Exceptions []struct {
+		Date openapi_types.Date `json:"date"`
+		Name string             `json:"name"`
+	} `json:"exceptions"`
+
+	// WorkingDays Hari kerja, 0 = Minggu sampai 6 = Sabtu
+	WorkingDays []int `json:"working_days"`
+}
+
 // Workflow defines model for Workflow.
 type Workflow struct {
 	Id        openapi_types.UUID `json:"id"`
@@ -1605,6 +1634,12 @@ type SearchParams struct {
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ReplaceWorkScheduleParams defines parameters for ReplaceWorkSchedule.
+type ReplaceWorkScheduleParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
 // UpdateSpaceParams defines parameters for UpdateSpace.
 type UpdateSpaceParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -1707,6 +1742,9 @@ type UpdateMeJSONRequestBody = MeUpdate
 
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
+
+// ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
+type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
 
 // CreateSpaceJSONRequestBody defines body for CreateSpace for application/json ContentType.
 type CreateSpaceJSONRequestBody = SpaceCreate
@@ -1953,6 +1991,12 @@ type ServerInterface interface {
 	// GetSeats Penggunaan seat (USR-03)
 	// (GET /seats)
 	GetSeats(w http.ResponseWriter, r *http.Request)
+	// GetWorkSchedule Work schedule workspace (SET-07); semua user yang login boleh membaca
+	// (GET /settings/work-schedule)
+	GetWorkSchedule(w http.ResponseWriter, r *http.Request)
+	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
+	// (PUT /settings/work-schedule)
+	ReplaceWorkSchedule(w http.ResponseWriter, r *http.Request, params ReplaceWorkScheduleParams)
 	// ListSpaces Space yang bisa diakses, termasuk Personal space (SPC-01, NAV-01)
 	// (GET /spaces)
 	ListSpaces(w http.ResponseWriter, r *http.Request)
@@ -3463,6 +3507,65 @@ func (siw *ServerInterfaceWrapper) GetSeats(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
+// GetWorkSchedule operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkSchedule(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkSchedule(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReplaceWorkSchedule operation middleware
+func (siw *ServerInterfaceWrapper) ReplaceWorkSchedule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReplaceWorkScheduleParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReplaceWorkSchedule(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaces operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaces(w http.ResponseWriter, r *http.Request) {
 
@@ -4288,6 +4391,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/invitations/accept", wrapper.AcceptInvitation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me", wrapper.GetMe)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/me", wrapper.UpdateMe)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/settings/work-schedule", wrapper.GetWorkSchedule)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/settings/work-schedule", wrapper.ReplaceWorkSchedule)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users", wrapper.ListUsers)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/types", wrapper.ListUserTypes)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/invitations", wrapper.InviteUser)
@@ -6554,6 +6659,144 @@ func (response GetSeats200JSONResponse) VisitGetSeatsResponse(w http.ResponseWri
 	return err
 }
 
+type GetWorkScheduleRequestObject struct {
+}
+
+type GetWorkScheduleResponseObject interface {
+	VisitGetWorkScheduleResponse(w http.ResponseWriter) error
+}
+
+type GetWorkSchedule200ResponseHeaders struct {
+	ETag *string
+}
+
+type GetWorkSchedule200JSONResponse struct {
+	Body    WorkSchedule
+	Headers GetWorkSchedule200ResponseHeaders
+}
+
+func (response GetWorkSchedule200JSONResponse) VisitGetWorkScheduleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkSchedule401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetWorkSchedule401ApplicationProblemPlusJSONResponse) VisitGetWorkScheduleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceWorkScheduleRequestObject struct {
+	Params ReplaceWorkScheduleParams
+	Body   *ReplaceWorkScheduleJSONRequestBody
+}
+
+type ReplaceWorkScheduleResponseObject interface {
+	VisitReplaceWorkScheduleResponse(w http.ResponseWriter) error
+}
+
+type ReplaceWorkSchedule200ResponseHeaders struct {
+	ETag *string
+}
+
+type ReplaceWorkSchedule200JSONResponse struct {
+	Body    WorkSchedule
+	Headers ReplaceWorkSchedule200ResponseHeaders
+}
+
+func (response ReplaceWorkSchedule200JSONResponse) VisitReplaceWorkScheduleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceWorkSchedule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReplaceWorkSchedule403ApplicationProblemPlusJSONResponse) VisitReplaceWorkScheduleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceWorkSchedule409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceWorkSchedule409ApplicationProblemPlusJSONResponse) VisitReplaceWorkScheduleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceWorkSchedule422ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceWorkSchedule422ApplicationProblemPlusJSONResponse) VisitReplaceWorkScheduleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceWorkSchedule428ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceWorkSchedule428ApplicationProblemPlusJSONResponse) VisitReplaceWorkScheduleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpacesRequestObject struct {
 }
 
@@ -7874,6 +8117,12 @@ type StrictServerInterface interface {
 	// GetSeats Penggunaan seat (USR-03)
 	// (GET /seats)
 	GetSeats(ctx context.Context, request GetSeatsRequestObject) (GetSeatsResponseObject, error)
+	// GetWorkSchedule Work schedule workspace (SET-07); semua user yang login boleh membaca
+	// (GET /settings/work-schedule)
+	GetWorkSchedule(ctx context.Context, request GetWorkScheduleRequestObject) (GetWorkScheduleResponseObject, error)
+	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
+	// (PUT /settings/work-schedule)
+	ReplaceWorkSchedule(ctx context.Context, request ReplaceWorkScheduleRequestObject) (ReplaceWorkScheduleResponseObject, error)
 	// ListSpaces Space yang bisa diakses, termasuk Personal space (SPC-01, NAV-01)
 	// (GET /spaces)
 	ListSpaces(ctx context.Context, request ListSpacesRequestObject) (ListSpacesResponseObject, error)
@@ -9270,6 +9519,63 @@ func (sh *strictHandler) GetSeats(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetSeatsResponseObject); ok {
 		if err := validResponse.VisitGetSeatsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkSchedule operation middleware
+func (sh *strictHandler) GetWorkSchedule(w http.ResponseWriter, r *http.Request) {
+	var request GetWorkScheduleRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkSchedule(ctx, request.(GetWorkScheduleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkSchedule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkScheduleResponseObject); ok {
+		if err := validResponse.VisitGetWorkScheduleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReplaceWorkSchedule operation middleware
+func (sh *strictHandler) ReplaceWorkSchedule(w http.ResponseWriter, r *http.Request, params ReplaceWorkScheduleParams) {
+	var request ReplaceWorkScheduleRequestObject
+
+	request.Params = params
+
+	var body ReplaceWorkScheduleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReplaceWorkSchedule(ctx, request.(ReplaceWorkScheduleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReplaceWorkSchedule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReplaceWorkScheduleResponseObject); ok {
+		if err := validResponse.VisitReplaceWorkScheduleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

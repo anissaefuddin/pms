@@ -80,17 +80,17 @@ Pilihan bila 30 hari harus dipertahankan: geser SPC-10 (S2.5.4, 1.5 hari) dan VI
 
 ### S2.1.1 — Work schedule (SET-07)
 - **Sebagai** admin, **saya ingin** menetapkan hari kerja, kapasitas harian, dan libur, **agar** durasi dan jadwal task mengikuti kalender kerja organisasi.
-- **Est:** 2.5 · **Dep:** M1
+- **Est:** 2.5 · **Dep:** M1 · **Status:** DONE (bukti di TESTING.md, 13 Nov 2026)
 - **Acceptance criteria:**
   - Admin mengatur hari kerja (default Senin–Jumat), jam kerja per hari (default 8), dan daftar tanggal libur lewat `/settings/work-schedule`; non-admin hanya bisa membaca.
   - Perubahan memakai `If-Match`; konflik memberi 409.
   - Fungsi Go `workdays(start, duration)` dan `duration(start, finish)` memakai jadwal ini; kasus libur di tengah rentang, libur di akhir pekan, dan jadwal tanpa hari kerja ditolak (422) teruji.
 - **Tugas:**
-  - [ ] `openapi.yaml`: `GET/PUT /settings/work-schedule`
-  - [ ] Migrasi `work_schedules` (satu baris per account) dan `work_schedule_exceptions` (tanggal, nama)
-  - [ ] Paket `schedule`: kalender dari data (ganti asumsi Senin–Jumat tetap)
-  - [ ] Endpoint dan tes otorisasi (admin tulis, semua baca)
-  - [ ] Layar pengaturan + tes Playwright
+  - [x] `openapi.yaml`: `GET/PUT /settings/work-schedule`
+  - [x] Migrasi `work_schedules` (satu baris per account) dan `work_schedule_exceptions` (tanggal, nama)
+  - [x] Paket `schedule`: kalender dari data (ganti asumsi Senin–Jumat tetap)
+  - [x] Endpoint dan tes otorisasi (admin tulis, semua baca)
+  - [x] Layar pengaturan + tes Playwright
 
 ### S2.1.2 — Dependensi item (data dan API)
 - **Sebagai** user, **saya ingin** menghubungkan task dengan dependensi FS/SS/FF/SF, **agar** urutan kerja jelas.

@@ -141,6 +141,24 @@ export interface paths {
         patch: operations["updateMe"];
         trace?: never;
     };
+    "/settings/work-schedule": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Work schedule workspace (SET-07); semua user yang login boleh membaca */
+        get: operations["getWorkSchedule"];
+        /** Ganti work schedule (admin saja, SET-07) */
+        put: operations["replaceWorkSchedule"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users": {
         parameters: {
             query?: never;
@@ -1171,6 +1189,20 @@ export interface components {
              */
             inherited_from?: string | null;
         };
+        WorkScheduleInput: {
+            /** @description Hari kerja, 0 = Minggu sampai 6 = Sabtu */
+            working_days: number[];
+            daily_hours: number;
+            /** @description Tanggal libur; tanggal harus unik */
+            exceptions: {
+                /** Format: date */
+                date: string;
+                name: string;
+            }[];
+        };
+        WorkSchedule: components["schemas"]["WorkScheduleInput"] & {
+            version: number;
+        };
         ShareReplace: {
             shares: components["schemas"]["ShareInput"][];
         };
@@ -1763,6 +1795,60 @@ export interface operations {
                 };
             };
             422: components["responses"]["Problem"];
+        };
+    };
+    getWorkSchedule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkSchedule"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    replaceWorkSchedule: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkScheduleInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkSchedule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
         };
     };
     listUsers: {

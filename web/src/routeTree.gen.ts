@@ -27,6 +27,7 @@ import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/ind
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
+import { Route as AppSettingsWorkScheduleRouteImport } from './routes/_app/settings/work-schedule'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces.$spaceId'
 import { Route as AppSpikesGanttRouteImport } from './routes/_app/spikes.gantt'
 import { Route as AppTasksItemIdRouteImport } from './routes/_app/tasks.$itemId'
@@ -122,6 +123,11 @@ const AppSettingsUsersRoute = AppSettingsUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsWorkScheduleRoute = AppSettingsWorkScheduleRouteImport.update({
+  id: '/work-schedule',
+  path: '/work-schedule',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
   id: '/spaces/$spaceId',
   path: '/spaces/$spaceId',
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/users': typeof AppSettingsUsersRouteWithChildren
+  '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/items/$itemId': typeof AppItemsItemIdRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
+  '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
@@ -213,6 +221,7 @@ export interface FileRoutesById {
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/settings/users': typeof AppSettingsUsersRouteWithChildren
+  '/_app/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spikes/gantt': typeof AppSpikesGanttRoute
   '/_app/tasks/$itemId': typeof AppTasksItemIdRoute
@@ -239,6 +248,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/settings/security'
     | '/settings/users'
+    | '/settings/work-schedule'
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/items/$itemId'
     | '/settings/profile'
     | '/settings/security'
+    | '/settings/work-schedule'
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
@@ -286,6 +297,7 @@ export interface FileRouteTypes {
     | '/_app/settings/profile'
     | '/_app/settings/security'
     | '/_app/settings/users'
+    | '/_app/settings/work-schedule'
     | '/_app/spaces/$spaceId'
     | '/_app/spikes/gantt'
     | '/_app/tasks/$itemId'
@@ -431,6 +443,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsUsersRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/work-schedule': {
+      id: '/_app/settings/work-schedule'
+      path: '/work-schedule'
+      fullPath: '/settings/work-schedule'
+      preLoaderRoute: typeof AppSettingsWorkScheduleRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/spaces/$spaceId': {
       id: '/_app/spaces/$spaceId'
       path: '/spaces/$spaceId'
@@ -486,6 +505,7 @@ interface AppSettingsRouteChildren {
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRouteWithChildren
+  AppSettingsWorkScheduleRoute: typeof AppSettingsWorkScheduleRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
@@ -493,6 +513,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppSettingsUsersRoute: AppSettingsUsersRouteWithChildren,
+  AppSettingsWorkScheduleRoute: AppSettingsWorkScheduleRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 
