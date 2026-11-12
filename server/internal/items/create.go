@@ -6,6 +6,7 @@ import (
 	"errors"
 	"sort"
 
+	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -18,20 +19,20 @@ type initialShare struct {
 	Role          string    `json:"role"`
 }
 
-func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage) (Detail, error) {
+func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return Detail{}, err
 	}
 	defer tx.Rollback(ctx)
-	item, err := create(ctx, tx, actor, fields)
+	item, err := create(ctx, tx, actor, fields, batch)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
 	return item, writeError(err)
 }
 
-func create(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[string]json.RawMessage) (Detail, error) {
+func create(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	var kind string
 	if json.Unmarshal(fields["type"], &kind) != nil || (kind != "project" && kind != "folder" && kind != "task") {
 		return Detail{}, Invalid("type must be project, folder or task")
@@ -182,6 +183,16 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 		return Detail{}, err
 	}
 	if err := recordChange(ctx, tx, id.String(), actor.ID, "create", json.RawMessage("{}"), after); err != nil {
+		return Detail{}, err
+	}
+	if err := notifyChanges(ctx, tx, batch, actor, id.String(), json.RawMessage("{}"), after, true); err != nil {
+		return Detail{}, err
+	}
+	var principals []notifications.Principal
+	for _, share := range shares {
+		principals = append(principals, notifications.Principal{Kind: share.PrincipalType, ID: share.PrincipalID.String()})
+	}
+	if _, err := batch.Record(ctx, tx, actor, "shared", notifications.Target{Item: id.String()}, "", principals, nil); err != nil {
 		return Detail{}, err
 	}
 	return readDetail(ctx, tx, actor, id.String())

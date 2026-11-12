@@ -42,6 +42,9 @@ func Run(ctx context.Context, pool *pgxpool.Pool, accountName, adminEmail string
 	if err != nil {
 		return Result{}, err
 	}
+	if _, err := tx.Exec(ctx, "SELECT 1 FROM account WHERE id=1 FOR UPDATE"); err != nil {
+		return Result{}, err
+	}
 	var adminID string
 	if tag.RowsAffected() == 0 {
 		// Already bootstrapped. The only allowed repeat is recovery: the same administrator never accepted the

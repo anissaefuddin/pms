@@ -9,6 +9,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -130,7 +131,7 @@ func validateText(name, description string) error {
 }
 
 // Create makes a shared Space. Only admin and regular users may create Spaces; the creator always gets full access.
-func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput) (Space, error) {
+func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput, batch *notifications.Batch) (Space, error) {
 	if actor.Type != policy.Admin && actor.Type != policy.Regular {
 		return Space{}, forbidden("your user type cannot create Spaces")
 	}
@@ -158,7 +159,7 @@ func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput
 		return Space{}, err
 	}
 	// The creator is the owner of the new Space, so granting any role is within their power.
-	if err := writeShares(ctx, tx, id, actor, shares, policy.Ceiling(actor.Type)); err != nil {
+	if err := writeShares(ctx, tx, id, actor, shares, policy.Ceiling(actor.Type), batch); err != nil {
 		return Space{}, err
 	}
 	access, found, err := policy.SpaceAccessFor(ctx, tx, actor, id)
@@ -234,7 +235,7 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 	return toSpace(access), nil
 }
 
-// Delete soft-deletes a shared Space (the Recycle bin, S1.7.1, restores it later).
+// Delete soft-deletes a shared Space and the Items without another live placement.
 func (s *Service) Delete(ctx context.Context, actor policy.Actor, id string) error {
 	if !IsID(id) {
 		return ErrNotFound
@@ -260,6 +261,22 @@ func (s *Service) Delete(ctx context.Context, actor policy.Actor, id string) err
 	if _, err := tx.Exec(ctx, "UPDATE spaces SET deleted_at=now(), deleted_by=$2 WHERE id=$1 AND deleted_at IS NULL", id, actor.ID); err != nil {
 		return err
 	}
+	if _, err := tx.Exec(ctx, `
+WITH removed AS (
+ UPDATE items i SET deleted_at=now(), deleted_by=$2::uuid, deleted_root_id=i.id, version=version+1
+ WHERE i.deleted_at IS NULL
+ AND EXISTS (SELECT 1 FROM item_locations l WHERE l.item_id=i.id AND l.space_id=$1::uuid AND l.deleted_root_id IS NULL)
+ AND NOT EXISTS (SELECT 1 FROM item_locations l JOIN spaces s ON s.id=l.space_id
+                 WHERE l.item_id=i.id AND l.deleted_root_id IS NULL AND s.deleted_at IS NULL)
+ RETURNING i.id
+), marked AS (
+ UPDATE item_locations l SET deleted_root_id=l.item_id FROM removed r
+ WHERE l.item_id=r.id AND l.space_id=$1::uuid AND l.deleted_root_id IS NULL
+)
+INSERT INTO activity(item_id,actor_id,action,changes)
+SELECT id,$2::uuid,'delete',jsonb_build_object('space_id',$1::uuid) FROM removed`, id, actor.ID); err != nil {
+		return err
+	}
 	return tx.Commit(ctx)
 }
 
@@ -277,12 +294,16 @@ SELECT sh.principal_type::text, sh.principal_id::text, sh.role::text,
             THEN (SELECT COALESCE(NULLIF(btrim(u.first_name || ' ' || u.last_name), ''), CASE WHEN $2 THEN u.email::text ELSE 'Member' END) FROM users u WHERE u.id = sh.principal_id)
             ELSE (SELECT g.name FROM groups g WHERE g.id = sh.principal_id) END AS name
 FROM shares sh
-WHERE sh.target_type = 'space' AND sh.target_id = $1::uuid
+WHERE sh.target_type = $3::share_target AND sh.target_id = $1::uuid
 ORDER BY sh.principal_type, name, sh.principal_id`
 
 // readShares lists the shares with display names. Emails are only shown to people who may browse the directory.
 func readShares(ctx context.Context, db policy.DB, actor policy.Actor, id string) ([]Share, error) {
-	rows, err := db.Query(ctx, listSharesSQL, id, policy.CanBrowseDirectory(actor.Type))
+	return readTargetShares(ctx, db, actor, id, "space")
+}
+
+func readTargetShares(ctx context.Context, db policy.DB, actor policy.Actor, id, target string) ([]Share, error) {
+	rows, err := db.Query(ctx, listSharesSQL, id, policy.CanBrowseDirectory(actor.Type), target)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +347,7 @@ func (s *Service) ListShares(ctx context.Context, actor policy.Actor, id string)
 // above the caller's own capabilities, and refuses Personal spaces. ifMatch is the Space version the caller's list was
 // loaded at: a stale list must not silently undo someone else's change (for example a revoked access coming back).
 // A successful replace bumps the version. It returns the new list and version.
-func (s *Service) ReplaceShares(ctx context.Context, actor policy.Actor, id string, ifMatch int, want []ShareInput) ([]Share, int, error) {
+func (s *Service) ReplaceShares(ctx context.Context, actor policy.Actor, id string, ifMatch int, want []ShareInput, batch *notifications.Batch) ([]Share, int, error) {
 	if !IsID(id) {
 		return nil, 0, ErrNotFound
 	}
@@ -355,7 +376,7 @@ func (s *Service) ReplaceShares(ctx context.Context, actor policy.Actor, id stri
 	if access.Version != ifMatch {
 		return nil, 0, ErrVersionConflict
 	}
-	if err := writeShares(ctx, tx, id, actor, want, access.Caps); err != nil {
+	if err := writeShares(ctx, tx, id, actor, want, access.Caps, batch); err != nil {
 		return nil, 0, err
 	}
 	var version int
@@ -376,7 +397,11 @@ type shareKey struct{ principalType, principalID string }
 
 // writeShares replaces the Space's share list with want inside tx. grantable is what the caller may hand out: a role is
 // refused when it holds a capability outside it, unless the role is already unchanged on the Space.
-func writeShares(ctx context.Context, tx pgx.Tx, spaceID string, actor policy.Actor, want []ShareInput, grantable policy.Caps) error {
+func writeShares(ctx context.Context, tx pgx.Tx, spaceID string, actor policy.Actor, want []ShareInput, grantable policy.Caps, batch *notifications.Batch) error {
+	return writeTargetShares(ctx, tx, spaceID, "space", actor, want, grantable, batch)
+}
+
+func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, actor policy.Actor, want []ShareInput, grantable policy.Caps, batch *notifications.Batch) error {
 	if len(want) > maxShares {
 		return ValidationError{fmt.Sprintf("a Space can have at most %d shares", maxShares)}
 	}
@@ -398,7 +423,7 @@ func writeShares(ctx context.Context, tx pgx.Tx, spaceID string, actor policy.Ac
 		desired[key] = policy.Role(sh.Role)
 	}
 	existing := map[shareKey]policy.Role{}
-	rows, err := tx.Query(ctx, "SELECT principal_type::text, principal_id::text, role::text FROM shares WHERE target_type='space' AND target_id=$1", spaceID)
+	rows, err := tx.Query(ctx, "SELECT principal_type::text, principal_id::text, role::text FROM shares WHERE target_type=$2::share_target AND target_id=$1", spaceID, target)
 	if err != nil {
 		return err
 	}
@@ -424,25 +449,34 @@ func writeShares(ctx context.Context, tx pgx.Tx, spaceID string, actor policy.Ac
 	}
 	for key := range existing {
 		if _, keep := desired[key]; !keep {
-			if _, err := tx.Exec(ctx, "DELETE FROM shares WHERE target_type='space' AND target_id=$1 AND principal_type=$2::principal_type AND principal_id=$3", spaceID, key.principalType, key.principalID); err != nil {
+			if _, err := tx.Exec(ctx, "DELETE FROM shares WHERE target_type=$4::share_target AND target_id=$1 AND principal_type=$2::principal_type AND principal_id=$3", spaceID, key.principalType, key.principalID, target); err != nil {
 				return err
 			}
 		}
 	}
+	var added []notifications.Principal
 	for key, role := range desired {
 		if existing[key] == role {
 			continue
 		}
 		if _, err := tx.Exec(ctx, `INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by)
-			VALUES ('space',$1,$2::principal_type,$3,$4::share_role,$5)
+			VALUES ($6::share_target,$1,$2::principal_type,$3,$4::share_role,$5)
 			ON CONFLICT (target_type,target_id,principal_type,principal_id) DO UPDATE SET role=EXCLUDED.role`,
-			spaceID, key.principalType, key.principalID, string(role), actor.ID); err != nil {
+			spaceID, key.principalType, key.principalID, string(role), actor.ID, target); err != nil {
 			var pg *pgconn.PgError
 			if errors.As(err, &pg) && pg.Code == "23503" {
 				return ValidationError{"every user or group in the list must exist and be active"}
 			}
 			return err
 		}
+		if _, wasGranted := existing[key]; !wasGranted {
+			added = append(added, notifications.Principal{Kind: key.principalType, ID: key.principalID})
+		}
 	}
-	return nil
+	resource := notifications.Target{Space: spaceID}
+	if target == "item" {
+		resource = notifications.Target{Item: spaceID}
+	}
+	_, err = batch.Record(ctx, tx, actor, "shared", resource, "", added, nil)
+	return err
 }

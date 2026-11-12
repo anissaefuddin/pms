@@ -1,12 +1,17 @@
 package housekeeping_test
 
 import (
+	"bytes"
 	"context"
+	"os"
+	"path/filepath"
 	"testing"
+	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/bootstrap"
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/housekeeping"
+	"github.com/anissaefuddin/pms/server/internal/storage"
 	"github.com/anissaefuddin/pms/server/internal/testdb"
 )
 
@@ -74,5 +79,52 @@ func TestRunKeepsLiveRowsAndRemovesDeadOnes(t *testing.T) {
 	}
 	if got := count("users"); got != 2 {
 		t.Fatalf("users left: %d, want 2 (invited users must keep their seat)", got)
+	}
+}
+
+func TestSweepFilesRemovesOnlyOldFilesWithoutARow(t *testing.T) {
+	ctx := context.Background()
+	pool, err := database.Open(ctx, testdb.New(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	boot, err := bootstrap.Run(ctx, pool, "Acme", "admin@example.com", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	store := storage.LocalStorage{Dir: t.TempDir()}
+	put := func(age time.Duration) string {
+		t.Helper()
+		f, err := store.Put(bytes.NewReader([]byte("x")), 10)
+		if err != nil {
+			t.Fatal(err)
+		}
+		old := time.Now().Add(-age)
+		if err := os.Chtimes(filepath.Join(store.Dir, f.Key), old, old); err != nil {
+			t.Fatal(err)
+		}
+		return f.Key
+	}
+	used, orphan, young := put(48*time.Hour), put(48*time.Hour), put(time.Hour)
+	var item string
+	if err := pool.QueryRow(ctx, "INSERT INTO items(type,title,created_by) VALUES ('task','t',$1) RETURNING id::text", boot.AdminID).Scan(&item); err != nil {
+		t.Fatal(err)
+	}
+	// A soft-deleted row still owns its file: the Recycle bin can restore it.
+	if _, err := pool.Exec(ctx, `INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256,deleted_at)
+VALUES (gen_random_uuid(),$1,$2,'a.txt','text/plain',1,$3,decode(repeat('00',32),'hex'),now())`, item, boot.AdminID, used); err != nil {
+		t.Fatal(err)
+	}
+	removed, err := housekeeping.SweepFiles(ctx, pool, store, 24*time.Hour)
+	if err != nil || removed != 1 {
+		t.Fatalf("removed %d, err %v; want exactly the old orphan", removed, err)
+	}
+	exists := func(key string) bool { _, err := os.Stat(filepath.Join(store.Dir, key)); return err == nil }
+	if exists(orphan) || !exists(used) || !exists(young) {
+		t.Fatalf("orphan=%v used=%v young=%v", exists(orphan), exists(used), exists(young))
+	}
+	if n, err := housekeeping.SweepFiles(ctx, pool, storage.LocalStorage{Dir: filepath.Join(t.TempDir(), "missing")}, 0); err != nil || n != 0 {
+		t.Fatalf("missing dir must be a no-op, got %d, %v", n, err)
 	}
 }

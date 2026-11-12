@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -35,7 +36,7 @@ func (e InvalidField) Error() string { return e.Message }
 
 // Patch reads and writes under one snapshot. A concurrent update that
 // invalidates the snapshot is surfaced as a version conflict.
-func Patch(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id string, version int, fields map[string]json.RawMessage) (Detail, error) {
+func Patch(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id string, version int, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	itemID, err := uuid.Parse(id)
 	if err != nil {
 		return Detail{}, ErrNotFound
@@ -46,7 +47,7 @@ func Patch(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id strin
 		return Detail{}, err
 	}
 	defer tx.Rollback(ctx)
-	item, err := patch(ctx, tx, actor, id, version, fields)
+	item, err := patch(ctx, tx, actor, id, version, fields, batch)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -71,7 +72,7 @@ func pgCode(err error) string {
 	return ""
 }
 
-func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, version int, fields map[string]json.RawMessage) (Detail, error) {
+func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, version int, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	caps, err := policy.ItemCaps(ctx, tx, actor, id)
 	if err != nil {
 		return Detail{}, err
@@ -115,6 +116,9 @@ func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, versio
 		return Detail{}, err
 	}
 	if err := recordChange(ctx, tx, id, actor.ID, "update", before, after); err != nil {
+		return Detail{}, err
+	}
+	if err := notifyChanges(ctx, tx, batch, actor, id, before, after, false); err != nil {
 		return Detail{}, err
 	}
 	return readDetail(ctx, tx, actor, id)

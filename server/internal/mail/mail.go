@@ -28,6 +28,7 @@ type Args struct {
 	Template string `json:"template"`
 	URL      string `json:"url"`
 	Locale   string `json:"locale"`
+	Message  string `json:"message,omitempty"`
 }
 
 func (Args) Kind() string { return "send_email" }
@@ -38,13 +39,17 @@ type Worker struct {
 }
 
 func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
-	subject, text, html, err := render(job.Args)
+	return w.deliver(ctx, job.Args)
+}
+
+func (w *Worker) deliver(ctx context.Context, args Args) error {
+	subject, text, html, err := render(args)
 	if err != nil {
 		return err
 	}
 	if w.cfg.SMTPHost == "" {
 		// Log mode for instances without SMTP; the link is a one-time secret, so only run like this on trusted logs.
-		slog.Warn("SMTP is not configured; email logged instead of sent", "to", job.Args.To, "subject", subject, "url", job.Args.URL)
+		slog.Warn("SMTP is not configured; email logged instead of sent", "to", args.To, "subject", subject, "url", args.URL)
 		return nil
 	}
 	from, err := mail.ParseAddress(w.cfg.SMTPFrom)
@@ -56,11 +61,11 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
 	if w.cfg.SMTPUser != "" {
 		auth = smtp.PlainAuth("", w.cfg.SMTPUser, w.cfg.SMTPPassword, w.cfg.SMTPHost)
 	}
-	msg, err := message(w.cfg.SMTPFrom, from.Address, job.Args.To, subject, text, html)
+	msg, err := message(w.cfg.SMTPFrom, from.Address, args.To, subject, text, html)
 	if err != nil {
 		return err
 	}
-	return send(ctx, address, w.cfg.SMTPHost, auth, from.Address, job.Args.To, msg)
+	return send(ctx, address, w.cfg.SMTPHost, auth, from.Address, args.To, msg)
 }
 
 // message builds the mail text. Date and Message-ID are required by many receivers; without them mail is often marked as spam.
@@ -146,9 +151,12 @@ type Queue struct{ client *river.Client[pgx.Tx] }
 
 func New(pool *pgxpool.Pool, cfg config.Config) (*Queue, error) {
 	workers := river.NewWorkers()
-	river.AddWorker(workers, &Worker{cfg: cfg})
+	mailer := &Worker{cfg: cfg}
+	river.AddWorker(workers, mailer)
+	river.AddWorker(workers, &InvitationWorker{pool: pool, mail: mailer})
+	river.AddWorker(workers, &NotificationWorker{pool: pool, mail: mailer})
 	// This is the process's only River client, so the daily cleanup is registered here too.
-	river.AddWorker(workers, &housekeeping.Worker{Pool: pool})
+	river.AddWorker(workers, &housekeeping.Worker{Pool: pool, FilesDir: cfg.FilesDir})
 	client, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 4}}, Workers: workers,
 		// Job args hold one-time links; keep finished jobs for an hour instead of River's 24 hours.
@@ -177,10 +185,18 @@ func render(args Args) (subject, text, html string, err error) {
 		return fmt.Sprintf(`<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>%s</h2><p>%s</p><p><a href="%s" style="background:#2563eb;color:#ffffff;padding:10px 16px;border-radius:6px;text-decoration:none">Open link</a></p><p style="color:#6b7280;font-size:13px">%s If the button does not work, copy this address into your browser:<br>%s</p></body></html>`, heading, intro, link, expires, link)
 	}
 	switch args.Template {
+	case "notification":
+		return "New PMS notification", "You have a new notification in PMS. Open " + args.URL,
+			fmt.Sprintf(`<p>You have a new notification in PMS.</p><p><a href="%s">Open Inbox</a></p>`, link), nil
 	case "set_password":
+		note, intro := "", "You have been invited to PMS. Activate your account and choose a password."
+		if args.Message != "" {
+			note = args.Message + "\n\n"
+			intro += "</p><p>" + htmlpkg.EscapeString(args.Message)
+		}
 		return "Set your PMS password",
-			fmt.Sprintf("Open %s to activate your account and set your password. This link expires in 7 days.", args.URL),
-			page("Activate your PMS account", "You have been invited to PMS. Activate your account and choose a password.", "This link expires in 7 days."), nil
+			note + fmt.Sprintf("Open %s to activate your account and set your password. This link expires in 7 days.", args.URL),
+			page("Activate your PMS account", intro, "This link expires in 7 days."), nil
 	case "reset_password":
 		return "Reset your PMS password",
 			fmt.Sprintf("Open %s to reset your password. This link expires in one hour.", args.URL),

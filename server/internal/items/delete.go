@@ -50,7 +50,8 @@ WITH RECURSIVE live AS MATERIALIZED (
   WHERE l.item_id<>$1::uuid
 ), marked AS (
   UPDATE item_locations l SET deleted_root_id=$1::uuid
-  WHERE l.deleted_root_id IS NULL AND (
+  WHERE EXISTS (SELECT 1 FROM live v WHERE v.item_id=l.item_id AND v.space_id=l.space_id
+    AND v.parent_item_id IS NOT DISTINCT FROM l.parent_item_id) AND (
     l.item_id=$1::uuid OR (
       EXISTS (SELECT 1 FROM affected a WHERE a.item_id=l.item_id AND a.space_id=l.space_id)
       AND l.parent_item_id IS NOT NULL

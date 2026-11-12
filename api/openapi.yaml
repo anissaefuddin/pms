@@ -50,7 +50,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Me' }
         '401': { $ref: '#/components/responses/Problem' }
-        '429': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /auth/logout:
     post:
       tags: [auth]
@@ -75,7 +75,7 @@ paths:
                 email: { type: string, format: email }
       responses:
         '202': { description: Diterima }
-        '429': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /auth/password/reset:
     post:
       tags: [auth]
@@ -96,6 +96,7 @@ paths:
         '204': { description: Password diganti; semua session dicabut }
         '410': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /auth/password/change:
     post:
       tags: [auth]
@@ -115,6 +116,7 @@ paths:
         '204': { description: Berhasil; session lain dicabut }
         '401': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /auth/invitations/{token}:
     get:
       tags: [auth]
@@ -149,6 +151,7 @@ paths:
               schema: { $ref: '#/components/schemas/Me' }
         '410': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
 
   # ───────────────────────── PROFIL & USER ─────────────────────────
   /me:
@@ -196,6 +199,31 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/UserPage' }
+  /users/types:
+    get:
+      tags: [users]
+      operationId: listUserTypes
+      summary: Matriks izin dari policy (USR-02); admin saja
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [roles, user_types]
+                properties:
+                  roles:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items: { $ref: '#/components/schemas/Capability' }
+                  user_types:
+                    type: object
+                    additionalProperties:
+                      type: array
+                      items: { $ref: '#/components/schemas/Capability' }
+        '403': { $ref: '#/components/responses/Problem' }
   /users/invitations:
     post:
       tags: [users]
@@ -661,20 +689,26 @@ paths:
       tags: [items]
       operationId: listItemShares
       responses:
-        '200': { $ref: '#/components/responses/ShareList' }
+        '200': { $ref: '#/components/responses/VersionedShareList' }
+        '404': { $ref: '#/components/responses/Problem' }
     put:
       tags: [items]
       operationId: replaceItemShares
       summary: Ganti seluruh daftar share item (SPC-11)
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
       requestBody:
         required: true
         content:
           application/json:
             schema: { $ref: '#/components/schemas/ShareReplace' }
       responses:
-        '200': { $ref: '#/components/responses/ShareList' }
+        '200': { $ref: '#/components/responses/VersionedShareList' }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/views:
     parameters:
       - { $ref: '#/components/parameters/ItemId' }
@@ -801,6 +835,8 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/CommentPage' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
     post:
       tags: [collaboration]
       operationId: createComment
@@ -822,6 +858,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Comment' }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
   /comments/{commentId}:
     parameters:
@@ -829,7 +866,7 @@ paths:
     patch:
       tags: [collaboration]
       operationId: updateComment
-      summary: Edit komentar sendiri
+      summary: Edit komentar sendiri (atau semua bila `full`)
       parameters:
         - { $ref: '#/components/parameters/IfMatch' }
       requestBody:
@@ -844,16 +881,23 @@ paths:
       responses:
         '200':
           description: OK
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Comment' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
     delete:
       tags: [collaboration]
       operationId: deleteComment
       summary: Hapus komentar sendiri (atau semua bila `full`)
       responses:
         '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/attachments:
     parameters:
       - { $ref: '#/components/parameters/ItemId' }
@@ -867,11 +911,13 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [items]
+                required: [items, max_upload_bytes]
                 properties:
+                  max_upload_bytes: { type: integer, format: int64, minimum: 1 }
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/Attachment' }
+        '404': { $ref: '#/components/responses/Problem' }
     post:
       tags: [collaboration]
       operationId: uploadAttachment
@@ -892,6 +938,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/Attachment' }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
         '413': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
   /attachments/{attachmentId}/download:
@@ -907,6 +954,8 @@ paths:
           headers:
             Content-Disposition: { schema: { type: string }, description: Selalu `attachment` }
             X-Content-Type-Options: { schema: { type: string, enum: [nosniff] } }
+            Content-Security-Policy: { schema: { type: string, enum: [sandbox] } }
+            Cache-Control: { schema: { type: string, enum: ['private, no-store'] } }
           content:
             application/octet-stream:
               schema: { type: string, format: binary }
@@ -920,6 +969,7 @@ paths:
       responses:
         '204': { description: Dihapus }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/activity:
     parameters:
       - { $ref: '#/components/parameters/ItemId' }
@@ -953,6 +1003,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/NotificationPage' }
+        '422': { $ref: '#/components/responses/Problem' }
   /notifications/read-all:
     post:
       tags: [inbox]
@@ -989,6 +1040,8 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Notification' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /me/todo:
     get:
       tags: [inbox]
@@ -1008,6 +1061,7 @@ paths:
             default: date
       responses:
         '200': { $ref: '#/components/responses/ItemPage' }
+        '422': { $ref: '#/components/responses/Problem' }
   /me/shared:
     get:
       tags: [inbox]
@@ -1034,6 +1088,8 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/SearchResults' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
 
   # ───────────────────────── RECYCLE ─────────────────────────
   /recycle-bin:
@@ -1044,8 +1100,11 @@ paths:
       parameters:
         - { $ref: '#/components/parameters/Limit' }
         - { $ref: '#/components/parameters/Cursor' }
+        - { name: type, in: query, schema: { $ref: '#/components/schemas/ItemType' } }
+        - { name: sort, in: query, schema: { type: string, enum: [deleted_at, title], default: deleted_at } }
       responses:
         '200': { $ref: '#/components/responses/ItemPage' }
+        '422': { $ref: '#/components/responses/Problem' }
   /recycle-bin/{itemId}/restore:
     post:
       tags: [recycle]
@@ -1059,6 +1118,7 @@ paths:
           content:
             application/json:
               schema: { $ref: '#/components/schemas/Item' }
+        '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
 
@@ -1086,9 +1146,10 @@ paths:
       operationId: streamEvents
       summary: Aliran event realtime (SSE)
       description: |
-        `text/event-stream`. Nama event: `item.created`, `item.updated`, `item.deleted`, `comment.created`,
+        `text/event-stream`. Nama event: `item.created`, `item.updated`, `item.deleted`, `item.restored`, `comment.created`,
         `notification.created`, `resync`. Data hanya berisi ID, tipe, dan versi (lihat `RealtimeEvent`);
         klien mengambil data lengkap lewat REST. `Last-Event-ID` didukung untuk menyambung ulang.
+        Koneksi baru menerima `ready` sebagai penanda cursor awal. Heartbeat dikirim sebagai komentar SSE setiap 25 detik.
       parameters:
         - { name: Last-Event-ID, in: header, schema: { type: string } }
       responses:
@@ -1097,6 +1158,7 @@ paths:
           content:
             text/event-stream:
               schema: { $ref: '#/components/schemas/RealtimeEvent' }
+        '401': { $ref: '#/components/responses/Problem' }
   /healthz:
     get:
       tags: [system]
@@ -1192,6 +1254,15 @@ components:
         default: manual
 
   responses:
+    RateLimited:
+      description: Batas percobaan tercapai
+      headers:
+        Retry-After:
+          description: Detik sebelum percobaan berikutnya
+          schema: { type: integer, minimum: 1 }
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
     Problem:
       description: Error
       content:
@@ -1333,7 +1404,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/User'
         - type: object
-          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, capabilities]
+          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, account_name, capabilities]
           properties:
             company: { type: string, nullable: true }
             country: { type: string, nullable: true }
@@ -1344,6 +1415,10 @@ components:
             date_format: { type: string, enum: [dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd] }
             time_format: { type: string, enum: ['12h', '24h'] }
             week_start: { type: string, enum: [monday, sunday, saturday] }
+            density: { type: string, enum: [compact, comfortable], default: compact }
+            theme: { type: string, enum: [light, dark, system], default: system }
+            comment_shortcut: { type: string, enum: [mod_enter, enter], default: mod_enter }
+            account_name: { type: string, description: Nama workspace }
             personal_space_id: { type: string, format: uuid }
             capabilities:
               type: object
@@ -1367,6 +1442,9 @@ components:
         date_format: { type: string, enum: [dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd] }
         time_format: { type: string, enum: ['12h', '24h'] }
         week_start: { type: string, enum: [monday, sunday, saturday] }
+        density: { type: string, enum: [compact, comfortable] }
+        theme: { type: string, enum: [light, dark, system] }
+        comment_shortcut: { type: string, enum: [mod_enter, enter] }
     InviteRequest:
       type: object
       required: [email, user_type]
@@ -1503,6 +1581,7 @@ components:
       required: [space_id]
       properties:
         space_id: { type: string, format: uuid }
+        space_name: { type: string }
         parent_item_id:
           type: string
           format: uuid
@@ -1546,6 +1625,8 @@ components:
         created_at: { type: string, format: date-time }
         updated_at: { type: string, format: date-time }
         deleted_at: { type: string, format: date-time, nullable: true }
+        deleted_by: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
+        restore_blocked_reason: { type: string, enum: [space_deleted, forbidden], nullable: true }
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }
@@ -1714,6 +1795,8 @@ components:
         actor: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
         item_id: { type: string, format: uuid, nullable: true }
         item_title: { type: string, nullable: true }
+        space_id: { type: string, format: uuid, nullable: true }
+        space_title: { type: string, nullable: true }
         snippet: { type: string, nullable: true }
         read_at: { type: string, format: date-time, nullable: true }
         archived_at: { type: string, format: date-time, nullable: true }
@@ -1757,7 +1840,7 @@ components:
       properties:
         type:
           type: string
-          enum: [item.created, item.updated, item.deleted, comment.created, notification.created, resync]
+          enum: [item.created, item.updated, item.deleted, item.restored, comment.created, notification.created, resync]
         id: { type: string, format: uuid, description: ID entitas yang berubah }
         item_id: { type: string, format: uuid, description: Untuk event komentar }
         version: { type: integer }

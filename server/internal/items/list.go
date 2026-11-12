@@ -223,3 +223,59 @@ func cursorKey(c *listCursor) *string {
 	}
 	return c.Key
 }
+
+// ListShared lists directly granted Items that are absent from every visible Space.
+func ListShared(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, filter ListFilter) (Page, error) {
+	_, cursor, scope, err := validateFilter(actor, "shared", false, &filter)
+	if err != nil {
+		return Page{}, err
+	}
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return Page{}, err
+	}
+	defer tx.Rollback(ctx)
+	spaces, err := policy.VisibleSpaces(ctx, tx, actor, "")
+	if err != nil {
+		return Page{}, err
+	}
+	visible := make([]string, 0, len(spaces))
+	for _, space := range spaces {
+		visible = append(visible, space.ID)
+	}
+	rows, err := tx.Query(ctx, `
+SELECT i.id::text FROM items i
+WHERE i.deleted_at IS NULL AND ($3::uuid IS NULL OR i.id>$3::uuid)
+AND EXISTS (SELECT 1 FROM shares sh WHERE sh.target_type='item' AND sh.target_id=i.id
+ AND sh.principal_type='user' AND sh.principal_id=$1::uuid)
+AND EXISTS (SELECT 1 FROM item_locations l JOIN spaces s ON s.id=l.space_id
+ WHERE l.item_id=i.id AND l.deleted_root_id IS NULL AND s.deleted_at IS NULL AND s.kind='shared')
+AND NOT EXISTS (SELECT 1 FROM item_locations l WHERE l.item_id=i.id AND l.deleted_root_id IS NULL
+ AND l.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)))
+ORDER BY i.id LIMIT $4`, actor.ID, visible, cursorID(cursor), filter.Limit+1)
+	if err != nil {
+		return Page{}, err
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return Page{}, err
+	}
+	page := Page{Items: []json.RawMessage{}}
+	if len(ids) > filter.Limit {
+		ids = ids[:filter.Limit]
+		data, err := json.Marshal(listCursor{Scope: scope, ID: ids[len(ids)-1]})
+		if err != nil {
+			return Page{}, err
+		}
+		value := base64.RawURLEncoding.EncodeToString(data)
+		page.NextCursor = &value
+	}
+	details, err := readDetails(ctx, tx, actor, ids)
+	if err != nil {
+		return Page{}, err
+	}
+	for _, item := range details {
+		page.Items = append(page.Items, item.Body)
+	}
+	return page, tx.Commit(ctx)
+}

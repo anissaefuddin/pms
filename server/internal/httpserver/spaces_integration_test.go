@@ -77,6 +77,11 @@ type fixture struct {
 
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
+	return newFixtureWithSeats(t, 1000)
+}
+
+func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
+	t.Helper()
 	dbURL := testdb.New(t)
 	registerer, gatherer := prometheus.DefaultRegisterer, prometheus.DefaultGatherer
 	registry := prometheus.NewRegistry()
@@ -88,7 +93,7 @@ func newFixture(t *testing.T) *fixture {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: 1000}
+	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: t.TempDir(), MaxUploadMB: 1}
 	queue, err := mailqueue.New(pool, cfg)
 	if err != nil {
 		t.Fatal(err)

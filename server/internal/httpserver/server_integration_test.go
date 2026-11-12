@@ -44,7 +44,7 @@ func TestAuthContract(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer pool.Close()
-	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: 3}
+	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: 3, TrustProxy: true}
 	queue, err := mailqueue.New(pool, cfg)
 	if err != nil {
 		t.Fatal(err)

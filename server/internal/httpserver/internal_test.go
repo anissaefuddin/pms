@@ -84,3 +84,43 @@ func TestStaticCachingAndMissingAssets(t *testing.T) {
 		t.Fatalf("a missing asset must be a plain 404, not index.html: %d %q", rec.Code, rec.Body.String())
 	}
 }
+
+func TestClientIPTrustsForwardedHeaderOnlyBehindProxy(t *testing.T) {
+	req := httptest.NewRequest("GET", "/", nil)
+	req.RemoteAddr = "192.0.2.7:5555"
+	req.Header.Set("X-Forwarded-For", "203.0.113.9, 10.0.0.1")
+	if got := (&Server{}).clientIP(req); got != "192.0.2.7" {
+		t.Fatalf("header must be ignored without TRUST_PROXY, got %q", got)
+	}
+	if got := (&Server{cfg: config.Config{TrustProxy: true}}).clientIP(req); got != "203.0.113.9" {
+		t.Fatalf("header must be used behind a proxy, got %q", got)
+	}
+}
+
+func TestLimiterStaysBounded(t *testing.T) {
+	l := newLimiter(5, time.Hour)
+	for i := 0; i < 25_000; i++ {
+		l.hit(strings.Repeat("k", 1) + time.Duration(i).String())
+	}
+	if len(l.entries) > 10_001 {
+		t.Fatalf("limiter grew to %d entries", len(l.entries))
+	}
+}
+
+func TestStreamsCappedPerUser(t *testing.T) {
+	for i := 0; i < maxStreamsPerUser; i++ {
+		if !takeStream("u") {
+			t.Fatalf("stream %d refused too early", i)
+		}
+	}
+	if takeStream("u") {
+		t.Fatal("stream over the cap was accepted")
+	}
+	releaseStream("u")
+	if !takeStream("u") {
+		t.Fatal("slot not freed after release")
+	}
+	for i := 0; i < maxStreamsPerUser; i++ {
+		releaseStream("u")
+	}
+}

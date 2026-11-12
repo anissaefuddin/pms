@@ -498,6 +498,38 @@ type Activity struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type Attachment struct {
+	ID          pgtype.UUID        `json:"id"`
+	ItemID      pgtype.UUID        `json:"item_id"`
+	UploaderID  pgtype.UUID        `json:"uploader_id"`
+	Filename    string             `json:"filename"`
+	ContentType string             `json:"content_type"`
+	SizeBytes   int64              `json:"size_bytes"`
+	StorageKey  string             `json:"storage_key"`
+	Sha256      []byte             `json:"sha256"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type Comment struct {
+	ID        pgtype.UUID        `json:"id"`
+	ItemID    pgtype.UUID        `json:"item_id"`
+	AuthorID  pgtype.UUID        `json:"author_id"`
+	Body      []byte             `json:"body"`
+	BodyText  string             `json:"body_text"`
+	Version   int32              `json:"version"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	EditedAt  pgtype.Timestamptz `json:"edited_at"`
+	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
+	Search    interface{}        `json:"search"`
+}
+
+type CommentMention struct {
+	CommentID   pgtype.UUID `json:"comment_id"`
+	MentionType string      `json:"mention_type"`
+	TargetID    pgtype.UUID `json:"target_id"`
+}
+
 type Group struct {
 	ID        pgtype.UUID        `json:"id"`
 	Name      string             `json:"name"`
@@ -555,6 +587,19 @@ type ItemLocation struct {
 	DeletedRootID pgtype.UUID `json:"deleted_root_id"`
 }
 
+type Notification struct {
+	ID          pgtype.UUID        `json:"id"`
+	RecipientID pgtype.UUID        `json:"recipient_id"`
+	ActorID     pgtype.UUID        `json:"actor_id"`
+	Kind        string             `json:"kind"`
+	ItemID      pgtype.UUID        `json:"item_id"`
+	SpaceID     pgtype.UUID        `json:"space_id"`
+	Snippet     pgtype.Text        `json:"snippet"`
+	ReadAt      pgtype.Timestamptz `json:"read_at"`
+	ArchivedAt  pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
 type Session struct {
 	TokenHash         []byte             `json:"token_hash"`
 	UserID            pgtype.UUID        `json:"user_id"`
@@ -597,23 +642,34 @@ type Status struct {
 }
 
 type User struct {
-	ID           pgtype.UUID        `json:"id"`
-	Email        string             `json:"email"`
-	FirstName    string             `json:"first_name"`
-	LastName     string             `json:"last_name"`
-	PasswordHash pgtype.Text        `json:"password_hash"`
-	UserType     UserType           `json:"user_type"`
-	Status       UserStatus         `json:"status"`
-	JobTitle     string             `json:"job_title"`
-	Department   string             `json:"department"`
-	Locale       string             `json:"locale"`
-	Timezone     string             `json:"timezone"`
-	DateFormat   string             `json:"date_format"`
-	TimeFormat   string             `json:"time_format"`
-	WeekStart    string             `json:"week_start"`
-	LastLoginAt  pgtype.Timestamptz `json:"last_login_at"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+	ID                   pgtype.UUID        `json:"id"`
+	Email                string             `json:"email"`
+	FirstName            string             `json:"first_name"`
+	LastName             string             `json:"last_name"`
+	PasswordHash         pgtype.Text        `json:"password_hash"`
+	UserType             UserType           `json:"user_type"`
+	Status               UserStatus         `json:"status"`
+	JobTitle             string             `json:"job_title"`
+	Department           string             `json:"department"`
+	Locale               string             `json:"locale"`
+	Timezone             string             `json:"timezone"`
+	DateFormat           string             `json:"date_format"`
+	TimeFormat           string             `json:"time_format"`
+	WeekStart            string             `json:"week_start"`
+	LastLoginAt          pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt            pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
+	Search               interface{}        `json:"search"`
+	InvitationGeneration int64              `json:"invitation_generation"`
+	InvitationMessage    string             `json:"invitation_message"`
+	InvitedBy            pgtype.UUID        `json:"invited_by"`
+	Company              pgtype.Text        `json:"company"`
+	Country              pgtype.Text        `json:"country"`
+	Location             pgtype.Text        `json:"location"`
+	Phone                pgtype.Text        `json:"phone"`
+	Density              string             `json:"density"`
+	Theme                string             `json:"theme"`
+	CommentShortcut      string             `json:"comment_shortcut"`
 }
 
 type UserToken struct {

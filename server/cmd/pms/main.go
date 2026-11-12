@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log/slog"
+	"net"
 	"net/http"
 	"os"
 	"os/signal"
@@ -68,8 +69,15 @@ func run() error {
 		if err != nil {
 			return err
 		}
-		result, err := bootstrap.Run(ctx, pool, *account, *email, func(ctx context.Context, tx pgx.Tx, to, token string) error {
-			return queue.SendTx(ctx, tx, mailqueue.Args{To: to, Template: "set_password", URL: fmt.Sprintf("%s/invitations/%s", cfg.PublicURL, token), Locale: "en"})
+		result, err := bootstrap.Run(ctx, pool, *account, *email, func(ctx context.Context, tx pgx.Tx, to, _ string) error {
+			if cfg.SMTPHost == "" {
+				return nil // The CLI prints the link when SMTP is not configured.
+			}
+			var id string
+			if err := tx.QueryRow(ctx, "SELECT id::text FROM users WHERE email=$1", to).Scan(&id); err != nil {
+				return err
+			}
+			return queue.InviteTx(ctx, tx, id)
 		})
 		if err != nil {
 			return err
@@ -93,8 +101,9 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 		return fmt.Errorf("start job queue: %w", err)
 	}
 	server := &http.Server{Addr: cfg.ListenAddress, Handler: httpserver.New(pool, cfg, queue),
+		BaseContext:       func(net.Listener) context.Context { return ctx },
 		ReadHeaderTimeout: 5 * time.Second,
-		// shortcut: fixed limits; M1 file uploads and the SSE stream need per-handler deadlines via http.ResponseController.
+		// Long uploads and SSE set their own deadlines in their handlers.
 		ReadTimeout: 30 * time.Second, WriteTimeout: 60 * time.Second, IdleTimeout: 120 * time.Second,
 	}
 	// Metrics listen on an internal port that Traefik never routes to (compose does not publish it).

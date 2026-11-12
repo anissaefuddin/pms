@@ -83,11 +83,13 @@ func (s *Server) createSpace(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &input) {
 		return
 	}
-	space, err := s.spaces.Create(r.Context(), actorOf(r), spaces.CreateInput{Name: input.Name, Description: input.Description, Shares: input.Shares})
+	batch := s.notificationBatch()
+	space, err := s.spaces.Create(r.Context(), actorOf(r), spaces.CreateInput{Name: input.Name, Description: input.Description, Shares: input.Shares}, batch)
 	if err != nil {
 		writeSpaceError(w, err)
 		return
 	}
+	s.publishNotifications(batch)
 	setETag(w, space.Version)
 	writeJSON(w, http.StatusCreated, space)
 }
@@ -191,11 +193,13 @@ func (s *Server) replaceSpaceShares(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusUnprocessableEntity, "shares is required")
 		return
 	}
-	list, newVersion, err := s.spaces.ReplaceShares(r.Context(), actorOf(r), r.PathValue("spaceId"), version, input.Shares)
+	batch := s.notificationBatch()
+	list, newVersion, err := s.spaces.ReplaceShares(r.Context(), actorOf(r), r.PathValue("spaceId"), version, input.Shares, batch)
 	if err != nil {
 		writeSpaceError(w, err)
 		return
 	}
+	s.publishNotifications(batch)
 	setETag(w, newVersion)
 	writeJSON(w, 200, map[string]any{"items": list})
 }

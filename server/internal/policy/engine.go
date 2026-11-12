@@ -37,16 +37,25 @@ FROM spaces s
 LEFT JOIN shares sh ON sh.target_type = 'space' AND sh.target_id = s.id AND (
        (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
     OR (sh.principal_type = 'group' AND sh.principal_id IN (SELECT group_id FROM group_members WHERE user_id = $1::uuid)))
-WHERE s.deleted_at IS NULL AND ($2::uuid IS NULL OR s.id = $2::uuid)
+WHERE (s.deleted_at IS NULL OR $3::boolean) AND ($2::uuid IS NULL OR s.id = $2::uuid)
 GROUP BY s.id`
 
 // VisibleSpaces returns the Spaces the actor can see, each with the actor's capabilities. spaceID narrows it to one Space.
 func VisibleSpaces(ctx context.Context, db DB, actor Actor, spaceID string) ([]SpaceAccess, error) {
+	return visibleSpaces(ctx, db, actor, spaceID, false)
+}
+
+// RecycleSpaces returns the names of original Spaces the actor is allowed to see in the bin.
+func RecycleSpaces(ctx context.Context, db DB, actor Actor) ([]SpaceAccess, error) {
+	return visibleSpaces(ctx, db, actor, "", true)
+}
+
+func visibleSpaces(ctx context.Context, db DB, actor Actor, spaceID string, includeDeleted bool) ([]SpaceAccess, error) {
 	var filter any
 	if spaceID != "" {
 		filter = spaceID
 	}
-	rows, err := db.Query(ctx, spaceRows, actor.ID, filter)
+	rows, err := db.Query(ctx, spaceRows, actor.ID, filter, includeDeleted)
 	if err != nil {
 		return nil, err
 	}

@@ -4,10 +4,31 @@ import (
 	"encoding/json"
 	"net/url"
 	"strings"
+
+	"github.com/google/uuid"
 )
 
 // descriptionText validates the supported ProseMirror subset and extracts text for search.
 func descriptionText(raw json.RawMessage) (string, error) {
+	var mentions []Mention
+	return richText(raw, &mentions)
+}
+
+type Mention struct {
+	Kind string
+	ID   *uuid.UUID
+}
+
+func CommentText(raw json.RawMessage) (string, []Mention, error) {
+	var mentions []Mention
+	plain, err := richText(raw, &mentions)
+	if err == nil && plain == "" {
+		err = Invalid("comment cannot be empty")
+	}
+	return plain, mentions, err
+}
+
+func richText(raw json.RawMessage, mentions *[]Mention) (string, error) {
 	var text strings.Builder
 	var visit func(json.RawMessage, int) bool
 	visit = func(raw json.RawMessage, depth int) bool {
@@ -15,7 +36,12 @@ func descriptionText(raw json.RawMessage) (string, error) {
 			Type    string
 			Text    string
 			Content []json.RawMessage
-			Marks   []struct {
+			Attrs   struct {
+				Kind  string
+				ID    string
+				Label string
+			}
+			Marks []struct {
 				Type  string
 				Attrs map[string]json.RawMessage
 			}
@@ -33,6 +59,28 @@ func descriptionText(raw json.RawMessage) (string, error) {
 				return false
 			}
 			text.WriteString(n.Text)
+		case "mention":
+			if mentions == nil || n.Text != "" || len(n.Content) != 0 || len(n.Marks) != 0 || len(*mentions) >= 100 ||
+				n.Attrs.Label == "" || len(n.Attrs.Label) > 320 || strings.ContainsRune(n.Attrs.Label, 0) {
+				return false
+			}
+			m := Mention{Kind: n.Attrs.Kind}
+			switch m.Kind {
+			case "user", "group":
+				id, err := uuid.Parse(n.Attrs.ID)
+				if err != nil || id == uuid.Nil {
+					return false
+				}
+				m.ID = &id
+			case "followers":
+				if n.Attrs.ID != "" {
+					return false
+				}
+			default:
+				return false
+			}
+			*mentions = append(*mentions, m)
+			text.WriteString("@" + n.Attrs.Label)
 		default:
 			return false
 		}

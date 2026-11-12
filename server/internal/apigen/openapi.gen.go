@@ -89,6 +89,24 @@ func (e ItemDefaultViewType) Valid() bool {
 	}
 }
 
+// Defines values for ItemRestoreBlockedReason.
+const (
+	Forbidden    ItemRestoreBlockedReason = "forbidden"
+	SpaceDeleted ItemRestoreBlockedReason = "space_deleted"
+)
+
+// Valid indicates whether the value is a known member of the ItemRestoreBlockedReason enum.
+func (e ItemRestoreBlockedReason) Valid() bool {
+	switch e {
+	case Forbidden:
+		return true
+	case SpaceDeleted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ItemCreateDefaultViewType.
 const (
 	ItemCreateDefaultViewTypeBoard ItemCreateDefaultViewType = "board"
@@ -128,6 +146,24 @@ func (e ItemType) Valid() bool {
 	}
 }
 
+// Defines values for MeCommentShortcut.
+const (
+	MeCommentShortcutEnter    MeCommentShortcut = "enter"
+	MeCommentShortcutModEnter MeCommentShortcut = "mod_enter"
+)
+
+// Valid indicates whether the value is a known member of the MeCommentShortcut enum.
+func (e MeCommentShortcut) Valid() bool {
+	switch e {
+	case MeCommentShortcutEnter:
+		return true
+	case MeCommentShortcutModEnter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MeDateFormat.
 const (
 	MeDateFormatDdmmyyyy MeDateFormat = "dd/mm/yyyy"
@@ -143,6 +179,45 @@ func (e MeDateFormat) Valid() bool {
 	case MeDateFormatMmddyyyy:
 		return true
 	case MeDateFormatYyyyMmDd:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeDensity.
+const (
+	MeDensityComfortable MeDensity = "comfortable"
+	MeDensityCompact     MeDensity = "compact"
+)
+
+// Valid indicates whether the value is a known member of the MeDensity enum.
+func (e MeDensity) Valid() bool {
+	switch e {
+	case MeDensityComfortable:
+		return true
+	case MeDensityCompact:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeTheme.
+const (
+	MeThemeDark   MeTheme = "dark"
+	MeThemeLight  MeTheme = "light"
+	MeThemeSystem MeTheme = "system"
+)
+
+// Valid indicates whether the value is a known member of the MeTheme enum.
+func (e MeTheme) Valid() bool {
+	switch e {
+	case MeThemeDark:
+		return true
+	case MeThemeLight:
+		return true
+	case MeThemeSystem:
 		return true
 	default:
 		return false
@@ -188,6 +263,24 @@ func (e MeWeekStart) Valid() bool {
 	}
 }
 
+// Defines values for MeUpdateCommentShortcut.
+const (
+	MeUpdateCommentShortcutEnter    MeUpdateCommentShortcut = "enter"
+	MeUpdateCommentShortcutModEnter MeUpdateCommentShortcut = "mod_enter"
+)
+
+// Valid indicates whether the value is a known member of the MeUpdateCommentShortcut enum.
+func (e MeUpdateCommentShortcut) Valid() bool {
+	switch e {
+	case MeUpdateCommentShortcutEnter:
+		return true
+	case MeUpdateCommentShortcutModEnter:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MeUpdateDateFormat.
 const (
 	MeUpdateDateFormatDdmmyyyy MeUpdateDateFormat = "dd/mm/yyyy"
@@ -209,6 +302,24 @@ func (e MeUpdateDateFormat) Valid() bool {
 	}
 }
 
+// Defines values for MeUpdateDensity.
+const (
+	MeUpdateDensityComfortable MeUpdateDensity = "comfortable"
+	MeUpdateDensityCompact     MeUpdateDensity = "compact"
+)
+
+// Valid indicates whether the value is a known member of the MeUpdateDensity enum.
+func (e MeUpdateDensity) Valid() bool {
+	switch e {
+	case MeUpdateDensityComfortable:
+		return true
+	case MeUpdateDensityCompact:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MeUpdateLocale.
 const (
 	En MeUpdateLocale = "en"
@@ -218,6 +329,27 @@ const (
 func (e MeUpdateLocale) Valid() bool {
 	switch e {
 	case En:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeUpdateTheme.
+const (
+	MeUpdateThemeDark   MeUpdateTheme = "dark"
+	MeUpdateThemeLight  MeUpdateTheme = "light"
+	MeUpdateThemeSystem MeUpdateTheme = "system"
+)
+
+// Valid indicates whether the value is a known member of the MeUpdateTheme enum.
+func (e MeUpdateTheme) Valid() bool {
+	switch e {
+	case MeUpdateThemeDark:
+		return true
+	case MeUpdateThemeLight:
+		return true
+	case MeUpdateThemeSystem:
 		return true
 	default:
 		return false
@@ -313,6 +445,7 @@ const (
 	CommentCreated      RealtimeEventType = "comment.created"
 	ItemCreated         RealtimeEventType = "item.created"
 	ItemDeleted         RealtimeEventType = "item.deleted"
+	ItemRestored        RealtimeEventType = "item.restored"
 	ItemUpdated         RealtimeEventType = "item.updated"
 	NotificationCreated RealtimeEventType = "notification.created"
 	Resync              RealtimeEventType = "resync"
@@ -326,6 +459,8 @@ func (e RealtimeEventType) Valid() bool {
 	case ItemCreated:
 		return true
 	case ItemDeleted:
+		return true
+	case ItemRestored:
 		return true
 	case ItemUpdated:
 		return true
@@ -641,6 +776,24 @@ func (e ListMyTodoParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for ListRecycleBinParamsSort.
+const (
+	ListRecycleBinParamsSortDeletedAt ListRecycleBinParamsSort = "deleted_at"
+	ListRecycleBinParamsSortTitle     ListRecycleBinParamsSort = "title"
+)
+
+// Valid indicates whether the value is a known member of the ListRecycleBinParamsSort enum.
+func (e ListRecycleBinParamsSort) Valid() bool {
+	switch e {
+	case ListRecycleBinParamsSortDeletedAt:
+		return true
+	case ListRecycleBinParamsSortTitle:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListSpaceRootItemsParamsSort.
 const (
 	ListSpaceRootItemsParamsSortCreatedAt ListSpaceRootItemsParamsSort = "created_at"
@@ -783,16 +936,18 @@ type Item struct {
 	DefaultViewType   *ItemDefaultViewType `json:"default_view_type,omitempty"`
 	DefaultWorkflowId *openapi_types.UUID  `json:"default_workflow_id,omitempty"`
 	DeletedAt         *time.Time           `json:"deleted_at,omitempty"`
+	DeletedBy         *UserRef             `json:"deleted_by,omitempty"`
 
 	// Description Dokumen ProseMirror JSON (TipTap). Server memvalidasi node dan mark yang diizinkan.
-	Description    *RichText           `json:"description,omitempty"`
-	DueDate        *openapi_types.Date `json:"due_date,omitempty"`
-	DurationDays   *int                `json:"duration_days,omitempty"`
-	Id             openapi_types.UUID  `json:"id"`
-	IsMilestone    *bool               `json:"is_milestone,omitempty"`
-	Locations      []Location          `json:"locations"`
-	MyCapabilities []Capability        `json:"my_capabilities"`
-	Owner          *UserRef            `json:"owner,omitempty"`
+	Description          *RichText                 `json:"description,omitempty"`
+	DueDate              *openapi_types.Date       `json:"due_date,omitempty"`
+	DurationDays         *int                      `json:"duration_days,omitempty"`
+	Id                   openapi_types.UUID        `json:"id"`
+	IsMilestone          *bool                     `json:"is_milestone,omitempty"`
+	Locations            []Location                `json:"locations"`
+	MyCapabilities       []Capability              `json:"my_capabilities"`
+	Owner                *UserRef                  `json:"owner,omitempty"`
+	RestoreBlockedReason *ItemRestoreBlockedReason `json:"restore_blocked_reason,omitempty"`
 
 	// Seq ID yang ditampilkan ke user
 	Seq       int64               `json:"seq"`
@@ -806,6 +961,9 @@ type Item struct {
 
 // ItemDefaultViewType defines model for Item.DefaultViewType.
 type ItemDefaultViewType string
+
+// ItemRestoreBlockedReason defines model for Item.RestoreBlockedReason.
+type ItemRestoreBlockedReason string
 
 // ItemCreate defines model for ItemCreate.
 type ItemCreate struct {
@@ -869,6 +1027,7 @@ type Location struct {
 	// ParentItemId null berarti langsung di root Space
 	ParentItemId *openapi_types.UUID `json:"parent_item_id,omitempty"`
 	SpaceId      openapi_types.UUID  `json:"space_id"`
+	SpaceName    *string             `json:"space_name,omitempty"`
 }
 
 // LoginRequest defines model for LoginRequest.
@@ -879,21 +1038,26 @@ type LoginRequest struct {
 
 // Me defines model for Me.
 type Me struct {
+	// AccountName Nama workspace
+	AccountName string `json:"account_name"`
+
 	// Capabilities Kemampuan global; kemampuan per item dihitung server
 	Capabilities struct {
 		CreateSpace *bool `json:"create_space,omitempty"`
 		ManageUsers *bool `json:"manage_users,omitempty"`
 	} `json:"capabilities"`
-	Company     *string             `json:"company,omitempty"`
-	Country     *string             `json:"country,omitempty"`
-	DateFormat  MeDateFormat        `json:"date_format"`
-	Department  *string             `json:"department,omitempty"`
-	Email       openapi_types.Email `json:"email"`
-	FirstName   string              `json:"first_name"`
-	Id          openapi_types.UUID  `json:"id"`
-	JobTitle    *string             `json:"job_title,omitempty"`
-	LastLoginAt *time.Time          `json:"last_login_at,omitempty"`
-	LastName    string              `json:"last_name"`
+	CommentShortcut *MeCommentShortcut  `json:"comment_shortcut,omitempty"`
+	Company         *string             `json:"company,omitempty"`
+	Country         *string             `json:"country,omitempty"`
+	DateFormat      MeDateFormat        `json:"date_format"`
+	Density         *MeDensity          `json:"density,omitempty"`
+	Department      *string             `json:"department,omitempty"`
+	Email           openapi_types.Email `json:"email"`
+	FirstName       string              `json:"first_name"`
+	Id              openapi_types.UUID  `json:"id"`
+	JobTitle        *string             `json:"job_title,omitempty"`
+	LastLoginAt     *time.Time          `json:"last_login_at,omitempty"`
+	LastName        string              `json:"last_name"`
 
 	// Locale Example: en
 	Locale          string             `json:"locale"`
@@ -901,6 +1065,7 @@ type Me struct {
 	PersonalSpaceId openapi_types.UUID `json:"personal_space_id"`
 	Phone           *string            `json:"phone,omitempty"`
 	Status          UserStatus         `json:"status"`
+	Theme           *MeTheme           `json:"theme,omitempty"`
 	TimeFormat      MeTimeFormat       `json:"time_format"`
 
 	// Timezone Example: Asia/Jakarta
@@ -909,8 +1074,17 @@ type Me struct {
 	WeekStart MeWeekStart `json:"week_start"`
 }
 
+// MeCommentShortcut defines model for Me.CommentShortcut.
+type MeCommentShortcut string
+
 // MeDateFormat defines model for Me.DateFormat.
 type MeDateFormat string
+
+// MeDensity defines model for Me.Density.
+type MeDensity string
+
+// MeTheme defines model for Me.Theme.
+type MeTheme string
 
 // MeTimeFormat defines model for Me.TimeFormat.
 type MeTimeFormat string
@@ -920,26 +1094,38 @@ type MeWeekStart string
 
 // MeUpdate defines model for MeUpdate.
 type MeUpdate struct {
-	Company    *string             `json:"company,omitempty"`
-	Country    *string             `json:"country,omitempty"`
-	DateFormat *MeUpdateDateFormat `json:"date_format,omitempty"`
-	Department *string             `json:"department,omitempty"`
-	FirstName  *string             `json:"first_name,omitempty"`
-	JobTitle   *string             `json:"job_title,omitempty"`
-	LastName   *string             `json:"last_name,omitempty"`
-	Locale     *MeUpdateLocale     `json:"locale,omitempty"`
-	Location   *string             `json:"location,omitempty"`
-	Phone      *string             `json:"phone,omitempty"`
-	TimeFormat *MeUpdateTimeFormat `json:"time_format,omitempty"`
-	Timezone   *string             `json:"timezone,omitempty"`
-	WeekStart  *MeUpdateWeekStart  `json:"week_start,omitempty"`
+	CommentShortcut *MeUpdateCommentShortcut `json:"comment_shortcut,omitempty"`
+	Company         *string                  `json:"company,omitempty"`
+	Country         *string                  `json:"country,omitempty"`
+	DateFormat      *MeUpdateDateFormat      `json:"date_format,omitempty"`
+	Density         *MeUpdateDensity         `json:"density,omitempty"`
+	Department      *string                  `json:"department,omitempty"`
+	FirstName       *string                  `json:"first_name,omitempty"`
+	JobTitle        *string                  `json:"job_title,omitempty"`
+	LastName        *string                  `json:"last_name,omitempty"`
+	Locale          *MeUpdateLocale          `json:"locale,omitempty"`
+	Location        *string                  `json:"location,omitempty"`
+	Phone           *string                  `json:"phone,omitempty"`
+	Theme           *MeUpdateTheme           `json:"theme,omitempty"`
+	TimeFormat      *MeUpdateTimeFormat      `json:"time_format,omitempty"`
+	Timezone        *string                  `json:"timezone,omitempty"`
+	WeekStart       *MeUpdateWeekStart       `json:"week_start,omitempty"`
 }
+
+// MeUpdateCommentShortcut defines model for MeUpdate.CommentShortcut.
+type MeUpdateCommentShortcut string
 
 // MeUpdateDateFormat defines model for MeUpdate.DateFormat.
 type MeUpdateDateFormat string
 
+// MeUpdateDensity defines model for MeUpdate.Density.
+type MeUpdateDensity string
+
 // MeUpdateLocale defines model for MeUpdate.Locale.
 type MeUpdateLocale string
+
+// MeUpdateTheme defines model for MeUpdate.Theme.
+type MeUpdateTheme string
 
 // MeUpdateTimeFormat defines model for MeUpdate.TimeFormat.
 type MeUpdateTimeFormat string
@@ -958,6 +1144,8 @@ type Notification struct {
 	Kind       NotificationKind    `json:"kind"`
 	ReadAt     *time.Time          `json:"read_at,omitempty"`
 	Snippet    *string             `json:"snippet,omitempty"`
+	SpaceId    *openapi_types.UUID `json:"space_id,omitempty"`
+	SpaceTitle *string             `json:"space_title,omitempty"`
 }
 
 // NotificationKind defines model for NotificationKind.
@@ -1229,6 +1417,9 @@ type UserId = openapi_types.UUID
 // ViewId defines model for ViewId.
 type ViewId = openapi_types.UUID
 
+// RateLimited defines model for RateLimited.
+type RateLimited = Problem
+
 // ShareList defines model for ShareList.
 type ShareList struct {
 	Items []Share `json:"items"`
@@ -1354,6 +1545,12 @@ type ReorderItemJSONBody struct {
 	SpaceId      *openapi_types.UUID `json:"space_id,omitempty"`
 }
 
+// ReplaceItemSharesParams defines parameters for ReplaceItemShares.
+type ReplaceItemSharesParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
 // ListSharedWithMeParams defines parameters for ListSharedWithMe.
 type ListSharedWithMeParams struct {
 	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -1389,9 +1586,14 @@ type UpdateNotificationJSONBody struct {
 
 // ListRecycleBinParams defines parameters for ListRecycleBin.
 type ListRecycleBinParams struct {
-	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *Limit                    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor                   `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Type   *ItemType                 `form:"type,omitempty" json:"type,omitempty"`
+	Sort   *ListRecycleBinParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
 }
+
+// ListRecycleBinParamsSort defines parameters for ListRecycleBin.
+type ListRecycleBinParamsSort string
 
 // SearchParams defines parameters for Search.
 type SearchParams struct {
@@ -1643,7 +1845,7 @@ type ServerInterface interface {
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID)
-	// UpdateComment Edit komentar sendiri
+	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID, params UpdateCommentParams)
 	// StreamEvents Aliran event realtime (SSE)
@@ -1708,7 +1910,7 @@ type ServerInterface interface {
 	ListItemShares(w http.ResponseWriter, r *http.Request, itemId ItemId)
 	// ReplaceItemShares Ganti seluruh daftar share item (SPC-11)
 	// (PUT /items/{itemId}/shares)
-	ReplaceItemShares(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	ReplaceItemShares(w http.ResponseWriter, r *http.Request, itemId ItemId, params ReplaceItemSharesParams)
 
 	// (GET /items/{itemId}/views)
 	ListItemViews(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -1784,6 +1986,9 @@ type ServerInterface interface {
 	// InviteUser Undang user via email (USR-01); admin saja
 	// (POST /users/invitations)
 	InviteUser(w http.ResponseWriter, r *http.Request)
+	// ListUserTypes Matriks izin dari policy (USR-02); admin saja
+	// (GET /users/types)
+	ListUserTypes(w http.ResponseWriter, r *http.Request)
 
 	// (GET /users/{userId})
 	GetUser(w http.ResponseWriter, r *http.Request, userId UserId)
@@ -2736,8 +2941,36 @@ func (siw *ServerInterfaceWrapper) ReplaceItemShares(w http.ResponseWriter, r *h
 		return
 	}
 
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReplaceItemSharesParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		siw.Handler.ReplaceItemShares(w, r, itemId)
+		siw.Handler.ReplaceItemShares(w, r, itemId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3077,6 +3310,32 @@ func (siw *ServerInterfaceWrapper) ListRecycleBin(w http.ResponseWriter, r *http
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "type", r.URL.Query(), &params.Type, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
 		}
 		return
 	}
@@ -3650,6 +3909,20 @@ func (siw *ServerInterfaceWrapper) InviteUser(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// ListUserTypes operation middleware
+func (siw *ServerInterfaceWrapper) ListUserTypes(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListUserTypes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetUser operation middleware
 func (siw *ServerInterfaceWrapper) GetUser(w http.ResponseWriter, r *http.Request) {
 
@@ -4016,6 +4289,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me", wrapper.GetMe)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/me", wrapper.UpdateMe)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users", wrapper.ListUsers)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/types", wrapper.ListUserTypes)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/invitations", wrapper.InviteUser)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}", wrapper.GetUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/users/{userId}", wrapper.UpdateUser)
@@ -4081,6 +4355,15 @@ type ItemPageJSONResponse ItemPage
 
 type ProblemApplicationProblemPlusJSONResponse Problem
 
+type RateLimitedResponseHeaders struct {
+	RetryAfter *int
+}
+type RateLimitedApplicationProblemPlusJSONResponse struct {
+	Body Problem
+
+	Headers RateLimitedResponseHeaders
+}
+
 type ShareListJSONResponse struct {
 	Items []Share `json:"items"`
 }
@@ -4132,6 +4415,20 @@ func (response DeleteAttachment403ApplicationProblemPlusJSONResponse) VisitDelet
 	return err
 }
 
+type DeleteAttachment404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteAttachment404ApplicationProblemPlusJSONResponse) VisitDeleteAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DownloadAttachmentRequestObject struct {
 	AttachmentId openapi_types.UUID `json:"attachmentId"`
 }
@@ -4141,8 +4438,10 @@ type DownloadAttachmentResponseObject interface {
 }
 
 type DownloadAttachment200ResponseHeaders struct {
-	ContentDisposition  *string
-	XContentTypeOptions *string
+	CacheControl          *string
+	ContentDisposition    *string
+	ContentSecurityPolicy *string
+	XContentTypeOptions   *string
 }
 
 type DownloadAttachment200ApplicationoctetStreamResponse struct {
@@ -4157,8 +4456,14 @@ func (response DownloadAttachment200ApplicationoctetStreamResponse) VisitDownloa
 	if response.ContentLength != 0 {
 		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
 	}
+	if response.Headers.CacheControl != nil {
+		w.Header().Set("Cache-Control", fmt.Sprint(*response.Headers.CacheControl))
+	}
 	if response.Headers.ContentDisposition != nil {
 		w.Header().Set("Content-Disposition", fmt.Sprint(*response.Headers.ContentDisposition))
+	}
+	if response.Headers.ContentSecurityPolicy != nil {
+		w.Header().Set("Content-Security-Policy", fmt.Sprint(*response.Headers.ContentSecurityPolicy))
 	}
 	if response.Headers.XContentTypeOptions != nil {
 		w.Header().Set("X-Content-Type-Options", fmt.Sprint(*response.Headers.XContentTypeOptions))
@@ -4240,6 +4545,25 @@ func (response AcceptInvitation422ApplicationProblemPlusJSONResponse) VisitAccep
 	return err
 }
 
+type AcceptInvitation429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response AcceptInvitation429ApplicationProblemPlusJSONResponse) VisitAcceptInvitationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetInvitationRequestObject struct {
 	Token string `json:"token"`
 }
@@ -4316,15 +4640,20 @@ func (response Login401ApplicationProblemPlusJSONResponse) VisitLoginResponse(w 
 	return err
 }
 
-type Login429ApplicationProblemPlusJSONResponse Problem
+type Login429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
 
 func (response Login429ApplicationProblemPlusJSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
 	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
@@ -4391,6 +4720,25 @@ func (response ChangePassword422ApplicationProblemPlusJSONResponse) VisitChangeP
 	return err
 }
 
+type ChangePassword429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response ChangePassword429ApplicationProblemPlusJSONResponse) VisitChangePasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ForgotPasswordRequestObject struct {
 	Body *ForgotPasswordJSONRequestBody
 }
@@ -4408,16 +4756,19 @@ func (response ForgotPassword202Response) VisitForgotPasswordResponse(w http.Res
 }
 
 type ForgotPassword429ApplicationProblemPlusJSONResponse struct {
-	ProblemApplicationProblemPlusJSONResponse
+	RateLimitedApplicationProblemPlusJSONResponse
 }
 
 func (response ForgotPassword429ApplicationProblemPlusJSONResponse) VisitForgotPasswordResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
 	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
@@ -4469,6 +4820,25 @@ func (response ResetPassword422ApplicationProblemPlusJSONResponse) VisitResetPas
 	return err
 }
 
+type ResetPassword429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response ResetPassword429ApplicationProblemPlusJSONResponse) VisitResetPasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DeleteCommentRequestObject struct {
 	CommentId openapi_types.UUID `json:"commentId"`
 }
@@ -4485,6 +4855,36 @@ func (response DeleteComment204Response) VisitDeleteCommentResponse(w http.Respo
 	return nil
 }
 
+type DeleteComment403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteComment403ApplicationProblemPlusJSONResponse) VisitDeleteCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteComment404ApplicationProblemPlusJSONResponse) VisitDeleteCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type UpdateCommentRequestObject struct {
 	CommentId openapi_types.UUID `json:"commentId"`
 	Params    UpdateCommentParams
@@ -4495,23 +4895,61 @@ type UpdateCommentResponseObject interface {
 	VisitUpdateCommentResponse(w http.ResponseWriter) error
 }
 
-type UpdateComment200JSONResponse Comment
+type UpdateComment200ResponseHeaders struct {
+	ETag *string
+}
+
+type UpdateComment200JSONResponse struct {
+	Body    Comment
+	Headers UpdateComment200ResponseHeaders
+}
 
 func (response UpdateComment200JSONResponse) VisitUpdateCommentResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
 
-type UpdateComment409ApplicationProblemPlusJSONResponse struct {
+type UpdateComment403ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
+
+func (response UpdateComment403ApplicationProblemPlusJSONResponse) VisitUpdateCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateComment404ApplicationProblemPlusJSONResponse) VisitUpdateCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateComment409ApplicationProblemPlusJSONResponse Problem
 
 func (response UpdateComment409ApplicationProblemPlusJSONResponse) VisitUpdateCommentResponse(w http.ResponseWriter) error {
 
@@ -4521,6 +4959,34 @@ func (response UpdateComment409ApplicationProblemPlusJSONResponse) VisitUpdateCo
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateComment422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateComment422ApplicationProblemPlusJSONResponse) VisitUpdateCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateComment428ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateComment428ApplicationProblemPlusJSONResponse) VisitUpdateCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -4574,6 +5040,22 @@ func (response StreamEvents200TexteventStreamResponse) VisitStreamEventsResponse
 			return err
 		}
 	}
+}
+
+type StreamEvents401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response StreamEvents401ApplicationProblemPlusJSONResponse) VisitStreamEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type ListGroupsRequestObject struct {
@@ -5011,7 +5493,8 @@ type ListAttachmentsResponseObject interface {
 }
 
 type ListAttachments200JSONResponse struct {
-	Items []Attachment `json:"items"`
+	Items          []Attachment `json:"items"`
+	MaxUploadBytes int64        `json:"max_upload_bytes"`
 }
 
 func (response ListAttachments200JSONResponse) VisitListAttachmentsResponse(w http.ResponseWriter) error {
@@ -5022,6 +5505,22 @@ func (response ListAttachments200JSONResponse) VisitListAttachmentsResponse(w ht
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAttachments404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAttachments404ApplicationProblemPlusJSONResponse) VisitListAttachmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5061,6 +5560,20 @@ func (response UploadAttachment403ApplicationProblemPlusJSONResponse) VisitUploa
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAttachment404ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadAttachment404ApplicationProblemPlusJSONResponse) VisitUploadAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5169,6 +5682,36 @@ func (response ListComments200JSONResponse) VisitListCommentsResponse(w http.Res
 	return err
 }
 
+type ListComments404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListComments404ApplicationProblemPlusJSONResponse) VisitListCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListComments422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListComments422ApplicationProblemPlusJSONResponse) VisitListCommentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateCommentRequestObject struct {
 	ItemId ItemId `json:"itemId"`
 	Body   *CreateCommentJSONRequestBody
@@ -5214,6 +5757,20 @@ func (response CreateComment403ApplicationProblemPlusJSONResponse) VisitCreateCo
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateComment404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateComment404ApplicationProblemPlusJSONResponse) VisitCreateCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5371,22 +5928,42 @@ type ListItemSharesResponseObject interface {
 	VisitListItemSharesResponse(w http.ResponseWriter) error
 }
 
-type ListItemShares200JSONResponse struct{ ShareListJSONResponse }
+type ListItemShares200JSONResponse struct{ VersionedShareListJSONResponse }
 
 func (response ListItemShares200JSONResponse) VisitListItemSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemShares404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListItemShares404ApplicationProblemPlusJSONResponse) VisitListItemSharesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
 		return err
 	}
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(200)
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
 
 type ReplaceItemSharesRequestObject struct {
 	ItemId ItemId `json:"itemId"`
+	Params ReplaceItemSharesParams
 	Body   *ReplaceItemSharesJSONRequestBody
 }
 
@@ -5394,15 +5971,18 @@ type ReplaceItemSharesResponseObject interface {
 	VisitReplaceItemSharesResponse(w http.ResponseWriter) error
 }
 
-type ReplaceItemShares200JSONResponse struct{ ShareListJSONResponse }
+type ReplaceItemShares200JSONResponse struct{ VersionedShareListJSONResponse }
 
 func (response ReplaceItemShares200JSONResponse) VisitReplaceItemSharesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
-	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
 		return err
 	}
 	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
 	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
@@ -5424,6 +6004,34 @@ func (response ReplaceItemShares403ApplicationProblemPlusJSONResponse) VisitRepl
 	return err
 }
 
+type ReplaceItemShares404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceItemShares404ApplicationProblemPlusJSONResponse) VisitReplaceItemSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceItemShares409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceItemShares409ApplicationProblemPlusJSONResponse) VisitReplaceItemSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReplaceItemShares422ApplicationProblemPlusJSONResponse Problem
 
 func (response ReplaceItemShares422ApplicationProblemPlusJSONResponse) VisitReplaceItemSharesResponse(w http.ResponseWriter) error {
@@ -5434,6 +6042,20 @@ func (response ReplaceItemShares422ApplicationProblemPlusJSONResponse) VisitRepl
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceItemShares428ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceItemShares428ApplicationProblemPlusJSONResponse) VisitReplaceItemSharesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5595,6 +6217,22 @@ func (response ListMyTodo200JSONResponse) VisitListMyTodoResponse(w http.Respons
 	return err
 }
 
+type ListMyTodo422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListMyTodo422ApplicationProblemPlusJSONResponse) VisitListMyTodoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListNotificationsRequestObject struct {
 	Params ListNotificationsParams
 }
@@ -5613,6 +6251,22 @@ func (response ListNotifications200JSONResponse) VisitListNotificationsResponse(
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListNotifications422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListNotifications422ApplicationProblemPlusJSONResponse) VisitListNotificationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -5670,6 +6324,36 @@ func (response UpdateNotification200JSONResponse) VisitUpdateNotificationRespons
 	return err
 }
 
+type UpdateNotification404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateNotification404ApplicationProblemPlusJSONResponse) VisitUpdateNotificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateNotification422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateNotification422ApplicationProblemPlusJSONResponse) VisitUpdateNotificationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReadyzRequestObject struct {
 }
 
@@ -5715,6 +6399,22 @@ func (response ListRecycleBin200JSONResponse) VisitListRecycleBinResponse(w http
 	return err
 }
 
+type ListRecycleBin422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRecycleBin422ApplicationProblemPlusJSONResponse) VisitListRecycleBinResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type RestoreItemRequestObject struct {
 	ItemId ItemId `json:"itemId"`
 }
@@ -5737,9 +6437,23 @@ func (response RestoreItem200JSONResponse) VisitRestoreItemResponse(w http.Respo
 	return err
 }
 
-type RestoreItem404ApplicationProblemPlusJSONResponse struct {
+type RestoreItem403ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
+
+func (response RestoreItem403ApplicationProblemPlusJSONResponse) VisitRestoreItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreItem404ApplicationProblemPlusJSONResponse Problem
 
 func (response RestoreItem404ApplicationProblemPlusJSONResponse) VisitRestoreItemResponse(w http.ResponseWriter) error {
 
@@ -5785,6 +6499,36 @@ func (response Search200JSONResponse) VisitSearchResponse(w http.ResponseWriter)
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type Search404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response Search404ApplicationProblemPlusJSONResponse) VisitSearchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type Search422ApplicationProblemPlusJSONResponse Problem
+
+func (response Search422ApplicationProblemPlusJSONResponse) VisitSearchResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -6442,6 +7186,46 @@ func (response InviteUser422ApplicationProblemPlusJSONResponse) VisitInviteUserR
 	return err
 }
 
+type ListUserTypesRequestObject struct {
+}
+
+type ListUserTypesResponseObject interface {
+	VisitListUserTypesResponse(w http.ResponseWriter) error
+}
+
+type ListUserTypes200JSONResponse struct {
+	Roles     map[string][]Capability `json:"roles"`
+	UserTypes map[string][]Capability `json:"user_types"`
+}
+
+func (response ListUserTypes200JSONResponse) VisitListUserTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListUserTypes403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListUserTypes403ApplicationProblemPlusJSONResponse) VisitListUserTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetUserRequestObject struct {
 	UserId UserId `json:"userId"`
 }
@@ -6982,7 +7766,7 @@ type StrictServerInterface interface {
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(ctx context.Context, request DeleteCommentRequestObject) (DeleteCommentResponseObject, error)
-	// UpdateComment Edit komentar sendiri
+	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(ctx context.Context, request UpdateCommentRequestObject) (UpdateCommentResponseObject, error)
 	// StreamEvents Aliran event realtime (SSE)
@@ -7123,6 +7907,9 @@ type StrictServerInterface interface {
 	// InviteUser Undang user via email (USR-01); admin saja
 	// (POST /users/invitations)
 	InviteUser(ctx context.Context, request InviteUserRequestObject) (InviteUserResponseObject, error)
+	// ListUserTypes Matriks izin dari policy (USR-02); admin saja
+	// (GET /users/types)
+	ListUserTypes(ctx context.Context, request ListUserTypesRequestObject) (ListUserTypesResponseObject, error)
 
 	// (GET /users/{userId})
 	GetUser(ctx context.Context, request GetUserRequestObject) (GetUserResponseObject, error)
@@ -8091,10 +8878,11 @@ func (sh *strictHandler) ListItemShares(w http.ResponseWriter, r *http.Request, 
 }
 
 // ReplaceItemShares operation middleware
-func (sh *strictHandler) ReplaceItemShares(w http.ResponseWriter, r *http.Request, itemId ItemId) {
+func (sh *strictHandler) ReplaceItemShares(w http.ResponseWriter, r *http.Request, itemId ItemId, params ReplaceItemSharesParams) {
 	var request ReplaceItemSharesRequestObject
 
 	request.ItemId = itemId
+	request.Params = params
 
 	var body ReplaceItemSharesJSONRequestBody
 	if err := runtime.BindJSONBody(r, &body); err != nil {
@@ -8793,6 +9581,30 @@ func (sh *strictHandler) InviteUser(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(InviteUserResponseObject); ok {
 		if err := validResponse.VisitInviteUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListUserTypes operation middleware
+func (sh *strictHandler) ListUserTypes(w http.ResponseWriter, r *http.Request) {
+	var request ListUserTypesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListUserTypes(ctx, request.(ListUserTypesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListUserTypes")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListUserTypesResponseObject); ok {
+		if err := validResponse.VisitListUserTypesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
