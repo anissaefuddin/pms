@@ -130,9 +130,11 @@ SELECT i.version, jsonb_strip_nulls(jsonb_build_object(
   'id', i.id, 'seq', i.seq, 'type', i.type, 'title', i.title,
   'version', i.version,
   'start_date', i.start_date, 'due_date', i.due_date, 'duration_days', i.duration_days,
-  'effort_minutes', i.effort_minutes,
+  'effort_minutes', i.effort_minutes, 'importance', i.importance,
   'progress_percent', i.progress_percent,
-  'is_milestone', i.is_milestone, 'completed_at', i.completed_at,
+  'is_milestone', i.is_milestone, 'completed_at', i.completed_at, 'status_changed_at', i.status_changed_at,
+  'cover_attachment_id', (SELECT a.id FROM attachments a WHERE a.item_id=i.id AND a.deleted_at IS NULL
+    AND a.content_type IN ('image/png','image/jpeg','image/gif','image/webp') ORDER BY a.created_at, a.id LIMIT 1),
   'default_workflow_id', i.default_workflow_id, 'default_view_type', i.default_view_type,
   'child_count', CASE WHEN jsonb_array_length($3::jsonb -> (i.id::text)) > 0 THEN (
     SELECT count(DISTINCT child.id) FROM item_locations l

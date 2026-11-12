@@ -68,12 +68,12 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 48 | S2.3.2 | Tipe field lengkap (TASK-11A) | 3.0 | 90.5–93.5 | 19 | DONE |
 | 49 | S2.4.1 | Tipe view Gantt dan Calendar | 1.0 | 93.5–94.5 | 19 | DONE |
 | 50 | S2.4.2 | Gantt: bar, progres, drag/resize, milestone (VIEW-05A) | 4.0 | 94.5–98.5 | 20 | DONE |
-| 51 | S2.4.3 | Gantt: dependensi dan penjadwalan (VIEW-05B) | 3.0 | 98.5–101.5 | 21 | PROPOSED |
+| 51 | S2.4.3 | Gantt: dependensi dan penjadwalan (VIEW-05B) | 3.0 | 98.5–101.5 | 21 | DONE |
 | 52 | S2.3.3 | Custom field di panel, Table, Board, dan pemilih kolom (VIEW-09) | 3.0 | 101.5–104.5 | 21 | DONE |
-| 53 | S2.5.1 | Board swimlane dan field kartu (VIEW-03, VIEW-04) | 3.0 | 104.5–107.5 | 22 | PROPOSED |
-| 54 | S2.5.2 | Calendar (VIEW-06) | 2.5 | 107.5–110 | 22 | PROPOSED |
-| 55 | S2.5.3 | Preset filter dan sort Space (SPC-03) | 1.5 | 110–111.5 | 23 | PROPOSED |
-| 56 | S2.5.4 | UI multi-lokasi (SPC-10) | 1.5 | 111.5–113 | 23 | PROPOSED |
+| 53 | S2.5.1 | Board swimlane dan field kartu (VIEW-03, VIEW-04) | 3.0 | 104.5–107.5 | 22 | DONE |
+| 54 | S2.5.2 | Calendar (VIEW-06) | 2.5 | 107.5–110 | 22 | DONE |
+| 55 | S2.5.3 | Preset filter dan sort Space (SPC-03) | 1.5 | 110–111.5 | 23 | DONE |
+| 56 | S2.5.4 | UI multi-lokasi (SPC-10) | 1.5 | 111.5–113 | 23 | DONE |
 | 57 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2.0 | 113–115 | 23 | PROPOSED |
 | 58 | S3.1.1 | Editor workflow dan status (WF-02, WF-03A) | 4 | 115–119 | 24 | PROPOSED |
 | 59 | S3.2.1 | Approval pada item (SPC-12) | 3.5 | 119–122.5 | 25 | PROPOSED |
@@ -480,35 +480,35 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Navigasi keyboard dan axe (panah memilih, kiri/kanan menggeser sehari, Shift mengubah tanggal selesai)
 
 **S2.4.3 Gantt: dependensi dan penjadwalan (VIEW-05B)**
-- [ ] Render link dan pemilih tipe/lag
-- [ ] Buat/hapus dependensi dengan pembaruan dari `affected_items`
-- [ ] Matikan penjadwalan otomatis bawaan library (jadwal hanya dari backend)
-- [ ] Tes Playwright: geser pendahulu → penerus bergeser; siklus ditolak; konflik 409
-- [ ] Realtime: penerima SSE memperbarui bar tanpa memuat ulang
+- [x] Render link dari `POST /dependencies/query` (satu request untuk seluruh pohon) dan pemilih tipe di panel pendahulu. Lag belum bisa diubah di UI
+- [x] Buat dengan klik pegangan bar (atau form panel yang bisa dipakai keyboard), ubah tipe, dan hapus lewat API. Bar penerus mengikuti data server setelah daftar dibaca ulang
+- [x] Penjadwalan otomatis SVAR mati (`schedule.auto=false`), jadwal hanya dari backend
+- [x] Tes Playwright: link, tipe, hapus, tambah pendahulu menggeser penerus, siklus ditolak dengan pesan server
+- [x] Realtime: event SSE membuat query link ikut dibaca ulang (tanpa tes dua browser)
 
 ### E2.5 View lain dan Space
 
 **S2.5.1 Board swimlane dan field kartu (VIEW-03, VIEW-04)**
-- [ ] Pengelompokan di server atau klien (diputuskan setelah ukur 500 item)
-- [ ] Konfigurasi kartu di `views.config` dan layar pengaturan
-- [ ] `days in status` dari riwayat aktivitas (tambah indeks bila lambat)
-- [ ] Tes Playwright untuk swimlane dan drag lintas lajur
+- [x] Pengelompokan di klien (Board memuat satu daftar per Space/project)
+- [x] Konfigurasi kartu di `views.config.columns` dan tombol "Card fields"
+- [x] `days in status` dari kolom baru `items.status_changed_at` (migrasi `00022`), bukan riwayat aktivitas. Sampul dari `cover_attachment_id`
+- [x] Tes Playwright untuk swimlane, drag lintas lajur dengan konfirmasi, dan pemilih kartu
 
 **S2.5.2 Calendar (VIEW-06)**
-- [ ] Komponen kalender bulanan (tanpa dependensi baru bila cukup dengan CSS grid, sesuai ui-kit)
-- [ ] Pemuatan per rentang bulan dengan paginasi cursor
-- [ ] Drag → PATCH dan pembaruan penerus
-- [ ] Tes Playwright dan axe
+- [x] Kalender bulanan dengan CSS grid, tanpa dependensi baru. Awal pekan dari profil, libur dan hari non-kerja dari work schedule
+- [x] Memuat seluruh item daftar Space (bukan per rentang bulan), sama seperti Table dan Board
+- [x] Drag → PATCH (penerus digeser server). Alt+panah menggeser sehari atau seminggu. Daftar Unscheduled
+- [x] Tes Playwright dan axe
 
 **S2.5.3 Preset filter dan sort Space (SPC-03)**
-- [ ] Migrasi kolom `importance` (bila M2-1 disetujui) dan field di panel detail
-- [ ] Preset dan sort di endpoint daftar dan `openapi.yaml`
-- [ ] UI preset dan tes
+- [x] Migrasi kolom `importance` (`00023`, D-36) dan pemilih di panel detail
+- [x] Sort `priority`, `importance`, `predecessors` di endpoint daftar dan `openapi.yaml`. Preset memakai `status_group` dan `assignee` yang sudah ada
+- [x] UI preset (Table, Board, Calendar), sort Priority dan Importance tampil di My to-do, tes
 
 **S2.5.4 UI multi-lokasi (SPC-10)**
-- [ ] UI di panel detail memakai `POST/DELETE /items/{id}/locations` yang sudah ada
-- [ ] Pemilih tujuan hanya menampilkan Space dan project yang boleh ditulis
-- [ ] Tes Playwright dan tes otorisasi lokasi
+- [x] Server: `PUT /items/{id}/locations` (ada di kontrak tetapi belum diimplementasi) menggantikan lokasi yang terlihat. Lokasi tersembunyi dipertahankan
+- [x] Pemilih tujuan hanya menampilkan Space dengan hak Create dan project di dalamnya. Lokasi terakhir tidak bisa dihapus, siklus ditolak
+- [x] Tes Playwright dan tes otorisasi lokasi (`TestReplaceItemLocations`)
 
 ### E2.6 Hardening
 

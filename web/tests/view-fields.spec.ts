@@ -87,7 +87,7 @@ test("Board cards show only the chosen fields, and a viewer cannot edit cells", 
   const card = page.getByRole("listitem").filter({ hasText: "Plan" });
   await expect(card).toContainText(/Cost:\s*12/);
   await expect(card).not.toContainText("Level");
-  await page.getByRole("button", { name: "Columns" }).click();
+  await page.getByRole("button", { name: "Card fields" }).click();
   await expect(page.getByRole("button", { name: "Save columns" })).toHaveCount(0);
   await expect(page.getByRole("checkbox", { name: "Cost" })).toBeDisabled();
 });

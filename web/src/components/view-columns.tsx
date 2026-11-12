@@ -5,10 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { CustomField } from "@/lib/custom-fields";
-import { columnGroups, fieldColumn, fieldFilterRef } from "@/lib/view-columns";
+import { cardFieldGroups, columnGroups, fieldColumn, fieldFilterRef } from "@/lib/view-columns";
 
-export function ColumnPicker({ selected, fields, canSave, saving, onSave }: {
-  selected: string[]; fields: CustomField[]; canSave: boolean; saving: boolean; onSave: (columns: string[]) => void;
+export function ColumnPicker({ board, selected, fields, canSave, saving, onSave }: {
+  board?: boolean; selected: string[]; fields: CustomField[]; canSave: boolean; saving: boolean; onSave: (columns: string[]) => void;
 }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
@@ -18,13 +18,13 @@ export function ColumnPicker({ selected, fields, canSave, saving, onSave }: {
     <input type="checkbox" checked={draft.includes(id)} disabled={!canSave} onChange={() => toggle(id)} />{label}
   </label>;
   return <>
-    <Button variant="outline" size="sm" onClick={() => { setDraft(selected); setOpen(true); }}><Columns3 />{t("views.columns.open")}</Button>
+    <Button variant="outline" size="sm" onClick={() => { setDraft(selected); setOpen(true); }}><Columns3 />{t(board ? "views.columns.cardOpen" : "views.columns.open")}</Button>
     {open && <Dialog open onOpenChange={setOpen}>
       <DialogContent>
-        <DialogTitle>{t("views.columns.title")}</DialogTitle>
+        <DialogTitle>{t(board ? "views.columns.cardTitle" : "views.columns.title")}</DialogTitle>
         <p className="text-sm text-muted-foreground">{t("views.columns.hint")}</p>
         <div className="max-h-[60vh] space-y-3 overflow-y-auto">
-          {columnGroups.map((group) => <fieldset key={group.id} className="space-y-1">
+          {(board ? cardFieldGroups : columnGroups).map((group) => <fieldset key={group.id} className="space-y-1">
             <legend className="font-medium">{t(`views.columns.${group.id}`)}</legend>
             {group.columns.map((id) => box(id, t(`views.columns.${id}`)))}
           </fieldset>)}
@@ -32,10 +32,10 @@ export function ColumnPicker({ selected, fields, canSave, saving, onSave }: {
             <legend className="font-medium">{t("views.columns.custom")}</legend>
             {fields.length ? fields.map((field) => box(fieldColumn(field.id), field.name)) : <p className="text-sm text-muted-foreground">{t("views.columns.noFields")}</p>}
           </fieldset>
-          <fieldset disabled className="space-y-1">
+          {!board && <fieldset disabled className="space-y-1">
             <legend className="font-medium">{t("views.columns.baselines")} <span className="text-xs font-normal text-muted-foreground">{t("views.columns.soon")}</span></legend>
             <p className="text-sm text-muted-foreground">{t("views.columns.baselineNote")}</p>
-          </fieldset>
+          </fieldset>}
         </div>
         <div className="flex gap-2">
           {canSave && <Button size="sm" disabled={saving} onClick={() => { onSave(draft); setOpen(false); }}>{t("views.columns.save")}</Button>}

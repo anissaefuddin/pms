@@ -9,6 +9,7 @@ import (
 
 func (s *Server) dependencyRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/items/{itemId}/dependencies", s.requireUser(s.listDependencies))
+	mux.HandleFunc("POST /api/v1/dependencies/query", s.requireUser(s.queryDependencies))
 	mux.HandleFunc("POST /api/v1/items/{itemId}/dependencies", s.requireUser(s.createDependency))
 	mux.HandleFunc("PATCH /api/v1/dependencies/{dependencyId}", s.requireUser(s.updateDependency))
 	mux.HandleFunc("DELETE /api/v1/dependencies/{dependencyId}", s.requireUser(s.deleteDependency))
@@ -61,4 +62,20 @@ func (s *Server) deleteDependency(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// queryDependencies is a POST only because the id list does not fit a URL; it reads and changes nothing.
+func (s *Server) queryDependencies(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		ItemIDs []string `json:"item_ids"`
+	}
+	if !decode(w, r, &input) {
+		return
+	}
+	dependencies, err := items.ListDependenciesAmong(r.Context(), s.pool, actorOf(r), input.ItemIDs)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": dependencies})
 }

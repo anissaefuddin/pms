@@ -243,6 +243,12 @@ func applyFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, kind st
 			set(key, "", percent)
 		case "assignee_allocations":
 			// Applied after any membership change so retained and new assignees can both be updated.
+		case "importance":
+			var level string
+			if json.Unmarshal(raw, &level) != nil || (level != "high" && level != "normal" && level != "low") {
+				return InvalidField{key, "importance must be high, normal, or low"}
+			}
+			set(key, "", level)
 		case "is_milestone":
 			var value *bool
 			if json.Unmarshal(raw, &value) != nil || value == nil {
@@ -283,6 +289,7 @@ WHERE i.id=$2::uuid AND next.id=$1
 				} else {
 					sets = append(sets, "completed_at=NULL")
 				}
+				sets = append(sets, "status_changed_at=CASE WHEN status_id IS DISTINCT FROM '"+target.String()+"'::uuid THEN now() ELSE status_changed_at END")
 			}
 			set(key, "", *target)
 		case "assignee_ids":

@@ -30,7 +30,7 @@ export function isProjectDetail(query: Query) {
     && (query.state.data as Awaited<ReturnType<typeof getItem>> | undefined)?.item.type === "project";
 }
 
-export async function listItems(path: string, sort?: string, type?: string, field?: string): Promise<Item[]> {
+export async function listItems(path: string, sort?: string, type?: string, field?: string, preset?: string): Promise<Item[]> {
   const items: Item[] = [];
   const seen = new Set<string>();
   let cursor: string | null | undefined;
@@ -40,6 +40,7 @@ export async function listItems(path: string, sort?: string, type?: string, fiel
     if (sort) params.set("sort", sort);
     if (type) params.set("type", type);
     if (field) params.set("field", field);
+    if (preset) { params.set("status_group", "active"); if (preset === "mine") params.set("assignee", "me"); }
     const query = params.size ? `?${params.toString()}` : "";
     const page: ItemPage = await api<ItemPage>(path + query);
     items.push(...page.items);

@@ -536,6 +536,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dependencies/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Dependensi di antara sekumpulan Item (link Gantt). POST hanya karena daftar ID tidak muat di URL */
+        post: operations["queryDependencies"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dependencies/{dependencyId}": {
         parameters: {
             query?: never;
@@ -1450,6 +1467,21 @@ export interface components {
             comment_count?: number;
             /** Format: date-time */
             completed_at?: string | null;
+            /**
+             * @description Prioritas item (D-36)
+             * @enum {string}
+             */
+            importance?: "high" | "normal" | "low";
+            /**
+             * Format: date-time
+             * @description Terakhir status berubah (days in status di kartu Board)
+             */
+            status_changed_at?: string;
+            /**
+             * Format: uuid
+             * @description Lampiran gambar pertama yang masih ada
+             */
+            cover_attachment_id?: string;
             version: number;
             created_by?: components["schemas"]["UserRef"];
             /** Format: date-time */
@@ -1541,6 +1573,8 @@ export interface components {
             affected_items?: components["schemas"]["ScheduleItemChange"][];
         };
         ItemUpdate: {
+            /** @enum {string} */
+            importance?: "high" | "normal" | "low";
             fields?: components["schemas"]["CustomFieldValues"];
             title?: string;
             description?: components["schemas"]["RichText"];
@@ -2905,6 +2939,35 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    queryDependencies: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    item_ids: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Dependensi yang kedua ujungnya ada di daftar dan terlihat */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ItemDependency"][];
+                    };
+                };
+            };
             422: components["responses"]["Problem"];
         };
     };

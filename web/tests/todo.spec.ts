@@ -32,7 +32,7 @@ test("My to-do filters assigned tasks, paginates, and changes status with the cu
   await expect(page.getByRole("link", { name: "Prepare brief" })).toHaveAttribute("href", `/tasks/${firstId}`);
   await expect(page.getByText("2026-11-10")).toBeVisible();
   await expect(page.getByRole("main").getByText("Marketing")).toBeVisible();
-  await expect(page.getByLabel("Sort tasks").getByRole("option")).toHaveCount(5);
+  await expect(page.getByLabel("Sort tasks").getByRole("option")).toHaveCount(7); // Priority and Importance are no longer hidden (S2.5.3)
 
   await page.getByLabel("Filter tasks").selectOption("overdue");
   await page.getByLabel("Sort tasks").selectOption("date_modified");

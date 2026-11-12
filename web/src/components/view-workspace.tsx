@@ -10,14 +10,17 @@ import { Input } from "@/components/ui/input";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
 import { ItemBoard } from "@/components/item-board";
+const ItemCalendar = lazy(() => import("@/components/item-calendar").then((module) => ({ default: module.ItemCalendar })));
 const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
 import { ViewTabs } from "@/components/view-tabs";
 import { ColumnPicker, FieldFilter } from "@/components/view-columns";
 import type { CustomField } from "@/lib/custom-fields";
 import { fieldSort, sortableField, visibleColumns } from "@/lib/view-columns";
 
-export const viewSorts = ["manual", "title", "status", "start_date", "due_date"] as const;
-const viewGroups = ["none", "status", "type"] as const;
+export const viewSorts = ["manual", "priority", "due_date", "status", "title", "predecessors", "start_date"] as const;
+const presets = ["all", "active", "mine"] as const;
+const tableGroups = ["none", "status", "type"] as const;
+const boardGroups = ["none", "assignee"] as const;
 
 export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen }: {
   spaceId: string;
@@ -35,21 +38,26 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
   const sort = search.sort ?? "manual";
   const filter = search.filter ?? "";
   const fieldFilter = search.field ?? "";
-  const group = search.group === "status" || search.group === "type" ? search.group : undefined;
+  const preset = search.preset ?? "";
   const viewKey = ["views", base];
   const listKey = parent ? itemKeys.children(parent.id) : itemKeys.root(spaceId);
-  const sortedKey = sort === "manual" && !fieldFilter ? listKey : [...listKey, sort, fieldFilter];
+  const sortedKey = sort === "manual" && !fieldFilter && !preset ? listKey : [...listKey, sort, fieldFilter, preset];
   const views = useQuery({ queryKey: viewKey, queryFn: () => api<{ items: SavedView[] }>(base + "/views") });
   const available = views.data?.items ?? [];
   const active = available.find((view) => view.id === search.view) ?? available.find((view) => view.is_default) ?? available[0];
+
+  const isBoard = active?.type === "board";
+  const group = !isBoard && (search.group === "status" || search.group === "type") ? search.group : undefined;
+  const swimlanes = isBoard && search.group === "assignee";
   const isGantt = active?.type === "gantt";
+  const isCalendar = active?.type === "calendar";
   const isCollection = active?.type === "table" || active?.type === "board";
   const items = useQuery({
-    queryKey: sortedKey, enabled: !active || isCollection || isGantt,
-    queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, undefined, fieldFilter || undefined),
+    queryKey: sortedKey, enabled: !active || isCollection || isGantt || isCalendar,
+    queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, undefined, fieldFilter || undefined, preset || undefined),
   });
   const fieldQueries = useQuery({
-    queryKey: ["custom-fields", spaceId], enabled: isCollection && !!spaceId,
+    queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar) && !!spaceId,
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/custom-fields`),
   });
   const customFields = (fieldQueries.data?.items ?? []).filter((field) => !field.archived_at);
@@ -152,6 +160,22 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
         <ItemGantt items={items.data} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
+    </> : isCalendar ? <>
+      <div className="flex flex-wrap items-end gap-3">
+        <label className="space-y-1"><span>{t("views.filter")}</span>
+          <Input value={filter} maxLength={120} onChange={(event) => setSearch("filter", event.target.value)} /></label>
+        <label className="space-y-1"><span>{t("views.preset.label")}</span>
+          <select aria-label={t("views.preset.label")} value={preset || "all"} onChange={(event) => setSearch("preset", event.target.value === "all" ? "" : event.target.value)}
+            className="block rounded border bg-background p-2">
+            {presets.map((value) => <option value={value} key={value}>{t(`views.preset.${value}`)}</option>)}
+          </select></label>
+        <FieldFilter fields={customFields.filter((field) => field.type !== "people")} value={fieldFilter} onChange={(value) => setSearch("field", value)} />
+      </div>
+      {items.isPending && <p role="status">{t("items.loading")}</p>}
+      {items.isError && <p role="alert">{t("items.loadError")}</p>}
+      {items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
+        <ItemCalendar items={filtered} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} />
+      </Suspense>}
     </> : !isCollection ? <div className="space-y-1 rounded border p-4">
       <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>
       <p className="text-sm text-muted-foreground">{t("views.placeholder")}</p>
@@ -159,6 +183,11 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
       <div className="flex flex-wrap items-end gap-3">
         <label className="space-y-1"><span>{t("views.filter")}</span>
           <Input value={filter} maxLength={120} onChange={(event) => setSearch("filter", event.target.value)} /></label>
+        <label className="space-y-1"><span>{t("views.preset.label")}</span>
+          <select aria-label={t("views.preset.label")} value={preset || "all"} onChange={(event) => setSearch("preset", event.target.value === "all" ? "" : event.target.value)}
+            className="block rounded border bg-background p-2">
+            {presets.map((value) => <option value={value} key={value}>{t(`views.preset.${value}`)}</option>)}
+          </select></label>
         <label className="space-y-1"><span>{t("views.sort")}</span>
           <select aria-label={t("views.sort")} value={sort} onChange={(event) => setSearch("sort", event.target.value)}
             className="block rounded border bg-background p-2">
@@ -167,18 +196,18 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
           </select></label>
         <FieldFilter fields={customFields.filter((field) => field.type !== "people")} value={fieldFilter}
           onChange={(value) => setSearch("field", value)} />
-        {!!spaceId && <ColumnPicker key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
+        {!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
         <label className="space-y-1"><span>{t("views.group")}</span>
-          <select aria-label={t("views.group")} value={group ?? "none"} onChange={(event) => setSearch("group", event.target.value === "none" ? "" : event.target.value)}
+          <select aria-label={t("views.group")} value={group ?? (swimlanes ? "assignee" : "none")} onChange={(event) => setSearch("group", event.target.value === "none" ? "" : event.target.value)}
             className="block rounded border bg-background p-2">
-            {viewGroups.map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
+            {(isBoard ? boardGroups : tableGroups).map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
           </select></label>
       </div>
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && (active.type === "board"
-        ? <ItemBoard {...collection} />
-        : <ItemTable {...collection} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter} onReorder={reorder} />)}
+        ? <ItemBoard {...collection} swimlanes={swimlanes} />
+        : <ItemTable {...collection} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
       {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
         taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
     </>}

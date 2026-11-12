@@ -218,3 +218,9 @@ Migrasi `00020` menambah `config jsonb` dan memperluas tipe. Single dan Multiple
 `time_entries`, `approvals`, `request_forms`, `dashboards`, `widgets`, `reports`, dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
 
 Kolom profil `company`, `country`, `location`, `phone` (kontrak `Me`/`MeUpdate`) belum ada di `users`; ditambahkan lewat migrasi di S1.6.2 (`PATCH /me`).
+
+### Tambahan M2 (S2.5.1, S2.5.3)
+
+- `items.status_changed_at timestamptz NOT NULL DEFAULT now()` (`00022`): diubah hanya bila `status_id` berubah. Dasar "days in status" pada kartu Board.
+- `items.importance text NOT NULL DEFAULT 'normal' CHECK (importance IN ('high','normal','low'))` (`00023`, D-36): dasar sort Priority dan Importance.
+

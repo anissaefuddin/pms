@@ -583,6 +583,8 @@ type Item struct {
 	EffortMinutes     pgtype.Int4        `json:"effort_minutes"`
 	ProgressMethod    pgtype.Text        `json:"progress_method"`
 	ProgressPercent   pgtype.Int2        `json:"progress_percent"`
+	StatusChangedAt   pgtype.Timestamptz `json:"status_changed_at"`
+	Importance        string             `json:"importance"`
 }
 
 type ItemAssignee struct {

@@ -25,3 +25,6 @@ export const fieldFilterRef = (field?: string) => {
   const [id, ...value] = (field ?? "").split(":");
   return { id: id ?? "", value: value.join(":") };
 };
+
+/** Optional facts on a Board card; the title, assignees, dates and counts are always shown. */
+export const cardFieldGroups = [{ id: "card", columns: ["cover", "id", "type", "locations", "author", "days_in_status"] }] as const;

@@ -12,7 +12,7 @@ import { useSpaces } from "@/lib/space-queries";
 export const Route = createFileRoute("/_app/my-todo")({ component: MyTodo });
 
 const filters = ["all", "active", "overdue"];
-const sorts = ["date", "date_modified", "date_created", "status", "title"];
+const sorts = ["date", "priority", "importance", "date_modified", "date_created", "status", "title"];
 const selectClass = "rounded border bg-background px-2 py-1 text-sm";
 
 function MyTodo() {

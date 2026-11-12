@@ -93,3 +93,52 @@ test("has no axe violations in light and dark", async ({ page }) => {
     expect(found.violations).toEqual([]);
   }
 });
+
+const depId = "e0000000-0000-4000-8000-000000000001";
+const existing = { id: depId, predecessor_id: kids[0].id, successor_id: kids[1].id, type: "FS", lag: 0 };
+
+async function select(page: import("@playwright/test").Page, downs: number) {
+  await page.getByRole("application", { name: "Gantt chart" }).focus();
+  for (let i = 0; i < downs; i++) await page.keyboard.press("ArrowDown");
+}
+
+test("links come from the server; type and removal go through the API", async ({ page }) => {
+  const { calls } = await mockGantt(page, { deps: [existing] });
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(page.locator(".wx-line").first()).toBeAttached();
+  await select(page, 3); // Launch, Design, Build
+  const panel = page.getByRole("region", { name: "Predecessors of Build" });
+  await expect(panel.locator("li").getByText("Design")).toBeVisible();
+  await panel.getByRole("combobox", { name: "Link type from Design" }).selectOption("SS");
+  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/dependencies/${depId}`)?.body).toEqual({ type: "SS" });
+  await panel.getByRole("button", { name: "Remove link from Design" }).click();
+  await expect.poll(() => calls.some((call) => call.method === "DELETE" && call.path === `/dependencies/${depId}`)).toBe(true);
+  await expect(panel.getByText("No predecessors.")).toBeVisible();
+});
+
+test("adding a predecessor shifts the successor from the server's data, and a cycle is refused", async ({ page }) => {
+  const { calls } = await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await select(page, 4); // ... Ship
+  const panel = page.getByRole("region", { name: "Predecessors of Ship" });
+  const before = (await bar(page, kids[2].id).boundingBox())!.x;
+  await panel.getByRole("combobox", { name: "Predecessor" }).selectOption({ label: "Design" });
+  await panel.getByRole("button", { name: "Add predecessor" }).click();
+  await expect.poll(() => calls.find((call) => call.method === "POST" && call.path === `/items/${kids[2].id}/dependencies`)?.body)
+    .toEqual({ predecessor_id: kids[0].id, type: "FS", lag: 0 });
+  await expect.poll(async () => (await bar(page, kids[2].id).boundingBox())!.x).toBeGreaterThan(before); // the server moved Ship from Nov 6 to Nov 9
+  await panel.getByRole("combobox", { name: "Predecessor" }).selectOption({ label: "Go live" });
+  await panel.getByRole("button", { name: "Add predecessor" }).click();
+  await expect(page.getByText("This link would create a cycle")).toBeVisible();
+});
+
+test("clicking one bar's finish handle and then another bar's start handle creates a finish-to-start link", async ({ page }) => {
+  const { calls } = await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await bar(page, kids[0].id).hover();
+  await page.locator(`.wx-bar[data-id=":${kids[0].id}"] .wx-link.wx-right`).click();
+  await bar(page, kids[2].id).hover();
+  await page.locator(`.wx-bar[data-id=":${kids[2].id}"] .wx-link.wx-left`).click();
+  await expect.poll(() => calls.find((call) => call.method === "POST" && call.path === `/items/${kids[2].id}/dependencies`)?.body)
+    .toEqual({ predecessor_id: kids[0].id, type: "FS", lag: 0 });
+});

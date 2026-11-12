@@ -266,6 +266,27 @@ func (e ItemDefaultViewType) Valid() bool {
 	}
 }
 
+// Defines values for ItemImportance.
+const (
+	ItemImportanceHigh   ItemImportance = "high"
+	ItemImportanceLow    ItemImportance = "low"
+	ItemImportanceNormal ItemImportance = "normal"
+)
+
+// Valid indicates whether the value is a known member of the ItemImportance enum.
+func (e ItemImportance) Valid() bool {
+	switch e {
+	case ItemImportanceHigh:
+		return true
+	case ItemImportanceLow:
+		return true
+	case ItemImportanceNormal:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ItemRestoreBlockedReason.
 const (
 	ItemRestoreBlockedReasonForbidden    ItemRestoreBlockedReason = "forbidden"
@@ -320,6 +341,27 @@ func (e ItemPatchResultDefaultViewType) Valid() bool {
 	}
 }
 
+// Defines values for ItemPatchResultImportance.
+const (
+	ItemPatchResultImportanceHigh   ItemPatchResultImportance = "high"
+	ItemPatchResultImportanceLow    ItemPatchResultImportance = "low"
+	ItemPatchResultImportanceNormal ItemPatchResultImportance = "normal"
+)
+
+// Valid indicates whether the value is a known member of the ItemPatchResultImportance enum.
+func (e ItemPatchResultImportance) Valid() bool {
+	switch e {
+	case ItemPatchResultImportanceHigh:
+		return true
+	case ItemPatchResultImportanceLow:
+		return true
+	case ItemPatchResultImportanceNormal:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ItemPatchResultRestoreBlockedReason.
 const (
 	ItemPatchResultRestoreBlockedReasonForbidden    ItemPatchResultRestoreBlockedReason = "forbidden"
@@ -353,6 +395,27 @@ func (e ItemType) Valid() bool {
 	case Project:
 		return true
 	case Task:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ItemUpdateImportance.
+const (
+	ItemUpdateImportanceHigh   ItemUpdateImportance = "high"
+	ItemUpdateImportanceLow    ItemUpdateImportance = "low"
+	ItemUpdateImportanceNormal ItemUpdateImportance = "normal"
+)
+
+// Valid indicates whether the value is a known member of the ItemUpdateImportance enum.
+func (e ItemUpdateImportance) Valid() bool {
+	switch e {
+	case ItemUpdateImportanceHigh:
+		return true
+	case ItemUpdateImportanceLow:
+		return true
+	case ItemUpdateImportanceNormal:
 		return true
 	default:
 		return false
@@ -1232,11 +1295,14 @@ type InviteRequest struct {
 
 // Item defines model for Item.
 type Item struct {
-	Assignees         []ItemAssignee       `json:"assignees"`
-	AttachmentCount   *int                 `json:"attachment_count,omitempty"`
-	ChildCount        *int                 `json:"child_count,omitempty"`
-	CommentCount      *int                 `json:"comment_count,omitempty"`
-	CompletedAt       *time.Time           `json:"completed_at,omitempty"`
+	Assignees       []ItemAssignee `json:"assignees"`
+	AttachmentCount *int           `json:"attachment_count,omitempty"`
+	ChildCount      *int           `json:"child_count,omitempty"`
+	CommentCount    *int           `json:"comment_count,omitempty"`
+	CompletedAt     *time.Time     `json:"completed_at,omitempty"`
+
+	// CoverAttachmentId Lampiran gambar pertama yang masih ada
+	CoverAttachmentId *openapi_types.UUID  `json:"cover_attachment_id,omitempty"`
 	CreatedAt         time.Time            `json:"created_at"`
 	CreatedBy         *UserRef             `json:"created_by,omitempty"`
 	DefaultViewType   *ItemDefaultViewType `json:"default_view_type,omitempty"`
@@ -1254,8 +1320,11 @@ type Item struct {
 	FieldPeople *map[string]CustomFieldPerson `json:"field_people,omitempty"`
 
 	// Fields Nilai berkunci UUID definisi. Text, Date (YYYY-MM-DD), dan Single select (UUID) memakai string. Multiple select dan People memakai array UUID. Number, Currency dan Percent memakai angka desimal. Duration adalah jumlah hari bulat nonnegatif. Checkbox memakai boolean. Pada PATCH, null menghapus nilai.
-	Fields         *CustomFieldValues     `json:"fields,omitempty"`
-	Id             openapi_types.UUID     `json:"id"`
+	Fields *CustomFieldValues `json:"fields,omitempty"`
+	Id     openapi_types.UUID `json:"id"`
+
+	// Importance Prioritas item (D-36)
+	Importance     *ItemImportance        `json:"importance,omitempty"`
 	IsMilestone    *bool                  `json:"is_milestone,omitempty"`
 	Locations      []Location             `json:"locations"`
 	MyCapabilities []Capability           `json:"my_capabilities"`
@@ -1271,14 +1340,20 @@ type Item struct {
 	Seq       int64               `json:"seq"`
 	StartDate *openapi_types.Date `json:"start_date,omitempty"`
 	Status    *Status             `json:"status,omitempty"`
-	Title     string              `json:"title"`
-	Type      ItemType            `json:"type"`
-	UpdatedAt time.Time           `json:"updated_at"`
-	Version   int                 `json:"version"`
+
+	// StatusChangedAt Terakhir status berubah (days in status di kartu Board)
+	StatusChangedAt *time.Time `json:"status_changed_at,omitempty"`
+	Title           string     `json:"title"`
+	Type            ItemType   `json:"type"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+	Version         int        `json:"version"`
 }
 
 // ItemDefaultViewType defines model for Item.DefaultViewType.
 type ItemDefaultViewType string
+
+// ItemImportance Prioritas item (D-36)
+type ItemImportance string
 
 // ItemRestoreBlockedReason defines model for Item.RestoreBlockedReason.
 type ItemRestoreBlockedReason string
@@ -1360,12 +1435,15 @@ type ItemPage struct {
 
 // ItemPatchResult defines model for ItemPatchResult.
 type ItemPatchResult struct {
-	AffectedItems     *[]ScheduleItemChange           `json:"affected_items,omitempty"`
-	Assignees         []ItemAssignee                  `json:"assignees"`
-	AttachmentCount   *int                            `json:"attachment_count,omitempty"`
-	ChildCount        *int                            `json:"child_count,omitempty"`
-	CommentCount      *int                            `json:"comment_count,omitempty"`
-	CompletedAt       *time.Time                      `json:"completed_at,omitempty"`
+	AffectedItems   *[]ScheduleItemChange `json:"affected_items,omitempty"`
+	Assignees       []ItemAssignee        `json:"assignees"`
+	AttachmentCount *int                  `json:"attachment_count,omitempty"`
+	ChildCount      *int                  `json:"child_count,omitempty"`
+	CommentCount    *int                  `json:"comment_count,omitempty"`
+	CompletedAt     *time.Time            `json:"completed_at,omitempty"`
+
+	// CoverAttachmentId Lampiran gambar pertama yang masih ada
+	CoverAttachmentId *openapi_types.UUID             `json:"cover_attachment_id,omitempty"`
 	CreatedAt         time.Time                       `json:"created_at"`
 	CreatedBy         *UserRef                        `json:"created_by,omitempty"`
 	DefaultViewType   *ItemPatchResultDefaultViewType `json:"default_view_type,omitempty"`
@@ -1383,13 +1461,16 @@ type ItemPatchResult struct {
 	FieldPeople *map[string]CustomFieldPerson `json:"field_people,omitempty"`
 
 	// Fields Nilai berkunci UUID definisi. Text, Date (YYYY-MM-DD), dan Single select (UUID) memakai string. Multiple select dan People memakai array UUID. Number, Currency dan Percent memakai angka desimal. Duration adalah jumlah hari bulat nonnegatif. Checkbox memakai boolean. Pada PATCH, null menghapus nilai.
-	Fields         *CustomFieldValues     `json:"fields,omitempty"`
-	Id             openapi_types.UUID     `json:"id"`
-	IsMilestone    *bool                  `json:"is_milestone,omitempty"`
-	Locations      []Location             `json:"locations"`
-	MyCapabilities []Capability           `json:"my_capabilities"`
-	Owner          *UserRef               `json:"owner,omitempty"`
-	ProgressMethod *ProjectProgressMethod `json:"progress_method,omitempty"`
+	Fields *CustomFieldValues `json:"fields,omitempty"`
+	Id     openapi_types.UUID `json:"id"`
+
+	// Importance Prioritas item (D-36)
+	Importance     *ItemPatchResultImportance `json:"importance,omitempty"`
+	IsMilestone    *bool                      `json:"is_milestone,omitempty"`
+	Locations      []Location                 `json:"locations"`
+	MyCapabilities []Capability               `json:"my_capabilities"`
+	Owner          *UserRef                   `json:"owner,omitempty"`
+	ProgressMethod *ProjectProgressMethod     `json:"progress_method,omitempty"`
 
 	// ProgressPercent Progres manual pada task atau progres hasil perhitungan pada project
 	ProgressPercent      *int                                 `json:"progress_percent,omitempty"`
@@ -1400,14 +1481,20 @@ type ItemPatchResult struct {
 	Seq       int64               `json:"seq"`
 	StartDate *openapi_types.Date `json:"start_date,omitempty"`
 	Status    *Status             `json:"status,omitempty"`
-	Title     string              `json:"title"`
-	Type      ItemType            `json:"type"`
-	UpdatedAt time.Time           `json:"updated_at"`
-	Version   int                 `json:"version"`
+
+	// StatusChangedAt Terakhir status berubah (days in status di kartu Board)
+	StatusChangedAt *time.Time `json:"status_changed_at,omitempty"`
+	Title           string     `json:"title"`
+	Type            ItemType   `json:"type"`
+	UpdatedAt       time.Time  `json:"updated_at"`
+	Version         int        `json:"version"`
 }
 
 // ItemPatchResultDefaultViewType defines model for ItemPatchResult.DefaultViewType.
 type ItemPatchResultDefaultViewType string
+
+// ItemPatchResultImportance Prioritas item (D-36)
+type ItemPatchResultImportance string
 
 // ItemPatchResultRestoreBlockedReason defines model for ItemPatchResult.RestoreBlockedReason.
 type ItemPatchResultRestoreBlockedReason string
@@ -1429,6 +1516,7 @@ type ItemUpdate struct {
 
 	// Fields Nilai berkunci UUID definisi. Text, Date (YYYY-MM-DD), dan Single select (UUID) memakai string. Multiple select dan People memakai array UUID. Number, Currency dan Percent memakai angka desimal. Duration adalah jumlah hari bulat nonnegatif. Checkbox memakai boolean. Pada PATCH, null menghapus nilai.
 	Fields         *CustomFieldValues     `json:"fields,omitempty"`
+	Importance     *ItemUpdateImportance  `json:"importance,omitempty"`
 	IsMilestone    *bool                  `json:"is_milestone,omitempty"`
 	OwnerId        *openapi_types.UUID    `json:"owner_id,omitempty"`
 	ProgressMethod *ProjectProgressMethod `json:"progress_method,omitempty"`
@@ -1442,6 +1530,9 @@ type ItemUpdate struct {
 	StatusId            *openapi_types.UUID            `json:"status_id,omitempty"`
 	Title               *string                        `json:"title,omitempty"`
 }
+
+// ItemUpdateImportance defines model for ItemUpdate.Importance.
+type ItemUpdateImportance string
 
 // ItemUpdateRecalculateDuration Hitung durasi hari kerja dari effort dan alokasi terbaru. Kirim tanpa field tanggal, durasi, atau milestone.
 type ItemUpdateRecalculateDuration bool
@@ -1943,6 +2034,11 @@ type UpdateCommentParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// QueryDependenciesJSONBody defines parameters for QueryDependencies.
+type QueryDependenciesJSONBody struct {
+	ItemIds []openapi_types.UUID `json:"item_ids"`
+}
+
 // UpdateItemDependencyJSONBody defines parameters for UpdateItemDependency.
 type UpdateItemDependencyJSONBody struct {
 	// Lag Lag dalam hari kerja
@@ -2175,6 +2271,9 @@ type ResetPasswordJSONRequestBody ResetPasswordJSONBody
 
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
+
+// QueryDependenciesJSONRequestBody defines body for QueryDependencies for application/json ContentType.
+type QueryDependenciesJSONRequestBody QueryDependenciesJSONBody
 
 // UpdateItemDependencyJSONRequestBody defines body for UpdateItemDependency for application/json ContentType.
 type UpdateItemDependencyJSONRequestBody UpdateItemDependencyJSONBody
@@ -2481,6 +2580,9 @@ type ServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID, params UpdateCommentParams)
+	// QueryDependencies Dependensi di antara sekumpulan Item (link Gantt). POST hanya karena daftar ID tidak muat di URL
+	// (POST /dependencies/query)
+	QueryDependencies(w http.ResponseWriter, r *http.Request)
 	// DeleteItemDependency Hapus dependensi dengan izin edit pada penerus
 	// (DELETE /dependencies/{dependencyId})
 	DeleteItemDependency(w http.ResponseWriter, r *http.Request, dependencyId openapi_types.UUID)
@@ -2926,6 +3028,20 @@ func (siw *ServerInterfaceWrapper) UpdateComment(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateComment(w, r, commentId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// QueryDependencies operation middleware
+func (siw *ServerInterfaceWrapper) QueryDependencies(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.QueryDependencies(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5296,6 +5412,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/items/{itemId}", wrapper.UpdateItem)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/dependencies", wrapper.ListItemDependencies)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/dependencies", wrapper.CreateItemDependency)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dependencies/query", wrapper.QueryDependencies)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dependencies/{dependencyId}", wrapper.DeleteItemDependency)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/dependencies/{dependencyId}", wrapper.UpdateItemDependency)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/children", wrapper.ListItemChildren)
@@ -5971,6 +6088,46 @@ func (response UpdateComment428ApplicationProblemPlusJSONResponse) VisitUpdateCo
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type QueryDependenciesRequestObject struct {
+	Body *QueryDependenciesJSONRequestBody
+}
+
+type QueryDependenciesResponseObject interface {
+	VisitQueryDependenciesResponse(w http.ResponseWriter) error
+}
+
+type QueryDependencies200JSONResponse struct {
+	Items []ItemDependency `json:"items"`
+}
+
+func (response QueryDependencies200JSONResponse) VisitQueryDependenciesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type QueryDependencies422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response QueryDependencies422ApplicationProblemPlusJSONResponse) VisitQueryDependenciesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -9417,6 +9574,9 @@ type StrictServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(ctx context.Context, request UpdateCommentRequestObject) (UpdateCommentResponseObject, error)
+	// QueryDependencies Dependensi di antara sekumpulan Item (link Gantt). POST hanya karena daftar ID tidak muat di URL
+	// (POST /dependencies/query)
+	QueryDependencies(ctx context.Context, request QueryDependenciesRequestObject) (QueryDependenciesResponseObject, error)
 	// DeleteItemDependency Hapus dependensi dengan izin edit pada penerus
 	// (DELETE /dependencies/{dependencyId})
 	DeleteItemDependency(ctx context.Context, request DeleteItemDependencyRequestObject) (DeleteItemDependencyResponseObject, error)
@@ -9969,6 +10129,37 @@ func (sh *strictHandler) UpdateComment(w http.ResponseWriter, r *http.Request, c
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateCommentResponseObject); ok {
 		if err := validResponse.VisitUpdateCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// QueryDependencies operation middleware
+func (sh *strictHandler) QueryDependencies(w http.ResponseWriter, r *http.Request) {
+	var request QueryDependenciesRequestObject
+
+	var body QueryDependenciesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.QueryDependencies(ctx, request.(QueryDependenciesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "QueryDependencies")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(QueryDependenciesResponseObject); ok {
+		if err := validResponse.VisitQueryDependenciesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

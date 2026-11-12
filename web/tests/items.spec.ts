@@ -107,7 +107,7 @@ test("detail actions use latest ETag and add a subitem with a parent link", asyn
   expect(calls.find((c) => c.method === "POST" && c.path === "/items")?.body.locations).toEqual([
     { space_id: marketing.id, parent_item_id: parentId },
   ]);
-  await page.getByRole("button", { name: "Design review" }).click();
+  await page.getByRole("button", { name: "Design review", exact: true }).click();
   await expect(page).toHaveURL(new RegExp(`/tasks/${parentId}$`));
   await expect(page.getByRole("button", { name: "Outline" })).toBeVisible();
 });

@@ -22,9 +22,9 @@ func MyTodo(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, mode st
 	}
 	direction, comparison := "ASC", ">"
 	switch filter.Sort {
-	case "", "date", "priority", "importance":
-		// shortcut: priority and importance sort by date until custom fields arrive in M2.
+	case "", "date":
 		filter.Sort = "due_date"
+	case "priority", "importance":
 	case "date_modified":
 		filter.Sort, direction, comparison = "updated_at", "DESC", "<"
 	case "date_created":

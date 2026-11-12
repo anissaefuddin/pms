@@ -271,3 +271,49 @@ func authorizeDependency(ctx context.Context, tx pgx.Tx, actor policy.Actor, pre
 	}
 	return nil
 }
+
+const maxDependencyQueryItems = 1000
+
+// ListDependenciesAmong returns the dependencies whose both ends are in ids and visible to the actor (Gantt links).
+func ListDependenciesAmong(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, ids []string) ([]Dependency, error) {
+	if len(ids) > maxDependencyQueryItems {
+		return nil, Invalid("at most 1000 items per query")
+	}
+	parsed := make([]string, 0, len(ids))
+	for _, raw := range ids {
+		id, err := uuid.Parse(raw)
+		if err != nil {
+			return nil, Invalid("item_ids must be UUIDs")
+		}
+		parsed = append(parsed, id.String())
+	}
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	visible, err := policy.ItemsCaps(ctx, tx, actor, parsed, nil)
+	if err != nil {
+		return nil, err
+	}
+	seen := make([]string, 0, len(parsed))
+	for _, id := range parsed {
+		if visible[id].Has(policy.View) {
+			seen = append(seen, id)
+		}
+	}
+	rows, err := tx.Query(ctx, "SELECT "+dependencyColumns+` FROM item_dependencies
+WHERE predecessor_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND successor_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid))
+ORDER BY predecessor_id, successor_id`, seen)
+	if err != nil {
+		return nil, err
+	}
+	out, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Dependency])
+	if err != nil {
+		return nil, err
+	}
+	if out == nil {
+		out = []Dependency{}
+	}
+	return out, tx.Commit(ctx)
+}

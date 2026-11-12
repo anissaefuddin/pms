@@ -37,9 +37,14 @@ var sortKeys = map[string]string{
 	"status":     "lpad(st.position::text, 12, '0')",
 	"due_date":   "i.due_date::text",
 	"start_date": "i.start_date::text",
-	"created_at": "to_char(i.created_at AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS.US')",
-	"updated_at": "to_char(i.updated_at AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS.US')",
+	// High first, then the earliest finish date; Items without one sort last within their level.
+	"priority":     "(CASE i.importance WHEN 'high' THEN '0' WHEN 'normal' THEN '1' ELSE '2' END)||'|'||COALESCE(i.due_date::text,'9999-99-99')",
+	"predecessors": "lpad((SELECT count(*) FROM item_dependencies d WHERE d.successor_id=i.id)::text, 8, '0')",
+	"created_at":   "to_char(i.created_at AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS.US')",
+	"updated_at":   "to_char(i.updated_at AT TIME ZONE 'UTC','YYYY-MM-DD HH24:MI:SS.US')",
 }
+
+func init() { sortKeys["importance"] = sortKeys["priority"] }
 
 func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, container string, children bool, filter ListFilter) (Page, error) {
 	id, err := uuid.Parse(container)

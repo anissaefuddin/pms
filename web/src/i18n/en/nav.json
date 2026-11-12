@@ -57,5 +57,7 @@
   "recycle.deleted": "Item moved to Recycle bin",
   "recycle.restored": "Item restored",
   "recycle.blocked.space_deleted": "The original Space was deleted.",
-  "recycle.blocked.forbidden": "You do not have permission to restore this item."
+  "recycle.blocked.forbidden": "You do not have permission to restore this item.",
+  "todo.sorts.priority": "Priority",
+  "todo.sorts.importance": "Importance"
 }

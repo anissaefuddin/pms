@@ -168,8 +168,8 @@ for (const { type, label, visibility } of [
       .toEqual({ scope_space_id: marketing.id, type, name, visibility });
 
     const tab = nav.getByRole("button", { name, exact: true });
-    // Gantt is a real chart now (S2.4.2); Calendar is still a placeholder.
-    const heading = type === "gantt" ? page.getByRole("application", { name: "Gantt chart" }) : page.getByRole("heading", { name: label, exact: true });
+    // Gantt and Calendar are real views now (S2.4.2, S2.5.2).
+    const heading = type === "gantt" ? page.getByRole("application", { name: "Gantt chart" }) : page.getByRole("grid", { name: "Calendar" });
     const grid = page.getByRole("table", { name: "Table" });
     await expect(tab).toHaveAttribute("aria-pressed", "true");
     await expect(heading).toBeVisible();
@@ -180,9 +180,8 @@ for (const { type, label, visibility } of [
     await page.reload();
     await expect(tab).toHaveAttribute("aria-pressed", "true");
     await expect(heading).toBeVisible();
-    if (type === "calendar") await expect(page.getByText("This view is not available yet.", { exact: true })).toBeVisible();
     await expect(grid).toHaveCount(0);
-    await expect(page.getByLabel("Filter items")).toHaveCount(0);
+    if (type === "gantt") await expect(page.getByLabel("Filter items")).toHaveCount(0);
   });
 }
 

@@ -67,7 +67,16 @@
     "start_date": "Start date",
     "due_date": "Finish date",
     "progress": "Progress",
-    "archived": "archived"
+    "archived": "archived",
+    "card": "Card",
+    "cover": "Cover image",
+    "id": "ID",
+    "type": "Type",
+    "locations": "Locations",
+    "author": "Author",
+    "days_in_status": "Days in status",
+    "cardTitle": "Choose card fields",
+    "cardOpen": "Card fields"
   },
   "fieldFilter": {
     "field": "Filter by field",
@@ -92,6 +101,45 @@
     "unscheduled": "{{name}}: no dates",
     "readonly": "You can view this chart but not change dates.",
     "moveError": "Could not change the dates.",
-    "noEdit": "You cannot change dates of {{name}}."
+    "noEdit": "You cannot change dates of {{name}}.",
+    "dependencies": "Predecessors of {{name}}",
+    "depType": "Link type from {{name}}",
+    "removeDep": "Remove link from {{name}}",
+    "remove": "Remove",
+    "noDeps": "No predecessors.",
+    "predecessor": "Predecessor",
+    "type": "Type",
+    "addDep": "Add predecessor"
+  },
+  "unassigned": "Unassigned",
+  "reassign": {
+    "title": "Change assignee?",
+    "body": "Move “{{title}}” from {{from}} to {{to}}? This changes who the item is assigned to.",
+    "confirm": "Change assignee"
+  },
+  "card": {
+    "daysInStatus_one": "{{count}} day in status",
+    "daysInStatus_other": "{{count}} days in status",
+    "author": "By {{name}}"
+  },
+  "assignee": "Assignee",
+  "calendar": {
+    "label": "Calendar",
+    "today": "Today",
+    "prev": "Previous month",
+    "next": "Next month",
+    "unscheduled": "Unscheduled",
+    "noneUnscheduled": "Everything has dates.",
+    "keys": "Drag an item to another day, or press Alt with an arrow key to move it a day or a week.",
+    "item": "{{title}}, {{start}} to {{end}}",
+    "day": "{{date}}, {{count}} items"
+  },
+  "priority": "Priority",
+  "predecessors": "Predecessors",
+  "preset": {
+    "label": "Preset",
+    "all": "All tasks",
+    "active": "All active",
+    "mine": "My active"
   }
 }

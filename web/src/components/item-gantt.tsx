@@ -1,20 +1,23 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react-gantt";
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { ApiError, api } from "@/lib/api";
+import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
 import { itemKeys, listItems, type Item } from "@/lib/items";
+import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 
+type Dependency = components["schemas"]["ItemDependency"];
+type DependencyType = Dependency["type"];
+const linkTypes = { FS: "e2s", SS: "s2s", FF: "e2e", SF: "s2e" } as const;
+const dependencyTypes: DependencyType[] = ["FS", "SS", "FF", "SF"];
+const fromLink = (type: string) => (Object.keys(linkTypes) as DependencyType[]).find((key) => linkTypes[key] === type);
 type Scale = "day" | "week" | "month";
 const scaleOptions: Scale[] = ["day", "week", "month"];
-
-/** Dates are calendar days (YYYY-MM-DD). SVAR gets local midnights so no time zone can shift a day. */
-export const toDay = (value?: string | null) => value ? new Date(+value.slice(0, 4), +value.slice(5, 7) - 1, +value.slice(8, 10)) : undefined;
-export const fromDay = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-const addDays = (date: Date, days: number) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
 
 export function ganttTask(item: Item, parent?: string): ITask {
   const start = toDay(item.start_date) ?? toDay(item.due_date);
@@ -38,7 +41,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
   const profile = useProfile();
   const [scale, setScale] = useState<Scale>("day");
   const [selected, setSelected] = useState<string>();
-  const api = useRef<IApi>(undefined);
+  const chart = useRef<IApi>(undefined);
   // Every level is fetched with the same cache keys as Table, so SSE updates and PATCH responses reach the chart.
   const [parents, setParents] = useState<string[]>([]);
   const branches = useQueries({
@@ -66,8 +69,36 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
     if (wanted.length) setParents((list) => [...list, ...wanted]);
   }, [byId, parents]);
 
-  const ref = useRef({ byId, readonly, onPatch, t });
-  ref.current = { byId, readonly, onPatch, t };
+  const qc = useQueryClient();
+  const itemIds = useMemo(() => [...byId.keys()].sort().slice(0, 1000), [byId]);
+  const dependencies = useQuery({
+    queryKey: ["gantt-dependencies", itemIds], enabled: itemIds.length > 1,
+    queryFn: () => api<{ items: Dependency[] }>("/api/v1/dependencies/query", { method: "POST", body: JSON.stringify({ item_ids: itemIds }) }),
+  });
+  const deps = dependencies.data?.items ?? [];
+  const links = useMemo(() => deps.map((dep) => ({ id: dep.id, source: dep.predecessor_id, target: dep.successor_id, type: linkTypes[dep.type] })), [deps]);
+  const [busy, setBusy] = useState(false);
+
+  /** The server moves the successors (D-37); afterwards every list and the links are read again. */
+  async function mutate(work: () => Promise<unknown>) {
+    if (busy) return;
+    setBusy(true);
+    try { await work(); }
+    catch (err) {
+      toast.error(err instanceof ApiError && (err.status === 409 && err.message === "" || err.status === 428) ? ref.current.t("items.statusConflict") : (err as Error).message);
+    } finally {
+      await Promise.all([qc.invalidateQueries({ queryKey: ["gantt-dependencies"] }), qc.invalidateQueries({ queryKey: itemKeys.all })]);
+      setBusy(false);
+    }
+  }
+  const addDependency = (predecessor: string, successor: string, type: DependencyType) => mutate(() =>
+    api(`/api/v1/items/${successor}/dependencies`, { method: "POST", body: JSON.stringify({ predecessor_id: predecessor, type, lag: 0 }) }));
+  const changeDependency = (id: string, type: DependencyType) => mutate(() =>
+    api(`/api/v1/dependencies/${id}`, { method: "PATCH", body: JSON.stringify({ type }) }));
+  const removeDependency = (id: string) => mutate(() => api(`/api/v1/dependencies/${id}`, { method: "DELETE" }));
+
+  const ref = useRef({ byId, readonly, onPatch, t, addDependency, removeDependency });
+  ref.current = { byId, readonly, onPatch, t, addDependency, removeDependency };
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const locale = i18n.language;
@@ -93,7 +124,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
     if (next.start_date !== item.start_date || next.due_date !== item.due_date) void onPatch(item, next);
   }
   function init(instance: IApi) {
-    api.current = instance;
+    chart.current = instance;
     // SVAR reports the edge it moved (`start` and/or `end`) and a whole-day `diff`; the dates themselves come from our item.
     instance.intercept("update-task", (event: { id: string | number; diff?: number; task?: ITask; inProgress?: boolean }) => {
       if (event.inProgress) return true; // live preview while dragging
@@ -108,6 +139,16 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
       }
       return false;
     });
+    instance.intercept("add-link", (event: { link: { source?: string | number; target?: string | number; type?: string } }) => {
+      const { link } = event;
+      const type = link.type ? fromLink(link.type) : undefined;
+      if (link.source !== undefined && link.target !== undefined && type && !ref.current.readonly) void ref.current.addDependency(String(link.source), String(link.target), type);
+      return false;
+    });
+    instance.intercept("delete-link", (event: { id: string | number }) => {
+      if (!ref.current.readonly) void ref.current.removeDependency(String(event.id));
+      return false;
+    });
     instance.on("select-task", (event: { id: string | number }) => setSelected(String(event.id)));
   }
   function keyboard(event: KeyboardEvent<HTMLDivElement>) {
@@ -116,7 +157,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       event.preventDefault();
       const next = ids[Math.min(ids.length - 1, Math.max(0, at + (event.key === "ArrowDown" ? 1 : -1)))];
-      if (next) { setSelected(next); api.current?.exec("select-task", { id: next }); }
+      if (next) { setSelected(next); chart.current?.exec("select-task", { id: next }); }
     } else if ((event.key === "ArrowLeft" || event.key === "ArrowRight") && selected) {
       event.preventDefault();
       const item = byId.get(selected);
@@ -143,11 +184,43 @@ export function ItemGantt({ items, spaceId, parentId, readonly, onOpen, onPatch 
     <div role="application" aria-label={t("views.gantt.label")} tabIndex={0} onKeyDown={keyboard}
       className="gantt-chart h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
       <Theme>
-        <Gantt tasks={tasks} links={[]} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
+        <Gantt tasks={tasks} links={links} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
           highlightTime={(date, unit) => unit === "day" && date.getTime() === today.getTime() ? "gantt-today" : ""} schedule={{ auto: false }} unscheduledTasks
           columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }]} />
       </Theme>
     </div>
+    {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">
+      <h3 className="font-medium">{t("views.gantt.dependencies", { name: current.title })}</h3>
+      <ul className="space-y-1">
+        {deps.filter((dep) => dep.successor_id === current.id).map((dep) => <li key={dep.id} className="flex flex-wrap items-center gap-2">
+          <span>{byId.get(dep.predecessor_id)?.title ?? dep.predecessor_id}</span>
+          <select aria-label={t("views.gantt.depType", { name: byId.get(dep.predecessor_id)?.title })} value={dep.type} disabled={readonly || busy}
+            className="rounded border bg-background p-1" onChange={(event) => void changeDependency(dep.id, event.target.value as DependencyType)}>
+            {dependencyTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+          {!readonly && <Button size="sm" variant="outline" disabled={busy} onClick={() => void removeDependency(dep.id)}
+            aria-label={t("views.gantt.removeDep", { name: byId.get(dep.predecessor_id)?.title })}>{t("views.gantt.remove")}</Button>}
+        </li>)}
+        {!deps.some((dep) => dep.successor_id === current.id) && <li className="text-sm text-muted-foreground">{t("views.gantt.noDeps")}</li>}
+      </ul>
+      {!readonly && <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const predecessor = String(data.get("predecessor") ?? "");
+        if (predecessor) void addDependency(predecessor, current.id, String(data.get("type")) as DependencyType);
+      }}>
+        <label className="space-y-1"><span className="block text-sm">{t("views.gantt.predecessor")}</span>
+          <select name="predecessor" required defaultValue="" className="rounded border bg-background p-1">
+            <option value="" disabled />
+            {[...byId.values()].filter((item) => item.id !== current.id).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
+          </select></label>
+        <label className="space-y-1"><span className="block text-sm">{t("views.gantt.type")}</span>
+          <select name="type" defaultValue="FS" className="rounded border bg-background p-1">
+            {dependencyTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select></label>
+        <Button type="submit" size="sm" disabled={busy}>{t("views.gantt.addDep")}</Button>
+      </form>}
+    </section>}
     <p role="status" className="sr-only">{current ? (current.start_date || current.due_date
       ? t("views.gantt.selected", { name: current.title, start: formatDate(current.start_date ?? current.due_date, profile), end: formatDate(current.due_date ?? current.start_date, profile) })
       : t("views.gantt.unscheduled", { name: current.title })) : ""}</p>

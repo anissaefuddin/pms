@@ -156,6 +156,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("GET /api/v1/recycle-bin", s.requireUser(s.listRecycleBin))
 	mux.HandleFunc("POST /api/v1/recycle-bin/{itemId}/restore", s.requireUser(s.restoreItem))
 	mux.HandleFunc("POST /api/v1/items/{itemId}/reorder", s.requireUser(s.reorderItem))
+	mux.HandleFunc("PUT /api/v1/items/{itemId}/locations", s.requireUser(s.replaceItemLocations))
 	mux.Handle("/", static())
 	return s.observe(s.requestID(recoverPanic(s.csrf(mux))))
 }

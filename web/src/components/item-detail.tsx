@@ -17,6 +17,7 @@ import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { ItemDates } from "@/components/item-dates";
 import { ItemEffort } from "@/components/item-effort";
+import { ItemLocations } from "@/components/item-locations";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
 import { ItemProgress } from "@/components/project-progress";
@@ -24,6 +25,8 @@ const ItemDescription = lazy(async () => ({ default: (await import("@/components
 const ItemComments = lazy(async () => ({ default: (await import("@/components/item-comments")).ItemComments }));
 
 type Props = { id: string; me: CurrentUser; onOpen: (id: string) => void; onDeleted: () => void };
+
+const importanceLevels = ["high", "normal", "low"] as const;
 
 export function ItemDetail(props: Props) {
   const { t } = useTranslation();
@@ -211,6 +214,13 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
         {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
       </select>
     </div>
+    <div className="space-y-1">
+      <label htmlFor="item-importance">{t("items.importance.label")}</label>
+      <select id="item-importance" className="block w-full rounded border bg-background p-2" value={item.importance ?? "normal"}
+        disabled={!canEdit || busy || stale} onChange={(event) => void save({ importance: event.target.value as NonNullable<Item["importance"]> })}>
+        {importanceLevels.map((level) => <option key={level} value={level}>{t(`items.importance.${level}`)}</option>)}
+      </select>
+    </div>
     <ItemProgress item={item} editable={canEdit} disabled={busy || stale}
       onEdit={() => beginDraft("progress_percent")} onSave={(update) => save(update)} />
     {canEdit ? <form className="space-y-2" onSubmit={saveDates}>
@@ -231,6 +241,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
     <ItemEffort item={item} editable={canEdit} disabled={busy || stale}
       onEdit={() => beginDraft("effort_minutes")}
       onSave={(update) => save(update, false, "effort_minutes")} />
+    <ItemLocations item={item} editable={canEdit} disabled={busy || stale} />
     <ItemCustomFields item={item} profile={me} editable={canEdit} disabled={busy || stale}
       onEdit={() => {
         delete draftVersions.current.fields;

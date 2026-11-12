@@ -188,3 +188,25 @@ func TestConcurrentDependenciesCannotCreateCycle(t *testing.T) {
 		t.Fatalf("expected one committed edge, got %d successful requests", created)
 	}
 }
+
+func TestQueryDependenciesAmongItems(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	space := f.space("Gantt links")
+	a, b, c := dependencyItem(f, admin, space, "A"), dependencyItem(f, admin, space, "B"), dependencyItem(f, admin, space, "C")
+	f.want(f.call(admin, "POST", dependencyPath(b), dependencyInput(a, "FS")), 201, "a to b")
+	f.want(f.call(admin, "POST", dependencyPath(c), dependencyInput(b, "SS")), 201, "b to c")
+	got := f.call(admin, "POST", "/dependencies/query", map[string]any{"item_ids": []string{a, b}})
+	f.want(got, 200, "query")
+	if len(got.items()) != 1 {
+		t.Fatalf("only a->b has both ends in the list: %+v", got)
+	}
+	if got = f.call(admin, "POST", "/dependencies/query", map[string]any{"item_ids": []string{}}); got.status != 200 || len(got.items()) != 0 {
+		t.Fatalf("empty list: %+v", got)
+	}
+	f.want(f.call(admin, "POST", "/dependencies/query", map[string]any{"item_ids": []string{"nope"}}), 422, "bad id")
+	stranger := f.person("regular")
+	if got = f.call(stranger, "POST", "/dependencies/query", map[string]any{"item_ids": []string{a, b, c}}); got.status != 200 || len(got.items()) != 0 {
+		t.Fatalf("a user who cannot see the items learns nothing: %+v", got)
+	}
+}

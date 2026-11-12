@@ -126,5 +126,21 @@
   "attachmentLimit": "Maximum file size: {{limit}} MB",
   "mentionSearch": "Find a user or group to mention",
   "followers": "Mention followers",
-  "followersLabel": "Followers"
+  "followersLabel": "Followers",
+  "importance": {
+    "label": "Importance",
+    "high": "High",
+    "normal": "Normal",
+    "low": "Low"
+  },
+  "locations": {
+    "title": "Locations",
+    "remove": "Remove location {{name}}",
+    "removeShort": "Remove",
+    "last": "The last location cannot be removed.",
+    "space": "Space",
+    "project": "Project",
+    "root": "Space root",
+    "add": "Add location"
+  }
 }

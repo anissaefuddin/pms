@@ -333,3 +333,19 @@ Batas: filter People hanya lewat API (UI tidak punya pemilih). Satu filter field
 
 Batas: Gantt memuat anak per level lewat `GET /items/{id}/children` (satu request per induk yang punya anak). Penjadwalan SVAR dimatikan (`schedule.auto=false`), jadwal hanya dari backend. Dependensi, link, dan realtime Gantt mengikuti S2.4.3. Hari non-kerja belum disorot. Tombol panah cepat berturut-turut menjatuhkan penekanan saat PATCH sebelumnya belum selesai.
 
+## M2 / S2.4.3–S2.5.4 Dependensi Gantt, swimlane, Calendar, preset, multi-lokasi (13 Nov 2026)
+
+| Pemeriksaan | Status | Bukti |
+|---|---|---|
+| Server dengan PostgreSQL | PASS | Seluruh suite Go dan `go vet`. Tes baru: `TestQueryDependenciesAmongItems` (kedua ujung harus ada di daftar dan terlihat, pengguna tanpa akses tidak melihat apa pun), `TestItemCardFields` (days in status tidak direset oleh status yang sama, sampul hanya gambar png/jpeg/gif/webp), `TestImportanceAndPredecessorSort` (urutan priority dan importance, sort predecessors, 422 untuk nilai salah, My to-do by priority), `TestReplaceItemLocations` (tambah, hapus, duplikat, daftar kosong, siklus, tanpa akses). |
+| Gantt dependensi (Chrome, mock) | PASS | `gantt.spec.ts` 9/9: link dari server, ubah tipe, hapus, tambah pendahulu menggeser penerus, siklus menampilkan pesan server, dua klik pegangan membuat FS. |
+| Board swimlane dan kartu | PASS | `board-lanes.spec.ts` 3/3: lajur per assignee dengan Unassigned, item multi-assignee di tiap lajur, drag antar lajur meminta konfirmasi lalu hanya mengganti assignee lajur asal, drop status tanpa lajur tetap langsung, pemilih kartu menyimpan ID, tipe, days in status, author, lokasi, dan sampul. |
+| Calendar | PASS | `calendar.spec.ts` 3/3: item tampil di setiap hari rentangnya, libur ditandai, Unscheduled, drag menggeser seluruh rentang, drop dari Unscheduled memberi satu hari, Alt+panah, baca-saja tidak bisa memindah, axe bersih. |
+| Preset, sort, importance | PASS | `view-presets.spec.ts` 3/3: preset mengirim `status_group` dan `assignee=me`, sort dan preset masuk URL di Table dan Calendar, panel mengubah importance dengan `If-Match`, My to-do menampilkan Priority dan Importance. |
+| Multi-lokasi | PASS | `item-locations.spec.ts` 2/2: tambah project di Space lain, hapus satu lokasi, lokasi terakhir nonaktif, pesan siklus dari server. |
+| Regresi Chrome mock | PASS dengan catatan | 121 lulus, 2 gagal (Share dialog axe lama), 3 dilewati. Tiga tes lama disesuaikan: Add view Calendar bukan placeholder, My to-do kini 7 opsi sort, tombol "Design review" memakai `exact`. |
+| Dua pengguna pada Gantt (konflik, SSE) | NOT RUN | Konflik 409 diuji dengan mock, event SSE hanya membaca ulang link. Tidak ada tes dua browser dengan Go API. |
+| Chrome dengan Go API dan PostgreSQL | NOT RUN | Semua tes UI baru memakai mock API. |
+
+Batas: sort Predecessors hanya menghitung jumlah pendahulu (belum kedalaman rantai). Calendar dan Gantt memuat seluruh daftar akar. Swimlane dikelompokkan di klien. Lag dependensi belum bisa diubah di UI. Filter People hanya lewat API. Tombol panah Gantt yang ditekan beruntun dijatuhkan selama PATCH sebelumnya berjalan.
+

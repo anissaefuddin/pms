@@ -138,6 +138,21 @@ func (s *Server) reorderItem(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusNoContent)
 }
 
+func (s *Server) replaceItemLocations(w http.ResponseWriter, r *http.Request) {
+	var input struct {
+		Locations []items.Location `json:"locations"`
+	}
+	if !decode(w, r, &input) {
+		return
+	}
+	id := r.PathValue("itemId")
+	item, err := items.ReplaceLocations(r.Context(), s.pool, actorOf(r), id, input.Locations)
+	if err == nil {
+		s.publishItem(r, "item.updated", id, id, item.Version)
+	}
+	writeItem(w, http.StatusOK, item, err)
+}
+
 func (s *Server) patchItem(w http.ResponseWriter, r *http.Request) {
 	version, ok := ifMatchVersion(w, r)
 	if !ok {
