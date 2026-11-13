@@ -1,0 +1,24 @@
+{
+  "format": 1, "version": 1, "id": "marketing-campaign", "name": "Campaign", "category": "Marketing",
+  "description": "Plan and run a marketing campaign, with a channel field and a content request form.",
+  "custom_fields": [
+    {"name": "Channel", "type": "multi_select", "options": [
+      {"label": "Email", "color": "#2563EB"}, {"label": "Social", "color": "#9333EA"}, {"label": "Events", "color": "#0D9488"}]}
+  ],
+  "projects": [
+    {"title": "Campaign launch", "default_view": "board", "tasks": [
+      {"title": "Write the campaign brief", "importance": "high", "duration_days": 2},
+      {"title": "Create content calendar", "duration_days": 3},
+      {"title": "Design assets", "duration_days": 5},
+      {"title": "Launch and monitor", "importance": "high", "duration_days": 2}
+    ]}
+  ],
+  "views": [{"type": "calendar", "name": "Content calendar"}],
+  "forms": [
+    {"name": "Content request", "description": "Ask the team for a piece of content.", "project": 0, "title_key": "topic", "definition": {"pages": [
+      {"title": "Request", "elements": [
+        {"key": "topic", "kind": "single_line", "label": "Topic", "required": true},
+        {"key": "audience", "kind": "single_choice", "label": "Audience", "options": ["Customers", "Partners", "Internal"]},
+        {"key": "needed_by", "kind": "date", "label": "Needed by"}]}]}}
+  ]
+}

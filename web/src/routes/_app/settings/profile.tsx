@@ -33,11 +33,12 @@ const choices = {
 const timezones = ["UTC", ...Intl.supportedValuesOf("timeZone")];
 
 // Only entries that exist in this version are offered; the other keys the API accepts stay hidden (NAV-02).
+const emailGroups = ["mention", "assigned", "shared", "task_changes", "report"] as const;
 const sidebarChoices = ["my_todo", "request_forms", "stream", "timesheets"] as const;
 
 function ProfileRoute() {
   const profile = useProfile();
-  return profile && <><ProfileForm key={profile.id} profile={profile} /><SidebarSettings profile={profile} /></>;
+  return profile && <><ProfileForm key={profile.id} profile={profile} /><SidebarSettings profile={profile} /><EmailSettings profile={profile} /></>;
 }
 
 function SidebarSettings({ profile }: { profile: CurrentUser }) {
@@ -68,6 +69,34 @@ function SidebarSettings({ profile }: { profile: CurrentUser }) {
   </fieldset>;
 }
 
+function EmailSettings({ profile }: { profile: CurrentUser }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const [error, setError] = useState("");
+  const [muted, setMuted] = useState(profile.email_muted ?? []);
+  async function toggle(key: (typeof emailGroups)[number], on: boolean) {
+    setError("");
+    const previous = muted;
+    const next = on ? muted.filter((entry) => entry !== key) : [...muted, key];
+    setMuted(next);
+    try {
+      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify({ email_muted: next }) }));
+    } catch (err) {
+      setMuted(previous);
+      setError((err as Error).message);
+    }
+  }
+  return <fieldset className="mt-6 max-w-3xl space-y-2">
+    <legend className="mb-1 text-lg font-semibold">{t("settings.profile.email.title")}</legend>
+    <p className="text-sm text-muted-foreground">{t("settings.profile.email.hint")}</p>
+    {emailGroups.map((key) => <label key={key} className="flex items-center gap-2 text-sm">
+      <input type="checkbox" checked={!muted.includes(key)} onChange={(event) => void toggle(key, event.target.checked)} />
+      {t(`settings.profile.email.${key}`)}
+    </label>)}
+    <FormError message={error} />
+  </fieldset>;
+}
+
 function ProfileForm({ profile }: { profile: CurrentUser }) {
   const { t } = useTranslation();
   const client = useQueryClient();
@@ -77,7 +106,8 @@ function ProfileForm({ profile }: { profile: CurrentUser }) {
   async function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (busy) return;
-    const values = Object.fromEntries(new FormData(event.currentTarget));
+    const values: Record<string, unknown> = Object.fromEntries(new FormData(event.currentTarget));
+    for (const key of ["default_task_duration_days", "default_task_effort_minutes"]) values[key] = values[key] === "" ? null : Number(values[key]);
     setBusy(true);
     setError("");
     try {
@@ -107,6 +137,14 @@ function ProfileForm({ profile }: { profile: CurrentUser }) {
       <datalist id="profile-timezones">
         {timezones.map((zone) => <option value={zone} key={zone} />)}
       </datalist>
+      <label className="space-y-1 text-sm">
+        <span>{t("settings.profile.fields.default_task_duration_days")}</span>
+        <Input name="default_task_duration_days" type="number" min={0} max={3650} step={1} defaultValue={profile.default_task_duration_days ?? ""} />
+      </label>
+      <label className="space-y-1 text-sm">
+        <span>{t("settings.profile.fields.default_task_effort_minutes")}</span>
+        <Input name="default_task_effort_minutes" type="number" min={0} max={525600} step={1} defaultValue={profile.default_task_effort_minutes ?? ""} />
+      </label>
       {Object.entries(choices).map(([key, options]) => <label key={key} className="space-y-1 text-sm">
         <span>{t(`settings.profile.fields.${key}`)}</span>
         <select className="block h-8 w-full rounded-md border border-input bg-background px-2 focus-visible:outline-ring"

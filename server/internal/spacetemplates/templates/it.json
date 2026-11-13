@@ -1,0 +1,22 @@
+{
+  "format": 1, "version": 1, "id": "it-helpdesk", "name": "IT helpdesk", "category": "IT",
+  "description": "Collect support requests and track them on a board.",
+  "custom_fields": [
+    {"name": "Severity", "type": "single_select", "options": [
+      {"label": "Minor", "color": "#16A34A"}, {"label": "Major", "color": "#D97706"}, {"label": "Critical", "color": "#DC2626"}]}
+  ],
+  "projects": [
+    {"title": "Support requests", "default_view": "board", "tasks": [
+      {"title": "Example: reset a password", "duration_days": 1},
+      {"title": "Example: install software", "duration_days": 1}
+    ]}
+  ],
+  "views": [{"type": "calendar", "name": "Due dates"}],
+  "forms": [
+    {"name": "Support request", "description": "Tell IT what is not working.", "project": 0, "title_key": "problem", "definition": {"pages": [
+      {"title": "Request", "elements": [
+        {"key": "problem", "kind": "single_line", "label": "What is the problem?", "required": true},
+        {"key": "details", "kind": "paragraph", "label": "Details"},
+        {"key": "screenshot", "kind": "attachment", "label": "Screenshot", "max_files": 3}]}]}}
+  ]
+}

@@ -17,6 +17,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/httpserver"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
+	"github.com/anissaefuddin/pms/server/internal/reportdigest"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -93,7 +94,7 @@ func run() error {
 }
 
 func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
-	queue, err := mailqueue.New(pool, cfg)
+	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL))
 	if err != nil {
 		return err
 	}

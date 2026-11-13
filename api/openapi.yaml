@@ -51,6 +51,65 @@ paths:
               schema: { $ref: '#/components/schemas/AnalyticsResult' }
         '422': { $ref: '#/components/responses/Problem' }
         '503': { $ref: '#/components/responses/Problem' }
+  /stars:
+    get:
+      operationId: listStars
+      summary: Item berbintang milik pemanggil yang masih dapat dilihat (NAV-02)
+      responses:
+        '200':
+          description: Daftar, bintang terbaru dulu
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    maxItems: 500
+                    items:
+                      type: object
+                      required: [id, title, type]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        type: { type: string, enum: [project, folder, task] }
+  /items/{itemId}/star:
+    parameters:
+      - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      operationId: starItem
+      summary: Beri bintang (idempoten); butuh hak View, jika tidak 404
+      responses:
+        '204': { description: Berbintang }
+        '404': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: unstarItem
+      summary: Cabut bintang (idempoten); hanya menyentuh baris milik pemanggil
+      responses:
+        '204': { description: Tidak berbintang }
+  /report-templates:
+    get:
+      operationId: listReportTemplates
+      summary: Template report siap pakai (RPT-01); namanya diterjemahkan klien dari key
+      responses:
+        '200':
+          description: Daftar template
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [key, layout, query]
+                      properties:
+                        key: { type: string, enum: [active_tasks_by_assignee, weekly_project_status, overdue, due_this_month, unassigned, time_spent, utilization] }
+                        layout: { type: string, enum: [table, column] }
+                        query: { $ref: '#/components/schemas/AnalyticsQuery' }
   /reports:
     get:
       operationId: listReports
@@ -1018,6 +1077,46 @@ paths:
         - { $ref: '#/components/parameters/UserId' }
       responses:
         '204': { description: Email dijadwalkan }
+  /account:
+    get:
+      tags: [users]
+      operationId: getAccount
+      summary: Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+    patch:
+      tags: [users]
+      operationId: renameAccount
+      summary: Ubah nama workspace (hanya admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /onboarding/complete:
+    post:
+      tags: [users]
+      operationId: completeOnboarding
+      summary: Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
+      responses:
+        '204': { description: Tersimpan }
+        '403': { $ref: '#/components/responses/Problem' }
   /seats:
     get:
       tags: [users]
@@ -1099,6 +1198,55 @@ paths:
         '204': { description: Dihapus }
 
   # ───────────────────────── SPACES ─────────────────────────
+  /space-templates:
+    get:
+      tags: [spaces]
+      operationId: listSpaceTemplates
+      summary: Template Space bawaan per kategori (SPC-18)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/SpaceTemplate' }
+  /space-templates/{templateId}/spaces:
+    post:
+      tags: [spaces]
+      operationId: createSpaceFromTemplate
+      summary: Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18)
+      parameters:
+        - { name: templateId, in: path, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [request_id]
+              properties:
+                request_id: { type: string, format: uuid, description: Kunci idempotensi dari klien }
+                name: { type: string, minLength: 1, maxLength: 120, description: Default nama template }
+      responses:
+        '200':
+          description: Diulang dengan request_id yang sama; Space yang sudah ada
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Space' }
+        '201':
+          description: Dibuat
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Space' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /spaces:
     get:
       tags: [spaces]
@@ -2018,6 +2166,19 @@ paths:
       responses:
         '200': { $ref: '#/components/responses/ItemPage' }
         '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [recycle]
+      operationId: emptyRecycleBin
+      summary: Hapus permanen semua entri yang boleh dihapus pemanggil (BIN-03); tidak bisa dibatalkan
+      responses:
+        '200':
+          description: Jumlah entri yang dihapus
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [deleted]
+                properties: { deleted: { type: integer } }
   /recycle-bin/{itemId}/restore:
     post:
       tags: [recycle]
@@ -2945,6 +3106,8 @@ components:
       additionalProperties: false
       properties:
         due_this_week: { type: boolean }
+        due_this_month: { type: boolean }
+        entry_this_month: { type: boolean }
         no_due_date: { type: boolean }
         awaiting_my_review: { type: boolean }
         status_groups: { type: array, maxItems: 4, items: { type: string, enum: [active, completed, deferred, cancelled] } }
@@ -2952,6 +3115,7 @@ components:
         unassigned: { type: boolean }
         importance: { type: array, maxItems: 3, items: { type: string, enum: [high, normal, low] } }
         followed: { type: boolean }
+        starred: { type: boolean }
         overdue: { type: boolean }
         due_from: { type: string, format: date }
         due_to: { type: string, format: date }
@@ -2968,7 +3132,7 @@ components:
         reporting_on: { type: string, enum: [tasks, projects, time_entries] }
         space_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Kosong berarti semua Space yang terlihat }
         container_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Project atau Folder; hanya subpohonnya }
-        metric: { type: string, enum: [count, effort_minutes, sum_field, minutes, billable_minutes], description: 'tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count' }
+        metric: { type: string, enum: [count, effort_minutes, sum_field, minutes, billable_minutes, utilization], description: 'tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count' }
         field_id: { type: string, format: uuid, description: 'Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya' }
         group_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
         break_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
@@ -3075,6 +3239,7 @@ components:
         space_id: { type: string, format: uuid, nullable: true, description: Null untuk report pribadi }
         sharing: { type: string, enum: [private, space], default: private }
         definition: { $ref: '#/components/schemas/ReportDefinition' }
+        template: { type: string, enum: [active_tasks_by_assignee, weekly_project_status, overdue, due_this_month, unassigned, time_spent, utilization], description: Pakai definisi template; tidak boleh bersama definition }
     ReportUpdate:
       type: object
       additionalProperties: false
@@ -3097,7 +3262,7 @@ components:
         show_labels: { type: boolean, description: "Untuk pie, column, bar, dan line" }
         pie_style: { type: string, enum: [classic, donut, ring], description: Khusus pie }
         list: { type: string, enum: [todo_this_week, to_review, completed, assigned_to_me], description: Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya }
-        template: { type: string, enum: [my_tasks, overdue, followed, backlog], description: Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang }
+        template: { type: string, enum: [my_tasks, overdue, followed, backlog, starred], description: Khusus task_list (DASH-02) }
         query: { $ref: '#/components/schemas/AnalyticsQuery' }
     DashboardWidgetInput:
       type: object
@@ -3303,7 +3468,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/User'
         - type: object
-          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, account_name, capabilities]
+          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, account_name, capabilities, onboarding_pending]
           properties:
             company: { type: string, nullable: true }
             country: { type: string, nullable: true }
@@ -3321,6 +3486,13 @@ components:
               type: array
               description: Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
               items: { $ref: '#/components/schemas/SidebarKey' }
+            email_muted:
+              type: array
+              description: Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif
+              items: { $ref: '#/components/schemas/EmailGroup' }
+            onboarding_pending: { type: boolean, description: true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati }
+            default_task_duration_days: { type: integer, nullable: true, minimum: 0, maximum: 3650, description: Durasi awal task baru (SET-03) }
+            default_task_effort_minutes: { type: integer, nullable: true, minimum: 0, maximum: 525600, description: Effort awal task baru (SET-03) }
             account_name: { type: string, description: Nama workspace }
             personal_space_id: { type: string, format: uuid }
             capabilities:
@@ -3351,6 +3523,33 @@ components:
         sidebar_hidden:
           type: array
           items: { $ref: '#/components/schemas/SidebarKey' }
+        email_muted:
+          type: array
+          items: { $ref: '#/components/schemas/EmailGroup' }
+        default_task_duration_days: { type: integer, nullable: true, minimum: 0, maximum: 3650 }
+        default_task_effort_minutes: { type: integer, nullable: true, minimum: 0, maximum: 525600 }
+    EmailGroup:
+      type: string
+      description: task_changes mencakup perubahan status dan approval; notifikasi komentar tidak pernah dikirim lewat email
+      enum: [mention, assigned, shared, task_changes, report]
+    Account:
+      type: object
+      required: [name, created_at, role, joined_at, administrators, seats]
+      properties:
+        name: { type: string }
+        created_at: { type: string, format: date-time }
+        role: { $ref: '#/components/schemas/UserType' }
+        joined_at: { type: string, format: date-time }
+        administrators:
+          type: array
+          items:
+            type: object
+            required: [id, name, email]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              email: { type: string, format: email }
+        seats: { $ref: '#/components/schemas/Seats' }
     SidebarKey:
       type: string
       enum: [created_by_me, workload, calendars, dashboards, my_todo, request_forms, timesheets, reports, stream, starred]
@@ -3393,6 +3592,25 @@ components:
     SpaceKind:
       type: string
       enum: [shared, personal]
+    SpaceTemplate:
+      type: object
+      required: [id, name, category, description, version, compatible, counts]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        category: { type: string }
+        description: { type: string }
+        version: { type: integer }
+        compatible: { type: boolean, description: false bila template ditulis untuk versi PMS yang lebih baru }
+        counts:
+          type: object
+          required: [projects, tasks, views, forms, custom_fields]
+          properties:
+            projects: { type: integer }
+            tasks: { type: integer }
+            views: { type: integer }
+            forms: { type: integer }
+            custom_fields: { type: integer }
     Space:
       type: object
       required: [id, name, kind, version]

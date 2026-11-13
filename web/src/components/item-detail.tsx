@@ -2,6 +2,7 @@ import { formatDate } from "@/lib/profile";
 import { lazy, Suspense, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
+import { StarButton } from "@/components/star-button";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { components } from "@/api/schema";
@@ -180,6 +181,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
     {parentId && !parent.isError && <Button size="sm" variant="ghost" onClick={() => onOpen(parentId)}>{parent.data?.item.title ?? t("items.parentLink")}</Button>}
     <div className="flex items-start justify-between gap-2">
       <h2 className="min-w-0 break-words text-xl font-semibold">{item.title}</h2>
+      <div className="flex shrink-0 items-center">
+      <StarButton itemId={item.id} />
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("items.actions")} />}><MoreHorizontal /></DropdownMenuTrigger>
         <DropdownMenuContent align="end">
@@ -197,6 +200,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
             onClick={() => { setError(""); setDeleting(true); }}>{t("items.delete")}</DropdownMenuItem>}
         </DropdownMenuContent>
       </DropdownMenu>
+      </div>
     </div>
     <FormError message={error} />
     {conflictDraft && <div className="space-y-2 rounded border border-warning bg-warning-subtle p-2">

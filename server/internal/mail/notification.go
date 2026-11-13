@@ -38,7 +38,8 @@ func (w *NotificationWorker) Work(ctx context.Context, job *river.Job[Notificati
 	defer tx.Rollback(ctx)
 	err = tx.QueryRow(ctx, `SELECT u.id::text,u.user_type::text,u.email::text,u.locale,
 COALESCE(n.item_id::text,''),COALESCE(n.space_id::text,'') FROM notifications n
-JOIN users u ON u.id=n.recipient_id AND u.status='active' WHERE n.id=$1::uuid AND n.kind<>'comment'`,
+JOIN users u ON u.id=n.recipient_id AND u.status='active' WHERE n.id=$1::uuid AND n.kind<>'comment'
+AND NOT (CASE n.kind WHEN 'mention' THEN 'mention' WHEN 'assigned' THEN 'assigned' WHEN 'shared' THEN 'shared' ELSE 'task_changes' END = ANY(u.email_muted))`,
 		job.Args.ID).Scan(&actor.ID, &actor.Type, &args.To, &args.Locale, &itemID, &spaceID)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil

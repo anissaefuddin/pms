@@ -138,6 +138,15 @@ func CreateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Act
 		return CustomField{}, err
 	}
 	defer tx.Rollback(ctx)
+	field, err := CreateCustomFieldTx(ctx, tx, actor, spaceID, input)
+	if err != nil {
+		return CustomField{}, err
+	}
+	return field, commitCustomFields(ctx, tx)
+}
+
+// CreateCustomFieldTx adds a field inside the caller's transaction; the caller commits.
+func CreateCustomFieldTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, spaceID string, input CustomFieldCreate) (CustomField, error) {
 	id, err := fieldSpace(ctx, tx, actor, spaceID, true)
 	if err != nil {
 		return CustomField{}, writeError(err)
@@ -156,10 +165,7 @@ func CreateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Act
 	field, err := scanCustomField(tx.QueryRow(ctx, `INSERT INTO custom_fields(space_id,name,type,options,position,config)
 SELECT $1::uuid,$2,$3,$4,COALESCE(max(position)+1,0),$5 FROM custom_fields WHERE space_id=$1::uuid
 RETURNING `+customFieldColumns, id, name, input.Type, options, input.Config))
-	if err != nil {
-		return CustomField{}, writeError(err)
-	}
-	return field, commitCustomFields(ctx, tx)
+	return field, writeError(err)
 }
 
 func UpdateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID, fieldID string, input CustomFieldUpdate) (CustomField, error) {

@@ -57,6 +57,23 @@ Setelah update, periksa berurutan: readiness; login; Settings → Workflows memu
 
 Hal yang perlu diketahui operator: akun placeholder tidak muncul di daftar user dan tidak memakai seat; jangan diaktifkan atau dihapus. Pengisi publik tidak punya akun, jadi email konfirmasi dan email perubahan status adalah satu-satunya kabar yang mereka terima. Rollback: sama seperti M2, restore backup pra-update dengan image M2. Data M3 (form, approval, tautan publik) hilang bersama restore. Update M3 dari instance M2 belum dilatih pada instance pilot.
 
+## Update ke M5 (migrasi 00034–00043)
+
+M5 menambah migrasi maju sampai `00043` (M4 memakai `00034`–`00037`). Tidak ada migrasi turun: jalan mundur hanya memulihkan backup pra-update, jadi jalankan `./backup.sh` dan periksa arsipnya sebelum `./update.sh`.
+
+| Migrasi | Isi | Dampak ke data M3 |
+|---|---|---|
+| `00034`–`00037` | time entry, view Timelog, ekspor dan impor Excel | tidak ada |
+| `00038` | `dashboards`, `widgets` | tidak ada |
+| `00039` | indeks `item_locations(space_id,item_id)` dan `items(due_date)` | membangun indeks; pada data besar butuh beberapa detik |
+| `00040`, `00042` | `reports`, `report_subscriptions` (+ `last_sent_at`) | tidak ada |
+| `00041` | batasan `widgets.config` | tidak ada |
+| `00043` | `item_stars` | tidak ada |
+
+Tidak ada variabel konfigurasi baru. Langganan report dikirim lewat SMTP yang sama dan memakai `PUBLIC_URL` untuk tautan; tanpa `SMTP_HOST` email hanya dicatat di log. Job `report_digest` berjalan tiap 15 menit di proses `serve` (satu proses River).
+
+Setelah update, periksa berurutan: readiness; login; More → Dashboards terbuka; buat dashboard, tambah widget daftar (template Overdue) dan pie, lalu muat ulang; More → Reports, buat report dari template Active tasks by assignee, ekspor CSV; berlangganan pada jam berikutnya di zona waktu Anda dan pastikan email tiba (atau tercatat di log); beri bintang pada satu task lalu buka More → Starred. Rollback: restore backup pra-update dengan image M3; dashboard, report, dan bintang yang dibuat sesudah update ikut hilang. Update M3 ke M5 belum dilatih pada instance pilot, dan pengiriman email langganan belum diuji ke SMTP sungguhan.
+
 ## Backup dan restore
 
 - Jadwalkan `./backup.sh` setiap hari. Periksa pasangan dump database, arsip file, dan manifest dengan timestamp yang sama. Atur `BACKUP_REMOTE` ke tujuan off-server dan lakukan latihan restore pada instance terisolasi. Catat waktu mulai, waktu instance siap, serta hasil unduh lampiran.

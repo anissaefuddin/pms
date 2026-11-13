@@ -4,10 +4,11 @@ import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-q
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import { formatDateTime, useProfile } from "@/lib/profile";
-import { recycleKey, restoreItem } from "@/lib/recycle";
+import { emptyRecycleBin, recycleKey, restoreItem } from "@/lib/recycle";
 import type { ItemPage } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/auth/form-error";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export const Route = createFileRoute("/_app/recycle-bin")({ component: RecycleBin });
 const types = ["task", "project", "folder"] as const;
@@ -30,6 +31,8 @@ function RecycleBin() {
     getNextPageParam: (page) => page.next_cursor ?? undefined,
   });
   const restore = useMutation({ mutationFn: (id: string) => restoreItem(client, id) });
+  const [confirming, setConfirming] = useState(false);
+  const empty = useMutation({ mutationFn: () => emptyRecycleBin(client), onSuccess: () => setConfirming(false) });
   const items = bin.data?.pages.flatMap((page) => page.items) ?? [];
   return <main className="space-y-4 p-6">
     <h1 className="text-xl font-semibold">{t("nav.recycle.label")}</h1>
@@ -47,6 +50,7 @@ function RecycleBin() {
         </select>
       </label>
     </div>
+    {items.length > 0 && <Button variant="outline" onClick={() => setConfirming(true)}>{t("nav.recycle.purge.action")}</Button>}
     {restore.error && <FormError message={restore.error.message} />}
     {bin.isPending && <p role="status">{t("items.loading")}</p>}
     {bin.isError && <div><FormError message={t("items.loadError")} />
@@ -68,5 +72,8 @@ function RecycleBin() {
     </li>)}</ul>
     {bin.hasNextPage && <Button variant="outline" disabled={bin.isFetchingNextPage}
       onClick={() => void bin.fetchNextPage()}>{t("nav.recycle.more")}</Button>}
+    <ConfirmDialog open={confirming} onOpenChange={setConfirming} title={t("nav.recycle.purge.title")}
+      description={t("nav.recycle.purge.body")} confirmLabel={t("nav.recycle.purge.confirm")} cancelLabel={t("items.cancel")}
+      busy={empty.isPending} error={empty.error?.message} onConfirm={() => empty.mutate()} />
   </main>;
 }

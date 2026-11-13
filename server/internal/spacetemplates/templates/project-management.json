@@ -1,0 +1,23 @@
+{
+  "format": 1, "version": 1, "id": "project-management", "name": "Project plan", "category": "Project management",
+  "description": "A project with phases, a risk field, and a request form for change requests.",
+  "custom_fields": [
+    {"name": "Risk", "type": "single_select", "options": [
+      {"label": "Low", "color": "#16A34A"}, {"label": "Medium", "color": "#D97706"}, {"label": "High", "color": "#DC2626"}]}
+  ],
+  "projects": [
+    {"title": "Project plan", "default_view": "board", "tasks": [
+      {"title": "Define scope and goals", "importance": "high", "duration_days": 2},
+      {"title": "Plan milestones", "duration_days": 2},
+      {"title": "Kick-off meeting", "duration_days": 1},
+      {"title": "Weekly status update", "importance": "low", "duration_days": 1}
+    ]}
+  ],
+  "views": [{"type": "gantt", "name": "Timeline"}],
+  "forms": [
+    {"name": "Change request", "description": "Ask for a change to the plan.", "project": 0, "title_key": "summary", "definition": {"pages": [
+      {"title": "Request", "elements": [
+        {"key": "summary", "kind": "single_line", "label": "What should change?", "required": true},
+        {"key": "reason", "kind": "paragraph", "label": "Why is it needed?"}]}]}}
+  ]
+}

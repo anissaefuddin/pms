@@ -214,6 +214,7 @@ const (
 	AnalyticsQueryMetricEffortMinutes   AnalyticsQueryMetric = "effort_minutes"
 	AnalyticsQueryMetricMinutes         AnalyticsQueryMetric = "minutes"
 	AnalyticsQueryMetricSumField        AnalyticsQueryMetric = "sum_field"
+	AnalyticsQueryMetricUtilization     AnalyticsQueryMetric = "utilization"
 )
 
 // Valid indicates whether the value is a known member of the AnalyticsQueryMetric enum.
@@ -228,6 +229,8 @@ func (e AnalyticsQueryMetric) Valid() bool {
 	case AnalyticsQueryMetricMinutes:
 		return true
 	case AnalyticsQueryMetricSumField:
+		return true
+	case AnalyticsQueryMetricUtilization:
 		return true
 	default:
 		return false
@@ -588,6 +591,7 @@ const (
 	DashboardWidgetConfigTemplateFollowed DashboardWidgetConfigTemplate = "followed"
 	DashboardWidgetConfigTemplateMyTasks  DashboardWidgetConfigTemplate = "my_tasks"
 	DashboardWidgetConfigTemplateOverdue  DashboardWidgetConfigTemplate = "overdue"
+	DashboardWidgetConfigTemplateStarred  DashboardWidgetConfigTemplate = "starred"
 )
 
 // Valid indicates whether the value is a known member of the DashboardWidgetConfigTemplate enum.
@@ -600,6 +604,8 @@ func (e DashboardWidgetConfigTemplate) Valid() bool {
 	case DashboardWidgetConfigTemplateMyTasks:
 		return true
 	case DashboardWidgetConfigTemplateOverdue:
+		return true
+	case DashboardWidgetConfigTemplateStarred:
 		return true
 	default:
 		return false
@@ -657,6 +663,33 @@ func (e DependencyType) Valid() bool {
 	case SF:
 		return true
 	case SS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for EmailGroup.
+const (
+	EmailGroupAssigned    EmailGroup = "assigned"
+	EmailGroupMention     EmailGroup = "mention"
+	EmailGroupReport      EmailGroup = "report"
+	EmailGroupShared      EmailGroup = "shared"
+	EmailGroupTaskChanges EmailGroup = "task_changes"
+)
+
+// Valid indicates whether the value is a known member of the EmailGroup enum.
+func (e EmailGroup) Valid() bool {
+	switch e {
+	case EmailGroupAssigned:
+		return true
+	case EmailGroupMention:
+		return true
+	case EmailGroupReport:
+		return true
+	case EmailGroupShared:
+		return true
+	case EmailGroupTaskChanges:
 		return true
 	default:
 		return false
@@ -1362,6 +1395,39 @@ func (e ReportCreateSharing) Valid() bool {
 	}
 }
 
+// Defines values for ReportCreateTemplate.
+const (
+	ReportCreateTemplateActiveTasksByAssignee ReportCreateTemplate = "active_tasks_by_assignee"
+	ReportCreateTemplateDueThisMonth          ReportCreateTemplate = "due_this_month"
+	ReportCreateTemplateOverdue               ReportCreateTemplate = "overdue"
+	ReportCreateTemplateTimeSpent             ReportCreateTemplate = "time_spent"
+	ReportCreateTemplateUnassigned            ReportCreateTemplate = "unassigned"
+	ReportCreateTemplateUtilization           ReportCreateTemplate = "utilization"
+	ReportCreateTemplateWeeklyProjectStatus   ReportCreateTemplate = "weekly_project_status"
+)
+
+// Valid indicates whether the value is a known member of the ReportCreateTemplate enum.
+func (e ReportCreateTemplate) Valid() bool {
+	switch e {
+	case ReportCreateTemplateActiveTasksByAssignee:
+		return true
+	case ReportCreateTemplateDueThisMonth:
+		return true
+	case ReportCreateTemplateOverdue:
+		return true
+	case ReportCreateTemplateTimeSpent:
+		return true
+	case ReportCreateTemplateUnassigned:
+		return true
+	case ReportCreateTemplateUtilization:
+		return true
+	case ReportCreateTemplateWeeklyProjectStatus:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ReportDefinitionLayout.
 const (
 	ReportDefinitionLayoutColumn ReportDefinitionLayout = "column"
@@ -1475,40 +1541,40 @@ func (e ShareTargetType) Valid() bool {
 
 // Defines values for SidebarKey.
 const (
-	Calendars    SidebarKey = "calendars"
-	CreatedByMe  SidebarKey = "created_by_me"
-	Dashboards   SidebarKey = "dashboards"
-	MyTodo       SidebarKey = "my_todo"
-	Reports      SidebarKey = "reports"
-	RequestForms SidebarKey = "request_forms"
-	Starred      SidebarKey = "starred"
-	Stream       SidebarKey = "stream"
-	Timesheets   SidebarKey = "timesheets"
-	Workload     SidebarKey = "workload"
+	SidebarKeyCalendars    SidebarKey = "calendars"
+	SidebarKeyCreatedByMe  SidebarKey = "created_by_me"
+	SidebarKeyDashboards   SidebarKey = "dashboards"
+	SidebarKeyMyTodo       SidebarKey = "my_todo"
+	SidebarKeyReports      SidebarKey = "reports"
+	SidebarKeyRequestForms SidebarKey = "request_forms"
+	SidebarKeyStarred      SidebarKey = "starred"
+	SidebarKeyStream       SidebarKey = "stream"
+	SidebarKeyTimesheets   SidebarKey = "timesheets"
+	SidebarKeyWorkload     SidebarKey = "workload"
 )
 
 // Valid indicates whether the value is a known member of the SidebarKey enum.
 func (e SidebarKey) Valid() bool {
 	switch e {
-	case Calendars:
+	case SidebarKeyCalendars:
 		return true
-	case CreatedByMe:
+	case SidebarKeyCreatedByMe:
 		return true
-	case Dashboards:
+	case SidebarKeyDashboards:
 		return true
-	case MyTodo:
+	case SidebarKeyMyTodo:
 		return true
-	case Reports:
+	case SidebarKeyReports:
 		return true
-	case RequestForms:
+	case SidebarKeyRequestForms:
 		return true
-	case Starred:
+	case SidebarKeyStarred:
 		return true
-	case Stream:
+	case SidebarKeyStream:
 		return true
-	case Timesheets:
+	case SidebarKeyTimesheets:
 		return true
-	case Workload:
+	case SidebarKeyWorkload:
 		return true
 	default:
 		return false
@@ -1890,6 +1956,57 @@ func (e ListRecycleBinParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for ListReportTemplates200JSONResponseBodyItemsKey.
+const (
+	ListReportTemplates200JSONResponseBodyItemsKeyActiveTasksByAssignee ListReportTemplates200JSONResponseBodyItemsKey = "active_tasks_by_assignee"
+	ListReportTemplates200JSONResponseBodyItemsKeyDueThisMonth          ListReportTemplates200JSONResponseBodyItemsKey = "due_this_month"
+	ListReportTemplates200JSONResponseBodyItemsKeyOverdue               ListReportTemplates200JSONResponseBodyItemsKey = "overdue"
+	ListReportTemplates200JSONResponseBodyItemsKeyTimeSpent             ListReportTemplates200JSONResponseBodyItemsKey = "time_spent"
+	ListReportTemplates200JSONResponseBodyItemsKeyUnassigned            ListReportTemplates200JSONResponseBodyItemsKey = "unassigned"
+	ListReportTemplates200JSONResponseBodyItemsKeyUtilization           ListReportTemplates200JSONResponseBodyItemsKey = "utilization"
+	ListReportTemplates200JSONResponseBodyItemsKeyWeeklyProjectStatus   ListReportTemplates200JSONResponseBodyItemsKey = "weekly_project_status"
+)
+
+// Valid indicates whether the value is a known member of the ListReportTemplates200JSONResponseBodyItemsKey enum.
+func (e ListReportTemplates200JSONResponseBodyItemsKey) Valid() bool {
+	switch e {
+	case ListReportTemplates200JSONResponseBodyItemsKeyActiveTasksByAssignee:
+		return true
+	case ListReportTemplates200JSONResponseBodyItemsKeyDueThisMonth:
+		return true
+	case ListReportTemplates200JSONResponseBodyItemsKeyOverdue:
+		return true
+	case ListReportTemplates200JSONResponseBodyItemsKeyTimeSpent:
+		return true
+	case ListReportTemplates200JSONResponseBodyItemsKeyUnassigned:
+		return true
+	case ListReportTemplates200JSONResponseBodyItemsKeyUtilization:
+		return true
+	case ListReportTemplates200JSONResponseBodyItemsKeyWeeklyProjectStatus:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListReportTemplates200JSONResponseBodyItemsLayout.
+const (
+	ListReportTemplates200JSONResponseBodyItemsLayoutColumn ListReportTemplates200JSONResponseBodyItemsLayout = "column"
+	ListReportTemplates200JSONResponseBodyItemsLayoutTable  ListReportTemplates200JSONResponseBodyItemsLayout = "table"
+)
+
+// Valid indicates whether the value is a known member of the ListReportTemplates200JSONResponseBodyItemsLayout enum.
+func (e ListReportTemplates200JSONResponseBodyItemsLayout) Valid() bool {
+	switch e {
+	case ListReportTemplates200JSONResponseBodyItemsLayoutColumn:
+		return true
+	case ListReportTemplates200JSONResponseBodyItemsLayoutTable:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetReportResult200JSONResponseBodyLayout.
 const (
 	GetReportResult200JSONResponseBodyLayoutColumn GetReportResult200JSONResponseBodyLayout = "column"
@@ -1944,6 +2061,27 @@ func (e SearchParamsSort) Valid() bool {
 	case SearchParamsSortDateModified:
 		return true
 	case SearchParamsSortRelevance:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListStars200JSONResponseBodyItemsType.
+const (
+	ListStars200JSONResponseBodyItemsTypeFolder  ListStars200JSONResponseBodyItemsType = "folder"
+	ListStars200JSONResponseBodyItemsTypeProject ListStars200JSONResponseBodyItemsType = "project"
+	ListStars200JSONResponseBodyItemsTypeTask    ListStars200JSONResponseBodyItemsType = "task"
+)
+
+// Valid indicates whether the value is a known member of the ListStars200JSONResponseBodyItemsType enum.
+func (e ListStars200JSONResponseBodyItemsType) Valid() bool {
+	switch e {
+	case ListStars200JSONResponseBodyItemsTypeFolder:
+		return true
+	case ListStars200JSONResponseBodyItemsTypeProject:
+		return true
+	case ListStars200JSONResponseBodyItemsTypeTask:
 		return true
 	default:
 		return false
@@ -2024,6 +2162,20 @@ type AcceptInvitationRequest struct {
 // AcceptInvitationRequestAcceptTerms defines model for AcceptInvitationRequest.AcceptTerms.
 type AcceptInvitationRequestAcceptTerms bool
 
+// Account defines model for Account.
+type Account struct {
+	Administrators []struct {
+		Email openapi_types.Email `json:"email"`
+		Id    openapi_types.UUID  `json:"id"`
+		Name  string              `json:"name"`
+	} `json:"administrators"`
+	CreatedAt time.Time `json:"created_at"`
+	JoinedAt  time.Time `json:"joined_at"`
+	Name      string    `json:"name"`
+	Role      UserType  `json:"role"`
+	Seats     Seats     `json:"seats"`
+}
+
 // Activity defines model for Activity.
 type Activity struct {
 	// Action Example: item.updated
@@ -2051,16 +2203,19 @@ type AnalyticsFilters struct {
 	AwaitingMyReview *bool                           `json:"awaiting_my_review,omitempty"`
 	Billing          *AnalyticsFiltersBilling        `json:"billing,omitempty"`
 	DueFrom          *openapi_types.Date             `json:"due_from,omitempty"`
+	DueThisMonth     *bool                           `json:"due_this_month,omitempty"`
 	DueThisWeek      *bool                           `json:"due_this_week,omitempty"`
 	DueTo            *openapi_types.Date             `json:"due_to,omitempty"`
 	EffortMax        *int                            `json:"effort_max,omitempty"`
 	EffortMin        *int                            `json:"effort_min,omitempty"`
 	EntryFrom        *openapi_types.Date             `json:"entry_from,omitempty"`
+	EntryThisMonth   *bool                           `json:"entry_this_month,omitempty"`
 	EntryTo          *openapi_types.Date             `json:"entry_to,omitempty"`
 	Followed         *bool                           `json:"followed,omitempty"`
 	Importance       *[]AnalyticsFiltersImportance   `json:"importance,omitempty"`
 	NoDueDate        *bool                           `json:"no_due_date,omitempty"`
 	Overdue          *bool                           `json:"overdue,omitempty"`
+	Starred          *bool                           `json:"starred,omitempty"`
 	StatusGroups     *[]AnalyticsFiltersStatusGroups `json:"status_groups,omitempty"`
 	Unassigned       *bool                           `json:"unassigned,omitempty"`
 }
@@ -2411,7 +2566,7 @@ type DashboardWidgetConfig struct {
 	// ShowLegend Untuk pie, column, bar, dan line
 	ShowLegend *bool `json:"show_legend,omitempty"`
 
-	// Template Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang
+	// Template Khusus task_list (DASH-02)
 	Template *DashboardWidgetConfigTemplate `json:"template,omitempty"`
 }
 
@@ -2421,7 +2576,7 @@ type DashboardWidgetConfigList string
 // DashboardWidgetConfigPieStyle Khusus pie
 type DashboardWidgetConfigPieStyle string
 
-// DashboardWidgetConfigTemplate Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang
+// DashboardWidgetConfigTemplate Khusus task_list (DASH-02)
 type DashboardWidgetConfigTemplate string
 
 // DashboardWidgetInput defines model for DashboardWidgetInput.
@@ -2437,6 +2592,9 @@ type DashboardWidgetInputType string
 
 // DependencyType defines model for DependencyType.
 type DependencyType string
+
+// EmailGroup task_changes mencakup perubahan status dan approval; notifikasi komentar tidak pernah dikirim lewat email
+type EmailGroup string
 
 // ExcelExport defines model for ExcelExport.
 type ExcelExport struct {
@@ -2883,24 +3041,36 @@ type Me struct {
 		CreateSpace *bool `json:"create_space,omitempty"`
 		ManageUsers *bool `json:"manage_users,omitempty"`
 	} `json:"capabilities"`
-	CommentShortcut *MeCommentShortcut  `json:"comment_shortcut,omitempty"`
-	Company         *string             `json:"company,omitempty"`
-	Country         *string             `json:"country,omitempty"`
-	DateFormat      MeDateFormat        `json:"date_format"`
-	Density         *MeDensity          `json:"density,omitempty"`
-	Department      *string             `json:"department,omitempty"`
-	Email           openapi_types.Email `json:"email"`
-	FirstName       string              `json:"first_name"`
-	Id              openapi_types.UUID  `json:"id"`
-	JobTitle        *string             `json:"job_title,omitempty"`
-	LastLoginAt     *time.Time          `json:"last_login_at,omitempty"`
-	LastName        string              `json:"last_name"`
+	CommentShortcut *MeCommentShortcut `json:"comment_shortcut,omitempty"`
+	Company         *string            `json:"company,omitempty"`
+	Country         *string            `json:"country,omitempty"`
+	DateFormat      MeDateFormat       `json:"date_format"`
+
+	// DefaultTaskDurationDays Durasi awal task baru (SET-03)
+	DefaultTaskDurationDays *int `json:"default_task_duration_days,omitempty"`
+
+	// DefaultTaskEffortMinutes Effort awal task baru (SET-03)
+	DefaultTaskEffortMinutes *int                `json:"default_task_effort_minutes,omitempty"`
+	Density                  *MeDensity          `json:"density,omitempty"`
+	Department               *string             `json:"department,omitempty"`
+	Email                    openapi_types.Email `json:"email"`
+
+	// EmailMuted Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif
+	EmailMuted  *[]EmailGroup      `json:"email_muted,omitempty"`
+	FirstName   string             `json:"first_name"`
+	Id          openapi_types.UUID `json:"id"`
+	JobTitle    *string            `json:"job_title,omitempty"`
+	LastLoginAt *time.Time         `json:"last_login_at,omitempty"`
+	LastName    string             `json:"last_name"`
 
 	// Locale Example: en
-	Locale          string             `json:"locale"`
-	Location        *string            `json:"location,omitempty"`
-	PersonalSpaceId openapi_types.UUID `json:"personal_space_id"`
-	Phone           *string            `json:"phone,omitempty"`
+	Locale   string  `json:"locale"`
+	Location *string `json:"location,omitempty"`
+
+	// OnboardingPending true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati
+	OnboardingPending bool               `json:"onboarding_pending"`
+	PersonalSpaceId   openapi_types.UUID `json:"personal_space_id"`
+	Phone             *string            `json:"phone,omitempty"`
 
 	// SidebarHidden Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
 	SidebarHidden *[]SidebarKey `json:"sidebar_hidden,omitempty"`
@@ -2934,23 +3104,26 @@ type MeWeekStart string
 
 // MeUpdate defines model for MeUpdate.
 type MeUpdate struct {
-	CommentShortcut *MeUpdateCommentShortcut `json:"comment_shortcut,omitempty"`
-	Company         *string                  `json:"company,omitempty"`
-	Country         *string                  `json:"country,omitempty"`
-	DateFormat      *MeUpdateDateFormat      `json:"date_format,omitempty"`
-	Density         *MeUpdateDensity         `json:"density,omitempty"`
-	Department      *string                  `json:"department,omitempty"`
-	FirstName       *string                  `json:"first_name,omitempty"`
-	JobTitle        *string                  `json:"job_title,omitempty"`
-	LastName        *string                  `json:"last_name,omitempty"`
-	Locale          *MeUpdateLocale          `json:"locale,omitempty"`
-	Location        *string                  `json:"location,omitempty"`
-	Phone           *string                  `json:"phone,omitempty"`
-	SidebarHidden   *[]SidebarKey            `json:"sidebar_hidden,omitempty"`
-	Theme           *MeUpdateTheme           `json:"theme,omitempty"`
-	TimeFormat      *MeUpdateTimeFormat      `json:"time_format,omitempty"`
-	Timezone        *string                  `json:"timezone,omitempty"`
-	WeekStart       *MeUpdateWeekStart       `json:"week_start,omitempty"`
+	CommentShortcut          *MeUpdateCommentShortcut `json:"comment_shortcut,omitempty"`
+	Company                  *string                  `json:"company,omitempty"`
+	Country                  *string                  `json:"country,omitempty"`
+	DateFormat               *MeUpdateDateFormat      `json:"date_format,omitempty"`
+	DefaultTaskDurationDays  *int                     `json:"default_task_duration_days,omitempty"`
+	DefaultTaskEffortMinutes *int                     `json:"default_task_effort_minutes,omitempty"`
+	Density                  *MeUpdateDensity         `json:"density,omitempty"`
+	Department               *string                  `json:"department,omitempty"`
+	EmailMuted               *[]EmailGroup            `json:"email_muted,omitempty"`
+	FirstName                *string                  `json:"first_name,omitempty"`
+	JobTitle                 *string                  `json:"job_title,omitempty"`
+	LastName                 *string                  `json:"last_name,omitempty"`
+	Locale                   *MeUpdateLocale          `json:"locale,omitempty"`
+	Location                 *string                  `json:"location,omitempty"`
+	Phone                    *string                  `json:"phone,omitempty"`
+	SidebarHidden            *[]SidebarKey            `json:"sidebar_hidden,omitempty"`
+	Theme                    *MeUpdateTheme           `json:"theme,omitempty"`
+	TimeFormat               *MeUpdateTimeFormat      `json:"time_format,omitempty"`
+	Timezone                 *string                  `json:"timezone,omitempty"`
+	WeekStart                *MeUpdateWeekStart       `json:"week_start,omitempty"`
 }
 
 // MeUpdateCommentShortcut defines model for MeUpdate.CommentShortcut.
@@ -3099,10 +3272,16 @@ type ReportCreate struct {
 
 	// SpaceId Null untuk report pribadi
 	SpaceId *openapi_types.UUID `json:"space_id,omitempty"`
+
+	// Template Pakai definisi template; tidak boleh bersama definition
+	Template *ReportCreateTemplate `json:"template,omitempty"`
 }
 
 // ReportCreateSharing defines model for ReportCreate.Sharing.
 type ReportCreateSharing string
+
+// ReportCreateTemplate Pakai definisi template; tidak boleh bersama definition
+type ReportCreateTemplate string
 
 // ReportDefinition defines model for ReportDefinition.
 type ReportDefinition struct {
@@ -3261,6 +3440,25 @@ type SpaceCreate struct {
 
 // SpaceKind defines model for SpaceKind.
 type SpaceKind string
+
+// SpaceTemplate defines model for SpaceTemplate.
+type SpaceTemplate struct {
+	Category string `json:"category"`
+
+	// Compatible false bila template ditulis untuk versi PMS yang lebih baru
+	Compatible bool `json:"compatible"`
+	Counts     struct {
+		CustomFields int `json:"custom_fields"`
+		Forms        int `json:"forms"`
+		Projects     int `json:"projects"`
+		Tasks        int `json:"tasks"`
+		Views        int `json:"views"`
+	} `json:"counts"`
+	Description string `json:"description"`
+	Id          string `json:"id"`
+	Name        string `json:"name"`
+	Version     int    `json:"version"`
+}
 
 // SpaceUpdate defines model for SpaceUpdate.
 type SpaceUpdate struct {
@@ -3577,6 +3775,11 @@ type VersionedShareList struct {
 // ViewList defines model for ViewList.
 type ViewList struct {
 	Items []View `json:"items"`
+}
+
+// RenameAccountJSONBody defines parameters for RenameAccount.
+type RenameAccountJSONBody struct {
+	Name string `json:"name"`
 }
 
 // UpdateApprovalParams defines parameters for UpdateApproval.
@@ -3907,6 +4110,12 @@ type ListRecycleBinParams struct {
 // ListRecycleBinParamsSort defines parameters for ListRecycleBin.
 type ListRecycleBinParamsSort string
 
+// ListReportTemplates200JSONResponseBodyItemsKey defines parameters for ListReportTemplates.
+type ListReportTemplates200JSONResponseBodyItemsKey string
+
+// ListReportTemplates200JSONResponseBodyItemsLayout defines parameters for ListReportTemplates.
+type ListReportTemplates200JSONResponseBodyItemsLayout string
+
 // ListReportsParams defines parameters for ListReports.
 type ListReportsParams struct {
 	SpaceId *openapi_types.UUID `form:"space_id,omitempty" json:"space_id,omitempty"`
@@ -3956,6 +4165,15 @@ type ReplaceWorkScheduleParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// CreateSpaceFromTemplateJSONBody defines parameters for CreateSpaceFromTemplate.
+type CreateSpaceFromTemplateJSONBody struct {
+	// Name Default nama template
+	Name *string `json:"name,omitempty"`
+
+	// RequestId Kunci idempotensi dari klien
+	RequestId openapi_types.UUID `json:"request_id"`
+}
+
 // UpdateSpaceParams defines parameters for UpdateSpace.
 type UpdateSpaceParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -4002,6 +4220,9 @@ type ReplaceSpaceSharesParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
 }
+
+// ListStars200JSONResponseBodyItemsType defines parameters for ListStars.
+type ListStars200JSONResponseBodyItemsType string
 
 // DeleteStatusParams defines parameters for DeleteStatus.
 type DeleteStatusParams struct {
@@ -4097,6 +4318,9 @@ type RenameWorkflowJSONBody struct {
 type ReorderStatusesJSONBody struct {
 	StatusIds []openapi_types.UUID `json:"status_ids"`
 }
+
+// RenameAccountJSONRequestBody defines body for RenameAccount for application/json ContentType.
+type RenameAccountJSONRequestBody RenameAccountJSONBody
 
 // RunAnalyticsQueryJSONRequestBody defines body for RunAnalyticsQuery for application/json ContentType.
 type RunAnalyticsQueryJSONRequestBody = AnalyticsQuery
@@ -4238,6 +4462,9 @@ type SubscribeReportJSONRequestBody = ReportSubscription
 
 // ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
 type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
+
+// CreateSpaceFromTemplateJSONRequestBody defines body for CreateSpaceFromTemplate for application/json ContentType.
+type CreateSpaceFromTemplateJSONRequestBody CreateSpaceFromTemplateJSONBody
 
 // CreateSpaceJSONRequestBody defines body for CreateSpace for application/json ContentType.
 type CreateSpaceJSONRequestBody = SpaceCreate
@@ -4562,6 +4789,12 @@ func (t *CustomFieldValues_AdditionalProperties) UnmarshalJSON(b []byte) error {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
+	// (GET /account)
+	GetAccount(w http.ResponseWriter, r *http.Request)
+	// RenameAccount Ubah nama workspace (hanya admin)
+	// (PATCH /account)
+	RenameAccount(w http.ResponseWriter, r *http.Request)
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(w http.ResponseWriter, r *http.Request)
@@ -4769,6 +5002,12 @@ type ServerInterface interface {
 	// ReplaceItemShares Ganti seluruh daftar share item (SPC-11)
 	// (PUT /items/{itemId}/shares)
 	ReplaceItemShares(w http.ResponseWriter, r *http.Request, itemId ItemId, params ReplaceItemSharesParams)
+	// UnstarItem Cabut bintang (idempoten); hanya menyentuh baris milik pemanggil
+	// (DELETE /items/{itemId}/star)
+	UnstarItem(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
+	// StarItem Beri bintang (idempoten); butuh hak View, jika tidak 404
+	// (PUT /items/{itemId}/star)
+	StarItem(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
 	// ListProjectTimeEntries Time entry sendiri atau entry pada lokasi Project dengan akses penuh
 	// (GET /items/{itemId}/time-entries)
 	ListProjectTimeEntries(w http.ResponseWriter, r *http.Request, itemId ItemId, params ListProjectTimeEntriesParams)
@@ -4823,6 +5062,9 @@ type ServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(w http.ResponseWriter, r *http.Request, notificationId openapi_types.UUID)
+	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
+	// (POST /onboarding/complete)
+	CompleteOnboarding(w http.ResponseWriter, r *http.Request)
 	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (GET /public/forms/{token})
 	GetPublicForm(w http.ResponseWriter, r *http.Request, token string)
@@ -4832,12 +5074,18 @@ type ServerInterface interface {
 	// Readyz Database terjangkau dan migrasi terpasang
 	// (GET /readyz)
 	Readyz(w http.ResponseWriter, r *http.Request)
+	// EmptyRecycleBin Hapus permanen semua entri yang boleh dihapus pemanggil (BIN-03); tidak bisa dibatalkan
+	// (DELETE /recycle-bin)
+	EmptyRecycleBin(w http.ResponseWriter, r *http.Request)
 	// ListRecycleBin Item yang dihapus dan masih bisa dipulihkan (BIN-01)
 	// (GET /recycle-bin)
 	ListRecycleBin(w http.ResponseWriter, r *http.Request, params ListRecycleBinParams)
 	// RestoreItem Pulihkan item beserta turunannya (BIN-02)
 	// (POST /recycle-bin/{itemId}/restore)
 	RestoreItem(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// ListReportTemplates Template report siap pakai (RPT-01); namanya diterjemahkan klien dari key
+	// (GET /report-templates)
+	ListReportTemplates(w http.ResponseWriter, r *http.Request)
 	// ListReports Report milik sendiri dan report Space yang dibagikan dan terlihat
 	// (GET /reports)
 	ListReports(w http.ResponseWriter, r *http.Request, params ListReportsParams)
@@ -4877,6 +5125,12 @@ type ServerInterface interface {
 	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
 	// (PUT /settings/work-schedule)
 	ReplaceWorkSchedule(w http.ResponseWriter, r *http.Request, params ReplaceWorkScheduleParams)
+	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
+	// (GET /space-templates)
+	ListSpaceTemplates(w http.ResponseWriter, r *http.Request)
+	// CreateSpaceFromTemplate Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18)
+	// (POST /space-templates/{templateId}/spaces)
+	CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request, templateId string)
 	// ListSpaces Space yang bisa diakses, termasuk Personal space (SPC-01, NAV-01)
 	// (GET /spaces)
 	ListSpaces(w http.ResponseWriter, r *http.Request)
@@ -4931,6 +5185,9 @@ type ServerInterface interface {
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ListStars Item berbintang milik pemanggil yang masih dapat dilihat (NAV-02)
+	// (GET /stars)
+	ListStars(w http.ResponseWriter, r *http.Request)
 	// DeleteStatus Hapus status. Bila dipakai item, `move_to` (status lain di workflow yang sama) wajib
 	// (DELETE /statuses/{statusId})
 	DeleteStatus(w http.ResponseWriter, r *http.Request, statusId openapi_types.UUID, params DeleteStatusParams)
@@ -5022,6 +5279,34 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetAccount operation middleware
+func (siw *ServerInterfaceWrapper) GetAccount(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAccount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RenameAccount operation middleware
+func (siw *ServerInterfaceWrapper) RenameAccount(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RenameAccount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // RunAnalyticsQuery operation middleware
 func (siw *ServerInterfaceWrapper) RunAnalyticsQuery(w http.ResponseWriter, r *http.Request) {
@@ -7134,6 +7419,58 @@ func (siw *ServerInterfaceWrapper) ReplaceItemShares(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// UnstarItem operation middleware
+func (siw *ServerInterfaceWrapper) UnstarItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnstarItem(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StarItem operation middleware
+func (siw *ServerInterfaceWrapper) StarItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StarItem(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListProjectTimeEntries operation middleware
 func (siw *ServerInterfaceWrapper) ListProjectTimeEntries(w http.ResponseWriter, r *http.Request) {
 
@@ -7733,6 +8070,20 @@ func (siw *ServerInterfaceWrapper) UpdateNotification(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// CompleteOnboarding operation middleware
+func (siw *ServerInterfaceWrapper) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CompleteOnboarding(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPublicForm operation middleware
 func (siw *ServerInterfaceWrapper) GetPublicForm(w http.ResponseWriter, r *http.Request) {
 
@@ -7790,6 +8141,20 @@ func (siw *ServerInterfaceWrapper) Readyz(w http.ResponseWriter, r *http.Request
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Readyz(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EmptyRecycleBin operation middleware
+func (siw *ServerInterfaceWrapper) EmptyRecycleBin(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EmptyRecycleBin(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7888,6 +8253,20 @@ func (siw *ServerInterfaceWrapper) RestoreItem(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RestoreItem(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListReportTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListReportTemplates(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReportTemplates(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8357,6 +8736,46 @@ func (siw *ServerInterfaceWrapper) ReplaceWorkSchedule(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReplaceWorkSchedule(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceTemplates(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceTemplates(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSpaceFromTemplate operation middleware
+func (siw *ServerInterfaceWrapper) CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "templateId" -------------
+	var templateId string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "templateId", r.PathValue("templateId"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "templateId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSpaceFromTemplate(w, r, templateId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8969,6 +9388,20 @@ func (siw *ServerInterfaceWrapper) ListSpaceViews(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListSpaceViews(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListStars operation middleware
+func (siw *ServerInterfaceWrapper) ListStars(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListStars(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9952,6 +10385,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/analytics/query", wrapper.RunAnalyticsQuery)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stars", wrapper.ListStars)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/items/{itemId}/star", wrapper.UnstarItem)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/items/{itemId}/star", wrapper.StarItem)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/report-templates", wrapper.ListReportTemplates)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports", wrapper.ListReports)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/reports", wrapper.CreateReport)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/reports/{reportId}", wrapper.DeleteReport)
@@ -10009,11 +10446,16 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/deactivate", wrapper.DeactivateUser)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/reactivate", wrapper.ReactivateUser)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/invitation/resend", wrapper.ResendInvitation)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account", wrapper.GetAccount)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/account", wrapper.RenameAccount)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/onboarding/complete", wrapper.CompleteOnboarding)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/seats", wrapper.GetSeats)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/groups", wrapper.ListGroups)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/groups", wrapper.CreateGroup)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/groups/{groupId}", wrapper.DeleteGroup)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/groups/{groupId}", wrapper.ReplaceGroup)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-templates", wrapper.ListSpaceTemplates)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates/{templateId}/spaces", wrapper.CreateSpaceFromTemplate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces", wrapper.ListSpaces)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces", wrapper.CreateSpace)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.DeleteSpace)
@@ -10064,6 +10506,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/todo", wrapper.ListMyTodo)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/shared", wrapper.ListSharedWithMe)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/search", wrapper.Search)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/recycle-bin", wrapper.EmptyRecycleBin)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/recycle-bin", wrapper.ListRecycleBin)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/recycle-bin/{itemId}/restore", wrapper.RestoreItem)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/workflows", wrapper.ListWorkflows)
@@ -10162,6 +10605,79 @@ type VersionedShareListJSONResponse struct {
 
 type ViewListJSONResponse struct {
 	Items []View `json:"items"`
+}
+
+type GetAccountRequestObject struct {
+}
+
+type GetAccountResponseObject interface {
+	VisitGetAccountResponse(w http.ResponseWriter) error
+}
+
+type GetAccount200JSONResponse Account
+
+func (response GetAccount200JSONResponse) VisitGetAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameAccountRequestObject struct {
+	Body *RenameAccountJSONRequestBody
+}
+
+type RenameAccountResponseObject interface {
+	VisitRenameAccountResponse(w http.ResponseWriter) error
+}
+
+type RenameAccount200JSONResponse Account
+
+func (response RenameAccount200JSONResponse) VisitRenameAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameAccount403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RenameAccount403ApplicationProblemPlusJSONResponse) VisitRenameAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameAccount422ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameAccount422ApplicationProblemPlusJSONResponse) VisitRenameAccountResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type RunAnalyticsQueryRequestObject struct {
@@ -14332,6 +14848,54 @@ func (response ReplaceItemShares428ApplicationProblemPlusJSONResponse) VisitRepl
 	return err
 }
 
+type UnstarItemRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+}
+
+type UnstarItemResponseObject interface {
+	VisitUnstarItemResponse(w http.ResponseWriter) error
+}
+
+type UnstarItem204Response struct {
+}
+
+func (response UnstarItem204Response) VisitUnstarItemResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type StarItemRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+}
+
+type StarItemResponseObject interface {
+	VisitStarItemResponse(w http.ResponseWriter) error
+}
+
+type StarItem204Response struct {
+}
+
+func (response StarItem204Response) VisitStarItemResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type StarItem404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response StarItem404ApplicationProblemPlusJSONResponse) VisitStarItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListProjectTimeEntriesRequestObject struct {
 	ItemId ItemId `json:"itemId"`
 	Params ListProjectTimeEntriesParams
@@ -15087,6 +15651,37 @@ func (response UpdateNotification422ApplicationProblemPlusJSONResponse) VisitUpd
 	return err
 }
 
+type CompleteOnboardingRequestObject struct {
+}
+
+type CompleteOnboardingResponseObject interface {
+	VisitCompleteOnboardingResponse(w http.ResponseWriter) error
+}
+
+type CompleteOnboarding204Response struct {
+}
+
+func (response CompleteOnboarding204Response) VisitCompleteOnboardingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type CompleteOnboarding403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CompleteOnboarding403ApplicationProblemPlusJSONResponse) VisitCompleteOnboardingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetPublicFormRequestObject struct {
 	Token string `json:"token"`
 }
@@ -15260,6 +15855,29 @@ func (response Readyz503Response) VisitReadyzResponse(w http.ResponseWriter) err
 	return nil
 }
 
+type EmptyRecycleBinRequestObject struct {
+}
+
+type EmptyRecycleBinResponseObject interface {
+	VisitEmptyRecycleBinResponse(w http.ResponseWriter) error
+}
+
+type EmptyRecycleBin200JSONResponse struct {
+	Deleted int `json:"deleted"`
+}
+
+func (response EmptyRecycleBin200JSONResponse) VisitEmptyRecycleBinResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListRecycleBinRequestObject struct {
 	Params ListRecycleBinParams
 }
@@ -15360,6 +15978,33 @@ func (response RestoreItem409ApplicationProblemPlusJSONResponse) VisitRestoreIte
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReportTemplatesRequestObject struct {
+}
+
+type ListReportTemplatesResponseObject interface {
+	VisitListReportTemplatesResponse(w http.ResponseWriter) error
+}
+
+type ListReportTemplates200JSONResponse struct {
+	Items []struct {
+		Key    ListReportTemplates200JSONResponseBodyItemsKey    `json:"key"`
+		Layout ListReportTemplates200JSONResponseBodyItemsLayout `json:"layout"`
+		Query  AnalyticsQuery                                    `json:"query"`
+	} `json:"items"`
+}
+
+func (response ListReportTemplates200JSONResponse) VisitListReportTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -16204,6 +16849,120 @@ func (response ReplaceWorkSchedule428ApplicationProblemPlusJSONResponse) VisitRe
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceTemplatesRequestObject struct {
+}
+
+type ListSpaceTemplatesResponseObject interface {
+	VisitListSpaceTemplatesResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceTemplates200JSONResponse struct {
+	Items []SpaceTemplate `json:"items"`
+}
+
+func (response ListSpaceTemplates200JSONResponse) VisitListSpaceTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceFromTemplateRequestObject struct {
+	TemplateId string `json:"templateId"`
+	Body       *CreateSpaceFromTemplateJSONRequestBody
+}
+
+type CreateSpaceFromTemplateResponseObject interface {
+	VisitCreateSpaceFromTemplateResponse(w http.ResponseWriter) error
+}
+
+type CreateSpaceFromTemplate200JSONResponse Space
+
+func (response CreateSpaceFromTemplate200JSONResponse) VisitCreateSpaceFromTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceFromTemplate201ResponseHeaders struct {
+	ETag *string
+}
+
+type CreateSpaceFromTemplate201JSONResponse struct {
+	Body    Space
+	Headers CreateSpaceFromTemplate201ResponseHeaders
+}
+
+func (response CreateSpaceFromTemplate201JSONResponse) VisitCreateSpaceFromTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceFromTemplate403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateSpaceFromTemplate403ApplicationProblemPlusJSONResponse) VisitCreateSpaceFromTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceFromTemplate404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateSpaceFromTemplate404ApplicationProblemPlusJSONResponse) VisitCreateSpaceFromTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceFromTemplate422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateSpaceFromTemplate422ApplicationProblemPlusJSONResponse) VisitCreateSpaceFromTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -17361,6 +18120,33 @@ func (response ListSpaceViews404ApplicationProblemPlusJSONResponse) VisitListSpa
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListStarsRequestObject struct {
+}
+
+type ListStarsResponseObject interface {
+	VisitListStarsResponse(w http.ResponseWriter) error
+}
+
+type ListStars200JSONResponse struct {
+	Items []struct {
+		Id    openapi_types.UUID                    `json:"id"`
+		Title string                                `json:"title"`
+		Type  ListStars200JSONResponseBodyItemsType `json:"type"`
+	} `json:"items"`
+}
+
+func (response ListStars200JSONResponse) VisitListStarsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -18933,6 +19719,12 @@ func (response CreateStatus422ApplicationProblemPlusJSONResponse) VisitCreateSta
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
+	// (GET /account)
+	GetAccount(ctx context.Context, request GetAccountRequestObject) (GetAccountResponseObject, error)
+	// RenameAccount Ubah nama workspace (hanya admin)
+	// (PATCH /account)
+	RenameAccount(ctx context.Context, request RenameAccountRequestObject) (RenameAccountResponseObject, error)
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(ctx context.Context, request RunAnalyticsQueryRequestObject) (RunAnalyticsQueryResponseObject, error)
@@ -19140,6 +19932,12 @@ type StrictServerInterface interface {
 	// ReplaceItemShares Ganti seluruh daftar share item (SPC-11)
 	// (PUT /items/{itemId}/shares)
 	ReplaceItemShares(ctx context.Context, request ReplaceItemSharesRequestObject) (ReplaceItemSharesResponseObject, error)
+	// UnstarItem Cabut bintang (idempoten); hanya menyentuh baris milik pemanggil
+	// (DELETE /items/{itemId}/star)
+	UnstarItem(ctx context.Context, request UnstarItemRequestObject) (UnstarItemResponseObject, error)
+	// StarItem Beri bintang (idempoten); butuh hak View, jika tidak 404
+	// (PUT /items/{itemId}/star)
+	StarItem(ctx context.Context, request StarItemRequestObject) (StarItemResponseObject, error)
 	// ListProjectTimeEntries Time entry sendiri atau entry pada lokasi Project dengan akses penuh
 	// (GET /items/{itemId}/time-entries)
 	ListProjectTimeEntries(ctx context.Context, request ListProjectTimeEntriesRequestObject) (ListProjectTimeEntriesResponseObject, error)
@@ -19194,6 +19992,9 @@ type StrictServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(ctx context.Context, request UpdateNotificationRequestObject) (UpdateNotificationResponseObject, error)
+	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
+	// (POST /onboarding/complete)
+	CompleteOnboarding(ctx context.Context, request CompleteOnboardingRequestObject) (CompleteOnboardingResponseObject, error)
 	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (GET /public/forms/{token})
 	GetPublicForm(ctx context.Context, request GetPublicFormRequestObject) (GetPublicFormResponseObject, error)
@@ -19203,12 +20004,18 @@ type StrictServerInterface interface {
 	// Readyz Database terjangkau dan migrasi terpasang
 	// (GET /readyz)
 	Readyz(ctx context.Context, request ReadyzRequestObject) (ReadyzResponseObject, error)
+	// EmptyRecycleBin Hapus permanen semua entri yang boleh dihapus pemanggil (BIN-03); tidak bisa dibatalkan
+	// (DELETE /recycle-bin)
+	EmptyRecycleBin(ctx context.Context, request EmptyRecycleBinRequestObject) (EmptyRecycleBinResponseObject, error)
 	// ListRecycleBin Item yang dihapus dan masih bisa dipulihkan (BIN-01)
 	// (GET /recycle-bin)
 	ListRecycleBin(ctx context.Context, request ListRecycleBinRequestObject) (ListRecycleBinResponseObject, error)
 	// RestoreItem Pulihkan item beserta turunannya (BIN-02)
 	// (POST /recycle-bin/{itemId}/restore)
 	RestoreItem(ctx context.Context, request RestoreItemRequestObject) (RestoreItemResponseObject, error)
+	// ListReportTemplates Template report siap pakai (RPT-01); namanya diterjemahkan klien dari key
+	// (GET /report-templates)
+	ListReportTemplates(ctx context.Context, request ListReportTemplatesRequestObject) (ListReportTemplatesResponseObject, error)
 	// ListReports Report milik sendiri dan report Space yang dibagikan dan terlihat
 	// (GET /reports)
 	ListReports(ctx context.Context, request ListReportsRequestObject) (ListReportsResponseObject, error)
@@ -19248,6 +20055,12 @@ type StrictServerInterface interface {
 	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
 	// (PUT /settings/work-schedule)
 	ReplaceWorkSchedule(ctx context.Context, request ReplaceWorkScheduleRequestObject) (ReplaceWorkScheduleResponseObject, error)
+	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
+	// (GET /space-templates)
+	ListSpaceTemplates(ctx context.Context, request ListSpaceTemplatesRequestObject) (ListSpaceTemplatesResponseObject, error)
+	// CreateSpaceFromTemplate Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18)
+	// (POST /space-templates/{templateId}/spaces)
+	CreateSpaceFromTemplate(ctx context.Context, request CreateSpaceFromTemplateRequestObject) (CreateSpaceFromTemplateResponseObject, error)
 	// ListSpaces Space yang bisa diakses, termasuk Personal space (SPC-01, NAV-01)
 	// (GET /spaces)
 	ListSpaces(ctx context.Context, request ListSpacesRequestObject) (ListSpacesResponseObject, error)
@@ -19302,6 +20115,9 @@ type StrictServerInterface interface {
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(ctx context.Context, request ListSpaceViewsRequestObject) (ListSpaceViewsResponseObject, error)
+	// ListStars Item berbintang milik pemanggil yang masih dapat dilihat (NAV-02)
+	// (GET /stars)
+	ListStars(ctx context.Context, request ListStarsRequestObject) (ListStarsResponseObject, error)
 	// DeleteStatus Hapus status. Bila dipakai item, `move_to` (status lain di workflow yang sama) wajib
 	// (DELETE /statuses/{statusId})
 	DeleteStatus(ctx context.Context, request DeleteStatusRequestObject) (DeleteStatusResponseObject, error)
@@ -19422,6 +20238,61 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// GetAccount operation middleware
+func (sh *strictHandler) GetAccount(w http.ResponseWriter, r *http.Request) {
+	var request GetAccountRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAccount(ctx, request.(GetAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAccountResponseObject); ok {
+		if err := validResponse.VisitGetAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RenameAccount operation middleware
+func (sh *strictHandler) RenameAccount(w http.ResponseWriter, r *http.Request) {
+	var request RenameAccountRequestObject
+
+	var body RenameAccountJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RenameAccount(ctx, request.(RenameAccountRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RenameAccount")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RenameAccountResponseObject); ok {
+		if err := validResponse.VisitRenameAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // RunAnalyticsQuery operation middleware
@@ -21452,6 +22323,58 @@ func (sh *strictHandler) ReplaceItemShares(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// UnstarItem operation middleware
+func (sh *strictHandler) UnstarItem(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request UnstarItemRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnstarItem(ctx, request.(UnstarItemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnstarItem")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnstarItemResponseObject); ok {
+		if err := validResponse.VisitUnstarItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StarItem operation middleware
+func (sh *strictHandler) StarItem(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request StarItemRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StarItem(ctx, request.(StarItemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StarItem")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StarItemResponseObject); ok {
+		if err := validResponse.VisitStarItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListProjectTimeEntries operation middleware
 func (sh *strictHandler) ListProjectTimeEntries(w http.ResponseWriter, r *http.Request, itemId ItemId, params ListProjectTimeEntriesParams) {
 	var request ListProjectTimeEntriesRequestObject
@@ -21945,6 +22868,30 @@ func (sh *strictHandler) UpdateNotification(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// CompleteOnboarding operation middleware
+func (sh *strictHandler) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
+	var request CompleteOnboardingRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CompleteOnboarding(ctx, request.(CompleteOnboardingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CompleteOnboarding")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CompleteOnboardingResponseObject); ok {
+		if err := validResponse.VisitCompleteOnboardingResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetPublicForm operation middleware
 func (sh *strictHandler) GetPublicForm(w http.ResponseWriter, r *http.Request, token string) {
 	var request GetPublicFormRequestObject
@@ -22039,6 +22986,30 @@ func (sh *strictHandler) Readyz(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// EmptyRecycleBin operation middleware
+func (sh *strictHandler) EmptyRecycleBin(w http.ResponseWriter, r *http.Request) {
+	var request EmptyRecycleBinRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EmptyRecycleBin(ctx, request.(EmptyRecycleBinRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EmptyRecycleBin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EmptyRecycleBinResponseObject); ok {
+		if err := validResponse.VisitEmptyRecycleBinResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListRecycleBin operation middleware
 func (sh *strictHandler) ListRecycleBin(w http.ResponseWriter, r *http.Request, params ListRecycleBinParams) {
 	var request ListRecycleBinRequestObject
@@ -22084,6 +23055,30 @@ func (sh *strictHandler) RestoreItem(w http.ResponseWriter, r *http.Request, ite
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RestoreItemResponseObject); ok {
 		if err := validResponse.VisitRestoreItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListReportTemplates operation middleware
+func (sh *strictHandler) ListReportTemplates(w http.ResponseWriter, r *http.Request) {
+	var request ListReportTemplatesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListReportTemplates(ctx, request.(ListReportTemplatesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListReportTemplates")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListReportTemplatesResponseObject); ok {
+		if err := validResponse.VisitListReportTemplatesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -22446,6 +23441,63 @@ func (sh *strictHandler) ReplaceWorkSchedule(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReplaceWorkScheduleResponseObject); ok {
 		if err := validResponse.VisitReplaceWorkScheduleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceTemplates operation middleware
+func (sh *strictHandler) ListSpaceTemplates(w http.ResponseWriter, r *http.Request) {
+	var request ListSpaceTemplatesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceTemplates(ctx, request.(ListSpaceTemplatesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceTemplates")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceTemplatesResponseObject); ok {
+		if err := validResponse.VisitListSpaceTemplatesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateSpaceFromTemplate operation middleware
+func (sh *strictHandler) CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request, templateId string) {
+	var request CreateSpaceFromTemplateRequestObject
+
+	request.TemplateId = templateId
+
+	var body CreateSpaceFromTemplateJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateSpaceFromTemplate(ctx, request.(CreateSpaceFromTemplateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateSpaceFromTemplate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateSpaceFromTemplateResponseObject); ok {
+		if err := validResponse.VisitCreateSpaceFromTemplateResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -22971,6 +24023,30 @@ func (sh *strictHandler) ListSpaceViews(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListSpaceViewsResponseObject); ok {
 		if err := validResponse.VisitListSpaceViewsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListStars operation middleware
+func (sh *strictHandler) ListStars(w http.ResponseWriter, r *http.Request) {
+	var request ListStarsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListStars(ctx, request.(ListStarsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListStars")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListStarsResponseObject); ok {
+		if err := validResponse.VisitListStarsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

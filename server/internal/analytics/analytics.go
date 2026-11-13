@@ -6,6 +6,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"math"
 	"slices"
 	"sort"
 	"strings"
@@ -13,6 +14,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/schedule"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -34,22 +36,25 @@ var (
 )
 
 type Filters struct {
-	StatusGroups []string `json:"status_groups,omitempty"` // active, completed, deferred, cancelled
-	Assignees    []string `json:"assignees,omitempty"`     // user ids or "me"; for time entries the user who logged them
-	Unassigned   bool     `json:"unassigned,omitempty"`
-	Importance   []string `json:"importance,omitempty"` // high, normal, low
-	Followed     bool     `json:"followed,omitempty"`
-	Overdue      bool     `json:"overdue,omitempty"`            // due before today and still active
-	DueThisWeek  bool     `json:"due_this_week,omitempty"`      // due from Monday to Sunday of the current week
-	NoDueDate    bool     `json:"no_due_date,omitempty"`        // backlog: nothing scheduled yet
-	AwaitingMe   bool     `json:"awaiting_my_review,omitempty"` // an approval is waiting for the caller's decision
-	DueFrom      string   `json:"due_from,omitempty"`
-	DueTo        string   `json:"due_to,omitempty"`
-	EffortMin    *int     `json:"effort_min,omitempty"` // minutes
-	EffortMax    *int     `json:"effort_max,omitempty"`
-	EntryFrom    string   `json:"entry_from,omitempty"` // time entries only
-	EntryTo      string   `json:"entry_to,omitempty"`
-	Billing      string   `json:"billing,omitempty"` // billable, non_billable; time entries only
+	StatusGroups   []string `json:"status_groups,omitempty"` // active, completed, deferred, cancelled
+	Assignees      []string `json:"assignees,omitempty"`     // user ids or "me"; for time entries the user who logged them
+	Unassigned     bool     `json:"unassigned,omitempty"`
+	Importance     []string `json:"importance,omitempty"` // high, normal, low
+	Followed       bool     `json:"followed,omitempty"`
+	Starred        bool     `json:"starred,omitempty"` // starred by the caller
+	Overdue        bool     `json:"overdue,omitempty"` // due before today and still active
+	DueThisMonth   bool     `json:"due_this_month,omitempty"`
+	DueThisWeek    bool     `json:"due_this_week,omitempty"`      // due from Monday to Sunday of the current week
+	NoDueDate      bool     `json:"no_due_date,omitempty"`        // backlog: nothing scheduled yet
+	AwaitingMe     bool     `json:"awaiting_my_review,omitempty"` // an approval is waiting for the caller's decision
+	DueFrom        string   `json:"due_from,omitempty"`
+	DueTo          string   `json:"due_to,omitempty"`
+	EffortMin      *int     `json:"effort_min,omitempty"` // minutes
+	EffortMax      *int     `json:"effort_max,omitempty"`
+	EntryThisMonth bool     `json:"entry_this_month,omitempty"` // time entries of the current month; the period for utilization
+	EntryFrom      string   `json:"entry_from,omitempty"`       // time entries only
+	EntryTo        string   `json:"entry_to,omitempty"`
+	Billing        string   `json:"billing,omitempty"` // billable, non_billable; time entries only
 }
 
 type Query struct {
@@ -86,7 +91,7 @@ const sumField = "COALESCE((i.fields->>" + fieldRef + ")::numeric,0)"
 var metrics = map[string]map[string]string{ // reporting_on → metric → SQL measure
 	"tasks":        {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField},
 	"projects":     {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField},
-	"time_entries": {"minutes": "te.minutes", "billable_minutes": "CASE WHEN te.billing_type='billable' THEN te.minutes ELSE 0 END", "count": "1"},
+	"time_entries": {"utilization": "te.minutes", "minutes": "te.minutes", "billable_minutes": "CASE WHEN te.billing_type='billable' THEN te.minutes ELSE 0 END", "count": "1"},
 }
 
 type dim struct{ join, key, label string }
@@ -197,6 +202,14 @@ func (q Query) Validate() error {
 	if q.Metric == "sum_field" && (q.GroupBy == "field" || q.BreakBy == "field") {
 		return items.Invalid("one custom field cannot be both the summed number and the grouping choice")
 	}
+	if q.Metric == "utilization" {
+		if q.GroupBy != "user" || q.BreakBy != "" {
+			return items.Invalid("utilization is measured per person: group_by must be user, without break_by")
+		}
+		if !q.Filters.EntryThisMonth && (q.Filters.EntryFrom == "" || q.Filters.EntryTo == "") {
+			return items.Invalid("utilization needs a period: entry_this_month, or both entry_from and entry_to")
+		}
+	}
 	if q.BreakBy != "" && q.GroupBy == "" {
 		return items.Invalid("break_by needs group_by")
 	}
@@ -238,11 +251,11 @@ func (q Query) Validate() error {
 		}
 	}
 	if q.ReportingOn == "time_entries" {
-		if len(f.StatusGroups)+len(f.Importance) > 0 || f.Followed || f.Overdue || f.DueThisWeek || f.NoDueDate || f.AwaitingMe || f.Unassigned || f.DueFrom != "" || f.DueTo != "" || f.EffortMin != nil || f.EffortMax != nil {
+		if len(f.StatusGroups)+len(f.Importance) > 0 || f.Followed || f.Starred || f.Overdue || f.DueThisWeek || f.DueThisMonth || f.NoDueDate || f.AwaitingMe || f.Unassigned || f.DueFrom != "" || f.DueTo != "" || f.EffortMin != nil || f.EffortMax != nil {
 			return items.Invalid("these filters apply to tasks and projects, not to time entries")
 		}
-	} else if f.EntryFrom != "" || f.EntryTo != "" || f.Billing != "" {
-		return items.Invalid("entry_from, entry_to and billing apply to time entries only")
+	} else if f.EntryFrom != "" || f.EntryTo != "" || f.Billing != "" || f.EntryThisMonth {
+		return items.Invalid("entry_from, entry_to, entry_this_month and billing apply to time entries only")
 	}
 	return nil
 }
@@ -303,6 +316,12 @@ func Run(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query) (
 		groups[h.gKey] = Label{h.gKey, h.gLabel}
 		breaks[h.bKey] = Label{h.bKey, h.bLabel}
 	}
+	capacity := 0.0
+	if q.Metric == "utilization" {
+		if capacity, err = capacityMinutes(ctx, tx, q.Filters); err != nil {
+			return Result{}, mapErr(err)
+		}
+	}
 	out := Result{Rows: []Row{}, Total: total}
 	for k, v := range sums {
 		row := Row{Group: groups[k.g], Value: v}
@@ -311,6 +330,17 @@ func Run(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query) (
 			row.Break = &b
 		}
 		out.Rows = append(out.Rows, row)
+	}
+	if q.Metric == "utilization" { // logged minutes as a percentage of the minutes one person can work in the period
+		var sum float64
+		for i := range out.Rows {
+			out.Rows[i].Value = math.Round(out.Rows[i].Value/capacity*1000) / 10
+			sum += out.Rows[i].Value
+		}
+		out.Total = 0
+		if len(out.Rows) > 0 {
+			out.Total = math.Round(sum/float64(len(out.Rows))*10) / 10 // the average of the people listed
+		}
 	}
 	sort.Slice(out.Rows, func(i, j int) bool {
 		a, b := out.Rows[i], out.Rows[j]
@@ -412,6 +442,9 @@ func build(q Query, actor policy.Actor, list *listSpec) (string, []any) {
 		if len(assignees) > 0 {
 			where = append(where, "te.user_id = ANY("+add(assignees, "uuid[]")+")")
 		}
+		if f.EntryThisMonth {
+			where = append(where, "te.entry_date BETWEEN date_trunc('month', current_date)::date AND (date_trunc('month', current_date) + interval '1 month - 1 day')::date")
+		}
 		if f.EntryFrom != "" {
 			where = append(where, "te.entry_date >= "+add(date(f.EntryFrom), "date"))
 		}
@@ -442,11 +475,17 @@ func build(q Query, actor policy.Actor, list *listSpec) (string, []any) {
 		if f.Followed {
 			where = append(where, "EXISTS (SELECT 1 FROM item_followers fo WHERE fo.item_id=i.id AND fo.user_id="+actorID+")")
 		}
+		if f.Starred {
+			where = append(where, "EXISTS (SELECT 1 FROM item_stars sx WHERE sx.item_id=i.id AND sx.user_id="+actorID+")")
+		}
 		if f.Overdue {
 			where = append(where, "(i.due_date < current_date AND st.grp = 'active')")
 		}
 		if f.DueThisWeek {
 			where = append(where, "i.due_date BETWEEN date_trunc('week', current_date)::date AND date_trunc('week', current_date)::date + 6")
+		}
+		if f.DueThisMonth {
+			where = append(where, "i.due_date BETWEEN date_trunc('month', current_date)::date AND (date_trunc('month', current_date) + interval '1 month - 1 day')::date")
 		}
 		if f.NoDueDate {
 			where = append(where, "i.due_date IS NULL")
@@ -565,7 +604,7 @@ func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query, 
 	return out, nil
 }
 
-// Preset is a ready-made task list for a widget (DASH-01, DASH-02). Starred is absent on purpose: Items cannot be starred yet.
+// Preset is a ready-made task list for a widget (DASH-01, DASH-02). Starred lists the caller's own stars.
 type Preset struct {
 	Filters         Filters
 	NewestCompleted bool
@@ -583,6 +622,7 @@ var ListPresets = map[string]Preset{
 	"my_tasks": {Filters: Filters{Assignees: me, StatusGroups: []string{"active"}}},
 	"overdue":  {Filters: Filters{Overdue: true}},
 	"followed": {Filters: Filters{Followed: true, StatusGroups: []string{"active"}}},
+	"starred":  {Filters: Filters{Starred: true, StatusGroups: []string{"active"}}},
 	"backlog":  {Filters: Filters{NoDueDate: true, StatusGroups: []string{"active"}}},
 }
 
@@ -605,4 +645,70 @@ func checkField(ctx context.Context, tx pgx.Tx, q Query) error {
 		return items.Invalid("the custom field type does not fit this choice: sum_field needs number, currency or percent; the field dimension needs single_select")
 	}
 	return nil
+}
+
+// capacityMinutes is what one person can work in the filter's period under the workspace schedule: working days
+// (minus holidays) times daily hours. It reads the same schedule that task scheduling uses.
+func capacityMinutes(ctx context.Context, tx pgx.Tx, f Filters) (float64, error) {
+	var from, to time.Time
+	var days []int
+	var holidays []time.Time
+	var hours int
+	if f.EntryThisMonth {
+		if err := tx.QueryRow(ctx, `SELECT date_trunc('month', current_date)::date, (date_trunc('month', current_date) + interval '1 month - 1 day')::date`).Scan(&from, &to); err != nil {
+			return 0, err
+		}
+	} else {
+		from, _ = time.Parse(time.DateOnly, f.EntryFrom)
+		to, _ = time.Parse(time.DateOnly, f.EntryTo)
+	}
+	if to.Before(from) || to.Sub(from) > 366*24*time.Hour {
+		return 0, items.Invalid("the period must be at most one year and end after it starts")
+	}
+	if err := tx.QueryRow(ctx, `SELECT working_days, daily_hours, ARRAY(SELECT day FROM work_schedule_exceptions) FROM work_schedules WHERE id=1`).Scan(&days, &hours, &holidays); err != nil {
+		return 0, err
+	}
+	calendar, err := schedule.NewCalendar(days, holidays)
+	if err != nil {
+		return 0, err
+	}
+	workdays := 0
+	for d := from; !d.After(to); d = d.AddDate(0, 0, 1) {
+		if calendar.IsWorkday(d) {
+			workdays++
+		}
+	}
+	if workdays == 0 {
+		return 0, items.Invalid("the period has no working days")
+	}
+	return float64(workdays * hours * 60), nil
+}
+
+// Template is a ready-made report definition (RPT-01). Keys are stable; names are translated by the client.
+type Template struct {
+	Key    string `json:"key"`
+	Layout string `json:"layout"`
+	Query  Query  `json:"query"`
+}
+
+var active = []string{"active"}
+
+var Templates = []Template{
+	{"active_tasks_by_assignee", "column", Query{ReportingOn: "tasks", Metric: "count", GroupBy: "assignee", Filters: Filters{StatusGroups: active}}},
+	{"weekly_project_status", "table", Query{ReportingOn: "projects", Metric: "count", GroupBy: "status"}},
+	{"overdue", "column", Query{ReportingOn: "tasks", Metric: "count", GroupBy: "assignee", Filters: Filters{Overdue: true}}},
+	{"due_this_month", "column", Query{ReportingOn: "tasks", Metric: "count", GroupBy: "assignee", Filters: Filters{StatusGroups: active, DueThisMonth: true}}},
+	{"unassigned", "table", Query{ReportingOn: "tasks", Metric: "count", GroupBy: "space", Filters: Filters{StatusGroups: active, Unassigned: true}}},
+	{"time_spent", "column", Query{ReportingOn: "time_entries", Metric: "minutes", GroupBy: "user", Filters: Filters{EntryThisMonth: true}}},
+	{"utilization", "column", Query{ReportingOn: "time_entries", Metric: "utilization", GroupBy: "user", Filters: Filters{EntryThisMonth: true}}},
+}
+
+// TemplateByKey returns the template with that key.
+func TemplateByKey(key string) (Template, bool) {
+	for _, t := range Templates {
+		if t.Key == key {
+			return t, true
+		}
+	}
+	return Template{}, false
 }

@@ -21,6 +21,60 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stars": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Item berbintang milik pemanggil yang masih dapat dilihat (NAV-02) */
+        get: operations["listStars"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{itemId}/star": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Beri bintang (idempoten); butuh hak View, jika tidak 404 */
+        put: operations["starItem"];
+        post?: never;
+        /** Cabut bintang (idempoten); hanya menyentuh baris milik pemanggil */
+        delete: operations["unstarItem"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/report-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Template report siap pakai (RPT-01); namanya diterjemahkan klien dari key */
+        get: operations["listReportTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports": {
         parameters: {
             query?: never;
@@ -789,6 +843,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/account": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri */
+        get: operations["getAccount"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Ubah nama workspace (hanya admin) */
+        patch: operations["renameAccount"];
+        trace?: never;
+    };
+    "/onboarding/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin */
+        post: operations["completeOnboarding"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/seats": {
         parameters: {
             query?: never;
@@ -837,6 +926,40 @@ export interface paths {
         put: operations["replaceGroup"];
         post?: never;
         delete: operations["deleteGroup"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/space-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Template Space bawaan per kategori (SPC-18) */
+        get: operations["listSpaceTemplates"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/space-templates/{templateId}/spaces": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18) */
+        post: operations["createSpaceFromTemplate"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -1505,7 +1628,8 @@ export interface paths {
         get: operations["listRecycleBin"];
         put?: never;
         post?: never;
-        delete?: never;
+        /** Hapus permanen semua entri yang boleh dihapus pemanggil (BIN-03); tidak bisa dibatalkan */
+        delete: operations["emptyRecycleBin"];
         options?: never;
         head?: never;
         patch?: never;
@@ -2055,6 +2179,8 @@ export interface components {
         };
         AnalyticsFilters: {
             due_this_week?: boolean;
+            due_this_month?: boolean;
+            entry_this_month?: boolean;
             no_due_date?: boolean;
             awaiting_my_review?: boolean;
             status_groups?: ("active" | "completed" | "deferred" | "cancelled")[];
@@ -2062,6 +2188,7 @@ export interface components {
             unassigned?: boolean;
             importance?: ("high" | "normal" | "low")[];
             followed?: boolean;
+            starred?: boolean;
             overdue?: boolean;
             /** Format: date */
             due_from?: string;
@@ -2087,7 +2214,7 @@ export interface components {
              * @description tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count
              * @enum {string}
              */
-            metric: "count" | "effort_minutes" | "sum_field" | "minutes" | "billable_minutes";
+            metric: "count" | "effort_minutes" | "sum_field" | "minutes" | "billable_minutes" | "utilization";
             /**
              * Format: uuid
              * @description Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya
@@ -2179,6 +2306,11 @@ export interface components {
              */
             sharing: "private" | "space";
             definition?: components["schemas"]["ReportDefinition"];
+            /**
+             * @description Pakai definisi template; tidak boleh bersama definition
+             * @enum {string}
+             */
+            template?: "active_tasks_by_assignee" | "weekly_project_status" | "overdue" | "due_this_month" | "unassigned" | "time_spent" | "utilization";
         };
         ReportUpdate: {
             name?: string;
@@ -2205,10 +2337,10 @@ export interface components {
              */
             list?: "todo_this_week" | "to_review" | "completed" | "assigned_to_me";
             /**
-             * @description Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang
+             * @description Khusus task_list (DASH-02)
              * @enum {string}
              */
-            template?: "my_tasks" | "overdue" | "followed" | "backlog";
+            template?: "my_tasks" | "overdue" | "followed" | "backlog" | "starred";
             query?: components["schemas"]["AnalyticsQuery"];
         };
         DashboardWidgetInput: {
@@ -2399,6 +2531,14 @@ export interface components {
             comment_shortcut: "mod_enter" | "enter";
             /** @description Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil */
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
+            /** @description Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif */
+            email_muted?: components["schemas"]["EmailGroup"][];
+            /** @description true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati */
+            onboarding_pending: boolean;
+            /** @description Durasi awal task baru (SET-03) */
+            default_task_duration_days?: number | null;
+            /** @description Effort awal task baru (SET-03) */
+            default_task_effort_minutes?: number | null;
             /** @description Nama workspace */
             account_name: string;
             /** Format: uuid */
@@ -2434,6 +2574,30 @@ export interface components {
             /** @enum {string} */
             comment_shortcut?: "mod_enter" | "enter";
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
+            email_muted?: components["schemas"]["EmailGroup"][];
+            default_task_duration_days?: number | null;
+            default_task_effort_minutes?: number | null;
+        };
+        /**
+         * @description task_changes mencakup perubahan status dan approval; notifikasi komentar tidak pernah dikirim lewat email
+         * @enum {string}
+         */
+        EmailGroup: "mention" | "assigned" | "shared" | "task_changes" | "report";
+        Account: {
+            name: string;
+            /** Format: date-time */
+            created_at: string;
+            role: components["schemas"]["UserType"];
+            /** Format: date-time */
+            joined_at: string;
+            administrators: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                /** Format: email */
+                email: string;
+            }[];
+            seats: components["schemas"]["Seats"];
         };
         /** @enum {string} */
         SidebarKey: "created_by_me" | "workload" | "calendars" | "dashboards" | "my_todo" | "request_forms" | "timesheets" | "reports" | "stream" | "starred";
@@ -2467,6 +2631,22 @@ export interface components {
         };
         /** @enum {string} */
         SpaceKind: "shared" | "personal";
+        SpaceTemplate: {
+            id: string;
+            name: string;
+            category: string;
+            description: string;
+            version: number;
+            /** @description false bila template ditulis untuk versi PMS yang lebih baru */
+            compatible: boolean;
+            counts: {
+                projects: number;
+                tasks: number;
+                views: number;
+                forms: number;
+                custom_fields: number;
+            };
+        };
         Space: {
             /** Format: uuid */
             id: string;
@@ -3353,6 +3533,103 @@ export interface operations {
             };
             422: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
+        };
+    };
+    listStars: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar, bintang terbaru dulu */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            /** @enum {string} */
+                            type: "project" | "folder" | "task";
+                        }[];
+                    };
+                };
+            };
+        };
+    };
+    starItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Berbintang */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    unstarItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tidak berbintang */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+        };
+    };
+    listReportTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar template */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            key: "active_tasks_by_assignee" | "weekly_project_status" | "overdue" | "due_this_month" | "unassigned" | "time_spent" | "utilization";
+                            /** @enum {string} */
+                            layout: "table" | "column";
+                            query: components["schemas"]["AnalyticsQuery"];
+                        }[];
+                    };
+                };
+            };
         };
     };
     listReports: {
@@ -4842,6 +5119,73 @@ export interface operations {
             };
         };
     };
+    getAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+        };
+    };
+    renameAccount: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    completeOnboarding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Tersimpan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
     getSeats: {
         parameters: {
             query?: never;
@@ -4958,6 +5302,75 @@ export interface operations {
                 };
                 content?: never;
             };
+        };
+    };
+    listSpaceTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["SpaceTemplate"][];
+                    };
+                };
+            };
+        };
+    };
+    createSpaceFromTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: uuid
+                     * @description Kunci idempotensi dari klien
+                     */
+                    request_id: string;
+                    /** @description Default nama template */
+                    name?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Diulang dengan request_id yang sama; Space yang sudah ada */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Space"];
+                };
+            };
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Space"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listSpaces: {
@@ -6297,6 +6710,28 @@ export interface operations {
         responses: {
             200: components["responses"]["ItemPage"];
             422: components["responses"]["Problem"];
+        };
+    };
+    emptyRecycleBin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Jumlah entri yang dihapus */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        deleted: number;
+                    };
+                };
+            };
         };
     };
     restoreItem: {

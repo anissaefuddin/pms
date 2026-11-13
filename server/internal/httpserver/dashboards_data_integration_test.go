@@ -64,7 +64,7 @@ VALUES ('task',$1,$2,$3::uuid,NULLIF($4,'')::date, CASE WHEN $3::text=$5::text T
 		"list and template":        {"task_list", map[string]any{"list": "to_review", "template": "overdue"}},
 		"template named as list":   {"task_list", map[string]any{"list": "overdue"}},
 		"list named as template":   {"task_list", map[string]any{"template": "to_review"}},
-		"starred has no data yet":  {"task_list", map[string]any{"template": "starred"}},
+		"unknown template":         {"task_list", map[string]any{"template": "archived"}},
 		"query on a task list":     {"task_list", map[string]any{"list": "completed", "query": map[string]any{"reporting_on": "tasks", "metric": "count"}}},
 		"list on a chart":          {"pie", map[string]any{"list": "completed"}},
 		"unknown query field":      {"pie", map[string]any{"query": map[string]any{"reporting_on": "tasks", "metric": "count", "sql": "1"}}},
@@ -151,4 +151,89 @@ VALUES ('task',$1,$2,$3::uuid,NULLIF($4,'')::date, CASE WHEN $3::text=$5::text T
 	f.want(f.call(member, "GET", base+"/widgets/not-a-uuid/data", nil), 404, "bad id")
 	_ = widget
 	_ = http.StatusOK
+}
+
+func TestStarsAndStarredWidget(t *testing.T) {
+	f := newFixture(t)
+	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
+	shared, secret := f.space("Stars shared"), f.space("Stars secret")
+	f.share(shared, "user", member.id, "read")
+	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
+	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")
+	task := func(space, title, status string) string {
+		id := f.queryID(`INSERT INTO items(type,title,created_by,status_id) VALUES ('task',$1,$2,$3) RETURNING id::text`, title, admin.id, status)
+		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
+		return id
+	}
+	open, closed, hidden := task(shared, "Open and starred", active), task(shared, "Done and starred", done), task(secret, "Secret", active)
+
+	// Starring needs View: an Item the caller cannot see is a plain 404, and nothing is stored.
+	f.want(f.call(member, "PUT", "/items/"+hidden+"/star", nil), 404, "hidden item")
+	f.want(f.call(outsider, "PUT", "/items/"+open+"/star", nil), 404, "no access")
+	f.want(f.call(member, "PUT", "/items/not-a-uuid/star", nil), 404, "bad id")
+	f.want(f.call(nil, "PUT", "/items/"+open+"/star", nil), 401, "anonymous")
+	if n := f.queryID("SELECT count(*)::text FROM item_stars"); n != "0" {
+		t.Fatalf("stars after refused requests = %s", n)
+	}
+	f.want(f.call(member, "PUT", "/items/"+open+"/star", nil), 204, "star")
+	f.want(f.call(member, "PUT", "/items/"+open+"/star", nil), 204, "starring twice is idempotent")
+	f.want(f.call(member, "PUT", "/items/"+closed+"/star", nil), 204, "star a completed task")
+	f.want(f.call(admin, "PUT", "/items/"+hidden+"/star", nil), 204, "admin stars the secret task")
+	if n := f.queryID("SELECT count(*)::text FROM item_stars WHERE user_id=$1", member.id); n != "2" {
+		t.Fatalf("member stars = %s, want 2", n)
+	}
+
+	titles := func(p *person) []string {
+		t.Helper()
+		r := f.call(p, "GET", "/stars", nil)
+		f.want(r, 200, "list stars")
+		out := []string{}
+		for _, item := range r.items() {
+			out = append(out, item["title"].(string))
+		}
+		return out
+	}
+	if got := fmt.Sprint(titles(member)); got != "[Done and starred Open and starred]" { // newest star first
+		t.Fatalf("member stars = %s", got)
+	}
+	if got := fmt.Sprint(titles(admin)); got != "[Secret]" {
+		t.Fatalf("stars are personal: admin = %s", got)
+	}
+	if len(titles(outsider)) != 0 {
+		t.Fatal("outsider has no stars")
+	}
+
+	// The starred template lists the caller's own active starred tasks, and only those they can still see.
+	board := f.call(member, "POST", "/dashboards", map[string]any{"name": "Stars"})
+	f.want(board, 201, "dashboard")
+	base := "/dashboards/" + board.body["id"].(string)
+	f.want(f.call(member, "POST", base+"/widgets", map[string]any{"name": "Starred", "type": "task_list", "config": map[string]any{"template": "starred"}}, "If-Match", `"1"`), 201, "widget")
+	widget := f.queryID("SELECT id::text FROM widgets WHERE dashboard_id=$1", board.body["id"])
+	data := f.call(member, "GET", base+"/widgets/"+widget+"/data", nil)
+	f.want(data, 200, "starred data")
+	if items := data.body["items"].([]any); len(items) != 1 || items[0].(map[string]any)["title"] != "Open and starred" {
+		t.Fatalf("starred widget = %v, want only the open starred task", data.body["items"])
+	}
+	// Losing access hides the starred Item everywhere without deleting the star.
+	f.exec("DELETE FROM shares WHERE principal_id=$1", member.id)
+	if len(titles(member)) != 0 {
+		t.Fatal("a star on an Item the member can no longer see must not be listed")
+	}
+	if n := f.queryID("SELECT count(*)::text FROM item_stars WHERE user_id=$1", member.id); n != "2" {
+		t.Fatalf("stars kept = %s, want 2", n)
+	}
+	f.exec("INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('space',$1,'user',$2,'read')", shared, member.id)
+
+	// Unstarring is idempotent, touches only the caller's row, and works even without View.
+	f.want(f.call(member, "DELETE", "/items/"+open+"/star", nil), 204, "unstar")
+	f.want(f.call(member, "DELETE", "/items/"+open+"/star", nil), 204, "unstar twice")
+	f.want(f.call(outsider, "DELETE", "/items/"+closed+"/star", nil), 204, "someone else's star is untouched")
+	if got := fmt.Sprint(titles(member)); got != "[Done and starred]" {
+		t.Fatalf("member stars after unstar = %s", got)
+	}
+	// Deleting the Item removes its stars.
+	f.exec("DELETE FROM items WHERE id=$1", closed)
+	if n := f.queryID("SELECT count(*)::text FROM item_stars WHERE item_id=$1", closed); n != "0" {
+		t.Fatalf("stars of a deleted item = %s", n)
+	}
 }

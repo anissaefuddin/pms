@@ -98,18 +98,18 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 78 | S4.4.1 | E2E dan regresi M4 | 1.5 | 169.5–171 | 35 | DONE |
 | 79 | S5.1.1 | Skema dashboard dan widget (DASH-01, DASH-06) | 3 | 171–174 | 35 | DONE |
 | 80 | S5.1.2 | Mesin data widget (DASH-02) | 4 | 174–178 | 36 | DONE |
-| 81 | S5.1.3 | Widget daftar task dan template (DASH-01, DASH-02) | 3 | 178–181 | 37 | IN_PROGRESS |
-| 82 | S5.1.4 | Widget visual (DASH-03A) | 4 | 181–185 | 38 | PROPOSED |
-| 83 | S5.1.5 | UI dashboard | 3 | 185–188 | 38 | PROPOSED |
+| 81 | S5.1.3 | Widget daftar task dan template (DASH-01, DASH-02) | 3 | 178–181 | 37 | DONE |
+| 82 | S5.1.4 | Widget visual (DASH-03A) | 4 | 181–185 | 38 | DONE |
+| 83 | S5.1.5 | UI dashboard | 3 | 185–188 | 38 | DONE |
 | 84 | S5.2.1 | Skema report dan daftar report (RPT-03) | 2.5 | 188–190.5 | 39 | DONE |
 | 85 | S5.2.2 | Editor dan eksekusi report (RPT-02) | 4 | 190.5–194.5 | 39 | DONE |
-| 86 | S5.2.3 | Template report (RPT-01) | 3 | 194.5–197.5 | 40 | PROPOSED |
-| 87 | S5.3.1 | Uji kecocokan angka dan E2E | 2.5 | 197.5–200 | 41 | PROPOSED |
-| 88 | S6.1.1 | Template Space (SPC-18) | 4 | 200–204 | 41 | PROPOSED |
-| 89 | S6.1.2 | Wizard first-run (AUTH-07) | 2.5 | 204–206.5 | 42 | PROPOSED |
-| 90 | S6.2.1 | Pengaturan workspace per user dan info akun (SET-03, SET-04) | 2 | 206.5–208.5 | 42 | PROPOSED |
-| 91 | S6.2.2 | Preferensi email notifikasi (SET-05) | 2 | 208.5–210.5 | 43 | PROPOSED |
-| 92 | S6.2.3 | Kosongkan Recycle bin (BIN-03) | 1 | 210.5–211.5 | 43 | PROPOSED |
+| 86 | S5.2.3 | Template report (RPT-01) | 3 | 194.5–197.5 | 40 | DONE |
+| 87 | S5.3.1 | Uji kecocokan angka dan E2E | 2.5 | 197.5–200 | 41 | DONE |
+| 88 | S6.1.1 | Template Space (SPC-18) | 4 | 200–204 | 41 | IN_PROGRESS |
+| 89 | S6.1.2 | Wizard first-run (AUTH-07) | 2.5 | 204–206.5 | 42 | IN_PROGRESS |
+| 90 | S6.2.1 | Pengaturan workspace per user dan info akun (SET-03, SET-04) | 2 | 206.5–208.5 | 42 | IN_PROGRESS |
+| 91 | S6.2.2 | Preferensi email notifikasi (SET-05) | 2 | 208.5–210.5 | 43 | IN_PROGRESS |
+| 92 | S6.2.3 | Kosongkan Recycle bin (BIN-03) | 1 | 210.5–211.5 | 43 | IN_PROGRESS |
 | 93 | S6.3.1 | Prosedur penghentian instance (USR-04) | 1.5 | 211.5–213 | 43 | PROPOSED |
 | 94 | S6.3.2 | Uji restore terhadap RTO (OPS-01) | 2 | 213–215 | 44 | PROPOSED |
 | 95 | S6.3.3 | Uji keamanan internal | 4 | 215–219 | 44 | PROPOSED |
@@ -679,18 +679,18 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 **S5.1.3 Widget daftar task dan template (DASH-01, DASH-02)**
 - [x] Widget to do this week, to review, completed, assigned to me
 - [x] Template widget: my tasks, overdue, followed, backlog
-- [ ] Template widget starred: belum bisa, Item belum dapat diberi bintang (fitur bintang belum ada di backend maupun UI); tambahkan template setelah fitur itu ada
-- [x] Pembuat widget custom dari mesin data; tes (lewat API: `config.query` divalidasi dan dihitung per pemirsa; formulir pembuat di UI datang bersama S5.1.5)
+- [x] Template widget starred: memakai bintang pribadi pada Item (`item_stars`, `PUT/DELETE /items/{id}/star`, `GET /stars`, halaman Starred, tombol bintang di panel Item)
+- [x] Pembuat widget custom dari mesin data; tes (API: `config.query` divalidasi dan dihitung per pemirsa; formulir pembuat di dialog widget, S5.1.5)
 
 **S5.1.4 Widget visual (DASH-03A)**
-- [ ] Indicator, pie (classic/donut/ring), column, bar, line, table
-- [ ] Legend, label, sumbu, irisan "Others"; warna dari token dan kontras aksesibel
-- [ ] Pratinjau saat mengedit dan tes visual dasar
+- [x] Indicator, pie (classic/donut/ring), column, bar, line, table
+- [x] Legend, label, sumbu, irisan "Others"; warna dari token dan kontras aksesibel
+- [x] Pratinjau saat mengedit dan tes visual dasar
 
 **S5.1.5 UI dashboard**
-- [ ] Daftar dan tata letak dashboard, tambah/edit/hapus widget
-- [ ] Rename, duplicate, move, delete dengan konfirmasi
-- [ ] Tes Playwright dan axe
+- [x] Daftar dan tata letak dashboard, tambah/edit/hapus widget
+- [x] Rename, duplicate, move, delete dengan konfirmasi
+- [x] Tes Playwright dan axe
 
 ### E5.2 Report
 
@@ -705,16 +705,16 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Eksekusi memakai mesin data S5.1.2 dan policy; ekspor hasil; tes
 
 **S5.2.3 Template report (RPT-01)**
-- [ ] Template: active tasks by assignee, weekly project status, overdue, due this month, unassigned, time spent, utilization
-- [ ] Report custom dari nol; tes angka per template
-- [ ] Pengiriman langganan lewat email memakai River
+- [x] Template: active tasks by assignee, weekly project status, overdue, due this month, unassigned, time spent, utilization
+- [x] Report custom dari nol; tes angka per template
+- [x] Pengiriman langganan lewat email memakai River
 
 ### E5.3 Hardening M5
 
 **S5.3.1 Uji kecocokan angka dan E2E**
-- [ ] Tes otomatis: angka dashboard dan report cocok dengan data mentah pada fixture bervariasi
-- [ ] Alur Playwright membangun dashboard dan report tanpa developer
-- [ ] Ukur p95 widget dan report pada 10 ribu item; perbarui TESTING
+- [x] Tes otomatis: angka dashboard dan report cocok dengan data mentah pada fixture bervariasi
+- [x] Alur Playwright membangun dashboard dan report tanpa developer
+- [x] Ukur p95 widget dan report pada 10 ribu item; perbarui TESTING
 
 
 ## M6
@@ -722,31 +722,31 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E6.1 Onboarding dan template
 
 **S6.1.1 Template Space (SPC-18)**
-- [ ] `openapi.yaml`: daftar template per kategori (Marketing, HR, IT, PM, …) dan pembuatan Space dari template
-- [ ] Format template memuat project, task, view, form, custom field, workflow; versi dan kompatibilitas
-- [ ] Pembuatan Space dari template dalam satu transaksi dan idempoten; tes
-- [ ] UI pemilih template di Space baru
+- [x] `openapi.yaml`: daftar template per kategori (Marketing, HR, IT, PM, …) dan pembuatan Space dari template
+- [x] Format template memuat project, task, view, form, custom field, workflow; versi dan kompatibilitas
+- [x] Pembuatan Space dari template dalam satu transaksi dan idempoten; tes
+- [x] UI pemilih template di Space baru
 
 **S6.1.2 Wizard first-run (AUTH-07)**
-- [ ] Wizard untuk admin pertama: nama organisasi → proyek pertama + 3 task → pilih view → undang anggota
-- [ ] Hanya tampil sekali dan dapat dilewati; menyimpan status selesai di akun
-- [ ] Tes Playwright dan axe
+- [x] Wizard untuk admin pertama: nama organisasi → proyek pertama + 3 task → pilih view → undang anggota
+- [x] Hanya tampil sekali dan dapat dilewati; menyimpan status selesai di akun
+- [x] Tes Playwright dan axe
 
 ### E6.2 Pengaturan
 
 **S6.2.1 Pengaturan workspace per user dan info akun (SET-03, SET-04)**
-- [ ] Timezone, bahasa (hanya English), format tanggal/jam, awal minggu, default task, shortcut komentar
-- [ ] Account info: nama akun, status trial, role, tanggal bergabung, seat, daftar administrator
-- [ ] Tes dan axe
+- [x] Timezone, bahasa (hanya English), format tanggal/jam, awal minggu, default task (durasi dan effort; "backlogged" dan "effort mode" belum punya fitur, D-54), shortcut komentar
+- [x] Account info: nama akun, status trial, role, tanggal bergabung, seat, daftar administrator (tanpa status trial: lihat D-54)
+- [x] Tes dan axe
 
 **S6.2.2 Preferensi email notifikasi (SET-05)**
-- [ ] Preferensi per jenis event (mention, assign, share, report, perubahan task)
-- [ ] Worker email menghormati preferensi; tes bahwa event dimatikan tidak mengirim email
-- [ ] UI pengaturan
+- [x] Preferensi per jenis event (mention, assign, share, report, perubahan task)
+- [x] Worker email menghormati preferensi; tes bahwa event dimatikan tidak mengirim email
+- [x] UI pengaturan
 
 **S6.2.3 Kosongkan Recycle bin (BIN-03)**
-- [ ] Hapus permanen dengan konfirmasi; hanya pemilik atau admin sesuai policy
-- [ ] File di penyimpanan ikut dibersihkan oleh housekeeping; tes tak ada yatim
+- [x] Hapus permanen dengan konfirmasi; hanya pemilik atau admin sesuai policy
+- [x] File di penyimpanan ikut dibersihkan oleh housekeeping; tes tak ada yatim
 
 ### E6.3 Hardening dan kesiapan rilis
 

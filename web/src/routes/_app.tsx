@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ProfileContext, useAppearance } from "@/lib/profile";
 import { useRealtime } from "@/lib/realtime";
 import { ItemDetail } from "@/components/item-detail";
+import { OnboardingWizard } from "@/components/onboarding-wizard";
 
 export const Route = createFileRoute("/_app")({
   validateSearch: (search: Record<string, unknown>): { task?: string; view?: string; filter?: string; sort?: string; group?: string; field?: string; preset?: string } => ({
@@ -75,6 +76,7 @@ function AppShell() {
         <Topbar live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? () => setCreating(true) : undefined} />
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
+      {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}
       <CreateItemDialog open={creating} onOpenChange={setCreating} me={me.data}
         location={spaceId ? { space_id: spaceId } : undefined}
         onCreated={(item) => {

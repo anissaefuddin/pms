@@ -20,6 +20,7 @@ async function mock(page: Page, over: Record<string, any> = {}) {
     "GET /reports": () => ({ body: { items: rows } }),
     [`GET /reports/${r1}`]: () => ({ body: { ...rows[0], definition }, headers: { ETag: '"1"' } }),
     "POST /analytics/query": { body: result },
+    "GET /report-templates": { body: { items: ["active_tasks_by_assignee", "overdue", "utilization"].map((key) => ({ key, layout: "column", query: { reporting_on: "tasks", metric: "count" } })) } },
     "GET /search": { body: { items: [{ id: proj, title: "Website launch", type: "project" }, { id: "b0000000-0000-4000-8000-0000000000aa", title: "Launch task", type: "task" }], comments: [], users: [] } },
     [`GET /items/${proj}`]: { body: { id: proj, title: "Website launch", type: "project" } },
     ...over,
@@ -56,6 +57,18 @@ test("creating a report posts the default definition and opens the editor", asyn
   await expect(page).toHaveURL(`/reports/${r1}`);
   const post = calls.find((c) => c.method === "POST" && c.path === "/reports")!;
   expect(post.body).toEqual({ name: "Weekly", space_id: null, sharing: "private", definition: { layout: "table", query: { reporting_on: "tasks", metric: "count", filters: {} } } });
+});
+
+test("a template fills the name and is created by key, without sending a definition", async ({ page }) => {
+  const { calls } = await mock(page, {
+    "POST /reports": (body: any) => ({ status: 201, body: { ...summary(r1, body.name), definition } , headers: { ETag: '"1"' } }),
+  });
+  await page.goto("/reports");
+  await page.getByLabel("Start from").selectOption("overdue");
+  await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Overdue tasks");
+  await page.getByRole("button", { name: "Create report" }).click();
+  await expect(page).toHaveURL(`/reports/${r1}`);
+  expect(calls.find((c) => c.method === "POST" && c.path === "/reports")!.body).toEqual({ name: "Overdue tasks", space_id: null, sharing: "private", template: "overdue" });
 });
 
 test("deleting asks first, then sends If-Match", async ({ page }) => {
@@ -114,6 +127,19 @@ test("editor runs the draft, saves with If-Match, and exposes export and subscri
   await page.getByRole("button", { name: "Subscribe", exact: true }).click();
   await expect.poll(() => calls.some((c) => c.method === "PUT")).toBe(true);
   expect(calls.find((c) => c.method === "PUT")!.body).toEqual({ weekday: 5, hour: 17 });
+});
+
+test("choosing utilization sets the person grouping and the period it needs", async ({ page }) => {
+  const { calls } = await mock(page);
+  await page.goto(`/reports/${r1}`);
+  await page.getByLabel(/^Based on/).selectOption("time_entries");
+  await page.getByLabel(/^Metric/).selectOption("utilization");
+  await expect(page.getByLabel(/^Group by/)).toHaveValue("user");
+  await expect(page.getByRole("checkbox", { name: "This month" })).toBeChecked();
+  await page.getByRole("button", { name: "Run report" }).click();
+  await expect.poll(() => calls.filter((c) => c.path === "/analytics/query").length).toBe(2);
+  expect(calls.filter((c) => c.path === "/analytics/query").at(-1)!.body).toEqual({
+    reporting_on: "time_entries", metric: "utilization", group_by: "user", filters: { entry_this_month: true } });
 });
 
 test("a stale save shows the conflict message, and an unknown report shows not found", async ({ page }) => {

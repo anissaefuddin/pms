@@ -22,10 +22,13 @@ import { Route as AppRecycleBinRouteImport } from './routes/_app/recycle-bin'
 import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppSharedWithMeRouteImport } from './routes/_app/shared-with-me'
+import { Route as AppStarredRouteImport } from './routes/_app/starred'
 import { Route as AppStreamRouteImport } from './routes/_app/stream'
 import { Route as AppTimesheetsRouteImport } from './routes/_app/timesheets'
 import { Route as FTokenRouteImport } from './routes/f.$token'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
+import { Route as AppDashboardsIndexRouteImport } from './routes/_app/dashboards.index'
+import { Route as AppDashboardsDashboardIdRouteImport } from './routes/_app/dashboards.$dashboardId'
 import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
 import { Route as AppReportsIndexRouteImport } from './routes/_app/reports.index'
 import { Route as AppReportsReportIdRouteImport } from './routes/_app/reports.$reportId'
@@ -33,6 +36,7 @@ import { Route as AppRequestsIndexRouteImport } from './routes/_app/requests.ind
 import { Route as AppRequestsFormIdRouteImport } from './routes/_app/requests.$formId'
 import { Route as AppRequestsMineRouteImport } from './routes/_app/requests.mine'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
+import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
@@ -110,6 +114,11 @@ const AppSharedWithMeRoute = AppSharedWithMeRouteImport.update({
   path: '/shared-with-me',
   getParentRoute: () => AppRoute,
 } as any)
+const AppStarredRoute = AppStarredRouteImport.update({
+  id: '/starred',
+  path: '/starred',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppStreamRoute = AppStreamRouteImport.update({
   id: '/stream',
   path: '/stream',
@@ -130,6 +139,17 @@ const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppDashboardsIndexRoute = AppDashboardsIndexRouteImport.update({
+  id: '/dashboards/',
+  path: '/dashboards/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppDashboardsDashboardIdRoute =
+  AppDashboardsDashboardIdRouteImport.update({
+    id: '/dashboards/$dashboardId',
+    path: '/dashboards/$dashboardId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppItemsItemIdRoute = AppItemsItemIdRouteImport.update({
   id: '/items/$itemId',
   path: '/items/$itemId',
@@ -163,6 +183,11 @@ const AppRequestsMineRoute = AppRequestsMineRouteImport.update({
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
+  id: '/account',
+  path: '/account',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
@@ -240,14 +265,17 @@ export interface FileRoutesByFullPath {
   '/search': typeof AppSearchRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/shared-with-me': typeof AppSharedWithMeRoute
+  '/starred': typeof AppStarredRoute
   '/stream': typeof AppStreamRoute
   '/timesheets': typeof AppTimesheetsRoute
   '/f/$token': typeof FTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
   '/reports/$reportId': typeof AppReportsReportIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
+  '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/users': typeof AppSettingsUsersRouteWithChildren
@@ -256,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/dashboards/': typeof AppDashboardsIndexRoute
   '/reports/': typeof AppReportsIndexRoute
   '/requests/': typeof AppRequestsIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
@@ -275,15 +304,18 @@ export interface FileRoutesByTo {
   '/recycle-bin': typeof AppRecycleBinRoute
   '/search': typeof AppSearchRoute
   '/shared-with-me': typeof AppSharedWithMeRoute
+  '/starred': typeof AppStarredRoute
   '/stream': typeof AppStreamRoute
   '/timesheets': typeof AppTimesheetsRoute
   '/f/$token': typeof FTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
+  '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
   '/reports/$reportId': typeof AppReportsReportIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
+  '/settings/account': typeof AppSettingsAccountRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
@@ -291,6 +323,7 @@ export interface FileRoutesByTo {
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/dashboards': typeof AppDashboardsIndexRoute
   '/reports': typeof AppReportsIndexRoute
   '/requests': typeof AppRequestsIndexRoute
   '/settings': typeof AppSettingsIndexRoute
@@ -313,15 +346,18 @@ export interface FileRoutesById {
   '/_app/search': typeof AppSearchRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/shared-with-me': typeof AppSharedWithMeRoute
+  '/_app/starred': typeof AppStarredRoute
   '/_app/stream': typeof AppStreamRoute
   '/_app/timesheets': typeof AppTimesheetsRoute
   '/f/$token': typeof FTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/_app/items/$itemId': typeof AppItemsItemIdRoute
   '/_app/reports/$reportId': typeof AppReportsReportIdRoute
   '/_app/requests/$formId': typeof AppRequestsFormIdRoute
   '/_app/requests/mine': typeof AppRequestsMineRoute
+  '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/settings/users': typeof AppSettingsUsersRouteWithChildren
@@ -330,6 +366,7 @@ export interface FileRoutesById {
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spikes/gantt': typeof AppSpikesGanttRoute
   '/_app/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/_app/dashboards/': typeof AppDashboardsIndexRoute
   '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/requests/': typeof AppRequestsIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
@@ -353,14 +390,17 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/shared-with-me'
+    | '/starred'
     | '/stream'
     | '/timesheets'
     | '/f/$token'
     | '/invitations/$token'
+    | '/dashboards/$dashboardId'
     | '/items/$itemId'
     | '/reports/$reportId'
     | '/requests/$formId'
     | '/requests/mine'
+    | '/settings/account'
     | '/settings/profile'
     | '/settings/security'
     | '/settings/users'
@@ -369,6 +409,7 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
+    | '/dashboards/'
     | '/reports/'
     | '/requests/'
     | '/settings/'
@@ -388,15 +429,18 @@ export interface FileRouteTypes {
     | '/recycle-bin'
     | '/search'
     | '/shared-with-me'
+    | '/starred'
     | '/stream'
     | '/timesheets'
     | '/f/$token'
     | '/invitations/$token'
     | '/'
+    | '/dashboards/$dashboardId'
     | '/items/$itemId'
     | '/reports/$reportId'
     | '/requests/$formId'
     | '/requests/mine'
+    | '/settings/account'
     | '/settings/profile'
     | '/settings/security'
     | '/settings/work-schedule'
@@ -404,6 +448,7 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
+    | '/dashboards'
     | '/reports'
     | '/requests'
     | '/settings'
@@ -425,15 +470,18 @@ export interface FileRouteTypes {
     | '/_app/search'
     | '/_app/settings'
     | '/_app/shared-with-me'
+    | '/_app/starred'
     | '/_app/stream'
     | '/_app/timesheets'
     | '/f/$token'
     | '/invitations/$token'
     | '/_app/'
+    | '/_app/dashboards/$dashboardId'
     | '/_app/items/$itemId'
     | '/_app/reports/$reportId'
     | '/_app/requests/$formId'
     | '/_app/requests/mine'
+    | '/_app/settings/account'
     | '/_app/settings/profile'
     | '/_app/settings/security'
     | '/_app/settings/users'
@@ -442,6 +490,7 @@ export interface FileRouteTypes {
     | '/_app/spaces/$spaceId'
     | '/_app/spikes/gantt'
     | '/_app/tasks/$itemId'
+    | '/_app/dashboards/'
     | '/_app/reports/'
     | '/_app/requests/'
     | '/_app/settings/'
@@ -554,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSharedWithMeRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/starred': {
+      id: '/_app/starred'
+      path: '/starred'
+      fullPath: '/starred'
+      preLoaderRoute: typeof AppStarredRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/stream': {
       id: '/_app/stream'
       path: '/stream'
@@ -581,6 +637,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/invitations/$token'
       preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/dashboards/': {
+      id: '/_app/dashboards/'
+      path: '/dashboards'
+      fullPath: '/dashboards/'
+      preLoaderRoute: typeof AppDashboardsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/dashboards/$dashboardId': {
+      id: '/_app/dashboards/$dashboardId'
+      path: '/dashboards/$dashboardId'
+      fullPath: '/dashboards/$dashboardId'
+      preLoaderRoute: typeof AppDashboardsDashboardIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/items/$itemId': {
       id: '/_app/items/$itemId'
@@ -629,6 +699,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/settings/'
       preLoaderRoute: typeof AppSettingsIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/account': {
+      id: '/_app/settings/account'
+      path: '/account'
+      fullPath: '/settings/account'
+      preLoaderRoute: typeof AppSettingsAccountRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/profile': {
@@ -732,6 +809,7 @@ const AppSettingsUsersRouteWithChildren =
   AppSettingsUsersRoute._addFileChildren(AppSettingsUsersRouteChildren)
 
 interface AppSettingsRouteChildren {
+  AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRouteWithChildren
@@ -741,6 +819,7 @@ interface AppSettingsRouteChildren {
 }
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
+  AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppSettingsUsersRoute: AppSettingsUsersRouteWithChildren,
@@ -761,9 +840,11 @@ interface AppRouteChildren {
   AppSearchRoute: typeof AppSearchRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSharedWithMeRoute: typeof AppSharedWithMeRoute
+  AppStarredRoute: typeof AppStarredRoute
   AppStreamRoute: typeof AppStreamRoute
   AppTimesheetsRoute: typeof AppTimesheetsRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppDashboardsDashboardIdRoute: typeof AppDashboardsDashboardIdRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
   AppReportsReportIdRoute: typeof AppReportsReportIdRoute
   AppRequestsFormIdRoute: typeof AppRequestsFormIdRoute
@@ -771,6 +852,7 @@ interface AppRouteChildren {
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpikesGanttRoute: typeof AppSpikesGanttRoute
   AppTasksItemIdRoute: typeof AppTasksItemIdRoute
+  AppDashboardsIndexRoute: typeof AppDashboardsIndexRoute
   AppReportsIndexRoute: typeof AppReportsIndexRoute
   AppRequestsIndexRoute: typeof AppRequestsIndexRoute
   AppSpacesSpaceIdFormsRoute: typeof AppSpacesSpaceIdFormsRoute
@@ -785,9 +867,11 @@ const AppRouteChildren: AppRouteChildren = {
   AppSearchRoute: AppSearchRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSharedWithMeRoute: AppSharedWithMeRoute,
+  AppStarredRoute: AppStarredRoute,
   AppStreamRoute: AppStreamRoute,
   AppTimesheetsRoute: AppTimesheetsRoute,
   AppIndexRoute: AppIndexRoute,
+  AppDashboardsDashboardIdRoute: AppDashboardsDashboardIdRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
   AppReportsReportIdRoute: AppReportsReportIdRoute,
   AppRequestsFormIdRoute: AppRequestsFormIdRoute,
@@ -795,6 +879,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpikesGanttRoute: AppSpikesGanttRoute,
   AppTasksItemIdRoute: AppTasksItemIdRoute,
+  AppDashboardsIndexRoute: AppDashboardsIndexRoute,
   AppReportsIndexRoute: AppReportsIndexRoute,
   AppRequestsIndexRoute: AppRequestsIndexRoute,
   AppSpacesSpaceIdFormsRoute: AppSpacesSpaceIdFormsRoute,

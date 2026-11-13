@@ -14,3 +14,9 @@ export async function restoreItem(client: QueryClient, id: string) {
   ]);
   return item;
 }
+
+export async function emptyRecycleBin(client: QueryClient) {
+  const result = await api<{ deleted: number }>("/api/v1/recycle-bin", { method: "DELETE" });
+  await client.invalidateQueries({ queryKey: recycleKey });
+  return result.deleted;
+}

@@ -132,6 +132,20 @@ func validateText(name, description string) error {
 
 // Create makes a shared Space. Only admin and regular users may create Spaces; the creator always gets full access.
 func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput, batch *notifications.Batch) (Space, error) {
+	tx, err := s.pool.Begin(ctx)
+	if err != nil {
+		return Space{}, err
+	}
+	defer tx.Rollback(ctx)
+	space, err := CreateTx(ctx, tx, actor, in, batch)
+	if err != nil {
+		return Space{}, err
+	}
+	return space, tx.Commit(ctx)
+}
+
+// CreateTx is Create inside the caller's transaction, for flows that fill the new Space before committing.
+func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput, batch *notifications.Batch) (Space, error) {
 	if actor.Type != policy.Admin && actor.Type != policy.Regular {
 		return Space{}, forbidden("your user type cannot create Spaces")
 	}
@@ -149,11 +163,6 @@ func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput
 	if !hasCreator {
 		shares = append(shares, ShareInput{PrincipalType: "user", PrincipalID: actor.ID, Role: string(policy.Full)})
 	}
-	tx, err := s.pool.Begin(ctx)
-	if err != nil {
-		return Space{}, err
-	}
-	defer tx.Rollback(ctx)
 	var id string
 	if err := tx.QueryRow(ctx, "INSERT INTO spaces(name,description,kind) VALUES ($1,$2,'shared') RETURNING id::text", strings.TrimSpace(in.Name), in.Description).Scan(&id); err != nil {
 		return Space{}, err
@@ -165,9 +174,6 @@ func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput
 	access, found, err := policy.SpaceAccessFor(ctx, tx, actor, id)
 	if err != nil || !found {
 		return Space{}, errors.Join(err, errors.New("created space is not visible to its creator"))
-	}
-	if err := tx.Commit(ctx); err != nil {
-		return Space{}, err
 	}
 	return toSpace(access), nil
 }

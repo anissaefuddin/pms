@@ -187,6 +187,9 @@
   --sidebar-accent: var(--muted);
   --sidebar-accent-foreground: var(--foreground);
   --sidebar-border: var(--border-subtle);
+
+  /* Lighter series colors keep 3:1 against the dark card (checked in src/lib/charts.test.ts). */
+  --cat-1: #A78BFA; --cat-2: #2DD4BF; --cat-3: #FB7185; --cat-4: #FB923C; --cat-5: #22D3EE; --cat-6: #E879F9;
 }
 
 /* Tenant brand override example. */

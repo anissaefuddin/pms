@@ -26,6 +26,11 @@ function Reports() {
   });
   const spaces = (useSpaces().data ?? []).filter((space) => space.kind === "shared" && space.my_capabilities?.includes("create"));
   const [filter, setFilter] = useState("");
+  const templates = useQuery({
+    queryKey: ["report-templates"], retry: false, staleTime: Infinity,
+    queryFn: async () => (await api<{ items: { key: string }[] }>("/api/v1/report-templates")).items,
+  });
+  const [template, setTemplate] = useState("");
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [sharing, setSharing] = useState<"private" | "space">("private");
@@ -39,7 +44,8 @@ function Reports() {
     setBusy(true); setError("");
     try {
       const report = await api<Report>("/api/v1/reports", { method: "POST", body: JSON.stringify({
-        name, space_id: location || null, sharing: location ? sharing : "private", definition: { layout: "table", query: defaultQuery("tasks") } }) });
+        name, space_id: location || null, sharing: location ? sharing : "private",
+        ...(template ? { template } : { definition: { layout: "table", query: defaultQuery("tasks") } }) }) });
       await qc.invalidateQueries({ queryKey: ["reports"] });
       await navigate({ to: "/reports/$reportId", params: { reportId: report.id } });
     } catch (err) { setError((err as Error).message || t("reports.create.failed")); }
@@ -64,6 +70,12 @@ function Reports() {
       <p className="text-sm text-muted-foreground">{t("reports.description")}</p>
     </header>
     <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => void create(e)} aria-label={t("reports.create.title")}>
+      {!!templates.data?.length && <label className="block text-sm">{t("reports.create.template")}
+        <select className="mt-1 block h-9 rounded-md border border-input bg-background px-2" value={template}
+          onChange={(e) => { setTemplate(e.target.value); if (e.target.value && !name.trim()) setName(t(`reports.template.${e.target.value}`)); }}>
+          <option value="">{t("reports.create.blank")}</option>
+          {templates.data.map((tpl) => <option key={tpl.key} value={tpl.key}>{t(`reports.template.${tpl.key}`)}</option>)}
+        </select></label>}
       <label className="block text-sm">{t("reports.create.name")}
         <Input required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-64" /></label>
       <label className="block text-sm">{t("reports.create.location")}

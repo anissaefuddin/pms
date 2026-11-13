@@ -1,3 +1,4 @@
+import { AxeBuilder } from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import { me } from "./mock-api";
 import { ALL, marketing, mockSpaces } from "./spaces-mock";
@@ -87,4 +88,43 @@ test("deleted item offers Undo and Recycle bin explains a blocked restore", asyn
   await page.goto("/recycle-bin");
   await expect(page.getByText("The original Space was deleted.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Restore", exact: true })).toBeDisabled();
+});
+
+test("emptying the Recycle bin asks for confirmation and deletes permanently", async ({ page }) => {
+  let emptied = false;
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /recycle-bin": () => ({ body: { items: emptied ? [] : [item] } }),
+    "DELETE /recycle-bin": () => { emptied = true; return { body: { deleted: 1 } }; },
+  } });
+  await page.goto("/recycle-bin");
+  await page.getByRole("button", { name: "Empty Recycle bin" }).click();
+  const dialog = page.getByRole("dialog", { name: "Empty the Recycle bin?" });
+  await expect(dialog.getByRole("button", { name: "Cancel" })).toBeFocused();
+  expect(calls.some((call) => call.method === "DELETE")).toBe(false);
+  await expect(dialog).toHaveCSS("opacity", "1"); // axe must not measure contrast mid fade-in
+  expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);
+  await dialog.getByRole("button", { name: "Delete permanently" }).click();
+  await expect(page.getByText("Recycle bin is empty")).toBeVisible();
+  expect(calls.filter((call) => call.method === "DELETE" && call.path === "/recycle-bin")).toHaveLength(1);
+});
+
+test("account page lists seats and administrators; email and task defaults save", async ({ page }) => {
+  let profile = { ...me, email_muted: [] as string[], default_task_duration_days: null as number | null };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /me": () => ({ body: profile }),
+    "PATCH /me": (body) => { profile = { ...profile, ...body }; return { body: profile }; },
+    "GET /account": { body: { name: "Pilot Co", created_at: "2026-01-02T00:00:00Z", role: "admin", joined_at: "2026-01-03T00:00:00Z",
+      administrators: [{ id: me.id, name: "Pilot Admin", email: "admin@example.test" }], seats: { used: 2, pending: 1, max: 5, available: 2 } } },
+  } });
+  await page.goto("/settings/account");
+  await expect(page.getByText("Pilot Co")).toBeVisible();
+  await expect(page.getByText("2 active · 1 invited · 2 available of 5 seats")).toBeVisible();
+  await expect(page.getByRole("link", { name: "admin@example.test" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.goto("/settings/profile");
+  await page.getByRole("checkbox", { name: "Scheduled report emails" }).uncheck();
+  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toMatchObject({ email_muted: ["report"] });
+  await page.getByLabel("Default task duration (days)").fill("3");
+  await page.getByRole("button", { name: "Save profile" }).click();
+  await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toMatchObject({ default_task_duration_days: 3 });
 });

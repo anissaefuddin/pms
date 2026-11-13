@@ -33,6 +33,27 @@ test.describe("sidebar", () => {
 });
 
 test.describe("create Space", () => {
+  test("starts from a template with one idempotent request", async ({ page }) => {
+    const template = { id: "project-management", name: "Project plan", category: "Project management", description: "A project with phases.",
+      version: 1, compatible: true, counts: { projects: 1, tasks: 4, views: 1, forms: 1, custom_fields: 1 } };
+    const base = { ...(extra()), "GET /space-templates": { body: { items: [template] } } };
+    const { calls } = await mockSpaces(page, { extra: { ...base,
+      "POST /space-templates/project-management/spaces": (body: Record<string, unknown>) => ({ status: 201, body: { id: "99999999-9999-4999-8999-999999999999", description: null, kind: "shared", version: 1, my_capabilities: [], ...body } }),
+    } });
+    await page.goto("/");
+    await page.getByRole("button", { name: "New Space" }).click();
+    const dialog = page.getByRole("dialog", { name: "New Space" });
+    await dialog.getByLabel("Start from").selectOption("project-management");
+    await expect(dialog.getByText("Includes 1 project, 4 tasks")).toBeVisible();
+    await expect(dialog.getByLabel("Description")).toHaveCount(0);
+    await dialog.getByLabel("Name").fill("Website relaunch");
+    await dialog.getByRole("button", { name: "Create Space" }).click();
+    await expect(dialog).toBeHidden();
+    const body = calls.find((c) => c.method === "POST" && c.path === "/space-templates/project-management/spaces")?.body as Record<string, string>;
+    expect(body.name).toBe("Website relaunch");
+    expect(body.request_id).toMatch(/^[0-9a-f-]{36}$/);
+    expect(calls.some((c) => c.method === "POST" && c.path === "/spaces")).toBe(false);
+  });
   test("includes initial sharing in the create request", async ({ page }) => {
     const { calls } = await mockSpaces(page, { extra: extra() });
     await page.goto("/");

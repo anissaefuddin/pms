@@ -59,6 +59,7 @@ type reportInput struct {
 	SpaceID    *uuid.UUID       `json:"space_id"`
 	Sharing    *string          `json:"sharing"`
 	Definition *json.RawMessage `json:"definition"`
+	Template   *string          `json:"template"` // start from a ready-made definition instead of sending one
 }
 
 type reportInvalid string
@@ -70,6 +71,9 @@ var errReportVersion = errors.New("report changed; reload and try again")
 const maxReportList = 1000
 
 func (s *Server) reportRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/v1/report-templates", s.requireUser(func(w http.ResponseWriter, _ *http.Request) {
+		writeJSON(w, http.StatusOK, map[string]any{"items": analytics.Templates})
+	}))
 	mux.HandleFunc("GET /api/v1/reports", s.requireUser(s.listReports))
 	mux.HandleFunc("POST /api/v1/reports", s.requireUser(s.createReport))
 	mux.HandleFunc("GET /api/v1/reports/{reportId}", s.requireUser(s.getReport))
@@ -266,7 +270,13 @@ func (s *Server) createReport(w http.ResponseWriter, r *http.Request) {
 			return nil, reportInvalid("sharing must be private, or space for a report located in a Space")
 		}
 		raw := json.RawMessage(defaultReportDefinition)
-		if in.Definition != nil {
+		if in.Template != nil {
+			tpl, ok := analytics.TemplateByKey(*in.Template)
+			if !ok || in.Definition != nil {
+				return nil, reportInvalid("template must name a known template and cannot be combined with a definition")
+			}
+			raw, _ = json.Marshal(reportDefinition{Layout: tpl.Layout, Query: tpl.Query})
+		} else if in.Definition != nil {
 			raw = *in.Definition
 		}
 		def, err := normalizeReportDefinition(raw)

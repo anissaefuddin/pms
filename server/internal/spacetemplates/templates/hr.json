@@ -1,0 +1,20 @@
+{
+  "format": 1, "version": 1, "id": "hr-onboarding", "name": "Employee onboarding", "category": "HR",
+  "description": "Checklist for a new hire and a form to request equipment.",
+  "custom_fields": [],
+  "projects": [
+    {"title": "New hire onboarding", "default_view": "table", "tasks": [
+      {"title": "Send welcome email", "duration_days": 1},
+      {"title": "Prepare workstation and accounts", "importance": "high", "duration_days": 2},
+      {"title": "Schedule introductions", "duration_days": 1},
+      {"title": "30-day check-in", "duration_days": 1}
+    ]}
+  ],
+  "views": [],
+  "forms": [
+    {"name": "Equipment request", "description": "Request equipment for a new hire.", "project": 0, "title_key": "employee", "definition": {"pages": [
+      {"title": "Request", "elements": [
+        {"key": "employee", "kind": "single_line", "label": "Employee name", "required": true},
+        {"key": "equipment", "kind": "multiple_choice", "label": "Equipment", "options": ["Laptop", "Monitor", "Phone", "Badge"]}]}]}}
+  ]
+}

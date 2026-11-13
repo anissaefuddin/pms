@@ -263,3 +263,20 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 
 - S4.3.2 DONE. Space actions → Import from Excel menampilkan kolom, pemetaan, sampel, dan galat per baris. Commit membuat Item baru dalam satu transaksi. Digest mengikat file dan mapping. Migrasi 00037 menyimpan hasil commit satu jam untuk retry yang sama. Maksimum 5 MiB, 500 baris data, 100 kolom. Impor membaca sheet pertama dan tanggal memakai teks ISO. Field kustom harus tersedia di Space tujuan atau dipetakan ulang. Field arsip dan People nonaktif tunduk pada validasi normal.
 - S4.4.1 DONE. Kedua alur Chrome dengan PostgreSQL lulus. Stack manual perlu build terbaru dengan migrasi 00037. Seluruh perubahan tetap di working tree.
+
+
+### Penutupan M5 (13 Nov 2026)
+
+- **DONE:** seluruh story M5 (S5.1.1 sampai S5.1.5, S5.2.1 sampai S5.2.3, S5.3.1). Bukti di TESTING.md.
+- **Yang ditambahkan:** paket `analytics` (mesin kueri tertutup, D-49) untuk widget dan report; dashboard dan widget (`/dashboards`, ECharts SVG dimuat lazy); report, template, ekspor CSV, langganan (`/reports`, D-50); job River `report_digest` tiap 15 menit (paket `reportdigest`, didaftarkan lewat `mail.New(..., reportdigest.Option(...))` di `serve`); bintang Item (D-51). Migrasi `00038` sampai `00043` (celah `00029` tetap disengaja).
+- **Konfigurasi:** tidak ada variabel baru. Email langganan memakai SMTP yang sama dan `PUBLIC_URL` untuk tautan.
+- **Titik hati-hati:** hasil widget dan report selalu dihitung dengan hak pemirsa; jangan menambahkan cache bersama antar pengguna. `mail` tidak boleh mengimpor `analytics` (siklus lewat `items`), karena itu job digest ada di `reportdigest`. `tsc --noEmit -p .` di `web` tidak memeriksa apa pun; pakai `npm run typecheck` (`tsc -b`).
+- **Belum:** pengiriman email langganan ke SMTP sungguhan dan job periodik pada server hidup, utilization dengan jadwal kerja per orang, custom field di editor widget dan report (API siap), layout dashboard vertikal/horizontal (DASH-05, P2), tes beban banyak pengguna, update 00033 sampai 00043 pada instance pilot.
+
+### Pengaturan, template dan onboarding (13 Nov 2026)
+
+- **Berjalan:** kosongkan Recycle bin (S6.2.3), default task dan info akun (S6.2.1), preferensi email (S6.2.2), template Space (S6.1.1) dan wizard first-run (S6.1.2). Kelimanya `IN_PROGRESS` di TASKS: bukti di TESTING.md lengkap untuk backend dan mock UI, tetapi belum ada UAT oleh manusia dan belum ada alur live wizard.
+- **Migrasi baru:** 00044 (`users` default task dan `email_muted`), 00045 (`space_template_runs`). Perbarui instance pilot dengan migrasi ini.
+- **Titik hati-hati:** template adalah JSON di biner (`server/internal/spacetemplates/templates`); menambah template cukup menambah berkas dan lulus `TestCatalogIsConsistent` serta tes pembuatan. Mengubah `Format` hanya bila struktur berkas berubah tak kompatibel. Live suite menandai `onboarding_done` sebelum memulai browser; tes yang ingin melihat wizard memakai mock. `loadMe` kini memuat `onboarding_pending` dan preferensi, jadi tiap panggilan `/me` ikut membaca `account.settings`.
+- **File sampingan dari sesi lain yang belum di-commit** (M5 dan report) ikut ada di working tree; `mail/notification.go` dan `reportdigest/reportdigest.go` disentuh satu kondisi `email_muted`.
+

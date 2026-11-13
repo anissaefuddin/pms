@@ -170,7 +170,7 @@ Aturan pembuatan (satu sumber untuk semua modul):
 | `comment` | Follower item | Pelaku, dan user yang sudah menerima `mention` dari komentar yang sama |
 | `shared` | Principal yang baru diberi share | Pelaku |
 
-Hanya penerima yang masih berstatus `active` dan masih punya kemampuan `view` pada item yang dibuatkan notifikasi. Email dikirim sesuai preferensi (SET-05, M6; sebelum itu semua event email aktif kecuali `comment`).
+Hanya penerima yang masih berstatus `active` dan masih punya kemampuan `view` pada item yang dibuatkan notifikasi. Email dikirim sesuai preferensi (SET-05): grup `mention`, `assigned`, `shared`, `task_changes` (status dan approval) dan `report` dapat dimatikan per user; notifikasi `comment` tidak pernah dikirim lewat email (D-54).
 
 ## 7. Lampiran file
 

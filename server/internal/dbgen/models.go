@@ -666,6 +666,12 @@ type ItemLocation struct {
 	DeletedRootID pgtype.UUID `json:"deleted_root_id"`
 }
 
+type ItemStar struct {
+	UserID    pgtype.UUID        `json:"user_id"`
+	ItemID    pgtype.UUID        `json:"item_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Notification struct {
 	ID          pgtype.UUID        `json:"id"`
 	RecipientID pgtype.UUID        `json:"recipient_id"`
@@ -713,11 +719,12 @@ type Report struct {
 }
 
 type ReportSubscription struct {
-	ReportID  pgtype.UUID        `json:"report_id"`
-	UserID    pgtype.UUID        `json:"user_id"`
-	Weekday   int16              `json:"weekday"`
-	Hour      int16              `json:"hour"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ReportID   pgtype.UUID        `json:"report_id"`
+	UserID     pgtype.UUID        `json:"user_id"`
+	Weekday    int16              `json:"weekday"`
+	Hour       int16              `json:"hour"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	LastSentAt pgtype.Timestamptz `json:"last_sent_at"`
 }
 
 type RequestForm struct {
@@ -776,6 +783,13 @@ type Space struct {
 	DeletedBy   pgtype.UUID        `json:"deleted_by"`
 }
 
+type SpaceTemplateRun struct {
+	RequestID pgtype.UUID        `json:"request_id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Status struct {
 	ID              pgtype.UUID `json:"id"`
 	WorkflowID      pgtype.UUID `json:"workflow_id"`
@@ -806,35 +820,38 @@ type TimeEntry struct {
 }
 
 type User struct {
-	ID                   pgtype.UUID        `json:"id"`
-	Email                string             `json:"email"`
-	FirstName            string             `json:"first_name"`
-	LastName             string             `json:"last_name"`
-	PasswordHash         pgtype.Text        `json:"password_hash"`
-	UserType             UserType           `json:"user_type"`
-	Status               UserStatus         `json:"status"`
-	JobTitle             string             `json:"job_title"`
-	Department           string             `json:"department"`
-	Locale               string             `json:"locale"`
-	Timezone             string             `json:"timezone"`
-	DateFormat           string             `json:"date_format"`
-	TimeFormat           string             `json:"time_format"`
-	WeekStart            string             `json:"week_start"`
-	LastLoginAt          pgtype.Timestamptz `json:"last_login_at"`
-	CreatedAt            pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt            pgtype.Timestamptz `json:"updated_at"`
-	Search               interface{}        `json:"search"`
-	InvitationGeneration int64              `json:"invitation_generation"`
-	InvitationMessage    string             `json:"invitation_message"`
-	InvitedBy            pgtype.UUID        `json:"invited_by"`
-	Company              pgtype.Text        `json:"company"`
-	Country              pgtype.Text        `json:"country"`
-	Location             pgtype.Text        `json:"location"`
-	Phone                pgtype.Text        `json:"phone"`
-	Density              string             `json:"density"`
-	Theme                string             `json:"theme"`
-	CommentShortcut      string             `json:"comment_shortcut"`
-	SidebarHidden        []string           `json:"sidebar_hidden"`
+	ID                       pgtype.UUID        `json:"id"`
+	Email                    string             `json:"email"`
+	FirstName                string             `json:"first_name"`
+	LastName                 string             `json:"last_name"`
+	PasswordHash             pgtype.Text        `json:"password_hash"`
+	UserType                 UserType           `json:"user_type"`
+	Status                   UserStatus         `json:"status"`
+	JobTitle                 string             `json:"job_title"`
+	Department               string             `json:"department"`
+	Locale                   string             `json:"locale"`
+	Timezone                 string             `json:"timezone"`
+	DateFormat               string             `json:"date_format"`
+	TimeFormat               string             `json:"time_format"`
+	WeekStart                string             `json:"week_start"`
+	LastLoginAt              pgtype.Timestamptz `json:"last_login_at"`
+	CreatedAt                pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt                pgtype.Timestamptz `json:"updated_at"`
+	Search                   interface{}        `json:"search"`
+	InvitationGeneration     int64              `json:"invitation_generation"`
+	InvitationMessage        string             `json:"invitation_message"`
+	InvitedBy                pgtype.UUID        `json:"invited_by"`
+	Company                  pgtype.Text        `json:"company"`
+	Country                  pgtype.Text        `json:"country"`
+	Location                 pgtype.Text        `json:"location"`
+	Phone                    pgtype.Text        `json:"phone"`
+	Density                  string             `json:"density"`
+	Theme                    string             `json:"theme"`
+	CommentShortcut          string             `json:"comment_shortcut"`
+	SidebarHidden            []string           `json:"sidebar_hidden"`
+	DefaultTaskDurationDays  pgtype.Int4        `json:"default_task_duration_days"`
+	DefaultTaskEffortMinutes pgtype.Int4        `json:"default_task_effort_minutes"`
+	EmailMuted               []string           `json:"email_muted"`
 }
 
 type UserToken struct {

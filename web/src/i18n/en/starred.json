@@ -1,0 +1,15 @@
+{
+  "nav": "Starred",
+  "title": "Starred",
+  "description": "Items you bookmarked. Only you see this list.",
+  "loading": "Loading starred items…",
+  "error": "Starred items could not be loaded.",
+  "retry": "Try again",
+  "empty": "You have not starred anything yet. Use the star on an item to find it here.",
+  "add": "Star this item",
+  "remove": "Remove the star",
+  "failed": "The star could not be changed.",
+  "type.project": "Project",
+  "type.folder": "Folder",
+  "type.task": "Task"
+}

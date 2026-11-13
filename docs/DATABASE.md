@@ -236,7 +236,15 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 ### 7.4 Report (M5)
 
-`reports` (`owner_id`, `space_id` null = pribadi, `name`, `definition` jsonb `{layout, query}` maksimum 8 KiB, `sharing` `private|space`, `version` untuk If-Match, `created_at`, `updated_at`; CHECK: sharing `space` wajib punya Space) dan `report_subscriptions` (`report_id` ON DELETE CASCADE, `user_id`, `weekday` 0-6 dengan 0 = Minggu, `hour` 0-23 di zona waktu pelanggan; kunci utama `(report_id, user_id)`). Report pribadi dan report `private` hanya terlihat pemiliknya, bahkan oleh admin; report `space` terlihat anggota Space yang punya View. Menghapus report menghapus langganan, bukan data sumber. Pengiriman email langganan belum ada (S5.2.3).
+`reports` (`owner_id`, `space_id` null = pribadi, `name`, `definition` jsonb `{layout, query}` maksimum 8 KiB, `sharing` `private|space`, `version` untuk If-Match, `created_at`, `updated_at`; CHECK: sharing `space` wajib punya Space) dan `report_subscriptions` (`report_id` ON DELETE CASCADE, `user_id`, `weekday` 0-6 dengan 0 = Minggu, `hour` 0-23 di zona waktu pelanggan; kunci utama `(report_id, user_id)`). Report pribadi dan report `private` hanya terlihat pemiliknya, bahkan oleh admin; report `space` terlihat anggota Space yang punya View. Menghapus report menghapus langganan, bukan data sumber. `report_subscriptions.last_sent_at` (migrasi `00042`) dicap oleh job `report_digest` saat mengklaim langganan; pengiriman maksimal sekali per slot mingguan.
+
+### 7.5 Bintang Item (M5)
+
+`item_stars(user_id, item_id, created_at)`, kunci utama `(user_id, item_id)`, `ON DELETE CASCADE` ke `users` dan `items`, indeks `item_id`. Baris hanya dibaca untuk pemiliknya dan disaring policy (View) saat ditampilkan; mencabut akses tidak menghapus bintang.
+
+### 7.6 Pengaturan dan template (M6)
+
+`users` bertambah `default_task_duration_days` (0 sampai 3650, null berarti tidak ada), `default_task_effort_minutes` (0 sampai 525600) dan `email_muted text[]` (grup email yang dimatikan; kosong berarti semua aktif). `account.settings` memegang `onboarding_done`. `space_template_runs(request_id, user_id, space_id, created_at)` mencatat pembuatan Space dari template untuk idempotensi; `ON DELETE CASCADE` ke `users` dan `spaces`. Template itu sendiri tidak ada di database (D-52).
 
 ## 8. Data yang sengaja belum ada (M2+)
 

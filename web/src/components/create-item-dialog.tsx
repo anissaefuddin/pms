@@ -91,6 +91,10 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     if (initialStatus) input.status_id = initialStatus;
     if (kind !== "task") input.default_view_type = form.get("default_view_type") === "board" ? "board" : "table";
     if (kind === "project" && owner[0]) input.owner_id = owner[0].id;
+    if (kind === "task") { // SET-03: the user's defaults for a new task
+      if (me.default_task_duration_days != null) input.duration_days = me.default_task_duration_days;
+      if (me.default_task_effort_minutes != null) input.effort_minutes = me.default_task_effort_minutes;
+    }
     if (start) input.start_date = start;
     if (due) input.due_date = due;
     if (canShare && shares.length) input.shares = shares.map(({ principal_type, principal_id, role }) => ({ principal_type, principal_id, role }));

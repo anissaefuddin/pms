@@ -30,6 +30,8 @@ type Args struct {
 	URL      string `json:"url"`
 	Locale   string `json:"locale"`
 	Message  string `json:"message,omitempty"`
+	Subject  string `json:"subject,omitempty"` // report_digest only
+	HTML     string `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
 }
 
 func (Args) Kind() string { return "send_email" }
@@ -157,7 +159,10 @@ func send(ctx context.Context, address, host string, auth smtp.Auth, from, to st
 
 type Queue struct{ client *river.Client[pgx.Tx] }
 
-func New(pool *pgxpool.Pool, cfg config.Config) (*Queue, error) {
+// Option lets packages that depend on mail (and so cannot be imported by it) add their own workers and periodic jobs to the one River client.
+type Option func(workers *river.Workers, periodic *[]*river.PeriodicJob)
+
+func New(pool *pgxpool.Pool, cfg config.Config, options ...Option) (*Queue, error) {
 	workers := river.NewWorkers()
 	mailer := &Worker{cfg: cfg}
 	river.AddWorker(workers, mailer)
@@ -166,13 +171,17 @@ func New(pool *pgxpool.Pool, cfg config.Config) (*Queue, error) {
 	river.AddWorker(workers, &NotificationWorker{pool: pool, mail: mailer})
 	// This is the process's only River client, so the daily cleanup is registered here too.
 	river.AddWorker(workers, &housekeeping.Worker{Pool: pool, FilesDir: cfg.FilesDir})
+	periodic := []*river.PeriodicJob{river.NewPeriodicJob(river.PeriodicInterval(24*time.Hour),
+		func() (river.JobArgs, *river.InsertOpts) { return housekeeping.Args{}, nil }, &river.PeriodicJobOpts{RunOnStart: true})}
+	for _, option := range options {
+		option(workers, &periodic)
+	}
 	client, err := river.NewClient(riverpgxv5.New(pool), &river.Config{
 		Queues: map[string]river.QueueConfig{river.QueueDefault: {MaxWorkers: 4}}, Workers: workers,
 		// Job args hold one-time links; keep finished jobs for an hour instead of River's 24 hours.
 		// shortcut: discarded jobs keep River's default retention (needed to debug failures) and backups still contain job args; encrypt the args if that matters.
 		CompletedJobRetentionPeriod: time.Hour,
-		PeriodicJobs: []*river.PeriodicJob{river.NewPeriodicJob(river.PeriodicInterval(24*time.Hour),
-			func() (river.JobArgs, *river.InsertOpts) { return housekeeping.Args{}, nil }, &river.PeriodicJobOpts{RunOnStart: true})},
+		PeriodicJobs:                periodic,
 	})
 	if err != nil {
 		return nil, err
@@ -201,6 +210,8 @@ func render(args Args) (subject, text, html string, err error) {
 		// Message is composed by the server from the form name, the item title and the status; it holds no internal data.
 		subject = map[string]string{"request_received": "We received your request", "request_status": "Your request was updated"}[args.Template]
 		return subject, args.Message, fmt.Sprintf(`<p>%s</p>`, htmlpkg.EscapeString(args.Message)), nil
+	case "report_digest":
+		return args.Subject, args.Message, `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827">` + args.HTML + `</body></html>`, nil
 	case "set_password":
 		note, intro := "", "You have been invited to PMS. Activate your account and choose a password."
 		if args.Message != "" {

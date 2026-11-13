@@ -41,3 +41,12 @@ func (s *Server) restoreItem(w http.ResponseWriter, r *http.Request) {
 	}
 	writeItem(w, http.StatusOK, item, err)
 }
+
+func (s *Server) emptyRecycleBin(w http.ResponseWriter, r *http.Request) {
+	n, err := items.Purge(r.Context(), s.pool, actorOf(r))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]int{"deleted": n})
+}

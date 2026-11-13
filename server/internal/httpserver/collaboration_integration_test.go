@@ -48,6 +48,7 @@ func TestBrowserCollaboration(t *testing.T) {
 
 func runBrowserFixture(t *testing.T, f *fixture, specs []string, env ...string) {
 	t.Helper()
+	f.exec(`UPDATE account SET settings=settings||'{"onboarding_done":true}'`) // the first-run wizard would cover the page under test
 	args := append([]string{"run", "test:e2e", "--", "--workers=1"}, specs...)
 	cmd := exec.CommandContext(t.Context(), "npm", args...)
 	cmd.Dir = "../../../web"
