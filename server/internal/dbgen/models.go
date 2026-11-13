@@ -632,6 +632,43 @@ type CommentMention struct {
 	TargetID    pgtype.UUID `json:"target_id"`
 }
 
+type ConnectorConflict struct {
+	ID            pgtype.UUID        `json:"id"`
+	ConnectorID   pgtype.UUID        `json:"connector_id"`
+	ExternalID    string             `json:"external_id"`
+	ItemID        pgtype.UUID        `json:"item_id"`
+	ItemTitle     string             `json:"item_title"`
+	RemoteTitle   string             `json:"remote_title"`
+	RemoteVersion string             `json:"remote_version"`
+	BaseTitle     pgtype.Text        `json:"base_title"`
+	Resolution    pgtype.Text        `json:"resolution"`
+	ResolvedBy    pgtype.UUID        `json:"resolved_by"`
+	ResolvedAt    pgtype.Timestamptz `json:"resolved_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
+type ConnectorInstall struct {
+	ID         pgtype.UUID        `json:"id"`
+	Kind       string             `json:"kind"`
+	Name       string             `json:"name"`
+	Config     []byte             `json:"config"`
+	SecretsEnc pgtype.Text        `json:"secrets_enc"`
+	Enabled    bool               `json:"enabled"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ConnectorLink struct {
+	ConnectorID         pgtype.UUID        `json:"connector_id"`
+	ExternalID          string             `json:"external_id"`
+	ItemID              pgtype.UUID        `json:"item_id"`
+	SyncedTitle         pgtype.Text        `json:"synced_title"`
+	SyncedRemoteVersion string             `json:"synced_remote_version"`
+	SyncedItemVersion   pgtype.Int4        `json:"synced_item_version"`
+	SyncedAt            pgtype.Timestamptz `json:"synced_at"`
+}
+
 type CustomField struct {
 	ID         pgtype.UUID        `json:"id"`
 	SpaceID    pgtype.UUID        `json:"space_id"`

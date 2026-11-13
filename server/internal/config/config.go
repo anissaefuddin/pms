@@ -31,6 +31,8 @@ type Config struct {
 	MaxUploadMB    int
 	// TwoFactorKey and TwoFactorKeyPrevious are 32-byte keys for TOTP secrets; without TwoFactorKey 2FA cannot be turned on.
 	TwoFactorKey, TwoFactorKeyPrevious []byte
+	// ConnectorKey and ConnectorKeyPrevious encrypt connector secrets (same format and rotation as the 2FA key).
+	ConnectorKey, ConnectorKeyPrevious []byte
 }
 
 func Load() (Config, error) {
@@ -52,7 +54,7 @@ func Load() (Config, error) {
 	if err != nil || cfg.MaxUploadMB < 1 || cfg.MaxUploadMB > 1024 {
 		return Config{}, fmt.Errorf("PMS_MAX_UPLOAD_MB must be between 1 and 1024")
 	}
-	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious} {
+	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious, "PMS_CONNECTOR_KEY": &cfg.ConnectorKey, "PMS_CONNECTOR_KEY_PREVIOUS": &cfg.ConnectorKeyPrevious} {
 		if raw := os.Getenv(env); raw != "" {
 			key, err := base64.StdEncoding.DecodeString(strings.TrimSpace(raw))
 			if err != nil || len(key) != 32 {
@@ -63,6 +65,9 @@ func Load() (Config, error) {
 	}
 	if cfg.TwoFactorKeyPrevious != nil && cfg.TwoFactorKey == nil {
 		return Config{}, fmt.Errorf("PMS_2FA_KEY_PREVIOUS needs PMS_2FA_KEY")
+	}
+	if cfg.ConnectorKeyPrevious != nil && cfg.ConnectorKey == nil {
+		return Config{}, fmt.Errorf("PMS_CONNECTOR_KEY_PREVIOUS needs PMS_CONNECTOR_KEY")
 	}
 	if cfg.DatabaseURL == "" {
 		// Parts instead of a URL: url.UserPassword escapes the password, so any characters work.

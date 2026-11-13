@@ -25,6 +25,8 @@ function SettingsLayout() {
             {me?.capabilities.manage_users && <Link to="/settings/users" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.users.title")}</Link>}
             <Link to="/settings/resources" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.resources")}</Link>
+            {me?.user_type === "admin" && <Link to="/settings/apps" className={linkClass}
+              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.apps.title")}</Link>}
             {me?.user_type === "admin" && <Link to="/settings/rates" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.rates")}</Link>}
             <Link to="/settings/work-schedule" className={linkClass}

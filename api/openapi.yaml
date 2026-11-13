@@ -210,6 +210,142 @@ paths:
                   id: { type: string, format: uuid }
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /connectors:
+    get:
+      operationId: listConnectors
+      summary: Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { kinds: { type: array, items: { type: string } }, items: { type: array, items: { $ref: '#/components/schemas/ConnectorInstall' } } } } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: installConnector
+      summary: Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, name]
+              properties:
+                kind: { type: string }
+                name: { type: string, minLength: 1, maxLength: 120 }
+                config: { type: object, additionalProperties: true }
+                secrets: { type: object, additionalProperties: { type: string } }
+      responses:
+        '201': { description: Dibuat, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: configureConnector
+      summary: Admin. Ubah nama, config, atau rahasia (digabung per nama; nilai kosong menghapus)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                config: { type: object, additionalProperties: true }
+                secrets: { type: object, additionalProperties: { type: string } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/disable:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: disableConnector
+      summary: Admin. Nonaktifkan; sinkronisasi ditolak (409) sampai diaktifkan lagi
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/enable:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: enableConnector
+      summary: Admin. Aktifkan kembali
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/links:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: linkConnectorItem
+      summary: Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item_id]
+              properties:
+                item_id: { type: string, format: uuid }
+                external_id: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { external_id: { type: string } } } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/sync:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: syncConnector
+      summary: Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pushed: { type: integer }
+                  pulled: { type: integer }
+                  conflicts: { type: integer }
+                  pending: { type: integer }
+                  skipped: { type: integer }
+                  unchanged: { type: integer }
+        '409': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/conflicts:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: status, in: query, required: false, schema: { type: string, enum: [open, all] } }
+    get:
+      operationId: listConnectorConflicts
+      summary: Admin. Konflik sinkronisasi (default hanya yang terbuka)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/ConnectorConflict' } } } } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /connector-conflicts/{conflictId}/resolve:
+    parameters:
+      - { name: conflictId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: resolveConnectorConflict
+      summary: Admin. Pilih sisi yang dipakai (item atau remote); sisi lain ditimpa dengan sengaja, teksnya tetap di catatan konflik
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution]
+              properties:
+                resolution: { type: string, enum: [item, remote] }
+      responses:
+        '204': { description: Diselesaikan }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
   /items/{projectId}/gantt-snapshots:
     parameters:
       - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -3881,6 +4017,29 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
+    ConnectorInstall:
+      type: object
+      required: [id, kind, name, config, secret_names, enabled, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string }
+        name: { type: string }
+        config: { type: object, additionalProperties: true }
+        secret_names: { type: array, items: { type: string } }
+        enabled: { type: boolean }
+        created_at: { type: string, format: date-time }
+    ConnectorConflict:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        external_id: { type: string }
+        item_id: { type: string, format: uuid }
+        item_title: { type: string }
+        remote_title: { type: string }
+        base_title: { type: string, nullable: true }
+        resolution: { type: string, enum: [item, remote], nullable: true }
+        resolved_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
     ResourceSchedule:
       type: object
       properties:
