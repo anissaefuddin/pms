@@ -48,7 +48,7 @@ func SweepFiles(ctx context.Context, pool *pgxpool.Pool, store storage.LocalStor
 	for len(keys) > 0 {
 		batch := keys[:min(500, len(keys))]
 		keys = keys[len(batch):]
-		rows, err := pool.Query(ctx, "SELECT storage_key FROM attachment_versions WHERE storage_key=ANY($1) UNION SELECT storage_key FROM attachments WHERE storage_key=ANY($1)", batch)
+		rows, err := pool.Query(ctx, "SELECT storage_key FROM attachment_versions WHERE storage_key=ANY($1) UNION SELECT storage_key FROM attachments WHERE storage_key=ANY($1) UNION SELECT p->>'key' FROM attachment_previews, jsonb_array_elements(pages) p WHERE p->>'key'=ANY($1)", batch)
 		if err != nil {
 			return removed, err
 		}

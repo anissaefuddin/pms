@@ -150,7 +150,11 @@
   "approvals": {
     "history": "Decision history",
     "reassign": "Reassign approvers",
-    "policy": { "label": "Approval policy", "all": "All approvers", "any": "Any approver" },
+    "policy": {
+      "label": "Approval policy",
+      "all": "All approvers",
+      "any": "Any approver"
+    },
     "pinnedVersion": "item version {{version}}",
     "event": {
       "approver_requested": "{{actor}} asked {{subject}} to decide",
@@ -202,5 +206,26 @@
   "relation.search": "Search items to link",
   "relation.results": "Search results",
   "relation.add": "Link {{title}}",
-  "relation.remove": "Unlink {{title}}"
+  "relation.remove": "Unlink {{title}}",
+  "proof": "Proof",
+  "proofOpen": "Proof {{name}}",
+  "proofHint": "Click the image to pin a comment to that spot.",
+  "proofReadOnly": "You can read comments on this version; commenting needs comment access.",
+  "proofPreparing": "Preparing preview…",
+  "proofUnavailable": {
+    "skipped": "No preview is available for this file. Download it to view it.",
+    "failed": "The preview could not be created. Download the file to view it."
+  },
+  "proofPrevious": "Previous page",
+  "proofNext": "Next page",
+  "proofPage": "Page {{page}} of {{count}}",
+  "proofImage": "Preview page {{page}}",
+  "proofComment": "Pin note",
+  "proofPost": "Pin comment",
+  "proofComments": "Pinned comments",
+  "proofNone": "No comments on this page.",
+  "proofResolved": "resolved",
+  "proofResolve": "Resolve",
+  "proofReopen": "Reopen",
+  "proofDelete": "Delete"
 }

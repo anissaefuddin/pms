@@ -429,6 +429,30 @@ func (e AssigneeAllocationUpdateAllocationUnit) Valid() bool {
 	}
 }
 
+// Defines values for AttachmentPreviewStatus.
+const (
+	AttachmentPreviewStatusFailed  AttachmentPreviewStatus = "failed"
+	AttachmentPreviewStatusPending AttachmentPreviewStatus = "pending"
+	AttachmentPreviewStatusReady   AttachmentPreviewStatus = "ready"
+	AttachmentPreviewStatusSkipped AttachmentPreviewStatus = "skipped"
+)
+
+// Valid indicates whether the value is a known member of the AttachmentPreviewStatus enum.
+func (e AttachmentPreviewStatus) Valid() bool {
+	switch e {
+	case AttachmentPreviewStatusFailed:
+		return true
+	case AttachmentPreviewStatusPending:
+		return true
+	case AttachmentPreviewStatusReady:
+		return true
+	case AttachmentPreviewStatusSkipped:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AutomationRunStatus.
 const (
 	AutomationRunStatusDenied       AutomationRunStatus = "denied"
@@ -2717,6 +2741,36 @@ type Attachment struct {
 	Version *int `json:"version,omitempty"`
 }
 
+// AttachmentAnnotation defines model for AttachmentAnnotation.
+type AttachmentAnnotation struct {
+	AttachmentId openapi_types.UUID `json:"attachment_id"`
+	Author       UserRef            `json:"author"`
+	Body         string             `json:"body"`
+	CreatedAt    time.Time          `json:"created_at"`
+	Id           openapi_types.UUID `json:"id"`
+	Page         int                `json:"page"`
+	Resolved     bool               `json:"resolved"`
+	Version      int                `json:"version"`
+	X            float32            `json:"x"`
+	Y            float32            `json:"y"`
+}
+
+// AttachmentPreview defines model for AttachmentPreview.
+type AttachmentPreview struct {
+	AttachmentId openapi_types.UUID `json:"attachment_id"`
+	Note         string             `json:"note"`
+	Pages        []struct {
+		Height int `json:"height"`
+		Page   int `json:"page"`
+		Width  int `json:"width"`
+	} `json:"pages"`
+	Status  AttachmentPreviewStatus `json:"status"`
+	Version int                     `json:"version"`
+}
+
+// AttachmentPreviewStatus defines model for AttachmentPreview.Status.
+type AttachmentPreviewStatus string
+
 // AttachmentVersion defines model for AttachmentVersion.
 type AttachmentVersion struct {
 	AttachmentId openapi_types.UUID `json:"attachment_id"`
@@ -4545,6 +4599,19 @@ type UploadAttachmentVersionMultipartBody struct {
 	File openapi_types.File `json:"file"`
 }
 
+// CreateAttachmentAnnotationJSONBody defines parameters for CreateAttachmentAnnotation.
+type CreateAttachmentAnnotationJSONBody struct {
+	Body string  `json:"body"`
+	Page *int    `json:"page,omitempty"`
+	X    float32 `json:"x"`
+	Y    float32 `json:"y"`
+}
+
+// UpdateAttachmentAnnotationJSONBody defines parameters for UpdateAttachmentAnnotation.
+type UpdateAttachmentAnnotationJSONBody struct {
+	Resolved bool `json:"resolved"`
+}
+
 // LoginSecondStepJSONBody defines parameters for LoginSecondStep.
 type LoginSecondStepJSONBody struct {
 	Challenge string `json:"challenge"`
@@ -5169,6 +5236,12 @@ type DecideApprovalJSONRequestBody DecideApprovalJSONBody
 // UploadAttachmentVersionMultipartRequestBody defines body for UploadAttachmentVersion for multipart/form-data ContentType.
 type UploadAttachmentVersionMultipartRequestBody UploadAttachmentVersionMultipartBody
 
+// CreateAttachmentAnnotationJSONRequestBody defines body for CreateAttachmentAnnotation for application/json ContentType.
+type CreateAttachmentAnnotationJSONRequestBody CreateAttachmentAnnotationJSONBody
+
+// UpdateAttachmentAnnotationJSONRequestBody defines body for UpdateAttachmentAnnotation for application/json ContentType.
+type UpdateAttachmentAnnotationJSONRequestBody UpdateAttachmentAnnotationJSONBody
+
 // AcceptInvitationJSONRequestBody defines body for AcceptInvitation for application/json ContentType.
 type AcceptInvitationJSONRequestBody = AcceptInvitationRequest
 
@@ -5699,9 +5772,27 @@ type ServerInterface interface {
 	// UploadAttachmentVersion Unggah versi baru (FIL-01); memerlukan `attach`. Aturan jenis file sama dengan lampiran baru
 	// (POST /attachments/{attachmentId}/versions)
 	UploadAttachmentVersion(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID)
+	// ListAttachmentAnnotations Anotasi yang dipin pada satu versi; versi lain tidak ikut (FIL-02). Memerlukan `view`
+	// (GET /attachments/{attachmentId}/versions/{version}/annotations)
+	ListAttachmentAnnotations(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int)
+	// CreateAttachmentAnnotation Pin komentar pada posisi relatif (0..1) di sebuah halaman; memerlukan `comment`
+	// (POST /attachments/{attachmentId}/versions/{version}/annotations)
+	CreateAttachmentAnnotation(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int)
+	// DeleteAttachmentAnnotation Hapus anotasi; penulisnya atau pemilik `delete` pada item
+	// (DELETE /attachments/{attachmentId}/versions/{version}/annotations/{annotationId})
+	DeleteAttachmentAnnotation(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int, annotationId openapi_types.UUID)
+	// UpdateAttachmentAnnotation Tandai selesai atau buka lagi; memerlukan `comment`
+	// (PATCH /attachments/{attachmentId}/versions/{version}/annotations/{annotationId})
+	UpdateAttachmentAnnotation(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int, annotationId openapi_types.UUID)
 	// DownloadAttachmentVersion Unduh satu versi; izin dicek terhadap item pemilik. Header sama dengan unduhan lampiran
 	// (GET /attachments/{attachmentId}/versions/{version}/download)
 	DownloadAttachmentVersion(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int)
+	// GetAttachmentPreview Status pratinjau satu versi (FIL-02); memerlukan `view`. Pertama kali dibuka antre render bila belum ada
+	// (GET /attachments/{attachmentId}/versions/{version}/preview)
+	GetAttachmentPreview(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int)
+	// GetAttachmentPreviewPage Gambar PNG satu halaman pratinjau (hasil render ulang, bukan file asli, maks 1600 px)
+	// (GET /attachments/{attachmentId}/versions/{version}/preview/{page})
+	GetAttachmentPreviewPage(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int, page int)
 	// AcceptInvitation Terima undangan dan aktifkan akun (AUTH-06)
 	// (POST /auth/invitations/accept)
 	AcceptInvitation(w http.ResponseWriter, r *http.Request)
@@ -6529,6 +6620,164 @@ func (siw *ServerInterfaceWrapper) UploadAttachmentVersion(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListAttachmentAnnotations operation middleware
+func (siw *ServerInterfaceWrapper) ListAttachmentAnnotations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "version", r.PathValue("version"), &version, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAttachmentAnnotations(w, r, attachmentId, version)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAttachmentAnnotation operation middleware
+func (siw *ServerInterfaceWrapper) CreateAttachmentAnnotation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "version", r.PathValue("version"), &version, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAttachmentAnnotation(w, r, attachmentId, version)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAttachmentAnnotation operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAttachmentAnnotation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "version", r.PathValue("version"), &version, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "annotationId" -------------
+	var annotationId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "annotationId", r.PathValue("annotationId"), &annotationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "annotationId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAttachmentAnnotation(w, r, attachmentId, version, annotationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateAttachmentAnnotation operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAttachmentAnnotation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "version", r.PathValue("version"), &version, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "annotationId" -------------
+	var annotationId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "annotationId", r.PathValue("annotationId"), &annotationId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "annotationId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAttachmentAnnotation(w, r, attachmentId, version, annotationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DownloadAttachmentVersion operation middleware
 func (siw *ServerInterfaceWrapper) DownloadAttachmentVersion(w http.ResponseWriter, r *http.Request) {
 
@@ -6555,6 +6804,85 @@ func (siw *ServerInterfaceWrapper) DownloadAttachmentVersion(w http.ResponseWrit
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadAttachmentVersion(w, r, attachmentId, version)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAttachmentPreview operation middleware
+func (siw *ServerInterfaceWrapper) GetAttachmentPreview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "version", r.PathValue("version"), &version, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAttachmentPreview(w, r, attachmentId, version)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAttachmentPreviewPage operation middleware
+func (siw *ServerInterfaceWrapper) GetAttachmentPreviewPage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "version", r.PathValue("version"), &version, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "page" -------------
+	var page int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "page", r.PathValue("page"), &page, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "page", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAttachmentPreviewPage(w, r, attachmentId, version, page)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12587,6 +12915,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.ListAttachmentVersions)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.UploadAttachmentVersion)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/download", wrapper.DownloadAttachmentVersion)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/preview", wrapper.GetAttachmentPreview)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/preview/{page}", wrapper.GetAttachmentPreviewPage)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/annotations", wrapper.ListAttachmentAnnotations)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/annotations", wrapper.CreateAttachmentAnnotation)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/annotations/{annotationId}", wrapper.DeleteAttachmentAnnotation)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/annotations/{annotationId}", wrapper.UpdateAttachmentAnnotation)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/attachments/{attachmentId}", wrapper.DeleteAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/relations", wrapper.ListItemRelations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/activity", wrapper.ListActivity)
@@ -13285,6 +13619,218 @@ func (response UploadAttachmentVersion422ApplicationProblemPlusJSONResponse) Vis
 	return err
 }
 
+type ListAttachmentAnnotationsRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Version      int                `json:"version"`
+}
+
+type ListAttachmentAnnotationsResponseObject interface {
+	VisitListAttachmentAnnotationsResponse(w http.ResponseWriter) error
+}
+
+type ListAttachmentAnnotations200JSONResponse struct {
+	Items []AttachmentAnnotation `json:"items"`
+}
+
+func (response ListAttachmentAnnotations200JSONResponse) VisitListAttachmentAnnotationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAttachmentAnnotations404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAttachmentAnnotations404ApplicationProblemPlusJSONResponse) VisitListAttachmentAnnotationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentAnnotationRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Version      int                `json:"version"`
+	Body         *CreateAttachmentAnnotationJSONRequestBody
+}
+
+type CreateAttachmentAnnotationResponseObject interface {
+	VisitCreateAttachmentAnnotationResponse(w http.ResponseWriter) error
+}
+
+type CreateAttachmentAnnotation201JSONResponse AttachmentAnnotation
+
+func (response CreateAttachmentAnnotation201JSONResponse) VisitCreateAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentAnnotation403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateAttachmentAnnotation403ApplicationProblemPlusJSONResponse) VisitCreateAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentAnnotation404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAttachmentAnnotation404ApplicationProblemPlusJSONResponse) VisitCreateAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentAnnotation422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAttachmentAnnotation422ApplicationProblemPlusJSONResponse) VisitCreateAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAttachmentAnnotationRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Version      int                `json:"version"`
+	AnnotationId openapi_types.UUID `json:"annotationId"`
+}
+
+type DeleteAttachmentAnnotationResponseObject interface {
+	VisitDeleteAttachmentAnnotationResponse(w http.ResponseWriter) error
+}
+
+type DeleteAttachmentAnnotation204Response struct {
+}
+
+func (response DeleteAttachmentAnnotation204Response) VisitDeleteAttachmentAnnotationResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteAttachmentAnnotation403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteAttachmentAnnotation403ApplicationProblemPlusJSONResponse) VisitDeleteAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAttachmentAnnotation404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteAttachmentAnnotation404ApplicationProblemPlusJSONResponse) VisitDeleteAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAttachmentAnnotationRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Version      int                `json:"version"`
+	AnnotationId openapi_types.UUID `json:"annotationId"`
+	Body         *UpdateAttachmentAnnotationJSONRequestBody
+}
+
+type UpdateAttachmentAnnotationResponseObject interface {
+	VisitUpdateAttachmentAnnotationResponse(w http.ResponseWriter) error
+}
+
+type UpdateAttachmentAnnotation200JSONResponse AttachmentAnnotation
+
+func (response UpdateAttachmentAnnotation200JSONResponse) VisitUpdateAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAttachmentAnnotation403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateAttachmentAnnotation403ApplicationProblemPlusJSONResponse) VisitUpdateAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAttachmentAnnotation404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateAttachmentAnnotation404ApplicationProblemPlusJSONResponse) VisitUpdateAttachmentAnnotationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DownloadAttachmentVersionRequestObject struct {
 	AttachmentId openapi_types.UUID `json:"attachmentId"`
 	Version      int                `json:"version"`
@@ -13319,6 +13865,91 @@ type DownloadAttachmentVersion404ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response DownloadAttachmentVersion404ApplicationProblemPlusJSONResponse) VisitDownloadAttachmentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachmentPreviewRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Version      int                `json:"version"`
+}
+
+type GetAttachmentPreviewResponseObject interface {
+	VisitGetAttachmentPreviewResponse(w http.ResponseWriter) error
+}
+
+type GetAttachmentPreview200JSONResponse AttachmentPreview
+
+func (response GetAttachmentPreview200JSONResponse) VisitGetAttachmentPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachmentPreview404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAttachmentPreview404ApplicationProblemPlusJSONResponse) VisitGetAttachmentPreviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAttachmentPreviewPageRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Version      int                `json:"version"`
+	Page         int                `json:"page"`
+}
+
+type GetAttachmentPreviewPageResponseObject interface {
+	VisitGetAttachmentPreviewPageResponse(w http.ResponseWriter) error
+}
+
+type GetAttachmentPreviewPage200ImagepngResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetAttachmentPreviewPage200ImagepngResponse) VisitGetAttachmentPreviewPageResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "image/png")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetAttachmentPreviewPage404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAttachmentPreviewPage404ApplicationProblemPlusJSONResponse) VisitGetAttachmentPreviewPageResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -24192,9 +24823,27 @@ type StrictServerInterface interface {
 	// UploadAttachmentVersion Unggah versi baru (FIL-01); memerlukan `attach`. Aturan jenis file sama dengan lampiran baru
 	// (POST /attachments/{attachmentId}/versions)
 	UploadAttachmentVersion(ctx context.Context, request UploadAttachmentVersionRequestObject) (UploadAttachmentVersionResponseObject, error)
+	// ListAttachmentAnnotations Anotasi yang dipin pada satu versi; versi lain tidak ikut (FIL-02). Memerlukan `view`
+	// (GET /attachments/{attachmentId}/versions/{version}/annotations)
+	ListAttachmentAnnotations(ctx context.Context, request ListAttachmentAnnotationsRequestObject) (ListAttachmentAnnotationsResponseObject, error)
+	// CreateAttachmentAnnotation Pin komentar pada posisi relatif (0..1) di sebuah halaman; memerlukan `comment`
+	// (POST /attachments/{attachmentId}/versions/{version}/annotations)
+	CreateAttachmentAnnotation(ctx context.Context, request CreateAttachmentAnnotationRequestObject) (CreateAttachmentAnnotationResponseObject, error)
+	// DeleteAttachmentAnnotation Hapus anotasi; penulisnya atau pemilik `delete` pada item
+	// (DELETE /attachments/{attachmentId}/versions/{version}/annotations/{annotationId})
+	DeleteAttachmentAnnotation(ctx context.Context, request DeleteAttachmentAnnotationRequestObject) (DeleteAttachmentAnnotationResponseObject, error)
+	// UpdateAttachmentAnnotation Tandai selesai atau buka lagi; memerlukan `comment`
+	// (PATCH /attachments/{attachmentId}/versions/{version}/annotations/{annotationId})
+	UpdateAttachmentAnnotation(ctx context.Context, request UpdateAttachmentAnnotationRequestObject) (UpdateAttachmentAnnotationResponseObject, error)
 	// DownloadAttachmentVersion Unduh satu versi; izin dicek terhadap item pemilik. Header sama dengan unduhan lampiran
 	// (GET /attachments/{attachmentId}/versions/{version}/download)
 	DownloadAttachmentVersion(ctx context.Context, request DownloadAttachmentVersionRequestObject) (DownloadAttachmentVersionResponseObject, error)
+	// GetAttachmentPreview Status pratinjau satu versi (FIL-02); memerlukan `view`. Pertama kali dibuka antre render bila belum ada
+	// (GET /attachments/{attachmentId}/versions/{version}/preview)
+	GetAttachmentPreview(ctx context.Context, request GetAttachmentPreviewRequestObject) (GetAttachmentPreviewResponseObject, error)
+	// GetAttachmentPreviewPage Gambar PNG satu halaman pratinjau (hasil render ulang, bukan file asli, maks 1600 px)
+	// (GET /attachments/{attachmentId}/versions/{version}/preview/{page})
+	GetAttachmentPreviewPage(ctx context.Context, request GetAttachmentPreviewPageRequestObject) (GetAttachmentPreviewPageResponseObject, error)
 	// AcceptInvitation Terima undangan dan aktifkan akun (AUTH-06)
 	// (POST /auth/invitations/accept)
 	AcceptInvitation(ctx context.Context, request AcceptInvitationRequestObject) (AcceptInvitationResponseObject, error)
@@ -25090,6 +25739,130 @@ func (sh *strictHandler) UploadAttachmentVersion(w http.ResponseWriter, r *http.
 	}
 }
 
+// ListAttachmentAnnotations operation middleware
+func (sh *strictHandler) ListAttachmentAnnotations(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int) {
+	var request ListAttachmentAnnotationsRequestObject
+
+	request.AttachmentId = attachmentId
+	request.Version = version
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAttachmentAnnotations(ctx, request.(ListAttachmentAnnotationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAttachmentAnnotations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAttachmentAnnotationsResponseObject); ok {
+		if err := validResponse.VisitListAttachmentAnnotationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateAttachmentAnnotation operation middleware
+func (sh *strictHandler) CreateAttachmentAnnotation(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int) {
+	var request CreateAttachmentAnnotationRequestObject
+
+	request.AttachmentId = attachmentId
+	request.Version = version
+
+	var body CreateAttachmentAnnotationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateAttachmentAnnotation(ctx, request.(CreateAttachmentAnnotationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateAttachmentAnnotation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateAttachmentAnnotationResponseObject); ok {
+		if err := validResponse.VisitCreateAttachmentAnnotationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteAttachmentAnnotation operation middleware
+func (sh *strictHandler) DeleteAttachmentAnnotation(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int, annotationId openapi_types.UUID) {
+	var request DeleteAttachmentAnnotationRequestObject
+
+	request.AttachmentId = attachmentId
+	request.Version = version
+	request.AnnotationId = annotationId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteAttachmentAnnotation(ctx, request.(DeleteAttachmentAnnotationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteAttachmentAnnotation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAttachmentAnnotationResponseObject); ok {
+		if err := validResponse.VisitDeleteAttachmentAnnotationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateAttachmentAnnotation operation middleware
+func (sh *strictHandler) UpdateAttachmentAnnotation(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int, annotationId openapi_types.UUID) {
+	var request UpdateAttachmentAnnotationRequestObject
+
+	request.AttachmentId = attachmentId
+	request.Version = version
+	request.AnnotationId = annotationId
+
+	var body UpdateAttachmentAnnotationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateAttachmentAnnotation(ctx, request.(UpdateAttachmentAnnotationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateAttachmentAnnotation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateAttachmentAnnotationResponseObject); ok {
+		if err := validResponse.VisitUpdateAttachmentAnnotationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DownloadAttachmentVersion operation middleware
 func (sh *strictHandler) DownloadAttachmentVersion(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int) {
 	var request DownloadAttachmentVersionRequestObject
@@ -25110,6 +25883,61 @@ func (sh *strictHandler) DownloadAttachmentVersion(w http.ResponseWriter, r *htt
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadAttachmentVersionResponseObject); ok {
 		if err := validResponse.VisitDownloadAttachmentVersionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAttachmentPreview operation middleware
+func (sh *strictHandler) GetAttachmentPreview(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int) {
+	var request GetAttachmentPreviewRequestObject
+
+	request.AttachmentId = attachmentId
+	request.Version = version
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAttachmentPreview(ctx, request.(GetAttachmentPreviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAttachmentPreview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAttachmentPreviewResponseObject); ok {
+		if err := validResponse.VisitGetAttachmentPreviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAttachmentPreviewPage operation middleware
+func (sh *strictHandler) GetAttachmentPreviewPage(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int, page int) {
+	var request GetAttachmentPreviewPageRequestObject
+
+	request.AttachmentId = attachmentId
+	request.Version = version
+	request.Page = page
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAttachmentPreviewPage(ctx, request.(GetAttachmentPreviewPageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAttachmentPreviewPage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAttachmentPreviewPageResponseObject); ok {
+		if err := validResponse.VisitGetAttachmentPreviewPageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

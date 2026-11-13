@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
+import { FileProofing } from "@/components/file-proofing";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Attachment = components["schemas"]["Attachment"];
@@ -93,7 +94,7 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
           }}>{t("items.removeAttachment")}</Button>}
           </span>
         </div>
-        {history === file.id && <VersionHistory attachmentId={file.id} />}
+        {history === file.id && <VersionHistory attachmentId={file.id} canComment={item.my_capabilities.includes("comment")} />}
         </li>;
       })}
     </ul>
@@ -121,7 +122,7 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
   </section>;
 }
 
-function VersionHistory({ attachmentId }: { attachmentId: string }) {
+function VersionHistory({ attachmentId, canComment }: { attachmentId: string; canComment: boolean }) {
   const { t } = useTranslation();
   const { data, isPending, isError } = useQuery({
     queryKey: ["attachment-versions", attachmentId],
@@ -135,6 +136,7 @@ function VersionHistory({ attachmentId }: { attachmentId: string }) {
         {t("items.versionLabel", { version: v.version })} {v.filename}
       </a>
       <span className="text-muted-foreground">{v.uploader.name} · {new Date(v.created_at).toLocaleString()}{v.is_current ? ` · ${t("items.currentVersion")}` : ""}</span>
+      <FileProofing attachmentId={attachmentId} version={v.version} filename={v.filename} canComment={canComment} />
     </li>)}
   </ol>;
 }
