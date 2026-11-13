@@ -179,6 +179,7 @@ type Storage interface {
 }
 ```
 
+- Backend lain: `PMS_STORAGE=s3|pydio` memakai `ObjectStore` (D-83); contoh di bawah menjelaskan `LocalStorage`.
 - MVP: `LocalStorage` menulis ke `PMS_FILES_DIR`. Key berupa `ab/cd/<uuid>` (dua level direktori dari UUID). Nama file asli hanya disimpan di database.
 - **File tidak pernah ditimpa**; tiap upload mendapat key baru. Karena itu backup database lebih dulu lalu file selalu konsisten (OPS-01).
 - **Upload (SEC-01):** batas ukuran `PMS_MAX_UPLOAD_MB` (default 100) dicek lewat `http.MaxBytesReader` dan batas byte file saat streaming. Tipe konten ditentukan oleh isi file. Format yang diterima adalah PDF, PNG, JPEG, GIF, WebP, teks biasa, dan ZIP. Pemeriksaan executable memakai nama dan isi, termasuk isi entri ZIP tingkat atas. SHA-256 dihitung saat streaming dan disimpan.
@@ -222,6 +223,7 @@ type Storage interface {
 | `MAX_SEATS` | 25 | Batas seat (USR-03, D-02) |
 | `PMS_FILES_DIR` | `/data/files` | Volume file |
 | `PMS_MAX_UPLOAD_MB` | `100` | SEC-01 |
+| `PMS_STORAGE` | `local` | `local`, `s3` (`PMS_S3_URL`, `PMS_S3_REGION`, `PMS_S3_ACCESS_KEY`, `PMS_S3_SECRET_KEY`) atau `pydio` (`PMS_PYDIO_URL`, `PMS_PYDIO_TOKEN`) |
 | `PMS_SMTP_HOST/PORT/USER/PASS/FROM` | kosong | Kosong → mode log |
 | `PMS_SECRET_KEY` | Belum dipakai di M1 | Direncanakan untuk enkripsi rahasia TOTP (M3) dan tanda tangan |
 | `PMS_DEFAULT_LOCALE` | `en` | Locale user baru |

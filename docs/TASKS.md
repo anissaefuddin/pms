@@ -1199,30 +1199,30 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [x] [TEST] Izin per versi dan thumbnail
 
 **S11.1.3 Pratinjau dan proofing (FIL-02) — 3.5 hari**
-- [ ] [BE] Worker pratinjau gambar dan PDF
-- [ ] [BE] Sanitasi dan batas ukuran
-- [ ] [API] Anotasi per versi
-- [ ] [DB] Tabel anotasi
-- [ ] [FE] Viewer
-- [ ] [FE] Komentar yang dipin ke posisi
-- [ ] [TEST] Anotasi tetap di versinya
+- [x] [BE] Worker pratinjau gambar dan PDF
+- [x] [BE] Sanitasi dan batas ukuran
+- [x] [API] Anotasi per versi
+- [x] [DB] Tabel anotasi
+- [x] [FE] Viewer
+- [x] [FE] Komentar yang dipin ke posisi
+- [x] [TEST] Anotasi tetap di versinya
 
 **S11.1.4 Bandingkan versi (FIL-03) — 1.5 hari**
-- [ ] [BE] Pratinjau dua versi
-- [ ] [FE] Tampilan berdampingan
-- [ ] [TEST] Playwright
+- [x] [BE] Pratinjau dua versi
+- [x] [FE] Tampilan berdampingan
+- [x] [TEST] Playwright
 
 **S11.1.5 Approval file per versi dan reviewer eksternal (FIL-04) — 2 hari**
-- [ ] [BE] Approval terikat versi
-- [ ] [BE] Akses reviewer eksternal terbatas
-- [ ] [FE] UI review
-- [ ] [TEST] E2E-PAR-09
+- [x] [BE] Approval terikat versi
+- [x] [BE] Akses reviewer eksternal terbatas
+- [x] [FE] UI review
+- [x] [TEST] E2E-PAR-09
 
 **S11.1.6 Storage eksternal dan link (TASK-08B) — 2 hari**
-- [ ] [BE] Adapter MinIO/S3
-- [ ] [BE] Adapter Pydio Cells
-- [ ] [BE] Lampiran berupa link
-- [ ] [TEST] Izin dan pemindaian tetap berlaku
+- [x] [BE] Adapter MinIO/S3
+- [x] [BE] Adapter Pydio Cells
+- [x] [BE] Lampiran berupa link
+- [x] [TEST] Izin dan pemindaian tetap berlaku
 
 ### E11.2 Analitik
 

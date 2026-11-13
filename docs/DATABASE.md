@@ -160,6 +160,8 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 | `item_assignees.allocation_unit`, `allocation_value` | Pasangan nullable `percent` atau `minutes_per_day` dengan nilai integer nonnegatif. Alokasi tersimpan selama keanggotaan dipertahankan. Menghapus assignee menghapus alokasinya |
 | `comments` | `body jsonb` ProseMirror, `body_text` untuk pencarian, `version`, `edited_at`, soft delete. Mention diekstrak dari JSON saat simpan ke `comment_mentions(comment_id, mention_type, target_id)` — `user`, `group`, atau `followers` |
 | `attachment_versions` | PK (`attachment_id`,`version`), immutable (trigger), `storage_key` unik; `attachments` mencerminkan versi terbaru lewat `current_version` (D-79) |
+| `attachment_previews` | PK (`attachment_id`,`version`), FK ke `attachment_versions` (cascade), `status`, `pages` jsonb dengan kunci storage PNG hasil render (D-80) |
+| `attachment_annotations` | komentar dipin per versi: FK komposit `(attachment_id, version)` (cascade), `page`, `x`/`y` 0..1, `body`, `resolved_at` (D-80) |
 | `attachments` | `storage_key` unik, `sha256`, `size_bytes`, `content_type` hasil deteksi server. Soft delete; file fisik dihapus oleh job (ARCHITECTURE §8) |
 | `activity` | Append-only: `(item_id, actor_id, action, changes jsonb, created_at)`. `changes` berisi pasangan `{field: {from, to}}`. Indeks `(item_id, id DESC)`. Tidak pernah diupdate atau dihapus selain bersama item yang dihapus permanen |
 | `notifications` | `kind` = `mention`, `assigned`, `status_changed`, `comment`, `shared`. Target tepat satu Item atau Space. `read_at` dan `archived_at` terpisah. Indeks parsial `(recipient_id, id DESC) WHERE archived_at IS NULL` untuk cursor UUIDv7. |

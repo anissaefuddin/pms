@@ -519,6 +519,8 @@ type Approval struct {
 	OnRejectedStatusID pgtype.UUID        `json:"on_rejected_status_id"`
 	Policy             string             `json:"policy"`
 	DeadlineStage      int32              `json:"deadline_stage"`
+	AttachmentID       pgtype.UUID        `json:"attachment_id"`
+	AttachmentVersion  pgtype.Int4        `json:"attachment_version"`
 }
 
 type ApprovalApprover struct {
@@ -554,6 +556,29 @@ type Attachment struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 	CurrentVersion int32              `json:"current_version"`
+	LinkUrl        pgtype.Text        `json:"link_url"`
+}
+
+type AttachmentAnnotation struct {
+	ID           pgtype.UUID        `json:"id"`
+	AttachmentID pgtype.UUID        `json:"attachment_id"`
+	Version      int32              `json:"version"`
+	AuthorID     pgtype.UUID        `json:"author_id"`
+	Page         int32              `json:"page"`
+	X            pgtype.Numeric     `json:"x"`
+	Y            pgtype.Numeric     `json:"y"`
+	Body         string             `json:"body"`
+	ResolvedAt   pgtype.Timestamptz `json:"resolved_at"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+}
+
+type AttachmentPreview struct {
+	AttachmentID pgtype.UUID        `json:"attachment_id"`
+	Version      int32              `json:"version"`
+	Status       string             `json:"status"`
+	Pages        []byte             `json:"pages"`
+	Note         string             `json:"note"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
 }
 
 type AttachmentVersion struct {

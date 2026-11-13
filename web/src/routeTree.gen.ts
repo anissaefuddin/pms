@@ -20,6 +20,7 @@ import { Route as AppInboxRouteImport } from './routes/_app/inbox'
 import { Route as AppMyTodoRouteImport } from './routes/_app/my-todo'
 import { Route as AppPortfolioRouteImport } from './routes/_app/portfolio'
 import { Route as AppRecycleBinRouteImport } from './routes/_app/recycle-bin'
+import { Route as AppReviewsRouteImport } from './routes/_app/reviews'
 import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppSharedWithMeRouteImport } from './routes/_app/shared-with-me'
@@ -112,6 +113,11 @@ const AppPortfolioRoute = AppPortfolioRouteImport.update({
 const AppRecycleBinRoute = AppRecycleBinRouteImport.update({
   id: '/recycle-bin',
   path: '/recycle-bin',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReviewsRoute = AppReviewsRouteImport.update({
+  id: '/reviews',
+  path: '/reviews',
   getParentRoute: () => AppRoute,
 } as any)
 const AppSearchRoute = AppSearchRouteImport.update({
@@ -324,6 +330,7 @@ export interface FileRoutesByFullPath {
   '/my-todo': typeof AppMyTodoRoute
   '/portfolio': typeof AppPortfolioRoute
   '/recycle-bin': typeof AppRecycleBinRoute
+  '/reviews': typeof AppReviewsRoute
   '/search': typeof AppSearchRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/shared-with-me': typeof AppSharedWithMeRoute
@@ -374,6 +381,7 @@ export interface FileRoutesByTo {
   '/my-todo': typeof AppMyTodoRoute
   '/portfolio': typeof AppPortfolioRoute
   '/recycle-bin': typeof AppRecycleBinRoute
+  '/reviews': typeof AppReviewsRoute
   '/search': typeof AppSearchRoute
   '/shared-with-me': typeof AppSharedWithMeRoute
   '/starred': typeof AppStarredRoute
@@ -425,6 +433,7 @@ export interface FileRoutesById {
   '/_app/my-todo': typeof AppMyTodoRoute
   '/_app/portfolio': typeof AppPortfolioRoute
   '/_app/recycle-bin': typeof AppRecycleBinRoute
+  '/_app/reviews': typeof AppReviewsRoute
   '/_app/search': typeof AppSearchRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/shared-with-me': typeof AppSharedWithMeRoute
@@ -479,6 +488,7 @@ export interface FileRouteTypes {
     | '/my-todo'
     | '/portfolio'
     | '/recycle-bin'
+    | '/reviews'
     | '/search'
     | '/settings'
     | '/shared-with-me'
@@ -529,6 +539,7 @@ export interface FileRouteTypes {
     | '/my-todo'
     | '/portfolio'
     | '/recycle-bin'
+    | '/reviews'
     | '/search'
     | '/shared-with-me'
     | '/starred'
@@ -579,6 +590,7 @@ export interface FileRouteTypes {
     | '/_app/my-todo'
     | '/_app/portfolio'
     | '/_app/recycle-bin'
+    | '/_app/reviews'
     | '/_app/search'
     | '/_app/settings'
     | '/_app/shared-with-me'
@@ -710,6 +722,13 @@ declare module '@tanstack/react-router' {
       path: '/recycle-bin'
       fullPath: '/recycle-bin'
       preLoaderRoute: typeof AppRecycleBinRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reviews': {
+      id: '/_app/reviews'
+      path: '/reviews'
+      fullPath: '/reviews'
+      preLoaderRoute: typeof AppReviewsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/search': {
@@ -1039,6 +1058,7 @@ interface AppRouteChildren {
   AppMyTodoRoute: typeof AppMyTodoRoute
   AppPortfolioRoute: typeof AppPortfolioRoute
   AppRecycleBinRoute: typeof AppRecycleBinRoute
+  AppReviewsRoute: typeof AppReviewsRoute
   AppSearchRoute: typeof AppSearchRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSharedWithMeRoute: typeof AppSharedWithMeRoute
@@ -1070,6 +1090,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppMyTodoRoute: AppMyTodoRoute,
   AppPortfolioRoute: AppPortfolioRoute,
   AppRecycleBinRoute: AppRecycleBinRoute,
+  AppReviewsRoute: AppReviewsRoute,
   AppSearchRoute: AppSearchRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSharedWithMeRoute: AppSharedWithMeRoute,

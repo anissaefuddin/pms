@@ -74,7 +74,7 @@
 | VIEW-10 | S11.1.1 | View Files dan Chart hanya menampilkan data berizin | Izin + Playwright | |
 | FIL-01 | S11.1.2 | Versi immutable; akses per versi dicek | Tes izin versi | |
 | FIL-02 | S11.1.3 | Anotasi tetap di versinya | Integrasi | |
-| FIL-03 | S11.1.4 | Dua versi tampil berdampingan | Playwright | |
+| FIL-03 | S11.1.4 | Dua versi tampil berdampingan | Playwright | `web/tests/file-compare.spec.ts` |
 | FIL-04 | S11.1.5 | Approval v1 tidak pindah ke v2 | E2E-PAR-09 | |
 | TASK-08B | S11.1.6 | Adapter eksternal tetap menegakkan izin dan pemindaian | Integrasi | |
 | DASH-03B | S11.2.1 | Area dan pivot cocok dengan data mentah | Tes kecocokan angka | |

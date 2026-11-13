@@ -79,6 +79,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
           {!hidden.includes("dashboards") && <DropdownMenuItem onClick={() => go("/dashboards")}>{t("dashboards.nav.label")}</DropdownMenuItem>}
           {!hidden.includes("reports") && <DropdownMenuItem onClick={() => go("/reports")}>{t("reports.nav.label")}</DropdownMenuItem>}
           {showTodo && <DropdownMenuItem onClick={() => go("/my-todo")}>{t("nav.todo.label")}</DropdownMenuItem>}
+          <DropdownMenuItem onClick={() => go("/reviews")}>{t("items.fileReview.nav")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => go("/shared-with-me")}>{t("nav.shared.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => go("/recycle-bin")}>{t("nav.recycle.label")}</DropdownMenuItem>
         </DropdownMenuContent>

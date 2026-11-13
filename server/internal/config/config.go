@@ -29,6 +29,8 @@ type Config struct {
 	BackupAlertURL string
 	FilesDir       string
 	MaxUploadMB    int
+	// Storage is local (PMS_FILES_DIR), s3 (MinIO or AWS; S3URL is endpoint/bucket[/prefix]) or pydio (Cells gateway folder URL).
+	Storage, S3URL, S3Region, S3AccessKey, S3SecretKey, PydioURL, PydioToken string
 	// TwoFactorKey and TwoFactorKeyPrevious are 32-byte keys for TOTP secrets; without TwoFactorKey 2FA cannot be turned on.
 	TwoFactorKey, TwoFactorKeyPrevious []byte
 	// ConnectorKey and ConnectorKeyPrevious encrypt connector secrets (same format and rotation as the 2FA key).
@@ -53,6 +55,16 @@ func Load() (Config, error) {
 	cfg.MaxUploadMB, err = strconv.Atoi(value("PMS_MAX_UPLOAD_MB", "100"))
 	if err != nil || cfg.MaxUploadMB < 1 || cfg.MaxUploadMB > 1024 {
 		return Config{}, fmt.Errorf("PMS_MAX_UPLOAD_MB must be between 1 and 1024")
+	}
+	cfg.Storage, cfg.S3URL, cfg.S3Region = value("PMS_STORAGE", "local"), strings.TrimRight(os.Getenv("PMS_S3_URL"), "/"), value("PMS_S3_REGION", "us-east-1")
+	cfg.S3AccessKey, cfg.S3SecretKey = os.Getenv("PMS_S3_ACCESS_KEY"), os.Getenv("PMS_S3_SECRET_KEY")
+	cfg.PydioURL, cfg.PydioToken = strings.TrimRight(os.Getenv("PMS_PYDIO_URL"), "/"), os.Getenv("PMS_PYDIO_TOKEN")
+	switch {
+	case cfg.Storage == "local":
+	case cfg.Storage == "s3" && cfg.S3URL != "" && cfg.S3AccessKey != "" && cfg.S3SecretKey != "":
+	case cfg.Storage == "pydio" && cfg.PydioURL != "" && cfg.PydioToken != "":
+	default:
+		return Config{}, fmt.Errorf("PMS_STORAGE must be local, s3 (needs PMS_S3_URL, PMS_S3_ACCESS_KEY, PMS_S3_SECRET_KEY) or pydio (needs PMS_PYDIO_URL, PMS_PYDIO_TOKEN)")
 	}
 	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious, "PMS_CONNECTOR_KEY": &cfg.ConnectorKey, "PMS_CONNECTOR_KEY_PREVIOUS": &cfg.ConnectorKeyPrevious} {
 		if raw := os.Getenv(env); raw != "" {

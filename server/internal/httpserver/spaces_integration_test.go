@@ -89,6 +89,11 @@ func newFixture(t *testing.T) *fixture {
 
 func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 	t.Helper()
+	return newFixtureWith(t, maxSeats, nil)
+}
+
+func newFixtureWith(t *testing.T, maxSeats int, tweak func(*config.Config)) *fixture {
+	t.Helper()
 	dbURL := testdb.New(t)
 	registerer, gatherer := prometheus.DefaultRegisterer, prometheus.DefaultGatherer
 	registry := prometheus.NewRegistry()
@@ -102,6 +107,9 @@ func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 	t.Cleanup(pool.Close)
 	files := t.TempDir()
 	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: files, MaxUploadMB: 1, TwoFactorKey: testTwoFactorKeys.Current, TwoFactorKeyPrevious: testTwoFactorKeys.Previous}
+	if tweak != nil {
+		tweak(&cfg)
+	}
 	queue, err := mailqueue.New(pool, cfg)
 	if err != nil {
 		t.Fatal(err)
