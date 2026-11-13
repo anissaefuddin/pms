@@ -14,6 +14,7 @@ import { ItemBoard } from "@/components/item-board";
 const ItemCalendar = lazy(() => import("@/components/item-calendar").then((module) => ({ default: module.ItemCalendar })));
 const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
 import { Timelog } from "@/components/timelog";
+import { ProjectChart, ProjectFiles } from "@/components/project-files";
 import { ViewTabs } from "@/components/view-tabs";
 import { ColumnPicker, FieldFilter } from "@/components/view-columns";
 import type { CustomField } from "@/lib/custom-fields";
@@ -56,7 +57,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const isCalendar = active?.type === "calendar";
   const isCollection = active?.type === "table" || active?.type === "board";
   const items = useQuery({
-    queryKey: sortedKey, enabled: !active || isCollection || isGantt || isCalendar,
+    queryKey: sortedKey, enabled: !active || isCollection || isGantt || isCalendar || active?.type === "chart",
     queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, undefined, fieldFilter || undefined, preset || undefined),
   });
   const fieldQueries = useQuery({
@@ -165,7 +166,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     <ViewTabs views={available} selected={active} canEdit={canEdit}
       project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
-    {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : isGantt ? <>
+    {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? (items.isSuccess ? <ProjectChart items={items.data} /> : <p role="status">{t("items.loading")}</p>) : isGantt ? <>
       {!!spaceId && customFields.length > 0 && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
         fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
       {items.isPending && <p role="status">{t("items.loading")}</p>}

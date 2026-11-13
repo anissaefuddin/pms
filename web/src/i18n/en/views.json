@@ -39,8 +39,12 @@
     "board": "Board",
     "gantt": "Gantt",
     "calendar": "Calendar",
-    "timelog": "Timelog"
+    "timelog": "Timelog",
+    "files": "Files",
+    "chart": "Chart"
   },
+  "files": { "empty": "No files in this project", "name": "File", "item": "Item", "size": "Size", "uploader": "Uploaded by", "added": "Added", "kb": "{{count}} KB" },
+  "chart": { "title": "Items by status", "noStatus": "No status", "bar": "{{name}}: {{count}}" },
   "placeholder": "This view is not available yet.",
   "actions": "Actions",
   "empty": "No matching items",

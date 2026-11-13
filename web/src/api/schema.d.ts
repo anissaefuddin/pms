@@ -1890,6 +1890,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{projectId}/files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        /** File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404 */
+        get: operations["listProjectFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attachments/{attachmentId}/download": {
         parameters: {
             query?: never;
@@ -4145,7 +4164,7 @@ export interface components {
             assignee_allocations?: components["schemas"]["AssigneeAllocationUpdate"][];
         };
         /** @enum {string} */
-        ViewType: "table" | "board" | "gantt" | "calendar" | "timelog";
+        ViewType: "table" | "board" | "gantt" | "calendar" | "timelog" | "files" | "chart";
         /** @enum {string} */
         ViewVisibility: "public" | "personal";
         View: {
@@ -4215,6 +4234,9 @@ export interface components {
             uploader: components["schemas"]["UserRef"];
             /** Format: date-time */
             created_at: string;
+        };
+        ProjectFile: components["schemas"]["Attachment"] & {
+            item_title: string;
         };
         Activity: {
             /** Format: int64 */
@@ -8445,6 +8467,31 @@ export interface operations {
             404: components["responses"]["Problem"];
             413: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listProjectFiles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ProjectFile"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
         };
     };
     downloadAttachment: {
