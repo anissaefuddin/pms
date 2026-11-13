@@ -36,6 +36,27 @@ Setelah update, periksa berurutan: readiness; login; Settings → Work schedule 
 
 Rollback: hentikan app, `./restore.sh <timestamp pra-update> --force`, lalu mulai dengan `PMS_IMAGE` M1. Data yang dibuat setelah update (dependensi, custom field, view Gantt/Calendar) hilang bersama restore. Jika hanya satu fitur bermasalah, lebih baik tidak rollback: hentikan pemakaian view atau field yang bermasalah dan laporkan. Kompatibilitas image M1 terhadap skema M2 belum diuji, dan view bertipe `gantt` atau `calendar` kemungkinan tidak dikenal image M1, jadi jangan menjalankan image M1 di atas database M2 tanpa restore.
 
+## Update ke M3 (migrasi 00024–00033)
+
+M3 menambah migrasi maju sampai `00033`. Nomor `00029` tidak dipakai (celah ini disengaja, bukan migrasi yang hilang). Tidak ada migrasi turun: jalan mundur hanya memulihkan backup pra-update. Jalankan `./backup.sh` dan periksa arsipnya sebelum `./update.sh`.
+
+| Migrasi | Isi | Dampak ke data M2 |
+|---|---|---|
+| `00024` workflow editor | `status_transitions`, flag status, nama workflow unik | transisi bebas seperti sebelumnya sampai admin mengunci |
+| `00025` approval | `approvals`, `approval_approvers` | tidak ada |
+| `00026`, `00027` form | `request_forms`, `form_submissions`, kolom `access` | tidak ada; form baru berstatus `private` |
+| `00028` 2FA | `user_totp`, kode cadangan, `security_events` | 2FA nonaktif untuk semua user |
+| `00030` sidebar | `users.sidebar_hidden` | semua entri sidebar tampil |
+| `00031` | `activity.auto`, indeks Stream | aktivitas lama dianggap manual |
+| `00032` blueprint | `blueprints` | tidak ada |
+| `00033` form publik | `request_forms.public_token`, kolom pemohon pada `form_submissions`, dan **satu akun placeholder** `external-requester@system.invalid` (status `deactivated`, tanpa password, tanpa seat) | tidak ada tautan publik sampai admin membuatnya |
+
+Konfigurasi baru: `PMS_2FA_KEY` (lihat bagian kunci 2FA di bawah) wajib diisi sebelum user bisa mengaktifkan 2FA. Tautan form publik memakai `PUBLIC_URL` untuk alamat dalam email, dan `TRUST_PROXY=true` bila di belakang Traefik agar batas laju per IP memakai IP asli pengunjung. Tanpa `TRUST_PROXY`, semua pengunjung publik terlihat dari IP proxy dan berbagi satu batas 30 pengajuan per jam.
+
+Setelah update, periksa berurutan: readiness; login; Settings → Workflows memuat workflow lama tanpa kunci; buka satu item yang punya status dan ubah statusnya; Settings → Profile menampilkan bagian Sidebar; halaman Stream terbuka; buat form kecil, bagikan secara internal, isi sebagai user biasa, dan lihat My requests. Untuk form publik: buat tautan di dialog Share, buka di jendela tanpa sesi, kirim, lalu pastikan item muncul dengan pembuat "External requester" dan email konfirmasi terkirim (atau tercatat di log bila SMTP kosong). Ganti tautan dan pastikan yang lama menghasilkan "form link is not available".
+
+Hal yang perlu diketahui operator: akun placeholder tidak muncul di daftar user dan tidak memakai seat; jangan diaktifkan atau dihapus. Pengisi publik tidak punya akun, jadi email konfirmasi dan email perubahan status adalah satu-satunya kabar yang mereka terima. Rollback: sama seperti M2, restore backup pra-update dengan image M2. Data M3 (form, approval, tautan publik) hilang bersama restore. Update M3 dari instance M2 belum dilatih pada instance pilot.
+
 ## Backup dan restore
 
 - Jadwalkan `./backup.sh` setiap hari. Periksa pasangan dump database, arsip file, dan manifest dengan timestamp yang sama. Atur `BACKUP_REMOTE` ke tujuan off-server dan lakukan latihan restore pada instance terisolasi. Catat waktu mulai, waktu instance siap, serta hasil unduh lampiran.

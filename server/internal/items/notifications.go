@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"slices"
 
+	"github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/jackc/pgx/v5"
@@ -36,6 +38,9 @@ func notifyChanges(ctx context.Context, tx pgx.Tx, batch *notifications.Batch, a
 	}
 	if !creating && old.Status != current.Status {
 		if _, err := batch.Record(ctx, tx, actor, "status_changed", target, "", []notifications.Principal{{Kind: "followers"}}, nil); err != nil {
+			return err
+		}
+		if err := mailExternalRequester(ctx, tx, batch, id, current.Status); err != nil {
 			return err
 		}
 	}
@@ -74,4 +79,24 @@ func MentionPrincipals(mentions []Mention) []notifications.Principal {
 
 func NewMentions(mentions, previous []notifications.Principal) []notifications.Principal {
 	return slices.DeleteFunc(mentions, func(p notifications.Principal) bool { return slices.Contains(previous, p) })
+}
+
+// mailExternalRequester tells the person who filed a public form that their request changed status (FORM-08).
+// The text holds only the form name, the item title and the status name.
+func mailExternalRequester(ctx context.Context, tx pgx.Tx, batch *notifications.Batch, itemID, statusID string) error {
+	if batch.Queue == nil || statusID == "" {
+		return nil
+	}
+	var email, form, title, status string
+	err := tx.QueryRow(ctx, `SELECT fs.requester_email::text,fs.form_name,i.title,st.name
+FROM form_submissions fs JOIN items i ON i.id=fs.item_id JOIN statuses st ON st.id=$2::uuid
+WHERE fs.item_id=$1::uuid AND fs.requester_email IS NOT NULL`, itemID, statusID).Scan(&email, &form, &title, &status)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	return batch.Queue.SendTx(ctx, tx, mail.Args{To: email, Template: "request_status", Locale: "en",
+		Message: "Your request \"" + title + "\" (" + form + ") is now: " + status + "."})
 }

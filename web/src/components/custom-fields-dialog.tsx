@@ -91,6 +91,7 @@ function CustomFields({ spaceId }: { spaceId: string }) {
     }
     const config: Config = {};
     if (draft.type === "currency") {
+      config.project_budget = draft.config.project_budget;
       config.currency = (draft.config.currency ?? "USD").toUpperCase();
       config.decimals = Number(draft.config.decimals ?? "2");
     }
@@ -241,6 +242,11 @@ function CustomFields({ spaceId }: { spaceId: string }) {
         <input type="checkbox" checked={draft.config.allow_over_100 ?? false} disabled={pending}
           onChange={(event) => editConfig({ allow_over_100: event.target.checked })} />
         <span>{t("spaces.customFields.allowOver100")}</span>
+      </label>}
+      {draft.type === "currency" && <label className="flex items-center gap-2">
+        <input type="checkbox" checked={draft.config.project_budget ?? false} disabled={pending}
+          onChange={(event) => editConfig({ project_budget: event.target.checked })} />
+        {t("time.budgetSetting")}
       </label>}
       {hasNumericConfig && <>
         <label className="block space-y-1">

@@ -99,6 +99,12 @@ func Run(ctx context.Context, pool *pgxpool.Pool) error {
 	if err != nil {
 		return err
 	}
+	if _, err := pool.Exec(ctx, "DELETE FROM project_excel_exports WHERE expires_at<=now()"); err != nil {
+		return err
+	}
+	if _, err := pool.Exec(ctx, "DELETE FROM project_excel_imports WHERE expires_at<=now()"); err != nil {
+		return err
+	}
 	slog.Info("housekeeping", "sessions", sessions.RowsAffected(), "tokens", tokens.RowsAffected(), "shares", shares.RowsAffected())
 	return nil
 }

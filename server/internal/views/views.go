@@ -138,8 +138,19 @@ func Create(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput) 
 	}
 	switch in.Type {
 	case "table", "board", "gantt", "calendar":
+	case "timelog":
+		var project bool
+		if in.ItemID == nil {
+			return View{}, Invalid("Timelog requires a project")
+		}
+		if err := tx.QueryRow(ctx, "SELECT type='project' FROM items WHERE id=$1", *in.ItemID).Scan(&project); err != nil {
+			return View{}, err
+		}
+		if !project {
+			return View{}, Invalid("Timelog requires a project")
+		}
 	default:
-		return View{}, Invalid("type must be table, board, gantt, or calendar")
+		return View{}, Invalid("type must be table, board, gantt, calendar, or timelog")
 	}
 	name, err := cleanName(in.Name)
 	if err != nil {

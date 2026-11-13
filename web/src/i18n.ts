@@ -3,6 +3,7 @@ import { initReactI18next } from "react-i18next";
 import auth from "./i18n/en/auth.json";
 import common from "./i18n/en/common.json";
 import blueprints from "./i18n/en/blueprints.json";
+import excel from "./i18n/en/excel.json";
 import forms from "./i18n/en/forms.json";
 import gantt from "./i18n/en/gantt.json";
 import items from "./i18n/en/items.json";
@@ -11,6 +12,7 @@ import search from "./i18n/en/search.json";
 import settings from "./i18n/en/settings.json";
 import share from "./i18n/en/share.json";
 import spaces from "./i18n/en/spaces.json";
+import time from "./i18n/en/time.json";
 import views from "./i18n/en/views.json";
 import workspace from "./i18n/en/workspace.json";
 
@@ -20,7 +22,7 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   resources: {
     en: {
-      translation: { auth, blueprints, common, forms, gantt, items, nav, search, settings, share, spaces, views, workspace },
+      translation: { auth, blueprints, common, excel, forms, gantt, items, nav, search, settings, share, spaces, time, views, workspace },
     },
   },
 });

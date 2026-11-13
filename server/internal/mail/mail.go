@@ -17,6 +17,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/housekeeping"
+	"github.com/anissaefuddin/pms/server/internal/projectexcel"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/riverqueue/river"
@@ -52,7 +53,11 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 		slog.Warn("SMTP is not configured; email logged instead of sent", "to", args.To, "subject", subject, "url", args.URL)
 		return nil
 	}
-	from, err := mail.ParseAddress(w.cfg.SMTPFrom)
+	sender := w.cfg.SMTPFrom
+	if args.Template == "set_password" || args.Template == "reset_password" {
+		sender = w.cfg.SMTPFromAuth
+	}
+	from, err := mail.ParseAddress(sender)
 	if err != nil {
 		return err
 	}
@@ -61,7 +66,7 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 	if w.cfg.SMTPUser != "" {
 		auth = smtp.PlainAuth("", w.cfg.SMTPUser, w.cfg.SMTPPassword, w.cfg.SMTPHost)
 	}
-	msg, err := message(w.cfg.SMTPFrom, from.Address, args.To, subject, text, html)
+	msg, err := message(sender, from.Address, w.cfg.SMTPReplyTo, args.To, subject, text, html)
 	if err != nil {
 		return err
 	}
@@ -69,8 +74,8 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 }
 
 // message builds the mail text. Date and Message-ID are required by many receivers; without them mail is often marked as spam.
-func message(fromHeader, fromAddress, to, subject, text, html string) ([]byte, error) {
-	for _, field := range []string{fromHeader, to, subject} { // a line break here would let data inject extra headers
+func message(fromHeader, fromAddress, replyTo, to, subject, text, html string) ([]byte, error) {
+	for _, field := range []string{fromHeader, replyTo, to, subject} { // a line break here would let data inject extra headers
 		if strings.ContainsAny(field, "\r\n") {
 			return nil, fmt.Errorf("email header contains a line break")
 		}
@@ -94,6 +99,9 @@ func message(fromHeader, fromAddress, to, subject, text, html string) ([]byte, e
 	headers := []string{"From: " + fromHeader, "To: " + to, "Subject: " + mime.QEncoding.Encode("utf-8", subject),
 		"Date: " + time.Now().UTC().Format(time.RFC1123Z), fmt.Sprintf("Message-ID: <%x@%s>", id, domain),
 		"MIME-Version: 1.0", fmt.Sprintf("Content-Type: multipart/alternative; boundary=%q", boundary), ""}
+	if replyTo != "" {
+		headers = append([]string{"Reply-To: " + replyTo}, headers...)
+	}
 	return []byte(strings.Join(headers, "\r\n") + "\r\n" + body.String()), nil
 }
 
@@ -153,6 +161,7 @@ func New(pool *pgxpool.Pool, cfg config.Config) (*Queue, error) {
 	workers := river.NewWorkers()
 	mailer := &Worker{cfg: cfg}
 	river.AddWorker(workers, mailer)
+	river.AddWorker(workers, &projectexcel.ExportWorker{Pool: pool})
 	river.AddWorker(workers, &InvitationWorker{pool: pool, mail: mailer})
 	river.AddWorker(workers, &NotificationWorker{pool: pool, mail: mailer})
 	// This is the process's only River client, so the daily cleanup is registered here too.
@@ -188,6 +197,10 @@ func render(args Args) (subject, text, html string, err error) {
 	case "notification":
 		return "New PMS notification", "You have a new notification in PMS. Open " + args.URL,
 			fmt.Sprintf(`<p>You have a new notification in PMS.</p><p><a href="%s">Open Inbox</a></p>`, link), nil
+	case "request_received", "request_status":
+		// Message is composed by the server from the form name, the item title and the status; it holds no internal data.
+		subject = map[string]string{"request_received": "We received your request", "request_status": "Your request was updated"}[args.Template]
+		return subject, args.Message, fmt.Sprintf(`<p>%s</p>`, htmlpkg.EscapeString(args.Message)), nil
 	case "set_password":
 		note, intro := "", "You have been invited to PMS. Activate your account and choose a password."
 		if args.Message != "" {
@@ -204,4 +217,9 @@ func render(args Args) (subject, text, html string, err error) {
 	default:
 		return "", "", "", fmt.Errorf("unknown email template %q", args.Template)
 	}
+}
+
+func (q *Queue) ExportProjectTx(ctx context.Context, tx pgx.Tx, args projectexcel.ExportArgs) error {
+	_, err := q.client.InsertTx(ctx, tx, args, &river.InsertOpts{MaxAttempts: 3})
+	return err
 }

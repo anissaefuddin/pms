@@ -32,7 +32,7 @@ func TestRenderRejectsUnknownTemplate(t *testing.T) {
 }
 
 func TestMessageHasDateAndMessageID(t *testing.T) {
-	raw, err := message("PMS <noreply@acme.test>", "noreply@acme.test", "u@x.test", "Hi", "body", "<p>body</p>")
+	raw, err := message("PMS <noreply@acme.test>", "noreply@acme.test", "", "u@x.test", "Hi", "body", "<p>body</p>")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -152,7 +152,7 @@ func (f *fakeSMTP) serve(c net.Conn) {
 func TestSendDeliversExactlyOneMessage(t *testing.T) {
 	f := newFakeSMTP(t, false)
 	subject, text, html, _ := render(Args{Template: "set_password", URL: "https://pms.test/reset-password?token=abc"})
-	msg, err := message("PMS <noreply@pms.test>", "noreply@pms.test", "admin@pms.test", subject, text, html)
+	msg, err := message("PMS <noreply@pms.test>", "noreply@pms.test", "", "admin@pms.test", subject, text, html)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -181,7 +181,7 @@ func TestSendReportsRefusal(t *testing.T) {
 // The delivered message is multipart/alternative with a plain-text and an HTML part, both carrying the link.
 func TestMessageHasTextAndHTMLParts(t *testing.T) {
 	_, text, html, _ := render(Args{Template: "set_password", URL: "https://pms.test/invitations/abc?x=1&y=2"})
-	raw, err := message("PMS <noreply@pms.test>", "noreply@pms.test", "u@x.test", "Set your PMS password", text, html)
+	raw, err := message("PMS <noreply@pms.test>", "noreply@pms.test", "", "u@x.test", "Set your PMS password", text, html)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -196,11 +196,11 @@ func TestMessageHasTextAndHTMLParts(t *testing.T) {
 
 func TestMessageRejectsHeaderInjection(t *testing.T) {
 	for _, to := range []string{"a@x.test\r\nBcc: evil@x.test", "a@x.test\nBcc: evil@x.test"} {
-		if _, err := message("PMS <n@x.test>", "n@x.test", to, "Hi", "t", "<p>t</p>"); err == nil {
+		if _, err := message("PMS <n@x.test>", "n@x.test", "", to, "Hi", "t", "<p>t</p>"); err == nil {
 			t.Fatalf("recipient %q with a line break was accepted", to)
 		}
 	}
-	if _, err := message("PMS <n@x.test>", "n@x.test", "a@x.test", "Hi\r\nBcc: evil@x.test", "t", "<p>t</p>"); err == nil {
+	if _, err := message("PMS <n@x.test>", "n@x.test", "", "a@x.test", "Hi\r\nBcc: evil@x.test", "t", "<p>t</p>"); err == nil {
 		t.Fatal("subject with a line break was accepted")
 	}
 }

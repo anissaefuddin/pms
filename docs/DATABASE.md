@@ -149,8 +149,8 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 | `statuses` | `grp` = `active`/`completed`/`deferred`/`cancelled`; `color` (token palet, bukan hex); `position`; `auto_assign`, `lock_transitions` (M3). Seed default: **New**, **In Progress** (active), **Completed** (completed), **On Hold** (deferred), **Cancelled** (cancelled) |
 | `status_transitions` | (`from_status_id`, `to_status_id`) transisi yang diizinkan dari status ber-`lock_transitions`; keduanya harus satu workflow (dijaga API); hapus berantai dengan status |
 | `approvals`, `approval_approvers` | Approval per item (`description`, `due_date`, `version`) dan keputusan per approver (`decision`, `comment`, `decided_at`; keduanya terisi atau kosong bersama). Hapus berantai dengan item |
-| `request_forms` | Form milik satu Space: `definition` dan `response` (jsonb, divalidasi paket `forms`), `access` (`private`/`internal`), `version`. Nama unik per Space tanpa membedakan huruf besar-kecil. ID tujuan di `response` tidak berkunci asing, jadi diperiksa ulang saat kirim |
-| `form_submissions` | Satu baris per item hasil form: `form_id` (NULL bila form dihapus), `form_name` salinan, `item_id` unik, `requester_id`, `answers` (jsonb). Dasar hak akses pengirim ke item dan daftar `GET /me/requests` |
+| `request_forms` | Form milik satu Space: `definition` dan `response` (jsonb, divalidasi paket `forms`), `access` (`private`/`internal`), `public_token` (NULL = tanpa tautan publik, unik), `version`. Nama unik per Space tanpa membedakan huruf besar-kecil. ID tujuan di `response` tidak berkunci asing, jadi diperiksa ulang saat kirim |
+| `form_submissions` | Satu baris per item hasil form: `form_id` (NULL bila form dihapus), `form_name` salinan, `item_id` unik, `requester_id`, `answers` (jsonb), `requester_name` dan `requester_email` (hanya untuk pengisi tautan publik; `requester_id` lalu menunjuk akun placeholder `00000000-0000-4000-8000-0000000000e1`). Dasar hak akses pengirim ke item dan daftar `GET /me/requests` |
 
 ### 3.5 Kolaborasi
 
@@ -167,7 +167,7 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 
 `views(id, scope_space_id NULL, scope_item_id NULL, type, name, config jsonb, visibility, owner_id, position, is_default)` dengan `CHECK` tepat satu dari kedua scope terisi.
 
-- `type`: `table`, `board` (M1), `gantt`, `calendar` (S2.4.1, migrasi maju `00018`). `timelog` mengikuti milestone terkait.
+- `type`: `table`, `board` (M1), `gantt`, `calendar` (S2.4.1, migrasi maju `00018`). `timelog` tersedia pada Project melalui migrasi `00035`.
 - `visibility`: `public` (semua yang punya akses ke scope) atau `personal` (hanya `owner_id`).
 - `config` (jsonb) menyimpan kolom yang tampil, urutan, grouping, dan preset filter bawaan. **State sementara** (filter yang sedang dipakai) tidak disimpan di database, tetapi di URL (UI_SPEC §3).
 - Hanya satu view `is_default` per scope (indeks unik parsial).
@@ -218,9 +218,19 @@ Migrasi `00020` menambah `config jsonb` dan memperluas tipe. Single dan Multiple
 
 `items.fields` menyimpan Text dan Date sebagai string, Number/Currency/Percent sebagai angka JSON, Duration sebagai hari bulat, Checkbox sebagai boolean, serta People dan Multiple select sebagai array UUID. Single select tetap UUID string. Nilai `null` dalam PATCH menghapus kunci. Metadata `field_people` hanya diproyeksikan dari nilai People di lokasi Item yang dapat dilihat, dengan nama dan status.
 
+### 7.1 Time entries dan budget (M4)
+
+`00034_time_entries` menyimpan satu entry per pengguna, task, dan tanggal. Durasi 1–1440 menit. Kategori dan komentar opsional. Billing type adalah `billable` atau `non_billable`. Lock dan versi disimpan per entry. Indeks (user, tanggal) dan (item, tanggal) mendukung Timesheet dan Timelog.
+
+Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `items.fields`. Total menit dihitung dari entry yang dapat dilihat pemanggil melalui jalur Project aktif.
+
+### 7.2 Workbook Project (M4)
+
+`project_excel_exports` menyimpan status River, lokasi Project, pemilik, daftar ID Item, serta workbook maksimum 5 MiB. Unduhan memeriksa ulang hak baca dan keanggotaan Item pada cakupan semula. `project_excel_imports` menyimpan digest dan ID hasil per pengguna serta Space agar retry dapat mengembalikan hasil yang sama. Pembuatan item dan penyimpanan hasil commit berjalan dalam satu transaksi. Keduanya kedaluwarsa setelah satu jam dan dibersihkan oleh housekeeping.
+
 ## 8. Data yang sengaja belum ada (M2+)
 
-`time_entries`, `approvals`, `request_forms`, `dashboards`, `widgets`, `reports`, dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
+`approvals`, `request_forms`, `dashboards`, `widgets`, `reports`, dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
 
 Kolom profil `company`, `country`, `location`, `phone` (kontrak `Me`/`MeUpdate`) belum ada di `users`; ditambahkan lewat migrasi di S1.6.2 (`PATCH /me`).
 

@@ -24,6 +24,8 @@ type Config struct {
 	SMTPUser       string
 	SMTPPassword   string
 	SMTPFrom       string
+	SMTPFromAuth   string // sender for account links (activation, reset); defaults to SMTPFrom
+	SMTPReplyTo    string
 	BackupAlertURL string
 	FilesDir       string
 	MaxUploadMB    int
@@ -45,6 +47,7 @@ func Load() (Config, error) {
 		BackupAlertURL: os.Getenv("BACKUP_ALERT_URL"),
 		FilesDir:       value("PMS_FILES_DIR", "/data/files"),
 	}
+	cfg.SMTPFromAuth, cfg.SMTPReplyTo = value("SMTP_FROM_AUTH", cfg.SMTPFrom), os.Getenv("SMTP_REPLY_TO")
 	cfg.MaxUploadMB, err = strconv.Atoi(value("PMS_MAX_UPLOAD_MB", "100"))
 	if err != nil || cfg.MaxUploadMB < 1 || cfg.MaxUploadMB > 1024 {
 		return Config{}, fmt.Errorf("PMS_MAX_UPLOAD_MB must be between 1 and 1024")

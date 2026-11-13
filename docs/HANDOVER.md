@@ -230,12 +230,12 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 
 ### Checkpoint M3 (S3.1.1 sampai S3.3.6, 13 Nov 2026)
 
-- **DONE:** S3.1.1, S3.2.1, S3.3.1, S3.3.2, S3.3.4 (bukti di TESTING.md). **IN_PROGRESS:** S3.3.3 (akses internal dan Manage forms selesai, tautan publik menunggu S3.3.5), S3.3.6 (My requests dan akses terbatas selesai, email requester eksternal menunggu S3.3.5), S3.6.1 (E2E live 3/3 lulus; tersisa matriks otorisasi lintas tipe user dan `PILOT_RUNBOOK.md`).
+- **DONE:** S3.1.1, S3.2.1, S3.3.1, S3.3.2, S3.3.4 (bukti di TESTING.md). **Diperbarui 13 Nov 2026 (penutupan M3):** seluruh story M3 `DONE`, termasuk S3.3.3, S3.3.5, S3.3.6, dan S3.6.1 (lihat blok Penutupan M3 di bawah).
 - **Migrasi baru:** `00024_workflow_editor` (status_transitions, flag status, nama workflow unik), `00025_approvals`, `00026_request_forms`, `00027_form_submissions` (kolom `access`, tabel `form_submissions`). Update dari 00023 belum dilatih pada instance pilot.
 - **Kontrak baru:** workflow dan status, approval, form (`/spaces/{id}/forms`, `/forms`, `/forms/{id}`, `/forms/{id}/access`, `/forms/available`, `/forms/{id}/definition`, `/forms/{id}/submissions`) dan `/me/requests`. Kind notifikasi baru: `approval_requested`, `approval_decided`.
 - **Keputusan:** D-41 sampai D-46. Aturan lengkap di `WORKFLOWS.md` §9.
 - **Titik hati-hati:** item dari form dibuat sebagai admin atas nama pengirim (`form_submit.go`). Hak pengirim ke item hasil form ada di `policy/item.go` (`requesterRole`), bukan peran share. Tujuan form divalidasi saat disimpan dan dicek ulang saat kirim. Lampiran form memakai `stageAttachment` yang sama dengan unggah biasa.
-- **Belum:** S3.2.2 Blueprint, S3.3.5 form publik, S3.4.x navigasi, S3.5.1 2FA, dan sisa S3.6.1.
+- **Penutupan M3:** form publik (`/f/{token}`, `forms_public.go`), email requester eksternal, flow E2E ke-4, matriks otorisasi M3 (`m3_authorization_integration_test.go`), dan runbook update M3 selesai. Migrasi `00033` membuat akun placeholder pemilik item form publik (D-48). Tes lama yang menghitung baris `users` kini mengecualikan akun itu. Yang belum: uji update 00023 → 00033 pada instance pilot, pemindaian dependensi/image dan pemeriksaan OWASP penuh (bagian S3.6.1 lama yang bukan lingkup M3 di sini), email pemberitahuan reset 2FA, dan batas 300/jam per tautan belum punya tes.
 
 ### Checkpoint 2FA (S3.5.1, 13 Nov 2026)
 
@@ -244,3 +244,22 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Perlu dilakukan operator:** isi `PMS_2FA_KEY` (`openssl rand -base64 32`) di `deploy/.env` sebelum pengguna bisa mengaktifkan 2FA, dan simpan kunci di luar backup.
 - **Belum:** tombol reset 2FA di UI admin, email pemberitahuan saat reset, pembatasan 2FA wajib per peran.
 
+
+### Checkpoint M4 time entry
+
+- S4.1.1 DONE. Migrasi 00034 dan CRUD `/time-entries` menyimpan satu entry per pengguna, task, dan tanggal. Pengguna dengan ChangeStatus dapat mencatat waktu sendiri pada task yang terlihat. Akses penuh pada task dapat membaca dan mengubah lock. Pemilik tetap memerlukan hak partisipasi dan ETag untuk mengubah entry yang tidak terkunci.
+
+- S4.1.2 DONE. More → Timesheets mengikuti zona waktu dan awal minggu profil. Pin disimpan per pengguna di browser. Sel memakai POST/PATCH/DELETE, `If-Match`, dan mempertahankan draf pada konflik.
+
+- S4.1.3 DONE. Migrasi 00035 menambah view Timelog untuk Project. Daftar berhalaman dan filter server tersedia di `GET /items/{id}/time-entries`. Full pada lokasi Project dapat melihat entry turunan, sedangkan pengguna lain hanya melihat entry sendiri.
+
+- S4.2.1 DONE. Di Space actions → Custom fields, definisikan Currency dengan opsi Use as a project budget. Panel Project memakai editor Currency yang sama dan menampilkan total jam yang diizinkan. Budget tersimpan di `items.fields`. Nilai cost belum menjadi bagian M4.
+
+- Checkpoint Time & Budget membuktikan E2E Timesheet → Timelog → Budget dengan PostgreSQL dan dua pengguna. Status akhir S4.4.1 tercatat di checkpoint Excel di bawah.
+
+### Checkpoint M4 Excel
+
+- S4.3.1 DONE. Project → Item actions → Export to Excel memilih satu lokasi Space. River membuat XLSX maksimal 500 Item dan 100 kolom. Artefak kedaluwarsa setelah satu jam. Unduhan memeriksa pemilik, izin, dan jangkauan Item saat ini. Migrasi 00036 menyimpan hasil dan status job.
+
+- S4.3.2 DONE. Space actions → Import from Excel menampilkan kolom, pemetaan, sampel, dan galat per baris. Commit membuat Item baru dalam satu transaksi. Digest mengikat file dan mapping. Migrasi 00037 menyimpan hasil commit satu jam untuk retry yang sama. Maksimum 5 MiB, 500 baris data, 100 kolom. Impor membaca sheet pertama dan tanggal memakai teks ISO. Field kustom harus tersedia di Space tujuan atau dipetakan ulang. Field arsip dan People nonaktif tunduk pada validasi normal.
+- S4.4.1 DONE. Kedua alur Chrome dengan PostgreSQL lulus. Stack manual perlu build terbaru dengan migrasi 00037. Seluruh perubahan tetap di working tree.

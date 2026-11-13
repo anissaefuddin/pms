@@ -79,6 +79,7 @@ type fixture struct {
 	n    int
 	// files is the directory attachments are stored in.
 	files string
+	queue *mailqueue.Queue
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -110,7 +111,7 @@ func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 	}
 	srv := httptest.NewServer(httpserver.New(pool, cfg, queue))
 	t.Cleanup(srv.Close)
-	return &fixture{t: t, ctx: ctx, pool: pool, srv: srv, files: files}
+	return &fixture{t: t, ctx: ctx, pool: pool, srv: srv, files: files, queue: queue}
 }
 
 func (f *fixture) exec(sql string, args ...any) {

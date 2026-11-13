@@ -317,7 +317,8 @@ func updateCustomFieldValues(ctx context.Context, tx pgx.Tx, actor policy.Actor,
 	}
 	sort.Strings(ids)
 	var current map[string]json.RawMessage
-	if err := tx.QueryRow(ctx, "SELECT fields FROM items WHERE id=$1::uuid", itemID).Scan(&current); err != nil {
+	var kind string
+	if err := tx.QueryRow(ctx, "SELECT fields,type::text FROM items WHERE id=$1::uuid", itemID).Scan(&current, &kind); err != nil {
 		return nil, err
 	}
 	if current == nil {
@@ -359,6 +360,9 @@ ORDER BY f.id FOR SHARE OF f`, itemID, ids, visibleSpaces)
 		}
 		if field.ArchivedAt != nil {
 			return nil, InvalidField{"fields", "archived custom fields cannot receive new values"}
+		}
+		if field.Config.ProjectBudget != nil && *field.Config.ProjectBudget && kind != "project" {
+			return nil, InvalidField{"fields." + field.ID, "budget can only be set on projects"}
 		}
 		normalized, err := normalizeCustomFieldValue(field, value)
 		if err != nil {

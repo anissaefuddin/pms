@@ -4,6 +4,264 @@
  */
 
 export interface paths {
+    "/dashboards": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat */
+        get: operations["listDashboards"];
+        put?: never;
+        post: operations["createDashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards/{dashboardId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getDashboard"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteDashboard"];
+        options?: never;
+        head?: never;
+        patch: operations["renameDashboard"];
+        trace?: never;
+    };
+    "/dashboards/{dashboardId}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Salin konfigurasi dashboard dan widget ke tujuan dengan ID baru */
+        post: operations["duplicateDashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards/{dashboardId}/move": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pindah dengan izin delete di sumber dan create di tujuan */
+        post: operations["moveDashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards/{dashboardId}/widgets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createDashboardWidget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards/{dashboardId}/widgets/{widgetId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+                widgetId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put: operations["replaceDashboardWidget"];
+        post?: never;
+        delete: operations["deleteDashboardWidget"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{projectId}/excel-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["startProjectExcelExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/excel-exports/{exportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exportId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getProjectExcelExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/excel-exports/{exportId}/file": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exportId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["downloadProjectExcelExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/excel-imports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Unggah untuk preview. Untuk membuat item, kirim ulang workbook, mapping, dan digest preview dengan commit=true. */
+        post: operations["importProjectExcel"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{itemId}/time-summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        /** Total menit aktual yang dapat dilihat pemanggil */
+        get: operations["getProjectTimeSummary"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{itemId}/time-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        /** Time entry sendiri atau entry pada lokasi Project dengan akses penuh */
+        get: operations["listProjectTimeEntries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/time-entries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daftar time entry sendiri yang masih terlihat */
+        get: operations["listTimeEntries"];
+        put?: never;
+        /** Catat waktu sendiri untuk task dan tanggal */
+        post: operations["createTimeEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/time-entries/{entryId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getTimeEntry"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteTimeEntry"];
+        options?: never;
+        head?: never;
+        /** Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah */
+        patch: operations["updateTimeEntry"];
+        trace?: never;
+    };
     "/auth/login": {
         parameters: {
             query?: never;
@@ -1434,6 +1692,72 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/forms/{formId}/public-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buat tautan publik, atau ganti yang ada sehingga tautan lama langsung mati (FORM-03); butuh kemampuan share pada Space */
+        post: operations["rotateFormPublicLink"];
+        /** Cabut tautan publik (FORM-03) */
+        delete: operations["revokeFormPublicLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/forms/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Definisi form lewat tautan publik, tanpa sesi (SEC-05)
+         * @description Tidak memuat id internal. Pertanyaan bertipe assignee tidak ditampilkan. Token yang dicabut atau tidak dikenal sama-sama 404.
+         */
+        get: operations["getPublicForm"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/forms/{token}/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Isi form lewat tautan publik, tanpa sesi (SEC-05)
+         * @description Item dibuat atas nama pengguna placeholder; identitas pengisi disimpan pada pengajuan. Respons hanya tanda terima,
+         *     tanpa id item. Field `website` adalah honeypot: bila terisi, tidak ada item dibuat tetapi balasan tetap 201.
+         *     Batas 30 pengajuan per jam per IP. `multipart/form-data` memakai bagian `answers`, `requester` (JSON), `website`, dan `file:<key>`.
+         */
+        post: operations["submitPublicForm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/requests": {
         parameters: {
             query?: never;
@@ -1572,6 +1896,111 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        DashboardRename: {
+            name: string;
+        };
+        DashboardDestination: components["schemas"]["DashboardRename"] & {
+            /**
+             * Format: uuid
+             * @description null atau dihilangkan untuk personal
+             */
+            space_id?: string | null;
+        };
+        DashboardMove: {
+            /**
+             * Format: uuid
+             * @description null untuk pindah ke personal milik pemanggil
+             */
+            space_id: string | null;
+        };
+        DashboardSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            owner_id: string;
+            /** Format: uuid */
+            space_id: string | null;
+            name: string;
+            version: number;
+        };
+        DashboardList: {
+            items: components["schemas"]["DashboardSummary"][];
+        };
+        DashboardWidgetConfig: {
+            /** @description Untuk pie, column, bar, dan line */
+            show_legend?: boolean;
+            /** @description Untuk pie, column, bar, dan line */
+            show_labels?: boolean;
+            /**
+             * @description Khusus pie
+             * @enum {string}
+             */
+            pie_style?: "classic" | "donut" | "ring";
+        };
+        DashboardWidgetInput: {
+            name: string;
+            /** @enum {string} */
+            type: "task_list" | "indicator" | "pie" | "column" | "bar" | "line" | "table";
+            position?: number;
+            config?: components["schemas"]["DashboardWidgetConfig"];
+        };
+        DashboardWidget: components["schemas"]["DashboardWidgetInput"] & {
+            /** Format: uuid */
+            id: string;
+            position: number;
+            config: components["schemas"]["DashboardWidgetConfig"];
+        };
+        Dashboard: components["schemas"]["DashboardSummary"] & {
+            widgets: components["schemas"]["DashboardWidget"][];
+        };
+        ExcelExport: {
+            /** Format: uuid */
+            id: string;
+            /** @enum {string} */
+            status: "pending" | "ready" | "failed";
+            error?: string;
+        };
+        ExcelPreview: {
+            columns: string[];
+            rows: number;
+            digest: string;
+            sample: string[][];
+            errors: {
+                row: number;
+                column: string;
+                message: string;
+            }[];
+        };
+        TimeEntryFields: {
+            minutes?: number;
+            category?: string;
+            comment?: string;
+            /** @enum {string} */
+            billing_type?: "billable" | "non_billable";
+        };
+        TimeEntry: components["schemas"]["TimeEntryFields"] & {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            item_id: string;
+            /** Format: uuid */
+            user_id: string;
+            /** Format: date */
+            date: string;
+            minutes: number;
+            category: string;
+            comment: string;
+            /** @enum {string} */
+            billing_type: "billable" | "non_billable";
+            locked: boolean;
+            version: number;
+            item_title?: string;
+            user_name?: string;
+        };
+        TimeEntryPage: {
+            items: components["schemas"]["TimeEntry"][];
+            next_offset: number | null;
+        };
         Problem: {
             /** @example about:blank */
             type: string;
@@ -1964,6 +2393,8 @@ export interface components {
             definition: components["schemas"]["FormDefinition"];
             response: components["schemas"]["FormResponseSettings"];
             access: components["schemas"]["FormAccess"];
+            /** @description Token tautan publik; kosong bila tidak ada tautan */
+            public_token?: string | null;
             /** Format: int32 */
             version: number;
             created_by: components["schemas"]["UserRef"];
@@ -1997,6 +2428,7 @@ export interface components {
             space_id: string;
             space_name: string;
             access: components["schemas"]["FormAccess"];
+            public_token?: string | null;
             name: string;
             description: string;
             /** Format: int32 */
@@ -2100,6 +2532,8 @@ export interface components {
             color: string;
         };
         CustomFieldConfig: {
+            /** @description Khusus Currency dan hanya menerima nilai pada Project */
+            project_budget?: boolean;
             /** @description Kode ISO 4217 untuk Currency */
             currency?: string;
             /** @description Jumlah desimal untuk Currency dengan default 2 */
@@ -2328,7 +2762,7 @@ export interface components {
             assignee_allocations?: components["schemas"]["AssigneeAllocationUpdate"][];
         };
         /** @enum {string} */
-        ViewType: "table" | "board" | "gantt" | "calendar";
+        ViewType: "table" | "board" | "gantt" | "calendar" | "timelog";
         /** @enum {string} */
         ViewVisibility: "public" | "personal";
         View: {
@@ -2500,6 +2934,26 @@ export interface components {
         };
     };
     responses: {
+        /** @description Dashboard beserta konfigurasi widget */
+        Dashboard: {
+            headers: {
+                ETag: components["headers"]["ETag"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Dashboard"];
+            };
+        };
+        /** @description Time entry */
+        TimeEntry: {
+            headers: {
+                ETag: components["headers"]["ETag"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["TimeEntry"];
+            };
+        };
         /** @description Batas percobaan tercapai */
         RateLimited: {
             headers: {
@@ -2591,6 +3045,576 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    listDashboards: {
+        parameters: {
+            query?: {
+                space_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar ringkasan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardList"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    createDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardDestination"];
+            };
+        };
+        responses: {
+            201: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    deleteDashboard: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dashboard dan konfigurasi widget dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    renameDashboard: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardRename"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    duplicateDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardDestination"];
+            };
+        };
+        responses: {
+            201: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    moveDashboard: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardMove"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    createDashboardWidget: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardWidgetInput"];
+            };
+        };
+        responses: {
+            201: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    replaceDashboardWidget: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                dashboardId: string;
+                widgetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["DashboardWidgetInput"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    deleteDashboardWidget: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                dashboardId: string;
+                widgetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Dashboard"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    startProjectExcelExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    space_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Export dijadwalkan */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExcelExport"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
+    getProjectExcelExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Status export */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExcelExport"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    downloadProjectExcelExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                exportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workbook XLSX */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    importProjectExcel: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /**
+                     * Format: binary
+                     * @description Workbook XLSX maksimum 5 MiB
+                     */
+                    file: string;
+                    /** @description JSON object dari nama kolom ke target. String kosong mengabaikan kolom. */
+                    mapping?: string;
+                    commit?: boolean;
+                    digest?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Pratinjau dan validasi */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExcelPreview"];
+                };
+            };
+            /** @description Item dibuat dalam satu transaksi */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        item_ids: string[];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            /** @description Workbook atau baris tidak valid */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/problem+json": components["schemas"]["Problem"];
+                };
+            };
+        };
+    };
+    getProjectTimeSummary: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: int64 */
+                        actual_minutes: number;
+                        /** @enum {string} */
+                        scope: "project" | "permitted_entries";
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    listProjectTimeEntries: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                limit?: number;
+                offset?: number;
+                user_id?: string;
+                category?: string;
+                billing_type?: "billable" | "non_billable";
+                locked?: boolean;
+                sort?: "date" | "-date" | "duration" | "-duration" | "user";
+            };
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryPage"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listTimeEntries: {
+        parameters: {
+            query?: {
+                from?: string;
+                to?: string;
+                limit?: number;
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryPage"];
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    createTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeEntryFields"] & {
+                    /** Format: uuid */
+                    item_id: string;
+                    /** Format: date */
+                    date: string;
+                    minutes: number;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntry"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getTimeEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["TimeEntry"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    deleteTimeEntry: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    updateTimeEntry: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TimeEntryFields"] & {
+                    locked?: boolean;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["TimeEntry"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
     login: {
         parameters: {
             query?: never;
@@ -5418,6 +6442,127 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    rotateFormPublicLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK; `public_token` berisi token baru */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    revokeFormPublicLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK; `public_token` kosong */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPublicForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        name: string;
+                        description: string;
+                        definition: components["schemas"]["FormDefinition"];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    submitPublicForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    answers: {
+                        [key: string]: unknown;
+                    };
+                    requester: {
+                        name: string;
+                        /** Format: email */
+                        email: string;
+                    };
+                    website?: string;
+                };
+                "multipart/form-data": {
+                    [key: string]: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Diterima */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        received: boolean;
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
         };
     };
     listMyRequests: {

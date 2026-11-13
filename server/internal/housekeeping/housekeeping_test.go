@@ -77,8 +77,12 @@ func TestRunKeepsLiveRowsAndRemovesDeadOnes(t *testing.T) {
 	if got := count("shares"); got != 1 {
 		t.Fatalf("shares left: %d, want 1 (orphans of a deleted group and a deleted user must go)", got)
 	}
-	if got := count("users"); got != 2 {
+	// the placeholder owner of public-form items (migration 00033) is always there and is not a person
+	if got := count("users WHERE id<>'00000000-0000-4000-8000-0000000000e1'"); got != 2 {
 		t.Fatalf("users left: %d, want 2 (invited users must keep their seat)", got)
+	}
+	if got := count("users WHERE id='00000000-0000-4000-8000-0000000000e1'"); got != 1 {
+		t.Fatalf("housekeeping removed the placeholder requester: %d", got)
 	}
 }
 

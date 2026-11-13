@@ -406,6 +406,7 @@ const (
 	ViewTypeBoard    ViewType = "board"
 	ViewTypeGantt    ViewType = "gantt"
 	ViewTypeCalendar ViewType = "calendar"
+	ViewTypeTimelog  ViewType = "timelog"
 )
 
 func (e *ViewType) Scan(src interface{}) error {
@@ -573,14 +574,24 @@ type CustomField struct {
 	Config     []byte             `json:"config"`
 }
 
+type Dashboard struct {
+	ID      pgtype.UUID `json:"id"`
+	OwnerID pgtype.UUID `json:"owner_id"`
+	SpaceID pgtype.UUID `json:"space_id"`
+	Name    string      `json:"name"`
+	Version int32       `json:"version"`
+}
+
 type FormSubmission struct {
-	ID          pgtype.UUID        `json:"id"`
-	FormID      pgtype.UUID        `json:"form_id"`
-	FormName    string             `json:"form_name"`
-	ItemID      pgtype.UUID        `json:"item_id"`
-	RequesterID pgtype.UUID        `json:"requester_id"`
-	Answers     []byte             `json:"answers"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ID             pgtype.UUID        `json:"id"`
+	FormID         pgtype.UUID        `json:"form_id"`
+	FormName       string             `json:"form_name"`
+	ItemID         pgtype.UUID        `json:"item_id"`
+	RequesterID    pgtype.UUID        `json:"requester_id"`
+	Answers        []byte             `json:"answers"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	RequesterName  pgtype.Text        `json:"requester_name"`
+	RequesterEmail pgtype.Text        `json:"requester_email"`
 }
 
 type Group struct {
@@ -668,6 +679,27 @@ type Notification struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type ProjectExcelExport struct {
+	ID             pgtype.UUID        `json:"id"`
+	ProjectID      pgtype.UUID        `json:"project_id"`
+	SpaceID        pgtype.UUID        `json:"space_id"`
+	UserID         pgtype.UUID        `json:"user_id"`
+	ExpiresAt      pgtype.Timestamptz `json:"expires_at"`
+	Status         string             `json:"status"`
+	Error          pgtype.Text        `json:"error"`
+	Workbook       []byte             `json:"workbook"`
+	ItemIds        []pgtype.UUID      `json:"item_ids"`
+	IncludesFields bool               `json:"includes_fields"`
+}
+
+type ProjectExcelImport struct {
+	UserID    pgtype.UUID        `json:"user_id"`
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	Digest    string             `json:"digest"`
+	ItemIds   []pgtype.UUID      `json:"item_ids"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+}
+
 type RequestForm struct {
 	ID          pgtype.UUID        `json:"id"`
 	SpaceID     pgtype.UUID        `json:"space_id"`
@@ -681,6 +713,7 @@ type RequestForm struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	Access      string             `json:"access"`
+	PublicToken pgtype.Text        `json:"public_token"`
 }
 
 type SecurityEvent struct {
@@ -737,6 +770,19 @@ type Status struct {
 type StatusTransition struct {
 	FromStatusID pgtype.UUID `json:"from_status_id"`
 	ToStatusID   pgtype.UUID `json:"to_status_id"`
+}
+
+type TimeEntry struct {
+	ID          pgtype.UUID `json:"id"`
+	ItemID      pgtype.UUID `json:"item_id"`
+	UserID      pgtype.UUID `json:"user_id"`
+	EntryDate   pgtype.Date `json:"entry_date"`
+	Minutes     int32       `json:"minutes"`
+	Category    string      `json:"category"`
+	Comment     string      `json:"comment"`
+	BillingType string      `json:"billing_type"`
+	Locked      bool        `json:"locked"`
+	Version     int32       `json:"version"`
 }
 
 type User struct {
@@ -806,6 +852,15 @@ type View struct {
 	OwnerID      pgtype.UUID    `json:"owner_id"`
 	Position     int32          `json:"position"`
 	IsDefault    bool           `json:"is_default"`
+}
+
+type Widget struct {
+	ID          pgtype.UUID `json:"id"`
+	DashboardID pgtype.UUID `json:"dashboard_id"`
+	Name        string      `json:"name"`
+	Type        string      `json:"type"`
+	Position    int32       `json:"position"`
+	Config      []byte      `json:"config"`
 }
 
 type WorkSchedule struct {

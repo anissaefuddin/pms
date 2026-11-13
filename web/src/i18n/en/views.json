@@ -38,7 +38,8 @@
     "table": "Table",
     "board": "Board",
     "gantt": "Gantt",
-    "calendar": "Calendar"
+    "calendar": "Calendar",
+    "timelog": "Timelog"
   },
   "placeholder": "This view is not available yet.",
   "actions": "Actions",

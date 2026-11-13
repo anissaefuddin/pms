@@ -108,7 +108,7 @@ function Question({ level, element, value, onChange, people, onPeople, error, fi
     return <fieldset className="space-y-1" aria-describedby={describedBy}>
       <legend className="font-medium">{label}</legend>{help}
       {(element.options ?? []).map((option) => <label key={option} className="flex items-center gap-2">
-        <input type={multi ? "checkbox" : "radio"} name={id} checked={multi ? list.includes(option) : text === option}
+        <input type={multi ? "checkbox" : "radio"} name={id} className="size-6" checked={multi ? list.includes(option) : text === option}
           onChange={(event) => onChange(multi ? (event.target.checked ? [...list, option] : list.filter((o) => o !== option)) : option)} />
         {option}</label>)}
       {message}

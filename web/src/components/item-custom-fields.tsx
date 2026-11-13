@@ -1,11 +1,12 @@
 import { useId, useRef, useState } from "react";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { api, type CurrentUser } from "@/lib/api";
 import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
+import { formatMinutes } from "@/lib/time-entries";
 import type { Item } from "@/lib/items";
 
 export function ItemCustomFields({ item, profile, editable, disabled, onEdit, onCancel, onSave }: {
@@ -27,7 +28,14 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/custom-fields`),
   })) });
   const fields = queries.flatMap((query) => query.data?.items ?? [])
-    .filter((field) => !field.archived_at || item.fields?.[field.id] != null);
+    .filter((field) => (!field.archived_at || item.fields?.[field.id] != null) &&
+      (item.type === "project" || !field.config?.project_budget));
+  const budgetFields = fields.filter((field) => field.config?.project_budget);
+  const actual = useQuery({
+    queryKey: ["time-entries", "summary", item.id], enabled: budgetFields.length > 0,
+    queryFn: ({ signal }) => api<{ actual_minutes: number; scope: "project" | "permitted_entries" }>(
+      `/api/v1/items/${item.id}/time-summary`, { signal }),
+  });
   const pending = queries.some((query) => query.isPending);
   const failed = queries.filter((query) => query.isError);
   const editingField = fields.find((field) => field.id === editing && !field.archived_at);
@@ -62,6 +70,10 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
                 {field.archived_at && <span className="ms-2 text-xs font-normal text-muted-foreground">{t("spaces.customFields.archived")}</span>}
               </p>
               <CustomFieldDisplay field={field} value={value} people={people} profile={profile} />
+              {field.config?.project_budget && actual.data && <p className="text-sm text-muted-foreground">
+                {t(actual.data.scope === "project" ? "time.actual" : "time.actualVisible", { duration: formatMinutes(actual.data.actual_minutes) })}
+              </p>}
+              {field.config?.project_budget && actual.isError && <FormError message={actual.error.message} />}
             </div>
             {editable && !field.archived_at && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}
               ref={(button) => {

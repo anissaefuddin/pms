@@ -43,7 +43,7 @@ jobs:
         run: npm run test:e2e -- --workers=2
         working-directory: web
       - name: Browser workflows with PostgreSQL
-        run: go test -count=1 ./server/internal/httpserver -run '^TestBrowser(Collaboration|CustomFields|ProjectProgress|M2Flows)$'
+        run: go test -count=1 ./server/internal/httpserver -run '^TestBrowser(Collaboration|CustomFields|ProjectProgress|M2Flows|M3Flows|M4Flows|ExcelRoundTrip)$'
         env:
           PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable"
           PMS_TEST_BROWSER: "1"

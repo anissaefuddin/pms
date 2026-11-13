@@ -184,3 +184,42 @@ test("flow 3: the requester reaches nothing around the request, and private form
   await expect(requester.getByText("Private M3 form")).toHaveCount(0);
   await requester.context().close();
 });
+
+test("flow 4: a visitor without an account files a request through a public link, and the link can be replaced", async ({ browser }) => {
+  const baseURL = test.info().project.use.baseURL!;
+  const context = await browser.newContext({ baseURL, colorScheme: "light" });
+  const visitor = await context.newPage();
+  await visitor.goto(`/f/${e.PMS_FIXTURE_M3_PUBLIC_TOKEN}`);
+  await expect(visitor.getByRole("heading", { name: "Public M3 form" })).toBeVisible();
+  await expect(visitor).toHaveURL(`/f/${e.PMS_FIXTURE_M3_PUBLIC_TOKEN}`);
+  await axe(visitor);
+  await visitor.getByLabel("Subject").fill("Badge reader is broken");
+  await visitor.getByLabel("Your name").fill("Pat Visitor");
+  await visitor.getByLabel("Your email").fill("pat.visitor@example.com");
+  await visitor.getByRole("button", { name: "Submit" }).click();
+  await expect(visitor.getByRole("heading", { name: "Request received" })).toBeVisible();
+  await expect(visitor.getByText("pat.visitor@example.com")).toBeVisible();
+  // Without a session the visitor reaches nothing else.
+  for (const path of ["/api/v1/me", "/api/v1/spaces", `/api/v1/spaces/${e.PMS_FIXTURE_M3_WORK}`, `/api/v1/items/${e.PMS_FIXTURE_M3_PROJECT}`]) {
+    expect((await visitor.request.get(path)).status(), path).toBe(401);
+  }
+  await context.close();
+
+  const admin = await as(browser, e.PMS_FIXTURE_M3_ADMIN!);
+  const found = await (await admin.request.get("/api/v1/search?q=Badge")).json();
+  const created = (found.items as any[]).find((entry) => entry.title === "Badge reader is broken");
+  expect(created, "the item exists in the destination Space").toBeTruthy();
+  expect(created.created_by.name).toBe("External requester");
+  expect(JSON.stringify(created)).not.toContain("pat.visitor@example.com"); // the email stays on the submission, not on the item
+
+  // Replacing the link in the UI kills the old one.
+  await admin.goto("/forms");
+  await admin.getByRole("button", { name: "Actions for Public M3 form" }).click();
+  await admin.getByRole("menuitem", { name: "Share / Change access" }).click();
+  const dialog = admin.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Replace link" }).click();
+  await dialog.getByRole("button", { name: "Replace link" }).click();
+  await expect(dialog.getByLabel("Public link address")).not.toHaveValue(new RegExp(`/f/${e.PMS_FIXTURE_M3_PUBLIC_TOKEN}$`));
+  await expect.poll(async () => (await admin.request.get(`/api/v1/public/forms/${e.PMS_FIXTURE_M3_PUBLIC_TOKEN}`)).status()).toBe(404);
+  await admin.context().close();
+});

@@ -18,11 +18,12 @@ import (
 const maxCustomNumber = 1_000_000_000
 
 type CustomFieldConfig struct {
-	Currency     string              `json:"currency,omitempty"`
-	Decimals     *int                `json:"decimals,omitempty"`
-	AllowOver100 *bool               `json:"allow_over_100,omitempty"`
-	Aggregation  string              `json:"aggregation,omitempty"`
-	Markers      []CustomFieldMarker `json:"markers,omitempty"`
+	ProjectBudget *bool               `json:"project_budget,omitempty"`
+	Currency      string              `json:"currency,omitempty"`
+	Decimals      *int                `json:"decimals,omitempty"`
+	AllowOver100  *bool               `json:"allow_over_100,omitempty"`
+	Aggregation   string              `json:"aggregation,omitempty"`
+	Markers       []CustomFieldMarker `json:"markers,omitempty"`
 }
 
 type CustomFieldMarker struct {
@@ -47,6 +48,9 @@ func numericCustomField(kind string) bool {
 }
 
 func validateCustomFieldConfig(kind string, config CustomFieldConfig) error {
+	if config.ProjectBudget != nil && kind != "currency" {
+		return Invalid("project_budget only applies to Currency fields")
+	}
 	if kind == "currency" {
 		if _, err := currency.ParseISO(config.Currency); err != nil || config.Currency != strings.ToUpper(config.Currency) {
 			return Invalid("currency requires an uppercase ISO 4217 code")
@@ -101,6 +105,17 @@ func validateCustomFieldOptions(kind string, input []CustomFieldOption) ([]Custo
 func preserveCustomFieldConfig(ctx context.Context, tx pgx.Tx, field CustomField, config CustomFieldConfig) error {
 	var query, message string
 	var args []any
+	switch {
+	case config.ProjectBudget != nil && *config.ProjectBudget &&
+		(field.Config.ProjectBudget == nil || !*field.Config.ProjectBudget):
+		var used bool
+		if err := tx.QueryRow(ctx, "SELECT EXISTS (SELECT 1 FROM items WHERE type<>'project' AND fields ? $1)", field.ID).Scan(&used); err != nil {
+			return err
+		}
+		if used {
+			return Invalid("clear non-project values before enabling project budget")
+		}
+	}
 	switch {
 	case field.Type == "currency" && field.Config.Currency != config.Currency:
 		query = "SELECT EXISTS (SELECT 1 FROM items WHERE fields ? $1)"

@@ -39,6 +39,10 @@ func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[str
 }
 
 func create(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
+	return createWithCustomFields(ctx, tx, actor, fields, nil, batch)
+}
+
+func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[string]json.RawMessage, custom json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	var kind string
 	if json.Unmarshal(fields["type"], &kind) != nil || (kind != "project" && kind != "folder" && kind != "task") {
 		return Detail{}, Invalid("type must be project, folder or task")
@@ -175,6 +179,15 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 		}
 		if _, err := tx.Exec(ctx, "INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES($1,$2,$3,$4)",
 			id, loc.SpaceID, loc.ParentID, rank); err != nil {
+			return Detail{}, err
+		}
+	}
+	if custom != nil {
+		updated, err := updateCustomFieldValues(ctx, tx, actor, id.String(), custom)
+		if err != nil {
+			return Detail{}, err
+		}
+		if _, err := tx.Exec(ctx, "UPDATE items SET fields=$2::jsonb WHERE id=$1", id, updated); err != nil {
 			return Detail{}, err
 		}
 	}

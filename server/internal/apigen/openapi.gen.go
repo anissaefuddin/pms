@@ -285,6 +285,93 @@ func (e CustomFieldType) Valid() bool {
 	}
 }
 
+// Defines values for DashboardWidgetType.
+const (
+	DashboardWidgetTypeBar       DashboardWidgetType = "bar"
+	DashboardWidgetTypeColumn    DashboardWidgetType = "column"
+	DashboardWidgetTypeIndicator DashboardWidgetType = "indicator"
+	DashboardWidgetTypeLine      DashboardWidgetType = "line"
+	DashboardWidgetTypePie       DashboardWidgetType = "pie"
+	DashboardWidgetTypeTable     DashboardWidgetType = "table"
+	DashboardWidgetTypeTaskList  DashboardWidgetType = "task_list"
+)
+
+// Valid indicates whether the value is a known member of the DashboardWidgetType enum.
+func (e DashboardWidgetType) Valid() bool {
+	switch e {
+	case DashboardWidgetTypeBar:
+		return true
+	case DashboardWidgetTypeColumn:
+		return true
+	case DashboardWidgetTypeIndicator:
+		return true
+	case DashboardWidgetTypeLine:
+		return true
+	case DashboardWidgetTypePie:
+		return true
+	case DashboardWidgetTypeTable:
+		return true
+	case DashboardWidgetTypeTaskList:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DashboardWidgetConfigPieStyle.
+const (
+	Classic DashboardWidgetConfigPieStyle = "classic"
+	Donut   DashboardWidgetConfigPieStyle = "donut"
+	Ring    DashboardWidgetConfigPieStyle = "ring"
+)
+
+// Valid indicates whether the value is a known member of the DashboardWidgetConfigPieStyle enum.
+func (e DashboardWidgetConfigPieStyle) Valid() bool {
+	switch e {
+	case Classic:
+		return true
+	case Donut:
+		return true
+	case Ring:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DashboardWidgetInputType.
+const (
+	DashboardWidgetInputTypeBar       DashboardWidgetInputType = "bar"
+	DashboardWidgetInputTypeColumn    DashboardWidgetInputType = "column"
+	DashboardWidgetInputTypeIndicator DashboardWidgetInputType = "indicator"
+	DashboardWidgetInputTypeLine      DashboardWidgetInputType = "line"
+	DashboardWidgetInputTypePie       DashboardWidgetInputType = "pie"
+	DashboardWidgetInputTypeTable     DashboardWidgetInputType = "table"
+	DashboardWidgetInputTypeTaskList  DashboardWidgetInputType = "task_list"
+)
+
+// Valid indicates whether the value is a known member of the DashboardWidgetInputType enum.
+func (e DashboardWidgetInputType) Valid() bool {
+	switch e {
+	case DashboardWidgetInputTypeBar:
+		return true
+	case DashboardWidgetInputTypeColumn:
+		return true
+	case DashboardWidgetInputTypeIndicator:
+		return true
+	case DashboardWidgetInputTypeLine:
+		return true
+	case DashboardWidgetInputTypePie:
+		return true
+	case DashboardWidgetInputTypeTable:
+		return true
+	case DashboardWidgetInputTypeTaskList:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DependencyType.
 const (
 	FF DependencyType = "FF"
@@ -303,6 +390,27 @@ func (e DependencyType) Valid() bool {
 	case SF:
 		return true
 	case SS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExcelExportStatus.
+const (
+	ExcelExportStatusFailed  ExcelExportStatus = "failed"
+	ExcelExportStatusPending ExcelExportStatus = "pending"
+	ExcelExportStatusReady   ExcelExportStatus = "ready"
+)
+
+// Valid indicates whether the value is a known member of the ExcelExportStatus enum.
+func (e ExcelExportStatus) Valid() bool {
+	switch e {
+	case ExcelExportStatusFailed:
+		return true
+	case ExcelExportStatusPending:
+		return true
+	case ExcelExportStatusReady:
 		return true
 	default:
 		return false
@@ -1110,6 +1218,42 @@ func (e StreamEntryKind) Valid() bool {
 	}
 }
 
+// Defines values for TimeEntryBillingType.
+const (
+	TimeEntryBillingTypeBillable    TimeEntryBillingType = "billable"
+	TimeEntryBillingTypeNonBillable TimeEntryBillingType = "non_billable"
+)
+
+// Valid indicates whether the value is a known member of the TimeEntryBillingType enum.
+func (e TimeEntryBillingType) Valid() bool {
+	switch e {
+	case TimeEntryBillingTypeBillable:
+		return true
+	case TimeEntryBillingTypeNonBillable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TimeEntryFieldsBillingType.
+const (
+	TimeEntryFieldsBillingTypeBillable    TimeEntryFieldsBillingType = "billable"
+	TimeEntryFieldsBillingTypeNonBillable TimeEntryFieldsBillingType = "non_billable"
+)
+
+// Valid indicates whether the value is a known member of the TimeEntryFieldsBillingType enum.
+func (e TimeEntryFieldsBillingType) Valid() bool {
+	switch e {
+	case TimeEntryFieldsBillingTypeBillable:
+		return true
+	case TimeEntryFieldsBillingTypeNonBillable:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TwoFactorChallengeTwoFactorRequired.
 const (
 	TwoFactorChallengeTwoFactorRequiredTrue TwoFactorChallengeTwoFactorRequired = true
@@ -1179,6 +1323,7 @@ const (
 	ViewTypeCalendar ViewType = "calendar"
 	ViewTypeGantt    ViewType = "gantt"
 	ViewTypeTable    ViewType = "table"
+	ViewTypeTimelog  ViewType = "timelog"
 )
 
 // Valid indicates whether the value is a known member of the ViewType enum.
@@ -1191,6 +1336,8 @@ func (e ViewType) Valid() bool {
 	case ViewTypeGantt:
 		return true
 	case ViewTypeTable:
+		return true
+	case ViewTypeTimelog:
 		return true
 	default:
 		return false
@@ -1227,6 +1374,69 @@ func (e DecideApprovalJSONBodyDecision) Valid() bool {
 	case DecideApprovalJSONBodyDecisionApproved:
 		return true
 	case DecideApprovalJSONBodyDecisionRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListProjectTimeEntriesParamsBillingType.
+const (
+	ListProjectTimeEntriesParamsBillingTypeBillable    ListProjectTimeEntriesParamsBillingType = "billable"
+	ListProjectTimeEntriesParamsBillingTypeNonBillable ListProjectTimeEntriesParamsBillingType = "non_billable"
+)
+
+// Valid indicates whether the value is a known member of the ListProjectTimeEntriesParamsBillingType enum.
+func (e ListProjectTimeEntriesParamsBillingType) Valid() bool {
+	switch e {
+	case ListProjectTimeEntriesParamsBillingTypeBillable:
+		return true
+	case ListProjectTimeEntriesParamsBillingTypeNonBillable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListProjectTimeEntriesParamsSort.
+const (
+	ListProjectTimeEntriesParamsSortDate          ListProjectTimeEntriesParamsSort = "date"
+	ListProjectTimeEntriesParamsSortDuration      ListProjectTimeEntriesParamsSort = "duration"
+	ListProjectTimeEntriesParamsSortMinusDate     ListProjectTimeEntriesParamsSort = "-date"
+	ListProjectTimeEntriesParamsSortMinusDuration ListProjectTimeEntriesParamsSort = "-duration"
+	ListProjectTimeEntriesParamsSortUser          ListProjectTimeEntriesParamsSort = "user"
+)
+
+// Valid indicates whether the value is a known member of the ListProjectTimeEntriesParamsSort enum.
+func (e ListProjectTimeEntriesParamsSort) Valid() bool {
+	switch e {
+	case ListProjectTimeEntriesParamsSortDate:
+		return true
+	case ListProjectTimeEntriesParamsSortDuration:
+		return true
+	case ListProjectTimeEntriesParamsSortMinusDate:
+		return true
+	case ListProjectTimeEntriesParamsSortMinusDuration:
+		return true
+	case ListProjectTimeEntriesParamsSortUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetProjectTimeSummary200JSONResponseBodyScope.
+const (
+	GetProjectTimeSummary200JSONResponseBodyScopePermittedEntries GetProjectTimeSummary200JSONResponseBodyScope = "permitted_entries"
+	GetProjectTimeSummary200JSONResponseBodyScopeProject          GetProjectTimeSummary200JSONResponseBodyScope = "project"
+)
+
+// Valid indicates whether the value is a known member of the GetProjectTimeSummary200JSONResponseBodyScope enum.
+func (e GetProjectTimeSummary200JSONResponseBodyScope) Valid() bool {
+	switch e {
+	case GetProjectTimeSummary200JSONResponseBodyScopePermittedEntries:
+		return true
+	case GetProjectTimeSummary200JSONResponseBodyScopeProject:
 		return true
 	default:
 		return false
@@ -1365,6 +1575,42 @@ func (e ListStreamParamsFilter) Valid() bool {
 	case ListStreamParamsFilterEverything:
 		return true
 	case ListStreamParamsFilterFollowed:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateTimeEntryJSONBodyBillingType.
+const (
+	CreateTimeEntryJSONBodyBillingTypeBillable    CreateTimeEntryJSONBodyBillingType = "billable"
+	CreateTimeEntryJSONBodyBillingTypeNonBillable CreateTimeEntryJSONBodyBillingType = "non_billable"
+)
+
+// Valid indicates whether the value is a known member of the CreateTimeEntryJSONBodyBillingType enum.
+func (e CreateTimeEntryJSONBodyBillingType) Valid() bool {
+	switch e {
+	case CreateTimeEntryJSONBodyBillingTypeBillable:
+		return true
+	case CreateTimeEntryJSONBodyBillingTypeNonBillable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UpdateTimeEntryJSONBodyBillingType.
+const (
+	UpdateTimeEntryJSONBodyBillingTypeBillable    UpdateTimeEntryJSONBodyBillingType = "billable"
+	UpdateTimeEntryJSONBodyBillingTypeNonBillable UpdateTimeEntryJSONBodyBillingType = "non_billable"
+)
+
+// Valid indicates whether the value is a known member of the UpdateTimeEntryJSONBodyBillingType enum.
+func (e UpdateTimeEntryJSONBodyBillingType) Valid() bool {
+	switch e {
+	case UpdateTimeEntryJSONBodyBillingTypeBillable:
+		return true
+	case UpdateTimeEntryJSONBodyBillingTypeNonBillable:
 		return true
 	default:
 		return false
@@ -1546,6 +1792,9 @@ type CustomFieldConfig struct {
 
 	// Markers Aturan numerik dalam urutan prioritas, kecocokan pertama berlaku
 	Markers *[]CustomFieldMarker `json:"markers,omitempty"`
+
+	// ProjectBudget Khusus Currency dan hanya menerima nilai pada Project
+	ProjectBudget *bool `json:"project_budget,omitempty"`
 }
 
 // CustomFieldConfigAggregation Default untuk field numerik
@@ -1622,19 +1871,126 @@ type CustomFieldValues_AdditionalProperties struct {
 	union json.RawMessage
 }
 
+// Dashboard defines model for Dashboard.
+type Dashboard struct {
+	Id      openapi_types.UUID  `json:"id"`
+	Name    string              `json:"name"`
+	OwnerId openapi_types.UUID  `json:"owner_id"`
+	SpaceId *openapi_types.UUID `json:"space_id"`
+	Version int                 `json:"version"`
+	Widgets []DashboardWidget   `json:"widgets"`
+}
+
+// DashboardDestination defines model for DashboardDestination.
+type DashboardDestination struct {
+	Name string `json:"name"`
+
+	// SpaceId null atau dihilangkan untuk personal
+	SpaceId *openapi_types.UUID `json:"space_id,omitempty"`
+}
+
+// DashboardList defines model for DashboardList.
+type DashboardList struct {
+	Items []DashboardSummary `json:"items"`
+}
+
+// DashboardMove defines model for DashboardMove.
+type DashboardMove struct {
+	// SpaceId null untuk pindah ke personal milik pemanggil
+	SpaceId *openapi_types.UUID `json:"space_id"`
+}
+
+// DashboardRename defines model for DashboardRename.
+type DashboardRename struct {
+	Name string `json:"name"`
+}
+
+// DashboardSummary defines model for DashboardSummary.
+type DashboardSummary struct {
+	Id      openapi_types.UUID  `json:"id"`
+	Name    string              `json:"name"`
+	OwnerId openapi_types.UUID  `json:"owner_id"`
+	SpaceId *openapi_types.UUID `json:"space_id"`
+	Version int                 `json:"version"`
+}
+
+// DashboardWidget defines model for DashboardWidget.
+type DashboardWidget struct {
+	Config   DashboardWidgetConfig `json:"config"`
+	Id       openapi_types.UUID    `json:"id"`
+	Name     string                `json:"name"`
+	Position int                   `json:"position"`
+	Type     DashboardWidgetType   `json:"type"`
+}
+
+// DashboardWidgetType defines model for DashboardWidget.Type.
+type DashboardWidgetType string
+
+// DashboardWidgetConfig defines model for DashboardWidgetConfig.
+type DashboardWidgetConfig struct {
+	// PieStyle Khusus pie
+	PieStyle *DashboardWidgetConfigPieStyle `json:"pie_style,omitempty"`
+
+	// ShowLabels Untuk pie, column, bar, dan line
+	ShowLabels *bool `json:"show_labels,omitempty"`
+
+	// ShowLegend Untuk pie, column, bar, dan line
+	ShowLegend *bool `json:"show_legend,omitempty"`
+}
+
+// DashboardWidgetConfigPieStyle Khusus pie
+type DashboardWidgetConfigPieStyle string
+
+// DashboardWidgetInput defines model for DashboardWidgetInput.
+type DashboardWidgetInput struct {
+	Config   *DashboardWidgetConfig   `json:"config,omitempty"`
+	Name     string                   `json:"name"`
+	Position *int                     `json:"position,omitempty"`
+	Type     DashboardWidgetInputType `json:"type"`
+}
+
+// DashboardWidgetInputType defines model for DashboardWidgetInput.Type.
+type DashboardWidgetInputType string
+
 // DependencyType defines model for DependencyType.
 type DependencyType string
+
+// ExcelExport defines model for ExcelExport.
+type ExcelExport struct {
+	Error  *string            `json:"error,omitempty"`
+	Id     openapi_types.UUID `json:"id"`
+	Status ExcelExportStatus  `json:"status"`
+}
+
+// ExcelExportStatus defines model for ExcelExport.Status.
+type ExcelExportStatus string
+
+// ExcelPreview defines model for ExcelPreview.
+type ExcelPreview struct {
+	Columns []string `json:"columns"`
+	Digest  string   `json:"digest"`
+	Errors  []struct {
+		Column  string `json:"column"`
+		Message string `json:"message"`
+		Row     int    `json:"row"`
+	} `json:"errors"`
+	Rows   int        `json:"rows"`
+	Sample [][]string `json:"sample"`
+}
 
 // Form defines model for Form.
 type Form struct {
 	// Access private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
-	Access      FormAccess           `json:"access"`
-	CreatedAt   time.Time            `json:"created_at"`
-	CreatedBy   UserRef              `json:"created_by"`
-	Definition  FormDefinition       `json:"definition"`
-	Description string               `json:"description"`
-	Id          openapi_types.UUID   `json:"id"`
-	Name        string               `json:"name"`
+	Access      FormAccess         `json:"access"`
+	CreatedAt   time.Time          `json:"created_at"`
+	CreatedBy   UserRef            `json:"created_by"`
+	Definition  FormDefinition     `json:"definition"`
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Name        string             `json:"name"`
+
+	// PublicToken Token tautan publik; kosong bila tidak ada tautan
+	PublicToken *string              `json:"public_token,omitempty"`
 	Response    FormResponseSettings `json:"response"`
 	SpaceId     openapi_types.UUID   `json:"space_id"`
 	UpdatedAt   time.Time            `json:"updated_at"`
@@ -1740,6 +2096,7 @@ type FormSummary struct {
 	Description   string             `json:"description"`
 	Id            openapi_types.UUID `json:"id"`
 	Name          string             `json:"name"`
+	PublicToken   *string            `json:"public_token,omitempty"`
 	QuestionCount int32              `json:"question_count"`
 	SpaceId       openapi_types.UUID `json:"space_id"`
 	SpaceName     string             `json:"space_name"`
@@ -2402,6 +2759,42 @@ type StreamPage struct {
 	NextCursor *string       `json:"next_cursor,omitempty"`
 }
 
+// TimeEntry defines model for TimeEntry.
+type TimeEntry struct {
+	BillingType TimeEntryBillingType `json:"billing_type"`
+	Category    string               `json:"category"`
+	Comment     string               `json:"comment"`
+	Date        openapi_types.Date   `json:"date"`
+	Id          openapi_types.UUID   `json:"id"`
+	ItemId      openapi_types.UUID   `json:"item_id"`
+	ItemTitle   *string              `json:"item_title,omitempty"`
+	Locked      bool                 `json:"locked"`
+	Minutes     int                  `json:"minutes"`
+	UserId      openapi_types.UUID   `json:"user_id"`
+	UserName    *string              `json:"user_name,omitempty"`
+	Version     int                  `json:"version"`
+}
+
+// TimeEntryBillingType defines model for TimeEntry.BillingType.
+type TimeEntryBillingType string
+
+// TimeEntryFields defines model for TimeEntryFields.
+type TimeEntryFields struct {
+	BillingType *TimeEntryFieldsBillingType `json:"billing_type,omitempty"`
+	Category    *string                     `json:"category,omitempty"`
+	Comment     *string                     `json:"comment,omitempty"`
+	Minutes     *int                        `json:"minutes,omitempty"`
+}
+
+// TimeEntryFieldsBillingType defines model for TimeEntryFields.BillingType.
+type TimeEntryFieldsBillingType string
+
+// TimeEntryPage defines model for TimeEntryPage.
+type TimeEntryPage struct {
+	Items      []TimeEntry `json:"items"`
+	NextOffset *int        `json:"next_offset"`
+}
+
 // TwoFactorChallenge defines model for TwoFactorChallenge.
 type TwoFactorChallenge struct {
 	Challenge         string                              `json:"challenge"`
@@ -2653,6 +3046,47 @@ type UpdateCommentParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// ListDashboardsParams defines parameters for ListDashboards.
+type ListDashboardsParams struct {
+	SpaceId *openapi_types.UUID `form:"space_id,omitempty" json:"space_id,omitempty"`
+}
+
+// DeleteDashboardParams defines parameters for DeleteDashboard.
+type DeleteDashboardParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// RenameDashboardParams defines parameters for RenameDashboard.
+type RenameDashboardParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// MoveDashboardParams defines parameters for MoveDashboard.
+type MoveDashboardParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// CreateDashboardWidgetParams defines parameters for CreateDashboardWidget.
+type CreateDashboardWidgetParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// DeleteDashboardWidgetParams defines parameters for DeleteDashboardWidget.
+type DeleteDashboardWidgetParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// ReplaceDashboardWidgetParams defines parameters for ReplaceDashboardWidget.
+type ReplaceDashboardWidgetParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
 // QueryDependenciesJSONBody defines parameters for QueryDependencies.
 type QueryDependenciesJSONBody struct {
 	ItemIds []openapi_types.UUID `json:"item_ids"`
@@ -2786,6 +3220,33 @@ type ReplaceItemSharesParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// ListProjectTimeEntriesParams defines parameters for ListProjectTimeEntries.
+type ListProjectTimeEntriesParams struct {
+	From        *openapi_types.Date                      `form:"from,omitempty" json:"from,omitempty"`
+	To          *openapi_types.Date                      `form:"to,omitempty" json:"to,omitempty"`
+	Limit       *int                                     `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset      *int                                     `form:"offset,omitempty" json:"offset,omitempty"`
+	UserId      *openapi_types.UUID                      `form:"user_id,omitempty" json:"user_id,omitempty"`
+	Category    *string                                  `form:"category,omitempty" json:"category,omitempty"`
+	BillingType *ListProjectTimeEntriesParamsBillingType `form:"billing_type,omitempty" json:"billing_type,omitempty"`
+	Locked      *bool                                    `form:"locked,omitempty" json:"locked,omitempty"`
+	Sort        *ListProjectTimeEntriesParamsSort        `form:"sort,omitempty" json:"sort,omitempty"`
+}
+
+// ListProjectTimeEntriesParamsBillingType defines parameters for ListProjectTimeEntries.
+type ListProjectTimeEntriesParamsBillingType string
+
+// ListProjectTimeEntriesParamsSort defines parameters for ListProjectTimeEntries.
+type ListProjectTimeEntriesParamsSort string
+
+// GetProjectTimeSummary200JSONResponseBodyScope defines parameters for GetProjectTimeSummary.
+type GetProjectTimeSummary200JSONResponseBodyScope string
+
+// StartProjectExcelExportJSONBody defines parameters for StartProjectExcelExport.
+type StartProjectExcelExportJSONBody struct {
+	SpaceId openapi_types.UUID `json:"space_id"`
+}
+
 // EnableTwoFactorJSONBody defines parameters for EnableTwoFactor.
 type EnableTwoFactorJSONBody struct {
 	Code string `json:"code"`
@@ -2829,6 +3290,19 @@ type UpdateNotificationJSONBody struct {
 	Archived *bool `json:"archived,omitempty"`
 	Read     *bool `json:"read,omitempty"`
 }
+
+// SubmitPublicFormJSONBody defines parameters for SubmitPublicForm.
+type SubmitPublicFormJSONBody struct {
+	Answers   map[string]interface{} `json:"answers"`
+	Requester struct {
+		Email openapi_types.Email `json:"email"`
+		Name  string              `json:"name"`
+	} `json:"requester"`
+	Website *string `json:"website,omitempty"`
+}
+
+// SubmitPublicFormMultipartBody defines parameters for SubmitPublicForm.
+type SubmitPublicFormMultipartBody map[string]openapi_types.File
 
 // ListRecycleBinParams defines parameters for ListRecycleBin.
 type ListRecycleBinParams struct {
@@ -2882,6 +3356,18 @@ type CreateBlueprintJSONBody struct {
 	SourceItemId openapi_types.UUID `json:"source_item_id"`
 }
 
+// ImportProjectExcelMultipartBody defines parameters for ImportProjectExcel.
+type ImportProjectExcelMultipartBody struct {
+	Commit *bool   `json:"commit,omitempty"`
+	Digest *string `json:"digest,omitempty"`
+
+	// File Workbook XLSX maksimum 5 MiB
+	File openapi_types.File `json:"file"`
+
+	// Mapping JSON object dari nama kolom ke target. String kosong mengabaikan kolom.
+	Mapping *string `json:"mapping,omitempty"`
+}
+
 // ListSpaceRootItemsParams defines parameters for ListSpaceRootItems.
 type ListSpaceRootItemsParams struct {
 	Limit       *Limit                 `form:"limit,omitempty" json:"limit,omitempty"`
@@ -2922,6 +3408,51 @@ type ListStreamParams struct {
 
 // ListStreamParamsFilter defines parameters for ListStream.
 type ListStreamParamsFilter string
+
+// ListTimeEntriesParams defines parameters for ListTimeEntries.
+type ListTimeEntriesParams struct {
+	From   *openapi_types.Date `form:"from,omitempty" json:"from,omitempty"`
+	To     *openapi_types.Date `form:"to,omitempty" json:"to,omitempty"`
+	Limit  *int                `form:"limit,omitempty" json:"limit,omitempty"`
+	Offset *int                `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// CreateTimeEntryJSONBody defines parameters for CreateTimeEntry.
+type CreateTimeEntryJSONBody struct {
+	BillingType *CreateTimeEntryJSONBodyBillingType `json:"billing_type,omitempty"`
+	Category    *string                             `json:"category,omitempty"`
+	Comment     *string                             `json:"comment,omitempty"`
+	Date        openapi_types.Date                  `json:"date"`
+	ItemId      openapi_types.UUID                  `json:"item_id"`
+	Minutes     int                                 `json:"minutes"`
+}
+
+// CreateTimeEntryJSONBodyBillingType defines parameters for CreateTimeEntry.
+type CreateTimeEntryJSONBodyBillingType string
+
+// DeleteTimeEntryParams defines parameters for DeleteTimeEntry.
+type DeleteTimeEntryParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// UpdateTimeEntryJSONBody defines parameters for UpdateTimeEntry.
+type UpdateTimeEntryJSONBody struct {
+	BillingType *UpdateTimeEntryJSONBodyBillingType `json:"billing_type,omitempty"`
+	Category    *string                             `json:"category,omitempty"`
+	Comment     *string                             `json:"comment,omitempty"`
+	Locked      *bool                               `json:"locked,omitempty"`
+	Minutes     *int                                `json:"minutes,omitempty"`
+}
+
+// UpdateTimeEntryParams defines parameters for UpdateTimeEntry.
+type UpdateTimeEntryParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// UpdateTimeEntryJSONBodyBillingType defines parameters for UpdateTimeEntry.
+type UpdateTimeEntryJSONBodyBillingType string
 
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
@@ -2985,6 +3516,24 @@ type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
 
+// CreateDashboardJSONRequestBody defines body for CreateDashboard for application/json ContentType.
+type CreateDashboardJSONRequestBody = DashboardDestination
+
+// RenameDashboardJSONRequestBody defines body for RenameDashboard for application/json ContentType.
+type RenameDashboardJSONRequestBody = DashboardRename
+
+// DuplicateDashboardJSONRequestBody defines body for DuplicateDashboard for application/json ContentType.
+type DuplicateDashboardJSONRequestBody = DashboardDestination
+
+// MoveDashboardJSONRequestBody defines body for MoveDashboard for application/json ContentType.
+type MoveDashboardJSONRequestBody = DashboardMove
+
+// CreateDashboardWidgetJSONRequestBody defines body for CreateDashboardWidget for application/json ContentType.
+type CreateDashboardWidgetJSONRequestBody = DashboardWidgetInput
+
+// ReplaceDashboardWidgetJSONRequestBody defines body for ReplaceDashboardWidget for application/json ContentType.
+type ReplaceDashboardWidgetJSONRequestBody = DashboardWidgetInput
+
 // QueryDependenciesJSONRequestBody defines body for QueryDependencies for application/json ContentType.
 type QueryDependenciesJSONRequestBody QueryDependenciesJSONBody
 
@@ -3039,6 +3588,9 @@ type ReorderItemJSONRequestBody ReorderItemJSONBody
 // ReplaceItemSharesJSONRequestBody defines body for ReplaceItemShares for application/json ContentType.
 type ReplaceItemSharesJSONRequestBody = ShareReplace
 
+// StartProjectExcelExportJSONRequestBody defines body for StartProjectExcelExport for application/json ContentType.
+type StartProjectExcelExportJSONRequestBody StartProjectExcelExportJSONBody
+
 // UpdateMeJSONRequestBody defines body for UpdateMe for application/json ContentType.
 type UpdateMeJSONRequestBody = MeUpdate
 
@@ -3053,6 +3605,12 @@ type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
 
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
+
+// SubmitPublicFormJSONRequestBody defines body for SubmitPublicForm for application/json ContentType.
+type SubmitPublicFormJSONRequestBody SubmitPublicFormJSONBody
+
+// SubmitPublicFormMultipartRequestBody defines body for SubmitPublicForm for multipart/form-data ContentType.
+type SubmitPublicFormMultipartRequestBody SubmitPublicFormMultipartBody
 
 // ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
 type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
@@ -3072,6 +3630,9 @@ type CreateCustomFieldJSONRequestBody = CustomFieldCreate
 // UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
 type UpdateCustomFieldJSONRequestBody = CustomFieldUpdate
 
+// ImportProjectExcelMultipartRequestBody defines body for ImportProjectExcel for multipart/form-data ContentType.
+type ImportProjectExcelMultipartRequestBody ImportProjectExcelMultipartBody
+
 // CreateFormJSONRequestBody defines body for CreateForm for application/json ContentType.
 type CreateFormJSONRequestBody = FormInput
 
@@ -3080,6 +3641,12 @@ type ReplaceSpaceSharesJSONRequestBody = ShareReplace
 
 // UpdateStatusJSONRequestBody defines body for UpdateStatus for application/json ContentType.
 type UpdateStatusJSONRequestBody = StatusPatch
+
+// CreateTimeEntryJSONRequestBody defines body for CreateTimeEntry for application/json ContentType.
+type CreateTimeEntryJSONRequestBody CreateTimeEntryJSONBody
+
+// UpdateTimeEntryJSONRequestBody defines body for UpdateTimeEntry for application/json ContentType.
+type UpdateTimeEntryJSONRequestBody UpdateTimeEntryJSONBody
 
 // InviteUserJSONRequestBody defines body for InviteUser for application/json ContentType.
 type InviteUserJSONRequestBody = InviteRequest
@@ -3422,6 +3989,36 @@ type ServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID, params UpdateCommentParams)
+	// ListDashboards Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat
+	// (GET /dashboards)
+	ListDashboards(w http.ResponseWriter, r *http.Request, params ListDashboardsParams)
+
+	// (POST /dashboards)
+	CreateDashboard(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /dashboards/{dashboardId})
+	DeleteDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params DeleteDashboardParams)
+
+	// (GET /dashboards/{dashboardId})
+	GetDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID)
+
+	// (PATCH /dashboards/{dashboardId})
+	RenameDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params RenameDashboardParams)
+	// DuplicateDashboard Salin konfigurasi dashboard dan widget ke tujuan dengan ID baru
+	// (POST /dashboards/{dashboardId}/duplicate)
+	DuplicateDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID)
+	// MoveDashboard Pindah dengan izin delete di sumber dan create di tujuan
+	// (POST /dashboards/{dashboardId}/move)
+	MoveDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params MoveDashboardParams)
+
+	// (POST /dashboards/{dashboardId}/widgets)
+	CreateDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params CreateDashboardWidgetParams)
+
+	// (DELETE /dashboards/{dashboardId}/widgets/{widgetId})
+	DeleteDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, widgetId openapi_types.UUID, params DeleteDashboardWidgetParams)
+
+	// (PUT /dashboards/{dashboardId}/widgets/{widgetId})
+	ReplaceDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, widgetId openapi_types.UUID, params ReplaceDashboardWidgetParams)
 	// QueryDependencies Dependensi di antara sekumpulan Item (link Gantt). POST hanya karena daftar ID tidak muat di URL
 	// (POST /dependencies/query)
 	QueryDependencies(w http.ResponseWriter, r *http.Request)
@@ -3434,6 +4031,12 @@ type ServerInterface interface {
 	// StreamEvents Aliran event realtime (SSE)
 	// (GET /events)
 	StreamEvents(w http.ResponseWriter, r *http.Request, params StreamEventsParams)
+
+	// (GET /excel-exports/{exportId})
+	GetProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID)
+
+	// (GET /excel-exports/{exportId}/file)
+	DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID)
 	// ListForms Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05)
 	// (GET /forms)
 	ListForms(w http.ResponseWriter, r *http.Request)
@@ -3455,6 +4058,12 @@ type ServerInterface interface {
 	// GetFormDefinition Pertanyaan form untuk pengisi; pengaturan respons (tujuan item) tidak ikut
 	// (GET /forms/{formId}/definition)
 	GetFormDefinition(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// RevokeFormPublicLink Cabut tautan publik (FORM-03)
+	// (DELETE /forms/{formId}/public-link)
+	RevokeFormPublicLink(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// RotateFormPublicLink Buat tautan publik, atau ganti yang ada sehingga tautan lama langsung mati (FORM-03); butuh kemampuan share pada Space
+	// (POST /forms/{formId}/public-link)
+	RotateFormPublicLink(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
 	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
 	// (POST /forms/{formId}/submissions)
 	SubmitForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
@@ -3530,9 +4139,18 @@ type ServerInterface interface {
 	// ReplaceItemShares Ganti seluruh daftar share item (SPC-11)
 	// (PUT /items/{itemId}/shares)
 	ReplaceItemShares(w http.ResponseWriter, r *http.Request, itemId ItemId, params ReplaceItemSharesParams)
+	// ListProjectTimeEntries Time entry sendiri atau entry pada lokasi Project dengan akses penuh
+	// (GET /items/{itemId}/time-entries)
+	ListProjectTimeEntries(w http.ResponseWriter, r *http.Request, itemId ItemId, params ListProjectTimeEntriesParams)
+	// GetProjectTimeSummary Total menit aktual yang dapat dilihat pemanggil
+	// (GET /items/{itemId}/time-summary)
+	GetProjectTimeSummary(w http.ResponseWriter, r *http.Request, itemId ItemId)
 
 	// (GET /items/{itemId}/views)
 	ListItemViews(w http.ResponseWriter, r *http.Request, itemId ItemId)
+
+	// (POST /items/{projectId}/excel-exports)
+	StartProjectExcelExport(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
 	// GetMe User yang sedang login beserta pengaturan (SET-02)
 	// (GET /me)
 	GetMe(w http.ResponseWriter, r *http.Request)
@@ -3575,6 +4193,12 @@ type ServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(w http.ResponseWriter, r *http.Request, notificationId openapi_types.UUID)
+	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
+	// (GET /public/forms/{token})
+	GetPublicForm(w http.ResponseWriter, r *http.Request, token string)
+	// SubmitPublicForm Isi form lewat tautan publik, tanpa sesi (SEC-05)
+	// (POST /public/forms/{token}/submissions)
+	SubmitPublicForm(w http.ResponseWriter, r *http.Request, token string)
 	// Readyz Database terjangkau dan migrasi terpasang
 	// (GET /readyz)
 	Readyz(w http.ResponseWriter, r *http.Request)
@@ -3629,6 +4253,9 @@ type ServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(w http.ResponseWriter, r *http.Request, spaceId SpaceId, fieldId openapi_types.UUID)
+
+	// (POST /spaces/{spaceId}/excel-imports)
+	ImportProjectExcel(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
 	// (GET /spaces/{spaceId}/forms)
 	ListSpaceForms(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -3656,6 +4283,21 @@ type ServerInterface interface {
 	// ListStream Stream aktivitas dan komentar pada item yang boleh dilihat (NAV-04)
 	// (GET /stream)
 	ListStream(w http.ResponseWriter, r *http.Request, params ListStreamParams)
+	// ListTimeEntries Daftar time entry sendiri yang masih terlihat
+	// (GET /time-entries)
+	ListTimeEntries(w http.ResponseWriter, r *http.Request, params ListTimeEntriesParams)
+	// CreateTimeEntry Catat waktu sendiri untuk task dan tanggal
+	// (POST /time-entries)
+	CreateTimeEntry(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /time-entries/{entryId})
+	DeleteTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params DeleteTimeEntryParams)
+
+	// (GET /time-entries/{entryId})
+	GetTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID)
+	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
+	// (PATCH /time-entries/{entryId})
+	UpdateTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params UpdateTimeEntryParams)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request, params ListUsersParams)
@@ -4138,6 +4780,447 @@ func (siw *ServerInterfaceWrapper) UpdateComment(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListDashboards operation middleware
+func (siw *ServerInterfaceWrapper) ListDashboards(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListDashboardsParams
+
+	// ------------- Optional query parameter "space_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "space_id", r.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "space_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDashboards(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDashboard operation middleware
+func (siw *ServerInterfaceWrapper) CreateDashboard(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDashboard(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDashboard operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteDashboardParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDashboard(w, r, dashboardId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDashboard operation middleware
+func (siw *ServerInterfaceWrapper) GetDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDashboard(w, r, dashboardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RenameDashboard operation middleware
+func (siw *ServerInterfaceWrapper) RenameDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RenameDashboardParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RenameDashboard(w, r, dashboardId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DuplicateDashboard operation middleware
+func (siw *ServerInterfaceWrapper) DuplicateDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DuplicateDashboard(w, r, dashboardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// MoveDashboard operation middleware
+func (siw *ServerInterfaceWrapper) MoveDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params MoveDashboardParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.MoveDashboard(w, r, dashboardId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateDashboardWidget operation middleware
+func (siw *ServerInterfaceWrapper) CreateDashboardWidget(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CreateDashboardWidgetParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateDashboardWidget(w, r, dashboardId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDashboardWidget operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDashboardWidget(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "widgetId" -------------
+	var widgetId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "widgetId", r.PathValue("widgetId"), &widgetId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "widgetId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteDashboardWidgetParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDashboardWidget(w, r, dashboardId, widgetId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReplaceDashboardWidget operation middleware
+func (siw *ServerInterfaceWrapper) ReplaceDashboardWidget(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "widgetId" -------------
+	var widgetId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "widgetId", r.PathValue("widgetId"), &widgetId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "widgetId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReplaceDashboardWidgetParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReplaceDashboardWidget(w, r, dashboardId, widgetId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // QueryDependencies operation middleware
 func (siw *ServerInterfaceWrapper) QueryDependencies(w http.ResponseWriter, r *http.Request) {
 
@@ -4236,6 +5319,58 @@ func (siw *ServerInterfaceWrapper) StreamEvents(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.StreamEvents(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProjectExcelExport operation middleware
+func (siw *ServerInterfaceWrapper) GetProjectExcelExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "exportId" -------------
+	var exportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "exportId", r.PathValue("exportId"), &exportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "exportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProjectExcelExport(w, r, exportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadProjectExcelExport operation middleware
+func (siw *ServerInterfaceWrapper) DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "exportId" -------------
+	var exportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "exportId", r.PathValue("exportId"), &exportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "exportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadProjectExcelExport(w, r, exportId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4422,6 +5557,58 @@ func (siw *ServerInterfaceWrapper) GetFormDefinition(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetFormDefinition(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeFormPublicLink operation middleware
+func (siw *ServerInterfaceWrapper) RevokeFormPublicLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeFormPublicLink(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RotateFormPublicLink operation middleware
+func (siw *ServerInterfaceWrapper) RotateFormPublicLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RotateFormPublicLink(w, r, formId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5241,6 +6428,178 @@ func (siw *ServerInterfaceWrapper) ReplaceItemShares(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ListProjectTimeEntries operation middleware
+func (siw *ServerInterfaceWrapper) ListProjectTimeEntries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId ItemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListProjectTimeEntriesParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "to", r.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "user_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "user_id", r.URL.Query(), &params.UserId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "user_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "user_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "category" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "category", r.URL.Query(), &params.Category, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "category"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "category", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "billing_type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "billing_type", r.URL.Query(), &params.BillingType, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "billing_type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "billing_type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "locked" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "locked", r.URL.Query(), &params.Locked, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "locked"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "locked", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProjectTimeEntries(w, r, itemId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetProjectTimeSummary operation middleware
+func (siw *ServerInterfaceWrapper) GetProjectTimeSummary(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId ItemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetProjectTimeSummary(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListItemViews operation middleware
 func (siw *ServerInterfaceWrapper) ListItemViews(w http.ResponseWriter, r *http.Request) {
 
@@ -5258,6 +6617,32 @@ func (siw *ServerInterfaceWrapper) ListItemViews(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListItemViews(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StartProjectExcelExport operation middleware
+func (siw *ServerInterfaceWrapper) StartProjectExcelExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "projectId" -------------
+	var projectId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "projectId", r.PathValue("projectId"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "projectId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartProjectExcelExport(w, r, projectId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5633,6 +7018,58 @@ func (siw *ServerInterfaceWrapper) UpdateNotification(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateNotification(w, r, notificationId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPublicForm operation middleware
+func (siw *ServerInterfaceWrapper) GetPublicForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPublicForm(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubmitPublicForm operation middleware
+func (siw *ServerInterfaceWrapper) SubmitPublicForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubmitPublicForm(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6246,6 +7683,32 @@ func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ImportProjectExcel operation middleware
+func (siw *ServerInterfaceWrapper) ImportProjectExcel(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportProjectExcel(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceForms operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceForms(w http.ResponseWriter, r *http.Request) {
 
@@ -6655,6 +8118,226 @@ func (siw *ServerInterfaceWrapper) ListStream(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListStream(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListTimeEntries operation middleware
+func (siw *ServerInterfaceWrapper) ListTimeEntries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTimeEntriesParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "to", r.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTimeEntries(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) CreateTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateTimeEntry(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) DeleteTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteTimeEntryParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteTimeEntry(w, r, entryId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) GetTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTimeEntry(w, r, entryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) UpdateTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateTimeEntryParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateTimeEntry(w, r, entryId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7277,6 +8960,27 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards", wrapper.ListDashboards)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards", wrapper.CreateDashboard)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}", wrapper.DeleteDashboard)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards/{dashboardId}", wrapper.GetDashboard)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/dashboards/{dashboardId}", wrapper.RenameDashboard)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards/{dashboardId}/duplicate", wrapper.DuplicateDashboard)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards/{dashboardId}/move", wrapper.MoveDashboard)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets", wrapper.CreateDashboardWidget)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.DeleteDashboardWidget)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.ReplaceDashboardWidget)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/excel-exports", wrapper.StartProjectExcelExport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-exports/{exportId}", wrapper.GetProjectExcelExport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-exports/{exportId}/file", wrapper.DownloadProjectExcelExport)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/excel-imports", wrapper.ImportProjectExcel)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-summary", wrapper.GetProjectTimeSummary)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-entries", wrapper.ListProjectTimeEntries)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries", wrapper.ListTimeEntries)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries", wrapper.CreateTimeEntry)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.DeleteTimeEntry)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.GetTimeEntry)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.UpdateTimeEntry)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/login", wrapper.Login)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/login/2fa", wrapper.LoginSecondStep)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/logout", wrapper.Logout)
@@ -7384,6 +9088,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/forms/{formId}", wrapper.ReplaceForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms", wrapper.ListForms)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/forms/{formId}/access", wrapper.SetFormAccess)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/forms/{formId}/public-link", wrapper.RevokeFormPublicLink)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/forms/{formId}/public-link", wrapper.RotateFormPublicLink)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/public/forms/{token}", wrapper.GetPublicForm)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/public/forms/{token}/submissions", wrapper.SubmitPublicForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/requests", wrapper.ListMyRequests)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/available", wrapper.ListAvailableForms)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}/definition", wrapper.GetFormDefinition)
@@ -7393,6 +9101,15 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/readyz", wrapper.Readyz)
 
 	return m
+}
+
+type DashboardResponseHeaders struct {
+	ETag *string
+}
+type DashboardJSONResponse struct {
+	Body Dashboard
+
+	Headers DashboardResponseHeaders
 }
 
 type ItemPageJSONResponse ItemPage
@@ -7410,6 +9127,15 @@ type RateLimitedApplicationProblemPlusJSONResponse struct {
 
 type ShareListJSONResponse struct {
 	Items []Share `json:"items"`
+}
+
+type TimeEntryResponseHeaders struct {
+	ETag *string
+}
+type TimeEntryJSONResponse struct {
+	Body TimeEntry
+
+	Headers TimeEntryResponseHeaders
 }
 
 type VersionedShareListResponseHeaders struct {
@@ -8458,6 +10184,879 @@ func (response UpdateComment428ApplicationProblemPlusJSONResponse) VisitUpdateCo
 	return err
 }
 
+type ListDashboardsRequestObject struct {
+	Params ListDashboardsParams
+}
+
+type ListDashboardsResponseObject interface {
+	VisitListDashboardsResponse(w http.ResponseWriter) error
+}
+
+type ListDashboards200JSONResponse DashboardList
+
+func (response ListDashboards200JSONResponse) VisitListDashboardsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDashboards403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListDashboards403ApplicationProblemPlusJSONResponse) VisitListDashboardsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDashboards404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListDashboards404ApplicationProblemPlusJSONResponse) VisitListDashboardsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDashboards422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListDashboards422ApplicationProblemPlusJSONResponse) VisitListDashboardsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboardRequestObject struct {
+	Body *CreateDashboardJSONRequestBody
+}
+
+type CreateDashboardResponseObject interface {
+	VisitCreateDashboardResponse(w http.ResponseWriter) error
+}
+
+type CreateDashboard201JSONResponse struct{ DashboardJSONResponse }
+
+func (response CreateDashboard201JSONResponse) VisitCreateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboard403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDashboard403ApplicationProblemPlusJSONResponse) VisitCreateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboard404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateDashboard404ApplicationProblemPlusJSONResponse) VisitCreateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboard409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateDashboard409ApplicationProblemPlusJSONResponse) VisitCreateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboard422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateDashboard422ApplicationProblemPlusJSONResponse) VisitCreateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	Params      DeleteDashboardParams
+}
+
+type DeleteDashboardResponseObject interface {
+	VisitDeleteDashboardResponse(w http.ResponseWriter) error
+}
+
+type DeleteDashboard204Response struct {
+}
+
+func (response DeleteDashboard204Response) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteDashboard403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDashboard403ApplicationProblemPlusJSONResponse) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboard404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboard404ApplicationProblemPlusJSONResponse) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboard409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboard409ApplicationProblemPlusJSONResponse) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboard422ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboard422ApplicationProblemPlusJSONResponse) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboard428ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboard428ApplicationProblemPlusJSONResponse) VisitDeleteDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+}
+
+type GetDashboardResponseObject interface {
+	VisitGetDashboardResponse(w http.ResponseWriter) error
+}
+
+type GetDashboard200JSONResponse struct{ DashboardJSONResponse }
+
+func (response GetDashboard200JSONResponse) VisitGetDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboard403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetDashboard403ApplicationProblemPlusJSONResponse) VisitGetDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboard404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetDashboard404ApplicationProblemPlusJSONResponse) VisitGetDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDashboardRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	Params      RenameDashboardParams
+	Body        *RenameDashboardJSONRequestBody
+}
+
+type RenameDashboardResponseObject interface {
+	VisitRenameDashboardResponse(w http.ResponseWriter) error
+}
+
+type RenameDashboard200JSONResponse struct{ DashboardJSONResponse }
+
+func (response RenameDashboard200JSONResponse) VisitRenameDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDashboard403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RenameDashboard403ApplicationProblemPlusJSONResponse) VisitRenameDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDashboard404ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameDashboard404ApplicationProblemPlusJSONResponse) VisitRenameDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDashboard409ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameDashboard409ApplicationProblemPlusJSONResponse) VisitRenameDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDashboard422ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameDashboard422ApplicationProblemPlusJSONResponse) VisitRenameDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameDashboard428ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameDashboard428ApplicationProblemPlusJSONResponse) VisitRenameDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateDashboardRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	Body        *DuplicateDashboardJSONRequestBody
+}
+
+type DuplicateDashboardResponseObject interface {
+	VisitDuplicateDashboardResponse(w http.ResponseWriter) error
+}
+
+type DuplicateDashboard201JSONResponse struct{ DashboardJSONResponse }
+
+func (response DuplicateDashboard201JSONResponse) VisitDuplicateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateDashboard403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DuplicateDashboard403ApplicationProblemPlusJSONResponse) VisitDuplicateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateDashboard404ApplicationProblemPlusJSONResponse Problem
+
+func (response DuplicateDashboard404ApplicationProblemPlusJSONResponse) VisitDuplicateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateDashboard409ApplicationProblemPlusJSONResponse Problem
+
+func (response DuplicateDashboard409ApplicationProblemPlusJSONResponse) VisitDuplicateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateDashboard422ApplicationProblemPlusJSONResponse Problem
+
+func (response DuplicateDashboard422ApplicationProblemPlusJSONResponse) VisitDuplicateDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDashboardRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	Params      MoveDashboardParams
+	Body        *MoveDashboardJSONRequestBody
+}
+
+type MoveDashboardResponseObject interface {
+	VisitMoveDashboardResponse(w http.ResponseWriter) error
+}
+
+type MoveDashboard200JSONResponse struct{ DashboardJSONResponse }
+
+func (response MoveDashboard200JSONResponse) VisitMoveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDashboard403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response MoveDashboard403ApplicationProblemPlusJSONResponse) VisitMoveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDashboard404ApplicationProblemPlusJSONResponse Problem
+
+func (response MoveDashboard404ApplicationProblemPlusJSONResponse) VisitMoveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDashboard409ApplicationProblemPlusJSONResponse Problem
+
+func (response MoveDashboard409ApplicationProblemPlusJSONResponse) VisitMoveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDashboard422ApplicationProblemPlusJSONResponse Problem
+
+func (response MoveDashboard422ApplicationProblemPlusJSONResponse) VisitMoveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type MoveDashboard428ApplicationProblemPlusJSONResponse Problem
+
+func (response MoveDashboard428ApplicationProblemPlusJSONResponse) VisitMoveDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboardWidgetRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	Params      CreateDashboardWidgetParams
+	Body        *CreateDashboardWidgetJSONRequestBody
+}
+
+type CreateDashboardWidgetResponseObject interface {
+	VisitCreateDashboardWidgetResponse(w http.ResponseWriter) error
+}
+
+type CreateDashboardWidget201JSONResponse struct{ DashboardJSONResponse }
+
+func (response CreateDashboardWidget201JSONResponse) VisitCreateDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboardWidget403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateDashboardWidget403ApplicationProblemPlusJSONResponse) VisitCreateDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboardWidget404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateDashboardWidget404ApplicationProblemPlusJSONResponse) VisitCreateDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboardWidget409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateDashboardWidget409ApplicationProblemPlusJSONResponse) VisitCreateDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboardWidget422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateDashboardWidget422ApplicationProblemPlusJSONResponse) VisitCreateDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateDashboardWidget428ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateDashboardWidget428ApplicationProblemPlusJSONResponse) VisitCreateDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardWidgetRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	WidgetId    openapi_types.UUID `json:"widgetId"`
+	Params      DeleteDashboardWidgetParams
+}
+
+type DeleteDashboardWidgetResponseObject interface {
+	VisitDeleteDashboardWidgetResponse(w http.ResponseWriter) error
+}
+
+type DeleteDashboardWidget200JSONResponse struct{ DashboardJSONResponse }
+
+func (response DeleteDashboardWidget200JSONResponse) VisitDeleteDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardWidget403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDashboardWidget403ApplicationProblemPlusJSONResponse) VisitDeleteDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardWidget404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboardWidget404ApplicationProblemPlusJSONResponse) VisitDeleteDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardWidget409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboardWidget409ApplicationProblemPlusJSONResponse) VisitDeleteDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardWidget422ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboardWidget422ApplicationProblemPlusJSONResponse) VisitDeleteDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardWidget428ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboardWidget428ApplicationProblemPlusJSONResponse) VisitDeleteDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceDashboardWidgetRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	WidgetId    openapi_types.UUID `json:"widgetId"`
+	Params      ReplaceDashboardWidgetParams
+	Body        *ReplaceDashboardWidgetJSONRequestBody
+}
+
+type ReplaceDashboardWidgetResponseObject interface {
+	VisitReplaceDashboardWidgetResponse(w http.ResponseWriter) error
+}
+
+type ReplaceDashboardWidget200JSONResponse struct{ DashboardJSONResponse }
+
+func (response ReplaceDashboardWidget200JSONResponse) VisitReplaceDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceDashboardWidget403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReplaceDashboardWidget403ApplicationProblemPlusJSONResponse) VisitReplaceDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceDashboardWidget404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceDashboardWidget404ApplicationProblemPlusJSONResponse) VisitReplaceDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceDashboardWidget409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceDashboardWidget409ApplicationProblemPlusJSONResponse) VisitReplaceDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceDashboardWidget422ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceDashboardWidget422ApplicationProblemPlusJSONResponse) VisitReplaceDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceDashboardWidget428ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceDashboardWidget428ApplicationProblemPlusJSONResponse) VisitReplaceDashboardWidgetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type QueryDependenciesRequestObject struct {
 	Body *QueryDependenciesJSONRequestBody
 }
@@ -8702,6 +11301,102 @@ func (response StreamEvents401ApplicationProblemPlusJSONResponse) VisitStreamEve
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProjectExcelExportRequestObject struct {
+	ExportId openapi_types.UUID `json:"exportId"`
+}
+
+type GetProjectExcelExportResponseObject interface {
+	VisitGetProjectExcelExportResponse(w http.ResponseWriter) error
+}
+
+type GetProjectExcelExport200JSONResponse ExcelExport
+
+func (response GetProjectExcelExport200JSONResponse) VisitGetProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProjectExcelExport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetProjectExcelExport404ApplicationProblemPlusJSONResponse) VisitGetProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DownloadProjectExcelExportRequestObject struct {
+	ExportId openapi_types.UUID `json:"exportId"`
+}
+
+type DownloadProjectExcelExportResponseObject interface {
+	VisitDownloadProjectExcelExportResponse(w http.ResponseWriter) error
+}
+
+type DownloadProjectExcelExport200ApplicationvndOpenxmlformatsOfficedocumentSpreadsheetmlSheetResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response DownloadProjectExcelExport200ApplicationvndOpenxmlformatsOfficedocumentSpreadsheetmlSheetResponse) VisitDownloadProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DownloadProjectExcelExport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DownloadProjectExcelExport404ApplicationProblemPlusJSONResponse) VisitDownloadProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DownloadProjectExcelExport409ApplicationProblemPlusJSONResponse Problem
+
+func (response DownloadProjectExcelExport409ApplicationProblemPlusJSONResponse) VisitDownloadProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -9070,6 +11765,110 @@ type GetFormDefinition404ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response GetFormDefinition404ApplicationProblemPlusJSONResponse) VisitGetFormDefinitionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeFormPublicLinkRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+}
+
+type RevokeFormPublicLinkResponseObject interface {
+	VisitRevokeFormPublicLinkResponse(w http.ResponseWriter) error
+}
+
+type RevokeFormPublicLink200JSONResponse Form
+
+func (response RevokeFormPublicLink200JSONResponse) VisitRevokeFormPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeFormPublicLink403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeFormPublicLink403ApplicationProblemPlusJSONResponse) VisitRevokeFormPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeFormPublicLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeFormPublicLink404ApplicationProblemPlusJSONResponse) VisitRevokeFormPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateFormPublicLinkRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+}
+
+type RotateFormPublicLinkResponseObject interface {
+	VisitRotateFormPublicLinkResponse(w http.ResponseWriter) error
+}
+
+type RotateFormPublicLink200JSONResponse Form
+
+func (response RotateFormPublicLink200JSONResponse) VisitRotateFormPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateFormPublicLink403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RotateFormPublicLink403ApplicationProblemPlusJSONResponse) VisitRotateFormPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateFormPublicLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response RotateFormPublicLink404ApplicationProblemPlusJSONResponse) VisitRotateFormPublicLinkResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -10389,6 +13188,100 @@ func (response ReplaceItemShares428ApplicationProblemPlusJSONResponse) VisitRepl
 	return err
 }
 
+type ListProjectTimeEntriesRequestObject struct {
+	ItemId ItemId `json:"itemId"`
+	Params ListProjectTimeEntriesParams
+}
+
+type ListProjectTimeEntriesResponseObject interface {
+	VisitListProjectTimeEntriesResponse(w http.ResponseWriter) error
+}
+
+type ListProjectTimeEntries200JSONResponse TimeEntryPage
+
+func (response ListProjectTimeEntries200JSONResponse) VisitListProjectTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProjectTimeEntries404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListProjectTimeEntries404ApplicationProblemPlusJSONResponse) VisitListProjectTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProjectTimeEntries422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListProjectTimeEntries422ApplicationProblemPlusJSONResponse) VisitListProjectTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProjectTimeSummaryRequestObject struct {
+	ItemId ItemId `json:"itemId"`
+}
+
+type GetProjectTimeSummaryResponseObject interface {
+	VisitGetProjectTimeSummaryResponse(w http.ResponseWriter) error
+}
+
+type GetProjectTimeSummary200JSONResponse struct {
+	ActualMinutes int64                                         `json:"actual_minutes"`
+	Scope         GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
+}
+
+func (response GetProjectTimeSummary200JSONResponse) VisitGetProjectTimeSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetProjectTimeSummary404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetProjectTimeSummary404ApplicationProblemPlusJSONResponse) VisitGetProjectTimeSummaryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListItemViewsRequestObject struct {
 	ItemId ItemId `json:"itemId"`
 }
@@ -10423,6 +13316,73 @@ func (response ListItemViews404ApplicationProblemPlusJSONResponse) VisitListItem
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartProjectExcelExportRequestObject struct {
+	ProjectId openapi_types.UUID `json:"projectId"`
+	Body      *StartProjectExcelExportJSONRequestBody
+}
+
+type StartProjectExcelExportResponseObject interface {
+	VisitStartProjectExcelExportResponse(w http.ResponseWriter) error
+}
+
+type StartProjectExcelExport202JSONResponse ExcelExport
+
+func (response StartProjectExcelExport202JSONResponse) VisitStartProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartProjectExcelExport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response StartProjectExcelExport404ApplicationProblemPlusJSONResponse) VisitStartProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartProjectExcelExport409ApplicationProblemPlusJSONResponse Problem
+
+func (response StartProjectExcelExport409ApplicationProblemPlusJSONResponse) VisitStartProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartProjectExcelExport429ApplicationProblemPlusJSONResponse Problem
+
+func (response StartProjectExcelExport429ApplicationProblemPlusJSONResponse) VisitStartProjectExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -10979,6 +13939,156 @@ func (response UpdateNotification422ApplicationProblemPlusJSONResponse) VisitUpd
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPublicFormRequestObject struct {
+	Token string `json:"token"`
+}
+
+type GetPublicFormResponseObject interface {
+	VisitGetPublicFormResponse(w http.ResponseWriter) error
+}
+
+type GetPublicForm200JSONResponse struct {
+	Definition  FormDefinition `json:"definition"`
+	Description string         `json:"description"`
+	Name        string         `json:"name"`
+}
+
+func (response GetPublicForm200JSONResponse) VisitGetPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPublicForm404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPublicForm404ApplicationProblemPlusJSONResponse) VisitGetPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPublicForm429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response GetPublicForm429ApplicationProblemPlusJSONResponse) VisitGetPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPublicFormRequestObject struct {
+	Token         string `json:"token"`
+	JSONBody      *SubmitPublicFormJSONRequestBody
+	MultipartBody *multipart.Reader
+}
+
+type SubmitPublicFormResponseObject interface {
+	VisitSubmitPublicFormResponse(w http.ResponseWriter) error
+}
+
+type SubmitPublicForm201JSONResponse struct {
+	Received bool `json:"received"`
+}
+
+func (response SubmitPublicForm201JSONResponse) VisitSubmitPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPublicForm404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SubmitPublicForm404ApplicationProblemPlusJSONResponse) VisitSubmitPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPublicForm413ApplicationProblemPlusJSONResponse Problem
+
+func (response SubmitPublicForm413ApplicationProblemPlusJSONResponse) VisitSubmitPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPublicForm422ApplicationProblemPlusJSONResponse Problem
+
+func (response SubmitPublicForm422ApplicationProblemPlusJSONResponse) VisitSubmitPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitPublicForm429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response SubmitPublicForm429ApplicationProblemPlusJSONResponse) VisitSubmitPublicFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -11991,6 +15101,103 @@ func (response UpdateCustomField422ApplicationProblemPlusJSONResponse) VisitUpda
 	return err
 }
 
+type ImportProjectExcelRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *multipart.Reader
+}
+
+type ImportProjectExcelResponseObject interface {
+	VisitImportProjectExcelResponse(w http.ResponseWriter) error
+}
+
+type ImportProjectExcel200JSONResponse ExcelPreview
+
+func (response ImportProjectExcel200JSONResponse) VisitImportProjectExcelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportProjectExcel201JSONResponse struct {
+	ItemIds []openapi_types.UUID `json:"item_ids"`
+}
+
+func (response ImportProjectExcel201JSONResponse) VisitImportProjectExcelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportProjectExcel403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ImportProjectExcel403ApplicationProblemPlusJSONResponse) VisitImportProjectExcelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportProjectExcel404ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportProjectExcel404ApplicationProblemPlusJSONResponse) VisitImportProjectExcelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportProjectExcel409ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportProjectExcel409ApplicationProblemPlusJSONResponse) VisitImportProjectExcelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportProjectExcel422ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportProjectExcel422ApplicationProblemPlusJSONResponse) VisitImportProjectExcelResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceFormsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -12577,6 +15784,349 @@ func (response ListStream422ApplicationProblemPlusJSONResponse) VisitListStreamR
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTimeEntriesRequestObject struct {
+	Params ListTimeEntriesParams
+}
+
+type ListTimeEntriesResponseObject interface {
+	VisitListTimeEntriesResponse(w http.ResponseWriter) error
+}
+
+type ListTimeEntries200JSONResponse TimeEntryPage
+
+func (response ListTimeEntries200JSONResponse) VisitListTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTimeEntries422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListTimeEntries422ApplicationProblemPlusJSONResponse) VisitListTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTimeEntryRequestObject struct {
+	Body *CreateTimeEntryJSONRequestBody
+}
+
+type CreateTimeEntryResponseObject interface {
+	VisitCreateTimeEntryResponse(w http.ResponseWriter) error
+}
+
+type CreateTimeEntry201ResponseHeaders struct {
+	ETag *string
+}
+
+type CreateTimeEntry201JSONResponse struct {
+	Body    TimeEntry
+	Headers CreateTimeEntry201ResponseHeaders
+}
+
+func (response CreateTimeEntry201JSONResponse) VisitCreateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTimeEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateTimeEntry403ApplicationProblemPlusJSONResponse) VisitCreateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTimeEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTimeEntry404ApplicationProblemPlusJSONResponse) VisitCreateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTimeEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTimeEntry409ApplicationProblemPlusJSONResponse) VisitCreateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateTimeEntry422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateTimeEntry422ApplicationProblemPlusJSONResponse) VisitCreateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTimeEntryRequestObject struct {
+	EntryId openapi_types.UUID `json:"entryId"`
+	Params  DeleteTimeEntryParams
+}
+
+type DeleteTimeEntryResponseObject interface {
+	VisitDeleteTimeEntryResponse(w http.ResponseWriter) error
+}
+
+type DeleteTimeEntry204Response struct {
+}
+
+func (response DeleteTimeEntry204Response) VisitDeleteTimeEntryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteTimeEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteTimeEntry403ApplicationProblemPlusJSONResponse) VisitDeleteTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTimeEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteTimeEntry404ApplicationProblemPlusJSONResponse) VisitDeleteTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTimeEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteTimeEntry409ApplicationProblemPlusJSONResponse) VisitDeleteTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteTimeEntry428ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteTimeEntry428ApplicationProblemPlusJSONResponse) VisitDeleteTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTimeEntryRequestObject struct {
+	EntryId openapi_types.UUID `json:"entryId"`
+}
+
+type GetTimeEntryResponseObject interface {
+	VisitGetTimeEntryResponse(w http.ResponseWriter) error
+}
+
+type GetTimeEntry200JSONResponse struct{ TimeEntryJSONResponse }
+
+func (response GetTimeEntry200JSONResponse) VisitGetTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTimeEntry404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetTimeEntry404ApplicationProblemPlusJSONResponse) VisitGetTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTimeEntryRequestObject struct {
+	EntryId openapi_types.UUID `json:"entryId"`
+	Params  UpdateTimeEntryParams
+	Body    *UpdateTimeEntryJSONRequestBody
+}
+
+type UpdateTimeEntryResponseObject interface {
+	VisitUpdateTimeEntryResponse(w http.ResponseWriter) error
+}
+
+type UpdateTimeEntry200JSONResponse struct{ TimeEntryJSONResponse }
+
+func (response UpdateTimeEntry200JSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTimeEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateTimeEntry403ApplicationProblemPlusJSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTimeEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTimeEntry404ApplicationProblemPlusJSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTimeEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTimeEntry409ApplicationProblemPlusJSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTimeEntry422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTimeEntry422ApplicationProblemPlusJSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateTimeEntry428ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateTimeEntry428ApplicationProblemPlusJSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -13657,6 +17207,36 @@ type StrictServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(ctx context.Context, request UpdateCommentRequestObject) (UpdateCommentResponseObject, error)
+	// ListDashboards Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat
+	// (GET /dashboards)
+	ListDashboards(ctx context.Context, request ListDashboardsRequestObject) (ListDashboardsResponseObject, error)
+
+	// (POST /dashboards)
+	CreateDashboard(ctx context.Context, request CreateDashboardRequestObject) (CreateDashboardResponseObject, error)
+
+	// (DELETE /dashboards/{dashboardId})
+	DeleteDashboard(ctx context.Context, request DeleteDashboardRequestObject) (DeleteDashboardResponseObject, error)
+
+	// (GET /dashboards/{dashboardId})
+	GetDashboard(ctx context.Context, request GetDashboardRequestObject) (GetDashboardResponseObject, error)
+
+	// (PATCH /dashboards/{dashboardId})
+	RenameDashboard(ctx context.Context, request RenameDashboardRequestObject) (RenameDashboardResponseObject, error)
+	// DuplicateDashboard Salin konfigurasi dashboard dan widget ke tujuan dengan ID baru
+	// (POST /dashboards/{dashboardId}/duplicate)
+	DuplicateDashboard(ctx context.Context, request DuplicateDashboardRequestObject) (DuplicateDashboardResponseObject, error)
+	// MoveDashboard Pindah dengan izin delete di sumber dan create di tujuan
+	// (POST /dashboards/{dashboardId}/move)
+	MoveDashboard(ctx context.Context, request MoveDashboardRequestObject) (MoveDashboardResponseObject, error)
+
+	// (POST /dashboards/{dashboardId}/widgets)
+	CreateDashboardWidget(ctx context.Context, request CreateDashboardWidgetRequestObject) (CreateDashboardWidgetResponseObject, error)
+
+	// (DELETE /dashboards/{dashboardId}/widgets/{widgetId})
+	DeleteDashboardWidget(ctx context.Context, request DeleteDashboardWidgetRequestObject) (DeleteDashboardWidgetResponseObject, error)
+
+	// (PUT /dashboards/{dashboardId}/widgets/{widgetId})
+	ReplaceDashboardWidget(ctx context.Context, request ReplaceDashboardWidgetRequestObject) (ReplaceDashboardWidgetResponseObject, error)
 	// QueryDependencies Dependensi di antara sekumpulan Item (link Gantt). POST hanya karena daftar ID tidak muat di URL
 	// (POST /dependencies/query)
 	QueryDependencies(ctx context.Context, request QueryDependenciesRequestObject) (QueryDependenciesResponseObject, error)
@@ -13669,6 +17249,12 @@ type StrictServerInterface interface {
 	// StreamEvents Aliran event realtime (SSE)
 	// (GET /events)
 	StreamEvents(ctx context.Context, request StreamEventsRequestObject) (StreamEventsResponseObject, error)
+
+	// (GET /excel-exports/{exportId})
+	GetProjectExcelExport(ctx context.Context, request GetProjectExcelExportRequestObject) (GetProjectExcelExportResponseObject, error)
+
+	// (GET /excel-exports/{exportId}/file)
+	DownloadProjectExcelExport(ctx context.Context, request DownloadProjectExcelExportRequestObject) (DownloadProjectExcelExportResponseObject, error)
 	// ListForms Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05)
 	// (GET /forms)
 	ListForms(ctx context.Context, request ListFormsRequestObject) (ListFormsResponseObject, error)
@@ -13690,6 +17276,12 @@ type StrictServerInterface interface {
 	// GetFormDefinition Pertanyaan form untuk pengisi; pengaturan respons (tujuan item) tidak ikut
 	// (GET /forms/{formId}/definition)
 	GetFormDefinition(ctx context.Context, request GetFormDefinitionRequestObject) (GetFormDefinitionResponseObject, error)
+	// RevokeFormPublicLink Cabut tautan publik (FORM-03)
+	// (DELETE /forms/{formId}/public-link)
+	RevokeFormPublicLink(ctx context.Context, request RevokeFormPublicLinkRequestObject) (RevokeFormPublicLinkResponseObject, error)
+	// RotateFormPublicLink Buat tautan publik, atau ganti yang ada sehingga tautan lama langsung mati (FORM-03); butuh kemampuan share pada Space
+	// (POST /forms/{formId}/public-link)
+	RotateFormPublicLink(ctx context.Context, request RotateFormPublicLinkRequestObject) (RotateFormPublicLinkResponseObject, error)
 	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
 	// (POST /forms/{formId}/submissions)
 	SubmitForm(ctx context.Context, request SubmitFormRequestObject) (SubmitFormResponseObject, error)
@@ -13765,9 +17357,18 @@ type StrictServerInterface interface {
 	// ReplaceItemShares Ganti seluruh daftar share item (SPC-11)
 	// (PUT /items/{itemId}/shares)
 	ReplaceItemShares(ctx context.Context, request ReplaceItemSharesRequestObject) (ReplaceItemSharesResponseObject, error)
+	// ListProjectTimeEntries Time entry sendiri atau entry pada lokasi Project dengan akses penuh
+	// (GET /items/{itemId}/time-entries)
+	ListProjectTimeEntries(ctx context.Context, request ListProjectTimeEntriesRequestObject) (ListProjectTimeEntriesResponseObject, error)
+	// GetProjectTimeSummary Total menit aktual yang dapat dilihat pemanggil
+	// (GET /items/{itemId}/time-summary)
+	GetProjectTimeSummary(ctx context.Context, request GetProjectTimeSummaryRequestObject) (GetProjectTimeSummaryResponseObject, error)
 
 	// (GET /items/{itemId}/views)
 	ListItemViews(ctx context.Context, request ListItemViewsRequestObject) (ListItemViewsResponseObject, error)
+
+	// (POST /items/{projectId}/excel-exports)
+	StartProjectExcelExport(ctx context.Context, request StartProjectExcelExportRequestObject) (StartProjectExcelExportResponseObject, error)
 	// GetMe User yang sedang login beserta pengaturan (SET-02)
 	// (GET /me)
 	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
@@ -13810,6 +17411,12 @@ type StrictServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(ctx context.Context, request UpdateNotificationRequestObject) (UpdateNotificationResponseObject, error)
+	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
+	// (GET /public/forms/{token})
+	GetPublicForm(ctx context.Context, request GetPublicFormRequestObject) (GetPublicFormResponseObject, error)
+	// SubmitPublicForm Isi form lewat tautan publik, tanpa sesi (SEC-05)
+	// (POST /public/forms/{token}/submissions)
+	SubmitPublicForm(ctx context.Context, request SubmitPublicFormRequestObject) (SubmitPublicFormResponseObject, error)
 	// Readyz Database terjangkau dan migrasi terpasang
 	// (GET /readyz)
 	Readyz(ctx context.Context, request ReadyzRequestObject) (ReadyzResponseObject, error)
@@ -13864,6 +17471,9 @@ type StrictServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(ctx context.Context, request UpdateCustomFieldRequestObject) (UpdateCustomFieldResponseObject, error)
+
+	// (POST /spaces/{spaceId}/excel-imports)
+	ImportProjectExcel(ctx context.Context, request ImportProjectExcelRequestObject) (ImportProjectExcelResponseObject, error)
 	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
 	// (GET /spaces/{spaceId}/forms)
 	ListSpaceForms(ctx context.Context, request ListSpaceFormsRequestObject) (ListSpaceFormsResponseObject, error)
@@ -13891,6 +17501,21 @@ type StrictServerInterface interface {
 	// ListStream Stream aktivitas dan komentar pada item yang boleh dilihat (NAV-04)
 	// (GET /stream)
 	ListStream(ctx context.Context, request ListStreamRequestObject) (ListStreamResponseObject, error)
+	// ListTimeEntries Daftar time entry sendiri yang masih terlihat
+	// (GET /time-entries)
+	ListTimeEntries(ctx context.Context, request ListTimeEntriesRequestObject) (ListTimeEntriesResponseObject, error)
+	// CreateTimeEntry Catat waktu sendiri untuk task dan tanggal
+	// (POST /time-entries)
+	CreateTimeEntry(ctx context.Context, request CreateTimeEntryRequestObject) (CreateTimeEntryResponseObject, error)
+
+	// (DELETE /time-entries/{entryId})
+	DeleteTimeEntry(ctx context.Context, request DeleteTimeEntryRequestObject) (DeleteTimeEntryResponseObject, error)
+
+	// (GET /time-entries/{entryId})
+	GetTimeEntry(ctx context.Context, request GetTimeEntryRequestObject) (GetTimeEntryResponseObject, error)
+	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
+	// (PATCH /time-entries/{entryId})
+	UpdateTimeEntry(ctx context.Context, request UpdateTimeEntryRequestObject) (UpdateTimeEntryResponseObject, error)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(ctx context.Context, request ListUsersRequestObject) (ListUsersResponseObject, error)
@@ -14489,6 +18114,314 @@ func (sh *strictHandler) UpdateComment(w http.ResponseWriter, r *http.Request, c
 	}
 }
 
+// ListDashboards operation middleware
+func (sh *strictHandler) ListDashboards(w http.ResponseWriter, r *http.Request, params ListDashboardsParams) {
+	var request ListDashboardsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDashboards(ctx, request.(ListDashboardsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDashboards")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListDashboardsResponseObject); ok {
+		if err := validResponse.VisitListDashboardsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateDashboard operation middleware
+func (sh *strictHandler) CreateDashboard(w http.ResponseWriter, r *http.Request) {
+	var request CreateDashboardRequestObject
+
+	var body CreateDashboardJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateDashboard(ctx, request.(CreateDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateDashboardResponseObject); ok {
+		if err := validResponse.VisitCreateDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteDashboard operation middleware
+func (sh *strictHandler) DeleteDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params DeleteDashboardParams) {
+	var request DeleteDashboardRequestObject
+
+	request.DashboardId = dashboardId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteDashboard(ctx, request.(DeleteDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteDashboardResponseObject); ok {
+		if err := validResponse.VisitDeleteDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDashboard operation middleware
+func (sh *strictHandler) GetDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID) {
+	var request GetDashboardRequestObject
+
+	request.DashboardId = dashboardId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDashboard(ctx, request.(GetDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDashboardResponseObject); ok {
+		if err := validResponse.VisitGetDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RenameDashboard operation middleware
+func (sh *strictHandler) RenameDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params RenameDashboardParams) {
+	var request RenameDashboardRequestObject
+
+	request.DashboardId = dashboardId
+	request.Params = params
+
+	var body RenameDashboardJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RenameDashboard(ctx, request.(RenameDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RenameDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RenameDashboardResponseObject); ok {
+		if err := validResponse.VisitRenameDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DuplicateDashboard operation middleware
+func (sh *strictHandler) DuplicateDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID) {
+	var request DuplicateDashboardRequestObject
+
+	request.DashboardId = dashboardId
+
+	var body DuplicateDashboardJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DuplicateDashboard(ctx, request.(DuplicateDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DuplicateDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DuplicateDashboardResponseObject); ok {
+		if err := validResponse.VisitDuplicateDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// MoveDashboard operation middleware
+func (sh *strictHandler) MoveDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params MoveDashboardParams) {
+	var request MoveDashboardRequestObject
+
+	request.DashboardId = dashboardId
+	request.Params = params
+
+	var body MoveDashboardJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.MoveDashboard(ctx, request.(MoveDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "MoveDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(MoveDashboardResponseObject); ok {
+		if err := validResponse.VisitMoveDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateDashboardWidget operation middleware
+func (sh *strictHandler) CreateDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params CreateDashboardWidgetParams) {
+	var request CreateDashboardWidgetRequestObject
+
+	request.DashboardId = dashboardId
+	request.Params = params
+
+	var body CreateDashboardWidgetJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateDashboardWidget(ctx, request.(CreateDashboardWidgetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateDashboardWidget")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateDashboardWidgetResponseObject); ok {
+		if err := validResponse.VisitCreateDashboardWidgetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteDashboardWidget operation middleware
+func (sh *strictHandler) DeleteDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, widgetId openapi_types.UUID, params DeleteDashboardWidgetParams) {
+	var request DeleteDashboardWidgetRequestObject
+
+	request.DashboardId = dashboardId
+	request.WidgetId = widgetId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteDashboardWidget(ctx, request.(DeleteDashboardWidgetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteDashboardWidget")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteDashboardWidgetResponseObject); ok {
+		if err := validResponse.VisitDeleteDashboardWidgetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReplaceDashboardWidget operation middleware
+func (sh *strictHandler) ReplaceDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, widgetId openapi_types.UUID, params ReplaceDashboardWidgetParams) {
+	var request ReplaceDashboardWidgetRequestObject
+
+	request.DashboardId = dashboardId
+	request.WidgetId = widgetId
+	request.Params = params
+
+	var body ReplaceDashboardWidgetJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReplaceDashboardWidget(ctx, request.(ReplaceDashboardWidgetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReplaceDashboardWidget")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReplaceDashboardWidgetResponseObject); ok {
+		if err := validResponse.VisitReplaceDashboardWidgetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // QueryDependencies operation middleware
 func (sh *strictHandler) QueryDependencies(w http.ResponseWriter, r *http.Request) {
 	var request QueryDependenciesRequestObject
@@ -14598,6 +18531,58 @@ func (sh *strictHandler) StreamEvents(w http.ResponseWriter, r *http.Request, pa
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(StreamEventsResponseObject); ok {
 		if err := validResponse.VisitStreamEventsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetProjectExcelExport operation middleware
+func (sh *strictHandler) GetProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID) {
+	var request GetProjectExcelExportRequestObject
+
+	request.ExportId = exportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetProjectExcelExport(ctx, request.(GetProjectExcelExportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetProjectExcelExport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetProjectExcelExportResponseObject); ok {
+		if err := validResponse.VisitGetProjectExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DownloadProjectExcelExport operation middleware
+func (sh *strictHandler) DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID) {
+	var request DownloadProjectExcelExportRequestObject
+
+	request.ExportId = exportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DownloadProjectExcelExport(ctx, request.(DownloadProjectExcelExportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DownloadProjectExcelExport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DownloadProjectExcelExportResponseObject); ok {
+		if err := validResponse.VisitDownloadProjectExcelExportResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -14791,6 +18776,58 @@ func (sh *strictHandler) GetFormDefinition(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetFormDefinitionResponseObject); ok {
 		if err := validResponse.VisitGetFormDefinitionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeFormPublicLink operation middleware
+func (sh *strictHandler) RevokeFormPublicLink(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request RevokeFormPublicLinkRequestObject
+
+	request.FormId = formId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeFormPublicLink(ctx, request.(RevokeFormPublicLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeFormPublicLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeFormPublicLinkResponseObject); ok {
+		if err := validResponse.VisitRevokeFormPublicLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RotateFormPublicLink operation middleware
+func (sh *strictHandler) RotateFormPublicLink(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request RotateFormPublicLinkRequestObject
+
+	request.FormId = formId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RotateFormPublicLink(ctx, request.(RotateFormPublicLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RotateFormPublicLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RotateFormPublicLinkResponseObject); ok {
+		if err := validResponse.VisitRotateFormPublicLinkResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -15547,6 +19584,59 @@ func (sh *strictHandler) ReplaceItemShares(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// ListProjectTimeEntries operation middleware
+func (sh *strictHandler) ListProjectTimeEntries(w http.ResponseWriter, r *http.Request, itemId ItemId, params ListProjectTimeEntriesParams) {
+	var request ListProjectTimeEntriesRequestObject
+
+	request.ItemId = itemId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProjectTimeEntries(ctx, request.(ListProjectTimeEntriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProjectTimeEntries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListProjectTimeEntriesResponseObject); ok {
+		if err := validResponse.VisitListProjectTimeEntriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetProjectTimeSummary operation middleware
+func (sh *strictHandler) GetProjectTimeSummary(w http.ResponseWriter, r *http.Request, itemId ItemId) {
+	var request GetProjectTimeSummaryRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetProjectTimeSummary(ctx, request.(GetProjectTimeSummaryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetProjectTimeSummary")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetProjectTimeSummaryResponseObject); ok {
+		if err := validResponse.VisitGetProjectTimeSummaryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListItemViews operation middleware
 func (sh *strictHandler) ListItemViews(w http.ResponseWriter, r *http.Request, itemId ItemId) {
 	var request ListItemViewsRequestObject
@@ -15566,6 +19656,39 @@ func (sh *strictHandler) ListItemViews(w http.ResponseWriter, r *http.Request, i
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListItemViewsResponseObject); ok {
 		if err := validResponse.VisitListItemViewsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StartProjectExcelExport operation middleware
+func (sh *strictHandler) StartProjectExcelExport(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
+	var request StartProjectExcelExportRequestObject
+
+	request.ProjectId = projectId
+
+	var body StartProjectExcelExportJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StartProjectExcelExport(ctx, request.(StartProjectExcelExportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartProjectExcelExport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StartProjectExcelExportResponseObject); ok {
+		if err := validResponse.VisitStartProjectExcelExportResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -15947,6 +20070,76 @@ func (sh *strictHandler) UpdateNotification(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateNotificationResponseObject); ok {
 		if err := validResponse.VisitUpdateNotificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPublicForm operation middleware
+func (sh *strictHandler) GetPublicForm(w http.ResponseWriter, r *http.Request, token string) {
+	var request GetPublicFormRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPublicForm(ctx, request.(GetPublicFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPublicForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPublicFormResponseObject); ok {
+		if err := validResponse.VisitGetPublicFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SubmitPublicForm operation middleware
+func (sh *strictHandler) SubmitPublicForm(w http.ResponseWriter, r *http.Request, token string) {
+	var request SubmitPublicFormRequestObject
+
+	request.Token = token
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+
+		var body SubmitPublicFormJSONRequestBody
+		if err := runtime.BindJSONBody(r, &body); err != nil {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+		request.JSONBody = &body
+
+	}
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		if reader, err := r.MultipartReader(); err != nil {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+			return
+		} else {
+			request.MultipartBody = reader
+		}
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SubmitPublicForm(ctx, request.(SubmitPublicFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SubmitPublicForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SubmitPublicFormResponseObject); ok {
+		if err := validResponse.VisitSubmitPublicFormResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -16457,6 +20650,39 @@ func (sh *strictHandler) UpdateCustomField(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// ImportProjectExcel operation middleware
+func (sh *strictHandler) ImportProjectExcel(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ImportProjectExcelRequestObject
+
+	request.SpaceId = spaceId
+
+	if reader, err := r.MultipartReader(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+		return
+	} else {
+		request.Body = reader
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImportProjectExcel(ctx, request.(ImportProjectExcelRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImportProjectExcel")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImportProjectExcelResponseObject); ok {
+		if err := validResponse.VisitImportProjectExcelResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceForms operation middleware
 func (sh *strictHandler) ListSpaceForms(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ListSpaceFormsRequestObject
@@ -16708,6 +20934,150 @@ func (sh *strictHandler) ListStream(w http.ResponseWriter, r *http.Request, para
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListStreamResponseObject); ok {
 		if err := validResponse.VisitListStreamResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListTimeEntries operation middleware
+func (sh *strictHandler) ListTimeEntries(w http.ResponseWriter, r *http.Request, params ListTimeEntriesParams) {
+	var request ListTimeEntriesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTimeEntries(ctx, request.(ListTimeEntriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTimeEntries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTimeEntriesResponseObject); ok {
+		if err := validResponse.VisitListTimeEntriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateTimeEntry operation middleware
+func (sh *strictHandler) CreateTimeEntry(w http.ResponseWriter, r *http.Request) {
+	var request CreateTimeEntryRequestObject
+
+	var body CreateTimeEntryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateTimeEntry(ctx, request.(CreateTimeEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateTimeEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateTimeEntryResponseObject); ok {
+		if err := validResponse.VisitCreateTimeEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteTimeEntry operation middleware
+func (sh *strictHandler) DeleteTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params DeleteTimeEntryParams) {
+	var request DeleteTimeEntryRequestObject
+
+	request.EntryId = entryId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteTimeEntry(ctx, request.(DeleteTimeEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteTimeEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteTimeEntryResponseObject); ok {
+		if err := validResponse.VisitDeleteTimeEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTimeEntry operation middleware
+func (sh *strictHandler) GetTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID) {
+	var request GetTimeEntryRequestObject
+
+	request.EntryId = entryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTimeEntry(ctx, request.(GetTimeEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTimeEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTimeEntryResponseObject); ok {
+		if err := validResponse.VisitGetTimeEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateTimeEntry operation middleware
+func (sh *strictHandler) UpdateTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params UpdateTimeEntryParams) {
+	var request UpdateTimeEntryRequestObject
+
+	request.EntryId = entryId
+	request.Params = params
+
+	var body UpdateTimeEntryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateTimeEntry(ctx, request.(UpdateTimeEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateTimeEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateTimeEntryResponseObject); ok {
+		if err := validResponse.VisitUpdateTimeEntryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

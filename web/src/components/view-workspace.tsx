@@ -12,6 +12,7 @@ import { ItemTable } from "@/components/item-table";
 import { ItemBoard } from "@/components/item-board";
 const ItemCalendar = lazy(() => import("@/components/item-calendar").then((module) => ({ default: module.ItemCalendar })));
 const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
+import { Timelog } from "@/components/timelog";
 import { ViewTabs } from "@/components/view-tabs";
 import { ColumnPicker, FieldFilter } from "@/components/view-columns";
 import type { CustomField } from "@/lib/custom-fields";
@@ -151,9 +152,9 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
   };
   return <section className="min-w-0 space-y-3">
     <ViewTabs views={available} selected={active} canEdit={canEdit}
-      scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
+      project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
-    {isGantt ? <>
+    {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : isGantt ? <>
       {!!spaceId && customFields.length > 0 && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
         fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
       {items.isPending && <p role="status">{t("items.loading")}</p>}

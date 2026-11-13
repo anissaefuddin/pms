@@ -38,6 +38,7 @@ export function Sidebar({ me }: { me: CurrentUser }) {
           <MoreHorizontal />{!collapsed && t("nav.more.label")}
         </DropdownMenuTrigger>
         <DropdownMenuContent>
+          {!hidden.includes("timesheets") && <DropdownMenuItem onClick={() => void navigate({ to: "/timesheets" })}>{t("time.timesheet")}</DropdownMenuItem>}
           {showTodo && <DropdownMenuItem onClick={() => void navigate({ to: "/my-todo" })}>{t("nav.todo.label")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => void navigate({ to: "/shared-with-me" })}>{t("nav.shared.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => void navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>

@@ -69,7 +69,7 @@ func TestBootstrapCreatesFoundationOnce(t *testing.T) {
 	if _, err := bootstrap.Run(ctx, pool, "Test Account", "other@example.com", nil); err == nil {
 		t.Fatal("second bootstrap with another email succeeded")
 	}
-	if got := count("SELECT count(*) FROM users"); got != 1 {
+	if got := count("SELECT count(*) FROM users WHERE id<>'00000000-0000-4000-8000-0000000000e1'"); got != 1 {
 		t.Fatalf("second bootstrap changed data: %d users", got)
 	}
 	// Recovery: the same still-invited admin gets a fresh link, the old one stops working, nothing else is created.
@@ -82,7 +82,7 @@ func TestBootstrapCreatesFoundationOnce(t *testing.T) {
 	}
 	for query, want := range map[string]int{
 		"SELECT count(*) FROM user_tokens WHERE purpose='invite' AND used_at IS NULL": 1,
-		"SELECT count(*) FROM account": 1, "SELECT count(*) FROM users": 1, "SELECT count(*) FROM spaces": 1, "SELECT count(*) FROM workflows": 1, "SELECT count(*) FROM statuses": 5,
+		"SELECT count(*) FROM account": 1, "SELECT count(*) FROM users WHERE id<>'00000000-0000-4000-8000-0000000000e1'": 1, "SELECT count(*) FROM spaces": 1, "SELECT count(*) FROM workflows": 1, "SELECT count(*) FROM statuses": 5,
 	} {
 		if got := count(query); got != want {
 			t.Fatalf("after re-issue: %s = %d, want %d", query, got, want)
@@ -128,7 +128,7 @@ func TestBootstrapConcurrentRunsCreateOneAccount(t *testing.T) {
 		t.Fatal("no bootstrap run succeeded")
 	}
 	for query, want := range map[string]int{
-		"SELECT count(*) FROM account": 1, "SELECT count(*) FROM users": 1, "SELECT count(*) FROM spaces": 1,
+		"SELECT count(*) FROM account": 1, "SELECT count(*) FROM users WHERE id<>'00000000-0000-4000-8000-0000000000e1'": 1, "SELECT count(*) FROM spaces": 1,
 		"SELECT count(*) FROM workflows": 1, "SELECT count(*) FROM statuses": 5,
 		"SELECT count(*) FROM user_tokens WHERE purpose='invite' AND used_at IS NULL": 1,
 	} {

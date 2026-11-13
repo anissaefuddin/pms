@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/forms")({ component: ManageForms });
 
+const publicUrl = (token: string) => new URL(`/f/${token}`, window.location.origin).href;
 const fillUrl = (id: string) => new URL(`/requests/${id}`, window.location.origin).href;
 
 function ManageForms() {
@@ -80,10 +81,11 @@ function ManageForms() {
               <Link to="/spaces/$spaceId/forms/$formId" params={{ spaceId: form.space_id, formId: form.id }} className="underline">{form.name}</Link></th>
             <td className="py-2 pr-4"><Link to="/spaces/$spaceId" params={{ spaceId: form.space_id }} className="underline">{form.space_name}</Link></td>
             <td className="py-2 pr-4"><span className="rounded-full border px-2 py-0.5 text-xs">{t(`forms.access.${form.access}`)}</span></td>
-            <td className="py-2 pr-4">{form.access === "internal"
-              ? <span className="flex items-center gap-2"><code className="break-all text-xs">{url}</code>
-                <Button size="sm" variant="outline" aria-label={t("forms.manage.copyNamed", { name: form.name })} onClick={() => void copy(url)}>{t("forms.manage.copy")}</Button></span>
-              : <span aria-label={t("forms.manage.noLink")}>—</span>}</td>
+            <td className="space-y-1 py-2 pr-4">{form.access === "internal" && <span className="flex items-center gap-2"><code className="break-all text-xs">{url}</code>
+                <Button size="sm" variant="outline" aria-label={t("forms.manage.copyNamed", { name: form.name })} onClick={() => void copy(url)}>{t("forms.manage.copy")}</Button></span>}
+              {form.public_token && <span className="flex items-center gap-2"><code className="break-all text-xs">{publicUrl(form.public_token)}</code>
+                <Button size="sm" variant="outline" aria-label={t("forms.manage.copyPublicNamed", { name: form.name })} onClick={() => void copy(publicUrl(form.public_token!))}>{t("forms.manage.copyPublic")}</Button></span>}
+              {form.access !== "internal" && !form.public_token && <span aria-label={t("forms.manage.noLink")}>—</span>}</td>
             <td className="py-2 pr-4">{form.updated_by.name}<span className="block text-muted-foreground">{formatDate(form.updated_at, profile)}</span></td>
             <td className="py-2">
               <DropdownMenu>

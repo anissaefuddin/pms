@@ -34,22 +34,25 @@ import (
 )
 
 type Server struct {
-	pool           *pgxpool.Pool
-	cfg            config.Config
-	mail           *mailqueue.Queue
-	spaces         *spaces.Service
-	directory      *directory.Service
-	loginIPFails   *limiter // failed logins per IP
-	loginAcctFails *limiter // failed logins per email: temporary lockout
-	mfaFails       *limiter // wrong second-factor codes per user
-	dummyHash      string   // checked when the email is unknown, so timing does not reveal which emails exist
-	forgotLimiter  *limiter
-	tokenLimiter   *limiter
-	requests       *prometheus.CounterVec
-	duration       *prometheus.HistogramVec
-	events         *realtime.Hub
-	eventEpoch     string
-	sseConnections prometheus.Gauge
+	pool                *pgxpool.Pool
+	cfg                 config.Config
+	mail                *mailqueue.Queue
+	spaces              *spaces.Service
+	directory           *directory.Service
+	loginIPFails        *limiter // failed logins per IP
+	loginAcctFails      *limiter // failed logins per email: temporary lockout
+	mfaFails            *limiter // wrong second-factor codes per user
+	dummyHash           string   // checked when the email is unknown, so timing does not reveal which emails exist
+	forgotLimiter       *limiter
+	tokenLimiter        *limiter
+	publicLimiter       *limiter // public form reads per IP
+	publicSubmitLimiter *limiter // public form submissions per IP
+	publicLinkLimiter   *limiter // public form submissions per link (D-42)
+	requests            *prometheus.CounterVec
+	duration            *prometheus.HistogramVec
+	events              *realtime.Hub
+	eventEpoch          string
+	sseConnections      prometheus.Gauge
 }
 
 type contextKey string
@@ -110,7 +113,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	if err != nil {
 		panic(err) // only fails if the system random source does
 	}
-	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), requests: requests, duration: duration}
+	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), publicLimiter: newLimiter(120, time.Minute), publicSubmitLimiter: newLimiter(30, time.Hour), publicLinkLimiter: newLimiter(300, time.Hour), requests: requests, duration: duration}
 	mux := http.NewServeMux()
 	s.events = realtime.New()
 	s.eventEpoch = uuid.NewString()
@@ -142,6 +145,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.adminRoutes(mux)
 	s.spaceRoutes(mux)
 	s.viewRoutes(mux)
+	s.dashboardRoutes(mux)
 	s.commentRoutes(mux)
 	s.workScheduleRoutes(mux)
 	s.workflowRoutes(mux)
@@ -152,6 +156,8 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.dependencyRoutes(mux)
 	s.customFieldRoutes(mux)
 	s.attachmentRoutes(mux)
+	s.timeEntryRoutes(mux)
+	s.projectExcelRoutes(mux)
 	mux.HandleFunc("GET /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))
 	mux.HandleFunc("PUT /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))
 	mux.HandleFunc("POST /api/v1/items", s.requireUser(s.createItem))

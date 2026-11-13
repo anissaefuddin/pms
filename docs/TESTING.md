@@ -403,3 +403,45 @@ Perubahan lain dalam story ini: Gantt memakai rentang tanggal dari data (sebelum
 Regresi: `go vet` dan `go test ./...` hijau dengan PostgreSQL (satu proses penuh sempat gagal sekali, ulangan bersih; penyebab tidak diselidiki). Playwright Chrome penuh 181 lulus, 6 gagal. Dua di antaranya Share dialog lama (`ad98a49`). Empat lain (auth security, custom-fields axe, views ViewTabs, spaces nav) lulus bila dijalankan sendiri; spaces nav memang perlu diubah karena ada entri Stream.
 
 Belum: tes terhadap server nyata (hanya mock di UI), "Hide auto updates" hanya mengenali penjadwalan otomatis (`activity.auto`), belum ada otomasi lain; Stream tidak memuat komentar atau aktivitas dari item yang dihapus.
+
+## M3 / Penutupan: form publik, email requester, matriks otorisasi, E2E (13 Nov 2026)
+
+| Story | Status | Bukti |
+|---|---|---|
+| S3.3.3 tautan publik | PASS backend dan UI mock | `TestPublicFormLink`: hanya admin dengan hak Share yang bisa membuat, mengganti, atau mencabut (editor, reader, tipe external 403; tanpa akses 404; anonim 401); token lama 404 setelah diganti; tautan dicabut 404; Space dihapus 404. `public-form.spec.ts` (dialog Share: buat, ganti dengan konfirmasi, matikan; axe). Mutasi: melewati cek Share → 3 tes gagal |
+| S3.3.5 form publik dan keamanan | PASS backend, PASS live | Endpoint tanpa sesi (cookie tidak dibaca). Tes: pemohon wajib (nama, email valid), jawaban divalidasi seperti form internal, pertanyaan assignee ditolak dan tidak ditampilkan, respons hanya `{received:true}` tanpa id, item dimiliki placeholder, email hanya di `form_submissions`, honeypot membalas 201 tanpa membuat item, lampiran 1 berkas OK, `.exe` ditolak, dua berkas pada batas 1 ditolak, berkas 2 MB (batas fixture 1 MB) ditolak, tidak ada berkas atau item yatim, batas 30/jam per IP (429 dengan `Retry-After`) dan IP lain via `X-Forwarded-For` tidak ikut terbatas. Live `m3-live.spec.ts` flow 4: pengunjung tanpa sesi mengisi, axe 0 pelanggaran, `/api/v1/me`, `/spaces`, dan item mengembalikan 401, admin menemukan item dengan pembuat "External requester" tanpa email, tautan diganti dari UI dan yang lama 404 |
+| S3.3.6 email requester eksternal | PASS backend | Email konfirmasi masuk antrean River saat submit (`request_received`) dan satu email per perubahan status (`request_status`); isi hanya nama form, judul, dan status. Pengiriman SMTP nyata tidak dicoba (mode log atau SMTP tiruan paket `mail`) |
+| S3.6.1 matriks otorisasi M3 | PASS | `TestM3AuthorizationMatrix`: 57 probe lintas anonim, admin, editor, reader, outsider, tipe external, dan tipe viewer pada approval, form (kelola, akses, tautan publik, isi), workflow, blueprint, dan Stream, termasuk IDOR id approval dan form dari Space tersembunyi. Stream tidak menampilkan apa pun dari Space tersembunyi. Setelah probe, data tidak berubah. Mutasi pada cek Share membuat tes gagal |
+| S3.6.1 E2E live | PASS | `PMS_TEST_BROWSER=1 go test -run TestBrowserM3Flows`: 4/4 di Chrome (workflow dengan transisi terkunci; form → item → approval → My requests; akses terbatas pemohon; form publik). CI kini menjalankan `M3Flows` |
+| S3.6.1 runbook | DONE | `PILOT_RUNBOOK.md` bagian "Update ke M3" (tabel migrasi 00024–00033, konfigurasi `PMS_2FA_KEY`, `TRUST_PROXY`, pemeriksaan sesudah update, rollback) |
+
+Perbaikan di sela: radio dan checkbox FormRenderer 24 px (axe `target-size` WCAG 2.2 ditemukan di flow 4). Tes `bootstrap` dan `housekeeping` menghitung baris `users`; kini mengecualikan akun placeholder.
+
+Regresi: `go vet` bersih; `go test ./...` hijau dengan PostgreSQL; Playwright Chrome penuh 205 lulus, 2 gagal (Share dialog lama dari `ad98a49`, sudah tercatat).
+
+Belum: update 00023 → 00033 pada instance pilot (NOT RUN); batas 300/jam per tautan tanpa tes; pengiriman email ke SMTP nyata untuk requester eksternal; uji beban form publik; pemindaian dependensi dan image serta pemeriksaan OWASP penuh (dua item yang di TASKS tertulis di bawah S3.6.1 tetapi berasal dari fase GA).
+
+## M4 / S4.1.1 Time entry
+
+- PASS. `TestTimeEntryAuthorization` memakai PostgreSQL dan migrasi 00034. Tes mencakup duplikat sel, batas menit, akses pemilik/pembaca/manager/pengguna tanpa akses, lock/unlock, versi usang, dan hapus.
+
+- S4.1.2 PASS. Chrome dengan mock API memverifikasi pin tersimpan setelah reload, navigasi keyboard, konversi H:MM, komentar, dan total mingguan. Typecheck dan lint lulus.
+
+- S4.1.3 PASS. `TestProjectTimelog` memverifikasi view khusus Project, filter server, akses lintas lokasi, dan pagination 10.001 entry. Satu request halaman dalam tercatat 14,5 ms pada PostgreSQL lokal.
+
+- S4.2.1 PASS. `TestProjectBudget` menyimpan nilai Currency pada Project dengan If-Match, menolak penulisan dari pembaca dan pada Task, dan memverifikasi total jam sesuai izin Timelog.
+
+- S4.4.1 PASS untuk bagian Time & Budget. `TestBrowserM4Flows` menjalankan Timesheet → Timelog → Budget dengan dua pengguna, Chrome, API Go, dan PostgreSQL. Alur tersedia di job browser CI. Tes API memeriksa entry kosong, akses lintas lokasi, lock, versi usang, dan total yang dapat dilihat. Latensi halaman dalam Timelog 10.001 entry tercatat 14,5 dan 20,0 ms dalam dua pengujian lokal.
+- Pada checkpoint Time & Budget, alur Excel belum diuji. Hasil pengujian Excel tercatat pada checkpoint S4.3.2 di bawah.
+- Regresi M4 PASS. Seluruh suite Go dengan PostgreSQL, Go vet, typecheck, lint, 20 unit test frontend, dan 17 tes Chrome terarah lulus. Suite Chrome mencakup draf Timesheet saat konflik.
+
+## M4 / S4.3.1 Ekspor Excel
+
+- PASS. `TestProjectExcelExport` menjalankan job River dan PostgreSQL, lalu membuka XLSX yang diunduh. Tes memeriksa tanggal, custom field Currency, dua induk dalam Space yang sama, judul mirip formula sebagai teks, kepemilikan artefak, dan penolakan unduhan setelah task keluar dari cakupan. Dialog dan polling job juga lulus tes Chrome dengan mock API.
+
+## M4 / S4.3.2 Impor Excel dan penutupan S4.4.1
+
+- PASS. `TestProjectExcelImport` memeriksa file rusak, kolom asing dan pemetaan, pratinjau 500 baris, siklus, izin, perubahan file setelah preview, retry tanpa duplikasi, dan rollback penuh saat database menolak baris terakhir.
+- PASS. Tes codec menolak formula dan batas ukuran, membaca shared strings, serta menyimpan teks yang mirip formula sebagai literal. Pemeriksaan silang dengan XlsxWriter dan openpyxl lulus.
+- PASS. Chrome dengan River dan PostgreSQL mengunduh Project, mengunggah workbook yang sama, dan memverifikasi nilai Currency, tanggal, judul mirip formula, serta dua induk setelah impor. Alur Timesheet → Timelog → Budget juga lulus. Dua tes dialog Excel dengan mock, typecheck, lint, dan 20 tes unit frontend lulus.
+- PASS. Regresi Go dengan PostgreSQL, Go vet, dan build web lulus.

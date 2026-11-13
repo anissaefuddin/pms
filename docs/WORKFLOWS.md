@@ -265,3 +265,10 @@ Semua error memakai `application/problem+json` (lihat openapi). Field `code` sta
 | `token_invalid` | 410 | Token undangan/reset kedaluwarsa atau sudah dipakai |
 | `rate_limited` | 429 | Terlalu banyak percobaan; `Retry-After` diisi |
 | `unauthenticated` | 401 | Session tidak ada/kedaluwarsa |
+
+## 11. Time entry dan budget (M4)
+
+- Satu sel Timesheet menyimpan satu entry per pengguna, task, dan tanggal. Pengguna mencatat waktu sendiri ketika memiliki `change_status` pada task aktif. Grid memakai zona waktu dan awal minggu dari profil.
+- Pemilik bisa membaca entry yang task-nya masih terlihat. Hanya pemilik dengan `change_status` bisa mengubah atau menghapus entry yang terbuka. Pengguna dengan akses penuh pada task bisa membaca dan mengubah lock, dalam request terpisah dari perubahan durasi atau komentar.
+- PATCH dan DELETE wajib memakai `If-Match`. Versi usang menghasilkan 409 `version_conflict`. Entry terkunci menghasilkan 409 `time_entry_locked` dan sel duplikat menghasilkan 409 `time_entry_exists`.
+- Timelog Project mengikuti jalur lokasi aktif yang terlihat. Akses penuh pada lokasi Project mengizinkan pembacaan entry semua pengguna melalui lokasi itu. Pengguna lain melihat entry sendiri. Budget memakai izin edit Project dan definisi Currency pada Space yang terlihat. Total waktu memakai cakupan yang sama dengan Timelog.

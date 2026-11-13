@@ -15,6 +15,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/forms"
 	"github.com/anissaefuddin/pms/server/internal/items"
+	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
@@ -169,9 +170,30 @@ type stagedAnswerFile struct {
 
 // readSubmission reads the answers and, for multipart bodies, stages each uploaded file. Staged files exist on disk
 // until the submission commits, so the caller removes them on every failure.
-func (s *Server) readSubmission(w http.ResponseWriter, r *http.Request, def forms.Definition) (map[string]json.RawMessage, []stagedAnswerFile, error) {
+// publicExtras carries what only a public submission has: who is asking, and the honeypot field real people leave empty.
+// Internal submissions pass nil, so those fields are rejected there like any other unknown field.
+type publicExtras struct {
+	Requester struct {
+		Name  string `json:"name"`
+		Email string `json:"email"`
+	} `json:"requester"`
+	Website string `json:"website"`
+}
+
+func (s *Server) readSubmission(w http.ResponseWriter, r *http.Request, def forms.Definition, extras *publicExtras) (map[string]json.RawMessage, []stagedAnswerFile, error) {
 	mediaType, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	if mediaType != "multipart/form-data" {
+		if extras != nil {
+			var body struct {
+				publicExtras
+				Answers map[string]json.RawMessage `json:"answers"`
+			}
+			if !decode(w, r, &body) {
+				return nil, nil, errResponded
+			}
+			*extras = body.publicExtras
+			return body.Answers, nil, nil
+		}
 		var body struct {
 			Answers map[string]json.RawMessage `json:"answers"`
 		}
@@ -236,6 +258,15 @@ func (s *Server) readSubmission(w http.ResponseWriter, r *http.Request, def form
 				return nil, nil, err
 			}
 			staged = append(staged, stagedAnswerFile{Key: key, File: file})
+		case extras != nil && name == "requester":
+			data, err := io.ReadAll(io.LimitReader(part, 4<<10))
+			if err != nil || json.Unmarshal(data, &extras.Requester) != nil {
+				cleanup()
+				return nil, nil, items.InvalidField{Field: "requester", Message: "requester must be a JSON object"}
+			}
+		case extras != nil && name == "website":
+			data, _ := io.ReadAll(io.LimitReader(part, 1<<10))
+			extras.Website = string(data)
 		default:
 			cleanup()
 			return nil, nil, items.InvalidField{Field: "answers", Message: "unexpected part " + name}
@@ -265,7 +296,7 @@ func (s *Server) submitForm(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	raw, staged, err := s.readSubmission(w, r, row.Definition)
+	raw, staged, err := s.readSubmission(w, r, row.Definition, nil)
 	if errors.Is(err, errResponded) {
 		return
 	}
@@ -288,7 +319,7 @@ func (s *Server) submitForm(w http.ResponseWriter, r *http.Request) {
 	}
 	defer tx.Rollback(ctx)
 	batch := s.notificationBatch()
-	created, err := createFromSubmission(ctx, tx, actor, id, raw, staged, batch)
+	created, err := createFromSubmission(ctx, tx, actor, id, raw, staged, batch, nil)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -323,8 +354,16 @@ type createdItem struct {
 // in the caller's transaction. The Item is created as an administrator acting for the requester: the requester has no
 // rights in the destination, and the form author already vouched for it when saving the form. The requester stays the
 // creator, follower, and activity actor.
-func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, formID uuid.UUID, raw map[string]json.RawMessage, staged []stagedAnswerFile, batch *notifications.Batch) (createdItem, error) {
-	row, err := loadSubmittableForm(ctx, tx, actor, formID)
+func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, formID uuid.UUID, raw map[string]json.RawMessage, staged []stagedAnswerFile, batch *notifications.Batch, external *externalRequester) (createdItem, error) {
+	var row formRow
+	var err error
+	if external != nil {
+		// The public handler already matched the token; matching it again here closes the window in which it was revoked.
+		row, err = loadPublicForm(ctx, tx, external.Token)
+		row.Definition = publicDefinition(row.Definition)
+	} else {
+		row, err = loadSubmittableForm(ctx, tx, actor, formID)
+	}
 	if err != nil {
 		return createdItem{}, err
 	}
@@ -349,7 +388,9 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 	}
 
 	var requester string
-	if err := tx.QueryRow(ctx, "SELECT concat_ws(' ',first_name,last_name) FROM users WHERE id=$1::uuid", actor.ID).Scan(&requester); err != nil {
+	if external != nil {
+		requester = external.Name
+	} else if err := tx.QueryRow(ctx, "SELECT concat_ws(' ',first_name,last_name) FROM users WHERE id=$1::uuid", actor.ID).Scan(&requester); err != nil {
 		return createdItem{}, err
 	}
 	title := strings.TrimSpace(row.Name + " – " + requester)
@@ -408,9 +449,19 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 	if err != nil {
 		return createdItem{}, err
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO form_submissions(id,form_id,form_name,item_id,requester_id,answers) VALUES($1,$2,$3,$4,$5::uuid,$6)",
-		submission, row.ID, row.Name, head.ID, actor.ID, marshal(answers)); err != nil {
+	var requesterName, requesterEmail *string
+	if external != nil {
+		requesterName, requesterEmail = &external.Name, &external.Email
+	}
+	if _, err := tx.Exec(ctx, "INSERT INTO form_submissions(id,form_id,form_name,item_id,requester_id,answers,requester_name,requester_email) VALUES($1,$2,$3,$4,$5::uuid,$6,$7,$8)",
+		submission, row.ID, row.Name, head.ID, actor.ID, marshal(answers), requesterName, requesterEmail); err != nil {
 		return createdItem{}, err
+	}
+	if external != nil && batch.Queue != nil {
+		if err := batch.Queue.SendTx(ctx, tx, mailqueue.Args{To: external.Email, Template: "request_received", Locale: "en",
+			Message: "Your request \"" + title + "\" was received through " + row.Name + ". We will email you when its status changes."}); err != nil {
+			return createdItem{}, err
+		}
 	}
 	return createdItem{ID: head.ID, Title: title}, nil
 }

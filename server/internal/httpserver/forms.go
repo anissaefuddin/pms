@@ -15,7 +15,7 @@ import (
 )
 
 const formSelect = `SELECT f.version, jsonb_build_object('id',f.id,'space_id',f.space_id,'name',f.name,'description',f.description,
- 'definition',f.definition,'response',f.response,'access',f.access,'version',f.version,
+ 'definition',f.definition,'response',f.response,'access',f.access,'public_token',f.public_token,'version',f.version,
  'created_by',jsonb_build_object('id',c.id,'name',concat_ws(' ',c.first_name,c.last_name)),
  'updated_by',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),
  'created_at',f.created_at,'updated_at',f.updated_at)
@@ -33,6 +33,7 @@ func (s *Server) formRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/me/requests", s.requireUser(s.listMyRequests))
 	mux.HandleFunc("GET /api/v1/forms/{formId}/definition", s.requireUser(s.getFormDefinition))
 	mux.HandleFunc("POST /api/v1/forms/{formId}/submissions", s.requireUser(s.submitForm))
+	s.publicFormRoutes(mux)
 }
 
 func writeFormError(w http.ResponseWriter, err error) {
@@ -94,7 +95,7 @@ func formSummaries(ctx context.Context, tx pgx.Tx, where string, arg any) (json.
 	var out json.RawMessage
 	err := tx.QueryRow(ctx, `
 SELECT COALESCE(jsonb_agg(jsonb_build_object('id',f.id,'space_id',f.space_id,'space_name',sp.name,'name',f.name,'description',f.description,
- 'access',f.access,
+ 'access',f.access,'public_token',f.public_token,
  'question_count',(SELECT count(*) FROM jsonb_array_elements(f.definition->'pages') p, jsonb_array_elements(p->'elements') e WHERE e->>'kind'<>'section'),
  'updated_by',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),'updated_at',f.updated_at)
  ORDER BY lower(sp.name),lower(f.name),f.id),'[]'::jsonb)

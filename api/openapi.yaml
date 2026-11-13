@@ -34,6 +34,376 @@ security:
   - cookieAuth: []
 
 paths:
+  /dashboards:
+    get:
+      operationId: listDashboards
+      summary: Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat
+      parameters:
+        - { name: space_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Daftar ringkasan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DashboardList' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createDashboard
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DashboardDestination' }
+      responses:
+        '201': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /dashboards/{dashboardId}:
+    parameters:
+      - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getDashboard
+      responses:
+        '200': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: renameDashboard
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DashboardRename' }
+      responses:
+        '200': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteDashboard
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '204': { description: Dashboard dan konfigurasi widget dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+  /dashboards/{dashboardId}/duplicate:
+    parameters:
+      - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: duplicateDashboard
+      summary: Salin konfigurasi dashboard dan widget ke tujuan dengan ID baru
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DashboardDestination' }
+      responses:
+        '201': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /dashboards/{dashboardId}/move:
+    parameters:
+      - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: moveDashboard
+      summary: Pindah dengan izin delete di sumber dan create di tujuan
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DashboardMove' }
+      responses:
+        '200': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+  /dashboards/{dashboardId}/widgets:
+    parameters:
+      - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: createDashboardWidget
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DashboardWidgetInput' }
+      responses:
+        '201': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+  /dashboards/{dashboardId}/widgets/{widgetId}:
+    parameters:
+      - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: widgetId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      operationId: replaceDashboardWidget
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DashboardWidgetInput' }
+      responses:
+        '200': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteDashboardWidget
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '200': { $ref: '#/components/responses/Dashboard' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+
+  /items/{projectId}/excel-exports:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: startProjectExcelExport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [space_id]
+              properties:
+                space_id: { type: string, format: uuid }
+      responses:
+        '202':
+          description: Export dijadwalkan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExcelExport' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /excel-exports/{exportId}:
+    parameters:
+      - { name: exportId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getProjectExcelExport
+      responses:
+        '200':
+          description: Status export
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExcelExport' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /excel-exports/{exportId}/file:
+    parameters:
+      - { name: exportId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: downloadProjectExcelExport
+      responses:
+        '200':
+          description: Workbook XLSX
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/excel-imports:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      operationId: importProjectExcel
+      description: Unggah untuk preview. Untuk membuat item, kirim ulang workbook, mapping, dan digest preview dengan commit=true.
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary, description: Workbook XLSX maksimum 5 MiB }
+                mapping: { type: string, description: JSON object dari nama kolom ke target. String kosong mengabaikan kolom. }
+                commit: { type: boolean }
+                digest: { type: string }
+      responses:
+        '200':
+          description: Pratinjau dan validasi
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExcelPreview' }
+        '201':
+          description: Item dibuat dalam satu transaksi
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [item_ids]
+                properties:
+                  item_ids:
+                    type: array
+                    items: { type: string, format: uuid }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422':
+          description: Workbook atau baris tidak valid
+          content:
+            application/problem+json:
+              schema: { $ref: '#/components/schemas/Problem' }
+
+  /items/{itemId}/time-summary:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      operationId: getProjectTimeSummary
+      summary: Total menit aktual yang dapat dilihat pemanggil
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [actual_minutes, scope]
+                properties:
+                  actual_minutes: { type: integer, format: int64 }
+                  scope: { type: string, enum: [project, permitted_entries] }
+        '404': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/time-entries:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      operationId: listProjectTimeEntries
+      summary: Time entry sendiri atau entry pada lokasi Project dengan akses penuh
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+        - { name: user_id, in: query, schema: { type: string, format: uuid } }
+        - { name: category, in: query, schema: { type: string } }
+        - { name: billing_type, in: query, schema: { type: string, enum: [billable, non_billable] } }
+        - { name: locked, in: query, schema: { type: boolean } }
+        - { name: sort, in: query, schema: { type: string, enum: [date, '-date', duration, '-duration', user] } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeEntryPage' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /time-entries:
+    get:
+      operationId: listTimeEntries
+      summary: Daftar time entry sendiri yang masih terlihat
+      parameters:
+        - { name: from, in: query, schema: { type: string, format: date } }
+        - { name: to, in: query, schema: { type: string, format: date } }
+        - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 200 } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeEntryPage' }
+        '422': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createTimeEntry
+      summary: Catat waktu sendiri untuk task dan tanggal
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/TimeEntryFields' }
+                - type: object
+                  required: [item_id, date, minutes]
+                  properties:
+                    item_id: { type: string, format: uuid }
+                    date: { type: string, format: date }
+                    minutes: { type: integer, minimum: 1, maximum: 1440 }
+      responses:
+        '201':
+          description: Dibuat
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeEntry' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/{entryId}:
+    parameters:
+      - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getTimeEntry
+      responses:
+        '200': { $ref: '#/components/responses/TimeEntry' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: updateTimeEntry
+      summary: Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - { $ref: '#/components/schemas/TimeEntryFields' }
+                - type: object
+                  properties:
+                    locked: { type: boolean }
+      responses:
+        '200': { $ref: '#/components/responses/TimeEntry' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteTimeEntry
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+
   # ───────────────────────── AUTH (M0) ─────────────────────────
   /auth/login:
     post:
@@ -1997,6 +2367,104 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /forms/{formId}/public-link:
+    parameters:
+      - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [forms]
+      operationId: rotateFormPublicLink
+      summary: Buat tautan publik, atau ganti yang ada sehingga tautan lama langsung mati (FORM-03); butuh kemampuan share pada Space
+      responses:
+        '200':
+          description: OK; `public_token` berisi token baru
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [forms]
+      operationId: revokeFormPublicLink
+      summary: Cabut tautan publik (FORM-03)
+      responses:
+        '200':
+          description: OK; `public_token` kosong
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /public/forms/{token}:
+    parameters:
+      - { name: token, in: path, required: true, schema: { type: string } }
+    get:
+      tags: [forms]
+      operationId: getPublicForm
+      summary: Definisi form lewat tautan publik, tanpa sesi (SEC-05)
+      description: Tidak memuat id internal. Pertanyaan bertipe assignee tidak ditampilkan. Token yang dicabut atau tidak dikenal sama-sama 404.
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, description, definition]
+                properties:
+                  name: { type: string }
+                  description: { type: string }
+                  definition: { $ref: '#/components/schemas/FormDefinition' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /public/forms/{token}/submissions:
+    parameters:
+      - { name: token, in: path, required: true, schema: { type: string } }
+    post:
+      tags: [forms]
+      operationId: submitPublicForm
+      summary: Isi form lewat tautan publik, tanpa sesi (SEC-05)
+      description: |
+        Item dibuat atas nama pengguna placeholder; identitas pengisi disimpan pada pengajuan. Respons hanya tanda terima,
+        tanpa id item. Field `website` adalah honeypot: bila terisi, tidak ada item dibuat tetapi balasan tetap 201.
+        Batas 30 pengajuan per jam per IP. `multipart/form-data` memakai bagian `answers`, `requester` (JSON), `website`, dan `file:<key>`.
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answers, requester]
+              additionalProperties: false
+              properties:
+                answers: { type: object, additionalProperties: true }
+                requester:
+                  type: object
+                  required: [name, email]
+                  properties:
+                    name: { type: string, maxLength: 120 }
+                    email: { type: string, format: email }
+                website: { type: string }
+          multipart/form-data:
+            schema:
+              type: object
+              required: [answers, requester]
+              additionalProperties: { type: string, format: binary }
+      responses:
+        '201':
+          description: Diterima
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [received]
+                properties:
+                  received: { type: boolean }
+        '404': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /me/requests:
     get:
       tags: [forms]
@@ -2211,6 +2679,20 @@ components:
       explode: true
 
   responses:
+    Dashboard:
+      description: Dashboard beserta konfigurasi widget
+      headers: { ETag: { $ref: '#/components/headers/ETag' } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Dashboard' }
+
+    TimeEntry:
+      description: Time entry
+      headers: { ETag: { $ref: '#/components/headers/ETag' } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/TimeEntry' }
+
     RateLimited:
       description: Batas percobaan tercapai
       headers:
@@ -2267,6 +2749,134 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
+    DashboardRename:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+    DashboardDestination:
+      allOf:
+        - { $ref: '#/components/schemas/DashboardRename' }
+        - type: object
+          properties:
+            space_id: { type: string, format: uuid, nullable: true, description: null atau dihilangkan untuk personal }
+    DashboardMove:
+      type: object
+      required: [space_id]
+      properties:
+        space_id: { type: string, format: uuid, nullable: true, description: null untuk pindah ke personal milik pemanggil }
+    DashboardSummary:
+      type: object
+      required: [id, owner_id, space_id, name, version]
+      properties:
+        id: { type: string, format: uuid }
+        owner_id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid, nullable: true }
+        name: { type: string }
+        version: { type: integer, minimum: 1 }
+    DashboardList:
+      type: object
+      required: [items]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/DashboardSummary' }
+    DashboardWidgetConfig:
+      type: object
+      additionalProperties: false
+      properties:
+        show_legend: { type: boolean, description: "Untuk pie, column, bar, dan line" }
+        show_labels: { type: boolean, description: "Untuk pie, column, bar, dan line" }
+        pie_style: { type: string, enum: [classic, donut, ring], description: Khusus pie }
+    DashboardWidgetInput:
+      type: object
+      required: [name, type]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        type: { type: string, enum: [task_list, indicator, pie, column, bar, line, table] }
+        position: { type: integer, minimum: 0, maximum: 9999 }
+        config: { $ref: '#/components/schemas/DashboardWidgetConfig' }
+    DashboardWidget:
+      allOf:
+        - { $ref: '#/components/schemas/DashboardWidgetInput' }
+        - type: object
+          required: [id, position, config]
+          properties:
+            id: { type: string, format: uuid }
+            position: { type: integer, minimum: 0, maximum: 9999 }
+            config: { $ref: '#/components/schemas/DashboardWidgetConfig' }
+    Dashboard:
+      allOf:
+        - { $ref: '#/components/schemas/DashboardSummary' }
+        - type: object
+          required: [widgets]
+          properties:
+            widgets:
+              type: array
+              maxItems: 100
+              items: { $ref: '#/components/schemas/DashboardWidget' }
+
+    ExcelExport:
+      type: object
+      required: [id, status]
+      properties:
+        id: { type: string, format: uuid }
+        status: { type: string, enum: [pending, ready, failed] }
+        error: { type: string }
+    ExcelPreview:
+      type: object
+      required: [columns, rows, errors, sample, digest]
+      properties:
+        columns: { type: array, items: { type: string } }
+        rows: { type: integer }
+        digest: { type: string }
+        sample:
+          type: array
+          items: { type: array, items: { type: string } }
+        errors:
+          type: array
+          items:
+            type: object
+            required: [row, column, message]
+            properties:
+              row: { type: integer }
+              column: { type: string }
+              message: { type: string }
+
+    TimeEntryFields:
+      type: object
+      properties:
+        minutes: { type: integer, minimum: 1, maximum: 1440 }
+        category: { type: string, maxLength: 80 }
+        comment: { type: string, maxLength: 2000 }
+        billing_type: { type: string, enum: [billable, non_billable] }
+    TimeEntry:
+      allOf:
+        - { $ref: '#/components/schemas/TimeEntryFields' }
+        - type: object
+          required: [id, item_id, user_id, date, minutes, category, comment, billing_type, locked, version]
+          properties:
+            id: { type: string, format: uuid }
+            item_id: { type: string, format: uuid }
+            user_id: { type: string, format: uuid }
+            date: { type: string, format: date }
+            minutes: { type: integer, minimum: 1, maximum: 1440 }
+            category: { type: string, maxLength: 80 }
+            comment: { type: string, maxLength: 2000 }
+            billing_type: { type: string, enum: [billable, non_billable] }
+            locked: { type: boolean }
+            version: { type: integer }
+            item_title: { type: string }
+            user_name: { type: string }
+    TimeEntryPage:
+      type: object
+      required: [items, next_offset]
+      properties:
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/TimeEntry' }
+        next_offset: { type: integer, nullable: true }
+
     # ── Umum ──
     Problem:
       type: object
@@ -2743,6 +3353,7 @@ components:
         definition: { $ref: '#/components/schemas/FormDefinition' }
         response: { $ref: '#/components/schemas/FormResponseSettings' }
         access: { $ref: '#/components/schemas/FormAccess' }
+        public_token: { type: string, nullable: true, description: Token tautan publik; kosong bila tidak ada tautan }
         version: { type: integer, format: int32 }
         created_by: { $ref: '#/components/schemas/UserRef' }
         updated_by: { $ref: '#/components/schemas/UserRef' }
@@ -2770,6 +3381,7 @@ components:
         space_id: { type: string, format: uuid }
         space_name: { type: string }
         access: { $ref: '#/components/schemas/FormAccess' }
+        public_token: { type: string, nullable: true }
         name: { type: string }
         description: { type: string }
         question_count: { type: integer, format: int32 }
@@ -2886,6 +3498,7 @@ components:
     CustomFieldConfig:
       type: object
       properties:
+        project_budget: { type: boolean, description: Khusus Currency dan hanya menerima nilai pada Project }
         currency: { type: string, pattern: '^[A-Z]{3}$', description: Kode ISO 4217 untuk Currency }
         decimals: { type: integer, minimum: 0, maximum: 6, description: Jumlah desimal untuk Currency dengan default 2 }
         allow_over_100: { type: boolean, description: Izinkan nilai Percent melebihi 100 }
@@ -3127,7 +3740,7 @@ components:
     # ── View ──
     ViewType:
       type: string
-      enum: [table, board, gantt, calendar]
+      enum: [table, board, gantt, calendar, timelog]
     ViewVisibility:
       type: string
       enum: [public, personal]

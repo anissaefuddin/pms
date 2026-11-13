@@ -126,6 +126,7 @@
   "profile.sidebar.my_todo": "My to-do",
   "profile.sidebar.request_forms": "Request forms",
   "profile.sidebar.stream": "Stream",
+  "profile.sidebar.timesheets": "Timesheets",
   "twoFactor.title": "Two-factor authentication",
   "twoFactor.description": "Ask for a code from your authenticator app each time you sign in.",
   "twoFactor.notConfigured": "Two-factor authentication is not available on this server yet. An admin must set PMS_2FA_KEY to turn it on.",

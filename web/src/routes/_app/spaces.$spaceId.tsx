@@ -12,6 +12,7 @@ import type { Item } from "@/lib/items";
 import { can, sortSpaces, spaceKeys, type Share, type Space } from "@/lib/spaces";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ShareDialog } from "@/components/share-dialog";
+import { SpaceExcelImport } from "@/components/space-excel-import";
 import { CustomFieldsDialog } from "@/components/custom-fields-dialog";
 import { SpaceDialog } from "@/components/space-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -50,6 +51,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState(false);
+  const [importingExcel, setImportingExcel] = useState(false);
   const [managingFields, setManagingFields] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -99,10 +101,11 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
-          {(canRename || canDelete || canManageFields) && (
+          {(canRename || canDelete || canManageFields || canCreate) && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
+                {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
                 {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
                 {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
                 {canDelete && <DropdownMenuItem variant="destructive" onClick={() => { setDeleteError(""); setDeleting(true); }}>{t("spaces.menu.delete")}</DropdownMenuItem>}
@@ -122,6 +125,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
 
       {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}
         onCreated={openItem} />}
+      {importingExcel && <SpaceExcelImport open={importingExcel} onOpenChange={setImportingExcel} spaceId={space.id} />}
       {canManageFields && <CustomFieldsDialog open={managingFields} onOpenChange={setManagingFields} spaceId={space.id} />}
       <SpaceDialog open={renaming} onOpenChange={setRenaming} space={space} />
       {me && (

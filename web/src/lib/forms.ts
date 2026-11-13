@@ -171,12 +171,17 @@ export function buildAnswers(definition: FormDefinition, answers: Answers): Reco
 }
 
 /** JSON without files; otherwise multipart with `answers` plus `file:<key>` parts (no Content-Type: the browser adds the boundary). */
-export function buildSubmission(definition: FormDefinition, answers: Answers, files: Files): { method: "POST"; body: string | FormData } {
+export function buildSubmission(definition: FormDefinition, answers: Answers, files: Files, requester?: { name: string; email: string; website: string }): { method: "POST"; body: string | FormData } {
   const built = buildAnswers(definition, answers);
   const attached = definition.pages.flatMap((page) => page.elements).filter((e) => e.kind === "attachment" && files[e.key]?.length);
-  if (!attached.length) return { method: "POST", body: JSON.stringify({ answers: built }) };
+  const extra = requester ? { requester: { name: requester.name, email: requester.email }, website: requester.website } : {};
+  if (!attached.length) return { method: "POST", body: JSON.stringify({ answers: built, ...extra }) };
   const body = new FormData();
   body.append("answers", JSON.stringify(built));
+  if (requester) {
+    body.append("requester", JSON.stringify(extra.requester));
+    body.append("website", requester.website);
+  }
   for (const element of attached) for (const file of files[element.key]) body.append(`file:${element.key}`, file);
   return { method: "POST", body };
 }

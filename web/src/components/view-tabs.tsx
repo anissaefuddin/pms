@@ -11,13 +11,14 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormError } from "@/components/auth/form-error";
 
-const viewTypes = ["table", "board", "gantt", "calendar"] as const satisfies readonly SavedView["type"][];
+const viewTypes = ["table", "board", "gantt", "calendar", "timelog"] as const satisfies readonly SavedView["type"][];
 
-export function ViewTabs({ views, selected, scope, canEdit, onSelect, onRefresh }: {
+export function ViewTabs({ views, selected, scope, canEdit, project = false, onSelect, onRefresh }: {
   views: SavedView[];
   selected: SavedView;
   scope: { scope_space_id: string } | { scope_item_id: string };
   canEdit: boolean;
+  project?: boolean;
   onSelect: (id: string) => void;
   onRefresh: () => Promise<void>;
 }) {
@@ -107,7 +108,7 @@ export function ViewTabs({ views, selected, scope, canEdit, onSelect, onRefresh 
           <Plus /> {t("views.addView")}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          {viewTypes.map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
+          {viewTypes.filter((type) => type !== "timelog" || project).map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
             {t(`views.types.${type}`)}
           </DropdownMenuItem>)}
         </DropdownMenuContent>

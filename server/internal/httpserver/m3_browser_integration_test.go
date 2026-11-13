@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// TestBrowserM3Flows seeds workflow, form and access data and runs the three M3 browser flows (S3.6.1) against the real API and PostgreSQL.
+// TestBrowserM3Flows seeds workflow, form and access data and runs the four M3 browser flows (S3.6.1) against the real API and PostgreSQL.
 func TestBrowserM3Flows(t *testing.T) {
 	if os.Getenv("PMS_TEST_BROWSER") != "1" {
 		t.Skip("set PMS_TEST_BROWSER=1 to run the browser against the PostgreSQL fixture")
@@ -36,6 +36,11 @@ func TestBrowserM3Flows(t *testing.T) {
 	private := f.call(admin, http.MethodPost, "/spaces/"+intake+"/forms", formBody(work, func(b map[string]any) { b["name"] = "Private M3 form" }))
 	f.want(private, http.StatusCreated, "private form")
 
+	public := f.call(admin, http.MethodPost, "/spaces/"+intake+"/forms", formBody(work, func(b map[string]any) { b["name"] = "Public M3 form" }))
+	f.want(public, http.StatusCreated, "public form")
+	link := f.call(admin, http.MethodPost, "/forms/"+public.body["id"].(string)+"/public-link", nil)
+	f.want(link, http.StatusOK, "public link")
+
 	runBrowserFixture(t, f, []string{"m3-live.spec.ts"},
 		"PMS_FIXTURE_M3_ADMIN="+admin.cookie.String(),
 		"PMS_FIXTURE_M3_EDITOR="+editor.cookie.String(),
@@ -46,6 +51,7 @@ func TestBrowserM3Flows(t *testing.T) {
 		"PMS_FIXTURE_M3_WORKFLOW="+f.queryID("SELECT id::text FROM workflows WHERE is_default"),
 		"PMS_FIXTURE_M3_INTAKE="+intake, "PMS_FIXTURE_M3_WORK="+work,
 		"PMS_FIXTURE_M3_LOCKED="+locked, "PMS_FIXTURE_M3_AUTO="+auto,
+		"PMS_FIXTURE_M3_PUBLIC_TOKEN="+link.body["public_token"].(string),
 		"PMS_FIXTURE_M3_PROJECT="+project, "PMS_FIXTURE_M3_SIBLING="+sibling,
 	)
 }

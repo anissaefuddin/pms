@@ -45,7 +45,7 @@ func (s *Service) Users(ctx context.Context, actor policy.Actor, q, status, user
 	pattern := "%" + strings.NewReplacer(`\`, `\\`, `%`, `\%`, `_`, `\_`).Replace(strings.TrimSpace(q)) + "%"
 	rows, err := s.pool.Query(ctx, `SELECT id::text, email::text, first_name, last_name, user_type::text, status::text, NULLIF(job_title,''), NULLIF(department,'')
 		FROM users
-		WHERE ($1 OR status = 'active')
+		WHERE ($1 OR status = 'active') AND id <> '00000000-0000-4000-8000-0000000000e1' -- the placeholder owner of public-form items
 		  AND (first_name || ' ' || last_name ILIKE $2 OR email::text ILIKE $2)
 		  AND ($5 = '' OR status::text = $5) AND ($6 = '' OR user_type::text = $6)
 		ORDER BY lower(last_name), lower(first_name), id

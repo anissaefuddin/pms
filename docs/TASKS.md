@@ -80,22 +80,22 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 60 | S3.2.2 | Blueprint (SPC-13) | 3 | 122.5–125.5 | 26 | DONE |
 | 61 | S3.3.1 | Skema form dan API pembuat form (FORM-01, FORM-02) | 3.5 | 125.5–129 | 26 | DONE |
 | 62 | S3.3.2 | UI form builder | 4 | 129–133 | 27 | DONE |
-| 63 | S3.3.3 | Sharing form dan Manage forms (FORM-03, FORM-05) | 2 | 133–135 | 28 | IN_PROGRESS |
+| 63 | S3.3.3 | Sharing form dan Manage forms (FORM-03, FORM-05) | 2 | 133–135 | 28 | DONE |
 | 64 | S3.3.4 | Submit form internal menjadi item (FORM-06) | 2.5 | 135–137.5 | 28 | DONE |
-| 65 | S3.3.5 | Form publik dan keamanan (SEC-05) | 3 | 137.5–140.5 | 29 | PROPOSED |
-| 66 | S3.3.6 | Pelacakan request (FORM-08) | 2.5 | 140.5–143 | 29 | IN_PROGRESS |
+| 65 | S3.3.5 | Form publik dan keamanan (SEC-05) | 3 | 137.5–140.5 | 29 | DONE |
+| 66 | S3.3.6 | Pelacakan request (FORM-08) | 2.5 | 140.5–143 | 29 | DONE |
 | 67 | S3.4.1 | Kustomisasi sidebar (NAV-02) | 1.5 | 143–144.5 | 29 | DONE |
 | 68 | S3.4.2 | Stream aktivitas (NAV-04) | 2.5 | 144.5–147 | 30 | DONE |
 | 69 | S3.4.3 | Halaman hasil pencarian (NAV-07) | 2 | 147–149 | 30 | DONE |
 | 70 | S3.5.1 | 2FA TOTP (AUTH-05) | 3 | 149–152 | 31 | DONE |
-| 71 | S3.6.1 | E2E, aksesibilitas, dan keamanan M3 | 2 | 152–154 | 31 | IN_PROGRESS |
-| 72 | S4.1.1 | Skema time entry dan API | 2.5 | 154–156.5 | 32 | PROPOSED |
-| 73 | S4.1.2 | Timesheet mingguan (TASK-13) | 3.5 | 156.5–160 | 33 | PROPOSED |
-| 74 | S4.1.3 | Timelog view (VIEW-07) | 2.5 | 160–162.5 | 33 | PROPOSED |
-| 75 | S4.2.1 | Budget project (TASK-12) | 1.5 | 162.5–164 | 33 | PROPOSED |
-| 76 | S4.3.1 | Export project ke Excel (SPC-15) | 2.5 | 164–166.5 | 34 | PROPOSED |
-| 77 | S4.3.2 | Import dari Excel (SPC-15) | 3 | 166.5–169.5 | 34 | PROPOSED |
-| 78 | S4.4.1 | E2E dan regresi M4 | 1.5 | 169.5–171 | 35 | PROPOSED |
+| 71 | S3.6.1 | E2E, aksesibilitas, dan keamanan M3 | 2 | 152–154 | 31 | DONE |
+| 72 | S4.1.1 | Skema time entry dan API | 2.5 | 154–156.5 | 32 | DONE |
+| 73 | S4.1.2 | Timesheet mingguan (TASK-13) | 3.5 | 156.5–160 | 33 | DONE |
+| 74 | S4.1.3 | Timelog view (VIEW-07) | 2.5 | 160–162.5 | 33 | DONE |
+| 75 | S4.2.1 | Budget project (TASK-12) | 1.5 | 162.5–164 | 33 | DONE |
+| 76 | S4.3.1 | Export project ke Excel (SPC-15) | 2.5 | 164–166.5 | 34 | DONE |
+| 77 | S4.3.2 | Import dari Excel (SPC-15) | 3 | 166.5–169.5 | 34 | DONE |
+| 78 | S4.4.1 | E2E dan regresi M4 | 1.5 | 169.5–171 | 35 | DONE |
 | 79 | S5.1.1 | Skema dashboard dan widget (DASH-01, DASH-06) | 3 | 171–174 | 35 | PROPOSED |
 | 80 | S5.1.2 | Mesin data widget (DASH-02) | 4 | 174–178 | 36 | PROPOSED |
 | 81 | S5.1.3 | Widget daftar task dan template (DASH-01, DASH-02) | 3 | 178–181 | 37 | PROPOSED |
@@ -561,9 +561,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Aksesibilitas keyboard dan axe; tes Playwright
 
 **S3.3.3 Sharing form dan Manage forms (FORM-03, FORM-05)**
-- [ ] Akses internal (seluruh akun) dan eksternal (tautan publik dengan token acak)
+- [x] Akses internal (seluruh akun) dan eksternal (tautan publik dengan token acak)
 - [x] Halaman Manage forms: nama, milik, akses, tautan, diubah oleh
-- [ ] Cabut dan rotasi tautan publik; tes bahwa tautan lama ditolak
+- [x] Cabut dan rotasi tautan publik; tes bahwa tautan lama ditolak
 
 **S3.3.4 Submit form internal menjadi item (FORM-06)**
 - [x] Pemilih form di menu dan layar pengisian; validasi di server
@@ -572,15 +572,15 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Tes: field wajib, tipe salah, lokasi tanpa hak tulis
 
 **S3.3.5 Form publik dan keamanan (SEC-05)**
-- [ ] Endpoint publik tanpa sesi dengan CSRF-aman dan token tautan
-- [ ] Rate limit per IP (memakai pengaturan proxy tepercaya), honeypot, batas jumlah dan ukuran lampiran
-- [ ] Item hasil memiliki pembuat khusus (requester eksternal); tidak ada data internal bocor di respons
-- [ ] Tes keamanan: spam, lampiran besar, tipe terblokir, tautan dicabut
+- [x] Endpoint publik tanpa sesi dengan CSRF-aman dan token tautan
+- [x] Rate limit per IP (memakai pengaturan proxy tepercaya), honeypot, batas jumlah dan ukuran lampiran
+- [x] Item hasil memiliki pembuat khusus (requester eksternal); tidak ada data internal bocor di respons
+- [x] Tes keamanan: spam, lampiran besar, tipe terblokir, tautan dicabut
 
 **S3.3.6 Pelacakan request (FORM-08)**
 - [x] Requester internal otomatis follower; daftar "My requests" beserta status
 - [x] Akses terbatas pada item hasil form (bukan seluruh project) kecuali punya akses lain; tes IDOR
-- [ ] Email konfirmasi dan email saat status berubah untuk requester eksternal
+- [x] Email konfirmasi dan email saat status berubah untuk requester eksternal
 - [x] UI My requests dan tes Playwright
 
 ### E3.4 Navigasi lanjutan
@@ -611,9 +611,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E3.6 Hardening M3
 
 **S3.6.1 E2E, aksesibilitas, dan keamanan M3**
-- [ ] Alur Playwright: workflow dengan transisi, form publik → item → approval, My requests
-- [ ] Perluas matriks otorisasi (approval, form, stream) dan tes keamanan form publik
-- [ ] Perbarui `PILOT_RUNBOOK.md` (migrasi, kunci 2FA), `TESTING.md`, `HANDOVER.md`
+- [x] Alur Playwright: workflow dengan transisi, form publik → item → approval, My requests
+- [x] Perluas matriks otorisasi (approval, form, stream) dan tes keamanan form publik
+- [x] Perbarui `PILOT_RUNBOOK.md` (migrasi, kunci 2FA), `TESTING.md`, `HANDOVER.md`
 
 
 ## M4
@@ -621,44 +621,45 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E4.1 Time tracking
 
 **S4.1.1 Skema time entry dan API**
-- [ ] `openapi.yaml`: `/time-entries`, kategori, billing type, kunci (lock)
-- [ ] Migrasi `time_entries` dan indeks (user, tanggal, item)
-- [ ] Validasi durasi, tanggal, dan hak; entry terkunci tidak bisa diubah; tes otorisasi
+- [x] `openapi.yaml`: `/time-entries`, kategori, billing type, kunci (lock)
+- [x] Migrasi `time_entries` dan indeks (user, tanggal, item)
+- [x] Validasi durasi, tanggal, dan hak; entry terkunci tidak bisa diubah; tes otorisasi
 
 **S4.1.2 Timesheet mingguan (TASK-13)**
-- [ ] Grid mingguan: baris per task (pin), sel durasi per hari, komentar, total
-- [ ] Simpan per sel dengan penanganan konflik; navigasi keyboard dan format durasi
-- [ ] Pin task dan pemilih task yang boleh dicatat; tes Playwright
+- [x] Grid mingguan: baris per task (pin), sel durasi per hari, komentar, total
+- [x] Simpan per sel dengan penanganan konflik; navigasi keyboard dan format durasi
+- [x] Pin task dan pemilih task yang boleh dicatat; tes Playwright
 
 **S4.1.3 Timelog view (VIEW-07)**
-- [ ] Tipe view `timelog` (enum) dan daftar entry per project
-- [ ] Kolom user, tanggal, durasi, kategori, komentar, billing type, lock; filter dan sort server
-- [ ] Tes performa pada 10 ribu entry
+- [x] Tipe view `timelog` (enum) dan daftar entry per project
+- [x] Kolom user, tanggal, durasi, kategori, komentar, billing type, lock; filter dan sort server
+- [x] Tes performa pada 10 ribu entry
 
 ### E4.2 Budget
 
 **S4.2.1 Budget project (TASK-12)**
-- [ ] Field budget (currency) di panel detail project memakai custom field S2.3.2
-- [ ] Tampilkan total jam aktual berdampingan; actual cost tidak termasuk (TASK-14, P2)
-- [ ] Tes dan otorisasi
+- [x] Field budget (currency) di panel detail project memakai custom field S2.3.2
+- [x] Tampilkan total jam aktual berdampingan; actual cost tidak termasuk (TASK-14, P2)
+- [x] Tes dan otorisasi
 
 ### E4.3 Export dan import
 
 **S4.3.1 Export project ke Excel (SPC-15)**
-- [ ] Endpoint export berbasis job dengan batas ukuran; hasil .xlsx berisi item, hierarki, tanggal, field kustom
-- [ ] Sanitasi nilai agar tidak menjadi formula (CSV/Excel injection)
-- [ ] Tes isi berkas dan hak akses
+- [x] Endpoint export berbasis job dengan batas ukuran; hasil .xlsx berisi item, hierarki, tanggal, field kustom
+- [x] Sanitasi nilai agar tidak menjadi formula (CSV/Excel injection)
+- [x] Tes isi berkas dan hak akses
 
 **S4.3.2 Import dari Excel (SPC-15)**
-- [ ] Unggah, pratinjau, dan pemetaan kolom; validasi per baris dengan laporan galat
-- [ ] Impor dalam satu transaksi atau per batch yang dapat dibatalkan; batas ukuran dan jumlah baris
-- [ ] Tes dengan berkas rusak, kolom tak dikenal, dan data besar
+- [x] Unggah, pratinjau, dan pemetaan kolom; validasi per baris dengan laporan galat
+- [x] Impor dalam satu transaksi atau per batch yang dapat dibatalkan; batas ukuran dan jumlah baris
+- [x] Tes dengan berkas rusak, kolom tak dikenal, dan data besar
 
 ### E4.4 Hardening M4
 
 **S4.4.1 E2E dan regresi M4**
-- [ ] Alur Playwright: isi timesheet → tampil di Timelog; export lalu import mengembalikan data sama
-- [ ] Matriks otorisasi time entry; perbarui TESTING dan HANDOVER
+- [x] Alur Playwright dengan PostgreSQL: isi Timesheet → tampil di Timelog dan total Budget
+- [x] Matriks otorisasi time entry; perbarui TESTING dan HANDOVER
+- [x] Alur ekspor → impor Excel memulihkan judul, tanggal, hierarki multi-induk, dan nilai Currency pada fixture PostgreSQL
 
 
 ## M5

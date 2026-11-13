@@ -14,6 +14,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormError } from "@/components/auth/form-error";
 import { CreateItemDialog } from "@/components/create-item-dialog";
+import { ProjectExcelExport } from "@/components/project-excel-export";
 import { SaveBlueprintDialog } from "@/components/save-blueprint-dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { ItemDates } from "@/components/item-dates";
@@ -68,6 +69,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
   const canDelete = caps.has("delete");
   const canCreate = caps.has("create");
   const [busy, setBusy] = useState(false);
+  const [exporting, setExporting] = useState(false);
   const [savingBlueprint, setSavingBlueprint] = useState(false);
   const saving = useRef(false);
   const [error, setError] = useState("");
@@ -189,6 +191,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
           }}>{t("items.copyLink")}</DropdownMenuItem>
           {canEdit && item.type === "task" && !item.is_milestone && <DropdownMenuItem disabled={busy || stale}
             onClick={() => void save({ is_milestone: true })}>{t("items.milestone")}</DropdownMenuItem>}
+          {item.type === "project" && item.locations.length > 0 && <DropdownMenuItem onClick={() => setExporting(true)}>{t("excel.exportTitle")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => setSavingBlueprint(true)}>{t("blueprints.menu")}</DropdownMenuItem>
           {canDelete && <DropdownMenuItem disabled={busy} variant="destructive"
             onClick={() => { setError(""); setDeleting(true); }}>{t("items.delete")}</DropdownMenuItem>}
@@ -280,6 +283,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
     <ItemApprovals item={item} userId={me.id} />
     <ItemAttachments item={item} userId={me.id} />
     {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
+    {exporting && <ProjectExcelExport open={exporting} onOpenChange={setExporting} item={item} />}
     <SaveBlueprintDialog open={savingBlueprint} onOpenChange={setSavingBlueprint} itemID={item.id} title={item.title} />
     <ConfirmDialog open={deleting} onOpenChange={setDeleting} title={t("items.delete")} description={t("items.deleteDescription")}
       confirmLabel={t("items.delete")} cancelLabel={t("items.cancel")} onConfirm={remove} busy={busy} error={error} />

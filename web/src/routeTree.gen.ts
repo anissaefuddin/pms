@@ -23,6 +23,8 @@ import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppSharedWithMeRouteImport } from './routes/_app/shared-with-me'
 import { Route as AppStreamRouteImport } from './routes/_app/stream'
+import { Route as AppTimesheetsRouteImport } from './routes/_app/timesheets'
+import { Route as FTokenRouteImport } from './routes/f.$token'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
 import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
 import { Route as AppRequestsIndexRouteImport } from './routes/_app/requests.index'
@@ -110,6 +112,16 @@ const AppStreamRoute = AppStreamRouteImport.update({
   id: '/stream',
   path: '/stream',
   getParentRoute: () => AppRoute,
+} as any)
+const AppTimesheetsRoute = AppTimesheetsRouteImport.update({
+  id: '/timesheets',
+  path: '/timesheets',
+  getParentRoute: () => AppRoute,
+} as any)
+const FTokenRoute = FTokenRouteImport.update({
+  id: '/f/$token',
+  path: '/f/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   id: '/invitations/$token',
@@ -217,6 +229,8 @@ export interface FileRoutesByFullPath {
   '/settings': typeof AppSettingsRouteWithChildren
   '/shared-with-me': typeof AppSharedWithMeRoute
   '/stream': typeof AppStreamRoute
+  '/timesheets': typeof AppTimesheetsRoute
+  '/f/$token': typeof FTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
@@ -248,6 +262,8 @@ export interface FileRoutesByTo {
   '/search': typeof AppSearchRoute
   '/shared-with-me': typeof AppSharedWithMeRoute
   '/stream': typeof AppStreamRoute
+  '/timesheets': typeof AppTimesheetsRoute
+  '/f/$token': typeof FTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
@@ -282,6 +298,8 @@ export interface FileRoutesById {
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/shared-with-me': typeof AppSharedWithMeRoute
   '/_app/stream': typeof AppStreamRoute
+  '/_app/timesheets': typeof AppTimesheetsRoute
+  '/f/$token': typeof FTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/items/$itemId': typeof AppItemsItemIdRoute
@@ -318,6 +336,8 @@ export interface FileRouteTypes {
     | '/settings'
     | '/shared-with-me'
     | '/stream'
+    | '/timesheets'
+    | '/f/$token'
     | '/invitations/$token'
     | '/items/$itemId'
     | '/requests/$formId'
@@ -349,6 +369,8 @@ export interface FileRouteTypes {
     | '/search'
     | '/shared-with-me'
     | '/stream'
+    | '/timesheets'
+    | '/f/$token'
     | '/invitations/$token'
     | '/'
     | '/items/$itemId'
@@ -382,6 +404,8 @@ export interface FileRouteTypes {
     | '/_app/settings'
     | '/_app/shared-with-me'
     | '/_app/stream'
+    | '/_app/timesheets'
+    | '/f/$token'
     | '/invitations/$token'
     | '/_app/'
     | '/_app/items/$itemId'
@@ -409,6 +433,7 @@ export interface RootRouteChildren {
   HelloRoute: typeof HelloRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  FTokenRoute: typeof FTokenRoute
   InvitationsTokenRoute: typeof InvitationsTokenRoute
 }
 
@@ -511,6 +536,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/stream'
       preLoaderRoute: typeof AppStreamRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/_app/timesheets': {
+      id: '/_app/timesheets'
+      path: '/timesheets'
+      fullPath: '/timesheets'
+      preLoaderRoute: typeof AppTimesheetsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/f/$token': {
+      id: '/f/$token'
+      path: '/f/$token'
+      fullPath: '/f/$token'
+      preLoaderRoute: typeof FTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/invitations/$token': {
       id: '/invitations/$token'
@@ -685,6 +724,7 @@ interface AppRouteChildren {
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSharedWithMeRoute: typeof AppSharedWithMeRoute
   AppStreamRoute: typeof AppStreamRoute
+  AppTimesheetsRoute: typeof AppTimesheetsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
   AppRequestsFormIdRoute: typeof AppRequestsFormIdRoute
@@ -706,6 +746,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSharedWithMeRoute: AppSharedWithMeRoute,
   AppStreamRoute: AppStreamRoute,
+  AppTimesheetsRoute: AppTimesheetsRoute,
   AppIndexRoute: AppIndexRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
   AppRequestsFormIdRoute: AppRequestsFormIdRoute,
@@ -726,6 +767,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelloRoute: HelloRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  FTokenRoute: FTokenRoute,
   InvitationsTokenRoute: InvitationsTokenRoute,
 }
 export const routeTree = rootRouteImport
