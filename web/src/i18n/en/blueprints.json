@@ -1,0 +1,13 @@
+{
+  "saveTitle": "Save as blueprint",
+  "saveHint": "Copies this item and the items inside it that you can see: status, assignees, dates, custom fields and links between them. Comments, files, approvals and sharing are not copied.",
+  "name": "Blueprint name",
+  "save": "Save blueprint",
+  "saved": "Blueprint saved",
+  "saveError": "The blueprint could not be saved",
+  "noSpace": "You need edit access to a shared Space to keep blueprints.",
+  "menu": "Save as blueprint",
+  "from": "Start from blueprint",
+  "none": "No blueprint",
+  "hint": "Dates are counted from the start date you set below. Without one, the new items have no dates."
+}

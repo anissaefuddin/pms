@@ -11,8 +11,13 @@ export function effectiveScope(scope: SearchScope, context: SearchContext): Sear
   return "everywhere";
 }
 
-export function useSearchResults(query: string, scope: SearchScope, context: SearchContext, limit: number, enabled = true) {
+export type SearchExtras = { assigned?: boolean; status?: string; sort?: string };
+
+export function useSearchResults(query: string, scope: SearchScope, context: SearchContext, limit: number, enabled = true, extras: SearchExtras = {}) {
   const params = new URLSearchParams({ q: query, limit: String(limit) });
+  if (extras.assigned) params.set("assigned_to_me", "true");
+  if (extras.status) params.set("status_group", extras.status);
+  if (extras.sort) params.set("sort", extras.sort);
   if (scope === "space" && context.spaceId) params.set("space_id", context.spaceId);
   if (scope === "project" && context.containerId) {
     params.set("container_id", context.containerId);

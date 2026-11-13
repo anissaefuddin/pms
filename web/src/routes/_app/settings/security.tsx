@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { FormError } from "@/components/auth/form-error";
 import { TextField } from "@/components/auth/text-field";
 import { Button } from "@/components/ui/button";
+import { TwoFactorSettings } from "@/components/two-factor-settings";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 
 export const Route = createFileRoute("/_app/settings/security")({ component: Security });
@@ -26,6 +27,7 @@ function Security() {
           </DialogContent>
         </Dialog>
       </div>
+      <TwoFactorSettings />
     </section>
   );
 }

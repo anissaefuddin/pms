@@ -15,5 +15,22 @@
   "error": "Search could not be completed.",
   "retry": "Try again",
   "empty": "No results for “{{query}}”",
-  "showAll": "Show all results"
+  "showAll": "Show all results",
+  "preset": "Show",
+  "presets.all": "All",
+  "presets.tasks": "Tasks",
+  "presets.projects": "Projects & folders",
+  "presets.comments": "Comments",
+  "presets.users": "People",
+  "filters": "Filters",
+  "assignedToMe": "Assigned to me",
+  "statusGroup": "Status",
+  "statusAny": "Any status",
+  "statuses.active": "Active",
+  "statuses.completed": "Completed",
+  "statuses.deferred": "Deferred",
+  "statuses.cancelled": "Cancelled",
+  "sort": "Sort by",
+  "sorts.relevance": "Relevance",
+  "sorts.date_modified": "Date modified"
 }

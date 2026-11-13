@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, ChevronDown, ClipboardList, ChevronRight, Inbox, MoreHorizontal, PanelLeft, Plus, Search, Settings } from "lucide-react";
+import { Activity, Bell, ChevronDown, ClipboardList, ChevronRight, Inbox, MoreHorizontal, PanelLeft, Plus, Search, Settings } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,8 @@ export function Sidebar({ me }: { me: CurrentUser }) {
     localStorage.setItem(storageKey, collapsed ? "expanded" : "collapsed");
     setCollapsed(!collapsed);
   }
+  const hidden = me.sidebar_hidden ?? [];
+  const showRequests = !hidden.includes("request_forms"), showStream = !hidden.includes("stream"), showTodo = !hidden.includes("my_todo");
   return <aside className={`sticky top-0 flex h-dvh shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground ${collapsed ? "w-14 p-1" : "w-[248px] p-3"}`}>
     <div className="mb-4 flex items-center justify-between gap-1">
       {!collapsed && <p className="min-w-0 truncate px-2 font-semibold text-foreground" title={me.account_name}>{me.account_name}</p>}
@@ -29,14 +31,14 @@ export function Sidebar({ me }: { me: CurrentUser }) {
         aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}><PanelLeft /></Button>
     </div>
     <nav className="space-y-1" aria-label={t("nav.main.label")}>
-      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} onClick={() => window.dispatchEvent(new Event("pms:open-search"))}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} onClick={() => void navigate({ to: "/inbox" })}/><Nav icon={<ClipboardList/>} label={t("nav.requests.label")} onClick={() => void navigate({ to: "/requests" })}/></>}
+      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} onClick={() => window.dispatchEvent(new Event("pms:open-search"))}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} onClick={() => void navigate({ to: "/inbox" })}/>{showRequests && <Nav icon={<ClipboardList/>} label={t("nav.requests.label")} onClick={() => void navigate({ to: "/requests" })}/>}{showStream && <Nav icon={<Activity/>} label={t("nav.stream.label")} onClick={() => void navigate({ to: "/stream" })}/>}</>}
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}
           className={collapsed ? "w-full px-0" : "w-full justify-start px-3"} />}>
           <MoreHorizontal />{!collapsed && t("nav.more.label")}
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          <DropdownMenuItem onClick={() => void navigate({ to: "/my-todo" })}>{t("nav.todo.label")}</DropdownMenuItem>
+          {showTodo && <DropdownMenuItem onClick={() => void navigate({ to: "/my-todo" })}>{t("nav.todo.label")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => void navigate({ to: "/shared-with-me" })}>{t("nav.shared.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => void navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>
         </DropdownMenuContent>

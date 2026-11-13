@@ -33,5 +33,7 @@ export async function api<T>(path: string, init?: RequestInit, onHeaders?: (head
     throw error;
   }
   onHeaders?.(response.headers);
-  return response.status === 204 || response.status === 202 ? (undefined as T) : response.json();
+  if (response.status === 204) return undefined as T;
+  // 202 is usually bodiless ("accepted"), but the login 2FA challenge carries JSON.
+  return response.status === 202 ? response.json().catch(() => undefined) : response.json();
 }

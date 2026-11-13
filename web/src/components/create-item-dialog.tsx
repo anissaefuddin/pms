@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { useBlueprints } from "@/lib/blueprints";
 import { ItemDates } from "@/components/item-dates";
 
 type Props = {
@@ -49,6 +50,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [error, setError] = useState("");
   const [fieldError, setFieldError] = useState<"title" | "due_date" | "locations" | null>(null);
   const [busy, setBusy] = useState(false);
+  const [blueprintID, setBlueprintID] = useState("");
   const choices = spaces.data?.filter((space) => space.my_capabilities?.includes("create")) ?? [];
   const selected = choices.find((space) => space.id === spaceID);
   const directory = trail.at(-1);
@@ -66,6 +68,9 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     queryKey: ["groups"], enabled: !!canShare,
     queryFn: async () => (await api<{ items: Group[] }>("/api/v1/groups")).items,
   });
+
+  const blueprints = useBlueprints(spaceID, !!selected).data ?? [];
+  const blueprint = blueprints.find((entry) => entry.id === blueprintID);
 
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -92,7 +97,11 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     setBusy(true);
     setError("");
     try {
-      const item = await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
+      const item = blueprint
+        ? await api<Item>(`/api/v1/blueprints/${blueprint.id}/items`, {
+          method: "POST", body: JSON.stringify({ locations: input.locations, title, ...(start && { start_date: start }) }),
+        })
+        : await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
       await queryClient.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
       onOpenChange(false);
       onCreated(item);
@@ -119,7 +128,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         {!fixedParent && <>
           <label className="block space-y-1"><span>{t("items.space")}</span>
             <select value={selected?.id ?? ""} aria-invalid={fieldError === "locations"} className="block w-full rounded border bg-background p-2"
-              onChange={(e) => { setSpaceID(e.target.value); setParentID(""); setTrail([]); setShares([]); }}>
+              onChange={(e) => { setSpaceID(e.target.value); setParentID(""); setTrail([]); setShares([]); setBlueprintID(""); }}>
               <option value="">{t("items.chooseSpace")}</option>
               {choices.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
             </select>
@@ -141,7 +150,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
               {t("items.browseChildren")}
             </Button>}
           </div>
-          {!taskOnly && <fieldset className="flex gap-3">
+          {!taskOnly && !blueprint && <fieldset className="flex gap-3">
             <legend>{t("items.type")}</legend>
             {itemTypes.map((type) => <label className="flex items-center gap-1" key={type}>
               <input type="radio" name="kind" checked={type === kind} onChange={() => setKind(type)} />{t(`items.${type}`)}
@@ -149,6 +158,13 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
           </fieldset>}
           {kind !== "task" && <p>{t("items.workflow")}: {t("items.defaultWorkflow")}</p>}
         </>}
+        {blueprints.length > 0 && <label className="block space-y-1"><span>{t("blueprints.from")}</span>
+          <select value={blueprintID} onChange={(e) => setBlueprintID(e.target.value)} className="block w-full rounded border bg-background p-2">
+            <option value="">{t("blueprints.none")}</option>
+            {blueprints.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+          </select>
+          {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
+        </label>}
       </div>
       <div className="space-y-3">
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}

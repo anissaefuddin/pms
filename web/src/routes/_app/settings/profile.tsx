@@ -32,9 +32,40 @@ const choices = {
 } as const;
 const timezones = ["UTC", ...Intl.supportedValuesOf("timeZone")];
 
+// Only entries that exist in this version are offered; the other keys the API accepts stay hidden (NAV-02).
+const sidebarChoices = ["my_todo", "request_forms", "stream"] as const;
+
 function ProfileRoute() {
   const profile = useProfile();
-  return profile && <ProfileForm key={profile.id} profile={profile} />;
+  return profile && <><ProfileForm key={profile.id} profile={profile} /><SidebarSettings profile={profile} /></>;
+}
+
+function SidebarSettings({ profile }: { profile: CurrentUser }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const [error, setError] = useState("");
+  const [hidden, setHidden] = useState(profile.sidebar_hidden ?? []); // local, so the checkbox flips at once
+  async function toggle(key: (typeof sidebarChoices)[number], visible: boolean) {
+    setError("");
+    const previous = hidden;
+    const next = visible ? hidden.filter((entry) => entry !== key) : [...hidden, key];
+    setHidden(next);
+    try {
+      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify({ sidebar_hidden: next }) }));
+    } catch (err) {
+      setHidden(previous);
+      setError((err as Error).message);
+    }
+  }
+  return <fieldset className="mt-6 max-w-3xl space-y-2">
+    <legend className="mb-1 text-lg font-semibold">{t("settings.profile.sidebar.title")}</legend>
+    <p className="text-sm text-muted-foreground">{t("settings.profile.sidebar.hint")}</p>
+    {sidebarChoices.map((key) => <label key={key} className="flex items-center gap-2 text-sm">
+      <input type="checkbox" checked={!hidden.includes(key)} onChange={(event) => void toggle(key, event.target.checked)} />
+      {t(`settings.profile.sidebar.${key}`)}
+    </label>)}
+    <FormError message={error} />
+  </fieldset>;
 }
 
 function ProfileForm({ profile }: { profile: CurrentUser }) {

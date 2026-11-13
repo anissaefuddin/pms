@@ -22,6 +22,7 @@ import { Route as AppRecycleBinRouteImport } from './routes/_app/recycle-bin'
 import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppSharedWithMeRouteImport } from './routes/_app/shared-with-me'
+import { Route as AppStreamRouteImport } from './routes/_app/stream'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
 import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
 import { Route as AppRequestsIndexRouteImport } from './routes/_app/requests.index'
@@ -103,6 +104,11 @@ const AppSettingsRoute = AppSettingsRouteImport.update({
 const AppSharedWithMeRoute = AppSharedWithMeRouteImport.update({
   id: '/shared-with-me',
   path: '/shared-with-me',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppStreamRoute = AppStreamRouteImport.update({
+  id: '/stream',
+  path: '/stream',
   getParentRoute: () => AppRoute,
 } as any)
 const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
@@ -210,6 +216,7 @@ export interface FileRoutesByFullPath {
   '/search': typeof AppSearchRoute
   '/settings': typeof AppSettingsRouteWithChildren
   '/shared-with-me': typeof AppSharedWithMeRoute
+  '/stream': typeof AppStreamRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
@@ -240,6 +247,7 @@ export interface FileRoutesByTo {
   '/recycle-bin': typeof AppRecycleBinRoute
   '/search': typeof AppSearchRoute
   '/shared-with-me': typeof AppSharedWithMeRoute
+  '/stream': typeof AppStreamRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
@@ -273,6 +281,7 @@ export interface FileRoutesById {
   '/_app/search': typeof AppSearchRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
   '/_app/shared-with-me': typeof AppSharedWithMeRoute
+  '/_app/stream': typeof AppStreamRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/items/$itemId': typeof AppItemsItemIdRoute
@@ -308,6 +317,7 @@ export interface FileRouteTypes {
     | '/search'
     | '/settings'
     | '/shared-with-me'
+    | '/stream'
     | '/invitations/$token'
     | '/items/$itemId'
     | '/requests/$formId'
@@ -338,6 +348,7 @@ export interface FileRouteTypes {
     | '/recycle-bin'
     | '/search'
     | '/shared-with-me'
+    | '/stream'
     | '/invitations/$token'
     | '/'
     | '/items/$itemId'
@@ -370,6 +381,7 @@ export interface FileRouteTypes {
     | '/_app/search'
     | '/_app/settings'
     | '/_app/shared-with-me'
+    | '/_app/stream'
     | '/invitations/$token'
     | '/_app/'
     | '/_app/items/$itemId'
@@ -491,6 +503,13 @@ declare module '@tanstack/react-router' {
       path: '/shared-with-me'
       fullPath: '/shared-with-me'
       preLoaderRoute: typeof AppSharedWithMeRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/stream': {
+      id: '/_app/stream'
+      path: '/stream'
+      fullPath: '/stream'
+      preLoaderRoute: typeof AppStreamRouteImport
       parentRoute: typeof AppRoute
     }
     '/invitations/$token': {
@@ -665,6 +684,7 @@ interface AppRouteChildren {
   AppSearchRoute: typeof AppSearchRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
   AppSharedWithMeRoute: typeof AppSharedWithMeRoute
+  AppStreamRoute: typeof AppStreamRoute
   AppIndexRoute: typeof AppIndexRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
   AppRequestsFormIdRoute: typeof AppRequestsFormIdRoute
@@ -685,6 +705,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSearchRoute: AppSearchRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
   AppSharedWithMeRoute: AppSharedWithMeRoute,
+  AppStreamRoute: AppStreamRoute,
   AppIndexRoute: AppIndexRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
   AppRequestsFormIdRoute: AppRequestsFormIdRoute,

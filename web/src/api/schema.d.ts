@@ -21,6 +21,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/login/2fa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Langkah kedua login dengan kode TOTP 6 digit atau kode cadangan (AUTH-05) */
+        post: operations["loginSecondStep"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/logout": {
         parameters: {
             query?: never;
@@ -227,6 +244,110 @@ export interface paths {
         head?: never;
         /** Ubah user type (USR-02); admin saja */
         patch: operations["updateUser"];
+        trace?: never;
+    };
+    "/me/2fa": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Status 2FA user ini (AUTH-05) */
+        get: operations["getTwoFactor"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/2fa/setup": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi */
+        post: operations["setupTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/2fa/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Konfirmasi dengan kode 6 digit; mengaktifkan 2FA, membuat kode cadangan (tampil sekali), dan mencabut session lain */
+        post: operations["enableTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/2fa/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Matikan 2FA; butuh password dan kode saat ini; mencabut session lain */
+        post: operations["disableTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/2fa/backup-codes": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buat kode cadangan baru (yang lama tidak berlaku); butuh password dan kode saat ini */
+        post: operations["renewBackupCodes"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/users/{userId}/2fa/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin menghapus 2FA user (pemulihan); user dikeluarkan dari semua session dan kejadiannya dicatat */
+        post: operations["resetUserTwoFactor"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/users/{userId}/deactivate": {
@@ -849,6 +970,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/stream": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Stream aktivitas dan komentar pada item yang boleh dilihat (NAV-04) */
+        get: operations["listStream"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/notifications": {
         parameters: {
             query?: never;
@@ -1176,6 +1314,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/blueprints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Blueprint di Space (butuh view pada Space; SPC-13) */
+        get: operations["listBlueprints"];
+        put?: never;
+        /**
+         * Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
+         * @description Menyalin satu kali; blueprint tidak tertaut ke sumber. Status, assignee, durasi, field kustom, dependensi antar item, dan tanggal (sebagai selisih hari) ikut tersimpan. Komentar, lampiran, approval, dan share tidak. Maksimal 200 item.
+         */
+        post: operations["createBlueprint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/blueprints/{blueprintId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah */
+        delete: operations["deleteBlueprint"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/blueprints/{blueprintId}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
+         * @description `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date`; tanpa `start_date` item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak lagi cocok dengan Space tujuan dilewati.
+         */
+        post: operations["createItemsFromBlueprint"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/forms/{formId}": {
         parameters: {
             query?: never;
@@ -1443,6 +1645,25 @@ export interface components {
         UserPage: components["schemas"]["Page"] & {
             items: components["schemas"]["User"][];
         };
+        TwoFactorChallenge: {
+            /** @enum {boolean} */
+            two_factor_required: true;
+            challenge: string;
+        };
+        TwoFactorStatus: {
+            /** @description false bila server belum punya PMS_2FA_KEY */
+            configured: boolean;
+            enabled: boolean;
+            /** Format: date-time */
+            enabled_at: string | null;
+            /** Format: int32 */
+            backup_codes_remaining: number;
+        };
+        TwoFactorReauth: {
+            password: string;
+            /** @description Kode TOTP 6 digit atau kode cadangan */
+            code: string;
+        };
         Me: components["schemas"]["User"] & {
             company?: string | null;
             country?: string | null;
@@ -1473,6 +1694,8 @@ export interface components {
              * @enum {string}
              */
             comment_shortcut: "mod_enter" | "enter";
+            /** @description Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil */
+            sidebar_hidden?: components["schemas"]["SidebarKey"][];
             /** @description Nama workspace */
             account_name: string;
             /** Format: uuid */
@@ -1507,7 +1730,10 @@ export interface components {
             theme?: "light" | "dark" | "system";
             /** @enum {string} */
             comment_shortcut?: "mod_enter" | "enter";
+            sidebar_hidden?: components["schemas"]["SidebarKey"][];
         };
+        /** @enum {string} */
+        SidebarKey: "created_by_me" | "workload" | "calendars" | "dashboards" | "my_todo" | "request_forms" | "timesheets" | "reports" | "stream" | "starred";
         InviteRequest: {
             /** Format: email */
             email: string;
@@ -1752,6 +1978,18 @@ export interface components {
          * @enum {string}
          */
         FormAccess: "private" | "internal";
+        Blueprint: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            space_id: string;
+            name: string;
+            /** @enum {string} */
+            item_type: "project" | "folder" | "task";
+            item_count: number;
+            /** Format: date-time */
+            created_at: string;
+        };
         FormSummary: {
             /** Format: uuid */
             id: string;
@@ -2180,6 +2418,29 @@ export interface components {
         ActivityPage: components["schemas"]["Page"] & {
             items: components["schemas"]["Activity"][];
         };
+        StreamEntry: {
+            id: string;
+            /** @enum {string} */
+            kind: "activity" | "comment";
+            action: string;
+            changes: {
+                [key: string]: unknown;
+            };
+            snippet?: string | null;
+            auto: boolean;
+            /** Format: date-time */
+            created_at: string;
+            actor: components["schemas"]["UserRef"];
+            item: {
+                /** Format: uuid */
+                id: string;
+                title: string;
+                type: components["schemas"]["ItemType"];
+            };
+        };
+        StreamPage: components["schemas"]["Page"] & {
+            items: components["schemas"]["StreamEntry"][];
+        };
         /** @enum {string} */
         NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided";
         Notification: {
@@ -2340,6 +2601,44 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": components["schemas"]["LoginRequest"];
+            };
+        };
+        responses: {
+            /** @description Berhasil; cookie session diset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Password benar tetapi user memakai 2FA; belum ada session. Lanjutkan dengan `POST /auth/login/2fa` dalam 5 menit */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorChallenge"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    loginSecondStep: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    challenge: string;
+                    code: string;
+                };
             };
         };
         responses: {
@@ -2742,6 +3041,158 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    getTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorStatus"];
+                };
+            };
+        };
+    };
+    setupTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        secret: string;
+                        otpauth_uri: string;
+                    };
+                };
+            };
+            409: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    enableTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    code: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Aktif */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: date-time */
+                        enabled_at: string;
+                        backup_codes: string[];
+                    };
+                };
+            };
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    disableTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorReauth"];
+            };
+        };
+        responses: {
+            /** @description Dimatikan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    renewBackupCodes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["TwoFactorReauth"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        backup_codes: string[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    resetUserTwoFactor: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Direset */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     deactivateUser: {
@@ -4064,6 +4515,33 @@ export interface operations {
             };
         };
     };
+    listStream: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                cursor?: components["parameters"]["Cursor"];
+                filter?: "everything" | "followed" | "assigned" | "conversations";
+                /** @description Sembunyikan perubahan otomatis (penjadwalan) */
+                hide_auto?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["StreamPage"];
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
     listNotifications: {
         parameters: {
             query?: {
@@ -4197,6 +4675,11 @@ export interface operations {
                 container_id?: string;
                 /** @description Maksimum per grup */
                 limit?: number;
+                /** @description Hanya item yang ditugaskan ke saya (NAV-07) */
+                assigned_to_me?: boolean;
+                /** @description Hanya item dengan grup status ini (NAV-07) */
+                status_group?: "active" | "completed" | "deferred" | "cancelled";
+                sort?: "relevance" | "date_modified";
             };
             header?: never;
             path?: never;
@@ -4682,6 +5165,122 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listBlueprints: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Blueprint"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createBlueprint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /** Format: uuid */
+                    source_item_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Blueprint"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteBlueprint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    createItemsFromBlueprint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    locations: components["schemas"]["Location"][];
+                    /** @description Mengganti judul item akar */
+                    title?: string;
+                    /** Format: date */
+                    start_date?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Item akar yang dibuat */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Item"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
