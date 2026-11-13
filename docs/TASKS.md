@@ -1273,10 +1273,10 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [ ] [TEST] E2E-PAR-11
 
 **S11.3.3 OAuth app dan Authorized apps (API-03) — 2 hari**
-- [ ] [BE] OAuth2 authorization code + PKCE
-- [ ] [BE] Penyimpanan token dan pencabutan
-- [ ] [FE] Layar persetujuan dan daftar Authorized apps
-- [ ] [TEST] Pencabutan efektif
+- [x] [BE] OAuth2 authorization code + PKCE
+- [x] [BE] Penyimpanan token dan pencabutan
+- [x] [FE] Layar persetujuan dan daftar Authorized apps
+- [x] [TEST] Pencabutan efektif
 
 **S11.3.4 Framework konektor (INT-01) — 1.5 hari**
 - [x] [BE] Lifecycle pasang, konfigurasi, nonaktif

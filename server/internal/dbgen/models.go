@@ -879,6 +879,42 @@ type Notification struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type OauthClient struct {
+	ID           pgtype.UUID        `json:"id"`
+	ClientID     string             `json:"client_id"`
+	Name         string             `json:"name"`
+	SecretHash   []byte             `json:"secret_hash"`
+	RedirectUris []string           `json:"redirect_uris"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	RevokedAt    pgtype.Timestamptz `json:"revoked_at"`
+}
+
+type OauthCode struct {
+	CodeHash      []byte             `json:"code_hash"`
+	ClientUuid    pgtype.UUID        `json:"client_uuid"`
+	UserID        pgtype.UUID        `json:"user_id"`
+	RedirectUri   string             `json:"redirect_uri"`
+	Scopes        []string           `json:"scopes"`
+	CodeChallenge string             `json:"code_challenge"`
+	ExpiresAt     pgtype.Timestamptz `json:"expires_at"`
+	UsedAt        pgtype.Timestamptz `json:"used_at"`
+	GrantID       pgtype.UUID        `json:"grant_id"`
+}
+
+type OauthGrant struct {
+	ID               pgtype.UUID        `json:"id"`
+	ClientUuid       pgtype.UUID        `json:"client_uuid"`
+	UserID           pgtype.UUID        `json:"user_id"`
+	Scopes           []string           `json:"scopes"`
+	AccessHash       []byte             `json:"access_hash"`
+	RefreshHash      []byte             `json:"refresh_hash"`
+	AccessExpiresAt  pgtype.Timestamptz `json:"access_expires_at"`
+	RefreshExpiresAt pgtype.Timestamptz `json:"refresh_expires_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	RevokedAt        pgtype.Timestamptz `json:"revoked_at"`
+}
+
 type ProjectExcelExport struct {
 	ID             pgtype.UUID        `json:"id"`
 	ProjectID      pgtype.UUID        `json:"project_id"`

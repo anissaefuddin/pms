@@ -399,6 +399,91 @@ paths:
         '204': { description: Dicabut }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /oauth/clients:
+    get:
+      operationId: listOAuthClients
+      summary: Daftar OAuth app terdaftar (admin; secret tidak pernah dikembalikan lagi)
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createOAuthClient
+      summary: Daftarkan OAuth app (admin); client_secret hanya tampil sekali di respons ini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, redirect_uris]
+              properties:
+                name: { type: string }
+                redirect_uris: { type: array, items: { type: string } }
+      responses:
+        '201': { description: Dibuat }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /oauth/clients/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: deleteOAuthClient
+      summary: Hapus OAuth app dan cabut semua grant-nya (admin)
+      responses:
+        '204': { description: Dihapus }
+        '404': { $ref: '#/components/responses/Problem' }
+  /oauth/authorize:
+    get:
+      operationId: getOAuthAuthorizeInfo
+      summary: Validasi permintaan otorisasi untuk layar persetujuan (redirect URI harus sama persis, PKCE S256 wajib)
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: approveOAuthAuthorize
+      summary: Setujui atau tolak; mengembalikan redirect_to berisi code sekali pakai (60 detik) dan state. Hanya lewat sesi cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, redirect_uri, scope, state, code_challenge, code_challenge_method, approve]
+              properties:
+                client_id: { type: string }
+                redirect_uri: { type: string }
+                scope: { type: string, description: 'read, write (dipisah spasi)' }
+                state: { type: string }
+                code_challenge: { type: string }
+                code_challenge_method: { type: string, enum: [S256] }
+                approve: { type: boolean }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Problem' }
+  /oauth/token:
+    post:
+      operationId: oauthToken
+      summary: Tukar code (+ code_verifier) atau refresh_token dengan token; form-urlencoded, klien memakai client_id dan client_secret. Token disimpan sebagai hash
+      security: []
+      responses:
+        '200': { description: access_token, refresh_token, token_type, expires_in, scope }
+        '400': { description: invalid_grant atau unsupported_grant_type }
+        '401': { description: invalid_client }
+  /oauth/grants:
+    get:
+      operationId: listOAuthGrants
+      summary: Authorized apps milik pengguna
+      responses:
+        '200': { description: OK }
+  /oauth/grants/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: revokeOAuthGrant
+      summary: Cabut app; access dan refresh token langsung tidak berlaku
+      responses:
+        '204': { description: Dicabut }
+        '404': { $ref: '#/components/responses/Problem' }
   /public/gantt/{token}:
     parameters:
       - { name: token, in: path, required: true, schema: { type: string } }

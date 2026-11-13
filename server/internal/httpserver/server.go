@@ -166,6 +166,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)
 	s.connectorRoutes(mux)
+	s.OAuthRoutes(mux)
 	s.portfolioRoutes(mux)
 	s.publicDashboardRoutes(mux)
 	s.formRoutes(mux)
@@ -609,7 +610,10 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		cookie, err := r.Cookie("pms_session")
 		if err != nil {
-			writeError(w, 401, "authentication required")
+			p, ok := s.bearerUser(w, r)
+			if ok {
+				next(w, r.WithContext(context.WithValue(context.WithValue(r.Context(), userKey, p.UserID), userTypeKey, p.UserType)))
+			}
 			return
 		}
 		var userID, userType string
@@ -644,6 +648,11 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 func (s *Server) csrf(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+		// Bearer calls carry no cookie, so there is nothing to forge; the token endpoint uses the client secret.
+		if _, err := r.Cookie("pms_session"); err != nil && (r.URL.Path == "/api/v1/oauth/token" || strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ")) {
 			next.ServeHTTP(w, r)
 			return
 		}

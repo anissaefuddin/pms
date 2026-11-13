@@ -2409,6 +2409,21 @@ func (e ListMyTodoParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod.
+const (
+	S256 ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod = "S256"
+)
+
+// Valid indicates whether the value is a known member of the ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod enum.
+func (e ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod) Valid() bool {
+	switch e {
+	case S256:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListRecycleBinParamsSort.
 const (
 	ListRecycleBinParamsSortDeletedAt ListRecycleBinParamsSort = "deleted_at"
@@ -5154,6 +5169,28 @@ type UpdateNotificationJSONBody struct {
 	Read     *bool `json:"read,omitempty"`
 }
 
+// ApproveOAuthAuthorizeJSONBody defines parameters for ApproveOAuthAuthorize.
+type ApproveOAuthAuthorizeJSONBody struct {
+	Approve             bool                                             `json:"approve"`
+	ClientId            string                                           `json:"client_id"`
+	CodeChallenge       string                                           `json:"code_challenge"`
+	CodeChallengeMethod ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod `json:"code_challenge_method"`
+	RedirectUri         string                                           `json:"redirect_uri"`
+
+	// Scope read, write (dipisah spasi)
+	Scope string `json:"scope"`
+	State string `json:"state"`
+}
+
+// ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod defines parameters for ApproveOAuthAuthorize.
+type ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod string
+
+// CreateOAuthClientJSONBody defines parameters for CreateOAuthClient.
+type CreateOAuthClientJSONBody struct {
+	Name         string   `json:"name"`
+	RedirectUris []string `json:"redirect_uris"`
+}
+
 // GetPortfolioTimelineJSONBody defines parameters for GetPortfolioTimeline.
 type GetPortfolioTimelineJSONBody struct {
 	ProjectIds []openapi_types.UUID `json:"project_ids"`
@@ -5605,6 +5642,12 @@ type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
 
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
+
+// ApproveOAuthAuthorizeJSONRequestBody defines body for ApproveOAuthAuthorize for application/json ContentType.
+type ApproveOAuthAuthorizeJSONRequestBody ApproveOAuthAuthorizeJSONBody
+
+// CreateOAuthClientJSONRequestBody defines body for CreateOAuthClient for application/json ContentType.
+type CreateOAuthClientJSONRequestBody CreateOAuthClientJSONBody
 
 // GetPortfolioTimelineJSONRequestBody defines body for GetPortfolioTimeline for application/json ContentType.
 type GetPortfolioTimelineJSONRequestBody GetPortfolioTimelineJSONBody
@@ -6355,6 +6398,30 @@ type ServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(w http.ResponseWriter, r *http.Request, notificationId openapi_types.UUID)
+	// GetOAuthAuthorizeInfo Validasi permintaan otorisasi untuk layar persetujuan (redirect URI harus sama persis, PKCE S256 wajib)
+	// (GET /oauth/authorize)
+	GetOAuthAuthorizeInfo(w http.ResponseWriter, r *http.Request)
+	// ApproveOAuthAuthorize Setujui atau tolak; mengembalikan redirect_to berisi code sekali pakai (60 detik) dan state. Hanya lewat sesi cookie
+	// (POST /oauth/authorize)
+	ApproveOAuthAuthorize(w http.ResponseWriter, r *http.Request)
+	// ListOAuthClients Daftar OAuth app terdaftar (admin; secret tidak pernah dikembalikan lagi)
+	// (GET /oauth/clients)
+	ListOAuthClients(w http.ResponseWriter, r *http.Request)
+	// CreateOAuthClient Daftarkan OAuth app (admin); client_secret hanya tampil sekali di respons ini
+	// (POST /oauth/clients)
+	CreateOAuthClient(w http.ResponseWriter, r *http.Request)
+	// DeleteOAuthClient Hapus OAuth app dan cabut semua grant-nya (admin)
+	// (DELETE /oauth/clients/{id})
+	DeleteOAuthClient(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListOAuthGrants Authorized apps milik pengguna
+	// (GET /oauth/grants)
+	ListOAuthGrants(w http.ResponseWriter, r *http.Request)
+	// RevokeOAuthGrant Cabut app; access dan refresh token langsung tidak berlaku
+	// (DELETE /oauth/grants/{id})
+	RevokeOAuthGrant(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// OauthToken Tukar code (+ code_verifier) atau refresh_token dengan token; form-urlencoded, klien memakai client_id dan client_secret. Token disimpan sebagai hash
+	// (POST /oauth/token)
+	OauthToken(w http.ResponseWriter, r *http.Request)
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(w http.ResponseWriter, r *http.Request)
@@ -10334,6 +10401,142 @@ func (siw *ServerInterfaceWrapper) UpdateNotification(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetOAuthAuthorizeInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetOAuthAuthorizeInfo(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOAuthAuthorizeInfo(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApproveOAuthAuthorize operation middleware
+func (siw *ServerInterfaceWrapper) ApproveOAuthAuthorize(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApproveOAuthAuthorize(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOAuthClients operation middleware
+func (siw *ServerInterfaceWrapper) ListOAuthClients(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOAuthClients(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOAuthClient operation middleware
+func (siw *ServerInterfaceWrapper) CreateOAuthClient(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOAuthClient(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOAuthClient operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOAuthClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOAuthClient(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOAuthGrants operation middleware
+func (siw *ServerInterfaceWrapper) ListOAuthGrants(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOAuthGrants(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeOAuthGrant operation middleware
+func (siw *ServerInterfaceWrapper) RevokeOAuthGrant(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeOAuthGrant(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// OauthToken operation middleware
+func (siw *ServerInterfaceWrapper) OauthToken(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.OauthToken(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CompleteOnboarding operation middleware
 func (siw *ServerInterfaceWrapper) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
 
@@ -13164,6 +13367,14 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.CreateGanttSnapshot)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/clients", wrapper.ListOAuthClients)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/oauth/clients", wrapper.CreateOAuthClient)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/oauth/clients/{id}", wrapper.DeleteOAuthClient)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/authorize", wrapper.GetOAuthAuthorizeInfo)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/oauth/authorize", wrapper.ApproveOAuthAuthorize)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/oauth/token", wrapper.OauthToken)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/grants", wrapper.ListOAuthGrants)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/oauth/grants/{id}", wrapper.RevokeOAuthGrant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/public/gantt/{token}", wrapper.GetPublicGanttSnapshot)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/portfolio/timeline", wrapper.GetPortfolioTimeline)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.DeleteDashboardPublicLink)
@@ -20323,6 +20534,256 @@ func (response UpdateNotification422ApplicationProblemPlusJSONResponse) VisitUpd
 	return err
 }
 
+type GetOAuthAuthorizeInfoRequestObject struct {
+}
+
+type GetOAuthAuthorizeInfoResponseObject interface {
+	VisitGetOAuthAuthorizeInfoResponse(w http.ResponseWriter) error
+}
+
+type GetOAuthAuthorizeInfo200Response struct {
+}
+
+func (response GetOAuthAuthorizeInfo200Response) VisitGetOAuthAuthorizeInfoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type GetOAuthAuthorizeInfo400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOAuthAuthorizeInfo400ApplicationProblemPlusJSONResponse) VisitGetOAuthAuthorizeInfoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveOAuthAuthorizeRequestObject struct {
+	Body *ApproveOAuthAuthorizeJSONRequestBody
+}
+
+type ApproveOAuthAuthorizeResponseObject interface {
+	VisitApproveOAuthAuthorizeResponse(w http.ResponseWriter) error
+}
+
+type ApproveOAuthAuthorize200Response struct {
+}
+
+func (response ApproveOAuthAuthorize200Response) VisitApproveOAuthAuthorizeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ApproveOAuthAuthorize400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ApproveOAuthAuthorize400ApplicationProblemPlusJSONResponse) VisitApproveOAuthAuthorizeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOAuthClientsRequestObject struct {
+}
+
+type ListOAuthClientsResponseObject interface {
+	VisitListOAuthClientsResponse(w http.ResponseWriter) error
+}
+
+type ListOAuthClients200Response struct {
+}
+
+func (response ListOAuthClients200Response) VisitListOAuthClientsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ListOAuthClients403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOAuthClients403ApplicationProblemPlusJSONResponse) VisitListOAuthClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOAuthClientRequestObject struct {
+	Body *CreateOAuthClientJSONRequestBody
+}
+
+type CreateOAuthClientResponseObject interface {
+	VisitCreateOAuthClientResponse(w http.ResponseWriter) error
+}
+
+type CreateOAuthClient201Response struct {
+}
+
+func (response CreateOAuthClient201Response) VisitCreateOAuthClientResponse(w http.ResponseWriter) error {
+	w.WriteHeader(201)
+	return nil
+}
+
+type CreateOAuthClient403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOAuthClient403ApplicationProblemPlusJSONResponse) VisitCreateOAuthClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOAuthClient422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOAuthClient422ApplicationProblemPlusJSONResponse) VisitCreateOAuthClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOAuthClientRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type DeleteOAuthClientResponseObject interface {
+	VisitDeleteOAuthClientResponse(w http.ResponseWriter) error
+}
+
+type DeleteOAuthClient204Response struct {
+}
+
+func (response DeleteOAuthClient204Response) VisitDeleteOAuthClientResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteOAuthClient404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOAuthClient404ApplicationProblemPlusJSONResponse) VisitDeleteOAuthClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOAuthGrantsRequestObject struct {
+}
+
+type ListOAuthGrantsResponseObject interface {
+	VisitListOAuthGrantsResponse(w http.ResponseWriter) error
+}
+
+type ListOAuthGrants200Response struct {
+}
+
+func (response ListOAuthGrants200Response) VisitListOAuthGrantsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type RevokeOAuthGrantRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type RevokeOAuthGrantResponseObject interface {
+	VisitRevokeOAuthGrantResponse(w http.ResponseWriter) error
+}
+
+type RevokeOAuthGrant204Response struct {
+}
+
+func (response RevokeOAuthGrant204Response) VisitRevokeOAuthGrantResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeOAuthGrant404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeOAuthGrant404ApplicationProblemPlusJSONResponse) VisitRevokeOAuthGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type OauthTokenRequestObject struct {
+}
+
+type OauthTokenResponseObject interface {
+	VisitOauthTokenResponse(w http.ResponseWriter) error
+}
+
+type OauthToken200Response struct {
+}
+
+func (response OauthToken200Response) VisitOauthTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type OauthToken400Response struct {
+}
+
+func (response OauthToken400Response) VisitOauthTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type OauthToken401Response struct {
+}
+
+func (response OauthToken401Response) VisitOauthTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
+}
+
 type CompleteOnboardingRequestObject struct {
 }
 
@@ -25974,6 +26435,30 @@ type StrictServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(ctx context.Context, request UpdateNotificationRequestObject) (UpdateNotificationResponseObject, error)
+	// GetOAuthAuthorizeInfo Validasi permintaan otorisasi untuk layar persetujuan (redirect URI harus sama persis, PKCE S256 wajib)
+	// (GET /oauth/authorize)
+	GetOAuthAuthorizeInfo(ctx context.Context, request GetOAuthAuthorizeInfoRequestObject) (GetOAuthAuthorizeInfoResponseObject, error)
+	// ApproveOAuthAuthorize Setujui atau tolak; mengembalikan redirect_to berisi code sekali pakai (60 detik) dan state. Hanya lewat sesi cookie
+	// (POST /oauth/authorize)
+	ApproveOAuthAuthorize(ctx context.Context, request ApproveOAuthAuthorizeRequestObject) (ApproveOAuthAuthorizeResponseObject, error)
+	// ListOAuthClients Daftar OAuth app terdaftar (admin; secret tidak pernah dikembalikan lagi)
+	// (GET /oauth/clients)
+	ListOAuthClients(ctx context.Context, request ListOAuthClientsRequestObject) (ListOAuthClientsResponseObject, error)
+	// CreateOAuthClient Daftarkan OAuth app (admin); client_secret hanya tampil sekali di respons ini
+	// (POST /oauth/clients)
+	CreateOAuthClient(ctx context.Context, request CreateOAuthClientRequestObject) (CreateOAuthClientResponseObject, error)
+	// DeleteOAuthClient Hapus OAuth app dan cabut semua grant-nya (admin)
+	// (DELETE /oauth/clients/{id})
+	DeleteOAuthClient(ctx context.Context, request DeleteOAuthClientRequestObject) (DeleteOAuthClientResponseObject, error)
+	// ListOAuthGrants Authorized apps milik pengguna
+	// (GET /oauth/grants)
+	ListOAuthGrants(ctx context.Context, request ListOAuthGrantsRequestObject) (ListOAuthGrantsResponseObject, error)
+	// RevokeOAuthGrant Cabut app; access dan refresh token langsung tidak berlaku
+	// (DELETE /oauth/grants/{id})
+	RevokeOAuthGrant(ctx context.Context, request RevokeOAuthGrantRequestObject) (RevokeOAuthGrantResponseObject, error)
+	// OauthToken Tukar code (+ code_verifier) atau refresh_token dengan token; form-urlencoded, klien memakai client_id dan client_secret. Token disimpan sebagai hash
+	// (POST /oauth/token)
+	OauthToken(ctx context.Context, request OauthTokenRequestObject) (OauthTokenResponseObject, error)
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(ctx context.Context, request CompleteOnboardingRequestObject) (CompleteOnboardingResponseObject, error)
@@ -29884,6 +30369,216 @@ func (sh *strictHandler) UpdateNotification(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateNotificationResponseObject); ok {
 		if err := validResponse.VisitUpdateNotificationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOAuthAuthorizeInfo operation middleware
+func (sh *strictHandler) GetOAuthAuthorizeInfo(w http.ResponseWriter, r *http.Request) {
+	var request GetOAuthAuthorizeInfoRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOAuthAuthorizeInfo(ctx, request.(GetOAuthAuthorizeInfoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOAuthAuthorizeInfo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOAuthAuthorizeInfoResponseObject); ok {
+		if err := validResponse.VisitGetOAuthAuthorizeInfoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ApproveOAuthAuthorize operation middleware
+func (sh *strictHandler) ApproveOAuthAuthorize(w http.ResponseWriter, r *http.Request) {
+	var request ApproveOAuthAuthorizeRequestObject
+
+	var body ApproveOAuthAuthorizeJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ApproveOAuthAuthorize(ctx, request.(ApproveOAuthAuthorizeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ApproveOAuthAuthorize")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ApproveOAuthAuthorizeResponseObject); ok {
+		if err := validResponse.VisitApproveOAuthAuthorizeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOAuthClients operation middleware
+func (sh *strictHandler) ListOAuthClients(w http.ResponseWriter, r *http.Request) {
+	var request ListOAuthClientsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOAuthClients(ctx, request.(ListOAuthClientsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOAuthClients")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOAuthClientsResponseObject); ok {
+		if err := validResponse.VisitListOAuthClientsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOAuthClient operation middleware
+func (sh *strictHandler) CreateOAuthClient(w http.ResponseWriter, r *http.Request) {
+	var request CreateOAuthClientRequestObject
+
+	var body CreateOAuthClientJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOAuthClient(ctx, request.(CreateOAuthClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOAuthClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOAuthClientResponseObject); ok {
+		if err := validResponse.VisitCreateOAuthClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteOAuthClient operation middleware
+func (sh *strictHandler) DeleteOAuthClient(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request DeleteOAuthClientRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOAuthClient(ctx, request.(DeleteOAuthClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOAuthClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOAuthClientResponseObject); ok {
+		if err := validResponse.VisitDeleteOAuthClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOAuthGrants operation middleware
+func (sh *strictHandler) ListOAuthGrants(w http.ResponseWriter, r *http.Request) {
+	var request ListOAuthGrantsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOAuthGrants(ctx, request.(ListOAuthGrantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOAuthGrants")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOAuthGrantsResponseObject); ok {
+		if err := validResponse.VisitListOAuthGrantsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeOAuthGrant operation middleware
+func (sh *strictHandler) RevokeOAuthGrant(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request RevokeOAuthGrantRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeOAuthGrant(ctx, request.(RevokeOAuthGrantRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeOAuthGrant")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeOAuthGrantResponseObject); ok {
+		if err := validResponse.VisitRevokeOAuthGrantResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// OauthToken operation middleware
+func (sh *strictHandler) OauthToken(w http.ResponseWriter, r *http.Request) {
+	var request OauthTokenRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.OauthToken(ctx, request.(OauthTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "OauthToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(OauthTokenResponseObject); ok {
+		if err := validResponse.VisitOauthTokenResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
