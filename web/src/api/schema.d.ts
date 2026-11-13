@@ -1924,6 +1924,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attachment-compare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pratinjau dua versi file yang sama untuk tampilan berdampingan (FIL-03); memerlukan `view` pada keduanya */
+        get: operations["compareAttachmentVersions"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attachments/{attachmentId}/versions/{version}/preview/{page}": {
         parameters: {
             query?: never;
@@ -8543,6 +8560,36 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    compareAttachmentVersions: {
+        parameters: {
+            query: {
+                left_attachment: string;
+                left_version: number;
+                right_attachment: string;
+                right_version: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pratinjau tiap sisi (bentuk sama dengan getAttachmentPreview) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        left: components["schemas"]["AttachmentPreview"];
+                        right: components["schemas"]["AttachmentPreview"];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getAttachmentPreviewPage: {

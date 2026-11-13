@@ -1208,9 +1208,9 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [x] [TEST] Anotasi tetap di versinya
 
 **S11.1.4 Bandingkan versi (FIL-03) — 1.5 hari**
-- [ ] [BE] Pratinjau dua versi
-- [ ] [FE] Tampilan berdampingan
-- [ ] [TEST] Playwright
+- [x] [BE] Pratinjau dua versi
+- [x] [FE] Tampilan berdampingan
+- [x] [TEST] Playwright
 
 **S11.1.5 Approval file per versi dan reviewer eksternal (FIL-04) — 2 hari**
 - [ ] [BE] Approval terikat versi

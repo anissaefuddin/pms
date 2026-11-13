@@ -24,6 +24,7 @@ const annotationJSON = `jsonb_build_object('id',n.id,'attachment_id',n.attachmen
 
 func (s *Server) proofingRoutes(mux *http.ServeMux) {
 	const base = "/api/v1/attachments/{attachmentId}/versions/{version}"
+	s.compareRoutes(mux)
 	mux.HandleFunc("GET "+base+"/preview", s.requireUser(s.getPreview))
 	mux.HandleFunc("GET "+base+"/preview/{page}", s.requireUser(s.getPreviewPage))
 	mux.HandleFunc("GET "+base+"/annotations", s.requireUser(s.listAnnotations))
@@ -38,6 +39,12 @@ func (s *Server) versionItem(r *http.Request, need policy.Capability) (att uuid.
 	if att, err = uuid.Parse(r.PathValue("attachmentId")); err == nil {
 		version, err = strconv.Atoi(r.PathValue("version"))
 	}
+	return s.versionItemOf(r, att, version, err, need)
+}
+
+func (s *Server) versionItemOf(r *http.Request, att uuid.UUID, version int, err error, need policy.Capability) (uuid.UUID, int, uuid.UUID, policy.Caps, error) {
+	var item uuid.UUID
+	var caps policy.Caps
 	if err != nil || version < 1 {
 		return att, 0, item, 0, items.ErrNotFound
 	}
@@ -49,7 +56,7 @@ WHERE a.id=$1 AND a.deleted_at IS NULL`, att, version).Scan(&item)
 	if err == nil {
 		caps, err = attachmentAccess(r, s.pool, item, need)
 	}
-	return
+	return att, version, item, caps, err
 }
 
 // ensurePreview records a pending preview for a version and queues the render, once (the primary key makes it idempotent).
@@ -67,16 +74,23 @@ func (s *Server) getPreview(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	ctx := r.Context()
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	out, err := s.previewOf(r.Context(), att, version)
 	if err != nil {
 		writeItemError(w, err)
 		return
 	}
+	writeJSON(w, 200, out)
+}
+
+// previewOf is the preview status of one version (queues the render on first use); shared with compare (S11.1.4).
+func (s *Server) previewOf(ctx context.Context, att uuid.UUID, version int) (map[string]any, error) {
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return nil, err
+	}
 	defer tx.Rollback(ctx)
 	if err = s.ensurePreview(ctx, tx, att, version); err != nil {
-		writeItemError(w, err)
-		return
+		return nil, err
 	}
 	var status, note string
 	var raw []byte
@@ -84,8 +98,7 @@ func (s *Server) getPreview(w http.ResponseWriter, r *http.Request) {
 		err = tx.Commit(ctx)
 	}
 	if err != nil {
-		writeItemError(w, err)
-		return
+		return nil, err
 	}
 	var pages []previews.Page
 	_ = json.Unmarshal(raw, &pages)
@@ -93,7 +106,7 @@ func (s *Server) getPreview(w http.ResponseWriter, r *http.Request) {
 	for _, p := range pages {
 		out = append(out, map[string]int{"page": p.Page, "width": p.Width, "height": p.Height})
 	}
-	writeJSON(w, 200, map[string]any{"attachment_id": att, "version": version, "status": status, "note": note, "pages": out})
+	return map[string]any{"attachment_id": att, "version": version, "status": status, "note": note, "pages": out}, nil
 }
 
 func (s *Server) getPreviewPage(w http.ResponseWriter, r *http.Request) {

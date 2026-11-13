@@ -2822,6 +2822,29 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/AttachmentPreview' }
         '404': { $ref: '#/components/responses/Problem' }
+  /attachment-compare:
+    get:
+      tags: [collaboration]
+      operationId: compareAttachmentVersions
+      summary: Pratinjau dua versi file yang sama untuk tampilan berdampingan (FIL-03); memerlukan `view` pada keduanya
+      parameters:
+        - { name: left_attachment, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: left_version, in: query, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: right_attachment, in: query, required: true, schema: { type: string, format: uuid } }
+        - { name: right_version, in: query, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Pratinjau tiap sisi (bentuk sama dengan getAttachmentPreview)
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [left, right]
+                properties:
+                  left: { $ref: '#/components/schemas/AttachmentPreview' }
+                  right: { $ref: '#/components/schemas/AttachmentPreview' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /attachments/{attachmentId}/versions/{version}/preview/{page}:
     get:
       tags: [collaboration]
