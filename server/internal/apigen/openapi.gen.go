@@ -4049,6 +4049,9 @@ type ProjectFile struct {
 	ItemTitle   string             `json:"item_title"`
 	SizeBytes   int64              `json:"size_bytes"`
 	Uploader    UserRef            `json:"uploader"`
+
+	// Version Nomor versi terbaru; filename
+	Version *int `json:"version,omitempty"`
 }
 
 // ProjectProgressMethod defines model for ProjectProgressMethod.
