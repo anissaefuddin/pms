@@ -2894,6 +2894,117 @@ paths:
             application/octet-stream:
               schema: { type: string, format: binary }
         '404': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}/versions/{version}/preview:
+    parameters:
+      - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: version, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      tags: [collaboration]
+      operationId: getAttachmentPreview
+      summary: Status pratinjau satu versi (FIL-02); memerlukan `view`. Pertama kali dibuka antre render bila belum ada
+      responses:
+        '200':
+          description: "`pending` (belum dirender), `ready` (halaman tersedia), `skipped` (jenis/ukuran tidak didukung), `failed` (file rusak)"
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttachmentPreview' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}/versions/{version}/preview/{page}:
+    get:
+      tags: [collaboration]
+      operationId: getAttachmentPreviewPage
+      summary: Gambar PNG satu halaman pratinjau (hasil render ulang, bukan file asli, maks 1600 px)
+      parameters:
+        - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: version, in: path, required: true, schema: { type: integer, minimum: 1 } }
+        - { name: page, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: PNG
+          content:
+            image/png:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}/versions/{version}/annotations:
+    parameters:
+      - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: version, in: path, required: true, schema: { type: integer, minimum: 1 } }
+    get:
+      tags: [collaboration]
+      operationId: listAttachmentAnnotations
+      summary: Anotasi yang dipin pada satu versi; versi lain tidak ikut (FIL-02). Memerlukan `view`
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AttachmentAnnotation' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [collaboration]
+      operationId: createAttachmentAnnotation
+      summary: Pin komentar pada posisi relatif (0..1) di sebuah halaman; memerlukan `comment`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [x, y, body]
+              properties:
+                page: { type: integer, minimum: 1, default: 1 }
+                x: { type: number, minimum: 0, maximum: 1 }
+                y: { type: number, minimum: 0, maximum: 1 }
+                body: { type: string, minLength: 1, maxLength: 4000 }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttachmentAnnotation' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}/versions/{version}/annotations/{annotationId}:
+    parameters:
+      - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: version, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      - { name: annotationId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [collaboration]
+      operationId: updateAttachmentAnnotation
+      summary: Tandai selesai atau buka lagi; memerlukan `comment`
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolved]
+              properties:
+                resolved: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AttachmentAnnotation' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [collaboration]
+      operationId: deleteAttachmentAnnotation
+      summary: Hapus anotasi; penulisnya atau pemilik `delete` pada item
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /attachments/{attachmentId}:
     delete:
       tags: [collaboration]
@@ -5780,6 +5891,37 @@ components:
           required: [item_title]
           properties:
             item_title: { type: string }
+    AttachmentPreview:
+      type: object
+      required: [attachment_id, version, status, note, pages]
+      properties:
+        attachment_id: { type: string, format: uuid }
+        version: { type: integer, minimum: 1 }
+        status: { type: string, enum: [pending, ready, skipped, failed] }
+        note: { type: string }
+        pages:
+          type: array
+          items:
+            type: object
+            required: [page, width, height]
+            properties:
+              page: { type: integer, minimum: 1 }
+              width: { type: integer }
+              height: { type: integer }
+    AttachmentAnnotation:
+      type: object
+      required: [id, attachment_id, version, page, x, y, body, resolved, author, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        attachment_id: { type: string, format: uuid }
+        version: { type: integer, minimum: 1 }
+        page: { type: integer, minimum: 1 }
+        x: { type: number }
+        y: { type: number }
+        body: { type: string }
+        resolved: { type: boolean }
+        author: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
     Activity:
       type: object
       required: [id, actor, action, changes, created_at]

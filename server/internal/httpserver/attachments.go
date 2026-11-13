@@ -38,6 +38,7 @@ func (s *Server) attachmentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentId}/versions", s.requireUser(s.listAttachmentVersions))
 	mux.HandleFunc("POST /api/v1/attachments/{attachmentId}/versions", s.requireUser(s.uploadAttachment))
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentId}/versions/{version}/download", s.requireUser(s.attachmentResource))
+	s.proofingRoutes(mux)
 }
 
 func (s *Server) attachmentStore() storage.Storage {
@@ -194,6 +195,12 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 	}
 	var out json.RawMessage
 	err = tx.QueryRow(ctx, "SELECT "+attachmentJSON+" FROM attachments a JOIN users u ON u.id=a.uploader_id WHERE a.id=$1", attachment).Scan(&out)
+	if err == nil {
+		var current int
+		if err = tx.QueryRow(ctx, "SELECT current_version FROM attachments WHERE id=$1", attachment).Scan(&current); err == nil {
+			err = s.ensurePreview(ctx, tx, attachment, current)
+		}
+	}
 	if err == nil {
 		err = tx.Commit(ctx)
 	}

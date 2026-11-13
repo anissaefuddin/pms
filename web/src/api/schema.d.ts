@@ -1963,6 +1963,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attachments/{attachmentId}/versions/{version}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        /** Status pratinjau satu versi (FIL-02); memerlukan `view`. Pertama kali dibuka antre render bila belum ada */
+        get: operations["getAttachmentPreview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attachments/{attachmentId}/versions/{version}/preview/{page}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Gambar PNG satu halaman pratinjau (hasil render ulang, bukan file asli, maks 1600 px) */
+        get: operations["getAttachmentPreviewPage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attachments/{attachmentId}/versions/{version}/annotations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        /** Anotasi yang dipin pada satu versi; versi lain tidak ikut (FIL-02). Memerlukan `view` */
+        get: operations["listAttachmentAnnotations"];
+        put?: never;
+        /** Pin komentar pada posisi relatif (0..1) di sebuah halaman; memerlukan `comment` */
+        post: operations["createAttachmentAnnotation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attachments/{attachmentId}/versions/{version}/annotations/{annotationId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+                annotationId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus anotasi; penulisnya atau pemilik `delete` pada item */
+        delete: operations["deleteAttachmentAnnotation"];
+        options?: never;
+        head?: never;
+        /** Tandai selesai atau buka lagi; memerlukan `comment` */
+        patch: operations["updateAttachmentAnnotation"];
+        trace?: never;
+    };
     "/attachments/{attachmentId}": {
         parameters: {
             query?: never;
@@ -4289,6 +4369,34 @@ export interface components {
         };
         ProjectFile: components["schemas"]["Attachment"] & {
             item_title: string;
+        };
+        AttachmentPreview: {
+            /** Format: uuid */
+            attachment_id: string;
+            version: number;
+            /** @enum {string} */
+            status: "pending" | "ready" | "skipped" | "failed";
+            note: string;
+            pages: {
+                page: number;
+                width: number;
+                height: number;
+            }[];
+        };
+        AttachmentAnnotation: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            attachment_id: string;
+            version: number;
+            page: number;
+            x: number;
+            y: number;
+            body: string;
+            resolved: boolean;
+            author: components["schemas"]["UserRef"];
+            /** Format: date-time */
+            created_at: string;
         };
         Activity: {
             /** Format: int64 */
@@ -8653,6 +8761,173 @@ export interface operations {
                     "application/octet-stream": string;
                 };
             };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getAttachmentPreview: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description `pending` (belum dirender), `ready` (halaman tersedia), `skipped` (jenis/ukuran tidak didukung), `failed` (file rusak) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentPreview"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getAttachmentPreviewPage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+                page: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description PNG */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "image/png": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    listAttachmentAnnotations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AttachmentAnnotation"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createAttachmentAnnotation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @default 1 */
+                    page?: number;
+                    x: number;
+                    y: number;
+                    body: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentAnnotation"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteAttachmentAnnotation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+                annotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateAttachmentAnnotation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+                annotationId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    resolved: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AttachmentAnnotation"];
+                };
+            };
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
         };
     };
