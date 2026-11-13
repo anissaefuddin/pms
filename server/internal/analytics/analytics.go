@@ -89,8 +89,9 @@ const fieldRef = "@FIELD@"
 const sumField = "COALESCE((i.fields->>" + fieldRef + ")::numeric,0)"
 
 var metrics = map[string]map[string]string{ // reporting_on → metric → SQL measure
-	"tasks":        {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField},
-	"projects":     {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField},
+	// completion_percent and avg_field are derived in Run from two plain runs, so their measure here is never used.
+	"tasks":        {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField, "completion_percent": "1", "avg_field": "1"},
+	"projects":     {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField, "completion_percent": "1", "avg_field": "1"},
 	"time_entries": {"utilization": "te.minutes", "minutes": "te.minutes", "billable_minutes": "CASE WHEN te.billing_type='billable' THEN te.minutes ELSE 0 END", "count": "1"},
 }
 
@@ -191,7 +192,7 @@ func (q Query) Validate() error {
 			return items.Invalid("unknown " + d.field + " for " + q.ReportingOn)
 		}
 	}
-	if usesField := q.Metric == "sum_field" || q.GroupBy == "field" || q.BreakBy == "field"; usesField != (q.FieldID != "") {
+	if usesField := q.Metric == "sum_field" || q.Metric == "avg_field" || q.GroupBy == "field" || q.BreakBy == "field"; usesField != (q.FieldID != "") {
 		return items.Invalid("field_id is required with the sum_field metric or the field dimension, and only then")
 	}
 	if q.FieldID != "" {
@@ -199,7 +200,7 @@ func (q Query) Validate() error {
 			return items.Invalid("field_id must be an id")
 		}
 	}
-	if q.Metric == "sum_field" && (q.GroupBy == "field" || q.BreakBy == "field") {
+	if (q.Metric == "sum_field" || q.Metric == "avg_field") && (q.GroupBy == "field" || q.BreakBy == "field") {
 		return items.Invalid("one custom field cannot be both the summed number and the grouping choice")
 	}
 	if q.Metric == "utilization" {
@@ -271,6 +272,71 @@ func Run(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query) (
 	if err := q.Validate(); err != nil {
 		return Result{}, err
 	}
+	switch q.Metric {
+	case "completion_percent": // finished tasks as a share of the tasks in scope
+		done := q
+		done.Metric = "count"
+		if len(q.Filters.StatusGroups) > 0 && !slices.Contains(q.Filters.StatusGroups, "completed") {
+			return ratio(ctx, pool, actor, q, done, true) // asking only for other groups: nothing in scope can be completed
+		}
+		done.Filters.StatusGroups = []string{"completed"}
+		return ratio(ctx, pool, actor, q, done, true)
+	case "avg_field": // the mean of a number field over the tasks in scope; tasks without a value count as 0, like sum_field
+		sum := q
+		sum.Metric = "sum_field"
+		return ratio(ctx, pool, actor, q, sum, false)
+	}
+	return runPlain(ctx, pool, actor, q)
+}
+
+// ratio answers num/den per group with den the plain count of q, rounded to one decimal; percent multiplies by 100.
+func ratio(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q, num Query, percent bool) (Result, error) {
+	den := q
+	den.Metric = "count"
+	if q.GroupBy != "field" && q.BreakBy != "field" {
+		den.FieldID = "" // the field only feeds the numerator
+	}
+	d, err := runPlain(ctx, pool, actor, den)
+	if err != nil {
+		return Result{}, err
+	}
+	var n Result
+	if len(q.Filters.StatusGroups) > 0 && percent && !slices.Contains(q.Filters.StatusGroups, "completed") {
+		n = Result{Rows: []Row{}}
+	} else if n, err = runPlain(ctx, pool, actor, num); err != nil {
+		return Result{}, err
+	}
+	scale := 1.0
+	if percent {
+		scale = 100
+	}
+	divide := func(a, b float64) float64 {
+		if b == 0 {
+			return 0
+		}
+		return math.Round(a/b*scale*10) / 10
+	}
+	top := map[[2]string]float64{}
+	for _, r := range n.Rows {
+		k := [2]string{r.Group.Key, ""}
+		if r.Break != nil {
+			k[1] = r.Break.Key
+		}
+		top[k] = r.Value
+	}
+	out := Result{Rows: make([]Row, 0, len(d.Rows)), Total: divide(n.Total, d.Total)}
+	for _, r := range d.Rows {
+		k := [2]string{r.Group.Key, ""}
+		if r.Break != nil {
+			k[1] = r.Break.Key
+		}
+		r.Value = divide(top[k], r.Value)
+		out.Rows = append(out.Rows, r)
+	}
+	return out, nil
+}
+
+func runPlain(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query) (Result, error) {
 	ctx, cancel := context.WithTimeout(ctx, Timeout)
 	defer cancel()
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
@@ -641,7 +707,7 @@ func checkField(ctx context.Context, tx pgx.Tx, q Query) error {
 		return err
 	}
 	numeric := kind == "number" || kind == "currency" || kind == "percent"
-	if q.Metric == "sum_field" && !numeric || q.Metric != "sum_field" && kind != "single_select" {
+	if (q.Metric == "sum_field") && !numeric || q.Metric != "sum_field" && kind != "single_select" {
 		return items.Invalid("the custom field type does not fit this choice: sum_field needs number, currency or percent; the field dimension needs single_select")
 	}
 	return nil

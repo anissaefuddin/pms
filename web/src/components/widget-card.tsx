@@ -9,7 +9,7 @@ import { ResultTable, useResultLabels } from "@/components/result-table";
 
 const WidgetChart = lazy(() => import("@/components/widget-chart"));
 
-export type WidgetConfig = { show_legend?: boolean; show_labels?: boolean; pie_style?: "classic" | "donut" | "ring"; list?: string; template?: string; query?: AnalyticsQuery };
+export type WidgetConfig = { description?: string; show_legend?: boolean; show_labels?: boolean; pie_style?: "classic" | "donut" | "ring"; list?: string; template?: string; query?: AnalyticsQuery };
 
 /** Draws one widget from its data: a task list, an indicator, a table or an accessible chart with a data table behind it. */
 export function WidgetBody({ type, config, data, pending, error }: { type: WidgetType; config: WidgetConfig; data?: WidgetData; pending: boolean; error: Error | null }) {
@@ -25,6 +25,28 @@ export function WidgetBody({ type, config, data, pending, error }: { type: Widge
   return <Series type={type} config={config} query={config.query} result={data.result} />;
 }
 
+/** Rows are the group, columns the break; every row and column carries its total (DASH-03B). */
+function PivotTable({ result, query }: { result: NonNullable<WidgetData["result"]>; query: AnalyticsQuery }) {
+  const { t } = useTranslation();
+  const labels = useResultLabels(query);
+  const columns = [...new Map(result.rows.filter((r) => r.break).map((r) => [r.break!.key, r.break!.label])).entries()];
+  const rows = [...new Map(result.rows.map((r) => [r.group.key, r.group.label])).entries()];
+  const cell = (g: string, b: string) => result.rows.find((r) => r.group.key === g && r.break?.key === b)?.value ?? 0;
+  const rowTotal = (g: string) => columns.reduce((sum, [b]) => sum + cell(g, b), 0);
+  return <div className="overflow-x-auto"><table className="w-full text-left text-sm">
+    <caption className="sr-only">{t("reports.result.chart", { metric: labels.metric, group: labels.group })}</caption>
+    <thead><tr className="border-b"><th scope="col" className="py-2 pr-4">{labels.group}</th>
+      {columns.map(([key, label]) => <th key={key} scope="col" className="py-2 pr-4 text-right">{labels.value(query.break_by, key, label)}</th>)}
+      <th scope="col" className="py-2 pr-4 text-right">{t("dashboards.widget.rowTotal")}</th></tr></thead>
+    <tbody>{rows.map(([g, label]) => <tr key={g} className="border-b"><th scope="row" className="py-2 pr-4 font-normal">{labels.value(query.group_by, g, label)}</th>
+      {columns.map(([b]) => <td key={b} className="py-2 pr-4 text-right tabular-nums">{cell(g, b)}</td>)}
+      <td className="py-2 pr-4 text-right font-medium tabular-nums">{rowTotal(g)}</td></tr>)}</tbody>
+    <tfoot><tr><th scope="row" className="py-2 pr-4 text-left">{t("dashboards.widget.columnTotal")}</th>
+      {columns.map(([b]) => <td key={b} className="py-2 pr-4 text-right font-medium tabular-nums">{rows.reduce((sum, [g]) => sum + cell(g, b), 0)}</td>)}
+      <td className="py-2 pr-4 text-right font-medium tabular-nums">{result.total}</td></tr></tfoot>
+  </table></div>;
+}
+
 function TaskList({ items }: { items: NonNullable<WidgetData["items"]> }) {
   const { t } = useTranslation();
   if (items.length === 0) return <p role="status" className="text-sm text-muted-foreground">{t("dashboards.widget.noTasks")}</p>;
@@ -38,7 +60,13 @@ function Series({ type, config, query, result }: { type: WidgetType; config: Wid
   const labels = useResultLabels(query);
   if (type === "indicator") return <p className="text-4xl font-semibold tabular-nums" aria-label={t("dashboards.widget.indicator", { metric: labels.metric, count: result.total })}>
     {result.total}<span className="ml-2 block text-sm font-normal text-muted-foreground">{labels.metric}</span></p>;
+  if (type === "completion") return <div className="space-y-1">
+    <p className="text-3xl font-semibold tabular-nums">{result.total}%</p>
+    <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={result.total} aria-label={labels.metric} className="h-3 overflow-hidden rounded bg-muted">
+      <div className="h-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, result.total))}%` }} /></div>
+    <p className="text-sm text-muted-foreground">{labels.metric}</p></div>;
   if (result.rows.length === 0) return <p role="status" className="text-sm text-muted-foreground">{t("reports.result.empty")}</p>;
+  if (type === "pivot") return <PivotTable result={result} query={query} />;
   if (!isChart(type)) return <ResultTable result={result} query={query} />;
   const label = (key: string, text: string, field: "group" | "break") => labels.value(field === "group" ? query.group_by : query.break_by, key, text);
   const summary = t("reports.result.chart", { metric: labels.metric, group: labels.group });
@@ -46,7 +74,7 @@ function Series({ type, config, query, result }: { type: WidgetType; config: Wid
   const grid = toGrid(result.rows, label, labels.metric);
   return <div className="space-y-2">
     <Suspense fallback={<p role="status" className="text-sm text-muted-foreground">{t("dashboards.widget.loading")}</p>}>
-      <WidgetChart type={type as "pie"} grid={grid} slices={slices.map((s) => ({ name: s.key === OTHERS_KEY ? t("dashboards.widget.others") : s.label, value: s.value }))}
+      <WidgetChart type={type as "pie" | "area" | "burndown"} grid={grid} slices={slices.map((s) => ({ name: s.key === OTHERS_KEY ? t("dashboards.widget.others") : s.label, value: s.value }))}
         showLegend={config.show_legend ?? true} showLabels={config.show_labels ?? false} pieStyle={config.pie_style ?? "classic"} metric={labels.metric} summary={summary} />
     </Suspense>
     <details className="text-sm"><summary className="cursor-pointer underline">{t("dashboards.widget.showTable")}</summary>

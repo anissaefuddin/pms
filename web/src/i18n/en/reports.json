@@ -131,7 +131,7 @@
   "subscribe.remove": "Unsubscribe",
   "subscribe.saved": "Subscription saved",
   "subscribe.removed": "Subscription removed",
-  "subscribe.note": "Your choice is saved. The report is emailed at that day and hour in your time zone, with the data you are allowed to see.",
+  "subscribe.note": "Your choice is saved. The report is emailed at that day and hour in the time zone you pick (your profile time zone by default), with the data you are allowed to see.",
   "subscribe.failed": "The subscription could not be changed.",
   "day.0": "Sunday",
   "day.1": "Monday",
@@ -159,5 +159,11 @@
   "template.utilization": "Utilization this month",
   "metric.utilization": "Utilization (% of working time)",
   "filters.entryThisMonth": "This month",
-  "filters.dueThisMonth": "Due this month"
+  "filters.dueThisMonth": "Due this month",
+  "metric.sum_field": "Sum of a number field",
+  "metric.avg_field": "Average of a number field",
+  "metric.completion_percent": "Completion (% of tasks done)",
+  "subscribe.daily": "Every day",
+  "subscribe.timezone": "Time zone",
+  "subscribe.profileZone": "My profile time zone"
 }

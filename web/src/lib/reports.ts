@@ -11,7 +11,7 @@ export type Source = (typeof SOURCES)[number];
 
 const itemDimensions = ["assignee", "status", "status_group", "importance", "type", "space", "due_month", "created_month"];
 export const METRICS: Record<Source, string[]> = {
-  tasks: ["count", "effort_minutes"], projects: ["count", "effort_minutes"], time_entries: ["minutes", "billable_minutes", "utilization", "count"],
+  tasks: ["count", "effort_minutes", "completion_percent"], projects: ["count", "effort_minutes", "completion_percent"], time_entries: ["minutes", "billable_minutes", "utilization", "count"],
 };
 export const DIMENSIONS: Record<Source, string[]> = {
   tasks: itemDimensions, projects: itemDimensions, time_entries: ["user", "item", "category", "billing_type", "entry_month"],

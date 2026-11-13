@@ -12,7 +12,7 @@ const rows = (labels: [string, number][]) => ({ total: labels.reduce((s, [, v]) 
 const many = rows(Array.from({ length: 11 }, (_, i) => [`item${i}`, 11 - i] as [string, number]));
 
 function board(over: Record<string, unknown> = {}) {
-  return { id: d1, owner_id: me.id, space_id: null, name: "Team board", version: 3, widgets: [
+  return { id: d1, owner_id: me.id, space_id: null, name: "Team board", layout: "columns", version: 3, widgets: [
     widget(1, "This week", "task_list", { list: "todo_this_week" }),
     widget(2, "Open tasks", "indicator", { query: query({ group_by: undefined }) }),
     widget(3, "By status", "pie", { show_legend: true, show_labels: true, pie_style: "donut", query: query() }),
@@ -159,7 +159,8 @@ test("adding a widget previews the draft and saves the config with If-Match", as
   const calls = await mock(page, { [`POST /dashboards/${d1}/widgets`]: (body: any) => ({ status: 201, body: { ...board(), version: 4, widgets: [...board().widgets, { id: w(8), position: 7, ...body }] } }) });
   await page.goto(`/dashboards/${d1}`);
   await page.getByRole("button", { name: "Add widget" }).click();
-  const dialog = page.getByRole("dialog");
+  await page.getByRole("dialog", { name: "Choose widget" }).getByRole("button", { name: /^Task list/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Add widget" });
   await dialog.getByLabel("Widget name").fill("My donut");
   await dialog.getByLabel(/^Widget type/).selectOption("pie");
   await dialog.getByLabel(/^Pie style/).selectOption("ring");
@@ -234,4 +235,64 @@ test("an unknown dashboard shows not found, and a read-only viewer sees no edit 
   await mock(page, { [`GET /dashboards/${d1}`]: problem(404, "not found", "not_found") });
   await page.goto(`/dashboards/${d1}`);
   await expect(page.getByRole("alert")).toContainText("This dashboard does not exist or you cannot see it.");
+});
+
+test("area, pivot, completion and burndown widgets render from their data, and the picker groups the kinds", async ({ page }) => {
+  const q = { reporting_on: "tasks", metric: "count", group_by: "importance", break_by: "status_group", filters: {} };
+  const dash = board({ widgets: [
+    widget(1, "Area", "area", { query: query({ group_by: "due_month" }) }),
+    widget(2, "Pivot", "pivot", { query: q }),
+    widget(3, "Done", "completion", { query: { reporting_on: "tasks", metric: "completion_percent", filters: {} } }),
+    widget(4, "Burn", "burndown", { query: { reporting_on: "tasks", metric: "count", filters: {} } }),
+  ] });
+  const cell = (g: [string, string], b: [string, string], value: number) => ({ group: { key: g[0], label: g[1] }, break: { key: b[0], label: b[1] }, value });
+  await mock(page, {
+    [`GET /dashboards/${d1}/widgets/${w(1)}/data`]: series(rows([["2026-10", 2], ["2026-11", 5]])),
+    [`GET /dashboards/${d1}/widgets/${w(2)}/data`]: series({ total: 10, rows: [cell(["high", "high"], ["active", "Active"], 3), cell(["high", "high"], ["completed", "Completed"], 2), cell(["low", "low"], ["active", "Active"], 5)] }),
+    [`GET /dashboards/${d1}/widgets/${w(3)}/data`]: series({ total: 40, rows: [] }),
+    [`GET /dashboards/${d1}/widgets/${w(4)}/data`]: series(rows([["2026-11-01", 9], ["2026-11-02", 7], ["2026-11-03", 4]])),
+  }, dash);
+  await page.goto(`/dashboards/${d1}`);
+  await expect(page.getByRole("region", { name: "Area" }).locator('[data-chart="area"] svg')).toBeVisible();
+  const pivot = page.getByRole("region", { name: "Pivot" });
+  await expect(pivot.getByRole("columnheader", { name: "Active" })).toBeVisible();
+  await expect(pivot.getByRole("row", { name: /High/ })).toContainText("5"); // 3 + 2 across the row
+  await expect(pivot.getByRole("row", { name: /^Total/ })).toContainText("10");
+  await expect(page.getByRole("region", { name: "Done" }).getByRole("progressbar")).toHaveAttribute("aria-valuenow", "40");
+  await expect(page.getByRole("region", { name: "Burn" }).locator('[data-chart="burndown"] svg')).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByRole("button", { name: "Add widget" }).click();
+  const picker = page.getByRole("dialog", { name: "Choose widget" });
+  for (const category of ["Lists", "Numbers", "Charts", "Progress over time", "Tables"]) await expect(picker.getByRole("region", { name: category })).toBeVisible();
+  await expect(picker.getByRole("region", { name: "Tables" }).getByRole("button", { name: /^Pivot table/ })).toBeVisible();
+});
+
+test("a Space gets a ready-made analytics board of five widgets", async ({ page }) => {
+  let version = 1;
+  const calls = await mock(page, {
+    "POST /dashboards": (body: any) => ({ status: 201, body: { ...board({ widgets: [] }), name: body.name, version } }),
+    [`POST /dashboards/${d1}/widgets`]: () => ({ status: 201, body: { ...board({ widgets: [] }), version: ++version } }),
+  });
+  await page.goto("/dashboards");
+  await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // personal scope has no Space
+  await page.getByLabel("Show dashboards in").selectOption(marketing.id);
+  await page.getByRole("button", { name: "Create analytics board" }).click();
+  await expect(page).toHaveURL(`/dashboards/${d1}`);
+  const posts = calls.filter((c) => c.method === "POST" && c.path === `/dashboards/${d1}/widgets`);
+  expect(posts.map((c) => c.body.type)).toEqual(["completion", "pie", "burndown", "pivot", "bar"]);
+  expect(posts.map((c) => c.headers["if-match"])).toEqual(['"1"', '"2"', '"3"', '"4"', '"5"']);
+});
+
+test("a widget shows its description and the layout can switch to one column", async ({ page }) => {
+  const dash = board({ widgets: [widget(1, "Open", "indicator", { description: "Everything not done yet", query: query({ group_by: undefined }) })] });
+  const calls = await mock(page, {
+    [`GET /dashboards/${d1}/widgets/${w(1)}/data`]: series(rows([["", 12]])),
+    [`PATCH /dashboards/${d1}`]: (body: any) => ({ body: { ...dash, ...body, version: 4 } }),
+  }, dash);
+  await page.goto(`/dashboards/${d1}`);
+  await expect(page.getByRole("region", { name: "Open" })).toContainText("Everything not done yet");
+  await page.getByLabel("Layout").selectOption("stack");
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toEqual({ layout: "stack" });
+  expect(calls.find((c) => c.method === "PATCH")?.headers["if-match"]).toBe('"3"');
+  await expect(page.locator("main > div.grid").first()).not.toHaveClass(/lg:grid-cols-2/);
 });

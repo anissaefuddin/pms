@@ -321,6 +321,73 @@ paths:
                     items: { $ref: '#/components/schemas/ItemDependency' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /dashboards/{dashboardId}/public-link:
+    parameters:
+      - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getDashboardPublicLink
+      summary: Status tautan publik dashboard (butuh Edit); tidak pernah mengulang token
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DashboardPublicLink' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: putDashboardPublicLink
+      summary: Aktifkan tautan publik atau ganti dengan token, kedaluwarsa, dan password baru; token hanya tampil di jawaban ini (DASH-07)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [expires_at]
+              additionalProperties: false
+              properties:
+                expires_at: { type: string, format: date-time, description: Antara 1 menit dan 365 hari dari sekarang }
+                password: { type: string, description: Opsional; tautan memakai aturan password yang sama dengan akun }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DashboardPublicLink' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteDashboardPublicLink
+      summary: Matikan tautan publik
+      responses:
+        '204': { description: Dimatikan }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /public/dashboards/{token}:
+    parameters:
+      - { name: token, in: path, required: true, schema: { type: string } }
+    post:
+      operationId: viewPublicDashboard
+      summary: Lihat dashboard lewat tautan publik; tidak membaca cookie. Data dihitung dengan hak pembuat tautan dan widget finansial disamarkan
+      security: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                password: { type: string }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicDashboard' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /workload:
     get:
       operationId: getWorkload
@@ -731,7 +798,7 @@ paths:
         required: true
         content:
           application/json:
-            schema: { $ref: '#/components/schemas/DashboardRename' }
+            schema: { $ref: '#/components/schemas/DashboardUpdate' }
       responses:
         '200': { $ref: '#/components/responses/Dashboard' }
         '403': { $ref: '#/components/responses/Problem' }
@@ -4065,6 +4132,13 @@ components:
       required: [name]
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
+    DashboardUpdate:
+      type: object
+      additionalProperties: false
+      description: Salah satu atau keduanya; nama dan orientasi tata letak (DASH-05)
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        layout: { type: string, enum: [columns, stack], description: 'columns: widget berdampingan; stack: satu di atas yang lain' }
     DashboardDestination:
       allOf:
         - { $ref: '#/components/schemas/DashboardRename' }
@@ -4078,12 +4152,13 @@ components:
         space_id: { type: string, format: uuid, nullable: true, description: null untuk pindah ke personal milik pemanggil }
     DashboardSummary:
       type: object
-      required: [id, owner_id, space_id, name, version]
+      required: [id, owner_id, space_id, name, layout, version]
       properties:
         id: { type: string, format: uuid }
         owner_id: { type: string, format: uuid }
         space_id: { type: string, format: uuid, nullable: true }
         name: { type: string }
+        layout: { type: string, enum: [columns, stack] }
         version: { type: integer, minimum: 1 }
     AnalyticsFilters:
       type: object
@@ -4116,7 +4191,7 @@ components:
         reporting_on: { type: string, enum: [tasks, projects, time_entries] }
         space_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Kosong berarti semua Space yang terlihat }
         container_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Project atau Folder; hanya subpohonnya }
-        metric: { type: string, enum: [count, effort_minutes, sum_field, minutes, billable_minutes, utilization], description: 'tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count' }
+        metric: { type: string, enum: [count, effort_minutes, sum_field, avg_field, completion_percent, minutes, billable_minutes, utilization], description: 'tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count' }
         field_id: { type: string, format: uuid, description: 'Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya' }
         group_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
         break_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
@@ -4174,8 +4249,9 @@ components:
       additionalProperties: false
       required: [weekday, hour]
       properties:
-        weekday: { type: integer, minimum: 0, maximum: 6, description: 0 = Minggu }
-        hour: { type: integer, minimum: 0, maximum: 23, description: Jam di zona waktu pelanggan }
+        weekday: { type: integer, minimum: 0, maximum: 6, nullable: true, description: 0 = Minggu; null = setiap hari }
+        hour: { type: integer, minimum: 0, maximum: 23, description: Jam di zona waktu jadwal }
+        timezone: { type: string, nullable: true, description: 'Nama zona waktu IANA; null mengikuti zona waktu profil pelanggan' }
     ReportSummary:
       type: object
       required: [id, name, owner, space, sharing, created_at, updated_at, version, subscription]
@@ -4242,8 +4318,9 @@ components:
       type: object
       additionalProperties: false
       properties:
-        show_legend: { type: boolean, description: "Untuk pie, column, bar, dan line" }
-        show_labels: { type: boolean, description: "Untuk pie, column, bar, dan line" }
+        show_legend: { type: boolean, description: "Untuk pie, column, bar, line, area, dan burndown" }
+        show_labels: { type: boolean, description: "Untuk pie, column, bar, line, area, dan burndown" }
+        description: { type: string, maxLength: 500, description: Keterangan singkat di bawah judul widget (DASH-04) }
         pie_style: { type: string, enum: [classic, donut, ring], description: Khusus pie }
         list: { type: string, enum: [todo_this_week, to_review, completed, assigned_to_me], description: Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya }
         template: { type: string, enum: [my_tasks, overdue, followed, backlog, starred], description: Khusus task_list (DASH-02) }
@@ -4253,7 +4330,7 @@ components:
       required: [name, type]
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
-        type: { type: string, enum: [task_list, indicator, pie, column, bar, line, table] }
+        type: { type: string, enum: [task_list, indicator, pie, column, bar, line, table, area, pivot, burndown, completion], description: 'burndown memakai metrik count atau effort_minutes tanpa pengelompokan, 30 hari terakhir; pivot butuh group_by dan break_by' }
         position: { type: integer, minimum: 0, maximum: 9999 }
         config: { $ref: '#/components/schemas/DashboardWidgetConfig' }
     DashboardWidget:
@@ -5198,6 +5275,33 @@ components:
               due_date: { type: string, format: date, nullable: true }
               progress_percent: { type: integer, format: int32, nullable: true }
               assignees: { type: array, items: { type: string } }
+    DashboardPublicLink:
+      type: object
+      required: [enabled, expires_at, has_password]
+      properties:
+        enabled: { type: boolean }
+        expires_at: { type: string, format: date-time, nullable: true }
+        has_password: { type: boolean }
+        token: { type: string, description: Hanya pada jawaban PUT }
+    PublicDashboard:
+      type: object
+      required: [name, layout, widgets]
+      properties:
+        name: { type: string }
+        layout: { type: string, enum: [columns, stack] }
+        widgets:
+          type: array
+          items:
+            type: object
+            required: [id, name, type, config]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              type: { type: string }
+              config: { $ref: '#/components/schemas/DashboardWidgetConfig' }
+              data: { $ref: '#/components/schemas/WidgetData' }
+              masked: { type: boolean, description: Widget finansial disamarkan }
+              failed: { type: boolean }
     UtilizationRow:
       type: object
       required: [id, name, capacity, planned, actual, planned_percent, actual_percent]

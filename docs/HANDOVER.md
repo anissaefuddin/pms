@@ -330,3 +330,9 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Belum:** UAT manusia G2a, kolom cost di report, widget utilization, bar baseline (SVAR PRO), mengubah tanggal dari Portfolio.
 - **Titik hati-hati:** `time_entries.rate_snapshot` diisi trigger basis data (jangan diisi dari kode kecuali untuk impor historis); `baselines` dan `approval_events` immutable lewat trigger; `GET /users/{id}/capacity` 403 bagi orang luar sengaja.
 
+### Analitik M11.2 (14 Nov 2026)
+
+- **Berjalan:** widget area, pivot, burndown, completion; metrik completion_percent dan avg_field; modal "Choose widget" dan papan analitik Space; deskripsi widget dan layout; tautan publik dashboard (`/d/{token}`) dengan password, kedaluwarsa dan masking finansial; jadwal report harian atau mingguan per zona waktu.
+- **Belum:** pemilih custom field di editor query, pratinjau burndown, riwayat status untuk burndown yang akurat.
+- **Titik hati-hati:** migrasi analitik bernomor 00070 sampai 00073 sengaja melompati 00063 sampai 00069 untuk sesi lain yang mengerjakan file dan integrasi M11; basis data yang sudah menerapkan nomor lebih tinggi lebih dulu perlu goose `-allow-missing`. Playwright untuk sesi paralel memakai `PMS_TEST_BROWSER_PORT` berbeda.
+

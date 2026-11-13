@@ -61,7 +61,7 @@ type due struct {
 	definition                                               []byte
 }
 
-// Deliver claims every subscription whose weekday and hour is now in the subscriber's time zone, runs the report with
+// Deliver claims every subscription whose weekday (or every day) and hour is now in its time zone (the subscriber's own unless one was chosen), runs the report with
 // the subscriber's own rights and hands one email per subscription to enqueue. It returns how many were queued.
 func Deliver(ctx context.Context, pool *pgxpool.Pool, publicURL string, enqueue func(context.Context, pgx.Tx, mail.Args) error) (int, error) {
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
@@ -74,8 +74,8 @@ SELECT r.id::text, u.id::text, u.email::text, u.user_type::text, u.locale, r.nam
 FROM report_subscriptions rs
 JOIN users u ON u.id=rs.user_id AND u.status='active' AND NOT 'report' = ANY(u.email_muted)
 JOIN reports r ON r.id=rs.report_id
-WHERE rs.weekday = EXTRACT(dow FROM now() AT TIME ZONE u.timezone)
-  AND rs.hour = EXTRACT(hour FROM now() AT TIME ZONE u.timezone)
+WHERE (rs.weekday IS NULL OR rs.weekday = EXTRACT(dow FROM now() AT TIME ZONE COALESCE(rs.timezone, u.timezone)))
+  AND rs.hour = EXTRACT(hour FROM now() AT TIME ZONE COALESCE(rs.timezone, u.timezone))
   AND (rs.last_sent_at IS NULL OR rs.last_sent_at < now() - interval '23 hours')
 ORDER BY rs.report_id, rs.user_id
 FOR UPDATE OF rs SKIP LOCKED`)

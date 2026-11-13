@@ -27,6 +27,7 @@ import { Route as AppStarredRouteImport } from './routes/_app/starred'
 import { Route as AppStreamRouteImport } from './routes/_app/stream'
 import { Route as AppTimesheetsRouteImport } from './routes/_app/timesheets'
 import { Route as AppWorkloadRouteImport } from './routes/_app/workload'
+import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as FTokenRouteImport } from './routes/f.$token'
 import { Route as GTokenRouteImport } from './routes/g.$token'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
@@ -145,6 +146,11 @@ const AppWorkloadRoute = AppWorkloadRouteImport.update({
   id: '/workload',
   path: '/workload',
   getParentRoute: () => AppRoute,
+} as any)
+const DTokenRoute = DTokenRouteImport.update({
+  id: '/d/$token',
+  path: '/d/$token',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const FTokenRoute = FTokenRouteImport.update({
   id: '/f/$token',
@@ -313,6 +319,7 @@ export interface FileRoutesByFullPath {
   '/stream': typeof AppStreamRoute
   '/timesheets': typeof AppTimesheetsRoute
   '/workload': typeof AppWorkloadRoute
+  '/d/$token': typeof DTokenRoute
   '/f/$token': typeof FTokenRoute
   '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
@@ -359,6 +366,7 @@ export interface FileRoutesByTo {
   '/stream': typeof AppStreamRoute
   '/timesheets': typeof AppTimesheetsRoute
   '/workload': typeof AppWorkloadRoute
+  '/d/$token': typeof DTokenRoute
   '/f/$token': typeof FTokenRoute
   '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
@@ -408,6 +416,7 @@ export interface FileRoutesById {
   '/_app/stream': typeof AppStreamRoute
   '/_app/timesheets': typeof AppTimesheetsRoute
   '/_app/workload': typeof AppWorkloadRoute
+  '/d/$token': typeof DTokenRoute
   '/f/$token': typeof FTokenRoute
   '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
@@ -459,6 +468,7 @@ export interface FileRouteTypes {
     | '/stream'
     | '/timesheets'
     | '/workload'
+    | '/d/$token'
     | '/f/$token'
     | '/g/$token'
     | '/invitations/$token'
@@ -505,6 +515,7 @@ export interface FileRouteTypes {
     | '/stream'
     | '/timesheets'
     | '/workload'
+    | '/d/$token'
     | '/f/$token'
     | '/g/$token'
     | '/invitations/$token'
@@ -553,6 +564,7 @@ export interface FileRouteTypes {
     | '/_app/stream'
     | '/_app/timesheets'
     | '/_app/workload'
+    | '/d/$token'
     | '/f/$token'
     | '/g/$token'
     | '/invitations/$token'
@@ -591,6 +603,7 @@ export interface RootRouteChildren {
   HelloRoute: typeof HelloRoute
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
+  DTokenRoute: typeof DTokenRoute
   FTokenRoute: typeof FTokenRoute
   GTokenRoute: typeof GTokenRoute
   InvitationsTokenRoute: typeof InvitationsTokenRoute
@@ -723,6 +736,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/workload'
       preLoaderRoute: typeof AppWorkloadRouteImport
       parentRoute: typeof AppRoute
+    }
+    '/d/$token': {
+      id: '/d/$token'
+      path: '/d/$token'
+      fullPath: '/d/$token'
+      preLoaderRoute: typeof DTokenRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/f/$token': {
       id: '/f/$token'
@@ -1041,6 +1061,7 @@ const rootRouteChildren: RootRouteChildren = {
   HelloRoute: HelloRoute,
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
+  DTokenRoute: DTokenRoute,
   FTokenRoute: FTokenRoute,
   GTokenRoute: GTokenRoute,
   InvitationsTokenRoute: InvitationsTokenRoute,

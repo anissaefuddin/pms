@@ -129,16 +129,20 @@ function ResultView({ result, pending, error, layout, query, metricLabel }: {
   </>;
 }
 
+/** The browser's list of IANA zones; an empty list (old engines) leaves only the profile zone. */
+const zones = () => (typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : []);
+
 function Subscription({ report }: { report: Report }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const [weekday, setWeekday] = useState(report.subscription?.weekday ?? 1);
+  const [weekday, setWeekday] = useState<string>(report.subscription ? String(report.subscription.weekday ?? "daily") : "1");
+  const [timezone, setTimezone] = useState(report.subscription?.timezone ?? "");
   const [hour, setHour] = useState(report.subscription?.hour ?? 8);
   const [busy, setBusy] = useState(false);
   async function change(remove: boolean) {
     setBusy(true);
     try {
-      await api(`/api/v1/reports/${report.id}/subscription`, remove ? { method: "DELETE" } : { method: "PUT", body: JSON.stringify({ weekday, hour }) });
+      await api(`/api/v1/reports/${report.id}/subscription`, remove ? { method: "DELETE" } : { method: "PUT", body: JSON.stringify({ weekday: weekday === "daily" ? null : Number(weekday), hour, timezone: timezone || null }) });
       toast.success(t(remove ? "reports.subscribe.removed" : "reports.subscribe.saved"));
       await Promise.all([qc.invalidateQueries({ queryKey: ["report", report.id] }), qc.invalidateQueries({ queryKey: ["reports"] })]);
     } catch { toast.error(t("reports.subscribe.failed")); }
@@ -147,12 +151,18 @@ function Subscription({ report }: { report: Report }) {
   return <Fieldset legend={t("reports.subscribe.title")}>
     <div className="flex flex-wrap items-end gap-4">
       <label className="block text-sm">{t("reports.subscribe.day")}
-        <select className={select} value={weekday} onChange={(e) => setWeekday(Number(e.target.value))}>
+        <select className={select} value={weekday} onChange={(e) => setWeekday(e.target.value)}>
+          <option value="daily">{t("reports.subscribe.daily")}</option>
           {weekdays.map((day) => <option key={day} value={day}>{t(`reports.day.${day}`)}</option>)}
         </select></label>
       <label className="block text-sm">{t("reports.subscribe.hour")}
         <select className={select} value={hour} onChange={(e) => setHour(Number(e.target.value))}>
           {Array.from({ length: 24 }, (_, h) => <option key={h} value={h}>{String(h).padStart(2, "0")}:00</option>)}
+        </select></label>
+      <label className="block text-sm">{t("reports.subscribe.timezone")}
+        <select className={select} value={timezone} onChange={(e) => setTimezone(e.target.value)}>
+          <option value="">{t("reports.subscribe.profileZone")}</option>
+          {zones().map((zone) => <option key={zone} value={zone}>{zone}</option>)}
         </select></label>
       <Button type="button" disabled={busy} onClick={() => void change(false)}>{t("reports.subscribe.save")}</Button>
       {report.subscription && <Button type="button" variant="outline" disabled={busy} onClick={() => void change(true)}>{t("reports.subscribe.remove")}</Button>}

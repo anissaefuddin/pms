@@ -209,18 +209,24 @@ func (e AnalyticsQueryGroupBy) Valid() bool {
 
 // Defines values for AnalyticsQueryMetric.
 const (
-	AnalyticsQueryMetricBillableMinutes AnalyticsQueryMetric = "billable_minutes"
-	AnalyticsQueryMetricCount           AnalyticsQueryMetric = "count"
-	AnalyticsQueryMetricEffortMinutes   AnalyticsQueryMetric = "effort_minutes"
-	AnalyticsQueryMetricMinutes         AnalyticsQueryMetric = "minutes"
-	AnalyticsQueryMetricSumField        AnalyticsQueryMetric = "sum_field"
-	AnalyticsQueryMetricUtilization     AnalyticsQueryMetric = "utilization"
+	AnalyticsQueryMetricAvgField          AnalyticsQueryMetric = "avg_field"
+	AnalyticsQueryMetricBillableMinutes   AnalyticsQueryMetric = "billable_minutes"
+	AnalyticsQueryMetricCompletionPercent AnalyticsQueryMetric = "completion_percent"
+	AnalyticsQueryMetricCount             AnalyticsQueryMetric = "count"
+	AnalyticsQueryMetricEffortMinutes     AnalyticsQueryMetric = "effort_minutes"
+	AnalyticsQueryMetricMinutes           AnalyticsQueryMetric = "minutes"
+	AnalyticsQueryMetricSumField          AnalyticsQueryMetric = "sum_field"
+	AnalyticsQueryMetricUtilization       AnalyticsQueryMetric = "utilization"
 )
 
 // Valid indicates whether the value is a known member of the AnalyticsQueryMetric enum.
 func (e AnalyticsQueryMetric) Valid() bool {
 	switch e {
+	case AnalyticsQueryMetricAvgField:
+		return true
 	case AnalyticsQueryMetricBillableMinutes:
+		return true
+	case AnalyticsQueryMetricCompletionPercent:
 		return true
 	case AnalyticsQueryMetricCount:
 		return true
@@ -660,29 +666,95 @@ func (e CustomFieldType) Valid() bool {
 	}
 }
 
+// Defines values for DashboardLayout.
+const (
+	DashboardLayoutColumns DashboardLayout = "columns"
+	DashboardLayoutStack   DashboardLayout = "stack"
+)
+
+// Valid indicates whether the value is a known member of the DashboardLayout enum.
+func (e DashboardLayout) Valid() bool {
+	switch e {
+	case DashboardLayoutColumns:
+		return true
+	case DashboardLayoutStack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DashboardSummaryLayout.
+const (
+	DashboardSummaryLayoutColumns DashboardSummaryLayout = "columns"
+	DashboardSummaryLayoutStack   DashboardSummaryLayout = "stack"
+)
+
+// Valid indicates whether the value is a known member of the DashboardSummaryLayout enum.
+func (e DashboardSummaryLayout) Valid() bool {
+	switch e {
+	case DashboardSummaryLayoutColumns:
+		return true
+	case DashboardSummaryLayoutStack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DashboardUpdateLayout.
+const (
+	DashboardUpdateLayoutColumns DashboardUpdateLayout = "columns"
+	DashboardUpdateLayoutStack   DashboardUpdateLayout = "stack"
+)
+
+// Valid indicates whether the value is a known member of the DashboardUpdateLayout enum.
+func (e DashboardUpdateLayout) Valid() bool {
+	switch e {
+	case DashboardUpdateLayoutColumns:
+		return true
+	case DashboardUpdateLayoutStack:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DashboardWidgetType.
 const (
-	DashboardWidgetTypeBar       DashboardWidgetType = "bar"
-	DashboardWidgetTypeColumn    DashboardWidgetType = "column"
-	DashboardWidgetTypeIndicator DashboardWidgetType = "indicator"
-	DashboardWidgetTypeLine      DashboardWidgetType = "line"
-	DashboardWidgetTypePie       DashboardWidgetType = "pie"
-	DashboardWidgetTypeTable     DashboardWidgetType = "table"
-	DashboardWidgetTypeTaskList  DashboardWidgetType = "task_list"
+	DashboardWidgetTypeArea       DashboardWidgetType = "area"
+	DashboardWidgetTypeBar        DashboardWidgetType = "bar"
+	DashboardWidgetTypeBurndown   DashboardWidgetType = "burndown"
+	DashboardWidgetTypeColumn     DashboardWidgetType = "column"
+	DashboardWidgetTypeCompletion DashboardWidgetType = "completion"
+	DashboardWidgetTypeIndicator  DashboardWidgetType = "indicator"
+	DashboardWidgetTypeLine       DashboardWidgetType = "line"
+	DashboardWidgetTypePie        DashboardWidgetType = "pie"
+	DashboardWidgetTypePivot      DashboardWidgetType = "pivot"
+	DashboardWidgetTypeTable      DashboardWidgetType = "table"
+	DashboardWidgetTypeTaskList   DashboardWidgetType = "task_list"
 )
 
 // Valid indicates whether the value is a known member of the DashboardWidgetType enum.
 func (e DashboardWidgetType) Valid() bool {
 	switch e {
+	case DashboardWidgetTypeArea:
+		return true
 	case DashboardWidgetTypeBar:
 		return true
+	case DashboardWidgetTypeBurndown:
+		return true
 	case DashboardWidgetTypeColumn:
+		return true
+	case DashboardWidgetTypeCompletion:
 		return true
 	case DashboardWidgetTypeIndicator:
 		return true
 	case DashboardWidgetTypeLine:
 		return true
 	case DashboardWidgetTypePie:
+		return true
+	case DashboardWidgetTypePivot:
 		return true
 	case DashboardWidgetTypeTable:
 		return true
@@ -767,27 +839,39 @@ func (e DashboardWidgetConfigTemplate) Valid() bool {
 
 // Defines values for DashboardWidgetInputType.
 const (
-	DashboardWidgetInputTypeBar       DashboardWidgetInputType = "bar"
-	DashboardWidgetInputTypeColumn    DashboardWidgetInputType = "column"
-	DashboardWidgetInputTypeIndicator DashboardWidgetInputType = "indicator"
-	DashboardWidgetInputTypeLine      DashboardWidgetInputType = "line"
-	DashboardWidgetInputTypePie       DashboardWidgetInputType = "pie"
-	DashboardWidgetInputTypeTable     DashboardWidgetInputType = "table"
-	DashboardWidgetInputTypeTaskList  DashboardWidgetInputType = "task_list"
+	DashboardWidgetInputTypeArea       DashboardWidgetInputType = "area"
+	DashboardWidgetInputTypeBar        DashboardWidgetInputType = "bar"
+	DashboardWidgetInputTypeBurndown   DashboardWidgetInputType = "burndown"
+	DashboardWidgetInputTypeColumn     DashboardWidgetInputType = "column"
+	DashboardWidgetInputTypeCompletion DashboardWidgetInputType = "completion"
+	DashboardWidgetInputTypeIndicator  DashboardWidgetInputType = "indicator"
+	DashboardWidgetInputTypeLine       DashboardWidgetInputType = "line"
+	DashboardWidgetInputTypePie        DashboardWidgetInputType = "pie"
+	DashboardWidgetInputTypePivot      DashboardWidgetInputType = "pivot"
+	DashboardWidgetInputTypeTable      DashboardWidgetInputType = "table"
+	DashboardWidgetInputTypeTaskList   DashboardWidgetInputType = "task_list"
 )
 
 // Valid indicates whether the value is a known member of the DashboardWidgetInputType enum.
 func (e DashboardWidgetInputType) Valid() bool {
 	switch e {
+	case DashboardWidgetInputTypeArea:
+		return true
 	case DashboardWidgetInputTypeBar:
 		return true
+	case DashboardWidgetInputTypeBurndown:
+		return true
 	case DashboardWidgetInputTypeColumn:
+		return true
+	case DashboardWidgetInputTypeCompletion:
 		return true
 	case DashboardWidgetInputTypeIndicator:
 		return true
 	case DashboardWidgetInputTypeLine:
 		return true
 	case DashboardWidgetInputTypePie:
+		return true
+	case DashboardWidgetInputTypePivot:
 		return true
 	case DashboardWidgetInputTypeTable:
 		return true
@@ -1557,6 +1641,24 @@ func (e ProjectProgressRisk) Valid() bool {
 	case ProjectProgressRiskRed:
 		return true
 	case ProjectProgressRiskYellow:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for PublicDashboardLayout.
+const (
+	PublicDashboardLayoutColumns PublicDashboardLayout = "columns"
+	PublicDashboardLayoutStack   PublicDashboardLayout = "stack"
+)
+
+// Valid indicates whether the value is a known member of the PublicDashboardLayout enum.
+func (e PublicDashboardLayout) Valid() bool {
+	switch e {
+	case PublicDashboardLayoutColumns:
+		return true
+	case PublicDashboardLayoutStack:
 		return true
 	default:
 		return false
@@ -2574,7 +2676,7 @@ type AnalyticsQuery struct {
 	Filters *AnalyticsFilters      `json:"filters,omitempty"`
 	GroupBy *AnalyticsQueryGroupBy `json:"group_by,omitempty"`
 
-	// Metric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count
+	// Metric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count
 	Metric      AnalyticsQueryMetric      `json:"metric"`
 	ReportingOn AnalyticsQueryReportingOn `json:"reporting_on"`
 
@@ -2588,7 +2690,7 @@ type AnalyticsQueryBreakBy string
 // AnalyticsQueryGroupBy defines model for AnalyticsQuery.GroupBy.
 type AnalyticsQueryGroupBy string
 
-// AnalyticsQueryMetric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count
+// AnalyticsQueryMetric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count
 type AnalyticsQueryMetric string
 
 // AnalyticsQueryReportingOn defines model for AnalyticsQuery.ReportingOn.
@@ -2942,12 +3044,16 @@ type CustomFieldValues_AdditionalProperties struct {
 // Dashboard defines model for Dashboard.
 type Dashboard struct {
 	Id      openapi_types.UUID  `json:"id"`
+	Layout  DashboardLayout     `json:"layout"`
 	Name    string              `json:"name"`
 	OwnerId openapi_types.UUID  `json:"owner_id"`
 	SpaceId *openapi_types.UUID `json:"space_id"`
 	Version int                 `json:"version"`
 	Widgets []DashboardWidget   `json:"widgets"`
 }
+
+// DashboardLayout defines model for Dashboard.Layout.
+type DashboardLayout string
 
 // DashboardDestination defines model for DashboardDestination.
 type DashboardDestination struct {
@@ -2968,6 +3074,16 @@ type DashboardMove struct {
 	SpaceId *openapi_types.UUID `json:"space_id"`
 }
 
+// DashboardPublicLink defines model for DashboardPublicLink.
+type DashboardPublicLink struct {
+	Enabled     bool       `json:"enabled"`
+	ExpiresAt   *time.Time `json:"expires_at"`
+	HasPassword bool       `json:"has_password"`
+
+	// Token Hanya pada jawaban PUT
+	Token *string `json:"token,omitempty"`
+}
+
 // DashboardRename defines model for DashboardRename.
 type DashboardRename struct {
 	Name string `json:"name"`
@@ -2975,12 +3091,26 @@ type DashboardRename struct {
 
 // DashboardSummary defines model for DashboardSummary.
 type DashboardSummary struct {
-	Id      openapi_types.UUID  `json:"id"`
-	Name    string              `json:"name"`
-	OwnerId openapi_types.UUID  `json:"owner_id"`
-	SpaceId *openapi_types.UUID `json:"space_id"`
-	Version int                 `json:"version"`
+	Id      openapi_types.UUID     `json:"id"`
+	Layout  DashboardSummaryLayout `json:"layout"`
+	Name    string                 `json:"name"`
+	OwnerId openapi_types.UUID     `json:"owner_id"`
+	SpaceId *openapi_types.UUID    `json:"space_id"`
+	Version int                    `json:"version"`
 }
+
+// DashboardSummaryLayout defines model for DashboardSummary.Layout.
+type DashboardSummaryLayout string
+
+// DashboardUpdate Salah satu atau keduanya; nama dan orientasi tata letak (DASH-05)
+type DashboardUpdate struct {
+	// Layout columns: widget berdampingan; stack: satu di atas yang lain
+	Layout *DashboardUpdateLayout `json:"layout,omitempty"`
+	Name   *string                `json:"name,omitempty"`
+}
+
+// DashboardUpdateLayout columns: widget berdampingan; stack: satu di atas yang lain
+type DashboardUpdateLayout string
 
 // DashboardWidget defines model for DashboardWidget.
 type DashboardWidget struct {
@@ -2988,14 +3118,19 @@ type DashboardWidget struct {
 	Id       openapi_types.UUID    `json:"id"`
 	Name     string                `json:"name"`
 	Position int                   `json:"position"`
-	Type     DashboardWidgetType   `json:"type"`
+
+	// Type burndown memakai metrik count atau effort_minutes tanpa pengelompokan, 30 hari terakhir; pivot butuh group_by dan break_by
+	Type DashboardWidgetType `json:"type"`
 }
 
-// DashboardWidgetType defines model for DashboardWidget.Type.
+// DashboardWidgetType burndown memakai metrik count atau effort_minutes tanpa pengelompokan, 30 hari terakhir; pivot butuh group_by dan break_by
 type DashboardWidgetType string
 
 // DashboardWidgetConfig defines model for DashboardWidgetConfig.
 type DashboardWidgetConfig struct {
+	// Description Keterangan singkat di bawah judul widget (DASH-04)
+	Description *string `json:"description,omitempty"`
+
 	// List Khusus task_list (DASH-01); gunakan list atau template
 	List *DashboardWidgetConfigList `json:"list,omitempty"`
 
@@ -3003,10 +3138,10 @@ type DashboardWidgetConfig struct {
 	PieStyle *DashboardWidgetConfigPieStyle `json:"pie_style,omitempty"`
 	Query    *AnalyticsQuery                `json:"query,omitempty"`
 
-	// ShowLabels Untuk pie, column, bar, dan line
+	// ShowLabels Untuk pie, column, bar, line, area, dan burndown
 	ShowLabels *bool `json:"show_labels,omitempty"`
 
-	// ShowLegend Untuk pie, column, bar, dan line
+	// ShowLegend Untuk pie, column, bar, line, area, dan burndown
 	ShowLegend *bool `json:"show_legend,omitempty"`
 
 	// Template Khusus task_list (DASH-02)
@@ -3024,13 +3159,15 @@ type DashboardWidgetConfigTemplate string
 
 // DashboardWidgetInput defines model for DashboardWidgetInput.
 type DashboardWidgetInput struct {
-	Config   *DashboardWidgetConfig   `json:"config,omitempty"`
-	Name     string                   `json:"name"`
-	Position *int                     `json:"position,omitempty"`
-	Type     DashboardWidgetInputType `json:"type"`
+	Config   *DashboardWidgetConfig `json:"config,omitempty"`
+	Name     string                 `json:"name"`
+	Position *int                   `json:"position,omitempty"`
+
+	// Type burndown memakai metrik count atau effort_minutes tanpa pengelompokan, 30 hari terakhir; pivot butuh group_by dan break_by
+	Type DashboardWidgetInputType `json:"type"`
 }
 
-// DashboardWidgetInputType defines model for DashboardWidgetInput.Type.
+// DashboardWidgetInputType burndown memakai metrik count atau effort_minutes tanpa pengelompokan, 30 hari terakhir; pivot butuh group_by dan break_by
 type DashboardWidgetInputType string
 
 // DependencyType defines model for DependencyType.
@@ -3808,6 +3945,26 @@ type ProjectProgressMethod string
 // ProjectProgressRisk defines model for ProjectProgressRisk.
 type ProjectProgressRisk string
 
+// PublicDashboard defines model for PublicDashboard.
+type PublicDashboard struct {
+	Layout  PublicDashboardLayout `json:"layout"`
+	Name    string                `json:"name"`
+	Widgets []struct {
+		Config DashboardWidgetConfig `json:"config"`
+		Data   *WidgetData           `json:"data,omitempty"`
+		Failed *bool                 `json:"failed,omitempty"`
+		Id     openapi_types.UUID    `json:"id"`
+
+		// Masked Widget finansial disamarkan
+		Masked *bool  `json:"masked,omitempty"`
+		Name   string `json:"name"`
+		Type   string `json:"type"`
+	} `json:"widgets"`
+}
+
+// PublicDashboardLayout defines model for PublicDashboard.Layout.
+type PublicDashboardLayout string
+
 // PublicGanttSnapshot defines model for PublicGanttSnapshot.
 type PublicGanttSnapshot struct {
 	Items []struct {
@@ -3901,11 +4058,14 @@ type ReportList struct {
 
 // ReportSubscription defines model for ReportSubscription.
 type ReportSubscription struct {
-	// Hour Jam di zona waktu pelanggan
+	// Hour Jam di zona waktu jadwal
 	Hour int `json:"hour"`
 
-	// Weekday 0 = Minggu
-	Weekday int `json:"weekday"`
+	// Timezone Nama zona waktu IANA; null mengikuti zona waktu profil pelanggan
+	Timezone *string `json:"timezone,omitempty"`
+
+	// Weekday 0 = Minggu; null = setiap hari
+	Weekday *int `json:"weekday"`
 }
 
 // ReportSummary defines model for ReportSummary.
@@ -4614,6 +4774,15 @@ type MoveDashboardParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// PutDashboardPublicLinkJSONBody defines parameters for PutDashboardPublicLink.
+type PutDashboardPublicLinkJSONBody struct {
+	// ExpiresAt Antara 1 menit dan 365 hari dari sekarang
+	ExpiresAt time.Time `json:"expires_at"`
+
+	// Password Opsional; tautan memakai aturan password yang sama dengan akun
+	Password *string `json:"password,omitempty"`
+}
+
 // CreateDashboardWidgetParams defines parameters for CreateDashboardWidget.
 type CreateDashboardWidgetParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -4852,6 +5021,11 @@ type UpdateNotificationJSONBody struct {
 // GetPortfolioTimelineJSONBody defines parameters for GetPortfolioTimeline.
 type GetPortfolioTimelineJSONBody struct {
 	ProjectIds []openapi_types.UUID `json:"project_ids"`
+}
+
+// ViewPublicDashboardJSONBody defines parameters for ViewPublicDashboard.
+type ViewPublicDashboardJSONBody struct {
+	Password *string `json:"password,omitempty"`
 }
 
 // SubmitPublicFormJSONBody defines parameters for SubmitPublicForm.
@@ -5180,13 +5354,16 @@ type UpdateCommentJSONRequestBody UpdateCommentJSONBody
 type CreateDashboardJSONRequestBody = DashboardDestination
 
 // RenameDashboardJSONRequestBody defines body for RenameDashboard for application/json ContentType.
-type RenameDashboardJSONRequestBody = DashboardRename
+type RenameDashboardJSONRequestBody = DashboardUpdate
 
 // DuplicateDashboardJSONRequestBody defines body for DuplicateDashboard for application/json ContentType.
 type DuplicateDashboardJSONRequestBody = DashboardDestination
 
 // MoveDashboardJSONRequestBody defines body for MoveDashboard for application/json ContentType.
 type MoveDashboardJSONRequestBody = DashboardMove
+
+// PutDashboardPublicLinkJSONRequestBody defines body for PutDashboardPublicLink for application/json ContentType.
+type PutDashboardPublicLinkJSONRequestBody PutDashboardPublicLinkJSONBody
 
 // CreateDashboardWidgetJSONRequestBody defines body for CreateDashboardWidget for application/json ContentType.
 type CreateDashboardWidgetJSONRequestBody = DashboardWidgetInput
@@ -5280,6 +5457,9 @@ type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
 
 // GetPortfolioTimelineJSONRequestBody defines body for GetPortfolioTimeline for application/json ContentType.
 type GetPortfolioTimelineJSONRequestBody GetPortfolioTimelineJSONBody
+
+// ViewPublicDashboardJSONRequestBody defines body for ViewPublicDashboard for application/json ContentType.
+type ViewPublicDashboardJSONRequestBody ViewPublicDashboardJSONBody
 
 // SubmitPublicFormJSONRequestBody defines body for SubmitPublicForm for application/json ContentType.
 type SubmitPublicFormJSONRequestBody SubmitPublicFormJSONBody
@@ -5754,6 +5934,15 @@ type ServerInterface interface {
 	// MoveDashboard Pindah dengan izin delete di sumber dan create di tujuan
 	// (POST /dashboards/{dashboardId}/move)
 	MoveDashboard(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params MoveDashboardParams)
+	// DeleteDashboardPublicLink Matikan tautan publik
+	// (DELETE /dashboards/{dashboardId}/public-link)
+	DeleteDashboardPublicLink(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID)
+	// GetDashboardPublicLink Status tautan publik dashboard (butuh Edit); tidak pernah mengulang token
+	// (GET /dashboards/{dashboardId}/public-link)
+	GetDashboardPublicLink(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID)
+	// PutDashboardPublicLink Aktifkan tautan publik atau ganti dengan token, kedaluwarsa, dan password baru; token hanya tampil di jawaban ini (DASH-07)
+	// (PUT /dashboards/{dashboardId}/public-link)
+	PutDashboardPublicLink(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID)
 
 	// (POST /dashboards/{dashboardId}/widgets)
 	CreateDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, params CreateDashboardWidgetParams)
@@ -5982,6 +6171,9 @@ type ServerInterface interface {
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(w http.ResponseWriter, r *http.Request)
+	// ViewPublicDashboard Lihat dashboard lewat tautan publik; tidak membaca cookie. Data dihitung dengan hak pembuat tautan dan widget finansial disamarkan
+	// (POST /public/dashboards/{token})
+	ViewPublicDashboard(w http.ResponseWriter, r *http.Request, token string)
 	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (GET /public/forms/{token})
 	GetPublicForm(w http.ResponseWriter, r *http.Request, token string)
@@ -7217,6 +7409,84 @@ func (siw *ServerInterfaceWrapper) MoveDashboard(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.MoveDashboard(w, r, dashboardId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteDashboardPublicLink operation middleware
+func (siw *ServerInterfaceWrapper) DeleteDashboardPublicLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteDashboardPublicLink(w, r, dashboardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDashboardPublicLink operation middleware
+func (siw *ServerInterfaceWrapper) GetDashboardPublicLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDashboardPublicLink(w, r, dashboardId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutDashboardPublicLink operation middleware
+func (siw *ServerInterfaceWrapper) PutDashboardPublicLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutDashboardPublicLink(w, r, dashboardId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9554,6 +9824,32 @@ func (siw *ServerInterfaceWrapper) GetPortfolioTimeline(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetPortfolioTimeline(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ViewPublicDashboard operation middleware
+func (siw *ServerInterfaceWrapper) ViewPublicDashboard(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ViewPublicDashboard(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12332,6 +12628,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/public/gantt/{token}", wrapper.GetPublicGanttSnapshot)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/portfolio/timeline", wrapper.GetPortfolioTimeline)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.DeleteDashboardPublicLink)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.GetDashboardPublicLink)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.PutDashboardPublicLink)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/public/dashboards/{token}", wrapper.ViewPublicDashboard)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/workload", wrapper.GetWorkload)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/resource-directory", wrapper.DeleteResourceEntry)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/resource-directory", wrapper.GetResourceDirectory)
@@ -14814,6 +15114,171 @@ func (response MoveDashboard428ApplicationProblemPlusJSONResponse) VisitMoveDash
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardPublicLinkRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+}
+
+type DeleteDashboardPublicLinkResponseObject interface {
+	VisitDeleteDashboardPublicLinkResponse(w http.ResponseWriter) error
+}
+
+type DeleteDashboardPublicLink204Response struct {
+}
+
+func (response DeleteDashboardPublicLink204Response) VisitDeleteDashboardPublicLinkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteDashboardPublicLink403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteDashboardPublicLink403ApplicationProblemPlusJSONResponse) VisitDeleteDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteDashboardPublicLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteDashboardPublicLink404ApplicationProblemPlusJSONResponse) VisitDeleteDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardPublicLinkRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+}
+
+type GetDashboardPublicLinkResponseObject interface {
+	VisitGetDashboardPublicLinkResponse(w http.ResponseWriter) error
+}
+
+type GetDashboardPublicLink200JSONResponse DashboardPublicLink
+
+func (response GetDashboardPublicLink200JSONResponse) VisitGetDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardPublicLink403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetDashboardPublicLink403ApplicationProblemPlusJSONResponse) VisitGetDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardPublicLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetDashboardPublicLink404ApplicationProblemPlusJSONResponse) VisitGetDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutDashboardPublicLinkRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	Body        *PutDashboardPublicLinkJSONRequestBody
+}
+
+type PutDashboardPublicLinkResponseObject interface {
+	VisitPutDashboardPublicLinkResponse(w http.ResponseWriter) error
+}
+
+type PutDashboardPublicLink200JSONResponse DashboardPublicLink
+
+func (response PutDashboardPublicLink200JSONResponse) VisitPutDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutDashboardPublicLink403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutDashboardPublicLink403ApplicationProblemPlusJSONResponse) VisitPutDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutDashboardPublicLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutDashboardPublicLink404ApplicationProblemPlusJSONResponse) VisitPutDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutDashboardPublicLink422ApplicationProblemPlusJSONResponse Problem
+
+func (response PutDashboardPublicLink422ApplicationProblemPlusJSONResponse) VisitPutDashboardPublicLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -18762,6 +19227,78 @@ func (response GetPortfolioTimeline422ApplicationProblemPlusJSONResponse) VisitG
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ViewPublicDashboardRequestObject struct {
+	Token string `json:"token"`
+	Body  *ViewPublicDashboardJSONRequestBody
+}
+
+type ViewPublicDashboardResponseObject interface {
+	VisitViewPublicDashboardResponse(w http.ResponseWriter) error
+}
+
+type ViewPublicDashboard200JSONResponse PublicDashboard
+
+func (response ViewPublicDashboard200JSONResponse) VisitViewPublicDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ViewPublicDashboard401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ViewPublicDashboard401ApplicationProblemPlusJSONResponse) VisitViewPublicDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ViewPublicDashboard404ApplicationProblemPlusJSONResponse Problem
+
+func (response ViewPublicDashboard404ApplicationProblemPlusJSONResponse) VisitViewPublicDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ViewPublicDashboard429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response ViewPublicDashboard429ApplicationProblemPlusJSONResponse) VisitViewPublicDashboardResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -23982,6 +24519,15 @@ type StrictServerInterface interface {
 	// MoveDashboard Pindah dengan izin delete di sumber dan create di tujuan
 	// (POST /dashboards/{dashboardId}/move)
 	MoveDashboard(ctx context.Context, request MoveDashboardRequestObject) (MoveDashboardResponseObject, error)
+	// DeleteDashboardPublicLink Matikan tautan publik
+	// (DELETE /dashboards/{dashboardId}/public-link)
+	DeleteDashboardPublicLink(ctx context.Context, request DeleteDashboardPublicLinkRequestObject) (DeleteDashboardPublicLinkResponseObject, error)
+	// GetDashboardPublicLink Status tautan publik dashboard (butuh Edit); tidak pernah mengulang token
+	// (GET /dashboards/{dashboardId}/public-link)
+	GetDashboardPublicLink(ctx context.Context, request GetDashboardPublicLinkRequestObject) (GetDashboardPublicLinkResponseObject, error)
+	// PutDashboardPublicLink Aktifkan tautan publik atau ganti dengan token, kedaluwarsa, dan password baru; token hanya tampil di jawaban ini (DASH-07)
+	// (PUT /dashboards/{dashboardId}/public-link)
+	PutDashboardPublicLink(ctx context.Context, request PutDashboardPublicLinkRequestObject) (PutDashboardPublicLinkResponseObject, error)
 
 	// (POST /dashboards/{dashboardId}/widgets)
 	CreateDashboardWidget(ctx context.Context, request CreateDashboardWidgetRequestObject) (CreateDashboardWidgetResponseObject, error)
@@ -24210,6 +24756,9 @@ type StrictServerInterface interface {
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(ctx context.Context, request GetPortfolioTimelineRequestObject) (GetPortfolioTimelineResponseObject, error)
+	// ViewPublicDashboard Lihat dashboard lewat tautan publik; tidak membaca cookie. Data dihitung dengan hak pembuat tautan dan widget finansial disamarkan
+	// (POST /public/dashboards/{token})
+	ViewPublicDashboard(ctx context.Context, request ViewPublicDashboardRequestObject) (ViewPublicDashboardResponseObject, error)
 	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (GET /public/forms/{token})
 	GetPublicForm(ctx context.Context, request GetPublicFormRequestObject) (GetPublicFormResponseObject, error)
@@ -25540,6 +26089,91 @@ func (sh *strictHandler) MoveDashboard(w http.ResponseWriter, r *http.Request, d
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(MoveDashboardResponseObject); ok {
 		if err := validResponse.VisitMoveDashboardResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteDashboardPublicLink operation middleware
+func (sh *strictHandler) DeleteDashboardPublicLink(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID) {
+	var request DeleteDashboardPublicLinkRequestObject
+
+	request.DashboardId = dashboardId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteDashboardPublicLink(ctx, request.(DeleteDashboardPublicLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteDashboardPublicLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteDashboardPublicLinkResponseObject); ok {
+		if err := validResponse.VisitDeleteDashboardPublicLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDashboardPublicLink operation middleware
+func (sh *strictHandler) GetDashboardPublicLink(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID) {
+	var request GetDashboardPublicLinkRequestObject
+
+	request.DashboardId = dashboardId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDashboardPublicLink(ctx, request.(GetDashboardPublicLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDashboardPublicLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDashboardPublicLinkResponseObject); ok {
+		if err := validResponse.VisitGetDashboardPublicLinkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutDashboardPublicLink operation middleware
+func (sh *strictHandler) PutDashboardPublicLink(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID) {
+	var request PutDashboardPublicLinkRequestObject
+
+	request.DashboardId = dashboardId
+
+	var body PutDashboardPublicLinkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutDashboardPublicLink(ctx, request.(PutDashboardPublicLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutDashboardPublicLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutDashboardPublicLinkResponseObject); ok {
+		if err := validResponse.VisitPutDashboardPublicLinkResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -27710,6 +28344,42 @@ func (sh *strictHandler) GetPortfolioTimeline(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetPortfolioTimelineResponseObject); ok {
 		if err := validResponse.VisitGetPortfolioTimelineResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ViewPublicDashboard operation middleware
+func (sh *strictHandler) ViewPublicDashboard(w http.ResponseWriter, r *http.Request, token string) {
+	var request ViewPublicDashboardRequestObject
+
+	request.Token = token
+
+	var body ViewPublicDashboardJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ViewPublicDashboard(ctx, request.(ViewPublicDashboardRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ViewPublicDashboard")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ViewPublicDashboardResponseObject); ok {
+		if err := validResponse.VisitViewPublicDashboardResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

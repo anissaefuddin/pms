@@ -8,7 +8,7 @@ import { palette, type Grid } from "@/lib/charts";
 echarts.use([BarChart, LineChart, PieChart, GridComponent, LegendComponent, TooltipComponent, AriaComponent, SVGRenderer]);
 
 export type ChartProps = {
-  type: "pie" | "column" | "bar" | "line";
+  type: "pie" | "column" | "bar" | "line" | "area" | "burndown";
   grid: Grid;
   /** Pie slices (one series). */
   slices: { name: string; value: number }[];
@@ -59,12 +59,15 @@ function option(p: ChartProps, el: Element): echarts.EChartsCoreOption {
     return { ...base, series: [{ type: "pie", radius: radius[p.pieStyle], data: p.slices, label: { show: p.showLabels, color: text, formatter: "{b}: {c}" }, avoidLabelOverlap: true,
       itemStyle: p.pieStyle === "classic" ? undefined : { borderColor: "transparent", borderWidth: 2 } }] };
   }
+  const lineLike = p.type === "line" || p.type === "area" || p.type === "burndown";
   const categories = p.grid.categories.map((c) => c.label);
   const horizontal = p.type === "bar";
   const category = { type: "category" as const, data: categories, axisLabel: { color: text, interval: 0, hideOverlap: true }, axisLine: { lineStyle: { color: text } } };
   const value = { type: "value" as const, name: p.metric, nameTextStyle: { color: text }, axisLabel: { color: text }, splitLine: { lineStyle: { opacity: 0.25 } } };
   return { ...base, grid: { left: 8, right: 16, top: 28, bottom: p.showLegend ? 40 : 8, containLabel: true },
     xAxis: horizontal ? value : category, yAxis: horizontal ? category : value,
-    series: p.grid.series.map((s) => ({ type: p.type === "line" ? "line" : "bar", name: s.name, data: s.values, stack: p.grid.series.length > 1 && p.type !== "line" ? "total" : undefined,
-      label: { show: p.showLabels, color: text, position: p.type === "line" ? "top" : undefined }, ...(p.type === "line" ? { symbolSize: 8 } : {}) })) };
+    series: p.grid.series.map((s) => ({ type: lineLike ? "line" : "bar", name: s.name, data: s.values,
+      stack: p.grid.series.length > 1 && (p.type === "area" || !lineLike) ? "total" : undefined,
+      label: { show: p.showLabels, color: text, position: lineLike ? "top" : undefined },
+      ...(lineLike ? { symbolSize: 8 } : {}), ...(p.type === "area" ? { areaStyle: { opacity: 0.35 } } : {}), ...(p.type === "burndown" ? { step: "end" } : {}) })) };
 }

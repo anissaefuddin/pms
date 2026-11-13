@@ -676,3 +676,13 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
 - Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
 
+## M11 / S11.2.1 sampai S11.2.5 analitik (14 Nov 2026)
+
+PostgreSQL 16 sementara, Chrome terpasang; Playwright memakai `PMS_TEST_BROWSER_PORT=4273` karena sesi lain memakai port 4173.
+
+- PASS (S11.2.1, S11.2.2). `TestAnalyticsWidgetsAreaPivotBurndownCompletion`: pivot 3 sel dengan total 4 dan ditolak bila tanpa kolom (422); area; completion 2 dari 4 = 50% (per importance 33,3 dan 100); rata-rata field 5; burndown 30 hari cocok dengan baris mentah (dibuat 20, 10, 9 hari lalu; selesai 5 dan 2 hari lalu). `dashboards.spec.ts`: area, pivot dengan total baris dan kolom, progress bar, burndown, modal "Choose widget" dengan lima kategori, papan analitik Space (lima widget dengan If-Match berurutan).
+- PASS (S11.2.3). `TestDashboardLayoutAndWidgetDescription`: layout `columns` atau `stack` lewat PATCH (If-Match), nilai lain 422, orang lain 404, salinan membawa layout; deskripsi 500 karakter diterima dan 501 ditolak. `dashboards.spec.ts`: deskripsi tampil di kartu dan layout beralih satu kolom.
+- PASS (S11.2.4). `TestPublicDashboardLinkExpiryPasswordAndFinancialMasking`: hanya yang bisa Edit mengelola tautan, token tampil sekali dan hanya hash yang disimpan, kedaluwarsa lampau 422, password lemah 422, tanpa atau salah password 401, token salah 404, widget dengan field currency atau billable disamarkan tanpa data, kedaluwarsa, token lama mati setelah diganti, dicabut 404. `dashboard-public.spec.ts` (3 tes, axe). E2E live `TestBrowserM11AnalyticsFlows` + `m11-analytics-live.spec.ts`: papan analitik dari UI dengan angka nyata (33,3% selesai, pivot 3), tautan publik dengan password dibuka tamu tanpa cookie (axe bersih), dimatikan lalu halaman "unavailable".
+- PASS (S11.2.5). `TestReportScheduleDailyAndChosenTimeZone`: jadwal setiap hari (`weekday` null) pada jam di zona Asia/Jakarta terkirim tepat satu kali per slot, jam lain tidak, tanpa zona pilihan zona profil dipakai, zona palsu dan hari 7 ditolak 422. `reports.spec.ts`: pilihan "Every day" dan zona waktu terkirim.
+- Belum: editor query belum punya pemilih custom field (avg_field hanya lewat API); burndown dihitung dari `completed_at` dan tidak mengenal item yang dibuka ulang; tautan publik menghitung data dengan hak pembuat tautan; pratinjau burndown di editor widget tidak ada.
+

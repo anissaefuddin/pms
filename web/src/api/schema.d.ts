@@ -171,6 +171,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/dashboards/{dashboardId}/public-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        /** Status tautan publik dashboard (butuh Edit); tidak pernah mengulang token */
+        get: operations["getDashboardPublicLink"];
+        /** Aktifkan tautan publik atau ganti dengan token, kedaluwarsa, dan password baru; token hanya tampil di jawaban ini (DASH-07) */
+        put: operations["putDashboardPublicLink"];
+        post?: never;
+        /** Matikan tautan publik */
+        delete: operations["deleteDashboardPublicLink"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/dashboards/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lihat dashboard lewat tautan publik; tidak membaca cookie. Data dihitung dengan hak pembuat tautan dan widget finansial disamarkan */
+        post: operations["viewPublicDashboard"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workload": {
         parameters: {
             query?: never;
@@ -2695,6 +2735,15 @@ export interface components {
         DashboardRename: {
             name: string;
         };
+        /** @description Salah satu atau keduanya; nama dan orientasi tata letak (DASH-05) */
+        DashboardUpdate: {
+            name?: string;
+            /**
+             * @description columns: widget berdampingan; stack: satu di atas yang lain
+             * @enum {string}
+             */
+            layout?: "columns" | "stack";
+        };
         DashboardDestination: components["schemas"]["DashboardRename"] & {
             /**
              * Format: uuid
@@ -2717,6 +2766,8 @@ export interface components {
             /** Format: uuid */
             space_id: string | null;
             name: string;
+            /** @enum {string} */
+            layout: "columns" | "stack";
             version: number;
         };
         AnalyticsFilters: {
@@ -2753,10 +2804,10 @@ export interface components {
             /** @description Project atau Folder; hanya subpohonnya */
             container_ids?: string[];
             /**
-             * @description tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count
+             * @description tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count
              * @enum {string}
              */
-            metric: "count" | "effort_minutes" | "sum_field" | "minutes" | "billable_minutes" | "utilization";
+            metric: "count" | "effort_minutes" | "sum_field" | "avg_field" | "completion_percent" | "minutes" | "billable_minutes" | "utilization";
             /**
              * Format: uuid
              * @description Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya
@@ -2801,10 +2852,12 @@ export interface components {
             query: components["schemas"]["AnalyticsQuery"];
         };
         ReportSubscription: {
-            /** @description 0 = Minggu */
-            weekday: number;
-            /** @description Jam di zona waktu pelanggan */
+            /** @description 0 = Minggu; null = setiap hari */
+            weekday: number | null;
+            /** @description Jam di zona waktu jadwal */
             hour: number;
+            /** @description Nama zona waktu IANA; null mengikuti zona waktu profil pelanggan */
+            timezone?: string | null;
         };
         ReportSummary: {
             /** Format: uuid */
@@ -2864,10 +2917,12 @@ export interface components {
             items: components["schemas"]["DashboardSummary"][];
         };
         DashboardWidgetConfig: {
-            /** @description Untuk pie, column, bar, dan line */
+            /** @description Untuk pie, column, bar, line, area, dan burndown */
             show_legend?: boolean;
-            /** @description Untuk pie, column, bar, dan line */
+            /** @description Untuk pie, column, bar, line, area, dan burndown */
             show_labels?: boolean;
+            /** @description Keterangan singkat di bawah judul widget (DASH-04) */
+            description?: string;
             /**
              * @description Khusus pie
              * @enum {string}
@@ -2887,8 +2942,11 @@ export interface components {
         };
         DashboardWidgetInput: {
             name: string;
-            /** @enum {string} */
-            type: "task_list" | "indicator" | "pie" | "column" | "bar" | "line" | "table";
+            /**
+             * @description burndown memakai metrik count atau effort_minutes tanpa pengelompokan, 30 hari terakhir; pivot butuh group_by dan break_by
+             * @enum {string}
+             */
+            type: "task_list" | "indicator" | "pie" | "column" | "bar" | "line" | "table" | "area" | "pivot" | "burndown" | "completion";
             position?: number;
             config?: components["schemas"]["DashboardWidgetConfig"];
         };
@@ -3769,6 +3827,30 @@ export interface components {
                 /** Format: int32 */
                 progress_percent: number | null;
                 assignees?: string[];
+            }[];
+        };
+        DashboardPublicLink: {
+            enabled: boolean;
+            /** Format: date-time */
+            expires_at: string | null;
+            has_password: boolean;
+            /** @description Hanya pada jawaban PUT */
+            token?: string;
+        };
+        PublicDashboard: {
+            name: string;
+            /** @enum {string} */
+            layout: "columns" | "stack";
+            widgets: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                type: string;
+                config: components["schemas"]["DashboardWidgetConfig"];
+                data?: components["schemas"]["WidgetData"];
+                /** @description Widget finansial disamarkan */
+                masked?: boolean;
+                failed?: boolean;
             }[];
         };
         UtilizationRow: {
@@ -4731,6 +4813,120 @@ export interface operations {
             422: components["responses"]["Problem"];
         };
     };
+    getDashboardPublicLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardPublicLink"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    putDashboardPublicLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /**
+                     * Format: date-time
+                     * @description Antara 1 menit dan 365 hari dari sekarang
+                     */
+                    expires_at: string;
+                    /** @description Opsional; tautan memakai aturan password yang sama dengan akun */
+                    password?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["DashboardPublicLink"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteDashboardPublicLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dimatikan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    viewPublicDashboard: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    password?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicDashboard"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
     getWorkload: {
         parameters: {
             query: {
@@ -5357,7 +5553,7 @@ export interface operations {
         };
         requestBody: {
             content: {
-                "application/json": components["schemas"]["DashboardRename"];
+                "application/json": components["schemas"]["DashboardUpdate"];
             };
         };
         responses: {

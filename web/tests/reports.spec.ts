@@ -126,7 +126,13 @@ test("editor runs the draft, saves with If-Match, and exposes export and subscri
   await page.getByLabel(/^Hour/).selectOption("17");
   await page.getByRole("button", { name: "Subscribe", exact: true }).click();
   await expect.poll(() => calls.some((c) => c.method === "PUT")).toBe(true);
-  expect(calls.find((c) => c.method === "PUT")!.body).toEqual({ weekday: 5, hour: 17 });
+  expect(calls.find((c) => c.method === "PUT")!.body).toEqual({ weekday: 5, hour: 17, timezone: null });
+  // every day, in a zone of the user's choosing
+  await page.getByLabel(/^Day/).selectOption("daily");
+  await page.getByLabel(/^Time zone/).selectOption("Asia/Jakarta");
+  await page.getByRole("button", { name: "Subscribe", exact: true }).click();
+  await expect.poll(() => calls.filter((c) => c.method === "PUT").length).toBe(2);
+  expect(calls.filter((c) => c.method === "PUT")[1].body).toEqual({ weekday: null, hour: 17, timezone: "Asia/Jakarta" });
 });
 
 test("choosing utilization sets the person grouping and the period it needs", async ({ page }) => {

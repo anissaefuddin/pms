@@ -649,6 +649,16 @@ type Dashboard struct {
 	SpaceID pgtype.UUID `json:"space_id"`
 	Name    string      `json:"name"`
 	Version int32       `json:"version"`
+	Layout  string      `json:"layout"`
+}
+
+type DashboardPublicLink struct {
+	DashboardID  pgtype.UUID        `json:"dashboard_id"`
+	TokenHash    []byte             `json:"token_hash"`
+	PasswordHash pgtype.Text        `json:"password_hash"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type DomainEvent struct {
@@ -853,10 +863,11 @@ type Report struct {
 type ReportSubscription struct {
 	ReportID   pgtype.UUID        `json:"report_id"`
 	UserID     pgtype.UUID        `json:"user_id"`
-	Weekday    int16              `json:"weekday"`
+	Weekday    pgtype.Int2        `json:"weekday"`
 	Hour       int16              `json:"hour"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 	LastSentAt pgtype.Timestamptz `json:"last_sent_at"`
+	Timezone   pgtype.Text        `json:"timezone"`
 }
 
 type RequestForm struct {

@@ -23,6 +23,7 @@ type dashboardSummary struct {
 	OwnerID uuid.UUID  `json:"owner_id"`
 	SpaceID *uuid.UUID `json:"space_id"`
 	Name    string     `json:"name"`
+	Layout  string     `json:"layout"`
 	Version int        `json:"version"`
 }
 
@@ -63,7 +64,7 @@ var (
 // widgetLists are the DASH-01 list names; the other presets are DASH-02 templates.
 var widgetLists = []string{"todo_this_week", "to_review", "completed", "assigned_to_me"}
 
-const dashboardColumns = "id, owner_id, space_id, name, version"
+const dashboardColumns = "id, owner_id, space_id, name, layout, version"
 const maxDashboardWidgets = 100
 
 func (s *Server) dashboardRoutes(mux *http.ServeMux) {
@@ -165,7 +166,7 @@ func readDashboard(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.U
 
 func scanDashboard(row pgx.Row) (dashboard, error) {
 	d := dashboard{Widgets: []dashboardWidget{}}
-	err := row.Scan(&d.ID, &d.OwnerID, &d.SpaceID, &d.Name, &d.Version)
+	err := row.Scan(&d.ID, &d.OwnerID, &d.SpaceID, &d.Name, &d.Layout, &d.Version)
 	return d, err
 }
 
@@ -281,6 +282,9 @@ func (s *Server) duplicateDashboard(w http.ResponseWriter, r *http.Request) {
 SELECT $1,name,type,position,config FROM widgets WHERE dashboard_id=$2`, d.ID, id); err != nil {
 			return nil, err
 		}
+		if d, err = scanDashboard(tx.QueryRow(ctx, "UPDATE dashboards SET layout=(SELECT layout FROM dashboards WHERE id=$2) WHERE id=$1 RETURNING "+dashboardColumns, d.ID, id)); err != nil {
+			return nil, err
+		}
 		return loadDashboardWidgets(ctx, tx, d)
 	})
 }
@@ -309,18 +313,31 @@ func (s *Server) mutateDashboard(w http.ResponseWriter, r *http.Request, need po
 
 func (s *Server) renameDashboard(w http.ResponseWriter, r *http.Request) {
 	var in struct {
-		Name string `json:"name"`
+		Name   *string `json:"name"`
+		Layout *string `json:"layout"`
 	}
 	if !decode(w, r, &in) {
 		return
 	}
 	ctx := r.Context()
 	s.mutateDashboard(w, r, policy.Edit, 200, func(tx pgx.Tx, d dashboard) (any, error) {
-		name, err := dashboardName(in.Name)
-		if err != nil {
-			return nil, err
+		name, layout := d.Name, d.Layout
+		if in.Name == nil && in.Layout == nil {
+			return nil, dashboardInvalid("name or layout is required")
 		}
-		d, err = scanDashboard(tx.QueryRow(ctx, `UPDATE dashboards SET name=$2,version=version+1 WHERE id=$1 RETURNING `+dashboardColumns, d.ID, name))
+		if in.Name != nil {
+			var err error
+			if name, err = dashboardName(*in.Name); err != nil {
+				return nil, err
+			}
+		}
+		if in.Layout != nil {
+			if *in.Layout != "columns" && *in.Layout != "stack" {
+				return nil, dashboardInvalid("layout must be columns or stack")
+			}
+			layout = *in.Layout
+		}
+		d, err := scanDashboard(tx.QueryRow(ctx, `UPDATE dashboards SET name=$2,layout=$3,version=version+1 WHERE id=$1 RETURNING `+dashboardColumns, d.ID, name, layout))
 		if err != nil {
 			return nil, err
 		}
@@ -373,9 +390,9 @@ func (in *dashboardWidgetInput) validate() error {
 	in.Name = name
 	chart := false
 	switch in.Type {
-	case "pie", "column", "bar", "line":
+	case "pie", "column", "bar", "line", "area", "burndown":
 		chart = true
-	case "task_list", "indicator", "table":
+	case "task_list", "indicator", "table", "pivot", "completion":
 	default:
 		return dashboardInvalid("unknown widget type")
 	}
@@ -391,6 +408,11 @@ func (in *dashboardWidgetInput) validate() error {
 	}
 	for key, value := range config {
 		switch key {
+		case "description":
+			var text string
+			if json.Unmarshal(value, &text) == nil && utf8.RuneCountInString(text) <= 500 && utf8.ValidString(text) && !strings.ContainsRune(text, 0) {
+				continue
+			}
 		case "show_legend", "show_labels":
 			var flag *bool
 			if chart && json.Unmarshal(value, &flag) == nil && flag != nil {
@@ -424,6 +446,12 @@ func (in *dashboardWidgetInput) validate() error {
 	}
 	if _, has := config["query"]; !has && in.Type == "task_list" && config["list"] == nil && config["template"] == nil {
 		return dashboardInvalid("a task list widget needs a list or a template")
+	}
+	if in.Type == "pivot" {
+		var q analytics.Query
+		if raw, has := config["query"]; has && json.Unmarshal(raw, &q) == nil && (q.GroupBy == "" || q.BreakBy == "") {
+			return dashboardInvalid("a pivot widget needs both group_by (rows) and break_by (columns)")
+		}
 	}
 	in.Config, _ = json.Marshal(config)
 	return nil

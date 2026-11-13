@@ -1227,33 +1227,33 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 ### E11.2 Analitik
 
 **S11.2.1 Visual area dan pivot (DASH-03B) — 2 hari**
-- [ ] [BE] Mesin widget: area dan pivot
-- [ ] [FE] Area
-- [ ] [FE] Pivot
-- [ ] [TEST] Angka cocok dengan data mentah
+- [x] [BE] Mesin widget: area dan pivot
+- [x] [FE] Area
+- [x] [FE] Pivot
+- [x] [TEST] Angka cocok dengan data mentah
 
 **S11.2.2 Pustaka widget dan papan analitik (DASH-08) — 2.5 hari**
-- [ ] [BE] Burndown (deret per tanggal)
-- [ ] [BE] Task completion progress dan rata-rata custom field
-- [ ] [FE] Modal "Choose widget" dengan kategori
-- [ ] [FE] Papan analitik di Tools Space
-- [ ] [TEST] Angka per widget
+- [x] [BE] Burndown (deret per tanggal)
+- [x] [BE] Task completion progress dan rata-rata custom field (rata-rata hanya lewat API; editor belum punya pemilih field)
+- [x] [FE] Modal "Choose widget" dengan kategori
+- [x] [FE] Papan analitik di Tools Space
+- [x] [TEST] Angka per widget
 
 **S11.2.3 Deskripsi widget dan layout (DASH-04, DASH-05) — 1 hari**
-- [ ] [BE] Deskripsi dan orientasi layout
-- [ ] [FE] UI deskripsi dan layout
+- [x] [BE] Deskripsi dan orientasi layout
+- [x] [FE] UI deskripsi dan layout
 
 **S11.2.4 Link publik dashboard (DASH-07) — 2.5 hari**
-- [ ] [API] Toggle, token, kedaluwarsa, password
-- [ ] [DB] Penyimpanan link
-- [ ] [BE] Akses publik dengan masking finansial
-- [ ] [FE] Dialog link publik
-- [ ] [TEST] Kedaluwarsa, password, data finansial
+- [x] [API] Toggle, token, kedaluwarsa, password
+- [x] [DB] Penyimpanan link
+- [x] [BE] Akses publik dengan masking finansial
+- [x] [FE] Dialog link publik
+- [x] [TEST] Kedaluwarsa, password, data finansial
 
 **S11.2.5 Jadwal report (RPT-04) — 1.5 hari**
-- [ ] [BE] Pilihan hari dan jam per zona waktu
-- [ ] [FE] UI jadwal
-- [ ] [TEST] Pengiriman tepat waktu
+- [x] [BE] Pilihan hari dan jam per zona waktu
+- [x] [FE] UI jadwal
+- [x] [TEST] Pengiriman tepat waktu
 
 ### E11.3 API dan integrasi
 

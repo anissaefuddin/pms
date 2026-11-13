@@ -23,8 +23,9 @@ type reportDefinition struct {
 }
 
 type reportSubscription struct {
-	Weekday int `json:"weekday"` // 0 = Sunday
-	Hour    int `json:"hour"`
+	Weekday  *int    `json:"weekday"` // 0 = Sunday; null = every day
+	Hour     int     `json:"hour"`
+	Timezone *string `json:"timezone"` // IANA name; null = the subscriber's profile time zone
 }
 
 type reportSummary struct {
@@ -161,7 +162,7 @@ func normalizeReportDefinition(raw json.RawMessage) (json.RawMessage, error) {
 const defaultReportDefinition = `{"layout":"table","query":{"reporting_on":"tasks","metric":"count"}}`
 
 const reportSelect = `SELECT r.id, r.name, r.owner_id, concat_ws(' ', o.first_name, o.last_name), r.space_id, sp.name, r.sharing,
-       r.created_at, r.updated_at, r.version, r.definition, rs.weekday, rs.hour
+       r.created_at, r.updated_at, r.version, r.definition, rs.weekday, rs.hour, rs.timezone
 FROM reports r JOIN users o ON o.id=r.owner_id LEFT JOIN spaces sp ON sp.id=r.space_id
 LEFT JOIN report_subscriptions rs ON rs.report_id=r.id AND rs.user_id=$1::uuid`
 
@@ -170,13 +171,19 @@ func scanReport(row pgx.Row) (report, error) {
 	var spaceID *uuid.UUID
 	var spaceName *string
 	var weekday, hour *int16
+	var timezone *string
 	err := row.Scan(&rep.ID, &rep.Name, &rep.Owner.ID, &rep.Owner.Name, &spaceID, &spaceName, &rep.Sharing,
-		&rep.CreatedAt, &rep.UpdatedAt, &rep.Version, &rep.Definition, &weekday, &hour)
+		&rep.CreatedAt, &rep.UpdatedAt, &rep.Version, &rep.Definition, &weekday, &hour, &timezone)
 	if spaceID != nil && spaceName != nil {
 		rep.Space = &reportSpace{*spaceID, *spaceName}
 	}
-	if weekday != nil && hour != nil {
-		rep.Subscription = &reportSubscription{int(*weekday), int(*hour)}
+	if hour != nil {
+		sub := &reportSubscription{Hour: int(*hour), Timezone: timezone}
+		if weekday != nil {
+			day := int(*weekday)
+			sub.Weekday = &day
+		}
+		rep.Subscription = sub
 	}
 	return rep, err
 }
@@ -393,8 +400,8 @@ func (s *Server) subscribeReport(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &in) {
 		return
 	}
-	if in.Weekday < 0 || in.Weekday > 6 || in.Hour < 0 || in.Hour > 23 {
-		writeReportError(w, reportInvalid("weekday must be 0 to 6 and hour 0 to 23"))
+	if (in.Weekday != nil && (*in.Weekday < 0 || *in.Weekday > 6)) || in.Hour < 0 || in.Hour > 23 {
+		writeReportError(w, reportInvalid("weekday must be 0 to 6 (or null for every day) and hour 0 to 23"))
 		return
 	}
 	actor, ctx := actorOf(r), r.Context()
@@ -402,8 +409,17 @@ func (s *Server) subscribeReport(w http.ResponseWriter, r *http.Request) {
 		if _, err := readReport(ctx, tx, actor, id, policy.View); err != nil {
 			return nil, err
 		}
-		if _, err := tx.Exec(ctx, `INSERT INTO report_subscriptions(report_id,user_id,weekday,hour) VALUES($1,$2,$3,$4)
-ON CONFLICT (report_id,user_id) DO UPDATE SET weekday=EXCLUDED.weekday, hour=EXCLUDED.hour`, id, actor.ID, in.Weekday, in.Hour); err != nil {
+		if in.Timezone != nil {
+			var known bool
+			if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM pg_timezone_names WHERE name=$1)", *in.Timezone).Scan(&known); err != nil {
+				return nil, err
+			}
+			if !known {
+				return nil, reportInvalid("timezone must be an IANA time zone name such as Asia/Jakarta")
+			}
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO report_subscriptions(report_id,user_id,weekday,hour,timezone) VALUES($1,$2,$3,$4,$5)
+ON CONFLICT (report_id,user_id) DO UPDATE SET weekday=EXCLUDED.weekday, hour=EXCLUDED.hour, timezone=EXCLUDED.timezone`, id, actor.ID, in.Weekday, in.Hour, in.Timezone); err != nil {
 			return nil, err
 		}
 		return in, nil

@@ -49,6 +49,28 @@ function Dashboards() {
     finally { setBusy(false); }
   }
 
+  /** The ready-made analytics board of a Space (DASH-08): five widgets that need no setup. */
+  async function createAnalyticsBoard() {
+    setBusy(true); setError("");
+    try {
+      const q = (extra: object) => ({ reporting_on: "tasks", metric: "count", filters: {}, ...extra });
+      const widgets = [
+        { name: t("dashboards.analytics.completion"), type: "completion", config: { query: q({ metric: "completion_percent" }) } },
+        { name: t("dashboards.analytics.byStatus"), type: "pie", config: { show_legend: true, query: q({ group_by: "status_group" }) } },
+        { name: t("dashboards.analytics.burndown"), type: "burndown", config: { query: q({}) } },
+        { name: t("dashboards.analytics.pivot"), type: "pivot", config: { query: q({ group_by: "importance", break_by: "status_group" }) } },
+        { name: t("dashboards.analytics.byAssignee"), type: "bar", config: { query: q({ group_by: "assignee", filters: { status_groups: ["active"] } }) } },
+      ];
+      let board = await api<Dashboard>("/api/v1/dashboards", { method: "POST", body: JSON.stringify({ name: t("dashboards.analytics.title"), space_id: location }) });
+      for (const [position, widget] of widgets.entries()) {
+        board = await api<Dashboard>(`/api/v1/dashboards/${board.id}/widgets`, { method: "POST", headers: { "If-Match": `"${board.version}"` }, body: JSON.stringify({ ...widget, position }) });
+      }
+      await refresh();
+      await navigate({ to: "/dashboards/$dashboardId", params: { dashboardId: board.id } });
+    } catch (err) { failure(err); }
+    finally { setBusy(false); }
+  }
+
   async function remove() {
     if (!deleting) return;
     setBusy(true); setError("");
@@ -77,6 +99,8 @@ function Dashboards() {
           <Input required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full sm:w-64" /></label>
         <Button type="submit" disabled={busy || !name.trim()}>{t("dashboards.create.submit")}</Button>
       </form>
+      {!!location && spaces.find((x) => x.id === location)?.my_capabilities?.includes("create") &&
+        <Button type="button" variant="outline" disabled={busy} onClick={() => void createAnalyticsBoard()}>{t("dashboards.analytics.create")}</Button>}
     </div>
     {error && !edit && !deleting && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {list.isPending && <p role="status" className="text-sm text-muted-foreground">{t("dashboards.loading")}</p>}

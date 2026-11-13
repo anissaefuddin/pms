@@ -24,7 +24,8 @@ async function axe() {
 
 async function addWidget(name: string, type: string, choose: (dialog: ReturnType<Page["getByRole"]>) => Promise<void> = async () => {}) {
   await page.getByRole("button", { name: "Add widget" }).click();
-  const dialog = page.getByRole("dialog");
+  await page.getByRole("dialog", { name: "Choose widget" }).getByRole("button", { name: /^Task list/ }).click();
+  const dialog = page.getByRole("dialog", { name: "Add widget" });
   await dialog.getByLabel("Widget name").fill(name);
   await dialog.getByLabel(/^Widget type/).selectOption(type);
   await choose(dialog);

@@ -113,3 +113,53 @@ FROM users u WHERE u.id = rs.user_id`)
 		t.Fatalf("the deactivated admin keeps an unstamped row (not due), got %s", left)
 	}
 }
+
+func TestReportScheduleDailyAndChosenTimeZone(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	report := f.call(admin, "POST", "/reports", map[string]any{"name": "Schedule", "definition": map[string]any{
+		"layout": "table", "query": map[string]any{"reporting_on": "tasks", "metric": "count"}}})
+	f.want(report, 201, "report")
+	path := "/reports/" + report.body["id"].(string) + "/subscription"
+	f.exec("UPDATE users SET timezone='UTC' WHERE id=$1", admin.id)
+
+	f.want(f.call(admin, "PUT", path, map[string]any{"weekday": nil, "hour": 8, "timezone": "Mars/Olympus"}), 422, "unknown zone")
+	f.want(f.call(admin, "PUT", path, map[string]any{"weekday": 7, "hour": 8}), 422, "bad weekday")
+	got := f.call(admin, "PUT", path, map[string]any{"weekday": nil, "hour": 8, "timezone": "Asia/Jakarta"})
+	f.want(got, 200, "daily in Jakarta")
+	shown := f.call(admin, "GET", "/reports/"+report.body["id"].(string), nil)
+	sub := shown.body["subscription"].(map[string]any)
+	if sub["weekday"] != nil || sub["hour"] != float64(8) || sub["timezone"] != "Asia/Jakarta" {
+		t.Fatalf("subscription: %v", sub)
+	}
+
+	var sent int
+	deliver := func() int {
+		t.Helper()
+		sent = 0
+		n, err := reportdigest.Deliver(f.ctx, f.pool, "https://pms.example.test", func(context.Context, pgx.Tx, mail.Args) error { sent++; return nil })
+		if err != nil {
+			t.Fatal(err)
+		}
+		return n
+	}
+	// The hour is Jakarta's: pointing it at the hour it is in Jakarta now delivers, whatever day it is (daily),
+	// while the same number in UTC would be a different hour and must not.
+	jakarta := f.queryID("SELECT EXTRACT(hour FROM now() AT TIME ZONE 'Asia/Jakarta')::int::text")
+	f.exec("UPDATE report_subscriptions SET hour=$1::int", jakarta)
+	if deliver() != 1 || sent != 1 {
+		t.Fatalf("due in Jakarta every day: %d", sent)
+	}
+	if deliver() != 0 {
+		t.Fatal("at most once per slot")
+	}
+	f.exec("UPDATE report_subscriptions SET last_sent_at=NULL, hour=(hour+1)%24")
+	if deliver() != 0 {
+		t.Fatal("another hour in Jakarta is not due")
+	}
+	// Without a chosen zone the profile's zone rules.
+	f.exec("UPDATE report_subscriptions SET timezone=NULL, hour=EXTRACT(hour FROM now() AT TIME ZONE 'UTC')")
+	if deliver() != 1 {
+		t.Fatal("the profile zone is used when none is chosen")
+	}
+}

@@ -260,6 +260,7 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 - `baselines`, `baseline_items` (00060): baseline Gantt immutable, tanpa foreign key.
 - `hourly_rates(id, user_id|role_id, rate_minor, effective_from, created_by)` (00061) dan `time_entries.rate_snapshot` (diisi trigger saat INSERT).
 - `gantt_snapshots(id, project_id, name, token_hash, created_by, show_assignees, expires_at, payload, created_at)` (00062): salinan beku Gantt untuk tautan publik; token disimpan sebagai hash.
+- `widgets.type` menerima `area`, `pivot`, `burndown`, `completion` dan `config.description` (00070); `dashboards.layout` (00071); `dashboard_public_links(dashboard_id, token_hash, password_hash, expires_at, created_by, created_at)` (00072); `report_subscriptions.weekday` boleh NULL (setiap hari) dan `timezone` (00073).
 - `automation_rules(id, space_id, container_id, name, owner_id, enabled, current_version_id)`, `automation_rule_versions(id, rule_id, version, definition jsonb, status draft|published|retired)` dengan satu draft per aturan, dan `automation_runs(id, rule_id, rule_version_id, event_id, action_index, item_id, actor_id, status, detail)` (00054). Indeks unik atas `(rule_version_id, event_id, action_index)` untuk status selain `failed` adalah jaminan tepat sekali; `action_index` -1 adalah hasil tingkat aturan. `notifications.kind` menerima `automation`.
 
 ## 8. Data yang sengaja belum ada (M2+)
