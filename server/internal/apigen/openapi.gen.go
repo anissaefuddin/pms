@@ -36,6 +36,225 @@ func (e AcceptInvitationRequestAcceptTerms) Valid() bool {
 	}
 }
 
+// Defines values for AnalyticsFiltersBilling.
+const (
+	AnalyticsFiltersBillingBillable    AnalyticsFiltersBilling = "billable"
+	AnalyticsFiltersBillingNonBillable AnalyticsFiltersBilling = "non_billable"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsFiltersBilling enum.
+func (e AnalyticsFiltersBilling) Valid() bool {
+	switch e {
+	case AnalyticsFiltersBillingBillable:
+		return true
+	case AnalyticsFiltersBillingNonBillable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnalyticsFiltersImportance.
+const (
+	AnalyticsFiltersImportanceHigh   AnalyticsFiltersImportance = "high"
+	AnalyticsFiltersImportanceLow    AnalyticsFiltersImportance = "low"
+	AnalyticsFiltersImportanceNormal AnalyticsFiltersImportance = "normal"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsFiltersImportance enum.
+func (e AnalyticsFiltersImportance) Valid() bool {
+	switch e {
+	case AnalyticsFiltersImportanceHigh:
+		return true
+	case AnalyticsFiltersImportanceLow:
+		return true
+	case AnalyticsFiltersImportanceNormal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnalyticsFiltersStatusGroups.
+const (
+	AnalyticsFiltersStatusGroupsActive    AnalyticsFiltersStatusGroups = "active"
+	AnalyticsFiltersStatusGroupsCancelled AnalyticsFiltersStatusGroups = "cancelled"
+	AnalyticsFiltersStatusGroupsCompleted AnalyticsFiltersStatusGroups = "completed"
+	AnalyticsFiltersStatusGroupsDeferred  AnalyticsFiltersStatusGroups = "deferred"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsFiltersStatusGroups enum.
+func (e AnalyticsFiltersStatusGroups) Valid() bool {
+	switch e {
+	case AnalyticsFiltersStatusGroupsActive:
+		return true
+	case AnalyticsFiltersStatusGroupsCancelled:
+		return true
+	case AnalyticsFiltersStatusGroupsCompleted:
+		return true
+	case AnalyticsFiltersStatusGroupsDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnalyticsQueryBreakBy.
+const (
+	AnalyticsQueryBreakByAssignee     AnalyticsQueryBreakBy = "assignee"
+	AnalyticsQueryBreakByBillingType  AnalyticsQueryBreakBy = "billing_type"
+	AnalyticsQueryBreakByCategory     AnalyticsQueryBreakBy = "category"
+	AnalyticsQueryBreakByCreatedMonth AnalyticsQueryBreakBy = "created_month"
+	AnalyticsQueryBreakByDueMonth     AnalyticsQueryBreakBy = "due_month"
+	AnalyticsQueryBreakByEntryMonth   AnalyticsQueryBreakBy = "entry_month"
+	AnalyticsQueryBreakByField        AnalyticsQueryBreakBy = "field"
+	AnalyticsQueryBreakByImportance   AnalyticsQueryBreakBy = "importance"
+	AnalyticsQueryBreakByItem         AnalyticsQueryBreakBy = "item"
+	AnalyticsQueryBreakBySpace        AnalyticsQueryBreakBy = "space"
+	AnalyticsQueryBreakByStatus       AnalyticsQueryBreakBy = "status"
+	AnalyticsQueryBreakByStatusGroup  AnalyticsQueryBreakBy = "status_group"
+	AnalyticsQueryBreakByType         AnalyticsQueryBreakBy = "type"
+	AnalyticsQueryBreakByUser         AnalyticsQueryBreakBy = "user"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsQueryBreakBy enum.
+func (e AnalyticsQueryBreakBy) Valid() bool {
+	switch e {
+	case AnalyticsQueryBreakByAssignee:
+		return true
+	case AnalyticsQueryBreakByBillingType:
+		return true
+	case AnalyticsQueryBreakByCategory:
+		return true
+	case AnalyticsQueryBreakByCreatedMonth:
+		return true
+	case AnalyticsQueryBreakByDueMonth:
+		return true
+	case AnalyticsQueryBreakByEntryMonth:
+		return true
+	case AnalyticsQueryBreakByField:
+		return true
+	case AnalyticsQueryBreakByImportance:
+		return true
+	case AnalyticsQueryBreakByItem:
+		return true
+	case AnalyticsQueryBreakBySpace:
+		return true
+	case AnalyticsQueryBreakByStatus:
+		return true
+	case AnalyticsQueryBreakByStatusGroup:
+		return true
+	case AnalyticsQueryBreakByType:
+		return true
+	case AnalyticsQueryBreakByUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnalyticsQueryGroupBy.
+const (
+	AnalyticsQueryGroupByAssignee     AnalyticsQueryGroupBy = "assignee"
+	AnalyticsQueryGroupByBillingType  AnalyticsQueryGroupBy = "billing_type"
+	AnalyticsQueryGroupByCategory     AnalyticsQueryGroupBy = "category"
+	AnalyticsQueryGroupByCreatedMonth AnalyticsQueryGroupBy = "created_month"
+	AnalyticsQueryGroupByDueMonth     AnalyticsQueryGroupBy = "due_month"
+	AnalyticsQueryGroupByEntryMonth   AnalyticsQueryGroupBy = "entry_month"
+	AnalyticsQueryGroupByField        AnalyticsQueryGroupBy = "field"
+	AnalyticsQueryGroupByImportance   AnalyticsQueryGroupBy = "importance"
+	AnalyticsQueryGroupByItem         AnalyticsQueryGroupBy = "item"
+	AnalyticsQueryGroupBySpace        AnalyticsQueryGroupBy = "space"
+	AnalyticsQueryGroupByStatus       AnalyticsQueryGroupBy = "status"
+	AnalyticsQueryGroupByStatusGroup  AnalyticsQueryGroupBy = "status_group"
+	AnalyticsQueryGroupByType         AnalyticsQueryGroupBy = "type"
+	AnalyticsQueryGroupByUser         AnalyticsQueryGroupBy = "user"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsQueryGroupBy enum.
+func (e AnalyticsQueryGroupBy) Valid() bool {
+	switch e {
+	case AnalyticsQueryGroupByAssignee:
+		return true
+	case AnalyticsQueryGroupByBillingType:
+		return true
+	case AnalyticsQueryGroupByCategory:
+		return true
+	case AnalyticsQueryGroupByCreatedMonth:
+		return true
+	case AnalyticsQueryGroupByDueMonth:
+		return true
+	case AnalyticsQueryGroupByEntryMonth:
+		return true
+	case AnalyticsQueryGroupByField:
+		return true
+	case AnalyticsQueryGroupByImportance:
+		return true
+	case AnalyticsQueryGroupByItem:
+		return true
+	case AnalyticsQueryGroupBySpace:
+		return true
+	case AnalyticsQueryGroupByStatus:
+		return true
+	case AnalyticsQueryGroupByStatusGroup:
+		return true
+	case AnalyticsQueryGroupByType:
+		return true
+	case AnalyticsQueryGroupByUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnalyticsQueryMetric.
+const (
+	AnalyticsQueryMetricBillableMinutes AnalyticsQueryMetric = "billable_minutes"
+	AnalyticsQueryMetricCount           AnalyticsQueryMetric = "count"
+	AnalyticsQueryMetricEffortMinutes   AnalyticsQueryMetric = "effort_minutes"
+	AnalyticsQueryMetricMinutes         AnalyticsQueryMetric = "minutes"
+	AnalyticsQueryMetricSumField        AnalyticsQueryMetric = "sum_field"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsQueryMetric enum.
+func (e AnalyticsQueryMetric) Valid() bool {
+	switch e {
+	case AnalyticsQueryMetricBillableMinutes:
+		return true
+	case AnalyticsQueryMetricCount:
+		return true
+	case AnalyticsQueryMetricEffortMinutes:
+		return true
+	case AnalyticsQueryMetricMinutes:
+		return true
+	case AnalyticsQueryMetricSumField:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AnalyticsQueryReportingOn.
+const (
+	AnalyticsQueryReportingOnProjects    AnalyticsQueryReportingOn = "projects"
+	AnalyticsQueryReportingOnTasks       AnalyticsQueryReportingOn = "tasks"
+	AnalyticsQueryReportingOnTimeEntries AnalyticsQueryReportingOn = "time_entries"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsQueryReportingOn enum.
+func (e AnalyticsQueryReportingOn) Valid() bool {
+	switch e {
+	case AnalyticsQueryReportingOnProjects:
+		return true
+	case AnalyticsQueryReportingOnTasks:
+		return true
+	case AnalyticsQueryReportingOnTimeEntries:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ApprovalApproversDecision.
 const (
 	ApprovalApproversDecisionApproved ApprovalApproversDecision = "approved"
@@ -170,25 +389,25 @@ func (e Capability) Valid() bool {
 
 // Defines values for CustomFieldConfigAggregation.
 const (
-	Average CustomFieldConfigAggregation = "average"
-	Count   CustomFieldConfigAggregation = "count"
-	Max     CustomFieldConfigAggregation = "max"
-	Min     CustomFieldConfigAggregation = "min"
-	Sum     CustomFieldConfigAggregation = "sum"
+	CustomFieldConfigAggregationAverage CustomFieldConfigAggregation = "average"
+	CustomFieldConfigAggregationCount   CustomFieldConfigAggregation = "count"
+	CustomFieldConfigAggregationMax     CustomFieldConfigAggregation = "max"
+	CustomFieldConfigAggregationMin     CustomFieldConfigAggregation = "min"
+	CustomFieldConfigAggregationSum     CustomFieldConfigAggregation = "sum"
 )
 
 // Valid indicates whether the value is a known member of the CustomFieldConfigAggregation enum.
 func (e CustomFieldConfigAggregation) Valid() bool {
 	switch e {
-	case Average:
+	case CustomFieldConfigAggregationAverage:
 		return true
-	case Count:
+	case CustomFieldConfigAggregationCount:
 		return true
-	case Max:
+	case CustomFieldConfigAggregationMax:
 		return true
-	case Min:
+	case CustomFieldConfigAggregationMin:
 		return true
-	case Sum:
+	case CustomFieldConfigAggregationSum:
 		return true
 	default:
 		return false
@@ -318,6 +537,30 @@ func (e DashboardWidgetType) Valid() bool {
 	}
 }
 
+// Defines values for DashboardWidgetConfigList.
+const (
+	DashboardWidgetConfigListAssignedToMe DashboardWidgetConfigList = "assigned_to_me"
+	DashboardWidgetConfigListCompleted    DashboardWidgetConfigList = "completed"
+	DashboardWidgetConfigListToReview     DashboardWidgetConfigList = "to_review"
+	DashboardWidgetConfigListTodoThisWeek DashboardWidgetConfigList = "todo_this_week"
+)
+
+// Valid indicates whether the value is a known member of the DashboardWidgetConfigList enum.
+func (e DashboardWidgetConfigList) Valid() bool {
+	switch e {
+	case DashboardWidgetConfigListAssignedToMe:
+		return true
+	case DashboardWidgetConfigListCompleted:
+		return true
+	case DashboardWidgetConfigListToReview:
+		return true
+	case DashboardWidgetConfigListTodoThisWeek:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DashboardWidgetConfigPieStyle.
 const (
 	Classic DashboardWidgetConfigPieStyle = "classic"
@@ -333,6 +576,30 @@ func (e DashboardWidgetConfigPieStyle) Valid() bool {
 	case Donut:
 		return true
 	case Ring:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DashboardWidgetConfigTemplate.
+const (
+	DashboardWidgetConfigTemplateBacklog  DashboardWidgetConfigTemplate = "backlog"
+	DashboardWidgetConfigTemplateFollowed DashboardWidgetConfigTemplate = "followed"
+	DashboardWidgetConfigTemplateMyTasks  DashboardWidgetConfigTemplate = "my_tasks"
+	DashboardWidgetConfigTemplateOverdue  DashboardWidgetConfigTemplate = "overdue"
+)
+
+// Valid indicates whether the value is a known member of the DashboardWidgetConfigTemplate enum.
+func (e DashboardWidgetConfigTemplate) Valid() bool {
+	switch e {
+	case DashboardWidgetConfigTemplateBacklog:
+		return true
+	case DashboardWidgetConfigTemplateFollowed:
+		return true
+	case DashboardWidgetConfigTemplateMyTasks:
+		return true
+	case DashboardWidgetConfigTemplateOverdue:
 		return true
 	default:
 		return false
@@ -419,16 +686,16 @@ func (e ExcelExportStatus) Valid() bool {
 
 // Defines values for FormAccess.
 const (
-	Internal FormAccess = "internal"
-	Private  FormAccess = "private"
+	FormAccessInternal FormAccess = "internal"
+	FormAccessPrivate  FormAccess = "private"
 )
 
 // Valid indicates whether the value is a known member of the FormAccess enum.
 func (e FormAccess) Valid() bool {
 	switch e {
-	case Internal:
+	case FormAccessInternal:
 		return true
-	case Private:
+	case FormAccessPrivate:
 		return true
 	default:
 		return false
@@ -1059,6 +1326,96 @@ func (e RealtimeEventType) Valid() bool {
 	}
 }
 
+// Defines values for ReportSharing.
+const (
+	ReportSharingPrivate ReportSharing = "private"
+	ReportSharingSpace   ReportSharing = "space"
+)
+
+// Valid indicates whether the value is a known member of the ReportSharing enum.
+func (e ReportSharing) Valid() bool {
+	switch e {
+	case ReportSharingPrivate:
+		return true
+	case ReportSharingSpace:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReportCreateSharing.
+const (
+	ReportCreateSharingPrivate ReportCreateSharing = "private"
+	ReportCreateSharingSpace   ReportCreateSharing = "space"
+)
+
+// Valid indicates whether the value is a known member of the ReportCreateSharing enum.
+func (e ReportCreateSharing) Valid() bool {
+	switch e {
+	case ReportCreateSharingPrivate:
+		return true
+	case ReportCreateSharingSpace:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReportDefinitionLayout.
+const (
+	ReportDefinitionLayoutColumn ReportDefinitionLayout = "column"
+	ReportDefinitionLayoutTable  ReportDefinitionLayout = "table"
+)
+
+// Valid indicates whether the value is a known member of the ReportDefinitionLayout enum.
+func (e ReportDefinitionLayout) Valid() bool {
+	switch e {
+	case ReportDefinitionLayoutColumn:
+		return true
+	case ReportDefinitionLayoutTable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReportSummarySharing.
+const (
+	ReportSummarySharingPrivate ReportSummarySharing = "private"
+	ReportSummarySharingSpace   ReportSummarySharing = "space"
+)
+
+// Valid indicates whether the value is a known member of the ReportSummarySharing enum.
+func (e ReportSummarySharing) Valid() bool {
+	switch e {
+	case ReportSummarySharingPrivate:
+		return true
+	case ReportSummarySharingSpace:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReportUpdateSharing.
+const (
+	ReportUpdateSharingPrivate ReportUpdateSharing = "private"
+	ReportUpdateSharingSpace   ReportUpdateSharing = "space"
+)
+
+// Valid indicates whether the value is a known member of the ReportUpdateSharing enum.
+func (e ReportUpdateSharing) Valid() bool {
+	switch e {
+	case ReportUpdateSharingPrivate:
+		return true
+	case ReportUpdateSharingSpace:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RichTextType.
 const (
 	Doc RichTextType = "doc"
@@ -1362,6 +1719,24 @@ func (e ViewVisibility) Valid() bool {
 	}
 }
 
+// Defines values for WidgetDataKind.
+const (
+	WidgetDataKindSeries WidgetDataKind = "series"
+	WidgetDataKindTasks  WidgetDataKind = "tasks"
+)
+
+// Valid indicates whether the value is a known member of the WidgetDataKind enum.
+func (e WidgetDataKind) Valid() bool {
+	switch e {
+	case WidgetDataKindSeries:
+		return true
+	case WidgetDataKindTasks:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DecideApprovalJSONBodyDecision.
 const (
 	DecideApprovalJSONBodyDecisionApproved DecideApprovalJSONBodyDecision = "approved"
@@ -1515,6 +1890,24 @@ func (e ListRecycleBinParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for GetReportResult200JSONResponseBodyLayout.
+const (
+	GetReportResult200JSONResponseBodyLayoutColumn GetReportResult200JSONResponseBodyLayout = "column"
+	GetReportResult200JSONResponseBodyLayoutTable  GetReportResult200JSONResponseBodyLayout = "table"
+)
+
+// Valid indicates whether the value is a known member of the GetReportResult200JSONResponseBodyLayout enum.
+func (e GetReportResult200JSONResponseBodyLayout) Valid() bool {
+	switch e {
+	case GetReportResult200JSONResponseBodyLayoutColumn:
+		return true
+	case GetReportResult200JSONResponseBodyLayoutTable:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SearchParamsStatusGroup.
 const (
 	SearchParamsStatusGroupActive    SearchParamsStatusGroup = "active"
@@ -1650,6 +2043,83 @@ type Activity struct {
 type ActivityPage struct {
 	Items      []Activity `json:"items"`
 	NextCursor *string    `json:"next_cursor,omitempty"`
+}
+
+// AnalyticsFilters defines model for AnalyticsFilters.
+type AnalyticsFilters struct {
+	Assignees        *[]string                       `json:"assignees,omitempty"`
+	AwaitingMyReview *bool                           `json:"awaiting_my_review,omitempty"`
+	Billing          *AnalyticsFiltersBilling        `json:"billing,omitempty"`
+	DueFrom          *openapi_types.Date             `json:"due_from,omitempty"`
+	DueThisWeek      *bool                           `json:"due_this_week,omitempty"`
+	DueTo            *openapi_types.Date             `json:"due_to,omitempty"`
+	EffortMax        *int                            `json:"effort_max,omitempty"`
+	EffortMin        *int                            `json:"effort_min,omitempty"`
+	EntryFrom        *openapi_types.Date             `json:"entry_from,omitempty"`
+	EntryTo          *openapi_types.Date             `json:"entry_to,omitempty"`
+	Followed         *bool                           `json:"followed,omitempty"`
+	Importance       *[]AnalyticsFiltersImportance   `json:"importance,omitempty"`
+	NoDueDate        *bool                           `json:"no_due_date,omitempty"`
+	Overdue          *bool                           `json:"overdue,omitempty"`
+	StatusGroups     *[]AnalyticsFiltersStatusGroups `json:"status_groups,omitempty"`
+	Unassigned       *bool                           `json:"unassigned,omitempty"`
+}
+
+// AnalyticsFiltersBilling defines model for AnalyticsFilters.Billing.
+type AnalyticsFiltersBilling string
+
+// AnalyticsFiltersImportance defines model for AnalyticsFilters.Importance.
+type AnalyticsFiltersImportance string
+
+// AnalyticsFiltersStatusGroups defines model for AnalyticsFilters.StatusGroups.
+type AnalyticsFiltersStatusGroups string
+
+// AnalyticsLabel defines model for AnalyticsLabel.
+type AnalyticsLabel struct {
+	Key   string `json:"key"`
+	Label string `json:"label"`
+}
+
+// AnalyticsQuery defines model for AnalyticsQuery.
+type AnalyticsQuery struct {
+	BreakBy *AnalyticsQueryBreakBy `json:"break_by,omitempty"`
+
+	// ContainerIds Project atau Folder; hanya subpohonnya
+	ContainerIds *[]openapi_types.UUID `json:"container_ids,omitempty"`
+
+	// FieldId Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya
+	FieldId *openapi_types.UUID    `json:"field_id,omitempty"`
+	Filters *AnalyticsFilters      `json:"filters,omitempty"`
+	GroupBy *AnalyticsQueryGroupBy `json:"group_by,omitempty"`
+
+	// Metric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count
+	Metric      AnalyticsQueryMetric      `json:"metric"`
+	ReportingOn AnalyticsQueryReportingOn `json:"reporting_on"`
+
+	// SpaceIds Kosong berarti semua Space yang terlihat
+	SpaceIds *[]openapi_types.UUID `json:"space_ids,omitempty"`
+}
+
+// AnalyticsQueryBreakBy defines model for AnalyticsQuery.BreakBy.
+type AnalyticsQueryBreakBy string
+
+// AnalyticsQueryGroupBy defines model for AnalyticsQuery.GroupBy.
+type AnalyticsQueryGroupBy string
+
+// AnalyticsQueryMetric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count
+type AnalyticsQueryMetric string
+
+// AnalyticsQueryReportingOn defines model for AnalyticsQuery.ReportingOn.
+type AnalyticsQueryReportingOn string
+
+// AnalyticsResult defines model for AnalyticsResult.
+type AnalyticsResult struct {
+	Rows []struct {
+		Break *AnalyticsLabel `json:"break"`
+		Group AnalyticsLabel  `json:"group"`
+		Value float32         `json:"value"`
+	} `json:"rows"`
+	Total float32 `json:"total"`
 }
 
 // Approval defines model for Approval.
@@ -1928,18 +2398,31 @@ type DashboardWidgetType string
 
 // DashboardWidgetConfig defines model for DashboardWidgetConfig.
 type DashboardWidgetConfig struct {
+	// List Khusus task_list (DASH-01); gunakan list atau template
+	List *DashboardWidgetConfigList `json:"list,omitempty"`
+
 	// PieStyle Khusus pie
 	PieStyle *DashboardWidgetConfigPieStyle `json:"pie_style,omitempty"`
+	Query    *AnalyticsQuery                `json:"query,omitempty"`
 
 	// ShowLabels Untuk pie, column, bar, dan line
 	ShowLabels *bool `json:"show_labels,omitempty"`
 
 	// ShowLegend Untuk pie, column, bar, dan line
 	ShowLegend *bool `json:"show_legend,omitempty"`
+
+	// Template Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang
+	Template *DashboardWidgetConfigTemplate `json:"template,omitempty"`
 }
+
+// DashboardWidgetConfigList Khusus task_list (DASH-01); gunakan list atau template
+type DashboardWidgetConfigList string
 
 // DashboardWidgetConfigPieStyle Khusus pie
 type DashboardWidgetConfigPieStyle string
+
+// DashboardWidgetConfigTemplate Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang
+type DashboardWidgetConfigTemplate string
 
 // DashboardWidgetInput defines model for DashboardWidgetInput.
 type DashboardWidgetInput struct {
@@ -2585,6 +3068,97 @@ type RealtimeEvent struct {
 // RealtimeEventType defines model for RealtimeEvent.Type.
 type RealtimeEventType string
 
+// Report defines model for Report.
+type Report struct {
+	CreatedAt  time.Time          `json:"created_at"`
+	Definition ReportDefinition   `json:"definition"`
+	Id         openapi_types.UUID `json:"id"`
+	Name       string             `json:"name"`
+	Owner      struct {
+		Id   openapi_types.UUID `json:"id"`
+		Name string             `json:"name"`
+	} `json:"owner"`
+	Sharing ReportSharing `json:"sharing"`
+	Space   *struct {
+		Id   openapi_types.UUID `json:"id"`
+		Name string             `json:"name"`
+	} `json:"space"`
+	Subscription *ReportSubscription `json:"subscription"`
+	UpdatedAt    time.Time           `json:"updated_at"`
+	Version      int                 `json:"version"`
+}
+
+// ReportSharing defines model for Report.Sharing.
+type ReportSharing string
+
+// ReportCreate defines model for ReportCreate.
+type ReportCreate struct {
+	Definition *ReportDefinition    `json:"definition,omitempty"`
+	Name       string               `json:"name"`
+	Sharing    *ReportCreateSharing `json:"sharing,omitempty"`
+
+	// SpaceId Null untuk report pribadi
+	SpaceId *openapi_types.UUID `json:"space_id,omitempty"`
+}
+
+// ReportCreateSharing defines model for ReportCreate.Sharing.
+type ReportCreateSharing string
+
+// ReportDefinition defines model for ReportDefinition.
+type ReportDefinition struct {
+	Layout ReportDefinitionLayout `json:"layout"`
+	Query  AnalyticsQuery         `json:"query"`
+}
+
+// ReportDefinitionLayout defines model for ReportDefinition.Layout.
+type ReportDefinitionLayout string
+
+// ReportList defines model for ReportList.
+type ReportList struct {
+	Items []ReportSummary `json:"items"`
+}
+
+// ReportSubscription defines model for ReportSubscription.
+type ReportSubscription struct {
+	// Hour Jam di zona waktu pelanggan
+	Hour int `json:"hour"`
+
+	// Weekday 0 = Minggu
+	Weekday int `json:"weekday"`
+}
+
+// ReportSummary defines model for ReportSummary.
+type ReportSummary struct {
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	Owner     struct {
+		Id   openapi_types.UUID `json:"id"`
+		Name string             `json:"name"`
+	} `json:"owner"`
+	Sharing ReportSummarySharing `json:"sharing"`
+	Space   *struct {
+		Id   openapi_types.UUID `json:"id"`
+		Name string             `json:"name"`
+	} `json:"space"`
+	Subscription *ReportSubscription `json:"subscription"`
+	UpdatedAt    time.Time           `json:"updated_at"`
+	Version      int                 `json:"version"`
+}
+
+// ReportSummarySharing defines model for ReportSummary.Sharing.
+type ReportSummarySharing string
+
+// ReportUpdate defines model for ReportUpdate.
+type ReportUpdate struct {
+	Definition *ReportDefinition    `json:"definition,omitempty"`
+	Name       *string              `json:"name,omitempty"`
+	Sharing    *ReportUpdateSharing `json:"sharing,omitempty"`
+}
+
+// ReportUpdateSharing defines model for ReportUpdate.Sharing.
+type ReportUpdateSharing string
+
 // RichText Dokumen ProseMirror JSON (TipTap). Server memvalidasi node dan mark yang diizinkan.
 type RichText struct {
 	Content              *[]map[string]interface{} `json:"content,omitempty"`
@@ -2890,6 +3464,24 @@ type ViewUpdate struct {
 
 // ViewVisibility defines model for ViewVisibility.
 type ViewVisibility string
+
+// WidgetData defines model for WidgetData.
+type WidgetData struct {
+	Items *[]struct {
+		// DueDate Kosong jika tidak ada
+		DueDate     string             `json:"due_date"`
+		Id          openapi_types.UUID `json:"id"`
+		Importance  string             `json:"importance"`
+		Status      string             `json:"status"`
+		StatusGroup string             `json:"status_group"`
+		Title       string             `json:"title"`
+	} `json:"items,omitempty"`
+	Kind   WidgetDataKind   `json:"kind"`
+	Result *AnalyticsResult `json:"result,omitempty"`
+}
+
+// WidgetDataKind defines model for WidgetData.Kind.
+type WidgetDataKind string
 
 // WorkSchedule defines model for WorkSchedule.
 type WorkSchedule struct {
@@ -3315,6 +3907,26 @@ type ListRecycleBinParams struct {
 // ListRecycleBinParamsSort defines parameters for ListRecycleBin.
 type ListRecycleBinParamsSort string
 
+// ListReportsParams defines parameters for ListReports.
+type ListReportsParams struct {
+	SpaceId *openapi_types.UUID `form:"space_id,omitempty" json:"space_id,omitempty"`
+}
+
+// DeleteReportParams defines parameters for DeleteReport.
+type DeleteReportParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// UpdateReportParams defines parameters for UpdateReport.
+type UpdateReportParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// GetReportResult200JSONResponseBodyLayout defines parameters for GetReportResult.
+type GetReportResult200JSONResponseBodyLayout string
+
 // SearchParams defines parameters for Search.
 type SearchParams struct {
 	Q           string              `form:"q" json:"q"`
@@ -3486,6 +4098,9 @@ type ReorderStatusesJSONBody struct {
 	StatusIds []openapi_types.UUID `json:"status_ids"`
 }
 
+// RunAnalyticsQueryJSONRequestBody defines body for RunAnalyticsQuery for application/json ContentType.
+type RunAnalyticsQueryJSONRequestBody = AnalyticsQuery
+
 // UpdateApprovalJSONRequestBody defines body for UpdateApproval for application/json ContentType.
 type UpdateApprovalJSONRequestBody = ApprovalPatch
 
@@ -3611,6 +4226,15 @@ type SubmitPublicFormJSONRequestBody SubmitPublicFormJSONBody
 
 // SubmitPublicFormMultipartRequestBody defines body for SubmitPublicForm for multipart/form-data ContentType.
 type SubmitPublicFormMultipartRequestBody SubmitPublicFormMultipartBody
+
+// CreateReportJSONRequestBody defines body for CreateReport for application/json ContentType.
+type CreateReportJSONRequestBody = ReportCreate
+
+// UpdateReportJSONRequestBody defines body for UpdateReport for application/json ContentType.
+type UpdateReportJSONRequestBody = ReportUpdate
+
+// SubscribeReportJSONRequestBody defines body for SubscribeReport for application/json ContentType.
+type SubscribeReportJSONRequestBody = ReportSubscription
 
 // ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
 type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
@@ -3938,6 +4562,9 @@ func (t *CustomFieldValues_AdditionalProperties) UnmarshalJSON(b []byte) error {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
+	// (POST /analytics/query)
+	RunAnalyticsQuery(w http.ResponseWriter, r *http.Request)
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
@@ -4019,6 +4646,9 @@ type ServerInterface interface {
 
 	// (PUT /dashboards/{dashboardId}/widgets/{widgetId})
 	ReplaceDashboardWidget(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, widgetId openapi_types.UUID, params ReplaceDashboardWidgetParams)
+	// GetDashboardWidgetData Hitung widget untuk pemanggil; hanya Item yang dapat dilihat pemanggil yang dihitung
+	// (GET /dashboards/{dashboardId}/widgets/{widgetId}/data)
+	GetDashboardWidgetData(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, widgetId openapi_types.UUID)
 	// QueryDependencies Dependensi di antara sekumpulan Item (link Gantt). POST hanya karena daftar ID tidak muat di URL
 	// (POST /dependencies/query)
 	QueryDependencies(w http.ResponseWriter, r *http.Request)
@@ -4208,6 +4838,33 @@ type ServerInterface interface {
 	// RestoreItem Pulihkan item beserta turunannya (BIN-02)
 	// (POST /recycle-bin/{itemId}/restore)
 	RestoreItem(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// ListReports Report milik sendiri dan report Space yang dibagikan dan terlihat
+	// (GET /reports)
+	ListReports(w http.ResponseWriter, r *http.Request, params ListReportsParams)
+
+	// (POST /reports)
+	CreateReport(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /reports/{reportId})
+	DeleteReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID, params DeleteReportParams)
+
+	// (GET /reports/{reportId})
+	GetReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
+	// UpdateReport Ubah nama, sharing (hanya pemilik) atau definisi; report tidak dapat dipindah
+	// (PATCH /reports/{reportId})
+	UpdateReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID, params UpdateReportParams)
+	// ExportReport Hasil report sebagai CSV; sel berawalan rumus diberi tanda kutip agar tidak dijalankan spreadsheet
+	// (GET /reports/{reportId}/export)
+	ExportReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
+	// GetReportResult Jalankan definisi report dengan hak pemanggil
+	// (GET /reports/{reportId}/result)
+	GetReportResult(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
+
+	// (DELETE /reports/{reportId}/subscription)
+	UnsubscribeReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
+	// SubscribeReport Berlangganan atas nama pemanggil (pengiriman lewat RPT-04)
+	// (PUT /reports/{reportId}/subscription)
+	SubscribeReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
 	// Search Pencarian global (NAV-06)
 	// (GET /search)
 	Search(w http.ResponseWriter, r *http.Request, params SearchParams)
@@ -4365,6 +5022,20 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// RunAnalyticsQuery operation middleware
+func (siw *ServerInterfaceWrapper) RunAnalyticsQuery(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RunAnalyticsQuery(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // DeleteApproval operation middleware
 func (siw *ServerInterfaceWrapper) DeleteApproval(w http.ResponseWriter, r *http.Request) {
@@ -5212,6 +5883,41 @@ func (siw *ServerInterfaceWrapper) ReplaceDashboardWidget(w http.ResponseWriter,
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReplaceDashboardWidget(w, r, dashboardId, widgetId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetDashboardWidgetData operation middleware
+func (siw *ServerInterfaceWrapper) GetDashboardWidgetData(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "dashboardId" -------------
+	var dashboardId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "dashboardId", r.PathValue("dashboardId"), &dashboardId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "dashboardId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "widgetId" -------------
+	var widgetId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "widgetId", r.PathValue("widgetId"), &widgetId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "widgetId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetDashboardWidgetData(w, r, dashboardId, widgetId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7191,6 +7897,291 @@ func (siw *ServerInterfaceWrapper) RestoreItem(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListReports operation middleware
+func (siw *ServerInterfaceWrapper) ListReports(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListReportsParams
+
+	// ------------- Optional query parameter "space_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "space_id", r.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "space_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListReports(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateReport operation middleware
+func (siw *ServerInterfaceWrapper) CreateReport(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateReport(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteReport operation middleware
+func (siw *ServerInterfaceWrapper) DeleteReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteReportParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteReport(w, r, reportId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetReport operation middleware
+func (siw *ServerInterfaceWrapper) GetReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReport(w, r, reportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateReport operation middleware
+func (siw *ServerInterfaceWrapper) UpdateReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateReportParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateReport(w, r, reportId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportReport operation middleware
+func (siw *ServerInterfaceWrapper) ExportReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportReport(w, r, reportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetReportResult operation middleware
+func (siw *ServerInterfaceWrapper) GetReportResult(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetReportResult(w, r, reportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnsubscribeReport operation middleware
+func (siw *ServerInterfaceWrapper) UnsubscribeReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnsubscribeReport(w, r, reportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubscribeReport operation middleware
+func (siw *ServerInterfaceWrapper) SubscribeReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubscribeReport(w, r, reportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // Search operation middleware
 func (siw *ServerInterfaceWrapper) Search(w http.ResponseWriter, r *http.Request) {
 
@@ -8960,6 +9951,16 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/analytics/query", wrapper.RunAnalyticsQuery)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports", wrapper.ListReports)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/reports", wrapper.CreateReport)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/reports/{reportId}", wrapper.DeleteReport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/{reportId}", wrapper.GetReport)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/reports/{reportId}", wrapper.UpdateReport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/{reportId}/result", wrapper.GetReportResult)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/{reportId}/export", wrapper.ExportReport)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/reports/{reportId}/subscription", wrapper.UnsubscribeReport)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/reports/{reportId}/subscription", wrapper.SubscribeReport)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards", wrapper.ListDashboards)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards", wrapper.CreateDashboard)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}", wrapper.DeleteDashboard)
@@ -8968,6 +9969,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards/{dashboardId}/duplicate", wrapper.DuplicateDashboard)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards/{dashboardId}/move", wrapper.MoveDashboard)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets", wrapper.CreateDashboardWidget)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}/data", wrapper.GetDashboardWidgetData)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.DeleteDashboardWidget)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.ReplaceDashboardWidget)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/excel-exports", wrapper.StartProjectExcelExport)
@@ -9125,6 +10127,15 @@ type RateLimitedApplicationProblemPlusJSONResponse struct {
 	Headers RateLimitedResponseHeaders
 }
 
+type ReportResponseHeaders struct {
+	ETag *string
+}
+type ReportJSONResponse struct {
+	Body Report
+
+	Headers ReportResponseHeaders
+}
+
 type ShareListJSONResponse struct {
 	Items []Share `json:"items"`
 }
@@ -9151,6 +10162,58 @@ type VersionedShareListJSONResponse struct {
 
 type ViewListJSONResponse struct {
 	Items []View `json:"items"`
+}
+
+type RunAnalyticsQueryRequestObject struct {
+	Body *RunAnalyticsQueryJSONRequestBody
+}
+
+type RunAnalyticsQueryResponseObject interface {
+	VisitRunAnalyticsQueryResponse(w http.ResponseWriter) error
+}
+
+type RunAnalyticsQuery200JSONResponse AnalyticsResult
+
+func (response RunAnalyticsQuery200JSONResponse) VisitRunAnalyticsQueryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunAnalyticsQuery422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RunAnalyticsQuery422ApplicationProblemPlusJSONResponse) VisitRunAnalyticsQueryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunAnalyticsQuery503ApplicationProblemPlusJSONResponse Problem
+
+func (response RunAnalyticsQuery503ApplicationProblemPlusJSONResponse) VisitRunAnalyticsQueryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type DeleteApprovalRequestObject struct {
@@ -11053,6 +12116,87 @@ func (response ReplaceDashboardWidget428ApplicationProblemPlusJSONResponse) Visi
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardWidgetDataRequestObject struct {
+	DashboardId openapi_types.UUID `json:"dashboardId"`
+	WidgetId    openapi_types.UUID `json:"widgetId"`
+}
+
+type GetDashboardWidgetDataResponseObject interface {
+	VisitGetDashboardWidgetDataResponse(w http.ResponseWriter) error
+}
+
+type GetDashboardWidgetData200JSONResponse WidgetData
+
+func (response GetDashboardWidgetData200JSONResponse) VisitGetDashboardWidgetDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardWidgetData403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetDashboardWidgetData403ApplicationProblemPlusJSONResponse) VisitGetDashboardWidgetDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardWidgetData404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetDashboardWidgetData404ApplicationProblemPlusJSONResponse) VisitGetDashboardWidgetDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardWidgetData422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetDashboardWidgetData422ApplicationProblemPlusJSONResponse) VisitGetDashboardWidgetDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetDashboardWidgetData503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetDashboardWidgetData503ApplicationProblemPlusJSONResponse) VisitGetDashboardWidgetDataResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -14220,6 +15364,639 @@ func (response RestoreItem409ApplicationProblemPlusJSONResponse) VisitRestoreIte
 	return err
 }
 
+type ListReportsRequestObject struct {
+	Params ListReportsParams
+}
+
+type ListReportsResponseObject interface {
+	VisitListReportsResponse(w http.ResponseWriter) error
+}
+
+type ListReports200JSONResponse ReportList
+
+func (response ListReports200JSONResponse) VisitListReportsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListReports422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListReports422ApplicationProblemPlusJSONResponse) VisitListReportsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateReportRequestObject struct {
+	Body *CreateReportJSONRequestBody
+}
+
+type CreateReportResponseObject interface {
+	VisitCreateReportResponse(w http.ResponseWriter) error
+}
+
+type CreateReport201JSONResponse struct{ ReportJSONResponse }
+
+func (response CreateReport201JSONResponse) VisitCreateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateReport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateReport403ApplicationProblemPlusJSONResponse) VisitCreateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateReport404ApplicationProblemPlusJSONResponse) VisitCreateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateReport409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateReport409ApplicationProblemPlusJSONResponse) VisitCreateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateReport422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateReport422ApplicationProblemPlusJSONResponse) VisitCreateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+	Params   DeleteReportParams
+}
+
+type DeleteReportResponseObject interface {
+	VisitDeleteReportResponse(w http.ResponseWriter) error
+}
+
+type DeleteReport204Response struct {
+}
+
+func (response DeleteReport204Response) VisitDeleteReportResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteReport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteReport403ApplicationProblemPlusJSONResponse) VisitDeleteReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteReport404ApplicationProblemPlusJSONResponse) VisitDeleteReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteReport409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteReport409ApplicationProblemPlusJSONResponse) VisitDeleteReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteReport428ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteReport428ApplicationProblemPlusJSONResponse) VisitDeleteReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+}
+
+type GetReportResponseObject interface {
+	VisitGetReportResponse(w http.ResponseWriter) error
+}
+
+type GetReport200JSONResponse struct{ ReportJSONResponse }
+
+func (response GetReport200JSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetReport403ApplicationProblemPlusJSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetReport404ApplicationProblemPlusJSONResponse) VisitGetReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+	Params   UpdateReportParams
+	Body     *UpdateReportJSONRequestBody
+}
+
+type UpdateReportResponseObject interface {
+	VisitUpdateReportResponse(w http.ResponseWriter) error
+}
+
+type UpdateReport200JSONResponse struct{ ReportJSONResponse }
+
+func (response UpdateReport200JSONResponse) VisitUpdateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateReport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateReport403ApplicationProblemPlusJSONResponse) VisitUpdateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateReport404ApplicationProblemPlusJSONResponse) VisitUpdateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateReport409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateReport409ApplicationProblemPlusJSONResponse) VisitUpdateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateReport422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateReport422ApplicationProblemPlusJSONResponse) VisitUpdateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateReport428ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateReport428ApplicationProblemPlusJSONResponse) VisitUpdateReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExportReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+}
+
+type ExportReportResponseObject interface {
+	VisitExportReportResponse(w http.ResponseWriter) error
+}
+
+type ExportReport200TextcsvResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response ExportReport200TextcsvResponse) VisitExportReportResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "text/csv")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type ExportReport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ExportReport403ApplicationProblemPlusJSONResponse) VisitExportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExportReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response ExportReport404ApplicationProblemPlusJSONResponse) VisitExportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExportReport422ApplicationProblemPlusJSONResponse Problem
+
+func (response ExportReport422ApplicationProblemPlusJSONResponse) VisitExportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExportReport503ApplicationProblemPlusJSONResponse Problem
+
+func (response ExportReport503ApplicationProblemPlusJSONResponse) VisitExportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReportResultRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+}
+
+type GetReportResultResponseObject interface {
+	VisitGetReportResultResponse(w http.ResponseWriter) error
+}
+
+type GetReportResult200JSONResponse struct {
+	Layout GetReportResult200JSONResponseBodyLayout `json:"layout"`
+	Name   string                                   `json:"name"`
+	Result AnalyticsResult                          `json:"result"`
+}
+
+func (response GetReportResult200JSONResponse) VisitGetReportResultResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReportResult403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetReportResult403ApplicationProblemPlusJSONResponse) VisitGetReportResultResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReportResult404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetReportResult404ApplicationProblemPlusJSONResponse) VisitGetReportResultResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReportResult422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetReportResult422ApplicationProblemPlusJSONResponse) VisitGetReportResultResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetReportResult503ApplicationProblemPlusJSONResponse Problem
+
+func (response GetReportResult503ApplicationProblemPlusJSONResponse) VisitGetReportResultResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnsubscribeReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+}
+
+type UnsubscribeReportResponseObject interface {
+	VisitUnsubscribeReportResponse(w http.ResponseWriter) error
+}
+
+type UnsubscribeReport204Response struct {
+}
+
+func (response UnsubscribeReport204Response) VisitUnsubscribeReportResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnsubscribeReport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnsubscribeReport403ApplicationProblemPlusJSONResponse) VisitUnsubscribeReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnsubscribeReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response UnsubscribeReport404ApplicationProblemPlusJSONResponse) VisitUnsubscribeReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubscribeReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+	Body     *SubscribeReportJSONRequestBody
+}
+
+type SubscribeReportResponseObject interface {
+	VisitSubscribeReportResponse(w http.ResponseWriter) error
+}
+
+type SubscribeReport200JSONResponse ReportSubscription
+
+func (response SubscribeReport200JSONResponse) VisitSubscribeReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubscribeReport403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SubscribeReport403ApplicationProblemPlusJSONResponse) VisitSubscribeReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubscribeReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response SubscribeReport404ApplicationProblemPlusJSONResponse) VisitSubscribeReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubscribeReport422ApplicationProblemPlusJSONResponse Problem
+
+func (response SubscribeReport422ApplicationProblemPlusJSONResponse) VisitSubscribeReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type SearchRequestObject struct {
 	Params SearchParams
 }
@@ -17156,6 +18933,9 @@ func (response CreateStatus422ApplicationProblemPlusJSONResponse) VisitCreateSta
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
+	// (POST /analytics/query)
+	RunAnalyticsQuery(ctx context.Context, request RunAnalyticsQueryRequestObject) (RunAnalyticsQueryResponseObject, error)
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(ctx context.Context, request DeleteApprovalRequestObject) (DeleteApprovalResponseObject, error)
@@ -17237,6 +19017,9 @@ type StrictServerInterface interface {
 
 	// (PUT /dashboards/{dashboardId}/widgets/{widgetId})
 	ReplaceDashboardWidget(ctx context.Context, request ReplaceDashboardWidgetRequestObject) (ReplaceDashboardWidgetResponseObject, error)
+	// GetDashboardWidgetData Hitung widget untuk pemanggil; hanya Item yang dapat dilihat pemanggil yang dihitung
+	// (GET /dashboards/{dashboardId}/widgets/{widgetId}/data)
+	GetDashboardWidgetData(ctx context.Context, request GetDashboardWidgetDataRequestObject) (GetDashboardWidgetDataResponseObject, error)
 	// QueryDependencies Dependensi di antara sekumpulan Item (link Gantt). POST hanya karena daftar ID tidak muat di URL
 	// (POST /dependencies/query)
 	QueryDependencies(ctx context.Context, request QueryDependenciesRequestObject) (QueryDependenciesResponseObject, error)
@@ -17426,6 +19209,33 @@ type StrictServerInterface interface {
 	// RestoreItem Pulihkan item beserta turunannya (BIN-02)
 	// (POST /recycle-bin/{itemId}/restore)
 	RestoreItem(ctx context.Context, request RestoreItemRequestObject) (RestoreItemResponseObject, error)
+	// ListReports Report milik sendiri dan report Space yang dibagikan dan terlihat
+	// (GET /reports)
+	ListReports(ctx context.Context, request ListReportsRequestObject) (ListReportsResponseObject, error)
+
+	// (POST /reports)
+	CreateReport(ctx context.Context, request CreateReportRequestObject) (CreateReportResponseObject, error)
+
+	// (DELETE /reports/{reportId})
+	DeleteReport(ctx context.Context, request DeleteReportRequestObject) (DeleteReportResponseObject, error)
+
+	// (GET /reports/{reportId})
+	GetReport(ctx context.Context, request GetReportRequestObject) (GetReportResponseObject, error)
+	// UpdateReport Ubah nama, sharing (hanya pemilik) atau definisi; report tidak dapat dipindah
+	// (PATCH /reports/{reportId})
+	UpdateReport(ctx context.Context, request UpdateReportRequestObject) (UpdateReportResponseObject, error)
+	// ExportReport Hasil report sebagai CSV; sel berawalan rumus diberi tanda kutip agar tidak dijalankan spreadsheet
+	// (GET /reports/{reportId}/export)
+	ExportReport(ctx context.Context, request ExportReportRequestObject) (ExportReportResponseObject, error)
+	// GetReportResult Jalankan definisi report dengan hak pemanggil
+	// (GET /reports/{reportId}/result)
+	GetReportResult(ctx context.Context, request GetReportResultRequestObject) (GetReportResultResponseObject, error)
+
+	// (DELETE /reports/{reportId}/subscription)
+	UnsubscribeReport(ctx context.Context, request UnsubscribeReportRequestObject) (UnsubscribeReportResponseObject, error)
+	// SubscribeReport Berlangganan atas nama pemanggil (pengiriman lewat RPT-04)
+	// (PUT /reports/{reportId}/subscription)
+	SubscribeReport(ctx context.Context, request SubscribeReportRequestObject) (SubscribeReportResponseObject, error)
 	// Search Pencarian global (NAV-06)
 	// (GET /search)
 	Search(ctx context.Context, request SearchRequestObject) (SearchResponseObject, error)
@@ -17612,6 +19422,37 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// RunAnalyticsQuery operation middleware
+func (sh *strictHandler) RunAnalyticsQuery(w http.ResponseWriter, r *http.Request) {
+	var request RunAnalyticsQueryRequestObject
+
+	var body RunAnalyticsQueryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RunAnalyticsQuery(ctx, request.(RunAnalyticsQueryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RunAnalyticsQuery")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RunAnalyticsQueryResponseObject); ok {
+		if err := validResponse.VisitRunAnalyticsQueryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // DeleteApproval operation middleware
@@ -18415,6 +20256,33 @@ func (sh *strictHandler) ReplaceDashboardWidget(w http.ResponseWriter, r *http.R
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReplaceDashboardWidgetResponseObject); ok {
 		if err := validResponse.VisitReplaceDashboardWidgetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetDashboardWidgetData operation middleware
+func (sh *strictHandler) GetDashboardWidgetData(w http.ResponseWriter, r *http.Request, dashboardId openapi_types.UUID, widgetId openapi_types.UUID) {
+	var request GetDashboardWidgetDataRequestObject
+
+	request.DashboardId = dashboardId
+	request.WidgetId = widgetId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetDashboardWidgetData(ctx, request.(GetDashboardWidgetDataRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetDashboardWidgetData")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetDashboardWidgetDataResponseObject); ok {
+		if err := validResponse.VisitGetDashboardWidgetDataResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -20216,6 +22084,261 @@ func (sh *strictHandler) RestoreItem(w http.ResponseWriter, r *http.Request, ite
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RestoreItemResponseObject); ok {
 		if err := validResponse.VisitRestoreItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListReports operation middleware
+func (sh *strictHandler) ListReports(w http.ResponseWriter, r *http.Request, params ListReportsParams) {
+	var request ListReportsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListReports(ctx, request.(ListReportsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListReports")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListReportsResponseObject); ok {
+		if err := validResponse.VisitListReportsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateReport operation middleware
+func (sh *strictHandler) CreateReport(w http.ResponseWriter, r *http.Request) {
+	var request CreateReportRequestObject
+
+	var body CreateReportJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateReport(ctx, request.(CreateReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateReportResponseObject); ok {
+		if err := validResponse.VisitCreateReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteReport operation middleware
+func (sh *strictHandler) DeleteReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID, params DeleteReportParams) {
+	var request DeleteReportRequestObject
+
+	request.ReportId = reportId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteReport(ctx, request.(DeleteReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteReportResponseObject); ok {
+		if err := validResponse.VisitDeleteReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetReport operation middleware
+func (sh *strictHandler) GetReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID) {
+	var request GetReportRequestObject
+
+	request.ReportId = reportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetReport(ctx, request.(GetReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetReportResponseObject); ok {
+		if err := validResponse.VisitGetReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateReport operation middleware
+func (sh *strictHandler) UpdateReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID, params UpdateReportParams) {
+	var request UpdateReportRequestObject
+
+	request.ReportId = reportId
+	request.Params = params
+
+	var body UpdateReportJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateReport(ctx, request.(UpdateReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateReportResponseObject); ok {
+		if err := validResponse.VisitUpdateReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExportReport operation middleware
+func (sh *strictHandler) ExportReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID) {
+	var request ExportReportRequestObject
+
+	request.ReportId = reportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ExportReport(ctx, request.(ExportReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExportReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExportReportResponseObject); ok {
+		if err := validResponse.VisitExportReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetReportResult operation middleware
+func (sh *strictHandler) GetReportResult(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID) {
+	var request GetReportResultRequestObject
+
+	request.ReportId = reportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetReportResult(ctx, request.(GetReportResultRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetReportResult")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetReportResultResponseObject); ok {
+		if err := validResponse.VisitGetReportResultResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnsubscribeReport operation middleware
+func (sh *strictHandler) UnsubscribeReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID) {
+	var request UnsubscribeReportRequestObject
+
+	request.ReportId = reportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnsubscribeReport(ctx, request.(UnsubscribeReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnsubscribeReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnsubscribeReportResponseObject); ok {
+		if err := validResponse.VisitUnsubscribeReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SubscribeReport operation middleware
+func (sh *strictHandler) SubscribeReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID) {
+	var request SubscribeReportRequestObject
+
+	request.ReportId = reportId
+
+	var body SubscribeReportJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SubscribeReport(ctx, request.(SubscribeReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SubscribeReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SubscribeReportResponseObject); ok {
+		if err := validResponse.VisitSubscribeReportResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

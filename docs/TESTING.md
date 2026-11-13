@@ -445,3 +445,36 @@ Belum: update 00023 → 00033 pada instance pilot (NOT RUN); batas 300/jam per t
 - PASS. Tes codec menolak formula dan batas ukuran, membaca shared strings, serta menyimpan teks yang mirip formula sebagai literal. Pemeriksaan silang dengan XlsxWriter dan openpyxl lulus.
 - PASS. Chrome dengan River dan PostgreSQL mengunduh Project, mengunggah workbook yang sama, dan memverifikasi nilai Currency, tanggal, judul mirip formula, serta dua induk setelah impor. Alur Timesheet → Timelog → Budget juga lulus. Dua tes dialog Excel dengan mock, typecheck, lint, dan 20 tes unit frontend lulus.
 - PASS. Regresi Go dengan PostgreSQL, Go vet, dan build web lulus.
+
+## M5 / S5.1.1 Skema dashboard dan widget
+
+- PASS. `TestDashboardLifecycle` dan `TestDashboardSpaceLifecycle` dengan PostgreSQL: CRUD dengan If-Match; rename, duplicate (nama + Space), move (butuh Delete di sumber, Create di tujuan), delete; 404 untuk non-anggota dan dashboard pribadi orang lain, 403 untuk pembaca; widget UUID dibatasi ke dashboard induknya; plafon user type pada dashboard pribadi; Space yang dihapus menyembunyikan dashboard; menghapus dashboard menghapus widget tetapi Task tetap ada. Go vet bersih.
+- Belum dicek: konfigurasi widget hanya memuat tiga kunci tampilan; skema data source (S5.1.2) dan UI (S5.1.5) belum ada.
+
+## M5 / S5.1.2 Mesin data widget
+
+- PASS. `TestAnalyticsEngineMatchesRawDataAndPolicy` (PostgreSQL): total per pemanggil mengikuti policy (anggota baca 3, admin 4, orang luar 0) dan cocok dengan `SELECT count(*)` mentah; group by status group, importance, assignee (+ break by), Space, custom field single select (label opsi) cocok dengan fixture yang dihitung tangan; metric effort, `sum_field` (desimal 10,5 + 4 = 14,5; Space rahasia tidak ikut); filter assigned to me, overdue, unassigned, importance, rentang due, rentang effort, status group, assignee id, followed; time entries (menit, billable, per user, rentang tanggal, billing).
+- PASS. Skema tertutup: 22 masukan salah ditolak 422 sebelum SQL dibuat (sumber, metric, dimensi asing, injeksi pada `group_by` dan status group, `break_by` tanpa `group_by`, dimensi sama dua kali, dimensi atau filter task pada time entries, tanggal salah, UUID salah, effort negatif, `field_id` tanpa metric `sum_field`, field tidak ada, tipe field tidak cocok); field tambahan di body 400; tanpa sesi 401; sumber melebihi batas baris (`MaxRows` diturunkan ke 2 pada tes) gagal 422 dan bukan angka parsial. **Mutasi:** melewati cek `View` membuat tes gagal (anggota melihat 4, bukan 3).
+- Migrasi `00039` menambah indeks `item_locations(space_id,item_id)` dan `items(due_date)`; batas waktu 8 detik lewat `statement_timeout` dan `context`.
+- Belum diukur: p95 pada 10 ribu Item (S5.3.1) dan jalur 503 timeout belum punya tes.
+
+## M5 / S5.1.3 Widget daftar task dan template (IN_PROGRESS)
+
+- PASS. `TestWidgetDataPresetsAndCustomQueries`: to do this week, to review (approval menunggu pemanggil), completed (terbaru dulu), assigned to me, my tasks, overdue, followed, backlog; Space dashboard membatasi diri ke Space-nya; dashboard pribadi tidak dibatasi Space tetapi policy tetap menyembunyikan Item rahasia; widget menjawab untuk pemirsa, bukan pemilik (daftar review admin kosong); dashboard pribadi orang lain dan widget dari dashboard lain 404; widget grafik dengan `config.query` cocok dengan hitungan mentah dan berbeda per pemirsa (admin 7, anggota 6); grafik tanpa query 422; 10 konfigurasi widget salah ditolak 422 (tanpa sumber, list dan template bersamaan, nama tertukar, `starred`, `query` pada task list, `list` pada grafik, field asing, query salah, bentuk salah).
+- **Belum:** template `starred` karena Item belum dapat diberi bintang; formulir pembuat widget di UI ada di S5.1.5.
+
+## M5 / S5.2.1 Skema report dan daftar report
+
+- PASS. `TestReportsLifecycleAndAccess` (PostgreSQL): hak Create/Edit/Delete per Space, report pribadi dan `private` tersembunyi dari anggota Space dan admin (404), report `space` terlihat anggota, hanya pemilik mengubah sharing, report tidak dapat dipindah, If-Match (428/409), definisi tertutup (5 bentuk salah 422), langganan milik pemanggil (rentang hari/jam, 404 tanpa View, tidak bocor ke pengguna lain, diganti bukan digandakan), hapus butuh Delete dan menghapus langganan tetapi bukan Task, Space terhapus menyembunyikan report. Kolom daftar RPT-03 (nama, pembuat, Space, sharing, dibuat, diubah, langganan) tersedia di API dan tampil di UI.
+- Pengiriman email langganan belum ada (S5.2.3); hanya tersimpan dan tampil.
+
+## M5 / S5.2.2 Editor dan eksekusi report
+
+- PASS. `TestReportResultAndExport`: hasil report mengikuti hak pemirsa (admin 3, pembaca 2, orang luar 404), sumber kosong menghasilkan 0, lingkup `container_ids` (Project) menghitung hanya subpohon, CSV memakai `Content-Disposition`, sel berawalan `=` diberi tanda kutip, orang luar 404.
+- PASS. `web/tests/reports.spec.ts` (Chrome, API mock, axe tanpa pelanggaran): daftar dengan 8 kolom dan filter, buat report mengirim definisi bawaan, hapus meminta konfirmasi dan mengirim If-Match, editor menjalankan draf dan mengirim query bersih (`container_ids`, filter), menyimpan dengan If-Match, tautan ekspor, langganan, konflik 409, report tidak ada, sumber terlalu besar.
+- Celah yang diketahui: filter assignee di UI hanya "assigned to me" (API menerima id), custom field belum bisa dipilih di editor report (API dan widget sudah), lokasi report tetap sejak dibuat, belum ada alur live Playwright terhadap backend sungguhan.
+
+## M5 regresi
+
+- Go vet bersih dan `go test ./...` hijau dengan PostgreSQL. Typecheck, lint, 20 tes unit, build web, dan Chrome mock suite: 213 lulus, 4 gagal, 19 dilewati. Dua gagal adalah tes axe Share dialog lama (`ad98a49`); `ViewTabs duplicates...` lulus bila dijalankan sendiri (flake saat beban); satu tes `spaces.spec.ts` (menu aksi Personal Space) sudah usang karena menu kini memuat "Import from Excel" dari M4, ekspektasinya saya perbarui.
+- Regresi yang ditemukan dan diperbaiki: email aktivasi gagal ("mail: no address") bila `SMTPFromAuth` kosong pada Config yang dibuat tangan; kini jatuh ke `SMTP_FROM`.

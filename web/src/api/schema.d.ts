@@ -4,6 +4,116 @@
  */
 
 export interface paths {
+    "/analytics/query": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung */
+        post: operations["runAnalyticsQuery"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Report milik sendiri dan report Space yang dibagikan dan terlihat */
+        get: operations["listReports"];
+        put?: never;
+        post: operations["createReport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getReport"];
+        put?: never;
+        post?: never;
+        delete: operations["deleteReport"];
+        options?: never;
+        head?: never;
+        /** Ubah nama, sharing (hanya pemilik) atau definisi; report tidak dapat dipindah */
+        patch: operations["updateReport"];
+        trace?: never;
+    };
+    "/reports/{reportId}/result": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        /** Jalankan definisi report dengan hak pemanggil */
+        get: operations["getReportResult"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{reportId}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        /** Hasil report sebagai CSV; sel berawalan rumus diberi tanda kutip agar tidak dijalankan spreadsheet */
+        get: operations["exportReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/{reportId}/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Berlangganan atas nama pemanggil (pengiriman lewat RPT-04) */
+        put: operations["subscribeReport"];
+        post?: never;
+        delete: operations["unsubscribeReport"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboards": {
         parameters: {
             query?: never;
@@ -89,6 +199,26 @@ export interface paths {
         get?: never;
         put?: never;
         post: operations["createDashboardWidget"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/dashboards/{dashboardId}/widgets/{widgetId}/data": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+                widgetId: string;
+            };
+            cookie?: never;
+        };
+        /** Hitung widget untuk pemanggil; hanya Item yang dapat dilihat pemanggil yang dihitung */
+        get: operations["getDashboardWidgetData"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -1923,6 +2053,139 @@ export interface components {
             name: string;
             version: number;
         };
+        AnalyticsFilters: {
+            due_this_week?: boolean;
+            no_due_date?: boolean;
+            awaiting_my_review?: boolean;
+            status_groups?: ("active" | "completed" | "deferred" | "cancelled")[];
+            assignees?: string[];
+            unassigned?: boolean;
+            importance?: ("high" | "normal" | "low")[];
+            followed?: boolean;
+            overdue?: boolean;
+            /** Format: date */
+            due_from?: string;
+            /** Format: date */
+            due_to?: string;
+            effort_min?: number;
+            effort_max?: number;
+            /** Format: date */
+            entry_from?: string;
+            /** Format: date */
+            entry_to?: string;
+            /** @enum {string} */
+            billing?: "billable" | "non_billable";
+        };
+        AnalyticsQuery: {
+            /** @enum {string} */
+            reporting_on: "tasks" | "projects" | "time_entries";
+            /** @description Kosong berarti semua Space yang terlihat */
+            space_ids?: string[];
+            /** @description Project atau Folder; hanya subpohonnya */
+            container_ids?: string[];
+            /**
+             * @description tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count
+             * @enum {string}
+             */
+            metric: "count" | "effort_minutes" | "sum_field" | "minutes" | "billable_minutes";
+            /**
+             * Format: uuid
+             * @description Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya
+             */
+            field_id?: string;
+            /** @enum {string} */
+            group_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            /** @enum {string} */
+            break_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            filters?: components["schemas"]["AnalyticsFilters"];
+        };
+        WidgetData: {
+            /** @enum {string} */
+            kind: "tasks" | "series";
+            items?: {
+                /** Format: uuid */
+                id: string;
+                title: string;
+                status: string;
+                status_group: string;
+                /** @description Kosong jika tidak ada */
+                due_date: string;
+                importance: string;
+            }[];
+            result?: components["schemas"]["AnalyticsResult"];
+        };
+        AnalyticsLabel: {
+            key: string;
+            label: string;
+        };
+        AnalyticsResult: {
+            total: number;
+            rows: {
+                group: components["schemas"]["AnalyticsLabel"];
+                break: components["schemas"]["AnalyticsLabel"] | null;
+                value: number;
+            }[];
+        };
+        ReportDefinition: {
+            /** @enum {string} */
+            layout: "table" | "column";
+            query: components["schemas"]["AnalyticsQuery"];
+        };
+        ReportSubscription: {
+            /** @description 0 = Minggu */
+            weekday: number;
+            /** @description Jam di zona waktu pelanggan */
+            hour: number;
+        };
+        ReportSummary: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            owner: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            };
+            space: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+            } | null;
+            /** @enum {string} */
+            sharing: "private" | "space";
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+            version: number;
+            subscription: components["schemas"]["ReportSubscription"] | null;
+        };
+        Report: components["schemas"]["ReportSummary"] & {
+            definition: components["schemas"]["ReportDefinition"];
+        };
+        ReportList: {
+            items: components["schemas"]["ReportSummary"][];
+        };
+        ReportCreate: {
+            name: string;
+            /**
+             * Format: uuid
+             * @description Null untuk report pribadi
+             */
+            space_id?: string | null;
+            /**
+             * @default private
+             * @enum {string}
+             */
+            sharing: "private" | "space";
+            definition?: components["schemas"]["ReportDefinition"];
+        };
+        ReportUpdate: {
+            name?: string;
+            /** @enum {string} */
+            sharing?: "private" | "space";
+            definition?: components["schemas"]["ReportDefinition"];
+        };
         DashboardList: {
             items: components["schemas"]["DashboardSummary"][];
         };
@@ -1936,6 +2199,17 @@ export interface components {
              * @enum {string}
              */
             pie_style?: "classic" | "donut" | "ring";
+            /**
+             * @description Khusus task_list (DASH-01); gunakan list atau template
+             * @enum {string}
+             */
+            list?: "todo_this_week" | "to_review" | "completed" | "assigned_to_me";
+            /**
+             * @description Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang
+             * @enum {string}
+             */
+            template?: "my_tasks" | "overdue" | "followed" | "backlog";
+            query?: components["schemas"]["AnalyticsQuery"];
         };
         DashboardWidgetInput: {
             name: string;
@@ -2934,6 +3208,16 @@ export interface components {
         };
     };
     responses: {
+        /** @description Report beserta definisi */
+        Report: {
+            headers: {
+                ETag: components["headers"]["ETag"];
+                [name: string]: unknown;
+            };
+            content: {
+                "application/json": components["schemas"]["Report"];
+            };
+        };
         /** @description Dashboard beserta konfigurasi widget */
         Dashboard: {
             headers: {
@@ -3045,6 +3329,252 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    runAnalyticsQuery: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsQuery"];
+            };
+        };
+        responses: {
+            /** @description Nilai per grup (dan break by) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsResult"];
+                };
+            };
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    listReports: {
+        parameters: {
+            query?: {
+                space_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar ringkasan (tanpa definisi) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportList"];
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    createReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportCreate"];
+            };
+        };
+        responses: {
+            201: components["responses"]["Report"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            200: components["responses"]["Report"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    deleteReport: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Report dan langganannya dihapus; data sumber tidak berubah */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    updateReport: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportUpdate"];
+            };
+        };
+        responses: {
+            200: components["responses"]["Report"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    getReportResult: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Layout dan hasil */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        layout: "table" | "column";
+                        name: string;
+                        result: components["schemas"]["AnalyticsResult"];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    exportReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description CSV */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "text/csv": string;
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    subscribeReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ReportSubscription"];
+            };
+        };
+        responses: {
+            /** @description Langganan tersimpan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ReportSubscription"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    unsubscribeReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Langganan dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
     listDashboards: {
         parameters: {
             query?: {
@@ -3232,6 +3762,33 @@ export interface operations {
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             428: components["responses"]["Problem"];
+        };
+    };
+    getDashboardWidgetData: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                dashboardId: string;
+                widgetId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar task atau deret nilai */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WidgetData"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     replaceDashboardWidget: {

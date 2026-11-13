@@ -34,6 +34,149 @@ security:
   - cookieAuth: []
 
 paths:
+  /analytics/query:
+    post:
+      operationId: runAnalyticsQuery
+      summary: Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnalyticsQuery' }
+      responses:
+        '200':
+          description: Nilai per grup (dan break by)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AnalyticsResult' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /reports:
+    get:
+      operationId: listReports
+      summary: Report milik sendiri dan report Space yang dibagikan dan terlihat
+      parameters:
+        - { name: space_id, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Daftar ringkasan (tanpa definisi)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportList' }
+        '422': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createReport
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportCreate' }
+      responses:
+        '201': { $ref: '#/components/responses/Report' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /reports/{reportId}:
+    parameters:
+      - { name: reportId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getReport
+      responses:
+        '200': { $ref: '#/components/responses/Report' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: updateReport
+      summary: Ubah nama, sharing (hanya pemilik) atau definisi; report tidak dapat dipindah
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportUpdate' }
+      responses:
+        '200': { $ref: '#/components/responses/Report' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteReport
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '204': { description: Report dan langganannya dihapus; data sumber tidak berubah }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+  /reports/{reportId}/result:
+    parameters:
+      - { name: reportId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getReportResult
+      summary: Jalankan definisi report dengan hak pemanggil
+      responses:
+        '200':
+          description: Layout dan hasil
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [layout, name, result]
+                properties:
+                  layout: { type: string, enum: [table, column] }
+                  name: { type: string }
+                  result: { $ref: '#/components/schemas/AnalyticsResult' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /reports/{reportId}/export:
+    parameters:
+      - { name: reportId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: exportReport
+      summary: Hasil report sebagai CSV; sel berawalan rumus diberi tanda kutip agar tidak dijalankan spreadsheet
+      responses:
+        '200':
+          description: CSV
+          content:
+            text/csv:
+              schema: { type: string }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /reports/{reportId}/subscription:
+    parameters:
+      - { name: reportId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      operationId: subscribeReport
+      summary: Berlangganan atas nama pemanggil (pengiriman lewat RPT-04)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ReportSubscription' }
+      responses:
+        '200':
+          description: Langganan tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ReportSubscription' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: unsubscribeReport
+      responses:
+        '204': { description: Langganan dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /dashboards:
     get:
       operationId: listDashboards
@@ -154,6 +297,23 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /dashboards/{dashboardId}/widgets/{widgetId}/data:
+    parameters:
+      - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: widgetId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getDashboardWidgetData
+      summary: Hitung widget untuk pemanggil; hanya Item yang dapat dilihat pemanggil yang dihitung
+      responses:
+        '200':
+          description: Daftar task atau deret nilai
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WidgetData' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
   /dashboards/{dashboardId}/widgets/{widgetId}:
     parameters:
       - { name: dashboardId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2679,6 +2839,12 @@ components:
       explode: true
 
   responses:
+    Report:
+      description: Report beserta definisi
+      headers: { ETag: { $ref: '#/components/headers/ETag' } }
+      content:
+        application/json:
+          schema: { $ref: '#/components/schemas/Report' }
     Dashboard:
       description: Dashboard beserta konfigurasi widget
       headers: { ETag: { $ref: '#/components/headers/ETag' } }
@@ -2774,6 +2940,148 @@ components:
         space_id: { type: string, format: uuid, nullable: true }
         name: { type: string }
         version: { type: integer, minimum: 1 }
+    AnalyticsFilters:
+      type: object
+      additionalProperties: false
+      properties:
+        due_this_week: { type: boolean }
+        no_due_date: { type: boolean }
+        awaiting_my_review: { type: boolean }
+        status_groups: { type: array, maxItems: 4, items: { type: string, enum: [active, completed, deferred, cancelled] } }
+        assignees: { type: array, maxItems: 100, items: { type: string, description: 'UUID pengguna atau "me"' } }
+        unassigned: { type: boolean }
+        importance: { type: array, maxItems: 3, items: { type: string, enum: [high, normal, low] } }
+        followed: { type: boolean }
+        overdue: { type: boolean }
+        due_from: { type: string, format: date }
+        due_to: { type: string, format: date }
+        effort_min: { type: integer, minimum: 0, maximum: 10000000 }
+        effort_max: { type: integer, minimum: 0, maximum: 10000000 }
+        entry_from: { type: string, format: date }
+        entry_to: { type: string, format: date }
+        billing: { type: string, enum: [billable, non_billable] }
+    AnalyticsQuery:
+      type: object
+      additionalProperties: false
+      required: [reporting_on, metric]
+      properties:
+        reporting_on: { type: string, enum: [tasks, projects, time_entries] }
+        space_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Kosong berarti semua Space yang terlihat }
+        container_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Project atau Folder; hanya subpohonnya }
+        metric: { type: string, enum: [count, effort_minutes, sum_field, minutes, billable_minutes], description: 'tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id); time_entries: minutes, billable_minutes, count' }
+        field_id: { type: string, format: uuid, description: 'Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya' }
+        group_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
+        break_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
+        filters: { $ref: '#/components/schemas/AnalyticsFilters' }
+    WidgetData:
+      type: object
+      required: [kind]
+      properties:
+        kind: { type: string, enum: [tasks, series] }
+        items:
+          type: array
+          maxItems: 50
+          items:
+            type: object
+            required: [id, title, status, status_group, due_date, importance]
+            properties:
+              id: { type: string, format: uuid }
+              title: { type: string }
+              status: { type: string }
+              status_group: { type: string }
+              due_date: { type: string, description: Kosong jika tidak ada }
+              importance: { type: string }
+        result: { $ref: '#/components/schemas/AnalyticsResult' }
+    AnalyticsLabel:
+      type: object
+      required: [key, label]
+      properties:
+        key: { type: string }
+        label: { type: string }
+    AnalyticsResult:
+      type: object
+      required: [rows, total]
+      properties:
+        total: { type: number }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [group, break, value]
+            properties:
+              group: { $ref: '#/components/schemas/AnalyticsLabel' }
+              break:
+                nullable: true
+                allOf: [{ $ref: '#/components/schemas/AnalyticsLabel' }]
+              value: { type: number }
+    ReportDefinition:
+      type: object
+      additionalProperties: false
+      required: [layout, query]
+      properties:
+        layout: { type: string, enum: [table, column] }
+        query: { $ref: '#/components/schemas/AnalyticsQuery' }
+    ReportSubscription:
+      type: object
+      additionalProperties: false
+      required: [weekday, hour]
+      properties:
+        weekday: { type: integer, minimum: 0, maximum: 6, description: 0 = Minggu }
+        hour: { type: integer, minimum: 0, maximum: 23, description: Jam di zona waktu pelanggan }
+    ReportSummary:
+      type: object
+      required: [id, name, owner, space, sharing, created_at, updated_at, version, subscription]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        owner:
+          type: object
+          required: [id, name]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+        space:
+          nullable: true
+          type: object
+          required: [id, name]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+        sharing: { type: string, enum: [private, space] }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        version: { type: integer }
+        subscription:
+          nullable: true
+          allOf: [{ $ref: '#/components/schemas/ReportSubscription' }]
+    Report:
+      allOf:
+        - { $ref: '#/components/schemas/ReportSummary' }
+        - type: object
+          required: [definition]
+          properties:
+            definition: { $ref: '#/components/schemas/ReportDefinition' }
+    ReportList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, maxItems: 1000, items: { $ref: '#/components/schemas/ReportSummary' } }
+    ReportCreate:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        space_id: { type: string, format: uuid, nullable: true, description: Null untuk report pribadi }
+        sharing: { type: string, enum: [private, space], default: private }
+        definition: { $ref: '#/components/schemas/ReportDefinition' }
+    ReportUpdate:
+      type: object
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        sharing: { type: string, enum: [private, space] }
+        definition: { $ref: '#/components/schemas/ReportDefinition' }
     DashboardList:
       type: object
       required: [items]
@@ -2788,6 +3096,9 @@ components:
         show_legend: { type: boolean, description: "Untuk pie, column, bar, dan line" }
         show_labels: { type: boolean, description: "Untuk pie, column, bar, dan line" }
         pie_style: { type: string, enum: [classic, donut, ring], description: Khusus pie }
+        list: { type: string, enum: [todo_this_week, to_review, completed, assigned_to_me], description: Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya }
+        template: { type: string, enum: [my_tasks, overdue, followed, backlog], description: Khusus task_list (DASH-02); starred menyusul setelah Item dapat diberi bintang }
+        query: { $ref: '#/components/schemas/AnalyticsQuery' }
     DashboardWidgetInput:
       type: object
       required: [name, type]

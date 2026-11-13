@@ -700,6 +700,26 @@ type ProjectExcelImport struct {
 	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
 }
 
+type Report struct {
+	ID         pgtype.UUID        `json:"id"`
+	OwnerID    pgtype.UUID        `json:"owner_id"`
+	SpaceID    pgtype.UUID        `json:"space_id"`
+	Name       string             `json:"name"`
+	Definition []byte             `json:"definition"`
+	Sharing    string             `json:"sharing"`
+	Version    int32              `json:"version"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ReportSubscription struct {
+	ReportID  pgtype.UUID        `json:"report_id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Weekday   int16              `json:"weekday"`
+	Hour      int16              `json:"hour"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type RequestForm struct {
 	ID          pgtype.UUID        `json:"id"`
 	SpaceID     pgtype.UUID        `json:"space_id"`

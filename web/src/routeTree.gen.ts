@@ -27,6 +27,8 @@ import { Route as AppTimesheetsRouteImport } from './routes/_app/timesheets'
 import { Route as FTokenRouteImport } from './routes/f.$token'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
 import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
+import { Route as AppReportsIndexRouteImport } from './routes/_app/reports.index'
+import { Route as AppReportsReportIdRouteImport } from './routes/_app/reports.$reportId'
 import { Route as AppRequestsIndexRouteImport } from './routes/_app/requests.index'
 import { Route as AppRequestsFormIdRouteImport } from './routes/_app/requests.$formId'
 import { Route as AppRequestsMineRouteImport } from './routes/_app/requests.mine'
@@ -133,6 +135,16 @@ const AppItemsItemIdRoute = AppItemsItemIdRouteImport.update({
   path: '/items/$itemId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
+  id: '/reports/',
+  path: '/reports/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppReportsReportIdRoute = AppReportsReportIdRouteImport.update({
+  id: '/reports/$reportId',
+  path: '/reports/$reportId',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRequestsIndexRoute = AppRequestsIndexRouteImport.update({
   id: '/requests/',
   path: '/requests/',
@@ -233,6 +245,7 @@ export interface FileRoutesByFullPath {
   '/f/$token': typeof FTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
+  '/reports/$reportId': typeof AppReportsReportIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/profile': typeof AppSettingsProfileRoute
@@ -243,6 +256,7 @@ export interface FileRoutesByFullPath {
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/reports/': typeof AppReportsIndexRoute
   '/requests/': typeof AppRequestsIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
@@ -267,6 +281,7 @@ export interface FileRoutesByTo {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
+  '/reports/$reportId': typeof AppReportsReportIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/profile': typeof AppSettingsProfileRoute
@@ -276,6 +291,7 @@ export interface FileRoutesByTo {
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/reports': typeof AppReportsIndexRoute
   '/requests': typeof AppRequestsIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
@@ -303,6 +319,7 @@ export interface FileRoutesById {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/items/$itemId': typeof AppItemsItemIdRoute
+  '/_app/reports/$reportId': typeof AppReportsReportIdRoute
   '/_app/requests/$formId': typeof AppRequestsFormIdRoute
   '/_app/requests/mine': typeof AppRequestsMineRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
@@ -313,6 +330,7 @@ export interface FileRoutesById {
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spikes/gantt': typeof AppSpikesGanttRoute
   '/_app/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/requests/': typeof AppRequestsIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/settings/users/types': typeof AppSettingsUsersTypesRoute
@@ -340,6 +358,7 @@ export interface FileRouteTypes {
     | '/f/$token'
     | '/invitations/$token'
     | '/items/$itemId'
+    | '/reports/$reportId'
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/profile'
@@ -350,6 +369,7 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
+    | '/reports/'
     | '/requests/'
     | '/settings/'
     | '/settings/users/types'
@@ -374,6 +394,7 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/'
     | '/items/$itemId'
+    | '/reports/$reportId'
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/profile'
@@ -383,6 +404,7 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
+    | '/reports'
     | '/requests'
     | '/settings'
     | '/settings/users/types'
@@ -409,6 +431,7 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/_app/'
     | '/_app/items/$itemId'
+    | '/_app/reports/$reportId'
     | '/_app/requests/$formId'
     | '/_app/requests/mine'
     | '/_app/settings/profile'
@@ -419,6 +442,7 @@ export interface FileRouteTypes {
     | '/_app/spaces/$spaceId'
     | '/_app/spikes/gantt'
     | '/_app/tasks/$itemId'
+    | '/_app/reports/'
     | '/_app/requests/'
     | '/_app/settings/'
     | '/_app/settings/users/types'
@@ -563,6 +587,20 @@ declare module '@tanstack/react-router' {
       path: '/items/$itemId'
       fullPath: '/items/$itemId'
       preLoaderRoute: typeof AppItemsItemIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reports/': {
+      id: '/_app/reports/'
+      path: '/reports'
+      fullPath: '/reports/'
+      preLoaderRoute: typeof AppReportsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/reports/$reportId': {
+      id: '/_app/reports/$reportId'
+      path: '/reports/$reportId'
+      fullPath: '/reports/$reportId'
+      preLoaderRoute: typeof AppReportsReportIdRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/requests/': {
@@ -727,11 +765,13 @@ interface AppRouteChildren {
   AppTimesheetsRoute: typeof AppTimesheetsRoute
   AppIndexRoute: typeof AppIndexRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
+  AppReportsReportIdRoute: typeof AppReportsReportIdRoute
   AppRequestsFormIdRoute: typeof AppRequestsFormIdRoute
   AppRequestsMineRoute: typeof AppRequestsMineRoute
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpikesGanttRoute: typeof AppSpikesGanttRoute
   AppTasksItemIdRoute: typeof AppTasksItemIdRoute
+  AppReportsIndexRoute: typeof AppReportsIndexRoute
   AppRequestsIndexRoute: typeof AppRequestsIndexRoute
   AppSpacesSpaceIdFormsRoute: typeof AppSpacesSpaceIdFormsRoute
   AppSpacesSpaceIdFormsFormIdRoute: typeof AppSpacesSpaceIdFormsFormIdRoute
@@ -749,11 +789,13 @@ const AppRouteChildren: AppRouteChildren = {
   AppTimesheetsRoute: AppTimesheetsRoute,
   AppIndexRoute: AppIndexRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
+  AppReportsReportIdRoute: AppReportsReportIdRoute,
   AppRequestsFormIdRoute: AppRequestsFormIdRoute,
   AppRequestsMineRoute: AppRequestsMineRoute,
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpikesGanttRoute: AppSpikesGanttRoute,
   AppTasksItemIdRoute: AppTasksItemIdRoute,
+  AppReportsIndexRoute: AppReportsIndexRoute,
   AppRequestsIndexRoute: AppRequestsIndexRoute,
   AppSpacesSpaceIdFormsRoute: AppSpacesSpaceIdFormsRoute,
   AppSpacesSpaceIdFormsFormIdRoute: AppSpacesSpaceIdFormsFormIdRoute,

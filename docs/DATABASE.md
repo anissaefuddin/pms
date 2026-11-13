@@ -228,9 +228,19 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 `project_excel_exports` menyimpan status River, lokasi Project, pemilik, daftar ID Item, serta workbook maksimum 5 MiB. Unduhan memeriksa ulang hak baca dan keanggotaan Item pada cakupan semula. `project_excel_imports` menyimpan digest dan ID hasil per pengguna serta Space agar retry dapat mengembalikan hasil yang sama. Pembuatan item dan penyimpanan hasil commit berjalan dalam satu transaksi. Keduanya kedaluwarsa setelah satu jam dan dibersihkan oleh housekeeping.
 
+### 7.3 Dashboard dan widget (M5)
+
+`dashboards` (`owner_id`, `space_id` nullable: null = pribadi, `name`, `version` untuk If-Match) dan `widgets` (`dashboard_id` ON DELETE CASCADE, `type`, `position`, `config` jsonb). CHECK pada `widgets.config` hanya menerima kunci `show_legend`, `show_labels`, `pie_style` dengan tipe dan widget type yang sesuai. Dashboard hanya menyimpan konfigurasi: menghapusnya menghapus widget-nya, tidak pernah Item. Dashboard Space ikut hilang saat Space dihapus permanen; Space yang di-soft-delete menyembunyikannya (404).
+
+`widgets.config` (migrasi `00041`) kini menerima kunci `list` atau `template` (hanya `task_list`) dan `query` (hanya tipe grafik dan tabel), selain tiga kunci tampilan; isi `query` divalidasi aplikasi dengan skema mesin analitik, bukan oleh database. Indeks `item_locations(space_id, item_id)` dan `items(due_date)` (migrasi `00039`) melayani lingkup Space dan filter tanggal mesin analitik.
+
+### 7.4 Report (M5)
+
+`reports` (`owner_id`, `space_id` null = pribadi, `name`, `definition` jsonb `{layout, query}` maksimum 8 KiB, `sharing` `private|space`, `version` untuk If-Match, `created_at`, `updated_at`; CHECK: sharing `space` wajib punya Space) dan `report_subscriptions` (`report_id` ON DELETE CASCADE, `user_id`, `weekday` 0-6 dengan 0 = Minggu, `hour` 0-23 di zona waktu pelanggan; kunci utama `(report_id, user_id)`). Report pribadi dan report `private` hanya terlihat pemiliknya, bahkan oleh admin; report `space` terlihat anggota Space yang punya View. Menghapus report menghapus langganan, bukan data sumber. Pengiriman email langganan belum ada (S5.2.3).
+
 ## 8. Data yang sengaja belum ada (M2+)
 
-`approvals`, `request_forms`, `dashboards`, `widgets`, `reports`, dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
+`reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.
 
 Kolom profil `company`, `country`, `location`, `phone` (kontrak `Me`/`MeUpdate`) belum ada di `users`; ditambahkan lewat migrasi di S1.6.2 (`PATCH /me`).
 

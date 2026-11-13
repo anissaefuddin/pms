@@ -39,6 +39,7 @@ export function Sidebar({ me }: { me: CurrentUser }) {
         </DropdownMenuTrigger>
         <DropdownMenuContent>
           {!hidden.includes("timesheets") && <DropdownMenuItem onClick={() => void navigate({ to: "/timesheets" })}>{t("time.timesheet")}</DropdownMenuItem>}
+          {!hidden.includes("reports") && <DropdownMenuItem onClick={() => void navigate({ to: "/reports" })}>{t("reports.nav.label")}</DropdownMenuItem>}
           {showTodo && <DropdownMenuItem onClick={() => void navigate({ to: "/my-todo" })}>{t("nav.todo.label")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => void navigate({ to: "/shared-with-me" })}>{t("nav.shared.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => void navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>

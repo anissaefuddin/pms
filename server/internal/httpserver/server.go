@@ -146,6 +146,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.spaceRoutes(mux)
 	s.viewRoutes(mux)
 	s.dashboardRoutes(mux)
+	s.reportRoutes(mux)
 	s.commentRoutes(mux)
 	s.workScheduleRoutes(mux)
 	s.workflowRoutes(mux)

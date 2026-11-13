@@ -96,13 +96,13 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 76 | S4.3.1 | Export project ke Excel (SPC-15) | 2.5 | 164–166.5 | 34 | DONE |
 | 77 | S4.3.2 | Import dari Excel (SPC-15) | 3 | 166.5–169.5 | 34 | DONE |
 | 78 | S4.4.1 | E2E dan regresi M4 | 1.5 | 169.5–171 | 35 | DONE |
-| 79 | S5.1.1 | Skema dashboard dan widget (DASH-01, DASH-06) | 3 | 171–174 | 35 | PROPOSED |
-| 80 | S5.1.2 | Mesin data widget (DASH-02) | 4 | 174–178 | 36 | PROPOSED |
-| 81 | S5.1.3 | Widget daftar task dan template (DASH-01, DASH-02) | 3 | 178–181 | 37 | PROPOSED |
+| 79 | S5.1.1 | Skema dashboard dan widget (DASH-01, DASH-06) | 3 | 171–174 | 35 | DONE |
+| 80 | S5.1.2 | Mesin data widget (DASH-02) | 4 | 174–178 | 36 | DONE |
+| 81 | S5.1.3 | Widget daftar task dan template (DASH-01, DASH-02) | 3 | 178–181 | 37 | IN_PROGRESS |
 | 82 | S5.1.4 | Widget visual (DASH-03A) | 4 | 181–185 | 38 | PROPOSED |
 | 83 | S5.1.5 | UI dashboard | 3 | 185–188 | 38 | PROPOSED |
-| 84 | S5.2.1 | Skema report dan daftar report (RPT-03) | 2.5 | 188–190.5 | 39 | PROPOSED |
-| 85 | S5.2.2 | Editor dan eksekusi report (RPT-02) | 4 | 190.5–194.5 | 39 | PROPOSED |
+| 84 | S5.2.1 | Skema report dan daftar report (RPT-03) | 2.5 | 188–190.5 | 39 | DONE |
+| 85 | S5.2.2 | Editor dan eksekusi report (RPT-02) | 4 | 190.5–194.5 | 39 | DONE |
 | 86 | S5.2.3 | Template report (RPT-01) | 3 | 194.5–197.5 | 40 | PROPOSED |
 | 87 | S5.3.1 | Uji kecocokan angka dan E2E | 2.5 | 197.5–200 | 41 | PROPOSED |
 | 88 | S6.1.1 | Template Space (SPC-18) | 4 | 200–204 | 41 | PROPOSED |
@@ -667,19 +667,20 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E5.1 Dashboard
 
 **S5.1.1 Skema dashboard dan widget (DASH-01, DASH-06)**
-- [ ] `openapi.yaml`: CRUD dashboard per Space/user; rename, duplicate (nama + Space), move, delete
-- [ ] Migrasi `dashboards` dan `widgets` (konfigurasi jsonb tervalidasi)
-- [ ] Menghapus dashboard tidak menghapus data; tes otorisasi
+- [x] `openapi.yaml`: CRUD dashboard per Space/user; rename, duplicate (nama + Space), move, delete
+- [x] Migrasi `dashboards` dan `widgets` (konfigurasi jsonb tervalidasi)
+- [x] Menghapus dashboard tidak menghapus data; tes otorisasi
 
 **S5.1.2 Mesin data widget (DASH-02)**
-- [ ] Definisi data source, reporting on, metrics, break by, group by, field, filter sebagai skema tertutup
-- [ ] Penerjemah ke SQL parameter (tanpa SQL bebas dari klien) dan penerapan policy akses
-- [ ] Indeks dan batas waktu kueri; tes kecocokan dengan data mentah
+- [x] Definisi data source, reporting on, metrics, break by, group by, field, filter sebagai skema tertutup
+- [x] Penerjemah ke SQL parameter (tanpa SQL bebas dari klien) dan penerapan policy akses
+- [x] Indeks dan batas waktu kueri; tes kecocokan dengan data mentah
 
 **S5.1.3 Widget daftar task dan template (DASH-01, DASH-02)**
-- [ ] Widget to do this week, to review, completed, assigned to me
-- [ ] Template widget: my tasks, overdue, followed, backlog, starred
-- [ ] Pembuat widget custom dari mesin data; tes
+- [x] Widget to do this week, to review, completed, assigned to me
+- [x] Template widget: my tasks, overdue, followed, backlog
+- [ ] Template widget starred: belum bisa, Item belum dapat diberi bintang (fitur bintang belum ada di backend maupun UI); tambahkan template setelah fitur itu ada
+- [x] Pembuat widget custom dari mesin data; tes (lewat API: `config.query` divalidasi dan dihitung per pemirsa; formulir pembuat di UI datang bersama S5.1.5)
 
 **S5.1.4 Widget visual (DASH-03A)**
 - [ ] Indicator, pie (classic/donut/ring), column, bar, line, table
@@ -694,14 +695,14 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E5.2 Report
 
 **S5.2.1 Skema report dan daftar report (RPT-03)**
-- [ ] `openapi.yaml`: CRUD report, sharing, langganan
-- [ ] Migrasi `reports` (definisi jsonb) dan `report_subscriptions`
-- [ ] Daftar: nama, pembuat, Space, sharing, dibuat, diubah, langganan
+- [x] `openapi.yaml`: CRUD report, sharing, langganan
+- [x] Migrasi `reports` (definisi jsonb) dan `report_subscriptions`
+- [x] Daftar: nama, pembuat, Space, sharing, dibuat, diubah, langganan
 
 **S5.2.2 Editor dan eksekusi report (RPT-02)**
-- [ ] Editor: judul, lokasi, data source multi-Space/project, based on (projects/tasks/time entries), layout table/column
-- [ ] Filter (status, assignee, tipe, importance, effort, tanggal) dan group by
-- [ ] Eksekusi memakai mesin data S5.1.2 dan policy; ekspor hasil; tes
+- [x] Editor: judul, lokasi, data source multi-Space/project, based on (projects/tasks/time entries), layout table/column
+- [x] Filter (status, assignee, tipe, importance, effort, tanggal) dan group by
+- [x] Eksekusi memakai mesin data S5.1.2 dan policy; ekspor hasil; tes
 
 **S5.2.3 Template report (RPT-01)**
 - [ ] Template: active tasks by assignee, weekly project status, overdue, due this month, unassigned, time spent, utilization

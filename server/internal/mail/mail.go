@@ -54,7 +54,7 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 		return nil
 	}
 	sender := w.cfg.SMTPFrom
-	if args.Template == "set_password" || args.Template == "reset_password" {
+	if (args.Template == "set_password" || args.Template == "reset_password") && w.cfg.SMTPFromAuth != "" {
 		sender = w.cfg.SMTPFromAuth
 	}
 	from, err := mail.ParseAddress(sender)

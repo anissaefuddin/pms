@@ -1,14 +1,17 @@
 package httpserver
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
 	"net/http"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/analytics"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -57,10 +60,14 @@ var (
 	errDashboardVersion = errors.New("dashboard changed; reload and try again")
 )
 
+// widgetLists are the DASH-01 list names; the other presets are DASH-02 templates.
+var widgetLists = []string{"todo_this_week", "to_review", "completed", "assigned_to_me"}
+
 const dashboardColumns = "id, owner_id, space_id, name, version"
 const maxDashboardWidgets = 100
 
 func (s *Server) dashboardRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("POST /api/v1/analytics/query", s.requireUser(s.runAnalytics))
 	mux.HandleFunc("GET /api/v1/dashboards", s.requireUser(s.listDashboards))
 	mux.HandleFunc("POST /api/v1/dashboards", s.requireUser(s.createDashboard))
 	mux.HandleFunc("GET /api/v1/dashboards/{dashboardId}", s.requireUser(s.getDashboard))
@@ -69,6 +76,7 @@ func (s *Server) dashboardRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/dashboards/{dashboardId}/move", s.requireUser(s.moveDashboard))
 	mux.HandleFunc("POST /api/v1/dashboards/{dashboardId}/duplicate", s.requireUser(s.duplicateDashboard))
 	mux.HandleFunc("POST /api/v1/dashboards/{dashboardId}/widgets", s.requireUser(s.changeDashboardWidget))
+	mux.HandleFunc("GET /api/v1/dashboards/{dashboardId}/widgets/{widgetId}/data", s.requireUser(s.widgetData))
 	mux.HandleFunc("PUT /api/v1/dashboards/{dashboardId}/widgets/{widgetId}", s.requireUser(s.changeDashboardWidget))
 	mux.HandleFunc("DELETE /api/v1/dashboards/{dashboardId}/widgets/{widgetId}", s.requireUser(s.changeDashboardWidget))
 }
@@ -378,7 +386,7 @@ func (in *dashboardWidgetInput) validate() error {
 		in.Config = json.RawMessage("{}")
 	}
 	var config map[string]json.RawMessage
-	if len(in.Config) > 1024 || json.Unmarshal(in.Config, &config) != nil || config == nil {
+	if len(in.Config) > 4000 || json.Unmarshal(in.Config, &config) != nil || config == nil {
 		return dashboardInvalid("widget config must be a JSON object")
 	}
 	for key, value := range config {
@@ -388,6 +396,24 @@ func (in *dashboardWidgetInput) validate() error {
 			if chart && json.Unmarshal(value, &flag) == nil && flag != nil {
 				continue
 			}
+		case "list", "template": // exactly one of the two, naming a preset of the matching kind
+			var name string
+			_, both := config["list"]
+			_, other := config["template"]
+			_, known := analytics.ListPresets[name]
+			if in.Type == "task_list" && json.Unmarshal(value, &name) == nil && !(both && other) {
+				_, known = analytics.ListPresets[name]
+				if known && (key == "list") == slices.Contains(widgetLists, name) {
+					continue
+				}
+			}
+		case "query":
+			dec := json.NewDecoder(bytes.NewReader(value))
+			dec.DisallowUnknownFields()
+			var q analytics.Query
+			if in.Type != "task_list" && dec.Decode(&q) == nil && q.Validate() == nil {
+				continue
+			}
 		case "pie_style":
 			var style string
 			if in.Type == "pie" && json.Unmarshal(value, &style) == nil && (style == "classic" || style == "donut" || style == "ring") {
@@ -395,6 +421,9 @@ func (in *dashboardWidgetInput) validate() error {
 			}
 		}
 		return dashboardInvalid("unsupported widget setting: " + key)
+	}
+	if _, has := config["query"]; !has && in.Type == "task_list" && config["list"] == nil && config["template"] == nil {
+		return dashboardInvalid("a task list widget needs a list or a template")
 	}
 	in.Config, _ = json.Marshal(config)
 	return nil
