@@ -1,0 +1,20 @@
+{
+  "title": "Webhooks",
+  "hint": "Receive signed HTTP POSTs when work changes. You only get events for items you can see.",
+  "name": "Name",
+  "url": "HTTPS endpoint URL",
+  "events": "Events",
+  "create": "Add webhook",
+  "empty": "No webhooks yet.",
+  "secretTitle": "Signing secret (shown once)",
+  "secretHint": "Copy it now. Verify X-PMS-Signature = v1=HMAC-SHA256(secret, timestamp + \".\" + body) and reject requests whose X-PMS-Timestamp is more than 5 minutes off.",
+  "secretDone": "I saved it",
+  "enabled": "Active",
+  "disabled": "Disabled: {{reason}}",
+  "enable": "Enable again",
+  "disable": "Pause",
+  "delete": "Delete",
+  "log": "Delivery log",
+  "noLog": "No deliveries yet.",
+  "attempts": "{{count}} attempts"
+}

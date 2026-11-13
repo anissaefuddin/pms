@@ -1297,6 +1297,70 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Langganan webhook milik pengguna (tanpa secret) */
+        get: operations["listWebhooks"];
+        put?: never;
+        /**
+         * Buat langganan; secret hanya muncul di respons ini
+         * @description Setiap pengiriman adalah POST JSON dengan header X-PMS-Event, X-PMS-Delivery (id event, tetap sama pada retry; gunakan untuk dedupe),
+         *     X-PMS-Timestamp (detik unix) dan X-PMS-Signature = "v1=" + hex(HMAC-SHA256(secret, timestamp + "." + body)).
+         *     Penerima WAJIB memverifikasi tanda tangan dan menolak permintaan bila timestamp berselisih > 5 menit dari jam penerima (anti-replay).
+         *     Hanya event atas item yang boleh dilihat pemilik langganan yang dikirim. URL harus https dan tidak boleh menuju alamat internal.
+         *     Gagal berturut-turut 10 kali menonaktifkan langganan; retry dengan backoff 1m, 4m, 16m, 64m, 4j (maks 6 percobaan per pengiriman).
+         */
+        post: operations["createWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/webhooks/{webhookId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhookId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus langganan */
+        delete: operations["deleteWebhook"];
+        options?: never;
+        head?: never;
+        /** Ubah atau aktifkan kembali (enabled=true mereset penghitung gagal) */
+        patch: operations["updateWebhook"];
+        trace?: never;
+    };
+    "/webhooks/{webhookId}/deliveries": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhookId: string;
+            };
+            cookie?: never;
+        };
+        /** Log pengiriman terbaru (100) */
+        get: operations["listWebhookDeliveries"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/automation/dead-events": {
         parameters: {
             query?: never;
@@ -2609,6 +2673,20 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        Webhook: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            url: string;
+            event_types: string[];
+            enabled: boolean;
+            consecutive_failures: number;
+            disabled_reason?: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** @description Hanya pada respons pembuatan */
+            secret?: string;
+        };
         ResourceSchedule: {
             working_days?: number[] | null;
             daily_hours?: number | null;
@@ -7019,6 +7097,154 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listWebhooks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Webhook"][];
+                        event_types: string[];
+                    };
+                };
+            };
+        };
+    };
+    createWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /** Format: uri */
+                    url: string;
+                    event_types: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat; berisi secret */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Webhook"];
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhookId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhookId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    /** Format: uri */
+                    url?: string;
+                    event_types?: string[];
+                    enabled?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Webhook"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listWebhookDeliveries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                webhookId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            /** Format: uuid */
+                            event_id: string;
+                            event_type: string;
+                            /** @enum {string} */
+                            status: "pending" | "success" | "failed";
+                            attempts: number;
+                            response_status?: number | null;
+                            last_error?: string | null;
+                            /** Format: date-time */
+                            created_at: string;
+                            /** Format: date-time */
+                            delivered_at?: string | null;
+                        }[];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
         };
     };
     listDeadAutomationEvents: {

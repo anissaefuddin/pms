@@ -17,6 +17,7 @@ info:
 servers:
   - url: /api/v1
 tags:
+  - { name: webhooks, description: "Langganan webhook (API-02)" }
   - { name: auth, description: "Login, session, password, undangan" }
   - { name: users, description: "Profil, user, grup, seat" }
   - { name: spaces, description: "Space dan sharing" }
@@ -1860,6 +1861,115 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /webhooks:
+    get:
+      tags: [webhooks]
+      operationId: listWebhooks
+      summary: Langganan webhook milik pengguna (tanpa secret)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, event_types]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Webhook' } }
+                  event_types: { type: array, items: { type: string } }
+    post:
+      tags: [webhooks]
+      operationId: createWebhook
+      summary: Buat langganan; secret hanya muncul di respons ini
+      description: |
+        Setiap pengiriman adalah POST JSON dengan header X-PMS-Event, X-PMS-Delivery (id event, tetap sama pada retry; gunakan untuk dedupe),
+        X-PMS-Timestamp (detik unix) dan X-PMS-Signature = "v1=" + hex(HMAC-SHA256(secret, timestamp + "." + body)).
+        Penerima WAJIB memverifikasi tanda tangan dan menolak permintaan bila timestamp berselisih > 5 menit dari jam penerima (anti-replay).
+        Hanya event atas item yang boleh dilihat pemilik langganan yang dikirim. URL harus https dan tidak boleh menuju alamat internal.
+        Gagal berturut-turut 10 kali menonaktifkan langganan; retry dengan backoff 1m, 4m, 16m, 64m, 4j (maks 6 percobaan per pengiriman).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url, event_types]
+              properties:
+                name: { type: string, maxLength: 100 }
+                url: { type: string, format: uri }
+                event_types: { type: array, minItems: 1, items: { type: string } }
+      responses:
+        '201':
+          description: Dibuat; berisi secret
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Webhook' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /webhooks/{webhookId}:
+    parameters:
+      - { name: webhookId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [webhooks]
+      operationId: updateWebhook
+      summary: Ubah atau aktifkan kembali (enabled=true mereset penghitung gagal)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 100 }
+                url: { type: string, format: uri }
+                event_types: { type: array, minItems: 1, items: { type: string } }
+                enabled: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Webhook' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [webhooks]
+      operationId: deleteWebhook
+      summary: Hapus langganan
+      responses:
+        '204': { description: Dihapus }
+        '404': { $ref: '#/components/responses/Problem' }
+  /webhooks/{webhookId}/deliveries:
+    parameters:
+      - { name: webhookId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [webhooks]
+      operationId: listWebhookDeliveries
+      summary: Log pengiriman terbaru (100)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, event_id, event_type, status, attempts, created_at]
+                      properties:
+                        id: { type: string, format: uuid }
+                        event_id: { type: string, format: uuid }
+                        event_type: { type: string }
+                        status: { type: string, enum: [pending, success, failed] }
+                        attempts: { type: integer }
+                        response_status: { type: integer, nullable: true }
+                        last_error: { type: string, nullable: true }
+                        created_at: { type: string, format: date-time }
+                        delivered_at: { type: string, format: date-time, nullable: true }
+        '404': { $ref: '#/components/responses/Problem' }
   /automation/dead-events:
     get:
       tags: [automation]
@@ -3881,6 +3991,19 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
+    Webhook:
+      type: object
+      required: [id, name, url, event_types, enabled, consecutive_failures, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        url: { type: string }
+        event_types: { type: array, items: { type: string } }
+        enabled: { type: boolean }
+        consecutive_failures: { type: integer }
+        disabled_reason: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        secret: { type: string, description: Hanya pada respons pembuatan }
     ResourceSchedule:
       type: object
       properties:

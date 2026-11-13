@@ -1068,6 +1068,35 @@ type View struct {
 	IsDefault    bool           `json:"is_default"`
 }
 
+type WebhookDelivery struct {
+	ID             pgtype.UUID        `json:"id"`
+	SubscriptionID pgtype.UUID        `json:"subscription_id"`
+	EventID        pgtype.UUID        `json:"event_id"`
+	EventType      string             `json:"event_type"`
+	Payload        []byte             `json:"payload"`
+	Status         string             `json:"status"`
+	Attempts       int32              `json:"attempts"`
+	NextAttemptAt  pgtype.Timestamptz `json:"next_attempt_at"`
+	ResponseStatus pgtype.Int4        `json:"response_status"`
+	LastError      pgtype.Text        `json:"last_error"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	DeliveredAt    pgtype.Timestamptz `json:"delivered_at"`
+}
+
+type WebhookSubscription struct {
+	ID                  pgtype.UUID        `json:"id"`
+	OwnerID             pgtype.UUID        `json:"owner_id"`
+	Name                string             `json:"name"`
+	Url                 string             `json:"url"`
+	Secret              string             `json:"secret"`
+	EventTypes          []string           `json:"event_types"`
+	Enabled             bool               `json:"enabled"`
+	ConsecutiveFailures int32              `json:"consecutive_failures"`
+	DisabledReason      pgtype.Text        `json:"disabled_reason"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	DeletedAt           pgtype.Timestamptz `json:"deleted_at"`
+}
+
 type Widget struct {
 	ID          pgtype.UUID `json:"id"`
 	DashboardID pgtype.UUID `json:"dashboard_id"`

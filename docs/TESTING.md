@@ -676,3 +676,12 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
 - Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
 
+
+## M11 / S11.3.2 Webhook (API-02) (14 Nov 2026)
+
+- PASS (E2E-PAR-11, bagian webhook). `TestWebhookSignedDeliveryAndVisibility`: secret hanya di respons pembuatan (daftar tidak memuatnya); header `X-PMS-Signature` = `v1=HMAC-SHA256(secret, timestamp + "." + body)` terverifikasi ulang dan berbeda untuk secret lain; `X-PMS-Timestamp` segar; langganan pengguna tanpa akses ke item tidak menerima apa pun (0 delivery); pengguna lain 404 untuk PATCH/log, id rusak 404; event yang dikirim ulang oleh outbox tidak mengirim dua kali (UNIQUE subscription+event). Pengiriman lewat `events.Dispatch` (hook di `automation.Engine`), tanpa jalur kirim paralel.
+- PASS. `TestWebhookRetryThenAutoDisable`: gagal 500 -> delivery `pending`, sukses pada retry dengan `X-PMS-Delivery` sama; backoff 1 jam menahan percobaan ulang; 10 kegagalan beruntun menonaktifkan langganan (`disabled_reason`) dan tidak ada kiriman lagi; `enabled=true` mereset penghitung.
+- PASS. `TestWebhookRejectsInternalTargets` (SSRF): http, 127.0.0.1, localhost, 169.254.169.254, 10.x, ::1, userinfo, `*.internal`, tipe event tidak dikenal -> 422. Pengiriman juga memeriksa alamat yang benar-benar di-dial (anti DNS rebinding) dan tidak mengikuti redirect. Mode uji: `PMS_WEBHOOK_ALLOW_INTERNAL=true`.
+- PASS. Sapuan endpoint (`TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds`) mencakup rute baru. Playwright `web/tests/webhooks.spec.ts` (mock, port 4392): buat, secret tampil sekali, jeda, log pengiriman, axe tanpa pelanggaran. `npm run typecheck` dan eslint bersih.
+- Dokumentasi penerima (anti-replay): ada di deskripsi operasi `POST /webhooks` pada `api/openapi.yaml` (tolak timestamp selisih > 5 menit, dedupe via `X-PMS-Delivery`).
+- Belum: secret disimpan apa adanya (bukan terenkripsi), tidak ada rotasi secret, tidak ada filter per Space, tidak ada tombol kirim ulang manual; log tidak dipangkas. Halaman `/settings/apps` hanya cangkang minimal milik S11.3.2 (S11.3.1 perlu menggabungkan tab).

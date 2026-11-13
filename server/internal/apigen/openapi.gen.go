@@ -2475,6 +2475,27 @@ func (e UpdateTimeEntryJSONBodyBillingType) Valid() bool {
 	}
 }
 
+// Defines values for ListWebhookDeliveries200JSONResponseBodyItemsStatus.
+const (
+	ListWebhookDeliveries200JSONResponseBodyItemsStatusFailed  ListWebhookDeliveries200JSONResponseBodyItemsStatus = "failed"
+	ListWebhookDeliveries200JSONResponseBodyItemsStatusPending ListWebhookDeliveries200JSONResponseBodyItemsStatus = "pending"
+	ListWebhookDeliveries200JSONResponseBodyItemsStatusSuccess ListWebhookDeliveries200JSONResponseBodyItemsStatus = "success"
+)
+
+// Valid indicates whether the value is a known member of the ListWebhookDeliveries200JSONResponseBodyItemsStatus enum.
+func (e ListWebhookDeliveries200JSONResponseBodyItemsStatus) Valid() bool {
+	switch e {
+	case ListWebhookDeliveries200JSONResponseBodyItemsStatusFailed:
+		return true
+	case ListWebhookDeliveries200JSONResponseBodyItemsStatusPending:
+		return true
+	case ListWebhookDeliveries200JSONResponseBodyItemsStatusSuccess:
+		return true
+	default:
+		return false
+	}
+}
+
 // AcceptInvitationRequest defines model for AcceptInvitationRequest.
 type AcceptInvitationRequest struct {
 	AcceptTerms AcceptInvitationRequestAcceptTerms `json:"accept_terms"`
@@ -4372,6 +4393,21 @@ type ViewUpdate struct {
 // ViewVisibility defines model for ViewVisibility.
 type ViewVisibility string
 
+// Webhook defines model for Webhook.
+type Webhook struct {
+	ConsecutiveFailures int                `json:"consecutive_failures"`
+	CreatedAt           time.Time          `json:"created_at"`
+	DisabledReason      *string            `json:"disabled_reason,omitempty"`
+	Enabled             bool               `json:"enabled"`
+	EventTypes          []string           `json:"event_types"`
+	Id                  openapi_types.UUID `json:"id"`
+	Name                string             `json:"name"`
+
+	// Secret Hanya pada respons pembuatan
+	Secret *string `json:"secret,omitempty"`
+	Url    string  `json:"url"`
+}
+
 // WidgetData defines model for WidgetData.
 type WidgetData struct {
 	Items *[]struct {
@@ -5116,6 +5152,24 @@ type DuplicateViewJSONBody struct {
 	Visibility ViewVisibility `json:"visibility"`
 }
 
+// CreateWebhookJSONBody defines parameters for CreateWebhook.
+type CreateWebhookJSONBody struct {
+	EventTypes []string `json:"event_types"`
+	Name       string   `json:"name"`
+	Url        string   `json:"url"`
+}
+
+// UpdateWebhookJSONBody defines parameters for UpdateWebhook.
+type UpdateWebhookJSONBody struct {
+	Enabled    *bool     `json:"enabled,omitempty"`
+	EventTypes *[]string `json:"event_types,omitempty"`
+	Name       *string   `json:"name,omitempty"`
+	Url        *string   `json:"url,omitempty"`
+}
+
+// ListWebhookDeliveries200JSONResponseBodyItemsStatus defines parameters for ListWebhookDeliveries.
+type ListWebhookDeliveries200JSONResponseBodyItemsStatus string
+
 // RenameWorkflowJSONBody defines parameters for RenameWorkflow.
 type RenameWorkflowJSONBody struct {
 	Name string `json:"name"`
@@ -5370,6 +5424,12 @@ type UpdateViewJSONRequestBody = ViewUpdate
 
 // DuplicateViewJSONRequestBody defines body for DuplicateView for application/json ContentType.
 type DuplicateViewJSONRequestBody DuplicateViewJSONBody
+
+// CreateWebhookJSONRequestBody defines body for CreateWebhook for application/json ContentType.
+type CreateWebhookJSONRequestBody CreateWebhookJSONBody
+
+// UpdateWebhookJSONRequestBody defines body for UpdateWebhook for application/json ContentType.
+type UpdateWebhookJSONRequestBody UpdateWebhookJSONBody
 
 // CreateWorkflowJSONRequestBody defines body for CreateWorkflow for application/json ContentType.
 type CreateWorkflowJSONRequestBody = WorkflowInput
@@ -6213,6 +6273,21 @@ type ServerInterface interface {
 	// DuplicateView Duplikat view (VIEW-08)
 	// (POST /views/{viewId}/duplicate)
 	DuplicateView(w http.ResponseWriter, r *http.Request, viewId ViewId)
+	// ListWebhooks Langganan webhook milik pengguna (tanpa secret)
+	// (GET /webhooks)
+	ListWebhooks(w http.ResponseWriter, r *http.Request)
+	// CreateWebhook Buat langganan; secret hanya muncul di respons ini
+	// (POST /webhooks)
+	CreateWebhook(w http.ResponseWriter, r *http.Request)
+	// DeleteWebhook Hapus langganan
+	// (DELETE /webhooks/{webhookId})
+	DeleteWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID)
+	// UpdateWebhook Ubah atau aktifkan kembali (enabled=true mereset penghitung gagal)
+	// (PATCH /webhooks/{webhookId})
+	UpdateWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID)
+	// ListWebhookDeliveries Log pengiriman terbaru (100)
+	// (GET /webhooks/{webhookId}/deliveries)
+	ListWebhookDeliveries(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID)
 	// ListWorkflows Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca
 	// (GET /workflows)
 	ListWorkflows(w http.ResponseWriter, r *http.Request)
@@ -11995,6 +12070,112 @@ func (siw *ServerInterfaceWrapper) DuplicateView(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListWebhooks operation middleware
+func (siw *ServerInterfaceWrapper) ListWebhooks(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWebhooks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWebhook operation middleware
+func (siw *ServerInterfaceWrapper) CreateWebhook(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWebhook(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteWebhook operation middleware
+func (siw *ServerInterfaceWrapper) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", r.PathValue("webhookId"), &webhookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "webhookId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteWebhook(w, r, webhookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWebhook operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", r.PathValue("webhookId"), &webhookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "webhookId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWebhook(w, r, webhookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWebhookDeliveries operation middleware
+func (siw *ServerInterfaceWrapper) ListWebhookDeliveries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", r.PathValue("webhookId"), &webhookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "webhookId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWebhookDeliveries(w, r, webhookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListWorkflows operation middleware
 func (siw *ServerInterfaceWrapper) ListWorkflows(w http.ResponseWriter, r *http.Request) {
 
@@ -12420,6 +12601,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/automation-rules/{ruleId}/draft", wrapper.SaveAutomationDraft)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/publish", wrapper.PublishAutomationRule)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation-rules/{ruleId}/runs", wrapper.ListAutomationRuns)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/webhooks", wrapper.ListWebhooks)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/webhooks", wrapper.CreateWebhook)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/webhooks/{webhookId}", wrapper.DeleteWebhook)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/webhooks/{webhookId}", wrapper.UpdateWebhook)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/webhooks/{webhookId}/deliveries", wrapper.ListWebhookDeliveries)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation/dead-events", wrapper.ListDeadAutomationEvents)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation/events/{eventId}/replay", wrapper.ReplayAutomationEvent)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules/dry-run", wrapper.DryRunAutomation)
@@ -23428,6 +23614,203 @@ func (response DuplicateView422ApplicationProblemPlusJSONResponse) VisitDuplicat
 	return err
 }
 
+type ListWebhooksRequestObject struct {
+}
+
+type ListWebhooksResponseObject interface {
+	VisitListWebhooksResponse(w http.ResponseWriter) error
+}
+
+type ListWebhooks200JSONResponse struct {
+	EventTypes []string  `json:"event_types"`
+	Items      []Webhook `json:"items"`
+}
+
+func (response ListWebhooks200JSONResponse) VisitListWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWebhookRequestObject struct {
+	Body *CreateWebhookJSONRequestBody
+}
+
+type CreateWebhookResponseObject interface {
+	VisitCreateWebhookResponse(w http.ResponseWriter) error
+}
+
+type CreateWebhook201JSONResponse Webhook
+
+func (response CreateWebhook201JSONResponse) VisitCreateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWebhook422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWebhook422ApplicationProblemPlusJSONResponse) VisitCreateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteWebhookRequestObject struct {
+	WebhookId openapi_types.UUID `json:"webhookId"`
+}
+
+type DeleteWebhookResponseObject interface {
+	VisitDeleteWebhookResponse(w http.ResponseWriter) error
+}
+
+type DeleteWebhook204Response struct {
+}
+
+func (response DeleteWebhook204Response) VisitDeleteWebhookResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteWebhook404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteWebhook404ApplicationProblemPlusJSONResponse) VisitDeleteWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWebhookRequestObject struct {
+	WebhookId openapi_types.UUID `json:"webhookId"`
+	Body      *UpdateWebhookJSONRequestBody
+}
+
+type UpdateWebhookResponseObject interface {
+	VisitUpdateWebhookResponse(w http.ResponseWriter) error
+}
+
+type UpdateWebhook200JSONResponse Webhook
+
+func (response UpdateWebhook200JSONResponse) VisitUpdateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWebhook404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateWebhook404ApplicationProblemPlusJSONResponse) VisitUpdateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWebhook422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateWebhook422ApplicationProblemPlusJSONResponse) VisitUpdateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWebhookDeliveriesRequestObject struct {
+	WebhookId openapi_types.UUID `json:"webhookId"`
+}
+
+type ListWebhookDeliveriesResponseObject interface {
+	VisitListWebhookDeliveriesResponse(w http.ResponseWriter) error
+}
+
+type ListWebhookDeliveries200JSONResponse struct {
+	Items []struct {
+		Attempts       int                                                 `json:"attempts"`
+		CreatedAt      time.Time                                           `json:"created_at"`
+		DeliveredAt    *time.Time                                          `json:"delivered_at,omitempty"`
+		EventId        openapi_types.UUID                                  `json:"event_id"`
+		EventType      string                                              `json:"event_type"`
+		Id             openapi_types.UUID                                  `json:"id"`
+		LastError      *string                                             `json:"last_error,omitempty"`
+		ResponseStatus *int                                                `json:"response_status,omitempty"`
+		Status         ListWebhookDeliveries200JSONResponseBodyItemsStatus `json:"status"`
+	} `json:"items"`
+}
+
+func (response ListWebhookDeliveries200JSONResponse) VisitListWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWebhookDeliveries404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListWebhookDeliveries404ApplicationProblemPlusJSONResponse) VisitListWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListWorkflowsRequestObject struct {
 }
 
@@ -24441,6 +24824,21 @@ type StrictServerInterface interface {
 	// DuplicateView Duplikat view (VIEW-08)
 	// (POST /views/{viewId}/duplicate)
 	DuplicateView(ctx context.Context, request DuplicateViewRequestObject) (DuplicateViewResponseObject, error)
+	// ListWebhooks Langganan webhook milik pengguna (tanpa secret)
+	// (GET /webhooks)
+	ListWebhooks(ctx context.Context, request ListWebhooksRequestObject) (ListWebhooksResponseObject, error)
+	// CreateWebhook Buat langganan; secret hanya muncul di respons ini
+	// (POST /webhooks)
+	CreateWebhook(ctx context.Context, request CreateWebhookRequestObject) (CreateWebhookResponseObject, error)
+	// DeleteWebhook Hapus langganan
+	// (DELETE /webhooks/{webhookId})
+	DeleteWebhook(ctx context.Context, request DeleteWebhookRequestObject) (DeleteWebhookResponseObject, error)
+	// UpdateWebhook Ubah atau aktifkan kembali (enabled=true mereset penghitung gagal)
+	// (PATCH /webhooks/{webhookId})
+	UpdateWebhook(ctx context.Context, request UpdateWebhookRequestObject) (UpdateWebhookResponseObject, error)
+	// ListWebhookDeliveries Log pengiriman terbaru (100)
+	// (GET /webhooks/{webhookId}/deliveries)
+	ListWebhookDeliveries(ctx context.Context, request ListWebhookDeliveriesRequestObject) (ListWebhookDeliveriesResponseObject, error)
 	// ListWorkflows Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca
 	// (GET /workflows)
 	ListWorkflows(ctx context.Context, request ListWorkflowsRequestObject) (ListWorkflowsResponseObject, error)
@@ -29896,6 +30294,146 @@ func (sh *strictHandler) DuplicateView(w http.ResponseWriter, r *http.Request, v
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DuplicateViewResponseObject); ok {
 		if err := validResponse.VisitDuplicateViewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListWebhooks operation middleware
+func (sh *strictHandler) ListWebhooks(w http.ResponseWriter, r *http.Request) {
+	var request ListWebhooksRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWebhooks(ctx, request.(ListWebhooksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWebhooks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWebhooksResponseObject); ok {
+		if err := validResponse.VisitListWebhooksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateWebhook operation middleware
+func (sh *strictHandler) CreateWebhook(w http.ResponseWriter, r *http.Request) {
+	var request CreateWebhookRequestObject
+
+	var body CreateWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateWebhook(ctx, request.(CreateWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateWebhookResponseObject); ok {
+		if err := validResponse.VisitCreateWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteWebhook operation middleware
+func (sh *strictHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID) {
+	var request DeleteWebhookRequestObject
+
+	request.WebhookId = webhookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteWebhook(ctx, request.(DeleteWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteWebhookResponseObject); ok {
+		if err := validResponse.VisitDeleteWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateWebhook operation middleware
+func (sh *strictHandler) UpdateWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID) {
+	var request UpdateWebhookRequestObject
+
+	request.WebhookId = webhookId
+
+	var body UpdateWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateWebhook(ctx, request.(UpdateWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateWebhookResponseObject); ok {
+		if err := validResponse.VisitUpdateWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListWebhookDeliveries operation middleware
+func (sh *strictHandler) ListWebhookDeliveries(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID) {
+	var request ListWebhookDeliveriesRequestObject
+
+	request.WebhookId = webhookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWebhookDeliveries(ctx, request.(ListWebhookDeliveriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWebhookDeliveries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWebhookDeliveriesResponseObject); ok {
+		if err := validResponse.VisitListWebhookDeliveriesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
