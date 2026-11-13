@@ -767,6 +767,16 @@ type DomainEvent struct {
 	LastError    pgtype.Text        `json:"last_error"`
 }
 
+type Feedback struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Subject   string             `json:"subject"`
+	Rating    pgtype.Int2        `json:"rating"`
+	Comment   string             `json:"comment"`
+	Page      string             `json:"page"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type FormSubmission struct {
 	ID             pgtype.UUID        `json:"id"`
 	FormID         pgtype.UUID        `json:"form_id"`
@@ -1087,6 +1097,18 @@ type Space struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 	DeletedBy   pgtype.UUID        `json:"deleted_by"`
+}
+
+type SpaceBookmark struct {
+	ID          pgtype.UUID        `json:"id"`
+	SpaceID     pgtype.UUID        `json:"space_id"`
+	Url         string             `json:"url"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Position    int32              `json:"position"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type SpaceTemplateRun struct {

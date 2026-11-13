@@ -59,6 +59,65 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/bookmarks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Bookmark URL eksternal sebuah Space (NAV-08); hak View */
+        get: operations["listSpaceBookmarks"];
+        put?: never;
+        /** Tambah bookmark; hanya URL http/https (hak Edit, maks 100 per Space) */
+        post: operations["createSpaceBookmark"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/bookmarks/{bookmarkId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                bookmarkId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus bookmark (hak Edit) */
+        delete: operations["deleteSpaceBookmark"];
+        options?: never;
+        head?: never;
+        /** Ubah url, title, description, atau position (hak Edit) */
+        patch: operations["updateSpaceBookmark"];
+        trace?: never;
+    };
+    "/feedback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Umpan balik terbaru (maks 200); hanya admin (NAV-09) */
+        get: operations["listFeedback"];
+        put?: never;
+        /** Kirim umpan balik; 5 per pengguna per jam, 429 bila lebih */
+        post: operations["createFeedback"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/baselines/{baselineId}/variance": {
         parameters: {
             query?: never;
@@ -3256,6 +3315,30 @@ export interface components {
             /** @description Hanya pada respons pembuatan */
             secret?: string;
         };
+        SpaceBookmark: {
+            /** Format: uuid */
+            id: string;
+            url: string;
+            title: string;
+            description: string;
+            position: number;
+        };
+        SpaceBookmarkInput: {
+            url: string;
+            title: string;
+            description?: string;
+        };
+        FeedbackEntry: {
+            /** Format: uuid */
+            id: string;
+            user: string | null;
+            subject: string;
+            rating: number | null;
+            comment: string;
+            page: string;
+            /** Format: date-time */
+            created_at: string;
+        };
         ResourceSchedule: {
             working_days?: number[] | null;
             daily_hours?: number | null;
@@ -5279,6 +5362,176 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listSpaceBookmarks: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["SpaceBookmark"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createSpaceBookmark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpaceBookmarkInput"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceBookmark"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteSpaceBookmark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                bookmarkId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateSpaceBookmark: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                bookmarkId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    url?: string;
+                    title?: string;
+                    description?: string;
+                    position?: number;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceBookmark"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["FeedbackEntry"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    createFeedback: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    subject: string;
+                    rating?: number | null;
+                    comment?: string;
+                    /** @description Path aplikasi asal; query dan fragment dibuang */
+                    page?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                    };
+                };
+            };
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
         };
     };
     getBaselineVariance: {

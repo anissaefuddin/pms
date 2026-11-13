@@ -148,6 +148,122 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/bookmarks:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      operationId: listSpaceBookmarks
+      summary: Bookmark URL eksternal sebuah Space (NAV-08); hak View
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/SpaceBookmark' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createSpaceBookmark
+      summary: Tambah bookmark; hanya URL http/https (hak Edit, maks 100 per Space)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SpaceBookmarkInput' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SpaceBookmark' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/bookmarks/{bookmarkId}:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+      - { name: bookmarkId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: updateSpaceBookmark
+      summary: Ubah url, title, description, atau position (hak Edit)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                url: { type: string, maxLength: 2000 }
+                title: { type: string, minLength: 1, maxLength: 200 }
+                description: { type: string, maxLength: 1000 }
+                position: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SpaceBookmark' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteSpaceBookmark
+      summary: Hapus bookmark (hak Edit)
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /feedback:
+    get:
+      operationId: listFeedback
+      summary: Umpan balik terbaru (maks 200); hanya admin (NAV-09)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/FeedbackEntry' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createFeedback
+      summary: Kirim umpan balik; 5 per pengguna per jam, 429 bila lebih
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject]
+              additionalProperties: false
+              properties:
+                subject: { type: string, minLength: 1, maxLength: 200 }
+                rating: { type: integer, minimum: 1, maximum: 5, nullable: true }
+                comment: { type: string, maxLength: 4000 }
+                page: { type: string, maxLength: 200, description: 'Path aplikasi asal; query dan fragment dibuang' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string, format: uuid }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
   /baselines/{baselineId}/variance:
     parameters:
       - { name: baselineId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -4639,6 +4755,34 @@ components:
         disabled_reason: { type: string, nullable: true }
         created_at: { type: string, format: date-time }
         secret: { type: string, description: Hanya pada respons pembuatan }
+    SpaceBookmark:
+      type: object
+      required: [id, url, title, description, position]
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        title: { type: string }
+        description: { type: string }
+        position: { type: integer }
+    SpaceBookmarkInput:
+      type: object
+      required: [url, title]
+      additionalProperties: false
+      properties:
+        url: { type: string, maxLength: 2000 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 1000 }
+    FeedbackEntry:
+      type: object
+      required: [id, user, subject, rating, comment, page, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        user: { type: string, nullable: true }
+        subject: { type: string }
+        rating: { type: integer, nullable: true }
+        comment: { type: string }
+        page: { type: string }
+        created_at: { type: string, format: date-time }
     ResourceSchedule:
       type: object
       properties:

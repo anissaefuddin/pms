@@ -3458,6 +3458,17 @@ type ExcelPreview struct {
 	Sample [][]string `json:"sample"`
 }
 
+// FeedbackEntry defines model for FeedbackEntry.
+type FeedbackEntry struct {
+	Comment   string             `json:"comment"`
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+	Page      string             `json:"page"`
+	Rating    *int               `json:"rating"`
+	Subject   string             `json:"subject"`
+	User      *string            `json:"user"`
+}
+
 // FileReview defines model for FileReview.
 type FileReview struct {
 	ApprovalId   openapi_types.UUID  `json:"approval_id"`
@@ -4555,6 +4566,22 @@ type Space struct {
 	Version        int                `json:"version"`
 }
 
+// SpaceBookmark defines model for SpaceBookmark.
+type SpaceBookmark struct {
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Position    int                `json:"position"`
+	Title       string             `json:"title"`
+	Url         string             `json:"url"`
+}
+
+// SpaceBookmarkInput defines model for SpaceBookmarkInput.
+type SpaceBookmarkInput struct {
+	Description *string `json:"description,omitempty"`
+	Title       string  `json:"title"`
+	Url         string  `json:"url"`
+}
+
 // SpaceCreate defines model for SpaceCreate.
 type SpaceCreate struct {
 	Description *string       `json:"description,omitempty"`
@@ -5200,6 +5227,16 @@ type StreamEventsParams struct {
 	LastEventID *string `json:"Last-Event-ID,omitempty"`
 }
 
+// CreateFeedbackJSONBody defines parameters for CreateFeedback.
+type CreateFeedbackJSONBody struct {
+	Comment *string `json:"comment,omitempty"`
+
+	// Page Path aplikasi asal; query dan fragment dibuang
+	Page    *string `json:"page,omitempty"`
+	Rating  *int    `json:"rating,omitempty"`
+	Subject string  `json:"subject"`
+}
+
 // ReplaceFormParams defines parameters for ReplaceForm.
 type ReplaceFormParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -5572,6 +5609,14 @@ type CreateBlueprintJSONBody struct {
 	SourceItemId openapi_types.UUID `json:"source_item_id"`
 }
 
+// UpdateSpaceBookmarkJSONBody defines parameters for UpdateSpaceBookmark.
+type UpdateSpaceBookmarkJSONBody struct {
+	Description *string `json:"description,omitempty"`
+	Position    *int    `json:"position,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Url         *string `json:"url,omitempty"`
+}
+
 // ImportProjectExcelMultipartBody defines parameters for ImportProjectExcel.
 type ImportProjectExcelMultipartBody struct {
 	Commit *bool   `json:"commit,omitempty"`
@@ -5832,6 +5877,9 @@ type QueryDependenciesJSONRequestBody QueryDependenciesJSONBody
 // UpdateItemDependencyJSONRequestBody defines body for UpdateItemDependency for application/json ContentType.
 type UpdateItemDependencyJSONRequestBody UpdateItemDependencyJSONBody
 
+// CreateFeedbackJSONRequestBody defines body for CreateFeedback for application/json ContentType.
+type CreateFeedbackJSONRequestBody CreateFeedbackJSONBody
+
 // ReplaceFormJSONRequestBody defines body for ReplaceForm for application/json ContentType.
 type ReplaceFormJSONRequestBody = FormInput
 
@@ -5972,6 +6020,12 @@ type DryRunAutomationJSONRequestBody DryRunAutomationJSONBody
 
 // CreateBlueprintJSONRequestBody defines body for CreateBlueprint for application/json ContentType.
 type CreateBlueprintJSONRequestBody CreateBlueprintJSONBody
+
+// CreateSpaceBookmarkJSONRequestBody defines body for CreateSpaceBookmark for application/json ContentType.
+type CreateSpaceBookmarkJSONRequestBody = SpaceBookmarkInput
+
+// UpdateSpaceBookmarkJSONRequestBody defines body for UpdateSpaceBookmark for application/json ContentType.
+type UpdateSpaceBookmarkJSONRequestBody UpdateSpaceBookmarkJSONBody
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldCreate
@@ -6512,6 +6566,12 @@ type ServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID)
+	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
+	// (GET /feedback)
+	ListFeedback(w http.ResponseWriter, r *http.Request)
+	// CreateFeedback Kirim umpan balik; 5 per pengguna per jam, 429 bila lebih
+	// (POST /feedback)
+	CreateFeedback(w http.ResponseWriter, r *http.Request)
 	// ListFileReviews Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04)
 	// (GET /file-reviews)
 	ListFileReviews(w http.ResponseWriter, r *http.Request)
@@ -6869,6 +6929,18 @@ type ServerInterface interface {
 	// CreateBlueprint Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
 	// (POST /spaces/{spaceId}/blueprints)
 	CreateBlueprint(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ListSpaceBookmarks Bookmark URL eksternal sebuah Space (NAV-08); hak View
+	// (GET /spaces/{spaceId}/bookmarks)
+	ListSpaceBookmarks(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// CreateSpaceBookmark Tambah bookmark; hanya URL http/https (hak Edit, maks 100 per Space)
+	// (POST /spaces/{spaceId}/bookmarks)
+	CreateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// DeleteSpaceBookmark Hapus bookmark (hak Edit)
+	// (DELETE /spaces/{spaceId}/bookmarks/{bookmarkId})
+	DeleteSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID)
+	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
+	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
+	UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -9150,6 +9222,34 @@ func (siw *ServerInterfaceWrapper) DownloadProjectExcelExport(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadProjectExcelExport(w, r, exportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFeedback operation middleware
+func (siw *ServerInterfaceWrapper) ListFeedback(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFeedback(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFeedback operation middleware
+func (siw *ServerInterfaceWrapper) CreateFeedback(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFeedback(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12497,6 +12597,128 @@ func (siw *ServerInterfaceWrapper) CreateBlueprint(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ListSpaceBookmarks operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceBookmarks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceBookmarks(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSpaceBookmark operation middleware
+func (siw *ServerInterfaceWrapper) CreateSpaceBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSpaceBookmark(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSpaceBookmark operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSpaceBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "bookmarkId" -------------
+	var bookmarkId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "bookmarkId", r.PathValue("bookmarkId"), &bookmarkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "bookmarkId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSpaceBookmark(w, r, spaceId, bookmarkId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSpaceBookmark operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "bookmarkId" -------------
+	var bookmarkId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "bookmarkId", r.PathValue("bookmarkId"), &bookmarkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "bookmarkId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSpaceBookmark(w, r, spaceId, bookmarkId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListCustomFields operation middleware
 func (siw *ServerInterfaceWrapper) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 
@@ -14217,6 +14439,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/utilization", wrapper.GetUtilization)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.ListBaselines)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.CreateBaseline)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.ListSpaceBookmarks)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.CreateSpaceBookmark)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks/{bookmarkId}", wrapper.DeleteSpaceBookmark)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks/{bookmarkId}", wrapper.UpdateSpaceBookmark)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/feedback", wrapper.ListFeedback)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/feedback", wrapper.CreateFeedback)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/baselines/{baselineId}/variance", wrapper.GetBaselineVariance)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api-keys", wrapper.ListApiKeys)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api-keys", wrapper.CreateApiKey)
@@ -18782,6 +19010,99 @@ func (response DownloadProjectExcelExport409ApplicationProblemPlusJSONResponse) 
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFeedbackRequestObject struct {
+}
+
+type ListFeedbackResponseObject interface {
+	VisitListFeedbackResponse(w http.ResponseWriter) error
+}
+
+type ListFeedback200JSONResponse struct {
+	Items []FeedbackEntry `json:"items"`
+}
+
+func (response ListFeedback200JSONResponse) VisitListFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFeedback403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListFeedback403ApplicationProblemPlusJSONResponse) VisitListFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFeedbackRequestObject struct {
+	Body *CreateFeedbackJSONRequestBody
+}
+
+type CreateFeedbackResponseObject interface {
+	VisitCreateFeedbackResponse(w http.ResponseWriter) error
+}
+
+type CreateFeedback201JSONResponse struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+func (response CreateFeedback201JSONResponse) VisitCreateFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFeedback422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateFeedback422ApplicationProblemPlusJSONResponse) VisitCreateFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFeedback429ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateFeedback429ApplicationProblemPlusJSONResponse) VisitCreateFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -24930,6 +25251,228 @@ func (response CreateBlueprint422ApplicationProblemPlusJSONResponse) VisitCreate
 	return err
 }
 
+type ListSpaceBookmarksRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListSpaceBookmarksResponseObject interface {
+	VisitListSpaceBookmarksResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceBookmarks200JSONResponse struct {
+	Items []SpaceBookmark `json:"items"`
+}
+
+func (response ListSpaceBookmarks200JSONResponse) VisitListSpaceBookmarksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceBookmarks404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceBookmarks404ApplicationProblemPlusJSONResponse) VisitListSpaceBookmarksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmarkRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *CreateSpaceBookmarkJSONRequestBody
+}
+
+type CreateSpaceBookmarkResponseObject interface {
+	VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error
+}
+
+type CreateSpaceBookmark201JSONResponse SpaceBookmark
+
+func (response CreateSpaceBookmark201JSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmark403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateSpaceBookmark403ApplicationProblemPlusJSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmark404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateSpaceBookmark404ApplicationProblemPlusJSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmark422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateSpaceBookmark422ApplicationProblemPlusJSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSpaceBookmarkRequestObject struct {
+	SpaceId    SpaceId            `json:"spaceId"`
+	BookmarkId openapi_types.UUID `json:"bookmarkId"`
+}
+
+type DeleteSpaceBookmarkResponseObject interface {
+	VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error
+}
+
+type DeleteSpaceBookmark204Response struct {
+}
+
+func (response DeleteSpaceBookmark204Response) VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteSpaceBookmark403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteSpaceBookmark403ApplicationProblemPlusJSONResponse) VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSpaceBookmark404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteSpaceBookmark404ApplicationProblemPlusJSONResponse) VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmarkRequestObject struct {
+	SpaceId    SpaceId            `json:"spaceId"`
+	BookmarkId openapi_types.UUID `json:"bookmarkId"`
+	Body       *UpdateSpaceBookmarkJSONRequestBody
+}
+
+type UpdateSpaceBookmarkResponseObject interface {
+	VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error
+}
+
+type UpdateSpaceBookmark200JSONResponse SpaceBookmark
+
+func (response UpdateSpaceBookmark200JSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmark403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateSpaceBookmark403ApplicationProblemPlusJSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmark404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateSpaceBookmark404ApplicationProblemPlusJSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmark422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateSpaceBookmark422ApplicationProblemPlusJSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCustomFieldsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -27984,6 +28527,12 @@ type StrictServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(ctx context.Context, request DownloadProjectExcelExportRequestObject) (DownloadProjectExcelExportResponseObject, error)
+	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
+	// (GET /feedback)
+	ListFeedback(ctx context.Context, request ListFeedbackRequestObject) (ListFeedbackResponseObject, error)
+	// CreateFeedback Kirim umpan balik; 5 per pengguna per jam, 429 bila lebih
+	// (POST /feedback)
+	CreateFeedback(ctx context.Context, request CreateFeedbackRequestObject) (CreateFeedbackResponseObject, error)
 	// ListFileReviews Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04)
 	// (GET /file-reviews)
 	ListFileReviews(ctx context.Context, request ListFileReviewsRequestObject) (ListFileReviewsResponseObject, error)
@@ -28341,6 +28890,18 @@ type StrictServerInterface interface {
 	// CreateBlueprint Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
 	// (POST /spaces/{spaceId}/blueprints)
 	CreateBlueprint(ctx context.Context, request CreateBlueprintRequestObject) (CreateBlueprintResponseObject, error)
+	// ListSpaceBookmarks Bookmark URL eksternal sebuah Space (NAV-08); hak View
+	// (GET /spaces/{spaceId}/bookmarks)
+	ListSpaceBookmarks(ctx context.Context, request ListSpaceBookmarksRequestObject) (ListSpaceBookmarksResponseObject, error)
+	// CreateSpaceBookmark Tambah bookmark; hanya URL http/https (hak Edit, maks 100 per Space)
+	// (POST /spaces/{spaceId}/bookmarks)
+	CreateSpaceBookmark(ctx context.Context, request CreateSpaceBookmarkRequestObject) (CreateSpaceBookmarkResponseObject, error)
+	// DeleteSpaceBookmark Hapus bookmark (hak Edit)
+	// (DELETE /spaces/{spaceId}/bookmarks/{bookmarkId})
+	DeleteSpaceBookmark(ctx context.Context, request DeleteSpaceBookmarkRequestObject) (DeleteSpaceBookmarkResponseObject, error)
+	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
+	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
+	UpdateSpaceBookmark(ctx context.Context, request UpdateSpaceBookmarkRequestObject) (UpdateSpaceBookmarkResponseObject, error)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(ctx context.Context, request ListCustomFieldsRequestObject) (ListCustomFieldsResponseObject, error)
@@ -30597,6 +31158,61 @@ func (sh *strictHandler) DownloadProjectExcelExport(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadProjectExcelExportResponseObject); ok {
 		if err := validResponse.VisitDownloadProjectExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListFeedback operation middleware
+func (sh *strictHandler) ListFeedback(w http.ResponseWriter, r *http.Request) {
+	var request ListFeedbackRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFeedback(ctx, request.(ListFeedbackRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFeedback")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFeedbackResponseObject); ok {
+		if err := validResponse.VisitListFeedbackResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateFeedback operation middleware
+func (sh *strictHandler) CreateFeedback(w http.ResponseWriter, r *http.Request) {
+	var request CreateFeedbackRequestObject
+
+	var body CreateFeedbackJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateFeedback(ctx, request.(CreateFeedbackRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateFeedback")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateFeedbackResponseObject); ok {
+		if err := validResponse.VisitCreateFeedbackResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -33959,6 +34575,126 @@ func (sh *strictHandler) CreateBlueprint(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateBlueprintResponseObject); ok {
 		if err := validResponse.VisitCreateBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceBookmarks operation middleware
+func (sh *strictHandler) ListSpaceBookmarks(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListSpaceBookmarksRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceBookmarks(ctx, request.(ListSpaceBookmarksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceBookmarks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceBookmarksResponseObject); ok {
+		if err := validResponse.VisitListSpaceBookmarksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateSpaceBookmark operation middleware
+func (sh *strictHandler) CreateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request CreateSpaceBookmarkRequestObject
+
+	request.SpaceId = spaceId
+
+	var body CreateSpaceBookmarkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateSpaceBookmark(ctx, request.(CreateSpaceBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateSpaceBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateSpaceBookmarkResponseObject); ok {
+		if err := validResponse.VisitCreateSpaceBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteSpaceBookmark operation middleware
+func (sh *strictHandler) DeleteSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID) {
+	var request DeleteSpaceBookmarkRequestObject
+
+	request.SpaceId = spaceId
+	request.BookmarkId = bookmarkId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteSpaceBookmark(ctx, request.(DeleteSpaceBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteSpaceBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteSpaceBookmarkResponseObject); ok {
+		if err := validResponse.VisitDeleteSpaceBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateSpaceBookmark operation middleware
+func (sh *strictHandler) UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID) {
+	var request UpdateSpaceBookmarkRequestObject
+
+	request.SpaceId = spaceId
+	request.BookmarkId = bookmarkId
+
+	var body UpdateSpaceBookmarkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateSpaceBookmark(ctx, request.(UpdateSpaceBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateSpaceBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateSpaceBookmarkResponseObject); ok {
+		if err := validResponse.VisitUpdateSpaceBookmarkResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
