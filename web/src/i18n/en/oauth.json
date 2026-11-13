@@ -1,0 +1,35 @@
+{
+  "apps": {
+    "title": "Apps & Integrations",
+    "tabs": "Integration tabs",
+    "authorized": "Authorized apps",
+    "clients": "OAuth apps"
+  },
+  "authorized": {
+    "hint": "Apps you let sign in as you. Revoking cuts off access immediately.",
+    "empty": "No app has access to your account.",
+    "scopes": "Access",
+    "since": "Authorized",
+    "revoke": "Revoke",
+    "revokeConfirm": "Revoke {{name}}?"
+  },
+  "scope": { "read": "Read your work", "write": "Read and change your work" },
+  "clients": {
+    "hint": "Register an app that signs users in with OAuth 2.0 (authorization code + PKCE).",
+    "name": "App name",
+    "redirects": "Redirect URIs (one per line, exact match)",
+    "create": "Register app",
+    "empty": "No OAuth apps yet.",
+    "clientId": "Client ID",
+    "remove": "Remove",
+    "secretTitle": "Client secret",
+    "secretHint": "Copy it now. It is shown only once and cannot be recovered."
+  },
+  "consent": {
+    "title": "Authorize {{name}}",
+    "intro": "{{name}} wants to access your account. It can never do more than you can.",
+    "allow": "Allow",
+    "deny": "Deny",
+    "invalid": "This authorization request is not valid."
+  }
+}

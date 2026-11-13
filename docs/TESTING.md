@@ -676,3 +676,9 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
 - Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
 
+
+## M11 / S11.3.3 OAuth app dan Authorized apps (14 Nov 2026)
+
+- PASS (BE/TEST). `TestOAuthCodePKCEAndRevocation` (PostgreSQL asli): redirect URI beda satu karakter 400 (di authorize dan di token), `plain` dan scope tak dikenal 400, verifier PKCE salah 400 dan membakar kode, kode kedua kali 400 dan mencabut grant yang dihasilkannya, client secret salah 401, state dikembalikan, penolakan menghasilkan `access_denied`. Token hanya tersimpan sebagai hash SHA-256. Refresh merotasi: access dan refresh lama langsung mati. Scope `read` menolak POST (403); token anggota biasa ditolak di `/users/types` (hak pengguna dicek hidup pada tiap panggilan, bukan disalin ke token); token tidak boleh memanggil `/auth/*` dan `/oauth/*`. Pencabutan dari Authorized apps dan penghapusan app efektif segera untuk access token dan refresh token.
+- PASS (FE). `web/tests/oauth.spec.ts` (Playwright mock): tab Authorized apps mendaftar dan mencabut; layar persetujuan memanggil API lalu mengikuti `redirect_to`. `npm run typecheck` bersih; eslint tidak menambah temuan baru pada berkas baru.
+- Belum: tes live browser untuk alur penuh, axe pada tab, scope granular per resource (hanya `read`/`write`), public client tanpa secret, kedaluwarsa kode diuji hanya lewat logika (tidak ada tes waktu).
