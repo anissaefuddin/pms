@@ -1265,12 +1265,12 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [x] [TEST] Scope, rotasi, pencabutan
 
 **S11.3.2 Webhook (API-02) — 3 hari**
-- [ ] [API] Kelola langganan webhook
-- [ ] [DB] Langganan dan log pengiriman
-- [ ] [BE] Kirim lewat outbox; tanda tangan HMAC dan timestamp
-- [ ] [BE] Retry dan nonaktif otomatis
-- [ ] [FE] UI webhook
-- [ ] [TEST] E2E-PAR-11
+- [x] [API] Kelola langganan webhook
+- [x] [DB] Langganan dan log pengiriman
+- [x] [BE] Kirim lewat outbox; tanda tangan HMAC dan timestamp
+- [x] [BE] Retry dan nonaktif otomatis
+- [x] [FE] UI webhook
+- [x] [TEST] E2E-PAR-11
 
 **S11.3.3 OAuth app dan Authorized apps (API-03) — 2 hari**
 - [x] [BE] OAuth2 authorization code + PKCE

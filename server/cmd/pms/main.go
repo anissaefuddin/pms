@@ -19,6 +19,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/httpserver"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
+	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -102,6 +103,10 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 		slog.Warn("PMS_CONNECTOR_KEY is not set: connectors that need secrets cannot be installed")
 	}
 	engine := automation.New(pool)
+	hooks := webhooks.New(pool)
+	webhooks.AllowInternal = os.Getenv("PMS_WEBHOOK_ALLOW_INTERNAL") == "true" // test mode only
+	engine.Hook = hooks.Handler
+	engine.Tick = func(ctx context.Context) error { _, err := hooks.Send(ctx); return err }
 	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL), engine.Option(), httpserver.ApprovalDeadlines(pool))
 	if err != nil {
 		return err

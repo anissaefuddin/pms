@@ -6,16 +6,18 @@ import { ApiKeysTab } from "@/components/ApiKeysTab";
 import { AuthorizedApps } from "@/components/AuthorizedApps";
 import { ConnectorsTab } from "@/components/ConnectorsTab";
 import { OAuthClients } from "@/components/OAuthClients";
+import { WebhooksTab } from "@/components/WebhooksTab";
 
 export const Route = createFileRoute("/_app/settings/apps")({ component: Apps });
 
-// Apps & Integrations: each story adds its own tab to `tabs` below (webhooks, S11.3.2, still to come).
+// Apps & Integrations: each story adds its own tab to `tabs` below (bookmarks and feedback are not integrations and live elsewhere).
 function Apps() {
   const { t } = useTranslation();
   const me = useProfile();
   const admin = me?.user_type === "admin";
   const tabs = [
     { id: "api", label: t("apps.tab.api"), body: <ApiKeysTab /> },
+    { id: "webhooks", label: t("webhooks.title"), body: <WebhooksTab /> },
     { id: "authorized", label: t("oauth.apps.authorized"), body: <AuthorizedApps /> },
     ...(admin ? [
       { id: "clients", label: t("oauth.apps.clients"), body: <OAuthClients /> },

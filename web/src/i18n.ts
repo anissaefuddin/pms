@@ -20,6 +20,7 @@ import spaces from "./i18n/en/spaces.json";
 import starred from "./i18n/en/starred.json";
 import time from "./i18n/en/time.json";
 import views from "./i18n/en/views.json";
+import webhooks from "./i18n/en/webhooks.json";
 import workspace from "./i18n/en/workspace.json";
 
 i18n.use(initReactI18next).init({
@@ -28,7 +29,7 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   resources: {
     en: {
-      translation: { apps, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, oauth, reports, search, settings, share, spaces, starred, time, views, workspace },
+      translation: { apps, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, oauth, reports, search, settings, share, spaces, starred, time, views, webhooks, workspace },
     },
   },
 });
