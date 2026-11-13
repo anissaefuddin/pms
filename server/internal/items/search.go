@@ -19,11 +19,31 @@ type SearchResults struct {
 	Users    []json.RawMessage `json:"users"`
 }
 
-func Search(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, query, spaceID, containerID string, limit int) (SearchResults, error) {
+// SearchOptions are the extra filters of the full search page (NAV-07); the zero value changes nothing.
+type SearchOptions struct {
+	AssignedToMe bool
+	StatusGroup  string // "", "active", "completed", "deferred" or "cancelled"
+	Sort         string // "" or "relevance" ranks by match, "date_modified" by recency
+}
+
+func Search(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, query, spaceID, containerID string, limit int, opts SearchOptions) (SearchResults, error) {
 	out := SearchResults{Items: []json.RawMessage{}, Comments: []json.RawMessage{}, Users: []json.RawMessage{}}
 	query = strings.TrimSpace(query)
 	if !utf8.ValidString(query) || strings.ContainsRune(query, 0) || utf8.RuneCountInString(query) < 1 || utf8.RuneCountInString(query) > 200 || limit < 1 || limit > 50 {
 		return out, Invalid("query must contain 1 to 200 characters and limit must be between 1 and 50")
+	}
+	order := "m.rank DESC, m.id"
+	switch opts.Sort {
+	case "", "relevance":
+	case "date_modified":
+		order = "m.ts DESC, m.id"
+	default:
+		return out, Invalid("unknown search sort")
+	}
+	switch opts.StatusGroup {
+	case "", "active", "completed", "deferred", "cancelled":
+	default:
+		return out, Invalid("unknown status group")
 	}
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
@@ -55,15 +75,17 @@ WITH RECURSIVE subtree(item_id, space_id) AS (
   JOIN items i ON i.id=l.item_id AND i.deleted_at IS NULL
   WHERE l.deleted_root_id IS NULL
 ), matched AS (
-  SELECT i.id AS id, i.id AS item_id, i.type::text AS kind, ts_rank(i.search, $1::tsquery) AS rank
-  FROM items i WHERE i.deleted_at IS NULL AND i.search @@ $1::tsquery AND %[1]s
+  SELECT i.id AS id, i.id AS item_id, i.type::text AS kind, ts_rank(i.search, $1::tsquery) AS rank, i.updated_at AS ts
+  FROM items i WHERE i.deleted_at IS NULL AND i.search @@ $1::tsquery AND %[1]s AND %[3]s
   UNION ALL
-  SELECT c.id, c.item_id, 'comment', ts_rank(c.search, $1::tsquery)
+  SELECT c.id, c.item_id, 'comment', ts_rank(c.search, $1::tsquery), c.created_at
   FROM comments c JOIN items i ON i.id=c.item_id AND i.deleted_at IS NULL
-  WHERE c.deleted_at IS NULL AND c.search @@ $1::tsquery AND %[2]s
+  WHERE c.deleted_at IS NULL AND c.search @@ $1::tsquery AND %[2]s AND %[3]s
 )
 SELECT m.id::text, m.item_id::text, m.kind FROM matched m
-ORDER BY m.rank DESC, m.id`, scope("i.id"), scope("c.item_id")), *prefix, spaces, container)
+ORDER BY %[4]s`, scope("i.id"), scope("c.item_id"), `($4::boolean IS FALSE OR EXISTS (SELECT 1 FROM item_assignees a WHERE a.item_id=i.id AND a.user_id=$6::uuid))
+  AND ($5::text='' OR EXISTS (SELECT 1 FROM statuses st WHERE st.id=i.status_id AND st.grp::text=$5))`, order),
+		*prefix, spaces, container, opts.AssignedToMe, opts.StatusGroup, actor.ID)
 	if err != nil {
 		return out, err
 	}

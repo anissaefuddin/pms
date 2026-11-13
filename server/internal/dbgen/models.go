@@ -273,6 +273,7 @@ type TokenPurpose string
 const (
 	TokenPurposeInvite TokenPurpose = "invite"
 	TokenPurposeReset  TokenPurpose = "reset"
+	TokenPurposeMfa    TokenPurpose = "mfa"
 )
 
 func (e *TokenPurpose) Scan(src interface{}) error {
@@ -498,6 +499,7 @@ type Activity struct {
 	Action    string             `json:"action"`
 	Changes   []byte             `json:"changes"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Auto      bool               `json:"auto"`
 }
 
 type Approval struct {
@@ -530,6 +532,15 @@ type Attachment struct {
 	Sha256      []byte             `json:"sha256"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+}
+
+type Blueprint struct {
+	ID        pgtype.UUID        `json:"id"`
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	Name      string             `json:"name"`
+	Tree      []byte             `json:"tree"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Comment struct {
@@ -672,6 +683,14 @@ type RequestForm struct {
 	Access      string             `json:"access"`
 }
 
+type SecurityEvent struct {
+	ID        int64              `json:"id"`
+	ActorID   pgtype.UUID        `json:"actor_id"`
+	TargetID  pgtype.UUID        `json:"target_id"`
+	Action    string             `json:"action"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Session struct {
 	TokenHash         []byte             `json:"token_hash"`
 	UserID            pgtype.UUID        `json:"user_id"`
@@ -749,6 +768,7 @@ type User struct {
 	Density              string             `json:"density"`
 	Theme                string             `json:"theme"`
 	CommentShortcut      string             `json:"comment_shortcut"`
+	SidebarHidden        []string           `json:"sidebar_hidden"`
 }
 
 type UserToken struct {
@@ -759,6 +779,20 @@ type UserToken struct {
 	UsedAt    pgtype.Timestamptz `json:"used_at"`
 	CreatedBy pgtype.UUID        `json:"created_by"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type UserTotp struct {
+	UserID      pgtype.UUID        `json:"user_id"`
+	SecretEnc   string             `json:"secret_enc"`
+	ConfirmedAt pgtype.Timestamptz `json:"confirmed_at"`
+	LastStep    int64              `json:"last_step"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+}
+
+type UserTotpBackupCode struct {
+	UserID   pgtype.UUID        `json:"user_id"`
+	CodeHash []byte             `json:"code_hash"`
+	UsedAt   pgtype.Timestamptz `json:"used_at"`
 }
 
 type View struct {

@@ -18,7 +18,8 @@ func (s *Server) search(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	results, err := items.Search(r.Context(), s.pool, actorOf(r), query.Get("q"), query.Get("space_id"), query.Get("container_id"), limit)
+	results, err := items.Search(r.Context(), s.pool, actorOf(r), query.Get("q"), query.Get("space_id"), query.Get("container_id"), limit,
+		items.SearchOptions{AssignedToMe: query.Get("assigned_to_me") == "true", StatusGroup: query.Get("status_group"), Sort: query.Get("sort")})
 	if err != nil {
 		writeItemError(w, err)
 		return

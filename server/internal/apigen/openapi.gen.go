@@ -111,6 +111,27 @@ func (e AssigneeAllocationUpdateAllocationUnit) Valid() bool {
 	}
 }
 
+// Defines values for BlueprintItemType.
+const (
+	BlueprintItemTypeFolder  BlueprintItemType = "folder"
+	BlueprintItemTypeProject BlueprintItemType = "project"
+	BlueprintItemTypeTask    BlueprintItemType = "task"
+)
+
+// Valid indicates whether the value is a known member of the BlueprintItemType enum.
+func (e BlueprintItemType) Valid() bool {
+	switch e {
+	case BlueprintItemTypeFolder:
+		return true
+	case BlueprintItemTypeProject:
+		return true
+	case BlueprintItemTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Capability.
 const (
 	CapabilityAttach       Capability = "attach"
@@ -987,6 +1008,48 @@ func (e ShareTargetType) Valid() bool {
 	}
 }
 
+// Defines values for SidebarKey.
+const (
+	Calendars    SidebarKey = "calendars"
+	CreatedByMe  SidebarKey = "created_by_me"
+	Dashboards   SidebarKey = "dashboards"
+	MyTodo       SidebarKey = "my_todo"
+	Reports      SidebarKey = "reports"
+	RequestForms SidebarKey = "request_forms"
+	Starred      SidebarKey = "starred"
+	Stream       SidebarKey = "stream"
+	Timesheets   SidebarKey = "timesheets"
+	Workload     SidebarKey = "workload"
+)
+
+// Valid indicates whether the value is a known member of the SidebarKey enum.
+func (e SidebarKey) Valid() bool {
+	switch e {
+	case Calendars:
+		return true
+	case CreatedByMe:
+		return true
+	case Dashboards:
+		return true
+	case MyTodo:
+		return true
+	case Reports:
+		return true
+	case RequestForms:
+		return true
+	case Starred:
+		return true
+	case Stream:
+		return true
+	case Timesheets:
+		return true
+	case Workload:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SpaceKind.
 const (
 	SpaceKindPersonal SpaceKind = "personal"
@@ -1023,6 +1086,39 @@ func (e StatusGroup) Valid() bool {
 	case StatusGroupCompleted:
 		return true
 	case StatusGroupDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StreamEntryKind.
+const (
+	StreamEntryKindActivity StreamEntryKind = "activity"
+	StreamEntryKindComment  StreamEntryKind = "comment"
+)
+
+// Valid indicates whether the value is a known member of the StreamEntryKind enum.
+func (e StreamEntryKind) Valid() bool {
+	switch e {
+	case StreamEntryKindActivity:
+		return true
+	case StreamEntryKindComment:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for TwoFactorChallengeTwoFactorRequired.
+const (
+	TwoFactorChallengeTwoFactorRequiredTrue TwoFactorChallengeTwoFactorRequired = true
+)
+
+// Valid indicates whether the value is a known member of the TwoFactorChallengeTwoFactorRequired enum.
+func (e TwoFactorChallengeTwoFactorRequired) Valid() bool {
+	switch e {
+	case TwoFactorChallengeTwoFactorRequiredTrue:
 		return true
 	default:
 		return false
@@ -1209,6 +1305,72 @@ func (e ListRecycleBinParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for SearchParamsStatusGroup.
+const (
+	SearchParamsStatusGroupActive    SearchParamsStatusGroup = "active"
+	SearchParamsStatusGroupCancelled SearchParamsStatusGroup = "cancelled"
+	SearchParamsStatusGroupCompleted SearchParamsStatusGroup = "completed"
+	SearchParamsStatusGroupDeferred  SearchParamsStatusGroup = "deferred"
+)
+
+// Valid indicates whether the value is a known member of the SearchParamsStatusGroup enum.
+func (e SearchParamsStatusGroup) Valid() bool {
+	switch e {
+	case SearchParamsStatusGroupActive:
+		return true
+	case SearchParamsStatusGroupCancelled:
+		return true
+	case SearchParamsStatusGroupCompleted:
+		return true
+	case SearchParamsStatusGroupDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchParamsSort.
+const (
+	SearchParamsSortDateModified SearchParamsSort = "date_modified"
+	SearchParamsSortRelevance    SearchParamsSort = "relevance"
+)
+
+// Valid indicates whether the value is a known member of the SearchParamsSort enum.
+func (e SearchParamsSort) Valid() bool {
+	switch e {
+	case SearchParamsSortDateModified:
+		return true
+	case SearchParamsSortRelevance:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListStreamParamsFilter.
+const (
+	ListStreamParamsFilterAssigned      ListStreamParamsFilter = "assigned"
+	ListStreamParamsFilterConversations ListStreamParamsFilter = "conversations"
+	ListStreamParamsFilterEverything    ListStreamParamsFilter = "everything"
+	ListStreamParamsFilterFollowed      ListStreamParamsFilter = "followed"
+)
+
+// Valid indicates whether the value is a known member of the ListStreamParamsFilter enum.
+func (e ListStreamParamsFilter) Valid() bool {
+	switch e {
+	case ListStreamParamsFilterAssigned:
+		return true
+	case ListStreamParamsFilterConversations:
+		return true
+	case ListStreamParamsFilterEverything:
+		return true
+	case ListStreamParamsFilterFollowed:
+		return true
+	default:
+		return false
+	}
+}
+
 // AcceptInvitationRequest defines model for AcceptInvitationRequest.
 type AcceptInvitationRequest struct {
 	AcceptTerms AcceptInvitationRequestAcceptTerms `json:"accept_terms"`
@@ -1320,6 +1482,19 @@ type Attachment struct {
 	SizeBytes   int64              `json:"size_bytes"`
 	Uploader    UserRef            `json:"uploader"`
 }
+
+// Blueprint defines model for Blueprint.
+type Blueprint struct {
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+	ItemCount int                `json:"item_count"`
+	ItemType  BlueprintItemType  `json:"item_type"`
+	Name      string             `json:"name"`
+	SpaceId   openapi_types.UUID `json:"space_id"`
+}
+
+// BlueprintItemType defines model for Blueprint.ItemType.
+type BlueprintItemType string
 
 // Capability defines model for Capability.
 type Capability string
@@ -1886,9 +2061,12 @@ type Me struct {
 	Location        *string            `json:"location,omitempty"`
 	PersonalSpaceId openapi_types.UUID `json:"personal_space_id"`
 	Phone           *string            `json:"phone,omitempty"`
-	Status          UserStatus         `json:"status"`
-	Theme           *MeTheme           `json:"theme,omitempty"`
-	TimeFormat      MeTimeFormat       `json:"time_format"`
+
+	// SidebarHidden Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
+	SidebarHidden *[]SidebarKey `json:"sidebar_hidden,omitempty"`
+	Status        UserStatus    `json:"status"`
+	Theme         *MeTheme      `json:"theme,omitempty"`
+	TimeFormat    MeTimeFormat  `json:"time_format"`
 
 	// Timezone Example: Asia/Jakarta
 	Timezone  string      `json:"timezone"`
@@ -1928,6 +2106,7 @@ type MeUpdate struct {
 	Locale          *MeUpdateLocale          `json:"locale,omitempty"`
 	Location        *string                  `json:"location,omitempty"`
 	Phone           *string                  `json:"phone,omitempty"`
+	SidebarHidden   *[]SidebarKey            `json:"sidebar_hidden,omitempty"`
 	Theme           *MeUpdateTheme           `json:"theme,omitempty"`
 	TimeFormat      *MeUpdateTimeFormat      `json:"time_format,omitempty"`
 	Timezone        *string                  `json:"timezone,omitempty"`
@@ -2129,6 +2308,9 @@ type ShareRole string
 // ShareTargetType defines model for ShareTargetType.
 type ShareTargetType string
 
+// SidebarKey defines model for SidebarKey.
+type SidebarKey string
+
 // Space defines model for Space.
 type Space struct {
 	Description    *string            `json:"description,omitempty"`
@@ -2192,6 +2374,58 @@ type StatusPatch struct {
 	Group           *StatusGroup          `json:"group,omitempty"`
 	LockTransitions *bool                 `json:"lock_transitions,omitempty"`
 	Name            *string               `json:"name,omitempty"`
+}
+
+// StreamEntry defines model for StreamEntry.
+type StreamEntry struct {
+	Action    string                 `json:"action"`
+	Actor     UserRef                `json:"actor"`
+	Auto      bool                   `json:"auto"`
+	Changes   map[string]interface{} `json:"changes"`
+	CreatedAt time.Time              `json:"created_at"`
+	Id        string                 `json:"id"`
+	Item      struct {
+		Id    openapi_types.UUID `json:"id"`
+		Title string             `json:"title"`
+		Type  ItemType           `json:"type"`
+	} `json:"item"`
+	Kind    StreamEntryKind `json:"kind"`
+	Snippet *string         `json:"snippet,omitempty"`
+}
+
+// StreamEntryKind defines model for StreamEntry.Kind.
+type StreamEntryKind string
+
+// StreamPage defines model for StreamPage.
+type StreamPage struct {
+	Items      []StreamEntry `json:"items"`
+	NextCursor *string       `json:"next_cursor,omitempty"`
+}
+
+// TwoFactorChallenge defines model for TwoFactorChallenge.
+type TwoFactorChallenge struct {
+	Challenge         string                              `json:"challenge"`
+	TwoFactorRequired TwoFactorChallengeTwoFactorRequired `json:"two_factor_required"`
+}
+
+// TwoFactorChallengeTwoFactorRequired defines model for TwoFactorChallenge.TwoFactorRequired.
+type TwoFactorChallengeTwoFactorRequired bool
+
+// TwoFactorReauth defines model for TwoFactorReauth.
+type TwoFactorReauth struct {
+	// Code Kode TOTP 6 digit atau kode cadangan
+	Code     string `json:"code"`
+	Password string `json:"password"`
+}
+
+// TwoFactorStatus defines model for TwoFactorStatus.
+type TwoFactorStatus struct {
+	BackupCodesRemaining int32 `json:"backup_codes_remaining"`
+
+	// Configured false bila server belum punya PMS_2FA_KEY
+	Configured bool       `json:"configured"`
+	Enabled    bool       `json:"enabled"`
+	EnabledAt  *time.Time `json:"enabled_at"`
 }
 
 // User defines model for User.
@@ -2375,6 +2609,12 @@ type DecideApprovalJSONBody struct {
 // DecideApprovalJSONBodyDecision defines parameters for DecideApproval.
 type DecideApprovalJSONBodyDecision string
 
+// LoginSecondStepJSONBody defines parameters for LoginSecondStep.
+type LoginSecondStepJSONBody struct {
+	Challenge string `json:"challenge"`
+	Code      string `json:"code"`
+}
+
 // ChangePasswordJSONBody defines parameters for ChangePassword.
 type ChangePasswordJSONBody struct {
 	CurrentPassword string `json:"current_password"`
@@ -2390,6 +2630,15 @@ type ForgotPasswordJSONBody struct {
 type ResetPasswordJSONBody struct {
 	Password string `json:"password"`
 	Token    string `json:"token"`
+}
+
+// CreateItemsFromBlueprintJSONBody defines parameters for CreateItemsFromBlueprint.
+type CreateItemsFromBlueprintJSONBody struct {
+	Locations []Location          `json:"locations"`
+	StartDate *openapi_types.Date `json:"start_date,omitempty"`
+
+	// Title Mengganti judul item akar
+	Title *string `json:"title,omitempty"`
 }
 
 // UpdateCommentJSONBody defines parameters for UpdateComment.
@@ -2537,6 +2786,11 @@ type ReplaceItemSharesParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// EnableTwoFactorJSONBody defines parameters for EnableTwoFactor.
+type EnableTwoFactorJSONBody struct {
+	Code string `json:"code"`
+}
+
 // ListMyRequestsParams defines parameters for ListMyRequests.
 type ListMyRequestsParams struct {
 	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -2595,7 +2849,20 @@ type SearchParams struct {
 
 	// Limit Maksimum per grup
 	Limit *int `form:"limit,omitempty" json:"limit,omitempty"`
+
+	// AssignedToMe Hanya item yang ditugaskan ke saya (NAV-07)
+	AssignedToMe *bool `form:"assigned_to_me,omitempty" json:"assigned_to_me,omitempty"`
+
+	// StatusGroup Hanya item dengan grup status ini (NAV-07)
+	StatusGroup *SearchParamsStatusGroup `form:"status_group,omitempty" json:"status_group,omitempty"`
+	Sort        *SearchParamsSort        `form:"sort,omitempty" json:"sort,omitempty"`
 }
+
+// SearchParamsStatusGroup defines parameters for Search.
+type SearchParamsStatusGroup string
+
+// SearchParamsSort defines parameters for Search.
+type SearchParamsSort string
 
 // ReplaceWorkScheduleParams defines parameters for ReplaceWorkSchedule.
 type ReplaceWorkScheduleParams struct {
@@ -2607,6 +2874,12 @@ type ReplaceWorkScheduleParams struct {
 type UpdateSpaceParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
+}
+
+// CreateBlueprintJSONBody defines parameters for CreateBlueprint.
+type CreateBlueprintJSONBody struct {
+	Name         string             `json:"name"`
+	SourceItemId openapi_types.UUID `json:"source_item_id"`
 }
 
 // ListSpaceRootItemsParams defines parameters for ListSpaceRootItems.
@@ -2636,6 +2909,19 @@ type ReplaceSpaceSharesParams struct {
 type DeleteStatusParams struct {
 	MoveTo *openapi_types.UUID `form:"move_to,omitempty" json:"move_to,omitempty"`
 }
+
+// ListStreamParams defines parameters for ListStream.
+type ListStreamParams struct {
+	Limit  *Limit                  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor                 `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Filter *ListStreamParamsFilter `form:"filter,omitempty" json:"filter,omitempty"`
+
+	// HideAuto Sembunyikan perubahan otomatis (penjadwalan)
+	HideAuto *bool `form:"hide_auto,omitempty" json:"hide_auto,omitempty"`
+}
+
+// ListStreamParamsFilter defines parameters for ListStream.
+type ListStreamParamsFilter string
 
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
@@ -2681,6 +2967,9 @@ type AcceptInvitationJSONRequestBody = AcceptInvitationRequest
 // LoginJSONRequestBody defines body for Login for application/json ContentType.
 type LoginJSONRequestBody = LoginRequest
 
+// LoginSecondStepJSONRequestBody defines body for LoginSecondStep for application/json ContentType.
+type LoginSecondStepJSONRequestBody LoginSecondStepJSONBody
+
 // ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
 type ChangePasswordJSONRequestBody ChangePasswordJSONBody
 
@@ -2689,6 +2978,9 @@ type ForgotPasswordJSONRequestBody ForgotPasswordJSONBody
 
 // ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
 type ResetPasswordJSONRequestBody ResetPasswordJSONBody
+
+// CreateItemsFromBlueprintJSONRequestBody defines body for CreateItemsFromBlueprint for application/json ContentType.
+type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
@@ -2750,6 +3042,15 @@ type ReplaceItemSharesJSONRequestBody = ShareReplace
 // UpdateMeJSONRequestBody defines body for UpdateMe for application/json ContentType.
 type UpdateMeJSONRequestBody = MeUpdate
 
+// RenewBackupCodesJSONRequestBody defines body for RenewBackupCodes for application/json ContentType.
+type RenewBackupCodesJSONRequestBody = TwoFactorReauth
+
+// DisableTwoFactorJSONRequestBody defines body for DisableTwoFactor for application/json ContentType.
+type DisableTwoFactorJSONRequestBody = TwoFactorReauth
+
+// EnableTwoFactorJSONRequestBody defines body for EnableTwoFactor for application/json ContentType.
+type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
+
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
 
@@ -2761,6 +3062,9 @@ type CreateSpaceJSONRequestBody = SpaceCreate
 
 // UpdateSpaceJSONRequestBody defines body for UpdateSpace for application/json ContentType.
 type UpdateSpaceJSONRequestBody = SpaceUpdate
+
+// CreateBlueprintJSONRequestBody defines body for CreateBlueprint for application/json ContentType.
+type CreateBlueprintJSONRequestBody CreateBlueprintJSONBody
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldCreate
@@ -3091,6 +3395,9 @@ type ServerInterface interface {
 	// Login Login dengan email dan password (AUTH-01)
 	// (POST /auth/login)
 	Login(w http.ResponseWriter, r *http.Request)
+	// LoginSecondStep Langkah kedua login dengan kode TOTP 6 digit atau kode cadangan (AUTH-05)
+	// (POST /auth/login/2fa)
+	LoginSecondStep(w http.ResponseWriter, r *http.Request)
 	// Logout Logout dan cabut session ini (AUTH-02)
 	// (POST /auth/logout)
 	Logout(w http.ResponseWriter, r *http.Request)
@@ -3103,6 +3410,12 @@ type ServerInterface interface {
 	// ResetPassword Set password baru dengan token reset (AUTH-03)
 	// (POST /auth/password/reset)
 	ResetPassword(w http.ResponseWriter, r *http.Request)
+	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
+	// (DELETE /blueprints/{blueprintId})
+	DeleteBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
+	// CreateItemsFromBlueprint Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
+	// (POST /blueprints/{blueprintId}/items)
+	CreateItemsFromBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID)
@@ -3226,6 +3539,21 @@ type ServerInterface interface {
 	// UpdateMe Ubah profil dan pengaturan workspace (SET-02)
 	// (PATCH /me)
 	UpdateMe(w http.ResponseWriter, r *http.Request)
+	// GetTwoFactor Status 2FA user ini (AUTH-05)
+	// (GET /me/2fa)
+	GetTwoFactor(w http.ResponseWriter, r *http.Request)
+	// RenewBackupCodes Buat kode cadangan baru (yang lama tidak berlaku); butuh password dan kode saat ini
+	// (POST /me/2fa/backup-codes)
+	RenewBackupCodes(w http.ResponseWriter, r *http.Request)
+	// DisableTwoFactor Matikan 2FA; butuh password dan kode saat ini; mencabut session lain
+	// (POST /me/2fa/disable)
+	DisableTwoFactor(w http.ResponseWriter, r *http.Request)
+	// EnableTwoFactor Konfirmasi dengan kode 6 digit; mengaktifkan 2FA, membuat kode cadangan (tampil sekali), dan mencabut session lain
+	// (POST /me/2fa/enable)
+	EnableTwoFactor(w http.ResponseWriter, r *http.Request)
+	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
+	// (POST /me/2fa/setup)
+	SetupTwoFactor(w http.ResponseWriter, r *http.Request)
 	// ListMyRequests Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu
 	// (GET /me/requests)
 	ListMyRequests(w http.ResponseWriter, r *http.Request, params ListMyRequestsParams)
@@ -3283,6 +3611,12 @@ type ServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params UpdateSpaceParams)
+	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
+	// (GET /spaces/{spaceId}/blueprints)
+	ListBlueprints(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// CreateBlueprint Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
+	// (POST /spaces/{spaceId}/blueprints)
+	CreateBlueprint(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -3319,6 +3653,9 @@ type ServerInterface interface {
 	// UpdateStatus Ubah nama, grup, warna, auto-assign, kunci transisi, atau transisi yang diizinkan (admin saja)
 	// (PATCH /statuses/{statusId})
 	UpdateStatus(w http.ResponseWriter, r *http.Request, statusId openapi_types.UUID)
+	// ListStream Stream aktivitas dan komentar pada item yang boleh dilihat (NAV-04)
+	// (GET /stream)
+	ListStream(w http.ResponseWriter, r *http.Request, params ListStreamParams)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request, params ListUsersParams)
@@ -3334,6 +3671,9 @@ type ServerInterface interface {
 	// UpdateUser Ubah user type (USR-02); admin saja
 	// (PATCH /users/{userId})
 	UpdateUser(w http.ResponseWriter, r *http.Request, userId UserId)
+	// ResetUserTwoFactor Admin menghapus 2FA user (pemulihan); user dikeluarkan dari semua session dan kejadiannya dicatat
+	// (POST /users/{userId}/2fa/reset)
+	ResetUserTwoFactor(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
 	// DeactivateUser Nonaktifkan user dan bebaskan seat (USR-03)
 	// (POST /users/{userId}/deactivate)
 	DeactivateUser(w http.ResponseWriter, r *http.Request, userId UserId)
@@ -3596,6 +3936,20 @@ func (siw *ServerInterfaceWrapper) Login(w http.ResponseWriter, r *http.Request)
 	handler.ServeHTTP(w, r)
 }
 
+// LoginSecondStep operation middleware
+func (siw *ServerInterfaceWrapper) LoginSecondStep(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LoginSecondStep(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // Logout operation middleware
 func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request) {
 
@@ -3643,6 +3997,58 @@ func (siw *ServerInterfaceWrapper) ResetPassword(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ResetPassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteBlueprint operation middleware
+func (siw *ServerInterfaceWrapper) DeleteBlueprint(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "blueprintId" -------------
+	var blueprintId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "blueprintId", r.PathValue("blueprintId"), &blueprintId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "blueprintId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteBlueprint(w, r, blueprintId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateItemsFromBlueprint operation middleware
+func (siw *ServerInterfaceWrapper) CreateItemsFromBlueprint(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "blueprintId" -------------
+	var blueprintId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "blueprintId", r.PathValue("blueprintId"), &blueprintId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "blueprintId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateItemsFromBlueprint(w, r, blueprintId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4889,6 +5295,76 @@ func (siw *ServerInterfaceWrapper) UpdateMe(w http.ResponseWriter, r *http.Reque
 	handler.ServeHTTP(w, r)
 }
 
+// GetTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) GetTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RenewBackupCodes operation middleware
+func (siw *ServerInterfaceWrapper) RenewBackupCodes(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RenewBackupCodes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DisableTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) DisableTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisableTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnableTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) EnableTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnableTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetupTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) SetupTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetupTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMyRequests operation middleware
 func (siw *ServerInterfaceWrapper) ListMyRequests(w http.ResponseWriter, r *http.Request) {
 
@@ -5339,6 +5815,45 @@ func (siw *ServerInterfaceWrapper) Search(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// ------------- Optional query parameter "assigned_to_me" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "assigned_to_me", r.URL.Query(), &params.AssignedToMe, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "assigned_to_me"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "assigned_to_me", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status_group" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status_group", r.URL.Query(), &params.StatusGroup, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status_group"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status_group", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Search(w, r, params)
 	}))
@@ -5548,6 +6063,58 @@ func (siw *ServerInterfaceWrapper) UpdateSpace(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateSpace(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListBlueprints operation middleware
+func (siw *ServerInterfaceWrapper) ListBlueprints(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListBlueprints(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateBlueprint operation middleware
+func (siw *ServerInterfaceWrapper) CreateBlueprint(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateBlueprint(w, r, spaceId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6025,6 +6592,78 @@ func (siw *ServerInterfaceWrapper) UpdateStatus(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// ListStream operation middleware
+func (siw *ServerInterfaceWrapper) ListStream(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListStreamParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "hide_auto" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "hide_auto", r.URL.Query(), &params.HideAuto, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "hide_auto"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "hide_auto", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListStream(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListUsers operation middleware
 func (siw *ServerInterfaceWrapper) ListUsers(w http.ResponseWriter, r *http.Request) {
 
@@ -6181,6 +6820,32 @@ func (siw *ServerInterfaceWrapper) UpdateUser(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateUser(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResetUserTwoFactor operation middleware
+func (siw *ServerInterfaceWrapper) ResetUserTwoFactor(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResetUserTwoFactor(w, r, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -6613,6 +7278,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	}
 
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/login", wrapper.Login)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/login/2fa", wrapper.LoginSecondStep)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/logout", wrapper.Logout)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/password/forgot", wrapper.ForgotPassword)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/password/reset", wrapper.ResetPassword)
@@ -6628,6 +7294,12 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/invitations", wrapper.InviteUser)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}", wrapper.GetUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/users/{userId}", wrapper.UpdateUser)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/2fa", wrapper.GetTwoFactor)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/setup", wrapper.SetupTwoFactor)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/enable", wrapper.EnableTwoFactor)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/disable", wrapper.DisableTwoFactor)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/backup-codes", wrapper.RenewBackupCodes)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/2fa/reset", wrapper.ResetUserTwoFactor)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/deactivate", wrapper.DeactivateUser)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/reactivate", wrapper.ReactivateUser)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/invitation/resend", wrapper.ResendInvitation)
@@ -6678,6 +7350,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/download", wrapper.DownloadAttachment)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/attachments/{attachmentId}", wrapper.DeleteAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/activity", wrapper.ListActivity)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stream", wrapper.ListStream)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/notifications", wrapper.ListNotifications)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/notifications/read-all", wrapper.MarkAllNotificationsRead)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/notifications/archive-all", wrapper.ArchiveAllNotifications)
@@ -6702,6 +7375,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/approvals/{approvalId}/decision", wrapper.DecideApproval)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/forms", wrapper.ListSpaceForms)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/forms", wrapper.CreateForm)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/blueprints", wrapper.ListBlueprints)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/blueprints", wrapper.CreateBlueprint)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/blueprints/{blueprintId}", wrapper.DeleteBlueprint)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/blueprints/{blueprintId}/items", wrapper.CreateItemsFromBlueprint)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/forms/{formId}", wrapper.DeleteForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}", wrapper.GetForm)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/forms/{formId}", wrapper.ReplaceForm)
@@ -7220,6 +7897,20 @@ func (response Login200JSONResponse) VisitLoginResponse(w http.ResponseWriter) e
 	return err
 }
 
+type Login202JSONResponse TwoFactorChallenge
+
+func (response Login202JSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type Login401ApplicationProblemPlusJSONResponse struct {
 	ProblemApplicationProblemPlusJSONResponse
 }
@@ -7241,6 +7932,63 @@ type Login429ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response Login429ApplicationProblemPlusJSONResponse) VisitLoginResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LoginSecondStepRequestObject struct {
+	Body *LoginSecondStepJSONRequestBody
+}
+
+type LoginSecondStepResponseObject interface {
+	VisitLoginSecondStepResponse(w http.ResponseWriter) error
+}
+
+type LoginSecondStep200JSONResponse Me
+
+func (response LoginSecondStep200JSONResponse) VisitLoginSecondStepResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LoginSecondStep401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response LoginSecondStep401ApplicationProblemPlusJSONResponse) VisitLoginSecondStepResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LoginSecondStep429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response LoginSecondStep429ApplicationProblemPlusJSONResponse) VisitLoginSecondStepResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -7431,6 +8179,129 @@ func (response ResetPassword429ApplicationProblemPlusJSONResponse) VisitResetPas
 		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
 	}
 	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteBlueprintRequestObject struct {
+	BlueprintId openapi_types.UUID `json:"blueprintId"`
+}
+
+type DeleteBlueprintResponseObject interface {
+	VisitDeleteBlueprintResponse(w http.ResponseWriter) error
+}
+
+type DeleteBlueprint204Response struct {
+}
+
+func (response DeleteBlueprint204Response) VisitDeleteBlueprintResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteBlueprint403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteBlueprint403ApplicationProblemPlusJSONResponse) VisitDeleteBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteBlueprint404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteBlueprint404ApplicationProblemPlusJSONResponse) VisitDeleteBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemsFromBlueprintRequestObject struct {
+	BlueprintId openapi_types.UUID `json:"blueprintId"`
+	Body        *CreateItemsFromBlueprintJSONRequestBody
+}
+
+type CreateItemsFromBlueprintResponseObject interface {
+	VisitCreateItemsFromBlueprintResponse(w http.ResponseWriter) error
+}
+
+type CreateItemsFromBlueprint201ResponseHeaders struct {
+	ETag *string
+}
+
+type CreateItemsFromBlueprint201JSONResponse struct {
+	Body    Item
+	Headers CreateItemsFromBlueprint201ResponseHeaders
+}
+
+func (response CreateItemsFromBlueprint201JSONResponse) VisitCreateItemsFromBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemsFromBlueprint403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateItemsFromBlueprint403ApplicationProblemPlusJSONResponse) VisitCreateItemsFromBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemsFromBlueprint404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateItemsFromBlueprint404ApplicationProblemPlusJSONResponse) VisitCreateItemsFromBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemsFromBlueprint422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateItemsFromBlueprint422ApplicationProblemPlusJSONResponse) VisitCreateItemsFromBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -9631,6 +10502,265 @@ func (response UpdateMe422ApplicationProblemPlusJSONResponse) VisitUpdateMeRespo
 	return err
 }
 
+type GetTwoFactorRequestObject struct {
+}
+
+type GetTwoFactorResponseObject interface {
+	VisitGetTwoFactorResponse(w http.ResponseWriter) error
+}
+
+type GetTwoFactor200JSONResponse TwoFactorStatus
+
+func (response GetTwoFactor200JSONResponse) VisitGetTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenewBackupCodesRequestObject struct {
+	Body *RenewBackupCodesJSONRequestBody
+}
+
+type RenewBackupCodesResponseObject interface {
+	VisitRenewBackupCodesResponse(w http.ResponseWriter) error
+}
+
+type RenewBackupCodes200JSONResponse struct {
+	BackupCodes []string `json:"backup_codes"`
+}
+
+func (response RenewBackupCodes200JSONResponse) VisitRenewBackupCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenewBackupCodes401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RenewBackupCodes401ApplicationProblemPlusJSONResponse) VisitRenewBackupCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenewBackupCodes429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response RenewBackupCodes429ApplicationProblemPlusJSONResponse) VisitRenewBackupCodesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTwoFactorRequestObject struct {
+	Body *DisableTwoFactorJSONRequestBody
+}
+
+type DisableTwoFactorResponseObject interface {
+	VisitDisableTwoFactorResponse(w http.ResponseWriter) error
+}
+
+type DisableTwoFactor204Response struct {
+}
+
+func (response DisableTwoFactor204Response) VisitDisableTwoFactorResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DisableTwoFactor401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DisableTwoFactor401ApplicationProblemPlusJSONResponse) VisitDisableTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableTwoFactor429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response DisableTwoFactor429ApplicationProblemPlusJSONResponse) VisitDisableTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableTwoFactorRequestObject struct {
+	Body *EnableTwoFactorJSONRequestBody
+}
+
+type EnableTwoFactorResponseObject interface {
+	VisitEnableTwoFactorResponse(w http.ResponseWriter) error
+}
+
+type EnableTwoFactor200JSONResponse struct {
+	BackupCodes []string  `json:"backup_codes"`
+	EnabledAt   time.Time `json:"enabled_at"`
+}
+
+func (response EnableTwoFactor200JSONResponse) VisitEnableTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableTwoFactor409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response EnableTwoFactor409ApplicationProblemPlusJSONResponse) VisitEnableTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableTwoFactor422ApplicationProblemPlusJSONResponse Problem
+
+func (response EnableTwoFactor422ApplicationProblemPlusJSONResponse) VisitEnableTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableTwoFactor429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response EnableTwoFactor429ApplicationProblemPlusJSONResponse) VisitEnableTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTwoFactorRequestObject struct {
+}
+
+type SetupTwoFactorResponseObject interface {
+	VisitSetupTwoFactorResponse(w http.ResponseWriter) error
+}
+
+type SetupTwoFactor200JSONResponse struct {
+	OtpauthUri string `json:"otpauth_uri"`
+	Secret     string `json:"secret"`
+}
+
+func (response SetupTwoFactor200JSONResponse) VisitSetupTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTwoFactor409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetupTwoFactor409ApplicationProblemPlusJSONResponse) VisitSetupTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetupTwoFactor503ApplicationProblemPlusJSONResponse Problem
+
+func (response SetupTwoFactor503ApplicationProblemPlusJSONResponse) VisitSetupTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListMyRequestsRequestObject struct {
 	Params ListMyRequestsParams
 }
@@ -10490,6 +11620,113 @@ func (response UpdateSpace428ApplicationProblemPlusJSONResponse) VisitUpdateSpac
 	return err
 }
 
+type ListBlueprintsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListBlueprintsResponseObject interface {
+	VisitListBlueprintsResponse(w http.ResponseWriter) error
+}
+
+type ListBlueprints200JSONResponse struct {
+	Items []Blueprint `json:"items"`
+}
+
+func (response ListBlueprints200JSONResponse) VisitListBlueprintsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBlueprints404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListBlueprints404ApplicationProblemPlusJSONResponse) VisitListBlueprintsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBlueprintRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *CreateBlueprintJSONRequestBody
+}
+
+type CreateBlueprintResponseObject interface {
+	VisitCreateBlueprintResponse(w http.ResponseWriter) error
+}
+
+type CreateBlueprint201JSONResponse Blueprint
+
+func (response CreateBlueprint201JSONResponse) VisitCreateBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBlueprint403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateBlueprint403ApplicationProblemPlusJSONResponse) VisitCreateBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBlueprint404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateBlueprint404ApplicationProblemPlusJSONResponse) VisitCreateBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBlueprint422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateBlueprint422ApplicationProblemPlusJSONResponse) VisitCreateBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCustomFieldsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -11306,6 +12543,44 @@ func (response UpdateStatus422ApplicationProblemPlusJSONResponse) VisitUpdateSta
 	return err
 }
 
+type ListStreamRequestObject struct {
+	Params ListStreamParams
+}
+
+type ListStreamResponseObject interface {
+	VisitListStreamResponse(w http.ResponseWriter) error
+}
+
+type ListStream200JSONResponse StreamPage
+
+func (response ListStream200JSONResponse) VisitListStreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListStream422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListStream422ApplicationProblemPlusJSONResponse) VisitListStreamResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListUsersRequestObject struct {
 	Params ListUsersParams
 }
@@ -11521,6 +12796,52 @@ func (response UpdateUser409ApplicationProblemPlusJSONResponse) VisitUpdateUserR
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResetUserTwoFactorRequestObject struct {
+	UserId openapi_types.UUID `json:"userId"`
+}
+
+type ResetUserTwoFactorResponseObject interface {
+	VisitResetUserTwoFactorResponse(w http.ResponseWriter) error
+}
+
+type ResetUserTwoFactor204Response struct {
+}
+
+func (response ResetUserTwoFactor204Response) VisitResetUserTwoFactorResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ResetUserTwoFactor403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResetUserTwoFactor403ApplicationProblemPlusJSONResponse) VisitResetUserTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResetUserTwoFactor404ApplicationProblemPlusJSONResponse Problem
+
+func (response ResetUserTwoFactor404ApplicationProblemPlusJSONResponse) VisitResetUserTwoFactorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -12309,6 +13630,9 @@ type StrictServerInterface interface {
 	// Login Login dengan email dan password (AUTH-01)
 	// (POST /auth/login)
 	Login(ctx context.Context, request LoginRequestObject) (LoginResponseObject, error)
+	// LoginSecondStep Langkah kedua login dengan kode TOTP 6 digit atau kode cadangan (AUTH-05)
+	// (POST /auth/login/2fa)
+	LoginSecondStep(ctx context.Context, request LoginSecondStepRequestObject) (LoginSecondStepResponseObject, error)
 	// Logout Logout dan cabut session ini (AUTH-02)
 	// (POST /auth/logout)
 	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
@@ -12321,6 +13645,12 @@ type StrictServerInterface interface {
 	// ResetPassword Set password baru dengan token reset (AUTH-03)
 	// (POST /auth/password/reset)
 	ResetPassword(ctx context.Context, request ResetPasswordRequestObject) (ResetPasswordResponseObject, error)
+	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
+	// (DELETE /blueprints/{blueprintId})
+	DeleteBlueprint(ctx context.Context, request DeleteBlueprintRequestObject) (DeleteBlueprintResponseObject, error)
+	// CreateItemsFromBlueprint Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
+	// (POST /blueprints/{blueprintId}/items)
+	CreateItemsFromBlueprint(ctx context.Context, request CreateItemsFromBlueprintRequestObject) (CreateItemsFromBlueprintResponseObject, error)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(ctx context.Context, request DeleteCommentRequestObject) (DeleteCommentResponseObject, error)
@@ -12444,6 +13774,21 @@ type StrictServerInterface interface {
 	// UpdateMe Ubah profil dan pengaturan workspace (SET-02)
 	// (PATCH /me)
 	UpdateMe(ctx context.Context, request UpdateMeRequestObject) (UpdateMeResponseObject, error)
+	// GetTwoFactor Status 2FA user ini (AUTH-05)
+	// (GET /me/2fa)
+	GetTwoFactor(ctx context.Context, request GetTwoFactorRequestObject) (GetTwoFactorResponseObject, error)
+	// RenewBackupCodes Buat kode cadangan baru (yang lama tidak berlaku); butuh password dan kode saat ini
+	// (POST /me/2fa/backup-codes)
+	RenewBackupCodes(ctx context.Context, request RenewBackupCodesRequestObject) (RenewBackupCodesResponseObject, error)
+	// DisableTwoFactor Matikan 2FA; butuh password dan kode saat ini; mencabut session lain
+	// (POST /me/2fa/disable)
+	DisableTwoFactor(ctx context.Context, request DisableTwoFactorRequestObject) (DisableTwoFactorResponseObject, error)
+	// EnableTwoFactor Konfirmasi dengan kode 6 digit; mengaktifkan 2FA, membuat kode cadangan (tampil sekali), dan mencabut session lain
+	// (POST /me/2fa/enable)
+	EnableTwoFactor(ctx context.Context, request EnableTwoFactorRequestObject) (EnableTwoFactorResponseObject, error)
+	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
+	// (POST /me/2fa/setup)
+	SetupTwoFactor(ctx context.Context, request SetupTwoFactorRequestObject) (SetupTwoFactorResponseObject, error)
 	// ListMyRequests Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu
 	// (GET /me/requests)
 	ListMyRequests(ctx context.Context, request ListMyRequestsRequestObject) (ListMyRequestsResponseObject, error)
@@ -12501,6 +13846,12 @@ type StrictServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(ctx context.Context, request UpdateSpaceRequestObject) (UpdateSpaceResponseObject, error)
+	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
+	// (GET /spaces/{spaceId}/blueprints)
+	ListBlueprints(ctx context.Context, request ListBlueprintsRequestObject) (ListBlueprintsResponseObject, error)
+	// CreateBlueprint Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
+	// (POST /spaces/{spaceId}/blueprints)
+	CreateBlueprint(ctx context.Context, request CreateBlueprintRequestObject) (CreateBlueprintResponseObject, error)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(ctx context.Context, request ListCustomFieldsRequestObject) (ListCustomFieldsResponseObject, error)
@@ -12537,6 +13888,9 @@ type StrictServerInterface interface {
 	// UpdateStatus Ubah nama, grup, warna, auto-assign, kunci transisi, atau transisi yang diizinkan (admin saja)
 	// (PATCH /statuses/{statusId})
 	UpdateStatus(ctx context.Context, request UpdateStatusRequestObject) (UpdateStatusResponseObject, error)
+	// ListStream Stream aktivitas dan komentar pada item yang boleh dilihat (NAV-04)
+	// (GET /stream)
+	ListStream(ctx context.Context, request ListStreamRequestObject) (ListStreamResponseObject, error)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(ctx context.Context, request ListUsersRequestObject) (ListUsersResponseObject, error)
@@ -12552,6 +13906,9 @@ type StrictServerInterface interface {
 	// UpdateUser Ubah user type (USR-02); admin saja
 	// (PATCH /users/{userId})
 	UpdateUser(ctx context.Context, request UpdateUserRequestObject) (UpdateUserResponseObject, error)
+	// ResetUserTwoFactor Admin menghapus 2FA user (pemulihan); user dikeluarkan dari semua session dan kejadiannya dicatat
+	// (POST /users/{userId}/2fa/reset)
+	ResetUserTwoFactor(ctx context.Context, request ResetUserTwoFactorRequestObject) (ResetUserTwoFactorResponseObject, error)
 	// DeactivateUser Nonaktifkan user dan bebaskan seat (USR-03)
 	// (POST /users/{userId}/deactivate)
 	DeactivateUser(ctx context.Context, request DeactivateUserRequestObject) (DeactivateUserResponseObject, error)
@@ -12865,6 +14222,37 @@ func (sh *strictHandler) Login(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// LoginSecondStep operation middleware
+func (sh *strictHandler) LoginSecondStep(w http.ResponseWriter, r *http.Request) {
+	var request LoginSecondStepRequestObject
+
+	var body LoginSecondStepJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.LoginSecondStep(ctx, request.(LoginSecondStepRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "LoginSecondStep")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LoginSecondStepResponseObject); ok {
+		if err := validResponse.VisitLoginSecondStepResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Logout operation middleware
 func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	var request LogoutRequestObject
@@ -12975,6 +14363,65 @@ func (sh *strictHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ResetPasswordResponseObject); ok {
 		if err := validResponse.VisitResetPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteBlueprint operation middleware
+func (sh *strictHandler) DeleteBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID) {
+	var request DeleteBlueprintRequestObject
+
+	request.BlueprintId = blueprintId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteBlueprint(ctx, request.(DeleteBlueprintRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteBlueprint")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteBlueprintResponseObject); ok {
+		if err := validResponse.VisitDeleteBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateItemsFromBlueprint operation middleware
+func (sh *strictHandler) CreateItemsFromBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID) {
+	var request CreateItemsFromBlueprintRequestObject
+
+	request.BlueprintId = blueprintId
+
+	var body CreateItemsFromBlueprintJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateItemsFromBlueprint(ctx, request.(CreateItemsFromBlueprintRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateItemsFromBlueprint")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateItemsFromBlueprintResponseObject); ok {
+		if err := validResponse.VisitCreateItemsFromBlueprintResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -14181,6 +15628,147 @@ func (sh *strictHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetTwoFactor operation middleware
+func (sh *strictHandler) GetTwoFactor(w http.ResponseWriter, r *http.Request) {
+	var request GetTwoFactorRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTwoFactor(ctx, request.(GetTwoFactorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTwoFactor")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTwoFactorResponseObject); ok {
+		if err := validResponse.VisitGetTwoFactorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RenewBackupCodes operation middleware
+func (sh *strictHandler) RenewBackupCodes(w http.ResponseWriter, r *http.Request) {
+	var request RenewBackupCodesRequestObject
+
+	var body RenewBackupCodesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RenewBackupCodes(ctx, request.(RenewBackupCodesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RenewBackupCodes")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RenewBackupCodesResponseObject); ok {
+		if err := validResponse.VisitRenewBackupCodesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DisableTwoFactor operation middleware
+func (sh *strictHandler) DisableTwoFactor(w http.ResponseWriter, r *http.Request) {
+	var request DisableTwoFactorRequestObject
+
+	var body DisableTwoFactorJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DisableTwoFactor(ctx, request.(DisableTwoFactorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DisableTwoFactor")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DisableTwoFactorResponseObject); ok {
+		if err := validResponse.VisitDisableTwoFactorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EnableTwoFactor operation middleware
+func (sh *strictHandler) EnableTwoFactor(w http.ResponseWriter, r *http.Request) {
+	var request EnableTwoFactorRequestObject
+
+	var body EnableTwoFactorJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EnableTwoFactor(ctx, request.(EnableTwoFactorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EnableTwoFactor")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EnableTwoFactorResponseObject); ok {
+		if err := validResponse.VisitEnableTwoFactorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetupTwoFactor operation middleware
+func (sh *strictHandler) SetupTwoFactor(w http.ResponseWriter, r *http.Request) {
+	var request SetupTwoFactorRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetupTwoFactor(ctx, request.(SetupTwoFactorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetupTwoFactor")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetupTwoFactorResponseObject); ok {
+		if err := validResponse.VisitSetupTwoFactorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListMyRequests operation middleware
 func (sh *strictHandler) ListMyRequests(w http.ResponseWriter, r *http.Request, params ListMyRequestsParams) {
 	var request ListMyRequestsRequestObject
@@ -14690,6 +16278,65 @@ func (sh *strictHandler) UpdateSpace(w http.ResponseWriter, r *http.Request, spa
 	}
 }
 
+// ListBlueprints operation middleware
+func (sh *strictHandler) ListBlueprints(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListBlueprintsRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListBlueprints(ctx, request.(ListBlueprintsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListBlueprints")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListBlueprintsResponseObject); ok {
+		if err := validResponse.VisitListBlueprintsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateBlueprint operation middleware
+func (sh *strictHandler) CreateBlueprint(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request CreateBlueprintRequestObject
+
+	request.SpaceId = spaceId
+
+	var body CreateBlueprintJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateBlueprint(ctx, request.(CreateBlueprintRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateBlueprint")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateBlueprintResponseObject); ok {
+		if err := validResponse.VisitCreateBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListCustomFields operation middleware
 func (sh *strictHandler) ListCustomFields(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ListCustomFieldsRequestObject
@@ -15042,6 +16689,32 @@ func (sh *strictHandler) UpdateStatus(w http.ResponseWriter, r *http.Request, st
 	}
 }
 
+// ListStream operation middleware
+func (sh *strictHandler) ListStream(w http.ResponseWriter, r *http.Request, params ListStreamParams) {
+	var request ListStreamRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListStream(ctx, request.(ListStreamRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListStream")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListStreamResponseObject); ok {
+		if err := validResponse.VisitListStreamResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListUsers operation middleware
 func (sh *strictHandler) ListUsers(w http.ResponseWriter, r *http.Request, params ListUsersParams) {
 	var request ListUsersRequestObject
@@ -15175,6 +16848,32 @@ func (sh *strictHandler) UpdateUser(w http.ResponseWriter, r *http.Request, user
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateUserResponseObject); ok {
 		if err := validResponse.VisitUpdateUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResetUserTwoFactor operation middleware
+func (sh *strictHandler) ResetUserTwoFactor(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID) {
+	var request ResetUserTwoFactorRequestObject
+
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResetUserTwoFactor(ctx, request.(ResetUserTwoFactorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResetUserTwoFactor")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResetUserTwoFactorResponseObject); ok {
+		if err := validResponse.VisitResetUserTwoFactorResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

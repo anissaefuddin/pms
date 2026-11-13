@@ -42,3 +42,29 @@ func TestMaxSeatsMustBePositive(t *testing.T) {
 		}
 	}
 }
+
+func TestTwoFactorKeys(t *testing.T) {
+	good := "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=" // 32 bytes
+	t.Setenv("DATABASE_URL", "postgres://x")
+	for name, c := range map[string]struct {
+		key, previous string
+		ok            bool
+	}{
+		"no keys":                  {"", "", true},
+		"current only":             {good, "", true},
+		"rotation":                 {good, good, true},
+		"not base64":               {"not base64!", "", false},
+		"wrong length":             {"c2hvcnQ=", "", false},
+		"previous without current": {"", good, false},
+	} {
+		t.Setenv("PMS_2FA_KEY", c.key)
+		t.Setenv("PMS_2FA_KEY_PREVIOUS", c.previous)
+		cfg, err := Load()
+		if (err == nil) != c.ok {
+			t.Errorf("%s: err=%v, want ok=%v", name, err, c.ok)
+		}
+		if err == nil && (c.key != "") != (len(cfg.TwoFactorKey) == 32) {
+			t.Errorf("%s: key loaded=%v", name, len(cfg.TwoFactorKey))
+		}
+	}
+}

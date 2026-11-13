@@ -1,6 +1,7 @@
 package config
 
 import (
+	"encoding/base64"
 	"fmt"
 	"net"
 	"net/url"
@@ -26,6 +27,8 @@ type Config struct {
 	BackupAlertURL string
 	FilesDir       string
 	MaxUploadMB    int
+	// TwoFactorKey and TwoFactorKeyPrevious are 32-byte keys for TOTP secrets; without TwoFactorKey 2FA cannot be turned on.
+	TwoFactorKey, TwoFactorKeyPrevious []byte
 }
 
 func Load() (Config, error) {
@@ -45,6 +48,18 @@ func Load() (Config, error) {
 	cfg.MaxUploadMB, err = strconv.Atoi(value("PMS_MAX_UPLOAD_MB", "100"))
 	if err != nil || cfg.MaxUploadMB < 1 || cfg.MaxUploadMB > 1024 {
 		return Config{}, fmt.Errorf("PMS_MAX_UPLOAD_MB must be between 1 and 1024")
+	}
+	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious} {
+		if raw := os.Getenv(env); raw != "" {
+			key, err := base64.StdEncoding.DecodeString(strings.TrimSpace(raw))
+			if err != nil || len(key) != 32 {
+				return Config{}, fmt.Errorf("%s must be 32 random bytes encoded as base64 (for example `openssl rand -base64 32`)", env)
+			}
+			*dst = key
+		}
+	}
+	if cfg.TwoFactorKeyPrevious != nil && cfg.TwoFactorKey == nil {
+		return Config{}, fmt.Errorf("PMS_2FA_KEY_PREVIOUS needs PMS_2FA_KEY")
 	}
 	if cfg.DatabaseURL == "" {
 		// Parts instead of a URL: url.UserPassword escapes the password, so any characters work.

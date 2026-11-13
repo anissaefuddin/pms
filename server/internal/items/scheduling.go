@@ -236,13 +236,13 @@ WITH changes AS (
     FROM changes c WHERE i.id=c.id
     RETURNING i.id,i.start_date,i.due_date,i.version,c.old_start,c.old_due,c.ordinality
 ), audit AS (
-    INSERT INTO activity(item_id,actor_id,action,changes)
+    INSERT INTO activity(item_id,actor_id,action,changes,auto)
     SELECT id,$5::uuid,'update',
         CASE WHEN old_start IS DISTINCT FROM start_date
             THEN jsonb_build_object('start_date',jsonb_build_object('from',old_start,'to',start_date)) ELSE '{}'::jsonb END
         || CASE WHEN old_due IS DISTINCT FROM due_date
             THEN jsonb_build_object('due_date',jsonb_build_object('from',old_due,'to',due_date)) ELSE '{}'::jsonb END
-    FROM updated WHERE id::text<>$4
+    ,true FROM updated WHERE id::text<>$4
 )
 SELECT id::text,to_char(start_date,'YYYY-MM-DD'),to_char(due_date,'YYYY-MM-DD'),version
 FROM updated ORDER BY ordinality`, changed, starts, finishes, alreadyVersioned, actor)

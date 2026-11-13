@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -62,6 +63,9 @@ func expectedCaps(userType string, roles ...string) []string {
 	return out
 }
 
+// testTwoFactorKeys are the 2FA keys of fixtures; tests of key handling replace them before creating a fixture.
+var testTwoFactorKeys = twofactor.Keys{Current: bytes.Repeat([]byte{7}, 32)}
+
 type person struct {
 	id, userType string
 	cookie       *http.Cookie
@@ -96,7 +100,7 @@ func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 	}
 	t.Cleanup(pool.Close)
 	files := t.TempDir()
-	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: files, MaxUploadMB: 1}
+	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: files, MaxUploadMB: 1, TwoFactorKey: testTwoFactorKeys.Current, TwoFactorKeyPrevious: testTwoFactorKeys.Previous}
 	queue, err := mailqueue.New(pool, cfg)
 	if err != nil {
 		t.Fatal(err)

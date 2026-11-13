@@ -14,6 +14,8 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
       SMTP_FROM: ${SMTP_FROM:-PMS <noreply@localhost>}
+      PMS_2FA_KEY: ${PMS_2FA_KEY:-}
+      PMS_2FA_KEY_PREVIOUS: ${PMS_2FA_KEY_PREVIOUS:-}
     volumes:
       - pms_files:/data/files
     depends_on:

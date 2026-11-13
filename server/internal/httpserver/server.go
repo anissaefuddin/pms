@@ -41,6 +41,7 @@ type Server struct {
 	directory      *directory.Service
 	loginIPFails   *limiter // failed logins per IP
 	loginAcctFails *limiter // failed logins per email: temporary lockout
+	mfaFails       *limiter // wrong second-factor codes per user
 	dummyHash      string   // checked when the email is unknown, so timing does not reveal which emails exist
 	forgotLimiter  *limiter
 	tokenLimiter   *limiter
@@ -81,6 +82,7 @@ type me struct {
 	Density         string     `json:"density"`
 	Theme           string     `json:"theme"`
 	CommentShortcut string     `json:"comment_shortcut"`
+	SidebarHidden   []string   `json:"sidebar_hidden"`
 	Capabilities    struct {
 		ManageUsers bool `json:"manage_users"`
 		CreateSpace bool `json:"create_space"`
@@ -108,7 +110,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	if err != nil {
 		panic(err) // only fails if the system random source does
 	}
-	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), requests: requests, duration: duration}
+	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), requests: requests, duration: duration}
 	mux := http.NewServeMux()
 	s.events = realtime.New()
 	s.eventEpoch = uuid.NewString()
@@ -125,6 +127,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("PATCH /api/v1/me", s.requireUser(s.updateMe))
 	mux.HandleFunc("GET /api/v1/me/shared", s.requireUser(s.listSharedItems))
 	mux.HandleFunc("GET /api/v1/me/todo", s.requireUser(s.listMyTodo))
+	mux.HandleFunc("GET /api/v1/stream", s.requireUser(s.listStream))
 	mux.HandleFunc("GET /api/v1/search", s.requireUser(s.search))
 	mux.HandleFunc("GET /api/v1/events", s.requireUser(s.streamEvents))
 	mux.HandleFunc("POST /api/v1/auth/password/forgot", s.forgotPassword)
@@ -144,6 +147,8 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.workflowRoutes(mux)
 	s.approvalRoutes(mux)
 	s.formRoutes(mux)
+	s.twoFactorRoutes(mux)
+	s.blueprintRoutes(mux)
 	s.dependencyRoutes(mux)
 	s.customFieldRoutes(mux)
 	s.attachmentRoutes(mux)
@@ -201,8 +206,8 @@ func loadMe(ctx context.Context, db interface {
 }, userID string) (me, error) {
 	var m me
 	var jobTitle, department string
-	err := db.QueryRow(ctx, `SELECT u.id::text,u.email::text,u.first_name,u.last_name,u.user_type::text,u.status::text,u.job_title,u.department,u.last_login_at,u.locale,u.timezone,u.date_format,u.time_format,u.week_start,COALESCE((SELECT id::text FROM spaces WHERE owner_id=u.id AND kind='personal'),''),a.name,u.company,u.country,u.location,u.phone,u.density,u.theme,u.comment_shortcut FROM users u CROSS JOIN account a WHERE u.id=$1`, userID).
-		Scan(&m.ID, &m.Email, &m.FirstName, &m.LastName, &m.UserType, &m.Status, &jobTitle, &department, &m.LastLoginAt, &m.Locale, &m.Timezone, &m.DateFormat, &m.TimeFormat, &m.WeekStart, &m.PersonalSpaceID, &m.AccountName, &m.Company, &m.Country, &m.Location, &m.Phone, &m.Density, &m.Theme, &m.CommentShortcut)
+	err := db.QueryRow(ctx, `SELECT u.id::text,u.email::text,u.first_name,u.last_name,u.user_type::text,u.status::text,u.job_title,u.department,u.last_login_at,u.locale,u.timezone,u.date_format,u.time_format,u.week_start,COALESCE((SELECT id::text FROM spaces WHERE owner_id=u.id AND kind='personal'),''),a.name,u.company,u.country,u.location,u.phone,u.density,u.theme,u.comment_shortcut,u.sidebar_hidden FROM users u CROSS JOIN account a WHERE u.id=$1`, userID).
+		Scan(&m.ID, &m.Email, &m.FirstName, &m.LastName, &m.UserType, &m.Status, &jobTitle, &department, &m.LastLoginAt, &m.Locale, &m.Timezone, &m.DateFormat, &m.TimeFormat, &m.WeekStart, &m.PersonalSpaceID, &m.AccountName, &m.Company, &m.Country, &m.Location, &m.Phone, &m.Density, &m.Theme, &m.CommentShortcut, &m.SidebarHidden)
 	if err != nil {
 		return me{}, err
 	}
@@ -258,6 +263,19 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.loginAcctFails.clear(account)
+	if on, err := s.hasTwoFactor(r.Context(), id); err != nil {
+		writeError(w, 500, "could not sign in")
+		return
+	} else if on {
+		// The password is right but the sign-in is not finished: no session until the second step succeeds.
+		challenge, err := s.issueChallenge(r.Context(), id)
+		if err != nil {
+			writeError(w, 500, "could not sign in")
+			return
+		}
+		writeJSON(w, http.StatusAccepted, map[string]any{"two_factor_required": true, "challenge": challenge})
+		return
+	}
 	// SEC-04: a fresh login replaces the session the browser was holding instead of leaving it alive until it expires.
 	if presented, err := r.Cookie("pms_session"); err == nil {
 		_, _ = s.pool.Exec(r.Context(), "DELETE FROM sessions WHERE token_hash=$1", security.TokenHash(presented.Value))

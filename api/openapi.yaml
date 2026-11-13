@@ -27,6 +27,7 @@ tags:
   - { name: inbox, description: "Notifikasi, My to-do, pencarian" }
   - { name: recycle, description: "Recycle bin" }
   - { name: forms, description: "Form permintaan" }
+  - { name: blueprints, description: "Blueprint: struktur item yang dipakai ulang" }
   - { name: system, description: "Workflow, realtime, health" }
 
 security:
@@ -45,6 +46,36 @@ paths:
         content:
           application/json:
             schema: { $ref: '#/components/schemas/LoginRequest' }
+      responses:
+        '200':
+          description: Berhasil; cookie session diset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '202':
+          description: Password benar tetapi user memakai 2FA; belum ada session. Lanjutkan dengan `POST /auth/login/2fa` dalam 5 menit
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TwoFactorChallenge' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/login/2fa:
+    post:
+      tags: [auth]
+      operationId: loginSecondStep
+      summary: Langkah kedua login dengan kode TOTP 6 digit atau kode cadangan (AUTH-05)
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [challenge, code]
+              additionalProperties: false
+              properties:
+                challenge: { type: string }
+                code: { type: string, maxLength: 32 }
       responses:
         '200':
           description: Berhasil; cookie session diset
@@ -315,6 +346,111 @@ paths:
               schema: { $ref: '#/components/schemas/User' }
         '403': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /me/2fa:
+    get:
+      tags: [auth]
+      operationId: getTwoFactor
+      summary: Status 2FA user ini (AUTH-05)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TwoFactorStatus' }
+  /me/2fa/setup:
+    post:
+      tags: [auth]
+      operationId: setupTwoFactor
+      summary: Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [secret, otpauth_uri]
+                properties:
+                  secret: { type: string }
+                  otpauth_uri: { type: string }
+        '409': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /me/2fa/enable:
+    post:
+      tags: [auth]
+      operationId: enableTwoFactor
+      summary: Konfirmasi dengan kode 6 digit; mengaktifkan 2FA, membuat kode cadangan (tampil sekali), dan mencabut session lain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [code]
+              additionalProperties: false
+              properties:
+                code: { type: string, maxLength: 16 }
+      responses:
+        '200':
+          description: Aktif
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [enabled_at, backup_codes]
+                properties:
+                  enabled_at: { type: string, format: date-time }
+                  backup_codes: { type: array, items: { type: string } }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /me/2fa/disable:
+    post:
+      tags: [auth]
+      operationId: disableTwoFactor
+      summary: Matikan 2FA; butuh password dan kode saat ini; mencabut session lain
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TwoFactorReauth' }
+      responses:
+        '204': { description: Dimatikan }
+        '401': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /me/2fa/backup-codes:
+    post:
+      tags: [auth]
+      operationId: renewBackupCodes
+      summary: Buat kode cadangan baru (yang lama tidak berlaku); butuh password dan kode saat ini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TwoFactorReauth' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [backup_codes]
+                properties:
+                  backup_codes: { type: array, items: { type: string } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /users/{userId}/2fa/reset:
+    parameters:
+      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [users]
+      operationId: resetUserTwoFactor
+      summary: Admin menghapus 2FA user (pemulihan); user dikeluarkan dari semua session dan kejadiannya dicatat
+      responses:
+        '204': { description: Direset }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /users/{userId}/deactivate:
     post:
       tags: [users]
@@ -1213,6 +1349,24 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/ActivityPage' }
 
+  /stream:
+    get:
+      tags: [inbox]
+      operationId: listStream
+      summary: Stream aktivitas dan komentar pada item yang boleh dilihat (NAV-04)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { name: filter, in: query, schema: { type: string, enum: [everything, followed, assigned, conversations], default: everything } }
+        - { name: hide_auto, in: query, schema: { type: boolean, default: false }, description: Sembunyikan perubahan otomatis (penjadwalan) }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StreamPage' }
+        '422': { $ref: '#/components/responses/Problem' }
+
   # ───────────────────────── INBOX, TO-DO, SEARCH ─────────────────────────
   /notifications:
     get:
@@ -1308,6 +1462,9 @@ paths:
         - { name: space_id, in: query, schema: { type: string, format: uuid } }
         - { name: container_id, in: query, schema: { type: string, format: uuid } }
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 }, description: Maksimum per grup }
+        - { name: assigned_to_me, in: query, schema: { type: boolean, default: false }, description: Hanya item yang ditugaskan ke saya (NAV-07) }
+        - { name: status_group, in: query, schema: { type: string, enum: [active, completed, deferred, cancelled] }, description: Hanya item dengan grup status ini (NAV-07) }
+        - { name: sort, in: query, schema: { type: string, enum: [relevance, date_modified], default: relevance } }
       responses:
         '200':
           description: OK
@@ -1652,6 +1809,100 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/blueprints:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [blueprints]
+      operationId: listBlueprints
+      summary: Blueprint di Space (butuh view pada Space; SPC-13)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Blueprint' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [blueprints]
+      operationId: createBlueprint
+      summary: Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
+      description: >
+        Menyalin satu kali; blueprint tidak tertaut ke sumber. Status, assignee, durasi, field kustom, dependensi antar
+        item, dan tanggal (sebagai selisih hari) ikut tersimpan. Komentar, lampiran, approval, dan share tidak.
+        Maksimal 200 item.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, source_item_id]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+                source_item_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Blueprint' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /blueprints/{blueprintId}:
+    parameters:
+      - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [blueprints]
+      operationId: deleteBlueprint
+      summary: Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /blueprints/{blueprintId}/items:
+    parameters:
+      - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [blueprints]
+      operationId: createItemsFromBlueprint
+      summary: Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
+      description: >
+        `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date`; tanpa
+        `start_date` item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak
+        lagi cocok dengan Space tujuan dilewati.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [locations]
+              properties:
+                locations:
+                  type: array
+                  minItems: 1
+                  items: { $ref: '#/components/schemas/Location' }
+                title: { type: string, description: Mengganti judul item akar }
+                start_date: { type: string, format: date }
+      responses:
+        '201':
+          description: Item akar yang dibuat
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
   /forms/{formId}:
     parameters:
@@ -2106,6 +2357,27 @@ components:
             items:
               type: array
               items: { $ref: '#/components/schemas/User' }
+    TwoFactorChallenge:
+      type: object
+      required: [two_factor_required, challenge]
+      properties:
+        two_factor_required: { type: boolean, enum: [true] }
+        challenge: { type: string }
+    TwoFactorStatus:
+      type: object
+      required: [configured, enabled, enabled_at, backup_codes_remaining]
+      properties:
+        configured: { type: boolean, description: false bila server belum punya PMS_2FA_KEY }
+        enabled: { type: boolean }
+        enabled_at: { type: string, format: date-time, nullable: true }
+        backup_codes_remaining: { type: integer, format: int32 }
+    TwoFactorReauth:
+      type: object
+      required: [password, code]
+      additionalProperties: false
+      properties:
+        password: { type: string }
+        code: { type: string, maxLength: 32, description: Kode TOTP 6 digit atau kode cadangan }
     Me:
       allOf:
         - $ref: '#/components/schemas/User'
@@ -2124,6 +2396,10 @@ components:
             density: { type: string, enum: [compact, comfortable], default: compact }
             theme: { type: string, enum: [light, dark, system], default: system }
             comment_shortcut: { type: string, enum: [mod_enter, enter], default: mod_enter }
+            sidebar_hidden:
+              type: array
+              description: Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
+              items: { $ref: '#/components/schemas/SidebarKey' }
             account_name: { type: string, description: Nama workspace }
             personal_space_id: { type: string, format: uuid }
             capabilities:
@@ -2151,6 +2427,12 @@ components:
         density: { type: string, enum: [compact, comfortable] }
         theme: { type: string, enum: [light, dark, system] }
         comment_shortcut: { type: string, enum: [mod_enter, enter] }
+        sidebar_hidden:
+          type: array
+          items: { $ref: '#/components/schemas/SidebarKey' }
+    SidebarKey:
+      type: string
+      enum: [created_by_me, workload, calendars, dashboards, my_todo, request_forms, timesheets, reports, stream, starred]
     InviteRequest:
       type: object
       required: [email, user_type]
@@ -2470,6 +2752,16 @@ components:
       type: string
       enum: [private, internal]
       description: private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+    Blueprint:
+      type: object
+      required: [id, space_id, name, item_type, item_count, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid }
+        name: { type: string }
+        item_type: { type: string, enum: [project, folder, task] }
+        item_count: { type: integer }
+        created_at: { type: string, format: date-time }
     FormSummary:
       type: object
       required: [id, space_id, space_name, name, description, access, question_count, updated_by, updated_at]
@@ -2933,6 +3225,35 @@ components:
             items:
               type: array
               items: { $ref: '#/components/schemas/Activity' }
+
+    StreamEntry:
+      type: object
+      required: [id, kind, action, changes, auto, created_at, actor, item]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [activity, comment] }
+        action: { type: string }
+        changes: { type: object, additionalProperties: true }
+        snippet: { type: string, nullable: true }
+        auto: { type: boolean }
+        created_at: { type: string, format: date-time }
+        actor: { $ref: '#/components/schemas/UserRef' }
+        item:
+          type: object
+          required: [id, title, type]
+          properties:
+            id: { type: string, format: uuid }
+            title: { type: string }
+            type: { $ref: '#/components/schemas/ItemType' }
+    StreamPage:
+      allOf:
+        - $ref: '#/components/schemas/Page'
+        - type: object
+          required: [items]
+          properties:
+            items:
+              type: array
+              items: { $ref: '#/components/schemas/StreamEntry' }
 
     # ── Inbox & search ──
     NotificationKind:

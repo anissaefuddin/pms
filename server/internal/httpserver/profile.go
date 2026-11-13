@@ -22,6 +22,9 @@ var profileChoices = map[string][]string{
 	"comment_shortcut": {"mod_enter", "enter"},
 }
 
+// sidebarKeys are the optional sidebar entries a user may hide (NAV-02); Search and Inbox are not listed because they always show.
+var sidebarKeys = []string{"created_by_me", "workload", "calendars", "dashboards", "my_todo", "request_forms", "timesheets", "reports", "stream", "starred"}
+
 func validProfileValue(field, value string) bool {
 	if strings.ContainsRune(value, 0) {
 		return false
@@ -67,6 +70,21 @@ func (s *Server) updateMe(w http.ResponseWriter, r *http.Request) {
 	values := []any{actor.ID}
 	assignments := make([]string, 0, len(fields))
 	for _, key := range fields {
+		if key == "sidebar_hidden" {
+			var hidden []string
+			if json.Unmarshal(input[key], &hidden) != nil || hidden == nil {
+				writeError(w, 422, "invalid profile field: "+key)
+				return
+			}
+			hidden = append([]string{}, slices.Compact(slices.Sorted(slices.Values(hidden)))...) // never nil: the column is NOT NULL
+			if slices.ContainsFunc(hidden, func(k string) bool { return !slices.Contains(sidebarKeys, k) }) {
+				writeError(w, 422, "invalid profile field: "+key)
+				return
+			}
+			values = append(values, hidden)
+			assignments = append(assignments, "sidebar_hidden=$"+strconv.Itoa(len(values))+"::text[]")
+			continue
+		}
 		var text *string
 		if json.Unmarshal(input[key], &text) != nil || text == nil {
 			writeError(w, 422, "invalid profile field: "+key)
