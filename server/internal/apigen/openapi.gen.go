@@ -2710,8 +2710,11 @@ type Attachment struct {
 	Filename    string             `json:"filename"`
 	Id          openapi_types.UUID `json:"id"`
 	ItemId      openapi_types.UUID `json:"item_id"`
-	SizeBytes   int64              `json:"size_bytes"`
-	Uploader    UserRef            `json:"uploader"`
+
+	// LinkUrl Terisi untuk lampiran tautan (tanpa berkas)
+	LinkUrl   *string `json:"link_url,omitempty"`
+	SizeBytes int64   `json:"size_bytes"`
+	Uploader  UserRef `json:"uploader"`
 
 	// Version Nomor versi terbaru; filename
 	Version *int `json:"version,omitempty"`
@@ -4717,6 +4720,15 @@ type ListActivityParams struct {
 	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
+// CreateAttachmentLinkJSONBody defines parameters for CreateAttachmentLink.
+type CreateAttachmentLinkJSONBody struct {
+	// Title Default host URL
+	Title *string `json:"title,omitempty"`
+
+	// Url http(s) tanpa kredensial
+	Url string `json:"url"`
+}
+
 // UploadAttachmentMultipartBody defines parameters for UploadAttachment.
 type UploadAttachmentMultipartBody struct {
 	File openapi_types.File `json:"file"`
@@ -5255,6 +5267,9 @@ type UpdateItemJSONRequestBody = ItemUpdate
 
 // CreateItemApprovalJSONRequestBody defines body for CreateItemApproval for application/json ContentType.
 type CreateItemApprovalJSONRequestBody = ApprovalInput
+
+// CreateAttachmentLinkJSONRequestBody defines body for CreateAttachmentLink for application/json ContentType.
+type CreateAttachmentLinkJSONRequestBody CreateAttachmentLinkJSONBody
 
 // UploadAttachmentMultipartRequestBody defines body for UploadAttachment for multipart/form-data ContentType.
 type UploadAttachmentMultipartRequestBody UploadAttachmentMultipartBody
@@ -5897,6 +5912,9 @@ type ServerInterface interface {
 	// CreateItemApproval Minta approval (butuh kemampuan edit; approver harus bisa melihat item)
 	// (POST /items/{itemId}/approvals)
 	CreateItemApproval(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// CreateAttachmentLink Lampiran berupa tautan http(s) (TASK-08B); memerlukan `attach`. Tidak ada berkas, jadi tidak ada unduhan atau versi baru (422)
+	// (POST /items/{itemId}/attachment-links)
+	CreateAttachmentLink(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
 
 	// (GET /items/{itemId}/attachments)
 	ListAttachments(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -8401,6 +8419,32 @@ func (siw *ServerInterfaceWrapper) CreateItemApproval(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateItemApproval(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAttachmentLink operation middleware
+func (siw *ServerInterfaceWrapper) CreateAttachmentLink(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAttachmentLink(w, r, itemId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12583,6 +12627,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/comments/{commentId}", wrapper.UpdateComment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.ListAttachments)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.UploadAttachment)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/attachment-links", wrapper.CreateAttachmentLink)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/download", wrapper.DownloadAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.ListAttachmentVersions)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.UploadAttachmentVersion)
@@ -17184,6 +17229,73 @@ func (response CreateItemApproval404ApplicationProblemPlusJSONResponse) VisitCre
 type CreateItemApproval422ApplicationProblemPlusJSONResponse Problem
 
 func (response CreateItemApproval422ApplicationProblemPlusJSONResponse) VisitCreateItemApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentLinkRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+	Body   *CreateAttachmentLinkJSONRequestBody
+}
+
+type CreateAttachmentLinkResponseObject interface {
+	VisitCreateAttachmentLinkResponse(w http.ResponseWriter) error
+}
+
+type CreateAttachmentLink201JSONResponse Attachment
+
+func (response CreateAttachmentLink201JSONResponse) VisitCreateAttachmentLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentLink403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateAttachmentLink403ApplicationProblemPlusJSONResponse) VisitCreateAttachmentLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentLink404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAttachmentLink404ApplicationProblemPlusJSONResponse) VisitCreateAttachmentLinkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAttachmentLink422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAttachmentLink422ApplicationProblemPlusJSONResponse) VisitCreateAttachmentLinkResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -24390,6 +24502,9 @@ type StrictServerInterface interface {
 	// CreateItemApproval Minta approval (butuh kemampuan edit; approver harus bisa melihat item)
 	// (POST /items/{itemId}/approvals)
 	CreateItemApproval(ctx context.Context, request CreateItemApprovalRequestObject) (CreateItemApprovalResponseObject, error)
+	// CreateAttachmentLink Lampiran berupa tautan http(s) (TASK-08B); memerlukan `attach`. Tidak ada berkas, jadi tidak ada unduhan atau versi baru (422)
+	// (POST /items/{itemId}/attachment-links)
+	CreateAttachmentLink(ctx context.Context, request CreateAttachmentLinkRequestObject) (CreateAttachmentLinkResponseObject, error)
 
 	// (GET /items/{itemId}/attachments)
 	ListAttachments(ctx context.Context, request ListAttachmentsRequestObject) (ListAttachmentsResponseObject, error)
@@ -26985,6 +27100,39 @@ func (sh *strictHandler) CreateItemApproval(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateItemApprovalResponseObject); ok {
 		if err := validResponse.VisitCreateItemApprovalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateAttachmentLink operation middleware
+func (sh *strictHandler) CreateAttachmentLink(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request CreateAttachmentLinkRequestObject
+
+	request.ItemId = itemId
+
+	var body CreateAttachmentLinkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateAttachmentLink(ctx, request.(CreateAttachmentLinkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateAttachmentLink")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateAttachmentLinkResponseObject); ok {
+		if err := validResponse.VisitCreateAttachmentLinkResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

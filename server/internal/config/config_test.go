@@ -68,3 +68,29 @@ func TestTwoFactorKeys(t *testing.T) {
 		}
 	}
 }
+
+func TestStorageBackendNeedsItsSettings(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	for _, c := range []struct {
+		backend, key string
+		ok           bool
+	}{{"", "", true}, {"local", "", true}, {"s3", "", false}, {"s3", "PMS_S3_URL", false}, {"pydio", "", false}, {"ftp", "", false}} {
+		t.Setenv("PMS_STORAGE", c.backend)
+		for _, k := range []string{"PMS_S3_URL", "PMS_S3_ACCESS_KEY", "PMS_S3_SECRET_KEY", "PMS_PYDIO_URL", "PMS_PYDIO_TOKEN"} {
+			t.Setenv(k, "")
+		}
+		if c.key != "" {
+			t.Setenv(c.key, "https://s3.example")
+		}
+		if _, err := Load(); (err == nil) != c.ok {
+			t.Fatalf("%+v: %v", c, err)
+		}
+	}
+	t.Setenv("PMS_STORAGE", "s3")
+	t.Setenv("PMS_S3_URL", "https://s3.example/pms")
+	t.Setenv("PMS_S3_ACCESS_KEY", "a")
+	t.Setenv("PMS_S3_SECRET_KEY", "b")
+	if cfg, err := Load(); err != nil || cfg.Storage != "s3" {
+		t.Fatalf("s3: %+v %v", cfg, err)
+	}
+}

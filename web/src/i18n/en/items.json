@@ -2,6 +2,8 @@
   "attachments": "Attachments",
   "versionLabel": "v{{version}}",
   "uploadVersion": "Upload new version",
+  "linkUrl": "Link address",
+  "addLink": "Add link",
   "versionHistory": "Version history",
   "currentVersion": "current",
   "chooseAttachment": "Choose file",

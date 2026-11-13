@@ -5,12 +5,15 @@ import (
 	"bufio"
 	"bytes"
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"io"
 	"mime"
 	"mime/multipart"
 	"net/http"
+	"net/url"
 	"path"
 	"strconv"
 	"strings"
@@ -25,7 +28,7 @@ import (
 )
 
 const attachmentJSON = `jsonb_build_object('id',a.id,'item_id',a.item_id,'filename',a.filename,
-'content_type',a.content_type,'size_bytes',a.size_bytes,'version',a.current_version,'created_at',a.created_at,
+'content_type',a.content_type,'size_bytes',a.size_bytes,'version',a.current_version,'link_url',a.link_url,'created_at',a.created_at,
 'uploader',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)))`
 
 var errBlockedArchive = errors.New("archive contains an executable or cannot be inspected")
@@ -33,6 +36,7 @@ var errBlockedArchive = errors.New("archive contains an executable or cannot be 
 func (s *Server) attachmentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/items/{itemId}/attachments", s.requireUser(s.listAttachments))
 	mux.HandleFunc("POST /api/v1/items/{itemId}/attachments", s.requireUser(s.uploadAttachment))
+	mux.HandleFunc("POST /api/v1/items/{itemId}/attachment-links", s.requireUser(s.createAttachmentLink))
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentId}/download", s.requireUser(s.attachmentResource))
 	mux.HandleFunc("DELETE /api/v1/attachments/{attachmentId}", s.requireUser(s.attachmentResource))
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentId}/versions", s.requireUser(s.listAttachmentVersions))
@@ -41,6 +45,12 @@ func (s *Server) attachmentRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) attachmentStore() storage.Storage {
+	switch s.cfg.Storage {
+	case "s3":
+		return storage.S3(s.cfg.S3URL, s.cfg.S3Region, s.cfg.S3AccessKey, s.cfg.S3SecretKey)
+	case "pydio":
+		return storage.Pydio(s.cfg.PydioURL, s.cfg.PydioToken)
+	}
 	dir := s.cfg.FilesDir
 	if dir == "" {
 		dir = "/data/files"
@@ -114,9 +124,12 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 		var aid uuid.UUID
 		if aid, err = uuid.Parse(raw); err == nil {
 			existing = &aid
-			err = s.pool.QueryRow(r.Context(), "SELECT item_id FROM attachments WHERE id=$1 AND deleted_at IS NULL", aid).Scan(&id)
+			var link *string
+			err = s.pool.QueryRow(r.Context(), "SELECT item_id,link_url FROM attachments WHERE id=$1 AND deleted_at IS NULL", aid).Scan(&id, &link)
 			if errors.Is(err, pgx.ErrNoRows) {
 				err = items.ErrNotFound
+			} else if err == nil && link != nil {
+				err = items.Invalid("a link attachment has no file versions")
 			}
 		}
 	}
@@ -202,6 +215,68 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	stored = true
+	s.publishItem(r, "item.updated", id.String(), id.String(), 0)
+	writeJSON(w, 201, out)
+}
+
+// createAttachmentLink records a URL as an attachment. Same Attach permission as an upload; only http(s) without credentials.
+func (s *Server) createAttachmentLink(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("itemId"))
+	if err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	var in struct{ URL, Title string }
+	if err = json.NewDecoder(http.MaxBytesReader(w, r.Body, 16<<10)).Decode(&in); err != nil {
+		writeItemError(w, items.Invalid("url is required"))
+		return
+	}
+	u, perr := url.Parse(strings.TrimSpace(in.URL))
+	title := strings.TrimSpace(in.Title)
+	if perr != nil || (u.Scheme != "http" && u.Scheme != "https") || u.Host == "" || u.User != nil || len(u.String()) > 2048 {
+		writeItemError(w, items.Invalid("url must be an http(s) address without credentials"))
+		return
+	}
+	if title == "" {
+		title = u.Host
+	}
+	if len(title) > 255 || strings.ContainsFunc(title, unicode.IsControl) {
+		writeItemError(w, items.Invalid("title is invalid"))
+		return
+	}
+	ctx := r.Context()
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	defer tx.Rollback(ctx)
+	if _, err = attachmentAccess(r, tx, id, policy.Attach); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	aid, err := uuid.NewV7()
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	sum := sha256.Sum256([]byte(u.String()))
+	f := stagedFile{Filename: title, Media: "text/uri-list", File: storage.File{Key: "link:" + aid.String(), Size: int64(len(u.String())), SHA256: hex.EncodeToString(sum[:])}}
+	_, err = tx.Exec(ctx, `WITH a AS (INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256,link_url)
+VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'),$9))
+INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
+VALUES($1,1,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, aid, id, actorOf(r).ID, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256, u.String())
+	var out json.RawMessage
+	if err == nil {
+		err = tx.QueryRow(ctx, "SELECT "+attachmentJSON+" FROM attachments a JOIN users u ON u.id=a.uploader_id WHERE a.id=$1", aid).Scan(&out)
+	}
+	if err == nil {
+		err = tx.Commit(ctx)
+	}
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
 	s.publishItem(r, "item.updated", id.String(), id.String(), 0)
 	writeJSON(w, 201, out)
 }
@@ -403,6 +478,7 @@ func (s *Server) attachmentResource(w http.ResponseWriter, r *http.Request) {
 	defer tx.Rollback(ctx)
 	var item uuid.UUID
 	var uploader, key, filename string
+	var link *string
 	var size int64
 	version := r.PathValue("version") // empty = current
 	n := 0
@@ -412,9 +488,9 @@ func (s *Server) attachmentResource(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	err = tx.QueryRow(ctx, `SELECT a.item_id,a.uploader_id::text,coalesce(v.storage_key,a.storage_key),coalesce(v.filename,a.filename),coalesce(v.size_bytes,a.size_bytes)
+	err = tx.QueryRow(ctx, `SELECT a.item_id,a.uploader_id::text,coalesce(v.storage_key,a.storage_key),coalesce(v.filename,a.filename),coalesce(v.size_bytes,a.size_bytes),a.link_url
 FROM attachments a LEFT JOIN attachment_versions v ON v.attachment_id=a.id AND v.version=$2
-WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id, n).Scan(&item, &uploader, &key, &filename, &size)
+WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id, n).Scan(&item, &uploader, &key, &filename, &size, &link)
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = items.ErrNotFound
 	}
@@ -442,6 +518,10 @@ WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id,
 		}
 		s.publishItem(r, "item.updated", item.String(), item.String(), 0)
 		w.WriteHeader(204)
+		return
+	}
+	if link != nil {
+		writeItemError(w, items.Invalid("a link attachment has no file to download; open "+*link))
 		return
 	}
 	file, err := s.attachmentStore().Open(key)
