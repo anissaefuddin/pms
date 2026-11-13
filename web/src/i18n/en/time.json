@@ -37,5 +37,19 @@
   "byUser": "By user",
   "budgetSetting": "Use as a project budget",
   "actual": "Actual hours: {{duration}}",
-  "actualVisible": "Actual hours (visible entries): {{duration}}"
+  "actualVisible": "Actual hours (visible entries): {{duration}}",
+  "actualCost": "Actual cost: {{cost}}",
+  "budgetUsed": "{{percent}}% of budget used",
+  "rates": {
+    "title": "Hourly rates",
+    "hint": "A new rate applies from its start date. Time already logged keeps the rate it was logged with.",
+    "subject": "Person or job role",
+    "user": "Person",
+    "role": "Job role",
+    "rate": "Rate per hour",
+    "from": "Effective from",
+    "add": "Add rate",
+    "empty": "No rates yet.",
+    "name": "Name"
+  }
 }

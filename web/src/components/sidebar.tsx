@@ -72,6 +72,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
           <MoreHorizontal />{!collapsed && t("nav.more.label")}
         </DropdownMenuTrigger>
         <DropdownMenuContent>
+          {!hidden.includes("workload") && <DropdownMenuItem onClick={() => go("/workload")}>{t("nav.workload")}</DropdownMenuItem>}
           {!hidden.includes("timesheets") && <DropdownMenuItem onClick={() => go("/timesheets")}>{t("time.timesheet")}</DropdownMenuItem>}
           {!hidden.includes("starred") && <DropdownMenuItem onClick={() => go("/starred")}>{t("starred.nav")}</DropdownMenuItem>}
           {!hidden.includes("dashboards") && <DropdownMenuItem onClick={() => go("/dashboards")}>{t("dashboards.nav.label")}</DropdownMenuItem>}

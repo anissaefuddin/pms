@@ -138,3 +138,46 @@ func TestBrowserM4Flows(t *testing.T) {
 		"PMS_M4_PROJECT="+project, "PMS_M4_TASK="+task,
 		"PMS_M4_ADMIN_COOKIE="+admin.cookie.String(), "PMS_M4_MEMBER_COOKIE="+member.cookie.String())
 }
+
+func TestRatesSnapshotKeepHistoryAndCostIsAdminOnly(t *testing.T) {
+	f := newFixture(t)
+	admin, member := f.person("admin"), f.person("regular")
+	space := f.space("Cost")
+	f.share(space, "user", member.id, "editor")
+	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", admin.id)
+	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", project, space)
+	task := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id::text", admin.id)
+	f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'A')", task, space, project)
+	role := f.queryID("INSERT INTO resource_roles(name) VALUES ('Dev') RETURNING id::text")
+	f.exec("INSERT INTO resource_user_roles(user_id,role_id) VALUES ($1,$2)", member.id, role)
+
+	f.want(f.call(member, "POST", "/rates", map[string]any{"user_id": member.id, "rate_minor": 5000, "effective_from": "2026-01-01"}), 403, "members cannot set rates")
+	f.want(f.call(member, "GET", "/rates", nil), 403, "members cannot read rates")
+	f.want(f.call(admin, "POST", "/rates", map[string]any{"rate_minor": 5000, "effective_from": "2026-01-01"}), 422, "needs a subject")
+	f.want(f.call(admin, "POST", "/rates", map[string]any{"user_id": member.id, "role_id": role, "rate_minor": 1, "effective_from": "2026-01-01"}), 422, "not both")
+	f.want(f.call(admin, "POST", "/rates", map[string]any{"user_id": member.id, "rate_minor": -1, "effective_from": "2026-01-01"}), 422, "negative")
+	f.want(f.call(admin, "POST", "/rates", map[string]any{"role_id": role, "rate_minor": 4000, "effective_from": "2026-01-01"}), 201, "role rate")
+	f.want(f.call(admin, "POST", "/rates", map[string]any{"user_id": member.id, "rate_minor": 6000, "effective_from": "2026-03-01"}), 201, "user rate")
+	f.want(f.call(admin, "POST", "/rates", map[string]any{"user_id": member.id, "rate_minor": 7000, "effective_from": "2026-03-01"}), 422, "duplicate date")
+
+	entry := func(date string, minutes int, billing string) {
+		f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type) VALUES ($1,$2,$3,$4,$5)", task, member.id, date, minutes, billing)
+	}
+	entry("2026-02-10", 60, "billable")      // before the personal rate: the role rate applies
+	entry("2026-03-10", 90, "billable")      // personal rate
+	entry("2026-03-11", 600, "non_billable") // never billed
+	// A later change must not touch what was already logged.
+	f.want(f.call(admin, "POST", "/rates", map[string]any{"user_id": member.id, "rate_minor": 9000, "effective_from": "2026-03-05"}), 201, "new version")
+	entry("2026-03-12", 60, "billable")
+	// 1h*4000 + 1.5h*6000 + 1h*9000 = 22000
+	sum := f.call(admin, "GET", "/items/"+project+"/time-summary", nil)
+	f.want(sum, 200, "summary")
+	if sum.body["actual_cost_minor"] != float64(22000) || sum.body["actual_minutes"] != float64(810) {
+		t.Fatalf("cost: %v", sum.body)
+	}
+	hidden := f.call(member, "GET", "/items/"+project+"/time-summary", nil)
+	f.want(hidden, 200, "member summary")
+	if _, leaked := hidden.body["actual_cost_minor"]; leaked {
+		t.Fatalf("a member must not see cost: %v", hidden.body)
+	}
+}

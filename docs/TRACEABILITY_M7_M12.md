@@ -56,11 +56,11 @@
 
 | Req | Story | Kriteria penerimaan ringkas | Tes | Bukti |
 |---|---|---|---|---|
-| RSC-01 | S10.1.1 | Kapasitas mengikuti jadwal pribadi, cuti, libur | Integrasi | |
-| RSC-02 | S10.1.2, S10.1.3 | Beban benar untuk multi-assignee dan multi-lokasi; over-allocation tampil | E2E-PAR-07 + perf | |
-| RSC-03 | S10.1.4 | Realokasi memperbarui beban, audit, SSE | Integrasi | |
-| RSC-04 | S10.2.1 | Workload dapat difilter per role/skill | Integrasi | |
-| RSC-05 | S10.2.2 | Booking masuk workload; konflik terlihat | Integrasi | |
+| RSC-01 | S10.1.1 | Kapasitas mengikuti jadwal pribadi, cuti, libur | Integrasi | [TESTING](TESTING.md#m10--kapasitas-workload-dan-booking) |
+| RSC-02 | S10.1.2, S10.1.3 | Beban benar untuk multi-assignee dan multi-lokasi; over-allocation tampil | E2E-PAR-07 + perf | [TESTING](TESTING.md#m10--kapasitas-workload-dan-booking) |
+| RSC-03 | S10.1.4 | Realokasi memperbarui beban, audit, SSE | Integrasi | [TESTING](TESTING.md#m10--kapasitas-workload-dan-booking) |
+| RSC-04 | S10.2.1 | Workload dapat difilter per role/skill | Integrasi | [TESTING](TESTING.md#m10--kapasitas-workload-dan-booking) |
+| RSC-05 | S10.2.2 | Booking masuk workload; konflik terlihat | Integrasi | [TESTING](TESTING.md#m10--kapasitas-workload-dan-booking) |
 | RSC-06 | S10.2.3 | Utilization cocok dengan data mentah | Tes kecocokan angka | |
 | VIEW-05C | S10.3.1 | Baseline tidak berubah saat jadwal berubah; variance benar | E2E-PAR-08 | |
 | SPC-16 | S10.3.2 | Snapshot publik read-only; nama assignee mengikuti opsi | Tes akses token | |

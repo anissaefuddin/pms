@@ -637,3 +637,35 @@ PostgreSQL 16 sementara dan Chrome terpasang (`PLAYWRIGHT_CHANNEL=chrome`).
 - PASS (regresi). `go vet`, `gofmt`, `go test ./...` hijau; `tsc -b`, eslint, `npm test` bersih; Chrome 345 lulus, 25 dilewati. Tiga tes mock (approvals, navigation, m8) kehabisan waktu hanya saat suite penuh dan lulus saat diulang.
 - Belum: pin ke versi file (S11.1.5); notifikasi aturan lewat SSE; aksi/kondisi di luar daftar tertutup.
 
+
+### Retest gate G1b
+
+- **PASS** 18 tes Go terarah pada PostgreSQL terisolasi, termasuk E2E-PAR-04 dan E2E-PAR-06 melalui Chrome. Kerangka SMTP lokal menerima email pengingat dan eskalasi melalui worker notifikasi, serta mengonfirmasi keduanya berhenti saat grup `task_changes` dimatikan.
+- **PASS** `TestAutomationAlertMetrics` memeriksa endpoint `/metrics` produksi pada fixture 201 event pending dan satu event dead. Setelah fixture dibersihkan, kedua gauge kembali ke nol. Evaluasi interval dan pengiriman alert Grafana pilot **NOT RUN**.
+- **NOT RUN** UAT pengguna, CI remote M9, dan SMTP pilot. Skenario penerimaan ada di [G1b](parity/gate-reports/G1B_AUTOMATION_APPROVALS.md).
+
+## M10 — Kapasitas, workload, dan booking
+
+| Story | Verifikasi lokal |
+|---|---|
+| S10.1.1 | PASS. Jadwal pribadi atau default workspace, cuti dan libur. API dapat ditulis pengguna sendiri atau admin. Fixture 4 jam × 3 hari aktif menghasilkan 720 menit. |
+| S10.1.2 | PASS. 601 menit dibagi di antara dua assignee tanpa menggandakan dua lokasi. Endpoint HTTP pada fixture 50 resource, 2.000 task, dua assignee per task dan 4.000 penempatan selama 14 hari menghasilkan p95 182,4 ms setelah dua warmup dan 20 sampel. Ambang uji lokal 1.500 ms. |
+| S10.1.3 | PASS. E2E-PAR-07 melalui Chrome dan PostgreSQL membuka Workload dari More, memeriksa cuti, backlog, realokasi dan label Over capacity. Axe lulus setelah warna teks indikator diperbaiki. |
+| S10.1.4 | PASS untuk PATCH dengan If-Match, pemindahan effort dan satu entri audit. Workload invalidates cache pada event item melalui hook SSE existing. Pengukuran propagasi ke perangkat kedua tidak dijalankan. |
+| S10.2.1 | PASS. Admin membuat role/skill, menetapkan ke pengguna, memfilter workload. Pengguna biasa ditolak untuk penulisan. Role yang masih dipakai booking tidak dapat dihapus. |
+| S10.2.2 | PASS. Booking orang dan role, akumulasi per hari kerja, konflik atas sisa kapasitas, pembatasan penulisan admin dan hapus booking. Tes UI booking tersendiri dan CI remote belum dijalankan. |
+
+Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap assignee dalam periode task. Task tanpa assignee tetap masuk backlog termasuk bila belum terjadwal. Baris booking role mengukur permintaan terhadap sisa kapasitas anggota role yang tampil. Kapasitas antar-role dapat bertumpang tindih untuk orang yang memegang beberapa role. Booking menampilkan konflik tanpa menolak penyimpanan. Pengguna internal non-admin melihat kapasitas dan booking sendiri serta task yang policy izinkan. Gate M10 dan G0 tetap mengikuti status masing-masing.
+
+## M10 / S10.2.3, S10.3.1 utilization dan baseline (13 Nov 2026)
+
+- PASS (S10.2.3). `TestUtilizationPlannedVersusActualMatchesRawData`: kapasitas 2400 menit, terencana 300 (effort task), aktual 180 (dua entri dalam rentang; entri di luar rentang tidak dihitung), persen 12,5 dan 7,5; pengguna biasa hanya melihat dirinya; rentang terbalik 422. Panel di halaman Workload.
+- PASS (S10.3.1). `TestBaselinesFreezeDatesAndCannotBeChanged`: 403 untuk read, 404 project tersembunyi, nama kosong 422, selisih +2/+7 hari setelah tanggal digeser, UPDATE, DELETE dan TRUNCATE ditolak trigger, batas 10 baseline. E2E-PAR-08 live (`TestBrowserM10Flows` + `m10-live.spec.ts`): baseline disimpan dari UI, rencana digeser, kolom Baseline dates tetap 2026-11-02 – 2026-11-04 dan Variance +7 d; axe Gantt bersih.
+- Perbaikan sampingan: Gantt di dalam project tidak menampilkan baris karena induk tingkat atas menunjuk project yang bukan baris; kini induknya 0.
+- Belum: bar baseline (edisi gratis SVAR tidak menyertakannya), widget dan template report untuk utilization planned vs actual.
+
+## M10 / S10.4.1, S10.4.2 tarif dan biaya (14 Nov 2026)
+
+- PASS (S10.4.1, S10.4.2). `TestRatesSnapshotKeepHistoryAndCostIsAdminOnly`: anggota biasa 403 untuk tarif; subjek ganda, kosong, negatif dan tanggal berulang 422; entry sebelum tarif pribadi memakai tarif role, entry setelahnya tarif pribadi; tarif baru yang berlaku mundur tidak mengubah entry lama (snapshot oleh trigger basis data); actual cost 22000 = 1 jam x 4000 + 1,5 jam x 6000 + 1 jam x 9000, entry non-billable tidak dihitung; `actual_cost_minor` tidak dikirim ke anggota. `web/tests/rates.spec.ts`: halaman tarif admin (tambah tarif, axe bersih).
+- Belum: kolom cost di report (metrik analytics harus dibatasi admin dulu), tes UI untuk baris actual cost di panel budget, satu mata uang untuk seluruh tarif (cost ditampilkan dengan mata uang field budget).
+

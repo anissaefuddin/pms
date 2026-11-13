@@ -1719,6 +1719,24 @@ func (e ReportUpdateSharing) Valid() bool {
 	}
 }
 
+// Defines values for ResourceDirectoryInputKind.
+const (
+	Role  ResourceDirectoryInputKind = "role"
+	Skill ResourceDirectoryInputKind = "skill"
+)
+
+// Valid indicates whether the value is a known member of the ResourceDirectoryInputKind enum.
+func (e ResourceDirectoryInputKind) Valid() bool {
+	switch e {
+	case Role:
+		return true
+	case Skill:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RichTextType.
 const (
 	Doc RichTextType = "doc"
@@ -2750,6 +2768,29 @@ type AutomationVersion struct {
 // AutomationVersionStatus defines model for AutomationVersion.Status.
 type AutomationVersionStatus string
 
+// Baseline defines model for Baseline.
+type Baseline struct {
+	CreatedAt time.Time `json:"created_at"`
+
+	// CreatedBy Nama pembuat
+	CreatedBy *string            `json:"created_by"`
+	Id        openapi_types.UUID `json:"id"`
+	ItemCount int32              `json:"item_count"`
+	Name      string             `json:"name"`
+	ProjectId openapi_types.UUID `json:"project_id"`
+}
+
+// BaselineVariance defines model for BaselineVariance.
+type BaselineVariance struct {
+	BaselineDue       *openapi_types.Date `json:"baseline_due"`
+	BaselineStart     *openapi_types.Date `json:"baseline_start"`
+	Due               *openapi_types.Date `json:"due"`
+	DueVarianceDays   *int32              `json:"due_variance_days"`
+	ItemId            openapi_types.UUID  `json:"item_id"`
+	Start             *openapi_types.Date `json:"start"`
+	StartVarianceDays *int32              `json:"start_variance_days"`
+}
+
 // Blueprint defines model for Blueprint.
 type Blueprint struct {
 	CreatedAt time.Time          `json:"created_at"`
@@ -3191,6 +3232,16 @@ type Group struct {
 	Id        openapi_types.UUID   `json:"id"`
 	MemberIds []openapi_types.UUID `json:"member_ids"`
 	Name      string               `json:"name"`
+}
+
+// HourlyRate defines model for HourlyRate.
+type HourlyRate struct {
+	EffectiveFrom openapi_types.Date  `json:"effective_from"`
+	Id            openapi_types.UUID  `json:"id"`
+	Name          string              `json:"name"`
+	RateMinor     int64               `json:"rate_minor"`
+	RoleId        *openapi_types.UUID `json:"role_id"`
+	UserId        *openapi_types.UUID `json:"user_id"`
 }
 
 // InvitationInfo defines model for InvitationInfo.
@@ -3861,6 +3912,73 @@ type ReportUpdate struct {
 // ReportUpdateSharing defines model for ReportUpdate.Sharing.
 type ReportUpdateSharing string
 
+// ResourceBooking defines model for ResourceBooking.
+type ResourceBooking struct {
+	EndDate       *openapi_types.Date `json:"end_date,omitempty"`
+	Id            *openapi_types.UUID `json:"id,omitempty"`
+	MinutesPerDay *int                `json:"minutes_per_day,omitempty"`
+	ProjectId     *openapi_types.UUID `json:"project_id,omitempty"`
+	RoleId        *openapi_types.UUID `json:"role_id,omitempty"`
+	StartDate     *openapi_types.Date `json:"start_date,omitempty"`
+	UserId        *openapi_types.UUID `json:"user_id,omitempty"`
+}
+
+// ResourceBookingInput defines model for ResourceBookingInput.
+type ResourceBookingInput struct {
+	EndDate       *openapi_types.Date `json:"end_date,omitempty"`
+	MinutesPerDay *int                `json:"minutes_per_day,omitempty"`
+	ProjectId     *openapi_types.UUID `json:"project_id,omitempty"`
+	RoleId        *openapi_types.UUID `json:"role_id,omitempty"`
+	StartDate     *openapi_types.Date `json:"start_date,omitempty"`
+	UserId        *openapi_types.UUID `json:"user_id,omitempty"`
+}
+
+// ResourceDirectory defines model for ResourceDirectory.
+type ResourceDirectory struct {
+	Roles  *[]ResourceReference `json:"roles,omitempty"`
+	Skills *[]ResourceReference `json:"skills,omitempty"`
+	Users  *[]struct {
+		Id     *openapi_types.UUID   `json:"id,omitempty"`
+		Name   *string               `json:"name,omitempty"`
+		Roles  *[]openapi_types.UUID `json:"roles,omitempty"`
+		Skills *[]openapi_types.UUID `json:"skills,omitempty"`
+	} `json:"users,omitempty"`
+}
+
+// ResourceDirectoryInput defines model for ResourceDirectoryInput.
+type ResourceDirectoryInput struct {
+	Assigned *bool                       `json:"assigned,omitempty"`
+	Id       *openapi_types.UUID         `json:"id,omitempty"`
+	Kind     *ResourceDirectoryInputKind `json:"kind,omitempty"`
+	Name     *string                     `json:"name,omitempty"`
+	UserId   *openapi_types.UUID         `json:"user_id,omitempty"`
+}
+
+// ResourceDirectoryInputKind defines model for ResourceDirectoryInput.Kind.
+type ResourceDirectoryInputKind string
+
+// ResourcePerson defines model for ResourcePerson.
+type ResourcePerson struct {
+	Booked   *[]int              `json:"booked,omitempty"`
+	Capacity *[]int              `json:"capacity,omitempty"`
+	Id       *openapi_types.UUID `json:"id,omitempty"`
+	Name     *string             `json:"name,omitempty"`
+	Planned  *[]int              `json:"planned,omitempty"`
+}
+
+// ResourceReference defines model for ResourceReference.
+type ResourceReference struct {
+	Id   *openapi_types.UUID `json:"id,omitempty"`
+	Name *string             `json:"name,omitempty"`
+}
+
+// ResourceSchedule defines model for ResourceSchedule.
+type ResourceSchedule struct {
+	DailyHours  *int                  `json:"daily_hours,omitempty"`
+	LeaveDates  *[]openapi_types.Date `json:"leave_dates,omitempty"`
+	WorkingDays *[]int                `json:"working_days,omitempty"`
+}
+
 // RichText Dokumen ProseMirror JSON (TipTap). Server memvalidasi node dan mark yang diizinkan.
 type RichText struct {
 	Content              *[]map[string]interface{} `json:"content,omitempty"`
@@ -4176,6 +4294,17 @@ type UserStatus string
 // UserType defines model for UserType.
 type UserType string
 
+// UtilizationRow defines model for UtilizationRow.
+type UtilizationRow struct {
+	Actual         int32              `json:"actual"`
+	ActualPercent  float32            `json:"actual_percent"`
+	Capacity       int32              `json:"capacity"`
+	Id             openapi_types.UUID `json:"id"`
+	Name           string             `json:"name"`
+	Planned        int32              `json:"planned"`
+	PlannedPercent float32            `json:"planned_percent"`
+}
+
 // View defines model for View.
 type View struct {
 	// Config Kolom, urutan kolom, grouping, dan preset bawaan view
@@ -4273,6 +4402,25 @@ type Workflow struct {
 // WorkflowInput defines model for WorkflowInput.
 type WorkflowInput struct {
 	Name string `json:"name"`
+}
+
+// Workload defines model for Workload.
+type Workload struct {
+	Bookings   *[]ResourceBooking `json:"bookings,omitempty"`
+	People     *[]ResourcePerson  `json:"people,omitempty"`
+	RoleDemand *[]ResourcePerson  `json:"role_demand,omitempty"`
+	Tasks      *[]WorkloadTask    `json:"tasks,omitempty"`
+}
+
+// WorkloadTask defines model for WorkloadTask.
+type WorkloadTask struct {
+	AssigneeIds   *[]openapi_types.UUID `json:"assignee_ids,omitempty"`
+	AssigneeNames *[]string             `json:"assignee_names,omitempty"`
+	Editable      *bool                 `json:"editable,omitempty"`
+	Effort        *int                  `json:"effort,omitempty"`
+	Id            *openapi_types.UUID   `json:"id,omitempty"`
+	Title         *string               `json:"title,omitempty"`
+	Version       *int                  `json:"version,omitempty"`
 }
 
 // Cursor defines model for Cursor.
@@ -4611,6 +4759,11 @@ type ListProjectTimeEntriesParamsSort string
 // GetProjectTimeSummary200JSONResponseBodyScope defines parameters for GetProjectTimeSummary.
 type GetProjectTimeSummary200JSONResponseBodyScope string
 
+// CreateBaselineJSONBody defines parameters for CreateBaseline.
+type CreateBaselineJSONBody struct {
+	Name string `json:"name"`
+}
+
 // StartProjectExcelExportJSONBody defines parameters for StartProjectExcelExport.
 type StartProjectExcelExportJSONBody struct {
 	SpaceId openapi_types.UUID `json:"space_id"`
@@ -4673,6 +4826,14 @@ type SubmitPublicFormJSONBody struct {
 // SubmitPublicFormMultipartBody defines parameters for SubmitPublicForm.
 type SubmitPublicFormMultipartBody map[string]openapi_types.File
 
+// CreateRateJSONBody defines parameters for CreateRate.
+type CreateRateJSONBody struct {
+	EffectiveFrom openapi_types.Date  `json:"effective_from"`
+	RateMinor     int64               `json:"rate_minor"`
+	RoleId        *openapi_types.UUID `json:"role_id,omitempty"`
+	UserId        *openapi_types.UUID `json:"user_id,omitempty"`
+}
+
 // ListRecycleBinParams defines parameters for ListRecycleBin.
 type ListRecycleBinParams struct {
 	Limit  *Limit                    `form:"limit,omitempty" json:"limit,omitempty"`
@@ -4709,6 +4870,12 @@ type UpdateReportParams struct {
 
 // GetReportResult200JSONResponseBodyLayout defines parameters for GetReportResult.
 type GetReportResult200JSONResponseBodyLayout string
+
+// DeleteResourceEntryParams defines parameters for DeleteResourceEntry.
+type DeleteResourceEntryParams struct {
+	Kind string             `form:"kind" json:"kind"`
+	Id   openapi_types.UUID `form:"id" json:"id"`
+}
 
 // SearchParams defines parameters for Search.
 type SearchParams struct {
@@ -4894,6 +5061,14 @@ type UpdateUserJSONBody struct {
 	UserType *UserType `json:"user_type,omitempty"`
 }
 
+// GetUtilizationParams defines parameters for GetUtilization.
+type GetUtilizationParams struct {
+	From  openapi_types.Date `form:"from" json:"from"`
+	To    openapi_types.Date `form:"to" json:"to"`
+	Role  *string            `form:"role,omitempty" json:"role,omitempty"`
+	Skill *string            `form:"skill,omitempty" json:"skill,omitempty"`
+}
+
 // DuplicateViewJSONBody defines parameters for DuplicateView.
 type DuplicateViewJSONBody struct {
 	Name       string         `json:"name"`
@@ -4908,6 +5083,14 @@ type RenameWorkflowJSONBody struct {
 // ReorderStatusesJSONBody defines parameters for ReorderStatuses.
 type ReorderStatusesJSONBody struct {
 	StatusIds []openapi_types.UUID `json:"status_ids"`
+}
+
+// GetWorkloadParams defines parameters for GetWorkload.
+type GetWorkloadParams struct {
+	From  openapi_types.Date `form:"from" json:"from"`
+	To    openapi_types.Date `form:"to" json:"to"`
+	Role  *string            `form:"role,omitempty" json:"role,omitempty"`
+	Skill *string            `form:"skill,omitempty" json:"skill,omitempty"`
 }
 
 // RenameAccountJSONRequestBody defines body for RenameAccount for application/json ContentType.
@@ -5030,6 +5213,9 @@ type ReorderItemJSONRequestBody ReorderItemJSONBody
 // ReplaceItemSharesJSONRequestBody defines body for ReplaceItemShares for application/json ContentType.
 type ReplaceItemSharesJSONRequestBody = ShareReplace
 
+// CreateBaselineJSONRequestBody defines body for CreateBaseline for application/json ContentType.
+type CreateBaselineJSONRequestBody CreateBaselineJSONBody
+
 // StartProjectExcelExportJSONRequestBody defines body for StartProjectExcelExport for application/json ContentType.
 type StartProjectExcelExportJSONRequestBody StartProjectExcelExportJSONBody
 
@@ -5054,6 +5240,9 @@ type SubmitPublicFormJSONRequestBody SubmitPublicFormJSONBody
 // SubmitPublicFormMultipartRequestBody defines body for SubmitPublicForm for multipart/form-data ContentType.
 type SubmitPublicFormMultipartRequestBody SubmitPublicFormMultipartBody
 
+// CreateRateJSONRequestBody defines body for CreateRate for application/json ContentType.
+type CreateRateJSONRequestBody CreateRateJSONBody
+
 // CreateReportJSONRequestBody defines body for CreateReport for application/json ContentType.
 type CreateReportJSONRequestBody = ReportCreate
 
@@ -5062,6 +5251,15 @@ type UpdateReportJSONRequestBody = ReportUpdate
 
 // SubscribeReportJSONRequestBody defines body for SubscribeReport for application/json ContentType.
 type SubscribeReportJSONRequestBody = ReportSubscription
+
+// CreateResourceBookingJSONRequestBody defines body for CreateResourceBooking for application/json ContentType.
+type CreateResourceBookingJSONRequestBody = ResourceBookingInput
+
+// CreateResourceEntryJSONRequestBody defines body for CreateResourceEntry for application/json ContentType.
+type CreateResourceEntryJSONRequestBody = ResourceDirectoryInput
+
+// UpdateResourceEntryJSONRequestBody defines body for UpdateResourceEntry for application/json ContentType.
+type UpdateResourceEntryJSONRequestBody = ResourceDirectoryInput
 
 // ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
 type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
@@ -5113,6 +5311,9 @@ type InviteUserJSONRequestBody = InviteRequest
 
 // UpdateUserJSONRequestBody defines body for UpdateUser for application/json ContentType.
 type UpdateUserJSONRequestBody UpdateUserJSONBody
+
+// SaveResourceCapacityJSONRequestBody defines body for SaveResourceCapacity for application/json ContentType.
+type SaveResourceCapacityJSONRequestBody = ResourceSchedule
 
 // CreateViewJSONRequestBody defines body for CreateView for application/json ContentType.
 type CreateViewJSONRequestBody = ViewCreate
@@ -5470,6 +5671,9 @@ type ServerInterface interface {
 	// ReplayAutomationEvent Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi
 	// (POST /automation/events/{eventId}/replay)
 	ReplayAutomationEvent(w http.ResponseWriter, r *http.Request, eventId openapi_types.UUID)
+	// GetBaselineVariance Selisih tanggal item terhadap baseline, dalam hari (positif = lebih lambat dari rencana)
+	// (GET /baselines/{baselineId}/variance)
+	GetBaselineVariance(w http.ResponseWriter, r *http.Request, baselineId openapi_types.UUID)
 	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
@@ -5665,6 +5869,12 @@ type ServerInterface interface {
 
 	// (GET /items/{itemId}/views)
 	ListItemViews(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// ListBaselines Baseline Gantt sebuah project, terbaru dulu (VIEW-05C)
+	// (GET /items/{projectId}/baselines)
+	ListBaselines(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
+	// CreateBaseline Bekukan tanggal item project yang terlihat; baseline tidak dapat diubah atau dihapus (maks 10 per project)
+	// (POST /items/{projectId}/baselines)
+	CreateBaseline(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
@@ -5719,6 +5929,12 @@ type ServerInterface interface {
 	// SubmitPublicForm Isi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (POST /public/forms/{token}/submissions)
 	SubmitPublicForm(w http.ResponseWriter, r *http.Request, token string)
+	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
+	// (GET /rates)
+	ListRates(w http.ResponseWriter, r *http.Request)
+	// CreateRate Tarif baru berlaku mulai tanggal tertentu; entry lama tidak berubah karena rate snapshot (admin)
+	// (POST /rates)
+	CreateRate(w http.ResponseWriter, r *http.Request)
 	// Readyz Database terjangkau dan migrasi terpasang
 	// (GET /readyz)
 	Readyz(w http.ResponseWriter, r *http.Request)
@@ -5761,6 +5977,24 @@ type ServerInterface interface {
 	// SubscribeReport Berlangganan atas nama pemanggil (pengiriman lewat RPT-04)
 	// (PUT /reports/{reportId}/subscription)
 	SubscribeReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
+
+	// (POST /resource-bookings)
+	CreateResourceBooking(w http.ResponseWriter, r *http.Request)
+
+	// (DELETE /resource-bookings/{bookingId})
+	DeleteResourceBooking(w http.ResponseWriter, r *http.Request, bookingId openapi_types.UUID)
+
+	// (DELETE /resource-directory)
+	DeleteResourceEntry(w http.ResponseWriter, r *http.Request, params DeleteResourceEntryParams)
+
+	// (GET /resource-directory)
+	GetResourceDirectory(w http.ResponseWriter, r *http.Request)
+
+	// (POST /resource-directory)
+	CreateResourceEntry(w http.ResponseWriter, r *http.Request)
+
+	// (PUT /resource-directory)
+	UpdateResourceEntry(w http.ResponseWriter, r *http.Request)
 	// Search Pencarian global (NAV-06)
 	// (GET /search)
 	Search(w http.ResponseWriter, r *http.Request, params SearchParams)
@@ -5887,6 +6121,12 @@ type ServerInterface interface {
 	// ResetUserTwoFactor Admin menghapus 2FA user (pemulihan); user dikeluarkan dari semua session dan kejadiannya dicatat
 	// (POST /users/{userId}/2fa/reset)
 	ResetUserTwoFactor(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
+
+	// (GET /users/{userId}/capacity)
+	GetResourceCapacity(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
+
+	// (PUT /users/{userId}/capacity)
+	SaveResourceCapacity(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID)
 	// DeactivateUser Nonaktifkan user dan bebaskan seat (USR-03)
 	// (POST /users/{userId}/deactivate)
 	DeactivateUser(w http.ResponseWriter, r *http.Request, userId UserId)
@@ -5896,6 +6136,9 @@ type ServerInterface interface {
 	// ReactivateUser Aktifkan kembali user (USR-03)
 	// (POST /users/{userId}/reactivate)
 	ReactivateUser(w http.ResponseWriter, r *http.Request, userId UserId)
+	// GetUtilization Utilization planned vs actual per orang (RSC-06); menit terencana = effort task + booking, aktual = time entry
+	// (GET /utilization)
+	GetUtilization(w http.ResponseWriter, r *http.Request, params GetUtilizationParams)
 	// CreateView Tambah view (VIEW-08)
 	// (POST /views)
 	CreateView(w http.ResponseWriter, r *http.Request)
@@ -5926,6 +6169,9 @@ type ServerInterface interface {
 	// CreateStatus Tambah status di akhir workflow (admin saja, WF-03A)
 	// (POST /workflows/{workflowId}/statuses)
 	CreateStatus(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
+
+	// (GET /workload)
+	GetWorkload(w http.ResponseWriter, r *http.Request, params GetWorkloadParams)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -6490,6 +6736,32 @@ func (siw *ServerInterfaceWrapper) ReplayAutomationEvent(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReplayAutomationEvent(w, r, eventId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetBaselineVariance operation middleware
+func (siw *ServerInterfaceWrapper) GetBaselineVariance(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "baselineId" -------------
+	var baselineId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "baselineId", r.PathValue("baselineId"), &baselineId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "baselineId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBaselineVariance(w, r, baselineId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8670,6 +8942,58 @@ func (siw *ServerInterfaceWrapper) ListItemViews(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListBaselines operation middleware
+func (siw *ServerInterfaceWrapper) ListBaselines(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "projectId" -------------
+	var projectId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "projectId", r.PathValue("projectId"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "projectId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListBaselines(w, r, projectId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateBaseline operation middleware
+func (siw *ServerInterfaceWrapper) CreateBaseline(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "projectId" -------------
+	var projectId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "projectId", r.PathValue("projectId"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "projectId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateBaseline(w, r, projectId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // StartProjectExcelExport operation middleware
 func (siw *ServerInterfaceWrapper) StartProjectExcelExport(w http.ResponseWriter, r *http.Request) {
 
@@ -9137,6 +9461,34 @@ func (siw *ServerInterfaceWrapper) SubmitPublicForm(w http.ResponseWriter, r *ht
 	handler.ServeHTTP(w, r)
 }
 
+// ListRates operation middleware
+func (siw *ServerInterfaceWrapper) ListRates(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListRates(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateRate operation middleware
+func (siw *ServerInterfaceWrapper) CreateRate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateRate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // Readyz operation middleware
 func (siw *ServerInterfaceWrapper) Readyz(w http.ResponseWriter, r *http.Request) {
 
@@ -9553,6 +9905,134 @@ func (siw *ServerInterfaceWrapper) SubscribeReport(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SubscribeReport(w, r, reportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateResourceBooking operation middleware
+func (siw *ServerInterfaceWrapper) CreateResourceBooking(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateResourceBooking(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteResourceBooking operation middleware
+func (siw *ServerInterfaceWrapper) DeleteResourceBooking(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "bookingId" -------------
+	var bookingId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "bookingId", r.PathValue("bookingId"), &bookingId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "bookingId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteResourceBooking(w, r, bookingId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteResourceEntry operation middleware
+func (siw *ServerInterfaceWrapper) DeleteResourceEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteResourceEntryParams
+
+	// ------------- Required query parameter "kind" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "kind", r.URL.Query(), &params.Kind, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "kind"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "id", r.URL.Query(), &params.Id, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteResourceEntry(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetResourceDirectory operation middleware
+func (siw *ServerInterfaceWrapper) GetResourceDirectory(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetResourceDirectory(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateResourceEntry operation middleware
+func (siw *ServerInterfaceWrapper) CreateResourceEntry(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateResourceEntry(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateResourceEntry operation middleware
+func (siw *ServerInterfaceWrapper) UpdateResourceEntry(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateResourceEntry(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11041,6 +11521,58 @@ func (siw *ServerInterfaceWrapper) ResetUserTwoFactor(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetResourceCapacity operation middleware
+func (siw *ServerInterfaceWrapper) GetResourceCapacity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetResourceCapacity(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveResourceCapacity operation middleware
+func (siw *ServerInterfaceWrapper) SaveResourceCapacity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveResourceCapacity(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeactivateUser operation middleware
 func (siw *ServerInterfaceWrapper) DeactivateUser(w http.ResponseWriter, r *http.Request) {
 
@@ -11110,6 +11642,78 @@ func (siw *ServerInterfaceWrapper) ReactivateUser(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReactivateUser(w, r, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetUtilization operation middleware
+func (siw *ServerInterfaceWrapper) GetUtilization(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetUtilizationParams
+
+	// ------------- Required query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "to", r.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "role" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "role", r.URL.Query(), &params.Role, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "role"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "role", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "skill" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "skill", r.URL.Query(), &params.Skill, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "skill"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "skill", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetUtilization(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11343,6 +11947,78 @@ func (siw *ServerInterfaceWrapper) CreateStatus(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// GetWorkload operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkload(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetWorkloadParams
+
+	// ------------- Required query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "to", r.URL.Query(), &params.To, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "to", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "role" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "role", r.URL.Query(), &params.Role, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "role"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "role", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "skill" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "skill", r.URL.Query(), &params.Skill, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "skill"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "skill", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkload(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -11463,6 +12139,21 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 		ErrorHandlerFunc:   options.ErrorHandlerFunc,
 	}
 
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}/capacity", wrapper.GetResourceCapacity)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/users/{userId}/capacity", wrapper.SaveResourceCapacity)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/utilization", wrapper.GetUtilization)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.ListBaselines)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.CreateBaseline)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/baselines/{baselineId}/variance", wrapper.GetBaselineVariance)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/rates", wrapper.ListRates)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/rates", wrapper.CreateRate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/workload", wrapper.GetWorkload)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/resource-directory", wrapper.DeleteResourceEntry)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/resource-directory", wrapper.GetResourceDirectory)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/resource-directory", wrapper.CreateResourceEntry)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/resource-directory", wrapper.UpdateResourceEntry)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/resource-bookings", wrapper.CreateResourceBooking)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/resource-bookings/{bookingId}", wrapper.DeleteResourceBooking)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/analytics/query", wrapper.RunAnalyticsQuery)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stars", wrapper.ListStars)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/items/{itemId}/star", wrapper.UnstarItem)
@@ -13041,6 +13732,46 @@ func (response ReplayAutomationEvent403ApplicationProblemPlusJSONResponse) Visit
 type ReplayAutomationEvent404ApplicationProblemPlusJSONResponse Problem
 
 func (response ReplayAutomationEvent404ApplicationProblemPlusJSONResponse) VisitReplayAutomationEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBaselineVarianceRequestObject struct {
+	BaselineId openapi_types.UUID `json:"baselineId"`
+}
+
+type GetBaselineVarianceResponseObject interface {
+	VisitGetBaselineVarianceResponse(w http.ResponseWriter) error
+}
+
+type GetBaselineVariance200JSONResponse struct {
+	Items []BaselineVariance `json:"items"`
+}
+
+func (response GetBaselineVariance200JSONResponse) VisitGetBaselineVarianceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBaselineVariance404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetBaselineVariance404ApplicationProblemPlusJSONResponse) VisitGetBaselineVarianceResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -16802,8 +17533,10 @@ type GetProjectTimeSummaryResponseObject interface {
 }
 
 type GetProjectTimeSummary200JSONResponse struct {
-	ActualMinutes int64                                         `json:"actual_minutes"`
-	Scope         GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
+	// ActualCostMinor Actual cost (satuan minor per jam x menit/60, entry billable, rate snapshot); hanya untuk administrator
+	ActualCostMinor *int64                                        `json:"actual_cost_minor,omitempty"`
+	ActualMinutes   int64                                         `json:"actual_minutes"`
+	Scope           GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
 }
 
 func (response GetProjectTimeSummary200JSONResponse) VisitGetProjectTimeSummaryResponse(w http.ResponseWriter) error {
@@ -16868,6 +17601,113 @@ func (response ListItemViews404ApplicationProblemPlusJSONResponse) VisitListItem
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBaselinesRequestObject struct {
+	ProjectId openapi_types.UUID `json:"projectId"`
+}
+
+type ListBaselinesResponseObject interface {
+	VisitListBaselinesResponse(w http.ResponseWriter) error
+}
+
+type ListBaselines200JSONResponse struct {
+	Items []Baseline `json:"items"`
+}
+
+func (response ListBaselines200JSONResponse) VisitListBaselinesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListBaselines404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListBaselines404ApplicationProblemPlusJSONResponse) VisitListBaselinesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBaselineRequestObject struct {
+	ProjectId openapi_types.UUID `json:"projectId"`
+	Body      *CreateBaselineJSONRequestBody
+}
+
+type CreateBaselineResponseObject interface {
+	VisitCreateBaselineResponse(w http.ResponseWriter) error
+}
+
+type CreateBaseline201JSONResponse Baseline
+
+func (response CreateBaseline201JSONResponse) VisitCreateBaselineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBaseline403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateBaseline403ApplicationProblemPlusJSONResponse) VisitCreateBaselineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBaseline404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateBaseline404ApplicationProblemPlusJSONResponse) VisitCreateBaselineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateBaseline422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateBaseline422ApplicationProblemPlusJSONResponse) VisitCreateBaselineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -17676,6 +18516,99 @@ func (response SubmitPublicForm429ApplicationProblemPlusJSONResponse) VisitSubmi
 	return err
 }
 
+type ListRatesRequestObject struct {
+}
+
+type ListRatesResponseObject interface {
+	VisitListRatesResponse(w http.ResponseWriter) error
+}
+
+type ListRates200JSONResponse struct {
+	Items []HourlyRate `json:"items"`
+}
+
+func (response ListRates200JSONResponse) VisitListRatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListRates403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListRates403ApplicationProblemPlusJSONResponse) VisitListRatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRateRequestObject struct {
+	Body *CreateRateJSONRequestBody
+}
+
+type CreateRateResponseObject interface {
+	VisitCreateRateResponse(w http.ResponseWriter) error
+}
+
+type CreateRate201JSONResponse struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+func (response CreateRate201JSONResponse) VisitCreateRateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRate403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateRate403ApplicationProblemPlusJSONResponse) VisitCreateRateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateRate422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateRate422ApplicationProblemPlusJSONResponse) VisitCreateRateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReadyzRequestObject struct {
 }
 
@@ -18475,6 +19408,455 @@ func (response SubscribeReport404ApplicationProblemPlusJSONResponse) VisitSubscr
 type SubscribeReport422ApplicationProblemPlusJSONResponse Problem
 
 func (response SubscribeReport422ApplicationProblemPlusJSONResponse) VisitSubscribeReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceBookingRequestObject struct {
+	Body *CreateResourceBookingJSONRequestBody
+}
+
+type CreateResourceBookingResponseObject interface {
+	VisitCreateResourceBookingResponse(w http.ResponseWriter) error
+}
+
+type CreateResourceBooking204Response struct {
+}
+
+func (response CreateResourceBooking204Response) VisitCreateResourceBookingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type CreateResourceBooking403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateResourceBooking403ApplicationProblemPlusJSONResponse) VisitCreateResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceBooking404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateResourceBooking404ApplicationProblemPlusJSONResponse) VisitCreateResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceBooking409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateResourceBooking409ApplicationProblemPlusJSONResponse) VisitCreateResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceBooking422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateResourceBooking422ApplicationProblemPlusJSONResponse) VisitCreateResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceBookingRequestObject struct {
+	BookingId openapi_types.UUID `json:"bookingId"`
+}
+
+type DeleteResourceBookingResponseObject interface {
+	VisitDeleteResourceBookingResponse(w http.ResponseWriter) error
+}
+
+type DeleteResourceBooking204Response struct {
+}
+
+func (response DeleteResourceBooking204Response) VisitDeleteResourceBookingResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteResourceBooking403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteResourceBooking403ApplicationProblemPlusJSONResponse) VisitDeleteResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceBooking404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteResourceBooking404ApplicationProblemPlusJSONResponse) VisitDeleteResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceBooking409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteResourceBooking409ApplicationProblemPlusJSONResponse) VisitDeleteResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceBooking422ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteResourceBooking422ApplicationProblemPlusJSONResponse) VisitDeleteResourceBookingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceEntryRequestObject struct {
+	Params DeleteResourceEntryParams
+}
+
+type DeleteResourceEntryResponseObject interface {
+	VisitDeleteResourceEntryResponse(w http.ResponseWriter) error
+}
+
+type DeleteResourceEntry204Response struct {
+}
+
+func (response DeleteResourceEntry204Response) VisitDeleteResourceEntryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteResourceEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteResourceEntry403ApplicationProblemPlusJSONResponse) VisitDeleteResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteResourceEntry404ApplicationProblemPlusJSONResponse) VisitDeleteResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteResourceEntry409ApplicationProblemPlusJSONResponse) VisitDeleteResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteResourceEntry422ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteResourceEntry422ApplicationProblemPlusJSONResponse) VisitDeleteResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceDirectoryRequestObject struct {
+}
+
+type GetResourceDirectoryResponseObject interface {
+	VisitGetResourceDirectoryResponse(w http.ResponseWriter) error
+}
+
+type GetResourceDirectory200JSONResponse ResourceDirectory
+
+func (response GetResourceDirectory200JSONResponse) VisitGetResourceDirectoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceDirectory403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetResourceDirectory403ApplicationProblemPlusJSONResponse) VisitGetResourceDirectoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceDirectory404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetResourceDirectory404ApplicationProblemPlusJSONResponse) VisitGetResourceDirectoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceDirectory409ApplicationProblemPlusJSONResponse Problem
+
+func (response GetResourceDirectory409ApplicationProblemPlusJSONResponse) VisitGetResourceDirectoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceDirectory422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetResourceDirectory422ApplicationProblemPlusJSONResponse) VisitGetResourceDirectoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceEntryRequestObject struct {
+	Body *CreateResourceEntryJSONRequestBody
+}
+
+type CreateResourceEntryResponseObject interface {
+	VisitCreateResourceEntryResponse(w http.ResponseWriter) error
+}
+
+type CreateResourceEntry204Response struct {
+}
+
+func (response CreateResourceEntry204Response) VisitCreateResourceEntryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type CreateResourceEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateResourceEntry403ApplicationProblemPlusJSONResponse) VisitCreateResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateResourceEntry404ApplicationProblemPlusJSONResponse) VisitCreateResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateResourceEntry409ApplicationProblemPlusJSONResponse) VisitCreateResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateResourceEntry422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateResourceEntry422ApplicationProblemPlusJSONResponse) VisitCreateResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateResourceEntryRequestObject struct {
+	Body *UpdateResourceEntryJSONRequestBody
+}
+
+type UpdateResourceEntryResponseObject interface {
+	VisitUpdateResourceEntryResponse(w http.ResponseWriter) error
+}
+
+type UpdateResourceEntry204Response struct {
+}
+
+func (response UpdateResourceEntry204Response) VisitUpdateResourceEntryResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UpdateResourceEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateResourceEntry403ApplicationProblemPlusJSONResponse) VisitUpdateResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateResourceEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateResourceEntry404ApplicationProblemPlusJSONResponse) VisitUpdateResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateResourceEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateResourceEntry409ApplicationProblemPlusJSONResponse) VisitUpdateResourceEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateResourceEntry422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateResourceEntry422ApplicationProblemPlusJSONResponse) VisitUpdateResourceEntryResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -20999,6 +22381,167 @@ func (response ResetUserTwoFactor404ApplicationProblemPlusJSONResponse) VisitRes
 	return err
 }
 
+type GetResourceCapacityRequestObject struct {
+	UserId openapi_types.UUID `json:"userId"`
+}
+
+type GetResourceCapacityResponseObject interface {
+	VisitGetResourceCapacityResponse(w http.ResponseWriter) error
+}
+
+type GetResourceCapacity200JSONResponse ResourceSchedule
+
+func (response GetResourceCapacity200JSONResponse) VisitGetResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceCapacity403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetResourceCapacity403ApplicationProblemPlusJSONResponse) VisitGetResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceCapacity404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetResourceCapacity404ApplicationProblemPlusJSONResponse) VisitGetResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceCapacity409ApplicationProblemPlusJSONResponse Problem
+
+func (response GetResourceCapacity409ApplicationProblemPlusJSONResponse) VisitGetResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetResourceCapacity422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetResourceCapacity422ApplicationProblemPlusJSONResponse) VisitGetResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveResourceCapacityRequestObject struct {
+	UserId openapi_types.UUID `json:"userId"`
+	Body   *SaveResourceCapacityJSONRequestBody
+}
+
+type SaveResourceCapacityResponseObject interface {
+	VisitSaveResourceCapacityResponse(w http.ResponseWriter) error
+}
+
+type SaveResourceCapacity200JSONResponse ResourceSchedule
+
+func (response SaveResourceCapacity200JSONResponse) VisitSaveResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveResourceCapacity403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveResourceCapacity403ApplicationProblemPlusJSONResponse) VisitSaveResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveResourceCapacity404ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveResourceCapacity404ApplicationProblemPlusJSONResponse) VisitSaveResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveResourceCapacity409ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveResourceCapacity409ApplicationProblemPlusJSONResponse) VisitSaveResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveResourceCapacity422ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveResourceCapacity422ApplicationProblemPlusJSONResponse) VisitSaveResourceCapacityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DeactivateUserRequestObject struct {
 	UserId UserId `json:"userId"`
 }
@@ -21080,6 +22623,60 @@ type ReactivateUser422ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ReactivateUser422ApplicationProblemPlusJSONResponse) VisitReactivateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUtilizationRequestObject struct {
+	Params GetUtilizationParams
+}
+
+type GetUtilizationResponseObject interface {
+	VisitGetUtilizationResponse(w http.ResponseWriter) error
+}
+
+type GetUtilization200JSONResponse struct {
+	Items []UtilizationRow `json:"items"`
+}
+
+func (response GetUtilization200JSONResponse) VisitGetUtilizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUtilization403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetUtilization403ApplicationProblemPlusJSONResponse) VisitGetUtilizationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetUtilization422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetUtilization422ApplicationProblemPlusJSONResponse) VisitGetUtilizationResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -21757,6 +23354,86 @@ func (response CreateStatus422ApplicationProblemPlusJSONResponse) VisitCreateSta
 	return err
 }
 
+type GetWorkloadRequestObject struct {
+	Params GetWorkloadParams
+}
+
+type GetWorkloadResponseObject interface {
+	VisitGetWorkloadResponse(w http.ResponseWriter) error
+}
+
+type GetWorkload200JSONResponse Workload
+
+func (response GetWorkload200JSONResponse) VisitGetWorkloadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkload403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetWorkload403ApplicationProblemPlusJSONResponse) VisitGetWorkloadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkload404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetWorkload404ApplicationProblemPlusJSONResponse) VisitGetWorkloadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkload409ApplicationProblemPlusJSONResponse Problem
+
+func (response GetWorkload409ApplicationProblemPlusJSONResponse) VisitGetWorkloadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkload422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetWorkload422ApplicationProblemPlusJSONResponse) VisitGetWorkloadResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
 	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
@@ -21831,6 +23508,9 @@ type StrictServerInterface interface {
 	// ReplayAutomationEvent Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi
 	// (POST /automation/events/{eventId}/replay)
 	ReplayAutomationEvent(ctx context.Context, request ReplayAutomationEventRequestObject) (ReplayAutomationEventResponseObject, error)
+	// GetBaselineVariance Selisih tanggal item terhadap baseline, dalam hari (positif = lebih lambat dari rencana)
+	// (GET /baselines/{baselineId}/variance)
+	GetBaselineVariance(ctx context.Context, request GetBaselineVarianceRequestObject) (GetBaselineVarianceResponseObject, error)
 	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(ctx context.Context, request DeleteBlueprintRequestObject) (DeleteBlueprintResponseObject, error)
@@ -22026,6 +23706,12 @@ type StrictServerInterface interface {
 
 	// (GET /items/{itemId}/views)
 	ListItemViews(ctx context.Context, request ListItemViewsRequestObject) (ListItemViewsResponseObject, error)
+	// ListBaselines Baseline Gantt sebuah project, terbaru dulu (VIEW-05C)
+	// (GET /items/{projectId}/baselines)
+	ListBaselines(ctx context.Context, request ListBaselinesRequestObject) (ListBaselinesResponseObject, error)
+	// CreateBaseline Bekukan tanggal item project yang terlihat; baseline tidak dapat diubah atau dihapus (maks 10 per project)
+	// (POST /items/{projectId}/baselines)
+	CreateBaseline(ctx context.Context, request CreateBaselineRequestObject) (CreateBaselineResponseObject, error)
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(ctx context.Context, request StartProjectExcelExportRequestObject) (StartProjectExcelExportResponseObject, error)
@@ -22080,6 +23766,12 @@ type StrictServerInterface interface {
 	// SubmitPublicForm Isi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (POST /public/forms/{token}/submissions)
 	SubmitPublicForm(ctx context.Context, request SubmitPublicFormRequestObject) (SubmitPublicFormResponseObject, error)
+	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
+	// (GET /rates)
+	ListRates(ctx context.Context, request ListRatesRequestObject) (ListRatesResponseObject, error)
+	// CreateRate Tarif baru berlaku mulai tanggal tertentu; entry lama tidak berubah karena rate snapshot (admin)
+	// (POST /rates)
+	CreateRate(ctx context.Context, request CreateRateRequestObject) (CreateRateResponseObject, error)
 	// Readyz Database terjangkau dan migrasi terpasang
 	// (GET /readyz)
 	Readyz(ctx context.Context, request ReadyzRequestObject) (ReadyzResponseObject, error)
@@ -22122,6 +23814,24 @@ type StrictServerInterface interface {
 	// SubscribeReport Berlangganan atas nama pemanggil (pengiriman lewat RPT-04)
 	// (PUT /reports/{reportId}/subscription)
 	SubscribeReport(ctx context.Context, request SubscribeReportRequestObject) (SubscribeReportResponseObject, error)
+
+	// (POST /resource-bookings)
+	CreateResourceBooking(ctx context.Context, request CreateResourceBookingRequestObject) (CreateResourceBookingResponseObject, error)
+
+	// (DELETE /resource-bookings/{bookingId})
+	DeleteResourceBooking(ctx context.Context, request DeleteResourceBookingRequestObject) (DeleteResourceBookingResponseObject, error)
+
+	// (DELETE /resource-directory)
+	DeleteResourceEntry(ctx context.Context, request DeleteResourceEntryRequestObject) (DeleteResourceEntryResponseObject, error)
+
+	// (GET /resource-directory)
+	GetResourceDirectory(ctx context.Context, request GetResourceDirectoryRequestObject) (GetResourceDirectoryResponseObject, error)
+
+	// (POST /resource-directory)
+	CreateResourceEntry(ctx context.Context, request CreateResourceEntryRequestObject) (CreateResourceEntryResponseObject, error)
+
+	// (PUT /resource-directory)
+	UpdateResourceEntry(ctx context.Context, request UpdateResourceEntryRequestObject) (UpdateResourceEntryResponseObject, error)
 	// Search Pencarian global (NAV-06)
 	// (GET /search)
 	Search(ctx context.Context, request SearchRequestObject) (SearchResponseObject, error)
@@ -22248,6 +23958,12 @@ type StrictServerInterface interface {
 	// ResetUserTwoFactor Admin menghapus 2FA user (pemulihan); user dikeluarkan dari semua session dan kejadiannya dicatat
 	// (POST /users/{userId}/2fa/reset)
 	ResetUserTwoFactor(ctx context.Context, request ResetUserTwoFactorRequestObject) (ResetUserTwoFactorResponseObject, error)
+
+	// (GET /users/{userId}/capacity)
+	GetResourceCapacity(ctx context.Context, request GetResourceCapacityRequestObject) (GetResourceCapacityResponseObject, error)
+
+	// (PUT /users/{userId}/capacity)
+	SaveResourceCapacity(ctx context.Context, request SaveResourceCapacityRequestObject) (SaveResourceCapacityResponseObject, error)
 	// DeactivateUser Nonaktifkan user dan bebaskan seat (USR-03)
 	// (POST /users/{userId}/deactivate)
 	DeactivateUser(ctx context.Context, request DeactivateUserRequestObject) (DeactivateUserResponseObject, error)
@@ -22257,6 +23973,9 @@ type StrictServerInterface interface {
 	// ReactivateUser Aktifkan kembali user (USR-03)
 	// (POST /users/{userId}/reactivate)
 	ReactivateUser(ctx context.Context, request ReactivateUserRequestObject) (ReactivateUserResponseObject, error)
+	// GetUtilization Utilization planned vs actual per orang (RSC-06); menit terencana = effort task + booking, aktual = time entry
+	// (GET /utilization)
+	GetUtilization(ctx context.Context, request GetUtilizationRequestObject) (GetUtilizationResponseObject, error)
 	// CreateView Tambah view (VIEW-08)
 	// (POST /views)
 	CreateView(ctx context.Context, request CreateViewRequestObject) (CreateViewResponseObject, error)
@@ -22287,6 +24006,9 @@ type StrictServerInterface interface {
 	// CreateStatus Tambah status di akhir workflow (admin saja, WF-03A)
 	// (POST /workflows/{workflowId}/statuses)
 	CreateStatus(ctx context.Context, request CreateStatusRequestObject) (CreateStatusResponseObject, error)
+
+	// (GET /workload)
+	GetWorkload(ctx context.Context, request GetWorkloadRequestObject) (GetWorkloadResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -23009,6 +24731,32 @@ func (sh *strictHandler) ReplayAutomationEvent(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReplayAutomationEventResponseObject); ok {
 		if err := validResponse.VisitReplayAutomationEventResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetBaselineVariance operation middleware
+func (sh *strictHandler) GetBaselineVariance(w http.ResponseWriter, r *http.Request, baselineId openapi_types.UUID) {
+	var request GetBaselineVarianceRequestObject
+
+	request.BaselineId = baselineId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBaselineVariance(ctx, request.(GetBaselineVarianceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBaselineVariance")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetBaselineVarianceResponseObject); ok {
+		if err := validResponse.VisitGetBaselineVarianceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -24903,6 +26651,65 @@ func (sh *strictHandler) ListItemViews(w http.ResponseWriter, r *http.Request, i
 	}
 }
 
+// ListBaselines operation middleware
+func (sh *strictHandler) ListBaselines(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
+	var request ListBaselinesRequestObject
+
+	request.ProjectId = projectId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListBaselines(ctx, request.(ListBaselinesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListBaselines")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListBaselinesResponseObject); ok {
+		if err := validResponse.VisitListBaselinesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateBaseline operation middleware
+func (sh *strictHandler) CreateBaseline(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
+	var request CreateBaselineRequestObject
+
+	request.ProjectId = projectId
+
+	var body CreateBaselineJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateBaseline(ctx, request.(CreateBaselineRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateBaseline")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateBaselineResponseObject); ok {
+		if err := validResponse.VisitCreateBaselineResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // StartProjectExcelExport operation middleware
 func (sh *strictHandler) StartProjectExcelExport(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
 	var request StartProjectExcelExportRequestObject
@@ -25411,6 +27218,61 @@ func (sh *strictHandler) SubmitPublicForm(w http.ResponseWriter, r *http.Request
 	}
 }
 
+// ListRates operation middleware
+func (sh *strictHandler) ListRates(w http.ResponseWriter, r *http.Request) {
+	var request ListRatesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListRates(ctx, request.(ListRatesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListRates")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListRatesResponseObject); ok {
+		if err := validResponse.VisitListRatesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateRate operation middleware
+func (sh *strictHandler) CreateRate(w http.ResponseWriter, r *http.Request) {
+	var request CreateRateRequestObject
+
+	var body CreateRateJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateRate(ctx, request.(CreateRateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateRate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateRateResponseObject); ok {
+		if err := validResponse.VisitCreateRateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // Readyz operation middleware
 func (sh *strictHandler) Readyz(w http.ResponseWriter, r *http.Request) {
 	var request ReadyzRequestObject
@@ -25783,6 +27645,175 @@ func (sh *strictHandler) SubscribeReport(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SubscribeReportResponseObject); ok {
 		if err := validResponse.VisitSubscribeReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateResourceBooking operation middleware
+func (sh *strictHandler) CreateResourceBooking(w http.ResponseWriter, r *http.Request) {
+	var request CreateResourceBookingRequestObject
+
+	var body CreateResourceBookingJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateResourceBooking(ctx, request.(CreateResourceBookingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateResourceBooking")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateResourceBookingResponseObject); ok {
+		if err := validResponse.VisitCreateResourceBookingResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteResourceBooking operation middleware
+func (sh *strictHandler) DeleteResourceBooking(w http.ResponseWriter, r *http.Request, bookingId openapi_types.UUID) {
+	var request DeleteResourceBookingRequestObject
+
+	request.BookingId = bookingId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteResourceBooking(ctx, request.(DeleteResourceBookingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteResourceBooking")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteResourceBookingResponseObject); ok {
+		if err := validResponse.VisitDeleteResourceBookingResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteResourceEntry operation middleware
+func (sh *strictHandler) DeleteResourceEntry(w http.ResponseWriter, r *http.Request, params DeleteResourceEntryParams) {
+	var request DeleteResourceEntryRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteResourceEntry(ctx, request.(DeleteResourceEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteResourceEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteResourceEntryResponseObject); ok {
+		if err := validResponse.VisitDeleteResourceEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetResourceDirectory operation middleware
+func (sh *strictHandler) GetResourceDirectory(w http.ResponseWriter, r *http.Request) {
+	var request GetResourceDirectoryRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetResourceDirectory(ctx, request.(GetResourceDirectoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetResourceDirectory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetResourceDirectoryResponseObject); ok {
+		if err := validResponse.VisitGetResourceDirectoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateResourceEntry operation middleware
+func (sh *strictHandler) CreateResourceEntry(w http.ResponseWriter, r *http.Request) {
+	var request CreateResourceEntryRequestObject
+
+	var body CreateResourceEntryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateResourceEntry(ctx, request.(CreateResourceEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateResourceEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateResourceEntryResponseObject); ok {
+		if err := validResponse.VisitCreateResourceEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateResourceEntry operation middleware
+func (sh *strictHandler) UpdateResourceEntry(w http.ResponseWriter, r *http.Request) {
+	var request UpdateResourceEntryRequestObject
+
+	var body UpdateResourceEntryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateResourceEntry(ctx, request.(UpdateResourceEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateResourceEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateResourceEntryResponseObject); ok {
+		if err := validResponse.VisitUpdateResourceEntryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -26991,6 +29022,65 @@ func (sh *strictHandler) ResetUserTwoFactor(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// GetResourceCapacity operation middleware
+func (sh *strictHandler) GetResourceCapacity(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID) {
+	var request GetResourceCapacityRequestObject
+
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetResourceCapacity(ctx, request.(GetResourceCapacityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetResourceCapacity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetResourceCapacityResponseObject); ok {
+		if err := validResponse.VisitGetResourceCapacityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveResourceCapacity operation middleware
+func (sh *strictHandler) SaveResourceCapacity(w http.ResponseWriter, r *http.Request, userId openapi_types.UUID) {
+	var request SaveResourceCapacityRequestObject
+
+	request.UserId = userId
+
+	var body SaveResourceCapacityJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveResourceCapacity(ctx, request.(SaveResourceCapacityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveResourceCapacity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveResourceCapacityResponseObject); ok {
+		if err := validResponse.VisitSaveResourceCapacityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeactivateUser operation middleware
 func (sh *strictHandler) DeactivateUser(w http.ResponseWriter, r *http.Request, userId UserId) {
 	var request DeactivateUserRequestObject
@@ -27062,6 +29152,32 @@ func (sh *strictHandler) ReactivateUser(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReactivateUserResponseObject); ok {
 		if err := validResponse.VisitReactivateUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetUtilization operation middleware
+func (sh *strictHandler) GetUtilization(w http.ResponseWriter, r *http.Request, params GetUtilizationParams) {
+	var request GetUtilizationRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetUtilization(ctx, request.(GetUtilizationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetUtilization")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetUtilizationResponseObject); ok {
+		if err := validResponse.VisitGetUtilizationResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -27365,6 +29481,32 @@ func (sh *strictHandler) CreateStatus(w http.ResponseWriter, r *http.Request, wo
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateStatusResponseObject); ok {
 		if err := validResponse.VisitCreateStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkload operation middleware
+func (sh *strictHandler) GetWorkload(w http.ResponseWriter, r *http.Request, params GetWorkloadParams) {
+	var request GetWorkloadRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkload(ctx, request.(GetWorkloadRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkload")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkloadResponseObject); ok {
+		if err := validResponse.VisitGetWorkloadResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -80,14 +80,18 @@ func TestNotificationWorkerHonoursEmailPreferences(t *testing.T) {
 	}
 	send("status_changed")
 	send("approval_decided")
-	if sent() != 7 {
+	send("approval_reminder")
+	send("approval_escalated")
+	if sent() != 9 {
 		t.Fatalf("task_changes must still send: %d", sent())
 	}
 	mute("task_changes")
 	send("status_changed")
 	send("approval_requested")
+	send("approval_reminder")
+	send("approval_escalated")
 	send("comment")
-	if sent() != 7 {
+	if sent() != 9 {
 		t.Fatalf("task_changes muted or comment emailed: %d", sent())
 	}
 }

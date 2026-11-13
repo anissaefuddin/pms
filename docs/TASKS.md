@@ -1079,66 +1079,66 @@ Memetakan: RSC-01..06, VIEW-05C, SPC-16, SCH-01, TASK-14. Prasyarat: S7.4.1; S8.
 
 ### E10.1 Workload dan kapasitas
 
-**S10.1.1 Kapasitas per orang (RSC-01) — 2.5 hari**
-- [ ] [API] Jadwal per orang dan pengecualian cuti
-- [ ] [DB] Penyimpanan jadwal dan cuti
-- [ ] [BE] Kapasitas harian memakai `schedule`
-- [ ] [FE] UI cuti dan pengecualian
-- [ ] [TEST] Kapasitas dengan libur dan cuti
+**S10.1.1 Kapasitas per orang (RSC-01) — 2.5 hari · DONE lokal**
+- [x] [API] Jadwal per orang dan pengecualian cuti
+- [x] [DB] Penyimpanan jadwal dan cuti
+- [x] [BE] Kapasitas harian memakai `schedule`
+- [x] [FE] UI cuti dan pengecualian
+- [x] [TEST] Kapasitas dengan libur dan cuti
 
-**S10.1.2 Mesin beban kerja (RSC-02) — 3.5 hari**
-- [ ] [BE] Distribusi effort per hari kerja
-- [ ] [BE] Pembagian multi-assignee
-- [ ] [BE] Tanpa hitung ganda lintas lokasi
-- [ ] [BE] Endpoint agregasi
-- [ ] [DB] Indeks
-- [ ] [TEST] Tabel kasus
-- [ ] [TEST] Performa 50 orang × 2.000 task
+**S10.1.2 Mesin beban kerja (RSC-02) — 3.5 hari · DONE lokal**
+- [x] [BE] Distribusi effort per hari kerja
+- [x] [BE] Pembagian multi-assignee
+- [x] [BE] Tanpa hitung ganda lintas lokasi
+- [x] [BE] Endpoint agregasi
+- [x] [DB] Indeks
+- [x] [TEST] Tabel kasus
+- [x] [TEST] Performa 50 orang × 2.000 task
 
-**S10.1.3 Halaman Workload (RSC-02) — 2.5 hari**
-- [ ] [FE] Grid orang × hari/minggu
-- [ ] [FE] Backlog tanpa assignee
-- [ ] [FE] Indikator over-allocation
-- [ ] [FE] Aktifkan kunci sidebar `workload`
-- [ ] [TEST] E2E-PAR-07, axe
+**S10.1.3 Halaman Workload (RSC-02) — 2.5 hari · DONE lokal**
+- [x] [FE] Grid orang × hari/minggu
+- [x] [FE] Backlog tanpa assignee
+- [x] [FE] Indikator over-allocation
+- [x] [FE] Aktifkan kunci sidebar `workload`
+- [x] [TEST] E2E-PAR-07, axe
 
-**S10.1.4 Realokasi (RSC-03) — 1.5 hari**
-- [ ] [FE] Pindah assignment dari workload
-- [ ] [BE] Lewat patch item (policy, audit, SSE)
-- [ ] [TEST] Realokasi memperbarui beban
+**S10.1.4 Realokasi (RSC-03) — 1.5 hari · DONE lokal**
+- [x] [FE] Pindah assignment dari workload
+- [x] [BE] Lewat patch item (policy, audit, SSE)
+- [x] [TEST] Realokasi memperbarui beban
 
 ### E10.2 Role, skill, booking
 
-**S10.2.1 Job role dan skill (RSC-04) — 3 hari**
-- [ ] [API] CRUD job role dan skill
-- [ ] [DB] Tabel role, skill, penugasan ke user
-- [ ] [BE] Validasi dan policy admin
-- [ ] [FE] Admin role dan skill
-- [ ] [FE] Filter workload per role/skill
-- [ ] [TEST] Integrasi
+**S10.2.1 Job role dan skill (RSC-04) — 3 hari · DONE lokal**
+- [x] [API] CRUD job role dan skill
+- [x] [DB] Tabel role, skill, penugasan ke user
+- [x] [BE] Validasi dan policy admin
+- [x] [FE] Admin role dan skill
+- [x] [FE] Filter workload per role/skill
+- [x] [TEST] Integrasi
 
-**S10.2.2 Resource booking (RSC-05) — 3 hari**
-- [ ] [API] Booking per project, orang, atau role
-- [ ] [DB] Tabel booking
-- [ ] [BE] Booking masuk perhitungan workload
-- [ ] [BE] Konflik booking vs kapasitas
-- [ ] [FE] UI booking
-- [ ] [TEST] Integrasi
+**S10.2.2 Resource booking (RSC-05) — 3 hari · DONE lokal**
+- [x] [API] Booking per project, orang, atau role
+- [x] [DB] Tabel booking
+- [x] [BE] Booking masuk perhitungan workload
+- [x] [BE] Konflik booking vs kapasitas
+- [x] [FE] UI booking
+- [x] [TEST] Integrasi
 
 **S10.2.3 Utilization planned vs actual (RSC-06) — 1.5 hari**
-- [ ] [BE] Metrik di mesin analytics
-- [ ] [FE] Widget dan template report
-- [ ] [TEST] Angka cocok dengan data mentah
+- [x] [BE] Metrik di mesin analytics
+- [x] [FE] Panel planned vs actual di halaman Workload (widget dan template report belum)
+- [x] [TEST] Angka cocok dengan data mentah
 
 ### E10.3 Jadwal lanjutan
 
 **S10.3.1 Baseline dan variance Gantt (VIEW-05C) — 3 hari**
-- [ ] [API] Simpan dan daftar baseline
-- [ ] [DB] Snapshot baseline
-- [ ] [BE] Perbandingan dan variance
-- [ ] [FE] Bar baseline di Gantt
-- [ ] [FE] Kolom variance
-- [ ] [TEST] E2E-PAR-08 (baseline immutable)
+- [x] [API] Simpan dan daftar baseline
+- [x] [DB] Snapshot baseline
+- [x] [BE] Perbandingan dan variance
+- [x] [FE] Tanggal baseline sebagai kolom Gantt (bar baseline butuh SVAR PRO)
+- [x] [FE] Kolom variance
+- [x] [TEST] E2E-PAR-08 (baseline immutable)
 
 **S10.3.2 Public snapshot Gantt (SPC-16) — 3 hari**
 - [ ] [API] Buat dan daftar snapshot
@@ -1158,18 +1158,18 @@ Memetakan: RSC-01..06, VIEW-05C, SPC-16, SCH-01, TASK-14. Prasyarat: S7.4.1; S8.
 ### E10.4 Biaya
 
 **S10.4.1 Tarif dan billable (TASK-14) — 2.5 hari**
-- [ ] [API] Tarif per user/role berversi
-- [ ] [DB] Tabel tarif dan `rate_snapshot` di time entry
-- [ ] [BE] Snapshot tarif saat entry dibuat; flag billable
-- [ ] [FE] Admin tarif (izin finance)
-- [ ] [TEST] Perubahan tarif tidak mengubah histori
+- [x] [API] Tarif per user/role berversi
+- [x] [DB] Tabel tarif dan `rate_snapshot` di time entry
+- [x] [BE] Snapshot tarif saat entry dibuat; flag billable
+- [x] [FE] Admin tarif (izin finance = peran admin)
+- [x] [TEST] Perubahan tarif tidak mengubah histori
 
 **S10.4.2 Actual cost dan budget vs actual (TASK-14) — 2.5 hari**
-- [ ] [BE] Kalkulasi actual cost
-- [ ] [BE] Data finansial disembunyikan di tampilan publik/berbagi
-- [ ] [FE] Panel budget vs actual
+- [x] [BE] Kalkulasi actual cost
+- [x] [BE] Data finansial hanya untuk admin (tidak dikirim ke yang lain)
+- [x] [FE] Panel budget vs actual (di field budget project)
 - [ ] [FE] Kolom cost di report
-- [ ] [TEST] Rumus dan masking
+- [x] [TEST] Rumus dan masking
 
 ### E10.5 Gate
 

@@ -4,6 +4,164 @@
  */
 
 export interface paths {
+    "/users/{userId}/capacity": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getResourceCapacity"];
+        put: operations["saveResourceCapacity"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/utilization": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Utilization planned vs actual per orang (RSC-06); menit terencana = effort task + booking, aktual = time entry */
+        get: operations["getUtilization"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{projectId}/baselines": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        /** Baseline Gantt sebuah project, terbaru dulu (VIEW-05C) */
+        get: operations["listBaselines"];
+        put?: never;
+        /** Bekukan tanggal item project yang terlihat; baseline tidak dapat diubah atau dihapus (maks 10 per project) */
+        post: operations["createBaseline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/baselines/{baselineId}/variance": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                baselineId: string;
+            };
+            cookie?: never;
+        };
+        /** Selisih tanggal item terhadap baseline, dalam hari (positif = lebih lambat dari rencana) */
+        get: operations["getBaselineVariance"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/rates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin) */
+        get: operations["listRates"];
+        put?: never;
+        /** Tarif baru berlaku mulai tanggal tertentu; entry lama tidak berubah karena rate snapshot (admin) */
+        post: operations["createRate"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workload": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getWorkload"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resource-directory": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: operations["getResourceDirectory"];
+        put: operations["updateResourceEntry"];
+        post: operations["createResourceEntry"];
+        delete: operations["deleteResourceEntry"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resource-bookings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: operations["createResourceBooking"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/resource-bookings/{bookingId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bookingId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteResourceBooking"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/analytics/query": {
         parameters: {
             query?: never;
@@ -2376,6 +2534,89 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ResourceSchedule: {
+            working_days?: number[] | null;
+            daily_hours?: number | null;
+            leave_dates?: string[];
+        };
+        ResourceReference: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+        };
+        ResourcePerson: {
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            capacity?: number[];
+            planned?: number[];
+            booked?: number[];
+        };
+        WorkloadTask: {
+            /** Format: uuid */
+            id?: string;
+            title?: string;
+            version?: number;
+            effort?: number;
+            assignee_names?: string[];
+            assignee_ids?: string[];
+            editable?: boolean;
+        };
+        ResourceDirectory: {
+            roles?: components["schemas"]["ResourceReference"][];
+            skills?: components["schemas"]["ResourceReference"][];
+            users?: {
+                /** Format: uuid */
+                id?: string;
+                name?: string;
+                roles?: string[];
+                skills?: string[];
+            }[];
+        };
+        ResourceDirectoryInput: {
+            /** @enum {string} */
+            kind?: "role" | "skill";
+            /** Format: uuid */
+            id?: string;
+            name?: string;
+            /** Format: uuid */
+            user_id?: string;
+            assigned?: boolean;
+        };
+        ResourceBookingInput: {
+            /** Format: uuid */
+            project_id?: string;
+            /** Format: uuid */
+            user_id?: string;
+            /** Format: uuid */
+            role_id?: string;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            minutes_per_day?: number;
+        };
+        ResourceBooking: {
+            /** Format: uuid */
+            id?: string;
+            /** Format: uuid */
+            project_id?: string;
+            /** Format: uuid */
+            user_id?: string | null;
+            /** Format: uuid */
+            role_id?: string | null;
+            /** Format: date */
+            start_date?: string;
+            /** Format: date */
+            end_date?: string;
+            minutes_per_day?: number;
+        };
+        Workload: {
+            people?: components["schemas"]["ResourcePerson"][];
+            role_demand?: components["schemas"]["ResourcePerson"][];
+            tasks?: components["schemas"]["WorkloadTask"][];
+            bookings?: components["schemas"]["ResourceBooking"][];
+        };
         DashboardRename: {
             name: string;
         };
@@ -3380,6 +3621,61 @@ export interface components {
              */
             parent_item_id?: string | null;
         };
+        Baseline: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            project_id: string;
+            name: string;
+            /** @description Nama pembuat */
+            created_by: string | null;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: int32 */
+            item_count: number;
+        };
+        BaselineVariance: {
+            /** Format: uuid */
+            item_id: string;
+            /** Format: date */
+            baseline_start: string | null;
+            /** Format: date */
+            baseline_due: string | null;
+            /** Format: date */
+            start: string | null;
+            /** Format: date */
+            due: string | null;
+            /** Format: int32 */
+            start_variance_days: number | null;
+            /** Format: int32 */
+            due_variance_days: number | null;
+        };
+        HourlyRate: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            user_id: string | null;
+            /** Format: uuid */
+            role_id: string | null;
+            name: string;
+            /** Format: int64 */
+            rate_minor: number;
+            /** Format: date */
+            effective_from: string;
+        };
+        UtilizationRow: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** Format: int32 */
+            capacity: number;
+            /** Format: int32 */
+            planned: number;
+            /** Format: int32 */
+            actual: number;
+            planned_percent: number;
+            actual_percent: number;
+        };
         UserRef: {
             /** Format: uuid */
             id: string;
@@ -3952,6 +4248,413 @@ export interface components {
 }
 export type $defs = Record<string, never>;
 export interface operations {
+    getResourceCapacity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceSchedule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    saveResourceCapacity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceSchedule"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceSchedule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getUtilization: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                role?: string;
+                skill?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["UtilizationRow"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listBaselines: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Baseline"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createBaseline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Baseline"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getBaselineVariance: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                baselineId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["BaselineVariance"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    listRates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["HourlyRate"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    createRate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    user_id?: string;
+                    /** Format: uuid */
+                    role_id?: string;
+                    /** Format: int64 */
+                    rate_minor: number;
+                    /** Format: date */
+                    effective_from: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        id: string;
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getWorkload: {
+        parameters: {
+            query: {
+                from: string;
+                to: string;
+                role?: string;
+                skill?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workload"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getResourceDirectory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ResourceDirectory"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    updateResourceEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceDirectoryInput"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    createResourceEntry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceDirectoryInput"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteResourceEntry: {
+        parameters: {
+            query: {
+                kind: string;
+                id: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    createResourceBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ResourceBookingInput"];
+            };
+        };
+        responses: {
+            /** @description Saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteResourceBooking: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                bookingId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Saved */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
     runAnalyticsQuery: {
         parameters: {
             query?: never;
@@ -4721,6 +5424,11 @@ export interface operations {
                         actual_minutes: number;
                         /** @enum {string} */
                         scope: "project" | "permitted_entries";
+                        /**
+                         * Format: int64
+                         * @description Actual cost (satuan minor per jam x menit/60, entry billable, rate snapshot); hanya untuk administrator
+                         */
+                        actual_cost_minor?: number;
                     };
                 };
             };

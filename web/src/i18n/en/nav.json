@@ -1,4 +1,5 @@
 {
+  "workload": "Workload",
   "realtime.live": "Live",
   "realtime.reconnecting": "Connecting…",
   "openNavigation": "Open navigation",

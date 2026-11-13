@@ -589,6 +589,21 @@ type AutomationRun struct {
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
 
+type Baseline struct {
+	ID        pgtype.UUID        `json:"id"`
+	ProjectID pgtype.UUID        `json:"project_id"`
+	Name      string             `json:"name"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type BaselineItem struct {
+	BaselineID pgtype.UUID `json:"baseline_id"`
+	ItemID     pgtype.UUID `json:"item_id"`
+	StartDate  pgtype.Date `json:"start_date"`
+	DueDate    pgtype.Date `json:"due_date"`
+}
+
 type Blueprint struct {
 	ID        pgtype.UUID        `json:"id"`
 	SpaceID   pgtype.UUID        `json:"space_id"`
@@ -674,6 +689,16 @@ type Group struct {
 type GroupMember struct {
 	GroupID pgtype.UUID `json:"group_id"`
 	UserID  pgtype.UUID `json:"user_id"`
+}
+
+type HourlyRate struct {
+	ID            pgtype.UUID        `json:"id"`
+	UserID        pgtype.UUID        `json:"user_id"`
+	RoleID        pgtype.UUID        `json:"role_id"`
+	RateMinor     int64              `json:"rate_minor"`
+	EffectiveFrom pgtype.Date        `json:"effective_from"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
 }
 
 type Item struct {
@@ -838,6 +863,43 @@ type RequestForm struct {
 	PublicToken pgtype.Text        `json:"public_token"`
 }
 
+type ResourceBooking struct {
+	ID            pgtype.UUID `json:"id"`
+	ProjectID     pgtype.UUID `json:"project_id"`
+	UserID        pgtype.UUID `json:"user_id"`
+	RoleID        pgtype.UUID `json:"role_id"`
+	StartDate     pgtype.Date `json:"start_date"`
+	EndDate       pgtype.Date `json:"end_date"`
+	MinutesPerDay int32       `json:"minutes_per_day"`
+}
+
+type ResourceRole struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+}
+
+type ResourceSchedule struct {
+	UserID      pgtype.UUID   `json:"user_id"`
+	WorkingDays []int16       `json:"working_days"`
+	DailyHours  pgtype.Int2   `json:"daily_hours"`
+	LeaveDates  []pgtype.Date `json:"leave_dates"`
+}
+
+type ResourceSkill struct {
+	ID   pgtype.UUID `json:"id"`
+	Name string      `json:"name"`
+}
+
+type ResourceUserRole struct {
+	UserID pgtype.UUID `json:"user_id"`
+	RoleID pgtype.UUID `json:"role_id"`
+}
+
+type ResourceUserSkill struct {
+	UserID  pgtype.UUID `json:"user_id"`
+	SkillID pgtype.UUID `json:"skill_id"`
+}
+
 type SecurityEvent struct {
 	ID        int64              `json:"id"`
 	ActorID   pgtype.UUID        `json:"actor_id"`
@@ -908,16 +970,17 @@ type StatusTransition struct {
 }
 
 type TimeEntry struct {
-	ID          pgtype.UUID `json:"id"`
-	ItemID      pgtype.UUID `json:"item_id"`
-	UserID      pgtype.UUID `json:"user_id"`
-	EntryDate   pgtype.Date `json:"entry_date"`
-	Minutes     int32       `json:"minutes"`
-	Category    string      `json:"category"`
-	Comment     string      `json:"comment"`
-	BillingType string      `json:"billing_type"`
-	Locked      bool        `json:"locked"`
-	Version     int32       `json:"version"`
+	ID           pgtype.UUID `json:"id"`
+	ItemID       pgtype.UUID `json:"item_id"`
+	UserID       pgtype.UUID `json:"user_id"`
+	EntryDate    pgtype.Date `json:"entry_date"`
+	Minutes      int32       `json:"minutes"`
+	Category     string      `json:"category"`
+	Comment      string      `json:"comment"`
+	BillingType  string      `json:"billing_type"`
+	Locked       bool        `json:"locked"`
+	Version      int32       `json:"version"`
+	RateSnapshot pgtype.Int8 `json:"rate_snapshot"`
 }
 
 type User struct {

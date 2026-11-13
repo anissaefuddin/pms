@@ -4,6 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"net/http/httptest"
+	"strings"
+
+	"github.com/anissaefuddin/pms/server/internal/httpserver"
 	"github.com/google/uuid"
 	"strconv"
 	"sync"
@@ -611,4 +615,26 @@ func TestDryRunReportsWithoutActing(t *testing.T) {
 	f.want(call(f.person("regular"), map[string]any{"definition": json.RawMessage(def), "item_id": hot["id"]}), 404, "no access")
 	f.want(call(e.editor, map[string]any{"definition": json.RawMessage(`{"when":{"type":"nope"},"then":[]}`), "item_id": hot["id"]}), 422, "invalid definition")
 	f.want(call(e.editor, map[string]any{"definition": json.RawMessage(def), "item_id": uuid.NewString()}), 404, "unknown item")
+}
+
+// Scrape the same endpoint and metric names used by the Grafana alerts.
+func TestAutomationAlertMetrics(t *testing.T) {
+	e := newAutoEnv(t)
+	_ = e.engine.Option() // registers the production collectors
+	e.f.exec(`INSERT INTO domain_events(event_id,type,dispatched_at,last_error)
+SELECT gen_random_uuid(),'item.created',NULL,NULL FROM generate_series(1,201)
+UNION ALL SELECT gen_random_uuid(),'item.created',now(),'fixture failure'`)
+	check := func(want ...string) {
+		t.Helper()
+		rec := httptest.NewRecorder()
+		httpserver.Metrics().ServeHTTP(rec, httptest.NewRequest("GET", "/metrics", nil))
+		for _, sample := range want {
+			if rec.Code != 200 || !strings.Contains(rec.Body.String(), sample+"\n") {
+				t.Fatalf("scrape status %d, missing sample %q", rec.Code, sample)
+			}
+		}
+	}
+	check("pms_automation_events_pending 201", "pms_automation_events_dead 1")
+	e.f.exec("DELETE FROM domain_events")
+	check("pms_automation_events_pending 0", "pms_automation_events_dead 0")
 }

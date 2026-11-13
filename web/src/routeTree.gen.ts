@@ -18,6 +18,7 @@ import { Route as AppIndexRouteImport } from './routes/_app/index'
 import { Route as AppFormsRouteImport } from './routes/_app/forms'
 import { Route as AppInboxRouteImport } from './routes/_app/inbox'
 import { Route as AppMyTodoRouteImport } from './routes/_app/my-todo'
+import { Route as AppPortfolioRouteImport } from './routes/_app/portfolio'
 import { Route as AppRecycleBinRouteImport } from './routes/_app/recycle-bin'
 import { Route as AppSearchRouteImport } from './routes/_app/search'
 import { Route as AppSettingsRouteImport } from './routes/_app/settings'
@@ -25,7 +26,9 @@ import { Route as AppSharedWithMeRouteImport } from './routes/_app/shared-with-m
 import { Route as AppStarredRouteImport } from './routes/_app/starred'
 import { Route as AppStreamRouteImport } from './routes/_app/stream'
 import { Route as AppTimesheetsRouteImport } from './routes/_app/timesheets'
+import { Route as AppWorkloadRouteImport } from './routes/_app/workload'
 import { Route as FTokenRouteImport } from './routes/f.$token'
+import { Route as GTokenRouteImport } from './routes/g.$token'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
 import { Route as AppDashboardsIndexRouteImport } from './routes/_app/dashboards.index'
 import { Route as AppDashboardsDashboardIdRouteImport } from './routes/_app/dashboards.$dashboardId'
@@ -39,6 +42,8 @@ import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/ind
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
+import { Route as AppSettingsRatesRouteImport } from './routes/_app/settings/rates'
+import { Route as AppSettingsResourcesRouteImport } from './routes/_app/settings/resources'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as AppSettingsWorkScheduleRouteImport } from './routes/_app/settings/work-schedule'
@@ -96,6 +101,11 @@ const AppMyTodoRoute = AppMyTodoRouteImport.update({
   path: '/my-todo',
   getParentRoute: () => AppRoute,
 } as any)
+const AppPortfolioRoute = AppPortfolioRouteImport.update({
+  id: '/portfolio',
+  path: '/portfolio',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppRecycleBinRoute = AppRecycleBinRouteImport.update({
   id: '/recycle-bin',
   path: '/recycle-bin',
@@ -131,9 +141,19 @@ const AppTimesheetsRoute = AppTimesheetsRouteImport.update({
   path: '/timesheets',
   getParentRoute: () => AppRoute,
 } as any)
+const AppWorkloadRoute = AppWorkloadRouteImport.update({
+  id: '/workload',
+  path: '/workload',
+  getParentRoute: () => AppRoute,
+} as any)
 const FTokenRoute = FTokenRouteImport.update({
   id: '/f/$token',
   path: '/f/$token',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GTokenRoute = GTokenRouteImport.update({
+  id: '/g/$token',
+  path: '/g/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
@@ -200,6 +220,16 @@ const AppSettingsItemTypesRoute = AppSettingsItemTypesRouteImport.update({
 const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
   id: '/profile',
   path: '/profile',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsRatesRoute = AppSettingsRatesRouteImport.update({
+  id: '/rates',
+  path: '/rates',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsResourcesRoute = AppSettingsResourcesRouteImport.update({
+  id: '/resources',
+  path: '/resources',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
@@ -274,6 +304,7 @@ export interface FileRoutesByFullPath {
   '/forms': typeof AppFormsRoute
   '/inbox': typeof AppInboxRoute
   '/my-todo': typeof AppMyTodoRoute
+  '/portfolio': typeof AppPortfolioRoute
   '/recycle-bin': typeof AppRecycleBinRoute
   '/search': typeof AppSearchRoute
   '/settings': typeof AppSettingsRouteWithChildren
@@ -281,7 +312,9 @@ export interface FileRoutesByFullPath {
   '/starred': typeof AppStarredRoute
   '/stream': typeof AppStreamRoute
   '/timesheets': typeof AppTimesheetsRoute
+  '/workload': typeof AppWorkloadRoute
   '/f/$token': typeof FTokenRoute
+  '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
@@ -291,6 +324,8 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/rates': typeof AppSettingsRatesRoute
+  '/settings/resources': typeof AppSettingsResourcesRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
@@ -316,13 +351,16 @@ export interface FileRoutesByTo {
   '/forms': typeof AppFormsRoute
   '/inbox': typeof AppInboxRoute
   '/my-todo': typeof AppMyTodoRoute
+  '/portfolio': typeof AppPortfolioRoute
   '/recycle-bin': typeof AppRecycleBinRoute
   '/search': typeof AppSearchRoute
   '/shared-with-me': typeof AppSharedWithMeRoute
   '/starred': typeof AppStarredRoute
   '/stream': typeof AppStreamRoute
   '/timesheets': typeof AppTimesheetsRoute
+  '/workload': typeof AppWorkloadRoute
   '/f/$token': typeof FTokenRoute
+  '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
   '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
@@ -333,6 +371,8 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/rates': typeof AppSettingsRatesRoute
+  '/settings/resources': typeof AppSettingsResourcesRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/settings/workflows': typeof AppSettingsWorkflowsRoute
@@ -359,6 +399,7 @@ export interface FileRoutesById {
   '/_app/forms': typeof AppFormsRoute
   '/_app/inbox': typeof AppInboxRoute
   '/_app/my-todo': typeof AppMyTodoRoute
+  '/_app/portfolio': typeof AppPortfolioRoute
   '/_app/recycle-bin': typeof AppRecycleBinRoute
   '/_app/search': typeof AppSearchRoute
   '/_app/settings': typeof AppSettingsRouteWithChildren
@@ -366,7 +407,9 @@ export interface FileRoutesById {
   '/_app/starred': typeof AppStarredRoute
   '/_app/stream': typeof AppStreamRoute
   '/_app/timesheets': typeof AppTimesheetsRoute
+  '/_app/workload': typeof AppWorkloadRoute
   '/f/$token': typeof FTokenRoute
+  '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
@@ -377,6 +420,8 @@ export interface FileRoutesById {
   '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
+  '/_app/settings/rates': typeof AppSettingsRatesRoute
+  '/_app/settings/resources': typeof AppSettingsResourcesRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/_app/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
@@ -405,6 +450,7 @@ export interface FileRouteTypes {
     | '/forms'
     | '/inbox'
     | '/my-todo'
+    | '/portfolio'
     | '/recycle-bin'
     | '/search'
     | '/settings'
@@ -412,7 +458,9 @@ export interface FileRouteTypes {
     | '/starred'
     | '/stream'
     | '/timesheets'
+    | '/workload'
     | '/f/$token'
+    | '/g/$token'
     | '/invitations/$token'
     | '/dashboards/$dashboardId'
     | '/items/$itemId'
@@ -422,6 +470,8 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/item-types'
     | '/settings/profile'
+    | '/settings/rates'
+    | '/settings/resources'
     | '/settings/security'
     | '/settings/users'
     | '/settings/work-schedule'
@@ -447,13 +497,16 @@ export interface FileRouteTypes {
     | '/forms'
     | '/inbox'
     | '/my-todo'
+    | '/portfolio'
     | '/recycle-bin'
     | '/search'
     | '/shared-with-me'
     | '/starred'
     | '/stream'
     | '/timesheets'
+    | '/workload'
     | '/f/$token'
+    | '/g/$token'
     | '/invitations/$token'
     | '/'
     | '/dashboards/$dashboardId'
@@ -464,6 +517,8 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/item-types'
     | '/settings/profile'
+    | '/settings/rates'
+    | '/settings/resources'
     | '/settings/security'
     | '/settings/work-schedule'
     | '/settings/workflows'
@@ -489,6 +544,7 @@ export interface FileRouteTypes {
     | '/_app/forms'
     | '/_app/inbox'
     | '/_app/my-todo'
+    | '/_app/portfolio'
     | '/_app/recycle-bin'
     | '/_app/search'
     | '/_app/settings'
@@ -496,7 +552,9 @@ export interface FileRouteTypes {
     | '/_app/starred'
     | '/_app/stream'
     | '/_app/timesheets'
+    | '/_app/workload'
     | '/f/$token'
+    | '/g/$token'
     | '/invitations/$token'
     | '/_app/'
     | '/_app/dashboards/$dashboardId'
@@ -507,6 +565,8 @@ export interface FileRouteTypes {
     | '/_app/settings/account'
     | '/_app/settings/item-types'
     | '/_app/settings/profile'
+    | '/_app/settings/rates'
+    | '/_app/settings/resources'
     | '/_app/settings/security'
     | '/_app/settings/users'
     | '/_app/settings/work-schedule'
@@ -532,6 +592,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   ResetPasswordRoute: typeof ResetPasswordRoute
   FTokenRoute: typeof FTokenRoute
+  GTokenRoute: typeof GTokenRoute
   InvitationsTokenRoute: typeof InvitationsTokenRoute
 }
 
@@ -600,6 +661,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppMyTodoRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/portfolio': {
+      id: '/_app/portfolio'
+      path: '/portfolio'
+      fullPath: '/portfolio'
+      preLoaderRoute: typeof AppPortfolioRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/recycle-bin': {
       id: '/_app/recycle-bin'
       path: '/recycle-bin'
@@ -649,11 +717,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTimesheetsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/workload': {
+      id: '/_app/workload'
+      path: '/workload'
+      fullPath: '/workload'
+      preLoaderRoute: typeof AppWorkloadRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/f/$token': {
       id: '/f/$token'
       path: '/f/$token'
       fullPath: '/f/$token'
       preLoaderRoute: typeof FTokenRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/g/$token': {
+      id: '/g/$token'
+      path: '/g/$token'
+      fullPath: '/g/$token'
+      preLoaderRoute: typeof GTokenRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/invitations/$token': {
@@ -745,6 +827,20 @@ declare module '@tanstack/react-router' {
       path: '/profile'
       fullPath: '/settings/profile'
       preLoaderRoute: typeof AppSettingsProfileRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/rates': {
+      id: '/_app/settings/rates'
+      path: '/rates'
+      fullPath: '/settings/rates'
+      preLoaderRoute: typeof AppSettingsRatesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/resources': {
+      id: '/_app/settings/resources'
+      path: '/resources'
+      fullPath: '/settings/resources'
+      preLoaderRoute: typeof AppSettingsResourcesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/security': {
@@ -851,6 +947,8 @@ interface AppSettingsRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
+  AppSettingsRatesRoute: typeof AppSettingsRatesRoute
+  AppSettingsResourcesRoute: typeof AppSettingsResourcesRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRouteWithChildren
   AppSettingsWorkScheduleRoute: typeof AppSettingsWorkScheduleRoute
@@ -862,6 +960,8 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
+  AppSettingsRatesRoute: AppSettingsRatesRoute,
+  AppSettingsResourcesRoute: AppSettingsResourcesRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppSettingsUsersRoute: AppSettingsUsersRouteWithChildren,
   AppSettingsWorkScheduleRoute: AppSettingsWorkScheduleRoute,
@@ -877,6 +977,7 @@ interface AppRouteChildren {
   AppFormsRoute: typeof AppFormsRoute
   AppInboxRoute: typeof AppInboxRoute
   AppMyTodoRoute: typeof AppMyTodoRoute
+  AppPortfolioRoute: typeof AppPortfolioRoute
   AppRecycleBinRoute: typeof AppRecycleBinRoute
   AppSearchRoute: typeof AppSearchRoute
   AppSettingsRoute: typeof AppSettingsRouteWithChildren
@@ -884,6 +985,7 @@ interface AppRouteChildren {
   AppStarredRoute: typeof AppStarredRoute
   AppStreamRoute: typeof AppStreamRoute
   AppTimesheetsRoute: typeof AppTimesheetsRoute
+  AppWorkloadRoute: typeof AppWorkloadRoute
   AppIndexRoute: typeof AppIndexRoute
   AppDashboardsDashboardIdRoute: typeof AppDashboardsDashboardIdRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
@@ -905,6 +1007,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppFormsRoute: AppFormsRoute,
   AppInboxRoute: AppInboxRoute,
   AppMyTodoRoute: AppMyTodoRoute,
+  AppPortfolioRoute: AppPortfolioRoute,
   AppRecycleBinRoute: AppRecycleBinRoute,
   AppSearchRoute: AppSearchRoute,
   AppSettingsRoute: AppSettingsRouteWithChildren,
@@ -912,6 +1015,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppStarredRoute: AppStarredRoute,
   AppStreamRoute: AppStreamRoute,
   AppTimesheetsRoute: AppTimesheetsRoute,
+  AppWorkloadRoute: AppWorkloadRoute,
   AppIndexRoute: AppIndexRoute,
   AppDashboardsDashboardIdRoute: AppDashboardsDashboardIdRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
@@ -938,6 +1042,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   ResetPasswordRoute: ResetPasswordRoute,
   FTokenRoute: FTokenRoute,
+  GTokenRoute: GTokenRoute,
   InvitationsTokenRoute: InvitationsTokenRoute,
 }
 export const routeTree = rootRouteImport

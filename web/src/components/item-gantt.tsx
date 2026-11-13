@@ -13,6 +13,8 @@ import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 import { customFieldText, type CustomField } from "@/lib/custom-fields";
 import { fieldColumn } from "@/lib/view-columns";
 
+type Baseline = components["schemas"]["Baseline"];
+type Variance = components["schemas"]["BaselineVariance"];
 type Dependency = components["schemas"]["ItemDependency"];
 type DependencyType = Dependency["type"];
 const linkTypes = { FS: "e2s", SS: "s2s", FF: "e2e", SF: "s2e" } as const;
@@ -45,6 +47,8 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const profile = useProfile();
   const [scale, setScale] = useState<Scale>("day");
   const [selected, setSelected] = useState<string>();
+  const [baselineId, setBaselineId] = useState("");
+  const [naming, setNaming] = useState(false);
   const chart = useRef<IApi>(undefined);
   const chartRegion = useRef<HTMLDivElement>(null);
   // Every level is fetched with the same cache keys as Table, so SSE updates and PATCH responses reach the chart.
@@ -67,7 +71,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
           item.id, new Set([...ancestors, item.id]));
       }
     }
-    visit(items, parentId, new Set());
+    visit(items, undefined, new Set());
     return { tasks: out, byId: lookup };
   }, [items, parents, branches, spaceId, parentId, shownFields, i18n.language]);
   useEffect(() => {
@@ -76,6 +80,18 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   }, [byId, parents]);
 
   const qc = useQueryClient();
+  const baselines = useQuery({ queryKey: ["baselines", parentId], enabled: !!parentId, queryFn: () => api<{ items: Baseline[] }>(`/api/v1/items/${parentId}/baselines`) });
+  const variance = useQuery({ queryKey: ["baseline-variance", baselineId], enabled: !!baselineId,
+    queryFn: () => api<{ items: Variance[] }>(`/api/v1/baselines/${baselineId}/variance`) });
+  const varianceById = useMemo(() => new Map((baselineId ? variance.data?.items ?? [] : []).map((v) => [v.item_id, v])), [baselineId, variance.data]);
+  const shownTasks = useMemo(() => tasks.map((task) => {
+    const v = varianceById.get(String(task.id));
+    if (!v) return task;
+    // shortcut: the free SVAR build has no baseline bars, so the frozen dates are shown as grid columns; upgrade with SVAR PRO.
+    const range = (a?: string | null, b?: string | null) => [a ?? b, b ?? a].filter(Boolean).map((d) => formatDate(d, profile)).join(" – ");
+    return { ...task, baseline: range(v.baseline_start, v.baseline_due),
+      variance: v.due_variance_days == null ? "" : `${v.due_variance_days > 0 ? "+" : ""}${t("views.gantt.varianceValue", { days: v.due_variance_days })}` };
+  }), [tasks, varianceById, t, profile]);
   const itemIds = useMemo(() => [...byId.keys()].sort().slice(0, 1000), [byId]);
   const dependencies = useQuery({
     queryKey: ["gantt-dependencies", itemIds], enabled: itemIds.length > 1,
@@ -221,14 +237,36 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
         {scaleOptions.map((value) => <Button key={value} size="sm" variant={scale === value ? "default" : "outline"}
           aria-pressed={scale === value} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</Button>)}
       </div>
+      {!!parentId && <>
+        <label className="flex items-center gap-1 text-sm">{t("views.gantt.baseline")}
+          <select value={baselineId} onChange={(event) => setBaselineId(event.target.value)} className="rounded border bg-background p-1">
+            <option value="">{t("views.gantt.baselineNone")}</option>
+            {baselines.data?.items.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
+          </select></label>
+        {!readonly && !naming && <Button size="sm" variant="outline" onClick={() => setNaming(true)}>{t("views.gantt.baselineSave")}</Button>}
+        {!readonly && naming && <form className="flex items-end gap-1" onSubmit={(event) => {
+          event.preventDefault();
+          const name = String(new FormData(event.currentTarget).get("name") ?? "");
+          void mutate(async () => {
+            const made = await api<Baseline>(`/api/v1/items/${parentId}/baselines`, { method: "POST", body: JSON.stringify({ name }) });
+            await qc.invalidateQueries({ queryKey: ["baselines", parentId] });
+            setBaselineId(made.id);
+            setNaming(false);
+          });
+        }}>
+          <label className="text-sm">{t("views.gantt.baselineName")}<input name="name" required maxLength={120} className="block rounded border bg-background p-1" /></label>
+          <Button type="submit" size="sm" disabled={busy}>{t("views.gantt.baselineCreate")}</Button>
+        </form>}
+      </>}
       <p className="text-sm text-muted-foreground">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</p>
     </div>
     <div ref={chartRegion} role="application" aria-label={t("views.gantt.label")} tabIndex={0} onKeyDown={keyboard}
       className="gantt-chart h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
       <Theme>
-        <Gantt tasks={tasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
+        <Gantt tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
           highlightTime={(date, unit) => unit === "day" && date.getTime() === today.getTime() ? "gantt-today" : ""} schedule={{ auto: false }} unscheduledTasks
-          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 }))]} />
+          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
+            ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 }))]} />
       </Theme>
     </div>
     {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">

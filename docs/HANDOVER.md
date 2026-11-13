@@ -314,3 +314,12 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Belum:** pin ke versi file (S11.1.5), UAT gate M9 (S9.3.1), alert belum diuji pada Grafana hidup.
 - **Titik hati-hati:** setiap kode yang menambah approver atau memutuskan approval harus memanggil `recordApprovalEvent`; `approval_events` tidak boleh diubah, termasuk oleh migrasi data.
 
+
+- Retest G1b mencakup SMTP test sink, scrape metrik alert dan kedua alur Chrome. `origin/main` masih di `b779d29` saat diperiksa, sehingga CI M9 belum tersedia. Checklist delapan requirement dan kolom bukti UAT ada di laporan G1b.
+
+### Workload M10 (S10.1.1–S10.2.2)
+
+- D-72 mengizinkan enam story ini sebelum G0 lulus. G0 tetap terbuka. Migrasi 00058–00059 menambah kapasitas, cuti, role/skill, booking dan indeks. Rute UI: Settings → Resources, More → Workload.
+- Bekukan acuan pengukuran lokal pada fixture 50 orang / 2.000 task / 4.000 penempatan, 14 hari, p95 182,4 ms. Retest memakai `PMS_PERF=1` dan `TestWorkloadPerformance`. Untuk E2E-PAR-07 gunakan `PMS_TEST_BROWSER=1` dan `TestBrowserWorkload`.
+- Pengguna biasa melihat kapasitas sendiri dan task yang dapat dilihat. Admin mengelola directory dan booking. Permintaan booking role memakai sisa kapasitas anggota role tanpa memilih individu. Role yang beririsan dapat berbagi kapasitas orang yang sama.
+- Pekerjaan berikutnya S10.2.3 planned vs actual. Bukti lokal di TESTING. CI remote, uji pilot, serta verifikasi SSE lintas browser untuk Workload masih terbuka.

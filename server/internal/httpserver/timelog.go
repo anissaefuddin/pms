@@ -112,10 +112,12 @@ func (s *Server) projectTimeSummary(w http.ResponseWriter, r *http.Request) {
 		timeEntryError(w, err)
 		return
 	}
-	var minutes int64
+	var minutes, cost int64
+	// Actual Cost = sum(hours x rate snapshot) of billable entries, in minor units; only an administrator is told.
 	err = tx.QueryRow(ctx, projectTimeScope+`
-SELECT COALESCE(sum(e.minutes),0) FROM scoped_tasks t JOIN time_entries e ON e.item_id=t.item_id
-WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan(&minutes)
+SELECT COALESCE(sum(e.minutes),0),COALESCE(round(sum(CASE WHEN e.billing_type='billable' THEN e.minutes*COALESCE(e.rate_snapshot,0) END)::numeric/60),0)::bigint
+FROM scoped_tasks t JOIN time_entries e ON e.item_id=t.item_id
+WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan(&minutes, &cost)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -127,5 +129,9 @@ WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan
 	if len(spaces) == len(full) {
 		scope = "project"
 	}
-	writeJSON(w, 200, map[string]any{"actual_minutes": minutes, "scope": scope})
+	out := map[string]any{"actual_minutes": minutes, "scope": scope}
+	if actor.Type == policy.Admin {
+		out["actual_cost_minor"] = cost
+	}
+	writeJSON(w, 200, out)
 }

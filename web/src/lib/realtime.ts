@@ -38,6 +38,7 @@ export function useRealtime(enabled: boolean) {
         return;
       }
       void client.invalidateQueries({ queryKey: ["gantt-dependencies"] });
+      void client.invalidateQueries({ queryKey: ["workload"] });
       const itemChanged = event.type !== "comment.created";
       const containers = new Set(event.container_ids ?? []);
       const updatedItems = new Set([id, ...(event.affected_items ?? []).map((item) => item.id)]);

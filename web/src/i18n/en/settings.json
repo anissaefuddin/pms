@@ -1,4 +1,6 @@
 {
+  "resources": "Resources",
+  "profile.sidebar.workload": "Workload",
   "profile.title": "Profile",
   "profile.workspace": "Workspace preferences",
   "profile.appearance": "Appearance",
@@ -239,5 +241,6 @@
   "itemTypes.block.activity": "Activity",
   "itemTypes.cancel": "Cancel",
   "itemTypes.save": "Save",
-  "itemTypes.saved": "Item type saved"
+  "itemTypes.saved": "Item type saved",
+  "rates": "Hourly rates"
 }

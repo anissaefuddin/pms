@@ -6,7 +6,7 @@ import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { api, type CurrentUser } from "@/lib/api";
-import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
+import { formatCustomNumber, type CustomField, type CustomFieldValue } from "@/lib/custom-fields";
 import { formatMinutes } from "@/lib/time-entries";
 import type { Item } from "@/lib/items";
 
@@ -19,7 +19,7 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
   onCancel: () => void;
   onSave: (id: string, value: CustomFieldValue) => Promise<boolean>;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const heading = useId();
   const [editing, setEditing] = useState<string>();
   const returnFocus = useRef<string | undefined>(undefined);
@@ -34,7 +34,7 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
   const budgetFields = fields.filter((field) => field.config?.project_budget);
   const actual = useQuery({
     queryKey: ["time-entries", "summary", item.id], enabled: budgetFields.length > 0,
-    queryFn: ({ signal }) => api<{ actual_minutes: number; scope: "project" | "permitted_entries" }>(
+    queryFn: ({ signal }) => api<{ actual_minutes: number; actual_cost_minor?: number; scope: "project" | "permitted_entries" }>(
       `/api/v1/items/${item.id}/time-summary`, { signal }),
   });
   const pending = queries.some((query) => query.isPending);
@@ -77,6 +77,10 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
               {field.type === "relation" ? <RelationDisplay group={relationOf(field.id)} /> : <CustomFieldDisplay field={field} value={value} people={people} profile={profile} />}
               {field.config?.project_budget && actual.data && <p className="text-sm text-muted-foreground">
                 {t(actual.data.scope === "project" ? "time.actual" : "time.actualVisible", { duration: formatMinutes(actual.data.actual_minutes) })}
+              </p>}
+              {field.config?.project_budget && actual.data?.actual_cost_minor != null && <p className="text-sm text-muted-foreground">
+                {t("time.actualCost", { cost: formatCustomNumber(field, actual.data.actual_cost_minor / 100, i18n.language) })}
+                {typeof value === "number" && value > 0 && ` · ${t("time.budgetUsed", { percent: Math.round(actual.data.actual_cost_minor / 100 / value * 100) })}`}
               </p>}
               {field.config?.project_budget && actual.isError && <FormError message={actual.error.message} />}
             </div>
