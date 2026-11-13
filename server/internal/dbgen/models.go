@@ -504,14 +504,17 @@ type Activity struct {
 }
 
 type Approval struct {
-	ID          pgtype.UUID        `json:"id"`
-	ItemID      pgtype.UUID        `json:"item_id"`
-	Description string             `json:"description"`
-	DueDate     pgtype.Date        `json:"due_date"`
-	CreatedBy   pgtype.UUID        `json:"created_by"`
-	Version     int32              `json:"version"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	ID                 pgtype.UUID        `json:"id"`
+	ItemID             pgtype.UUID        `json:"item_id"`
+	Description        string             `json:"description"`
+	DueDate            pgtype.Date        `json:"due_date"`
+	CreatedBy          pgtype.UUID        `json:"created_by"`
+	Version            int32              `json:"version"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	TriggerStatusID    pgtype.UUID        `json:"trigger_status_id"`
+	OnApprovedStatusID pgtype.UUID        `json:"on_approved_status_id"`
+	OnRejectedStatusID pgtype.UUID        `json:"on_rejected_status_id"`
 }
 
 type ApprovalApprover struct {
@@ -636,6 +639,7 @@ type Item struct {
 	ProgressPercent   pgtype.Int2        `json:"progress_percent"`
 	StatusChangedAt   pgtype.Timestamptz `json:"status_changed_at"`
 	Importance        string             `json:"importance"`
+	TypeID            pgtype.UUID        `json:"type_id"`
 }
 
 type ItemAssignee struct {
@@ -666,10 +670,34 @@ type ItemLocation struct {
 	DeletedRootID pgtype.UUID `json:"deleted_root_id"`
 }
 
+type ItemRelation struct {
+	FieldID    pgtype.UUID        `json:"field_id"`
+	FromItemID pgtype.UUID        `json:"from_item_id"`
+	ToItemID   pgtype.UUID        `json:"to_item_id"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type ItemStar struct {
 	UserID    pgtype.UUID        `json:"user_id"`
 	ItemID    pgtype.UUID        `json:"item_id"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type ItemTypeDef struct {
+	ID                pgtype.UUID        `json:"id"`
+	Key               string             `json:"key"`
+	Name              string             `json:"name"`
+	Icon              string             `json:"icon"`
+	Base              ItemType           `json:"base"`
+	IsBuiltin         bool               `json:"is_builtin"`
+	Active            bool               `json:"active"`
+	AllowedChildren   []pgtype.UUID      `json:"allowed_children"`
+	DefaultWorkflowID pgtype.UUID        `json:"default_workflow_id"`
+	Defaults          []byte             `json:"defaults"`
+	Layout            []byte             `json:"layout"`
+	Version           int32              `json:"version"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 }
 
 type Notification struct {
@@ -791,14 +819,20 @@ type SpaceTemplateRun struct {
 }
 
 type Status struct {
-	ID              pgtype.UUID `json:"id"`
-	WorkflowID      pgtype.UUID `json:"workflow_id"`
-	Name            string      `json:"name"`
-	Grp             StatusGroup `json:"grp"`
-	Color           string      `json:"color"`
-	Position        int32       `json:"position"`
-	AutoAssign      bool        `json:"auto_assign"`
-	LockTransitions bool        `json:"lock_transitions"`
+	ID                  pgtype.UUID   `json:"id"`
+	WorkflowID          pgtype.UUID   `json:"workflow_id"`
+	Name                string        `json:"name"`
+	Grp                 StatusGroup   `json:"grp"`
+	Color               string        `json:"color"`
+	Position            int32         `json:"position"`
+	AutoAssign          bool          `json:"auto_assign"`
+	LockTransitions     bool          `json:"lock_transitions"`
+	RequiredFields      []string      `json:"required_fields"`
+	ActorRule           string        `json:"actor_rule"`
+	RequireChildrenDone bool          `json:"require_children_done"`
+	ApprovalApproverIds []pgtype.UUID `json:"approval_approver_ids"`
+	ApprovedStatusID    pgtype.UUID   `json:"approved_status_id"`
+	RejectedStatusID    pgtype.UUID   `json:"rejected_status_id"`
 }
 
 type StatusTransition struct {
@@ -852,6 +886,7 @@ type User struct {
 	DefaultTaskDurationDays  pgtype.Int4        `json:"default_task_duration_days"`
 	DefaultTaskEffortMinutes pgtype.Int4        `json:"default_task_effort_minutes"`
 	EmailMuted               []string           `json:"email_muted"`
+	Accent                   string             `json:"accent"`
 }
 
 type UserToken struct {

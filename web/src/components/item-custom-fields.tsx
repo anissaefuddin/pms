@@ -1,6 +1,7 @@
 import { useId, useRef, useState } from "react";
 import { useQueries, useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { RelationDisplay, RelationEditor, useItemRelations } from "@/components/relation-field";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
@@ -46,6 +47,8 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
     setEditing(undefined);
   }
 
+  const relations = useItemRelations(item.id, item.version, fields.some((field) => field.type === "relation"));
+  const relationOf = (id: string) => relations.data?.find((group) => group.field_id === id);
   if (!fields.length && !pending && !failed.length) return null;
   return <section aria-labelledby={heading} className="space-y-2 border-t pt-4">
     <h3 id={heading} className="font-medium">{t("items.customFields.title")}</h3>
@@ -60,7 +63,9 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
         const people = field.type === "people" && Array.isArray(value) ? value.map((id) =>
           item.field_people?.[id] ?? { id, name: t("items.customFields.unknownPerson") }) : [];
         return <li className="py-2" key={field.id}>
-          {editable && editingField?.id === field.id ? <CustomFieldEditor field={field} value={value} people={people}
+          {editable && editingField?.id === field.id && field.type === "relation" ? <RelationEditor itemId={item.id} group={relationOf(field.id)} disabled={disabled}
+            onCancel={() => close(field.id)} onSave={async (ids) => { if (await onSave(field.id, ids)) close(field.id); }} />
+          : editable && editingField?.id === field.id ? <CustomFieldEditor field={field} value={value} people={people}
             locale={profile.locale} disabled={disabled} onCancel={() => close(field.id)} onSave={async (next) => {
               if (JSON.stringify(next) === JSON.stringify(value ?? null) || await onSave(field.id, next)) close(field.id);
             }} /> : <div className="flex items-start justify-between gap-2">
@@ -69,13 +74,13 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
                 {field.name}
                 {field.archived_at && <span className="ms-2 text-xs font-normal text-muted-foreground">{t("spaces.customFields.archived")}</span>}
               </p>
-              <CustomFieldDisplay field={field} value={value} people={people} profile={profile} />
+              {field.type === "relation" ? <RelationDisplay group={relationOf(field.id)} /> : <CustomFieldDisplay field={field} value={value} people={people} profile={profile} />}
               {field.config?.project_budget && actual.data && <p className="text-sm text-muted-foreground">
                 {t(actual.data.scope === "project" ? "time.actual" : "time.actualVisible", { duration: formatMinutes(actual.data.actual_minutes) })}
               </p>}
               {field.config?.project_budget && actual.isError && <FormError message={actual.error.message} />}
             </div>
-            {editable && !field.archived_at && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}
+            {editable && !field.archived_at && field.type !== "formula" && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}
               ref={(button) => {
                 if (button && returnFocus.current === field.id) {
                   button.focus();

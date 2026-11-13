@@ -128,6 +128,7 @@ ORDER BY space_id, parent_item_id NULLS FIRST`, visibleIDs, spaceIDs)
 	rows, err = tx.Query(ctx, `
 SELECT i.version, jsonb_strip_nulls(jsonb_build_object(
   'id', i.id, 'seq', i.seq, 'type', i.type, 'title', i.title,
+  'item_type', jsonb_build_object('id', it.id, 'key', it.key, 'name', it.name, 'icon', it.icon, 'layout', it.layout),
   'version', i.version,
   'start_date', i.start_date, 'due_date', i.due_date, 'duration_days', i.duration_days,
   'effort_minutes', i.effort_minutes, 'importance', i.importance,
@@ -166,6 +167,7 @@ SELECT i.version, jsonb_strip_nulls(jsonb_build_object(
    COALESCE(st.grp::text,''), i.due_date
 FROM unnest($1::text[]) WITH ORDINALITY AS page(id,position)
 JOIN items i ON i.id = page.id::uuid JOIN users creator ON creator.id = i.created_by
+JOIN item_type_defs it ON it.id = i.type_id
 LEFT JOIN users owner ON owner.id = i.owner_id
 LEFT JOIN statuses st ON st.id = i.status_id
 LEFT JOIN LATERAL (

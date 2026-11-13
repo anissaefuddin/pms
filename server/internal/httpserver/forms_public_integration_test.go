@@ -206,3 +206,33 @@ func mustJSON(v any) []byte {
 	b, _ := json.Marshal(v)
 	return b
 }
+
+// FORM-04: the wording an author saves is what the public requester's confirmation carries.
+func TestPublicConfirmationUsesTheFormsWording(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	intake, work := f.space("Intake"), f.space("Work")
+	body := map[string]any{"name": "Brand form", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
+		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
+	}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": work}, "title_question": "subject",
+		"email": map[string]any{"sender_name": "Acme Desk", "greeting": "Hi {name}", "message": "We got {title} via {form}.", "closing": "<b>Bye</b>"}}}
+	created := f.call(admin, "POST", "/spaces/"+intake+"/forms", body)
+	f.want(created, 201, "build form")
+	link := f.call(admin, "POST", "/forms/"+created.body["id"].(string)+"/public-link", nil)
+	token := link.body["public_token"].(string)
+	got := f.call(nil, "POST", "/public/forms/"+token+"/submissions", map[string]any{"answers": map[string]any{"subject": "Broken login"}, "requester": map[string]string{"name": "Pat", "email": "pat@example.com"}})
+	f.want(got, 201, "submit")
+	var args map[string]any
+	if err := json.Unmarshal([]byte(f.queryID("SELECT args::text FROM river_job WHERE kind='send_email' AND args->>'template'='request_received'")), &args); err != nil {
+		t.Fatal(err)
+	}
+	for key, want := range map[string]string{"sender_name": "Acme Desk", "greeting": "Hi Pat", "message": "We got Broken login via Brand form.", "closing": "<b>Bye</b>"} {
+		if args[key] != want {
+			t.Errorf("%s = %q, want %q", key, args[key], want)
+		}
+	}
+	// A saved form with a bad logo is refused.
+	body["response"].(map[string]any)["email"] = map[string]any{"logo_url": "http://x.test/l.png"}
+	current := f.call(admin, "GET", "/forms/"+created.body["id"].(string), nil)
+	f.want(f.call(admin, "PUT", "/forms/"+created.body["id"].(string), body, "If-Match", current.header.Get("ETag")), 422, "http logo refused")
+}

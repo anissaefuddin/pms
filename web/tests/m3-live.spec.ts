@@ -98,7 +98,7 @@ test("flow 2: a form built in the UI is shared, filled by a requester, approved,
   await admin.getByRole("radio", { name: /Everyone in the workspace/ }).check();
   await admin.getByRole("button", { name: "Save", exact: true }).click();
   await expect(admin.getByText("Form access updated")).toBeVisible();
-  await expect(row).toContainText(`/requests/${formId}`);
+  await expect(row.getByRole("link", { name: /Open form/ })).toHaveAttribute("href", new RegExp(`/requests/${formId}$`)); // the label replaced the raw URL (UI-05)
 
   // The requester has no access to the destination Space and works in their own context.
   const requester = await as(browser, e.PMS_FIXTURE_M3_REQUESTER!);

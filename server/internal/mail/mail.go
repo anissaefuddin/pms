@@ -12,6 +12,7 @@ import (
 	"net"
 	"net/mail"
 	"net/smtp"
+	neturl "net/url"
 	"strings"
 	"time"
 
@@ -32,6 +33,11 @@ type Args struct {
 	Message  string `json:"message,omitempty"`
 	Subject  string `json:"subject,omitempty"` // report_digest only
 	HTML     string `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
+	// Form confirmation branding (FORM-04, request_received only); every value is escaped when rendered.
+	SenderName string `json:"sender_name,omitempty"`
+	LogoURL    string `json:"logo_url,omitempty"`
+	Greeting   string `json:"greeting,omitempty"`
+	Closing    string `json:"closing,omitempty"`
 }
 
 func (Args) Kind() string { return "send_email" }
@@ -62,6 +68,10 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 	from, err := mail.ParseAddress(sender)
 	if err != nil {
 		return err
+	}
+	if args.Template == "request_received" && args.SenderName != "" {
+		from.Name = args.SenderName // the address stays the instance's own; only the display name is the form's
+		sender = from.String()      // RFC 5322 quoting keeps odd characters in the name from altering the header
 	}
 	address := net.JoinHostPort(w.cfg.SMTPHost, w.cfg.SMTPPort)
 	var auth smtp.Auth
@@ -209,6 +219,9 @@ func render(args Args) (subject, text, html string, err error) {
 	case "request_received", "request_status":
 		// Message is composed by the server from the form name, the item title and the status; it holds no internal data.
 		subject = map[string]string{"request_received": "We received your request", "request_status": "Your request was updated"}[args.Template]
+		if args.Template == "request_received" && (args.Greeting != "" || args.Closing != "" || args.LogoURL != "") {
+			return subject, brandedText(args), brandedHTML(args), nil
+		}
 		return subject, args.Message, fmt.Sprintf(`<p>%s</p>`, htmlpkg.EscapeString(args.Message)), nil
 	case "report_digest":
 		return args.Subject, args.Message, `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827">` + args.HTML + `</body></html>`, nil
@@ -233,4 +246,31 @@ func render(args Args) (subject, text, html string, err error) {
 func (q *Queue) ExportProjectTx(ctx context.Context, tx pgx.Tx, args projectexcel.ExportArgs) error {
 	_, err := q.client.InsertTx(ctx, tx, args, &river.InsertOpts{MaxAttempts: 3})
 	return err
+}
+
+func brandedText(args Args) string {
+	parts := []string{}
+	for _, p := range []string{args.Greeting, args.Message, args.Closing} {
+		if p != "" {
+			parts = append(parts, p)
+		}
+	}
+	return strings.Join(parts, "\n\n")
+}
+
+// brandedHTML renders the confirmation with the form's greeting, message, closing and logo. Every value is escaped; the
+// logo address must be https (checked when the form is saved and again here).
+func brandedHTML(args Args) string {
+	var b strings.Builder
+	b.WriteString(`<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827">`)
+	if u, err := neturl.Parse(args.LogoURL); err == nil && u.Scheme == "https" && u.Host != "" {
+		fmt.Fprintf(&b, `<p><img src="%s" alt="" style="max-height:48px"></p>`, htmlpkg.EscapeString(args.LogoURL))
+	}
+	for _, p := range []string{args.Greeting, args.Message, args.Closing} {
+		if p != "" {
+			fmt.Fprintf(&b, "<p>%s</p>", strings.ReplaceAll(htmlpkg.EscapeString(p), "\n", "<br>"))
+		}
+	}
+	b.WriteString("</body></html>")
+	return b.String()
 }

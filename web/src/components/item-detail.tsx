@@ -23,6 +23,7 @@ import { ItemEffort } from "@/components/item-effort";
 import { ItemLocations } from "@/components/item-locations";
 import { ItemApprovals } from "@/components/item-approvals";
 import { ItemActivity } from "@/components/item-activity";
+import { ItemBlocks } from "@/components/item-blocks";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
 import { ItemProgress } from "@/components/project-progress";
@@ -221,6 +222,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
         <Input ref={titleInput} name="title" defaultValue={item.title} onChange={() => beginDraft("title")} maxLength={500} required /></label>
       <Button disabled={busy || stale}>{t("items.save")}</Button>
     </form>}
+    <ItemBlocks item={item} blocks={{
+      status: <>
     {canStatus ? <div className="space-y-1">
       <label htmlFor={statusInput}>{t("items.status")}</label>
       <select id={statusInput} className="block w-full rounded border bg-background p-2" value={item.status?.id ?? ""}
@@ -230,6 +233,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
         {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
       </select>
     </div> : <dl><dt>{t("items.status")}</dt><dd>{item.status?.name}</dd></dl>}
+      </>,
+      importance: <>
     {canEdit ? <div className="space-y-1">
       <label htmlFor="item-importance">{t("items.importance.label")}</label>
       <select id="item-importance" className="block w-full rounded border bg-background p-2" value={item.importance ?? "normal"}
@@ -237,6 +242,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
         {importanceLevels.map((level) => <option key={level} value={level}>{t(`items.importance.${level}`)}</option>)}
       </select>
     </div> : <dl><dt>{t("items.importance.label")}</dt><dd>{t(`items.importance.${item.importance ?? "normal"}`)}</dd></dl>}
+      </>,
+      dates: <>
     <ItemProgress item={item} editable={canEdit} disabled={busy || stale}
       onEdit={() => beginDraft("progress_percent")} onSave={(update) => save(update)} />
     {canEdit ? <form className="space-y-2" onSubmit={saveDates}>
@@ -247,6 +254,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
       {item.start_date && <div><dt>{t("items.start")}</dt><dd>{formatDate(item.start_date, me)}</dd></div>}
       {item.due_date && <div><dt>{t("items.due")}</dt><dd>{formatDate(item.due_date, me)}</dd></div>}
     </dl>}
+      </>,
+      assignees: <>
     {canEdit ? <div className="space-y-2">
       <ItemUserPicker multiple label={t("items.assignees")} selected={assignees} onChange={(people) => {
         beginDraft("assignee_ids");
@@ -254,10 +263,16 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
       }} />
       <Button variant="outline" disabled={busy || stale} onClick={() => void save({ assignee_ids: assignees.map((person) => person.id) })}>{t("items.save")}</Button>
     </div> : <section><h3>{t("items.assignees")}</h3><p>{item.assignees.map((person) => person.name).join(", ")}</p></section>}
+      </>,
+      effort: <>
     <ItemEffort item={item} editable={canEdit} disabled={busy || stale}
       onEdit={() => beginDraft("effort_minutes")}
       onSave={(update) => save(update, false, "effort_minutes")} />
+      </>,
+      locations: <>
     <ItemLocations item={item} editable={canEdit} disabled={busy || stale} />
+      </>,
+      custom: <>
     <ItemCustomFields item={item} profile={me} editable={canEdit} disabled={busy || stale}
       onEdit={() => {
         delete draftVersions.current.fields;
@@ -265,10 +280,14 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
       }}
       onCancel={() => { delete draftVersions.current.fields; }}
       onSave={(fieldId, value) => save({ fields: { [fieldId]: value } })} />
+      </>,
+      description: <>
     <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
       <ItemDescription description={item.description} editable={canEdit && !stale} busy={busy} save={save}
         onEdit={() => beginDraft("description")} />
     </Suspense>
+      </>,
+      subitems: <>
     <section className="space-y-2 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-medium">{t("items.children")}{children.data ? ` · ${children.data.length}` : ""}</h3>
@@ -284,10 +303,20 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
         </Button>
       </li>)}</ul>
     </section>
+      </>,
+      comments: <>
     <Suspense fallback={null}><ItemComments item={item} userId={me.id} /></Suspense>
+      </>,
+      approvals: <>
     <ItemApprovals item={item} userId={me.id} />
+      </>,
+      activity: <>
     <ItemActivity item={item} />
+      </>,
+      attachments: <>
     <ItemAttachments item={item} userId={me.id} />
+      </>,
+    }} />
     {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
     {exporting && <ProjectExcelExport open={exporting} onOpenChange={setExporting} item={item} />}
     <SaveBlueprintDialog open={savingBlueprint} onOpenChange={setSavingBlueprint} itemID={item.id} title={item.title} />

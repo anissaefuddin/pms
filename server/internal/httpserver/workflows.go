@@ -12,6 +12,7 @@ import (
 	"unicode"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -21,7 +22,7 @@ import (
 // workflowJSON renders one workflow row `w` in the shape of the OpenAPI Workflow schema.
 const workflowJSON = `jsonb_build_object('id',w.id,'name',w.name,'is_default',w.is_default,
  'statuses',COALESCE((SELECT jsonb_agg(jsonb_build_object('id',s.id,'name',s.name,'color',s.color,'group',s.grp,
-   'auto_assign',s.auto_assign,'lock_transitions',s.lock_transitions,
+   'auto_assign',s.auto_assign,'lock_transitions',s.lock_transitions,'required_fields',s.required_fields,'actor_rule',s.actor_rule,'require_children_done',s.require_children_done,'approval_approver_ids',s.approval_approver_ids,'approved_status_id',s.approved_status_id,'rejected_status_id',s.rejected_status_id,
    'allowed_next',COALESCE((SELECT jsonb_agg(t.to_status_id ORDER BY t.to_status_id) FROM status_transitions t WHERE t.from_status_id=s.id),'[]'::jsonb))
    ORDER BY s.position) FROM statuses s WHERE s.workflow_id=w.id),'[]'::jsonb))`
 
@@ -274,12 +275,18 @@ FROM workflows w WHERE w.id=$1`, id).Scan(&isDefault, &inUse); err != nil {
 }
 
 type statusFields struct {
-	Name            *string      `json:"name"`
-	Group           *string      `json:"group"`
-	Color           *string      `json:"color"`
-	AutoAssign      *bool        `json:"auto_assign"`
-	LockTransitions *bool        `json:"lock_transitions"`
-	AllowedNext     *[]uuid.UUID `json:"allowed_next"`
+	Name            *string         `json:"name"`
+	Group           *string         `json:"group"`
+	Color           *string         `json:"color"`
+	AutoAssign      *bool           `json:"auto_assign"`
+	LockTransitions *bool           `json:"lock_transitions"`
+	AllowedNext     *[]uuid.UUID    `json:"allowed_next"`
+	RequiredFields  *[]string       `json:"required_fields"`
+	ActorRule       *string         `json:"actor_rule"`
+	ChildrenDone    *bool           `json:"require_children_done"`
+	ApprovalBy      *[]uuid.UUID    `json:"approval_approver_ids"`
+	ApprovedStatus  json.RawMessage `json:"approved_status_id"`
+	RejectedStatus  json.RawMessage `json:"rejected_status_id"`
 }
 
 func (s *Server) createStatus(w http.ResponseWriter, r *http.Request) {
@@ -334,7 +341,7 @@ func (s *Server) updateStatus(w http.ResponseWriter, r *http.Request) {
 		if err != nil {
 			return statusID, err
 		}
-		if in.Name == nil && in.Group == nil && in.Color == nil && in.AutoAssign == nil && in.LockTransitions == nil && in.AllowedNext == nil {
+		if in.Name == nil && in.Group == nil && in.Color == nil && in.AutoAssign == nil && in.LockTransitions == nil && in.AllowedNext == nil && in.RequiredFields == nil && in.ActorRule == nil && in.ChildrenDone == nil && in.ApprovalBy == nil && in.ApprovedStatus == nil && in.RejectedStatus == nil {
 			return statusID, wfProblem{422, "validation_failed", "at least one field is required"}
 		}
 		workflow, oldGroup, err := lockStatusWorkflow(ctx, tx, statusID)
@@ -365,6 +372,33 @@ func (s *Server) updateStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		if in.LockTransitions != nil {
 			if _, err := tx.Exec(ctx, "UPDATE statuses SET lock_transitions=$2 WHERE id=$1", statusID, *in.LockTransitions); err != nil {
+				return workflow, err
+			}
+		}
+		if in.RequiredFields != nil {
+			unique := slices.Compact(slices.Sorted(slices.Values(*in.RequiredFields)))
+			if len(unique) > 20 || slices.ContainsFunc(unique, func(k string) bool { return !items.ValidGuardField(k) }) {
+				return workflow, wfProblem{422, "validation_failed", "required_fields may list due_date, start_date, assignees, description, effort_minutes or custom field ids (at most 20)"}
+			}
+			if _, err := tx.Exec(ctx, "UPDATE statuses SET required_fields=$2 WHERE id=$1", statusID, unique); err != nil {
+				return workflow, err
+			}
+		}
+		if in.ApprovalBy != nil || in.ApprovedStatus != nil || in.RejectedStatus != nil {
+			if err := setStatusApproval(ctx, tx, statusID, workflow, in); err != nil {
+				return workflow, err
+			}
+		}
+		if in.ChildrenDone != nil {
+			if _, err := tx.Exec(ctx, "UPDATE statuses SET require_children_done=$2 WHERE id=$1", statusID, *in.ChildrenDone); err != nil {
+				return workflow, err
+			}
+		}
+		if in.ActorRule != nil {
+			if !slices.Contains([]string{"anyone", "assignee", "admin"}, *in.ActorRule) {
+				return workflow, wfProblem{422, "validation_failed", "actor_rule must be anyone, assignee or admin"}
+			}
+			if _, err := tx.Exec(ctx, "UPDATE statuses SET actor_rule=$2 WHERE id=$1", statusID, *in.ActorRule); err != nil {
 				return workflow, err
 			}
 		}
@@ -491,4 +525,48 @@ func (s *Server) reorderStatuses(w http.ResponseWriter, r *http.Request) {
 		_, err = tx.Exec(ctx, `UPDATE statuses SET position=t.ord-1 FROM unnest($1::uuid[]) WITH ORDINALITY AS t(id,ord) WHERE statuses.id=t.id`, in.StatusIDs)
 		return id, err
 	})
+}
+
+// setStatusApproval stores the approval a status starts (WF-03B): up to 20 active approvers and, optionally, the statuses of
+// the same workflow an Approved or Rejected result moves the item to.
+func setStatusApproval(ctx context.Context, tx pgx.Tx, statusID, workflow uuid.UUID, in statusFields) error {
+	bad := func(message string) error { return wfProblem{422, "validation_failed", message} }
+	if in.ApprovalBy != nil {
+		ids := slices.Compact(slices.SortedFunc(slices.Values(*in.ApprovalBy), func(a, b uuid.UUID) int { return strings.Compare(a.String(), b.String()) }))
+		if len(ids) > 20 {
+			return bad("a status can name at most 20 approvers")
+		}
+		var active int
+		if err := tx.QueryRow(ctx, "SELECT count(*) FROM users WHERE status='active' AND id=ANY($1)", ids).Scan(&active); err != nil {
+			return err
+		}
+		if active != len(ids) {
+			return bad("every approver must be an active user")
+		}
+		if _, err := tx.Exec(ctx, "UPDATE statuses SET approval_approver_ids=$2 WHERE id=$1", statusID, ids); err != nil {
+			return err
+		}
+	}
+	for column, raw := range map[string]json.RawMessage{"approved_status_id": in.ApprovedStatus, "rejected_status_id": in.RejectedStatus} {
+		if raw == nil {
+			continue
+		}
+		var target *uuid.UUID
+		if json.Unmarshal(raw, &target) != nil {
+			return bad(column + " must be a status id or null")
+		}
+		if target != nil {
+			var ok bool
+			if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM statuses WHERE id=$1 AND workflow_id=$2 AND id<>$3)", *target, workflow, statusID).Scan(&ok); err != nil {
+				return err
+			}
+			if !ok {
+				return bad(column + " must be another status of the same workflow")
+			}
+		}
+		if _, err := tx.Exec(ctx, "UPDATE statuses SET "+column+"=$2 WHERE id=$1", statusID, target); err != nil {
+			return err
+		}
+	}
+	return nil
 }

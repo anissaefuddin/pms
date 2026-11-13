@@ -8,6 +8,7 @@ import { useProfile } from "@/lib/profile";
 import { moveId, statusColorTokens, statusDotClass, statusGroups, type Workflow, type WorkflowStatus } from "@/lib/status-colors";
 import { FormError } from "@/components/auth/form-error";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { StatusGuardEditor } from "@/components/status-guard-editor";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -199,6 +200,7 @@ function StatusRow({ status, siblings, admin, busy, first, last, onPatch, onMove
       <Button type="button" variant="outline" size="sm" disabled={last} aria-label={label(t("settings.workflows.moveDown"))} onClick={() => onMove(1)}>↓</Button>
       {admin && <Button type="button" variant="ghost" size="sm" aria-label={label(t("settings.workflows.deleteStatus"))} onClick={onRemove}>×</Button>}
     </fieldset>
+    {admin && <StatusGuardEditor status={status} siblings={siblings} busy={busy} onPatch={onPatch} />}
     {status.lock_transitions && <fieldset disabled={!admin || busy} className="flex flex-wrap gap-3 pl-6">
       <legend className="mb-1 text-xs font-medium text-muted-foreground">{t("settings.workflows.allowedNext")}: {status.name}</legend>
       {siblings.filter((s) => s.id !== status.id).map((s) => <label key={s.id} className="flex items-center gap-1 text-sm">

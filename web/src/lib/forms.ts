@@ -68,11 +68,20 @@ export type FormDraft = {
   approval: boolean;
   approvers: { id: string; name: string }[];
   approval_description: string;
+  /** FORM-09: custom item type, answer-based routes, and answer to custom field mapping. */
+  type_key: string;
+  routes: { question: string; value: string; type_key: string }[];
+  field_map: Record<string, string>;
+  /** FORM-04: wording of the confirmation sent to public requesters. */
+  email: { sender_name: string; logo_url: string; greeting: string; message: string; closing: string };
 };
+
+export const emptyEmail = { sender_name: "", logo_url: "", greeting: "", message: "", closing: "" };
 
 export const emptyDraft = (spaceId: string): FormDraft => ({
   name: "", description: "", pages: [{ title: "", elements: [] }], item_type: "task", status_id: "", space_id: spaceId, parent_item_id: "",
   assignees: [], title_question: "", approval: false, approvers: [], approval_description: "",
+  type_key: "", routes: [], field_map: {}, email: { ...emptyEmail },
 });
 
 /** Only the properties a kind understands are sent, so switching nothing lingers (the server rejects strays). */
@@ -87,6 +96,7 @@ function cleanElement(e: FormElement): FormElement {
   }
   if (e.kind === "attachment") out.max_files = e.max_files;
   if (e.kind === "assignee" && e.multiple) out.multiple = true;
+  if (e.show_if) out.show_if = e.show_if.op === "answered" || e.show_if.op === "not_answered" ? { key: e.show_if.key, op: e.show_if.op } : e.show_if;
   return out;
 }
 
@@ -99,6 +109,13 @@ export function buildInput(d: FormDraft): FormInput {
     title_question: d.title_question || null,
     approval: d.approval ? { approver_ids: d.approvers.map((a) => a.id), description: d.approval_description || undefined } : null,
   };
+  // FORM-04 and FORM-09 settings are sent only when used, so a plain form keeps its old request body.
+  if (d.type_key) response.type_key = d.type_key;
+  const routes = d.routes.filter((r) => r.question && r.type_key).map((r) => ({ when: { key: r.question, op: "equals" as const, value: r.value }, type_key: r.type_key }));
+  if (routes.length) response.routes = routes;
+  const fieldMap = Object.fromEntries(Object.entries(d.field_map).filter(([, id]) => id));
+  if (Object.keys(fieldMap).length) response.field_map = fieldMap;
+  if (Object.values(d.email).some(Boolean)) response.email = d.email;
   return {
     name: d.name.trim(), description: d.description,
     definition: { pages: d.pages.map((p) => ({ title: p.title, elements: p.elements.map(cleanElement) })) },
@@ -114,6 +131,10 @@ export function draftFromForm(f: Form): FormDraft {
     item_type: r.item_type, status_id: r.status_id ?? "", space_id: r.location.space_id, parent_item_id: r.location.parent_item_id ?? "",
     assignees: (r.assignee_ids ?? []).map((id) => ({ id, name: id })), title_question: r.title_question ?? "",
     approval: !!r.approval, approvers: (r.approval?.approver_ids ?? []).map((id) => ({ id, name: id })), approval_description: r.approval?.description ?? "",
+    type_key: r.type_key ?? "",
+    routes: (r.routes ?? []).map((route) => ({ question: route.when.key, value: route.when.value ?? "", type_key: route.type_key })),
+    field_map: { ...(r.field_map ?? {}) },
+    email: { ...emptyEmail, ...(r.email ?? {}) },
   };
 }
 
@@ -131,9 +152,10 @@ export function errorTarget(field: string): ErrorTarget {
   return { area: "field", name: field };
 }
 
-const ELEMENT_PROPS = new Set(["label", "help", "options", "min", "max", "max_files"]);
+const ELEMENT_PROPS = new Set(["label", "help", "options", "min", "max", "max_files", "show_if"]);
 const FIELD_IDS = new Set(["name", "description", "response.item_type", "response.status_id", "response.location.space_id", "response.location.parent_item_id",
-  "response.assignee_ids", "response.title_question", "response.approval.approver_ids", "response.approval.description"]);
+  "response.assignee_ids", "response.title_question", "response.approval.approver_ids", "response.approval.description", "response.type_key", "response.field_map", "response.routes",
+  "response.email.sender_name", "response.email.logo_url", "response.email.greeting", "response.email.message", "response.email.closing"]);
 
 /**
  * Splits errors into those shown beside a control (keyed by control id: `e<page>-<element>-<prop>`, `p<page>-title`
@@ -187,10 +209,37 @@ export function buildSubmission(definition: FormDefinition, answers: Answers, fi
 }
 
 /** Cheap checks before sending; the server stays authoritative. */
+export type FormCondition = NonNullable<FormElement["show_if"]>;
+
+/** Mirror of the server's condition check (FORM-07): the same rules decide what a requester sees and what the server keeps. */
+export function conditionHolds(c: FormCondition, answers: Answers, shown: Set<string>): boolean {
+  const raw = shown.has(c.key) ? answers[c.key] : undefined;
+  const answered = !isEmpty(raw);
+  if (c.op === "answered") return answered;
+  if (c.op === "not_answered") return !answered;
+  if (!answered) return c.op === "not_equals";
+  if (Array.isArray(raw)) return raw.includes(c.value ?? "") === (c.op === "contains");
+  const text = String(raw);
+  if (c.op === "contains") return text.toLowerCase().includes((c.value ?? "").toLowerCase());
+  const numeric = text.trim() !== "" && Number.isFinite(Number(text)) && Number.isFinite(Number(c.value));
+  const same = numeric ? Number(text) === Number(c.value) : text === c.value;
+  return same === (c.op === "equals");
+}
+
+/** Keys of the questions and sections that are visible for the answers given so far, in form order. */
+export function visibleKeys(definition: FormDefinition, answers: Answers): Set<string> {
+  const shown = new Set<string>();
+  for (const e of definition.pages.flatMap((page) => page.elements)) {
+    if (!e.show_if || conditionHolds(e.show_if, answers, shown)) shown.add(e.key);
+  }
+  return shown;
+}
+
 export function validateAnswers(definition: FormDefinition, answers: Answers, files: Files): Record<string, FieldProblem> {
   const out: Record<string, FieldProblem> = {};
+  const shown = visibleKeys(definition, answers);
   for (const e of definition.pages.flatMap((page) => page.elements)) {
-    if (e.kind === "section") continue;
+    if (e.kind === "section" || !shown.has(e.key)) continue;
     const value = answers[e.key];
     const empty = e.kind === "attachment" ? !files[e.key]?.length : isEmpty(value);
     if (empty) { if (e.required) out[e.key] = { code: "required" }; continue; }

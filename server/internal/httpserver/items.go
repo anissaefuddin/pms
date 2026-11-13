@@ -183,6 +183,7 @@ func writeItem(w http.ResponseWriter, status int, item items.Detail, err error) 
 func writeItemError(w http.ResponseWriter, err error) {
 	var invalid items.Invalid
 	var field items.InvalidField
+	var guard items.GuardError
 	switch {
 	case errors.Is(err, items.ErrNotFound):
 		writeError(w, http.StatusNotFound, "not found")
@@ -190,6 +191,18 @@ func writeItemError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusForbidden, "item operation forbidden")
 	case errors.Is(err, items.ErrConflict):
 		writeError(w, http.StatusConflict, "the Item changed; reload and try again")
+	case errors.As(err, &guard):
+		problems := make([]map[string]string, len(guard.Problems))
+		for i, p := range guard.Problems {
+			problems[i] = map[string]string{"field": p.Field, "message": p.Message}
+		}
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_ = json.NewEncoder(w).Encode(map[string]any{
+			"type": "about:blank", "title": http.StatusText(http.StatusUnprocessableEntity),
+			"status": http.StatusUnprocessableEntity, "code": "transition_blocked",
+			"detail": guard.Error(), "request_id": w.Header().Get("X-Request-ID"), "errors": problems,
+		})
 	case errors.As(err, &field):
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusUnprocessableEntity)

@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"maps"
+	"slices"
 	"sort"
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
@@ -44,8 +46,17 @@ func create(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[strin
 
 func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[string]json.RawMessage, custom json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	var kind string
-	if json.Unmarshal(fields["type"], &kind) != nil || (kind != "project" && kind != "folder" && kind != "task") {
-		return Detail{}, Invalid("type must be project, folder or task")
+	itemType, err := resolveCreateType(ctx, tx, fields, &kind)
+	if err != nil {
+		return Detail{}, err
+	}
+	if len(itemType.Defaults) > 0 { // S8.1.2: a type's defaults fill what the caller left out, on every create path
+		fields = maps.Clone(fields)
+		for key, value := range itemType.Defaults {
+			if _, given := fields[key]; !given && key != "inherit" {
+				fields[key], _ = json.Marshal(value)
+			}
+		}
 	}
 	if _, ok := fields["title"]; !ok {
 		return Detail{}, InvalidField{"title", "title is required"}
@@ -65,6 +76,9 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 		if json.Unmarshal(raw, &workflowID) != nil || workflowID == nil || kind == "task" {
 			return Detail{}, Invalid("default_workflow_id requires a project or folder and a workflow UUID")
 		}
+	} else if itemType.DefaultWorkflowID != nil && kind != "task" {
+		parsed := uuid.MustParse(*itemType.DefaultWorkflowID)
+		workflowID = &parsed
 	}
 	var view *string
 	if raw, ok := fields["default_view_type"]; ok {
@@ -104,14 +118,24 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 		var resolved uuid.UUID
 		if loc.ParentID != nil {
 			key[1] = *loc.ParentID
-			var parentKind string
+			var parentKind, parentTypeName, parentImportance string
+			var allowed []uuid.UUID
 			if err := tx.QueryRow(ctx, `
-SELECT i.type::text, COALESCE(i.default_workflow_id,s.workflow_id,(SELECT id FROM workflows WHERE is_default))
-FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1`, *loc.ParentID).Scan(&parentKind, &resolved); err != nil {
+SELECT i.type::text, COALESCE(i.default_workflow_id,s.workflow_id,(SELECT id FROM workflows WHERE is_default)), pt.name, pt.allowed_children, i.importance
+FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1`, *loc.ParentID).Scan(&parentKind, &resolved, &parentTypeName, &allowed, &parentImportance); err != nil {
 				return Detail{}, err
+			}
+			if inherit, _ := itemType.Defaults["inherit"].([]any); slices.Contains(inherit, any("importance")) && parentImportance != "" {
+				if _, given := fields["importance"]; !given {
+					fields = maps.Clone(fields)
+					fields["importance"], _ = json.Marshal(parentImportance)
+				}
 			}
 			if parentKind == "task" && kind != "task" {
 				return Detail{}, Invalid("a task can contain only tasks")
+			}
+			if len(allowed) > 0 && !slices.Contains(allowed, uuid.MustParse(itemType.ID)) { // S8.1.3
+				return Detail{}, Invalid("a " + itemType.Name + " cannot be placed inside a " + parentTypeName)
 			}
 		} else if err := tx.QueryRow(ctx, "SELECT id FROM workflows WHERE is_default").Scan(&resolved); err != nil {
 			return Detail{}, err
@@ -137,7 +161,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1`, *loc.Paren
 	}
 	var status uuid.UUID
 	var completed bool
-	err := tx.QueryRow(ctx, "SELECT id, grp='completed' FROM statuses WHERE workflow_id=$1 ORDER BY position LIMIT 1", inheritedWorkflow).Scan(&status, &completed)
+	err = tx.QueryRow(ctx, "SELECT id, grp='completed' FROM statuses WHERE workflow_id=$1 ORDER BY position LIMIT 1", inheritedWorkflow).Scan(&status, &completed)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return Detail{}, Invalid("workflow has no statuses")
 	}
@@ -149,15 +173,15 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1`, *loc.Paren
 		return Detail{}, err
 	}
 	if _, err := tx.Exec(ctx, `
-INSERT INTO items(id,type,title,status_id,created_by,default_workflow_id,default_view_type,completed_at)
-VALUES($1,$2::item_type,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN now() END)`,
-		id, kind, status, actor.ID, workflowID, view, completed); err != nil {
+INSERT INTO items(id,type,type_id,title,status_id,created_by,default_workflow_id,default_view_type,completed_at)
+VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN now() END)`,
+		id, kind, status, actor.ID, workflowID, view, completed, itemType.ID); err != nil {
 		return Detail{}, err
 	}
 	keys := make([]string, 0, len(fields))
 	for key := range fields {
 		switch key {
-		case "type", "locations", "shares", "default_workflow_id", "default_view_type":
+		case "type", "type_key", "locations", "shares", "default_workflow_id", "default_view_type":
 		default:
 			keys = append(keys, key)
 		}
@@ -239,4 +263,37 @@ VALUES('item',$1,$2::principal_type,$3,$4::share_role,$5::uuid)`,
 		}
 	}
 	return nil
+}
+
+// resolveCreateType finds the item type of a new item: `type_key` names any active type, otherwise `type` names a built-in
+// class. kind receives the class, which still drives every behaviour.
+func resolveCreateType(ctx context.Context, tx pgx.Tx, fields map[string]json.RawMessage, kind *string) (ItemType, error) {
+	if raw, ok := fields["type_key"]; ok {
+		var key string
+		if json.Unmarshal(raw, &key) != nil || key == "" {
+			return ItemType{}, InvalidField{"type_key", "type_key must be an item type key"}
+		}
+		t, err := getItemType(ctx, tx, "key=$1", key)
+		if errors.Is(err, ErrNotFound) {
+			return ItemType{}, InvalidField{"type_key", "unknown item type"}
+		}
+		if err != nil {
+			return ItemType{}, err
+		}
+		if !t.Active {
+			return ItemType{}, InvalidField{"type_key", "this item type is inactive"}
+		}
+		if raw, ok := fields["type"]; ok {
+			var given string
+			if json.Unmarshal(raw, &given) != nil || given != t.Base {
+				return ItemType{}, InvalidField{"type", "type does not match the class of the item type"}
+			}
+		}
+		*kind = t.Base
+		return t, nil
+	}
+	if json.Unmarshal(fields["type"], kind) != nil || (*kind != "project" && *kind != "folder" && *kind != "task") {
+		return ItemType{}, Invalid("type must be project, folder or task")
+	}
+	return getItemType(ctx, tx, "is_builtin AND key=$1", *kind)
 }

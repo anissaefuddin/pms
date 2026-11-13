@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"slices"
 
 	"github.com/anissaefuddin/pms/server/internal/forms"
 	"github.com/anissaefuddin/pms/server/internal/items"
@@ -345,6 +346,9 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			return forms.Error{Field: "response.status_id", Message: "the status must belong to the workflow of the destination"}
 		}
 	}
+	if err := checkRouting(ctx, tx, resp); err != nil {
+		return err
+	}
 	people := append([]uuid.UUID{}, resp.AssigneeIDs...)
 	field := "response.assignee_ids"
 	if resp.Approval != nil {
@@ -402,3 +406,39 @@ func uniqueIDs(ids []uuid.UUID) []uuid.UUID {
 	}
 	return out
 }
+
+// checkRouting (FORM-09): every item type a form can create is active and of the class the form creates, and every
+// mapped custom field lives in the destination Space and can take that kind of answer.
+func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
+	keys := []string{}
+	if resp.TypeKey != nil {
+		keys = append(keys, *resp.TypeKey)
+	}
+	for _, route := range resp.Routes {
+		keys = append(keys, route.TypeKey)
+	}
+	for _, key := range keys {
+		var base string
+		var active bool
+		err := tx.QueryRow(ctx, "SELECT base::text, active FROM item_type_defs WHERE key=$1", key).Scan(&base, &active)
+		if errors.Is(err, pgx.ErrNoRows) || (err == nil && (!active || base != resp.ItemType)) {
+			return forms.Error{Field: "response.type_key", Message: "item type " + key + " must be active and of the class " + resp.ItemType}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	for _, id := range resp.FieldMap {
+		var kind string
+		err := tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1 AND space_id=$2 AND archived_at IS NULL", id, resp.Location.SpaceID).Scan(&kind)
+		if errors.Is(err, pgx.ErrNoRows) || (err == nil && !slices.Contains(mappableFieldTypes, kind)) {
+			return forms.Error{Field: "response.field_map", Message: "map answers to text, number, date or select fields of the destination Space"}
+		}
+		if err != nil {
+			return err
+		}
+	}
+	return nil
+}
+
+var mappableFieldTypes = []string{"text", "number", "date", "single_select", "multi_select"}

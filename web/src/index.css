@@ -207,6 +207,14 @@
   --brand-primary-subtle: #0C4A6E;
 }
 
+/* Color themes (SET-06): a per-user accent. Each pair keeps white (light) or near-black (dark) text at 4.5:1 or better. */
+[data-accent="teal"] { --brand-primary: #0F766E; --brand-primary-hover: #115E59; --brand-primary-subtle: #F0FDFA; }
+[data-accent="violet"] { --brand-primary: #6D28D9; --brand-primary-hover: #5B21B6; --brand-primary-subtle: #F5F3FF; }
+[data-accent="green"] { --brand-primary: #15803D; --brand-primary-hover: #166534; --brand-primary-subtle: #F0FDF4; }
+.dark[data-accent="teal"] { --brand-primary: #5EEAD4; --brand-primary-hover: #99F6E4; --brand-primary-subtle: #134E4A; }
+.dark[data-accent="violet"] { --brand-primary: #C4B5FD; --brand-primary-hover: #DDD6FE; --brand-primary-subtle: #4C1D95; }
+.dark[data-accent="green"] { --brand-primary: #86EFAC; --brand-primary-hover: #BBF7D0; --brand-primary-subtle: #14532D; }
+
 .rdp-root {
   --rdp-accent-color: var(--primary);
   --rdp-accent-background-color: var(--brand-primary-subtle);

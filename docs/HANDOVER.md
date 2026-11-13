@@ -287,3 +287,11 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - Lanjutkan pemetaan cakupan otorisasi per endpoint, verifikasi Gantt dan SSE pada lingkungan pilot, jalankan GitHub Actions pada revisi kandidat, dan isi [UAT.md](UAT.md) bersama pengguna pilot. Triase hasil sebelum membekukan kontrak dan menandai kandidat rilis.
 - Log alur browser juga mencatat HTTP 500 singkat pada GET /me, daftar view dan time entry. Semua skenario lulus. Konfirmasi apakah request dibatalkan saat navigasi atau ada galat yang terlihat pengguna sebelum menutup stabilisasi.
 - Trivy pada image hasil patch melaporkan 0 HIGH/CRITICAL. Regresi Go penuh awal mencapai timeout 10 menit. Cek hasil rerun akhir (timeout 30 menit) di `/tmp/pms-ga-full-final.log` jika masih tersedia.
+
+### M8 konfigurasi kerja (13 Nov 2026)
+
+- **Berjalan di backend dan UI dasar:** tipe item kustom, aturan anak dan default, layout panel, field relasi, formula, guard transisi, validasi subitem, approval otomatis saat masuk status, form kondisional, routing form ke tipe dan field, email konfirmasi form, tema warna. Migrasi baru 00046 sampai 00052; perbarui instance pilot dengan semuanya sebelum memakai image baru.
+- **Dimulai walau Gate G0 belum lulus** atas perintah pemilik (D-60). Blocker G0 tidak tertutup.
+- **Belum dikerjakan:** menu "+" per Space dan menu blueprint (SPC-14), tipe item di Table, Board, filter, pencarian, ekspor Excel dan report, default untuk impor Excel, default berdasar custom field, tampilan formula di Table dengan filter dan sort, routing form ke Blueprint, E2E live untuk form kondisional (E2E-PAR-05), pesan penolakan guard di Board (tampil di panel item), UAT manusia per requirement. Daftar lengkap di laporan G1a.
+- **Titik hati-hati:** `items.OnStatusEntered` diisi oleh `init()` di paket httpserver; paket lain tidak boleh mengganti hook itu. Tabel tipe bernama `item_type_defs` (bukan `item_types`) karena sqlc. Formula merujuk field dengan nama. Item yang dipindah ke Space lain tidak menghitung ulang formula sampai fieldnya berubah.
+

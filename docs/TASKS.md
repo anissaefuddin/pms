@@ -877,110 +877,110 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 ### E8.1 Custom item type
 
 **S8.1.1 Skema dan API tipe item (CUST-01) — 4 hari**
-- [ ] [API] CRUD tipe item: key, nama, ikon, kelas task/project, aktif
-- [ ] [DB] Migrasi `item_types` dan backfill tipe bawaan
+- [x] [API] CRUD tipe item: key, nama, ikon, kelas task/project, aktif
+- [x] [DB] Migrasi `item_types` dan backfill tipe bawaan
 - [ ] [DB] Query sqlc
-- [ ] [BE] Validasi: key unik, kelas, nama
-- [ ] [BE] Policy admin dan 403
-- [ ] [BE] Nonaktifkan tanpa menghapus data
-- [ ] [TEST] Integrasi CRUD dan matriks role
-- [ ] [TEST] Kompatibilitas item lama
+- [x] [BE] Validasi: key unik, kelas, nama
+- [x] [BE] Policy admin dan 403
+- [x] [BE] Nonaktifkan tanpa menghapus data
+- [x] [TEST] Integrasi CRUD dan matriks role
+- [x] [TEST] Kompatibilitas item lama
 
 **S8.1.2 Field bawaan, default, inheritance (CUST-02) — 3 hari**
-- [ ] [API] Field bawaan dan nilai default per tipe
+- [x] [API] Field bawaan dan nilai default per tipe
 - [ ] [DB] Relasi tipe↔custom field dan default
 - [ ] [BE] Terapkan default saat create dari UI/API/impor/form
-- [ ] [BE] Inheritance nilai dari parent sesuai aturan tipe
+- [x] [BE] Inheritance nilai dari parent sesuai aturan tipe
 - [ ] [TEST] Default di keempat jalur create
-- [ ] [TEST] Inheritance dan perubahan definisi
+- [x] [TEST] Inheritance dan perubahan definisi
 
 **S8.1.3 Aturan subitem dan workflow bawaan (CUST-03) — 2 hari**
-- [ ] [BE] Validasi allowed parent/child di create, move, reorder, lokasi
-- [ ] [BE] Workflow bawaan per tipe
-- [ ] [TEST] Tabel kasus parent/child
-- [ ] [TEST] Item multi-lokasi
+- [x] [BE] Validasi allowed parent/child di create, move, reorder, lokasi
+- [x] [BE] Workflow bawaan per tipe
+- [x] [TEST] Tabel kasus parent/child
+- [x] [TEST] Item multi-lokasi
 
 **S8.1.4 Layout detail per tipe (CUST-04) — 2.5 hari**
-- [ ] [API] Section layout per tipe
-- [ ] [BE] Validasi layout
-- [ ] [FE] Panel item dirender dari layout
-- [ ] [FE] Editor layout admin
-- [ ] [TEST] Playwright dan axe
+- [x] [API] Section layout per tipe
+- [x] [BE] Validasi layout
+- [x] [FE] Panel item dirender dari layout
+- [x] [FE] Editor layout admin
+- [x] [TEST] Playwright dan axe
 
 **S8.1.5 UI tipe dan menu "+" (CUST-01, SPC-14) — 3 hari**
-- [ ] [FE] Dialog "Create a custom item type"
+- [x] [FE] Dialog "Create a custom item type"
 - [ ] [FE] Toggle menu "+" per Space
 - [ ] [FE] Menu blueprint: tipe, nama, ikon
 - [ ] [FE] Tipe di Table, Board, filter, search
 - [ ] [BE] Tipe di ekspor Excel, laporan, search
-- [ ] [TEST] E2E-PAR-01 dan E2E-PAR-02, axe
+- [x] [TEST] E2E-PAR-01 dan E2E-PAR-02, axe
 
 **S8.1.6 Field relasi bertipe (CUST-05) — 2.5 hari**
-- [ ] [API] Tipe field relasi dengan target tipe
-- [ ] [DB] Penyimpanan relasi (sesuai ADR S7.3.2)
-- [ ] [BE] Validasi target dan izin; nama target tanpa akses tidak bocor
-- [ ] [FE] Picker relasi
-- [ ] [TEST] IDOR dan izin
+- [x] [API] Tipe field relasi dengan target tipe
+- [x] [DB] Penyimpanan relasi (sesuai ADR S7.3.2)
+- [x] [BE] Validasi target dan izin; nama target tanpa akses tidak bocor
+- [x] [FE] Picker relasi
+- [x] [TEST] IDOR dan izin
 
 ### E8.2 Field dan workflow
 
 **S8.2.1 Custom field Formula (TASK-11B) — 4 hari**
-- [ ] [BE] Parser ekspresi tertutup (tanpa eval)
-- [ ] [BE] Evaluator dan tipe hasil
-- [ ] [BE] Deteksi siklus
-- [ ] [BE] Hitung ulang saat field sumber berubah
-- [ ] [FE] Editor formula
+- [x] [BE] Parser ekspresi tertutup (tanpa eval)
+- [x] [BE] Evaluator dan tipe hasil
+- [x] [BE] Deteksi siklus
+- [x] [BE] Hitung ulang saat field sumber berubah
+- [x] [FE] Editor formula
 - [ ] [FE] Tampilan Table dan filter/sort
-- [ ] [TEST] Tabel ≥ 20 kasus
-- [ ] [TEST] Performa 500 item
+- [x] [TEST] Tabel ≥ 20 kasus
+- [x] [TEST] Performa 500 item
 
 **S8.2.2 Guard transisi (WF-04) — 4 hari**
-- [ ] [API] Aturan transisi pada workflow
-- [ ] [DB] Penyimpanan aturan
-- [ ] [BE] Evaluator: field wajib, transisi diizinkan, role/assignee
-- [ ] [BE] Pasang di patch item, impor, dan job
-- [ ] [BE] Error terstruktur tanpa mengubah data
-- [ ] [FE] Editor guard di settings workflow
+- [x] [API] Aturan transisi pada workflow
+- [x] [DB] Penyimpanan aturan
+- [x] [BE] Evaluator: field wajib, transisi diizinkan, role/assignee
+- [x] [BE] Pasang di patch item, impor, dan job
+- [x] [BE] Error terstruktur tanpa mengubah data
+- [x] [FE] Editor guard di settings workflow
 - [ ] [FE] Pesan error di panel item dan Board
-- [ ] [TEST] E2E-PAR-03 lewat UI, REST, impor
+- [x] [TEST] E2E-PAR-03 lewat UI, REST, impor
 
 **S8.2.3 Validasi lintas record (WF-05) — 1.5 hari**
-- [ ] [BE] Aturan relasi: subitem selesai, relasi wajib terisi
-- [ ] [BE] Pakai evaluator S8.2.2
-- [ ] [TEST] Tabel kasus
+- [x] [BE] Aturan relasi: subitem selesai, relasi wajib terisi
+- [x] [BE] Pakai evaluator S8.2.2
+- [x] [TEST] Tabel kasus
 
 **S8.2.4 Approval otomatis saat masuk status (WF-03B) — 2.5 hari**
-- [ ] [API] Konfigurasi approval per status
-- [ ] [BE] Buat approval saat transisi
-- [ ] [BE] Status tujuan Approved/Rejected
-- [ ] [FE] Konfigurasi di editor workflow
-- [ ] [TEST] Integrasi dan Playwright
+- [x] [API] Konfigurasi approval per status
+- [x] [BE] Buat approval saat transisi
+- [x] [BE] Status tujuan Approved/Rejected
+- [x] [FE] Konfigurasi di editor workflow
+- [x] [TEST] Integrasi dan Playwright
 
 ### E8.3 Form dan tema
 
 **S8.3.1 Logika kondisional form (FORM-07) — 3 hari**
-- [ ] [API] Skema kondisi pertanyaan
-- [ ] [BE] Validasi server; jawaban pertanyaan tersembunyi ditolak/dibuang
-- [ ] [FE] Editor kondisi
-- [ ] [FE] Renderer publik dan internal
-- [ ] [TEST] Unit evaluator kondisi
+- [x] [API] Skema kondisi pertanyaan
+- [x] [BE] Validasi server; jawaban pertanyaan tersembunyi ditolak/dibuang
+- [x] [FE] Editor kondisi
+- [x] [FE] Renderer publik dan internal
+- [x] [TEST] Unit evaluator kondisi
 - [ ] [TEST] E2E-PAR-05
 
 **S8.3.2 Routing form ke tipe custom dan Blueprint (FORM-09) — 1.5 hari**
-- [ ] [BE] Pemetaan jawaban ke field tipe custom
-- [ ] [FE] UI pemetaan
-- [ ] [TEST] Item yang terbentuk sesuai cabang
+- [x] [BE] Pemetaan jawaban ke field tipe custom
+- [x] [FE] UI pemetaan
+- [x] [TEST] Item yang terbentuk sesuai cabang
 
 **S8.3.3 Email konfirmasi form (FORM-04) — 2 hari**
-- [ ] [API] Sender name, logo, salam, pesan, penutup
-- [ ] [BE] Template dengan escape HTML
-- [ ] [FE] Editor dan pratinjau
-- [ ] [TEST] Email terkirim sesuai konfigurasi
+- [x] [API] Sender name, logo, salam, pesan, penutup
+- [x] [BE] Template dengan escape HTML
+- [x] [FE] Editor dan pratinjau
+- [x] [TEST] Email terkirim sesuai konfigurasi
 
 **S8.3.4 Tema System dan warna (SET-06) — 1.5 hari**
-- [ ] [BE] Preferensi tema
-- [ ] [FE] Light / Dark / System dan tema warna
-- [ ] [TEST] Axe kontras semua tema
+- [x] [BE] Preferensi tema
+- [x] [FE] Light / Dark / System dan tema warna
+- [x] [TEST] Axe kontras semua tema
 
 ### E8.4 Gate
 
@@ -988,7 +988,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [ ] [TEST] UAT per requirement M8
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
-- [ ] [DOC] Gate report G1a
+- [x] [DOC] Gate report G1a
 
 ## M9 — Otomasi dan approval lanjutan (G1)
 

@@ -24,20 +24,20 @@
 
 | Req | Story | Kriteria penerimaan ringkas | Tes | Bukti |
 |---|---|---|---|---|
-| CUST-01 | S8.1.1, S8.1.5 | Admin membuat tipe tanpa migrasi; tipe tampil di menu "+", view, search, ekspor; non-admin 403 | E2E-PAR-01, E2E-PAR-02 | |
-| CUST-02 | S8.1.2 | Default terisi dari keempat jalur create; inheritance sesuai aturan | Integrasi 4 jalur | |
-| CUST-03 | S8.1.3 | Parent/child terlarang ditolak di create, move, lokasi | Tabel kasus | |
-| CUST-04 | S8.1.4 | Panel item mengikuti layout tipe | Playwright + axe | |
-| CUST-05 | S8.1.6 | Relasi ke target tanpa akses ditolak dan namanya tidak bocor | Tes IDOR | |
+| CUST-01 | S8.1.1, S8.1.5 | Admin membuat tipe tanpa migrasi; tipe tampil di menu "+", view, search, ekspor; non-admin 403 | E2E-PAR-01, E2E-PAR-02 | TESTING M8 (sebagian); [G1a](parity/gate-reports/G1A_CONFIG.md) |
+| CUST-02 | S8.1.2 | Default terisi dari keempat jalur create; inheritance sesuai aturan | Integrasi 4 jalur | TESTING M8 (sebagian) |
+| CUST-03 | S8.1.3 | Parent/child terlarang ditolak di create, move, lokasi | Tabel kasus | TESTING M8 |
+| CUST-04 | S8.1.4 | Panel item mengikuti layout tipe | Playwright + axe | TESTING M8 |
+| CUST-05 | S8.1.6 | Relasi ke target tanpa akses ditolak dan namanya tidak bocor | Tes IDOR | TESTING M8 |
 | SPC-14 | S8.1.5 | Menu blueprint dapat diatur tipe, nama, ikon | Playwright | |
-| TASK-11B | S8.2.1 | Formula benar untuk ≥ 20 kasus; siklus ditolak | Tabel kasus + perf 500 item | |
-| WF-04 | S8.2.2 | Transisi tidak valid ditolak sama di UI/REST/impor tanpa perubahan data | E2E-PAR-03 | |
-| WF-05 | S8.2.3 | Aturan lintas record ditegakkan | Tabel kasus | |
-| WF-03B | S8.2.4 | Masuk status memicu approval; hasil memindah ke status tujuan | Integrasi + Playwright | |
-| FORM-07 | S8.3.1 | Hanya cabang yang sesuai ditampilkan dan disimpan | E2E-PAR-05 | |
-| FORM-09 | S8.3.2 | Item terbentuk dengan tipe dan field sesuai cabang | Integrasi | |
-| FORM-04 | S8.3.3 | Email konfirmasi sesuai konfigurasi, HTML di-escape | Integrasi SMTP tiruan | |
-| SET-06 | S8.3.4 | Light/Dark/System dan tema warna lulus kontras AA | Axe | |
+| TASK-11B | S8.2.1 | Formula benar untuk ≥ 20 kasus; siklus ditolak | Tabel kasus + perf 500 item | TESTING M8 (sebagian) |
+| WF-04 | S8.2.2 | Transisi tidak valid ditolak sama di UI/REST/impor tanpa perubahan data | E2E-PAR-03 | TESTING M8 |
+| WF-05 | S8.2.3 | Aturan lintas record ditegakkan | Tabel kasus | TESTING M8 |
+| WF-03B | S8.2.4 | Masuk status memicu approval; hasil memindah ke status tujuan | Integrasi + Playwright | TESTING M8 |
+| FORM-07 | S8.3.1 | Hanya cabang yang sesuai ditampilkan dan disimpan | E2E-PAR-05 | TESTING M8 (sebagian) |
+| FORM-09 | S8.3.2 | Item terbentuk dengan tipe dan field sesuai cabang | Integrasi | TESTING M8 (sebagian) |
+| FORM-04 | S8.3.3 | Email konfirmasi sesuai konfigurasi, HTML di-escape | Integrasi SMTP tiruan | TESTING M8 |
+| SET-06 | S8.3.4 | Light/Dark/System dan tema warna lulus kontras AA | Axe | TESTING M8 |
 
 ## M9 — Otomasi dan approval
 

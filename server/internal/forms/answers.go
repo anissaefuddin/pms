@@ -32,6 +32,12 @@ func ValidateAnswers(def Definition, raw map[string]json.RawMessage, fileCounts 
 			}
 			known[el.Key] = true
 			field := "answers." + el.Key
+			if el.ShowIf != nil && !el.ShowIf.Holds(out) { // FORM-07: a hidden question takes no answer and is never required
+				if el.Kind == Attachment && fileCounts[el.Key] > 0 {
+					problems = append(problems, Error{field, "this question is not shown for your answers"})
+				}
+				continue
+			}
 			if el.Kind == Attachment {
 				switch n := fileCounts[el.Key]; {
 				case n == 0 && el.Required:

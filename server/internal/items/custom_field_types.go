@@ -24,6 +24,10 @@ type CustomFieldConfig struct {
 	AllowOver100  *bool               `json:"allow_over_100,omitempty"`
 	Aggregation   string              `json:"aggregation,omitempty"`
 	Markers       []CustomFieldMarker `json:"markers,omitempty"`
+	// TargetTypeKey limits a Relation field to items of one item type (empty: any item).
+	TargetTypeKey string `json:"target_type_key,omitempty"`
+	// Expression is the formula of a Formula field (see formula.go).
+	Expression string `json:"expression,omitempty"`
 }
 
 type CustomFieldMarker struct {
@@ -58,8 +62,18 @@ func validateCustomFieldConfig(kind string, config CustomFieldConfig) error {
 		if decimals := config.currencyDecimals(); decimals < 0 || decimals > 6 {
 			return Invalid("currency decimals must be between 0 and 6")
 		}
-	} else if config.Currency != "" || config.Decimals != nil {
-		return Invalid("currency and decimals only apply to Currency fields")
+	} else if config.Currency != "" || (config.Decimals != nil && kind != "formula") {
+		return Invalid("currency and decimals only apply to Currency and Formula fields")
+	}
+	if kind == "formula" {
+		if _, err := parseFormula(config.Expression); err != nil {
+			return InvalidField{"config.expression", err.Error()}
+		}
+	} else if config.Expression != "" {
+		return Invalid("expression only applies to Formula fields")
+	}
+	if config.TargetTypeKey != "" && (kind != "relation" || !typeKeyPattern.MatchString(config.TargetTypeKey)) {
+		return Invalid("target_type_key only applies to Relation fields and must be an item type key")
 	}
 	if config.AllowOver100 != nil && kind != "percent" {
 		return Invalid("allow_over_100 only applies to Percent fields")
@@ -90,7 +104,7 @@ func validateCustomFieldOptions(kind string, input []CustomFieldOption) ([]Custo
 	switch kind {
 	case "single_select", "multi_select":
 		return validateOptions(input)
-	case "text", "number", "currency", "percent", "people", "date", "duration", "checkbox":
+	case "text", "number", "currency", "percent", "people", "date", "duration", "checkbox", "relation", "formula":
 		if len(input) != 0 {
 			return nil, Invalid("only select fields accept options")
 		}
@@ -195,6 +209,21 @@ func normalizeCustomFieldValue(field CustomField, raw json.RawMessage) (json.Raw
 			seen[id] = true
 		}
 		return json.Marshal(ids)
+	case "formula":
+		return invalid("a formula field is calculated and cannot be edited")
+	case "relation":
+		var ids []string
+		if json.Unmarshal(raw, &ids) != nil || ids == nil || len(ids) > 50 {
+			return invalid("select up to 50 distinct items")
+		}
+		seen := make(map[string]bool, len(ids))
+		for _, id := range ids {
+			if !validFieldID(id) || seen[id] {
+				return invalid("select up to 50 distinct items")
+			}
+			seen[id] = true
+		}
+		return json.Marshal(ids)
 	case "single_select", "multi_select":
 		if !validSelectValue(field, raw) {
 			return invalid("select a valid option without duplicates")
@@ -262,4 +291,65 @@ AND status='active' ORDER BY id FOR SHARE`, added)
 		return unavailable
 	}
 	return nil
+}
+
+// validateNewRelationTargets checks only the targets a write adds: each must be a live item, different from the source,
+// of the configured type, and visible to the actor. A hidden item and a missing one give the same answer, so a name or an
+// id cannot be probed through this field. Targets kept from before stay as they are even if the actor cannot see them now.
+func validateNewRelationTargets(ctx context.Context, tx pgx.Tx, actor policy.Actor, field CustomField, itemID string, previous, next json.RawMessage) error {
+	var before, selected []string
+	_ = json.Unmarshal(previous, &before)
+	_ = json.Unmarshal(next, &selected)
+	added := make([]string, 0, len(selected))
+	for _, id := range selected {
+		if !slices.Contains(before, id) {
+			added = append(added, id)
+		}
+	}
+	if len(added) == 0 {
+		return nil
+	}
+	unavailable := InvalidField{"fields." + field.ID, field.Name + ": choose items you can access"}
+	if slices.Contains(added, itemID) {
+		return InvalidField{"fields." + field.ID, field.Name + ": an item cannot relate to itself"}
+	}
+	rows, err := tx.Query(ctx, `SELECT i.id::text FROM items i JOIN item_type_defs t ON t.id=i.type_id
+WHERE i.id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND i.deleted_at IS NULL AND ($2='' OR t.key=$2) ORDER BY i.id FOR SHARE OF i`, added, field.Config.TargetTypeKey)
+	if err != nil {
+		return err
+	}
+	live, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return err
+	}
+	if len(live) != len(added) {
+		return unavailable
+	}
+	caps, err := policy.ItemsCaps(ctx, tx, actor, live, nil)
+	if err != nil {
+		return err
+	}
+	for _, id := range live {
+		if !caps[id].Has(policy.View) {
+			return unavailable
+		}
+	}
+	return nil
+}
+
+// syncRelations makes item_relations match the field's new value.
+func syncRelations(ctx context.Context, tx pgx.Tx, actor policy.Actor, field CustomField, itemID string, value json.RawMessage) error {
+	var ids []string
+	if len(value) > 0 {
+		_ = json.Unmarshal(value, &ids)
+	}
+	if _, err := tx.Exec(ctx, "DELETE FROM item_relations WHERE field_id=$1::uuid AND from_item_id=$2::uuid", field.ID, itemID); err != nil {
+		return err
+	}
+	if len(ids) == 0 {
+		return nil
+	}
+	_, err := tx.Exec(ctx, `INSERT INTO item_relations(field_id,from_item_id,to_item_id,created_by)
+SELECT $1::uuid,$2::uuid,unnest($3::text[])::uuid,$4::uuid`, field.ID, itemID, ids, actor.ID)
+	return err
 }

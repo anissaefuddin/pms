@@ -416,6 +416,9 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 	if row.Response.StatusID != nil {
 		fields["status_id"] = marshal(row.Response.StatusID)
 	}
+	if key := row.Response.ResolveTypeKey(answers); key != "" { // FORM-09: the item type follows the branch the answers took
+		fields["type_key"] = marshal(key)
+	}
 	for _, page := range row.Definition.Pages {
 		for _, el := range page.Elements {
 			if value, ok := answers[el.Key].(string); ok && el.Kind == forms.Importance && fields["importance"] == nil {
@@ -427,6 +430,23 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 	item, err := items.CreateTx(ctx, tx, elevated, fields, batch)
 	if err != nil {
 		return createdItem{}, err
+	}
+	if len(row.Response.FieldMap) > 0 {
+		var created struct {
+			ID string `json:"id"`
+		}
+		if err := json.Unmarshal(item.Body, &created); err != nil {
+			return createdItem{}, err
+		}
+		values, err := mappedFieldValues(ctx, tx, row, answers)
+		if err != nil {
+			return createdItem{}, err
+		}
+		if len(values) > 0 {
+			if err := items.SetCustomFieldValuesTx(ctx, tx, elevated, created.ID, values); err != nil {
+				return createdItem{}, err
+			}
+		}
 	}
 	var head struct {
 		ID uuid.UUID `json:"id"`
@@ -458,8 +478,16 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 		return createdItem{}, err
 	}
 	if external != nil && batch.Queue != nil {
-		if err := batch.Queue.SendTx(ctx, tx, mailqueue.Args{To: external.Email, Template: "request_received", Locale: "en",
-			Message: "Your request \"" + title + "\" was received through " + row.Name + ". We will email you when its status changes."}); err != nil {
+		args := mailqueue.Args{To: external.Email, Template: "request_received", Locale: "en",
+			Message: "Your request \"" + title + "\" was received through " + row.Name + ". We will email you when its status changes."}
+		if e := row.Response.Email; e != nil { // FORM-04: the form's own wording replaces the default
+			text := func(v string) string { return forms.ConfirmationText(v, title, row.Name, external.Name) }
+			args.SenderName, args.LogoURL, args.Greeting, args.Closing = e.SenderName, e.LogoURL, text(e.Greeting), text(e.Closing)
+			if e.Message != "" {
+				args.Message = text(e.Message)
+			}
+		}
+		if err := batch.Queue.SendTx(ctx, tx, args); err != nil {
 			return createdItem{}, err
 		}
 	}
@@ -536,4 +564,60 @@ func summaryDocument(lines []forms.Line) map[string]any {
 		content = append(content, map[string]any{"type": "paragraph"})
 	}
 	return map[string]any{"type": "doc", "content": content}
+}
+
+// mappedFieldValues turns answers into custom field values (FORM-09). Choices match options by label; an answer that fits no
+// option, or a field of another kind, is left out rather than failing the whole request.
+func mappedFieldValues(ctx context.Context, tx pgx.Tx, row formRow, answers map[string]any) (map[string]json.RawMessage, error) {
+	out := map[string]json.RawMessage{}
+	for key, fieldID := range row.Response.FieldMap {
+		answer, ok := answers[key]
+		if !ok {
+			continue
+		}
+		var kind string
+		var options []items.CustomFieldOption
+		if err := tx.QueryRow(ctx, "SELECT type, options FROM custom_fields WHERE id=$1 AND archived_at IS NULL", fieldID).Scan(&kind, &options); err != nil {
+			if errors.Is(err, pgx.ErrNoRows) {
+				continue
+			}
+			return nil, err
+		}
+		optionID := func(label string) (string, bool) {
+			for _, o := range options {
+				if strings.EqualFold(strings.TrimSpace(o.Label), strings.TrimSpace(label)) {
+					return o.ID, true
+				}
+			}
+			return "", false
+		}
+		switch value := answer.(type) {
+		case string:
+			switch kind {
+			case "text", "date":
+				out[fieldID.String()] = marshal(value)
+			case "single_select":
+				if id, ok := optionID(value); ok {
+					out[fieldID.String()] = marshal(id)
+				}
+			}
+		case float64:
+			if kind == "number" {
+				out[fieldID.String()] = marshal(value)
+			}
+		case []string:
+			if kind == "multi_select" {
+				ids := []string{}
+				for _, label := range value {
+					if id, ok := optionID(label); ok {
+						ids = append(ids, id)
+					}
+				}
+				if len(ids) > 0 {
+					out[fieldID.String()] = marshal(ids)
+				}
+			}
+		}
+	}
+	return out, nil
 }

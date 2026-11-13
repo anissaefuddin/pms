@@ -25,7 +25,7 @@ type FieldDraft = {
 };
 
 const fieldTypes: FieldType[] = [
-  "text", "number", "currency", "percent", "single_select", "multi_select", "people", "date", "duration", "checkbox",
+  "text", "number", "currency", "percent", "single_select", "multi_select", "people", "date", "duration", "checkbox", "relation", "formula",
 ];
 const aggregations: NonNullable<Config["aggregation"]>[] = ["sum", "average", "min", "max", "count"];
 const operators: Marker["operator"][] = ["lt", "lte", "eq", "gte", "gt"];
@@ -96,6 +96,8 @@ function CustomFields({ spaceId }: { spaceId: string }) {
       config.decimals = Number(draft.config.decimals ?? "2");
     }
     if (draft.type === "percent") config.allow_over_100 = draft.config.allow_over_100;
+    if (draft.type === "formula") config.expression = (draft.config.expression ?? "").trim();
+    if (draft.type === "relation" && draft.config.target_type_key?.trim()) config.target_type_key = draft.config.target_type_key.trim();
     if (hasNumericConfig) {
       config.aggregation = draft.config.aggregation;
       config.markers = draft.config.markers.map(({ operator, value, color }) => ({ operator, value: Number(value), color }));
@@ -103,7 +105,7 @@ function CustomFields({ spaceId }: { spaceId: string }) {
     const value = {
       name,
       options: hasOptions ? options : undefined,
-      config: hasNumericConfig && (!draft.id || draft.configChanged) ? config : undefined,
+      config: (hasNumericConfig || draft.type === "formula" || draft.type === "relation") && (!draft.id || draft.configChanged) ? config : undefined,
     } satisfies components["schemas"]["CustomFieldUpdate"];
     if (draft.id) void change(`${path}/${draft.id}`, "PATCH", value);
     else void change(path, "POST", { ...value, type: draft.type });
@@ -226,6 +228,15 @@ function CustomFields({ spaceId }: { spaceId: string }) {
         <Button type="button" variant="outline" size="sm" disabled={pending || draft.options.length >= 100}
           onClick={() => setDraft({ ...draft, options: [...draft.options, newOption()] })}>{t("spaces.customFields.addOption")}</Button>
       </fieldset>}
+      {draft.type === "formula" && <label className="block space-y-1">
+        <span>{t("spaces.customFields.formula")}</span>
+        <Input value={draft.config.expression ?? ""} maxLength={500} required disabled={pending}
+          onChange={(event) => editConfig({ expression: event.target.value })} />
+        <small className="text-muted-foreground">{t("spaces.customFields.formulaHint")}</small></label>}
+      {draft.type === "relation" && <label className="block space-y-1">
+        <span>{t("spaces.customFields.relationTarget")}</span>
+        <Input value={draft.config.target_type_key ?? ""} maxLength={40} disabled={pending}
+          onChange={(event) => editConfig({ target_type_key: event.target.value })} /></label>}
       {draft.type === "currency" && <div className="grid grid-cols-2 gap-2">
         <label className="block space-y-1">
           <span>{t("spaces.customFields.currencyCode")}</span>

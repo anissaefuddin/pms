@@ -246,6 +246,13 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 `users` bertambah `default_task_duration_days` (0 sampai 3650, null berarti tidak ada), `default_task_effort_minutes` (0 sampai 525600) dan `email_muted text[]` (grup email yang dimatikan; kosong berarti semua aktif). `account.settings` memegang `onboarding_done`. `space_template_runs(request_id, user_id, space_id, created_at)` mencatat pembuatan Space dari template untuk idempotensi; `ON DELETE CASCADE` ke `users` dan `spaces`. Template itu sendiri tidak ada di database (D-52).
 
+### 7.7 Konfigurasi kerja (M8)
+
+- `item_type_defs(id, key unik, name unik tanpa beda huruf, icon, base item_type, is_builtin, active, allowed_children uuid[], default_workflow_id, defaults jsonb, layout jsonb, version)` (migrasi 00046). Tiga baris bawaan (`task`, `project`, `folder`). `items.type_id` wajib; trigger `items_default_type` mengisinya dari tipe bawaan bila sebuah INSERT tidak menyebutkannya. `items.type` tetap kelas perilaku.
+- `item_relations(field_id, from_item_id, to_item_id, created_by)` dengan kunci utama tiga kolom, cascade dari field dan item, indeks `to_item_id` (00047); `custom_fields.type` menerima `relation` dan `formula` (00047, 00052). Ekspresi formula ada di `custom_fields.config.expression`.
+- `statuses` bertambah `required_fields text[]`, `actor_rule` (00048), `require_children_done` (00049), `approval_approver_ids uuid[]`, `approved_status_id`, `rejected_status_id` (00050). `approvals` bertambah `trigger_status_id`, `on_approved_status_id`, `on_rejected_status_id`.
+- `users.accent` (00051). Pengaturan form baru (`type_key`, `routes`, `field_map`, `email`) tersimpan di `request_forms.response`, dan `show_if` di `request_forms.definition`; tanpa kolom baru.
+
 ## 8. Data yang sengaja belum ada (M2+)
 
 `reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.

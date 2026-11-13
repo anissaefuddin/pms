@@ -211,3 +211,26 @@ for (const scheme of ["light", "dark"] as const) {
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 }
+
+test("a question can be shown only for an earlier answer; the condition is saved and the confirmation email previews escaped text", async ({ page }) => {
+  const calls = await mock(page, { extra: { "GET /item-types": { body: { items: [] } } } });
+  await page.goto(`/spaces/${marketing.id}/forms/${fid}`);
+  await expect(page.getByLabel("Form name")).toHaveValue("IT request");
+  // "Notes" (page 2) can depend on "Kind" (page 1); the first question has no earlier question to depend on.
+  await page.getByLabel(/Show "Notes" conditionally/).check();
+  await page.getByLabel('Earlier question for "Notes"').selectOption("kind");
+  await page.getByLabel('Value for "Notes"').selectOption("Laptop");
+  await expect(page.getByLabel(/Show "Your name" conditionally/)).toHaveCount(0);
+  // The confirmation wording is previewed as text: markup typed by an author never becomes elements.
+  await page.getByLabel("Greeting").fill("Hi <b>{name}</b>");
+  await page.getByLabel("Message").fill("Got {title}\n<script>alert(1)</script>");
+  const preview = page.getByRole("region", { name: "Email preview" });
+  await expect(preview).toContainText("Hi <b>Sam Visitor</b>");
+  await expect(preview).toContainText("Got Broken login");
+  await expect(preview.locator("script, b")).toHaveCount(0);
+  await page.getByRole("button", { name: "Save form" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PUT")?.body).toBeTruthy();
+  const put = calls.find((c) => c.method === "PUT")!;
+  expect(put.body.definition.pages[1].elements[0].show_if).toEqual({ key: "kind", op: "equals", value: "Laptop" });
+  expect(put.body.response.email).toMatchObject({ greeting: "Hi <b>{name}</b>" });
+});

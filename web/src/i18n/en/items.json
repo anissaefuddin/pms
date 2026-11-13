@@ -179,5 +179,14 @@
   "activity.action.restore": "{{actor}} restored this item",
   "activity.action.detach": "{{actor}} removed this item from a location",
   "activity.action.create": "{{actor}} created this item",
-  "activity.action.other": "{{actor}} changed this item"
+  "activity.action.other": "{{actor}} changed this item",
+  "type.otherSection": "More",
+  "type.label": "Type",
+  "relation.hidden": "{{count}} item you cannot access",
+  "relation.hidden_other": "{{count}} items you cannot access",
+  "relation.locked": "This field also links {{count}} item(s) you cannot access, so it cannot be edited here.",
+  "relation.search": "Search items to link",
+  "relation.results": "Search results",
+  "relation.add": "Link {{title}}",
+  "relation.remove": "Unlink {{title}}"
 }

@@ -4,6 +4,7 @@ package forms
 
 import (
 	"fmt"
+	"net/url"
 	"regexp"
 	"slices"
 	"strings"
@@ -41,16 +42,17 @@ var kinds = []string{SingleLine, Paragraph, SingleChoice, MultipleChoice, Date, 
 
 // Element is one question or section header. Key is stable across edits so stored answers keep their meaning.
 type Element struct {
-	Key      string   `json:"key"`
-	Kind     string   `json:"kind"`
-	Label    string   `json:"label"`
-	Help     string   `json:"help,omitempty"`
-	Required bool     `json:"required,omitempty"`
-	Options  []string `json:"options,omitempty"`
-	Min      *float64 `json:"min,omitempty"`
-	Max      *float64 `json:"max,omitempty"`
-	MaxFiles int      `json:"max_files,omitempty"`
-	Multiple bool     `json:"multiple,omitempty"`
+	Key      string     `json:"key"`
+	Kind     string     `json:"kind"`
+	Label    string     `json:"label"`
+	Help     string     `json:"help,omitempty"`
+	Required bool       `json:"required,omitempty"`
+	Options  []string   `json:"options,omitempty"`
+	Min      *float64   `json:"min,omitempty"`
+	Max      *float64   `json:"max,omitempty"`
+	MaxFiles int        `json:"max_files,omitempty"`
+	Multiple bool       `json:"multiple,omitempty"`
+	ShowIf   *Condition `json:"show_if,omitempty"`
 }
 
 type Page struct {
@@ -81,6 +83,7 @@ func ValidateDefinition(def Definition) error {
 		return bad("definition.pages", "a form needs 1 to %d pages", MaxPages)
 	}
 	keys := map[string]bool{}
+	earlier := map[string]Element{}
 	elements, questions := 0, 0
 	for p, page := range def.Pages {
 		field := fmt.Sprintf("definition.pages[%d]", p)
@@ -103,6 +106,12 @@ func ValidateDefinition(def Definition) error {
 			if err := validateElement(path, el); err != nil {
 				return err
 			}
+			if el.ShowIf != nil {
+				if err := validateCondition(path+".show_if", *el.ShowIf, earlier); err != nil {
+					return err
+				}
+			}
+			earlier[el.Key] = el
 			if el.Kind != Section {
 				questions++
 			}
@@ -174,6 +183,65 @@ type Response struct {
 	AssigneeIDs   []uuid.UUID       `json:"assignee_ids"`
 	TitleQuestion *string           `json:"title_question"`
 	Approval      *ResponseApproval `json:"approval"`
+	// TypeKey is the custom item type of the created item (empty: the built-in type of ItemType); Routes override it by answer.
+	TypeKey *string `json:"type_key"`
+	// FieldMap copies answers into custom fields of the destination Space: question key to field id.
+	FieldMap map[string]uuid.UUID `json:"field_map"`
+	Routes   []Route              `json:"routes"`
+	// Email customises the confirmation sent to people who submit through a public link (FORM-04).
+	Email *ConfirmationEmail `json:"email"`
+}
+
+// ConfirmationEmail holds the wording of the confirmation. {title}, {form} and {name} are replaced when it is sent.
+type ConfirmationEmail struct {
+	SenderName string `json:"sender_name"`
+	LogoURL    string `json:"logo_url"`
+	Greeting   string `json:"greeting"`
+	Message    string `json:"message"`
+	Closing    string `json:"closing"`
+}
+
+func validateEmail(e *ConfirmationEmail) error {
+	for field, limit := range map[string]int{"sender_name": 80, "greeting": 200, "closing": 500} {
+		value := map[string]string{"sender_name": e.SenderName, "greeting": e.Greeting, "closing": e.Closing}[field]
+		if utf8.RuneCountInString(value) > limit || strings.ContainsFunc(value, unicode.IsControl) {
+			return bad("response.email."+field, "%s must be at most %d characters on one line", field, limit)
+		}
+	}
+	if utf8.RuneCountInString(e.Message) > 2000 || !utf8.ValidString(e.Message) || strings.ContainsFunc(e.Message, func(r rune) bool { return unicode.IsControl(r) && r != '\n' }) {
+		return bad("response.email.message", "message must be at most 2000 characters")
+	}
+	if e.LogoURL != "" {
+		u, err := url.Parse(e.LogoURL)
+		if err != nil || u.Scheme != "https" || u.Host == "" || u.User != nil || len(e.LogoURL) > 500 {
+			return bad("response.email.logo_url", "the logo must be an https address of at most 500 characters")
+		}
+	}
+	return nil
+}
+
+// ConfirmationText fills the placeholders of one wording field.
+func ConfirmationText(value, title, form, name string) string {
+	return strings.NewReplacer("{title}", title, "{form}", form, "{name}", name).Replace(value)
+}
+
+// Route picks another item type when the answers match (FORM-09); the first route that holds wins.
+type Route struct {
+	When    Condition `json:"when"`
+	TypeKey string    `json:"type_key"`
+}
+
+// ResolveTypeKey returns the item type key a submission creates: the first matching route, else the form's own.
+func (r Response) ResolveTypeKey(answers map[string]any) string {
+	for _, route := range r.Routes {
+		if route.When.Holds(answers) {
+			return route.TypeKey
+		}
+	}
+	if r.TypeKey != nil {
+		return *r.TypeKey
+	}
+	return ""
 }
 
 type Location struct {
@@ -206,6 +274,42 @@ func ValidateResponse(def Definition, resp Response) error {
 		}
 		if !found {
 			return bad("response.title_question", "title_question must be the key of a single-line question")
+		}
+	}
+	if resp.Email != nil {
+		if err := validateEmail(resp.Email); err != nil {
+			return err
+		}
+	}
+	questions := map[string]Element{}
+	for _, page := range def.Pages {
+		for _, el := range page.Elements {
+			if el.Kind != Section && el.Kind != Attachment {
+				questions[el.Key] = el
+			}
+		}
+	}
+	if resp.TypeKey != nil && !keyPattern.MatchString(*resp.TypeKey) {
+		return bad("response.type_key", "type_key must be an item type key")
+	}
+	if len(resp.Routes) > 10 {
+		return bad("response.routes", "at most 10 routes")
+	}
+	for i, route := range resp.Routes {
+		path := fmt.Sprintf("response.routes[%d]", i)
+		if !keyPattern.MatchString(route.TypeKey) {
+			return bad(path+".type_key", "type_key must be an item type key")
+		}
+		if err := validateCondition(path+".when", route.When, questions); err != nil {
+			return err
+		}
+	}
+	if len(resp.FieldMap) > 50 {
+		return bad("response.field_map", "at most 50 mapped questions")
+	}
+	for key, field := range resp.FieldMap {
+		if _, ok := questions[key]; !ok || field == uuid.Nil {
+			return bad("response.field_map", "%q must be a question of this form mapped to a custom field", key)
 		}
 	}
 	if resp.Approval != nil {

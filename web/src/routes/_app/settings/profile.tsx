@@ -28,6 +28,7 @@ const choices = {
   week_start: ["monday", "sunday", "saturday"],
   density: ["compact", "comfortable"],
   theme: ["light", "dark", "system"],
+  accent: ["blue", "teal", "violet", "green"],
   comment_shortcut: ["mod_enter", "enter"],
 } as const;
 const timezones = ["UTC", ...Intl.supportedValuesOf("timeZone")];

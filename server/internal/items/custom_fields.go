@@ -165,7 +165,18 @@ func CreateCustomFieldTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, spa
 	field, err := scanCustomField(tx.QueryRow(ctx, `INSERT INTO custom_fields(space_id,name,type,options,position,config)
 SELECT $1::uuid,$2,$3,$4,COALESCE(max(position)+1,0),$5 FROM custom_fields WHERE space_id=$1::uuid
 RETURNING `+customFieldColumns, id, name, input.Type, options, input.Config))
-	return field, writeError(err)
+	if err != nil {
+		return field, writeError(err)
+	}
+	if field.Type == "formula" {
+		if err := checkFormulaDefinition(ctx, tx, id, field); err != nil {
+			return CustomField{}, err
+		}
+		if err := recomputeSpaceFormulas(ctx, tx, id); err != nil {
+			return CustomField{}, writeError(err)
+		}
+	}
+	return field, nil
 }
 
 func UpdateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID, fieldID string, input CustomFieldUpdate) (CustomField, error) {
@@ -197,9 +208,15 @@ func UpdateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Act
 		return CustomField{}, Invalid("at least one custom field property is required")
 	}
 	if input.Name != nil {
+		previous := field
 		field.Name, err = fieldName(*input.Name)
 		if err != nil {
 			return CustomField{}, err
+		}
+		if !strings.EqualFold(previous.Name, field.Name) { // references are by name, so a renamed input would break its formulas
+			if err := guardFormulaReferences(ctx, tx, space, previous); err != nil {
+				return CustomField{}, err
+			}
 		}
 	}
 	if input.Options != nil {
@@ -231,6 +248,14 @@ func UpdateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Act
 	if err != nil {
 		return CustomField{}, writeError(err)
 	}
+	if field.Type == "formula" && (input.Config != nil || input.Name != nil) {
+		if err := checkFormulaDefinition(ctx, tx, space, field); err != nil {
+			return CustomField{}, err
+		}
+		if err := recomputeSpaceFormulas(ctx, tx, space); err != nil {
+			return CustomField{}, writeError(err)
+		}
+	}
 	return field, commitCustomFields(ctx, tx)
 }
 
@@ -247,6 +272,11 @@ func ArchiveCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Ac
 	space, err := fieldSpace(ctx, tx, actor, spaceID, true)
 	if err != nil {
 		return writeError(err)
+	}
+	if current, err := scanCustomField(tx.QueryRow(ctx, "SELECT "+customFieldColumns+" FROM custom_fields WHERE id=$1 AND space_id=$2::uuid", parsed, space)); err == nil {
+		if err := guardFormulaReferences(ctx, tx, space, current); err != nil {
+			return err
+		}
 	}
 	tag, err := tx.Exec(ctx, "UPDATE custom_fields SET archived_at=COALESCE(archived_at,now()) WHERE id=$1 AND space_id=$2::uuid", parsed, space)
 	if err != nil {
@@ -362,6 +392,11 @@ ORDER BY f.id FOR SHARE OF f`, itemID, ids, visibleSpaces)
 		value := updates[field.ID]
 		if string(value) == "null" {
 			delete(current, field.ID)
+			if field.Type == "relation" {
+				if err := syncRelations(ctx, tx, actor, field, itemID, nil); err != nil {
+					return nil, err
+				}
+			}
 			continue
 		}
 		if field.ArchivedAt != nil {
@@ -379,7 +414,18 @@ ORDER BY f.id FOR SHARE OF f`, itemID, ids, visibleSpaces)
 				return nil, err
 			}
 		}
+		if field.Type == "relation" {
+			if err := validateNewRelationTargets(ctx, tx, actor, field, itemID, current[field.ID], normalized); err != nil {
+				return nil, err
+			}
+			if err := syncRelations(ctx, tx, actor, field, itemID, normalized); err != nil {
+				return nil, err
+			}
+		}
 		current[field.ID] = normalized
+	}
+	if err := refreshItemFormulas(ctx, tx, itemID, current); err != nil {
+		return nil, err
 	}
 	return json.Marshal(current)
 }
@@ -408,4 +454,19 @@ func validSelectValue(field CustomField, raw json.RawMessage) bool {
 		seen[id] = true
 	}
 	return true
+}
+
+// SetCustomFieldValuesTx writes custom field values on an item inside the caller's transaction, with the same checks as a PATCH.
+// Forms use it to copy answers into fields right after creating the item.
+func SetCustomFieldValuesTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID string, values map[string]json.RawMessage) error {
+	raw, err := json.Marshal(values)
+	if err != nil {
+		return err
+	}
+	updated, err := updateCustomFieldValues(ctx, tx, actor, itemID, raw)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, "UPDATE items SET fields=$2::jsonb WHERE id=$1::uuid", itemID, updated)
+	return writeError(err)
 }

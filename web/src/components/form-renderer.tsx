@@ -1,6 +1,6 @@
 import { useEffect, useId, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { IMPORTANCE, validateAnswers, type Answers, type Files, type FormDefinition, type FormElement } from "@/lib/forms";
+import { IMPORTANCE, validateAnswers, visibleKeys, type Answers, type Files, type FormDefinition, type FormElement } from "@/lib/forms";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,7 +33,8 @@ export function FormRenderer({ definition, answers, onAnswersChange, preview = f
   const pages = definition.pages;
   const at = Math.min(index, pages.length - 1);
   const page = pages[at];
-  const elements = pages.flatMap((p) => p.elements);
+  const shown = visibleKeys(definition, answers);
+  const elements = pages.flatMap((p) => p.elements).filter((e) => shown.has(e.key));
 
   function show(next: Record<string, string>) {
     setErrors(next);
@@ -56,7 +57,7 @@ export function FormRenderer({ definition, answers, onAnswersChange, preview = f
       [key, t(`forms.render.error.${p.code}`, { limit: p.limit })]));
     if (Object.keys(next).length) return show(next);
     setErrors({});
-    onSubmit?.(files);
+    onSubmit?.(Object.fromEntries(Object.entries(files).filter(([key]) => shown.has(key)))); // files of hidden questions are never sent
   }
   const problems = elements.filter((e) => e.key in errors);
 
@@ -67,7 +68,7 @@ export function FormRenderer({ definition, answers, onAnswersChange, preview = f
     </div>}
     {pages.length > 1 && <p className="text-sm text-muted-foreground" aria-live="polite">{t("forms.render.page", { current: at + 1, total: pages.length })}</p>}
     {page.title && <Heading level={headingLevel}>{page.title}</Heading>}
-    {page.elements.map((element) => <Question key={element.key} element={element} value={answers[element.key]}
+    {page.elements.filter((element) => shown.has(element.key)).map((element) => <Question key={element.key} element={element} value={answers[element.key]}
       onChange={(value) => set(element.key, value)} level={headingLevel + 1} people={people[element.key] ?? []} error={errors[element.key]}
       files={files[element.key] ?? []} onFiles={(list) => setKeyFiles(element.key, list)}
       onPeople={(next) => { setPeople({ ...people, [element.key]: next }); set(element.key, next.map((p) => p.id)); }} />)}

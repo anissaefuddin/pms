@@ -1198,6 +1198,63 @@ paths:
         '204': { description: Dihapus }
 
   # ───────────────────────── SPACES ─────────────────────────
+  /item-types:
+    get:
+      tags: [items]
+      operationId: listItemTypes
+      summary: Tipe item bawaan dan kustom (CUST-01); semua pengguna yang login boleh membaca
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ItemTypeDef' } }
+    post:
+      tags: [items]
+      operationId: createItemType
+      summary: Buat tipe item kustom (hanya admin)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemTypeCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ItemTypeDef' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /item-types/{typeId}:
+    patch:
+      tags: [items]
+      operationId: updateItemType
+      summary: Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah
+      parameters:
+        - { name: typeId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ItemTypeUpdate' }
+      responses:
+        '200':
+          description: OK
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ItemTypeDef' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /space-templates:
     get:
       tags: [spaces]
@@ -2009,6 +2066,42 @@ paths:
       responses:
         '204': { description: Dihapus }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/relations:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [items]
+      operationId: listItemRelations
+      summary: Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [field_id, name, items, hidden]
+                      properties:
+                        field_id: { type: string, format: uuid }
+                        name: { type: string }
+                        hidden: { type: integer }
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            required: [id, title, type, type_key]
+                            properties:
+                              id: { type: string, format: uuid }
+                              title: { type: string }
+                              type: { $ref: '#/components/schemas/ItemType' }
+                              type_key: { type: string }
         '404': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/activity:
     parameters:
@@ -3481,6 +3574,7 @@ components:
             week_start: { type: string, enum: [monday, sunday, saturday] }
             density: { type: string, enum: [compact, comfortable], default: compact }
             theme: { type: string, enum: [light, dark, system], default: system }
+            accent: { type: string, enum: [blue, teal, violet, green], default: blue, description: Tema warna (SET-06) }
             comment_shortcut: { type: string, enum: [mod_enter, enter], default: mod_enter }
             sidebar_hidden:
               type: array
@@ -3519,6 +3613,7 @@ components:
         week_start: { type: string, enum: [monday, sunday, saturday] }
         density: { type: string, enum: [compact, comfortable] }
         theme: { type: string, enum: [light, dark, system] }
+        accent: { type: string, enum: [blue, teal, violet, green] }
         comment_shortcut: { type: string, enum: [mod_enter, enter] }
         sidebar_hidden:
           type: array
@@ -3708,6 +3803,64 @@ components:
           items: { $ref: '#/components/schemas/ShareInput' }
 
     # ── Item ──
+    ItemTypeLayout:
+      type: object
+      description: 'Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar'
+      additionalProperties: true
+    ItemTypeRef:
+      type: object
+      description: Tipe item (bawaan atau kustom); type tetap kelas perilakunya
+      required: [id, key, name, icon]
+      properties:
+        id: { type: string, format: uuid }
+        key: { type: string }
+        name: { type: string }
+        icon: { type: string }
+        layout: { $ref: '#/components/schemas/ItemTypeLayout' }
+    ItemTypeDef:
+      type: object
+      required: [id, key, name, icon, base, is_builtin, active, allowed_children, defaults, layout, version]
+      properties:
+        id: { type: string, format: uuid }
+        key: { type: string }
+        name: { type: string }
+        icon: { type: string }
+        base: { $ref: '#/components/schemas/ItemType' }
+        is_builtin: { type: boolean }
+        active: { type: boolean }
+        allowed_children:
+          type: array
+          description: Kosong berarti mengikuti aturan kelas; terisi berarti hanya tipe ini yang boleh menjadi anak
+          items: { type: string, format: uuid }
+        default_workflow_id: { type: string, format: uuid, nullable: true }
+        defaults:
+          type: object
+          description: 'Nilai awal item baru: importance, duration_days, effort_minutes'
+          additionalProperties: true
+        layout: { $ref: '#/components/schemas/ItemTypeLayout' }
+        version: { type: integer }
+    ItemTypeCreate:
+      type: object
+      required: [key, name, base]
+      properties:
+        key: { type: string, pattern: '^[a-z][a-z0-9_]{1,39}$' }
+        name: { type: string, minLength: 1, maxLength: 80 }
+        icon: { type: string }
+        base: { $ref: '#/components/schemas/ItemType' }
+        allowed_children: { type: array, items: { type: string, format: uuid } }
+        default_workflow_id: { type: string, format: uuid, nullable: true }
+        defaults: { type: object, additionalProperties: true }
+        layout: { $ref: '#/components/schemas/ItemTypeLayout' }
+    ItemTypeUpdate:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        icon: { type: string }
+        active: { type: boolean }
+        allowed_children: { type: array, items: { type: string, format: uuid } }
+        default_workflow_id: { type: string, format: uuid, nullable: true }
+        defaults: { type: object, additionalProperties: true }
+        layout: { $ref: '#/components/schemas/ItemTypeLayout' }
     ItemType:
       type: string
       enum: [project, folder, task]
@@ -3716,8 +3869,20 @@ components:
       enum: [active, completed, deferred, cancelled]
     Status:
       type: object
-      required: [id, name, color, group, auto_assign, lock_transitions, allowed_next]
+      required: [id, name, color, group, auto_assign, lock_transitions, allowed_next, required_fields, actor_rule, require_children_done, approval_approver_ids]
       properties:
+        required_fields:
+          type: array
+          description: 'Guard (WF-04): isian yang wajib terisi agar item boleh masuk status ini (due_date, start_date, assignees, description, effort_minutes, atau id custom field)'
+          items: { type: string }
+        actor_rule: { type: string, enum: [anyone, assignee, admin], description: Siapa yang boleh memindahkan item ke status ini }
+        require_children_done: { type: boolean, description: 'Validasi lintas record (WF-05): semua subitem harus selesai atau dibatalkan lebih dulu' }
+        approval_approver_ids:
+          type: array
+          description: 'Approval otomatis (WF-03B): item yang masuk status ini memulai approval untuk pengguna ini'
+          items: { type: string, format: uuid }
+        approved_status_id: { type: string, format: uuid, nullable: true, description: Status tujuan bila hasil approval Approved }
+        rejected_status_id: { type: string, format: uuid, nullable: true, description: Status tujuan bila hasil approval Rejected }
         id: { type: string, format: uuid }
         name: { type: string }
         color: { type: string, description: "Nama token warna, bukan hex" }
@@ -3751,6 +3916,12 @@ components:
           type: array
           maxItems: 50
           items: { type: string, format: uuid }
+        required_fields: { type: array, maxItems: 20, items: { type: string } }
+        actor_rule: { type: string, enum: [anyone, assignee, admin] }
+        require_children_done: { type: boolean }
+        approval_approver_ids: { type: array, maxItems: 20, items: { type: string, format: uuid } }
+        approved_status_id: { type: string, format: uuid, nullable: true }
+        rejected_status_id: { type: string, format: uuid, nullable: true }
     WorkflowInput:
       type: object
       required: [name]
@@ -3825,6 +3996,16 @@ components:
         max: { type: number }
         max_files: { type: integer, minimum: 1, maximum: 5, description: Wajib untuk attachment }
         multiple: { type: boolean, description: Hanya untuk assignee }
+        show_if: { $ref: '#/components/schemas/FormCondition' }
+    FormCondition:
+      type: object
+      description: 'Logika kondisional (FORM-07): tampil hanya bila pertanyaan sebelumnya dijawab tertentu; pertanyaan tersembunyi tidak wajib dan jawabannya dibuang'
+      required: [key, op]
+      additionalProperties: false
+      properties:
+        key: { type: string, description: Pertanyaan sebelumnya (bukan section atau attachment) }
+        op: { type: string, enum: [equals, not_equals, contains, answered, not_answered] }
+        value: { type: string, maxLength: 500 }
     FormPage:
       type: object
       required: [title, elements]
@@ -3854,6 +4035,33 @@ components:
             parent_item_id: { type: string, format: uuid, nullable: true }
         assignee_ids: { type: array, maxItems: 20, items: { type: string, format: uuid } }
         title_question: { type: string, nullable: true, description: Key pertanyaan single_line yang menjadi judul item }
+        type_key: { type: string, nullable: true, description: Tipe item kustom yang dibuat (kelasnya harus sama dengan item_type); kosong = tipe bawaan }
+        field_map:
+          type: object
+          description: 'Pemetaan jawaban ke custom field Space tujuan (FORM-09): key pertanyaan ke id field text, number, date, atau select; pilihan dicocokkan lewat label'
+          additionalProperties: { type: string, format: uuid }
+        email:
+          type: object
+          nullable: true
+          description: 'Wording email konfirmasi untuk pengirim lewat link publik (FORM-04); {title}, {form}, {name} diganti saat dikirim, semua nilai di-escape'
+          additionalProperties: false
+          properties:
+            sender_name: { type: string, maxLength: 80 }
+            logo_url: { type: string, maxLength: 500, description: Alamat https saja }
+            greeting: { type: string, maxLength: 200 }
+            message: { type: string, maxLength: 2000 }
+            closing: { type: string, maxLength: 500 }
+        routes:
+          type: array
+          maxItems: 10
+          description: Cabang jawaban ke tipe item; rute pertama yang cocok menang
+          items:
+            type: object
+            required: [when, type_key]
+            additionalProperties: false
+            properties:
+              when: { $ref: '#/components/schemas/FormCondition' }
+              type_key: { type: string }
         approval:
           type: object
           nullable: true
@@ -4009,7 +4217,7 @@ components:
           description: null menghapus alokasi assignee
     CustomFieldType:
       type: string
-      enum: [single_select, multi_select, text, number, currency, percent, people, date, duration, checkbox]
+      enum: [single_select, multi_select, text, number, currency, percent, people, date, duration, checkbox, relation, formula]
     CustomFieldOption:
       type: object
       required: [id, label, color]
@@ -4031,6 +4239,8 @@ components:
         currency: { type: string, pattern: '^[A-Z]{3}$', description: Kode ISO 4217 untuk Currency }
         decimals: { type: integer, minimum: 0, maximum: 6, description: Jumlah desimal untuk Currency dengan default 2 }
         allow_over_100: { type: boolean, description: Izinkan nilai Percent melebihi 100 }
+        expression: { type: string, maxLength: 500, description: 'Khusus Formula (TASK-11B): angka, [Nama field], + - * /, perbandingan, kurung, min, max, round, abs, if' }
+        target_type_key: { type: string, description: Khusus Relation; batasi target ke satu tipe item (kosong = semua) }
         aggregation: { type: string, enum: [sum, average, min, max, count], description: Default untuk field numerik }
         markers:
           type: array
@@ -4105,6 +4315,7 @@ components:
       type: object
       required: [id, seq, type, title, version, locations, assignees, created_at, updated_at, my_capabilities]
       properties:
+        item_type: { $ref: '#/components/schemas/ItemTypeRef' }
         fields: { $ref: '#/components/schemas/CustomFieldValues' }
         field_people:
           type: object
@@ -4166,9 +4377,11 @@ components:
               items: { $ref: '#/components/schemas/Item' }
     ItemCreate:
       type: object
-      required: [type, title, locations]
+      required: [title, locations]
+      description: Kirim type (kelas bawaan) atau type_key (tipe kustom; kelasnya menjadi type)
       properties:
         type: { $ref: '#/components/schemas/ItemType' }
+        type_key: { type: string, description: Kunci tipe item aktif, mis. bug }
         title: { type: string, minLength: 1, maxLength: 500 }
         description: { $ref: '#/components/schemas/RichText' }
         status_id: { type: string, format: uuid, description: Default status pertama workflow container }

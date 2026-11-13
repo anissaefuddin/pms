@@ -125,8 +125,30 @@ func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, versio
 		keys = append(keys, key)
 	}
 	sort.Strings(keys)
+	var oldStatus *string
+	if _, moving := fields["status_id"]; moving {
+		if err := tx.QueryRow(ctx, "SELECT status_id::text FROM items WHERE id=$1::uuid", id).Scan(&oldStatus); err != nil {
+			return Detail{}, err
+		}
+	}
 	if err := applyFields(ctx, tx, actor, id, kind, fields, keys, true); err != nil {
 		return Detail{}, err
+	}
+	if _, moving := fields["status_id"]; moving { // WF-04: the guard sees the item as this PATCH leaves it
+		var now string
+		if err := tx.QueryRow(ctx, "SELECT status_id::text FROM items WHERE id=$1::uuid", id).Scan(&now); err != nil {
+			return Detail{}, err
+		}
+		if oldStatus == nil || *oldStatus != now {
+			if err := checkStatusGuard(ctx, tx, actor, id, now); err != nil {
+				return Detail{}, err
+			}
+			if OnStatusEntered != nil {
+				if err := OnStatusEntered(ctx, tx, actor, id, now, batch); err != nil {
+					return Detail{}, err
+				}
+			}
+		}
 	}
 	if recalculate {
 		days, err := effortDuration(ctx, tx, id)

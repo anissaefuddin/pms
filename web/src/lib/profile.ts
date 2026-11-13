@@ -7,6 +7,17 @@ export const useProfile = () => useContext(ProfileContext);
 export function useAppearance(profile?: CurrentUser) {
   const theme = profile?.theme;
   const density = profile?.density;
+  const accent = profile?.accent;
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.dataset.accent;
+    if (accent && accent !== "blue") root.dataset.accent = accent;
+    else delete root.dataset.accent;
+    return () => {
+      if (previous === undefined) delete root.dataset.accent;
+      else root.dataset.accent = previous;
+    };
+  }, [accent]);
   useEffect(() => {
     if (!theme && !density) return;
     const root = document.documentElement;

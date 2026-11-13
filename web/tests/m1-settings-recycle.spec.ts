@@ -50,7 +50,7 @@ test("profile saves preferences and applies theme and density", async ({ page })
   } });
   await page.goto("/settings/profile");
   await page.getByLabel("Company").fill("Pilot Ltd");
-  await page.getByLabel("Theme").selectOption("dark");
+  await page.getByLabel(/^Theme/).selectOption("dark");
   await page.getByLabel("Density").selectOption("comfortable");
   await page.getByLabel("Send comment shortcut").selectOption("enter");
   await page.getByRole("button", { name: "Save profile" }).click();

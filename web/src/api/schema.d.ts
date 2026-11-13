@@ -931,6 +931,41 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/item-types": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tipe item bawaan dan kustom (CUST-01); semua pengguna yang login boleh membaca */
+        get: operations["listItemTypes"];
+        put?: never;
+        /** Buat tipe item kustom (hanya admin) */
+        post: operations["createItemType"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/item-types/{typeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah */
+        patch: operations["updateItemType"];
+        trace?: never;
+    };
     "/space-templates": {
         parameters: {
             query?: never;
@@ -1457,6 +1492,25 @@ export interface paths {
         put?: never;
         post?: never;
         delete: operations["deleteAttachment"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/items/{itemId}/relations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        /** Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05) */
+        get: operations["listItemRelations"];
+        put?: never;
+        post?: never;
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -2525,6 +2579,12 @@ export interface components {
              */
             theme: "light" | "dark" | "system";
             /**
+             * @description Tema warna (SET-06)
+             * @default blue
+             * @enum {string}
+             */
+            accent: "blue" | "teal" | "violet" | "green";
+            /**
              * @default mod_enter
              * @enum {string}
              */
@@ -2571,6 +2631,8 @@ export interface components {
             density?: "compact" | "comfortable";
             /** @enum {string} */
             theme?: "light" | "dark" | "system";
+            /** @enum {string} */
+            accent?: "blue" | "teal" | "violet" | "green";
             /** @enum {string} */
             comment_shortcut?: "mod_enter" | "enter";
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
@@ -2704,11 +2766,90 @@ export interface components {
         ShareReplace: {
             shares: components["schemas"]["ShareInput"][];
         };
+        /** @description Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar */
+        ItemTypeLayout: {
+            [key: string]: unknown;
+        };
+        /** @description Tipe item (bawaan atau kustom); type tetap kelas perilakunya */
+        ItemTypeRef: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            name: string;
+            icon: string;
+            layout?: components["schemas"]["ItemTypeLayout"];
+        };
+        ItemTypeDef: {
+            /** Format: uuid */
+            id: string;
+            key: string;
+            name: string;
+            icon: string;
+            base: components["schemas"]["ItemType"];
+            is_builtin: boolean;
+            active: boolean;
+            /** @description Kosong berarti mengikuti aturan kelas; terisi berarti hanya tipe ini yang boleh menjadi anak */
+            allowed_children: string[];
+            /** Format: uuid */
+            default_workflow_id?: string | null;
+            /** @description Nilai awal item baru: importance, duration_days, effort_minutes */
+            defaults: {
+                [key: string]: unknown;
+            };
+            layout: components["schemas"]["ItemTypeLayout"];
+            version: number;
+        };
+        ItemTypeCreate: {
+            key: string;
+            name: string;
+            icon?: string;
+            base: components["schemas"]["ItemType"];
+            allowed_children?: string[];
+            /** Format: uuid */
+            default_workflow_id?: string | null;
+            defaults?: {
+                [key: string]: unknown;
+            };
+            layout?: components["schemas"]["ItemTypeLayout"];
+        };
+        ItemTypeUpdate: {
+            name?: string;
+            icon?: string;
+            active?: boolean;
+            allowed_children?: string[];
+            /** Format: uuid */
+            default_workflow_id?: string | null;
+            defaults?: {
+                [key: string]: unknown;
+            };
+            layout?: components["schemas"]["ItemTypeLayout"];
+        };
         /** @enum {string} */
         ItemType: "project" | "folder" | "task";
         /** @enum {string} */
         StatusGroup: "active" | "completed" | "deferred" | "cancelled";
         Status: {
+            /** @description Guard (WF-04): isian yang wajib terisi agar item boleh masuk status ini (due_date, start_date, assignees, description, effort_minutes, atau id custom field) */
+            required_fields: string[];
+            /**
+             * @description Siapa yang boleh memindahkan item ke status ini
+             * @enum {string}
+             */
+            actor_rule: "anyone" | "assignee" | "admin";
+            /** @description Validasi lintas record (WF-05): semua subitem harus selesai atau dibatalkan lebih dulu */
+            require_children_done: boolean;
+            /** @description Approval otomatis (WF-03B): item yang masuk status ini memulai approval untuk pengguna ini */
+            approval_approver_ids: string[];
+            /**
+             * Format: uuid
+             * @description Status tujuan bila hasil approval Approved
+             */
+            approved_status_id?: string | null;
+            /**
+             * Format: uuid
+             * @description Status tujuan bila hasil approval Rejected
+             */
+            rejected_status_id?: string | null;
             /** Format: uuid */
             id: string;
             name: string;
@@ -2735,6 +2876,15 @@ export interface components {
             auto_assign?: boolean;
             lock_transitions?: boolean;
             allowed_next?: string[];
+            required_fields?: string[];
+            /** @enum {string} */
+            actor_rule?: "anyone" | "assignee" | "admin";
+            require_children_done?: boolean;
+            approval_approver_ids?: string[];
+            /** Format: uuid */
+            approved_status_id?: string | null;
+            /** Format: uuid */
+            rejected_status_id?: string | null;
         };
         WorkflowInput: {
             name: string;
@@ -2801,6 +2951,15 @@ export interface components {
             max_files?: number;
             /** @description Hanya untuk assignee */
             multiple?: boolean;
+            show_if?: components["schemas"]["FormCondition"];
+        };
+        /** @description Logika kondisional (FORM-07): tampil hanya bila pertanyaan sebelumnya dijawab tertentu; pertanyaan tersembunyi tidak wajib dan jawabannya dibuang */
+        FormCondition: {
+            /** @description Pertanyaan sebelumnya (bukan section atau attachment) */
+            key: string;
+            /** @enum {string} */
+            op: "equals" | "not_equals" | "contains" | "answered" | "not_answered";
+            value?: string;
         };
         FormPage: {
             title: string;
@@ -2826,6 +2985,26 @@ export interface components {
             assignee_ids?: string[];
             /** @description Key pertanyaan single_line yang menjadi judul item */
             title_question?: string | null;
+            /** @description Tipe item kustom yang dibuat (kelasnya harus sama dengan item_type); kosong = tipe bawaan */
+            type_key?: string | null;
+            /** @description Pemetaan jawaban ke custom field Space tujuan (FORM-09): key pertanyaan ke id field text, number, date, atau select; pilihan dicocokkan lewat label */
+            field_map?: {
+                [key: string]: string;
+            };
+            /** @description Wording email konfirmasi untuk pengirim lewat link publik (FORM-04); {title}, {form}, {name} diganti saat dikirim, semua nilai di-escape */
+            email?: {
+                sender_name?: string;
+                /** @description Alamat https saja */
+                logo_url?: string;
+                greeting?: string;
+                message?: string;
+                closing?: string;
+            } | null;
+            /** @description Cabang jawaban ke tipe item; rute pertama yang cocok menang */
+            routes?: {
+                when: components["schemas"]["FormCondition"];
+                type_key: string;
+            }[];
             approval?: {
                 approver_ids: string[];
                 description?: string;
@@ -2971,7 +3150,7 @@ export interface components {
             } | null;
         };
         /** @enum {string} */
-        CustomFieldType: "single_select" | "multi_select" | "text" | "number" | "currency" | "percent" | "people" | "date" | "duration" | "checkbox";
+        CustomFieldType: "single_select" | "multi_select" | "text" | "number" | "currency" | "percent" | "people" | "date" | "duration" | "checkbox" | "relation" | "formula";
         CustomFieldOption: {
             /** Format: uuid */
             id: string;
@@ -2994,6 +3173,10 @@ export interface components {
             decimals?: number;
             /** @description Izinkan nilai Percent melebihi 100 */
             allow_over_100?: boolean;
+            /** @description Khusus Formula (TASK-11B): angka, [Nama field], + - * /, perbandingan, kurung, min, max, round, abs, if */
+            expression?: string;
+            /** @description Khusus Relation; batasi target ke satu tipe item (kosong = semua) */
+            target_type_key?: string;
             /**
              * @description Default untuk field numerik
              * @enum {string}
@@ -3040,6 +3223,7 @@ export interface components {
         /** @enum {string} */
         ProjectProgressRisk: "green" | "yellow" | "red";
         Item: {
+            item_type?: components["schemas"]["ItemTypeRef"];
             fields?: components["schemas"]["CustomFieldValues"];
             /** @description Metadata orang yang sudah dipilih pada nilai People yang terlihat, berkunci UUID user */
             field_people?: {
@@ -3111,8 +3295,11 @@ export interface components {
         ItemPage: components["schemas"]["Page"] & {
             items: components["schemas"]["Item"][];
         };
+        /** @description Kirim type (kelas bawaan) atau type_key (tipe kustom; kelasnya menjadi type) */
         ItemCreate: {
-            type: components["schemas"]["ItemType"];
+            type?: components["schemas"]["ItemType"];
+            /** @description Kunci tipe item aktif */
+            type_key?: string;
             title: string;
             description?: components["schemas"]["RichText"];
             /**
@@ -5304,6 +5491,87 @@ export interface operations {
             };
         };
     };
+    listItemTypes: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ItemTypeDef"][];
+                    };
+                };
+            };
+        };
+    };
+    createItemType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemTypeCreate"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemTypeDef"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    updateItemType: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                typeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ItemTypeUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemTypeDef"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
     listSpaceTemplates: {
         parameters: {
             query?: never;
@@ -6481,6 +6749,43 @@ export interface operations {
                 content?: never;
             };
             403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listItemRelations: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            field_id: string;
+                            name: string;
+                            hidden: number;
+                            items: {
+                                /** Format: uuid */
+                                id: string;
+                                title: string;
+                                type: components["schemas"]["ItemType"];
+                                type_key: string;
+                            }[];
+                        }[];
+                    };
+                };
+            };
             404: components["responses"]["Problem"];
         };
     };

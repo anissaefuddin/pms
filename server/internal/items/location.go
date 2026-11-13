@@ -148,6 +148,9 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			if parentKind == "task" && kind != "task" {
 				return Detail{}, Invalid("a task can contain only tasks")
 			}
+			if err := checkAllowedUnder(ctx, tx, *loc.ParentID, itemID); err != nil { // S8.1.3
+				return Detail{}, err
+			}
 		} else if err = tx.QueryRow(ctx, "SELECT id FROM workflows WHERE is_default").Scan(&resolved); err != nil {
 			return Detail{}, err
 		}

@@ -471,10 +471,12 @@ const (
 	CustomFieldTypeCurrency     CustomFieldType = "currency"
 	CustomFieldTypeDate         CustomFieldType = "date"
 	CustomFieldTypeDuration     CustomFieldType = "duration"
+	CustomFieldTypeFormula      CustomFieldType = "formula"
 	CustomFieldTypeMultiSelect  CustomFieldType = "multi_select"
 	CustomFieldTypeNumber       CustomFieldType = "number"
 	CustomFieldTypePeople       CustomFieldType = "people"
 	CustomFieldTypePercent      CustomFieldType = "percent"
+	CustomFieldTypeRelation     CustomFieldType = "relation"
 	CustomFieldTypeSingleSelect CustomFieldType = "single_select"
 	CustomFieldTypeText         CustomFieldType = "text"
 )
@@ -490,6 +492,8 @@ func (e CustomFieldType) Valid() bool {
 		return true
 	case CustomFieldTypeDuration:
 		return true
+	case CustomFieldTypeFormula:
+		return true
 	case CustomFieldTypeMultiSelect:
 		return true
 	case CustomFieldTypeNumber:
@@ -497,6 +501,8 @@ func (e CustomFieldType) Valid() bool {
 	case CustomFieldTypePeople:
 		return true
 	case CustomFieldTypePercent:
+		return true
+	case CustomFieldTypeRelation:
 		return true
 	case CustomFieldTypeSingleSelect:
 		return true
@@ -729,6 +735,33 @@ func (e FormAccess) Valid() bool {
 	case FormAccessInternal:
 		return true
 	case FormAccessPrivate:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FormConditionOp.
+const (
+	Answered    FormConditionOp = "answered"
+	Contains    FormConditionOp = "contains"
+	Equals      FormConditionOp = "equals"
+	NotAnswered FormConditionOp = "not_answered"
+	NotEquals   FormConditionOp = "not_equals"
+)
+
+// Valid indicates whether the value is a known member of the FormConditionOp enum.
+func (e FormConditionOp) Valid() bool {
+	switch e {
+	case Answered:
+		return true
+	case Contains:
+		return true
+	case Equals:
+		return true
+	case NotAnswered:
+		return true
+	case NotEquals:
 		return true
 	default:
 		return false
@@ -984,6 +1017,30 @@ func (e ItemUpdateRecalculateDuration) Valid() bool {
 	}
 }
 
+// Defines values for MeAccent.
+const (
+	MeAccentBlue   MeAccent = "blue"
+	MeAccentGreen  MeAccent = "green"
+	MeAccentTeal   MeAccent = "teal"
+	MeAccentViolet MeAccent = "violet"
+)
+
+// Valid indicates whether the value is a known member of the MeAccent enum.
+func (e MeAccent) Valid() bool {
+	switch e {
+	case MeAccentBlue:
+		return true
+	case MeAccentGreen:
+		return true
+	case MeAccentTeal:
+		return true
+	case MeAccentViolet:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for MeCommentShortcut.
 const (
 	MeCommentShortcutEnter    MeCommentShortcut = "enter"
@@ -1095,6 +1152,30 @@ func (e MeWeekStart) Valid() bool {
 	case MeWeekStartSaturday:
 		return true
 	case MeWeekStartSunday:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for MeUpdateAccent.
+const (
+	MeUpdateAccentBlue   MeUpdateAccent = "blue"
+	MeUpdateAccentGreen  MeUpdateAccent = "green"
+	MeUpdateAccentTeal   MeUpdateAccent = "teal"
+	MeUpdateAccentViolet MeUpdateAccent = "violet"
+)
+
+// Valid indicates whether the value is a known member of the MeUpdateAccent enum.
+func (e MeUpdateAccent) Valid() bool {
+	switch e {
+	case MeUpdateAccentBlue:
+		return true
+	case MeUpdateAccentGreen:
+		return true
+	case MeUpdateAccentTeal:
+		return true
+	case MeUpdateAccentViolet:
 		return true
 	default:
 		return false
@@ -1307,19 +1388,19 @@ func (e ProjectProgressMethod) Valid() bool {
 
 // Defines values for ProjectProgressRisk.
 const (
-	Green  ProjectProgressRisk = "green"
-	Red    ProjectProgressRisk = "red"
-	Yellow ProjectProgressRisk = "yellow"
+	ProjectProgressRiskGreen  ProjectProgressRisk = "green"
+	ProjectProgressRiskRed    ProjectProgressRisk = "red"
+	ProjectProgressRiskYellow ProjectProgressRisk = "yellow"
 )
 
 // Valid indicates whether the value is a known member of the ProjectProgressRisk enum.
 func (e ProjectProgressRisk) Valid() bool {
 	switch e {
-	case Green:
+	case ProjectProgressRiskGreen:
 		return true
-	case Red:
+	case ProjectProgressRiskRed:
 		return true
-	case Yellow:
+	case ProjectProgressRiskYellow:
 		return true
 	default:
 		return false
@@ -1599,6 +1680,27 @@ func (e SpaceKind) Valid() bool {
 	}
 }
 
+// Defines values for StatusActorRule.
+const (
+	StatusActorRuleAdmin    StatusActorRule = "admin"
+	StatusActorRuleAnyone   StatusActorRule = "anyone"
+	StatusActorRuleAssignee StatusActorRule = "assignee"
+)
+
+// Valid indicates whether the value is a known member of the StatusActorRule enum.
+func (e StatusActorRule) Valid() bool {
+	switch e {
+	case StatusActorRuleAdmin:
+		return true
+	case StatusActorRuleAnyone:
+		return true
+	case StatusActorRuleAssignee:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for StatusGroup.
 const (
 	StatusGroupActive    StatusGroup = "active"
@@ -1617,6 +1719,27 @@ func (e StatusGroup) Valid() bool {
 	case StatusGroupCompleted:
 		return true
 	case StatusGroupDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StatusPatchActorRule.
+const (
+	StatusPatchActorRuleAdmin    StatusPatchActorRule = "admin"
+	StatusPatchActorRuleAnyone   StatusPatchActorRule = "anyone"
+	StatusPatchActorRuleAssignee StatusPatchActorRule = "assignee"
+)
+
+// Valid indicates whether the value is a known member of the StatusPatchActorRule enum.
+func (e StatusPatchActorRule) Valid() bool {
+	switch e {
+	case StatusPatchActorRuleAdmin:
+		return true
+	case StatusPatchActorRuleAnyone:
+		return true
+	case StatusPatchActorRuleAssignee:
 		return true
 	default:
 		return false
@@ -1715,25 +1838,25 @@ func (e UserStatus) Valid() bool {
 
 // Defines values for UserType.
 const (
-	Admin        UserType = "admin"
-	Collaborator UserType = "collaborator"
-	External     UserType = "external"
-	Regular      UserType = "regular"
-	Viewer       UserType = "viewer"
+	UserTypeAdmin        UserType = "admin"
+	UserTypeCollaborator UserType = "collaborator"
+	UserTypeExternal     UserType = "external"
+	UserTypeRegular      UserType = "regular"
+	UserTypeViewer       UserType = "viewer"
 )
 
 // Valid indicates whether the value is a known member of the UserType enum.
 func (e UserType) Valid() bool {
 	switch e {
-	case Admin:
+	case UserTypeAdmin:
 		return true
-	case Collaborator:
+	case UserTypeCollaborator:
 		return true
-	case External:
+	case UserTypeExternal:
 		return true
-	case Regular:
+	case UserTypeRegular:
 		return true
-	case Viewer:
+	case UserTypeViewer:
 		return true
 	default:
 		return false
@@ -2415,11 +2538,17 @@ type CustomFieldConfig struct {
 	// Decimals Jumlah desimal untuk Currency dengan default 2
 	Decimals *int `json:"decimals,omitempty"`
 
+	// Expression Khusus Formula (TASK-11B): angka, [Nama field], + - * /, perbandingan, kurung, min, max, round, abs, if
+	Expression *string `json:"expression,omitempty"`
+
 	// Markers Aturan numerik dalam urutan prioritas, kecocokan pertama berlaku
 	Markers *[]CustomFieldMarker `json:"markers,omitempty"`
 
 	// ProjectBudget Khusus Currency dan hanya menerima nilai pada Project
 	ProjectBudget *bool `json:"project_budget,omitempty"`
+
+	// TargetTypeKey Khusus Relation; batasi target ke satu tipe item (kosong = semua)
+	TargetTypeKey *string `json:"target_type_key,omitempty"`
 }
 
 // CustomFieldConfigAggregation Default untuk field numerik
@@ -2649,6 +2778,17 @@ type FormAvailable struct {
 	Name        string             `json:"name"`
 }
 
+// FormCondition Logika kondisional (FORM-07): tampil hanya bila pertanyaan sebelumnya dijawab tertentu; pertanyaan tersembunyi tidak wajib dan jawabannya dibuang
+type FormCondition struct {
+	// Key Pertanyaan sebelumnya (bukan section atau attachment)
+	Key   string          `json:"key"`
+	Op    FormConditionOp `json:"op"`
+	Value *string         `json:"value,omitempty"`
+}
+
+// FormConditionOp defines model for FormCondition.Op.
+type FormConditionOp string
+
 // FormDefinition defines model for FormDefinition.
 type FormDefinition struct {
 	Pages []FormPage `json:"pages"`
@@ -2674,6 +2814,9 @@ type FormElement struct {
 	// Options Wajib 2-50 untuk single_choice dan multiple_choice
 	Options  *[]string `json:"options,omitempty"`
 	Required *bool     `json:"required,omitempty"`
+
+	// ShowIf Logika kondisional (FORM-07): tampil hanya bila pertanyaan sebelumnya dijawab tertentu; pertanyaan tersembunyi tidak wajib dan jawabannya dibuang
+	ShowIf *FormCondition `json:"show_if,omitempty"`
 }
 
 // FormElementKind defines model for FormElement.Kind.
@@ -2707,18 +2850,43 @@ type FormResponseSettings struct {
 		ApproverIds []openapi_types.UUID `json:"approver_ids"`
 		Description *string              `json:"description,omitempty"`
 	} `json:"approval,omitempty"`
-	AssigneeIds *[]openapi_types.UUID        `json:"assignee_ids,omitempty"`
-	ItemType    FormResponseSettingsItemType `json:"item_type"`
-	Location    struct {
+	AssigneeIds *[]openapi_types.UUID `json:"assignee_ids,omitempty"`
+
+	// Email Wording email konfirmasi untuk pengirim lewat link publik (FORM-04); {title}, {form}, {name} diganti saat dikirim, semua nilai di-escape
+	Email *struct {
+		Closing  *string `json:"closing,omitempty"`
+		Greeting *string `json:"greeting,omitempty"`
+
+		// LogoUrl Alamat https saja
+		LogoUrl    *string `json:"logo_url,omitempty"`
+		Message    *string `json:"message,omitempty"`
+		SenderName *string `json:"sender_name,omitempty"`
+	} `json:"email,omitempty"`
+
+	// FieldMap Pemetaan jawaban ke custom field Space tujuan (FORM-09): key pertanyaan ke id field text, number, date, atau select; pilihan dicocokkan lewat label
+	FieldMap *map[string]openapi_types.UUID `json:"field_map,omitempty"`
+	ItemType FormResponseSettingsItemType   `json:"item_type"`
+	Location struct {
 		ParentItemId *openapi_types.UUID `json:"parent_item_id,omitempty"`
 		SpaceId      openapi_types.UUID  `json:"space_id"`
 	} `json:"location"`
+
+	// Routes Cabang jawaban ke tipe item; rute pertama yang cocok menang
+	Routes *[]struct {
+		TypeKey string `json:"type_key"`
+
+		// When Logika kondisional (FORM-07): tampil hanya bila pertanyaan sebelumnya dijawab tertentu; pertanyaan tersembunyi tidak wajib dan jawabannya dibuang
+		When FormCondition `json:"when"`
+	} `json:"routes,omitempty"`
 
 	// StatusId Kosong berarti status pertama workflow tujuan
 	StatusId *openapi_types.UUID `json:"status_id,omitempty"`
 
 	// TitleQuestion Key pertanyaan single_line yang menjadi judul item
 	TitleQuestion *string `json:"title_question,omitempty"`
+
+	// TypeKey Tipe item kustom yang dibuat (kelasnya harus sama dengan item_type); kosong = tipe bawaan
+	TypeKey *string `json:"type_key,omitempty"`
 }
 
 // FormResponseSettingsItemType defines model for FormResponseSettings.ItemType.
@@ -2804,8 +2972,11 @@ type Item struct {
 	Id     openapi_types.UUID `json:"id"`
 
 	// Importance Prioritas item (D-36)
-	Importance     *ItemImportance        `json:"importance,omitempty"`
-	IsMilestone    *bool                  `json:"is_milestone,omitempty"`
+	Importance  *ItemImportance `json:"importance,omitempty"`
+	IsMilestone *bool           `json:"is_milestone,omitempty"`
+
+	// ItemType Tipe item (bawaan atau kustom); type tetap kelas perilakunya
+	ItemType       *ItemTypeRef           `json:"item_type,omitempty"`
 	Locations      []Location             `json:"locations"`
 	MyCapabilities []Capability           `json:"my_capabilities"`
 	Owner          *UserRef               `json:"owner,omitempty"`
@@ -2845,7 +3016,7 @@ type ItemAssignee struct {
 	Name       string              `json:"name"`
 }
 
-// ItemCreate defines model for ItemCreate.
+// ItemCreate Kirim type (kelas bawaan) atau type_key (tipe kustom; kelasnya menjadi type)
 type ItemCreate struct {
 	AssigneeAllocations *[]AssigneeAllocationUpdate `json:"assignee_allocations,omitempty"`
 	AssigneeIds         *[]openapi_types.UUID       `json:"assignee_ids,omitempty"`
@@ -2878,7 +3049,10 @@ type ItemCreate struct {
 	// StatusId Default status pertama workflow container
 	StatusId *openapi_types.UUID `json:"status_id,omitempty"`
 	Title    string              `json:"title"`
-	Type     ItemType            `json:"type"`
+	Type     *ItemType           `json:"type,omitempty"`
+
+	// TypeKey Kunci tipe item aktif
+	TypeKey *string `json:"type_key,omitempty"`
 }
 
 // ItemCreateDefaultViewType Hanya project/folder
@@ -2945,12 +3119,15 @@ type ItemPatchResult struct {
 	Id     openapi_types.UUID `json:"id"`
 
 	// Importance Prioritas item (D-36)
-	Importance     *ItemPatchResultImportance `json:"importance,omitempty"`
-	IsMilestone    *bool                      `json:"is_milestone,omitempty"`
-	Locations      []Location                 `json:"locations"`
-	MyCapabilities []Capability               `json:"my_capabilities"`
-	Owner          *UserRef                   `json:"owner,omitempty"`
-	ProgressMethod *ProjectProgressMethod     `json:"progress_method,omitempty"`
+	Importance  *ItemPatchResultImportance `json:"importance,omitempty"`
+	IsMilestone *bool                      `json:"is_milestone,omitempty"`
+
+	// ItemType Tipe item (bawaan atau kustom); type tetap kelas perilakunya
+	ItemType       *ItemTypeRef           `json:"item_type,omitempty"`
+	Locations      []Location             `json:"locations"`
+	MyCapabilities []Capability           `json:"my_capabilities"`
+	Owner          *UserRef               `json:"owner,omitempty"`
+	ProgressMethod *ProjectProgressMethod `json:"progress_method,omitempty"`
 
 	// ProgressPercent Progres manual pada task atau progres hasil perhitungan pada project
 	ProgressPercent      *int                                 `json:"progress_percent,omitempty"`
@@ -2981,6 +3158,69 @@ type ItemPatchResultRestoreBlockedReason string
 
 // ItemType defines model for ItemType.
 type ItemType string
+
+// ItemTypeCreate defines model for ItemTypeCreate.
+type ItemTypeCreate struct {
+	AllowedChildren   *[]openapi_types.UUID   `json:"allowed_children,omitempty"`
+	Base              ItemType                `json:"base"`
+	DefaultWorkflowId *openapi_types.UUID     `json:"default_workflow_id,omitempty"`
+	Defaults          *map[string]interface{} `json:"defaults,omitempty"`
+	Icon              *string                 `json:"icon,omitempty"`
+	Key               string                  `json:"key"`
+
+	// Layout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
+	Layout *ItemTypeLayout `json:"layout,omitempty"`
+	Name   string          `json:"name"`
+}
+
+// ItemTypeDef defines model for ItemTypeDef.
+type ItemTypeDef struct {
+	Active bool `json:"active"`
+
+	// AllowedChildren Kosong berarti mengikuti aturan kelas; terisi berarti hanya tipe ini yang boleh menjadi anak
+	AllowedChildren   []openapi_types.UUID `json:"allowed_children"`
+	Base              ItemType             `json:"base"`
+	DefaultWorkflowId *openapi_types.UUID  `json:"default_workflow_id,omitempty"`
+
+	// Defaults Nilai awal item baru: importance, duration_days, effort_minutes
+	Defaults  map[string]interface{} `json:"defaults"`
+	Icon      string                 `json:"icon"`
+	Id        openapi_types.UUID     `json:"id"`
+	IsBuiltin bool                   `json:"is_builtin"`
+	Key       string                 `json:"key"`
+
+	// Layout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
+	Layout  ItemTypeLayout `json:"layout"`
+	Name    string         `json:"name"`
+	Version int            `json:"version"`
+}
+
+// ItemTypeLayout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
+type ItemTypeLayout map[string]interface{}
+
+// ItemTypeRef Tipe item (bawaan atau kustom); type tetap kelas perilakunya
+type ItemTypeRef struct {
+	Icon string             `json:"icon"`
+	Id   openapi_types.UUID `json:"id"`
+	Key  string             `json:"key"`
+
+	// Layout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
+	Layout *ItemTypeLayout `json:"layout,omitempty"`
+	Name   string          `json:"name"`
+}
+
+// ItemTypeUpdate defines model for ItemTypeUpdate.
+type ItemTypeUpdate struct {
+	Active            *bool                   `json:"active,omitempty"`
+	AllowedChildren   *[]openapi_types.UUID   `json:"allowed_children,omitempty"`
+	DefaultWorkflowId *openapi_types.UUID     `json:"default_workflow_id,omitempty"`
+	Defaults          *map[string]interface{} `json:"defaults,omitempty"`
+	Icon              *string                 `json:"icon,omitempty"`
+
+	// Layout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
+	Layout *ItemTypeLayout `json:"layout,omitempty"`
+	Name   *string         `json:"name,omitempty"`
+}
 
 // ItemUpdate defines model for ItemUpdate.
 type ItemUpdate struct {
@@ -3033,6 +3273,9 @@ type LoginRequest struct {
 
 // Me defines model for Me.
 type Me struct {
+	// Accent Tema warna (SET-06)
+	Accent *MeAccent `json:"accent,omitempty"`
+
 	// AccountName Nama workspace
 	AccountName string `json:"account_name"`
 
@@ -3084,6 +3327,9 @@ type Me struct {
 	WeekStart MeWeekStart `json:"week_start"`
 }
 
+// MeAccent Tema warna (SET-06)
+type MeAccent string
+
 // MeCommentShortcut defines model for Me.CommentShortcut.
 type MeCommentShortcut string
 
@@ -3104,6 +3350,7 @@ type MeWeekStart string
 
 // MeUpdate defines model for MeUpdate.
 type MeUpdate struct {
+	Accent                   *MeUpdateAccent          `json:"accent,omitempty"`
 	CommentShortcut          *MeUpdateCommentShortcut `json:"comment_shortcut,omitempty"`
 	Company                  *string                  `json:"company,omitempty"`
 	Country                  *string                  `json:"country,omitempty"`
@@ -3125,6 +3372,9 @@ type MeUpdate struct {
 	Timezone                 *string                  `json:"timezone,omitempty"`
 	WeekStart                *MeUpdateWeekStart       `json:"week_start,omitempty"`
 }
+
+// MeUpdateAccent defines model for MeUpdate.Accent.
+type MeUpdateAccent string
 
 // MeUpdateCommentShortcut defines model for MeUpdate.CommentShortcut.
 type MeUpdateCommentShortcut string
@@ -3468,7 +3718,15 @@ type SpaceUpdate struct {
 
 // Status defines model for Status.
 type Status struct {
+	// ActorRule Siapa yang boleh memindahkan item ke status ini
+	ActorRule   StatusActorRule      `json:"actor_rule"`
 	AllowedNext []openapi_types.UUID `json:"allowed_next"`
+
+	// ApprovalApproverIds Approval otomatis (WF-03B): item yang masuk status ini memulai approval untuk pengguna ini
+	ApprovalApproverIds []openapi_types.UUID `json:"approval_approver_ids"`
+
+	// ApprovedStatusId Status tujuan bila hasil approval Approved
+	ApprovedStatusId *openapi_types.UUID `json:"approved_status_id,omitempty"`
 
 	// AutoAssign Item yang masuk status ini otomatis menugaskan pengguna yang mengubahnya
 	AutoAssign bool `json:"auto_assign"`
@@ -3481,7 +3739,19 @@ type Status struct {
 	// LockTransitions Bila true, item di status ini hanya boleh pindah ke `allowed_next`
 	LockTransitions bool   `json:"lock_transitions"`
 	Name            string `json:"name"`
+
+	// RejectedStatusId Status tujuan bila hasil approval Rejected
+	RejectedStatusId *openapi_types.UUID `json:"rejected_status_id,omitempty"`
+
+	// RequireChildrenDone Validasi lintas record (WF-05): semua subitem harus selesai atau dibatalkan lebih dulu
+	RequireChildrenDone bool `json:"require_children_done"`
+
+	// RequiredFields Guard (WF-04): isian yang wajib terisi agar item boleh masuk status ini (due_date, start_date, assignees, description, effort_minutes, atau id custom field)
+	RequiredFields []string `json:"required_fields"`
 }
+
+// StatusActorRule Siapa yang boleh memindahkan item ke status ini
+type StatusActorRule string
 
 // StatusGroup defines model for StatusGroup.
 type StatusGroup string
@@ -3497,13 +3767,22 @@ type StatusInput struct {
 
 // StatusPatch defines model for StatusPatch.
 type StatusPatch struct {
-	AllowedNext     *[]openapi_types.UUID `json:"allowed_next,omitempty"`
-	AutoAssign      *bool                 `json:"auto_assign,omitempty"`
-	Color           *string               `json:"color,omitempty"`
-	Group           *StatusGroup          `json:"group,omitempty"`
-	LockTransitions *bool                 `json:"lock_transitions,omitempty"`
-	Name            *string               `json:"name,omitempty"`
+	ActorRule           *StatusPatchActorRule `json:"actor_rule,omitempty"`
+	AllowedNext         *[]openapi_types.UUID `json:"allowed_next,omitempty"`
+	ApprovalApproverIds *[]openapi_types.UUID `json:"approval_approver_ids,omitempty"`
+	ApprovedStatusId    *openapi_types.UUID   `json:"approved_status_id,omitempty"`
+	AutoAssign          *bool                 `json:"auto_assign,omitempty"`
+	Color               *string               `json:"color,omitempty"`
+	Group               *StatusGroup          `json:"group,omitempty"`
+	LockTransitions     *bool                 `json:"lock_transitions,omitempty"`
+	Name                *string               `json:"name,omitempty"`
+	RejectedStatusId    *openapi_types.UUID   `json:"rejected_status_id,omitempty"`
+	RequireChildrenDone *bool                 `json:"require_children_done,omitempty"`
+	RequiredFields      *[]string             `json:"required_fields,omitempty"`
 }
+
+// StatusPatchActorRule defines model for StatusPatch.ActorRule.
+type StatusPatchActorRule string
 
 // StreamEntry defines model for StreamEntry.
 type StreamEntry struct {
@@ -4397,6 +4676,12 @@ type CreateGroupJSONRequestBody CreateGroupJSONBody
 // ReplaceGroupJSONRequestBody defines body for ReplaceGroup for application/json ContentType.
 type ReplaceGroupJSONRequestBody ReplaceGroupJSONBody
 
+// CreateItemTypeJSONRequestBody defines body for CreateItemType for application/json ContentType.
+type CreateItemTypeJSONRequestBody = ItemTypeCreate
+
+// UpdateItemTypeJSONRequestBody defines body for UpdateItemType for application/json ContentType.
+type UpdateItemTypeJSONRequestBody = ItemTypeUpdate
+
 // CreateItemJSONRequestBody defines body for CreateItem for application/json ContentType.
 type CreateItemJSONRequestBody = ItemCreate
 
@@ -4945,6 +5230,15 @@ type ServerInterface interface {
 	// Healthz Proses hidup
 	// (GET /healthz)
 	Healthz(w http.ResponseWriter, r *http.Request)
+	// ListItemTypes Tipe item bawaan dan kustom (CUST-01); semua pengguna yang login boleh membaca
+	// (GET /item-types)
+	ListItemTypes(w http.ResponseWriter, r *http.Request)
+	// CreateItemType Buat tipe item kustom (hanya admin)
+	// (POST /item-types)
+	CreateItemType(w http.ResponseWriter, r *http.Request)
+	// UpdateItemType Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah
+	// (PATCH /item-types/{typeId})
+	UpdateItemType(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID)
 	// CreateItem Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
 	// (POST /items)
 	CreateItem(w http.ResponseWriter, r *http.Request)
@@ -4993,6 +5287,9 @@ type ServerInterface interface {
 	// ReplaceItemLocations Ganti seluruh lokasi item (multi-lokasi)
 	// (PUT /items/{itemId}/locations)
 	ReplaceItemLocations(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
+	// (GET /items/{itemId}/relations)
+	ListItemRelations(w http.ResponseWriter, r *http.Request, itemId ItemId)
 	// ReorderItem Ubah urutan item di dalam satu lokasi (drag di Table/Board)
 	// (POST /items/{itemId}/reorder)
 	ReorderItem(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -6729,6 +7026,60 @@ func (siw *ServerInterfaceWrapper) Healthz(w http.ResponseWriter, r *http.Reques
 	handler.ServeHTTP(w, r)
 }
 
+// ListItemTypes operation middleware
+func (siw *ServerInterfaceWrapper) ListItemTypes(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListItemTypes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateItemType operation middleware
+func (siw *ServerInterfaceWrapper) CreateItemType(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateItemType(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateItemType operation middleware
+func (siw *ServerInterfaceWrapper) UpdateItemType(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "typeId" -------------
+	var typeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "typeId", r.PathValue("typeId"), &typeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "typeId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateItemType(w, r, typeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateItem operation middleware
 func (siw *ServerInterfaceWrapper) CreateItem(w http.ResponseWriter, r *http.Request) {
 
@@ -7304,6 +7655,32 @@ func (siw *ServerInterfaceWrapper) ReplaceItemLocations(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReplaceItemLocations(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListItemRelations operation middleware
+func (siw *ServerInterfaceWrapper) ListItemRelations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId ItemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListItemRelations(w, r, itemId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10454,6 +10831,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/groups", wrapper.CreateGroup)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/groups/{groupId}", wrapper.DeleteGroup)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/groups/{groupId}", wrapper.ReplaceGroup)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/item-types", wrapper.ListItemTypes)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/item-types", wrapper.CreateItemType)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/item-types/{typeId}", wrapper.UpdateItemType)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-templates", wrapper.ListSpaceTemplates)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates/{templateId}/spaces", wrapper.CreateSpaceFromTemplate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces", wrapper.ListSpaces)
@@ -10497,6 +10877,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.UploadAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/download", wrapper.DownloadAttachment)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/attachments/{attachmentId}", wrapper.DeleteAttachment)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/relations", wrapper.ListItemRelations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/activity", wrapper.ListActivity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stream", wrapper.ListStream)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/notifications", wrapper.ListNotifications)
@@ -13707,6 +14088,196 @@ func (response Healthz200Response) VisitHealthzResponse(w http.ResponseWriter) e
 	return nil
 }
 
+type ListItemTypesRequestObject struct {
+}
+
+type ListItemTypesResponseObject interface {
+	VisitListItemTypesResponse(w http.ResponseWriter) error
+}
+
+type ListItemTypes200JSONResponse struct {
+	Items []ItemTypeDef `json:"items"`
+}
+
+func (response ListItemTypes200JSONResponse) VisitListItemTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemTypeRequestObject struct {
+	Body *CreateItemTypeJSONRequestBody
+}
+
+type CreateItemTypeResponseObject interface {
+	VisitCreateItemTypeResponse(w http.ResponseWriter) error
+}
+
+type CreateItemType201ResponseHeaders struct {
+	ETag *string
+}
+
+type CreateItemType201JSONResponse struct {
+	Body    ItemTypeDef
+	Headers CreateItemType201ResponseHeaders
+}
+
+func (response CreateItemType201JSONResponse) VisitCreateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemType403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateItemType403ApplicationProblemPlusJSONResponse) VisitCreateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemType422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateItemType422ApplicationProblemPlusJSONResponse) VisitCreateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateItemTypeRequestObject struct {
+	TypeId openapi_types.UUID `json:"typeId"`
+	Body   *UpdateItemTypeJSONRequestBody
+}
+
+type UpdateItemTypeResponseObject interface {
+	VisitUpdateItemTypeResponse(w http.ResponseWriter) error
+}
+
+type UpdateItemType200ResponseHeaders struct {
+	ETag *string
+}
+
+type UpdateItemType200JSONResponse struct {
+	Body    ItemTypeDef
+	Headers UpdateItemType200ResponseHeaders
+}
+
+func (response UpdateItemType200JSONResponse) VisitUpdateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateItemType403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateItemType403ApplicationProblemPlusJSONResponse) VisitUpdateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateItemType404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateItemType404ApplicationProblemPlusJSONResponse) VisitUpdateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateItemType409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateItemType409ApplicationProblemPlusJSONResponse) VisitUpdateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateItemType422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateItemType422ApplicationProblemPlusJSONResponse) VisitUpdateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateItemType428ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateItemType428ApplicationProblemPlusJSONResponse) VisitUpdateItemTypeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateItemRequestObject struct {
 	Body *CreateItemJSONRequestBody
 }
@@ -14629,6 +15200,56 @@ func (response ReplaceItemLocations422ApplicationProblemPlusJSONResponse) VisitR
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemRelationsRequestObject struct {
+	ItemId ItemId `json:"itemId"`
+}
+
+type ListItemRelationsResponseObject interface {
+	VisitListItemRelationsResponse(w http.ResponseWriter) error
+}
+
+type ListItemRelations200JSONResponse struct {
+	Items []struct {
+		FieldId openapi_types.UUID `json:"field_id"`
+		Hidden  int                `json:"hidden"`
+		Items   []struct {
+			Id      openapi_types.UUID `json:"id"`
+			Title   string             `json:"title"`
+			Type    ItemType           `json:"type"`
+			TypeKey string             `json:"type_key"`
+		} `json:"items"`
+		Name string `json:"name"`
+	} `json:"items"`
+}
+
+func (response ListItemRelations200JSONResponse) VisitListItemRelationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemRelations404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListItemRelations404ApplicationProblemPlusJSONResponse) VisitListItemRelationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -19875,6 +20496,15 @@ type StrictServerInterface interface {
 	// Healthz Proses hidup
 	// (GET /healthz)
 	Healthz(ctx context.Context, request HealthzRequestObject) (HealthzResponseObject, error)
+	// ListItemTypes Tipe item bawaan dan kustom (CUST-01); semua pengguna yang login boleh membaca
+	// (GET /item-types)
+	ListItemTypes(ctx context.Context, request ListItemTypesRequestObject) (ListItemTypesResponseObject, error)
+	// CreateItemType Buat tipe item kustom (hanya admin)
+	// (POST /item-types)
+	CreateItemType(ctx context.Context, request CreateItemTypeRequestObject) (CreateItemTypeResponseObject, error)
+	// UpdateItemType Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah
+	// (PATCH /item-types/{typeId})
+	UpdateItemType(ctx context.Context, request UpdateItemTypeRequestObject) (UpdateItemTypeResponseObject, error)
 	// CreateItem Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
 	// (POST /items)
 	CreateItem(ctx context.Context, request CreateItemRequestObject) (CreateItemResponseObject, error)
@@ -19923,6 +20553,9 @@ type StrictServerInterface interface {
 	// ReplaceItemLocations Ganti seluruh lokasi item (multi-lokasi)
 	// (PUT /items/{itemId}/locations)
 	ReplaceItemLocations(ctx context.Context, request ReplaceItemLocationsRequestObject) (ReplaceItemLocationsResponseObject, error)
+	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
+	// (GET /items/{itemId}/relations)
+	ListItemRelations(ctx context.Context, request ListItemRelationsRequestObject) (ListItemRelationsResponseObject, error)
 	// ReorderItem Ubah urutan item di dalam satu lokasi (drag di Table/Board)
 	// (POST /items/{itemId}/reorder)
 	ReorderItem(ctx context.Context, request ReorderItemRequestObject) (ReorderItemResponseObject, error)
@@ -21756,6 +22389,94 @@ func (sh *strictHandler) Healthz(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// ListItemTypes operation middleware
+func (sh *strictHandler) ListItemTypes(w http.ResponseWriter, r *http.Request) {
+	var request ListItemTypesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListItemTypes(ctx, request.(ListItemTypesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListItemTypes")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListItemTypesResponseObject); ok {
+		if err := validResponse.VisitListItemTypesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateItemType operation middleware
+func (sh *strictHandler) CreateItemType(w http.ResponseWriter, r *http.Request) {
+	var request CreateItemTypeRequestObject
+
+	var body CreateItemTypeJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateItemType(ctx, request.(CreateItemTypeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateItemType")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateItemTypeResponseObject); ok {
+		if err := validResponse.VisitCreateItemTypeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateItemType operation middleware
+func (sh *strictHandler) UpdateItemType(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID) {
+	var request UpdateItemTypeRequestObject
+
+	request.TypeId = typeId
+
+	var body UpdateItemTypeJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateItemType(ctx, request.(UpdateItemTypeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateItemType")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateItemTypeResponseObject); ok {
+		if err := validResponse.VisitUpdateItemTypeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreateItem operation middleware
 func (sh *strictHandler) CreateItem(w http.ResponseWriter, r *http.Request) {
 	var request CreateItemRequestObject
@@ -22223,6 +22944,32 @@ func (sh *strictHandler) ReplaceItemLocations(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReplaceItemLocationsResponseObject); ok {
 		if err := validResponse.VisitReplaceItemLocationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListItemRelations operation middleware
+func (sh *strictHandler) ListItemRelations(w http.ResponseWriter, r *http.Request, itemId ItemId) {
+	var request ListItemRelationsRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListItemRelations(ctx, request.(ListItemRelationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListItemRelations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListItemRelationsResponseObject); ok {
+		if err := validResponse.VisitListItemRelationsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -11,6 +11,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { useItemTypes } from "@/lib/item-types";
 import { useBlueprints } from "@/lib/blueprints";
 import { ItemDates } from "@/components/item-dates";
 
@@ -51,6 +52,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [fieldError, setFieldError] = useState<"title" | "due_date" | "locations" | null>(null);
   const [busy, setBusy] = useState(false);
   const [blueprintID, setBlueprintID] = useState("");
+  const [typeKey, setTypeKey] = useState("");
+  const customTypes = (useItemTypes().data ?? []).filter((def) => !def.is_builtin && def.active && def.base === kind);
   const choices = spaces.data?.filter((space) => space.my_capabilities?.includes("create")) ?? [];
   const selected = choices.find((space) => space.id === spaceID);
   const directory = trail.at(-1);
@@ -89,6 +92,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     }
     const input: ItemCreate = { type: kind, title, locations: [{ space_id: spaceID, parent_item_id: parentID || null }] };
     if (initialStatus) input.status_id = initialStatus;
+    if (typeKey && customTypes.some((def) => def.key === typeKey)) input.type_key = typeKey; // CUST-01: a custom type of this kind
     if (kind !== "task") input.default_view_type = form.get("default_view_type") === "board" ? "board" : "table";
     if (kind === "project" && owner[0]) input.owner_id = owner[0].id;
     if (kind === "task") { // SET-03: the user's defaults for a new task
@@ -157,9 +161,14 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
           {!taskOnly && !blueprint && <fieldset className="flex gap-3">
             <legend>{t("items.type")}</legend>
             {itemTypes.map((type) => <label className="flex items-center gap-1" key={type}>
-              <input type="radio" name="kind" checked={type === kind} onChange={() => setKind(type)} />{t(`items.${type}`)}
+              <input type="radio" name="kind" checked={type === kind} onChange={() => { setKind(type); setTypeKey(""); }} />{t(`items.${type}`)}
             </label>)}
           </fieldset>}
+          {!blueprint && customTypes.length > 0 && <label className="block space-y-1"><span>{t("items.type.label")}</span>
+            <select value={typeKey} onChange={(event) => setTypeKey(event.target.value)} className="block w-full rounded border bg-background p-2">
+              <option value="">{t(`items.${kind}`)}</option>
+              {customTypes.map((def) => <option key={def.key} value={def.key}>{def.name}</option>)}
+            </select></label>}
           {kind !== "task" && <p>{t("items.workflow")}: {t("items.defaultWorkflow")}</p>}
         </>}
         {blueprints.length > 0 && <label className="block space-y-1"><span>{t("blueprints.from")}</span>

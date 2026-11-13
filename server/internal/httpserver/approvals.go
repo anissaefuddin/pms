@@ -390,5 +390,8 @@ func decideApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, item
 	if _, err := batch.Record(ctx, tx, actor, "approval_decided", notifications.Target{Item: itemID.String()}, snippet, []notifications.Principal{{Kind: "user", ID: creator}}, nil); err != nil {
 		return items.Detail{}, err
 	}
+	if err := applyApprovalOutcome(ctx, tx, actor, id, itemID); err != nil {
+		return items.Detail{}, err
+	}
 	return readApproval(ctx, tx, id)
 }

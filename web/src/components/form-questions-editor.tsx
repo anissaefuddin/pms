@@ -54,6 +54,7 @@ export function FormQuestionsEditor({ pages, lockedKeys, errors, onChange }: Pro
         <ol className="space-y-3">
           {page.elements.map((element, ei) => <li key={ei}>
             <ElementCard element={element} pi={pi} ei={ei} count={page.elements.length} errors={errors}
+              earlier={[...pages.slice(0, pi).flatMap((p) => p.elements), ...page.elements.slice(0, ei)].filter((e) => e.kind !== "section" && e.kind !== "attachment")}
               onPatch={(patch) => patchElement(pi, ei, patch)}
               onMove={(delta) => patchPage(pi, { ...page, elements: moveAt(page.elements, ei, delta) })}
               onRemove={() => patchPage(pi, { ...page, elements: page.elements.filter((_, j) => j !== ei) })} />
@@ -71,8 +72,8 @@ export function FormQuestionsEditor({ pages, lockedKeys, errors, onChange }: Pro
   </section>;
 }
 
-function ElementCard({ element, pi, ei, count, errors, onPatch, onMove, onRemove }: {
-  element: FormElement; pi: number; ei: number; count: number; errors: Record<string, string>;
+function ElementCard({ element, pi, ei, count, errors, earlier, onPatch, onMove, onRemove }: {
+  element: FormElement; pi: number; ei: number; count: number; errors: Record<string, string>; earlier: FormElement[];
   onPatch: (patch: Partial<FormElement>) => void; onMove: (delta: -1 | 1) => void; onRemove: () => void;
 }) {
   const { t } = useTranslation();
@@ -123,6 +124,41 @@ function ElementCard({ element, pi, ei, count, errors, onPatch, onMove, onRemove
     {element.kind === "attachment" && <div><label className="block space-y-1 text-sm"><span>{t("forms.questions.maxFiles")}</span>
       <Input type="number" min={1} max={5} value={element.max_files ?? ""} aria-invalid={!!err("max_files")} onChange={(e) => onPatch({ max_files: num(e.target.value) })} /></label>
       <FormError message={err("max_files")} /></div>}
+    <ConditionEditor element={element} earlier={earlier} onPatch={onPatch} error={err("show_if")} />
     {element.kind === "assignee" && <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={!!element.multiple} onChange={(e) => onPatch({ multiple: e.target.checked })} />{t("forms.questions.multiple")}</label>}
   </div>;
+}
+
+const OPS = ["equals", "not_equals", "contains", "answered", "not_answered"] as const;
+
+/** FORM-07: show this question only when an earlier question was answered a certain way. */
+function ConditionEditor({ element, earlier, onPatch, error }: { element: FormElement; earlier: FormElement[]; onPatch: (patch: Partial<FormElement>) => void; error: string }) {
+  const { t } = useTranslation();
+  const cond = element.show_if;
+  const name = element.label || t("forms.questions.untitled");
+  if (!earlier.length) return null;
+  const source = earlier.find((e) => e.key === cond?.key);
+  const needsValue = cond && cond.op !== "answered" && cond.op !== "not_answered";
+  const select = "rounded-lg border border-input bg-transparent px-2 py-1 text-sm dark:bg-input/30";
+  const set = (patch: Partial<NonNullable<FormElement["show_if"]>>) => onPatch({ show_if: { ...(cond ?? { key: earlier[0].key, op: "equals" }), ...patch } as NonNullable<FormElement["show_if"]> });
+  return <fieldset className="space-y-2 text-sm">
+    <legend className="font-medium">{t("forms.condition.title")}</legend>
+    <label className="flex items-center gap-2"><input type="checkbox" checked={!!cond} aria-label={t("forms.condition.enable", { label: name })}
+      onChange={(e) => onPatch({ show_if: e.target.checked ? { key: earlier[0].key, op: isChoice(earlier[0].kind) ? (earlier[0].kind === "multiple_choice" ? "contains" : "equals") : "answered", value: undefined } as NonNullable<FormElement["show_if"]> : undefined })} />
+      {t("forms.condition.only")}</label>
+    {cond && <div className="flex flex-wrap items-center gap-2">
+      <select className={select} aria-label={t("forms.condition.question", { label: name })} value={cond.key} onChange={(e) => {
+        const next = earlier.find((q) => q.key === e.target.value);
+        set({ key: e.target.value, value: undefined, op: next && isChoice(next.kind) ? (next.kind === "multiple_choice" ? "contains" : "equals") : "answered" });
+      }}>
+        {earlier.map((e) => <option key={e.key} value={e.key}>{e.label || e.key}</option>)}</select>
+      <select className={select} aria-label={t("forms.condition.op", { label: name })} value={cond.op} onChange={(e) => set({ op: e.target.value as typeof OPS[number], value: undefined })}>
+        {OPS.map((op) => <option key={op} value={op}>{t(`forms.condition.ops.${op}`)}</option>)}</select>
+      {needsValue && (source && isChoice(source.kind)
+        ? <select className={select} aria-label={t("forms.condition.value", { label: name })} value={cond.value ?? ""} onChange={(e) => set({ value: e.target.value })}>
+          <option value="">—</option>{(source.options ?? []).filter(Boolean).map((o) => <option key={o} value={o}>{o}</option>)}</select>
+        : <Input className="w-40" aria-label={t("forms.condition.value", { label: name })} value={cond.value ?? ""} maxLength={500} onChange={(e) => set({ value: e.target.value })} />)}
+    </div>}
+    <FormError message={error} />
+  </fieldset>;
 }
