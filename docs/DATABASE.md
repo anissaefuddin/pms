@@ -144,8 +144,12 @@ Indeks `item_locations (item_id)` mendukung langkah rekursif. Lihat ARCHITECTURE
 
 | Tabel | Keputusan |
 |---|---|
-| `workflows` | M1 hanya berisi satu workflow `is_default = true` yang dibuat oleh bootstrap (tidak bisa diubah lewat UI sampai M3) |
-| `statuses` | `grp` = `active`/`completed`/`deferred`/`cancelled`; `color` (token palet, bukan hex); `position`. Seed default: **New**, **In Progress** (active), **Completed** (completed), **On Hold** (deferred), **Cancelled** (cancelled) |
+| `workflows` | Satu workflow `is_default = true` dibuat oleh bootstrap; admin dapat menambah workflow lain (M3). Nama unik tanpa membedakan huruf besar-kecil |
+| `statuses` | `grp` = `active`/`completed`/`deferred`/`cancelled`; `color` (token palet, bukan hex); `position`; `auto_assign`, `lock_transitions` (M3). Seed default: **New**, **In Progress** (active), **Completed** (completed), **On Hold** (deferred), **Cancelled** (cancelled) |
+| `status_transitions` | (`from_status_id`, `to_status_id`) transisi yang diizinkan dari status ber-`lock_transitions`; keduanya harus satu workflow (dijaga API); hapus berantai dengan status |
+| `approvals`, `approval_approvers` | Approval per item (`description`, `due_date`, `version`) dan keputusan per approver (`decision`, `comment`, `decided_at`; keduanya terisi atau kosong bersama). Hapus berantai dengan item |
+| `request_forms` | Form milik satu Space: `definition` dan `response` (jsonb, divalidasi paket `forms`), `access` (`private`/`internal`), `version`. Nama unik per Space tanpa membedakan huruf besar-kecil. ID tujuan di `response` tidak berkunci asing, jadi diperiksa ulang saat kirim |
+| `form_submissions` | Satu baris per item hasil form: `form_id` (NULL bila form dihapus), `form_name` salinan, `item_id` unik, `requester_id`, `answers` (jsonb). Dasar hak akses pengirim ke item dan daftar `GET /me/requests` |
 
 ### 3.5 Kolaborasi
 

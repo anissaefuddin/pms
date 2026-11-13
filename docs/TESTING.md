@@ -363,3 +363,19 @@ Batas: sort Predecessors hanya menghitung jumlah pendahulu (belum kedalaman rant
 
 Perubahan lain dalam story ini: Gantt memakai rentang tanggal dari data (sebelumnya jendela bawaan SVAR membuat rencana di luar bulan ini tidak terlihat) dan menyembunyikan bar item tanpa tanggal.
 
+
+## M3 / S3.1.1–S3.3.6 (13 Nov 2026), belum ditutup
+
+| Story | Status | Bukti |
+|---|---|---|
+| S3.1.1 Editor workflow | PASS backend, PASS UI mock | `TestWorkflowEditor` (PostgreSQL): admin saja, invarian status pertama Active dan Completed, urutan, hapus dengan `move_to`, transisi terkunci, auto-assign tercatat di activity. Mutan tanpa cek transisi dan tanpa auto-assign gagal. Playwright mock `workflows.spec.ts` 6/6 |
+| S3.2.1 Approval | PASS backend, PASS UI mock | `TestApprovals`: hak edit, approver harus bisa melihat, keputusan dapat diubah, `If-Match`, notifikasi. 4 mutan gagal. `approvals.spec.ts` 6/6 |
+| S3.3.1 Skema dan API form | PASS | `forms` (unit tabel) dan `TestFormsDefinitionAndSettings`: tujuan, status, assignee, approver divalidasi, mutan gagal |
+| S3.3.2 Builder | PASS UI mock | `forms.spec.ts` 13/13 |
+| S3.3.4 Submit internal | PASS backend, PASS UI mock | `TestFormSubmission`: semua galat sekaligus, item dibuat atas nama pengirim, lampiran, approval, rollback total termasuk berkas, tujuan hilang 422 `form_unavailable`. 4 mutan gagal. `requests.spec.ts` 15/15 |
+| S3.3.3 Akses dan Manage forms | PASS backend, PASS UI mock | `TestFormAccessAndManageList` (publish butuh `share`, mutan gagal). `manage-forms.spec.ts` 7/7 |
+| S3.3.6 My requests | PASS backend, PASS UI mock | `TestMyRequests`: hak terbatas hanya pada item itu, plafon tipe user, 404 untuk project, saudara, dan Space, paginasi, item terhapus. 3 dari 4 mutan gagal, satu setara. `my-requests.spec.ts` 10/10 |
+| Regresi | PASS dengan catatan | Seluruh suite Go dengan PostgreSQL dan `go vet` lulus. Typecheck, lint, 20 tes unit lulus. Chrome mock: dua tes Share dialog axe lama masih gagal |
+| S3.6.1 E2E Go API dan PostgreSQL | PASS (sebagian) | `PMS_TEST_BROWSER=1 go test -run TestBrowserM3Flows` 3/3 di Chrome, dijalankan dua kali (agen, lalu saya, 14 detik). (1) admin mengunci transisi New lewat layar workflow, Completed ditolak dengan pesan server dan status tetap New, In Progress berhasil, auto-assign menambah editor sebagai assignee. (2) admin membangun form di builder dan membagikannya, pengirim tanpa akses mengisi dengan lampiran .txt, item dibuat di Space tujuan, pengirim melihat My requests dan item dengan hak terbatas lalu berkomentar, approver menyetujui (1/1), admin memindahkan ke In Progress, pengirim melihat status baru dan notifikasi `status_changed`. (3) pengirim mendapat 404 untuk Space, project induk, dan tugas saudara; form private tidak muncul di `/requests`. Axe terang 0 pelanggaran pada 6 layar. Batas: alur 2 dan 3 bergantung pada kunci workflow dari alur 1; axe gelap tidak dijalankan; matriks otorisasi lintas tipe user untuk approval dan form belum diperluas; form publik belum ada |
+| Temuan di luar story | CATATAN | Log run browser menunjukkan `GET /api/v1/me` 500 enam kali: `requireUser` mengubah galat pencarian sesi akibat request yang dibatalkan browser menjadi 500. Tidak memengaruhi alur; pembatalan konteks sebaiknya tidak dihitung 500 |
+| Email requester eksternal, form publik | NOT DONE | Menunggu S3.3.5 |

@@ -75,20 +75,20 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 55 | S2.5.3 | Preset filter dan sort Space (SPC-03) | 1.5 | 110–111.5 | 23 | DONE |
 | 56 | S2.5.4 | UI multi-lokasi (SPC-10) | 1.5 | 111.5–113 | 23 | DONE |
 | 57 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2.0 | 113–115 | 23 | DONE |
-| 58 | S3.1.1 | Editor workflow dan status (WF-02, WF-03A) | 4 | 115–119 | 24 | PROPOSED |
-| 59 | S3.2.1 | Approval pada item (SPC-12) | 3.5 | 119–122.5 | 25 | PROPOSED |
+| 58 | S3.1.1 | Editor workflow dan status (WF-02, WF-03A) | 4 | 115–119 | 24 | DONE |
+| 59 | S3.2.1 | Approval pada item (SPC-12) | 3.5 | 119–122.5 | 25 | DONE |
 | 60 | S3.2.2 | Blueprint (SPC-13) | 3 | 122.5–125.5 | 26 | PROPOSED |
-| 61 | S3.3.1 | Skema form dan API pembuat form (FORM-01, FORM-02) | 3.5 | 125.5–129 | 26 | PROPOSED |
-| 62 | S3.3.2 | UI form builder | 4 | 129–133 | 27 | PROPOSED |
-| 63 | S3.3.3 | Sharing form dan Manage forms (FORM-03, FORM-05) | 2 | 133–135 | 28 | PROPOSED |
-| 64 | S3.3.4 | Submit form internal menjadi item (FORM-06) | 2.5 | 135–137.5 | 28 | PROPOSED |
+| 61 | S3.3.1 | Skema form dan API pembuat form (FORM-01, FORM-02) | 3.5 | 125.5–129 | 26 | DONE |
+| 62 | S3.3.2 | UI form builder | 4 | 129–133 | 27 | DONE |
+| 63 | S3.3.3 | Sharing form dan Manage forms (FORM-03, FORM-05) | 2 | 133–135 | 28 | IN_PROGRESS |
+| 64 | S3.3.4 | Submit form internal menjadi item (FORM-06) | 2.5 | 135–137.5 | 28 | DONE |
 | 65 | S3.3.5 | Form publik dan keamanan (SEC-05) | 3 | 137.5–140.5 | 29 | PROPOSED |
-| 66 | S3.3.6 | Pelacakan request (FORM-08) | 2.5 | 140.5–143 | 29 | PROPOSED |
+| 66 | S3.3.6 | Pelacakan request (FORM-08) | 2.5 | 140.5–143 | 29 | IN_PROGRESS |
 | 67 | S3.4.1 | Kustomisasi sidebar (NAV-02) | 1.5 | 143–144.5 | 29 | PROPOSED |
 | 68 | S3.4.2 | Stream aktivitas (NAV-04) | 2.5 | 144.5–147 | 30 | PROPOSED |
 | 69 | S3.4.3 | Halaman hasil pencarian (NAV-07) | 2 | 147–149 | 30 | PROPOSED |
 | 70 | S3.5.1 | 2FA TOTP (AUTH-05) | 3 | 149–152 | 31 | PROPOSED |
-| 71 | S3.6.1 | E2E, aksesibilitas, dan keamanan M3 | 2 | 152–154 | 31 | PROPOSED |
+| 71 | S3.6.1 | E2E, aksesibilitas, dan keamanan M3 | 2 | 152–154 | 31 | IN_PROGRESS |
 | 72 | S4.1.1 | Skema time entry dan API | 2.5 | 154–156.5 | 32 | PROPOSED |
 | 73 | S4.1.2 | Timesheet mingguan (TASK-13) | 3.5 | 156.5–160 | 33 | PROPOSED |
 | 74 | S4.1.3 | Timelog view (VIEW-07) | 2.5 | 160–162.5 | 33 | PROPOSED |
@@ -523,21 +523,21 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E3.1 Workflow
 
 **S3.1.1 Editor workflow dan status (WF-02, WF-03A)**
-- [ ] `openapi.yaml`: CRUD workflow dan status, `auto_assign`, daftar transisi, opsi `locked`
-- [ ] Migrasi kolom status (auto-assign, transisi, lock) dan tabel `status_transitions`; aman untuk data M1
-- [ ] Terapkan transisi di `PATCH /items/{id}` dan drag Board: transisi tak sah 422 dengan pesan jelas
-- [ ] Auto-assign saat masuk status (pengguna yang mengubah atau assignee tetap) dicatat di aktivitas
-- [ ] UI editor workflow: grup Active/Completed/Deferred/Cancelled, warna dari palet token, urutkan, hapus dengan pemindahan item
-- [ ] Tes: matriks transisi, lock, hapus status yang dipakai, dan otorisasi (hanya admin Space)
+- [x] `openapi.yaml`: CRUD workflow dan status, `auto_assign`, daftar transisi, opsi `locked`
+- [x] Migrasi kolom status (auto-assign, transisi, lock) dan tabel `status_transitions`; aman untuk data M1
+- [x] Terapkan transisi di `PATCH /items/{id}` dan drag Board: transisi tak sah 422 dengan pesan jelas
+- [x] Auto-assign saat masuk status (pengguna yang mengubah atau assignee tetap) dicatat di aktivitas
+- [x] UI editor workflow: grup Active/Completed/Deferred/Cancelled, warna dari palet token, urutkan, hapus dengan pemindahan item
+- [x] Tes: matriks transisi, lock, hapus status yang dipakai, dan otorisasi (hanya admin Space)
 
 ### E3.2 Approval dan blueprint
 
 **S3.2.1 Approval pada item (SPC-12)**
-- [ ] `openapi.yaml`: `/items/{id}/approvals`, keputusan approve/reject dengan komentar
-- [ ] Migrasi `approvals` dan `approval_decisions`; penghitung (0/2) dihitung di server
-- [ ] Approver menerima notifikasi dan Inbox; hasil memengaruhi status sesuai pengaturan
-- [ ] Policy: hanya approver yang memutuskan; edit setelah ada keputusan memerlukan reset
-- [ ] UI panel approval dan tes otorisasi + Playwright
+- [x] `openapi.yaml`: `/items/{id}/approvals`, keputusan approve/reject dengan komentar
+- [x] Migrasi `approvals` dan `approval_approvers` (keputusan per approver); penghitung (0/2) dihitung di server
+- [x] Approver menerima notifikasi dan Inbox; hasil hanya dicatat, tidak mengubah status (D-41)
+- [x] Policy: hanya approver yang memutuskan; keputusan boleh diubah, penghapusan approver menghapus keputusannya (tanpa reset otomatis)
+- [x] UI panel approval dan tes otorisasi + Playwright
 
 **S3.2.2 Blueprint (SPC-13)**
 - [ ] `openapi.yaml`: simpan item sebagai blueprint dan buat item dari blueprint
@@ -548,28 +548,28 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E3.3 Formulir permintaan
 
 **S3.3.1 Skema form dan API pembuat form (FORM-01, FORM-02)**
-- [ ] `openapi.yaml`: CRUD form, halaman, pertanyaan, response settings
-- [ ] Migrasi `request_forms`, `form_questions`, `form_response_settings`
-- [ ] Validasi definisi: tipe pertanyaan, field wajib, multi-halaman, section header
-- [ ] Response settings: buat task/project, status awal, lokasi, assign to, buat approval
-- [ ] Tes integrasi dan otorisasi
+- [x] `openapi.yaml`: CRUD form, halaman, pertanyaan, response settings
+- [x] Migrasi `request_forms` (definisi dan pengaturan respons sebagai jsonb tervalidasi), `form_submissions`
+- [x] Validasi definisi: tipe pertanyaan, field wajib, multi-halaman, section header
+- [x] Response settings: buat task/project, status awal, lokasi, assign to, buat approval
+- [x] Tes integrasi dan otorisasi
 
 **S3.3.2 UI form builder**
-- [ ] Editor pertanyaan dengan drag urutan dan pratinjau (semua tipe FORM-01)
-- [ ] Multi-halaman dan section header; pengaturan wajib per pertanyaan
-- [ ] Layar response settings dan penyimpanan dengan `If-Match`
-- [ ] Aksesibilitas keyboard dan axe; tes Playwright
+- [x] Editor pertanyaan dengan drag urutan dan pratinjau (semua tipe FORM-01)
+- [x] Multi-halaman dan section header; pengaturan wajib per pertanyaan
+- [x] Layar response settings dan penyimpanan dengan `If-Match`
+- [x] Aksesibilitas keyboard dan axe; tes Playwright
 
 **S3.3.3 Sharing form dan Manage forms (FORM-03, FORM-05)**
 - [ ] Akses internal (seluruh akun) dan eksternal (tautan publik dengan token acak)
-- [ ] Halaman Manage forms: nama, milik, akses, tautan, diubah oleh
+- [x] Halaman Manage forms: nama, milik, akses, tautan, diubah oleh
 - [ ] Cabut dan rotasi tautan publik; tes bahwa tautan lama ditolak
 
 **S3.3.4 Submit form internal menjadi item (FORM-06)**
-- [ ] Pemilih form di menu dan layar pengisian; validasi di server
-- [ ] Endpoint submit membuat item sesuai response settings dalam satu transaksi
-- [ ] Lampiran dari form memakai batas dan penyimpanan S1.4.2
-- [ ] Tes: field wajib, tipe salah, lokasi tanpa hak tulis
+- [x] Pemilih form di menu dan layar pengisian; validasi di server
+- [x] Endpoint submit membuat item sesuai response settings dalam satu transaksi
+- [x] Lampiran dari form memakai batas dan penyimpanan S1.4.2
+- [x] Tes: field wajib, tipe salah, lokasi tanpa hak tulis
 
 **S3.3.5 Form publik dan keamanan (SEC-05)**
 - [ ] Endpoint publik tanpa sesi dengan CSRF-aman dan token tautan
@@ -578,10 +578,10 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Tes keamanan: spam, lampiran besar, tipe terblokir, tautan dicabut
 
 **S3.3.6 Pelacakan request (FORM-08)**
-- [ ] Requester internal otomatis follower; daftar "My requests" beserta status
-- [ ] Akses terbatas pada item hasil form (bukan seluruh project) kecuali punya akses lain; tes IDOR
+- [x] Requester internal otomatis follower; daftar "My requests" beserta status
+- [x] Akses terbatas pada item hasil form (bukan seluruh project) kecuali punya akses lain; tes IDOR
 - [ ] Email konfirmasi dan email saat status berubah untuk requester eksternal
-- [ ] UI My requests dan tes Playwright
+- [x] UI My requests dan tes Playwright
 
 ### E3.4 Navigasi lanjutan
 

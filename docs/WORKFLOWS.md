@@ -193,13 +193,47 @@ stateDiagram-v2
 
 `pms bootstrap` idempoten dan gagal dengan kode keluar ≠ 0 bila instance sudah dibootstrap. Satu-satunya pengulangan yang diizinkan adalah pemulihan: dengan email yang sama selagi admin itu masih `invited`, bootstrap menerbitkan token undangan baru (token lama dicabut) agar instance tidak terkunci setelah undangan kedaluwarsa. Bila SMTP belum dikonfigurasi, link undangan (`/invitations/<token>`, berlaku 7 hari) dicetak ke log.
 
-## 9. Placeholder M3 (belum dirancang rinci)
+## 9. Workflow, approval, dan request form (M3)
 
-| State machine | Catatan arah rancangan |
+### 9.1 Editor workflow (WF-02, WF-03A; S3.1.1)
+
+| Aturan | Isi |
 |---|---|
-| Approval | `Pending → Approved \| Rejected \| Cancelled`; keputusan per approver, ambang "semua harus setuju"; guard: approver aktif dan punya `view` |
-| Request form | `Submitted → Task dibuat → (mengikuti status item)`; requester menjadi follower; email ke requester eksternal saat grup Completed/Cancelled (FORM-08) |
-| Workflow custom | Matriks transisi per status (`allowed_transitions`) + opsi lock; penghapusan status memerlukan pemetaan item ke status pengganti |
+| Siapa | Hanya user bertipe admin yang mengubah (workflow bersifat global, bukan per Space); semua user login boleh membaca `GET /workflows` |
+| Invarian | Status pertama (posisi 0) harus grup Active, ada minimal satu status Completed, maksimal 30 status per workflow. Pelanggaran: 422 dan tidak ada yang tersimpan |
+| Warna | 12 token palet tetap (`slate`, `blue`, `sky`, `teal`, `green`, `lime`, `amber`, `orange`, `red`, `pink`, `purple`, `indigo`), terpisah dari hue aksen (D-35) |
+| Transisi | Status dengan `lock_transitions` hanya boleh dilanjutkan ke status di `allowed_next`. Berlaku di `PATCH /items/{id}` (termasuk drag Board); **tidak** berlaku saat item dibuat dan saat penghapusan status memindahkan item. Pelanggaran: 422 `validation_failed` pada field `status_id` |
+| Auto-assign | Item yang masuk status ber-`auto_assign` menjadikan pelaku sebagai assignee dan follower; tercatat di activity bersama perubahan lain |
+| Ubah grup status | Item yang sedang di status itu mendapat atau kehilangan `completed_at` sesuai grup baru |
+| Hapus status | Bila dipakai item, `move_to` wajib (status lain di workflow yang sama; 409 `status_in_use` tanpa itu). Item dipindah dalam transaksi yang sama, `version+1`, `completed_at` mengikuti grup tujuan |
+| Hapus workflow | Ditolak (409 `workflow_in_use`) untuk workflow default atau yang dipakai container maupun item |
+| Nama | Unik tanpa membedakan huruf besar-kecil: 409 `name_taken` |
+
+### 9.2 Approval (SPC-12; S3.2.1)
+
+`Pending` bila belum ada penolakan dan belum semua setuju; `Rejected` bila ada satu approver menolak; `Approved` bila semua approver setuju. Status dan penghitung `approved_count/total` dihitung di server dan tidak disimpan. Keputusan hanya dicatat, tidak mengubah status item (D-41).
+
+| Aksi | Syarat |
+|---|---|
+| Minta approval, ubah, hapus | Kemampuan `edit` pada item; approver harus user aktif yang bisa melihat item (1-20 orang); maksimal 50 approval per item |
+| Putuskan | Hanya approver yang disebut, dengan kemampuan `view`; keputusan boleh diubah kemudian; `comment` opsional |
+| Edit | `If-Match` dengan versi approval; menghapus approver menghapus keputusannya |
+| Notifikasi | `approval_requested` ke approver baru; `approval_decided` ke pembuat approval |
+| Berkas approval | Memakai lampiran item (tidak ada penyimpanan berkas terpisah) |
+
+### 9.3 Request form (FORM-01, FORM-02, FORM-06, FORM-08; S3.3.x)
+
+| Hal | Aturan |
+|---|---|
+| Milik | Form milik satu Space bersama (bukan Personal). Membuat dan mengubah butuh kemampuan `edit` pada Space, dan hak `create` pada Space tujuan (dan project/folder tujuan bila diisi), karena pengirim tidak punya hak di sana |
+| Definisi | Halaman berisi pertanyaan dan section; key pertanyaan stabil. Batas: 10 halaman, 100 elemen, 50 opsi, lampiran 1-5 berkas per pertanyaan. Divalidasi oleh paket `forms` |
+| Pengaturan respons | Tipe item (task atau project), status awal (harus milik workflow tujuan), lokasi, assignee tetap, pertanyaan judul, dan approval otomatis. Approver harus bisa melihat tujuan |
+| Akses | `private` (hanya pengelola) atau `internal` (semua user login). Mengubah akses butuh kemampuan `share` pada Space. Tautan publik menunggu S3.3.5 |
+| Kirim | `POST /forms/{id}/submissions` (JSON, atau multipart bila ada lampiran). Semua kesalahan jawaban dikembalikan sekaligus (`answers.<key>`). Item, lampiran, approval, dan catatan `form_submissions` dibuat dalam satu transaksi; berkas yang sudah tersimpan dihapus bila transaksi gagal |
+| Atas nama | Item dibuat sebagai admin atas nama pengirim: pengirim tetap `created_by`, follower, dan pelaku activity. Pembatasan transisi status tidak berlaku saat item dibuat |
+| Tujuan hilang | Bila Space atau project tujuan terhapus setelah form disimpan: 422 `form_unavailable` (bukan 403) |
+| Akses pengirim ke item | Pengirim mendapat `view`, `comment`, `attach` (dibatasi plafon tipe user) pada **item itu saja**; bukan Space, project induk, saudara, atau anak. Berlaku selama item tidak dihapus. Daftar `GET /me/requests` memuat permintaan sendiri beserta status terkini |
+| Belum ada | Email konfirmasi dan email perubahan status untuk requester eksternal (menunggu form publik, S3.3.5) |
 
 ## 10. Kode error yang konsisten
 
