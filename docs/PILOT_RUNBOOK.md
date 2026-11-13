@@ -74,12 +74,23 @@ Tidak ada variabel konfigurasi baru. Langganan report dikirim lewat SMTP yang sa
 
 Setelah update, periksa berurutan: readiness; login; More → Dashboards terbuka; buat dashboard, tambah widget daftar (template Overdue) dan pie, lalu muat ulang; More → Reports, buat report dari template Active tasks by assignee, ekspor CSV; berlangganan pada jam berikutnya di zona waktu Anda dan pastikan email tiba (atau tercatat di log); beri bintang pada satu task lalu buka More → Starred. Rollback: restore backup pra-update dengan image M3; dashboard, report, dan bintang yang dibuat sesudah update ikut hilang. Update M3 ke M5 belum dilatih pada instance pilot, dan pengiriman email langganan belum diuji ke SMTP sungguhan.
 
+## Menghentikan instance (USR-04)
+
+Instance diakhiri oleh operator, tidak pernah dari aplikasi: tidak ada tombol atau endpoint hapus akun. Urutannya tetap:
+
+1. Hentikan pemakaian dan beri tahu pengguna. Jalankan `./export.sh` dari `deploy`. Hasilnya `exports/pms-export-<timestamp>.tar.gz` berisi `database.dump`, `files.tar.gz`, `users.csv`, `spaces.csv`, `items.csv`, `README.txt` dan `SHA256SUMS`. Serahkan ke klien lewat saluran aman dan minta konfirmasi bahwa berkasnya terbuka (`sha256sum -c SHA256SUMS` setelah diekstrak).
+2. Jalankan `./backup.sh` untuk backup akhir dan simpan setnya (dump, arsip file, manifest) sampai klien mengonfirmasi.
+3. Jalankan `./decommission.sh exports/pms-export-<timestamp>.tar.gz <nilai PMS_HOST>`. Script menolak berjalan bila bundel hilang, rusak, atau tidak memuat `database.dump`, `files.tar.gz` dan `SHA256SUMS`, atau bila nilai `PMS_HOST` tidak diketik ulang dengan benar. Setelah lolos, ia menjalankan `docker compose down --volumes`, yang menghapus kontainer, volume database, dan volume file. Tidak ada undo.
+4. Hapus rekaman DNS dan router Traefik, cabut kunci `PMS_2FA_KEY`, dan hapus `deploy/.env` bila klien tidak lagi memerlukannya. Bundel export berisi data klien: perlakukan sebagai rahasia dan hapus salinan Anda sesuai kesepakatan.
+
+CSV hanya salinan yang dapat dibaca; dump database adalah arsip lengkap. Password dan secret 2FA tidak ada di CSV. Dump memuat hash password dan secret 2FA terenkripsi, tetapi tanpa `PMS_2FA_KEY` secret itu tidak terbuka (lihat bagian kunci 2FA).
+
 ## Backup dan restore
 
 - Jadwalkan `./backup.sh` setiap hari. Periksa pasangan dump database, arsip file, dan manifest dengan timestamp yang sama. Atur `BACKUP_REMOTE` ke tujuan off-server dan lakukan latihan restore pada instance terisolasi. Catat waktu mulai, waktu instance siap, serta hasil unduh lampiran.
 - Restore mengganti data instance. Hentikan pekerjaan pengguna dan pilih timestamp serta tag image dari manifest. Jalankan `./restore.sh YYYYMMDDTHHMMSSZ --force` dari `deploy`. Script memeriksa arsip, memulihkan database ke scratch, lalu menyimpan salinan volume file sebelum cutover.
 - Setelah restore, periksa readiness, login, dan unduhan lampiran. Jika cutover gagal, script mencoba mengembalikan database dan file asli. Jika pemulihan balik gagal, pertahankan app dalam keadaan berhenti dan simpan nama database serta path arsip rollback dari output sampai kedua penyimpanan diperiksa bersama.
-- Target operasional OPS-01 adalah RPO ≤ 24 jam dan RTO ≤ 4 jam. Waktu aktual diukur pada latihan restore per instance.
+- Target operasional OPS-01 adalah RPO ≤ 24 jam dan RTO ≤ 4 jam. Waktu aktual diukur pada latihan restore per instance. Latihan 13 Nov 2026 pada data seukuran pilot (25 user, 10.000 item, 500 lampiran, 51,6 MB file): backup 2,8 detik, restore penuh pada stack bersih 44 detik. Ulangi latihan ini pada instance klien dengan data aslinya sebelum GA dan tiap bulan.
 
 ## Kunci 2FA (`PMS_2FA_KEY`)
 

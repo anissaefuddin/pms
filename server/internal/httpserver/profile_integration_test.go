@@ -102,3 +102,14 @@ func TestOnboardingIsAdminOnlyAndShownOnce(t *testing.T) {
 		}
 	}
 }
+
+// USR-04: an instance is ended by the operator runbook, never from the app.
+func TestNoEndpointDeletesTheAccount(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	for _, path := range []string{"/account", "/users", "/me"} {
+		if got := f.call(admin, "DELETE", path, nil); got.status != 404 && got.status != 405 {
+			t.Fatalf("DELETE %s answered %d, want 404 or 405", path, got.status)
+		}
+	}
+}
