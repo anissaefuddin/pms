@@ -549,6 +549,24 @@ Baseline `main` pada `547926e`, dengan perubahan lokal pada toolchain dan tes. F
 | S6.3.4 SSE | PARTIAL | Suite Collaboration lulus batas 3 detik untuk pembaruan judul dan notifikasi mention antarpengguna. Pengukuran status dan tampilan komentar antarpengguna pada beban klien masih terbuka. |
 | S6.3.5 Playwright lokal | PASS | `TestBrowserCollaboration` (51,77 s), `TestBrowserM2Flows` (13,74 s), `TestBrowserM3Flows` (32,31 s), `TestBrowserM4Flows` (8,05 s), dan `TestBrowserM5Flows` (13,66 s). Workflow CI sudah memuat kelimanya. Eksekusi GitHub Actions untuk perubahan ini NOT RUN. |
 | S6.3.5 UAT P0/P1 | NOT RUN | [UAT.md](UAT.md) menelusuri 93 requirement dari tabel PRD. Semua baris menunggu hasil dan bukti penerimaan pilot. |
-| S6.3.6 Stabilisasi | PARTIAL | Triase awal mencakup patch Go dan x/crypto, pengukuran Gantt, serta pembaruan assertion ShareDialog. Log suite live mencatat beberapa respons 500 singkat (GET /me, daftar view dan time entry). Penyebab masih perlu dikonfirmasi. Seluruh 18 tes axe layar lulus pada Chrome (tema terang dan gelap). Pembekuan skema dan kontrak serta penandaan kandidat menunggu gate keamanan, NFR, UAT, dan CI. |
+| S6.3.6 Stabilisasi | PARTIAL | Triase awal mencakup patch Go dan x/crypto, pengukuran Gantt, serta pembaruan assertion ShareDialog. Respons 500 singkat pada log suite live (GET /me, daftar view dan time entry) ditemukan penyebabnya dan diperbaiki: `requireUser` menjawab 500 bila browser membatalkan permintaan saat query sesi berjalan (lihat bagian S6.3.3 di bawah). Seluruh 18 tes axe layar lulus pada Chrome (tema terang dan gelap). Pembekuan skema dan kontrak serta penandaan kandidat menunggu gate keamanan, NFR, UAT, dan CI. |
 
 Regresi Go penuh sebelum patch mencapai batas 10 menit di `TestSpaceAccessRules`. Rerun dengan patch akhir dan `-timeout=30m` dimulai, hasil akhir belum tercatat di checkpoint ini. Tes heartbeat SSE terpisah SKIP karena opt-in.
+
+## M6 / S6.3.3 pemeriksaan keamanan internal dan stabilisasi (13 Nov 2026)
+
+Laporan temuan:
+
+| # | Temuan | Dampak | Perbaikan dan bukti |
+|---|---|---|---|
+| 1 | `GET /items/{id}/activity` dan `PUT /items/{id}/followers` ada di kontrak tetapi tidak ada di server (SPC-07, P0: activity log di panel detail) | Fitur P0 hilang; kontrak dan server tidak sama | Keduanya diimplementasikan dengan otorisasi (View untuk riwayat, Edit untuk follower; tanpa akses 404) dan panel Activity di detail Item. `TestItemActivityAndFollowers` (paging, bentuk entri, 422 untuk limit dan cursor, outsider 404, pembaca hanya-baca 403, follower tak dikenal 422, penggantian). Mutasi (hapus syarat View) membuat tes gagal. Spec Chrome menampilkan log dan lolos axe |
+| 2 | `requireUser` menjawab 500 bila browser membatalkan permintaan (navigasi, abort) | Hitungan 5xx dan alert palsu; penyebab 500 singkat pada log suite live | Permintaan yang konteksnya sudah dibatalkan kini dihentikan tanpa jawaban. `TestAbandonedRequestIsNotAServerError`; mutasi mengembalikan 500 "could not check session" |
+
+Pemeriksaan otomatis yang ditambahkan (`endpoint_sweep_integration_test.go`):
+
+- PASS. `TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds`: seluruh operasi di `api/openapi.yaml` yang tidak bertanda `security: []` (lebih dari 100) menjawab 401 tanpa sesi; dengan sesi biasa dan id yang tidak ada, tidak ada yang menjawab 5xx dan tidak ada operasi atas id yang berhasil. Tes ini juga menangkap temuan 1 (rute di kontrak tanpa pengendali).
+- PASS. `TestOutsiderCannotTouchAnotherSpacesResourcesThroughAnyEndpoint` (IDOR): dengan id nyata sebuah Space privat, task, form, view dan custom field, pengguna tanpa share dicoba pada 51 operasi yang memakai id itu; semua pembacaan 404 dan tidak ada tulis yang berhasil (kecuali menghapus bintang milik sendiri, D-51).
+- Gabungan dengan yang sudah ada: matriks otorisasi Space, Item, M2, M3 dan time entry; atribut cookie; lampiran dan form publik (rate limit, honeypot, batas lampiran); 2FA dengan anti-replay dan pembatas; audit dependensi dan image (bagian sebelumnya).
+- Batas: ini pemeriksaan internal otomatis, bukan pentest manual atau WSTG lengkap; endpoint dashboard, report, user, dan grup diperiksa lewat sapuan sesi tetapi tidak dengan id nyata milik pengguna lain.
+- Regresi: `go vet`, `go test ./...` (semua paket) hijau; Chrome mock suite 237 lulus dan 1 gagal (spec my-requests belum memock endpoint activity; diperbaiki dan 10 lulus), 22 dilewati.
+

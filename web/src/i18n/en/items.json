@@ -169,5 +169,15 @@
     "approve": "Approve",
     "reject": "Reject"
   },
-  "usersUnavailable": "The people directory is not available to you."
+  "usersUnavailable": "The people directory is not available to you.",
+  "activity.title": "Activity",
+  "activity.empty": "No changes yet",
+  "activity.error": "Activity could not be loaded.",
+  "activity.more": "Load more",
+  "activity.action.update": "{{actor}} updated this item",
+  "activity.action.delete": "{{actor}} deleted this item",
+  "activity.action.restore": "{{actor}} restored this item",
+  "activity.action.detach": "{{actor}} removed this item from a location",
+  "activity.action.create": "{{actor}} created this item",
+  "activity.action.other": "{{actor}} changed this item"
 }

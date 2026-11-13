@@ -22,6 +22,7 @@ import { ItemDates } from "@/components/item-dates";
 import { ItemEffort } from "@/components/item-effort";
 import { ItemLocations } from "@/components/item-locations";
 import { ItemApprovals } from "@/components/item-approvals";
+import { ItemActivity } from "@/components/item-activity";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
 import { ItemProgress } from "@/components/project-progress";
@@ -285,6 +286,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
     </section>
     <Suspense fallback={null}><ItemComments item={item} userId={me.id} /></Suspense>
     <ItemApprovals item={item} userId={me.id} />
+    <ItemActivity item={item} />
     <ItemAttachments item={item} userId={me.id} />
     {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
     {exporting && <ProjectExcelExport open={exporting} onOpenChange={setExporting} item={item} />}

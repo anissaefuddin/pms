@@ -78,6 +78,7 @@ async function restricted(page: Page) {
     [`GET /items/${itemId}/comments`]: { body: { items: [] } },
     [`GET /items/${itemId}/attachments`]: { body: { items: [] } },
     [`GET /items/${itemId}/approvals`]: { body: { items: [] } },
+    [`GET /items/${itemId}/activity`]: { body: { items: [], next_cursor: null } },
     [`POST /items/${itemId}/comments`]: (body: any) => { posted.push(body); return { status: 201, body: {} }; },
   });
   await page.goto("/requests/mine");

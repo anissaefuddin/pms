@@ -105,14 +105,14 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 85 | S5.2.2 | Editor dan eksekusi report (RPT-02) | 4 | 190.5–194.5 | 39 | DONE |
 | 86 | S5.2.3 | Template report (RPT-01) | 3 | 194.5–197.5 | 40 | DONE |
 | 87 | S5.3.1 | Uji kecocokan angka dan E2E | 2.5 | 197.5–200 | 41 | DONE |
-| 88 | S6.1.1 | Template Space (SPC-18) | 4 | 200–204 | 41 | IN_PROGRESS |
-| 89 | S6.1.2 | Wizard first-run (AUTH-07) | 2.5 | 204–206.5 | 42 | IN_PROGRESS |
-| 90 | S6.2.1 | Pengaturan workspace per user dan info akun (SET-03, SET-04) | 2 | 206.5–208.5 | 42 | IN_PROGRESS |
-| 91 | S6.2.2 | Preferensi email notifikasi (SET-05) | 2 | 208.5–210.5 | 43 | IN_PROGRESS |
-| 92 | S6.2.3 | Kosongkan Recycle bin (BIN-03) | 1 | 210.5–211.5 | 43 | IN_PROGRESS |
-| 93 | S6.3.1 | Prosedur penghentian instance (USR-04) | 1.5 | 211.5–213 | 43 | IN_PROGRESS |
-| 94 | S6.3.2 | Uji restore terhadap RTO (OPS-01) | 2 | 213–215 | 44 | IN_PROGRESS |
-| 95 | S6.3.3 | Uji keamanan internal | 4 | 215–219 | 44 | IN_PROGRESS |
+| 88 | S6.1.1 | Template Space (SPC-18) | 4 | 200–204 | 41 | DONE |
+| 89 | S6.1.2 | Wizard first-run (AUTH-07) | 2.5 | 204–206.5 | 42 | DONE |
+| 90 | S6.2.1 | Pengaturan workspace per user dan info akun (SET-03, SET-04) | 2 | 206.5–208.5 | 42 | DONE |
+| 91 | S6.2.2 | Preferensi email notifikasi (SET-05) | 2 | 208.5–210.5 | 43 | DONE |
+| 92 | S6.2.3 | Kosongkan Recycle bin (BIN-03) | 1 | 210.5–211.5 | 43 | DONE |
+| 93 | S6.3.1 | Prosedur penghentian instance (USR-04) | 1.5 | 211.5–213 | 43 | DONE |
+| 94 | S6.3.2 | Uji restore terhadap RTO (OPS-01) | 2 | 213–215 | 44 | DONE |
+| 95 | S6.3.3 | Uji keamanan internal | 4 | 215–219 | 44 | DONE |
 | 96 | S6.3.4 | Uji performa target NFR | 2.5 | 219–221.5 | 45 | IN_PROGRESS |
 | 97 | S6.3.5 | UAT P0 + P1 dan lima flow Playwright | 3 | 221.5–224.5 | 45 | IN_PROGRESS |
 | 98 | S6.3.6 | Perbaikan bug dan stabilisasi | 3 | 224.5–227.5 | 46 | IN_PROGRESS |
@@ -759,9 +759,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Bandingkan dengan RPO/RTO di PRD dan catat hasil di TESTING
 
 **S6.3.3 Uji keamanan internal**
-- [ ] Pemeriksaan OWASP pada auth, sesi, upload, form publik, IDOR di semua endpoint
+- [x] Pemeriksaan OWASP pada auth, sesi, upload, form publik, IDOR di semua endpoint
 - [x] Pemindaian dependensi dan image; perbaiki temuan high
-- [ ] Laporan temuan dan bukti perbaikan
+- [x] Laporan temuan dan bukti perbaikan
 
 **S6.3.4 Uji performa target NFR**
 - [ ] Ukur target NFR PRD §6 pada data skala klien; hasil lokal dan sisa pengujian di TESTING

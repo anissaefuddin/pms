@@ -128,3 +128,21 @@ test("account page lists seats and administrators; email and task defaults save"
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toMatchObject({ default_task_duration_days: 3 });
 });
+
+test("item detail lists the activity log", async ({ page }) => {
+  await mockSpaces(page, { extra: {
+    [`GET /items/${item.id}`]: { body: item, headers: { ETag: '"1"' } },
+    [`GET /items/${item.id}/children`]: { body: { items: [] } },
+    [`GET /items/${item.id}/comments`]: { body: { items: [] } },
+    [`GET /items/${item.id}/attachments`]: { body: { items: [], max_upload_bytes: 1048576 } },
+    [`GET /items/${item.id}/activity`]: { body: { next_cursor: null, items: [
+      { id: 2, actor: { id: me.id, name: "Pilot Admin" }, action: "update", changes: { title: { from: "a", to: "b" } }, created_at: "2026-11-13T08:00:00Z" },
+      { id: 1, actor: { id: me.id, name: "Pilot Admin" }, action: "create", changes: {}, created_at: "2026-11-13T07:00:00Z" },
+    ] } },
+  } });
+  await page.goto(`/tasks/${item.id}`);
+  const log = page.getByRole("region", { name: "Activity" });
+  await expect(log.getByText("Pilot Admin updated this item")).toBeVisible();
+  await expect(log.getByText("Pilot Admin created this item")).toBeVisible();
+  expect((await new AxeBuilder({ page }).include("main").analyze()).violations).toEqual([]);
+});

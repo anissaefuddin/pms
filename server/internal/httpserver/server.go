@@ -602,6 +602,9 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 		var userID, userType string
 		var idleExpires, absoluteExpires time.Time
 		err = s.pool.QueryRow(r.Context(), `SELECT u.id::text,u.user_type::text,s.expires_at,s.absolute_expires_at FROM sessions s JOIN users u ON u.id=s.user_id WHERE s.token_hash=$1 AND u.status='active'`, security.TokenHash(cookie.Value)).Scan(&userID, &userType, &idleExpires, &absoluteExpires)
+		if r.Context().Err() != nil { // the browser gave up (navigation, abort): nobody reads an answer, and it is not a 5xx
+			return
+		}
 		if err != nil && !errors.Is(err, pgx.ErrNoRows) { // a database hiccup must not log everyone out
 			writeError(w, 500, "could not check session")
 			return
