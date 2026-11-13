@@ -870,6 +870,24 @@ func (e ExcelExportStatus) Valid() bool {
 	}
 }
 
+// Defines values for FileReviewDecision.
+const (
+	FileReviewDecisionApproved FileReviewDecision = "approved"
+	FileReviewDecisionRejected FileReviewDecision = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the FileReviewDecision enum.
+func (e FileReviewDecision) Valid() bool {
+	switch e {
+	case FileReviewDecisionApproved:
+		return true
+	case FileReviewDecisionRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FormAccess.
 const (
 	FormAccessInternal FormAccess = "internal"
@@ -2614,13 +2632,15 @@ type Approval struct {
 		Decision  *ApprovalApproversDecision `json:"decision"`
 		User      UserRef                    `json:"user"`
 	} `json:"approvers"`
-	CreatedAt   time.Time           `json:"created_at"`
-	CreatedBy   UserRef             `json:"created_by"`
-	Description string              `json:"description"`
-	DueDate     *openapi_types.Date `json:"due_date"`
-	Id          openapi_types.UUID  `json:"id"`
-	ItemId      openapi_types.UUID  `json:"item_id"`
-	Policy      ApprovalPolicy      `json:"policy"`
+	AttachmentId      *openapi_types.UUID `json:"attachment_id,omitempty"`
+	AttachmentVersion *int32              `json:"attachment_version,omitempty"`
+	CreatedAt         time.Time           `json:"created_at"`
+	CreatedBy         UserRef             `json:"created_by"`
+	Description       string              `json:"description"`
+	DueDate           *openapi_types.Date `json:"due_date"`
+	Id                openapi_types.UUID  `json:"id"`
+	ItemId            openapi_types.UUID  `json:"item_id"`
+	Policy            ApprovalPolicy      `json:"policy"`
 
 	// Status Any menerima satu persetujuan dan menolak bila semua menolak. All menerima bila semua menyetujui dan menolak pada penolakan pertama.
 	Status  ApprovalStatus `json:"status"`
@@ -2661,9 +2681,13 @@ type ApprovalEventKind string
 // ApprovalInput defines model for ApprovalInput.
 type ApprovalInput struct {
 	ApproverIds []openapi_types.UUID `json:"approver_ids"`
-	Description *string              `json:"description,omitempty"`
-	DueDate     *openapi_types.Date  `json:"due_date,omitempty"`
-	Policy      *ApprovalInputPolicy `json:"policy,omitempty"`
+
+	// AttachmentId Pin ke versi file (FIL-04); harus bersama attachment_version. Approver bertipe external boleh tanpa akses item dan hanya membaca versi ini
+	AttachmentId      *openapi_types.UUID  `json:"attachment_id,omitempty"`
+	AttachmentVersion *int                 `json:"attachment_version,omitempty"`
+	Description       *string              `json:"description,omitempty"`
+	DueDate           *openapi_types.Date  `json:"due_date,omitempty"`
+	Policy            *ApprovalInputPolicy `json:"policy,omitempty"`
 }
 
 // ApprovalInputPolicy defines model for ApprovalInput.Policy.
@@ -3076,6 +3100,23 @@ type ExcelPreview struct {
 	Rows   int        `json:"rows"`
 	Sample [][]string `json:"sample"`
 }
+
+// FileReview defines model for FileReview.
+type FileReview struct {
+	ApprovalId   openapi_types.UUID  `json:"approval_id"`
+	AttachmentId openapi_types.UUID  `json:"attachment_id"`
+	Comment      string              `json:"comment"`
+	Decision     *FileReviewDecision `json:"decision"`
+	Description  string              `json:"description"`
+	DueDate      *openapi_types.Date `json:"due_date"`
+	Filename     string              `json:"filename"`
+	RequestedBy  string              `json:"requested_by"`
+	SizeBytes    int64               `json:"size_bytes"`
+	Version      int32               `json:"version"`
+}
+
+// FileReviewDecision defines model for FileReview.Decision.
+type FileReviewDecision string
 
 // Form defines model for Form.
 type Form struct {
@@ -5816,6 +5857,9 @@ type ServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID)
+	// ListFileReviews Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04)
+	// (GET /file-reviews)
+	ListFileReviews(w http.ResponseWriter, r *http.Request)
 	// ListForms Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05)
 	// (GET /forms)
 	ListForms(w http.ResponseWriter, r *http.Request)
@@ -7710,6 +7754,20 @@ func (siw *ServerInterfaceWrapper) DownloadProjectExcelExport(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadProjectExcelExport(w, r, exportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFileReviews operation middleware
+func (siw *ServerInterfaceWrapper) ListFileReviews(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFileReviews(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12612,6 +12670,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/approvals", wrapper.ListItemApprovals)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/approvals", wrapper.CreateItemApproval)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/approval-events", wrapper.ListItemApprovalEvents)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/file-reviews", wrapper.ListFileReviews)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/approvals/{approvalId}", wrapper.DeleteApproval)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/approvals/{approvalId}", wrapper.UpdateApproval)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/approvals/{approvalId}/decision", wrapper.DecideApproval)
@@ -15825,6 +15884,29 @@ func (response DownloadProjectExcelExport409ApplicationProblemPlusJSONResponse) 
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFileReviewsRequestObject struct {
+}
+
+type ListFileReviewsResponseObject interface {
+	VisitListFileReviewsResponse(w http.ResponseWriter) error
+}
+
+type ListFileReviews200JSONResponse struct {
+	Items []FileReview `json:"items"`
+}
+
+func (response ListFileReviews200JSONResponse) VisitListFileReviewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -24309,6 +24391,9 @@ type StrictServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(ctx context.Context, request DownloadProjectExcelExportRequestObject) (DownloadProjectExcelExportResponseObject, error)
+	// ListFileReviews Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04)
+	// (GET /file-reviews)
+	ListFileReviews(ctx context.Context, request ListFileReviewsRequestObject) (ListFileReviewsResponseObject, error)
 	// ListForms Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05)
 	// (GET /forms)
 	ListForms(ctx context.Context, request ListFormsRequestObject) (ListFormsResponseObject, error)
@@ -26215,6 +26300,30 @@ func (sh *strictHandler) DownloadProjectExcelExport(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadProjectExcelExportResponseObject); ok {
 		if err := validResponse.VisitDownloadProjectExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListFileReviews operation middleware
+func (sh *strictHandler) ListFileReviews(w http.ResponseWriter, r *http.Request) {
+	var request ListFileReviewsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFileReviews(ctx, request.(ListFileReviewsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFileReviews")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFileReviewsResponseObject); ok {
+		if err := validResponse.VisitListFileReviewsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

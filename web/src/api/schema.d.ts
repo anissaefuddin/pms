@@ -2264,6 +2264,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/file-reviews": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04) */
+        get: operations["listFileReviews"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/approvals/{approvalId}": {
         parameters: {
             query?: never;
@@ -3492,6 +3509,10 @@ export interface components {
             status: "pending" | "approved" | "rejected";
             /** @enum {string} */
             policy: "any" | "all";
+            /** Format: uuid */
+            attachment_id?: string | null;
+            /** Format: int32 */
+            attachment_version?: number | null;
             /**
              * Format: int32
              * @description Pembilang penghitung "0/2"
@@ -3528,6 +3549,24 @@ export interface components {
             /** Format: date-time */
             created_at: string;
         };
+        FileReview: {
+            /** Format: uuid */
+            approval_id: string;
+            /** Format: uuid */
+            attachment_id: string;
+            /** Format: int32 */
+            version: number;
+            filename: string;
+            /** Format: int64 */
+            size_bytes: number;
+            description: string;
+            /** Format: date */
+            due_date: string | null;
+            /** @enum {string|null} */
+            decision: "approved" | "rejected" | null;
+            comment: string;
+            requested_by: string;
+        };
         ApprovalInput: {
             /** @enum {string} */
             policy?: "any" | "all";
@@ -3535,6 +3574,12 @@ export interface components {
             /** Format: date */
             due_date?: string | null;
             approver_ids: string[];
+            /**
+             * Format: uuid
+             * @description Pin ke versi file (FIL-04); harus bersama attachment_version. Approver bertipe external boleh tanpa akses item dan hanya membaca versi ini
+             */
+            attachment_id?: string;
+            attachment_version?: number;
         };
         ApprovalPatch: {
             /** @enum {string} */
@@ -9047,6 +9092,28 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    listFileReviews: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["FileReview"][];
+                    };
+                };
+            };
         };
     };
     deleteApproval: {
