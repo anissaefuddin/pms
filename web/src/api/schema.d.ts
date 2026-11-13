@@ -78,6 +78,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api-keys": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** API key milik pemanggil (tanpa nilai rahasia; hanya sesi) */
+        get: operations["listApiKeys"];
+        put?: never;
+        /** Buat API key; nilai penuh hanya dikembalikan sekali di respons ini (hanya sesi) */
+        post: operations["createApiKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api-keys/{keyId}/rotate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ganti nilai rahasia; nilai lama langsung tidak berlaku (hanya sesi) */
+        post: operations["rotateApiKey"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api-keys/{keyId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cabut API key; efektif segera (hanya sesi) */
+        delete: operations["revokeApiKey"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/rates": {
         parameters: {
             query?: never;
@@ -3725,6 +3777,25 @@ export interface components {
             /** Format: int32 */
             due_variance_days: number | null;
         };
+        ApiKey: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            /** @enum {string} */
+            scope: "read" | "write";
+            prefix: string;
+            /** Format: date-time */
+            expires_at: string | null;
+            /** Format: date-time */
+            last_used_at: string | null;
+            /** Format: date-time */
+            created_at: string;
+        };
+        ApiKeyCreated: {
+            key: components["schemas"]["ApiKey"];
+            /** @description Dikirim sekali saja; hanya hash yang disimpan */
+            secret: string;
+        };
         HourlyRate: {
             /** Format: uuid */
             id: string;
@@ -4519,6 +4590,110 @@ export interface operations {
                     };
                 };
             };
+            404: components["responses"]["Problem"];
+        };
+    };
+    listApiKeys: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ApiKey"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    createApiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /**
+                     * @description read = hanya GET; write = semua metode. Hak tetap mengikuti pembuatnya (policy).
+                     * @enum {string}
+                     */
+                    scope: "read" | "write";
+                    /** Format: date-time */
+                    expires_at?: string | null;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyCreated"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    rotateApiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                keyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ApiKeyCreated"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    revokeApiKey: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                keyId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dicabut */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
         };
     };

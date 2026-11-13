@@ -32,6 +32,7 @@ tags:
 
 security:
   - cookieAuth: []
+  - bearerKey: []
 
 paths:
   /users/{userId}/capacity:
@@ -164,6 +165,70 @@ paths:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/BaselineVariance' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /api-keys:
+    get:
+      operationId: listApiKeys
+      summary: API key milik pemanggil (tanpa nilai rahasia; hanya sesi)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ApiKey' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createApiKey
+      summary: Buat API key; nilai penuh hanya dikembalikan sekali di respons ini (hanya sesi)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, scope]
+              additionalProperties: false
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+                scope: { type: string, enum: [read, write], description: "read = hanya GET; write = semua metode. Hak tetap mengikuti pembuatnya (policy)." }
+                expires_at: { type: string, format: date-time, nullable: true }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKeyCreated' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /api-keys/{keyId}/rotate:
+    post:
+      operationId: rotateApiKey
+      summary: Ganti nilai rahasia; nilai lama langsung tidak berlaku (hanya sesi)
+      parameters:
+        - { name: keyId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKeyCreated' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /api-keys/{keyId}:
+    delete:
+      operationId: revokeApiKey
+      summary: Cabut API key; efektif segera (hanya sesi)
+      parameters:
+        - { name: keyId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Dicabut }
+        '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
   /rates:
     get:
@@ -3724,6 +3789,10 @@ components:
       type: apiKey
       in: cookie
       name: pms_session
+    bearerKey:
+      type: http
+      scheme: bearer
+      description: "API key `pmsk_...` (Authorization: Bearer). Bertindak sebagai pembuatnya lewat policy; scope read hanya GET."
 
   headers:
     ETag:
@@ -5158,6 +5227,23 @@ components:
         due: { type: string, format: date, nullable: true }
         start_variance_days: { type: integer, format: int32, nullable: true }
         due_variance_days: { type: integer, format: int32, nullable: true }
+    ApiKey:
+      type: object
+      required: [id, name, scope, prefix, expires_at, last_used_at, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        scope: { type: string, enum: [read, write] }
+        prefix: { type: string }
+        expires_at: { type: string, format: date-time, nullable: true }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    ApiKeyCreated:
+      type: object
+      required: [key, secret]
+      properties:
+        key: { $ref: '#/components/schemas/ApiKey' }
+        secret: { type: string, description: "Dikirim sekali saja; hanya hash yang disimpan" }
     HourlyRate:
       type: object
       required: [id, user_id, role_id, name, rate_minor, effective_from]

@@ -258,6 +258,24 @@ func (e AnalyticsQueryReportingOn) Valid() bool {
 	}
 }
 
+// Defines values for ApiKeyScope.
+const (
+	ApiKeyScopeRead  ApiKeyScope = "read"
+	ApiKeyScopeWrite ApiKeyScope = "write"
+)
+
+// Valid indicates whether the value is a known member of the ApiKeyScope enum.
+func (e ApiKeyScope) Valid() bool {
+	switch e {
+	case ApiKeyScopeRead:
+		return true
+	case ApiKeyScopeWrite:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ApprovalApproversDecision.
 const (
 	ApprovalApproversDecisionApproved ApprovalApproversDecision = "approved"
@@ -1754,22 +1772,22 @@ func (e RichTextType) Valid() bool {
 
 // Defines values for ShareRole.
 const (
-	Editor  ShareRole = "editor"
-	Full    ShareRole = "full"
-	Limited ShareRole = "limited"
-	Read    ShareRole = "read"
+	ShareRoleEditor  ShareRole = "editor"
+	ShareRoleFull    ShareRole = "full"
+	ShareRoleLimited ShareRole = "limited"
+	ShareRoleRead    ShareRole = "read"
 )
 
 // Valid indicates whether the value is a known member of the ShareRole enum.
 func (e ShareRole) Valid() bool {
 	switch e {
-	case Editor:
+	case ShareRoleEditor:
 		return true
-	case Full:
+	case ShareRoleFull:
 		return true
-	case Limited:
+	case ShareRoleLimited:
 		return true
-	case Read:
+	case ShareRoleRead:
 		return true
 	default:
 		return false
@@ -2094,6 +2112,24 @@ func (e WidgetDataKind) Valid() bool {
 	case WidgetDataKindSeries:
 		return true
 	case WidgetDataKindTasks:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CreateApiKeyJSONBodyScope.
+const (
+	CreateApiKeyJSONBodyScopeRead  CreateApiKeyJSONBodyScope = "read"
+	CreateApiKeyJSONBodyScopeWrite CreateApiKeyJSONBodyScope = "write"
+)
+
+// Valid indicates whether the value is a known member of the CreateApiKeyJSONBodyScope enum.
+func (e CreateApiKeyJSONBodyScope) Valid() bool {
+	switch e {
+	case CreateApiKeyJSONBodyScopeRead:
+		return true
+	case CreateApiKeyJSONBodyScopeWrite:
 		return true
 	default:
 		return false
@@ -2602,6 +2638,28 @@ type AnalyticsResult struct {
 		Value float32         `json:"value"`
 	} `json:"rows"`
 	Total float32 `json:"total"`
+}
+
+// ApiKey defines model for ApiKey.
+type ApiKey struct {
+	CreatedAt  time.Time          `json:"created_at"`
+	ExpiresAt  *time.Time         `json:"expires_at"`
+	Id         openapi_types.UUID `json:"id"`
+	LastUsedAt *time.Time         `json:"last_used_at"`
+	Name       string             `json:"name"`
+	Prefix     string             `json:"prefix"`
+	Scope      ApiKeyScope        `json:"scope"`
+}
+
+// ApiKeyScope defines model for ApiKey.Scope.
+type ApiKeyScope string
+
+// ApiKeyCreated defines model for ApiKeyCreated.
+type ApiKeyCreated struct {
+	Key ApiKey `json:"key"`
+
+	// Secret Dikirim sekali saja; hanya hash yang disimpan
+	Secret string `json:"secret"`
 }
 
 // Approval defines model for Approval.
@@ -4510,6 +4568,18 @@ type RenameAccountJSONBody struct {
 	Name string `json:"name"`
 }
 
+// CreateApiKeyJSONBody defines parameters for CreateApiKey.
+type CreateApiKeyJSONBody struct {
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	Name      string     `json:"name"`
+
+	// Scope read = hanya GET; write = semua metode. Hak tetap mengikuti pembuatnya (policy).
+	Scope CreateApiKeyJSONBodyScope `json:"scope"`
+}
+
+// CreateApiKeyJSONBodyScope defines parameters for CreateApiKey.
+type CreateApiKeyJSONBodyScope string
+
 // UpdateApprovalParams defines parameters for UpdateApproval.
 type UpdateApprovalParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -5140,6 +5210,9 @@ type RenameAccountJSONRequestBody RenameAccountJSONBody
 // RunAnalyticsQueryJSONRequestBody defines body for RunAnalyticsQuery for application/json ContentType.
 type RunAnalyticsQueryJSONRequestBody = AnalyticsQuery
 
+// CreateApiKeyJSONRequestBody defines body for CreateApiKey for application/json ContentType.
+type CreateApiKeyJSONRequestBody CreateApiKeyJSONBody
+
 // UpdateApprovalJSONRequestBody defines body for UpdateApproval for application/json ContentType.
 type UpdateApprovalJSONRequestBody = ApprovalPatch
 
@@ -5655,6 +5728,18 @@ type ServerInterface interface {
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(w http.ResponseWriter, r *http.Request)
+	// ListApiKeys API key milik pemanggil (tanpa nilai rahasia; hanya sesi)
+	// (GET /api-keys)
+	ListApiKeys(w http.ResponseWriter, r *http.Request)
+	// CreateApiKey Buat API key; nilai penuh hanya dikembalikan sekali di respons ini (hanya sesi)
+	// (POST /api-keys)
+	CreateApiKey(w http.ResponseWriter, r *http.Request)
+	// RevokeApiKey Cabut API key; efektif segera (hanya sesi)
+	// (DELETE /api-keys/{keyId})
+	RevokeApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID)
+	// RotateApiKey Ganti nilai rahasia; nilai lama langsung tidak berlaku (hanya sesi)
+	// (POST /api-keys/{keyId}/rotate)
+	RotateApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID)
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
@@ -6278,6 +6363,86 @@ func (siw *ServerInterfaceWrapper) RunAnalyticsQuery(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RunAnalyticsQuery(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListApiKeys operation middleware
+func (siw *ServerInterfaceWrapper) ListApiKeys(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListApiKeys(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateApiKey operation middleware
+func (siw *ServerInterfaceWrapper) CreateApiKey(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateApiKey(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeApiKey operation middleware
+func (siw *ServerInterfaceWrapper) RevokeApiKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "keyId" -------------
+	var keyId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "keyId", r.PathValue("keyId"), &keyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keyId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeApiKey(w, r, keyId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RotateApiKey operation middleware
+func (siw *ServerInterfaceWrapper) RotateApiKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "keyId" -------------
+	var keyId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "keyId", r.PathValue("keyId"), &keyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keyId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RotateApiKey(w, r, keyId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12325,6 +12490,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.ListBaselines)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.CreateBaseline)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/baselines/{baselineId}/variance", wrapper.GetBaselineVariance)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api-keys", wrapper.ListApiKeys)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api-keys", wrapper.CreateApiKey)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api-keys/{keyId}/rotate", wrapper.RotateApiKey)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api-keys/{keyId}", wrapper.RevokeApiKey)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/rates", wrapper.ListRates)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/rates", wrapper.CreateRate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
@@ -12699,6 +12868,195 @@ func (response RunAnalyticsQuery503ApplicationProblemPlusJSONResponse) VisitRunA
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListApiKeysRequestObject struct {
+}
+
+type ListApiKeysResponseObject interface {
+	VisitListApiKeysResponse(w http.ResponseWriter) error
+}
+
+type ListApiKeys200JSONResponse struct {
+	Items []ApiKey `json:"items"`
+}
+
+func (response ListApiKeys200JSONResponse) VisitListApiKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListApiKeys403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListApiKeys403ApplicationProblemPlusJSONResponse) VisitListApiKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateApiKeyRequestObject struct {
+	Body *CreateApiKeyJSONRequestBody
+}
+
+type CreateApiKeyResponseObject interface {
+	VisitCreateApiKeyResponse(w http.ResponseWriter) error
+}
+
+type CreateApiKey201JSONResponse ApiKeyCreated
+
+func (response CreateApiKey201JSONResponse) VisitCreateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateApiKey403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateApiKey403ApplicationProblemPlusJSONResponse) VisitCreateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateApiKey422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateApiKey422ApplicationProblemPlusJSONResponse) VisitCreateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeApiKeyRequestObject struct {
+	KeyId openapi_types.UUID `json:"keyId"`
+}
+
+type RevokeApiKeyResponseObject interface {
+	VisitRevokeApiKeyResponse(w http.ResponseWriter) error
+}
+
+type RevokeApiKey204Response struct {
+}
+
+func (response RevokeApiKey204Response) VisitRevokeApiKeyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeApiKey403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeApiKey403ApplicationProblemPlusJSONResponse) VisitRevokeApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeApiKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeApiKey404ApplicationProblemPlusJSONResponse) VisitRevokeApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateApiKeyRequestObject struct {
+	KeyId openapi_types.UUID `json:"keyId"`
+}
+
+type RotateApiKeyResponseObject interface {
+	VisitRotateApiKeyResponse(w http.ResponseWriter) error
+}
+
+type RotateApiKey200JSONResponse ApiKeyCreated
+
+func (response RotateApiKey200JSONResponse) VisitRotateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateApiKey403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RotateApiKey403ApplicationProblemPlusJSONResponse) VisitRotateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateApiKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response RotateApiKey404ApplicationProblemPlusJSONResponse) VisitRotateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -23883,6 +24241,18 @@ type StrictServerInterface interface {
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(ctx context.Context, request RunAnalyticsQueryRequestObject) (RunAnalyticsQueryResponseObject, error)
+	// ListApiKeys API key milik pemanggil (tanpa nilai rahasia; hanya sesi)
+	// (GET /api-keys)
+	ListApiKeys(ctx context.Context, request ListApiKeysRequestObject) (ListApiKeysResponseObject, error)
+	// CreateApiKey Buat API key; nilai penuh hanya dikembalikan sekali di respons ini (hanya sesi)
+	// (POST /api-keys)
+	CreateApiKey(ctx context.Context, request CreateApiKeyRequestObject) (CreateApiKeyResponseObject, error)
+	// RevokeApiKey Cabut API key; efektif segera (hanya sesi)
+	// (DELETE /api-keys/{keyId})
+	RevokeApiKey(ctx context.Context, request RevokeApiKeyRequestObject) (RevokeApiKeyResponseObject, error)
+	// RotateApiKey Ganti nilai rahasia; nilai lama langsung tidak berlaku (hanya sesi)
+	// (POST /api-keys/{keyId}/rotate)
+	RotateApiKey(ctx context.Context, request RotateApiKeyRequestObject) (RotateApiKeyResponseObject, error)
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(ctx context.Context, request DeleteApprovalRequestObject) (DeleteApprovalResponseObject, error)
@@ -24582,6 +24952,113 @@ func (sh *strictHandler) RunAnalyticsQuery(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RunAnalyticsQueryResponseObject); ok {
 		if err := validResponse.VisitRunAnalyticsQueryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListApiKeys operation middleware
+func (sh *strictHandler) ListApiKeys(w http.ResponseWriter, r *http.Request) {
+	var request ListApiKeysRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListApiKeys(ctx, request.(ListApiKeysRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListApiKeys")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListApiKeysResponseObject); ok {
+		if err := validResponse.VisitListApiKeysResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateApiKey operation middleware
+func (sh *strictHandler) CreateApiKey(w http.ResponseWriter, r *http.Request) {
+	var request CreateApiKeyRequestObject
+
+	var body CreateApiKeyJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateApiKey(ctx, request.(CreateApiKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateApiKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateApiKeyResponseObject); ok {
+		if err := validResponse.VisitCreateApiKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeApiKey operation middleware
+func (sh *strictHandler) RevokeApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID) {
+	var request RevokeApiKeyRequestObject
+
+	request.KeyId = keyId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeApiKey(ctx, request.(RevokeApiKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeApiKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeApiKeyResponseObject); ok {
+		if err := validResponse.VisitRevokeApiKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RotateApiKey operation middleware
+func (sh *strictHandler) RotateApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID) {
+	var request RotateApiKeyRequestObject
+
+	request.KeyId = keyId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RotateApiKey(ctx, request.(RotateApiKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RotateApiKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RotateApiKeyResponseObject); ok {
+		if err := validResponse.VisitRotateApiKeyResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

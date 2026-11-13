@@ -676,3 +676,9 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
 - Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
 
+
+## M11 / S11.3.1 API key dan scope (14 Nov 2026)
+
+- PASS (S11.3.1). `TestAPIKeysScopeRotateRevokeAndOwnerLimits`: nama kosong, scope salah, dan kedaluwarsa lampau 422; hanya hash SHA-256 yang tersimpan dan daftar tidak mengulang nilai rahasia; key milik pembuat saja (pengguna lain melihat daftar kosong, rotasi atau cabut 404); key read bisa GET sebagai pembuatnya tetapi 404 untuk Space yang pembuatnya tidak lihat (hak tetap lewat `policy`) dan 403 untuk penulisan; key tidak bisa mengelola key atau mengganti password (403); key write membuat item; rotasi membuat nilai lama 401 seketika; pencabutan dan kedaluwarsa 401 seketika; sapuan endpoint (`TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds`) tetap hijau dengan 4 operasi baru. `web/tests/api-keys.spec.ts`: tab API di `/settings/apps` (buat, salin sekali, rotasi, cabut; axe bersih).
+- Keputusan: scope hanya `read` (GET/HEAD) dan `write`; key tidak berlaku untuk `/auth/*` dan perubahan `/me`; hanya admin dan regular yang boleh punya key; maksimum 20 key aktif per orang; permintaan Bearer dikecualikan dari cek Origin CSRF karena tidak membawa cookie.
+- Belum: scope per resource (mis. per Space), rate limit per key, log audit pemakaian key, tes UI terhadap server nyata (hanya mock).

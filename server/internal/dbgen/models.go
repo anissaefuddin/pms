@@ -503,6 +503,19 @@ type Activity struct {
 	Auto      bool               `json:"auto"`
 }
 
+type ApiKey struct {
+	ID         pgtype.UUID        `json:"id"`
+	UserID     pgtype.UUID        `json:"user_id"`
+	Name       string             `json:"name"`
+	Scope      string             `json:"scope"`
+	Prefix     string             `json:"prefix"`
+	TokenHash  []byte             `json:"token_hash"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type Approval struct {
 	ID                 pgtype.UUID        `json:"id"`
 	ItemID             pgtype.UUID        `json:"item_id"`

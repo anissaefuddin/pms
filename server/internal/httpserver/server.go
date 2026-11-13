@@ -174,6 +174,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.attachmentRoutes(mux)
 	s.timeEntryRoutes(mux)
 	s.projectExcelRoutes(mux)
+	s.apiKeyRoutes(mux)
 	mux.HandleFunc("GET /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))
 	mux.HandleFunc("PUT /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))
 	mux.HandleFunc("POST /api/v1/items", s.requireUser(s.createItem))
@@ -604,6 +605,12 @@ func (s *Server) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok && strings.HasPrefix(token, keyPrefix) {
+			if ctx, ok := s.authenticateKey(w, r, token); ok {
+				next(w, r.WithContext(ctx))
+			}
+			return
+		}
 		cookie, err := r.Cookie("pms_session")
 		if err != nil {
 			writeError(w, 401, "authentication required")
@@ -641,6 +648,10 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 func (s *Server) csrf(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if strings.HasPrefix(r.Header.Get("Authorization"), "Bearer "+keyPrefix) { // no ambient cookie authority, so no CSRF
 			next.ServeHTTP(w, r)
 			return
 		}
