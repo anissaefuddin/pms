@@ -26,3 +26,20 @@ func TestHubReplayWindow(t *testing.T) {
 		t.Fatalf("window len=%d resync=%t", len(events), resync)
 	}
 }
+
+// A client that was away for more than the history (1000 events), or holds an id from the future, must reload instead of resuming.
+func TestAfterAsksForResyncBeyondHistory(t *testing.T) {
+	h := New()
+	for range historySize + 1 {
+		h.Publish(Event{Type: "item.updated"})
+	}
+	for name, cursor := range map[string]uint64{"too old": 0, "future": 5000} {
+		if events, _, resync, _ := h.After(&cursor); !resync || len(events) != 0 {
+			t.Errorf("%s: resync=%t events=%d", name, resync, len(events))
+		}
+	}
+	recent := uint64(historySize)
+	if events, _, resync, _ := h.After(&recent); resync || len(events) != 1 {
+		t.Errorf("recent: resync=%t events=%d", resync, len(events))
+	}
+}

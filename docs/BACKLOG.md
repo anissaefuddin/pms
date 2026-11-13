@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **Versi** | 0.1 (draft) |
-| **Cakupan** | Epic dan user story untuk M0, M1 (47 requirement PRD), dan M2 (13 requirement; ditulis 13 Nov 2026). M3–M7 ditulis saat milestone dimulai |
+| **Cakupan** | Epic dan user story untuk M0, M1 (47 requirement PRD), dan M2 (13 requirement; ditulis 13 Nov 2026). M3–M12 ditulis saat milestone dimulai |
 | **Satuan estimasi** | **Hari ideal** satu developer dibantu AI (hari fokus penuh, termasuk tes dan review sendiri; di luar rapat/gangguan). Estimasi kasar dari bawah ke atas, **belum dikalibrasi** dengan kecepatan nyata |
 | **Terkait** | [PRD.md](PRD.md), [TASKS.md](TASKS.md) (urutan kerja dan tugas teknis), [ARCHITECTURE.md](ARCHITECTURE.md), [DATABASE.md](DATABASE.md), [UI_SPEC.md](UI_SPEC.md) |
 

@@ -72,9 +72,9 @@ function Dashboards() {
           <option value="">{t("dashboards.scope.personal")}</option>
           {spaces.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
         </select></label>
-      <form className="flex items-end gap-3" onSubmit={(e) => void create(e)} aria-label={t("dashboards.create.submit")}>
+      <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => void create(e)} aria-label={t("dashboards.create.submit")}>
         <label className="block text-sm">{t("dashboards.create.name")}
-          <Input required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-64" /></label>
+          <Input required maxLength={120} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 w-full sm:w-64" /></label>
         <Button type="submit" disabled={busy || !name.trim()}>{t("dashboards.create.submit")}</Button>
       </form>
     </div>

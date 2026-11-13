@@ -306,6 +306,9 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 func (s *Server) writeMe(w http.ResponseWriter, r *http.Request, userID string) {
 	m, err := loadMe(r.Context(), s.pool, userID)
 	if err != nil {
+		if errors.Is(r.Context().Err(), context.Canceled) {
+			return
+		}
 		writeError(w, 500, "could not load user")
 		return
 	}

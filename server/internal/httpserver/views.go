@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -28,7 +29,9 @@ func (s *Server) viewTx(w http.ResponseWriter, r *http.Request, status int, work
 	}
 	tx, err := s.pool.BeginTx(ctx, options)
 	if err != nil {
-		writeViewError(w, err)
+		if !errors.Is(ctx.Err(), context.Canceled) {
+			writeViewError(w, err)
+		}
 		return
 	}
 	defer tx.Rollback(ctx)
@@ -37,7 +40,9 @@ func (s *Server) viewTx(w http.ResponseWriter, r *http.Request, status int, work
 		err = tx.Commit(ctx)
 	}
 	if err != nil {
-		writeViewError(w, err)
+		if !errors.Is(ctx.Err(), context.Canceled) {
+			writeViewError(w, err)
+		}
 		return
 	}
 	if status == http.StatusNoContent {

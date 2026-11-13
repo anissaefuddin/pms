@@ -2,8 +2,8 @@
 
 | | |
 |---|---|
-| **Versi** | 0.3.1 (draft) — revisi hasil review: ketergantungan antar milestone, pemisahan requirement, keamanan & operasional. 0.3.1: AUTH-03 (min. 8 karakter) dan SEC-04 (ganti password) diselaraskan dengan `api/openapi.yaml` (keputusan D-11) 0.3.2: baseline M1 12 minggu, GA minggu 39 (D-16). |
-| **Tanggal** | 12 November 2026 |
+| **Versi** | 0.3.1 (draft) — revisi hasil review: ketergantungan antar milestone, pemisahan requirement, keamanan & operasional. 0.3.1: AUTH-03 (min. 8 karakter) dan SEC-04 (ganti password) diselaraskan dengan `api/openapi.yaml` (keputusan D-11) 0.3.2: baseline M1 12 minggu, GA minggu 39 (D-16). **0.4 (draft, 13 Nov 2026):** rilis 1.0 = M0–M12 dengan target parity Wrike pada katalog in-scope; GA dipindah ke setelah M12; M13 hanya backlog (D-55); requirement baru §5.15; definisi prioritas P2 diubah. |
+| **Tanggal** | 13 November 2026 |
 | **Status** | Draft untuk review |
 | **Repo** | [github.com/anissaefuddin/pms](https://github.com/anissaefuddin/pms) |
 | **Sumber input** | [ANALISA_FITUR_SCREEN.md](ANALISA_FITUR_SCREEN.md) (99 flow, 540 screen Wrike Web), [Wrike_Feature_Scanning.md](Wrike_Feature_Scanning.md) (inventaris fitur dan paket) |
@@ -44,22 +44,22 @@ Tim butuh satu platform untuk menerima permintaan kerja, merencanakan proyek, me
 
 ## 3. Ruang Lingkup
 
-**Masuk lingkup (rilis 1.0):** seluruh flow di [ANALISA_FITUR_SCREEN.md](ANALISA_FITUR_SCREEN.md), dipetakan ke requirement di §5 dan milestone di §8.
+**Masuk lingkup (rilis 1.0 = M0–M12, D-55):** seluruh flow di [ANALISA_FITUR_SCREEN.md](ANALISA_FITUR_SCREEN.md) dan kapabilitas Wrike in-scope pada katalog yang dibekukan (S7.2.1), dipetakan ke requirement di §5 dan milestone di §8. Termasuk sejak v0.4: custom item type dan layout, guard workflow, otomasi no-code, approval Any/All, workload, kapasitas, job role, skill, booking, utilization, baseline dan portfolio Gantt, tarif dan actual cost, versi dan proofing file, storage eksternal, analitik lanjutan, API publik, webhook, OAuth app, framework konektor dengan dua konektor pilot, SSO (OIDC/SAML), SCIM, role kustom, audit keamanan, locked space.
 
-**Di luar lingkup rilis 1.0** (dari inventaris Wrike, P2):
+**Parity:** dinilai dengan rumus di [PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md](PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md) §2 terhadap katalog in-scope. Kelompok M13 di bawah berstatus `N/A_APPROVED` untuk 1.0 dan wajib disebut setiap kali parity diklaim.
 
-- Fitur AI (Copilot, summarization, risk insights, AI agents, MCP server)
-- Resource booking, job roles, skills, planned vs actual utilization
-- Proofing file, versioning dokumen, document editor
-- Integrasi pihak ketiga dua arah (Jira/GitHub sync, Salesforce, Adobe), BI connector
-- SSO/SAML, audit/access reports lengkap, locked spaces
-- Programme/portfolio timeline lintas proyek, Whiteboard
-- Aplikasi mobile/desktop native (rilis 1.0 cukup web responsif)
+**Di luar lingkup rilis 1.0 (backlog M13):**
+
+- Fitur AI (assistant, summarization, risk insights, AI agents, MCP server)
+- Whiteboard
+- Implementasi Business Object Registry (kontrak datanya diputuskan di M7 sebagai REG-00)
+- Aplikasi mobile/desktop native, offline, push (rilis 1.0 cukup web responsif)
+- Editor dokumen kolaboratif; manajemen kunci enkripsi enterprise
+- Katalog integrasi pihak ketiga penuh (Salesforce, Adobe, BI connector, dll.); rilis 1.0 menyediakan API, webhook, framework konektor, dan dua konektor pilot (INT-03)
+- Bahasa selain English (i18n sudah siap)
 - Multi-tenant dalam satu instance: setiap klien mendapat instance terpisah (§10)
 - Billing/subscription otomatis: seat diatur manual per instance
 - Email masuk menjadi task (email-to-task); rilis 1.0 hanya email keluar
-- Integrasi penyimpanan file eksternal (Pydio Cells, MinIO/S3); MVP memakai disk lokal dengan interface `Storage` yang siap diganti
-- Manajemen tarif dan actual cost (TASK-14): rilis 1.0 hanya mencatat budget (rencana) dan jam aktual
 - Fitur arsip project: item yang selesai tetap tersedia lewat filter status
 
 ## 4. Model Domain
@@ -91,7 +91,7 @@ Prinsip penting:
 
 ## 5. Kebutuhan Fungsional
 
-Prioritas: **P0** wajib untuk MVP, **P1** diperlukan untuk rilis 1.0, **P2** bisa menyusul. Kolom "Screen" merujuk ke nama flow di analisa screen.
+Prioritas: **P0** wajib untuk MVP (M0–M1), **P1** diperlukan untuk kesiapan dasar (M2–M6), **P2** diperlukan untuk rilis 1.0 parity dan dikerjakan di M7–M12 (sejak v0.4; sebelumnya "bisa menyusul"). Item M13 tidak punya baris requirement. Kolom "Screen" merujuk ke nama flow di analisa screen.
 
 ### 5.1 Autentikasi & Onboarding (AUTH)
 
@@ -279,6 +279,51 @@ Prioritas: **P0** wajib untuk MVP, **P1** diperlukan untuk rilis 1.0, **P2** bis
 | OPS-02 | Update & migrasi: script update menjalankan backup pre-deploy otomatis → pull image versi baru → start. Migrasi hanya maju (forward-only), dan setiap migrasi berjalan dalam transaksi. Jika migrasi gagal, app menolak start; pemulihan dilakukan dengan restore dump pre-deploy dan kembali ke image versi lama | P0 | — (operasional) |
 | OPS-03 | Observability: log JSON terstruktur (`slog`) dengan request ID; metrik Prometheus (error rate, latency, panjang antrian dan job gagal di River); alert Grafana untuk error rate, job gagal, backup gagal, dan disk hampir penuh | P0 | — (operasional) |
 
+### 5.15 Requirement parity baru (v0.4)
+
+Semua P2 (M7–M12). Story, kriteria penerimaan ringkas, dan tes per ID ada di [TRACEABILITY_M7_M12.md](TRACEABILITY_M7_M12.md).
+
+| ID | Requirement | Prio | Screen / sumber |
+|---|---|---|---|
+| CUST-02 | Field bawaan dan nilai default per tipe item, inheritance dari parent; berlaku untuk create dari UI, API, impor, dan form | P2 | Customizing a menu |
+| CUST-03 | Aturan parent/child yang diizinkan dan workflow bawaan per tipe | P2 | Customizing a menu |
+| CUST-04 | Layout panel detail per tipe (section dan urutan field) | P2 | Editing an item |
+| CUST-05 | Custom field relasi bertipe ke item lain; izin target dicek, nama target tanpa akses tidak bocor | P2 | Baseline §3.1 |
+| WF-04 | Guard transisi: field wajib, transisi diizinkan, syarat role/assignee; jalur UI, REST, impor, dan job sama; gagal = error terstruktur tanpa perubahan data | P2 | Editing workflow |
+| WF-05 | Validasi lintas record (mis. semua subitem selesai, relasi wajib terisi) | P2 | Baseline WFP-032 |
+| FORM-09 | Jawaban form dipetakan ke tipe custom dan Blueprint sesuai cabang | P2 | Creating a request form |
+| AUT-01 | Event domain transaksional (outbox) dari semua jalur perubahan | P2 | Gantt chart view (tombol Automation) |
+| AUT-02 | Aturan WHEN/IF/THEN berversi: pemicu status, assignee, tanggal, form; aksi ubah field, assign, komentar, buat item, notifikasi | P2 | Gantt chart view |
+| AUT-03 | Keamanan eksekusi: identitas dan izin per aksi, loop guard, kuota, konkurensi | P2 | Baseline §6.3 |
+| AUT-04 | Log eksekusi, retry, dead job, replay admin, metrik dan alert | P2 | Baseline §6.3 |
+| AUT-05 | UI Automation di header project: daftar, editor, dry-run, aktif/nonaktif | P2 | Gantt chart view |
+| APR-01 | Kebijakan approval Any/All | P2 | Approving a project |
+| APR-02 | Reassign approver, pengingat tenggat, eskalasi | P2 | Approving a project |
+| APR-03 | Riwayat keputusan append-only, dipin ke versi item/file | P2 | Approving a project |
+| RSC-01 | Kapasitas per orang: jadwal kerja pribadi, cuti, libur | P2 | Work schedule |
+| RSC-02 | Halaman Workload: beban per orang per hari/minggu, backlog tanpa assignee, over-allocation | P2 | Wrike_Feature_Scanning |
+| RSC-03 | Realokasi assignment dari Workload | P2 | Wrike_Feature_Scanning |
+| RSC-04 | Job role dan skill | P2 | Wrike_Feature_Scanning |
+| RSC-05 | Resource booking per project, orang, atau role | P2 | Wrike_Feature_Scanning |
+| RSC-06 | Utilization planned vs actual | P2 | Wrike_Feature_Scanning |
+| SCH-01 | Dependensi lintas project dan portfolio Gantt multi-project | P2 | Wrike_Feature_Scanning |
+| FIL-01 | Versi file immutable dan riwayat versi | P2 | Adding a file |
+| FIL-02 | Pratinjau dan proofing: anotasi yang dipin ke versi | P2 | Wrike_Feature_Scanning |
+| FIL-03 | Bandingkan dua versi | P2 | Wrike_Feature_Scanning |
+| FIL-04 | Approval file per versi dan reviewer eksternal | P2 | Wrike_Feature_Scanning |
+| API-01 | API key dengan scope, rotasi, pencabutan (bagian SET-08) | P2 | Apps & Integrations |
+| API-02 | Webhook bertanda tangan dengan retry dan anti-replay | P2 | Apps & Integrations |
+| API-03 | OAuth app (authorization code + PKCE) dan daftar Authorized apps | P2 | Apps & Integrations |
+| INT-01 | Framework konektor: pasang, konfigurasi, nonaktif, rahasia terenkripsi | P2 | Apps & Integrations |
+| INT-02 | Sinkronisasi dua arah dengan kebijakan konflik | P2 | Apps & Integrations (Sync) |
+| INT-03 | Dua konektor pilot: GitHub Issues (dua arah), Google Calendar (satu arah) | P2 | Apps & Integrations |
+| ENT-01 | SSO OIDC dan SAML tanpa merusak login yang ada | P2 | Logging in |
+| ENT-02 | Provisioning dan deprovisioning SCIM | P2 | Baseline WFP-089 |
+| ENT-03 | Role kustom least privilege | P2 | User types |
+| ENT-04 | Laporan audit keamanan (login, role, share, API key) | P2 | Baseline WFP-091 |
+| ENT-05 | Locked space dan IP allowlist | P2 | Baseline WFP-092..093 |
+| REG-00 | Kontrak data registry dan relasi bertipe diputuskan (ADR, tanpa implementasi) sebelum CUST-05 dan AUT-02 | P2 | Baseline §6.8 |
+
 ## 6. Kebutuhan Non-Fungsional
 
 | Area | Requirement |
@@ -324,9 +369,16 @@ Estimasi mengasumsikan **satu developer dibantu AI**, dengan siklus kerja 2 ming
 | **M4 — Time & Budget** | 3 minggu (Mgg 27–29) | TASK-12, 13; VIEW-07; SPC-15 (export/import Excel) | Timesheet mingguan terisi dan tampil di Timelog; panel project menampilkan budget (rencana) dan total jam aktual. Actual cost tidak termasuk (TASK-14, P2) |
 | **M5 — Dashboard & Reporting** | 5 minggu (Mgg 30–34) | DASH-01, 02, DASH-03A, DASH-06; RPT-01..03 | PM bisa membangun dashboard dan report tanpa bantuan developer; angka cocok dengan data mentah (diuji otomatis) |
 | **M6 — Admin, Onboarding & Hardening** | 4 minggu (Mgg 35–38) | SPC-18 (template space); AUTH-07; SET-03..05; USR-04 (prosedur + runbook); BIN-03; uji restore OPS-01 terhadap target RTO; uji performa & keamanan, perbaikan bug | Seluruh P0 + P1 lulus UAT dan 5 flow Playwright hijau; pentest internal tanpa temuan high; target NFR §6 tercapai |
-| **GA — Rilis 1.0** | Mgg 39 | Deploy instance klien pertama, migrasi data pilot, dokumentasi user, pelatihan | Klien pertama go-live |
-| **M7 — Post-GA (P2)** | Backlog | AUTH-08; NAV-08, 09; SPC-14, 16; VIEW-05C, VIEW-10; TASK-08B, TASK-11B, TASK-14; WF-03B; DASH-03B; FORM-04, 07; DASH-04, 05, 07, 08; RPT-04; CUST-01; SET-06, 08, 09; item di luar lingkup §3 | Diprioritaskan ulang berdasarkan feedback pilot |
+| **M7 — Stabilisasi & fondasi platform (G0)** | 7 minggu (Mgg 39–45) | STAB-02, 04, 05, 07, 08; freeze katalog; PRD v0.4 final; spike CIT; REG-00; ADR event/otomasi | Nol 5xx pada skenario uji; cakupan keamanan endpoint lengkap; SSE ≤ 3 detik termasuk reconnect; katalog dibekukan; ADR CIT, REG-00, event disetujui. **M8 tidak dimulai sebelum gate ini** |
+| **M8 — Konfigurasi kerja** | 10 minggu (Mgg 46–55) | CUST-01..05; SPC-14; TASK-11B; WF-03B, WF-04, WF-05; FORM-04, 07, 09; SET-06 | Admin membuat tipe item dengan field, layout, aturan subitem, workflow tanpa migrasi; guard berlaku sama di UI/REST/impor; UAT gate M8 PASS |
+| **M9 — Otomasi & approval lanjutan** | 7 minggu (Mgg 56–62) | AUT-01..05; APR-01..03 | Aturan efektif tepat sekali, tanpa loop, dengan log dan replay; Any/All dan riwayat append-only; UAT gate M9 PASS |
+| **M10 — Resource, jadwal & biaya** | 8 minggu (Mgg 63–70) | RSC-01..06; VIEW-05C; SPC-16; SCH-01; TASK-14 | Workload menghitung kapasitas dengan cuti; baseline immutable; actual cost memakai rate snapshot; UAT gate M10 PASS |
+| **M11 — File, analitik & integrasi** | 10 minggu (Mgg 71–80) | VIEW-10; TASK-08B; FIL-01..04; DASH-03B, 04, 05, 07, 08; RPT-04; SET-08; API-01..03; INT-01..03; NAV-08, 09 | Approval file terikat versi; API key dan webhook ber-scope dan bertanda tangan; dua konektor pilot jalan; UAT gate M11 PASS |
+| **M12 — Enterprise & penerimaan parity** | 7 minggu (Mgg 81–87) | ENT-01..05; AUTH-08; SET-09; regresi dan UAT parity | Semua WFP in-scope `ACCEPTED` atau `N/A_APPROVED`; E2E-PAR-01..12 hijau di CI; sign-off produk dan keamanan |
+| **GA — Rilis 1.0** | Mgg 88 | Deploy instance klien pertama, migrasi data pilot, dokumentasi user, pelatihan | Klien pertama go-live |
+| **M13 — Backlog** | Tidak dijadwalkan | AI, Whiteboard, implementasi registry, aplikasi native, editor dokumen, kunci enkripsi, bahasa lain (§3) | Di luar rilis 1.0 (D-55) |
 
+Durasi M7–M12 dihitung dari [TASKS.md](TASKS.md) (190 hari ideal + cadangan 20%, satu developer) dan **belum dikalibrasi**; jangan menjanjikan tanggal GA ke klien sebelum kalibrasi setelah M8.
 ```mermaid
 gantt
     title Roadmap PMS 1.0
@@ -339,9 +391,15 @@ gantt
     M4 Time & Budget           :m4, after m3, 3w
     M5 Dashboard & Reporting   :m5, after m4, 5w
     M6 Admin & Hardening       :m6, after m5, 4w
+    M7 Stabilisasi & fondasi   :m7, after m6, 7w
+    M8 Konfigurasi kerja       :m8, after m7, 10w
+    M9 Otomasi & approval      :m9, after m8, 7w
+    M10 Resource & biaya       :m10, after m9, 8w
+    M11 File, analitik, integrasi :m11, after m10, 10w
+    M12 Enterprise & parity    :m12, after m11, 7w
     section Rilis
     Pilot internal             :milestone, after m1, 0d
-    GA 1.0                     :milestone, after m6, 0d
+    GA 1.0                     :milestone, after m12, 0d
 ```
 
 **Ketergantungan antar milestone**
@@ -357,7 +415,8 @@ gantt
 |---|---|---|
 | Gantt + dependensi + hari kerja kompleks | Jadwal M2 molor | Spike di M0; SVAR (MIT) hanya untuk tampilan, penjadwalan di Go; beli SVAR PRO ($749, sekali bayar) jika baseline/critical path ternyata wajib |
 | Model izin (sharing role × user type) rumit | Kebocoran data | Satu modul policy terpusat + matriks tes otomatis per kombinasi |
-| Scope creep ke fitur P2 | GA tertunda | Fitur P2 hanya masuk lewat review backlog M7 |
+| Scope creep parity | GA tertunda | Katalog Wrike dibekukan di S7.2.1; fitur baru setelah freeze hanya lewat change request (DEC-PAR-09); M13 tidak masuk 1.0 |
+| Estimasi M7–M12 meleset (190 hari ideal, belum dikalibrasi) | GA mundur | Cadangan 20%; kalibrasi setelah M8; gate per milestone dengan UAT sendiri |
 | Performa view untuk proyek besar | UX buruk | Virtualisasi baris sejak M1; uji beban di M6 |
 | Satu developer (bus factor 1) | Proyek berhenti jika developer berhalangan | Keputusan teknis tercatat di repo, CI wajib hijau, kode dibuat dari spec OpenAPI agar mudah dilanjutkan orang lain |
 | Mengelola banyak instance klien | Versi dan migrasi tidak sinkron, backup terlewat | Versi image dikunci per klien, update bertahap (klien internal dulu), backup + uji restore terjadwal, monitoring terpusat di Grafana |

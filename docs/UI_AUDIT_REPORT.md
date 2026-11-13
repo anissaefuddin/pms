@@ -182,3 +182,17 @@ Setiap sel merujuk ke capture pada ukuran yang tertera. **D** berarti state diti
 | `(route tak dikenal)` | 404 global | [T](ui-audit-evidence/not-found-1440.png) | [T](ui-audit-evidence/not-found-1280.png) | [T](ui-audit-evidence/not-found-768.png) | [T](ui-audit-evidence/not-found-390.png) |
 
 **State tambahan NOT TESTED** meliputi onboarding tahap 2–4, login 2FA dan backup code, konfirmasi email reset, Settings Groups, pengguna non-admin, sharing eksternal, hapus/pulihkan, impor/ekspor Excel, date picker, perubahan status keyboard, konflik versi, chart editor, Timelog, approval, upload dan komentar sebagai audit visual individual. Alur live memberi bukti fungsional terbatas untuk komentar/mention dan unggah.
+
+## Audit ulang resmi (S7.1.4, 13 Nov 2026)
+
+**Skor baru 85/100** (baseline 64/100 pada `0872b69`). Dasar: seluruh temuan UI-01 sampai UI-08 lulus retest ([UI_AUDIT_RETEST_REPORT.md](UI_AUDIT_RETEST_REPORT.md)) dan sapuan otomatis baru `web/tests/ui-audit.spec.ts`: 19 layar utama pada 1440, 1280, 768 dan 390 px (76 kombinasi) harus muat di viewport tanpa scroll horizontal halaman dan bebas pelanggaran axe, serta setiap entri menu More membuka halaman nyata. Sapuan menemukan satu cacat baru: daftar Dashboards melebar 442 px pada 390 px (formulir buat dengan input tetap 256 px). Diperbaiki (`flex-wrap`, input penuh pada layar sempit) dan seluruh 76 kombinasi lulus.
+
+| Dimensi | Baseline | Baru | Dasar |
+|---|---:|---:|---|
+| Layout dan responsivitas | 7/20 | 18/20 | Drawer mobile, Settings, Calendar, formulir dan Dashboards muat pada empat ukuran (diukur). Kurang: tidak ada golden snapshot visual dan perangkat sentuh nyata |
+| Tipografi, warna, dan hierarki | 15/20 | 16/20 | Skala judul 20/22 px diselaraskan (UI-08). Penilaian keterbacaan data padat tidak diulang |
+| Konsistensi komponen | 14/20 | 15/20 | Tautan form dan pola kosong disatukan. Tabel dan pola pesan masih tersebar |
+| Feedback dan state | 15/20 | 18/20 | Satu pesan Space kosong dengan Clear filters (UI-07) dan halaman 404 dengan aksi pulih (UI-06) |
+| Aksesibilitas dasar | 13/20 | 18/20 | Axe bersih pada 76 kombinasi dan 18 tes layar terang/gelap; semantik Gantt diperbaiki (UI-03). Screen reader, Safari dan Firefox NOT TESTED |
+
+Skor dimensi memakai rubrik baseline dan bukti terukur di atas; dimensi yang bergantung penilaian visual tidak dinaikkan melebihi bukti. Kunci sidebar `workload` (STAB-08, Q-01): sidebar tidak merender tautan Workload dan pengaturan profil hanya menawarkan empat entri nyata; kunci tetap diterima API sampai S10.1.3. Tes memastikan tidak ada entri menu yang mengarah ke 404.

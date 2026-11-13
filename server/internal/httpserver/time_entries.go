@@ -284,7 +284,7 @@ func (s *Server) listTimeEntries(w http.ResponseWriter, r *http.Request) {
 	ctx, actor := r.Context(), actorOf(r)
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
-		timeEntryError(w, err)
+		timeEntryListError(w, ctx, err)
 		return
 	}
 	defer tx.Rollback(ctx)
@@ -294,12 +294,12 @@ func (s *Server) listTimeEntries(w http.ResponseWriter, r *http.Request) {
 	}
 	ids, err := visibleOwnEntryTasks(ctx, tx, actor, from, to)
 	if err != nil {
-		timeEntryError(w, err)
+		timeEntryListError(w, ctx, err)
 		return
 	}
 	if len(ids) == 0 {
 		if err := tx.Commit(ctx); err != nil {
-			timeEntryError(w, err)
+			timeEntryListError(w, ctx, err)
 			return
 		}
 		writeJSON(w, 200, map[string]any{"items": []timeEntry{}, "next_offset": nil})
@@ -333,9 +333,15 @@ AND entry_date BETWEEN COALESCE(NULLIF($2,'')::date,DATE '0001-01-01') AND COALE
 	return visible, err
 }
 
+func timeEntryListError(w http.ResponseWriter, ctx context.Context, err error) {
+	if !errors.Is(ctx.Err(), context.Canceled) {
+		timeEntryError(w, err)
+	}
+}
+
 func writeTimeEntryList(w http.ResponseWriter, ctx context.Context, tx pgx.Tx, rows pgx.Rows, err error, limit, offset int) {
 	if err != nil {
-		timeEntryError(w, err)
+		timeEntryListError(w, ctx, err)
 		return
 	}
 	entries, err := pgx.CollectRows(rows, pgx.RowToStructByPos[timeEntry])
@@ -343,7 +349,7 @@ func writeTimeEntryList(w http.ResponseWriter, ctx context.Context, tx pgx.Tx, r
 		err = tx.Commit(ctx)
 	}
 	if err != nil {
-		timeEntryError(w, err)
+		timeEntryListError(w, ctx, err)
 		return
 	}
 	var next *int

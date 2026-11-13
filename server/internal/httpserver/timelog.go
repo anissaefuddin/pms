@@ -84,7 +84,7 @@ func (s *Server) listProjectTimeEntries(w http.ResponseWriter, r *http.Request, 
 	ctx := r.Context()
 	spaces, full, err := projectTimeSpaces(ctx, tx, actor, project)
 	if err != nil {
-		timeEntryError(w, err)
+		timeEntryListError(w, ctx, err)
 		return
 	}
 	rows, err := tx.Query(ctx, projectTimeScope+"SELECT "+timeEntryColumns+`,i.title,concat_ws(' ',u.first_name,u.last_name)

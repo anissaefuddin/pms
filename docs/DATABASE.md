@@ -96,7 +96,7 @@ FK pada `shares.target_id` tidak bisa dibuat langsung karena targetnya polimorfi
 
 ### 3.3 Item (project, folder, task)
 
-Satu tabel `items` untuk semua tipe (PRD §4). `type` = `project` | `folder` | `task`; tipe custom ditambah di M7.
+Satu tabel `items` untuk semua tipe (PRD §4). `type` = `project` | `folder` | `task`; tipe custom ditambah di M8 (CUST-01..05, D-55).
 
 | Kolom penting | Keputusan |
 |---|---|

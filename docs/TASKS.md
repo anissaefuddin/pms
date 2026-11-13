@@ -1,4 +1,4 @@
-# TASKS — PMS (M0 – M6 dan GA)
+# TASKS — PMS (M0 – M12 dan GA)
 
 | | |
 |---|---|
@@ -777,7 +777,619 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Bekukan skema dan kontrak; tandai rilis kandidat
 
 
-## Rilis 1.0 (GA)
+## M7–M12 — Aturan bersama
+
+Dasar: [PRD.md](PRD.md) v0.4 §5.15 dan §8, [PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md](PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md), [ANALISA_TEMUAN_PARITY.md](ANALISA_TEMUAN_PARITY.md), traceability di [TRACEABILITY_M7_M12.md](TRACEABILITY_M7_M12.md).
+
+- **Rilis 1.0 = M0–M12** (D-55). GA dipindah ke setelah M12. M13 hanya backlog dan tidak masuk rilis 1.0.
+- **Satu tugas = ±0,5 hari.** Estimasi story = jumlah tugas × 0,5 hari, dihitung otomatis; jangan menulis angka manual. Label: `[DB]` migrasi/sqlc, `[API]` openapi + generate, `[BE]` Go, `[FE]` React, `[TEST]` tes otomatis/UAT, `[OPS]` CI/deploy, `[DOC]` dokumen/ADR, `[REVIEW]` review/persetujuan, `[FIX]` cadangan perbaikan.
+- **Gate:** M8 tidak boleh dimulai sebelum S7.4.1 PASS. Setiap milestone ditutup story UAT gate sendiri; parity final di M12 hanya konsolidasi.
+- **Cadangan risiko 20%** dihitung terpisah di ringkasan dan tidak dibagikan ke story.
+- Kriteria penerimaan ringkas per requirement ada di TRACEABILITY; detail ditulis di BACKLOG saat milestone dimulai. Status awal semua story `PROPOSED`.
+
+## M7 — Stabilisasi dan desain fondasi platform (G0)
+
+Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB-01 (93 UAT) = S6.3.5; STAB-03 = S1.1.4; STAB-06 = S6.3.5; tidak diduplikasi di sini.
+
+### E7.1 Stabilisasi (dikerjakan pertama)
+
+**S7.1.1 RCA HTTP 500 intermiten (STAB-02) — 4 hari**
+- [ ] [TEST] Reproduksi `GET /me` di bawah request paralel
+- [ ] [TEST] Reproduksi daftar view dan time entries
+- [ ] [BE] Analisis log dan trace; tulis hipotesis akar masalah
+- [ ] [BE] Perbaikan akar masalah bagian 1
+- [ ] [BE] Perbaikan akar masalah bagian 2 / jalur error tersisa
+- [ ] [TEST] Tes regresi yang mereproduksi kegagalan
+- [ ] [TEST] Run skenario uji: nol 5xx
+- [ ] [DOC] RCA di TESTING
+
+**S7.1.2 Verifikasi SSE multi-user (STAB-05) — 3 hari**
+- [x] [TEST] Harness dua pengguna browser
+- [x] [TEST] Latensi status dan komentar ≤ 3 detik
+- [ ] [TEST] Reconnect dan pemuatan ulang data setelah putus
+- [x] [TEST] Urutan event dan duplikasi
+- [ ] [FIX] Perbaikan temuan
+- [x] [DOC] Hasil di TESTING
+
+**S7.1.3 Cakupan keamanan endpoint (STAB-04) — 3.5 hari**
+- [x] [TEST] Skrip inventaris endpoint dari `openapi.yaml` vs tes yang ada
+- [x] [TEST] Tutup gap 401
+- [x] [TEST] Tutup gap 403
+- [x] [TEST] Tutup gap 404/IDOR item, file, komentar
+- [x] [TEST] Tutup gap 404/IDOR dashboard, report, form, view
+- [x] [TEST] Token publik form: kedaluwarsa, salah, dicabut
+- [x] [DOC] Laporan residual risk
+
+**S7.1.4 Audit UI ulang dan tautan mati (STAB-07, STAB-08, Q-01) — 2 hari**
+- [x] [TEST] Audit UI ulang resmi dari baseline 64/100
+- [x] [FE] Sembunyikan kunci sidebar `workload` sampai S10.1.3
+- [x] [TEST] Tes sidebar tanpa tautan mati
+- [x] [DOC] Skor baru di UI_AUDIT_REPORT
+
+### E7.2 Katalog, PRD, dan traceability
+
+**S7.2.1 Freeze katalog fitur Wrike (PAR-CAT-01) — 4 hari**
+- [x] [DOC] Kerangka `docs/parity/WRIKE_SOURCE_CATALOG_<tanggal>.md`
+- [x] [DOC] Verifikasi plan Free dan Team
+- [x] [DOC] Verifikasi plan Business
+- [x] [DOC] Verifikasi plan Pinnacle dan Apex
+- [x] [DOC] Verifikasi add-on
+- [ ] [DOC] Rekonsiliasi WFP-001..053 dengan flow screen
+- [ ] [DOC] Rekonsiliasi WFP-054..106 dengan flow screen
+- [ ] [REVIEW] Review owner produk, freeze, tag versi
+
+**S7.2.2 Finalisasi PRD v0.4 dan traceability (REV-04, REV-05) — 2 hari**
+- [x] [DOC] Matriks WFP → ID PRD
+- [x] [DOC] Lengkapi TRACEABILITY dengan hasil katalog
+- [ ] [REVIEW] Review PRD v0.4 dan persetujuan user
+- [x] [DOC] Catat keputusan di DECISIONS
+
+### E7.3 Desain fondasi platform
+
+**S7.3.1 Spike custom item type pada model Item (CUST-01..05) — 2.5 hari**
+- [x] [DB] Prototipe tabel `item_types` dan FK dari `items` di branch spike
+- [x] [DB] Uji migrasi dan backfill tiga tipe bawaan pada 10 ribu item
+- [x] [BE] Petakan dampak ke policy, search, report, Excel, blueprint
+- [x] [TEST] Benchmark Table/Board setelah perubahan
+- [x] [DOC] ADR CIT: tipe sebagai data, layout, subitem, default, inheritance
+
+**S7.3.2 ADR kontrak registry dan relasi bertipe (REG-00) — 2 hari**
+- [x] [DOC] Model `record_type`, `master_record`, `record_version` (desain saja)
+- [x] [DOC] Relasi bertipe item↔item dan item↔record; dampak custom field
+- [x] [DOC] Ownership, scope, versi, privasi, retensi
+- [ ] [REVIEW] Keputusan DEC-PAR-03 dan DEC-PAR-04
+
+**S7.3.3 ADR event domain dan otomasi (AUT-01 desain) — 1.5 hari**
+- [x] [BE] Spike outbox transaksional + River
+- [x] [DOC] ADR skema event, idempotensi, loop guard
+- [x] [DOC] ADR versi dan publish aturan (DEC-PAR-07)
+
+### E7.4 Gate
+
+**S7.4.1 Gate G0 — 1 hari**
+- [ ] [REVIEW] Checklist STAB-01..10 tertutup atau BLOCKED dengan keputusan
+- [x] [DOC] `docs/parity/gate-reports/G0_STABILIZATION.md`
+
+## M8 — Konfigurasi kerja (G1)
+
+Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07, FORM-09, SET-06. Prasyarat: S7.4.1, S7.3.1, S7.3.2.
+
+### E8.1 Custom item type
+
+**S8.1.1 Skema dan API tipe item (CUST-01) — 4 hari**
+- [ ] [API] CRUD tipe item: key, nama, ikon, kelas task/project, aktif
+- [ ] [DB] Migrasi `item_types` dan backfill tipe bawaan
+- [ ] [DB] Query sqlc
+- [ ] [BE] Validasi: key unik, kelas, nama
+- [ ] [BE] Policy admin dan 403
+- [ ] [BE] Nonaktifkan tanpa menghapus data
+- [ ] [TEST] Integrasi CRUD dan matriks role
+- [ ] [TEST] Kompatibilitas item lama
+
+**S8.1.2 Field bawaan, default, inheritance (CUST-02) — 3 hari**
+- [ ] [API] Field bawaan dan nilai default per tipe
+- [ ] [DB] Relasi tipe↔custom field dan default
+- [ ] [BE] Terapkan default saat create dari UI/API/impor/form
+- [ ] [BE] Inheritance nilai dari parent sesuai aturan tipe
+- [ ] [TEST] Default di keempat jalur create
+- [ ] [TEST] Inheritance dan perubahan definisi
+
+**S8.1.3 Aturan subitem dan workflow bawaan (CUST-03) — 2 hari**
+- [ ] [BE] Validasi allowed parent/child di create, move, reorder, lokasi
+- [ ] [BE] Workflow bawaan per tipe
+- [ ] [TEST] Tabel kasus parent/child
+- [ ] [TEST] Item multi-lokasi
+
+**S8.1.4 Layout detail per tipe (CUST-04) — 2.5 hari**
+- [ ] [API] Section layout per tipe
+- [ ] [BE] Validasi layout
+- [ ] [FE] Panel item dirender dari layout
+- [ ] [FE] Editor layout admin
+- [ ] [TEST] Playwright dan axe
+
+**S8.1.5 UI tipe dan menu "+" (CUST-01, SPC-14) — 3 hari**
+- [ ] [FE] Dialog "Create a custom item type"
+- [ ] [FE] Toggle menu "+" per Space
+- [ ] [FE] Menu blueprint: tipe, nama, ikon
+- [ ] [FE] Tipe di Table, Board, filter, search
+- [ ] [BE] Tipe di ekspor Excel, laporan, search
+- [ ] [TEST] E2E-PAR-01 dan E2E-PAR-02, axe
+
+**S8.1.6 Field relasi bertipe (CUST-05) — 2.5 hari**
+- [ ] [API] Tipe field relasi dengan target tipe
+- [ ] [DB] Penyimpanan relasi (sesuai ADR S7.3.2)
+- [ ] [BE] Validasi target dan izin; nama target tanpa akses tidak bocor
+- [ ] [FE] Picker relasi
+- [ ] [TEST] IDOR dan izin
+
+### E8.2 Field dan workflow
+
+**S8.2.1 Custom field Formula (TASK-11B) — 4 hari**
+- [ ] [BE] Parser ekspresi tertutup (tanpa eval)
+- [ ] [BE] Evaluator dan tipe hasil
+- [ ] [BE] Deteksi siklus
+- [ ] [BE] Hitung ulang saat field sumber berubah
+- [ ] [FE] Editor formula
+- [ ] [FE] Tampilan Table dan filter/sort
+- [ ] [TEST] Tabel ≥ 20 kasus
+- [ ] [TEST] Performa 500 item
+
+**S8.2.2 Guard transisi (WF-04) — 4 hari**
+- [ ] [API] Aturan transisi pada workflow
+- [ ] [DB] Penyimpanan aturan
+- [ ] [BE] Evaluator: field wajib, transisi diizinkan, role/assignee
+- [ ] [BE] Pasang di patch item, impor, dan job
+- [ ] [BE] Error terstruktur tanpa mengubah data
+- [ ] [FE] Editor guard di settings workflow
+- [ ] [FE] Pesan error di panel item dan Board
+- [ ] [TEST] E2E-PAR-03 lewat UI, REST, impor
+
+**S8.2.3 Validasi lintas record (WF-05) — 1.5 hari**
+- [ ] [BE] Aturan relasi: subitem selesai, relasi wajib terisi
+- [ ] [BE] Pakai evaluator S8.2.2
+- [ ] [TEST] Tabel kasus
+
+**S8.2.4 Approval otomatis saat masuk status (WF-03B) — 2.5 hari**
+- [ ] [API] Konfigurasi approval per status
+- [ ] [BE] Buat approval saat transisi
+- [ ] [BE] Status tujuan Approved/Rejected
+- [ ] [FE] Konfigurasi di editor workflow
+- [ ] [TEST] Integrasi dan Playwright
+
+### E8.3 Form dan tema
+
+**S8.3.1 Logika kondisional form (FORM-07) — 3 hari**
+- [ ] [API] Skema kondisi pertanyaan
+- [ ] [BE] Validasi server; jawaban pertanyaan tersembunyi ditolak/dibuang
+- [ ] [FE] Editor kondisi
+- [ ] [FE] Renderer publik dan internal
+- [ ] [TEST] Unit evaluator kondisi
+- [ ] [TEST] E2E-PAR-05
+
+**S8.3.2 Routing form ke tipe custom dan Blueprint (FORM-09) — 1.5 hari**
+- [ ] [BE] Pemetaan jawaban ke field tipe custom
+- [ ] [FE] UI pemetaan
+- [ ] [TEST] Item yang terbentuk sesuai cabang
+
+**S8.3.3 Email konfirmasi form (FORM-04) — 2 hari**
+- [ ] [API] Sender name, logo, salam, pesan, penutup
+- [ ] [BE] Template dengan escape HTML
+- [ ] [FE] Editor dan pratinjau
+- [ ] [TEST] Email terkirim sesuai konfigurasi
+
+**S8.3.4 Tema System dan warna (SET-06) — 1.5 hari**
+- [ ] [BE] Preferensi tema
+- [ ] [FE] Light / Dark / System dan tema warna
+- [ ] [TEST] Axe kontras semua tema
+
+### E8.4 Gate
+
+**S8.4.1 UAT gate M8 — 2 hari**
+- [ ] [TEST] UAT per requirement M8
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [DOC] Gate report G1a
+
+## M9 — Otomasi dan approval lanjutan (G1)
+
+Memetakan: AUT-01..05, APR-01..03. Prasyarat: S8.2.2, S7.3.3.
+
+### E9.1 Mesin otomasi
+
+**S9.1.1 Event domain dan outbox (AUT-01) — 3 hari**
+- [ ] [DB] Tabel outbox
+- [ ] [BE] Emit event dalam transaksi item service
+- [ ] [BE] Emit dari impor, form, dan job
+- [ ] [BE] Dispatcher River
+- [ ] [TEST] Hasil efektif tepat sekali pada kiriman ulang
+- [ ] [TEST] Pemulihan setelah crash
+
+**S9.1.2 Skema dan evaluasi aturan (AUT-02) — 5.5 hari**
+- [ ] [API] Skema aturan WHEN/IF/THEN
+- [ ] [DB] `automation_rules` dan versinya
+- [ ] [BE] Validasi skema tertutup
+- [ ] [BE] Pemicu status dan assignee
+- [ ] [BE] Pemicu tanggal (scheduler) dan form submit
+- [ ] [BE] Evaluator kondisi
+- [ ] [BE] Aksi ubah field dan assign
+- [ ] [BE] Aksi komentar, buat item, notifikasi
+- [ ] [BE] Versi dan publish aturan
+- [ ] [TEST] Unit evaluator berbasis tabel
+- [ ] [TEST] Integrasi tiap aksi
+
+**S9.1.3 Keamanan eksekusi (AUT-03) — 3.5 hari**
+- [ ] [BE] Identitas eksekusi dan cek policy per aksi
+- [ ] [BE] Loop guard: kedalaman, chain ID, rate
+- [ ] [BE] Kuota per aturan dan per Space
+- [ ] [BE] Konkurensi: lock per item, retry versi optimistic
+- [ ] [TEST] Loop tidak tak terbatas
+- [ ] [TEST] Izin pemilik dicabut → aksi ditolak
+- [ ] [TEST] Dua aturan pada item yang sama secara paralel
+
+**S9.1.4 Log, retry, replay, observability (AUT-04) — 3 hari**
+- [ ] [DB] Log eksekusi: actor, versi aturan, event sumber, hasil
+- [ ] [BE] Retry dan dead job
+- [ ] [BE] Replay manual oleh admin (idempoten)
+- [ ] [BE] Metrik Prometheus dan alert
+- [ ] [FE] Tampilan log
+- [ ] [TEST] Retry, dead job, replay
+
+**S9.1.5 UI Automation (AUT-05) — 3 hari**
+- [ ] [FE] Tombol Automation di header project dan daftar aturan
+- [ ] [FE] Editor WHEN/IF/THEN
+- [ ] [BE] Endpoint dry-run
+- [ ] [FE] Pratinjau dry-run
+- [ ] [FE] Aktif/nonaktif aturan
+- [ ] [TEST] E2E-PAR-04, axe
+
+### E9.2 Approval lanjutan
+
+**S9.2.1 Any/All approver (APR-01) — 2.5 hari**
+- [ ] [API] Kebijakan Any/All
+- [ ] [DB] Kolom kebijakan
+- [ ] [BE] Evaluasi hasil
+- [ ] [FE] Pilihan kebijakan dan indikator
+- [ ] [TEST] E2E-PAR-06
+
+**S9.2.2 Reassign dan eskalasi (APR-02) — 3 hari**
+- [ ] [API] Reassign approver
+- [ ] [BE] Reassign dengan riwayat
+- [ ] [BE] Job pengingat tenggat
+- [ ] [BE] Eskalasi
+- [ ] [FE] UI reassign
+- [ ] [TEST] Integrasi
+
+**S9.2.3 Riwayat append-only dan pin versi (APR-03) — 2 hari**
+- [ ] [DB] `approval_events` append-only
+- [ ] [BE] Pin keputusan ke versi item/file
+- [ ] [FE] Riwayat keputusan
+- [ ] [TEST] Riwayat tidak dapat diubah
+
+### E9.3 Gate
+
+**S9.3.1 UAT gate M9 — 2 hari**
+- [ ] [TEST] UAT per requirement M9
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [DOC] Gate report G1b
+
+## M10 — Resource, jadwal, dan biaya (G2)
+
+Memetakan: RSC-01..06, VIEW-05C, SPC-16, SCH-01, TASK-14. Prasyarat: S7.4.1; S8.1.1 untuk tipe di workload.
+
+### E10.1 Workload dan kapasitas
+
+**S10.1.1 Kapasitas per orang (RSC-01) — 2.5 hari**
+- [ ] [API] Jadwal per orang dan pengecualian cuti
+- [ ] [DB] Penyimpanan jadwal dan cuti
+- [ ] [BE] Kapasitas harian memakai `schedule`
+- [ ] [FE] UI cuti dan pengecualian
+- [ ] [TEST] Kapasitas dengan libur dan cuti
+
+**S10.1.2 Mesin beban kerja (RSC-02) — 3.5 hari**
+- [ ] [BE] Distribusi effort per hari kerja
+- [ ] [BE] Pembagian multi-assignee
+- [ ] [BE] Tanpa hitung ganda lintas lokasi
+- [ ] [BE] Endpoint agregasi
+- [ ] [DB] Indeks
+- [ ] [TEST] Tabel kasus
+- [ ] [TEST] Performa 50 orang × 2.000 task
+
+**S10.1.3 Halaman Workload (RSC-02) — 2.5 hari**
+- [ ] [FE] Grid orang × hari/minggu
+- [ ] [FE] Backlog tanpa assignee
+- [ ] [FE] Indikator over-allocation
+- [ ] [FE] Aktifkan kunci sidebar `workload`
+- [ ] [TEST] E2E-PAR-07, axe
+
+**S10.1.4 Realokasi (RSC-03) — 1.5 hari**
+- [ ] [FE] Pindah assignment dari workload
+- [ ] [BE] Lewat patch item (policy, audit, SSE)
+- [ ] [TEST] Realokasi memperbarui beban
+
+### E10.2 Role, skill, booking
+
+**S10.2.1 Job role dan skill (RSC-04) — 3 hari**
+- [ ] [API] CRUD job role dan skill
+- [ ] [DB] Tabel role, skill, penugasan ke user
+- [ ] [BE] Validasi dan policy admin
+- [ ] [FE] Admin role dan skill
+- [ ] [FE] Filter workload per role/skill
+- [ ] [TEST] Integrasi
+
+**S10.2.2 Resource booking (RSC-05) — 3 hari**
+- [ ] [API] Booking per project, orang, atau role
+- [ ] [DB] Tabel booking
+- [ ] [BE] Booking masuk perhitungan workload
+- [ ] [BE] Konflik booking vs kapasitas
+- [ ] [FE] UI booking
+- [ ] [TEST] Integrasi
+
+**S10.2.3 Utilization planned vs actual (RSC-06) — 1.5 hari**
+- [ ] [BE] Metrik di mesin analytics
+- [ ] [FE] Widget dan template report
+- [ ] [TEST] Angka cocok dengan data mentah
+
+### E10.3 Jadwal lanjutan
+
+**S10.3.1 Baseline dan variance Gantt (VIEW-05C) — 3 hari**
+- [ ] [API] Simpan dan daftar baseline
+- [ ] [DB] Snapshot baseline
+- [ ] [BE] Perbandingan dan variance
+- [ ] [FE] Bar baseline di Gantt
+- [ ] [FE] Kolom variance
+- [ ] [TEST] E2E-PAR-08 (baseline immutable)
+
+**S10.3.2 Public snapshot Gantt (SPC-16) — 3 hari**
+- [ ] [API] Buat dan daftar snapshot
+- [ ] [DB] Penyimpanan snapshot
+- [ ] [BE] Token, kedaluwarsa, opsi nama assignee
+- [ ] [FE] Dialog dan riwayat snapshot
+- [ ] [FE] Halaman publik read-only
+- [ ] [TEST] Akses token dan data tersembunyi
+
+**S10.3.3 Portfolio dan dependensi lintas proyek (SCH-01) — 2.5 hari**
+- [ ] [BE] Dependensi lintas project dengan cek izin
+- [ ] [BE] Endpoint timeline multi-project
+- [ ] [FE] Portfolio Gantt
+- [ ] [TEST] Siklus lintas project
+- [ ] [TEST] Izin lintas Space
+
+### E10.4 Biaya
+
+**S10.4.1 Tarif dan billable (TASK-14) — 2.5 hari**
+- [ ] [API] Tarif per user/role berversi
+- [ ] [DB] Tabel tarif dan `rate_snapshot` di time entry
+- [ ] [BE] Snapshot tarif saat entry dibuat; flag billable
+- [ ] [FE] Admin tarif (izin finance)
+- [ ] [TEST] Perubahan tarif tidak mengubah histori
+
+**S10.4.2 Actual cost dan budget vs actual (TASK-14) — 2.5 hari**
+- [ ] [BE] Kalkulasi actual cost
+- [ ] [BE] Data finansial disembunyikan di tampilan publik/berbagi
+- [ ] [FE] Panel budget vs actual
+- [ ] [FE] Kolom cost di report
+- [ ] [TEST] Rumus dan masking
+
+### E10.5 Gate
+
+**S10.5.1 UAT gate M10 — 2 hari**
+- [ ] [TEST] UAT per requirement M10
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [DOC] Gate report G2a
+
+## M11 — File, analitik, dan integrasi (G2/G4)
+
+Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-08, API-01..03, INT-01..03, NAV-08, NAV-09. Prasyarat: S9.1.1 (webhook memakai outbox), S9.2.3.
+
+### E11.1 File
+
+**S11.1.1 View Files dan Chart (VIEW-10) — 2.5 hari**
+- [ ] [API] Daftar file lintas item dalam project
+- [ ] [BE] Query dengan policy
+- [ ] [FE] View Files
+- [ ] [FE] View Chart
+- [ ] [TEST] Izin dan Playwright
+
+**S11.1.2 Versi file (FIL-01) — 2 hari**
+- [ ] [DB] Metadata versi immutable
+- [ ] [BE] Unggah versi baru
+- [ ] [FE] Riwayat versi
+- [ ] [TEST] Izin per versi dan thumbnail
+
+**S11.1.3 Pratinjau dan proofing (FIL-02) — 3.5 hari**
+- [ ] [BE] Worker pratinjau gambar dan PDF
+- [ ] [BE] Sanitasi dan batas ukuran
+- [ ] [API] Anotasi per versi
+- [ ] [DB] Tabel anotasi
+- [ ] [FE] Viewer
+- [ ] [FE] Komentar yang dipin ke posisi
+- [ ] [TEST] Anotasi tetap di versinya
+
+**S11.1.4 Bandingkan versi (FIL-03) — 1.5 hari**
+- [ ] [BE] Pratinjau dua versi
+- [ ] [FE] Tampilan berdampingan
+- [ ] [TEST] Playwright
+
+**S11.1.5 Approval file per versi dan reviewer eksternal (FIL-04) — 2 hari**
+- [ ] [BE] Approval terikat versi
+- [ ] [BE] Akses reviewer eksternal terbatas
+- [ ] [FE] UI review
+- [ ] [TEST] E2E-PAR-09
+
+**S11.1.6 Storage eksternal dan link (TASK-08B) — 2 hari**
+- [ ] [BE] Adapter MinIO/S3
+- [ ] [BE] Adapter Pydio Cells
+- [ ] [BE] Lampiran berupa link
+- [ ] [TEST] Izin dan pemindaian tetap berlaku
+
+### E11.2 Analitik
+
+**S11.2.1 Visual area dan pivot (DASH-03B) — 2 hari**
+- [ ] [BE] Mesin widget: area dan pivot
+- [ ] [FE] Area
+- [ ] [FE] Pivot
+- [ ] [TEST] Angka cocok dengan data mentah
+
+**S11.2.2 Pustaka widget dan papan analitik (DASH-08) — 2.5 hari**
+- [ ] [BE] Burndown (deret per tanggal)
+- [ ] [BE] Task completion progress dan rata-rata custom field
+- [ ] [FE] Modal "Choose widget" dengan kategori
+- [ ] [FE] Papan analitik di Tools Space
+- [ ] [TEST] Angka per widget
+
+**S11.2.3 Deskripsi widget dan layout (DASH-04, DASH-05) — 1 hari**
+- [ ] [BE] Deskripsi dan orientasi layout
+- [ ] [FE] UI deskripsi dan layout
+
+**S11.2.4 Link publik dashboard (DASH-07) — 2.5 hari**
+- [ ] [API] Toggle, token, kedaluwarsa, password
+- [ ] [DB] Penyimpanan link
+- [ ] [BE] Akses publik dengan masking finansial
+- [ ] [FE] Dialog link publik
+- [ ] [TEST] Kedaluwarsa, password, data finansial
+
+**S11.2.5 Jadwal report (RPT-04) — 1.5 hari**
+- [ ] [BE] Pilihan hari dan jam per zona waktu
+- [ ] [FE] UI jadwal
+- [ ] [TEST] Pengiriman tepat waktu
+
+### E11.3 API dan integrasi
+
+**S11.3.1 API key dan scope (API-01, SET-08) — 2.5 hari**
+- [ ] [API] Kelola API key
+- [ ] [DB] Key disimpan sebagai hash
+- [ ] [BE] Middleware auth key dan scope
+- [ ] [FE] Halaman Apps & Integrations: tab API
+- [ ] [TEST] Scope, rotasi, pencabutan
+
+**S11.3.2 Webhook (API-02) — 3 hari**
+- [ ] [API] Kelola langganan webhook
+- [ ] [DB] Langganan dan log pengiriman
+- [ ] [BE] Kirim lewat outbox; tanda tangan HMAC dan timestamp
+- [ ] [BE] Retry dan nonaktif otomatis
+- [ ] [FE] UI webhook
+- [ ] [TEST] E2E-PAR-11
+
+**S11.3.3 OAuth app dan Authorized apps (API-03) — 2 hari**
+- [ ] [BE] OAuth2 authorization code + PKCE
+- [ ] [BE] Penyimpanan token dan pencabutan
+- [ ] [FE] Layar persetujuan dan daftar Authorized apps
+- [ ] [TEST] Pencabutan efektif
+
+**S11.3.4 Framework konektor (INT-01) — 1.5 hari**
+- [ ] [BE] Lifecycle pasang, konfigurasi, nonaktif
+- [ ] [BE] Penyimpanan rahasia terenkripsi
+- [ ] [TEST] Lifecycle
+
+**S11.3.5 Sinkronisasi dua arah dan konflik (INT-02) — 2 hari**
+- [ ] [DOC] Kebijakan konflik
+- [ ] [BE] Pemetaan ID eksternal
+- [ ] [BE] Deteksi dan penyelesaian konflik
+- [ ] [TEST] Tidak ada penimpaan diam-diam
+
+**S11.3.6 Dua konektor pilot (INT-03) — 1.5 hari**
+- [ ] [BE] GitHub Issues dua arah
+- [ ] [BE] Google Calendar satu arah
+- [ ] [TEST] Uji dengan akun uji
+
+**S11.3.7 Bookmark dan feedback (NAV-08, NAV-09) — 1.5 hari**
+- [ ] [BE] API bookmark dan feedback
+- [ ] [FE] Bookmark URL di Space
+- [ ] [FE] Form feedback
+
+### E11.4 Gate
+
+**S11.4.1 UAT gate M11 — 2 hari**
+- [ ] [TEST] UAT per requirement M11
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [DOC] Gate report G2b
+
+## M12 — Enterprise dan penerimaan parity (G4)
+
+Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
+
+### E12.1 Governance
+
+**S12.1.1 SSO OIDC (ENT-01) — 2.5 hari**
+- [ ] [DOC] ADR adapter identitas (DEC-PAR-05)
+- [ ] [BE] Login OIDC
+- [ ] [BE] Penautan akun dan sesi yang ada
+- [ ] [FE] Konfigurasi dan tombol login
+- [ ] [TEST] State, nonce, akun dinonaktifkan
+
+**S12.1.2 SSO SAML (ENT-01) — 2 hari**
+- [ ] [BE] SAML service provider
+- [ ] [BE] Validasi tanda tangan dan replay
+- [ ] [FE] Konfigurasi
+- [ ] [TEST] Assertion palsu ditolak
+
+**S12.1.3 Provisioning SCIM (ENT-02) — 2 hari**
+- [ ] [BE] SCIM users
+- [ ] [BE] SCIM groups
+- [ ] [BE] Deprovision mencabut sesi dan seat
+- [ ] [TEST] E2E-PAR-12
+
+**S12.1.4 Role kustom (ENT-03) — 2.5 hari**
+- [ ] [DB] Definisi role
+- [ ] [BE] Policy role kustom
+- [ ] [FE] Editor role
+- [ ] [TEST] Matriks least privilege
+- [ ] [TEST] Regresi policy role bawaan
+
+**S12.1.5 Laporan audit keamanan (ENT-04) — 2 hari**
+- [ ] [DB] Event audit: login, role, share, API key
+- [ ] [BE] Endpoint dan ekspor
+- [ ] [FE] Halaman audit
+- [ ] [TEST] Event tercatat dan hanya admin
+
+**S12.1.6 Locked space dan kebijakan akses (ENT-05) — 2 hari**
+- [ ] [BE] Locked space
+- [ ] [BE] IP allowlist
+- [ ] [FE] Pengaturan kebijakan
+- [ ] [TEST] Akses ditolak sesuai kebijakan
+
+**S12.1.7 Login OTP dan transfer kepemilikan (AUTH-08, SET-09) — 2 hari**
+- [ ] [BE] Login one-time password
+- [ ] [FE] Layar OTP
+- [ ] [BE] Transfer kepemilikan akun
+- [ ] [TEST] OTP dan transfer
+
+### E12.2 Penerimaan
+
+**S12.2.1 Regresi parity penuh — 3 hari**
+- [ ] [TEST] E2E-PAR-01..04 di CI
+- [ ] [TEST] E2E-PAR-05..08 di CI
+- [ ] [TEST] E2E-PAR-09..12 di CI
+- [ ] [TEST] Regresi performa NFR
+- [ ] [TEST] Sweep keamanan endpoint baru M8–M12
+- [ ] [TEST] Restore drill dan migrasi rehearsal
+
+**S12.2.2 UAT parity final (PAR-UAT) — 7 hari**
+- [ ] [TEST] UAT WFP kelompok Work management
+- [ ] [TEST] UAT Planning & views
+- [ ] [TEST] UAT Workflow & intake
+- [ ] [TEST] UAT Resources
+- [ ] [TEST] UAT Time & finance
+- [ ] [TEST] UAT Collaboration
+- [ ] [TEST] UAT Reporting
+- [ ] [TEST] UAT Integration
+- [ ] [TEST] UAT Admin & security
+- [ ] [TEST] UAT Experience
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [FIX] Perbaikan temuan UAT
+- [ ] [DOC] Bukti per WFP di `docs/parity/PARITY_TEST_EVIDENCE.md`
+
+**S12.2.3 Rilis kandidat 1.0 — 1 hari**
+- [ ] [REVIEW] Gate rilis baseline §12.3
+- [ ] [REVIEW] Sign-off produk dan keamanan
+
+## Rilis 1.0 (GA) — setelah M12 (D-55)
+
+Prasyarat: S12.2.3 PASS. GA.1–GA.4 tidak berubah isinya; hanya posisinya yang dipindah dari setelah M6.
 
 ### EGA Rilis 1.0
 
@@ -797,6 +1409,33 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [ ] Sesi pelatihan admin dan pengguna; catat pertanyaan
 - [ ] Serah terima runbook dan kontak dukungan
 
-## M7 — Post-GA (P2)
+## M13 — Backlog (di luar rilis 1.0, D-55)
 
-Belum dipecah menjadi story: AUTH-08; NAV-08, 09; SPC-14, 16; VIEW-05C, VIEW-10; TASK-08B, TASK-11B, TASK-14; WF-03B; DASH-03B; FORM-04, 07; DASH-04, 05, 07, 08; RPT-04; CUST-01; SET-06, 08, 09. Diprioritaskan ulang berdasarkan feedback pilot (PRD §8).
+Tidak dipecah menjadi story dan tidak dihitung dalam parity rilis 1.0. Status WFP di matriks parity: `N/A_APPROVED` untuk 1.0 dengan rujukan D-55. Klaim parity rilis 1.0 wajib menyebut pengecualian ini.
+
+| Kelompok | WFP | Catatan |
+|---|---|---|
+| AI assistant, agent, insight, MCP | WFP-096..099 | Butuh RBAC dan API publik (M11–M12) lebih dulu |
+| Whiteboard dan konversi ke task | WFP-100..101 | |
+| Business Object Registry (implementasi) | WFP-084..085, REG-01.. | Kontrak data sudah diputuskan di S7.3.2 (REG-00) dan dipakai field relasi CUST-05, jadi implementasi nanti tidak menulis ulang model Item |
+| Aplikasi native, desktop, offline, push | WFP-105..106 | Rilis 1.0 web responsif |
+| Editor dokumen kolaboratif | WFP-069 | |
+| Manajemen kunci enkripsi enterprise | WFP-094 | |
+| Bahasa selain English | WFP-104 | i18n sudah siap |
+| Email-to-task, arsip project | — | PRD §3 |
+
+## Ringkasan estimasi M7–M12
+
+Dihitung otomatis dari jumlah tugas (× 0,5 hari). Cadangan risiko +20%. Satu developer, 5 hari kerja per minggu. **Belum dikalibrasi** dengan kecepatan nyata; kalibrasi ulang setelah M8.
+
+| Milestone | Story | Tugas | Hari ideal | + cadangan 20% | Minggu |
+|---|---|---|---|---|---|
+| M7 | 10 | 51 | 25.5 | 30.6 | 7 |
+| M8 | 15 | 78 | 39 | 46.8 | 10 |
+| M9 | 9 | 55 | 27.5 | 33 | 7 |
+| M10 | 13 | 66 | 33 | 39.6 | 8 |
+| M11 | 19 | 78 | 39 | 46.8 | 10 |
+| M12 | 10 | 52 | 26 | 31.2 | 7 |
+| **Total** | **76** | **380** | **190** | **228** | **49** |
+
+Pemetaan P2 lama: AUTH-08→M12; NAV-08/09→M11; SPC-14→M8, SPC-16→M10; VIEW-05C→M10, VIEW-10→M11; TASK-08B→M11, TASK-11B→M8, TASK-14→M10; WF-03B→M8; DASH-03B/04/05/07/08→M11; FORM-04/07→M8; RPT-04→M11; CUST-01→M8; SET-06→M8, SET-08→M11, SET-09→M12.

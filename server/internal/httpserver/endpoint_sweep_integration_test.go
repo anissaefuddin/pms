@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"regexp"
+	"sort"
 	"strings"
 	"testing"
 
@@ -151,56 +152,122 @@ func TestItemActivityAndFollowers(t *testing.T) {
 	}
 }
 
-// S6.3.3 (OWASP A01, IDOR): with real ids of a private Space, its project, form, view and custom field, a signed-in
-// user who has no share must be refused by every operation that takes those ids: reads answer 404 and nothing succeeds.
-func TestOutsiderCannotTouchAnotherSpacesResourcesThroughAnyEndpoint(t *testing.T) {
-	f := newFixture(t)
-	owner, outsider := f.person("admin"), f.person("regular")
+// idorFixture builds a private Space with one of each resource kind the contract addresses by id.
+func idorFixture(t *testing.T, f *fixture, owner *person) map[string]string {
+	t.Helper()
 	made := f.call(owner, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": uuid.NewString()})
-	if made.status != 201 {
-		t.Fatalf("template: %+v", made)
-	}
+	f.want(made, 201, "template")
 	space := made.body["id"].(string)
+	board := f.call(owner, "POST", "/dashboards", map[string]any{"space_id": space, "name": "Private board"})
+	f.want(board, 201, "dashboard")
+	dashboard := board.body["id"].(string)
+	widget := f.call(owner, "POST", "/dashboards/"+dashboard+"/widgets", map[string]any{"name": "W", "type": "pie", "position": 0, "config": map[string]any{}}, "If-Match", `"1"`)
+	f.want(widget, 201, "widget")
+	report := f.call(owner, "POST", "/reports", map[string]any{"name": "Private report", "template": "overdue"})
+	f.want(report, 201, "report")
 	ids := map[string]string{
-		"spaceId": space,
-		"itemId":  f.queryID("SELECT i.id::text FROM items i JOIN item_locations l ON l.item_id=i.id WHERE l.space_id=$1 AND i.type='task' LIMIT 1", space),
-		"formId":  f.queryID("SELECT id::text FROM request_forms WHERE space_id=$1", space),
-		"fieldId": f.queryID("SELECT id::text FROM custom_fields WHERE space_id=$1", space),
-		"viewId":  f.queryID("SELECT id::text FROM views WHERE scope_space_id=$1 LIMIT 1", space),
+		"spaceId":     space,
+		"itemId":      f.queryID("SELECT i.id::text FROM items i JOIN item_locations l ON l.item_id=i.id WHERE l.space_id=$1 AND i.type='task' LIMIT 1", space),
+		"projectId":   f.queryID("SELECT i.id::text FROM items i JOIN item_locations l ON l.item_id=i.id WHERE l.space_id=$1 AND i.type='project' LIMIT 1", space),
+		"formId":      f.queryID("SELECT id::text FROM request_forms WHERE space_id=$1", space),
+		"fieldId":     f.queryID("SELECT id::text FROM custom_fields WHERE space_id=$1", space),
+		"viewId":      f.queryID("SELECT id::text FROM views WHERE scope_space_id=$1 LIMIT 1", space),
+		"dashboardId": dashboard,
+		"widgetId":    widget.body["widgets"].([]any)[0].(map[string]any)["id"].(string),
+		"reportId":    report.body["id"].(string),
 	}
-	if f.call(owner, "GET", "/spaces/"+space, nil).status != 200 {
-		t.Fatal("owner lost access to own Space")
-	}
+	ids["commentId"] = f.queryID("INSERT INTO comments(id,item_id,author_id,body,body_text) VALUES (gen_random_uuid(),$1,$2,'{}','c') RETURNING id::text", ids["itemId"], owner.id)
+	ids["attachmentId"] = f.queryID(`INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
+VALUES (gen_random_uuid(),$1,$2,'a.bin','application/octet-stream',1,'aa/bb/aabbccdd-1111-4222-8333-444455556666',decode(repeat('00',32),'hex')) RETURNING id::text`, ids["itemId"], owner.id)
+	ids["notificationId"] = f.queryID("INSERT INTO notifications(id,recipient_id,kind,item_id) VALUES (gen_random_uuid(),$1,'mention',$2) RETURNING id::text", owner.id, ids["itemId"])
+	approval := f.call(owner, "POST", "/items/"+ids["itemId"]+"/approvals", map[string]any{"approver_ids": []string{owner.id}})
+	f.want(approval, 201, "approval")
+	ids["approvalId"] = approval.body["id"].(string)
+	entry := f.call(owner, "POST", "/time-entries", map[string]any{"item_id": ids["itemId"], "date": "2026-11-13", "minutes": 30, "category": "Delivery", "billing_type": "billable"})
+	f.want(entry, 201, "time entry")
+	ids["entryId"] = entry.body["id"].(string)
+	second := f.call(owner, "POST", "/items", map[string]any{"type": "task", "title": "Second", "locations": []map[string]any{{"space_id": space}}})
+	f.want(second, 201, "second item")
+	dep := f.call(owner, "POST", "/items/"+second.body["id"].(string)+"/dependencies", map[string]any{"predecessor_id": ids["itemId"], "type": "FS"})
+	f.want(dep, 201, "dependency")
+	ids["dependencyId"] = dep.body["id"].(string)
+	blueprint := f.call(owner, "POST", "/spaces/"+space+"/blueprints", map[string]any{"name": "Plan", "source_item_id": ids["projectId"]})
+	f.want(blueprint, 201, "blueprint")
+	ids["blueprintId"] = blueprint.body["id"].(string)
+	ids["groupId"] = f.group("Private group", owner)
+	ids["userId"] = owner.id
+	ids["workflowId"] = f.queryID("SELECT id::text FROM workflows WHERE is_default")
+	ids["statusId"] = f.queryID("SELECT id::text FROM statuses WHERE workflow_id=$1 ORDER BY position LIMIT 1", ids["workflowId"])
+	return ids
+}
+
+// resolve fills the path parameters from ids; ok is false when some parameter has no real id.
+func resolve(path string, ids map[string]string) (string, bool) {
+	ok := true
+	out := pathParam.ReplaceAllStringFunc(path, func(p string) string {
+		id, found := ids[strings.Trim(p, "{}")]
+		ok = ok && found
+		return id
+	})
+	return out, ok
+}
+
+// S7.1.3 (STAB-04, OWASP A01/IDOR): with real ids of a private Space, a signed-in user with no share is refused by
+// every operation that takes those ids (reads 404, nothing succeeds), and a user with only the read role cannot write.
+// The log lists the operations that could not be exercised with a real id, which is the residual-risk inventory.
+func TestStrangersAndReadersCannotTouchAnotherSpacesResourcesThroughAnyEndpoint(t *testing.T) {
+	f := newFixture(t)
+	owner, outsider, reader := f.person("admin"), f.person("regular"), f.person("regular")
+	ids := idorFixture(t, f, owner)
+	f.share(ids["spaceId"], "user", reader.id, "read")
 	protected, _ := contractOps(t)
-	checked := 0
+	covered, uncovered := 0, []string{}
 	for _, op := range protected {
-		params := pathParam.FindAllString(op.path, -1)
-		path, resolvable := op.path, len(params) > 0
-		for _, p := range params {
-			id, ok := ids[strings.Trim(p, "{}")]
-			if !ok {
-				resolvable = false
-				break
-			}
-			path = strings.Replace(path, p, id, 1)
-		}
-		if !resolvable {
+		path, ok := resolve(op.path, ids)
+		if !strings.Contains(op.path, "{") {
 			continue
 		}
-		checked++
+		if !ok {
+			uncovered = append(uncovered, op.method+" "+op.path)
+			continue
+		}
+		covered++
 		got := f.call(outsider, op.method, path, map[string]any{})
 		switch {
 		case got.status >= 500:
 			t.Errorf("outsider %s %s answered %d", op.method, op.path, got.status)
+		case op.method == "GET" && op.path == "/users/{userId}": // the directory is open to regular users by design; external users are checked below
 		case op.method == "GET" && got.status != 404:
 			t.Errorf("outsider GET %s answered %d, want 404", op.path, got.status)
 		case op.method == "DELETE" && strings.HasSuffix(op.path, "/star"): // D-51: removing one's own bookmark needs no access
 		case got.status == 200 || got.status == 201 || got.status == 204:
 			t.Errorf("outsider %s %s succeeded with %d", op.method, op.path, got.status)
 		}
+		if op.method == "GET" || strings.HasSuffix(op.path, "/star") || strings.HasSuffix(op.path, "/duplicate") || strings.HasSuffix(op.path, "/result") || strings.Contains(op.path, "/data") {
+			continue // reading and copying are what the read role allows
+		}
+		got = f.call(reader, op.method, path, map[string]any{})
+		if got.status >= 500 || got.status == 200 || got.status == 201 || got.status == 204 {
+			t.Errorf("read-only %s %s answered %d", op.method, op.path, got.status)
+		}
 	}
-	if checked < 20 {
-		t.Fatalf("only %d operations were exercised; the sweep is not covering the contract", checked)
+	external := f.person("external")
+	f.want(f.call(external, "GET", "/users/"+owner.id, nil), 404, "an external user cannot browse the directory")
+	if covered < 60 {
+		t.Fatalf("only %d operations were exercised; the sweep is not covering the contract", covered)
 	}
-	t.Logf("%d operations on another Space's ids refused", checked)
+	sort.Strings(uncovered)
+	t.Logf("%d operations exercised with real ids; %d have no real id in the fixture:\n%s", covered, len(uncovered), strings.Join(uncovered, "\n"))
+}
+
+// Hostile public-form tokens are "not found", never a server error (links do not expire by design; rotation and revocation are tested in forms_public_integration_test.go).
+func TestHostilePublicTokensAreNotFound(t *testing.T) {
+	f := newFixture(t)
+	for _, token := range []string{"x", strings.Repeat("a", 5000), "%27%20OR%201=1--", "..%2f..%2fetc", "00000000-0000-0000-0000-000000000000"} {
+		for _, call := range []struct{ method, suffix string }{{"GET", ""}, {"POST", "/submissions"}} {
+			if got := f.call(nil, call.method, "/public/forms/"+token+call.suffix, map[string]any{}); got.status != 404 && got.status != 414 {
+				t.Errorf("%s token %.20q answered %d", call.method, token, got.status)
+			}
+		}
+	}
 }
