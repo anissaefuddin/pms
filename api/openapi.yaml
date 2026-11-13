@@ -26,6 +26,7 @@ tags:
   - { name: collaboration, description: "Komentar, lampiran, aktivitas" }
   - { name: inbox, description: "Notifikasi, My to-do, pencarian" }
   - { name: recycle, description: "Recycle bin" }
+  - { name: forms, description: "Form permintaan" }
   - { name: system, description: "Workflow, realtime, health" }
 
 security:
@@ -1352,7 +1353,7 @@ paths:
     get:
       tags: [system]
       operationId: listWorkflows
-      summary: Workflow dan statusnya (WF-01; hanya baca di M1)
+      summary: Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca
       responses:
         '200':
           description: OK
@@ -1365,6 +1366,476 @@ paths:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/Workflow' }
+    post:
+      tags: [system]
+      operationId: createWorkflow
+      summary: Buat workflow dengan status awal (admin saja, WF-02)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkflowInput' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workflow' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /workflows/{workflowId}:
+    parameters:
+      - { name: workflowId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [system]
+      operationId: renameWorkflow
+      summary: Ubah nama workflow (admin saja)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              additionalProperties: false
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workflow' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [system]
+      operationId: deleteWorkflow
+      summary: Hapus workflow yang tidak dipakai (admin saja); workflow default atau yang dipakai item ditolak
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+  /workflows/{workflowId}/statuses:
+    parameters:
+      - { name: workflowId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [system]
+      operationId: createStatus
+      summary: Tambah status di akhir workflow (admin saja, WF-03A)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatusInput' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workflow' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /workflows/{workflowId}/status-order:
+    parameters:
+      - { name: workflowId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [system]
+      operationId: reorderStatuses
+      summary: Urutkan status; harus memuat semua status workflow, dan status pertama harus Active
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [status_ids]
+              additionalProperties: false
+              properties:
+                status_ids:
+                  type: array
+                  maxItems: 50
+                  items: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workflow' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /statuses/{statusId}:
+    parameters:
+      - { name: statusId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [system]
+      operationId: updateStatus
+      summary: Ubah nama, grup, warna, auto-assign, kunci transisi, atau transisi yang diizinkan (admin saja)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/StatusPatch' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workflow' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [system]
+      operationId: deleteStatus
+      summary: Hapus status. Bila dipakai item, `move_to` (status lain di workflow yang sama) wajib
+      parameters:
+        - { name: move_to, in: query, required: false, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Workflow setelah perubahan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workflow' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/approvals:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [items]
+      operationId: listItemApprovals
+      summary: Approval pada item beserta keputusan tiap approver (SPC-12)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/Approval' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [items]
+      operationId: createItemApproval
+      summary: Minta approval (butuh kemampuan edit; approver harus bisa melihat item)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApprovalInput' }
+      responses:
+        '201':
+          description: Dibuat
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Approval' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /approvals/{approvalId}:
+    parameters:
+      - { name: approvalId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [items]
+      operationId: updateApproval
+      summary: Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApprovalPatch' }
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Approval' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [items]
+      operationId: deleteApproval
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /approvals/{approvalId}/decision:
+    parameters:
+      - { name: approvalId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [items]
+      operationId: decideApproval
+      summary: Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              additionalProperties: false
+              properties:
+                decision: { type: string, enum: [approved, rejected] }
+                comment: { type: string, maxLength: 2000 }
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Approval' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/forms:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [forms]
+      operationId: listSpaceForms
+      summary: Form di Space (butuh kemampuan edit pada Space; FORM-05)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/FormSummary' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [forms]
+      operationId: createForm
+      summary: Buat form (FORM-01, FORM-02); butuh edit pada Space dan hak membuat item di tujuan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FormInput' }
+      responses:
+        '201':
+          description: Dibuat
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /forms/{formId}:
+    parameters:
+      - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [forms]
+      operationId: getForm
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [forms]
+      operationId: replaceForm
+      summary: Ganti seluruh isi form (nama, pertanyaan, pengaturan respons)
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/FormInput' }
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [forms]
+      operationId: deleteForm
+      summary: Hapus form; item yang sudah dibuat dari form tidak ikut terhapus
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /forms:
+    get:
+      tags: [forms]
+      operationId: listForms
+      summary: Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/FormSummary' }
+  /forms/{formId}/access:
+    parameters:
+      - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [forms]
+      operationId: setFormAccess
+      summary: Atur siapa yang boleh mengisi form (FORM-03); butuh kemampuan share pada Space
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [access]
+              additionalProperties: false
+              properties:
+                access: { $ref: '#/components/schemas/FormAccess' }
+      responses:
+        '200':
+          description: OK
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /me/requests:
+    get:
+      tags: [forms]
+      operationId: listMyRequests
+      summary: Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/MyRequest' }
+                  next_cursor: { type: string, nullable: true }
+        '422': { $ref: '#/components/responses/Problem' }
+  /forms/available:
+    get:
+      tags: [forms]
+      operationId: listAvailableForms
+      summary: Form yang boleh diisi user ini (akses internal); dipakai menu "Request forms"
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/FormAvailable' }
+  /forms/{formId}/definition:
+    parameters:
+      - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [forms]
+      operationId: getFormDefinition
+      summary: Pertanyaan form untuk pengisi; pengaturan respons (tujuan item) tidak ikut
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FormFill' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /forms/{formId}/submissions:
+    parameters:
+      - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [forms]
+      operationId: submitForm
+      summary: Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
+      description: |
+        `application/json` dengan `{answers}` bila form tanpa lampiran, atau `multipart/form-data` dengan bagian `answers`
+        (JSON) dan bagian `file:<key>` untuk tiap berkas pada pertanyaan attachment. Item dibuat atas nama pengisi.
+        Semua kesalahan jawaban dikembalikan sekaligus di `errors` (field `answers.<key>`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [answers]
+              additionalProperties: false
+              properties:
+                answers: { type: object, additionalProperties: true }
+          multipart/form-data:
+            schema:
+              type: object
+              required: [answers]
+              properties:
+                answers: { type: string, description: Objek JSON jawaban }
+              additionalProperties: { type: string, format: binary }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/FormSubmitted' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /events:
     get:
       tags: [system]
@@ -1824,12 +2295,233 @@ components:
       enum: [active, completed, deferred, cancelled]
     Status:
       type: object
-      required: [id, name, color, group]
+      required: [id, name, color, group, auto_assign, lock_transitions, allowed_next]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         color: { type: string, description: "Nama token warna, bukan hex" }
         group: { $ref: '#/components/schemas/StatusGroup' }
+        auto_assign: { type: boolean, description: Item yang masuk status ini otomatis menugaskan pengguna yang mengubahnya }
+        lock_transitions: { type: boolean, description: "Bila true, item di status ini hanya boleh pindah ke `allowed_next`" }
+        allowed_next:
+          type: array
+          items: { type: string, format: uuid }
+    StatusInput:
+      type: object
+      required: [name, group, color]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        group: { $ref: '#/components/schemas/StatusGroup' }
+        color: { type: string, maxLength: 40 }
+        auto_assign: { type: boolean }
+        lock_transitions: { type: boolean }
+    StatusPatch:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        group: { $ref: '#/components/schemas/StatusGroup' }
+        color: { type: string, maxLength: 40 }
+        auto_assign: { type: boolean }
+        lock_transitions: { type: boolean }
+        allowed_next:
+          type: array
+          maxItems: 50
+          items: { type: string, format: uuid }
+    WorkflowInput:
+      type: object
+      required: [name]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+    Approval:
+      type: object
+      required: [id, item_id, description, due_date, created_by, version, created_at, status, approved_count, total, approvers]
+      properties:
+        id: { type: string, format: uuid }
+        item_id: { type: string, format: uuid }
+        description: { type: string }
+        due_date: { type: string, format: date, nullable: true }
+        created_by: { $ref: '#/components/schemas/UserRef' }
+        version: { type: integer, format: int32 }
+        created_at: { type: string, format: date-time }
+        status:
+          type: string
+          enum: [pending, approved, rejected]
+          description: rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+        approved_count: { type: integer, format: int32, description: Pembilang penghitung "0/2" }
+        total: { type: integer, format: int32 }
+        approvers:
+          type: array
+          items:
+            type: object
+            required: [user, decision, comment, decided_at]
+            properties:
+              user: { $ref: '#/components/schemas/UserRef' }
+              decision: { type: string, enum: [approved, rejected], nullable: true }
+              comment: { type: string }
+              decided_at: { type: string, format: date-time, nullable: true }
+    ApprovalInput:
+      type: object
+      required: [approver_ids]
+      additionalProperties: false
+      properties:
+        description: { type: string, maxLength: 2000 }
+        due_date: { type: string, format: date, nullable: true }
+        approver_ids:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { type: string, format: uuid }
+    ApprovalPatch:
+      type: object
+      minProperties: 1
+      additionalProperties: false
+      properties:
+        description: { type: string, maxLength: 2000 }
+        due_date: { type: string, format: date, nullable: true }
+        approver_ids:
+          type: array
+          minItems: 1
+          maxItems: 20
+          items: { type: string, format: uuid }
+    FormElement:
+      type: object
+      required: [key, kind, label]
+      additionalProperties: false
+      properties:
+        key: { type: string, pattern: '^[a-z][a-z0-9_]{0,39}$', description: Stabil di semua revisi form; jawaban tersimpan memakai key ini }
+        kind:
+          type: string
+          enum: [single_line, paragraph, single_choice, multiple_choice, date, number, attachment, assignee, importance, section]
+        label: { type: string, minLength: 1, maxLength: 200 }
+        help: { type: string, maxLength: 500 }
+        required: { type: boolean }
+        options: { type: array, maxItems: 50, items: { type: string, maxLength: 100 }, description: Wajib 2-50 untuk single_choice dan multiple_choice }
+        min: { type: number }
+        max: { type: number }
+        max_files: { type: integer, minimum: 1, maximum: 5, description: Wajib untuk attachment }
+        multiple: { type: boolean, description: Hanya untuk assignee }
+    FormPage:
+      type: object
+      required: [title, elements]
+      additionalProperties: false
+      properties:
+        title: { type: string, maxLength: 120 }
+        elements: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/FormElement' } }
+    FormDefinition:
+      type: object
+      required: [pages]
+      additionalProperties: false
+      properties:
+        pages: { type: array, minItems: 1, maxItems: 10, items: { $ref: '#/components/schemas/FormPage' } }
+    FormResponseSettings:
+      type: object
+      required: [item_type, location]
+      additionalProperties: false
+      properties:
+        item_type: { type: string, enum: [task, project] }
+        status_id: { type: string, format: uuid, nullable: true, description: Kosong berarti status pertama workflow tujuan }
+        location:
+          type: object
+          required: [space_id]
+          additionalProperties: false
+          properties:
+            space_id: { type: string, format: uuid }
+            parent_item_id: { type: string, format: uuid, nullable: true }
+        assignee_ids: { type: array, maxItems: 20, items: { type: string, format: uuid } }
+        title_question: { type: string, nullable: true, description: Key pertanyaan single_line yang menjadi judul item }
+        approval:
+          type: object
+          nullable: true
+          required: [approver_ids]
+          additionalProperties: false
+          properties:
+            approver_ids: { type: array, minItems: 1, maxItems: 20, items: { type: string, format: uuid } }
+            description: { type: string, maxLength: 2000 }
+    FormInput:
+      type: object
+      required: [name, definition, response]
+      additionalProperties: false
+      properties:
+        name: { type: string, minLength: 1, maxLength: 120 }
+        description: { type: string, maxLength: 2000 }
+        definition: { $ref: '#/components/schemas/FormDefinition' }
+        response: { $ref: '#/components/schemas/FormResponseSettings' }
+    Form:
+      type: object
+      required: [id, space_id, name, description, definition, response, access, version, created_by, updated_by, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        definition: { $ref: '#/components/schemas/FormDefinition' }
+        response: { $ref: '#/components/schemas/FormResponseSettings' }
+        access: { $ref: '#/components/schemas/FormAccess' }
+        version: { type: integer, format: int32 }
+        created_by: { $ref: '#/components/schemas/UserRef' }
+        updated_by: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    FormAccess:
+      type: string
+      enum: [private, internal]
+      description: private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+    FormSummary:
+      type: object
+      required: [id, space_id, space_name, name, description, access, question_count, updated_by, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid }
+        space_name: { type: string }
+        access: { $ref: '#/components/schemas/FormAccess' }
+        name: { type: string }
+        description: { type: string }
+        question_count: { type: integer, format: int32 }
+        updated_by: { $ref: '#/components/schemas/UserRef' }
+        updated_at: { type: string, format: date-time }
+    MyRequest:
+      type: object
+      required: [id, form_name, item_id, title, status, created_at, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        form_name: { type: string }
+        item_id: { type: string, format: uuid }
+        title: { type: string }
+        status:
+          type: object
+          required: [id, name, color, group]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            color: { type: string }
+            group: { $ref: '#/components/schemas/StatusGroup' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    FormAvailable:
+      type: object
+      required: [id, name, description]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+    FormFill:
+      type: object
+      required: [id, name, description, definition]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        description: { type: string }
+        definition: { $ref: '#/components/schemas/FormDefinition' }
+    FormSubmitted:
+      type: object
+      required: [item_id, title]
+      properties:
+        item_id: { type: string, format: uuid }
+        title: { type: string }
     Workflow:
       type: object
       required: [id, name, is_default, statuses]
@@ -2245,7 +2937,7 @@ components:
     # ── Inbox & search ──
     NotificationKind:
       type: string
-      enum: [mention, assigned, status_changed, comment, shared]
+      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided]
     Notification:
       type: object
       required: [id, kind, created_at]

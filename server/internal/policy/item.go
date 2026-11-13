@@ -6,6 +6,12 @@ import (
 	"github.com/google/uuid"
 )
 
+// requesterRole marks the access a person has to the one Item their form submission created. It is not a share role:
+// it cannot be granted, and it never reaches the Space, the project around the Item, or any sibling.
+const requesterRole = "requester"
+
+var requesterCaps = setOf(View, Comment, Attach)
+
 // ItemCaps resolves live locations and ancestors in the same Space. A foreign
 // Personal space cannot contribute roles, even when the actor is an admin.
 func ItemCaps(ctx context.Context, db DB, actor Actor, itemID string) (Caps, error) {
@@ -78,6 +84,10 @@ JOIN targets t ON t.target_type = sh.target_type AND t.target_id = sh.target_id
 WHERE (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
    OR (sh.principal_type = 'group' AND sh.principal_id IN
        (SELECT group_id FROM group_members WHERE user_id = $1::uuid))
+UNION
+SELECT fs.item_id::text, 'requester' FROM form_submissions fs JOIN items i ON i.id = fs.item_id AND i.deleted_at IS NULL
+WHERE fs.requester_id = $1::uuid AND fs.item_id = ANY(ARRAY(SELECT unnest($2::text[])::uuid))
+  AND NOT $5::boolean AND $4::uuid IS NULL
 `, actor.ID, itemIDs, actor.Type == Admin, spaceID, deleted, includeDeletedSpaces)
 	if err != nil {
 		return nil, err
@@ -88,6 +98,10 @@ WHERE (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
 		var id, role string
 		if err := rows.Scan(&id, &role); err != nil {
 			return nil, err
+		}
+		if role == requesterRole {
+			caps[id] |= requesterCaps & Ceiling(actor.Type)
+			continue
 		}
 		caps[id] |= Effective(actor.Type, Role(role))
 	}

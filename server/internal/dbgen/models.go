@@ -500,6 +500,25 @@ type Activity struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type Approval struct {
+	ID          pgtype.UUID        `json:"id"`
+	ItemID      pgtype.UUID        `json:"item_id"`
+	Description string             `json:"description"`
+	DueDate     pgtype.Date        `json:"due_date"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	Version     int32              `json:"version"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type ApprovalApprover struct {
+	ApprovalID pgtype.UUID        `json:"approval_id"`
+	UserID     pgtype.UUID        `json:"user_id"`
+	Decision   pgtype.Text        `json:"decision"`
+	Comment    string             `json:"comment"`
+	DecidedAt  pgtype.Timestamptz `json:"decided_at"`
+}
+
 type Attachment struct {
 	ID          pgtype.UUID        `json:"id"`
 	ItemID      pgtype.UUID        `json:"item_id"`
@@ -541,6 +560,16 @@ type CustomField struct {
 	Position   int32              `json:"position"`
 	ArchivedAt pgtype.Timestamptz `json:"archived_at"`
 	Config     []byte             `json:"config"`
+}
+
+type FormSubmission struct {
+	ID          pgtype.UUID        `json:"id"`
+	FormID      pgtype.UUID        `json:"form_id"`
+	FormName    string             `json:"form_name"`
+	ItemID      pgtype.UUID        `json:"item_id"`
+	RequesterID pgtype.UUID        `json:"requester_id"`
+	Answers     []byte             `json:"answers"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Group struct {
@@ -628,6 +657,21 @@ type Notification struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type RequestForm struct {
+	ID          pgtype.UUID        `json:"id"`
+	SpaceID     pgtype.UUID        `json:"space_id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	Definition  []byte             `json:"definition"`
+	Response    []byte             `json:"response"`
+	Version     int32              `json:"version"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	UpdatedBy   pgtype.UUID        `json:"updated_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Access      string             `json:"access"`
+}
+
 type Session struct {
 	TokenHash         []byte             `json:"token_hash"`
 	UserID            pgtype.UUID        `json:"user_id"`
@@ -661,12 +705,19 @@ type Space struct {
 }
 
 type Status struct {
-	ID         pgtype.UUID `json:"id"`
-	WorkflowID pgtype.UUID `json:"workflow_id"`
-	Name       string      `json:"name"`
-	Grp        StatusGroup `json:"grp"`
-	Color      string      `json:"color"`
-	Position   int32       `json:"position"`
+	ID              pgtype.UUID `json:"id"`
+	WorkflowID      pgtype.UUID `json:"workflow_id"`
+	Name            string      `json:"name"`
+	Grp             StatusGroup `json:"grp"`
+	Color           string      `json:"color"`
+	Position        int32       `json:"position"`
+	AutoAssign      bool        `json:"auto_assign"`
+	LockTransitions bool        `json:"lock_transitions"`
+}
+
+type StatusTransition struct {
+	FromStatusID pgtype.UUID `json:"from_status_id"`
+	ToStatusID   pgtype.UUID `json:"to_status_id"`
 }
 
 type User struct {

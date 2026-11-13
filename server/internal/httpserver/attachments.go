@@ -4,10 +4,12 @@ import (
 	"archive/zip"
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/json"
 	"errors"
 	"io"
 	"mime"
+	"mime/multipart"
 	"net/http"
 	"path"
 	"strconv"
@@ -126,53 +128,22 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 		writeAttachmentUploadError(w, err)
 		return
 	}
-	filename := strings.TrimSpace(path.Base(strings.ReplaceAll(part.FileName(), "\\", "/")))
-	if part.FormName() != "file" || filename == "" || filename == "." || len(filename) > 255 || strings.ContainsFunc(filename, unicode.IsControl) {
+	if part.FormName() != "file" {
 		writeItemError(w, items.Invalid("valid attachment filename is required"))
 		return
 	}
-	source := bufio.NewReader(part)
-	header, err := source.Peek(512)
-	if err != nil && !errors.Is(err, io.EOF) {
-		writeAttachmentUploadError(w, err)
-		return
-	}
-	media := http.DetectContentType(header)
-	if len(header) == 0 {
-		writeItemError(w, items.Invalid("attachment is empty"))
-		return
-	}
-	if executableAttachment(filename, header) {
-		writeProblem(w, 422, "file_type_blocked", "executable attachments are not allowed")
-		return
-	}
-	switch media {
-	case "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "application/zip", "text/plain; charset=utf-8":
-	default:
-		writeProblem(w, 422, "file_type_blocked", "supported files are PDF, PNG, JPEG, GIF, WebP, plain text, and ZIP")
-		return
-	}
-	store := s.attachmentStore()
-	file, err := store.Put(source, max)
+	staged, err := s.stageAttachment(part, max)
 	if err != nil {
 		writeAttachmentUploadError(w, err)
 		return
 	}
+	store := s.attachmentStore()
 	stored := false
 	defer func() {
 		if !stored {
-			_ = store.Remove(file.Key)
+			_ = store.Remove(staged.File.Key)
 		}
 	}()
-	if media == "application/zip" {
-		if err := validateAttachmentZIP(store, file); errors.Is(err, errBlockedArchive) {
-			writeProblem(w, 422, "file_type_blocked", err.Error())
-			return
-		} else if err != nil {
-			writeItemError(w, err)
-			return
-		}
-	}
 	if _, err = reader.NextPart(); !errors.Is(err, io.EOF) {
 		if err == nil {
 			err = items.Invalid("exactly one file is allowed")
@@ -191,13 +162,8 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	attachment, err := uuid.NewV7()
+	attachment, err := insertAttachment(ctx, tx, id, actorOf(r).ID, staged)
 	if err != nil {
-		writeItemError(w, err)
-		return
-	}
-	if _, err = tx.Exec(ctx, `INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
-VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, attachment, id, actorOf(r).ID, filename, media, file.Size, file.Key, file.SHA256); err != nil {
 		writeItemError(w, err)
 		return
 	}
@@ -213,6 +179,69 @@ VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, attachment, id, actorOf(r)
 	stored = true
 	s.publishItem(r, "item.updated", id.String(), id.String(), 0)
 	writeJSON(w, 201, out)
+}
+
+// blockedFile is an upload the checks refuse; it is answered with 422 file_type_blocked.
+type blockedFile struct{ message string }
+
+func (b blockedFile) Error() string { return b.message }
+
+// stagedFile is an upload that passed every attachment check and sits in storage but is not recorded yet.
+// The caller must record it in the database or remove File.Key.
+type stagedFile struct {
+	Filename, Media string
+	File            storage.File
+}
+
+// stageAttachment applies the attachment rules (name, executable and type checks, size limit, ZIP inspection)
+// to one multipart file and stores it. Normal uploads and form submissions both use it.
+func (s *Server) stageAttachment(part *multipart.Part, max int64) (stagedFile, error) {
+	filename := strings.TrimSpace(path.Base(strings.ReplaceAll(part.FileName(), "\\", "/")))
+	if filename == "" || filename == "." || len(filename) > 255 || strings.ContainsFunc(filename, unicode.IsControl) {
+		return stagedFile{}, items.Invalid("valid attachment filename is required")
+	}
+	source := bufio.NewReader(part)
+	header, err := source.Peek(512)
+	if err != nil && !errors.Is(err, io.EOF) {
+		return stagedFile{}, err
+	}
+	if len(header) == 0 {
+		return stagedFile{}, items.Invalid("attachment is empty")
+	}
+	media := http.DetectContentType(header)
+	if executableAttachment(filename, header) {
+		return stagedFile{}, blockedFile{"executable attachments are not allowed"}
+	}
+	switch media {
+	case "image/png", "image/jpeg", "image/gif", "image/webp", "application/pdf", "application/zip", "text/plain; charset=utf-8":
+	default:
+		return stagedFile{}, blockedFile{"supported files are PDF, PNG, JPEG, GIF, WebP, plain text, and ZIP"}
+	}
+	store := s.attachmentStore()
+	file, err := store.Put(source, max)
+	if err != nil {
+		return stagedFile{}, err
+	}
+	if media == "application/zip" {
+		if err := validateAttachmentZIP(store, file); err != nil {
+			_ = store.Remove(file.Key)
+			if errors.Is(err, errBlockedArchive) {
+				return stagedFile{}, blockedFile{err.Error()}
+			}
+			return stagedFile{}, err
+		}
+	}
+	return stagedFile{Filename: filename, Media: media, File: file}, nil
+}
+
+func insertAttachment(ctx context.Context, tx pgx.Tx, itemID uuid.UUID, uploader string, f stagedFile) (uuid.UUID, error) {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return id, err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
+VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, id, itemID, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256)
+	return id, err
 }
 
 func executableAttachment(name string, prefix []byte) bool {
@@ -266,7 +295,10 @@ func validateAttachmentZIP(store storage.Storage, file storage.File) error {
 
 func writeAttachmentUploadError(w http.ResponseWriter, err error) {
 	var max *http.MaxBytesError
+	var blocked blockedFile
 	switch {
+	case errors.As(err, &blocked):
+		writeProblem(w, 422, "file_type_blocked", blocked.message)
 	case errors.Is(err, storage.ErrTooLarge), errors.As(err, &max):
 		writeProblem(w, 413, "file_too_large", "attachment exceeds upload limit")
 	case errors.Is(err, io.EOF), errors.Is(err, io.ErrUnexpectedEOF):

@@ -14,6 +14,7 @@ import (
 	"io"
 	"mime/multipart"
 	"net/http"
+	"strings"
 	"time"
 
 	"github.com/oapi-codegen/runtime"
@@ -29,6 +30,45 @@ const (
 func (e AcceptInvitationRequestAcceptTerms) Valid() bool {
 	switch e {
 	case AcceptInvitationRequestAcceptTermsTrue:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApprovalApproversDecision.
+const (
+	ApprovalApproversDecisionApproved ApprovalApproversDecision = "approved"
+	ApprovalApproversDecisionRejected ApprovalApproversDecision = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalApproversDecision enum.
+func (e ApprovalApproversDecision) Valid() bool {
+	switch e {
+	case ApprovalApproversDecisionApproved:
+		return true
+	case ApprovalApproversDecisionRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApprovalStatus.
+const (
+	ApprovalStatusApproved ApprovalStatus = "approved"
+	ApprovalStatusPending  ApprovalStatus = "pending"
+	ApprovalStatusRejected ApprovalStatus = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalStatus enum.
+func (e ApprovalStatus) Valid() bool {
+	switch e {
+	case ApprovalStatusApproved:
+		return true
+	case ApprovalStatusPending:
+		return true
+	case ApprovalStatusRejected:
 		return true
 	default:
 		return false
@@ -248,6 +288,84 @@ func (e DependencyType) Valid() bool {
 	}
 }
 
+// Defines values for FormAccess.
+const (
+	Internal FormAccess = "internal"
+	Private  FormAccess = "private"
+)
+
+// Valid indicates whether the value is a known member of the FormAccess enum.
+func (e FormAccess) Valid() bool {
+	switch e {
+	case Internal:
+		return true
+	case Private:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FormElementKind.
+const (
+	FormElementKindAssignee       FormElementKind = "assignee"
+	FormElementKindAttachment     FormElementKind = "attachment"
+	FormElementKindDate           FormElementKind = "date"
+	FormElementKindImportance     FormElementKind = "importance"
+	FormElementKindMultipleChoice FormElementKind = "multiple_choice"
+	FormElementKindNumber         FormElementKind = "number"
+	FormElementKindParagraph      FormElementKind = "paragraph"
+	FormElementKindSection        FormElementKind = "section"
+	FormElementKindSingleChoice   FormElementKind = "single_choice"
+	FormElementKindSingleLine     FormElementKind = "single_line"
+)
+
+// Valid indicates whether the value is a known member of the FormElementKind enum.
+func (e FormElementKind) Valid() bool {
+	switch e {
+	case FormElementKindAssignee:
+		return true
+	case FormElementKindAttachment:
+		return true
+	case FormElementKindDate:
+		return true
+	case FormElementKindImportance:
+		return true
+	case FormElementKindMultipleChoice:
+		return true
+	case FormElementKindNumber:
+		return true
+	case FormElementKindParagraph:
+		return true
+	case FormElementKindSection:
+		return true
+	case FormElementKindSingleChoice:
+		return true
+	case FormElementKindSingleLine:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FormResponseSettingsItemType.
+const (
+	FormResponseSettingsItemTypeProject FormResponseSettingsItemType = "project"
+	FormResponseSettingsItemTypeTask    FormResponseSettingsItemType = "task"
+)
+
+// Valid indicates whether the value is a known member of the FormResponseSettingsItemType enum.
+func (e FormResponseSettingsItemType) Valid() bool {
+	switch e {
+	case FormResponseSettingsItemTypeProject:
+		return true
+	case FormResponseSettingsItemTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ItemDefaultViewType.
 const (
 	ItemDefaultViewTypeBoard ItemDefaultViewType = "board"
@@ -382,19 +500,19 @@ func (e ItemPatchResultRestoreBlockedReason) Valid() bool {
 
 // Defines values for ItemType.
 const (
-	Folder  ItemType = "folder"
-	Project ItemType = "project"
-	Task    ItemType = "task"
+	ItemTypeFolder  ItemType = "folder"
+	ItemTypeProject ItemType = "project"
+	ItemTypeTask    ItemType = "task"
 )
 
 // Valid indicates whether the value is a known member of the ItemType enum.
 func (e ItemType) Valid() bool {
 	switch e {
-	case Folder:
+	case ItemTypeFolder:
 		return true
-	case Project:
+	case ItemTypeProject:
 		return true
-	case Task:
+	case ItemTypeTask:
 		return true
 	default:
 		return false
@@ -688,16 +806,22 @@ func (e MeUpdateWeekStart) Valid() bool {
 
 // Defines values for NotificationKind.
 const (
-	NotificationKindAssigned      NotificationKind = "assigned"
-	NotificationKindComment       NotificationKind = "comment"
-	NotificationKindMention       NotificationKind = "mention"
-	NotificationKindShared        NotificationKind = "shared"
-	NotificationKindStatusChanged NotificationKind = "status_changed"
+	NotificationKindApprovalDecided   NotificationKind = "approval_decided"
+	NotificationKindApprovalRequested NotificationKind = "approval_requested"
+	NotificationKindAssigned          NotificationKind = "assigned"
+	NotificationKindComment           NotificationKind = "comment"
+	NotificationKindMention           NotificationKind = "mention"
+	NotificationKindShared            NotificationKind = "shared"
+	NotificationKindStatusChanged     NotificationKind = "status_changed"
 )
 
 // Valid indicates whether the value is a known member of the NotificationKind enum.
 func (e NotificationKind) Valid() bool {
 	switch e {
+	case NotificationKindApprovalDecided:
+		return true
+	case NotificationKindApprovalRequested:
+		return true
 	case NotificationKindAssigned:
 		return true
 	case NotificationKindComment:
@@ -995,6 +1119,24 @@ func (e ViewVisibility) Valid() bool {
 	}
 }
 
+// Defines values for DecideApprovalJSONBodyDecision.
+const (
+	DecideApprovalJSONBodyDecisionApproved DecideApprovalJSONBodyDecision = "approved"
+	DecideApprovalJSONBodyDecisionRejected DecideApprovalJSONBodyDecision = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the DecideApprovalJSONBodyDecision enum.
+func (e DecideApprovalJSONBodyDecision) Valid() bool {
+	switch e {
+	case DecideApprovalJSONBodyDecisionApproved:
+		return true
+	case DecideApprovalJSONBodyDecisionRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListMyTodoParamsFilter.
 const (
 	ListMyTodoParamsFilterActive  ListMyTodoParamsFilter = "active"
@@ -1100,6 +1242,49 @@ type Activity struct {
 type ActivityPage struct {
 	Items      []Activity `json:"items"`
 	NextCursor *string    `json:"next_cursor,omitempty"`
+}
+
+// Approval defines model for Approval.
+type Approval struct {
+	// ApprovedCount Pembilang penghitung "0/2"
+	ApprovedCount int32 `json:"approved_count"`
+	Approvers     []struct {
+		Comment   string                     `json:"comment"`
+		DecidedAt *time.Time                 `json:"decided_at"`
+		Decision  *ApprovalApproversDecision `json:"decision"`
+		User      UserRef                    `json:"user"`
+	} `json:"approvers"`
+	CreatedAt   time.Time           `json:"created_at"`
+	CreatedBy   UserRef             `json:"created_by"`
+	Description string              `json:"description"`
+	DueDate     *openapi_types.Date `json:"due_date"`
+	Id          openapi_types.UUID  `json:"id"`
+	ItemId      openapi_types.UUID  `json:"item_id"`
+
+	// Status rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+	Status  ApprovalStatus `json:"status"`
+	Total   int32          `json:"total"`
+	Version int32          `json:"version"`
+}
+
+// ApprovalApproversDecision defines model for Approval.Approvers.Decision.
+type ApprovalApproversDecision string
+
+// ApprovalStatus rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+type ApprovalStatus string
+
+// ApprovalInput defines model for ApprovalInput.
+type ApprovalInput struct {
+	ApproverIds []openapi_types.UUID `json:"approver_ids"`
+	Description *string              `json:"description,omitempty"`
+	DueDate     *openapi_types.Date  `json:"due_date,omitempty"`
+}
+
+// ApprovalPatch defines model for ApprovalPatch.
+type ApprovalPatch struct {
+	ApproverIds *[]openapi_types.UUID `json:"approver_ids,omitempty"`
+	Description *string               `json:"description,omitempty"`
+	DueDate     *openapi_types.Date   `json:"due_date,omitempty"`
 }
 
 // AssigneeAllocation defines model for AssigneeAllocation.
@@ -1264,6 +1449,128 @@ type CustomFieldValues_AdditionalProperties struct {
 
 // DependencyType defines model for DependencyType.
 type DependencyType string
+
+// Form defines model for Form.
+type Form struct {
+	// Access private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+	Access      FormAccess           `json:"access"`
+	CreatedAt   time.Time            `json:"created_at"`
+	CreatedBy   UserRef              `json:"created_by"`
+	Definition  FormDefinition       `json:"definition"`
+	Description string               `json:"description"`
+	Id          openapi_types.UUID   `json:"id"`
+	Name        string               `json:"name"`
+	Response    FormResponseSettings `json:"response"`
+	SpaceId     openapi_types.UUID   `json:"space_id"`
+	UpdatedAt   time.Time            `json:"updated_at"`
+	UpdatedBy   UserRef              `json:"updated_by"`
+	Version     int32                `json:"version"`
+}
+
+// FormAccess private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+type FormAccess string
+
+// FormAvailable defines model for FormAvailable.
+type FormAvailable struct {
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Name        string             `json:"name"`
+}
+
+// FormDefinition defines model for FormDefinition.
+type FormDefinition struct {
+	Pages []FormPage `json:"pages"`
+}
+
+// FormElement defines model for FormElement.
+type FormElement struct {
+	Help *string `json:"help,omitempty"`
+
+	// Key Stabil di semua revisi form; jawaban tersimpan memakai key ini
+	Key   string          `json:"key"`
+	Kind  FormElementKind `json:"kind"`
+	Label string          `json:"label"`
+	Max   *float32        `json:"max,omitempty"`
+
+	// MaxFiles Wajib untuk attachment
+	MaxFiles *int     `json:"max_files,omitempty"`
+	Min      *float32 `json:"min,omitempty"`
+
+	// Multiple Hanya untuk assignee
+	Multiple *bool `json:"multiple,omitempty"`
+
+	// Options Wajib 2-50 untuk single_choice dan multiple_choice
+	Options  *[]string `json:"options,omitempty"`
+	Required *bool     `json:"required,omitempty"`
+}
+
+// FormElementKind defines model for FormElement.Kind.
+type FormElementKind string
+
+// FormFill defines model for FormFill.
+type FormFill struct {
+	Definition  FormDefinition     `json:"definition"`
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Name        string             `json:"name"`
+}
+
+// FormInput defines model for FormInput.
+type FormInput struct {
+	Definition  FormDefinition       `json:"definition"`
+	Description *string              `json:"description,omitempty"`
+	Name        string               `json:"name"`
+	Response    FormResponseSettings `json:"response"`
+}
+
+// FormPage defines model for FormPage.
+type FormPage struct {
+	Elements []FormElement `json:"elements"`
+	Title    string        `json:"title"`
+}
+
+// FormResponseSettings defines model for FormResponseSettings.
+type FormResponseSettings struct {
+	Approval *struct {
+		ApproverIds []openapi_types.UUID `json:"approver_ids"`
+		Description *string              `json:"description,omitempty"`
+	} `json:"approval,omitempty"`
+	AssigneeIds *[]openapi_types.UUID        `json:"assignee_ids,omitempty"`
+	ItemType    FormResponseSettingsItemType `json:"item_type"`
+	Location    struct {
+		ParentItemId *openapi_types.UUID `json:"parent_item_id,omitempty"`
+		SpaceId      openapi_types.UUID  `json:"space_id"`
+	} `json:"location"`
+
+	// StatusId Kosong berarti status pertama workflow tujuan
+	StatusId *openapi_types.UUID `json:"status_id,omitempty"`
+
+	// TitleQuestion Key pertanyaan single_line yang menjadi judul item
+	TitleQuestion *string `json:"title_question,omitempty"`
+}
+
+// FormResponseSettingsItemType defines model for FormResponseSettings.ItemType.
+type FormResponseSettingsItemType string
+
+// FormSubmitted defines model for FormSubmitted.
+type FormSubmitted struct {
+	ItemId openapi_types.UUID `json:"item_id"`
+	Title  string             `json:"title"`
+}
+
+// FormSummary defines model for FormSummary.
+type FormSummary struct {
+	// Access private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+	Access        FormAccess         `json:"access"`
+	Description   string             `json:"description"`
+	Id            openapi_types.UUID `json:"id"`
+	Name          string             `json:"name"`
+	QuestionCount int32              `json:"question_count"`
+	SpaceId       openapi_types.UUID `json:"space_id"`
+	SpaceName     string             `json:"space_name"`
+	UpdatedAt     time.Time          `json:"updated_at"`
+	UpdatedBy     UserRef            `json:"updated_by"`
+}
 
 // Group defines model for Group.
 type Group struct {
@@ -1648,6 +1955,22 @@ type MeUpdateTimeFormat string
 // MeUpdateWeekStart defines model for MeUpdate.WeekStart.
 type MeUpdateWeekStart string
 
+// MyRequest defines model for MyRequest.
+type MyRequest struct {
+	CreatedAt time.Time          `json:"created_at"`
+	FormName  string             `json:"form_name"`
+	Id        openapi_types.UUID `json:"id"`
+	ItemId    openapi_types.UUID `json:"item_id"`
+	Status    struct {
+		Color string             `json:"color"`
+		Group StatusGroup        `json:"group"`
+		Id    openapi_types.UUID `json:"id"`
+		Name  string             `json:"name"`
+	} `json:"status"`
+	Title     string    `json:"title"`
+	UpdatedAt time.Time `json:"updated_at"`
+}
+
 // Notification defines model for Notification.
 type Notification struct {
 	Actor      *UserRef            `json:"actor,omitempty"`
@@ -1834,15 +2157,42 @@ type SpaceUpdate struct {
 
 // Status defines model for Status.
 type Status struct {
+	AllowedNext []openapi_types.UUID `json:"allowed_next"`
+
+	// AutoAssign Item yang masuk status ini otomatis menugaskan pengguna yang mengubahnya
+	AutoAssign bool `json:"auto_assign"`
+
 	// Color Nama token warna, bukan hex
 	Color string             `json:"color"`
 	Group StatusGroup        `json:"group"`
 	Id    openapi_types.UUID `json:"id"`
-	Name  string             `json:"name"`
+
+	// LockTransitions Bila true, item di status ini hanya boleh pindah ke `allowed_next`
+	LockTransitions bool   `json:"lock_transitions"`
+	Name            string `json:"name"`
 }
 
 // StatusGroup defines model for StatusGroup.
 type StatusGroup string
+
+// StatusInput defines model for StatusInput.
+type StatusInput struct {
+	AutoAssign      *bool       `json:"auto_assign,omitempty"`
+	Color           string      `json:"color"`
+	Group           StatusGroup `json:"group"`
+	LockTransitions *bool       `json:"lock_transitions,omitempty"`
+	Name            string      `json:"name"`
+}
+
+// StatusPatch defines model for StatusPatch.
+type StatusPatch struct {
+	AllowedNext     *[]openapi_types.UUID `json:"allowed_next,omitempty"`
+	AutoAssign      *bool                 `json:"auto_assign,omitempty"`
+	Color           *string               `json:"color,omitempty"`
+	Group           *StatusGroup          `json:"group,omitempty"`
+	LockTransitions *bool                 `json:"lock_transitions,omitempty"`
+	Name            *string               `json:"name,omitempty"`
+}
 
 // User defines model for User.
 type User struct {
@@ -1951,6 +2301,11 @@ type Workflow struct {
 	Statuses  []Status           `json:"statuses"`
 }
 
+// WorkflowInput defines model for WorkflowInput.
+type WorkflowInput struct {
+	Name string `json:"name"`
+}
+
 // Cursor defines model for Cursor.
 type Cursor = string
 
@@ -2005,6 +2360,21 @@ type ViewList struct {
 	Items []View `json:"items"`
 }
 
+// UpdateApprovalParams defines parameters for UpdateApproval.
+type UpdateApprovalParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// DecideApprovalJSONBody defines parameters for DecideApproval.
+type DecideApprovalJSONBody struct {
+	Comment  *string                        `json:"comment,omitempty"`
+	Decision DecideApprovalJSONBodyDecision `json:"decision"`
+}
+
+// DecideApprovalJSONBodyDecision defines parameters for DecideApproval.
+type DecideApprovalJSONBodyDecision string
+
 // ChangePasswordJSONBody defines parameters for ChangePassword.
 type ChangePasswordJSONBody struct {
 	CurrentPassword string `json:"current_password"`
@@ -2049,6 +2419,30 @@ type UpdateItemDependencyJSONBody struct {
 // StreamEventsParams defines parameters for StreamEvents.
 type StreamEventsParams struct {
 	LastEventID *string `json:"Last-Event-ID,omitempty"`
+}
+
+// ReplaceFormParams defines parameters for ReplaceForm.
+type ReplaceFormParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// SetFormAccessJSONBody defines parameters for SetFormAccess.
+type SetFormAccessJSONBody struct {
+	// Access private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+	Access FormAccess `json:"access"`
+}
+
+// SubmitFormJSONBody defines parameters for SubmitForm.
+type SubmitFormJSONBody struct {
+	Answers map[string]interface{} `json:"answers"`
+}
+
+// SubmitFormMultipartBody defines parameters for SubmitForm.
+type SubmitFormMultipartBody struct {
+	// Answers Objek JSON jawaban
+	Answers              string                        `json:"answers"`
+	AdditionalProperties map[string]openapi_types.File `json:"-"`
 }
 
 // CreateGroupJSONBody defines parameters for CreateGroup.
@@ -2143,6 +2537,12 @@ type ReplaceItemSharesParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// ListMyRequestsParams defines parameters for ListMyRequests.
+type ListMyRequestsParams struct {
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
 // ListSharedWithMeParams defines parameters for ListSharedWithMe.
 type ListSharedWithMeParams struct {
 	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -2232,6 +2632,11 @@ type ReplaceSpaceSharesParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// DeleteStatusParams defines parameters for DeleteStatus.
+type DeleteStatusParams struct {
+	MoveTo *openapi_types.UUID `form:"move_to,omitempty" json:"move_to,omitempty"`
+}
+
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
 	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -2253,6 +2658,22 @@ type DuplicateViewJSONBody struct {
 	Name       string         `json:"name"`
 	Visibility ViewVisibility `json:"visibility"`
 }
+
+// RenameWorkflowJSONBody defines parameters for RenameWorkflow.
+type RenameWorkflowJSONBody struct {
+	Name string `json:"name"`
+}
+
+// ReorderStatusesJSONBody defines parameters for ReorderStatuses.
+type ReorderStatusesJSONBody struct {
+	StatusIds []openapi_types.UUID `json:"status_ids"`
+}
+
+// UpdateApprovalJSONRequestBody defines body for UpdateApproval for application/json ContentType.
+type UpdateApprovalJSONRequestBody = ApprovalPatch
+
+// DecideApprovalJSONRequestBody defines body for DecideApproval for application/json ContentType.
+type DecideApprovalJSONRequestBody DecideApprovalJSONBody
 
 // AcceptInvitationJSONRequestBody defines body for AcceptInvitation for application/json ContentType.
 type AcceptInvitationJSONRequestBody = AcceptInvitationRequest
@@ -2278,6 +2699,18 @@ type QueryDependenciesJSONRequestBody QueryDependenciesJSONBody
 // UpdateItemDependencyJSONRequestBody defines body for UpdateItemDependency for application/json ContentType.
 type UpdateItemDependencyJSONRequestBody UpdateItemDependencyJSONBody
 
+// ReplaceFormJSONRequestBody defines body for ReplaceForm for application/json ContentType.
+type ReplaceFormJSONRequestBody = FormInput
+
+// SetFormAccessJSONRequestBody defines body for SetFormAccess for application/json ContentType.
+type SetFormAccessJSONRequestBody SetFormAccessJSONBody
+
+// SubmitFormJSONRequestBody defines body for SubmitForm for application/json ContentType.
+type SubmitFormJSONRequestBody SubmitFormJSONBody
+
+// SubmitFormMultipartRequestBody defines body for SubmitForm for multipart/form-data ContentType.
+type SubmitFormMultipartRequestBody SubmitFormMultipartBody
+
 // CreateGroupJSONRequestBody defines body for CreateGroup for application/json ContentType.
 type CreateGroupJSONRequestBody CreateGroupJSONBody
 
@@ -2289,6 +2722,9 @@ type CreateItemJSONRequestBody = ItemCreate
 
 // UpdateItemJSONRequestBody defines body for UpdateItem for application/json ContentType.
 type UpdateItemJSONRequestBody = ItemUpdate
+
+// CreateItemApprovalJSONRequestBody defines body for CreateItemApproval for application/json ContentType.
+type CreateItemApprovalJSONRequestBody = ApprovalInput
 
 // UploadAttachmentMultipartRequestBody defines body for UploadAttachment for multipart/form-data ContentType.
 type UploadAttachmentMultipartRequestBody UploadAttachmentMultipartBody
@@ -2332,8 +2768,14 @@ type CreateCustomFieldJSONRequestBody = CustomFieldCreate
 // UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
 type UpdateCustomFieldJSONRequestBody = CustomFieldUpdate
 
+// CreateFormJSONRequestBody defines body for CreateForm for application/json ContentType.
+type CreateFormJSONRequestBody = FormInput
+
 // ReplaceSpaceSharesJSONRequestBody defines body for ReplaceSpaceShares for application/json ContentType.
 type ReplaceSpaceSharesJSONRequestBody = ShareReplace
+
+// UpdateStatusJSONRequestBody defines body for UpdateStatus for application/json ContentType.
+type UpdateStatusJSONRequestBody = StatusPatch
 
 // InviteUserJSONRequestBody defines body for InviteUser for application/json ContentType.
 type InviteUserJSONRequestBody = InviteRequest
@@ -2349,6 +2791,18 @@ type UpdateViewJSONRequestBody = ViewUpdate
 
 // DuplicateViewJSONRequestBody defines body for DuplicateView for application/json ContentType.
 type DuplicateViewJSONRequestBody DuplicateViewJSONBody
+
+// CreateWorkflowJSONRequestBody defines body for CreateWorkflow for application/json ContentType.
+type CreateWorkflowJSONRequestBody = WorkflowInput
+
+// RenameWorkflowJSONRequestBody defines body for RenameWorkflow for application/json ContentType.
+type RenameWorkflowJSONRequestBody RenameWorkflowJSONBody
+
+// ReorderStatusesJSONRequestBody defines body for ReorderStatuses for application/json ContentType.
+type ReorderStatusesJSONRequestBody ReorderStatusesJSONBody
+
+// CreateStatusJSONRequestBody defines body for CreateStatus for application/json ContentType.
+type CreateStatusJSONRequestBody = StatusInput
 
 // Getter for additional properties for RichText. Returns the specified
 // element and whether it was found
@@ -2420,6 +2874,72 @@ func (a RichText) MarshalJSON() ([]byte, error) {
 	object["type"], err = json.Marshal(a.Type)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'type': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for SubmitFormMultipartBody. Returns the specified
+// element and whether it was found
+func (a SubmitFormMultipartBody) Get(fieldName string) (value openapi_types.File, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for SubmitFormMultipartBody
+func (a *SubmitFormMultipartBody) Set(fieldName string, value openapi_types.File) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]openapi_types.File)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for SubmitFormMultipartBody to handle AdditionalProperties
+func (a *SubmitFormMultipartBody) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["answers"]; found {
+		err = json.Unmarshal(raw, &a.Answers)
+		if err != nil {
+			return fmt.Errorf("error reading 'answers': %w", err)
+		}
+		delete(object, "answers")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]openapi_types.File)
+		for fieldName, fieldBuf := range object {
+			var fieldVal openapi_types.File
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for SubmitFormMultipartBody to handle AdditionalProperties
+func (a SubmitFormMultipartBody) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["answers"], err = json.Marshal(a.Answers)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'answers': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
@@ -2548,6 +3068,15 @@ func (t *CustomFieldValues_AdditionalProperties) UnmarshalJSON(b []byte) error {
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
 
+	// (DELETE /approvals/{approvalId})
+	DeleteApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
+	// UpdateApproval Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya
+	// (PATCH /approvals/{approvalId})
+	UpdateApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID, params UpdateApprovalParams)
+	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
+	// (PUT /approvals/{approvalId}/decision)
+	DecideApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
+
 	// (DELETE /attachments/{attachmentId})
 	DeleteAttachment(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID)
 	// DownloadAttachment Unduh file; izin dicek terhadap item pemilik (SEC-01)
@@ -2592,6 +3121,30 @@ type ServerInterface interface {
 	// StreamEvents Aliran event realtime (SSE)
 	// (GET /events)
 	StreamEvents(w http.ResponseWriter, r *http.Request, params StreamEventsParams)
+	// ListForms Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05)
+	// (GET /forms)
+	ListForms(w http.ResponseWriter, r *http.Request)
+	// ListAvailableForms Form yang boleh diisi user ini (akses internal); dipakai menu "Request forms"
+	// (GET /forms/available)
+	ListAvailableForms(w http.ResponseWriter, r *http.Request)
+	// DeleteForm Hapus form; item yang sudah dibuat dari form tidak ikut terhapus
+	// (DELETE /forms/{formId})
+	DeleteForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+
+	// (GET /forms/{formId})
+	GetForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// ReplaceForm Ganti seluruh isi form (nama, pertanyaan, pengaturan respons)
+	// (PUT /forms/{formId})
+	ReplaceForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID, params ReplaceFormParams)
+	// SetFormAccess Atur siapa yang boleh mengisi form (FORM-03); butuh kemampuan share pada Space
+	// (PUT /forms/{formId}/access)
+	SetFormAccess(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// GetFormDefinition Pertanyaan form untuk pengisi; pengaturan respons (tujuan item) tidak ikut
+	// (GET /forms/{formId}/definition)
+	GetFormDefinition(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
+	// (POST /forms/{formId}/submissions)
+	SubmitForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
 
 	// (GET /groups)
 	ListGroups(w http.ResponseWriter, r *http.Request)
@@ -2622,6 +3175,12 @@ type ServerInterface interface {
 	// ListActivity Riwayat perubahan item (SPC-07)
 	// (GET /items/{itemId}/activity)
 	ListActivity(w http.ResponseWriter, r *http.Request, itemId ItemId, params ListActivityParams)
+	// ListItemApprovals Approval pada item beserta keputusan tiap approver (SPC-12)
+	// (GET /items/{itemId}/approvals)
+	ListItemApprovals(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// CreateItemApproval Minta approval (butuh kemampuan edit; approver harus bisa melihat item)
+	// (POST /items/{itemId}/approvals)
+	CreateItemApproval(w http.ResponseWriter, r *http.Request, itemId ItemId)
 
 	// (GET /items/{itemId}/attachments)
 	ListAttachments(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -2667,6 +3226,9 @@ type ServerInterface interface {
 	// UpdateMe Ubah profil dan pengaturan workspace (SET-02)
 	// (PATCH /me)
 	UpdateMe(w http.ResponseWriter, r *http.Request)
+	// ListMyRequests Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu
+	// (GET /me/requests)
+	ListMyRequests(w http.ResponseWriter, r *http.Request, params ListMyRequestsParams)
 	// ListSharedWithMe Item yang dibagikan langsung ke saya dan tidak berada di Space yang bisa saya akses (NAV-01)
 	// (GET /me/shared)
 	ListSharedWithMe(w http.ResponseWriter, r *http.Request, params ListSharedWithMeParams)
@@ -2733,6 +3295,12 @@ type ServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(w http.ResponseWriter, r *http.Request, spaceId SpaceId, fieldId openapi_types.UUID)
+	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
+	// (GET /spaces/{spaceId}/forms)
+	ListSpaceForms(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// CreateForm Buat form (FORM-01, FORM-02); butuh edit pada Space dan hak membuat item di tujuan
+	// (POST /spaces/{spaceId}/forms)
+	CreateForm(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ListSpaceRootItemsParams)
@@ -2745,6 +3313,12 @@ type ServerInterface interface {
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// DeleteStatus Hapus status. Bila dipakai item, `move_to` (status lain di workflow yang sama) wajib
+	// (DELETE /statuses/{statusId})
+	DeleteStatus(w http.ResponseWriter, r *http.Request, statusId openapi_types.UUID, params DeleteStatusParams)
+	// UpdateStatus Ubah nama, grup, warna, auto-assign, kunci transisi, atau transisi yang diizinkan (admin saja)
+	// (PATCH /statuses/{statusId})
+	UpdateStatus(w http.ResponseWriter, r *http.Request, statusId openapi_types.UUID)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request, params ListUsersParams)
@@ -2781,9 +3355,24 @@ type ServerInterface interface {
 	// DuplicateView Duplikat view (VIEW-08)
 	// (POST /views/{viewId}/duplicate)
 	DuplicateView(w http.ResponseWriter, r *http.Request, viewId ViewId)
-	// ListWorkflows Workflow dan statusnya (WF-01; hanya baca di M1)
+	// ListWorkflows Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca
 	// (GET /workflows)
 	ListWorkflows(w http.ResponseWriter, r *http.Request)
+	// CreateWorkflow Buat workflow dengan status awal (admin saja, WF-02)
+	// (POST /workflows)
+	CreateWorkflow(w http.ResponseWriter, r *http.Request)
+	// DeleteWorkflow Hapus workflow yang tidak dipakai (admin saja); workflow default atau yang dipakai item ditolak
+	// (DELETE /workflows/{workflowId})
+	DeleteWorkflow(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
+	// RenameWorkflow Ubah nama workflow (admin saja)
+	// (PATCH /workflows/{workflowId})
+	RenameWorkflow(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
+	// ReorderStatuses Urutkan status; harus memuat semua status workflow, dan status pertama harus Active
+	// (PUT /workflows/{workflowId}/status-order)
+	ReorderStatuses(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
+	// CreateStatus Tambah status di akhir workflow (admin saja, WF-03A)
+	// (POST /workflows/{workflowId}/statuses)
+	CreateStatus(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
 }
 
 // ServerInterfaceWrapper converts contexts to parameters.
@@ -2794,6 +3383,112 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// DeleteApproval operation middleware
+func (siw *ServerInterfaceWrapper) DeleteApproval(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "approvalId" -------------
+	var approvalId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "approvalId", r.PathValue("approvalId"), &approvalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "approvalId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteApproval(w, r, approvalId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateApproval operation middleware
+func (siw *ServerInterfaceWrapper) UpdateApproval(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "approvalId" -------------
+	var approvalId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "approvalId", r.PathValue("approvalId"), &approvalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "approvalId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateApprovalParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateApproval(w, r, approvalId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DecideApproval operation middleware
+func (siw *ServerInterfaceWrapper) DecideApproval(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "approvalId" -------------
+	var approvalId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "approvalId", r.PathValue("approvalId"), &approvalId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "approvalId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DecideApproval(w, r, approvalId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // DeleteAttachment operation middleware
 func (siw *ServerInterfaceWrapper) DeleteAttachment(w http.ResponseWriter, r *http.Request) {
@@ -3144,6 +3839,218 @@ func (siw *ServerInterfaceWrapper) StreamEvents(w http.ResponseWriter, r *http.R
 	handler.ServeHTTP(w, r)
 }
 
+// ListForms operation middleware
+func (siw *ServerInterfaceWrapper) ListForms(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListForms(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAvailableForms operation middleware
+func (siw *ServerInterfaceWrapper) ListAvailableForms(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAvailableForms(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteForm operation middleware
+func (siw *ServerInterfaceWrapper) DeleteForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteForm(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetForm operation middleware
+func (siw *ServerInterfaceWrapper) GetForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetForm(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReplaceForm operation middleware
+func (siw *ServerInterfaceWrapper) ReplaceForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReplaceFormParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReplaceForm(w, r, formId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetFormAccess operation middleware
+func (siw *ServerInterfaceWrapper) SetFormAccess(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetFormAccess(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetFormDefinition operation middleware
+func (siw *ServerInterfaceWrapper) GetFormDefinition(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetFormDefinition(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubmitForm operation middleware
+func (siw *ServerInterfaceWrapper) SubmitForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubmitForm(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListGroups operation middleware
 func (siw *ServerInterfaceWrapper) ListGroups(w http.ResponseWriter, r *http.Request) {
 
@@ -3404,6 +4311,58 @@ func (siw *ServerInterfaceWrapper) ListActivity(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListActivity(w, r, itemId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListItemApprovals operation middleware
+func (siw *ServerInterfaceWrapper) ListItemApprovals(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId ItemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListItemApprovals(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateItemApproval operation middleware
+func (siw *ServerInterfaceWrapper) CreateItemApproval(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId ItemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateItemApproval(w, r, itemId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -3921,6 +4880,52 @@ func (siw *ServerInterfaceWrapper) UpdateMe(w http.ResponseWriter, r *http.Reque
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateMe(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListMyRequests operation middleware
+func (siw *ServerInterfaceWrapper) ListMyRequests(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListMyRequestsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMyRequests(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -4674,6 +5679,58 @@ func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ListSpaceForms operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceForms(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceForms(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateForm operation middleware
+func (siw *ServerInterfaceWrapper) CreateForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateForm(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceRootItems operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceRootItems(w http.ResponseWriter, r *http.Request) {
 
@@ -4891,6 +5948,74 @@ func (siw *ServerInterfaceWrapper) ListSpaceViews(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListSpaceViews(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteStatus operation middleware
+func (siw *ServerInterfaceWrapper) DeleteStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "statusId" -------------
+	var statusId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "statusId", r.PathValue("statusId"), &statusId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "statusId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteStatusParams
+
+	// ------------- Optional query parameter "move_to" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "move_to", r.URL.Query(), &params.MoveTo, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "move_to"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "move_to", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteStatus(w, r, statusId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateStatus operation middleware
+func (siw *ServerInterfaceWrapper) UpdateStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "statusId" -------------
+	var statusId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "statusId", r.PathValue("statusId"), &statusId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "statusId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateStatus(w, r, statusId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -5249,6 +6374,124 @@ func (siw *ServerInterfaceWrapper) ListWorkflows(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// CreateWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkflow(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) DeleteWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "workflowId" -------------
+	var workflowId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflowId", r.PathValue("workflowId"), &workflowId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflowId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteWorkflow(w, r, workflowId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RenameWorkflow operation middleware
+func (siw *ServerInterfaceWrapper) RenameWorkflow(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "workflowId" -------------
+	var workflowId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflowId", r.PathValue("workflowId"), &workflowId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflowId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RenameWorkflow(w, r, workflowId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReorderStatuses operation middleware
+func (siw *ServerInterfaceWrapper) ReorderStatuses(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "workflowId" -------------
+	var workflowId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflowId", r.PathValue("workflowId"), &workflowId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflowId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReorderStatuses(w, r, workflowId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateStatus operation middleware
+func (siw *ServerInterfaceWrapper) CreateStatus(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "workflowId" -------------
+	var workflowId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflowId", r.PathValue("workflowId"), &workflowId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflowId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateStatus(w, r, workflowId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 type UnescapedCookieParamError struct {
 	ParamName string
 	Err       error
@@ -5445,6 +6688,29 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/recycle-bin", wrapper.ListRecycleBin)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/recycle-bin/{itemId}/restore", wrapper.RestoreItem)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/workflows", wrapper.ListWorkflows)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/workflows", wrapper.CreateWorkflow)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/workflows/{workflowId}", wrapper.DeleteWorkflow)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/workflows/{workflowId}", wrapper.RenameWorkflow)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/workflows/{workflowId}/statuses", wrapper.CreateStatus)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/workflows/{workflowId}/status-order", wrapper.ReorderStatuses)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/statuses/{statusId}", wrapper.DeleteStatus)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/statuses/{statusId}", wrapper.UpdateStatus)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/approvals", wrapper.ListItemApprovals)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/approvals", wrapper.CreateItemApproval)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/approvals/{approvalId}", wrapper.DeleteApproval)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/approvals/{approvalId}", wrapper.UpdateApproval)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/approvals/{approvalId}/decision", wrapper.DecideApproval)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/forms", wrapper.ListSpaceForms)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/forms", wrapper.CreateForm)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/forms/{formId}", wrapper.DeleteForm)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}", wrapper.GetForm)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/forms/{formId}", wrapper.ReplaceForm)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms", wrapper.ListForms)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/forms/{formId}/access", wrapper.SetFormAccess)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/requests", wrapper.ListMyRequests)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/available", wrapper.ListAvailableForms)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}/definition", wrapper.GetFormDefinition)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/forms/{formId}/submissions", wrapper.SubmitForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/events", wrapper.StreamEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/healthz", wrapper.Healthz)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/readyz", wrapper.Readyz)
@@ -5482,6 +6748,235 @@ type VersionedShareListJSONResponse struct {
 
 type ViewListJSONResponse struct {
 	Items []View `json:"items"`
+}
+
+type DeleteApprovalRequestObject struct {
+	ApprovalId openapi_types.UUID `json:"approvalId"`
+}
+
+type DeleteApprovalResponseObject interface {
+	VisitDeleteApprovalResponse(w http.ResponseWriter) error
+}
+
+type DeleteApproval204Response struct {
+}
+
+func (response DeleteApproval204Response) VisitDeleteApprovalResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteApproval403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteApproval403ApplicationProblemPlusJSONResponse) VisitDeleteApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteApproval404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteApproval404ApplicationProblemPlusJSONResponse) VisitDeleteApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApprovalRequestObject struct {
+	ApprovalId openapi_types.UUID `json:"approvalId"`
+	Params     UpdateApprovalParams
+	Body       *UpdateApprovalJSONRequestBody
+}
+
+type UpdateApprovalResponseObject interface {
+	VisitUpdateApprovalResponse(w http.ResponseWriter) error
+}
+
+type UpdateApproval200ResponseHeaders struct {
+	ETag *string
+}
+
+type UpdateApproval200JSONResponse struct {
+	Body    Approval
+	Headers UpdateApproval200ResponseHeaders
+}
+
+func (response UpdateApproval200JSONResponse) VisitUpdateApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApproval403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateApproval403ApplicationProblemPlusJSONResponse) VisitUpdateApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApproval404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateApproval404ApplicationProblemPlusJSONResponse) VisitUpdateApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApproval409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateApproval409ApplicationProblemPlusJSONResponse) VisitUpdateApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApproval422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateApproval422ApplicationProblemPlusJSONResponse) VisitUpdateApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateApproval428ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateApproval428ApplicationProblemPlusJSONResponse) VisitUpdateApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideApprovalRequestObject struct {
+	ApprovalId openapi_types.UUID `json:"approvalId"`
+	Body       *DecideApprovalJSONRequestBody
+}
+
+type DecideApprovalResponseObject interface {
+	VisitDecideApprovalResponse(w http.ResponseWriter) error
+}
+
+type DecideApproval200ResponseHeaders struct {
+	ETag *string
+}
+
+type DecideApproval200JSONResponse struct {
+	Body    Approval
+	Headers DecideApproval200ResponseHeaders
+}
+
+func (response DecideApproval200JSONResponse) VisitDecideApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideApproval403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DecideApproval403ApplicationProblemPlusJSONResponse) VisitDecideApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideApproval404ApplicationProblemPlusJSONResponse Problem
+
+func (response DecideApproval404ApplicationProblemPlusJSONResponse) VisitDecideApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideApproval422ApplicationProblemPlusJSONResponse Problem
+
+func (response DecideApproval422ApplicationProblemPlusJSONResponse) VisitDecideApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type DeleteAttachmentRequestObject struct {
@@ -6340,6 +7835,449 @@ func (response StreamEvents401ApplicationProblemPlusJSONResponse) VisitStreamEve
 	return err
 }
 
+type ListFormsRequestObject struct {
+}
+
+type ListFormsResponseObject interface {
+	VisitListFormsResponse(w http.ResponseWriter) error
+}
+
+type ListForms200JSONResponse struct {
+	Items []FormSummary `json:"items"`
+}
+
+func (response ListForms200JSONResponse) VisitListFormsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAvailableFormsRequestObject struct {
+}
+
+type ListAvailableFormsResponseObject interface {
+	VisitListAvailableFormsResponse(w http.ResponseWriter) error
+}
+
+type ListAvailableForms200JSONResponse struct {
+	Items []FormAvailable `json:"items"`
+}
+
+func (response ListAvailableForms200JSONResponse) VisitListAvailableFormsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteFormRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+}
+
+type DeleteFormResponseObject interface {
+	VisitDeleteFormResponse(w http.ResponseWriter) error
+}
+
+type DeleteForm204Response struct {
+}
+
+func (response DeleteForm204Response) VisitDeleteFormResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteForm403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteForm403ApplicationProblemPlusJSONResponse) VisitDeleteFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteForm404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteForm404ApplicationProblemPlusJSONResponse) VisitDeleteFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFormRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+}
+
+type GetFormResponseObject interface {
+	VisitGetFormResponse(w http.ResponseWriter) error
+}
+
+type GetForm200ResponseHeaders struct {
+	ETag *string
+}
+
+type GetForm200JSONResponse struct {
+	Body    Form
+	Headers GetForm200ResponseHeaders
+}
+
+func (response GetForm200JSONResponse) VisitGetFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetForm403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetForm403ApplicationProblemPlusJSONResponse) VisitGetFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetForm404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetForm404ApplicationProblemPlusJSONResponse) VisitGetFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceFormRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+	Params ReplaceFormParams
+	Body   *ReplaceFormJSONRequestBody
+}
+
+type ReplaceFormResponseObject interface {
+	VisitReplaceFormResponse(w http.ResponseWriter) error
+}
+
+type ReplaceForm200ResponseHeaders struct {
+	ETag *string
+}
+
+type ReplaceForm200JSONResponse struct {
+	Body    Form
+	Headers ReplaceForm200ResponseHeaders
+}
+
+func (response ReplaceForm200JSONResponse) VisitReplaceFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceForm403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReplaceForm403ApplicationProblemPlusJSONResponse) VisitReplaceFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceForm404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceForm404ApplicationProblemPlusJSONResponse) VisitReplaceFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceForm409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceForm409ApplicationProblemPlusJSONResponse) VisitReplaceFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceForm422ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceForm422ApplicationProblemPlusJSONResponse) VisitReplaceFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplaceForm428ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplaceForm428ApplicationProblemPlusJSONResponse) VisitReplaceFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetFormAccessRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+	Body   *SetFormAccessJSONRequestBody
+}
+
+type SetFormAccessResponseObject interface {
+	VisitSetFormAccessResponse(w http.ResponseWriter) error
+}
+
+type SetFormAccess200ResponseHeaders struct {
+	ETag *string
+}
+
+type SetFormAccess200JSONResponse struct {
+	Body    Form
+	Headers SetFormAccess200ResponseHeaders
+}
+
+func (response SetFormAccess200JSONResponse) VisitSetFormAccessResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetFormAccess403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetFormAccess403ApplicationProblemPlusJSONResponse) VisitSetFormAccessResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetFormAccess404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetFormAccess404ApplicationProblemPlusJSONResponse) VisitSetFormAccessResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetFormAccess422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetFormAccess422ApplicationProblemPlusJSONResponse) VisitSetFormAccessResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFormDefinitionRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+}
+
+type GetFormDefinitionResponseObject interface {
+	VisitGetFormDefinitionResponse(w http.ResponseWriter) error
+}
+
+type GetFormDefinition200JSONResponse FormFill
+
+func (response GetFormDefinition200JSONResponse) VisitGetFormDefinitionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetFormDefinition404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetFormDefinition404ApplicationProblemPlusJSONResponse) VisitGetFormDefinitionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitFormRequestObject struct {
+	FormId        openapi_types.UUID `json:"formId"`
+	JSONBody      *SubmitFormJSONRequestBody
+	MultipartBody *multipart.Reader
+}
+
+type SubmitFormResponseObject interface {
+	VisitSubmitFormResponse(w http.ResponseWriter) error
+}
+
+type SubmitForm201JSONResponse FormSubmitted
+
+func (response SubmitForm201JSONResponse) VisitSubmitFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitForm404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SubmitForm404ApplicationProblemPlusJSONResponse) VisitSubmitFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitForm413ApplicationProblemPlusJSONResponse Problem
+
+func (response SubmitForm413ApplicationProblemPlusJSONResponse) VisitSubmitFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitForm422ApplicationProblemPlusJSONResponse Problem
+
+func (response SubmitForm422ApplicationProblemPlusJSONResponse) VisitSubmitFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListGroupsRequestObject struct {
 }
 
@@ -6762,6 +8700,123 @@ func (response ListActivity200JSONResponse) VisitListActivityResponse(w http.Res
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemApprovalsRequestObject struct {
+	ItemId ItemId `json:"itemId"`
+}
+
+type ListItemApprovalsResponseObject interface {
+	VisitListItemApprovalsResponse(w http.ResponseWriter) error
+}
+
+type ListItemApprovals200JSONResponse struct {
+	Items []Approval `json:"items"`
+}
+
+func (response ListItemApprovals200JSONResponse) VisitListItemApprovalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemApprovals404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListItemApprovals404ApplicationProblemPlusJSONResponse) VisitListItemApprovalsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemApprovalRequestObject struct {
+	ItemId ItemId `json:"itemId"`
+	Body   *CreateItemApprovalJSONRequestBody
+}
+
+type CreateItemApprovalResponseObject interface {
+	VisitCreateItemApprovalResponse(w http.ResponseWriter) error
+}
+
+type CreateItemApproval201ResponseHeaders struct {
+	ETag *string
+}
+
+type CreateItemApproval201JSONResponse struct {
+	Body    Approval
+	Headers CreateItemApproval201ResponseHeaders
+}
+
+func (response CreateItemApproval201JSONResponse) VisitCreateItemApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemApproval403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateItemApproval403ApplicationProblemPlusJSONResponse) VisitCreateItemApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemApproval404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateItemApproval404ApplicationProblemPlusJSONResponse) VisitCreateItemApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateItemApproval422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateItemApproval422ApplicationProblemPlusJSONResponse) VisitCreateItemApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -7565,6 +9620,47 @@ type UpdateMe422ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response UpdateMe422ApplicationProblemPlusJSONResponse) VisitUpdateMeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyRequestsRequestObject struct {
+	Params ListMyRequestsParams
+}
+
+type ListMyRequestsResponseObject interface {
+	VisitListMyRequestsResponse(w http.ResponseWriter) error
+}
+
+type ListMyRequests200JSONResponse struct {
+	Items      []MyRequest `json:"items"`
+	NextCursor *string     `json:"next_cursor"`
+}
+
+func (response ListMyRequests200JSONResponse) VisitListMyRequestsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListMyRequests422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListMyRequests422ApplicationProblemPlusJSONResponse) VisitListMyRequestsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -8658,6 +10754,151 @@ func (response UpdateCustomField422ApplicationProblemPlusJSONResponse) VisitUpda
 	return err
 }
 
+type ListSpaceFormsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListSpaceFormsResponseObject interface {
+	VisitListSpaceFormsResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceForms200JSONResponse struct {
+	Items []FormSummary `json:"items"`
+}
+
+func (response ListSpaceForms200JSONResponse) VisitListSpaceFormsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceForms403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceForms403ApplicationProblemPlusJSONResponse) VisitListSpaceFormsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceForms404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceForms404ApplicationProblemPlusJSONResponse) VisitListSpaceFormsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFormRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *CreateFormJSONRequestBody
+}
+
+type CreateFormResponseObject interface {
+	VisitCreateFormResponse(w http.ResponseWriter) error
+}
+
+type CreateForm201ResponseHeaders struct {
+	ETag *string
+}
+
+type CreateForm201JSONResponse struct {
+	Body    Form
+	Headers CreateForm201ResponseHeaders
+}
+
+func (response CreateForm201JSONResponse) VisitCreateFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateForm403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateForm403ApplicationProblemPlusJSONResponse) VisitCreateFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateForm404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateForm404ApplicationProblemPlusJSONResponse) VisitCreateFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateForm409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateForm409ApplicationProblemPlusJSONResponse) VisitCreateFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateForm422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateForm422ApplicationProblemPlusJSONResponse) VisitCreateFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceRootItemsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 	Params  ListSpaceRootItemsParams
@@ -8899,6 +11140,168 @@ func (response ListSpaceViews404ApplicationProblemPlusJSONResponse) VisitListSpa
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteStatusRequestObject struct {
+	StatusId openapi_types.UUID `json:"statusId"`
+	Params   DeleteStatusParams
+}
+
+type DeleteStatusResponseObject interface {
+	VisitDeleteStatusResponse(w http.ResponseWriter) error
+}
+
+type DeleteStatus200JSONResponse Workflow
+
+func (response DeleteStatus200JSONResponse) VisitDeleteStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteStatus403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteStatus403ApplicationProblemPlusJSONResponse) VisitDeleteStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteStatus404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteStatus404ApplicationProblemPlusJSONResponse) VisitDeleteStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteStatus409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteStatus409ApplicationProblemPlusJSONResponse) VisitDeleteStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteStatus422ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteStatus422ApplicationProblemPlusJSONResponse) VisitDeleteStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateStatusRequestObject struct {
+	StatusId openapi_types.UUID `json:"statusId"`
+	Body     *UpdateStatusJSONRequestBody
+}
+
+type UpdateStatusResponseObject interface {
+	VisitUpdateStatusResponse(w http.ResponseWriter) error
+}
+
+type UpdateStatus200JSONResponse Workflow
+
+func (response UpdateStatus200JSONResponse) VisitUpdateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateStatus403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateStatus403ApplicationProblemPlusJSONResponse) VisitUpdateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateStatus404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateStatus404ApplicationProblemPlusJSONResponse) VisitUpdateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateStatus409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateStatus409ApplicationProblemPlusJSONResponse) VisitUpdateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateStatus422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateStatus422ApplicationProblemPlusJSONResponse) VisitUpdateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -9539,8 +11942,358 @@ func (response ListWorkflows200JSONResponse) VisitListWorkflowsResponse(w http.R
 	return err
 }
 
+type CreateWorkflowRequestObject struct {
+	Body *CreateWorkflowJSONRequestBody
+}
+
+type CreateWorkflowResponseObject interface {
+	VisitCreateWorkflowResponse(w http.ResponseWriter) error
+}
+
+type CreateWorkflow201JSONResponse Workflow
+
+func (response CreateWorkflow201JSONResponse) VisitCreateWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkflow403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWorkflow403ApplicationProblemPlusJSONResponse) VisitCreateWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkflow422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateWorkflow422ApplicationProblemPlusJSONResponse) VisitCreateWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteWorkflowRequestObject struct {
+	WorkflowId openapi_types.UUID `json:"workflowId"`
+}
+
+type DeleteWorkflowResponseObject interface {
+	VisitDeleteWorkflowResponse(w http.ResponseWriter) error
+}
+
+type DeleteWorkflow204Response struct {
+}
+
+func (response DeleteWorkflow204Response) VisitDeleteWorkflowResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteWorkflow403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteWorkflow403ApplicationProblemPlusJSONResponse) VisitDeleteWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteWorkflow404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteWorkflow404ApplicationProblemPlusJSONResponse) VisitDeleteWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteWorkflow409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteWorkflow409ApplicationProblemPlusJSONResponse) VisitDeleteWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameWorkflowRequestObject struct {
+	WorkflowId openapi_types.UUID `json:"workflowId"`
+	Body       *RenameWorkflowJSONRequestBody
+}
+
+type RenameWorkflowResponseObject interface {
+	VisitRenameWorkflowResponse(w http.ResponseWriter) error
+}
+
+type RenameWorkflow200JSONResponse Workflow
+
+func (response RenameWorkflow200JSONResponse) VisitRenameWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameWorkflow403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RenameWorkflow403ApplicationProblemPlusJSONResponse) VisitRenameWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameWorkflow404ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameWorkflow404ApplicationProblemPlusJSONResponse) VisitRenameWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameWorkflow409ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameWorkflow409ApplicationProblemPlusJSONResponse) VisitRenameWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RenameWorkflow422ApplicationProblemPlusJSONResponse Problem
+
+func (response RenameWorkflow422ApplicationProblemPlusJSONResponse) VisitRenameWorkflowResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReorderStatusesRequestObject struct {
+	WorkflowId openapi_types.UUID `json:"workflowId"`
+	Body       *ReorderStatusesJSONRequestBody
+}
+
+type ReorderStatusesResponseObject interface {
+	VisitReorderStatusesResponse(w http.ResponseWriter) error
+}
+
+type ReorderStatuses200JSONResponse Workflow
+
+func (response ReorderStatuses200JSONResponse) VisitReorderStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReorderStatuses403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReorderStatuses403ApplicationProblemPlusJSONResponse) VisitReorderStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReorderStatuses404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReorderStatuses404ApplicationProblemPlusJSONResponse) VisitReorderStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReorderStatuses422ApplicationProblemPlusJSONResponse Problem
+
+func (response ReorderStatuses422ApplicationProblemPlusJSONResponse) VisitReorderStatusesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateStatusRequestObject struct {
+	WorkflowId openapi_types.UUID `json:"workflowId"`
+	Body       *CreateStatusJSONRequestBody
+}
+
+type CreateStatusResponseObject interface {
+	VisitCreateStatusResponse(w http.ResponseWriter) error
+}
+
+type CreateStatus201JSONResponse Workflow
+
+func (response CreateStatus201JSONResponse) VisitCreateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateStatus403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateStatus403ApplicationProblemPlusJSONResponse) VisitCreateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateStatus404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateStatus404ApplicationProblemPlusJSONResponse) VisitCreateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateStatus409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateStatus409ApplicationProblemPlusJSONResponse) VisitCreateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateStatus422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateStatus422ApplicationProblemPlusJSONResponse) VisitCreateStatusResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+
+	// (DELETE /approvals/{approvalId})
+	DeleteApproval(ctx context.Context, request DeleteApprovalRequestObject) (DeleteApprovalResponseObject, error)
+	// UpdateApproval Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya
+	// (PATCH /approvals/{approvalId})
+	UpdateApproval(ctx context.Context, request UpdateApprovalRequestObject) (UpdateApprovalResponseObject, error)
+	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
+	// (PUT /approvals/{approvalId}/decision)
+	DecideApproval(ctx context.Context, request DecideApprovalRequestObject) (DecideApprovalResponseObject, error)
 
 	// (DELETE /attachments/{attachmentId})
 	DeleteAttachment(ctx context.Context, request DeleteAttachmentRequestObject) (DeleteAttachmentResponseObject, error)
@@ -9586,6 +12339,30 @@ type StrictServerInterface interface {
 	// StreamEvents Aliran event realtime (SSE)
 	// (GET /events)
 	StreamEvents(ctx context.Context, request StreamEventsRequestObject) (StreamEventsResponseObject, error)
+	// ListForms Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05)
+	// (GET /forms)
+	ListForms(ctx context.Context, request ListFormsRequestObject) (ListFormsResponseObject, error)
+	// ListAvailableForms Form yang boleh diisi user ini (akses internal); dipakai menu "Request forms"
+	// (GET /forms/available)
+	ListAvailableForms(ctx context.Context, request ListAvailableFormsRequestObject) (ListAvailableFormsResponseObject, error)
+	// DeleteForm Hapus form; item yang sudah dibuat dari form tidak ikut terhapus
+	// (DELETE /forms/{formId})
+	DeleteForm(ctx context.Context, request DeleteFormRequestObject) (DeleteFormResponseObject, error)
+
+	// (GET /forms/{formId})
+	GetForm(ctx context.Context, request GetFormRequestObject) (GetFormResponseObject, error)
+	// ReplaceForm Ganti seluruh isi form (nama, pertanyaan, pengaturan respons)
+	// (PUT /forms/{formId})
+	ReplaceForm(ctx context.Context, request ReplaceFormRequestObject) (ReplaceFormResponseObject, error)
+	// SetFormAccess Atur siapa yang boleh mengisi form (FORM-03); butuh kemampuan share pada Space
+	// (PUT /forms/{formId}/access)
+	SetFormAccess(ctx context.Context, request SetFormAccessRequestObject) (SetFormAccessResponseObject, error)
+	// GetFormDefinition Pertanyaan form untuk pengisi; pengaturan respons (tujuan item) tidak ikut
+	// (GET /forms/{formId}/definition)
+	GetFormDefinition(ctx context.Context, request GetFormDefinitionRequestObject) (GetFormDefinitionResponseObject, error)
+	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
+	// (POST /forms/{formId}/submissions)
+	SubmitForm(ctx context.Context, request SubmitFormRequestObject) (SubmitFormResponseObject, error)
 
 	// (GET /groups)
 	ListGroups(ctx context.Context, request ListGroupsRequestObject) (ListGroupsResponseObject, error)
@@ -9616,6 +12393,12 @@ type StrictServerInterface interface {
 	// ListActivity Riwayat perubahan item (SPC-07)
 	// (GET /items/{itemId}/activity)
 	ListActivity(ctx context.Context, request ListActivityRequestObject) (ListActivityResponseObject, error)
+	// ListItemApprovals Approval pada item beserta keputusan tiap approver (SPC-12)
+	// (GET /items/{itemId}/approvals)
+	ListItemApprovals(ctx context.Context, request ListItemApprovalsRequestObject) (ListItemApprovalsResponseObject, error)
+	// CreateItemApproval Minta approval (butuh kemampuan edit; approver harus bisa melihat item)
+	// (POST /items/{itemId}/approvals)
+	CreateItemApproval(ctx context.Context, request CreateItemApprovalRequestObject) (CreateItemApprovalResponseObject, error)
 
 	// (GET /items/{itemId}/attachments)
 	ListAttachments(ctx context.Context, request ListAttachmentsRequestObject) (ListAttachmentsResponseObject, error)
@@ -9661,6 +12444,9 @@ type StrictServerInterface interface {
 	// UpdateMe Ubah profil dan pengaturan workspace (SET-02)
 	// (PATCH /me)
 	UpdateMe(ctx context.Context, request UpdateMeRequestObject) (UpdateMeResponseObject, error)
+	// ListMyRequests Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu
+	// (GET /me/requests)
+	ListMyRequests(ctx context.Context, request ListMyRequestsRequestObject) (ListMyRequestsResponseObject, error)
 	// ListSharedWithMe Item yang dibagikan langsung ke saya dan tidak berada di Space yang bisa saya akses (NAV-01)
 	// (GET /me/shared)
 	ListSharedWithMe(ctx context.Context, request ListSharedWithMeRequestObject) (ListSharedWithMeResponseObject, error)
@@ -9727,6 +12513,12 @@ type StrictServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(ctx context.Context, request UpdateCustomFieldRequestObject) (UpdateCustomFieldResponseObject, error)
+	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
+	// (GET /spaces/{spaceId}/forms)
+	ListSpaceForms(ctx context.Context, request ListSpaceFormsRequestObject) (ListSpaceFormsResponseObject, error)
+	// CreateForm Buat form (FORM-01, FORM-02); butuh edit pada Space dan hak membuat item di tujuan
+	// (POST /spaces/{spaceId}/forms)
+	CreateForm(ctx context.Context, request CreateFormRequestObject) (CreateFormResponseObject, error)
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(ctx context.Context, request ListSpaceRootItemsRequestObject) (ListSpaceRootItemsResponseObject, error)
@@ -9739,6 +12531,12 @@ type StrictServerInterface interface {
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(ctx context.Context, request ListSpaceViewsRequestObject) (ListSpaceViewsResponseObject, error)
+	// DeleteStatus Hapus status. Bila dipakai item, `move_to` (status lain di workflow yang sama) wajib
+	// (DELETE /statuses/{statusId})
+	DeleteStatus(ctx context.Context, request DeleteStatusRequestObject) (DeleteStatusResponseObject, error)
+	// UpdateStatus Ubah nama, grup, warna, auto-assign, kunci transisi, atau transisi yang diizinkan (admin saja)
+	// (PATCH /statuses/{statusId})
+	UpdateStatus(ctx context.Context, request UpdateStatusRequestObject) (UpdateStatusResponseObject, error)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(ctx context.Context, request ListUsersRequestObject) (ListUsersResponseObject, error)
@@ -9775,9 +12573,24 @@ type StrictServerInterface interface {
 	// DuplicateView Duplikat view (VIEW-08)
 	// (POST /views/{viewId}/duplicate)
 	DuplicateView(ctx context.Context, request DuplicateViewRequestObject) (DuplicateViewResponseObject, error)
-	// ListWorkflows Workflow dan statusnya (WF-01; hanya baca di M1)
+	// ListWorkflows Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca
 	// (GET /workflows)
 	ListWorkflows(ctx context.Context, request ListWorkflowsRequestObject) (ListWorkflowsResponseObject, error)
+	// CreateWorkflow Buat workflow dengan status awal (admin saja, WF-02)
+	// (POST /workflows)
+	CreateWorkflow(ctx context.Context, request CreateWorkflowRequestObject) (CreateWorkflowResponseObject, error)
+	// DeleteWorkflow Hapus workflow yang tidak dipakai (admin saja); workflow default atau yang dipakai item ditolak
+	// (DELETE /workflows/{workflowId})
+	DeleteWorkflow(ctx context.Context, request DeleteWorkflowRequestObject) (DeleteWorkflowResponseObject, error)
+	// RenameWorkflow Ubah nama workflow (admin saja)
+	// (PATCH /workflows/{workflowId})
+	RenameWorkflow(ctx context.Context, request RenameWorkflowRequestObject) (RenameWorkflowResponseObject, error)
+	// ReorderStatuses Urutkan status; harus memuat semua status workflow, dan status pertama harus Active
+	// (PUT /workflows/{workflowId}/status-order)
+	ReorderStatuses(ctx context.Context, request ReorderStatusesRequestObject) (ReorderStatusesResponseObject, error)
+	// CreateStatus Tambah status di akhir workflow (admin saja, WF-03A)
+	// (POST /workflows/{workflowId}/statuses)
+	CreateStatus(ctx context.Context, request CreateStatusRequestObject) (CreateStatusResponseObject, error)
 }
 
 type StrictHandlerFunc func(ctx context.Context, w http.ResponseWriter, r *http.Request, request any) (any, error)
@@ -9817,6 +12630,99 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// DeleteApproval operation middleware
+func (sh *strictHandler) DeleteApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID) {
+	var request DeleteApprovalRequestObject
+
+	request.ApprovalId = approvalId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteApproval(ctx, request.(DeleteApprovalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteApproval")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteApprovalResponseObject); ok {
+		if err := validResponse.VisitDeleteApprovalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateApproval operation middleware
+func (sh *strictHandler) UpdateApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID, params UpdateApprovalParams) {
+	var request UpdateApprovalRequestObject
+
+	request.ApprovalId = approvalId
+	request.Params = params
+
+	var body UpdateApprovalJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateApproval(ctx, request.(UpdateApprovalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateApproval")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateApprovalResponseObject); ok {
+		if err := validResponse.VisitUpdateApprovalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DecideApproval operation middleware
+func (sh *strictHandler) DecideApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID) {
+	var request DecideApprovalRequestObject
+
+	request.ApprovalId = approvalId
+
+	var body DecideApprovalJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DecideApproval(ctx, request.(DecideApprovalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DecideApproval")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DecideApprovalResponseObject); ok {
+		if err := validResponse.VisitDecideApprovalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // DeleteAttachment operation middleware
@@ -10252,6 +13158,243 @@ func (sh *strictHandler) StreamEvents(w http.ResponseWriter, r *http.Request, pa
 	}
 }
 
+// ListForms operation middleware
+func (sh *strictHandler) ListForms(w http.ResponseWriter, r *http.Request) {
+	var request ListFormsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListForms(ctx, request.(ListFormsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListForms")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFormsResponseObject); ok {
+		if err := validResponse.VisitListFormsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAvailableForms operation middleware
+func (sh *strictHandler) ListAvailableForms(w http.ResponseWriter, r *http.Request) {
+	var request ListAvailableFormsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAvailableForms(ctx, request.(ListAvailableFormsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAvailableForms")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAvailableFormsResponseObject); ok {
+		if err := validResponse.VisitListAvailableFormsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteForm operation middleware
+func (sh *strictHandler) DeleteForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request DeleteFormRequestObject
+
+	request.FormId = formId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteForm(ctx, request.(DeleteFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteFormResponseObject); ok {
+		if err := validResponse.VisitDeleteFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetForm operation middleware
+func (sh *strictHandler) GetForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request GetFormRequestObject
+
+	request.FormId = formId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetForm(ctx, request.(GetFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetFormResponseObject); ok {
+		if err := validResponse.VisitGetFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReplaceForm operation middleware
+func (sh *strictHandler) ReplaceForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID, params ReplaceFormParams) {
+	var request ReplaceFormRequestObject
+
+	request.FormId = formId
+	request.Params = params
+
+	var body ReplaceFormJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReplaceForm(ctx, request.(ReplaceFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReplaceForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReplaceFormResponseObject); ok {
+		if err := validResponse.VisitReplaceFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetFormAccess operation middleware
+func (sh *strictHandler) SetFormAccess(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request SetFormAccessRequestObject
+
+	request.FormId = formId
+
+	var body SetFormAccessJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetFormAccess(ctx, request.(SetFormAccessRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetFormAccess")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetFormAccessResponseObject); ok {
+		if err := validResponse.VisitSetFormAccessResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetFormDefinition operation middleware
+func (sh *strictHandler) GetFormDefinition(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request GetFormDefinitionRequestObject
+
+	request.FormId = formId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetFormDefinition(ctx, request.(GetFormDefinitionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetFormDefinition")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetFormDefinitionResponseObject); ok {
+		if err := validResponse.VisitGetFormDefinitionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SubmitForm operation middleware
+func (sh *strictHandler) SubmitForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request SubmitFormRequestObject
+
+	request.FormId = formId
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+
+		var body SubmitFormJSONRequestBody
+		if err := runtime.BindJSONBody(r, &body); err != nil {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+		request.JSONBody = &body
+
+	}
+	if strings.HasPrefix(r.Header.Get("Content-Type"), "multipart/form-data") {
+		if reader, err := r.MultipartReader(); err != nil {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+			return
+		} else {
+			request.MultipartBody = reader
+		}
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SubmitForm(ctx, request.(SubmitFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SubmitForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SubmitFormResponseObject); ok {
+		if err := validResponse.VisitSubmitFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListGroups operation middleware
 func (sh *strictHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	var request ListGroupsRequestObject
@@ -10527,6 +13670,65 @@ func (sh *strictHandler) ListActivity(w http.ResponseWriter, r *http.Request, it
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListActivityResponseObject); ok {
 		if err := validResponse.VisitListActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListItemApprovals operation middleware
+func (sh *strictHandler) ListItemApprovals(w http.ResponseWriter, r *http.Request, itemId ItemId) {
+	var request ListItemApprovalsRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListItemApprovals(ctx, request.(ListItemApprovalsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListItemApprovals")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListItemApprovalsResponseObject); ok {
+		if err := validResponse.VisitListItemApprovalsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateItemApproval operation middleware
+func (sh *strictHandler) CreateItemApproval(w http.ResponseWriter, r *http.Request, itemId ItemId) {
+	var request CreateItemApprovalRequestObject
+
+	request.ItemId = itemId
+
+	var body CreateItemApprovalJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateItemApproval(ctx, request.(CreateItemApprovalRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateItemApproval")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateItemApprovalResponseObject); ok {
+		if err := validResponse.VisitCreateItemApprovalResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -10972,6 +14174,32 @@ func (sh *strictHandler) UpdateMe(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateMeResponseObject); ok {
 		if err := validResponse.VisitUpdateMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListMyRequests operation middleware
+func (sh *strictHandler) ListMyRequests(w http.ResponseWriter, r *http.Request, params ListMyRequestsParams) {
+	var request ListMyRequestsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMyRequests(ctx, request.(ListMyRequestsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMyRequests")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMyRequestsResponseObject); ok {
+		if err := validResponse.VisitListMyRequestsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -11582,6 +14810,65 @@ func (sh *strictHandler) UpdateCustomField(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// ListSpaceForms operation middleware
+func (sh *strictHandler) ListSpaceForms(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListSpaceFormsRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceForms(ctx, request.(ListSpaceFormsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceForms")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceFormsResponseObject); ok {
+		if err := validResponse.VisitListSpaceFormsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateForm operation middleware
+func (sh *strictHandler) CreateForm(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request CreateFormRequestObject
+
+	request.SpaceId = spaceId
+
+	var body CreateFormJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateForm(ctx, request.(CreateFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateFormResponseObject); ok {
+		if err := validResponse.VisitCreateFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceRootItems operation middleware
 func (sh *strictHandler) ListSpaceRootItems(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ListSpaceRootItemsParams) {
 	var request ListSpaceRootItemsRequestObject
@@ -11688,6 +14975,66 @@ func (sh *strictHandler) ListSpaceViews(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListSpaceViewsResponseObject); ok {
 		if err := validResponse.VisitListSpaceViewsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteStatus operation middleware
+func (sh *strictHandler) DeleteStatus(w http.ResponseWriter, r *http.Request, statusId openapi_types.UUID, params DeleteStatusParams) {
+	var request DeleteStatusRequestObject
+
+	request.StatusId = statusId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteStatus(ctx, request.(DeleteStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteStatusResponseObject); ok {
+		if err := validResponse.VisitDeleteStatusResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateStatus operation middleware
+func (sh *strictHandler) UpdateStatus(w http.ResponseWriter, r *http.Request, statusId openapi_types.UUID) {
+	var request UpdateStatusRequestObject
+
+	request.StatusId = statusId
+
+	var body UpdateStatusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateStatus(ctx, request.(UpdateStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateStatusResponseObject); ok {
+		if err := validResponse.VisitUpdateStatusResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -12053,6 +15400,162 @@ func (sh *strictHandler) ListWorkflows(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListWorkflowsResponseObject); ok {
 		if err := validResponse.VisitListWorkflowsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateWorkflow operation middleware
+func (sh *strictHandler) CreateWorkflow(w http.ResponseWriter, r *http.Request) {
+	var request CreateWorkflowRequestObject
+
+	var body CreateWorkflowJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateWorkflow(ctx, request.(CreateWorkflowRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateWorkflow")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateWorkflowResponseObject); ok {
+		if err := validResponse.VisitCreateWorkflowResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteWorkflow operation middleware
+func (sh *strictHandler) DeleteWorkflow(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID) {
+	var request DeleteWorkflowRequestObject
+
+	request.WorkflowId = workflowId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteWorkflow(ctx, request.(DeleteWorkflowRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteWorkflow")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteWorkflowResponseObject); ok {
+		if err := validResponse.VisitDeleteWorkflowResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RenameWorkflow operation middleware
+func (sh *strictHandler) RenameWorkflow(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID) {
+	var request RenameWorkflowRequestObject
+
+	request.WorkflowId = workflowId
+
+	var body RenameWorkflowJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RenameWorkflow(ctx, request.(RenameWorkflowRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RenameWorkflow")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RenameWorkflowResponseObject); ok {
+		if err := validResponse.VisitRenameWorkflowResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReorderStatuses operation middleware
+func (sh *strictHandler) ReorderStatuses(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID) {
+	var request ReorderStatusesRequestObject
+
+	request.WorkflowId = workflowId
+
+	var body ReorderStatusesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReorderStatuses(ctx, request.(ReorderStatusesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReorderStatuses")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReorderStatusesResponseObject); ok {
+		if err := validResponse.VisitReorderStatusesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateStatus operation middleware
+func (sh *strictHandler) CreateStatus(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID) {
+	var request CreateStatusRequestObject
+
+	request.WorkflowId = workflowId
+
+	var body CreateStatusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateStatus(ctx, request.(CreateStatusRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateStatus")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateStatusResponseObject); ok {
+		if err := validResponse.VisitCreateStatusResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

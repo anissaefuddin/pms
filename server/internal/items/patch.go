@@ -197,7 +197,7 @@ func applyFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, kind st
 		sets = append(sets, fmt.Sprintf("%s=$%d%s", column, len(args), cast))
 	}
 	var assignees []uuid.UUID
-	var replaceAssignees bool
+	var replaceAssignees, autoAssign bool
 	for _, key := range keys {
 		raw := fields[key]
 		switch key {
@@ -271,19 +271,28 @@ func applyFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, kind st
 					return err
 				}
 			} else {
-				var completed bool
+				var completed, auto, allowed bool
 				err := tx.QueryRow(ctx, `
-SELECT next.grp='completed' FROM statuses next, items i
+SELECT next.grp='completed', next.auto_assign,
+  (current.id IS NULL OR current.id=next.id OR NOT current.lock_transitions
+   OR EXISTS(SELECT 1 FROM status_transitions t WHERE t.from_status_id=current.id AND t.to_status_id=next.id))
+FROM statuses next, items i
 LEFT JOIN statuses current ON current.id=i.status_id
 WHERE i.id=$2::uuid AND next.id=$1
   AND next.workflow_id=COALESCE(current.workflow_id,
-     (SELECT id FROM workflows WHERE is_default))`, *target, id).Scan(&completed)
+     (SELECT id FROM workflows WHERE is_default))`, *target, id).Scan(&completed, &auto, &allowed)
 				if errors.Is(err, pgx.ErrNoRows) {
 					return Invalid("status must belong to the Item workflow")
 				}
 				if err != nil {
 					return err
 				}
+				// Transitions limit edits of an existing Item, not the status it is created with.
+				if !allowed && incrementVersion {
+					return InvalidField{"status_id", "this workflow does not allow that status change"}
+				}
+				// Entering a status with auto-assign makes the person who changed it an assignee (applied after assignee_ids).
+				autoAssign = autoAssign || (auto && incrementVersion)
 				if completed {
 					sets = append(sets, "completed_at=COALESCE(completed_at,now())")
 				} else {
@@ -330,6 +339,13 @@ WHERE i.id=$2::uuid AND next.id=$1
 	if replaceAssignees {
 		if err := setAssignees(ctx, tx, id, assignees); err != nil {
 			return err
+		}
+	}
+	if autoAssign {
+		for _, table := range []string{"item_assignees", "item_followers"} {
+			if _, err := tx.Exec(ctx, "INSERT INTO "+table+"(item_id,user_id) VALUES($1::uuid,$2::uuid) ON CONFLICT DO NOTHING", id, actor.ID); err != nil {
+				return err
+			}
 		}
 	}
 	if raw, ok := fields["assignee_allocations"]; ok {

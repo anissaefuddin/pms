@@ -73,6 +73,8 @@ type fixture struct {
 	pool *pgxpool.Pool
 	srv  *httptest.Server
 	n    int
+	// files is the directory attachments are stored in.
+	files string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -93,7 +95,8 @@ func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
-	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: t.TempDir(), MaxUploadMB: 1}
+	files := t.TempDir()
+	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: files, MaxUploadMB: 1}
 	queue, err := mailqueue.New(pool, cfg)
 	if err != nil {
 		t.Fatal(err)
@@ -103,7 +106,7 @@ func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 	}
 	srv := httptest.NewServer(httpserver.New(pool, cfg, queue))
 	t.Cleanup(srv.Close)
-	return &fixture{t: t, ctx: ctx, pool: pool, srv: srv}
+	return &fixture{t: t, ctx: ctx, pool: pool, srv: srv, files: files}
 }
 
 func (f *fixture) exec(sql string, args ...any) {

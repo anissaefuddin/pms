@@ -32,6 +32,12 @@ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields 
 	return item, writeError(err)
 }
 
+// CreateTx creates an Item inside the caller's transaction (Serializable); the caller commits.
+func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
+	item, err := create(ctx, tx, actor, fields, batch)
+	return item, writeError(err)
+}
+
 func create(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	var kind string
 	if json.Unmarshal(fields["type"], &kind) != nil || (kind != "project" && kind != "folder" && kind != "task") {

@@ -47,12 +47,7 @@ func (s *Server) getItem(w http.ResponseWriter, r *http.Request) {
 func (s *Server) listWorkflows(w http.ResponseWriter, r *http.Request) {
 	var result json.RawMessage
 	err := s.pool.QueryRow(r.Context(), `
-SELECT jsonb_build_object('items',COALESCE(jsonb_agg(jsonb_build_object(
-  'id',w.id,'name',w.name,'is_default',w.is_default,
-  'statuses',COALESCE((SELECT jsonb_agg(jsonb_build_object(
-    'id',s.id,'name',s.name,'color',s.color,'group',s.grp) ORDER BY s.position)
-    FROM statuses s WHERE s.workflow_id=w.id),'[]'::jsonb)
-) ORDER BY w.is_default DESC,w.name,w.id),'[]'::jsonb))
+SELECT jsonb_build_object('items',COALESCE(jsonb_agg(`+workflowJSON+` ORDER BY w.is_default DESC,w.name,w.id),'[]'::jsonb))
 FROM workflows w`).Scan(&result)
 	if err != nil {
 		writeItemError(w, err)
