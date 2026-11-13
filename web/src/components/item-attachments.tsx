@@ -27,6 +27,7 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removing, setRemoving] = useState<Attachment>();
+  const [linkUrl, setLinkUrl] = useState("");
   const [history, setHistory] = useState<string>();
   const [replacing, setReplacing] = useState<string>();
   const versionInput = useRef<HTMLInputElement>(null);
@@ -80,12 +81,14 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
         const canRemove = item.my_capabilities.includes("delete") || (canAttach && file.uploader.id === userId);
         return <li key={file.id} className="py-1">
         <div className="flex items-center justify-between gap-2">
-          <a className="min-w-0 break-all underline" href={attachmentPath(file.id) + "/download"} download>{file.filename}</a>
+          {file.link_url
+            ? <a className="min-w-0 break-all underline" href={file.link_url} target="_blank" rel="noopener noreferrer">{file.filename}</a>
+            : <a className="min-w-0 break-all underline" href={attachmentPath(file.id) + "/download"} download>{file.filename}</a>}
           <span className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="sm" aria-expanded={history === file.id} onClick={() => setHistory(history === file.id ? undefined : file.id)}>
+          {!file.link_url && <Button variant="ghost" size="sm" aria-expanded={history === file.id} onClick={() => setHistory(history === file.id ? undefined : file.id)}>
             {t("items.versionLabel", { version: file.version })}
-          </Button>
-          {canAttach && <Button variant="ghost" size="sm" disabled={busy} onClick={() => {
+          </Button>}
+          {canAttach && !file.link_url && <Button variant="ghost" size="sm" disabled={busy} onClick={() => {
             setReplacing(file.id);
             versionInput.current?.click();
           }}>{t("items.uploadVersion")}</Button>}
@@ -115,6 +118,14 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
         {t("items.attachmentLimit", { limit: data.max_upload_bytes / 2 ** 20 })}
       </p>}
     </div>}
+    {canAttach && <form className="flex gap-2" onSubmit={(event) => {
+      event.preventDefault();
+      const url = linkUrl.trim();
+      if (url) void change(async () => { await api(`/api/v1/items/${item.id}/attachment-links`, { method: "POST", body: JSON.stringify({ url }) }); setLinkUrl(""); });
+    }}>
+      <input className="min-w-0 flex-1 rounded border px-2 py-1" type="url" value={linkUrl} aria-label={t("items.linkUrl")} onChange={(event) => setLinkUrl(event.target.value)} />
+      <Button type="submit" variant="outline" disabled={busy || !linkUrl.trim()}>{t("items.addLink")}</Button>
+    </form>}
     {!removing && <FormError message={error} />}
     <ConfirmDialog open={!!removing} onOpenChange={(open) => { if (!open) setRemoving(undefined); }}
       title={t("items.removeAttachment")} description={removing?.filename ?? ""}

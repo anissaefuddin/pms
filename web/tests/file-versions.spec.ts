@@ -32,3 +32,23 @@ test("file version history lists versions and uploads a new one", async ({ page 
   await expect(history.getByRole("link")).toHaveCount(2);
   await expect(history.getByRole("link").first()).toHaveAttribute("href", `/api/v1/attachments/${file}/versions/2/download`);
 });
+
+test("a link attachment opens its address and has no version controls", async ({ page }) => {
+  let linked = false;
+  const link = { ...attachment(1, "Design doc"), content_type: "text/uri-list", link_url: "https://example.com/doc" };
+  const { calls } = await mockSpaces(page, { extra: {
+    [`GET /items/${id}`]: { body: item, headers: { ETag: '"1"' } },
+    [`GET /items/${id}/children`]: { body: { items: [] } },
+    [`GET /items/${id}/comments`]: { body: { items: [] } },
+    [`GET /items/${id}/approvals`]: { body: { items: [] } },
+    [`GET /items/${id}/attachments`]: () => ({ body: { items: linked ? [link] : [], max_upload_bytes: 1048576 } }),
+    [`POST /items/${id}/attachment-links`]: () => { linked = true; return { status: 201, body: link }; },
+  } });
+  await page.goto(`/tasks/${id}`);
+  await page.getByLabel("Link address").fill("https://example.com/doc");
+  await page.getByRole("button", { name: "Add link" }).click();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path.endsWith(`/items/${id}/attachment-links`))).toBe(true);
+  const anchor = page.getByRole("link", { name: "Design doc" });
+  await expect(anchor).toHaveAttribute("href", "https://example.com/doc");
+  await expect(page.getByRole("button", { name: "Upload new version" })).toHaveCount(0);
+});

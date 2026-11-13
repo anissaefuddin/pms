@@ -556,6 +556,7 @@ type Attachment struct {
 	CreatedAt      pgtype.Timestamptz `json:"created_at"`
 	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
 	CurrentVersion int32              `json:"current_version"`
+	LinkUrl        pgtype.Text        `json:"link_url"`
 }
 
 type AttachmentAnnotation struct {

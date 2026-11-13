@@ -1219,10 +1219,10 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [x] [TEST] E2E-PAR-09
 
 **S11.1.6 Storage eksternal dan link (TASK-08B) — 2 hari**
-- [ ] [BE] Adapter MinIO/S3
-- [ ] [BE] Adapter Pydio Cells
-- [ ] [BE] Lampiran berupa link
-- [ ] [TEST] Izin dan pemindaian tetap berlaku
+- [x] [BE] Adapter MinIO/S3
+- [x] [BE] Adapter Pydio Cells
+- [x] [BE] Lampiran berupa link
+- [x] [TEST] Izin dan pemindaian tetap berlaku
 
 ### E11.2 Analitik
 

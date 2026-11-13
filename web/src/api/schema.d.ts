@@ -1909,6 +1909,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{itemId}/attachment-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Lampiran berupa tautan http(s) (TASK-08B); memerlukan `attach`. Tidak ada berkas, jadi tidak ada unduhan atau versi baru (422) */
+        post: operations["createAttachmentLink"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attachments/{attachmentId}/download": {
         parameters: {
             query?: never;
@@ -4410,6 +4427,8 @@ export interface components {
             content_type: string;
             /** Format: int64 */
             size_bytes: number;
+            /** @description Terisi untuk lampiran tautan (tanpa berkas) */
+            link_url?: string | null;
             /** @description Nomor versi terbaru; filename */
             version?: number;
             uploader: components["schemas"]["UserRef"];
@@ -8714,6 +8733,40 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    createAttachmentLink: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description http(s) tanpa kredensial */
+                    url: string;
+                    /** @description Default host URL */
+                    title?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attachment"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     downloadAttachment: {

@@ -59,18 +59,7 @@ func (s LocalStorage) Put(src io.Reader, maxBytes int64) (File, error) {
 		return File{}, err
 	}
 	hash := sha256.New()
-	reader := &io.LimitedReader{R: src, N: maxBytes}
-	n, err := io.Copy(io.MultiWriter(out, hash), reader)
-	if err == nil && reader.N == 0 {
-		var extra [1]byte
-		_, readErr := io.ReadFull(src, extra[:])
-		switch {
-		case readErr == nil:
-			err = ErrTooLarge
-		case readErr != io.EOF:
-			err = readErr
-		}
-	}
+	n, err := copyLimited(io.MultiWriter(out, hash), src, maxBytes)
 	if closeErr := out.Close(); err == nil {
 		err = closeErr
 	}
@@ -128,4 +117,20 @@ func (s LocalStorage) Keys(cutoff time.Time) ([]string, error) {
 		return nil, nil
 	}
 	return keys, err
+}
+
+// copyLimited copies at most max bytes and fails with ErrTooLarge when src has more.
+func copyLimited(dst io.Writer, src io.Reader, max int64) (int64, error) {
+	reader := &io.LimitedReader{R: src, N: max}
+	n, err := io.Copy(dst, reader)
+	if err == nil && reader.N == 0 {
+		var extra [1]byte
+		switch _, readErr := io.ReadFull(src, extra[:]); {
+		case readErr == nil:
+			err = ErrTooLarge
+		case readErr != io.EOF:
+			err = readErr
+		}
+	}
+	return n, err
 }

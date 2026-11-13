@@ -2817,6 +2817,32 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/ProjectFile' }
         '404': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/attachment-links:
+    post:
+      tags: [collaboration]
+      operationId: createAttachmentLink
+      summary: Lampiran berupa tautan http(s) (TASK-08B); memerlukan `attach`. Tidak ada berkas, jadi tidak ada unduhan atau versi baru (422)
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [url]
+              properties:
+                url: { type: string, maxLength: 2048, description: http(s) tanpa kredensial }
+                title: { type: string, maxLength: 255, description: Default host URL }
+      responses:
+        '201':
+          description: Tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Attachment' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /attachments/{attachmentId}/download:
     get:
       tags: [collaboration]
@@ -5927,6 +5953,7 @@ components:
         filename: { type: string }
         content_type: { type: string, description: Hasil deteksi server }
         size_bytes: { type: integer, format: int64 }
+        link_url: { type: string, nullable: true, description: Terisi untuk lampiran tautan (tanpa berkas) }
         version: { type: integer, minimum: 1, description: Nomor versi terbaru; filename, ukuran dan unduhan mengikuti versi ini }
         uploader: { $ref: '#/components/schemas/UserRef' }
         created_at: { type: string, format: date-time }

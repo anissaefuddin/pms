@@ -183,7 +183,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, options ...Option) (*Queue, erro
 	river.AddWorker(workers, &InvitationWorker{pool: pool, mail: mailer})
 	river.AddWorker(workers, &NotificationWorker{pool: pool, mail: mailer})
 	// This is the process's only River client, so the daily cleanup is registered here too.
-	river.AddWorker(workers, &housekeeping.Worker{Pool: pool, FilesDir: cfg.FilesDir})
+	river.AddWorker(workers, &housekeeping.Worker{Pool: pool, FilesDir: sweepDir(cfg.Storage, cfg.FilesDir)})
 	periodic := []*river.PeriodicJob{river.NewPeriodicJob(river.PeriodicInterval(24*time.Hour),
 		func() (river.JobArgs, *river.InsertOpts) { return housekeeping.Args{}, nil }, &river.PeriodicJobOpts{RunOnStart: true})}
 	for _, option := range options {
@@ -276,4 +276,12 @@ func brandedHTML(args Args) string {
 	}
 	b.WriteString("</body></html>")
 	return b.String()
+}
+
+// sweepDir limits the orphan sweep to local files; remote backends are not listed (see D-83).
+func sweepDir(backend, dir string) string {
+	if backend == "" || backend == "local" {
+		return dir
+	}
+	return ""
 }
