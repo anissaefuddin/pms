@@ -1384,6 +1384,118 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/runs:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [automation]
+      operationId: listAutomationRuns
+      summary: Log eksekusi sebuah aturan, terbaru dulu (AUT-04)
+      parameters:
+        - { $ref: '#/components/parameters/Limit' }
+        - { $ref: '#/components/parameters/Cursor' }
+        - { name: status, in: query, schema: { type: string, enum: [done, denied, skipped, loop_blocked, quota_blocked, failed] } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/AutomationRun' } }
+                  next_cursor: { type: string, nullable: true }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /automation/dead-events:
+    get:
+      tags: [automation]
+      operationId: listDeadAutomationEvents
+      summary: Event yang diparkir pengirim setelah gagal berulang (hanya admin)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [event_id, type, attempts, last_error, created_at]
+                      properties:
+                        event_id: { type: string, format: uuid }
+                        type: { type: string }
+                        item_id: { type: string, format: uuid, nullable: true }
+                        attempts: { type: integer }
+                        last_error: { type: string }
+                        created_at: { type: string }
+        '403': { $ref: '#/components/responses/Problem' }
+  /automation/events/{eventId}/replay:
+    parameters:
+      - { name: eventId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: replayAutomationEvent
+      summary: Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [requeued, reopened_runs]
+                properties:
+                  requeued: { type: boolean }
+                  reopened_runs: { type: integer }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/automation-rules/dry-run:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      tags: [automation]
+      operationId: dryRunAutomation
+      summary: Uji definisi pada satu item tanpa menjalankan apa pun (AUT-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [definition, item_id]
+              properties:
+                definition: { $ref: '#/components/schemas/AutomationDefinition' }
+                item_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [conditions, would_run, actions, item_title]
+                properties:
+                  conditions:
+                    type: array
+                    items:
+                      type: object
+                      required: [index, holds]
+                      properties:
+                        index: { type: integer }
+                        holds: { type: boolean }
+                  would_run: { type: boolean }
+                  actions: { type: array, items: { type: string } }
+                  item_title: { type: string }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /space-templates:
     get:
       tags: [spaces]
@@ -2618,13 +2730,33 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/approval-events:
+    parameters:
+      - { $ref: '#/components/parameters/ItemId' }
+    get:
+      tags: [items]
+      operationId: listItemApprovalEvents
+      summary: Riwayat approval append-only pada item, terbaru dulu; keputusan dipin ke versi item (S9.2.3)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ApprovalEvent' }
+        '404': { $ref: '#/components/responses/Problem' }
   /approvals/{approvalId}:
     parameters:
       - { name: approvalId, in: path, required: true, schema: { type: string, format: uuid } }
     patch:
       tags: [items]
       operationId: updateApproval
-      summary: Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya
+      summary: Ubah kebijakan, deskripsi, tenggat, atau reassign daftar approver dengan If-Match. Keputusan approver yang dipertahankan tetap berlaku; penghapusan dan penambahan dicatat pada riwayat.
       parameters:
         - { $ref: '#/components/parameters/IfMatch' }
       requestBody:
@@ -3944,6 +4076,22 @@ components:
         when: { type: object, additionalProperties: true }
         if: { type: array, maxItems: 10, items: { type: object, additionalProperties: true } }
         then: { type: array, minItems: 1, maxItems: 10, items: { type: object, additionalProperties: true } }
+    AutomationRun:
+      type: object
+      required: [id, rule_id, version, event_id, event_type, action_index, status, detail, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        rule_id: { type: string, format: uuid }
+        version: { type: integer }
+        event_id: { type: string, format: uuid }
+        event_type: { type: string }
+        action_index: { type: integer, description: -1 untuk hasil tingkat aturan }
+        item_id: { type: string, format: uuid, nullable: true }
+        item_title: { type: string, nullable: true }
+        actor_id: { type: string, format: uuid, nullable: true }
+        status: { type: string, enum: [done, denied, skipped, loop_blocked, quota_blocked, failed] }
+        detail: { type: string }
+        created_at: { type: string }
     AutomationVersion:
       type: object
       required: [id, version, status, definition, created_at]
@@ -4089,7 +4237,7 @@ components:
         name: { type: string, minLength: 1, maxLength: 120 }
     Approval:
       type: object
-      required: [id, item_id, description, due_date, created_by, version, created_at, status, approved_count, total, approvers]
+      required: [id, item_id, description, due_date, created_by, version, created_at, status, policy, approved_count, total, approvers]
       properties:
         id: { type: string, format: uuid }
         item_id: { type: string, format: uuid }
@@ -4101,7 +4249,8 @@ components:
         status:
           type: string
           enum: [pending, approved, rejected]
-          description: rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+          description: Any menerima satu persetujuan dan menolak bila semua menolak. All menerima bila semua menyetujui dan menolak pada penolakan pertama.
+        policy: { type: string, enum: [any, all] }
         approved_count: { type: integer, format: int32, description: Pembilang penghitung "0/2" }
         total: { type: integer, format: int32 }
         approvers:
@@ -4114,11 +4263,25 @@ components:
               decision: { type: string, enum: [approved, rejected], nullable: true }
               comment: { type: string }
               decided_at: { type: string, format: date-time, nullable: true }
+    ApprovalEvent:
+      type: object
+      required: [id, approval_id, kind, actor, subject, decision, comment, item_version, created_at]
+      properties:
+        id: { type: integer, format: int64 }
+        approval_id: { type: string, format: uuid }
+        kind: { type: string, enum: [approver_requested, approver_removed, decided, withdrawn] }
+        actor: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
+        subject: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
+        decision: { type: string, enum: [approved, rejected], nullable: true }
+        comment: { type: string }
+        item_version: { type: integer, format: int32, nullable: true, description: Versi item saat peristiwa terjadi }
+        created_at: { type: string, format: date-time }
     ApprovalInput:
       type: object
       required: [approver_ids]
       additionalProperties: false
       properties:
+        policy: { type: string, enum: [any, all] }
         description: { type: string, maxLength: 2000 }
         due_date: { type: string, format: date, nullable: true }
         approver_ids:
@@ -4131,6 +4294,7 @@ components:
       minProperties: 1
       additionalProperties: false
       properties:
+        policy: { type: string, enum: [any, all] }
         description: { type: string, maxLength: 2000 }
         due_date: { type: string, format: date, nullable: true }
         approver_ids:
@@ -4772,7 +4936,7 @@ components:
     # ── Inbox & search ──
     NotificationKind:
       type: string
-      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided]
+      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated]
     Notification:
       type: object
       required: [id, kind, created_at]

@@ -462,7 +462,7 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 	}
 	if approval := row.Response.Approval; approval != nil {
 		description := approval.Description
-		if _, err := createApproval(ctx, tx, elevated, head.ID, &description, nil, &approval.ApproverIDs, batch); err != nil {
+		if _, err := createApproval(ctx, tx, elevated, head.ID, &description, nil, &approval.ApproverIDs, nil, batch); err != nil {
 			return createdItem{}, err
 		}
 	}

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
-import { formatDate, useProfile } from "@/lib/profile";
+import { formatDate, formatDateTime, useProfile } from "@/lib/profile";
 import { FormError } from "@/components/auth/form-error";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
@@ -13,6 +13,7 @@ import { DatePicker, calendarDate, dateValue } from "@/components/ui/date-picker
 import { Input } from "@/components/ui/input";
 
 type Approval = components["schemas"]["Approval"];
+type ApprovalEvent = components["schemas"]["ApprovalEvent"];
 
 /** Item approvals (SPC-12). Status is always text, never colour alone. */
 export function ItemApprovals({ item, userId }: { item: Item; userId: string }) {
@@ -20,6 +21,7 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
   const heading = useId();
   const qc = useQueryClient();
   const profile = useProfile();
+  const [reassigning, setReassigning] = useState(false);
   const [adding, setAdding] = useState(false);
   const [editing, setEditing] = useState<string>();
   const [deleting, setDeleting] = useState<Approval>();
@@ -27,11 +29,12 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
   const [busy, setBusy] = useState(false);
   const key = ["item-approvals", item.id];
   const list = useQuery({ queryKey: key, queryFn: () => api<{ items: Approval[] }>(`/api/v1/items/${item.id}/approvals`) });
+  const history = useQuery({ queryKey: ["item-approval-events", item.id], queryFn: () => api<{ items: ApprovalEvent[] }>(`/api/v1/items/${item.id}/approval-events`) });
   const canEdit = item.my_capabilities.includes("edit");
 
   async function run(op: () => Promise<unknown>) {
     setBusy(true); setError("");
-    try { await op(); await qc.invalidateQueries({ queryKey: key }); return true; }
+    try { await op(); await qc.invalidateQueries({ queryKey: key }); await qc.invalidateQueries({ queryKey: ["item-approval-events", item.id] }); return true; }
     catch (err) { setError((err as Error).message); await qc.invalidateQueries({ queryKey: key }); return false; }
     finally { setBusy(false); }
   }
@@ -51,13 +54,13 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
       const mine = approval.approvers.find((entry) => entry.user.id === userId);
       return <article key={approval.id} className="space-y-2 rounded border p-3">
         {editing === approval.id
-          ? <ApprovalForm initial={approval} busy={busy} onCancel={() => setEditing(undefined)}
+          ? <ApprovalForm initial={approval} reassign={reassigning} busy={busy} onCancel={() => setEditing(undefined)}
             onSubmit={async (body) => { if (await run(() => send(`/api/v1/approvals/${approval.id}`, "PATCH", body, approval.version))) setEditing(undefined); }} />
           : <>
             <div className="flex flex-wrap items-center gap-2">
               <p className="min-w-0 flex-1 break-words font-medium">{approval.description || t("items.approvals.title")}</p>
               <span className="rounded border px-2 py-0.5 text-xs font-medium">
-                {t("items.approvals.counter", { approved: approval.approved_count, total: approval.total })} · {t(`items.approvals.status.${approval.status}`)}
+                {t("items.approvals.counter", { approved: approval.approved_count, total: approval.total })} · {t(`items.approvals.status.${approval.status}`)} · {t(`items.approvals.policy.${approval.policy ?? "all"}`)}
               </span>
             </div>
             <p className="text-sm text-muted-foreground">
@@ -73,7 +76,8 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
             {mine && <Decision key={`${approval.id}-${mine.decision}-${mine.decided_at}`} current={mine} busy={busy}
               onDecide={(decision, comment) => void run(() => send(`/api/v1/approvals/${approval.id}/decision`, "PUT", { decision, comment }))} />}
             {canEdit && <div className="flex gap-2">
-              <Button size="sm" variant="ghost" disabled={busy} onClick={() => setEditing(approval.id)}>{t("items.approvals.edit")}</Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => { setReassigning(false); setEditing(approval.id); }}>{t("items.approvals.edit")}</Button>
+              <Button size="sm" variant="ghost" disabled={busy} onClick={() => { setReassigning(true); setEditing(approval.id); }}>{t("items.approvals.reassign")}</Button>
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => setDeleting(approval)}>{t("items.approvals.delete")}</Button>
             </div>}
           </>}
@@ -83,6 +87,16 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
       <ApprovalForm busy={busy} onCancel={() => setAdding(false)}
         onSubmit={async (body) => { if (await run(() => send(`/api/v1/items/${item.id}/approvals`, "POST", body))) setAdding(false); }} />
     </div>}
+    {!!history.data?.items.length && <details className="rounded border p-3">
+      <summary className="cursor-pointer font-medium">{t("items.approvals.history")}</summary>
+      <ol className="mt-2 space-y-1 text-sm" aria-label={t("items.approvals.history")}>
+        {history.data.items.map((e) => <li key={e.id}>
+          {t(`items.approvals.event.${e.kind}`, { actor: e.actor?.name ?? "", subject: e.subject?.name ?? "", decision: e.decision ? t(`items.approvals.status.${e.decision}`) : "" })}
+          {e.comment && <> — <span className="break-words">{e.comment}</span></>}
+          <span className="text-xs text-muted-foreground"> · {formatDateTime(e.created_at, profile)}{e.item_version != null && ` · ${t("items.approvals.pinnedVersion", { version: e.item_version })}`}</span>
+        </li>)}
+      </ol>
+    </details>}
     <ConfirmDialog open={!!deleting} onOpenChange={(open) => { if (!open) setDeleting(undefined); }}
       title={t("items.approvals.delete")} description={t("items.approvals.deleteDescription")}
       confirmLabel={t("items.approvals.delete")} cancelLabel={t("items.cancel")} busy={busy}
@@ -104,23 +118,34 @@ function Decision({ current, busy, onDecide }: { current: Approval["approvers"][
   </div>;
 }
 
-function ApprovalForm({ initial, busy, onSubmit, onCancel }: {
-  initial?: Approval; busy: boolean; onCancel: () => void;
-  onSubmit: (body: { description: string; due_date: string | null; approver_ids: string[] }) => Promise<void>;
+function ApprovalForm({ initial, reassign = false, busy, onSubmit, onCancel }: {
+  initial?: Approval; reassign?: boolean; busy: boolean; onCancel: () => void;
+  onSubmit: (body: { description?: string; due_date?: string | null; approver_ids: string[]; policy?: Approval["policy"] }) => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const [policy, setPolicy] = useState<Approval["policy"]>(initial?.policy ?? "all");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [due, setDue] = useState<Date | undefined>(calendarDate(initial?.due_date));
   const [approvers, setApprovers] = useState<PersonOption[]>(initial?.approvers.map((entry) => entry.user) ?? []);
   return <form className="space-y-3" onSubmit={(event) => {
     event.preventDefault();
-    if (approvers.length) void onSubmit({ description, due_date: dateValue(due) || null, approver_ids: approvers.map((person) => person.id) });
+    if (!approvers.length) return;
+    const approver_ids = approvers.map((person) => person.id);
+    void onSubmit(reassign ? { approver_ids } : { policy, description, due_date: dateValue(due) || null, approver_ids });
   }}>
+    {!reassign && <>
     <label className="block space-y-1 font-medium">{t("items.approvals.description")}
       <Input value={description} onChange={(event) => setDescription(event.target.value)} /></label>
     <div className="space-y-1">
       <DatePicker value={due} onChange={setDue} label={t("items.approvals.due")} />
     </div>
+    <label className="block space-y-1">{t("items.approvals.policy.label")}
+      <select className="block rounded border bg-background p-2" value={policy} onChange={(event) => setPolicy(event.target.value === "any" ? "any" : "all")}>
+        <option value="all">{t("items.approvals.policy.all")}</option>
+        <option value="any">{t("items.approvals.policy.any")}</option>
+      </select>
+    </label>
+    </>}
     <ItemUserPicker multiple maxSelected={20} label={t("items.approvals.approvers")} selected={approvers} onChange={setApprovers} />
     {!approvers.length && <p className="text-xs text-muted-foreground">{t("items.approvals.approversRequired")}</p>}
     <div className="flex gap-2">

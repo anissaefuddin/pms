@@ -1045,6 +1045,80 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/automation-rules/{ruleId}/runs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        /** Log eksekusi sebuah aturan, terbaru dulu (AUT-04) */
+        get: operations["listAutomationRuns"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation/dead-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Event yang diparkir pengirim setelah gagal berulang (hanya admin) */
+        get: operations["listDeadAutomationEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation/events/{eventId}/replay": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi */
+        post: operations["replayAutomationEvent"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/automation-rules/dry-run": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Uji definisi pada satu item tanpa menjalankan apa pun (AUT-05) */
+        post: operations["dryRunAutomation"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/space-templates": {
         parameters: {
             query?: never;
@@ -1901,6 +1975,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{itemId}/approval-events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        /** Riwayat approval append-only pada item, terbaru dulu; keputusan dipin ke versi item (S9.2.3) */
+        get: operations["listItemApprovalEvents"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/approvals/{approvalId}": {
         parameters: {
             query?: never;
@@ -1916,7 +2009,7 @@ export interface paths {
         delete: operations["deleteApproval"];
         options?: never;
         head?: never;
-        /** Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya */
+        /** Ubah kebijakan, deskripsi, tenggat, atau reassign daftar approver dengan If-Match. Keputusan approver yang dipertahankan tetap berlaku; penghapusan dan penambahan dicatat pada riwayat. */
         patch: operations["updateApproval"];
         trace?: never;
     };
@@ -2861,6 +2954,27 @@ export interface components {
                 [key: string]: unknown;
             }[];
         };
+        AutomationRun: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            rule_id: string;
+            version: number;
+            /** Format: uuid */
+            event_id: string;
+            event_type: string;
+            /** @description -1 untuk hasil tingkat aturan */
+            action_index: number;
+            /** Format: uuid */
+            item_id?: string | null;
+            item_title?: string | null;
+            /** Format: uuid */
+            actor_id?: string | null;
+            /** @enum {string} */
+            status: "done" | "denied" | "skipped" | "loop_blocked" | "quota_blocked" | "failed";
+            detail: string;
+            created_at: string;
+        };
         AutomationVersion: {
             /** Format: uuid */
             id: string;
@@ -3019,10 +3133,12 @@ export interface components {
             /** Format: date-time */
             created_at: string;
             /**
-             * @description rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+             * @description Any menerima satu persetujuan dan menolak bila semua menolak. All menerima bila semua menyetujui dan menolak pada penolakan pertama.
              * @enum {string}
              */
             status: "pending" | "approved" | "rejected";
+            /** @enum {string} */
+            policy: "any" | "all";
             /**
              * Format: int32
              * @description Pembilang penghitung "0/2"
@@ -3039,13 +3155,37 @@ export interface components {
                 decided_at: string | null;
             }[];
         };
+        ApprovalEvent: {
+            /** Format: int64 */
+            id: number;
+            /** Format: uuid */
+            approval_id: string;
+            /** @enum {string} */
+            kind: "approver_requested" | "approver_removed" | "decided" | "withdrawn";
+            actor: components["schemas"]["UserRef"] | null;
+            subject: components["schemas"]["UserRef"] | null;
+            /** @enum {string|null} */
+            decision: "approved" | "rejected" | null;
+            comment: string;
+            /**
+             * Format: int32
+             * @description Versi item saat peristiwa terjadi
+             */
+            item_version: number | null;
+            /** Format: date-time */
+            created_at: string;
+        };
         ApprovalInput: {
+            /** @enum {string} */
+            policy?: "any" | "all";
             description?: string;
             /** Format: date */
             due_date?: string | null;
             approver_ids: string[];
         };
         ApprovalPatch: {
+            /** @enum {string} */
+            policy?: "any" | "all";
             description?: string;
             /** Format: date */
             due_date?: string | null;
@@ -3633,7 +3773,7 @@ export interface components {
             items: components["schemas"]["StreamEntry"][];
         };
         /** @enum {string} */
-        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided";
+        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided" | "automation" | "approval_reminder" | "approval_escalated";
         Notification: {
             /** Format: uuid */
             id: string;
@@ -5885,6 +6025,138 @@ export interface operations {
             422: components["responses"]["Problem"];
         };
     };
+    listAutomationRuns: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                cursor?: components["parameters"]["Cursor"];
+                status?: "done" | "denied" | "skipped" | "loop_blocked" | "quota_blocked" | "failed";
+            };
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AutomationRun"][];
+                        next_cursor?: string | null;
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listDeadAutomationEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            event_id: string;
+                            type: string;
+                            /** Format: uuid */
+                            item_id?: string | null;
+                            attempts: number;
+                            last_error: string;
+                            created_at: string;
+                        }[];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    replayAutomationEvent: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                eventId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        requeued: boolean;
+                        reopened_runs: number;
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    dryRunAutomation: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    definition: components["schemas"]["AutomationDefinition"];
+                    /** Format: uuid */
+                    item_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        conditions: {
+                            index: number;
+                            holds: boolean;
+                        }[];
+                        would_run: boolean;
+                        actions: string[];
+                        item_title: string;
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
     listSpaceTemplates: {
         parameters: {
             query?: never;
@@ -7652,6 +7924,31 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listItemApprovalEvents: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ApprovalEvent"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
         };
     };
     deleteApproval: {

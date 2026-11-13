@@ -1027,51 +1027,51 @@ Memetakan: AUT-01..05, APR-01..03. Prasyarat: S8.2.2, S7.3.3.
 - [x] [TEST] Dua aturan pada item yang sama secara paralel
 
 **S9.1.4 Log, retry, replay, observability (AUT-04) — 3 hari**
-- [ ] [DB] Log eksekusi: actor, versi aturan, event sumber, hasil
-- [ ] [BE] Retry dan dead job
-- [ ] [BE] Replay manual oleh admin (idempoten)
-- [ ] [BE] Metrik Prometheus dan alert
-- [ ] [FE] Tampilan log
-- [ ] [TEST] Retry, dead job, replay
+- [x] [DB] Log eksekusi: actor, versi aturan, event sumber, hasil
+- [x] [BE] Retry dan dead job
+- [x] [BE] Replay manual oleh admin (idempoten)
+- [x] [BE] Metrik Prometheus dan alert
+- [x] [FE] Tampilan log
+- [x] [TEST] Retry, dead job, replay
 
 **S9.1.5 UI Automation (AUT-05) — 3 hari**
-- [ ] [FE] Tombol Automation di header project dan daftar aturan
-- [ ] [FE] Editor WHEN/IF/THEN
-- [ ] [BE] Endpoint dry-run
-- [ ] [FE] Pratinjau dry-run
-- [ ] [FE] Aktif/nonaktif aturan
-- [ ] [TEST] E2E-PAR-04, axe
+- [x] [FE] Tombol Automation di header project dan daftar aturan
+- [x] [FE] Editor WHEN/IF/THEN
+- [x] [BE] Endpoint dry-run
+- [x] [FE] Pratinjau dry-run
+- [x] [FE] Aktif/nonaktif aturan
+- [x] [TEST] E2E-PAR-04, axe
 
 ### E9.2 Approval lanjutan
 
-**S9.2.1 Any/All approver (APR-01) — 2.5 hari**
-- [ ] [API] Kebijakan Any/All
-- [ ] [DB] Kolom kebijakan
-- [ ] [BE] Evaluasi hasil
-- [ ] [FE] Pilihan kebijakan dan indikator
-- [ ] [TEST] E2E-PAR-06
+**S9.2.1 Any/All approver (APR-01) — 2.5 hari · DONE**
+- [x] [API] Kebijakan Any/All
+- [x] [DB] Kolom kebijakan
+- [x] [BE] Evaluasi hasil
+- [x] [FE] Pilihan kebijakan dan indikator
+- [x] [TEST] E2E-PAR-06
 
-**S9.2.2 Reassign dan eskalasi (APR-02) — 3 hari**
-- [ ] [API] Reassign approver
-- [ ] [BE] Reassign dengan riwayat
-- [ ] [BE] Job pengingat tenggat
-- [ ] [BE] Eskalasi
-- [ ] [FE] UI reassign
-- [ ] [TEST] Integrasi
+**S9.2.2 Reassign dan eskalasi (APR-02) — 3 hari · DONE**
+- [x] [API] Reassign approver
+- [x] [BE] Reassign dengan riwayat
+- [x] [BE] Job pengingat tenggat
+- [x] [BE] Eskalasi
+- [x] [FE] UI reassign
+- [x] [TEST] Integrasi
 
 **S9.2.3 Riwayat append-only dan pin versi (APR-03) — 2 hari**
-- [ ] [DB] `approval_events` append-only
-- [ ] [BE] Pin keputusan ke versi item/file
-- [ ] [FE] Riwayat keputusan
-- [ ] [TEST] Riwayat tidak dapat diubah
+- [x] [DB] `approval_events` append-only
+- [x] [BE] Pin keputusan ke versi item (versi file menyusul di S11.1.5)
+- [x] [FE] Riwayat keputusan
+- [x] [TEST] Riwayat tidak dapat diubah
 
 ### E9.3 Gate
 
-**S9.3.1 UAT gate M9 — 2 hari**
+**S9.3.1 UAT gate M9 — 2 hari · IN_PROGRESS**
 - [ ] [TEST] UAT per requirement M9
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
-- [ ] [DOC] Gate report G1b
+- [x] [DOC] [Gate report G1b](parity/gate-reports/G1B_AUTOMATION_APPROVALS.md)
 
 ## M10 — Resource, jadwal, dan biaya (G2)
 

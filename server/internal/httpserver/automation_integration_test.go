@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/google/uuid"
 	"strconv"
 	"sync"
 	"sync/atomic"
@@ -521,4 +522,93 @@ func pendingEvent(t *testing.T, e *autoEnv, item, kind string) events.Event {
 	}
 	_ = json.Unmarshal(payload, &ev.Payload)
 	return ev
+}
+
+// S9.1.4: the log shows what every rule version did, parked events can be replayed by an administrator, and replaying twice
+// changes nothing twice.
+func TestRunLogDeadEventsAndReplay(t *testing.T) {
+	e := newAutoEnv(t)
+	f := e.f
+	rule := e.rule(t, e.editor, "Escalate", `{"when":{"type":"item.created"},"if":[{"field":"item_type","op":"eq","value":"task"}],"then":[{"type":"set_field","field":"importance","value":"high"},{"type":"comment","text":"Escalated"}]}`)
+	for i := range 3 {
+		e.item(t, e.editor, "Log "+strconv.Itoa(i), nil)
+	}
+	e.drain(t)
+	runs := f.call(e.editor, "GET", "/automation-rules/"+rule+"/runs?limit=4", nil)
+	if runs.status != 200 || len(runs.items()) != 4 || runs.body["next_cursor"] == nil {
+		t.Fatalf("first page: %+v", runs)
+	}
+	first := runs.items()[0]
+	if first["event_type"] != "item.created" || first["status"] != "done" || first["version"] != float64(1) || first["item_title"] == nil || first["actor_id"] != e.editor.id {
+		t.Fatalf("a log line must say what happened, to what, and as whom: %+v", first)
+	}
+	rest := f.call(e.editor, "GET", "/automation-rules/"+rule+"/runs?cursor="+runs.body["next_cursor"].(string), nil)
+	if len(rest.items()) != 2 || rest.body["next_cursor"] != nil {
+		t.Fatalf("second page: %+v", rest)
+	}
+	f.want(f.call(e.editor, "GET", "/automation-rules/"+rule+"/runs?status=skipped", nil), 200, "filter")
+	f.want(f.call(e.editor, "GET", "/automation-rules/"+rule+"/runs?limit=0", nil), 422, "limit")
+	f.want(f.call(e.editor, "GET", "/automation-rules/"+rule+"/runs?cursor=x", nil), 422, "cursor")
+	outsider := f.person("regular")
+	f.want(f.call(outsider, "GET", "/automation-rules/"+rule+"/runs", nil), 404, "outsider")
+	f.want(f.call(f.person("regular"), "GET", "/automation/dead-events", nil), 403, "dead events are for administrators")
+
+	// An event that cannot be handled is parked; once the cause is fixed an admin replays it and only the missing part happens.
+	f.exec("UPDATE users SET status='deactivated' WHERE id=$1", e.editor.id)
+	item := e.item(t, e.admin, "Parked", nil)
+	e.drain(t)
+	if importanceOf(e, item["id"].(string)) != "normal" {
+		t.Fatal("the deactivated owner's rule must not act")
+	}
+	f.exec("UPDATE users SET status='active' WHERE id=$1", e.editor.id)
+	ev := pendingEvent(t, e, item["id"].(string), events.ItemCreated)
+	f.exec("UPDATE domain_events SET last_error='boom', attempts=8 WHERE event_id=$1", ev.ID)
+	dead := f.call(e.admin, "GET", "/automation/dead-events", nil)
+	if dead.status != 200 || len(dead.items()) != 1 || dead.items()[0]["last_error"] != "boom" {
+		t.Fatalf("dead events: %+v", dead)
+	}
+	for range 2 { // replaying twice must not do anything twice
+		f.want(f.call(e.admin, "POST", "/automation/events/"+ev.ID.String()+"/replay", nil), 200, "replay")
+		e.drain(t)
+	}
+	if importanceOf(e, item["id"].(string)) != "high" || f.queryID("SELECT count(*)::text FROM comments WHERE item_id=$1 AND body_text='Escalated'", item["id"]) != "1" {
+		t.Fatalf("the replay must finish the work exactly once: %v", e.runs(rule))
+	}
+	if d := f.call(e.admin, "GET", "/automation/dead-events", nil); len(d.items()) != 0 {
+		t.Fatalf("a replayed event is no longer dead: %+v", d)
+	}
+	f.want(f.call(e.editor, "POST", "/automation/events/"+ev.ID.String()+"/replay", nil), 403, "only admins replay")
+	f.want(f.call(e.admin, "POST", "/automation/events/"+uuid.NewString()+"/replay", nil), 404, "unknown event")
+}
+
+// AUT-05: a dry run reports which conditions hold and what would be done, and changes nothing.
+func TestDryRunReportsWithoutActing(t *testing.T) {
+	e := newAutoEnv(t)
+	f := e.f
+	hot := e.item(t, e.editor, "Hot", map[string]any{"importance": "high"})
+	def := `{"when":{"type":"item.created"},"if":[{"field":"importance","op":"eq","value":"high"},{"field":"assignee","op":"empty"}],"then":[{"type":"comment","text":"Look at {item.title}"},{"type":"set_field","field":"importance","value":"low"}]}`
+	call := func(p *person, body map[string]any) reply {
+		return f.call(p, "POST", "/spaces/"+e.space+"/automation-rules/dry-run", body)
+	}
+	got := call(e.editor, map[string]any{"definition": json.RawMessage(def), "item_id": hot["id"]})
+	f.want(got, 200, "dry run")
+	if got.body["would_run"] != true || len(got.body["actions"].([]any)) != 2 || got.body["actions"].([]any)[0] != "Comment: Look at Hot" {
+		t.Fatalf("dry run: %+v", got.body)
+	}
+	if importanceOf(e, hot["id"].(string)) != "high" || f.queryID("SELECT count(*)::text FROM comments WHERE item_id=$1", hot["id"]) != "0" || f.queryID("SELECT count(*)::text FROM automation_runs") != "0" {
+		t.Fatal("a dry run must change nothing")
+	}
+	f.want(f.call(e.editor, "PATCH", "/items/"+hot["id"].(string), map[string]any{"assignee_ids": []string{e.editor.id}}, "If-Match", `"1"`), 200, "assign")
+	again := call(e.editor, map[string]any{"definition": json.RawMessage(def), "item_id": hot["id"]})
+	conds := again.body["conditions"].([]any)
+	if again.body["would_run"] != false || conds[0].(map[string]any)["holds"] != true || conds[1].(map[string]any)["holds"] != false || len(again.body["actions"].([]any)) != 0 {
+		t.Fatalf("a failing condition must be shown: %+v", again.body)
+	}
+	other := f.space("Other")
+	f.want(call(e.editor, map[string]any{"definition": json.RawMessage(def), "item_id": hot["id"]}), 200, "own space")
+	_ = other
+	f.want(f.call(e.editor, "POST", "/spaces/"+other+"/automation-rules/dry-run", map[string]any{"definition": json.RawMessage(def), "item_id": hot["id"]}), 404, "a Space the user cannot edit")
+	f.want(call(f.person("regular"), map[string]any{"definition": json.RawMessage(def), "item_id": hot["id"]}), 404, "no access")
+	f.want(call(e.editor, map[string]any{"definition": json.RawMessage(`{"when":{"type":"nope"},"then":[]}`), "item_id": hot["id"]}), 422, "invalid definition")
+	f.want(call(e.editor, map[string]any{"definition": json.RawMessage(def), "item_id": uuid.NewString()}), 404, "unknown item")
 }

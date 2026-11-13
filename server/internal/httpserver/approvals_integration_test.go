@@ -1,8 +1,12 @@
 package httpserver_test
 
 import (
+	"context"
 	"net/http"
 	"testing"
+	"time"
+
+	"github.com/anissaefuddin/pms/server/internal/httpserver"
 )
 
 func TestApprovals(t *testing.T) {
@@ -90,4 +94,109 @@ func TestApprovals(t *testing.T) {
 		t.Fatalf("approval must be gone: %v", got.body)
 	}
 	f.want(f.call(editor, "DELETE", "/approvals/"+id, nil), 404, "delete twice")
+}
+
+func TestApprovalHistoryIsAppendOnlyAndPinnedToItemVersion(t *testing.T) {
+	f := newFixture(t)
+	admin, approver, outsider := f.person("admin"), f.person("regular"), f.person("regular")
+	space := f.space("Work")
+	f.share(space, "user", approver.id, "read")
+	item := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": "Ship", "locations": []map[string]any{{"space_id": space}}})
+	f.want(item, 201, "create item")
+	itemID := item.body["id"].(string)
+	made := f.call(admin, "POST", "/items/"+itemID+"/approvals", map[string]any{"approver_ids": []string{approver.id}})
+	f.want(made, 201, "request")
+	id := made.body["id"].(string)
+	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "approved", "comment": "fine"}), 200, "decide")
+
+	// The decision is pinned to the item version at that moment, even when the item moves on afterwards.
+	f.exec("UPDATE items SET version=version+5 WHERE id=$1", itemID)
+	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "rejected", "comment": "changed my mind"}), 200, "re-decide")
+	hist := f.call(admin, "GET", "/items/"+itemID+"/approval-events", nil)
+	f.want(hist, 200, "history")
+	ev := hist.items()
+	if len(ev) != 3 || ev[0]["kind"] != "decided" || ev[0]["decision"] != "rejected" || ev[2]["kind"] != "approver_requested" {
+		t.Fatalf("history newest first: %v", ev)
+	}
+	if ev[1]["item_version"] == ev[0]["item_version"] || ev[0]["comment"] != "changed my mind" {
+		t.Fatalf("decisions must keep their own item version: %v", ev)
+	}
+	f.want(f.call(outsider, "GET", "/items/"+itemID+"/approval-events", nil), 404, "no access is 404")
+
+	// Deleting the approval is recorded, and the rows can never be changed or removed, not even by SQL.
+	f.want(f.call(admin, "DELETE", "/approvals/"+id, nil), 204, "withdraw")
+	if n := f.queryID("SELECT count(*)::text FROM approval_events WHERE item_id=$1", itemID); n != "4" {
+		t.Fatalf("history survives the approval: %s", n)
+	}
+	for _, q := range []string{"UPDATE approval_events SET comment='x'", "DELETE FROM approval_events", "TRUNCATE approval_events"} {
+		if _, err := f.pool.Exec(context.Background(), q); err == nil {
+			t.Fatalf("%s must be rejected", q)
+		}
+	}
+}
+
+func TestApprovalPoliciesReassignAndDeadlines(t *testing.T) {
+	f := newFixture(t)
+	admin, first, second, replacement := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
+	space := f.space("Approval deadlines")
+	for _, reviewer := range []*person{first, second, replacement} {
+		f.share(space, "user", reviewer.id, "read")
+	}
+	item := f.call(admin, "POST", "/items", map[string]any{"type": "task", "title": "Release", "locations": []map[string]any{{"space_id": space}}})
+	f.want(item, 201, "create item")
+	path := "/items/" + item.body["id"].(string) + "/approvals"
+	makeApproval := func(policy string) reply {
+		got := f.call(admin, "POST", path, map[string]any{"policy": policy, "due_date": "2026-11-13", "approver_ids": []string{first.id, second.id}})
+		f.want(got, 201, "request approval")
+		if got.body["policy"] != policy {
+			t.Fatalf("policy: %v", got.body)
+		}
+		return got
+	}
+	decide := func(r reply, actor *person, vote, want string) {
+		got := f.call(actor, "PUT", "/approvals/"+r.body["id"].(string)+"/decision", map[string]string{"decision": vote})
+		f.want(got, 200, "decide")
+		if got.body["status"] != want {
+			t.Fatalf("wanted %s: %v", want, got.body)
+		}
+	}
+	anyApproval := makeApproval("any")
+	decide(anyApproval, first, "rejected", "pending")
+	decide(anyApproval, second, "rejected", "rejected")
+	decide(anyApproval, second, "approved", "approved")
+	all := makeApproval("all")
+	decide(all, first, "approved", "pending")
+	id := all.body["id"].(string)
+	body := map[string]any{"approver_ids": []string{first.id, replacement.id}}
+	f.want(f.call(admin, "PATCH", "/approvals/"+id, body, "If-Match", all.header.Get("ETag")), 409, "stale reassign")
+	f.want(f.call(second, "PATCH", "/approvals/"+id, body, "If-Match", `"2"`), 403, "viewer cannot reassign")
+	got := f.call(admin, "PATCH", "/approvals/"+id, body, "If-Match", `"2"`)
+	f.want(got, 200, "reassign")
+	if got.body["approved_count"] != float64(1) {
+		t.Fatalf("reassign erased a retained vote: %v", got.body)
+	}
+	f.want(f.call(second, "PUT", "/approvals/"+id+"/decision", map[string]string{"decision": "approved"}), 403, "old reviewer loses decision rights")
+	if n := f.queryID("SELECT count(*)::text FROM approval_events WHERE approval_id=$1 AND ((kind='approver_removed' AND subject_id=$2) OR (kind='approver_requested' AND subject_id=$3))", id, second.id, replacement.id); n != "2" {
+		t.Fatalf("reassignment history count: %s", n)
+	}
+	for _, day := range []int{12, 13, 13, 14, 14} {
+		err := httpserver.DeliverApprovalDeadlines(t.Context(), f.pool, time.Date(2026, 11, day, 12, 0, 0, 0, time.UTC), f.queue.NotifyTx)
+		if err != nil {
+			t.Fatal(err)
+		}
+		want := "0"
+		if day >= 13 {
+			want = "1"
+		}
+		if n := f.queryID("SELECT count(*)::text FROM notifications WHERE kind='approval_reminder' AND recipient_id=$1", replacement.id); n != want {
+			t.Fatalf("reminder count on day %d: %s", day, n)
+		}
+	}
+	if n := f.queryID("SELECT count(*)::text FROM notifications WHERE kind='approval_escalated' AND recipient_id=$1", admin.id); n != "1" {
+		t.Fatalf("escalation count: %s", n)
+	}
+	if n := f.queryID("SELECT count(*)::text FROM notifications WHERE kind IN ('approval_reminder','approval_escalated')"); n != "2" {
+		t.Fatalf("unexpected deadline notifications: %s", n)
+	}
+	decide(all, replacement, "approved", "approved")
 }

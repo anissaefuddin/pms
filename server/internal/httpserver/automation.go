@@ -3,6 +3,7 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"github.com/anissaefuddin/pms/server/internal/automation"
 )
@@ -15,6 +16,62 @@ func (s *Server) automationRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/automation-rules/{ruleId}", s.requireUser(s.deleteAutomationRule))
 	mux.HandleFunc("PUT /api/v1/automation-rules/{ruleId}/draft", s.requireUser(s.saveAutomationDraft))
 	mux.HandleFunc("POST /api/v1/automation-rules/{ruleId}/publish", s.requireUser(s.publishAutomationRule))
+	mux.HandleFunc("GET /api/v1/automation-rules/{ruleId}/runs", s.requireUser(s.listAutomationRuns))
+	mux.HandleFunc("GET /api/v1/automation/dead-events", s.requireUser(s.listDeadEvents))
+	mux.HandleFunc("POST /api/v1/automation/events/{eventId}/replay", s.requireUser(s.replayEvent))
+	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/automation-rules/dry-run", s.requireUser(s.dryRunAutomation))
+}
+
+func (s *Server) listAutomationRuns(w http.ResponseWriter, r *http.Request) {
+	limit := 50
+	if v := r.URL.Query().Get("limit"); v != "" {
+		n, err := strconv.Atoi(v)
+		if err != nil {
+			writeError(w, http.StatusUnprocessableEntity, "limit must be a number")
+			return
+		}
+		limit = n
+	}
+	runs, next, err := automation.Runs(r.Context(), s.pool, actorOf(r), r.PathValue("ruleId"), r.URL.Query().Get("status"), r.URL.Query().Get("cursor"), limit)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": runs, "next_cursor": next})
+}
+
+func (s *Server) listDeadEvents(w http.ResponseWriter, r *http.Request) {
+	dead, err := automation.DeadEvents(r.Context(), s.pool, actorOf(r))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": dead})
+}
+
+func (s *Server) replayEvent(w http.ResponseWriter, r *http.Request) {
+	cleared, err := automation.Replay(r.Context(), s.pool, actorOf(r), r.PathValue("eventId"))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"requeued": true, "reopened_runs": cleared})
+}
+
+func (s *Server) dryRunAutomation(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Definition json.RawMessage `json:"definition"`
+		ItemID     string          `json:"item_id"`
+	}
+	if !decode(w, r, &in) {
+		return
+	}
+	result, err := automation.New(s.pool).DryRun(r.Context(), actorOf(r), r.PathValue("spaceId"), in.Definition, in.ItemID)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, result)
 }
 
 func (s *Server) listAutomationRules(w http.ResponseWriter, r *http.Request) {

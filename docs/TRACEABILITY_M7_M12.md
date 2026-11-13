@@ -48,8 +48,8 @@
 | AUT-03 | S9.1.3 | Loop berhenti; aksi tanpa izin ditolak; paralel aman | Tes loop, izin, konkurensi | |
 | AUT-04 | S9.1.4 | Log lengkap; retry, dead job, replay idempoten | Integrasi | |
 | AUT-05 | S9.1.5 | Pengguna membuat, menguji, menonaktifkan aturan dari UI | E2E-PAR-04 | |
-| APR-01 | S9.2.1 | Any/All menghasilkan keputusan sesuai kebijakan | E2E-PAR-06 | |
-| APR-02 | S9.2.2 | Reassign tercatat; pengingat dan eskalasi terkirim | Integrasi | |
+| APR-01 | S9.2.1 | Any/All menghasilkan keputusan sesuai kebijakan | E2E-PAR-06 | [TESTING](TESTING.md#s921-dan-s922--approval-m9) |
+| APR-02 | S9.2.2 | Reassign tercatat; pengingat dan eskalasi terkirim | Integrasi | [TESTING](TESTING.md#s921-dan-s922--approval-m9) |
 | APR-03 | S9.2.3 | Riwayat tidak dapat diubah; keputusan menunjuk versi | Integrasi | |
 
 ## M10 — Resource, jadwal, biaya

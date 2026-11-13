@@ -55,10 +55,9 @@ func applyApprovalOutcome(ctx context.Context, tx pgx.Tx, actor policy.Actor, ap
 	var result string
 	var target *uuid.UUID
 	var trigger *uuid.UUID
-	err := tx.QueryRow(ctx, `SELECT CASE WHEN EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='rejected') THEN 'rejected'
- WHEN NOT EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision IS DISTINCT FROM 'approved') THEN 'approved' ELSE 'pending' END,
- CASE WHEN EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='rejected') THEN a.on_rejected_status_id ELSE a.on_approved_status_id END, a.trigger_status_id
-FROM approvals a WHERE a.id=$1`, approvalID).Scan(&result, &target, &trigger)
+	err := tx.QueryRow(ctx, `SELECT outcome.status,
+ CASE outcome.status WHEN 'rejected' THEN a.on_rejected_status_id WHEN 'approved' THEN a.on_approved_status_id END, a.trigger_status_id
+ FROM approvals a CROSS JOIN LATERAL (SELECT `+approvalOutcome+` AS status) outcome WHERE a.id=$1`, approvalID).Scan(&result, &target, &trigger)
 	if err != nil || result == "pending" || target == nil || trigger == nil {
 		return err
 	}

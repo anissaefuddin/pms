@@ -276,6 +276,24 @@ func (e ApprovalApproversDecision) Valid() bool {
 	}
 }
 
+// Defines values for ApprovalPolicy.
+const (
+	ApprovalPolicyAll ApprovalPolicy = "all"
+	ApprovalPolicyAny ApprovalPolicy = "any"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalPolicy enum.
+func (e ApprovalPolicy) Valid() bool {
+	switch e {
+	case ApprovalPolicyAll:
+		return true
+	case ApprovalPolicyAny:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ApprovalStatus.
 const (
 	ApprovalStatusApproved ApprovalStatus = "approved"
@@ -291,6 +309,84 @@ func (e ApprovalStatus) Valid() bool {
 	case ApprovalStatusPending:
 		return true
 	case ApprovalStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApprovalEventDecision.
+const (
+	ApprovalEventDecisionApproved ApprovalEventDecision = "approved"
+	ApprovalEventDecisionRejected ApprovalEventDecision = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalEventDecision enum.
+func (e ApprovalEventDecision) Valid() bool {
+	switch e {
+	case ApprovalEventDecisionApproved:
+		return true
+	case ApprovalEventDecisionRejected:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApprovalEventKind.
+const (
+	ApproverRemoved   ApprovalEventKind = "approver_removed"
+	ApproverRequested ApprovalEventKind = "approver_requested"
+	Decided           ApprovalEventKind = "decided"
+	Withdrawn         ApprovalEventKind = "withdrawn"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalEventKind enum.
+func (e ApprovalEventKind) Valid() bool {
+	switch e {
+	case ApproverRemoved:
+		return true
+	case ApproverRequested:
+		return true
+	case Decided:
+		return true
+	case Withdrawn:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApprovalInputPolicy.
+const (
+	ApprovalInputPolicyAll ApprovalInputPolicy = "all"
+	ApprovalInputPolicyAny ApprovalInputPolicy = "any"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalInputPolicy enum.
+func (e ApprovalInputPolicy) Valid() bool {
+	switch e {
+	case ApprovalInputPolicyAll:
+		return true
+	case ApprovalInputPolicyAny:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApprovalPatchPolicy.
+const (
+	ApprovalPatchPolicyAll ApprovalPatchPolicy = "all"
+	ApprovalPatchPolicyAny ApprovalPatchPolicy = "any"
+)
+
+// Valid indicates whether the value is a known member of the ApprovalPatchPolicy enum.
+func (e ApprovalPatchPolicy) Valid() bool {
+	switch e {
+	case ApprovalPatchPolicyAll:
+		return true
+	case ApprovalPatchPolicyAny:
 		return true
 	default:
 		return false
@@ -327,6 +423,36 @@ func (e AssigneeAllocationUpdateAllocationUnit) Valid() bool {
 	case AssigneeAllocationUpdateAllocationUnitMinutesPerDay:
 		return true
 	case AssigneeAllocationUpdateAllocationUnitPercent:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AutomationRunStatus.
+const (
+	AutomationRunStatusDenied       AutomationRunStatus = "denied"
+	AutomationRunStatusDone         AutomationRunStatus = "done"
+	AutomationRunStatusFailed       AutomationRunStatus = "failed"
+	AutomationRunStatusLoopBlocked  AutomationRunStatus = "loop_blocked"
+	AutomationRunStatusQuotaBlocked AutomationRunStatus = "quota_blocked"
+	AutomationRunStatusSkipped      AutomationRunStatus = "skipped"
+)
+
+// Valid indicates whether the value is a known member of the AutomationRunStatus enum.
+func (e AutomationRunStatus) Valid() bool {
+	switch e {
+	case AutomationRunStatusDenied:
+		return true
+	case AutomationRunStatusDone:
+		return true
+	case AutomationRunStatusFailed:
+		return true
+	case AutomationRunStatusLoopBlocked:
+		return true
+	case AutomationRunStatusQuotaBlocked:
+		return true
+	case AutomationRunStatusSkipped:
 		return true
 	default:
 		return false
@@ -1338,8 +1464,11 @@ func (e MeUpdateWeekStart) Valid() bool {
 // Defines values for NotificationKind.
 const (
 	NotificationKindApprovalDecided   NotificationKind = "approval_decided"
+	NotificationKindApprovalEscalated NotificationKind = "approval_escalated"
+	NotificationKindApprovalReminder  NotificationKind = "approval_reminder"
 	NotificationKindApprovalRequested NotificationKind = "approval_requested"
 	NotificationKindAssigned          NotificationKind = "assigned"
+	NotificationKindAutomation        NotificationKind = "automation"
 	NotificationKindComment           NotificationKind = "comment"
 	NotificationKindMention           NotificationKind = "mention"
 	NotificationKindShared            NotificationKind = "shared"
@@ -1351,9 +1480,15 @@ func (e NotificationKind) Valid() bool {
 	switch e {
 	case NotificationKindApprovalDecided:
 		return true
+	case NotificationKindApprovalEscalated:
+		return true
+	case NotificationKindApprovalReminder:
+		return true
 	case NotificationKindApprovalRequested:
 		return true
 	case NotificationKindAssigned:
+		return true
+	case NotificationKindAutomation:
 		return true
 	case NotificationKindComment:
 		return true
@@ -1965,6 +2100,36 @@ func (e DecideApprovalJSONBodyDecision) Valid() bool {
 	}
 }
 
+// Defines values for ListAutomationRunsParamsStatus.
+const (
+	ListAutomationRunsParamsStatusDenied       ListAutomationRunsParamsStatus = "denied"
+	ListAutomationRunsParamsStatusDone         ListAutomationRunsParamsStatus = "done"
+	ListAutomationRunsParamsStatusFailed       ListAutomationRunsParamsStatus = "failed"
+	ListAutomationRunsParamsStatusLoopBlocked  ListAutomationRunsParamsStatus = "loop_blocked"
+	ListAutomationRunsParamsStatusQuotaBlocked ListAutomationRunsParamsStatus = "quota_blocked"
+	ListAutomationRunsParamsStatusSkipped      ListAutomationRunsParamsStatus = "skipped"
+)
+
+// Valid indicates whether the value is a known member of the ListAutomationRunsParamsStatus enum.
+func (e ListAutomationRunsParamsStatus) Valid() bool {
+	switch e {
+	case ListAutomationRunsParamsStatusDenied:
+		return true
+	case ListAutomationRunsParamsStatusDone:
+		return true
+	case ListAutomationRunsParamsStatusFailed:
+		return true
+	case ListAutomationRunsParamsStatusLoopBlocked:
+		return true
+	case ListAutomationRunsParamsStatusQuotaBlocked:
+		return true
+	case ListAutomationRunsParamsStatusSkipped:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListProjectTimeEntriesParamsBillingType.
 const (
 	ListProjectTimeEntriesParamsBillingTypeBillable    ListProjectTimeEntriesParamsBillingType = "billable"
@@ -2437,8 +2602,9 @@ type Approval struct {
 	DueDate     *openapi_types.Date `json:"due_date"`
 	Id          openapi_types.UUID  `json:"id"`
 	ItemId      openapi_types.UUID  `json:"item_id"`
+	Policy      ApprovalPolicy      `json:"policy"`
 
-	// Status rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+	// Status Any menerima satu persetujuan dan menolak bila semua menolak. All menerima bila semua menyetujui dan menolak pada penolakan pertama.
 	Status  ApprovalStatus `json:"status"`
 	Total   int32          `json:"total"`
 	Version int32          `json:"version"`
@@ -2447,22 +2613,54 @@ type Approval struct {
 // ApprovalApproversDecision defines model for Approval.Approvers.Decision.
 type ApprovalApproversDecision string
 
-// ApprovalStatus rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+// ApprovalPolicy defines model for Approval.Policy.
+type ApprovalPolicy string
+
+// ApprovalStatus Any menerima satu persetujuan dan menolak bila semua menolak. All menerima bila semua menyetujui dan menolak pada penolakan pertama.
 type ApprovalStatus string
+
+// ApprovalEvent defines model for ApprovalEvent.
+type ApprovalEvent struct {
+	Actor      *UserRef               `json:"actor"`
+	ApprovalId openapi_types.UUID     `json:"approval_id"`
+	Comment    string                 `json:"comment"`
+	CreatedAt  time.Time              `json:"created_at"`
+	Decision   *ApprovalEventDecision `json:"decision"`
+	Id         int64                  `json:"id"`
+
+	// ItemVersion Versi item saat peristiwa terjadi
+	ItemVersion *int32            `json:"item_version"`
+	Kind        ApprovalEventKind `json:"kind"`
+	Subject     *UserRef          `json:"subject"`
+}
+
+// ApprovalEventDecision defines model for ApprovalEvent.Decision.
+type ApprovalEventDecision string
+
+// ApprovalEventKind defines model for ApprovalEvent.Kind.
+type ApprovalEventKind string
 
 // ApprovalInput defines model for ApprovalInput.
 type ApprovalInput struct {
 	ApproverIds []openapi_types.UUID `json:"approver_ids"`
 	Description *string              `json:"description,omitempty"`
 	DueDate     *openapi_types.Date  `json:"due_date,omitempty"`
+	Policy      *ApprovalInputPolicy `json:"policy,omitempty"`
 }
+
+// ApprovalInputPolicy defines model for ApprovalInput.Policy.
+type ApprovalInputPolicy string
 
 // ApprovalPatch defines model for ApprovalPatch.
 type ApprovalPatch struct {
 	ApproverIds *[]openapi_types.UUID `json:"approver_ids,omitempty"`
 	Description *string               `json:"description,omitempty"`
 	DueDate     *openapi_types.Date   `json:"due_date,omitempty"`
+	Policy      *ApprovalPatchPolicy  `json:"policy,omitempty"`
 }
+
+// ApprovalPatchPolicy defines model for ApprovalPatch.Policy.
+type ApprovalPatchPolicy string
 
 // AssigneeAllocation defines model for AssigneeAllocation.
 type AssigneeAllocation struct {
@@ -2516,6 +2714,26 @@ type AutomationRule struct {
 	SpaceId          openapi_types.UUID   `json:"space_id"`
 	Versions         *[]AutomationVersion `json:"versions,omitempty"`
 }
+
+// AutomationRun defines model for AutomationRun.
+type AutomationRun struct {
+	// ActionIndex -1 untuk hasil tingkat aturan
+	ActionIndex int                 `json:"action_index"`
+	ActorId     *openapi_types.UUID `json:"actor_id,omitempty"`
+	CreatedAt   string              `json:"created_at"`
+	Detail      string              `json:"detail"`
+	EventId     openapi_types.UUID  `json:"event_id"`
+	EventType   string              `json:"event_type"`
+	Id          openapi_types.UUID  `json:"id"`
+	ItemId      *openapi_types.UUID `json:"item_id,omitempty"`
+	ItemTitle   *string             `json:"item_title,omitempty"`
+	RuleId      openapi_types.UUID  `json:"rule_id"`
+	Status      AutomationRunStatus `json:"status"`
+	Version     int                 `json:"version"`
+}
+
+// AutomationRunStatus defines model for AutomationRun.Status.
+type AutomationRunStatus string
 
 // AutomationVersion defines model for AutomationVersion.
 type AutomationVersion struct {
@@ -4166,6 +4384,16 @@ type SaveAutomationDraftJSONBody struct {
 	Definition AutomationDefinition `json:"definition"`
 }
 
+// ListAutomationRunsParams defines parameters for ListAutomationRuns.
+type ListAutomationRunsParams struct {
+	Limit  *Limit                          `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor                         `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Status *ListAutomationRunsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// ListAutomationRunsParamsStatus defines parameters for ListAutomationRuns.
+type ListAutomationRunsParamsStatus string
+
 // CreateItemsFromBlueprintJSONBody defines parameters for CreateItemsFromBlueprint.
 type CreateItemsFromBlueprintJSONBody struct {
 	Locations []Location          `json:"locations"`
@@ -4536,6 +4764,13 @@ type CreateAutomationRuleJSONBody struct {
 	Name       string               `json:"name"`
 }
 
+// DryRunAutomationJSONBody defines parameters for DryRunAutomation.
+type DryRunAutomationJSONBody struct {
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	Definition AutomationDefinition `json:"definition"`
+	ItemId     openapi_types.UUID   `json:"item_id"`
+}
+
 // CreateBlueprintJSONBody defines parameters for CreateBlueprint.
 type CreateBlueprintJSONBody struct {
 	Name         string             `json:"name"`
@@ -4842,6 +5077,9 @@ type UpdateSpaceJSONRequestBody = SpaceUpdate
 
 // CreateAutomationRuleJSONRequestBody defines body for CreateAutomationRule for application/json ContentType.
 type CreateAutomationRuleJSONRequestBody CreateAutomationRuleJSONBody
+
+// DryRunAutomationJSONRequestBody defines body for DryRunAutomation for application/json ContentType.
+type DryRunAutomationJSONRequestBody DryRunAutomationJSONBody
 
 // CreateBlueprintJSONRequestBody defines body for CreateBlueprint for application/json ContentType.
 type CreateBlueprintJSONRequestBody CreateBlueprintJSONBody
@@ -5172,7 +5410,7 @@ type ServerInterface interface {
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
-	// UpdateApproval Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya
+	// UpdateApproval Ubah kebijakan, deskripsi, tenggat, atau reassign daftar approver dengan If-Match. Keputusan approver yang dipertahankan tetap berlaku; penghapusan dan penambahan dicatat pada riwayat.
 	// (PATCH /approvals/{approvalId})
 	UpdateApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID, params UpdateApprovalParams)
 	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
@@ -5223,6 +5461,15 @@ type ServerInterface interface {
 	// PublishAutomationRule Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi
 	// (POST /automation-rules/{ruleId}/publish)
 	PublishAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// ListAutomationRuns Log eksekusi sebuah aturan, terbaru dulu (AUT-04)
+	// (GET /automation-rules/{ruleId}/runs)
+	ListAutomationRuns(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID, params ListAutomationRunsParams)
+	// ListDeadAutomationEvents Event yang diparkir pengirim setelah gagal berulang (hanya admin)
+	// (GET /automation/dead-events)
+	ListDeadAutomationEvents(w http.ResponseWriter, r *http.Request)
+	// ReplayAutomationEvent Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi
+	// (POST /automation/events/{eventId}/replay)
+	ReplayAutomationEvent(w http.ResponseWriter, r *http.Request, eventId openapi_types.UUID)
 	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
@@ -5355,6 +5602,9 @@ type ServerInterface interface {
 	// ListActivity Riwayat perubahan item (SPC-07)
 	// (GET /items/{itemId}/activity)
 	ListActivity(w http.ResponseWriter, r *http.Request, itemId ItemId, params ListActivityParams)
+	// ListItemApprovalEvents Riwayat approval append-only pada item, terbaru dulu; keputusan dipin ke versi item (S9.2.3)
+	// (GET /items/{itemId}/approval-events)
+	ListItemApprovalEvents(w http.ResponseWriter, r *http.Request, itemId ItemId)
 	// ListItemApprovals Approval pada item beserta keputusan tiap approver (SPC-12)
 	// (GET /items/{itemId}/approvals)
 	ListItemApprovals(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -5550,6 +5800,9 @@ type ServerInterface interface {
 	// CreateAutomationRule Buat aturan sebagai draft; pembuatnya menjadi pemilik dan aturan berjalan dengan hak pemilik (AUT-03)
 	// (POST /spaces/{spaceId}/automation-rules)
 	CreateAutomationRule(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// DryRunAutomation Uji definisi pada satu item tanpa menjalankan apa pun (AUT-05)
+	// (POST /spaces/{spaceId}/automation-rules/dry-run)
+	DryRunAutomation(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
 	// (GET /spaces/{spaceId}/blueprints)
 	ListBlueprints(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -6129,6 +6382,114 @@ func (siw *ServerInterfaceWrapper) PublishAutomationRule(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PublishAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAutomationRuns operation middleware
+func (siw *ServerInterfaceWrapper) ListAutomationRuns(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListAutomationRunsParams
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAutomationRuns(w, r, ruleId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListDeadAutomationEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListDeadAutomationEvents(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListDeadAutomationEvents(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReplayAutomationEvent operation middleware
+func (siw *ServerInterfaceWrapper) ReplayAutomationEvent(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "eventId" -------------
+	var eventId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "eventId", r.PathValue("eventId"), &eventId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "eventId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReplayAutomationEvent(w, r, eventId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -7483,6 +7844,32 @@ func (siw *ServerInterfaceWrapper) ListActivity(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListActivity(w, r, itemId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListItemApprovalEvents operation middleware
+func (siw *ServerInterfaceWrapper) ListItemApprovalEvents(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId ItemId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListItemApprovalEvents(w, r, itemId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9585,6 +9972,32 @@ func (siw *ServerInterfaceWrapper) CreateAutomationRule(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// DryRunAutomation operation middleware
+func (siw *ServerInterfaceWrapper) DryRunAutomation(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DryRunAutomation(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListBlueprints operation middleware
 func (siw *ServerInterfaceWrapper) ListBlueprints(w http.ResponseWriter, r *http.Request) {
 
@@ -11130,6 +11543,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/automation-rules/{ruleId}", wrapper.UpdateAutomationRule)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/automation-rules/{ruleId}/draft", wrapper.SaveAutomationDraft)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/publish", wrapper.PublishAutomationRule)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation-rules/{ruleId}/runs", wrapper.ListAutomationRuns)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation/dead-events", wrapper.ListDeadAutomationEvents)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation/events/{eventId}/replay", wrapper.ReplayAutomationEvent)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules/dry-run", wrapper.DryRunAutomation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-templates", wrapper.ListSpaceTemplates)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates/{templateId}/spaces", wrapper.CreateSpaceFromTemplate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces", wrapper.ListSpaces)
@@ -11196,6 +11613,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/statuses/{statusId}", wrapper.UpdateStatus)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/approvals", wrapper.ListItemApprovals)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/approvals", wrapper.CreateItemApproval)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/approval-events", wrapper.ListItemApprovalEvents)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/approvals/{approvalId}", wrapper.DeleteApproval)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/approvals/{approvalId}", wrapper.UpdateApproval)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/approvals/{approvalId}/decision", wrapper.DecideApproval)
@@ -12459,6 +12877,177 @@ func (response PublishAutomationRule422ApplicationProblemPlusJSONResponse) Visit
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationRunsRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+	Params ListAutomationRunsParams
+}
+
+type ListAutomationRunsResponseObject interface {
+	VisitListAutomationRunsResponse(w http.ResponseWriter) error
+}
+
+type ListAutomationRuns200JSONResponse struct {
+	Items      []AutomationRun `json:"items"`
+	NextCursor *string         `json:"next_cursor,omitempty"`
+}
+
+func (response ListAutomationRuns200JSONResponse) VisitListAutomationRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationRuns403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAutomationRuns403ApplicationProblemPlusJSONResponse) VisitListAutomationRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationRuns404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListAutomationRuns404ApplicationProblemPlusJSONResponse) VisitListAutomationRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationRuns422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListAutomationRuns422ApplicationProblemPlusJSONResponse) VisitListAutomationRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDeadAutomationEventsRequestObject struct {
+}
+
+type ListDeadAutomationEventsResponseObject interface {
+	VisitListDeadAutomationEventsResponse(w http.ResponseWriter) error
+}
+
+type ListDeadAutomationEvents200JSONResponse struct {
+	Items []struct {
+		Attempts  int                 `json:"attempts"`
+		CreatedAt string              `json:"created_at"`
+		EventId   openapi_types.UUID  `json:"event_id"`
+		ItemId    *openapi_types.UUID `json:"item_id,omitempty"`
+		LastError string              `json:"last_error"`
+		Type      string              `json:"type"`
+	} `json:"items"`
+}
+
+func (response ListDeadAutomationEvents200JSONResponse) VisitListDeadAutomationEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListDeadAutomationEvents403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListDeadAutomationEvents403ApplicationProblemPlusJSONResponse) VisitListDeadAutomationEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplayAutomationEventRequestObject struct {
+	EventId openapi_types.UUID `json:"eventId"`
+}
+
+type ReplayAutomationEventResponseObject interface {
+	VisitReplayAutomationEventResponse(w http.ResponseWriter) error
+}
+
+type ReplayAutomationEvent200JSONResponse struct {
+	ReopenedRuns int  `json:"reopened_runs"`
+	Requeued     bool `json:"requeued"`
+}
+
+func (response ReplayAutomationEvent200JSONResponse) VisitReplayAutomationEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplayAutomationEvent403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReplayAutomationEvent403ApplicationProblemPlusJSONResponse) VisitReplayAutomationEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReplayAutomationEvent404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReplayAutomationEvent404ApplicationProblemPlusJSONResponse) VisitReplayAutomationEventResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -15195,6 +15784,46 @@ func (response ListActivity200JSONResponse) VisitListActivityResponse(w http.Res
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemApprovalEventsRequestObject struct {
+	ItemId ItemId `json:"itemId"`
+}
+
+type ListItemApprovalEventsResponseObject interface {
+	VisitListItemApprovalEventsResponse(w http.ResponseWriter) error
+}
+
+type ListItemApprovalEvents200JSONResponse struct {
+	Items []ApprovalEvent `json:"items"`
+}
+
+func (response ListItemApprovalEvents200JSONResponse) VisitListItemApprovalEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemApprovalEvents404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListItemApprovalEvents404ApplicationProblemPlusJSONResponse) VisitListItemApprovalEventsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -18602,6 +19231,81 @@ func (response CreateAutomationRule422ApplicationProblemPlusJSONResponse) VisitC
 	return err
 }
 
+type DryRunAutomationRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *DryRunAutomationJSONRequestBody
+}
+
+type DryRunAutomationResponseObject interface {
+	VisitDryRunAutomationResponse(w http.ResponseWriter) error
+}
+
+type DryRunAutomation200JSONResponse struct {
+	Actions    []string `json:"actions"`
+	Conditions []struct {
+		Holds bool `json:"holds"`
+		Index int  `json:"index"`
+	} `json:"conditions"`
+	ItemTitle string `json:"item_title"`
+	WouldRun  bool   `json:"would_run"`
+}
+
+func (response DryRunAutomation200JSONResponse) VisitDryRunAutomationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DryRunAutomation403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DryRunAutomation403ApplicationProblemPlusJSONResponse) VisitDryRunAutomationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DryRunAutomation404ApplicationProblemPlusJSONResponse Problem
+
+func (response DryRunAutomation404ApplicationProblemPlusJSONResponse) VisitDryRunAutomationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DryRunAutomation422ApplicationProblemPlusJSONResponse Problem
+
+func (response DryRunAutomation422ApplicationProblemPlusJSONResponse) VisitDryRunAutomationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListBlueprintsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -21067,7 +21771,7 @@ type StrictServerInterface interface {
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(ctx context.Context, request DeleteApprovalRequestObject) (DeleteApprovalResponseObject, error)
-	// UpdateApproval Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya
+	// UpdateApproval Ubah kebijakan, deskripsi, tenggat, atau reassign daftar approver dengan If-Match. Keputusan approver yang dipertahankan tetap berlaku; penghapusan dan penambahan dicatat pada riwayat.
 	// (PATCH /approvals/{approvalId})
 	UpdateApproval(ctx context.Context, request UpdateApprovalRequestObject) (UpdateApprovalResponseObject, error)
 	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
@@ -21118,6 +21822,15 @@ type StrictServerInterface interface {
 	// PublishAutomationRule Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi
 	// (POST /automation-rules/{ruleId}/publish)
 	PublishAutomationRule(ctx context.Context, request PublishAutomationRuleRequestObject) (PublishAutomationRuleResponseObject, error)
+	// ListAutomationRuns Log eksekusi sebuah aturan, terbaru dulu (AUT-04)
+	// (GET /automation-rules/{ruleId}/runs)
+	ListAutomationRuns(ctx context.Context, request ListAutomationRunsRequestObject) (ListAutomationRunsResponseObject, error)
+	// ListDeadAutomationEvents Event yang diparkir pengirim setelah gagal berulang (hanya admin)
+	// (GET /automation/dead-events)
+	ListDeadAutomationEvents(ctx context.Context, request ListDeadAutomationEventsRequestObject) (ListDeadAutomationEventsResponseObject, error)
+	// ReplayAutomationEvent Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi
+	// (POST /automation/events/{eventId}/replay)
+	ReplayAutomationEvent(ctx context.Context, request ReplayAutomationEventRequestObject) (ReplayAutomationEventResponseObject, error)
 	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(ctx context.Context, request DeleteBlueprintRequestObject) (DeleteBlueprintResponseObject, error)
@@ -21250,6 +21963,9 @@ type StrictServerInterface interface {
 	// ListActivity Riwayat perubahan item (SPC-07)
 	// (GET /items/{itemId}/activity)
 	ListActivity(ctx context.Context, request ListActivityRequestObject) (ListActivityResponseObject, error)
+	// ListItemApprovalEvents Riwayat approval append-only pada item, terbaru dulu; keputusan dipin ke versi item (S9.2.3)
+	// (GET /items/{itemId}/approval-events)
+	ListItemApprovalEvents(ctx context.Context, request ListItemApprovalEventsRequestObject) (ListItemApprovalEventsResponseObject, error)
 	// ListItemApprovals Approval pada item beserta keputusan tiap approver (SPC-12)
 	// (GET /items/{itemId}/approvals)
 	ListItemApprovals(ctx context.Context, request ListItemApprovalsRequestObject) (ListItemApprovalsResponseObject, error)
@@ -21445,6 +22161,9 @@ type StrictServerInterface interface {
 	// CreateAutomationRule Buat aturan sebagai draft; pembuatnya menjadi pemilik dan aturan berjalan dengan hak pemilik (AUT-03)
 	// (POST /spaces/{spaceId}/automation-rules)
 	CreateAutomationRule(ctx context.Context, request CreateAutomationRuleRequestObject) (CreateAutomationRuleResponseObject, error)
+	// DryRunAutomation Uji definisi pada satu item tanpa menjalankan apa pun (AUT-05)
+	// (POST /spaces/{spaceId}/automation-rules/dry-run)
+	DryRunAutomation(ctx context.Context, request DryRunAutomationRequestObject) (DryRunAutomationResponseObject, error)
 	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
 	// (GET /spaces/{spaceId}/blueprints)
 	ListBlueprints(ctx context.Context, request ListBlueprintsRequestObject) (ListBlueprintsResponseObject, error)
@@ -22213,6 +22932,83 @@ func (sh *strictHandler) PublishAutomationRule(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PublishAutomationRuleResponseObject); ok {
 		if err := validResponse.VisitPublishAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAutomationRuns operation middleware
+func (sh *strictHandler) ListAutomationRuns(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID, params ListAutomationRunsParams) {
+	var request ListAutomationRunsRequestObject
+
+	request.RuleId = ruleId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAutomationRuns(ctx, request.(ListAutomationRunsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAutomationRuns")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAutomationRunsResponseObject); ok {
+		if err := validResponse.VisitListAutomationRunsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListDeadAutomationEvents operation middleware
+func (sh *strictHandler) ListDeadAutomationEvents(w http.ResponseWriter, r *http.Request) {
+	var request ListDeadAutomationEventsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListDeadAutomationEvents(ctx, request.(ListDeadAutomationEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListDeadAutomationEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListDeadAutomationEventsResponseObject); ok {
+		if err := validResponse.VisitListDeadAutomationEventsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReplayAutomationEvent operation middleware
+func (sh *strictHandler) ReplayAutomationEvent(w http.ResponseWriter, r *http.Request, eventId openapi_types.UUID) {
+	var request ReplayAutomationEventRequestObject
+
+	request.EventId = eventId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReplayAutomationEvent(ctx, request.(ReplayAutomationEventRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReplayAutomationEvent")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReplayAutomationEventResponseObject); ok {
+		if err := validResponse.VisitReplayAutomationEventResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -23494,6 +24290,32 @@ func (sh *strictHandler) ListActivity(w http.ResponseWriter, r *http.Request, it
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListActivityResponseObject); ok {
 		if err := validResponse.VisitListActivityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListItemApprovalEvents operation middleware
+func (sh *strictHandler) ListItemApprovalEvents(w http.ResponseWriter, r *http.Request, itemId ItemId) {
+	var request ListItemApprovalEventsRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListItemApprovalEvents(ctx, request.(ListItemApprovalEventsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListItemApprovalEvents")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListItemApprovalEventsResponseObject); ok {
+		if err := validResponse.VisitListItemApprovalEventsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -25325,6 +26147,39 @@ func (sh *strictHandler) CreateAutomationRule(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateAutomationRuleResponseObject); ok {
 		if err := validResponse.VisitCreateAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DryRunAutomation operation middleware
+func (sh *strictHandler) DryRunAutomation(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request DryRunAutomationRequestObject
+
+	request.SpaceId = spaceId
+
+	var body DryRunAutomationJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DryRunAutomation(ctx, request.(DryRunAutomationRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DryRunAutomation")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DryRunAutomationResponseObject); ok {
+		if err := validResponse.VisitDryRunAutomationResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

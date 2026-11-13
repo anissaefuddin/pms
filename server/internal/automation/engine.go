@@ -136,6 +136,9 @@ SELECT DISTINCT parent_id FROM up WHERE parent_id IS NOT NULL`, itemID)
 func (g *Engine) outcome(ctx context.Context, e events.Event, c candidate, index int, status, detail string) (bool, error) {
 	tag, err := g.Pool.Exec(ctx, `INSERT INTO automation_runs(id,rule_id,rule_version_id,event_id,action_index,item_id,actor_id,status,detail)
 VALUES (gen_random_uuid(),$1,$2,$3,$4,NULLIF($5,'')::uuid,$6,$7,left($8,500)) ON CONFLICT DO NOTHING`, c.RuleID, c.VersionID, e.ID, index, e.ItemID, c.OwnerID, status, detail)
+	if tag.RowsAffected() == 1 {
+		runsTotal.WithLabelValues(status).Inc()
+	}
 	return tag.RowsAffected() == 1, err
 }
 
@@ -226,6 +229,7 @@ VALUES (gen_random_uuid(),$1,$2,$3,$4,NULLIF($5,'')::uuid,$6,'done',$7) ON CONFL
 		}
 		if err == nil {
 			if err = tx.Commit(ctx); err == nil {
+				runsTotal.WithLabelValues("done").Inc()
 				return nil
 			}
 		}
@@ -245,6 +249,7 @@ VALUES (gen_random_uuid(),$1,$2,$3,$4,NULLIF($5,'')::uuid,$6,'done',$7) ON CONFL
 	}
 	_, _ = g.Pool.Exec(ctx, `INSERT INTO automation_runs(id,rule_id,rule_version_id,event_id,action_index,item_id,actor_id,status,detail)
 VALUES (gen_random_uuid(),$1,$2,$3,$4,NULLIF($5,'')::uuid,$6,'failed',left($7,500))`, c.RuleID, c.VersionID, e.ID, index, e.ItemID, actor.ID, fmt.Sprint(last))
+	runsTotal.WithLabelValues("failed").Inc()
 	return last
 }
 
@@ -428,6 +433,7 @@ func (w *dueWorker) Work(ctx context.Context, _ *river.Job[DueArgs]) error {
 }
 
 func (g *Engine) Option() mail.Option {
+	g.registerMetrics()
 	return func(workers *river.Workers, periodic *[]*river.PeriodicJob) {
 		river.AddWorker(workers, &dispatchWorker{engine: g})
 		river.AddWorker(workers, &dueWorker{engine: g})

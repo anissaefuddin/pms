@@ -2,6 +2,7 @@ import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
 import auth from "./i18n/en/auth.json";
 import common from "./i18n/en/common.json";
+import automation from "./i18n/en/automation.json";
 import dashboards from "./i18n/en/dashboards.json";
 import blueprints from "./i18n/en/blueprints.json";
 import excel from "./i18n/en/excel.json";
@@ -25,7 +26,7 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   resources: {
     en: {
-      translation: { auth, blueprints, common, dashboards, excel, forms, gantt, items, nav, reports, search, settings, share, spaces, starred, time, views, workspace },
+      translation: { auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, reports, search, settings, share, spaces, starred, time, views, workspace },
     },
   },
 });

@@ -2,6 +2,7 @@ import { formatDate } from "@/lib/profile";
 import { lazy, Suspense, useEffect, useId, useRef, useState, type FormEvent } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
+import { useNavigate } from "@tanstack/react-router";
 import { StarButton } from "@/components/star-button";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -56,6 +57,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const statusInput = useId();
   const { item, etag } = detail;
   const titleInput = useRef<HTMLInputElement>(null);
@@ -196,6 +198,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
           }}>{t("items.copyLink")}</DropdownMenuItem>
           {canEdit && item.type === "task" && !item.is_milestone && <DropdownMenuItem disabled={busy || stale}
             onClick={() => void save({ is_milestone: true })}>{t("items.milestone")}</DropdownMenuItem>}
+          {canEdit && item.type !== "task" && item.locations.length > 0 && <DropdownMenuItem
+            onClick={() => void navigate({ to: "/spaces/$spaceId/automation", params: { spaceId: item.locations[0].space_id }, search: { container: item.id } })}>{t("automation.link")}</DropdownMenuItem>}
           {item.type === "project" && item.locations.length > 0 && <DropdownMenuItem onClick={() => setExporting(true)}>{t("excel.exportTitle")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => setSavingBlueprint(true)}>{t("blueprints.menu")}</DropdownMenuItem>
           {canDelete && <DropdownMenuItem disabled={busy} variant="destructive"

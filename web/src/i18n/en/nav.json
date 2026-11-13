@@ -43,6 +43,8 @@
   "inbox.event.status_changed": "{{actor}} changed the status of {{title}}",
   "inbox.event.comment": "{{actor}} commented on {{title}}",
   "inbox.event.shared": "{{actor}} shared {{title}} with you",
+  "inbox.event.approval_reminder": "Approval is due on {{title}}",
+  "inbox.event.approval_escalated": "Approval is overdue on {{title}}",
   "inbox.event.approval_requested": "{{actor}} asked you to approve {{title}}",
   "inbox.event.approval_decided": "{{actor}} reviewed your approval request on {{title}}",
   "help.label": "Help",

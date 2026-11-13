@@ -618,3 +618,22 @@ PostgreSQL 16 sementara. Semua tes baru ada di `automation_integration_test.go`,
 - PASS (regresi). `go vet`, `gofmt`, `go test ./...` hijau pada 19 paket.
 - Belum: UI aturan (S9.1.5), log dan replay (S9.1.4, tabel `automation_runs` sudah menyimpan hasil), notifikasi in-app dari aturan belum didorong lewat SSE, aksi dan kondisi hanya yang tercantum (tanpa webhook, tanpa percabangan), dan latensi hingga sekitar 10 detik karena pengirim periodik.
 
+
+## S9.2.1 dan S9.2.2 — Approval M9
+
+- **PASS** Any/All di PostgreSQL dan Chrome live. Any lulus dengan satu persetujuan dan ditolak bila semua menolak. All lulus bila semua setuju dan ditolak saat ada penolakan. Migrasi 00056 memberi default All pada approval lama, form, dan approval yang dibuat workflow. Status UI menggunakan kebijakan yang tersimpan.
+- **PASS** `TestApprovalPoliciesReassignAndDeadlines`. PATCH dengan ETag basi mendapat 409. Viewer mendapat 403 saat reassign. Reviewer lama kehilangan hak memutuskan. Keputusan reviewer yang dipertahankan dan riwayat penambahan/penghapusan tetap tersedia.
+- **PASS** Pengingat dan eskalasi pada fixture. Migrasi 00057 menyimpan tahap pengiriman. Job River berjalan setiap 15 menit. Tanggal UTC dipakai sebagai batas: reviewer aktif yang masih menunggu dan berhak melihat item menerima satu pengingat sejak hari tenggat, lalu pembuat approval yang masih berhak menerima satu eskalasi jika approval masih pending setelah tanggal tersebut. Notifikasi inbox dan job email ditulis dalam transaksi yang sama. Tes memanggil fungsi delivery dengan waktu tetap, memverifikasi dua notifikasi total dan mengulang pemanggilan untuk memeriksa duplikasi. Pengiriman SMTP nyata **NOT RUN**.
+- **PASS** E2E-PAR-04 dan E2E-PAR-06 di `TestBrowserM9Flows`, serta regresi workflow `TestEnteringAStatusStartsAnApprovalWhoseResultMovesTheItem`. Typecheck dan 13 skenario mock UI approval/otomasi lulus, termasuk axe terang/gelap. Workflow CI memuat M9, eksekusi remote **NOT RUN**.
+- Gate G1b masih menunggu UAT pengguna dan verifikasi operasional. [Matriks G1b](parity/gate-reports/G1B_AUTOMATION_APPROVALS.md).
+
+## M9 / S9.1.4, S9.1.5, S9.2.3 log, UI Automation, riwayat approval (13 Nov 2026)
+
+PostgreSQL 16 sementara dan Chrome terpasang (`PLAYWRIGHT_CHANNEL=chrome`).
+
+- PASS (S9.1.4). `TestRunLogDeadEventsAndReplay`: log per aturan dengan kursor dan filter status, 422 untuk limit tak sah, 404 dan 403 sesuai hak; event yang diparkir muncul di daftar dead (hanya admin) dan replay dua kali menyelesaikan pekerjaan tepat sekali (baris `done` tidak diulang). Metrik `pms_automation_runs_total{status}`, `pms_automation_events_pending` dan `_dead` terdaftar; alert Grafana `pms-automation-dead` dan `pms-automation-backlog` (YAML divalidasi, belum diuji pada Grafana hidup).
+- PASS (S9.1.5). `TestDryRunReportsWithoutActing` (tanpa tulis). `web/tests/automation.spec.ts` (5 tes: daftar dan aktif/nonaktif dengan axe, editor WHEN/IF/THEN + dry-run + publish, edit hanya menyimpan setelan yang sah, log dengan filter dan paging dengan axe, pesan 403). E2E-PAR-04 live: `TestBrowserM9Flows` + `m9-live.spec.ts` (pengguna membangun aturan Item created, mengaktifkannya, item baru mendapat komentar dari dispatcher, log menampilkan Done; axe dialog bersih).
+- PASS (S9.2.3). `TestApprovalHistoryIsAppendOnlyAndPinnedToItemVersion`: permintaan, keputusan (dua keputusan beda versi item) dan penarikan tercatat terbaru dulu; 404 tanpa akses; UPDATE, DELETE dan TRUNCATE pada `approval_events` ditolak oleh trigger; riwayat bertahan setelah approval dihapus. `approvals.spec.ts`: daftar riwayat dengan versi item.
+- PASS (regresi). `go vet`, `gofmt`, `go test ./...` hijau; `tsc -b`, eslint, `npm test` bersih; Chrome 345 lulus, 25 dilewati. Tiga tes mock (approvals, navigation, m8) kehabisan waktu hanya saat suite penuh dan lulus saat diulang.
+- Belum: pin ke versi file (S11.1.5); notifikasi aturan lewat SSE; aksi/kondisi di luar daftar tertutup.
+

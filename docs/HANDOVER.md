@@ -301,3 +301,16 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Belum ada UI** untuk aturan (S9.1.5), log dan replay admin (S9.1.4), dan metrik. `automation_runs` sudah menyimpan hasil per aksi.
 - **Titik hati-hati:** setiap kode baru yang mengubah item harus lewat layanan item (supaya event keluar dari `recordChange`) atau memanggil `events.Emit` di transaksinya. Handler event wajib idempoten; aksi aturan sudah dijaga indeks unik `automation_runs`. Jangan mengubah `Cause` atau menghapus kolom `chain` dan `depth`: itulah loop guard.
 
+
+### Approval M9 dan gate G1b
+
+- S9.2.1 dan S9.2.2 DONE lokal. Migrasi 00056 menambah policy Any/All; approval lama tetap All. Migrasi 00057 menambah tahap deadline dan jenis notifikasi. API reassign memakai PATCH yang ada, dengan If-Match dan riwayat append-only.
+- River memeriksa tenggat setiap 15 menit. Pengingat ke reviewer yang belum memutuskan, eskalasi berikutnya ke pembuat approval, dengan pemeriksaan hak View sebelum pengiriman. Tanggal UTC menjadi batas. Bukti integrasi dan browser ada di TESTING.
+- S9.3.1 IN_PROGRESS. Lanjut dari [G1b](parity/gate-reports/G1B_AUTOMATION_APPROVALS.md) untuk UAT per requirement, verifikasi alert dan email pilot, serta CI.
+
+### Log, UI Automation dan riwayat approval (S9.1.4, S9.1.5, S9.2.3, 13 Nov 2026)
+
+- **Berjalan:** log run per aturan, daftar dead event dan replay admin, dry-run, metrik dan alert Grafana, halaman `/spaces/$spaceId/automation` (daftar, editor WHEN/IF/THEN, pratinjau, aktif/nonaktif, log), riwayat approval append-only dengan pin versi item.
+- **Belum:** pin ke versi file (S11.1.5), UAT gate M9 (S9.3.1), alert belum diuji pada Grafana hidup.
+- **Titik hati-hati:** setiap kode yang menambah approver atau memutuskan approval harus memanggil `recordApprovalEvent`; `approval_events` tidak boleh diubah, termasuk oleh migrasi data.
+

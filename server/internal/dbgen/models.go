@@ -515,6 +515,8 @@ type Approval struct {
 	TriggerStatusID    pgtype.UUID        `json:"trigger_status_id"`
 	OnApprovedStatusID pgtype.UUID        `json:"on_approved_status_id"`
 	OnRejectedStatusID pgtype.UUID        `json:"on_rejected_status_id"`
+	Policy             string             `json:"policy"`
+	DeadlineStage      int32              `json:"deadline_stage"`
 }
 
 type ApprovalApprover struct {
@@ -523,6 +525,19 @@ type ApprovalApprover struct {
 	Decision   pgtype.Text        `json:"decision"`
 	Comment    string             `json:"comment"`
 	DecidedAt  pgtype.Timestamptz `json:"decided_at"`
+}
+
+type ApprovalEvent struct {
+	ID          int64              `json:"id"`
+	ApprovalID  pgtype.UUID        `json:"approval_id"`
+	ItemID      pgtype.UUID        `json:"item_id"`
+	Kind        string             `json:"kind"`
+	ActorID     pgtype.UUID        `json:"actor_id"`
+	SubjectID   pgtype.UUID        `json:"subject_id"`
+	Decision    pgtype.Text        `json:"decision"`
+	Comment     string             `json:"comment"`
+	ItemVersion pgtype.Int4        `json:"item_version"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
 type Attachment struct {

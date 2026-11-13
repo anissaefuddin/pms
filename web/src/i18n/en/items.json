@@ -144,6 +144,16 @@
     "add": "Add location"
   },
   "approvals": {
+    "history": "Decision history",
+    "reassign": "Reassign approvers",
+    "policy": { "label": "Approval policy", "all": "All approvers", "any": "Any approver" },
+    "pinnedVersion": "item version {{version}}",
+    "event": {
+      "approver_requested": "{{actor}} asked {{subject}} to decide",
+      "approver_removed": "{{actor}} removed {{subject}} as approver",
+      "decided": "{{subject}} {{decision}}",
+      "withdrawn": "{{actor}} withdrew the approval"
+    },
     "title": "Approvals",
     "empty": "No approvals yet.",
     "add": "Add approval",

@@ -256,6 +256,7 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 ### 7.8 Otomasi (M9)
 
 - `domain_events(id, event_id unik, type, item_id, actor_id, payload, caused_by_run, depth, chain uuid[], created_at, dispatched_at, attempts, last_error)` (00053): outbox transaksional. Baris menunggu selama `dispatched_at` kosong; indeks parsial atas baris yang menunggu.
+- `approval_events(id, approval_id, item_id, kind, actor_id, subject_id, decision, comment, item_version, created_at)` (00055): riwayat approval append-only (trigger menolak UPDATE, DELETE, TRUNCATE), tanpa foreign key; `item_version` adalah pin keputusan.
 - `automation_rules(id, space_id, container_id, name, owner_id, enabled, current_version_id)`, `automation_rule_versions(id, rule_id, version, definition jsonb, status draft|published|retired)` dengan satu draft per aturan, dan `automation_runs(id, rule_id, rule_version_id, event_id, action_index, item_id, actor_id, status, detail)` (00054). Indeks unik atas `(rule_version_id, event_id, action_index)` untuk status selain `failed` adalah jaminan tepat sekali; `action_index` -1 adalah hasil tingkat aturan. `notifications.kind` menerima `automation`.
 
 ## 8. Data yang sengaja belum ada (M2+)

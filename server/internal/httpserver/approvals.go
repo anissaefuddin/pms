@@ -19,12 +19,17 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+const approvalOutcome = `CASE
+ WHEN a.policy='any' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='approved') THEN 'approved'
+ WHEN a.policy='all' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='rejected') THEN 'rejected'
+ WHEN EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id)
+  AND NOT EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision IS NULL)
+ THEN CASE WHEN a.policy='any' THEN 'rejected' ELSE 'approved' END
+ ELSE 'pending' END`
+
 const approvalSelect = `SELECT a.version, jsonb_build_object('id',a.id,'item_id',a.item_id,'description',a.description,'due_date',a.due_date,
  'created_by',jsonb_build_object('id',cu.id,'name',concat_ws(' ',cu.first_name,cu.last_name)),'version',a.version,'created_at',a.created_at,
- 'status',CASE WHEN EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='rejected') THEN 'rejected'
-   WHEN EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id)
-    AND NOT EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision IS DISTINCT FROM 'approved') THEN 'approved'
-   ELSE 'pending' END,
+ 'policy',a.policy,'status',` + approvalOutcome + `,
  'approved_count',(SELECT count(*) FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='approved'),
  'total',(SELECT count(*) FROM approval_approvers x WHERE x.approval_id=a.id),
  'approvers',COALESCE((SELECT jsonb_agg(jsonb_build_object('user',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),
@@ -37,6 +42,7 @@ const maxApprovalsPerItem = 50
 func (s *Server) approvalRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/items/{itemId}/approvals", s.requireUser(s.listApprovals))
 	mux.HandleFunc("POST /api/v1/items/{itemId}/approvals", s.requireUser(s.writeApproval))
+	mux.HandleFunc("GET /api/v1/items/{itemId}/approval-events", s.requireUser(s.listApprovalEvents))
 	mux.HandleFunc("PATCH /api/v1/approvals/{approvalId}", s.requireUser(s.writeApproval))
 	mux.HandleFunc("DELETE /api/v1/approvals/{approvalId}", s.requireUser(s.writeApproval))
 	mux.HandleFunc("PUT /api/v1/approvals/{approvalId}/decision", s.requireUser(s.writeApproval))
@@ -76,6 +82,36 @@ func (s *Server) listApprovals(w http.ResponseWriter, r *http.Request) {
 	out := make([]json.RawMessage, 0, len(list))
 	for _, entry := range list {
 		out = append(out, entry.Body)
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
+}
+
+func (s *Server) listApprovalEvents(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("itemId"))
+	if err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	ctx := r.Context()
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	defer tx.Rollback(ctx)
+	if _, err := approvalCaps(ctx, tx, actorOf(r), id, policy.View); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	var out json.RawMessage
+	err = tx.QueryRow(ctx, `SELECT COALESCE(jsonb_agg(jsonb_build_object('id',e.id,'approval_id',e.approval_id,'kind',e.kind,
+ 'actor',CASE WHEN a.id IS NULL THEN NULL ELSE jsonb_build_object('id',a.id,'name',concat_ws(' ',a.first_name,a.last_name)) END,
+ 'subject',CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object('id',s.id,'name',concat_ws(' ',s.first_name,s.last_name)) END,
+ 'decision',e.decision,'comment',e.comment,'item_version',e.item_version,'created_at',e.created_at) ORDER BY e.id DESC),'[]'::jsonb)
+FROM approval_events e LEFT JOIN users a ON a.id=e.actor_id LEFT JOIN users s ON s.id=e.subject_id WHERE e.item_id=$1`, id).Scan(&out)
+	if err != nil {
+		writeItemError(w, err)
+		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }
@@ -166,6 +202,7 @@ func (s *Server) writeApproval(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	var body struct {
+		Policy      *string         `json:"policy"`
 		Description *string         `json:"description"`
 		DueDate     json.RawMessage `json:"due_date"`
 		ApproverIDs *[]uuid.UUID    `json:"approver_ids"`
@@ -188,7 +225,7 @@ func (s *Server) writeApproval(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case creating:
 		itemID = id
-		result, err = createApproval(ctx, tx, actorOf(r), id, body.Description, body.DueDate, body.ApproverIDs, batch)
+		result, err = createApproval(ctx, tx, actorOf(r), id, body.Description, body.DueDate, body.ApproverIDs, body.Policy, batch)
 	default:
 		if err = tx.QueryRow(ctx, "SELECT item_id FROM approvals WHERE id=$1", id).Scan(&itemID); errors.Is(err, pgx.ErrNoRows) {
 			err = items.ErrNotFound
@@ -198,7 +235,7 @@ func (s *Server) writeApproval(w http.ResponseWriter, r *http.Request) {
 		} else if err == nil && deciding {
 			result, err = decideApproval(ctx, tx, actorOf(r), id, itemID, body.Decision, body.Comment, batch)
 		} else if err == nil {
-			result, err = patchApproval(ctx, tx, actorOf(r), id, itemID, version, body.Description, body.DueDate, body.ApproverIDs, batch)
+			result, err = patchApproval(ctx, tx, actorOf(r), id, itemID, version, body.Description, body.DueDate, body.ApproverIDs, body.Policy, batch)
 		}
 	}
 	if err == nil {
@@ -231,11 +268,25 @@ func readApproval(ctx context.Context, tx pgx.Tx, id uuid.UUID) (items.Detail, e
 	return out, err
 }
 
+// recordApprovalEvent appends one history row, pinned to the item's current version.
+func recordApprovalEvent(ctx context.Context, tx pgx.Tx, approval, itemID uuid.UUID, actorID, kind string, subjects []uuid.UUID, decision, comment string) error {
+	if len(subjects) == 0 {
+		subjects = []uuid.UUID{uuid.Nil}
+	}
+	_, err := tx.Exec(ctx, `INSERT INTO approval_events(approval_id,item_id,kind,actor_id,subject_id,decision,comment,item_version)
+SELECT $1,$2,$3,$4::uuid,NULLIF(s,'00000000-0000-0000-0000-000000000000'::uuid),NULLIF($6,''),$7,(SELECT version FROM items WHERE id=$2)
+FROM unnest($5::uuid[]) s`, approval, itemID, kind, actorID, subjects, decision, comment)
+	return err
+}
+
 func addApprovers(ctx context.Context, tx pgx.Tx, actor policy.Actor, approval, itemID uuid.UUID, ids []uuid.UUID, snippet string, batch *notifications.Batch) error {
 	if len(ids) == 0 {
 		return nil
 	}
 	if _, err := tx.Exec(ctx, "INSERT INTO approval_approvers(approval_id,user_id) SELECT $1,unnest($2::uuid[]) ON CONFLICT DO NOTHING", approval, ids); err != nil {
+		return err
+	}
+	if err := recordApprovalEvent(ctx, tx, approval, itemID, actor.ID, "approver_requested", ids, "", ""); err != nil {
 		return err
 	}
 	principals := make([]notifications.Principal, len(ids))
@@ -246,8 +297,22 @@ func addApprovers(ctx context.Context, tx pgx.Tx, actor policy.Actor, approval, 
 	return err
 }
 
-func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID uuid.UUID, description *string, due json.RawMessage, approvers *[]uuid.UUID, batch *notifications.Batch) (items.Detail, error) {
+func validateApprovalPolicy(value string) error {
+	if value != "any" && value != "all" {
+		return items.InvalidField{Field: "policy", Message: "policy must be any or all"}
+	}
+	return nil
+}
+
+func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID uuid.UUID, description *string, due json.RawMessage, approvers *[]uuid.UUID, decisionPolicy *string, batch *notifications.Batch) (items.Detail, error) {
 	if _, err := approvalCaps(ctx, tx, actor, itemID, policy.Edit); err != nil {
+		return items.Detail{}, err
+	}
+	if decisionPolicy == nil {
+		defaultPolicy := "all"
+		decisionPolicy = &defaultPolicy
+	}
+	if err := validateApprovalPolicy(*decisionPolicy); err != nil {
 		return items.Detail{}, err
 	}
 	if approvers == nil {
@@ -282,7 +347,7 @@ func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID u
 	if err != nil {
 		return items.Detail{}, err
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO approvals(id,item_id,description,due_date,created_by) VALUES($1,$2,$3,$4::date,$5::uuid)", id, itemID, text, date, actor.ID); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO approvals(id,item_id,description,due_date,created_by,policy) VALUES($1,$2,$3,$4::date,$5::uuid,$6)", id, itemID, text, date, actor.ID, *decisionPolicy); err != nil {
 		return items.Detail{}, err
 	}
 	if err := addApprovers(ctx, tx, actor, id, itemID, ids, text, batch); err != nil {
@@ -291,11 +356,11 @@ func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID u
 	return readApproval(ctx, tx, id)
 }
 
-func patchApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemID uuid.UUID, version int, description *string, due json.RawMessage, approvers *[]uuid.UUID, batch *notifications.Batch) (items.Detail, error) {
+func patchApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemID uuid.UUID, version int, description *string, due json.RawMessage, approvers *[]uuid.UUID, decisionPolicy *string, batch *notifications.Batch) (items.Detail, error) {
 	if _, err := approvalCaps(ctx, tx, actor, itemID, policy.Edit); err != nil {
 		return items.Detail{}, err
 	}
-	if description == nil && len(due) == 0 && approvers == nil {
+	if description == nil && len(due) == 0 && approvers == nil && decisionPolicy == nil {
 		return items.Detail{}, items.Invalid("at least one field is required")
 	}
 	var current int
@@ -305,6 +370,14 @@ func patchApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemI
 	}
 	if current != version {
 		return items.Detail{}, items.ErrConflict
+	}
+	if decisionPolicy != nil {
+		if err := validateApprovalPolicy(*decisionPolicy); err != nil {
+			return items.Detail{}, err
+		}
+		if _, err := tx.Exec(ctx, "UPDATE approvals SET policy=$2 WHERE id=$1", id, *decisionPolicy); err != nil {
+			return items.Detail{}, err
+		}
 	}
 	if description != nil {
 		var err error
@@ -320,7 +393,7 @@ func patchApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemI
 		if err != nil {
 			return items.Detail{}, err
 		}
-		if _, err := tx.Exec(ctx, "UPDATE approvals SET due_date=$2::date WHERE id=$1", id, date); err != nil {
+		if _, err := tx.Exec(ctx, "UPDATE approvals SET due_date=$2::date, deadline_stage=CASE WHEN due_date IS DISTINCT FROM $2::date THEN 0 ELSE deadline_stage END WHERE id=$1", id, date); err != nil {
 			return items.Detail{}, err
 		}
 	}
@@ -340,6 +413,12 @@ func patchApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemI
 		if _, err := tx.Exec(ctx, "DELETE FROM approval_approvers WHERE approval_id=$1 AND user_id<>ALL($2::uuid[])", id, ids); err != nil {
 			return items.Detail{}, err
 		}
+		removed := slices.DeleteFunc(slices.Clone(existing), func(u uuid.UUID) bool { return slices.Contains(ids, u) })
+		if len(removed) > 0 {
+			if err := recordApprovalEvent(ctx, tx, id, itemID, actor.ID, "approver_removed", removed, "", ""); err != nil {
+				return items.Detail{}, err
+			}
+		}
 		added := slices.DeleteFunc(slices.Clone(ids), func(u uuid.UUID) bool { return slices.Contains(existing, u) })
 		if err := addApprovers(ctx, tx, actor, id, itemID, added, text, batch); err != nil {
 			return items.Detail{}, err
@@ -353,6 +432,9 @@ func patchApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemI
 
 func deleteApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemID uuid.UUID) error {
 	if _, err := approvalCaps(ctx, tx, actor, itemID, policy.Edit); err != nil {
+		return err
+	}
+	if err := recordApprovalEvent(ctx, tx, id, itemID, actor.ID, "withdrawn", nil, "", ""); err != nil {
 		return err
 	}
 	_, err := tx.Exec(ctx, "DELETE FROM approvals WHERE id=$1", id)
@@ -380,6 +462,9 @@ func decideApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, item
 	}
 	if tag.RowsAffected() == 0 {
 		return items.Detail{}, items.ErrForbidden
+	}
+	if err := recordApprovalEvent(ctx, tx, id, itemID, actor.ID, "decided", []uuid.UUID{uuid.MustParse(actor.ID)}, decision, comment); err != nil {
+		return items.Detail{}, err
 	}
 	if _, err := tx.Exec(ctx, "UPDATE approvals SET version=version+1 WHERE id=$1", id); err != nil {
 		return items.Detail{}, err
