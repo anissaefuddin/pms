@@ -415,6 +415,9 @@ FROM items i WHERE i.id=$1::uuid`, id).Scan(&out)
 }
 
 func recordChange(ctx context.Context, tx pgx.Tx, id, actor, action string, before, after json.RawMessage) error {
+	if err := emitChange(ctx, tx, id, actor, action, before, after); err != nil {
+		return err
+	}
 	_, err := tx.Exec(ctx, `
 INSERT INTO activity(item_id,actor_id,action,changes)
 SELECT $1::uuid,$2::uuid,$3,COALESCE(jsonb_object_agg(COALESCE(a.key,b.key),
@@ -422,4 +425,10 @@ SELECT $1::uuid,$2::uuid,$3,COALESCE(jsonb_object_agg(COALESCE(a.key,b.key),
 FROM jsonb_each($4::jsonb) a FULL JOIN jsonb_each($5::jsonb) b USING (key)
 WHERE a.value IS DISTINCT FROM b.value`, id, actor, action, before, after)
 	return err
+}
+
+// PatchTx is Patch inside the caller's transaction, for flows that must commit the change together with their own record of it.
+func PatchTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, version int, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
+	item, err := patch(ctx, tx, actor, id, version, fields, batch)
+	return item, writeError(err)
 }

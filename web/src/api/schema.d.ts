@@ -966,6 +966,85 @@ export interface paths {
         patch: operations["updateItemType"];
         trace?: never;
     };
+    "/spaces/{spaceId}/automation-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Aturan otomasi sebuah Space (AUT-02); butuh hak Edit */
+        get: operations["listAutomationRules"];
+        put?: never;
+        /** Buat aturan sebagai draft; pembuatnya menjadi pemilik dan aturan berjalan dengan hak pemilik (AUT-03) */
+        post: operations["createAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        /** Aturan beserta semua versinya */
+        get: operations["getAutomationRule"];
+        put?: never;
+        post?: never;
+        /** Hapus aturan beserta versi dan lognya */
+        delete: operations["deleteAutomationRule"];
+        options?: never;
+        head?: never;
+        /** Ganti nama atau aktif/nonaktifkan; aktif hanya bila ada versi terbit. Pemilik atau admin */
+        patch: operations["updateAutomationRule"];
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/draft": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Ganti draft (atau mulai versi berikutnya); versi terbit tidak pernah berubah */
+        put: operations["saveAutomationDraft"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi */
+        post: operations["publishAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/space-templates": {
         parameters: {
             query?: never;
@@ -2769,6 +2848,43 @@ export interface components {
         /** @description Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar */
         ItemTypeLayout: {
             [key: string]: unknown;
+        };
+        /** @description Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak */
+        AutomationDefinition: {
+            when: {
+                [key: string]: unknown;
+            };
+            if?: {
+                [key: string]: unknown;
+            }[];
+            then: {
+                [key: string]: unknown;
+            }[];
+        };
+        AutomationVersion: {
+            /** Format: uuid */
+            id: string;
+            version: number;
+            /** @enum {string} */
+            status: "draft" | "published" | "retired";
+            definition: components["schemas"]["AutomationDefinition"];
+            created_at: string;
+            published_at?: string | null;
+        };
+        AutomationRule: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            space_id: string;
+            /** Format: uuid */
+            container_id?: string | null;
+            name: string;
+            /** Format: uuid */
+            owner_id: string;
+            enabled: boolean;
+            /** Format: uuid */
+            current_version_id?: string | null;
+            versions?: components["schemas"]["AutomationVersion"][];
         };
         /** @description Tipe item (bawaan atau kustom); type tetap kelas perilakunya */
         ItemTypeRef: {
@@ -5570,6 +5686,203 @@ export interface operations {
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             428: components["responses"]["Problem"];
+        };
+    };
+    listAutomationRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AutomationRule"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    createAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /**
+                     * Format: uuid
+                     * @description Batasi ke satu project atau folder
+                     */
+                    container_id?: string | null;
+                    definition: components["schemas"]["AutomationDefinition"];
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    deleteAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    enabled?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    saveAutomationDraft: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    definition: components["schemas"]["AutomationDefinition"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationVersion"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    publishAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     listSpaceTemplates: {

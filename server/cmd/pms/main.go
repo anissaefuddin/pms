@@ -12,6 +12,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/anissaefuddin/pms/server/internal/automation"
 	"github.com/anissaefuddin/pms/server/internal/bootstrap"
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/database"
@@ -97,10 +98,12 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	if cfg.TwoFactorKey == nil {
 		slog.Warn("PMS_2FA_KEY is not set: two-factor authentication is unavailable to every user")
 	}
-	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL))
+	engine := automation.New(pool)
+	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL), engine.Option())
 	if err != nil {
 		return err
 	}
+	engine.Queue = queue
 	if err := queue.Start(ctx); err != nil {
 		return fmt.Errorf("start job queue: %w", err)
 	}

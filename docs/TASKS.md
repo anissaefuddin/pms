@@ -997,34 +997,34 @@ Memetakan: AUT-01..05, APR-01..03. Prasyarat: S8.2.2, S7.3.3.
 ### E9.1 Mesin otomasi
 
 **S9.1.1 Event domain dan outbox (AUT-01) — 3 hari**
-- [ ] [DB] Tabel outbox
-- [ ] [BE] Emit event dalam transaksi item service
-- [ ] [BE] Emit dari impor, form, dan job
-- [ ] [BE] Dispatcher River
-- [ ] [TEST] Hasil efektif tepat sekali pada kiriman ulang
-- [ ] [TEST] Pemulihan setelah crash
+- [x] [DB] Tabel outbox
+- [x] [BE] Emit event dalam transaksi item service
+- [x] [BE] Emit dari impor, form, dan job
+- [x] [BE] Dispatcher River
+- [x] [TEST] Hasil efektif tepat sekali pada kiriman ulang
+- [x] [TEST] Pemulihan setelah crash
 
 **S9.1.2 Skema dan evaluasi aturan (AUT-02) — 5.5 hari**
-- [ ] [API] Skema aturan WHEN/IF/THEN
-- [ ] [DB] `automation_rules` dan versinya
-- [ ] [BE] Validasi skema tertutup
-- [ ] [BE] Pemicu status dan assignee
-- [ ] [BE] Pemicu tanggal (scheduler) dan form submit
-- [ ] [BE] Evaluator kondisi
-- [ ] [BE] Aksi ubah field dan assign
-- [ ] [BE] Aksi komentar, buat item, notifikasi
-- [ ] [BE] Versi dan publish aturan
-- [ ] [TEST] Unit evaluator berbasis tabel
-- [ ] [TEST] Integrasi tiap aksi
+- [x] [API] Skema aturan WHEN/IF/THEN
+- [x] [DB] `automation_rules` dan versinya
+- [x] [BE] Validasi skema tertutup
+- [x] [BE] Pemicu status dan assignee
+- [x] [BE] Pemicu tanggal (scheduler) dan form submit
+- [x] [BE] Evaluator kondisi
+- [x] [BE] Aksi ubah field dan assign
+- [x] [BE] Aksi komentar, buat item, notifikasi
+- [x] [BE] Versi dan publish aturan
+- [x] [TEST] Unit evaluator berbasis tabel
+- [x] [TEST] Integrasi tiap aksi
 
 **S9.1.3 Keamanan eksekusi (AUT-03) — 3.5 hari**
-- [ ] [BE] Identitas eksekusi dan cek policy per aksi
-- [ ] [BE] Loop guard: kedalaman, chain ID, rate
-- [ ] [BE] Kuota per aturan dan per Space
-- [ ] [BE] Konkurensi: lock per item, retry versi optimistic
-- [ ] [TEST] Loop tidak tak terbatas
-- [ ] [TEST] Izin pemilik dicabut → aksi ditolak
-- [ ] [TEST] Dua aturan pada item yang sama secara paralel
+- [x] [BE] Identitas eksekusi dan cek policy per aksi
+- [x] [BE] Loop guard: kedalaman, chain ID, rate
+- [x] [BE] Kuota per aturan dan per Space
+- [x] [BE] Konkurensi: lock per item, retry versi optimistic
+- [x] [TEST] Loop tidak tak terbatas
+- [x] [TEST] Izin pemilik dicabut → aksi ditolak
+- [x] [TEST] Dua aturan pada item yang sama secara paralel
 
 **S9.1.4 Log, retry, replay, observability (AUT-04) — 3 hari**
 - [ ] [DB] Log eksekusi: actor, versi aturan, event sumber, hasil

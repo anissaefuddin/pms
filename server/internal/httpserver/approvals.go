@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/anissaefuddin/pms/server/internal/events"
 	"net/http"
 	"slices"
 	"strings"
@@ -388,6 +389,9 @@ func decideApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, item
 		snippet += ": " + comment
 	}
 	if _, err := batch.Record(ctx, tx, actor, "approval_decided", notifications.Target{Item: itemID.String()}, snippet, []notifications.Principal{{Kind: "user", ID: creator}}, nil); err != nil {
+		return items.Detail{}, err
+	}
+	if err := events.Emit(ctx, tx, events.Event{Type: events.ApprovalDecided, ItemID: itemID.String(), ActorID: actor.ID, Payload: map[string]any{"approval_id": id.String(), "decision": decision}}); err != nil {
 		return items.Detail{}, err
 	}
 	if err := applyApprovalOutcome(ctx, tx, actor, id, itemID); err != nil {

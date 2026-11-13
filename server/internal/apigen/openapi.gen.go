@@ -333,6 +333,27 @@ func (e AssigneeAllocationUpdateAllocationUnit) Valid() bool {
 	}
 }
 
+// Defines values for AutomationVersionStatus.
+const (
+	Draft     AutomationVersionStatus = "draft"
+	Published AutomationVersionStatus = "published"
+	Retired   AutomationVersionStatus = "retired"
+)
+
+// Valid indicates whether the value is a known member of the AutomationVersionStatus enum.
+func (e AutomationVersionStatus) Valid() bool {
+	switch e {
+	case Draft:
+		return true
+	case Published:
+		return true
+	case Retired:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for BlueprintItemType.
 const (
 	BlueprintItemTypeFolder  BlueprintItemType = "folder"
@@ -2477,6 +2498,40 @@ type Attachment struct {
 	Uploader    UserRef            `json:"uploader"`
 }
 
+// AutomationDefinition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+type AutomationDefinition struct {
+	If   *[]map[string]interface{} `json:"if,omitempty"`
+	Then []map[string]interface{}  `json:"then"`
+	When map[string]interface{}    `json:"when"`
+}
+
+// AutomationRule defines model for AutomationRule.
+type AutomationRule struct {
+	ContainerId      *openapi_types.UUID  `json:"container_id,omitempty"`
+	CurrentVersionId *openapi_types.UUID  `json:"current_version_id,omitempty"`
+	Enabled          bool                 `json:"enabled"`
+	Id               openapi_types.UUID   `json:"id"`
+	Name             string               `json:"name"`
+	OwnerId          openapi_types.UUID   `json:"owner_id"`
+	SpaceId          openapi_types.UUID   `json:"space_id"`
+	Versions         *[]AutomationVersion `json:"versions,omitempty"`
+}
+
+// AutomationVersion defines model for AutomationVersion.
+type AutomationVersion struct {
+	CreatedAt string `json:"created_at"`
+
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	Definition  AutomationDefinition    `json:"definition"`
+	Id          openapi_types.UUID      `json:"id"`
+	PublishedAt *string                 `json:"published_at,omitempty"`
+	Status      AutomationVersionStatus `json:"status"`
+	Version     int                     `json:"version"`
+}
+
+// AutomationVersionStatus defines model for AutomationVersion.Status.
+type AutomationVersionStatus string
+
 // Blueprint defines model for Blueprint.
 type Blueprint struct {
 	CreatedAt time.Time          `json:"created_at"`
@@ -4099,6 +4154,18 @@ type ResetPasswordJSONBody struct {
 	Token    string `json:"token"`
 }
 
+// UpdateAutomationRuleJSONBody defines parameters for UpdateAutomationRule.
+type UpdateAutomationRuleJSONBody struct {
+	Enabled *bool   `json:"enabled,omitempty"`
+	Name    *string `json:"name,omitempty"`
+}
+
+// SaveAutomationDraftJSONBody defines parameters for SaveAutomationDraft.
+type SaveAutomationDraftJSONBody struct {
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	Definition AutomationDefinition `json:"definition"`
+}
+
 // CreateItemsFromBlueprintJSONBody defines parameters for CreateItemsFromBlueprint.
 type CreateItemsFromBlueprintJSONBody struct {
 	Locations []Location          `json:"locations"`
@@ -4459,6 +4526,16 @@ type UpdateSpaceParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// CreateAutomationRuleJSONBody defines parameters for CreateAutomationRule.
+type CreateAutomationRuleJSONBody struct {
+	// ContainerId Batasi ke satu project atau folder
+	ContainerId *openapi_types.UUID `json:"container_id,omitempty"`
+
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	Definition AutomationDefinition `json:"definition"`
+	Name       string               `json:"name"`
+}
+
 // CreateBlueprintJSONBody defines parameters for CreateBlueprint.
 type CreateBlueprintJSONBody struct {
 	Name         string             `json:"name"`
@@ -4628,6 +4705,12 @@ type ForgotPasswordJSONRequestBody ForgotPasswordJSONBody
 // ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
 type ResetPasswordJSONRequestBody ResetPasswordJSONBody
 
+// UpdateAutomationRuleJSONRequestBody defines body for UpdateAutomationRule for application/json ContentType.
+type UpdateAutomationRuleJSONRequestBody UpdateAutomationRuleJSONBody
+
+// SaveAutomationDraftJSONRequestBody defines body for SaveAutomationDraft for application/json ContentType.
+type SaveAutomationDraftJSONRequestBody SaveAutomationDraftJSONBody
+
 // CreateItemsFromBlueprintJSONRequestBody defines body for CreateItemsFromBlueprint for application/json ContentType.
 type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 
@@ -4756,6 +4839,9 @@ type CreateSpaceJSONRequestBody = SpaceCreate
 
 // UpdateSpaceJSONRequestBody defines body for UpdateSpace for application/json ContentType.
 type UpdateSpaceJSONRequestBody = SpaceUpdate
+
+// CreateAutomationRuleJSONRequestBody defines body for CreateAutomationRule for application/json ContentType.
+type CreateAutomationRuleJSONRequestBody CreateAutomationRuleJSONBody
 
 // CreateBlueprintJSONRequestBody defines body for CreateBlueprint for application/json ContentType.
 type CreateBlueprintJSONRequestBody CreateBlueprintJSONBody
@@ -5122,6 +5208,21 @@ type ServerInterface interface {
 	// ResetPassword Set password baru dengan token reset (AUTH-03)
 	// (POST /auth/password/reset)
 	ResetPassword(w http.ResponseWriter, r *http.Request)
+	// DeleteAutomationRule Hapus aturan beserta versi dan lognya
+	// (DELETE /automation-rules/{ruleId})
+	DeleteAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// GetAutomationRule Aturan beserta semua versinya
+	// (GET /automation-rules/{ruleId})
+	GetAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// UpdateAutomationRule Ganti nama atau aktif/nonaktifkan; aktif hanya bila ada versi terbit. Pemilik atau admin
+	// (PATCH /automation-rules/{ruleId})
+	UpdateAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// SaveAutomationDraft Ganti draft (atau mulai versi berikutnya); versi terbit tidak pernah berubah
+	// (PUT /automation-rules/{ruleId}/draft)
+	SaveAutomationDraft(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// PublishAutomationRule Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi
+	// (POST /automation-rules/{ruleId}/publish)
+	PublishAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
 	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
@@ -5443,6 +5544,12 @@ type ServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params UpdateSpaceParams)
+	// ListAutomationRules Aturan otomasi sebuah Space (AUT-02); butuh hak Edit
+	// (GET /spaces/{spaceId}/automation-rules)
+	ListAutomationRules(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// CreateAutomationRule Buat aturan sebagai draft; pembuatnya menjadi pemilik dan aturan berjalan dengan hak pemilik (AUT-03)
+	// (POST /spaces/{spaceId}/automation-rules)
+	CreateAutomationRule(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
 	// (GET /spaces/{spaceId}/blueprints)
 	ListBlueprints(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -5892,6 +5999,136 @@ func (siw *ServerInterfaceWrapper) ResetPassword(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ResetPassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) DeleteAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) GetAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) UpdateAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveAutomationDraft operation middleware
+func (siw *ServerInterfaceWrapper) SaveAutomationDraft(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveAutomationDraft(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PublishAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) PublishAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PublishAutomationRule(w, r, ruleId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9296,6 +9533,58 @@ func (siw *ServerInterfaceWrapper) UpdateSpace(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListAutomationRules operation middleware
+func (siw *ServerInterfaceWrapper) ListAutomationRules(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAutomationRules(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) CreateAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateAutomationRule(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListBlueprints operation middleware
 func (siw *ServerInterfaceWrapper) ListBlueprints(w http.ResponseWriter, r *http.Request) {
 
@@ -10834,6 +11123,13 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/item-types", wrapper.ListItemTypes)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/item-types", wrapper.CreateItemType)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/item-types/{typeId}", wrapper.UpdateItemType)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules", wrapper.ListAutomationRules)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules", wrapper.CreateAutomationRule)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/automation-rules/{ruleId}", wrapper.DeleteAutomationRule)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation-rules/{ruleId}", wrapper.GetAutomationRule)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/automation-rules/{ruleId}", wrapper.UpdateAutomationRule)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/automation-rules/{ruleId}/draft", wrapper.SaveAutomationDraft)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/publish", wrapper.PublishAutomationRule)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-templates", wrapper.ListSpaceTemplates)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates/{templateId}/spaces", wrapper.CreateSpaceFromTemplate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces", wrapper.ListSpaces)
@@ -11865,6 +12161,304 @@ func (response ResetPassword429ApplicationProblemPlusJSONResponse) VisitResetPas
 		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
 	}
 	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type DeleteAutomationRuleResponseObject interface {
+	VisitDeleteAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type DeleteAutomationRule204Response struct {
+}
+
+func (response DeleteAutomationRule204Response) VisitDeleteAutomationRuleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteAutomationRule403ApplicationProblemPlusJSONResponse) VisitDeleteAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteAutomationRule404ApplicationProblemPlusJSONResponse) VisitDeleteAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type GetAutomationRuleResponseObject interface {
+	VisitGetAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type GetAutomationRule200JSONResponse AutomationRule
+
+func (response GetAutomationRule200JSONResponse) VisitGetAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAutomationRule403ApplicationProblemPlusJSONResponse) VisitGetAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetAutomationRule404ApplicationProblemPlusJSONResponse) VisitGetAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+	Body   *UpdateAutomationRuleJSONRequestBody
+}
+
+type UpdateAutomationRuleResponseObject interface {
+	VisitUpdateAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type UpdateAutomationRule200JSONResponse AutomationRule
+
+func (response UpdateAutomationRule200JSONResponse) VisitUpdateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateAutomationRule403ApplicationProblemPlusJSONResponse) VisitUpdateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateAutomationRule404ApplicationProblemPlusJSONResponse) VisitUpdateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateAutomationRule422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateAutomationRule422ApplicationProblemPlusJSONResponse) VisitUpdateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveAutomationDraftRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+	Body   *SaveAutomationDraftJSONRequestBody
+}
+
+type SaveAutomationDraftResponseObject interface {
+	VisitSaveAutomationDraftResponse(w http.ResponseWriter) error
+}
+
+type SaveAutomationDraft200JSONResponse AutomationVersion
+
+func (response SaveAutomationDraft200JSONResponse) VisitSaveAutomationDraftResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveAutomationDraft403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveAutomationDraft403ApplicationProblemPlusJSONResponse) VisitSaveAutomationDraftResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveAutomationDraft404ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveAutomationDraft404ApplicationProblemPlusJSONResponse) VisitSaveAutomationDraftResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveAutomationDraft422ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveAutomationDraft422ApplicationProblemPlusJSONResponse) VisitSaveAutomationDraftResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PublishAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type PublishAutomationRuleResponseObject interface {
+	VisitPublishAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type PublishAutomationRule200JSONResponse AutomationRule
+
+func (response PublishAutomationRule200JSONResponse) VisitPublishAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PublishAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PublishAutomationRule403ApplicationProblemPlusJSONResponse) VisitPublishAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PublishAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response PublishAutomationRule404ApplicationProblemPlusJSONResponse) VisitPublishAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PublishAutomationRule422ApplicationProblemPlusJSONResponse Problem
+
+func (response PublishAutomationRule422ApplicationProblemPlusJSONResponse) VisitPublishAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -17887,6 +18481,127 @@ func (response UpdateSpace428ApplicationProblemPlusJSONResponse) VisitUpdateSpac
 	return err
 }
 
+type ListAutomationRulesRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListAutomationRulesResponseObject interface {
+	VisitListAutomationRulesResponse(w http.ResponseWriter) error
+}
+
+type ListAutomationRules200JSONResponse struct {
+	Items []AutomationRule `json:"items"`
+}
+
+func (response ListAutomationRules200JSONResponse) VisitListAutomationRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationRules403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAutomationRules403ApplicationProblemPlusJSONResponse) VisitListAutomationRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationRules404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListAutomationRules404ApplicationProblemPlusJSONResponse) VisitListAutomationRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutomationRuleRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *CreateAutomationRuleJSONRequestBody
+}
+
+type CreateAutomationRuleResponseObject interface {
+	VisitCreateAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type CreateAutomationRule201JSONResponse AutomationRule
+
+func (response CreateAutomationRule201JSONResponse) VisitCreateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateAutomationRule403ApplicationProblemPlusJSONResponse) VisitCreateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAutomationRule404ApplicationProblemPlusJSONResponse) VisitCreateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateAutomationRule422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateAutomationRule422ApplicationProblemPlusJSONResponse) VisitCreateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListBlueprintsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -20388,6 +21103,21 @@ type StrictServerInterface interface {
 	// ResetPassword Set password baru dengan token reset (AUTH-03)
 	// (POST /auth/password/reset)
 	ResetPassword(ctx context.Context, request ResetPasswordRequestObject) (ResetPasswordResponseObject, error)
+	// DeleteAutomationRule Hapus aturan beserta versi dan lognya
+	// (DELETE /automation-rules/{ruleId})
+	DeleteAutomationRule(ctx context.Context, request DeleteAutomationRuleRequestObject) (DeleteAutomationRuleResponseObject, error)
+	// GetAutomationRule Aturan beserta semua versinya
+	// (GET /automation-rules/{ruleId})
+	GetAutomationRule(ctx context.Context, request GetAutomationRuleRequestObject) (GetAutomationRuleResponseObject, error)
+	// UpdateAutomationRule Ganti nama atau aktif/nonaktifkan; aktif hanya bila ada versi terbit. Pemilik atau admin
+	// (PATCH /automation-rules/{ruleId})
+	UpdateAutomationRule(ctx context.Context, request UpdateAutomationRuleRequestObject) (UpdateAutomationRuleResponseObject, error)
+	// SaveAutomationDraft Ganti draft (atau mulai versi berikutnya); versi terbit tidak pernah berubah
+	// (PUT /automation-rules/{ruleId}/draft)
+	SaveAutomationDraft(ctx context.Context, request SaveAutomationDraftRequestObject) (SaveAutomationDraftResponseObject, error)
+	// PublishAutomationRule Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi
+	// (POST /automation-rules/{ruleId}/publish)
+	PublishAutomationRule(ctx context.Context, request PublishAutomationRuleRequestObject) (PublishAutomationRuleResponseObject, error)
 	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(ctx context.Context, request DeleteBlueprintRequestObject) (DeleteBlueprintResponseObject, error)
@@ -20709,6 +21439,12 @@ type StrictServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(ctx context.Context, request UpdateSpaceRequestObject) (UpdateSpaceResponseObject, error)
+	// ListAutomationRules Aturan otomasi sebuah Space (AUT-02); butuh hak Edit
+	// (GET /spaces/{spaceId}/automation-rules)
+	ListAutomationRules(ctx context.Context, request ListAutomationRulesRequestObject) (ListAutomationRulesResponseObject, error)
+	// CreateAutomationRule Buat aturan sebagai draft; pembuatnya menjadi pemilik dan aturan berjalan dengan hak pemilik (AUT-03)
+	// (POST /spaces/{spaceId}/automation-rules)
+	CreateAutomationRule(ctx context.Context, request CreateAutomationRuleRequestObject) (CreateAutomationRuleResponseObject, error)
 	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
 	// (GET /spaces/{spaceId}/blueprints)
 	ListBlueprints(ctx context.Context, request ListBlueprintsRequestObject) (ListBlueprintsResponseObject, error)
@@ -21333,6 +22069,150 @@ func (sh *strictHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ResetPasswordResponseObject); ok {
 		if err := validResponse.VisitResetPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteAutomationRule operation middleware
+func (sh *strictHandler) DeleteAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request DeleteAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteAutomationRule(ctx, request.(DeleteAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitDeleteAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAutomationRule operation middleware
+func (sh *strictHandler) GetAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request GetAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAutomationRule(ctx, request.(GetAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitGetAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateAutomationRule operation middleware
+func (sh *strictHandler) UpdateAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request UpdateAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	var body UpdateAutomationRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateAutomationRule(ctx, request.(UpdateAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitUpdateAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveAutomationDraft operation middleware
+func (sh *strictHandler) SaveAutomationDraft(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request SaveAutomationDraftRequestObject
+
+	request.RuleId = ruleId
+
+	var body SaveAutomationDraftJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveAutomationDraft(ctx, request.(SaveAutomationDraftRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveAutomationDraft")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveAutomationDraftResponseObject); ok {
+		if err := validResponse.VisitSaveAutomationDraftResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PublishAutomationRule operation middleware
+func (sh *strictHandler) PublishAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request PublishAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PublishAutomationRule(ctx, request.(PublishAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PublishAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PublishAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitPublishAutomationRuleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -24386,6 +25266,65 @@ func (sh *strictHandler) UpdateSpace(w http.ResponseWriter, r *http.Request, spa
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateSpaceResponseObject); ok {
 		if err := validResponse.VisitUpdateSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAutomationRules operation middleware
+func (sh *strictHandler) ListAutomationRules(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListAutomationRulesRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAutomationRules(ctx, request.(ListAutomationRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAutomationRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAutomationRulesResponseObject); ok {
+		if err := validResponse.VisitListAutomationRulesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateAutomationRule operation middleware
+func (sh *strictHandler) CreateAutomationRule(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request CreateAutomationRuleRequestObject
+
+	request.SpaceId = spaceId
+
+	var body CreateAutomationRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateAutomationRule(ctx, request.(CreateAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitCreateAutomationRuleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

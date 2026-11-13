@@ -1,0 +1,170 @@
+// Package events is the transactional outbox for domain events (AUT-01). Emit writes inside the caller's transaction;
+// Dispatch hands pending events to a handler at least once, and handlers are responsible for being idempotent per event id.
+package events
+
+import (
+	"context"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"log/slog"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
+)
+
+// Event types. The set only grows; payloads only gain keys (ADR-AUT).
+const (
+	ItemCreated       = "item.created"
+	ItemUpdated       = "item.updated"
+	ItemStatusChanged = "item.status_changed"
+	ItemAssigned      = "item.assigned"
+	ItemDueChanged    = "item.due_changed"
+	ItemDueReached    = "item.due_reached"
+	FormSubmitted     = "form.submitted"
+	ApprovalDecided   = "approval.decided"
+	CommentCreated    = "comment.created"
+)
+
+// MaxDepth is how many automation hops one chain may take before it is stopped.
+const MaxDepth = 5
+
+type Event struct {
+	ID      uuid.UUID
+	Type    string
+	ItemID  string
+	ActorID string
+	Payload map[string]any
+	// Set by the dispatcher when it reads the row.
+	Seq        int64
+	CausedBy   *uuid.UUID
+	Depth      int
+	Chain      []uuid.UUID
+	CreatedAt  time.Time
+	Dispatched *time.Time
+}
+
+type causeKey struct{}
+
+// Cause says an emission happens because an automation run acted: events emitted under it extend the chain.
+type Cause struct {
+	Run   uuid.UUID
+	Rule  uuid.UUID
+	Depth int
+	Chain []uuid.UUID
+}
+
+func WithCause(ctx context.Context, c Cause) context.Context {
+	return context.WithValue(ctx, causeKey{}, c)
+}
+
+// Emit records an event in tx. Call it from the code that changes the data, so both commit or roll back together.
+func Emit(ctx context.Context, tx pgx.Tx, e Event) error {
+	if e.Type == "" {
+		return errors.New("event type is required")
+	}
+	if e.ID == uuid.Nil {
+		id, err := uuid.NewV7()
+		if err != nil {
+			return err
+		}
+		e.ID = id
+	}
+	payload := e.Payload
+	if payload == nil {
+		payload = map[string]any{}
+	}
+	raw, err := json.Marshal(payload)
+	if err != nil {
+		return err
+	}
+	var item, actor *string
+	if e.ItemID != "" {
+		item = &e.ItemID
+	}
+	if e.ActorID != "" {
+		actor = &e.ActorID
+	}
+	var cause *uuid.UUID
+	depth, chain := 0, []uuid.UUID{}
+	if c, ok := ctx.Value(causeKey{}).(Cause); ok {
+		cause, depth = &c.Run, c.Depth+1
+		chain = append(append(chain, c.Chain...), c.Rule)
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO domain_events(event_id,type,item_id,actor_id,payload,caused_by_run,depth,chain)
+VALUES ($1,$2,$3::uuid,$4::uuid,$5,$6,$7,$8) ON CONFLICT (event_id) DO NOTHING`, e.ID, e.Type, item, actor, raw, cause, depth, chain)
+	return err
+}
+
+// Handler processes one event. Returning an error leaves the event pending (it is retried); handlers must tolerate a second delivery.
+type Handler func(ctx context.Context, e Event) error
+
+const maxAttempts = 8
+
+// Dispatch claims up to limit pending events, runs the handler for each in order and marks the ones that succeeded.
+// A failing event is counted and retried later; after maxAttempts it is parked with its error (dispatched_at set, last_error kept).
+// Several dispatchers may run at once: rows are claimed with SKIP LOCKED inside the transaction that marks them.
+func Dispatch(ctx context.Context, pool *pgxpool.Pool, handle Handler, limit int) (int, error) {
+	tx, err := pool.Begin(ctx)
+	if err != nil {
+		return 0, err
+	}
+	defer tx.Rollback(ctx)
+	rows, err := tx.Query(ctx, `SELECT id,event_id,type,COALESCE(item_id::text,''),COALESCE(actor_id::text,''),payload,caused_by_run,depth,chain,created_at,attempts
+FROM domain_events WHERE dispatched_at IS NULL ORDER BY id LIMIT $1 FOR UPDATE SKIP LOCKED`, limit)
+	if err != nil {
+		return 0, err
+	}
+	type claimed struct {
+		Event
+		attempts int
+	}
+	var batch []claimed
+	for rows.Next() {
+		var c claimed
+		var payload []byte
+		if err := rows.Scan(&c.Seq, &c.ID, &c.Type, &c.ItemID, &c.ActorID, &payload, &c.CausedBy, &c.Depth, &c.Chain, &c.CreatedAt, &c.attempts); err != nil {
+			rows.Close()
+			return 0, err
+		}
+		if err := json.Unmarshal(payload, &c.Payload); err != nil {
+			rows.Close()
+			return 0, err
+		}
+		batch = append(batch, c)
+	}
+	rows.Close()
+	if err := rows.Err(); err != nil {
+		return 0, err
+	}
+	done := 0
+	for _, c := range batch {
+		herr := safely(func() error { return handle(ctx, c.Event) })
+		switch {
+		case herr == nil:
+			_, err = tx.Exec(ctx, "UPDATE domain_events SET dispatched_at=now(), attempts=attempts+1, last_error=NULL WHERE id=$1", c.Seq)
+			done++
+		case c.attempts+1 >= maxAttempts:
+			slog.Error("domain event parked after repeated failures", "event", c.ID, "type", c.Type, "error", herr)
+			_, err = tx.Exec(ctx, "UPDATE domain_events SET dispatched_at=now(), attempts=attempts+1, last_error=$2 WHERE id=$1", c.Seq, fmt.Sprint(herr))
+		default:
+			_, err = tx.Exec(ctx, "UPDATE domain_events SET attempts=attempts+1, last_error=$2 WHERE id=$1", c.Seq, fmt.Sprint(herr))
+		}
+		if err != nil {
+			return done, err
+		}
+	}
+	return done, tx.Commit(ctx)
+}
+
+// safely turns a handler panic into an error so one bad event cannot stop the dispatcher.
+func safely(f func() error) (err error) {
+	defer func() {
+		if r := recover(); r != nil {
+			err = fmt.Errorf("handler panicked: %v", r)
+		}
+	}()
+	return f()
+}

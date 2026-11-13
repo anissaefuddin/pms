@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/anissaefuddin/pms/server/internal/events"
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"net/http"
 	"strconv"
@@ -234,6 +235,9 @@ func mutateComment(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.U
 			return items.Detail{}, err
 		}
 		_, err = tx.Exec(ctx, "INSERT INTO comments(id,item_id,author_id,body,body_text) VALUES($1,$2,$3::uuid,$4,$5)", id, itemID, actor.ID, body, plain)
+		if err == nil {
+			err = events.Emit(ctx, tx, events.Event{Type: events.CommentCreated, ItemID: itemID.String(), ActorID: actor.ID, Payload: map[string]any{"comment_id": id.String()}})
+		}
 	} else {
 		if current != version {
 			return items.Detail{}, items.ErrConflict

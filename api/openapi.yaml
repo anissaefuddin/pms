@@ -1255,6 +1255,135 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/automation-rules:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [automation]
+      operationId: listAutomationRules
+      summary: Aturan otomasi sebuah Space (AUT-02); butuh hak Edit
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/AutomationRule' } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [automation]
+      operationId: createAutomationRule
+      summary: Buat aturan sebagai draft; pembuatnya menjadi pemilik dan aturan berjalan dengan hak pemilik (AUT-03)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, definition]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+                container_id: { type: string, format: uuid, nullable: true, description: Batasi ke satu project atau folder }
+                definition: { $ref: '#/components/schemas/AutomationDefinition' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [automation]
+      operationId: getAutomationRule
+      summary: Aturan beserta semua versinya
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [automation]
+      operationId: updateAutomationRule
+      summary: Ganti nama atau aktif/nonaktifkan; aktif hanya bila ada versi terbit. Pemilik atau admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+                enabled: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [automation]
+      operationId: deleteAutomationRule
+      summary: Hapus aturan beserta versi dan lognya
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/draft:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      tags: [automation]
+      operationId: saveAutomationDraft
+      summary: Ganti draft (atau mulai versi berikutnya); versi terbit tidak pernah berubah
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [definition]
+              properties:
+                definition: { $ref: '#/components/schemas/AutomationDefinition' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationVersion' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/publish:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: publishAutomationRule
+      summary: Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /space-templates:
     get:
       tags: [spaces]
@@ -3807,6 +3936,36 @@ components:
       type: object
       description: 'Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar'
       additionalProperties: true
+    AutomationDefinition:
+      type: object
+      description: 'Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak'
+      required: [when, then]
+      properties:
+        when: { type: object, additionalProperties: true }
+        if: { type: array, maxItems: 10, items: { type: object, additionalProperties: true } }
+        then: { type: array, minItems: 1, maxItems: 10, items: { type: object, additionalProperties: true } }
+    AutomationVersion:
+      type: object
+      required: [id, version, status, definition, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        version: { type: integer }
+        status: { type: string, enum: [draft, published, retired] }
+        definition: { $ref: '#/components/schemas/AutomationDefinition' }
+        created_at: { type: string }
+        published_at: { type: string, nullable: true }
+    AutomationRule:
+      type: object
+      required: [id, space_id, name, owner_id, enabled]
+      properties:
+        id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid }
+        container_id: { type: string, format: uuid, nullable: true }
+        name: { type: string }
+        owner_id: { type: string, format: uuid }
+        enabled: { type: boolean }
+        current_version_id: { type: string, format: uuid, nullable: true }
+        versions: { type: array, items: { $ref: '#/components/schemas/AutomationVersion' } }
     ItemTypeRef:
       type: object
       description: Tipe item (bawaan atau kustom); type tetap kelas perilakunya

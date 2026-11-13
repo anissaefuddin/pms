@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"github.com/anissaefuddin/pms/server/internal/events"
 	"io"
 	"mime"
 	"net/http"
@@ -490,6 +491,10 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 		if err := batch.Queue.SendTx(ctx, tx, args); err != nil {
 			return createdItem{}, err
 		}
+	}
+	if err := events.Emit(ctx, tx, events.Event{Type: events.FormSubmitted, ItemID: head.ID.String(), ActorID: actor.ID,
+		Payload: map[string]any{"form_id": row.ID.String(), "submission_id": submission.String(), "external": external != nil}}); err != nil {
+		return createdItem{}, err
 	}
 	return createdItem{ID: head.ID, Title: title}, nil
 }

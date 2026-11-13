@@ -538,6 +538,42 @@ type Attachment struct {
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 }
 
+type AutomationRule struct {
+	ID               pgtype.UUID        `json:"id"`
+	SpaceID          pgtype.UUID        `json:"space_id"`
+	ContainerID      pgtype.UUID        `json:"container_id"`
+	Name             string             `json:"name"`
+	OwnerID          pgtype.UUID        `json:"owner_id"`
+	Enabled          bool               `json:"enabled"`
+	CurrentVersionID pgtype.UUID        `json:"current_version_id"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
+type AutomationRuleVersion struct {
+	ID          pgtype.UUID        `json:"id"`
+	RuleID      pgtype.UUID        `json:"rule_id"`
+	Version     int32              `json:"version"`
+	Definition  []byte             `json:"definition"`
+	Status      string             `json:"status"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	PublishedAt pgtype.Timestamptz `json:"published_at"`
+}
+
+type AutomationRun struct {
+	ID            pgtype.UUID        `json:"id"`
+	RuleID        pgtype.UUID        `json:"rule_id"`
+	RuleVersionID pgtype.UUID        `json:"rule_version_id"`
+	EventID       pgtype.UUID        `json:"event_id"`
+	ActionIndex   int32              `json:"action_index"`
+	ItemID        pgtype.UUID        `json:"item_id"`
+	ActorID       pgtype.UUID        `json:"actor_id"`
+	Status        string             `json:"status"`
+	Detail        string             `json:"detail"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
 type Blueprint struct {
 	ID        pgtype.UUID        `json:"id"`
 	SpaceID   pgtype.UUID        `json:"space_id"`
@@ -583,6 +619,22 @@ type Dashboard struct {
 	SpaceID pgtype.UUID `json:"space_id"`
 	Name    string      `json:"name"`
 	Version int32       `json:"version"`
+}
+
+type DomainEvent struct {
+	ID           int64              `json:"id"`
+	EventID      pgtype.UUID        `json:"event_id"`
+	Type         string             `json:"type"`
+	ItemID       pgtype.UUID        `json:"item_id"`
+	ActorID      pgtype.UUID        `json:"actor_id"`
+	Payload      []byte             `json:"payload"`
+	CausedByRun  pgtype.UUID        `json:"caused_by_run"`
+	Depth        int32              `json:"depth"`
+	Chain        []pgtype.UUID      `json:"chain"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
+	Attempts     int32              `json:"attempts"`
+	LastError    pgtype.Text        `json:"last_error"`
 }
 
 type FormSubmission struct {

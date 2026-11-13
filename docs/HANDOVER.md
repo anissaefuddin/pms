@@ -295,3 +295,9 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Belum dikerjakan:** menu "+" per Space dan menu blueprint (SPC-14), tipe item di Table, Board, filter, pencarian, ekspor Excel dan report, default untuk impor Excel, default berdasar custom field, tampilan formula di Table dengan filter dan sort, routing form ke Blueprint, E2E live untuk form kondisional (E2E-PAR-05), pesan penolakan guard di Board (tampil di panel item), UAT manusia per requirement. Daftar lengkap di laporan G1a.
 - **Titik hati-hati:** `items.OnStatusEntered` diisi oleh `init()` di paket httpserver; paket lain tidak boleh mengganti hook itu. Tabel tipe bernama `item_type_defs` (bukan `item_types`) karena sqlc. Formula merujuk field dengan nama. Item yang dipindah ke Space lain tidak menghitung ulang formula sampai fieldnya berubah.
 
+### Mesin otomasi (S9.1.1 sampai S9.1.3, 13 Nov 2026)
+
+- **Berjalan:** outbox `domain_events`, pengirim periodik 10 detik dan scheduler jatuh tempo per jam (keduanya job River dari `automation.Engine.Option()`, didaftarkan di `cmd/pms/main.go`), aturan WHEN/IF/THEN berversi lewat API `/spaces/{id}/automation-rules` dan `/automation-rules/{id}`, eksekusi dengan hak pemilik, loop guard, kuota dan idempotensi. Migrasi 00053 dan 00054.
+- **Belum ada UI** untuk aturan (S9.1.5), log dan replay admin (S9.1.4), dan metrik. `automation_runs` sudah menyimpan hasil per aksi.
+- **Titik hati-hati:** setiap kode baru yang mengubah item harus lewat layanan item (supaya event keluar dari `recordChange`) atau memanggil `events.Emit` di transaksinya. Handler event wajib idempoten; aksi aturan sudah dijaga indeks unik `automation_runs`. Jangan mengubah `Cause` atau menghapus kolom `chain` dan `depth`: itulah loop guard.
+
