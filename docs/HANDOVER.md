@@ -280,3 +280,10 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Titik hati-hati:** template adalah JSON di biner (`server/internal/spacetemplates/templates`); menambah template cukup menambah berkas dan lulus `TestCatalogIsConsistent` serta tes pembuatan. Mengubah `Format` hanya bila struktur berkas berubah tak kompatibel. Live suite menandai `onboarding_done` sebelum memulai browser; tes yang ingin melihat wizard memakai mock. `loadMe` kini memuat `onboarding_pending` dan preferensi, jadi tiap panggilan `/me` ikut membaca `account.settings`.
 - **File sampingan dari sesi lain yang belum di-commit** (M5 dan report) ikut ada di working tree; `mail/notification.go` dan `reportdigest/reportdigest.go` disentuh satu kondisi `email_muted`.
 
+### Checkpoint hardening GA (13 Nov 2026)
+
+- Baseline `main` di `547926e`. S6.3.1 dan S6.3.2 selesai pada baseline. S6.3.3–S6.3.6 berjalan. Hasil dan cakupan tiap gate ada di [TESTING.md](TESTING.md#verifikasi-kandidat-ga-13-november-2026).
+- Toolchain Go dan builder Docker dipatok ke 1.27.4 dan x/crypto ke v0.55.0. Perubahan tes memperbarui ekspektasi undangan eksternal ShareDialog dan menambah fixture Gantt 1.000 tugas. Tidak ada perubahan skema atau kontrak API dalam sesi ini.
+- Lanjutkan pemetaan cakupan otorisasi per endpoint, verifikasi Gantt dan SSE pada lingkungan pilot, jalankan GitHub Actions pada revisi kandidat, dan isi [UAT.md](UAT.md) bersama pengguna pilot. Triase hasil sebelum membekukan kontrak dan menandai kandidat rilis.
+- Log alur browser juga mencatat HTTP 500 singkat pada GET /me, daftar view dan time entry. Semua skenario lulus. Konfirmasi apakah request dibatalkan saat navigasi atau ada galat yang terlihat pengguna sebelum menutup stabilisasi.
+- Trivy pada image hasil patch melaporkan 0 HIGH/CRITICAL. Regresi Go penuh awal mencapai timeout 10 menit. Cek hasil rerun akhir (timeout 30 menit) di `/tmp/pms-ga-full-final.log` jika masih tersedia.

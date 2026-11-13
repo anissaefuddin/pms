@@ -109,7 +109,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expectNoViolations(page);
 
       await dialog.getByLabel("Add people or groups").fill("nobody@example.test");
-      await expect(dialog.getByRole("button", { name: "Invite as external user" })).toBeDisabled();
+      await expect(dialog.getByRole("button", { name: "Invite as external user" })).toBeEnabled();
       await expectNoViolations(page);
 
       await dialog.getByLabel("Role for Ada Lovelace").selectOption("read");

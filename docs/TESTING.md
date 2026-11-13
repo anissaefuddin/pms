@@ -533,3 +533,22 @@ Belum: update 00023 → 00033 pada instance pilot (NOT RUN); batas 300/jam per t
 - Perbandingan dengan PRD OPS-01: RTO 44 detik terhadap target 4 jam; RPO ditentukan jadwal `backup.sh` harian (≤ 24 jam). Margin besar, tetapi ukuran uji kecil.
 - Belum: restore pada data dan volume sungguhan klien (puluhan GB akan jauh lebih lama; ukur ulang), backup ke tujuan off-server (`BACKUP_REMOTE`, rclone), unduhan lampiran lewat UI setelah restore (diperiksa lewat jumlah dan ukuran berkas, bukan unduhan), dan uji `sha256` isi berkas per berkas.
 
+
+## Verifikasi kandidat GA (13 November 2026)
+
+Baseline `main` pada `547926e`, dengan perubahan lokal pada toolchain dan tes. Fixture PostgreSQL dan Chrome lokal.
+
+| Task | Hasil | Bukti dan batas cakupan |
+|---|---|---|
+| S6.3.3 Audit dependensi | PASS untuk kode yang terjangkau | `npm audit --omit=dev` melaporkan 0. `govulncheck ./server/...` pada Go 1.27.1 melaporkan 11 kerentanan standar yang terjangkau (GO-2026-6859, 6809, 6617, 6613, 6612, 6611, 6609, 6608, 6607, 6604, 6603). Go 1.27.4 melaporkan 0 terjangkau, 0 pada paket yang diimpor, dan 17 pada modul yang diwajibkan. Setelah x/crypto v0.55.0, pemindaian ulang melaporkan 0 terjangkau, 0 pada paket yang diimpor, dan 3 pada modul yang diwajibkan. Versi Go diselaraskan di go.mod, CI (membaca go.mod), dan Dockerfile. |
+| S6.3.3 Image | PASS setelah perbaikan | Trivy pada Alpine 3.23.8 melaporkan 0 HIGH/CRITICAL di OS dan 10 HIGH (0 CRITICAL) di metadata biner, seluruhnya pada paket SSH dari `golang.org/x/crypto v0.46.0`. Dependency dinaikkan ke `v0.55.0`, versi perbaikan tertinggi yang dilaporkan. Scan ulang image lokal `pms:ga-security-local` melaporkan 0 HIGH/CRITICAL pada OS dan biner (digest manifest `sha256:be8781711dbfee871db0f7e073cdfd333c0c5347ebba27b255fdc3faa690dcd4`). |
+| S6.3.3 Kontrol aplikasi | PARTIAL | Pada Go 1.27.4, tes atribut cookie, otorisasi kolaborasi dan lampiran, siklus komentar, replay SSE dan form publik lulus. Matriks otorisasi Space, Item, M2, M3 dan time entry lulus. Uji kontrak auth dan atribut cookie juga lulus lagi setelah x/crypto diperbarui. Pemetaan seluruh endpoint dan pemeriksaan internal lengkap menurut [OWASP WSTG](https://owasp.org/projects/web-security-testing-guide) masih terbuka. |
+| S6.3.4 Table dan Board | PASS | Chrome + API dan DB nyata. 500 Item per proyek, 10.000 Item di DB, 20 sampel sesudah 2 pemanasan. Table p95 498,8 ms dan Board p95 451,6 ms (target masing-masing <1.500 ms). |
+| S6.3.4 Pencarian | PASS | 10.000 Item dan 500 komentar, 24 permintaan HTTP sesudah 4 pemanasan. p95 60,0 ms (target <800 ms). Dashboard 16 widget p95 maksimal 266,5 ms dan laporan 150,1 ms pada fixture 10.000 Item. |
+| S6.3.4 Gantt | PASS lokal, NOT RUN di pilot | Mock API, satu pemanasan dan 10 sampel per ukuran. p95 939 ms (500) dan 967 ms (1.000), di bawah ambang lokal 1.500 ms untuk bar pertama. Uji sebelumnya yang menyertakan pemuatan pertama melampaui ambang (2.339 dan 1.939 ms pada run kedua). Interaksi dan waktu muat dingin pada build produksi masih terbuka. |
+| S6.3.4 SSE | PARTIAL | Suite Collaboration lulus batas 3 detik untuk pembaruan judul dan notifikasi mention antarpengguna. Pengukuran status dan tampilan komentar antarpengguna pada beban klien masih terbuka. |
+| S6.3.5 Playwright lokal | PASS | `TestBrowserCollaboration` (51,77 s), `TestBrowserM2Flows` (13,74 s), `TestBrowserM3Flows` (32,31 s), `TestBrowserM4Flows` (8,05 s), dan `TestBrowserM5Flows` (13,66 s). Workflow CI sudah memuat kelimanya. Eksekusi GitHub Actions untuk perubahan ini NOT RUN. |
+| S6.3.5 UAT P0/P1 | NOT RUN | [UAT.md](UAT.md) menelusuri 93 requirement dari tabel PRD. Semua baris menunggu hasil dan bukti penerimaan pilot. |
+| S6.3.6 Stabilisasi | PARTIAL | Triase awal mencakup patch Go dan x/crypto, pengukuran Gantt, serta pembaruan assertion ShareDialog. Log suite live mencatat beberapa respons 500 singkat (GET /me, daftar view dan time entry). Penyebab masih perlu dikonfirmasi. Seluruh 18 tes axe layar lulus pada Chrome (tema terang dan gelap). Pembekuan skema dan kontrak serta penandaan kandidat menunggu gate keamanan, NFR, UAT, dan CI. |
+
+Regresi Go penuh sebelum patch mencapai batas 10 menit di `TestSpaceAccessRules`. Rerun dengan patch akhir dan `-timeout=30m` dimulai, hasil akhir belum tercatat di checkpoint ini. Tes heartbeat SSE terpisah SKIP karena opt-in.
