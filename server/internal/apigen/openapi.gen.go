@@ -543,6 +543,24 @@ func (e Capability) Valid() bool {
 	}
 }
 
+// Defines values for ConnectorConflictResolution.
+const (
+	ConnectorConflictResolutionItem   ConnectorConflictResolution = "item"
+	ConnectorConflictResolutionRemote ConnectorConflictResolution = "remote"
+)
+
+// Valid indicates whether the value is a known member of the ConnectorConflictResolution enum.
+func (e ConnectorConflictResolution) Valid() bool {
+	switch e {
+	case ConnectorConflictResolutionItem:
+		return true
+	case ConnectorConflictResolutionRemote:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CustomFieldConfigAggregation.
 const (
 	CustomFieldConfigAggregationAverage CustomFieldConfigAggregation = "average"
@@ -2256,6 +2274,24 @@ func (e ListAutomationRunsParamsStatus) Valid() bool {
 	}
 }
 
+// Defines values for ResolveConnectorConflictJSONBodyResolution.
+const (
+	ResolveConnectorConflictJSONBodyResolutionItem   ResolveConnectorConflictJSONBodyResolution = "item"
+	ResolveConnectorConflictJSONBodyResolutionRemote ResolveConnectorConflictJSONBodyResolution = "remote"
+)
+
+// Valid indicates whether the value is a known member of the ResolveConnectorConflictJSONBodyResolution enum.
+func (e ResolveConnectorConflictJSONBodyResolution) Valid() bool {
+	switch e {
+	case ResolveConnectorConflictJSONBodyResolutionItem:
+		return true
+	case ResolveConnectorConflictJSONBodyResolutionRemote:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListProjectTimeEntriesParamsBillingType.
 const (
 	ListProjectTimeEntriesParamsBillingTypeBillable    ListProjectTimeEntriesParamsBillingType = "billable"
@@ -2947,6 +2983,33 @@ type Comment struct {
 type CommentPage struct {
 	Items      []Comment `json:"items"`
 	NextCursor *string   `json:"next_cursor,omitempty"`
+}
+
+// ConnectorConflict defines model for ConnectorConflict.
+type ConnectorConflict struct {
+	BaseTitle   *string                      `json:"base_title,omitempty"`
+	CreatedAt   *time.Time                   `json:"created_at,omitempty"`
+	ExternalId  *string                      `json:"external_id,omitempty"`
+	Id          *openapi_types.UUID          `json:"id,omitempty"`
+	ItemId      *openapi_types.UUID          `json:"item_id,omitempty"`
+	ItemTitle   *string                      `json:"item_title,omitempty"`
+	RemoteTitle *string                      `json:"remote_title,omitempty"`
+	Resolution  *ConnectorConflictResolution `json:"resolution,omitempty"`
+	ResolvedAt  *time.Time                   `json:"resolved_at,omitempty"`
+}
+
+// ConnectorConflictResolution defines model for ConnectorConflict.Resolution.
+type ConnectorConflictResolution string
+
+// ConnectorInstall defines model for ConnectorInstall.
+type ConnectorInstall struct {
+	Config      map[string]interface{} `json:"config"`
+	CreatedAt   time.Time              `json:"created_at"`
+	Enabled     bool                   `json:"enabled"`
+	Id          openapi_types.UUID     `json:"id"`
+	Kind        string                 `json:"kind"`
+	Name        string                 `json:"name"`
+	SecretNames []string               `json:"secret_names"`
 }
 
 // CustomField defines model for CustomField.
@@ -4790,6 +4853,40 @@ type UpdateCommentParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// ResolveConnectorConflictJSONBody defines parameters for ResolveConnectorConflict.
+type ResolveConnectorConflictJSONBody struct {
+	Resolution ResolveConnectorConflictJSONBodyResolution `json:"resolution"`
+}
+
+// ResolveConnectorConflictJSONBodyResolution defines parameters for ResolveConnectorConflict.
+type ResolveConnectorConflictJSONBodyResolution string
+
+// InstallConnectorJSONBody defines parameters for InstallConnector.
+type InstallConnectorJSONBody struct {
+	Config  *map[string]interface{} `json:"config,omitempty"`
+	Kind    string                  `json:"kind"`
+	Name    string                  `json:"name"`
+	Secrets *map[string]string      `json:"secrets,omitempty"`
+}
+
+// ConfigureConnectorJSONBody defines parameters for ConfigureConnector.
+type ConfigureConnectorJSONBody struct {
+	Config  *map[string]interface{} `json:"config,omitempty"`
+	Name    *string                 `json:"name,omitempty"`
+	Secrets *map[string]string      `json:"secrets,omitempty"`
+}
+
+// ListConnectorConflictsParams defines parameters for ListConnectorConflicts.
+type ListConnectorConflictsParams struct {
+	Status *string `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// LinkConnectorItemJSONBody defines parameters for LinkConnectorItem.
+type LinkConnectorItemJSONBody struct {
+	ExternalId *string            `json:"external_id,omitempty"`
+	ItemId     openapi_types.UUID `json:"item_id"`
+}
+
 // ListDashboardsParams defines parameters for ListDashboards.
 type ListDashboardsParams struct {
 	SpaceId *openapi_types.UUID `form:"space_id,omitempty" json:"space_id,omitempty"`
@@ -5392,6 +5489,18 @@ type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
 
+// ResolveConnectorConflictJSONRequestBody defines body for ResolveConnectorConflict for application/json ContentType.
+type ResolveConnectorConflictJSONRequestBody ResolveConnectorConflictJSONBody
+
+// InstallConnectorJSONRequestBody defines body for InstallConnector for application/json ContentType.
+type InstallConnectorJSONRequestBody InstallConnectorJSONBody
+
+// ConfigureConnectorJSONRequestBody defines body for ConfigureConnector for application/json ContentType.
+type ConfigureConnectorJSONRequestBody ConfigureConnectorJSONBody
+
+// LinkConnectorItemJSONRequestBody defines body for LinkConnectorItem for application/json ContentType.
+type LinkConnectorItemJSONRequestBody LinkConnectorItemJSONBody
+
 // CreateDashboardJSONRequestBody defines body for CreateDashboard for application/json ContentType.
 type CreateDashboardJSONRequestBody = DashboardDestination
 
@@ -5964,6 +6073,33 @@ type ServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID, params UpdateCommentParams)
+	// ResolveConnectorConflict Admin. Pilih sisi yang dipakai (item atau remote); sisi lain ditimpa dengan sengaja, teksnya tetap di catatan konflik
+	// (POST /connector-conflicts/{conflictId}/resolve)
+	ResolveConnectorConflict(w http.ResponseWriter, r *http.Request, conflictId openapi_types.UUID)
+	// ListConnectors Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama)
+	// (GET /connectors)
+	ListConnectors(w http.ResponseWriter, r *http.Request)
+	// InstallConnector Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada)
+	// (POST /connectors)
+	InstallConnector(w http.ResponseWriter, r *http.Request)
+	// ConfigureConnector Admin. Ubah nama, config, atau rahasia (digabung per nama; nilai kosong menghapus)
+	// (PATCH /connectors/{connectorId})
+	ConfigureConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// ListConnectorConflicts Admin. Konflik sinkronisasi (default hanya yang terbuka)
+	// (GET /connectors/{connectorId}/conflicts)
+	ListConnectorConflicts(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID, params ListConnectorConflictsParams)
+	// DisableConnector Admin. Nonaktifkan; sinkronisasi ditolak (409) sampai diaktifkan lagi
+	// (POST /connectors/{connectorId}/disable)
+	DisableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// EnableConnector Admin. Aktifkan kembali
+	// (POST /connectors/{connectorId}/enable)
+	EnableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// LinkConnectorItem Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
+	// (POST /connectors/{connectorId}/links)
+	LinkConnectorItem(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// SyncConnector Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
+	// (POST /connectors/{connectorId}/sync)
+	SyncConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
 	// ListDashboards Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat
 	// (GET /dashboards)
 	ListDashboards(w http.ResponseWriter, r *http.Request, params ListDashboardsParams)
@@ -7289,6 +7425,232 @@ func (siw *ServerInterfaceWrapper) UpdateComment(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateComment(w, r, commentId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ResolveConnectorConflict operation middleware
+func (siw *ServerInterfaceWrapper) ResolveConnectorConflict(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "conflictId" -------------
+	var conflictId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "conflictId", r.PathValue("conflictId"), &conflictId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "conflictId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResolveConnectorConflict(w, r, conflictId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListConnectors operation middleware
+func (siw *ServerInterfaceWrapper) ListConnectors(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListConnectors(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// InstallConnector operation middleware
+func (siw *ServerInterfaceWrapper) InstallConnector(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.InstallConnector(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ConfigureConnector operation middleware
+func (siw *ServerInterfaceWrapper) ConfigureConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ConfigureConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListConnectorConflicts operation middleware
+func (siw *ServerInterfaceWrapper) ListConnectorConflicts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListConnectorConflictsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListConnectorConflicts(w, r, connectorId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DisableConnector operation middleware
+func (siw *ServerInterfaceWrapper) DisableConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisableConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnableConnector operation middleware
+func (siw *ServerInterfaceWrapper) EnableConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnableConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// LinkConnectorItem operation middleware
+func (siw *ServerInterfaceWrapper) LinkConnectorItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LinkConnectorItem(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SyncConnector operation middleware
+func (siw *ServerInterfaceWrapper) SyncConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SyncConnector(w, r, connectorId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12790,6 +13152,15 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/baselines/{baselineId}/variance", wrapper.GetBaselineVariance)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/rates", wrapper.ListRates)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/rates", wrapper.CreateRate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors", wrapper.ListConnectors)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors", wrapper.InstallConnector)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/connectors/{connectorId}", wrapper.ConfigureConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/disable", wrapper.DisableConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/enable", wrapper.EnableConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/links", wrapper.LinkConnectorItem)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/sync", wrapper.SyncConnector)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors/{connectorId}/conflicts", wrapper.ListConnectorConflicts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connector-conflicts/{conflictId}/resolve", wrapper.ResolveConnectorConflict)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.CreateGanttSnapshot)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
@@ -14876,6 +15247,443 @@ func (response UpdateComment428ApplicationProblemPlusJSONResponse) VisitUpdateCo
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveConnectorConflictRequestObject struct {
+	ConflictId openapi_types.UUID `json:"conflictId"`
+	Body       *ResolveConnectorConflictJSONRequestBody
+}
+
+type ResolveConnectorConflictResponseObject interface {
+	VisitResolveConnectorConflictResponse(w http.ResponseWriter) error
+}
+
+type ResolveConnectorConflict204Response struct {
+}
+
+func (response ResolveConnectorConflict204Response) VisitResolveConnectorConflictResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ResolveConnectorConflict404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResolveConnectorConflict404ApplicationProblemPlusJSONResponse) VisitResolveConnectorConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveConnectorConflict409ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolveConnectorConflict409ApplicationProblemPlusJSONResponse) VisitResolveConnectorConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectorsRequestObject struct {
+}
+
+type ListConnectorsResponseObject interface {
+	VisitListConnectorsResponse(w http.ResponseWriter) error
+}
+
+type ListConnectors200JSONResponse struct {
+	Items *[]ConnectorInstall `json:"items,omitempty"`
+	Kinds *[]string           `json:"kinds,omitempty"`
+}
+
+func (response ListConnectors200JSONResponse) VisitListConnectorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectors403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListConnectors403ApplicationProblemPlusJSONResponse) VisitListConnectorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnectorRequestObject struct {
+	Body *InstallConnectorJSONRequestBody
+}
+
+type InstallConnectorResponseObject interface {
+	VisitInstallConnectorResponse(w http.ResponseWriter) error
+}
+
+type InstallConnector201JSONResponse ConnectorInstall
+
+func (response InstallConnector201JSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnector403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response InstallConnector403ApplicationProblemPlusJSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnector422ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallConnector422ApplicationProblemPlusJSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnector503ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallConnector503ApplicationProblemPlusJSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfigureConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Body        *ConfigureConnectorJSONRequestBody
+}
+
+type ConfigureConnectorResponseObject interface {
+	VisitConfigureConnectorResponse(w http.ResponseWriter) error
+}
+
+type ConfigureConnector200JSONResponse ConnectorInstall
+
+func (response ConfigureConnector200JSONResponse) VisitConfigureConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfigureConnector404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ConfigureConnector404ApplicationProblemPlusJSONResponse) VisitConfigureConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfigureConnector422ApplicationProblemPlusJSONResponse Problem
+
+func (response ConfigureConnector422ApplicationProblemPlusJSONResponse) VisitConfigureConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectorConflictsRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Params      ListConnectorConflictsParams
+}
+
+type ListConnectorConflictsResponseObject interface {
+	VisitListConnectorConflictsResponse(w http.ResponseWriter) error
+}
+
+type ListConnectorConflicts200JSONResponse struct {
+	Items *[]ConnectorConflict `json:"items,omitempty"`
+}
+
+func (response ListConnectorConflicts200JSONResponse) VisitListConnectorConflictsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectorConflicts404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListConnectorConflicts404ApplicationProblemPlusJSONResponse) VisitListConnectorConflictsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+}
+
+type DisableConnectorResponseObject interface {
+	VisitDisableConnectorResponse(w http.ResponseWriter) error
+}
+
+type DisableConnector200JSONResponse ConnectorInstall
+
+func (response DisableConnector200JSONResponse) VisitDisableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableConnector404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DisableConnector404ApplicationProblemPlusJSONResponse) VisitDisableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+}
+
+type EnableConnectorResponseObject interface {
+	VisitEnableConnectorResponse(w http.ResponseWriter) error
+}
+
+type EnableConnector200JSONResponse ConnectorInstall
+
+func (response EnableConnector200JSONResponse) VisitEnableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableConnector404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response EnableConnector404ApplicationProblemPlusJSONResponse) VisitEnableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkConnectorItemRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Body        *LinkConnectorItemJSONRequestBody
+}
+
+type LinkConnectorItemResponseObject interface {
+	VisitLinkConnectorItemResponse(w http.ResponseWriter) error
+}
+
+type LinkConnectorItem200JSONResponse struct {
+	ExternalId *string `json:"external_id,omitempty"`
+}
+
+func (response LinkConnectorItem200JSONResponse) VisitLinkConnectorItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkConnectorItem409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response LinkConnectorItem409ApplicationProblemPlusJSONResponse) VisitLinkConnectorItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkConnectorItem422ApplicationProblemPlusJSONResponse Problem
+
+func (response LinkConnectorItem422ApplicationProblemPlusJSONResponse) VisitLinkConnectorItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SyncConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+}
+
+type SyncConnectorResponseObject interface {
+	VisitSyncConnectorResponse(w http.ResponseWriter) error
+}
+
+type SyncConnector200JSONResponse struct {
+	Conflicts *int `json:"conflicts,omitempty"`
+	Pending   *int `json:"pending,omitempty"`
+	Pulled    *int `json:"pulled,omitempty"`
+	Pushed    *int `json:"pushed,omitempty"`
+	Skipped   *int `json:"skipped,omitempty"`
+	Unchanged *int `json:"unchanged,omitempty"`
+}
+
+func (response SyncConnector200JSONResponse) VisitSyncConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SyncConnector409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SyncConnector409ApplicationProblemPlusJSONResponse) VisitSyncConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SyncConnector502ApplicationProblemPlusJSONResponse Problem
+
+func (response SyncConnector502ApplicationProblemPlusJSONResponse) VisitSyncConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -24884,6 +25692,33 @@ type StrictServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(ctx context.Context, request UpdateCommentRequestObject) (UpdateCommentResponseObject, error)
+	// ResolveConnectorConflict Admin. Pilih sisi yang dipakai (item atau remote); sisi lain ditimpa dengan sengaja, teksnya tetap di catatan konflik
+	// (POST /connector-conflicts/{conflictId}/resolve)
+	ResolveConnectorConflict(ctx context.Context, request ResolveConnectorConflictRequestObject) (ResolveConnectorConflictResponseObject, error)
+	// ListConnectors Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama)
+	// (GET /connectors)
+	ListConnectors(ctx context.Context, request ListConnectorsRequestObject) (ListConnectorsResponseObject, error)
+	// InstallConnector Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada)
+	// (POST /connectors)
+	InstallConnector(ctx context.Context, request InstallConnectorRequestObject) (InstallConnectorResponseObject, error)
+	// ConfigureConnector Admin. Ubah nama, config, atau rahasia (digabung per nama; nilai kosong menghapus)
+	// (PATCH /connectors/{connectorId})
+	ConfigureConnector(ctx context.Context, request ConfigureConnectorRequestObject) (ConfigureConnectorResponseObject, error)
+	// ListConnectorConflicts Admin. Konflik sinkronisasi (default hanya yang terbuka)
+	// (GET /connectors/{connectorId}/conflicts)
+	ListConnectorConflicts(ctx context.Context, request ListConnectorConflictsRequestObject) (ListConnectorConflictsResponseObject, error)
+	// DisableConnector Admin. Nonaktifkan; sinkronisasi ditolak (409) sampai diaktifkan lagi
+	// (POST /connectors/{connectorId}/disable)
+	DisableConnector(ctx context.Context, request DisableConnectorRequestObject) (DisableConnectorResponseObject, error)
+	// EnableConnector Admin. Aktifkan kembali
+	// (POST /connectors/{connectorId}/enable)
+	EnableConnector(ctx context.Context, request EnableConnectorRequestObject) (EnableConnectorResponseObject, error)
+	// LinkConnectorItem Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
+	// (POST /connectors/{connectorId}/links)
+	LinkConnectorItem(ctx context.Context, request LinkConnectorItemRequestObject) (LinkConnectorItemResponseObject, error)
+	// SyncConnector Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
+	// (POST /connectors/{connectorId}/sync)
+	SyncConnector(ctx context.Context, request SyncConnectorRequestObject) (SyncConnectorResponseObject, error)
 	// ListDashboards Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat
 	// (GET /dashboards)
 	ListDashboards(ctx context.Context, request ListDashboardsRequestObject) (ListDashboardsResponseObject, error)
@@ -26353,6 +27188,265 @@ func (sh *strictHandler) UpdateComment(w http.ResponseWriter, r *http.Request, c
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateCommentResponseObject); ok {
 		if err := validResponse.VisitUpdateCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ResolveConnectorConflict operation middleware
+func (sh *strictHandler) ResolveConnectorConflict(w http.ResponseWriter, r *http.Request, conflictId openapi_types.UUID) {
+	var request ResolveConnectorConflictRequestObject
+
+	request.ConflictId = conflictId
+
+	var body ResolveConnectorConflictJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResolveConnectorConflict(ctx, request.(ResolveConnectorConflictRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResolveConnectorConflict")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResolveConnectorConflictResponseObject); ok {
+		if err := validResponse.VisitResolveConnectorConflictResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListConnectors operation middleware
+func (sh *strictHandler) ListConnectors(w http.ResponseWriter, r *http.Request) {
+	var request ListConnectorsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListConnectors(ctx, request.(ListConnectorsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListConnectors")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListConnectorsResponseObject); ok {
+		if err := validResponse.VisitListConnectorsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// InstallConnector operation middleware
+func (sh *strictHandler) InstallConnector(w http.ResponseWriter, r *http.Request) {
+	var request InstallConnectorRequestObject
+
+	var body InstallConnectorJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.InstallConnector(ctx, request.(InstallConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "InstallConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(InstallConnectorResponseObject); ok {
+		if err := validResponse.VisitInstallConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ConfigureConnector operation middleware
+func (sh *strictHandler) ConfigureConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request ConfigureConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	var body ConfigureConnectorJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ConfigureConnector(ctx, request.(ConfigureConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ConfigureConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ConfigureConnectorResponseObject); ok {
+		if err := validResponse.VisitConfigureConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListConnectorConflicts operation middleware
+func (sh *strictHandler) ListConnectorConflicts(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID, params ListConnectorConflictsParams) {
+	var request ListConnectorConflictsRequestObject
+
+	request.ConnectorId = connectorId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListConnectorConflicts(ctx, request.(ListConnectorConflictsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListConnectorConflicts")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListConnectorConflictsResponseObject); ok {
+		if err := validResponse.VisitListConnectorConflictsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DisableConnector operation middleware
+func (sh *strictHandler) DisableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request DisableConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DisableConnector(ctx, request.(DisableConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DisableConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DisableConnectorResponseObject); ok {
+		if err := validResponse.VisitDisableConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EnableConnector operation middleware
+func (sh *strictHandler) EnableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request EnableConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EnableConnector(ctx, request.(EnableConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EnableConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EnableConnectorResponseObject); ok {
+		if err := validResponse.VisitEnableConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// LinkConnectorItem operation middleware
+func (sh *strictHandler) LinkConnectorItem(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request LinkConnectorItemRequestObject
+
+	request.ConnectorId = connectorId
+
+	var body LinkConnectorItemJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.LinkConnectorItem(ctx, request.(LinkConnectorItemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "LinkConnectorItem")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LinkConnectorItemResponseObject); ok {
+		if err := validResponse.VisitLinkConnectorItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SyncConnector operation middleware
+func (sh *strictHandler) SyncConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request SyncConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SyncConnector(ctx, request.(SyncConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SyncConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SyncConnectorResponseObject); ok {
+		if err := validResponse.VisitSyncConnectorResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

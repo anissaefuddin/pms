@@ -1279,15 +1279,15 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [ ] [TEST] Pencabutan efektif
 
 **S11.3.4 Framework konektor (INT-01) — 1.5 hari**
-- [ ] [BE] Lifecycle pasang, konfigurasi, nonaktif
-- [ ] [BE] Penyimpanan rahasia terenkripsi
-- [ ] [TEST] Lifecycle
+- [x] [BE] Lifecycle pasang, konfigurasi, nonaktif
+- [x] [BE] Penyimpanan rahasia terenkripsi
+- [x] [TEST] Lifecycle
 
 **S11.3.5 Sinkronisasi dua arah dan konflik (INT-02) — 2 hari**
-- [ ] [DOC] Kebijakan konflik
-- [ ] [BE] Pemetaan ID eksternal
-- [ ] [BE] Deteksi dan penyelesaian konflik
-- [ ] [TEST] Tidak ada penimpaan diam-diam
+- [x] [DOC] Kebijakan konflik
+- [x] [BE] Pemetaan ID eksternal
+- [x] [BE] Deteksi dan penyelesaian konflik
+- [x] [TEST] Tidak ada penimpaan diam-diam
 
 **S11.3.6 Dua konektor pilot (INT-03) — 1.5 hari**
 - [ ] [BE] GitHub Issues dua arah

@@ -99,6 +99,15 @@
 
 **Seluruh D-20..D-25 DISETUJUI user** ("Setujui semua", 12 Nov 2026), dengan catatan: D-21 menyimpang pada UUID v4 untuk tabel M0 dan `groups` ditunda ke S1.1.3; D-23 menerima tambahan yang sifatnya menambah (`Retry-After`, 429 pada reset/accept, `account_name` di `Me`), sedangkan mengubah atau menghapus tetap butuh persetujuan; D-24 dengan penyimpangan D-31; D-25 dengan baseline D-16.
 
+## 2b. Kebijakan konflik sinkronisasi konektor (S11.3.5, 14 Nov 2026, PROPOSED oleh sesi implementasi)
+
+| ID | Keputusan |
+|---|---|
+| D-INT-02 | **Terdeteksi:** satu Item terhubung ke satu record eksternal lewat `connector_links`, yang menyimpan judul terakhir tersinkron (basis). Item "berubah" bila judulnya berbeda dari basis, record eksternal "berubah" bila judulnya berbeda dari basis; tautan baru dengan ID eksternal yang sudah ada tidak punya basis, jadi keduanya dianggap berubah. Konflik = kedua sisi berubah **dan** isinya berbeda. Isi yang sama di kedua sisi diadopsi menjadi basis tanpa konflik. |
+| | **Siapa menang:** bila hanya satu sisi berubah, sisi itu menang dan disalin ke sisi lain. Bila konflik, **tidak ada sisi yang menang otomatis**: tidak ada yang ditulis ke Item maupun ke sistem eksternal sampai admin memilih `item` atau `remote`. Tautan yang sedang konflik dilewati oleh sinkronisasi berikutnya (tidak ada konflik ganda). |
+| | **Dicatat:** baris `connector_conflicts` berisi judul Item, judul eksternal, basis, waktu, dan setelah diselesaikan: pilihan, penyelesai, waktu. Teks sisi yang kalah tetap ada di baris itu. |
+| | **Cakupan awal:** hanya judul yang disinkronkan; menambah kolom berarti menambah `Record`, kolom basis, dan perbandingan. Record eksternal tanpa tautan diabaikan (tidak membuat Item otomatis). Penghapusan di salah satu sisi tidak diteruskan; tautan dilewati. Jika Item diubah lewat `UPDATE` oleh sinkronisasi, versi Item naik tetapi event domain dan activity log belum ditulis (risiko tercatat di TESTING.md). |
+
 ## 3. PENDING (perlu keputusan user)
 
 Tidak ada keputusan yang menunggu user. Semua P-01..P-08 ditutup pada 12 Nov 2026:

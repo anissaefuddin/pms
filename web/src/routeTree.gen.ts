@@ -41,6 +41,7 @@ import { Route as AppRequestsFormIdRouteImport } from './routes/_app/requests.$f
 import { Route as AppRequestsMineRouteImport } from './routes/_app/requests.mine'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
+import { Route as AppSettingsAppsRouteImport } from './routes/_app/settings/apps'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsRatesRouteImport } from './routes/_app/settings/rates'
@@ -218,6 +219,11 @@ const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsAppsRoute = AppSettingsAppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsItemTypesRoute = AppSettingsItemTypesRouteImport.update({
   id: '/item-types',
   path: '/item-types',
@@ -329,6 +335,7 @@ export interface FileRoutesByFullPath {
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/rates': typeof AppSettingsRatesRoute
@@ -377,6 +384,7 @@ export interface FileRoutesByTo {
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/rates': typeof AppSettingsRatesRoute
@@ -427,6 +435,7 @@ export interface FileRoutesById {
   '/_app/requests/$formId': typeof AppRequestsFormIdRoute
   '/_app/requests/mine': typeof AppRequestsMineRoute
   '/_app/settings/account': typeof AppSettingsAccountRoute
+  '/_app/settings/apps': typeof AppSettingsAppsRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/rates': typeof AppSettingsRatesRoute
@@ -478,6 +487,7 @@ export interface FileRouteTypes {
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/account'
+    | '/settings/apps'
     | '/settings/item-types'
     | '/settings/profile'
     | '/settings/rates'
@@ -526,6 +536,7 @@ export interface FileRouteTypes {
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/account'
+    | '/settings/apps'
     | '/settings/item-types'
     | '/settings/profile'
     | '/settings/rates'
@@ -575,6 +586,7 @@ export interface FileRouteTypes {
     | '/_app/requests/$formId'
     | '/_app/requests/mine'
     | '/_app/settings/account'
+    | '/_app/settings/apps'
     | '/_app/settings/item-types'
     | '/_app/settings/profile'
     | '/_app/settings/rates'
@@ -835,6 +847,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAccountRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/apps': {
+      id: '/_app/settings/apps'
+      path: '/apps'
+      fullPath: '/settings/apps'
+      preLoaderRoute: typeof AppSettingsAppsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/item-types': {
       id: '/_app/settings/item-types'
       path: '/item-types'
@@ -965,6 +984,7 @@ const AppSettingsUsersRouteWithChildren =
 
 interface AppSettingsRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
+  AppSettingsAppsRoute: typeof AppSettingsAppsRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsRatesRoute: typeof AppSettingsRatesRoute
@@ -978,6 +998,7 @@ interface AppSettingsRouteChildren {
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
+  AppSettingsAppsRoute: AppSettingsAppsRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsRatesRoute: AppSettingsRatesRoute,

@@ -96,6 +96,159 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/connectors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama) */
+        get: operations["listConnectors"];
+        put?: never;
+        /** Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada) */
+        post: operations["installConnector"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/{connectorId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Admin. Ubah nama, config, atau rahasia (digabung per nama; nilai kosong menghapus) */
+        patch: operations["configureConnector"];
+        trace?: never;
+    };
+    "/connectors/{connectorId}/disable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin. Nonaktifkan; sinkronisasi ditolak (409) sampai diaktifkan lagi */
+        post: operations["disableConnector"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/{connectorId}/enable": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin. Aktifkan kembali */
+        post: operations["enableConnector"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/{connectorId}/links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item) */
+        post: operations["linkConnectorItem"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/{connectorId}/sync": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa */
+        post: operations["syncConnector"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connectors/{connectorId}/conflicts": {
+        parameters: {
+            query?: {
+                status?: "open" | "all";
+            };
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        /** Admin. Konflik sinkronisasi (default hanya yang terbuka) */
+        get: operations["listConnectorConflicts"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/connector-conflicts/{conflictId}/resolve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conflictId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Admin. Pilih sisi yang dipakai (item atau remote); sisi lain ditimpa dengan sengaja, teksnya tetap di catatan konflik */
+        post: operations["resolveConnectorConflict"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/items/{projectId}/gantt-snapshots": {
         parameters: {
             query?: never;
@@ -2705,6 +2858,35 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        ConnectorInstall: {
+            /** Format: uuid */
+            id: string;
+            kind: string;
+            name: string;
+            config: {
+                [key: string]: unknown;
+            };
+            secret_names: string[];
+            enabled: boolean;
+            /** Format: date-time */
+            created_at: string;
+        };
+        ConnectorConflict: {
+            /** Format: uuid */
+            id?: string;
+            external_id?: string;
+            /** Format: uuid */
+            item_id?: string;
+            item_title?: string;
+            remote_title?: string;
+            base_title?: string | null;
+            /** @enum {string|null} */
+            resolution?: "item" | "remote" | null;
+            /** Format: date-time */
+            resolved_at?: string | null;
+            /** Format: date-time */
+            created_at?: string;
+        };
         ResourceSchedule: {
             working_days?: number[] | null;
             daily_hours?: number | null;
@@ -4737,6 +4919,269 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listConnectors: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        kinds?: string[];
+                        items?: components["schemas"]["ConnectorInstall"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    installConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    kind: string;
+                    name: string;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    secrets?: {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorInstall"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    configureConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name?: string;
+                    config?: {
+                        [key: string]: unknown;
+                    };
+                    secrets?: {
+                        [key: string]: string;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorInstall"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    disableConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorInstall"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    enableConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ConnectorInstall"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    linkConnectorItem: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    item_id: string;
+                    external_id?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        external_id?: string;
+                    };
+                };
+            };
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    syncConnector: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        pushed?: number;
+                        pulled?: number;
+                        conflicts?: number;
+                        pending?: number;
+                        skipped?: number;
+                        unchanged?: number;
+                    };
+                };
+            };
+            409: components["responses"]["Problem"];
+            502: components["responses"]["Problem"];
+        };
+    };
+    listConnectorConflicts: {
+        parameters: {
+            query?: {
+                status?: "open" | "all";
+            };
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items?: components["schemas"]["ConnectorConflict"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    resolveConnectorConflict: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                conflictId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    resolution: "item" | "remote";
+                };
+            };
+        };
+        responses: {
+            /** @description Diselesaikan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
         };
     };
     listGanttSnapshots: {

@@ -242,5 +242,13 @@
   "itemTypes.cancel": "Cancel",
   "itemTypes.save": "Save",
   "itemTypes.saved": "Item type saved",
+  "apps": {
+    "title": "Apps & Integrations",
+    "connectors": {
+      "title": "Connectors", "empty": "No connectors installed.", "enabled": "Enabled", "disabled": "Disabled",
+      "enable": "Enable", "disable": "Disable", "sync": "Sync now", "conflicts": "Sync conflicts",
+      "conflictLine": "Item: \"{{item}}\" / Remote: \"{{remote}}\"", "keepItem": "Keep item", "keepRemote": "Keep remote"
+    }
+  },
   "rates": "Hourly rates"
 }

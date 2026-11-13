@@ -98,6 +98,9 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	if cfg.TwoFactorKey == nil {
 		slog.Warn("PMS_2FA_KEY is not set: two-factor authentication is unavailable to every user")
 	}
+	if cfg.ConnectorKey == nil {
+		slog.Warn("PMS_CONNECTOR_KEY is not set: connectors that need secrets cannot be installed")
+	}
 	engine := automation.New(pool)
 	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL), engine.Option(), httpserver.ApprovalDeadlines(pool))
 	if err != nil {

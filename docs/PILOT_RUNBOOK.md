@@ -103,6 +103,10 @@ Secret TOTP disimpan terenkripsi (AES-256-GCM) dengan kunci dari `PMS_2FA_KEY` (
 - **Pemulihan user (kehilangan app dan kode cadangan):** admin memanggil `POST /users/{id}/2fa/reset` (belum ada tombol di UI). Server menghapus secret dan kode cadangan, mengeluarkan user dari semua sesi, dan mencatat `2fa_reset_by_admin` di tabel `security_events` beserta id admin dan waktu. Verifikasi identitas user di luar aplikasi sebelum reset. Setelah itu user login dengan password dan dapat mendaftar ulang 2FA.
 - **Riwayat perubahan:** `SELECT * FROM security_events WHERE target_id = '<user id>' ORDER BY id DESC;` (`2fa_enabled`, `2fa_disabled`, `2fa_backup_codes_renewed`, `2fa_reset_by_admin`).
 
+## Kunci konektor (`PMS_CONNECTOR_KEY`)
+
+Rahasia konektor (token, kunci API) di Settings → Apps & Integrations disimpan terenkripsi AES-256-GCM dengan `PMS_CONNECTOR_KEY` (32 byte acak, base64; `openssl rand -base64 32`), terpisah dari `PMS_2FA_KEY`. Tanpa kunci, server tetap berjalan tetapi konektor yang butuh rahasia tidak bisa dipasang (log: `PMS_CONNECTOR_KEY is not set`). Backup, restore, dan rotasi sama dengan kunci 2FA: kunci tidak ikut dump, restore harus memakai kunci yang sama, dan rotasi lewat `PMS_CONNECTOR_KEY_PREVIOUS`; rahasia dipindah ke kunci baru saat konfigurasi konektor disimpan ulang, jadi simpan ulang tiap konektor sebelum mengosongkan kunci lama.
+
 ## Menambah seat
 
 Naikkan `MAX_SEATS` di `deploy/.env`, lalu buat ulang container app dengan `docker compose up -d app`. Periksa jumlah active, invited, dan available di Settings → Users. Undangan pending memakai seat. Nonaktifkan akun hanya melalui UI admin agar sesi dicabut dan histori tetap tersimpan.
