@@ -1258,11 +1258,11 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 ### E11.3 API dan integrasi
 
 **S11.3.1 API key dan scope (API-01, SET-08) — 2.5 hari**
-- [ ] [API] Kelola API key
-- [ ] [DB] Key disimpan sebagai hash
-- [ ] [BE] Middleware auth key dan scope
-- [ ] [FE] Halaman Apps & Integrations: tab API
-- [ ] [TEST] Scope, rotasi, pencabutan
+- [x] [API] Kelola API key
+- [x] [DB] Key disimpan sebagai hash
+- [x] [BE] Middleware auth key dan scope
+- [x] [FE] Halaman Apps & Integrations: tab API
+- [x] [TEST] Scope, rotasi, pencabutan
 
 **S11.3.2 Webhook (API-02) — 3 hari**
 - [ ] [API] Kelola langganan webhook

@@ -49,7 +49,7 @@ func (s *Server) bearerUser(w http.ResponseWriter, r *http.Request) (*bearerPrin
 		return nil, false
 	}
 	// Tokens must not manage sessions, passwords or other apps.
-	if p := r.URL.Path; strings.HasPrefix(p, "/api/v1/auth/") || strings.HasPrefix(p, "/api/v1/oauth/") {
+	if p := r.URL.Path; strings.HasPrefix(p, "/api/v1/auth/") || strings.HasPrefix(p, "/api/v1/oauth/") || strings.HasPrefix(p, "/api/v1/api-keys") {
 		writeError(w, 403, "not available to tokens")
 		return nil, false
 	}
