@@ -4776,6 +4776,14 @@ type DecideApprovalJSONBody struct {
 // DecideApprovalJSONBodyDecision defines parameters for DecideApproval.
 type DecideApprovalJSONBodyDecision string
 
+// CompareAttachmentVersionsParams defines parameters for CompareAttachmentVersions.
+type CompareAttachmentVersionsParams struct {
+	LeftAttachment  openapi_types.UUID `form:"left_attachment" json:"left_attachment"`
+	LeftVersion     int                `form:"left_version" json:"left_version"`
+	RightAttachment openapi_types.UUID `form:"right_attachment" json:"right_attachment"`
+	RightVersion    int                `form:"right_version" json:"right_version"`
+}
+
 // UploadAttachmentVersionMultipartBody defines parameters for UploadAttachmentVersion.
 type UploadAttachmentVersionMultipartBody struct {
 	File openapi_types.File `json:"file"`
@@ -5962,6 +5970,9 @@ type ServerInterface interface {
 	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
 	// (PUT /approvals/{approvalId}/decision)
 	DecideApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
+	// CompareAttachmentVersions Pratinjau dua versi file yang sama untuk tampilan berdampingan (FIL-03); memerlukan `view` pada keduanya
+	// (GET /attachment-compare)
+	CompareAttachmentVersions(w http.ResponseWriter, r *http.Request, params CompareAttachmentVersionsParams)
 
 	// (DELETE /attachments/{attachmentId})
 	DeleteAttachment(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID)
@@ -6724,6 +6735,78 @@ func (siw *ServerInterfaceWrapper) DecideApproval(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DecideApproval(w, r, approvalId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CompareAttachmentVersions operation middleware
+func (siw *ServerInterfaceWrapper) CompareAttachmentVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params CompareAttachmentVersionsParams
+
+	// ------------- Required query parameter "left_attachment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "left_attachment", r.URL.Query(), &params.LeftAttachment, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "left_attachment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "left_attachment", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "left_version" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "left_version", r.URL.Query(), &params.LeftVersion, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "left_version"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "left_version", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "right_attachment" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "right_attachment", r.URL.Query(), &params.RightAttachment, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "right_attachment"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "right_attachment", Err: err})
+		}
+		return
+	}
+
+	// ------------- Required query parameter "right_version" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "right_version", r.URL.Query(), &params.RightVersion, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "right_version"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "right_version", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CompareAttachmentVersions(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -13268,6 +13351,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.UploadAttachmentVersion)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/download", wrapper.DownloadAttachmentVersion)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/preview", wrapper.GetAttachmentPreview)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachment-compare", wrapper.CompareAttachmentVersions)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/preview/{page}", wrapper.GetAttachmentPreviewPage)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/annotations", wrapper.ListAttachmentAnnotations)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/annotations", wrapper.CreateAttachmentAnnotation)
@@ -13729,6 +13813,61 @@ func (response DecideApproval404ApplicationProblemPlusJSONResponse) VisitDecideA
 type DecideApproval422ApplicationProblemPlusJSONResponse Problem
 
 func (response DecideApproval422ApplicationProblemPlusJSONResponse) VisitDecideApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CompareAttachmentVersionsRequestObject struct {
+	Params CompareAttachmentVersionsParams
+}
+
+type CompareAttachmentVersionsResponseObject interface {
+	VisitCompareAttachmentVersionsResponse(w http.ResponseWriter) error
+}
+
+type CompareAttachmentVersions200JSONResponse struct {
+	Left  AttachmentPreview `json:"left"`
+	Right AttachmentPreview `json:"right"`
+}
+
+func (response CompareAttachmentVersions200JSONResponse) VisitCompareAttachmentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CompareAttachmentVersions404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CompareAttachmentVersions404ApplicationProblemPlusJSONResponse) VisitCompareAttachmentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CompareAttachmentVersions422ApplicationProblemPlusJSONResponse Problem
+
+func (response CompareAttachmentVersions422ApplicationProblemPlusJSONResponse) VisitCompareAttachmentVersionsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -25440,6 +25579,9 @@ type StrictServerInterface interface {
 	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
 	// (PUT /approvals/{approvalId}/decision)
 	DecideApproval(ctx context.Context, request DecideApprovalRequestObject) (DecideApprovalResponseObject, error)
+	// CompareAttachmentVersions Pratinjau dua versi file yang sama untuk tampilan berdampingan (FIL-03); memerlukan `view` pada keduanya
+	// (GET /attachment-compare)
+	CompareAttachmentVersions(ctx context.Context, request CompareAttachmentVersionsRequestObject) (CompareAttachmentVersionsResponseObject, error)
 
 	// (DELETE /attachments/{attachmentId})
 	DeleteAttachment(ctx context.Context, request DeleteAttachmentRequestObject) (DeleteAttachmentResponseObject, error)
@@ -26265,6 +26407,32 @@ func (sh *strictHandler) DecideApproval(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DecideApprovalResponseObject); ok {
 		if err := validResponse.VisitDecideApprovalResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CompareAttachmentVersions operation middleware
+func (sh *strictHandler) CompareAttachmentVersions(w http.ResponseWriter, r *http.Request, params CompareAttachmentVersionsParams) {
+	var request CompareAttachmentVersionsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CompareAttachmentVersions(ctx, request.(CompareAttachmentVersionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CompareAttachmentVersions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CompareAttachmentVersionsResponseObject); ok {
+		if err := validResponse.VisitCompareAttachmentVersionsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

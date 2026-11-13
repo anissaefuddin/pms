@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
+import { FileCompare } from "@/components/file-compare";
 import { FileProofing } from "@/components/file-proofing";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
@@ -138,5 +139,6 @@ function VersionHistory({ attachmentId, canComment }: { attachmentId: string; ca
       <span className="text-muted-foreground">{v.uploader.name} · {new Date(v.created_at).toLocaleString()}{v.is_current ? ` · ${t("items.currentVersion")}` : ""}</span>
       <FileProofing attachmentId={attachmentId} version={v.version} filename={v.filename} canComment={canComment} />
     </li>)}
+    {data.items.length > 1 && <li><FileCompare attachmentId={attachmentId} versions={data.items.map((v) => v.version)} filename={data.items[0]?.filename ?? ""} /></li>}
   </ol>;
 }
