@@ -110,7 +110,7 @@ func TestSweepFilesRemovesOnlyOldFilesWithoutARow(t *testing.T) {
 		}
 		return f.Key
 	}
-	used, orphan, young := put(48*time.Hour), put(48*time.Hour), put(time.Hour)
+	used, orphan, young, oldVersion := put(48*time.Hour), put(48*time.Hour), put(time.Hour), put(48*time.Hour)
 	var item string
 	if err := pool.QueryRow(ctx, "INSERT INTO items(type,title,created_by) VALUES ('task','t',$1) RETURNING id::text", boot.AdminID).Scan(&item); err != nil {
 		t.Fatal(err)
@@ -120,12 +120,17 @@ func TestSweepFilesRemovesOnlyOldFilesWithoutARow(t *testing.T) {
 VALUES (gen_random_uuid(),$1,$2,'a.txt','text/plain',1,$3,decode(repeat('00',32),'hex'),now())`, item, boot.AdminID, used); err != nil {
 		t.Fatal(err)
 	}
+	// An older version's file is referenced only by attachment_versions and must survive.
+	if _, err := pool.Exec(ctx, `INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
+SELECT id,2,$1,'old.txt','text/plain',1,$2,decode(repeat('01',32),'hex') FROM attachments LIMIT 1`, boot.AdminID, oldVersion); err != nil {
+		t.Fatal(err)
+	}
 	removed, err := housekeeping.SweepFiles(ctx, pool, store, 24*time.Hour)
 	if err != nil || removed != 1 {
 		t.Fatalf("removed %d, err %v; want exactly the old orphan", removed, err)
 	}
 	exists := func(key string) bool { _, err := os.Stat(filepath.Join(store.Dir, key)); return err == nil }
-	if exists(orphan) || !exists(used) || !exists(young) {
+	if exists(orphan) || !exists(oldVersion) || !exists(used) || !exists(young) {
 		t.Fatalf("orphan=%v used=%v young=%v", exists(orphan), exists(used), exists(young))
 	}
 	if n, err := housekeeping.SweepFiles(ctx, pool, storage.LocalStorage{Dir: filepath.Join(t.TempDir(), "missing")}, 0); err != nil || n != 0 {

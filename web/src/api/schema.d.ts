@@ -1926,6 +1926,43 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/attachments/{attachmentId}/versions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        /** Riwayat versi file, terbaru dulu (FIL-01); memerlukan `view` pada item */
+        get: operations["listAttachmentVersions"];
+        put?: never;
+        /** Unggah versi baru (FIL-01); memerlukan `attach`. Aturan jenis file sama dengan lampiran baru */
+        post: operations["uploadAttachmentVersion"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/attachments/{attachmentId}/versions/{version}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Unduh satu versi; izin dicek terhadap item pemilik. Header sama dengan unduhan lampiran */
+        get: operations["downloadAttachmentVersion"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/attachments/{attachmentId}": {
         parameters: {
             query?: never;
@@ -4231,6 +4268,21 @@ export interface components {
             content_type: string;
             /** Format: int64 */
             size_bytes: number;
+            /** @description Nomor versi terbaru; filename */
+            version?: number;
+            uploader: components["schemas"]["UserRef"];
+            /** Format: date-time */
+            created_at: string;
+        };
+        AttachmentVersion: {
+            /** Format: uuid */
+            attachment_id: string;
+            version: number;
+            filename: string;
+            content_type: string;
+            /** Format: int64 */
+            size_bytes: number;
+            is_current: boolean;
             uploader: components["schemas"]["UserRef"];
             /** Format: date-time */
             created_at: string;
@@ -8513,6 +8565,88 @@ export interface operations {
                     "X-Content-Type-Options"?: "nosniff";
                     "Content-Security-Policy"?: "sandbox";
                     "Cache-Control"?: "private, no-store";
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    listAttachmentVersions: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AttachmentVersion"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    uploadAttachmentVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "multipart/form-data": {
+                    /** Format: binary */
+                    file: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Versi tersimpan; lampiran kini menunjuk versi ini */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Attachment"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    downloadAttachmentVersion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                attachmentId: string;
+                version: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Isi file */
+            200: {
+                headers: {
                     [name: string]: unknown;
                 };
                 content: {

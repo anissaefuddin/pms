@@ -2836,6 +2836,64 @@ paths:
             application/octet-stream:
               schema: { type: string, format: binary }
         '404': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}/versions:
+    parameters:
+      - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [collaboration]
+      operationId: listAttachmentVersions
+      summary: Riwayat versi file, terbaru dulu (FIL-01); memerlukan `view` pada item
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/AttachmentVersion' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [collaboration]
+      operationId: uploadAttachmentVersion
+      summary: Unggah versi baru (FIL-01); memerlukan `attach`. Aturan jenis file sama dengan lampiran baru
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required: [file]
+              properties:
+                file: { type: string, format: binary }
+      responses:
+        '201':
+          description: Versi tersimpan; lampiran kini menunjuk versi ini
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Attachment' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /attachments/{attachmentId}/versions/{version}/download:
+    get:
+      tags: [collaboration]
+      operationId: downloadAttachmentVersion
+      summary: Unduh satu versi; izin dicek terhadap item pemilik. Header sama dengan unduhan lampiran
+      parameters:
+        - { name: attachmentId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: version, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: Isi file
+          content:
+            application/octet-stream:
+              schema: { type: string, format: binary }
+        '404': { $ref: '#/components/responses/Problem' }
   /attachments/{attachmentId}:
     delete:
       tags: [collaboration]
@@ -5700,6 +5758,19 @@ components:
         filename: { type: string }
         content_type: { type: string, description: Hasil deteksi server }
         size_bytes: { type: integer, format: int64 }
+        version: { type: integer, minimum: 1, description: Nomor versi terbaru; filename, ukuran dan unduhan mengikuti versi ini }
+        uploader: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
+    AttachmentVersion:
+      type: object
+      required: [attachment_id, version, filename, content_type, size_bytes, uploader, created_at, is_current]
+      properties:
+        attachment_id: { type: string, format: uuid }
+        version: { type: integer, minimum: 1 }
+        filename: { type: string }
+        content_type: { type: string }
+        size_bytes: { type: integer, format: int64 }
+        is_current: { type: boolean }
         uploader: { $ref: '#/components/schemas/UserRef' }
         created_at: { type: string, format: date-time }
     ProjectFile:

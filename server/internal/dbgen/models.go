@@ -543,16 +543,29 @@ type ApprovalEvent struct {
 }
 
 type Attachment struct {
-	ID          pgtype.UUID        `json:"id"`
-	ItemID      pgtype.UUID        `json:"item_id"`
-	UploaderID  pgtype.UUID        `json:"uploader_id"`
-	Filename    string             `json:"filename"`
-	ContentType string             `json:"content_type"`
-	SizeBytes   int64              `json:"size_bytes"`
-	StorageKey  string             `json:"storage_key"`
-	Sha256      []byte             `json:"sha256"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
+	ID             pgtype.UUID        `json:"id"`
+	ItemID         pgtype.UUID        `json:"item_id"`
+	UploaderID     pgtype.UUID        `json:"uploader_id"`
+	Filename       string             `json:"filename"`
+	ContentType    string             `json:"content_type"`
+	SizeBytes      int64              `json:"size_bytes"`
+	StorageKey     string             `json:"storage_key"`
+	Sha256         []byte             `json:"sha256"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	DeletedAt      pgtype.Timestamptz `json:"deleted_at"`
+	CurrentVersion int32              `json:"current_version"`
+}
+
+type AttachmentVersion struct {
+	AttachmentID pgtype.UUID        `json:"attachment_id"`
+	Version      int32              `json:"version"`
+	UploaderID   pgtype.UUID        `json:"uploader_id"`
+	Filename     string             `json:"filename"`
+	ContentType  string             `json:"content_type"`
+	SizeBytes    int64              `json:"size_bytes"`
+	StorageKey   string             `json:"storage_key"`
+	Sha256       []byte             `json:"sha256"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
 type AutomationRule struct {
