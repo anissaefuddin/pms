@@ -43,9 +43,15 @@ Rollback: hentikan app, `./restore.sh <timestamp pra-update> --force`, lalu mula
 - Setelah restore, periksa readiness, login, dan unduhan lampiran. Jika cutover gagal, script mencoba mengembalikan database dan file asli. Jika pemulihan balik gagal, pertahankan app dalam keadaan berhenti dan simpan nama database serta path arsip rollback dari output sampai kedua penyimpanan diperiksa bersama.
 - Target operasional OPS-01 adalah RPO ≤ 24 jam dan RTO ≤ 4 jam. Waktu aktual diukur pada latihan restore per instance.
 
-## Rotasi PMS_SECRET_KEY
+## Kunci 2FA (`PMS_2FA_KEY`)
 
-Runtime M1 belum membaca `PMS_SECRET_KEY`. TOTP dijadwalkan untuk M3. Saat key mulai dipakai, simpan versi aktif dan versi sebelumnya di secret store, gunakan prosedur migrasi key yang didukung versi rilis untuk data terenkripsi, lalu uji dekripsi serta pemulihan dari backup sebelum menghapus versi lama. Runbook rilis yang memperkenalkan key harus menetapkan perintah rotasi dan rollback yang sesuai dengan format penyimpanannya.
+Secret TOTP disimpan terenkripsi (AES-256-GCM) dengan kunci dari `PMS_2FA_KEY` (32 byte acak, base64). Tanpa kunci ini server tetap berjalan, tetapi user tidak bisa mengaktifkan 2FA (`/me/2fa` melapor `configured: false`).
+
+- **Membuat kunci:** `openssl rand -base64 32`. Simpan di secret store, bukan di repositori. Kehilangan kunci berarti semua secret TOTP tidak terbaca: user perlu direset oleh admin (lihat di bawah).
+- **Backup:** kunci tidak ikut backup database. Simpan terpisah dari dump dan arsip berkas; dump tanpa kunci tidak membuka secret.
+- **Rotasi:** (1) isi `PMS_2FA_KEY_PREVIOUS` dengan kunci lama dan `PMS_2FA_KEY` dengan kunci baru di `deploy/.env`; (2) `docker compose up -d app`; (3) setiap secret dipindah ke kunci baru saat pemiliknya berhasil login dengan 2FA; (4) setelah semua user 2FA pernah login, atau setelah batas waktu yang Anda tetapkan, kosongkan `PMS_2FA_KEY_PREVIOUS`. Secret yang belum dipindah tidak terbaca setelah langkah 4 dan pemiliknya perlu direset.
+- **Pemulihan user (kehilangan app dan kode cadangan):** admin memanggil `POST /users/{id}/2fa/reset` (belum ada tombol di UI). Server menghapus secret dan kode cadangan, mengeluarkan user dari semua sesi, dan mencatat `2fa_reset_by_admin` di tabel `security_events` beserta id admin dan waktu. Verifikasi identitas user di luar aplikasi sebelum reset. Setelah itu user login dengan password dan dapat mendaftar ulang 2FA.
+- **Riwayat perubahan:** `SELECT * FROM security_events WHERE target_id = '<user id>' ORDER BY id DESC;` (`2fa_enabled`, `2fa_disabled`, `2fa_backup_codes_renewed`, `2fa_reset_by_admin`).
 
 ## Menambah seat
 

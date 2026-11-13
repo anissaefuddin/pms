@@ -77,17 +77,17 @@ Urutan topologis dengan satu developer (tidak paralel), 5 hari kerja per minggu.
 | 57 | S2.6.1 | E2E, aksesibilitas, dan performa M2 | 2.0 | 113–115 | 23 | DONE |
 | 58 | S3.1.1 | Editor workflow dan status (WF-02, WF-03A) | 4 | 115–119 | 24 | DONE |
 | 59 | S3.2.1 | Approval pada item (SPC-12) | 3.5 | 119–122.5 | 25 | DONE |
-| 60 | S3.2.2 | Blueprint (SPC-13) | 3 | 122.5–125.5 | 26 | PROPOSED |
+| 60 | S3.2.2 | Blueprint (SPC-13) | 3 | 122.5–125.5 | 26 | DONE |
 | 61 | S3.3.1 | Skema form dan API pembuat form (FORM-01, FORM-02) | 3.5 | 125.5–129 | 26 | DONE |
 | 62 | S3.3.2 | UI form builder | 4 | 129–133 | 27 | DONE |
 | 63 | S3.3.3 | Sharing form dan Manage forms (FORM-03, FORM-05) | 2 | 133–135 | 28 | IN_PROGRESS |
 | 64 | S3.3.4 | Submit form internal menjadi item (FORM-06) | 2.5 | 135–137.5 | 28 | DONE |
 | 65 | S3.3.5 | Form publik dan keamanan (SEC-05) | 3 | 137.5–140.5 | 29 | PROPOSED |
 | 66 | S3.3.6 | Pelacakan request (FORM-08) | 2.5 | 140.5–143 | 29 | IN_PROGRESS |
-| 67 | S3.4.1 | Kustomisasi sidebar (NAV-02) | 1.5 | 143–144.5 | 29 | PROPOSED |
-| 68 | S3.4.2 | Stream aktivitas (NAV-04) | 2.5 | 144.5–147 | 30 | PROPOSED |
-| 69 | S3.4.3 | Halaman hasil pencarian (NAV-07) | 2 | 147–149 | 30 | PROPOSED |
-| 70 | S3.5.1 | 2FA TOTP (AUTH-05) | 3 | 149–152 | 31 | PROPOSED |
+| 67 | S3.4.1 | Kustomisasi sidebar (NAV-02) | 1.5 | 143–144.5 | 29 | DONE |
+| 68 | S3.4.2 | Stream aktivitas (NAV-04) | 2.5 | 144.5–147 | 30 | DONE |
+| 69 | S3.4.3 | Halaman hasil pencarian (NAV-07) | 2 | 147–149 | 30 | DONE |
+| 70 | S3.5.1 | 2FA TOTP (AUTH-05) | 3 | 149–152 | 31 | DONE |
 | 71 | S3.6.1 | E2E, aksesibilitas, dan keamanan M3 | 2 | 152–154 | 31 | IN_PROGRESS |
 | 72 | S4.1.1 | Skema time entry dan API | 2.5 | 154–156.5 | 32 | PROPOSED |
 | 73 | S4.1.2 | Timesheet mingguan (TASK-13) | 3.5 | 156.5–160 | 33 | PROPOSED |
@@ -540,10 +540,10 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] UI panel approval dan tes otorisasi + Playwright
 
 **S3.2.2 Blueprint (SPC-13)**
-- [ ] `openapi.yaml`: simpan item sebagai blueprint dan buat item dari blueprint
-- [ ] Migrasi `blueprints` (struktur item jsonb dengan status, assignee, tanggal relatif)
-- [ ] Pembuatan item dari blueprint dalam satu transaksi (hierarki, dependensi, field kustom)
-- [ ] UI simpan dan pakai blueprint; tes bahwa hasil tidak berbagi data dengan sumber
+- [x] `openapi.yaml`: simpan item sebagai blueprint dan buat item dari blueprint
+- [x] Migrasi `blueprints` (struktur item jsonb dengan status, assignee, tanggal relatif)
+- [x] Pembuatan item dari blueprint dalam satu transaksi (hierarki, dependensi, field kustom)
+- [x] UI simpan dan pakai blueprint; tes bahwa hasil tidak berbagi data dengan sumber
 
 ### E3.3 Formulir permintaan
 
@@ -586,27 +586,27 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E3.4 Navigasi lanjutan
 
 **S3.4.1 Kustomisasi sidebar (NAV-02)**
-- [ ] Pengaturan show/hide per user (Created by me, Workload, Calendars, Dashboards, My to-do, Request forms, Timesheets, Reports, Stream, Starred)
-- [ ] Search dan Inbox selalu tampil; item untuk fitur yang belum aktif disembunyikan
-- [ ] Simpan di profil dan tes
+- [x] Pengaturan show/hide per user (Created by me, Workload, Calendars, Dashboards, My to-do, Request forms, Timesheets, Reports, Stream, Starred). API menerima kesepuluh kunci; halaman Settings hanya menawarkan yang sudah ada (My to-do, Request forms, Stream)
+- [x] Search dan Inbox selalu tampil; item untuk fitur yang belum aktif disembunyikan
+- [x] Simpan di profil dan tes
 
 **S3.4.2 Stream aktivitas (NAV-04)**
-- [ ] `openapi.yaml`: `GET /stream` dengan filter Everything, Followed, Assigned to me, My conversations
-- [ ] Opsi "Hide auto updates"; paginasi cursor; hanya aktivitas yang boleh dilihat user
-- [ ] UI Stream dan tes otorisasi
+- [x] `openapi.yaml`: `GET /stream` dengan filter Everything, Followed, Assigned to me, My conversations
+- [x] Opsi "Hide auto updates"; paginasi cursor; hanya aktivitas yang boleh dilihat user
+- [x] UI Stream dan tes otorisasi
 
 **S3.4.3 Halaman hasil pencarian (NAV-07)**
-- [ ] Halaman penuh dengan preset filter, keyword, filter tambahan, dan sort Relevance
-- [ ] Memakai Search S1.5.4; tidak membocorkan hasil di luar hak
-- [ ] Tes dan axe
+- [x] Halaman penuh dengan preset filter, keyword, filter tambahan, dan sort Relevance
+- [x] Memakai Search S1.5.4; tidak membocorkan hasil di luar hak
+- [x] Tes dan axe
 
 ### E3.5 Keamanan akun
 
 **S3.5.1 2FA TOTP (AUTH-05)**
-- [ ] Migrasi secret TOTP terenkripsi dan kode cadangan; kunci enkripsi dari konfigurasi
-- [ ] Setup: QR dan secret, verifikasi kode 6 digit; status aktif dan tanggalnya
-- [ ] Login meminta kode kedua; rate limit percobaan; pencabutan sesi saat 2FA diaktifkan
-- [ ] Reset 2FA oleh admin lewat prosedur tercatat; tes dan Playwright
+- [x] Migrasi secret TOTP terenkripsi dan kode cadangan; kunci enkripsi dari konfigurasi
+- [x] Setup: QR dan secret, verifikasi kode 6 digit; status aktif dan tanggalnya
+- [x] Login meminta kode kedua; rate limit percobaan; pencabutan sesi saat 2FA diaktifkan
+- [x] Reset 2FA oleh admin lewat prosedur tercatat (API + `security_events` + runbook; belum ada tombol UI dan belum ada email pemberitahuan); tes dan Playwright
 
 ### E3.6 Hardening M3
 

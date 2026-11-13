@@ -236,3 +236,11 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Keputusan:** D-41 sampai D-46. Aturan lengkap di `WORKFLOWS.md` §9.
 - **Titik hati-hati:** item dari form dibuat sebagai admin atas nama pengirim (`form_submit.go`). Hak pengirim ke item hasil form ada di `policy/item.go` (`requesterRole`), bukan peran share. Tujuan form divalidasi saat disimpan dan dicek ulang saat kirim. Lampiran form memakai `stageAttachment` yang sama dengan unggah biasa.
 - **Belum:** S3.2.2 Blueprint, S3.3.5 form publik, S3.4.x navigasi, S3.5.1 2FA, dan sisa S3.6.1.
+
+### Checkpoint 2FA (S3.5.1, 13 Nov 2026)
+
+- **DONE:** S3.5.1. Migrasi `00028_two_factor` (`user_totp`, `user_totp_backup_codes`, `security_events`, nilai enum `mfa`). Konfigurasi baru `PMS_2FA_KEY` dan `PMS_2FA_KEY_PREVIOUS` (compose dan `.env.example` sudah diperbarui; runbook berisi pembuatan, backup, rotasi, dan pemulihan). Tanpa kunci, 2FA tidak bisa diaktifkan.
+- **Kontrak:** login dapat membalas 202 dengan challenge; endpoint baru `/auth/login/2fa`, `/me/2fa`, `/me/2fa/{setup,enable,disable,backup-codes}`, `/users/{id}/2fa/reset`.
+- **Perlu dilakukan operator:** isi `PMS_2FA_KEY` (`openssl rand -base64 32`) di `deploy/.env` sebelum pengguna bisa mengaktifkan 2FA, dan simpan kunci di luar backup.
+- **Belum:** tombol reset 2FA di UI admin, email pemberitahuan saat reset, pembatasan 2FA wajib per peran.
+

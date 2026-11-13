@@ -120,6 +120,18 @@ stateDiagram-v2
 
 Request dengan session kedaluwarsa atau dicabut → 401; SPA mengarahkan ke `/login` dengan `?next=` (hanya path internal yang diterima).
 
+### 4.1 Login dengan 2FA TOTP (AUTH-05; S3.5.1)
+
+| Langkah | Aturan |
+|---|---|
+| Daftar | `POST /me/2fa/setup` menyimpan secret baru terenkripsi (belum aktif); UI menampilkan QR dari `otpauth_uri` dan secret teks. `POST /me/2fa/enable` dengan kode 6 digit mengaktifkan, membuat 10 kode cadangan (tampil sekali), dan mencabut session lain. Setup yang tidak dikonfirmasi tidak mengubah login |
+| Login | Password benar dan 2FA aktif: `202 {two_factor_required, challenge}` tanpa cookie. `POST /auth/login/2fa` dengan challenge (berlaku 5 menit, sekali pakai) dan kode TOTP atau kode cadangan membuat session. Session lama di browser itu diganti seperti login biasa |
+| Kode | TOTP RFC 6238 (SHA-1, 30 detik, 6 digit), toleransi satu langkah. Langkah yang sudah dipakai ditolak (tidak bisa dipakai ulang, juga saat dua request bersamaan). Kode cadangan dipakai sekali dan tidak membedakan huruf besar-kecil |
+| Batas | 5 kode salah per user per 15 menit lalu 429 (termasuk untuk kode yang benar), ditambah batas per IP yang sama dengan login |
+| Matikan, kode cadangan baru | Perlu password dan kode saat ini; mematikan mencabut session lain; kode cadangan baru membatalkan yang lama |
+| Reset admin | `POST /users/{id}/2fa/reset` menghapus secret dan kode cadangan, mengeluarkan user dari semua session, dan mencatat `2fa_reset_by_admin` di `security_events`. Tidak ada email pemberitahuan ke user (belum ada) |
+| Kunci | `PMS_2FA_KEY` (dan `PMS_2FA_KEY_PREVIOUS` untuk rotasi). Tanpa kunci, 2FA tidak bisa diaktifkan (503 `not_configured`). Lihat `PILOT_RUNBOOK.md` |
+
 ## 5. Reset dan ganti password
 
 ```mermaid
