@@ -519,6 +519,8 @@ type Approval struct {
 	OnRejectedStatusID pgtype.UUID        `json:"on_rejected_status_id"`
 	Policy             string             `json:"policy"`
 	DeadlineStage      int32              `json:"deadline_stage"`
+	AttachmentID       pgtype.UUID        `json:"attachment_id"`
+	AttachmentVersion  pgtype.Int4        `json:"attachment_version"`
 }
 
 type ApprovalApprover struct {

@@ -13,6 +13,7 @@ import { DatePicker, calendarDate, dateValue } from "@/components/ui/date-picker
 import { Input } from "@/components/ui/input";
 
 type Approval = components["schemas"]["Approval"];
+type Attachment = components["schemas"]["Attachment"];
 type ApprovalEvent = components["schemas"]["ApprovalEvent"];
 
 /** Item approvals (SPC-12). Status is always text, never colour alone. */
@@ -54,7 +55,7 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
       const mine = approval.approvers.find((entry) => entry.user.id === userId);
       return <article key={approval.id} className="space-y-2 rounded border p-3">
         {editing === approval.id
-          ? <ApprovalForm initial={approval} reassign={reassigning} busy={busy} onCancel={() => setEditing(undefined)}
+          ? <ApprovalForm itemId={item.id} initial={approval} reassign={reassigning} busy={busy} onCancel={() => setEditing(undefined)}
             onSubmit={async (body) => { if (await run(() => send(`/api/v1/approvals/${approval.id}`, "PATCH", body, approval.version))) setEditing(undefined); }} />
           : <>
             <div className="flex flex-wrap items-center gap-2">
@@ -63,6 +64,7 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
                 {t("items.approvals.counter", { approved: approval.approved_count, total: approval.total })} · {t(`items.approvals.status.${approval.status}`)} · {t(`items.approvals.policy.${approval.policy ?? "all"}`)}
               </span>
             </div>
+            {approval.attachment_id && <p className="text-sm"><a className="underline" href={`/api/v1/attachments/${approval.attachment_id}/versions/${approval.attachment_version}/download`} download>{t("items.fileReview.pinned", { version: approval.attachment_version })}</a></p>}
             <p className="text-sm text-muted-foreground">
               {t("items.approvals.createdBy", { name: approval.created_by.name })}
               {approval.due_date && ` · ${t("items.approvals.dueOn", { date: formatDate(approval.due_date, profile) })}`}
@@ -84,7 +86,7 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
       </article>;
     })}
     {canEdit && adding && <div className="rounded border p-3">
-      <ApprovalForm busy={busy} onCancel={() => setAdding(false)}
+      <ApprovalForm itemId={item.id} busy={busy} onCancel={() => setAdding(false)}
         onSubmit={async (body) => { if (await run(() => send(`/api/v1/items/${item.id}/approvals`, "POST", body))) setAdding(false); }} />
     </div>}
     {!!history.data?.items.length && <details className="rounded border p-3">
@@ -118,20 +120,23 @@ function Decision({ current, busy, onDecide }: { current: Approval["approvers"][
   </div>;
 }
 
-function ApprovalForm({ initial, reassign = false, busy, onSubmit, onCancel }: {
-  initial?: Approval; reassign?: boolean; busy: boolean; onCancel: () => void;
-  onSubmit: (body: { description?: string; due_date?: string | null; approver_ids: string[]; policy?: Approval["policy"] }) => Promise<void>;
+function ApprovalForm({ itemId, initial, reassign = false, busy, onSubmit, onCancel }: {
+  itemId: string; initial?: Approval; reassign?: boolean; busy: boolean; onCancel: () => void;
+  onSubmit: (body: { attachment_id?: string; attachment_version?: number; description?: string; due_date?: string | null; approver_ids: string[]; policy?: Approval["policy"] }) => Promise<void>;
 }) {
   const { t } = useTranslation();
   const [policy, setPolicy] = useState<Approval["policy"]>(initial?.policy ?? "all");
   const [description, setDescription] = useState(initial?.description ?? "");
   const [due, setDue] = useState<Date | undefined>(calendarDate(initial?.due_date));
   const [approvers, setApprovers] = useState<PersonOption[]>(initial?.approvers.map((entry) => entry.user) ?? []);
+  const [file, setFile] = useState("");
+  const files = useQuery({ queryKey: ["item-attachments", itemId], enabled: !initial, queryFn: () => api<{ items: Attachment[] }>(`/api/v1/items/${itemId}/attachments`) });
+  const picked = files.data?.items.find((entry) => entry.id === file);
   return <form className="space-y-3" onSubmit={(event) => {
     event.preventDefault();
     if (!approvers.length) return;
     const approver_ids = approvers.map((person) => person.id);
-    void onSubmit(reassign ? { approver_ids } : { policy, description, due_date: dateValue(due) || null, approver_ids });
+    void onSubmit(reassign ? { approver_ids } : { policy, description, due_date: dateValue(due) || null, approver_ids, ...(picked ? { attachment_id: picked.id, attachment_version: picked.version } : {}) });
   }}>
     {!reassign && <>
     <label className="block space-y-1 font-medium">{t("items.approvals.description")}
@@ -139,6 +144,11 @@ function ApprovalForm({ initial, reassign = false, busy, onSubmit, onCancel }: {
     <div className="space-y-1">
       <DatePicker value={due} onChange={setDue} label={t("items.approvals.due")} />
     </div>
+    {!initial && !!files.data?.items.length && <label className="block space-y-1">{t("items.fileReview.attachment")}
+      <select className="block rounded border bg-background p-2" value={file} onChange={(event) => setFile(event.target.value)}>
+        <option value="">{t("items.fileReview.none")}</option>
+        {files.data.items.map((entry) => <option key={entry.id} value={entry.id}>{entry.filename} · {t("items.versionLabel", { version: entry.version })}</option>)}
+      </select></label>}
     <label className="block space-y-1">{t("items.approvals.policy.label")}
       <select className="block rounded border bg-background p-2" value={policy} onChange={(event) => setPolicy(event.target.value === "any" ? "any" : "all")}>
         <option value="all">{t("items.approvals.policy.all")}</option>

@@ -29,7 +29,7 @@ func startStatusApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, ite
 	item := uuid.MustParse(itemID)
 	allowed := make([]uuid.UUID, 0, len(approvers))
 	for _, id := range approvers {
-		if _, err := checkApprovers(ctx, tx, []uuid.UUID{id}, item); err == nil {
+		if _, err := checkApprovers(ctx, tx, []uuid.UUID{id}, item, false); err == nil {
 			allowed = append(allowed, id)
 		}
 	}

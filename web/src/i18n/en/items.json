@@ -147,6 +147,14 @@
     "root": "Space root",
     "add": "Add location"
   },
+  "fileReview": {
+    "nav": "File reviews",
+    "title": "Files to review",
+    "empty": "No files are waiting for your review.",
+    "attachment": "File to review (optional)",
+    "none": "No file (whole item)",
+    "pinned": "File version {{version}}"
+  },
   "approvals": {
     "history": "Decision history",
     "reassign": "Reassign approvers",

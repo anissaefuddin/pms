@@ -29,7 +29,7 @@ const approvalOutcome = `CASE
 
 const approvalSelect = `SELECT a.version, jsonb_build_object('id',a.id,'item_id',a.item_id,'description',a.description,'due_date',a.due_date,
  'created_by',jsonb_build_object('id',cu.id,'name',concat_ws(' ',cu.first_name,cu.last_name)),'version',a.version,'created_at',a.created_at,
- 'policy',a.policy,'status',` + approvalOutcome + `,
+ 'policy',a.policy,'attachment_id',a.attachment_id,'attachment_version',a.attachment_version,'status',` + approvalOutcome + `,
  'approved_count',(SELECT count(*) FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='approved'),
  'total',(SELECT count(*) FROM approval_approvers x WHERE x.approval_id=a.id),
  'approvers',COALESCE((SELECT jsonb_agg(jsonb_build_object('user',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),
@@ -153,7 +153,7 @@ func approvalDate(raw json.RawMessage) (*string, error) {
 }
 
 // checkApprovers requires distinct, active users who can see the item, so a request never goes to someone who cannot open it.
-func checkApprovers(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, itemID uuid.UUID) ([]uuid.UUID, error) {
+func checkApprovers(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, itemID uuid.UUID, file bool) ([]uuid.UUID, error) {
 	unique := slices.Clone(ids)
 	slices.SortFunc(unique, func(a, b uuid.UUID) int { return strings.Compare(a.String(), b.String()) })
 	unique = slices.Compact(unique)
@@ -176,7 +176,8 @@ func checkApprovers(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, itemID uuid
 		if err != nil {
 			return nil, err
 		}
-		if !caps.Has(policy.View) {
+		// A file approval may name an external reviewer who sees only that version (FIL-04).
+		if !caps.Has(policy.View) && !(file && approver.Type == policy.External) {
 			return nil, items.InvalidField{Field: "approver_ids", Message: "approvers must be able to view the item"}
 		}
 	}
@@ -208,6 +209,7 @@ func (s *Server) writeApproval(w http.ResponseWriter, r *http.Request) {
 		ApproverIDs *[]uuid.UUID    `json:"approver_ids"`
 		Decision    string          `json:"decision"`
 		Comment     string          `json:"comment"`
+		filePin
 	}
 	if !deleting && !decode(w, r, &body) {
 		return
@@ -225,7 +227,7 @@ func (s *Server) writeApproval(w http.ResponseWriter, r *http.Request) {
 	switch {
 	case creating:
 		itemID = id
-		result, err = createApproval(ctx, tx, actorOf(r), id, body.Description, body.DueDate, body.ApproverIDs, body.Policy, batch)
+		result, err = createApproval(ctx, tx, actorOf(r), id, body.Description, body.DueDate, body.ApproverIDs, body.Policy, body.filePin, batch)
 	default:
 		if err = tx.QueryRow(ctx, "SELECT item_id FROM approvals WHERE id=$1", id).Scan(&itemID); errors.Is(err, pgx.ErrNoRows) {
 			err = items.ErrNotFound
@@ -304,8 +306,11 @@ func validateApprovalPolicy(value string) error {
 	return nil
 }
 
-func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID uuid.UUID, description *string, due json.RawMessage, approvers *[]uuid.UUID, decisionPolicy *string, batch *notifications.Batch) (items.Detail, error) {
+func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID uuid.UUID, description *string, due json.RawMessage, approvers *[]uuid.UUID, decisionPolicy *string, pin filePin, batch *notifications.Batch) (items.Detail, error) {
 	if _, err := approvalCaps(ctx, tx, actor, itemID, policy.Edit); err != nil {
+		return items.Detail{}, err
+	}
+	if err := pin.validate(ctx, tx, itemID); err != nil {
 		return items.Detail{}, err
 	}
 	if decisionPolicy == nil {
@@ -332,7 +337,7 @@ func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID u
 			return items.Detail{}, err
 		}
 	}
-	ids, err := checkApprovers(ctx, tx, *approvers, itemID)
+	ids, err := checkApprovers(ctx, tx, *approvers, itemID, pin.AttachmentID != nil)
 	if err != nil {
 		return items.Detail{}, err
 	}
@@ -347,7 +352,7 @@ func createApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID u
 	if err != nil {
 		return items.Detail{}, err
 	}
-	if _, err := tx.Exec(ctx, "INSERT INTO approvals(id,item_id,description,due_date,created_by,policy) VALUES($1,$2,$3,$4::date,$5::uuid,$6)", id, itemID, text, date, actor.ID, *decisionPolicy); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO approvals(id,item_id,description,due_date,created_by,policy,attachment_id,attachment_version) VALUES($1,$2,$3,$4::date,$5::uuid,$6,$7,$8)", id, itemID, text, date, actor.ID, *decisionPolicy, pin.AttachmentID, pin.Version); err != nil {
 		return items.Detail{}, err
 	}
 	if err := addApprovers(ctx, tx, actor, id, itemID, ids, text, batch); err != nil {
@@ -398,7 +403,11 @@ func patchApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemI
 		}
 	}
 	if approvers != nil {
-		ids, err := checkApprovers(ctx, tx, *approvers, itemID)
+		var file bool
+		if err := tx.QueryRow(ctx, "SELECT attachment_id IS NOT NULL FROM approvals WHERE id=$1", id).Scan(&file); err != nil {
+			return items.Detail{}, err
+		}
+		ids, err := checkApprovers(ctx, tx, *approvers, itemID, file)
 		if err != nil {
 			return items.Detail{}, err
 		}
@@ -442,7 +451,7 @@ func deleteApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, item
 }
 
 func decideApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, itemID uuid.UUID, decision, comment string, batch *notifications.Batch) (items.Detail, error) {
-	if _, err := approvalCaps(ctx, tx, actor, itemID, policy.View); err != nil {
+	if _, err := approvalCaps(ctx, tx, actor, itemID, policy.View); err != nil && !(errors.Is(err, items.ErrNotFound) && approvalReviewer(ctx, tx, actor, id)) {
 		return items.Detail{}, err
 	}
 	if decision != "approved" && decision != "rejected" {

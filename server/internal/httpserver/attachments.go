@@ -430,6 +430,9 @@ WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id,
 		return
 	}
 	caps, err := attachmentAccess(r, tx, item, policy.View)
+	if errors.Is(err, items.ErrNotFound) && r.Method == http.MethodGet && n > 0 && fileReviewer(ctx, tx, actorOf(r), id, n) {
+		err = nil // FIL-04: external reviewer of exactly this version
+	}
 	if err != nil {
 		writeItemError(w, err)
 		return

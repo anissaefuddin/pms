@@ -703,3 +703,10 @@ S11.1.1 (VIEW-10): **PASS**. `GET /items/{projectId}/files` mendaftar lampiran h
 
 - PASS (S11.1.4). `TestCompareTwoVersionsOfOneFile` (PostgreSQL nyata): v1 (40 px) dan v2 (60 px) dari satu file tampil di sisi kiri dan kanan; pembaca read-only 200, orang luar 404, versi 3 404, versi dari dua file berbeda 422, file di space yang tidak terlihat 404 (bukan 422). `web/tests/file-compare.spec.ts` (mock): tombol Compare membuka dua panel, kiri bergambar, kanan menampilkan pesan tanpa pratinjau, permintaan memakai versi 1 dan 2. `go vet` bersih, `go test ./...` hijau (httpserver 688 dtk), Playwright mock penuh 354 lulus, `tsc` bersih, eslint bersih untuk berkas baru. Keputusan: D-81. Tanpa migrasi.
 - Belum: penyorotan perbedaan piksel, sinkronisasi zoom (viewer tanpa zoom), tes axe untuk dialog.
+## M11 / S11.1.5 approval file per versi (14 Nov 2026)
+
+- PASS (S11.1.5, E2E-PAR-09 tingkat API). `TestFileApprovalPinnedToVersionWithExternalReviewer` (PostgreSQL nyata): pin tanpa versi, versi tidak ada, dan user regular tanpa akses item 422; approval item biasa untuk external tanpa akses 422; sebelum pin external 404 di mana-mana; setelah pin external mengunduh v1 (200, byte v1), v2 dan unduhan terkini 404, item 404, hapus lampiran 404, `GET /file-reviews` memuat satu baris; orang asing 404 saat memutuskan, reviewer memutuskan 200; unggah v3 tidak memindahkan pin (tetap v1, status approved); menghapus approval mencabut akses (404). `TestApprovals` dan `TestAttachmentVersionsAreImmutableAndPolicyChecked` tetap hijau.
+- PASS (UI, mock). `web/tests/file-review.spec.ts`: form approval memilih file dan mengirim `attachment_id` + `attachment_version`; halaman `/reviews` menampilkan tautan versi dan keputusan Approve terkirim. `approvals.spec.ts` dan `file-versions.spec.ts` tetap hijau.
+- Keputusan: D-82. Migrasi 00072 (cabang lain memakai 00071, 00220, 00240, 00260).
+- Belum: notifikasi untuk reviewer tanpa akses item, tes axe halaman `/reviews`, tes UI live. Eslint melaporkan error lama di portfolio.tsx, settings/resources.tsx, workload.tsx (bukan bagian S11.1.5).
+

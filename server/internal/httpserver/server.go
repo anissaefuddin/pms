@@ -162,6 +162,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.workflowRoutes(mux)
 	s.automationRoutes(mux)
 	s.approvalRoutes(mux)
+	s.fileApprovalRoutes(mux)
 	s.baselineRoutes(mux)
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)

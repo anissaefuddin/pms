@@ -3480,6 +3480,23 @@ paths:
                     type: array
                     items: { $ref: '#/components/schemas/ApprovalEvent' }
         '404': { $ref: '#/components/responses/Problem' }
+  /file-reviews:
+    get:
+      tags: [items]
+      operationId: listFileReviews
+      summary: Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/FileReview' }
   /approvals/{approvalId}:
     parameters:
       - { name: approvalId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -5170,6 +5187,8 @@ components:
           enum: [pending, approved, rejected]
           description: Any menerima satu persetujuan dan menolak bila semua menolak. All menerima bila semua menyetujui dan menolak pada penolakan pertama.
         policy: { type: string, enum: [any, all] }
+        attachment_id: { type: string, format: uuid, nullable: true }
+        attachment_version: { type: integer, format: int32, nullable: true }
         approved_count: { type: integer, format: int32, description: Pembilang penghitung "0/2" }
         total: { type: integer, format: int32 }
         approvers:
@@ -5195,6 +5214,20 @@ components:
         comment: { type: string }
         item_version: { type: integer, format: int32, nullable: true, description: Versi item saat peristiwa terjadi }
         created_at: { type: string, format: date-time }
+    FileReview:
+      type: object
+      required: [approval_id, attachment_id, version, filename, size_bytes, description, due_date, decision, comment, requested_by]
+      properties:
+        approval_id: { type: string, format: uuid }
+        attachment_id: { type: string, format: uuid }
+        version: { type: integer, format: int32 }
+        filename: { type: string }
+        size_bytes: { type: integer, format: int64 }
+        description: { type: string }
+        due_date: { type: string, format: date, nullable: true }
+        decision: { type: string, enum: [approved, rejected], nullable: true }
+        comment: { type: string }
+        requested_by: { type: string }
     ApprovalInput:
       type: object
       required: [approver_ids]
@@ -5208,6 +5241,8 @@ components:
           minItems: 1
           maxItems: 20
           items: { type: string, format: uuid }
+        attachment_id: { type: string, format: uuid, description: "Pin ke versi file (FIL-04); harus bersama attachment_version. Approver bertipe external boleh tanpa akses item dan hanya membaca versi ini" }
+        attachment_version: { type: integer, minimum: 1 }
     ApprovalPatch:
       type: object
       minProperties: 1

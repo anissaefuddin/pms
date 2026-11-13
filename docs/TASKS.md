@@ -1213,10 +1213,10 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [x] [TEST] Playwright
 
 **S11.1.5 Approval file per versi dan reviewer eksternal (FIL-04) — 2 hari**
-- [ ] [BE] Approval terikat versi
-- [ ] [BE] Akses reviewer eksternal terbatas
-- [ ] [FE] UI review
-- [ ] [TEST] E2E-PAR-09
+- [x] [BE] Approval terikat versi
+- [x] [BE] Akses reviewer eksternal terbatas
+- [x] [FE] UI review
+- [x] [TEST] E2E-PAR-09
 
 **S11.1.6 Storage eksternal dan link (TASK-08B) — 2 hari**
 - [ ] [BE] Adapter MinIO/S3
