@@ -6,5 +6,8 @@
   "health.running": "Server is running",
   "feedback.loading": "Loading…",
   "datePicker.placeholder": "Pick a date",
+  "notFound.title": "Page not found",
+  "notFound.description": "Check the address or return to your workspace.",
+  "notFound.home": "Return to workspace",
   "dialog.close": "Close"
 }

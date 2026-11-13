@@ -20,7 +20,8 @@ import type { ItemCollectionProps } from "./item-collection-types";
 
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string };
 
-export function ItemTable({ items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder }: ItemCollectionProps & {
+export function ItemTable({ items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder, showEmpty = true }: ItemCollectionProps & {
+  showEmpty?: boolean;
   group?: "status" | "type";
   manual: boolean;
   onReorder: (item: Item, parent: string | undefined, after: string | null) => Promise<void>;
@@ -223,7 +224,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
         })}
       </div>
     </div>
-    {model.length === 0 && <p className="text-muted-foreground">{t("views.empty")}</p>}
+    {showEmpty && model.length === 0 && <p className="text-muted-foreground">{t("views.empty")}</p>}
     {canCreate && <Button variant="outline" size="sm" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
     {editedField && editedFieldItem && profile && <FieldEdit key={editedFieldItem.id + editedField.id} field={editedField} item={editedFieldItem}
       locale={profile.locale} pending={pending} onCancel={() => setEditing(undefined)}

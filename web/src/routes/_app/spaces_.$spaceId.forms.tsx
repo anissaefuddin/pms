@@ -45,7 +45,7 @@ function FormsList() {
     <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
       <div>
         <Link to="/spaces/$spaceId" params={{ spaceId }} className="text-sm text-muted-foreground underline">{t("forms.list.back", { name: space.data?.kind === "personal" ? t("spaces.personal") : space.data?.name ?? "" })}</Link>
-        <h1 className="mt-1 text-2xl font-semibold">{t("forms.list.title")}</h1>
+        <h1 className="mt-1 workspace-title">{t("forms.list.title")}</h1>
         <p className="text-sm text-muted-foreground">{t("forms.list.description")}</p>
       </div>
       {!forbidden && <div className="flex gap-2">

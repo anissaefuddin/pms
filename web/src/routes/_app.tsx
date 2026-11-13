@@ -3,7 +3,7 @@ import { Outlet, createFileRoute, useParams, useRouter } from "@tanstack/react-r
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
-import { Sidebar } from "@/components/sidebar";
+import { MobileSidebar, Sidebar } from "@/components/sidebar";
 import { SearchPalette } from "@/components/search-palette";
 import { Topbar } from "@/components/topbar";
 import { CreateItemDialog } from "@/components/create-item-dialog";
@@ -71,9 +71,9 @@ function AppShell() {
   return (
     <ProfileContext.Provider value={me.data}>
     <div className="flex min-h-screen">
-      <Sidebar key={me.data.id} me={me.data} />
+      <div className="sticky top-0 hidden self-start shrink-0 lg:block"><Sidebar key={me.data.id} me={me.data} /></div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? () => setCreating(true) : undefined} />
+        <Topbar navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? () => setCreating(true) : undefined} />
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}

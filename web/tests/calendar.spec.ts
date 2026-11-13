@@ -68,3 +68,15 @@ test("view-only users cannot move items; axe is clean", async ({ page }) => {
     expect((await new AxeBuilder({ page }).include('[role="grid"]').analyze()).violations).toEqual([]);
   }
 });
+
+test("the calendar scrolls locally by keyboard on a narrow screen", async ({ page }) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await mock(page);
+  await page.goto(path);
+  const grid = page.getByRole("grid", { name: "Calendar" });
+  await expect(grid.getByRole("columnheader")).toHaveCount(7);
+  expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(390);
+  await grid.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect.poll(() => grid.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+});

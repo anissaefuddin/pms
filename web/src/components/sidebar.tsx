@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Activity, Bell, ChevronDown, ClipboardList, ChevronRight, Inbox, MoreHorizontal, PanelLeft, Plus, Search, Settings } from "lucide-react";
-import { Link, useNavigate } from "@tanstack/react-router";
+import { useEffect, useState } from "react";
+import { Activity, Bell, ChevronDown, ClipboardList, ChevronRight, Inbox, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings } from "lucide-react";
+import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import type { CurrentUser } from "@/lib/api";
@@ -8,43 +8,77 @@ import { itemKeys, listItems, type Item } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
 import { Button } from "./ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
 
 const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-2 text-sm hover:bg-sidebar-accent";
 const activeLink = { className: `${linkClass} bg-sidebar-accent font-medium`, "aria-current": "page" as const };
 
-export function Sidebar({ me }: { me: CurrentUser }) {
+export function MobileSidebar({ me }: { me: CurrentUser }) {
+  const { t } = useTranslation();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    if (!open) return;
+    const desktop = window.matchMedia("(min-width: 64rem)");
+    const closeOnDesktop = () => { if (desktop.matches) setOpen(false); };
+    desktop.addEventListener("change", closeOnDesktop);
+    return () => {
+      desktop.removeEventListener("change", closeOnDesktop);
+    };
+  }, [open]);
+
+  useEffect(() => setOpen(false), [pathname]);
+
+  return <Dialog open={open} onOpenChange={setOpen}>
+    <DialogTrigger render={<Button variant="ghost" size="icon" className="lg:hidden"
+      aria-label={t("nav.openNavigation")} />}><Menu /></DialogTrigger>
+    <DialogContent className="inset-y-0 left-0 top-0 flex w-[var(--sidebar-width)] max-w-full translate-none flex-col gap-0 rounded-none p-0 [animation:none]! scale-none!">
+      <DialogTitle className="sr-only">{t("nav.main.label")}</DialogTitle>
+      <Sidebar me={me} mobile onNavigate={() => setOpen(false)} />
+    </DialogContent>
+  </Dialog>;
+}
+
+export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; mobile?: boolean; onNavigate?: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const storageKey = `pms:sidebar:${me.id}`;
-  const [collapsed, setCollapsed] = useState(() => localStorage.getItem(storageKey) === "collapsed");
+  const [desktopCollapsed, setCollapsed] = useState(() => localStorage.getItem(storageKey) === "collapsed");
+  const collapsed = !mobile && desktopCollapsed;
   function toggle() {
     localStorage.setItem(storageKey, collapsed ? "expanded" : "collapsed");
     setCollapsed(!collapsed);
   }
+  function go(to: Parameters<typeof navigate>[0]["to"]) {
+    onNavigate?.();
+    void navigate({ to });
+  }
+
   const hidden = me.sidebar_hidden ?? [];
   const showRequests = !hidden.includes("request_forms"), showStream = !hidden.includes("stream"), showTodo = !hidden.includes("my_todo");
-  return <aside className={`sticky top-0 flex h-dvh shrink-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground ${collapsed ? "w-14 p-1" : "w-[248px] p-3"}`}>
+  return <aside className={`flex min-h-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "w-14 p-1" : "w-[var(--sidebar-width)] p-3"}`}`}>
     <div className="mb-4 flex items-center justify-between gap-1">
       {!collapsed && <p className="min-w-0 truncate px-2 font-semibold text-foreground" title={me.account_name}>{me.account_name}</p>}
-      <Button variant="ghost" size="icon" onClick={toggle} aria-expanded={!collapsed}
-        aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}><PanelLeft /></Button>
+      {!mobile && <Button variant="ghost" size="icon" onClick={toggle} aria-expanded={!collapsed}
+        aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}><PanelLeft /></Button>}
     </div>
     <nav className="space-y-1" aria-label={t("nav.main.label")}>
-      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} onClick={() => window.dispatchEvent(new Event("pms:open-search"))}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} onClick={() => void navigate({ to: "/inbox" })}/>{showRequests && <Nav icon={<ClipboardList/>} label={t("nav.requests.label")} onClick={() => void navigate({ to: "/requests" })}/>}{showStream && <Nav icon={<Activity/>} label={t("nav.stream.label")} onClick={() => void navigate({ to: "/stream" })}/>}</>}
+      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} onClick={() => go("/inbox")}/>{showRequests && <Nav icon={<ClipboardList/>} label={t("nav.requests.label")} onClick={() => go("/requests")}/>}{showStream && <Nav icon={<Activity/>} label={t("nav.stream.label")} onClick={() => go("/stream")}/>}</>}
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}
           className={collapsed ? "w-full px-0" : "w-full justify-start px-3"} />}>
           <MoreHorizontal />{!collapsed && t("nav.more.label")}
         </DropdownMenuTrigger>
         <DropdownMenuContent>
-          {!hidden.includes("timesheets") && <DropdownMenuItem onClick={() => void navigate({ to: "/timesheets" })}>{t("time.timesheet")}</DropdownMenuItem>}
-          {!hidden.includes("starred") && <DropdownMenuItem onClick={() => void navigate({ to: "/starred" })}>{t("starred.nav")}</DropdownMenuItem>}
-          {!hidden.includes("dashboards") && <DropdownMenuItem onClick={() => void navigate({ to: "/dashboards" })}>{t("dashboards.nav.label")}</DropdownMenuItem>}
-          {!hidden.includes("reports") && <DropdownMenuItem onClick={() => void navigate({ to: "/reports" })}>{t("reports.nav.label")}</DropdownMenuItem>}
-          {showTodo && <DropdownMenuItem onClick={() => void navigate({ to: "/my-todo" })}>{t("nav.todo.label")}</DropdownMenuItem>}
-          <DropdownMenuItem onClick={() => void navigate({ to: "/shared-with-me" })}>{t("nav.shared.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => void navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>
+          {!hidden.includes("timesheets") && <DropdownMenuItem onClick={() => go("/timesheets")}>{t("time.timesheet")}</DropdownMenuItem>}
+          {!hidden.includes("starred") && <DropdownMenuItem onClick={() => go("/starred")}>{t("starred.nav")}</DropdownMenuItem>}
+          {!hidden.includes("dashboards") && <DropdownMenuItem onClick={() => go("/dashboards")}>{t("dashboards.nav.label")}</DropdownMenuItem>}
+          {!hidden.includes("reports") && <DropdownMenuItem onClick={() => go("/reports")}>{t("reports.nav.label")}</DropdownMenuItem>}
+          {showTodo && <DropdownMenuItem onClick={() => go("/my-todo")}>{t("nav.todo.label")}</DropdownMenuItem>}
+          <DropdownMenuItem onClick={() => go("/shared-with-me")}>{t("nav.shared.label")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => go("/recycle-bin")}>{t("nav.recycle.label")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>

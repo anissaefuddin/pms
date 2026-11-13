@@ -1,6 +1,7 @@
 {
   "realtime.live": "Live",
   "realtime.reconnecting": "Connecting…",
+  "openNavigation": "Open navigation",
   "expandSidebar": "Expand sidebar",
   "collapseSidebar": "Collapse sidebar",
   "tree.expand": "Expand {{name}}",

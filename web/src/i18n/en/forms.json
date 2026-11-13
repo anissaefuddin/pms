@@ -164,6 +164,8 @@
   "manage.space": "Belongs to",
   "manage.access": "Access",
   "manage.link": "Link",
+  "manage.openInternal": "Open form",
+  "manage.openPublic": "Open public form",
   "manage.modified": "Last modified by",
   "manage.copy": "Copy",
   "manage.copyNamed": "Copy link for {{name}}",

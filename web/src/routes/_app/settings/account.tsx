@@ -25,13 +25,13 @@ function AccountRoute() {
   ];
   return <section className="max-w-3xl space-y-4">
     <h2 className="text-lg font-semibold">{t("settings.account.title")}</h2>
-    <dl className="grid grid-cols-[12rem_1fr] gap-2 text-sm">
-      {rows.map(([label, value]) => <div key={label} className="contents"><dt className="text-muted-foreground">{label}</dt><dd>{value}</dd></div>)}
+    <dl className="grid gap-3 sm:grid-cols-[12rem_minmax(0,1fr)] sm:gap-2 text-sm">
+      {rows.map(([label, value]) => <div key={label} className="sm:contents"><dt className="text-muted-foreground">{label}</dt><dd className="break-words">{value}</dd></div>)}
     </dl>
     <p className="text-sm">{t("settings.users.seats", { ...data.seats })}</p>
     <div>
       <h3 className="mb-1 font-medium">{t("settings.account.admins")}</h3>
-      <ul className="space-y-1 text-sm">{data.administrators.map((admin) =>
+      <ul className="space-y-1 break-words text-sm">{data.administrators.map((admin) =>
         <li key={admin.id}>{admin.name} · <a className="underline" href={`mailto:${admin.email}`}>{admin.email}</a></li>)}</ul>
     </div>
   </section>;

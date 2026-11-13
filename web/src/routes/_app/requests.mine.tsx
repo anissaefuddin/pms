@@ -25,7 +25,7 @@ function MyRequests() {
   return <main className="space-y-5 p-8">
     <RequestTabs />
     <header className="border-b pb-5">
-      <h1 className="text-2xl font-semibold">{t("forms.mine.title")}</h1>
+      <h1 className="workspace-title">{t("forms.mine.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("forms.mine.description")}</p>
     </header>
     {list.isPending && <p role="status">{t("forms.mine.loading")}</p>}

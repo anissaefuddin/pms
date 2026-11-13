@@ -45,11 +45,11 @@ function Fill() {
   if (form.isError) {
     const missing = form.error instanceof ApiError && form.error.status === 404;
     return <main className="space-y-3 p-8">{back}
-      <h1 className="text-2xl font-semibold">{t(missing ? "forms.requests.notFound.title" : "forms.requests.loadError")}</h1>
+      <h1 className="workspace-title">{t(missing ? "forms.requests.notFound.title" : "forms.requests.loadError")}</h1>
       {missing && <p className="text-muted-foreground">{t("forms.requests.notFound.description")}</p>}</main>;
   }
   if (sent !== undefined) return <main className="space-y-4 p-8">
-    <h1 className="text-2xl font-semibold" tabIndex={-1} ref={(el) => el?.focus()}>{t("forms.requests.sent")}</h1>
+    <h1 className="workspace-title" tabIndex={-1} ref={(el) => el?.focus()}>{t("forms.requests.sent")}</h1>
     <p>{t("forms.requests.sentDescription", { title: sent })}</p>
     <div className="flex gap-2">
       <Button onClick={() => { setSent(undefined); setAnswers({}); setRound(round + 1); }}>{t("forms.requests.another")}</Button>
@@ -58,7 +58,7 @@ function Fill() {
   </main>;
   return <main className="max-w-2xl space-y-5 p-8">
     {back}
-    <header><h1 className="text-2xl font-semibold">{form.data.name}</h1>
+    <header><h1 className="workspace-title">{form.data.name}</h1>
       {form.data.description && <p className="text-sm text-muted-foreground">{form.data.description}</p>}</header>
     {banner && <p ref={bannerRef} tabIndex={-1} role="alert" className="rounded-lg border border-destructive p-3 text-sm font-medium">{banner}</p>}
     <FormRenderer key={round} headingLevel={2} definition={form.data.definition} answers={answers} onAnswersChange={setAnswers}

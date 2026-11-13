@@ -9,7 +9,7 @@ import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
-export function Topbar({ onCreate, live, search }: { onCreate?: () => void; live: boolean; search?: ReactNode }) {
+export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () => void; live: boolean; search?: ReactNode; navigation?: ReactNode }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const navigate = useNavigate();
@@ -21,7 +21,8 @@ export function Topbar({ onCreate, live, search }: { onCreate?: () => void; live
     location.assign("/login");
   }
   return (
-    <header className="flex h-12 shrink-0 items-center justify-end border-b px-4">
+    <header className="flex h-12 shrink-0 items-center justify-end border-b px-2 sm:px-4">
+      {navigation}
       <span role="status" className="mr-auto text-xs text-muted-foreground">{t(live ? "nav.realtime.live" : "nav.realtime.reconnecting")}</span>
       {search}
       <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>

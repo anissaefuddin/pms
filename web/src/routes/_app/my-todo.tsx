@@ -64,7 +64,7 @@ function MyTodo() {
   }
 
   return <main className="space-y-4 p-6">
-    <h1 className="text-xl font-semibold">{t("nav.todo.label")}</h1>
+    <h1 className="workspace-title">{t("nav.todo.label")}</h1>
     <div className="flex flex-wrap gap-4">
       <label className="flex items-center gap-2 text-sm">{t("nav.todo.filter")}
         <select className={selectClass} value={filter} onChange={(event) => updateSearch("filter", event.target.value)}>

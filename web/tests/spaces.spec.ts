@@ -232,3 +232,24 @@ test("sidebar expands ranked containers by keyboard, remembers collapse and open
   await page.getByRole("menuitem", { name: "Recycle bin" }).click();
   await expect(page.getByRole("heading", { name: "Recycle bin" })).toBeVisible();
 });
+
+test("an empty Space and a filtered Table show distinct recovery actions", async ({ page }) => {
+  const root = `/spaces/${marketing.id}`;
+  const project = { id: marketing.id, type: "project", title: "Launch", assignees: [], locations: [{ space_id: marketing.id, parent_item_id: null }], my_capabilities: ["view"] };
+  let empty = true;
+  await mockSpaces(page, { extra: {
+    [`GET ${root}/views`]: { body: { items: [{ id: marketing.id, type: "table", name: "Table", visibility: "public", position: 0, is_default: true, config: {} }] } },
+    [`GET ${root}/items`]: () => ({ body: { items: empty ? [] : [project] } }),
+  } });
+  await page.goto(root);
+  await expect(page.getByRole("heading", { name: "No projects yet" })).toBeVisible();
+  await expect(page.getByText("No matching items")).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "New item" }).last()).toBeVisible();
+
+  empty = false;
+  await page.goto(root + "?filter=missing");
+  await expect(page.getByRole("status").filter({ hasText: "No matching items" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "No projects yet" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Clear filters" }).press("Enter");
+  await expect(page.getByText("Launch", { exact: true })).toBeVisible();
+});

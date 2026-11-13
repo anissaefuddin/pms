@@ -1,7 +1,7 @@
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
-import { me } from "./mock-api";
-import { mockSpaces } from "./spaces-mock";
+import { me, problem } from "./mock-api";
+import { marketing, mockSpaces } from "./spaces-mock";
 
 const taskId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
 const entry = (over: Record<string, unknown>) => ({
@@ -79,4 +79,82 @@ test("full search page applies presets, extra filters and sort, and has no axe v
     && call.query.get("status_group") === "active" && call.query.get("sort") === "date_modified")).toBe(true);
   const result = await new AxeBuilder({ page }).analyze();
   expect(result.violations).toEqual([]);
+});
+
+for (const width of [390, 768]) {
+  test(`mobile navigation is keyboard-accessible at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockSpaces(page, { spaces: [marketing] });
+    await page.goto("/");
+
+    const trigger = page.getByRole("button", { name: "Open navigation" });
+    const drawer = page.getByRole("dialog", { name: "Main navigation" });
+    await expect(page.getByRole("navigation", { name: "Main navigation" })).toHaveCount(0);
+    await expect(trigger).toBeVisible();
+    await page.keyboard.press("Tab");
+    await expect(trigger).toBeFocused();
+    await page.keyboard.press("Enter");
+    await expect(drawer).toBeVisible();
+    await expect(drawer.getByRole("link", { name: "Marketing" })).toBeVisible();
+    await expect.poll(async () => Math.abs((await drawer.boundingBox())?.x ?? width)).toBeLessThan(8);
+    expect((await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa", "wcag21aa"]).analyze()).violations).toEqual([]);
+    await page.keyboard.press("Escape");
+    await expect(drawer).toBeHidden();
+    await expect(trigger).toBeFocused();
+
+    await trigger.press("Enter");
+    const space = drawer.getByRole("link", { name: "Marketing" });
+    await expect.poll(async () => {
+      await space.focus();
+      return space.evaluate((link) => link === document.activeElement);
+    }).toBe(true);
+    await page.keyboard.press("Enter");
+    await expect(page.getByRole("heading", { name: "Marketing" })).toBeVisible();
+    await expect(drawer).toBeHidden();
+    await expect(trigger).toBeFocused();
+    expect(await page.evaluate(() => document.documentElement.scrollWidth)).toBe(width);
+
+    await trigger.press("Enter");
+    await drawer.getByRole("button", { name: "Search", exact: true }).press("Enter");
+    await expect(drawer).toBeHidden();
+    const search = page.getByRole("dialog", { name: "Search" });
+    await expect(search.getByRole("searchbox")).toBeFocused();
+    await page.keyboard.press("Escape");
+    await expect(search).toBeHidden();
+
+    await trigger.press("Enter");
+    await expect(drawer).toBeVisible();
+    await page.setViewportSize({ width: 1280, height: 800 });
+    await expect(drawer).toBeHidden();
+    await expect(trigger).toBeHidden();
+    await expect(page.getByRole("button", { name: "Collapse sidebar" })).toBeVisible();
+  });
+}
+
+test("unknown URLs provide a keyboard path back to the workspace", async ({ page }) => {
+  await mockSpaces(page);
+  await page.goto("/no-such-page");
+  await expect(page.getByRole("heading", { name: "Page not found" })).toBeVisible();
+  const back = page.getByRole("link", { name: "Return to workspace" });
+  await page.keyboard.press("Tab");
+  await expect(back).toBeFocused();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.keyboard.press("Enter");
+  await expect(page.getByRole("heading", { name: "Your workspace is ready" })).toBeVisible();
+});
+
+test("workspace headings follow compact and comfortable density", async ({ page }) => {
+  await mockSpaces(page, { extra: { "GET /forms": { body: { items: [] } }, "GET /me": { body: { ...me, density: "compact" } } } });
+  await page.goto("/forms");
+  const heading = page.getByRole("heading", { name: "Manage forms", level: 1 });
+  await expect(heading).toHaveCSS("font-size", "20px");
+  await page.evaluate(() => { document.documentElement.dataset.density = "comfortable"; });
+  await expect(heading).toHaveCSS("font-size", "22px");
+});
+
+test("the 404 recovery link sends a signed-out visitor to login", async ({ page }) => {
+  await mockSpaces(page, { extra: { "GET /me": problem(401, "No session", "unauthenticated") } });
+  await page.goto("/no-such-page");
+  await page.getByRole("link", { name: "Return to workspace" }).press("Enter");
+  await expect(page.getByRole("heading", { name: "Sign in to your workspace" })).toBeVisible();
 });

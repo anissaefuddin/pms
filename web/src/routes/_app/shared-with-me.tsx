@@ -10,7 +10,7 @@ function SharedItems() {
   const { t } = useTranslation();
   const items = useQuery({ queryKey: ["shared-items"], queryFn: () => listItems("/api/v1/me/shared") });
   return <main className="space-y-4 p-6">
-    <h1 className="text-xl font-semibold">{t("nav.shared.label")}</h1>
+    <h1 className="workspace-title">{t("nav.shared.label")}</h1>
     {items.isPending && <p role="status">{t("items.loading")}</p>}
     {items.isError && <div><p role="alert">{t("items.loadError")}</p>
       <Button variant="link" onClick={() => void items.refetch()}>{t("items.retry")}</Button></div>}

@@ -10,7 +10,7 @@ function Starred() {
   const stars = useStars();
   return <main className="space-y-5 p-8">
     <header className="border-b pb-5">
-      <h1 className="text-2xl font-semibold">{t("starred.title")}</h1>
+      <h1 className="workspace-title">{t("starred.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("starred.description")}</p>
     </header>
     {stars.isPending && <p role="status" className="text-sm text-muted-foreground">{t("starred.loading")}</p>}

@@ -66,7 +66,7 @@ function Reports() {
 
   return <main className="space-y-5 p-8">
     <header className="border-b pb-5">
-      <h1 className="text-2xl font-semibold">{t("reports.title")}</h1>
+      <h1 className="workspace-title">{t("reports.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("reports.description")}</p>
     </header>
     <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => void create(e)} aria-label={t("reports.create.title")}>

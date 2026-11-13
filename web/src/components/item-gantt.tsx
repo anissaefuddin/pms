@@ -46,6 +46,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const [scale, setScale] = useState<Scale>("day");
   const [selected, setSelected] = useState<string>();
   const chart = useRef<IApi>(undefined);
+  const chartRegion = useRef<HTMLDivElement>(null);
   // Every level is fetched with the same cache keys as Table, so SSE updates and PATCH responses reach the chart.
   const [parents, setParents] = useState<string[]>([]);
   const branches = useQueries({
@@ -187,6 +188,33 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
 
   const current = selected ? byId.get(selected) : undefined;
   const Theme = document.documentElement.classList.contains("dark") ? WillowDark : Willow;
+  useEffect(() => {
+    const region = chartRegion.current;
+    if (!region) return;
+    const taskParents = new Map(tasks.map((task) => [String(task.id), String(task.parent ?? 0)]));
+    const parentIds = new Set(taskParents.values());
+    const syncGridSemantics = () => {
+      // SVAR reports viewport-relative row indices starting at zero, including after virtualization.
+      for (const grid of region.querySelectorAll(".wx-table-box")) {
+        if (grid.getAttribute("role") !== "treegrid") grid.setAttribute("role", "treegrid");
+        grid.removeAttribute("aria-rowcount");
+        for (const row of grid.querySelectorAll("[role=row][data-id]")) {
+          row.removeAttribute("aria-rowindex");
+          const id = row.getAttribute("data-id")?.replace(/^:/, "") ?? "";
+          if (!parentIds.has(id) && !byId.get(id)?.child_count) row.removeAttribute("aria-expanded");
+          let level = 1;
+          for (let parent = taskParents.get(id); parent && taskParents.has(parent); parent = taskParents.get(parent)) level++;
+          if (row.getAttribute("aria-level") !== String(level)) row.setAttribute("aria-level", String(level));
+        }
+      }
+    };
+    syncGridSemantics();
+    const observer = new MutationObserver(syncGridSemantics);
+    observer.observe(region, { subtree: true, childList: true, attributes: true,
+      attributeFilter: ["data-id", "aria-rowindex", "aria-rowcount", "aria-expanded"] });
+    return () => observer.disconnect();
+  }, [tasks, byId]);
+
   return <div className="space-y-2">
     <div className="flex flex-wrap items-center gap-2">
       <div role="group" aria-label={t("views.gantt.scale")} className="flex gap-1">
@@ -195,7 +223,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
       </div>
       <p className="text-sm text-muted-foreground">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</p>
     </div>
-    <div role="application" aria-label={t("views.gantt.label")} tabIndex={0} onKeyDown={keyboard}
+    <div ref={chartRegion} role="application" aria-label={t("views.gantt.label")} tabIndex={0} onKeyDown={keyboard}
       className="gantt-chart h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
       <Theme>
         <Gantt tasks={tasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}

@@ -39,7 +39,7 @@ function SearchPage() {
   };
   const set = (patch: Record<string, unknown>) => void navigate({ search: { ...search, show: preset, order: sort, ...patch } });
   return <main className="mx-auto w-full max-w-3xl space-y-4 p-6">
-    <h1 className="text-xl font-semibold">{t("search.title")}</h1>
+    <h1 className="workspace-title">{t("search.title")}</h1>
     <SearchForm key={search.q} initialQuery={search.q} onSubmit={(q) => void navigate({ search: { ...search, q } })} />
     <SearchScopes context={search} scope={scope} onChange={(scope) => void navigate({ search: { ...search, scope } })} />
     <div className="flex flex-wrap gap-1" role="group" aria-label={t("search.preset")}>

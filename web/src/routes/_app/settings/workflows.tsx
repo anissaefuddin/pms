@@ -111,14 +111,14 @@ function WorkflowsRoute() {
         <Button variant="outline" onClick={() => setRename(workflow.name)}>{t("settings.workflows.rename")}</Button>
         <Button variant="destructive" onClick={() => setConfirmDelete(true)}>{t("settings.workflows.delete")}</Button>
       </>}
-      {admin && rename !== undefined && <form className="flex items-end gap-2" onSubmit={saveName}>
+      {admin && rename !== undefined && <form className="flex flex-wrap items-end gap-2" onSubmit={saveName}>
         <label className="space-y-1 text-sm"><span className="block">{t("settings.workflows.renameName")}</span>
           <Input value={rename} maxLength={120} onChange={(event) => setRename(event.target.value)} /></label>
         <Button type="submit" disabled={busy}>{t("settings.workflows.save")}</Button>
         <Button type="button" variant="outline" onClick={() => setRename(undefined)}>{t("settings.workflows.cancel")}</Button>
       </form>}
     </div>
-    {admin && <form className="flex items-end gap-2" onSubmit={create}>
+    {admin && <form className="flex flex-wrap items-end gap-2" onSubmit={create}>
       <label className="space-y-1 text-sm"><span className="block">{t("settings.workflows.newName")}</span>
         <Input value={name} maxLength={120} onChange={(event) => setName(event.target.value)} /></label>
       <Button type="submit" variant="outline" disabled={busy || !name.trim()}>{t("settings.workflows.create")}</Button>
@@ -131,7 +131,7 @@ function WorkflowsRoute() {
           admin={admin} busy={busy} first={index === 0} last={index === workflow.statuses.length - 1}
           onPatch={(patch) => saveStatus(status, patch)} onMove={(delta) => reorder(status, delta)} onRemove={() => setRemoving(status)} />)}
       </ol>
-      {admin && <form className="flex items-end gap-2" onSubmit={addStatus}>
+      {admin && <form className="flex flex-wrap items-end gap-2" onSubmit={addStatus}>
         <label className="space-y-1 text-sm"><span className="block">{t("settings.workflows.statusName")}</span>
           <Input value={newStatus} maxLength={120} onChange={(event) => setNewStatus(event.target.value)} /></label>
         <Button type="submit" variant="outline" disabled={busy || !newStatus.trim()}>{t("settings.workflows.addStatus")}</Button>

@@ -60,7 +60,7 @@ function Inbox() {
   }
 
   return <main className="mx-auto max-w-4xl space-y-4 p-6">
-    <h1 className="text-xl font-semibold">{t("nav.inbox.label")}</h1>
+    <h1 className="workspace-title">{t("nav.inbox.label")}</h1>
     <div className="flex flex-wrap items-center gap-3">
       <label className="flex items-center gap-2"><input type="checkbox" checked={!!unread}
         onChange={(event) => void navigate({ to: "/inbox", search: (current) => ({ ...current, unread: event.target.checked || undefined }) })} />

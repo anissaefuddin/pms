@@ -93,8 +93,7 @@ for (const scheme of ["light", "dark"] as const) {
     await page.getByRole("application", { name: "Gantt chart" }).focus();
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("ArrowDown");
-    // SVAR's task grid puts aria-expanded/aria-rowindex=0 on rows of a role=grid; that is inside the library.
-    const found = await new AxeBuilder({ page }).include('[role="application"]').include('[aria-label^="Predecessors"]').disableRules(["aria-conditional-attr", "aria-valid-attr-value"]).analyze();
+    const found = await new AxeBuilder({ page }).include('[role="application"]').include('[aria-label^="Predecessors"]').analyze();
     expect(found.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 100)}`)).toEqual([]);
   });
 }

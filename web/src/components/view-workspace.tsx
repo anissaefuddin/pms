@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import type { components } from "@/api/schema";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { isProjectDetail, itemKeys, listItems, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
@@ -23,8 +24,9 @@ const presets = ["all", "active", "mine"] as const;
 const tableGroups = ["none", "status", "type"] as const;
 const boardGroups = ["none", "assignee"] as const;
 
-export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen }: {
+export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen, spaceEmpty = false }: {
   spaceId: string;
+  spaceEmpty?: boolean;
   parent?: Item;
   me?: CurrentUser;
   canCreate: boolean;
@@ -139,12 +141,21 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
     }
   }
 
+  const hasFilters = !!(filter.trim() || fieldFilter || preset);
+  function clearFilters() {
+    const url = new URL(window.location.href);
+    for (const key of ["filter", "field", "preset"]) url.searchParams.delete(key);
+    router.history.replace(url.pathname + url.search + url.hash);
+  }
   // The existing Space empty state stays available while the View list loads.
   if (!active) return views.isError && !!items.data?.length
     ? <ul className="mt-4 divide-y rounded border">{items.data.map((item) => <li key={item.id}>
       <button type="button" className="block w-full p-3 text-left" onClick={() => onOpen(item)}>{item.title}</button>
     </li>)}</ul> : null;
   const filtered = (items.data ?? []).filter((item) => item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
+  const noMatches = items.isSuccess && filtered.length === 0 && hasFilters;
+  const emptyResults = <div className="space-y-2"><p role="status">{t("views.empty")}</p>
+    <Button variant="outline" onClick={clearFilters}>{t("views.clearFilters")}</Button></div>;
   const columns = visibleColumns(active.config, (items.data ?? []).some((item) => item.type === "project"));
   const collection = {
     items: filtered, statuses: workflow?.statuses ?? [], spaceId, parentId: parent?.id, customFields, columns,
@@ -177,7 +188,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
       </div>
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
-      {items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
+      {noMatches && !spaceEmpty ? emptyResults : items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
         <ItemCalendar items={filtered} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
     </> : !isCollection ? <div className="space-y-1 rounded border p-4">
@@ -209,9 +220,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen 
       </div>
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
-      {items.isSuccess && (active.type === "board"
+      {items.isSuccess && (!spaceEmpty && noMatches ? emptyResults
+        : active.type === "board"
         ? <ItemBoard {...collection} swimlanes={swimlanes} />
-        : <ItemTable {...collection} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
+        : <ItemTable {...collection} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
       {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
         taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
     </>}

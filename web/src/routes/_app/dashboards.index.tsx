@@ -63,7 +63,7 @@ function Dashboards() {
 
   return <main className="space-y-5 p-8">
     <header className="border-b pb-5">
-      <h1 className="text-2xl font-semibold">{t("dashboards.title")}</h1>
+      <h1 className="workspace-title">{t("dashboards.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("dashboards.description")}</p>
     </header>
     <div className="flex flex-wrap items-end gap-3">

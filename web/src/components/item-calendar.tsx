@@ -67,7 +67,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
   };
   const names = Array.from({ length: 7 }, (_, index) => addDays(first, index));
 
-  return <div className="space-y-2">
+  return <div className="min-w-0 space-y-2">
     <div className="flex flex-wrap items-center gap-2">
       <Button size="sm" variant="outline" aria-label={t("views.calendar.prev")} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))}><ChevronLeft /></Button>
       <Button size="sm" variant="outline" onClick={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); }}>{t("views.calendar.today")}</Button>
@@ -76,7 +76,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
       {!readonly && <p className="text-sm text-muted-foreground">{t("views.calendar.keys")}</p>}
     </div>
     <div className="flex flex-col gap-3 lg:flex-row">
-      <div role="grid" aria-label={t("views.calendar.label")} className="min-w-0 flex-1 overflow-x-auto">
+      <div role="grid" aria-label={t("views.calendar.label")} tabIndex={0} className="relative w-full min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-ring lg:w-auto lg:flex-1">
         <div role="row" className="grid min-w-[44rem] grid-cols-7 text-sm font-medium">
           {names.map((day) => <div role="columnheader" key={day.getDay()} className="px-1">{fmt(weekdayFormat).format(day)}</div>)}
         </div>
@@ -95,7 +95,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
           })}
         </div>)}
       </div>
-      <section aria-label={t("views.calendar.unscheduled")} className="w-full shrink-0 space-y-1 rounded border p-2 lg:w-56">
+      <section aria-label={t("views.calendar.unscheduled")} className="w-full min-w-0 shrink-0 space-y-1 break-words rounded border p-2 lg:w-56">
         <h3 className="font-medium">{t("views.calendar.unscheduled")}</h3>
         {unscheduled.length ? <ul className="space-y-0.5">{unscheduled.map((item) => chip(item))}</ul> : <p className="text-sm text-muted-foreground">{t("views.calendar.noneUnscheduled")}</p>}
       </section>

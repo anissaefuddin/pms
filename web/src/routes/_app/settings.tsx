@@ -11,9 +11,9 @@ function SettingsLayout() {
   const me = useProfile();
   return (
     <main>
-      <header className="border-b px-8 py-5"><h1 className="text-xl font-semibold">{t("nav.settings.label")}</h1></header>
-      <div className="grid grid-cols-[15rem_1fr] gap-8 p-8">
-        <nav className="space-y-6" aria-label={t("settings.nav.label")}>
+      <header className="border-b px-4 py-5 sm:px-8"><h1 className="workspace-title">{t("nav.settings.label")}</h1></header>
+      <div className="grid grid-cols-1 gap-5 p-4 sm:p-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
+        <nav className="grid grid-cols-2 gap-3 lg:block lg:space-y-6" aria-label={t("settings.nav.label")}>
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("settings.nav.personal")}</h2>
             <Link to="/settings/profile" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.profile.title")}</Link>
@@ -31,7 +31,7 @@ function SettingsLayout() {
             <Link to="/spikes/gantt" className={linkClass}>{t("settings.nav.gantt")}</Link>
           </section>
         </nav>
-        <Outlet />
+        <div className="min-w-0"><Outlet /></div>
       </div>
     </main>
   );

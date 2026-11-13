@@ -52,7 +52,7 @@ function ManageForms() {
 
   return <main className="space-y-5 p-8">
     <header className="border-b pb-5">
-      <h1 className="text-2xl font-semibold">{t("forms.manage.title")}</h1>
+      <h1 className="workspace-title">{t("forms.manage.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("forms.manage.description")}</p>
     </header>
     {list.isPending && <p role="status" className="text-sm text-muted-foreground">{t("forms.list.loading")}</p>}
@@ -65,7 +65,7 @@ function ManageForms() {
       <label className="block max-w-sm text-sm"><span className="sr-only">{t("forms.manage.filter")}</span>
         <Input type="search" placeholder={t("forms.manage.filter")} value={filter} onChange={(e) => setFilter(e.target.value)} /></label>
       {rows.length === 0 ? <p role="status" className="text-sm text-muted-foreground">{t("forms.manage.noMatch")}</p> :
-      <table className="w-full text-left text-sm">
+      <div className="relative overflow-x-auto"><table className="w-full text-left text-sm">
         <thead><tr className="border-b">
           <th scope="col" className="py-2 pr-4">{t("forms.list.name")}</th>
           <th scope="col" className="py-2 pr-4">{t("forms.manage.space")}</th>
@@ -81,9 +81,9 @@ function ManageForms() {
               <Link to="/spaces/$spaceId/forms/$formId" params={{ spaceId: form.space_id, formId: form.id }} className="underline">{form.name}</Link></th>
             <td className="py-2 pr-4"><Link to="/spaces/$spaceId" params={{ spaceId: form.space_id }} className="underline">{form.space_name}</Link></td>
             <td className="py-2 pr-4"><span className="rounded-full border px-2 py-0.5 text-xs">{t(`forms.access.${form.access}`)}</span></td>
-            <td className="space-y-1 py-2 pr-4">{form.access === "internal" && <span className="flex items-center gap-2"><code className="break-all text-xs">{url}</code>
+            <td className="space-y-1 py-2 pr-4">{form.access === "internal" && <span className="flex items-center gap-2"><a href={url} className="whitespace-nowrap underline">{t("forms.manage.openInternal")}</a>
                 <Button size="sm" variant="outline" aria-label={t("forms.manage.copyNamed", { name: form.name })} onClick={() => void copy(url)}>{t("forms.manage.copy")}</Button></span>}
-              {form.public_token && <span className="flex items-center gap-2"><code className="break-all text-xs">{publicUrl(form.public_token)}</code>
+              {form.public_token && <span className="flex items-center gap-2"><a href={publicUrl(form.public_token)} className="whitespace-nowrap underline">{t("forms.manage.openPublic")}</a>
                 <Button size="sm" variant="outline" aria-label={t("forms.manage.copyPublicNamed", { name: form.name })} onClick={() => void copy(publicUrl(form.public_token!))}>{t("forms.manage.copyPublic")}</Button></span>}
               {form.access !== "internal" && !form.public_token && <span aria-label={t("forms.manage.noLink")}>—</span>}</td>
             <td className="py-2 pr-4">{form.updated_by.name}<span className="block text-muted-foreground">{formatDate(form.updated_at, profile)}</span></td>
@@ -99,7 +99,7 @@ function ManageForms() {
             </td>
           </tr>;
         })}</tbody>
-      </table>}
+      </table></div>}
     </>}
     <FormAccessDialog form={sharing} onOpenChange={(open) => !open && setSharing(undefined)} />
     <ConfirmDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(undefined)} busy={busy} error={error}

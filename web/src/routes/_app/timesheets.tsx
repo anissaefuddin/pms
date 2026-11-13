@@ -117,7 +117,7 @@ function Timesheet({ user, start, today }: { user: string; start: "monday" | "su
   }
 
   return <main className="min-w-0 space-y-4 p-6">
-    <h1 className="text-2xl font-semibold">{t("time.timesheet")}</h1>
+    <h1 className="workspace-title">{t("time.timesheet")}</h1>
     <div className="flex flex-wrap items-center gap-2">
       <Button variant="outline" onClick={() => setWeek(week - 1)}>{t("time.previous")}</Button>
       <Button variant="outline" onClick={() => setWeek(0)}>{t("time.current")}</Button>

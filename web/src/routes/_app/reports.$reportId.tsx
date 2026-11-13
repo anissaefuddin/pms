@@ -69,7 +69,7 @@ function Editor({ report }: { report: Report }) {
   return <main className="mx-auto max-w-5xl space-y-5 p-8">
     <header className="space-y-2 border-b pb-5">
       <Link to="/reports" className="text-sm underline">{t("reports.editor.back")}</Link>
-      <h1 className="text-2xl font-semibold">{report.name}</h1>
+      <h1 className="workspace-title">{report.name}</h1>
       <p className="text-sm text-muted-foreground">{report.space ? t("reports.editor.location", { space: report.space.name }) : t("reports.personal")}</p>
     </header>
     <form className="space-y-4" onSubmit={(e) => { e.preventDefault(); void save(); }}>

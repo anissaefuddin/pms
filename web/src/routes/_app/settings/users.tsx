@@ -1,4 +1,4 @@
-import { createFileRoute, notFound, Outlet } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useProfile } from "@/lib/profile";
 
@@ -6,7 +6,7 @@ export const Route = createFileRoute("/_app/settings/users")({ component: AdminU
 
 function AdminUsers() {
   const me = useProfile();
-  if (!me?.capabilities.manage_users) throw notFound({ routeId: Route.id });
+  if (!me?.capabilities.manage_users) return <AdminNotFound />;
   return <Outlet />;
 }
 

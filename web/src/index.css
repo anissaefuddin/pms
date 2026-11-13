@@ -130,11 +130,13 @@
   --row-h: 32px;
   --density-padding: 8px;
   --density-font-size: 13px;
+  --workspace-title-size: 20px;
 
   /* sidebar: no dedicated token group in design-tokens.json — reuses
      surface/background.subtle/border.subtle/brand, same as the Portal
      Akademika test screen's sidebar (white bg, subtle border, brand active
      state), so it stays consistent with what you already reviewed there. */
+  --sidebar-width: 248px;
   --sidebar: #FFFFFF;
   --sidebar-foreground: #111827;
   --sidebar-primary: var(--brand-primary);
@@ -215,6 +217,7 @@
   --row-h: 40px;
   --density-padding: 16px;
   --density-font-size: 14px;
+  --workspace-title-size: 22px;
 }
 
 @layer base {
@@ -251,3 +254,9 @@
 .gantt-chart .gantt-today { background: rgb(220 38 38 / .18); }
 /* Items without dates get a row but no bar; SVAR draws them as a stray bar at the left edge. */
 .gantt-chart .wx-bar:not([style*="left"]) { display: none; }
+
+@utility workspace-title {
+  font-size: var(--workspace-title-size);
+  line-height: 1.4;
+  font-weight: 600;
+}

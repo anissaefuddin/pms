@@ -30,7 +30,7 @@ test("table shows columns, link only for internal forms, and filters by name", a
   await expect(it).toContainText("Ada Lovelace");
   const leave = page.getByRole("row", { name: /Leave request/ });
   await expect(leave).toContainText("Everyone in the workspace");
-  await expect(leave).toContainText(`/requests/${f2}`);
+  await expect(leave.getByRole("link", { name: "Open form" })).toHaveAttribute("href", new RegExp(`/requests/${f2}$`));
   await page.getByRole("searchbox", { name: "Filter by name" }).fill("leave");
   await expect(it).toHaveCount(0);
   await page.getByRole("searchbox", { name: "Filter by name" }).fill("zzz");
@@ -48,8 +48,8 @@ test("changing access to internal sends the PUT and shows a copyable link", asyn
   await expect(page.getByText("Form access updated")).toBeVisible();
   expect(calls.find((c) => c.method === "PUT")!.body).toEqual({ access: "internal" });
   const it = page.getByRole("row", { name: /IT request/ });
-  await expect(it).toContainText(`/requests/${f1}`);
-  await it.getByRole("button", { name: "Copy link for IT request" }).click();
+  await expect(it.getByRole("link", { name: "Open form" })).toHaveAttribute("href", new RegExp(`/requests/${f1}$`));
+  await it.getByRole("button", { name: "Copy link for IT request" }).press("Enter");
   await expect(page.getByText("Link copied")).toBeVisible();
   expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(`${new URL(page.url()).origin}/requests/${f1}`);
 });

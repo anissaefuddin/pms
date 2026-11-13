@@ -35,7 +35,7 @@ function RecycleBin() {
   const empty = useMutation({ mutationFn: () => emptyRecycleBin(client), onSuccess: () => setConfirming(false) });
   const items = bin.data?.pages.flatMap((page) => page.items) ?? [];
   return <main className="space-y-4 p-6">
-    <h1 className="text-xl font-semibold">{t("nav.recycle.label")}</h1>
+    <h1 className="workspace-title">{t("nav.recycle.label")}</h1>
     <div className="flex flex-wrap gap-3">
       <label className="flex items-center gap-2">{t("items.type")}
         <select className="rounded border bg-background p-2 text-sm" value={type} onChange={(event) => setType(event.target.value)}>

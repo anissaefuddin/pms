@@ -74,7 +74,7 @@ function DashboardPage() {
     <header className="space-y-2 border-b pb-5">
       <Link to="/dashboards" className="text-sm underline">{t("dashboards.board.back")}</Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{data.name}</h1>
+        <h1 className="workspace-title">{data.name}</h1>
         {canEdit && <Button onClick={() => setEditing("new")}>{t("dashboards.board.add")}</Button>}
       </div>
       <p className="text-sm text-muted-foreground">{space ? t("dashboards.board.location", { space: space.name }) : data.space_id ? "" : t("dashboards.board.personal")}</p>

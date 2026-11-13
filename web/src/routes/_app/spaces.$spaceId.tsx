@@ -33,7 +33,7 @@ function SpacePage() {
     return (
       <main className="grid place-items-center p-12 text-center">
         <div className="max-w-md space-y-3">
-          <h1 className="text-2xl font-semibold">{t("spaces.notFound.title")}</h1>
+          <h1 className="workspace-title">{t("spaces.notFound.title")}</h1>
           <p className="text-muted-foreground">{t("spaces.notFound.description")}</p>
           {me && <Link to="/spaces/$spaceId" params={{ spaceId: me.personal_space_id }} className={buttonVariants({ variant: "outline" })}>{t("spaces.notFound.home")}</Link>}
         </div>
@@ -91,13 +91,13 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   }
 
   return (
-    <main className="p-8">
-      <header className="flex items-start justify-between gap-4 border-b pb-5">
+    <main className="p-4 sm:p-8">
+      <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
         <div className="min-w-0">
-          <h1 className="truncate text-2xl font-semibold">{personal ? t("spaces.personal") : space.name}</h1>
+          <h1 className="truncate workspace-title">{personal ? t("spaces.personal") : space.name}</h1>
           {space.description && <p className="mt-1 max-w-2xl text-muted-foreground">{space.description}</p>}
         </div>
-        <div className="flex shrink-0 items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
@@ -121,7 +121,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         <h2 className="mt-3 text-lg font-semibold">{t("spaces.empty.title")}</h2>
         <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t("spaces.empty.description")}</p>
       </section>}
-      <div className="mt-6"><ViewWorkspace spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
+      <div className="mt-6"><ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
 
       {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}
         onCreated={openItem} />}

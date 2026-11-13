@@ -103,7 +103,7 @@ function Builder({ spaceId, form, onReload }: { spaceId: string; form?: Form; on
     <header className="space-y-1 border-b pb-5">
       <Link to="/spaces/$spaceId/forms" params={{ spaceId }} className="text-sm text-muted-foreground underline">{t("forms.builder.back")}</Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-semibold">{t(form ? "forms.builder.titleEdit" : "forms.builder.titleNew")}</h1>
+        <h1 className="workspace-title">{t(form ? "forms.builder.titleEdit" : "forms.builder.titleNew")}</h1>
         {form && <Button type="button" variant="outline" onClick={() => setSharing(true)}>{t("forms.access.share")}</Button>}
       </div>
       {form && <FormAccessDialog form={sharing ? form : undefined} onOpenChange={setSharing} />}

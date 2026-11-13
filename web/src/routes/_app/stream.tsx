@@ -36,7 +36,7 @@ function Stream() {
   });
   const entries = query.data?.pages.flatMap((page) => page.items) ?? [];
   return <main className="mx-auto w-full max-w-3xl space-y-4 p-6">
-    <h1 className="text-xl font-semibold">{t("nav.stream.title")}</h1>
+    <h1 className="workspace-title">{t("nav.stream.title")}</h1>
     <div className="flex flex-wrap items-center gap-2">
       <div className="flex flex-wrap gap-1" role="group" aria-label={t("nav.stream.filter")}>
         {filters.map((value) => <Button key={value} type="button" size="sm" variant={filter === value ? "secondary" : "ghost"}
