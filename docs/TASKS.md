@@ -1186,11 +1186,11 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 ### E11.1 File
 
 **S11.1.1 View Files dan Chart (VIEW-10) — 2.5 hari**
-- [ ] [API] Daftar file lintas item dalam project
-- [ ] [BE] Query dengan policy
-- [ ] [FE] View Files
-- [ ] [FE] View Chart
-- [ ] [TEST] Izin dan Playwright
+- [x] [API] Daftar file lintas item dalam project
+- [x] [BE] Query dengan policy
+- [x] [FE] View Files
+- [x] [FE] View Chart
+- [x] [TEST] Izin dan Playwright
 
 **S11.1.2 Versi file (FIL-01) — 2 hari**
 - [ ] [DB] Metadata versi immutable

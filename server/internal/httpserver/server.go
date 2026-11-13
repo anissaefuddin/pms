@@ -172,6 +172,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.dependencyRoutes(mux)
 	s.customFieldRoutes(mux)
 	s.attachmentRoutes(mux)
+	s.ProjectFileRoutes(mux)
 	s.timeEntryRoutes(mux)
 	s.projectExcelRoutes(mux)
 	mux.HandleFunc("GET /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))

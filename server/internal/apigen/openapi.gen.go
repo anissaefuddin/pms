@@ -2041,6 +2041,8 @@ func (e UserType) Valid() bool {
 const (
 	ViewTypeBoard    ViewType = "board"
 	ViewTypeCalendar ViewType = "calendar"
+	ViewTypeChart    ViewType = "chart"
+	ViewTypeFiles    ViewType = "files"
 	ViewTypeGantt    ViewType = "gantt"
 	ViewTypeTable    ViewType = "table"
 	ViewTypeTimelog  ViewType = "timelog"
@@ -2052,6 +2054,10 @@ func (e ViewType) Valid() bool {
 	case ViewTypeBoard:
 		return true
 	case ViewTypeCalendar:
+		return true
+	case ViewTypeChart:
+		return true
+	case ViewTypeFiles:
 		return true
 	case ViewTypeGantt:
 		return true
@@ -3800,6 +3806,19 @@ type Problem struct {
 
 	// Type Example: about:blank
 	Type string `json:"type"`
+}
+
+// ProjectFile defines model for ProjectFile.
+type ProjectFile struct {
+	// ContentType Hasil deteksi server
+	ContentType string             `json:"content_type"`
+	CreatedAt   time.Time          `json:"created_at"`
+	Filename    string             `json:"filename"`
+	Id          openapi_types.UUID `json:"id"`
+	ItemId      openapi_types.UUID `json:"item_id"`
+	ItemTitle   string             `json:"item_title"`
+	SizeBytes   int64              `json:"size_bytes"`
+	Uploader    UserRef            `json:"uploader"`
 }
 
 // ProjectProgressMethod defines model for ProjectProgressMethod.
@@ -5928,6 +5947,9 @@ type ServerInterface interface {
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
+	// ListProjectFiles File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404
+	// (GET /items/{projectId}/files)
+	ListProjectFiles(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
 	// ListGanttSnapshots Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat)
 	// (GET /items/{projectId}/gantt-snapshots)
 	ListGanttSnapshots(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
@@ -9099,6 +9121,32 @@ func (siw *ServerInterfaceWrapper) StartProjectExcelExport(w http.ResponseWriter
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.StartProjectExcelExport(w, r, projectId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListProjectFiles operation middleware
+func (siw *ServerInterfaceWrapper) ListProjectFiles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "projectId" -------------
+	var projectId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "projectId", r.PathValue("projectId"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "projectId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListProjectFiles(w, r, projectId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12464,6 +12512,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/comments/{commentId}", wrapper.UpdateComment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.ListAttachments)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.UploadAttachment)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/files", wrapper.ListProjectFiles)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/download", wrapper.DownloadAttachment)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/attachments/{attachmentId}", wrapper.DeleteAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/relations", wrapper.ListItemRelations)
@@ -18006,6 +18055,46 @@ func (response StartProjectExcelExport429ApplicationProblemPlusJSONResponse) Vis
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProjectFilesRequestObject struct {
+	ProjectId openapi_types.UUID `json:"projectId"`
+}
+
+type ListProjectFilesResponseObject interface {
+	VisitListProjectFilesResponse(w http.ResponseWriter) error
+}
+
+type ListProjectFiles200JSONResponse struct {
+	Items []ProjectFile `json:"items"`
+}
+
+func (response ListProjectFiles200JSONResponse) VisitListProjectFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListProjectFiles404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListProjectFiles404ApplicationProblemPlusJSONResponse) VisitListProjectFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -24156,6 +24245,9 @@ type StrictServerInterface interface {
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(ctx context.Context, request StartProjectExcelExportRequestObject) (StartProjectExcelExportResponseObject, error)
+	// ListProjectFiles File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404
+	// (GET /items/{projectId}/files)
+	ListProjectFiles(ctx context.Context, request ListProjectFilesRequestObject) (ListProjectFilesResponseObject, error)
 	// ListGanttSnapshots Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat)
 	// (GET /items/{projectId}/gantt-snapshots)
 	ListGanttSnapshots(ctx context.Context, request ListGanttSnapshotsRequestObject) (ListGanttSnapshotsResponseObject, error)
@@ -27215,6 +27307,32 @@ func (sh *strictHandler) StartProjectExcelExport(w http.ResponseWriter, r *http.
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(StartProjectExcelExportResponseObject); ok {
 		if err := validResponse.VisitStartProjectExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListProjectFiles operation middleware
+func (sh *strictHandler) ListProjectFiles(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
+	var request ListProjectFilesRequestObject
+
+	request.ProjectId = projectId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListProjectFiles(ctx, request.(ListProjectFilesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListProjectFiles")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListProjectFilesResponseObject); ok {
+		if err := validResponse.VisitListProjectFilesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -676,3 +676,5 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
 - Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
 
+
+S11.1.1 (VIEW-10): **PASS**. `GET /items/{projectId}/files` mendaftar lampiran hidup milik project dan turunannya, disaring `policy.ItemsCaps` per Item; tanpa akses ke project = 404. `TestProjectFiles` (PostgreSQL nyata): admin melihat 3 file, pembaca hanya 2 (file di Item ruang tersembunyi dan file terhapus tidak muncul), orang luar 404. View `files` dan `chart` hanya untuk project (migrasi `00063`, validasi di `views.Create`). Playwright `project-files.spec.ts` (mock hermetik, `PLAYWRIGHT_CHANNEL=chrome`): tabel Files dan grafik batang Chart tampil, axe pada keduanya tanpa pelanggaran; `views.spec.ts` tetap 6/6. Catatan: 83 error `eslint` lama di `portfolio.tsx`, `settings/resources.tsx`, `workload.tsx` bukan dari perubahan ini; berkas S11.1.1 bersih. Batas: 5000 lampiran terbaru sebelum penyaringan policy (belum ada paging).

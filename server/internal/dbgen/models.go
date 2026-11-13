@@ -407,6 +407,8 @@ const (
 	ViewTypeGantt    ViewType = "gantt"
 	ViewTypeCalendar ViewType = "calendar"
 	ViewTypeTimelog  ViewType = "timelog"
+	ViewTypeFiles    ViewType = "files"
+	ViewTypeChart    ViewType = "chart"
 )
 
 func (e *ViewType) Scan(src interface{}) error {

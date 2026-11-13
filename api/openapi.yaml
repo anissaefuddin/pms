@@ -2730,6 +2730,26 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '413': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /items/{projectId}/files:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [collaboration]
+      operationId: listProjectFiles
+      summary: File lintas item dalam project (VIEW-10); hanya item yang boleh dilihat pemanggil, tanpa akses ke project = 404
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProjectFile' }
+        '404': { $ref: '#/components/responses/Problem' }
   /attachments/{attachmentId}/download:
     get:
       tags: [collaboration]
@@ -5507,7 +5527,7 @@ components:
     # ── View ──
     ViewType:
       type: string
-      enum: [table, board, gantt, calendar, timelog]
+      enum: [table, board, gantt, calendar, timelog, files, chart]
     ViewVisibility:
       type: string
       enum: [public, personal]
@@ -5578,6 +5598,13 @@ components:
         size_bytes: { type: integer, format: int64 }
         uploader: { $ref: '#/components/schemas/UserRef' }
         created_at: { type: string, format: date-time }
+    ProjectFile:
+      allOf:
+        - $ref: '#/components/schemas/Attachment'
+        - type: object
+          required: [item_title]
+          properties:
+            item_title: { type: string }
     Activity:
       type: object
       required: [id, actor, action, changes, created_at]
