@@ -7,7 +7,7 @@ COPY api/openapi.yaml /src/api/openapi.yaml
 COPY web ./
 RUN npm run generate && npm run build
 
-FROM golang:1.26-alpine AS server
+FROM golang:1.27.4-alpine AS server
 WORKDIR /src
 COPY go.mod go.sum ./
 RUN --mount=type=cache,target=/go/pkg/mod go mod download
