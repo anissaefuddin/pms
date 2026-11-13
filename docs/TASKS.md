@@ -1193,10 +1193,10 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [ ] [TEST] Izin dan Playwright
 
 **S11.1.2 Versi file (FIL-01) — 2 hari**
-- [ ] [DB] Metadata versi immutable
-- [ ] [BE] Unggah versi baru
-- [ ] [FE] Riwayat versi
-- [ ] [TEST] Izin per versi dan thumbnail
+- [x] [DB] Metadata versi immutable
+- [x] [BE] Unggah versi baru
+- [x] [FE] Riwayat versi
+- [x] [TEST] Izin per versi dan thumbnail
 
 **S11.1.3 Pratinjau dan proofing (FIL-02) — 3.5 hari**
 - [ ] [BE] Worker pratinjau gambar dan PDF

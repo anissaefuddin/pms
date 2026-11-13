@@ -25,7 +25,7 @@ import (
 )
 
 const attachmentJSON = `jsonb_build_object('id',a.id,'item_id',a.item_id,'filename',a.filename,
-'content_type',a.content_type,'size_bytes',a.size_bytes,'created_at',a.created_at,
+'content_type',a.content_type,'size_bytes',a.size_bytes,'version',a.current_version,'created_at',a.created_at,
 'uploader',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)))`
 
 var errBlockedArchive = errors.New("archive contains an executable or cannot be inspected")
@@ -35,6 +35,9 @@ func (s *Server) attachmentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/items/{itemId}/attachments", s.requireUser(s.uploadAttachment))
 	mux.HandleFunc("GET /api/v1/attachments/{attachmentId}/download", s.requireUser(s.attachmentResource))
 	mux.HandleFunc("DELETE /api/v1/attachments/{attachmentId}", s.requireUser(s.attachmentResource))
+	mux.HandleFunc("GET /api/v1/attachments/{attachmentId}/versions", s.requireUser(s.listAttachmentVersions))
+	mux.HandleFunc("POST /api/v1/attachments/{attachmentId}/versions", s.requireUser(s.uploadAttachment))
+	mux.HandleFunc("GET /api/v1/attachments/{attachmentId}/versions/{version}/download", s.requireUser(s.attachmentResource))
 }
 
 func (s *Server) attachmentStore() storage.Storage {
@@ -102,10 +105,23 @@ func (s *Server) attachmentLimit() int64 {
 	return int64(s.cfg.MaxUploadMB) << 20
 }
 
+// uploadAttachment serves both POST /items/{id}/attachments (new file, version 1) and
+// POST /attachments/{id}/versions (next version of an existing file).
 func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
+	var existing *uuid.UUID
 	id, err := uuid.Parse(r.PathValue("itemId"))
+	if raw := r.PathValue("attachmentId"); raw != "" {
+		var aid uuid.UUID
+		if aid, err = uuid.Parse(raw); err == nil {
+			existing = &aid
+			err = s.pool.QueryRow(r.Context(), "SELECT item_id FROM attachments WHERE id=$1 AND deleted_at IS NULL", aid).Scan(&id)
+			if errors.Is(err, pgx.ErrNoRows) {
+				err = items.ErrNotFound
+			}
+		}
+	}
 	if err != nil {
-		writeItemError(w, items.ErrNotFound)
+		writeItemError(w, err)
 		return
 	}
 	if _, err = attachmentAccess(r, s.pool, id, policy.Attach); err != nil {
@@ -162,7 +178,16 @@ func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	attachment, err := insertAttachment(ctx, tx, id, actorOf(r).ID, staged)
+	var attachment uuid.UUID
+	if existing != nil {
+		attachment = *existing
+		err = insertAttachmentVersion(ctx, tx, attachment, actorOf(r).ID, staged)
+		if errors.Is(err, pgx.ErrNoRows) {
+			err = items.ErrNotFound
+		}
+	} else {
+		attachment, err = insertAttachment(ctx, tx, id, actorOf(r).ID, staged)
+	}
 	if err != nil {
 		writeItemError(w, err)
 		return
@@ -239,9 +264,64 @@ func insertAttachment(ctx context.Context, tx pgx.Tx, itemID uuid.UUID, uploader
 	if err != nil {
 		return id, err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
-VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, id, itemID, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256)
+	_, err = tx.Exec(ctx, `WITH a AS (INSERT INTO attachments(id,item_id,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
+VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex')))
+INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
+VALUES($1,1,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, id, itemID, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256)
 	return id, err
+}
+
+// insertAttachmentVersion appends the next version and moves the attachment row to it. ErrNoRows: attachment gone.
+func insertAttachmentVersion(ctx context.Context, tx pgx.Tx, id uuid.UUID, uploader string, f stagedFile) error {
+	var next int
+	err := tx.QueryRow(ctx, "SELECT current_version+1 FROM attachments WHERE id=$1 AND deleted_at IS NULL FOR UPDATE", id).Scan(&next)
+	if err != nil {
+		return err
+	}
+	if _, err = tx.Exec(ctx, `INSERT INTO attachment_versions(attachment_id,version,uploader_id,filename,content_type,size_bytes,storage_key,sha256)
+VALUES($1,$2,$3::uuid,$4,$5,$6,$7,decode($8,'hex'))`, id, next, uploader, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256); err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `UPDATE attachments SET current_version=$2,filename=$3,content_type=$4,size_bytes=$5,storage_key=$6,sha256=decode($7,'hex') WHERE id=$1`,
+		id, next, f.Filename, f.Media, f.File.Size, f.File.Key, f.File.SHA256)
+	return err
+}
+
+// listAttachmentVersions returns every version, newest first. Visible to anyone who can view the item.
+func (s *Server) listAttachmentVersions(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("attachmentId"))
+	if err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	ctx := r.Context()
+	var item uuid.UUID
+	err = s.pool.QueryRow(ctx, "SELECT item_id FROM attachments WHERE id=$1 AND deleted_at IS NULL", id).Scan(&item)
+	if errors.Is(err, pgx.ErrNoRows) {
+		err = items.ErrNotFound
+	}
+	if err == nil {
+		_, err = attachmentAccess(r, s.pool, item, policy.View)
+	}
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	rows, err := s.pool.Query(ctx, `SELECT jsonb_build_object('attachment_id',v.attachment_id,'version',v.version,'filename',v.filename,
+'content_type',v.content_type,'size_bytes',v.size_bytes,'created_at',v.created_at,'is_current',v.version=a.current_version,
+'uploader',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)))
+FROM attachment_versions v JOIN attachments a ON a.id=v.attachment_id JOIN users u ON u.id=v.uploader_id
+WHERE v.attachment_id=$1 ORDER BY v.version DESC`, id)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	out, err := pgx.CollectRows(rows, pgx.RowTo[json.RawMessage])
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, 200, map[string]any{"items": out})
 }
 
 func executableAttachment(name string, prefix []byte) bool {
@@ -324,7 +404,17 @@ func (s *Server) attachmentResource(w http.ResponseWriter, r *http.Request) {
 	var item uuid.UUID
 	var uploader, key, filename string
 	var size int64
-	err = tx.QueryRow(ctx, "SELECT item_id,uploader_id::text,storage_key,filename,size_bytes FROM attachments WHERE id=$1 AND deleted_at IS NULL", id).Scan(&item, &uploader, &key, &filename, &size)
+	version := r.PathValue("version") // empty = current
+	n := 0
+	if version != "" {
+		if n, err = strconv.Atoi(version); err != nil || n < 1 {
+			writeItemError(w, items.ErrNotFound)
+			return
+		}
+	}
+	err = tx.QueryRow(ctx, `SELECT a.item_id,a.uploader_id::text,coalesce(v.storage_key,a.storage_key),coalesce(v.filename,a.filename),coalesce(v.size_bytes,a.size_bytes)
+FROM attachments a LEFT JOIN attachment_versions v ON v.attachment_id=a.id AND v.version=$2
+WHERE a.id=$1 AND a.deleted_at IS NULL AND ($2=0 OR v.version IS NOT NULL)`, id, n).Scan(&item, &uploader, &key, &filename, &size)
 	if errors.Is(err, pgx.ErrNoRows) {
 		err = items.ErrNotFound
 	}

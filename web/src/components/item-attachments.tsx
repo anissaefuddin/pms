@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Attachment = components["schemas"]["Attachment"];
+type Version = components["schemas"]["AttachmentVersion"];
 const attachmentPath = (id: string) => `/api/v1/attachments/${id}`;
 
 export function ItemAttachments({ item, userId }: { item: Item; userId: string }) {
@@ -24,6 +25,9 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [removing, setRemoving] = useState<Attachment>();
+  const [history, setHistory] = useState<string>();
+  const [replacing, setReplacing] = useState<string>();
+  const versionInput = useRef<HTMLInputElement>(null);
   const canAttach = item.my_capabilities.includes("attach");
 
   async function change(operation: () => Promise<unknown>) {
@@ -54,6 +58,17 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
     void change(() => api(path, { method: "POST", body }));
   }
 
+  function uploadVersion(files: FileList | null) {
+    if (files?.length !== 1 || !replacing || working.current) return;
+    const body = new FormData();
+    body.append("file", files[0]);
+    const id = replacing;
+    void change(async () => {
+      await api(`${attachmentPath(id)}/versions`, { method: "POST", body });
+      await client.invalidateQueries({ queryKey: ["attachment-versions", id] });
+    });
+  }
+
   return <section className="space-y-2 border-t pt-4">
     <h3 className="font-medium">{t("items.attachments")}</h3>
     {isPending && <p role="status">{t("items.loading")}</p>}
@@ -61,15 +76,31 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
     <ul className="divide-y">
       {data?.items.map((file) => {
         const canRemove = item.my_capabilities.includes("delete") || (canAttach && file.uploader.id === userId);
-        return <li key={file.id} className="flex items-center justify-between gap-2 py-1">
+        return <li key={file.id} className="py-1">
+        <div className="flex items-center justify-between gap-2">
           <a className="min-w-0 break-all underline" href={attachmentPath(file.id) + "/download"} download>{file.filename}</a>
+          <span className="flex shrink-0 items-center gap-1">
+          <Button variant="ghost" size="sm" aria-expanded={history === file.id} onClick={() => setHistory(history === file.id ? undefined : file.id)}>
+            {t("items.versionLabel", { version: file.version })}
+          </Button>
+          {canAttach && <Button variant="ghost" size="sm" disabled={busy} onClick={() => {
+            setReplacing(file.id);
+            versionInput.current?.click();
+          }}>{t("items.uploadVersion")}</Button>}
           {canRemove && <Button variant="ghost" size="sm" disabled={busy} onClick={() => {
             setError("");
             setRemoving(file);
           }}>{t("items.removeAttachment")}</Button>}
+          </span>
+        </div>
+        {history === file.id && <VersionHistory attachmentId={file.id} />}
         </li>;
       })}
     </ul>
+    <input type="file" ref={versionInput} hidden aria-label={t("items.uploadVersion")} onChange={(event) => {
+      uploadVersion(event.currentTarget.files);
+      event.currentTarget.value = "";
+    }} />
     {canAttach && <div className="rounded border border-dashed p-3" onDragOver={(event) => event.preventDefault()}
       onDrop={(event) => { event.preventDefault(); upload(event.dataTransfer.files); }}>
       <input type="file" ref={input} hidden onChange={(event) => {
@@ -88,4 +119,22 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
       confirmLabel={t("items.removeAttachment")} cancelLabel={t("items.cancel")} busy={busy} error={error}
       onConfirm={() => removing ? change(() => api(attachmentPath(removing.id), { method: "DELETE" })) : undefined} />
   </section>;
+}
+
+function VersionHistory({ attachmentId }: { attachmentId: string }) {
+  const { t } = useTranslation();
+  const { data, isPending, isError } = useQuery({
+    queryKey: ["attachment-versions", attachmentId],
+    queryFn: () => api<{ items: Version[] }>(`${attachmentPath(attachmentId)}/versions`),
+  });
+  if (isPending) return <p role="status">{t("items.loading")}</p>;
+  if (isError) return <FormError message={t("items.loadError")} />;
+  return <ol className="mt-1 space-y-1 pl-4 text-sm" aria-label={t("items.versionHistory")}>
+    {data.items.map((v) => <li key={v.version} className="flex flex-wrap gap-x-2">
+      <a className="underline" href={`${attachmentPath(attachmentId)}/versions/${v.version}/download`} download>
+        {t("items.versionLabel", { version: v.version })} {v.filename}
+      </a>
+      <span className="text-muted-foreground">{v.uploader.name} · {new Date(v.created_at).toLocaleString()}{v.is_current ? ` · ${t("items.currentVersion")}` : ""}</span>
+    </li>)}
+  </ol>;
 }

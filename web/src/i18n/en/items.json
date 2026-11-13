@@ -1,5 +1,9 @@
 {
   "attachments": "Attachments",
+  "versionLabel": "v{{version}}",
+  "uploadVersion": "Upload new version",
+  "versionHistory": "Version history",
+  "currentVersion": "current",
   "chooseAttachment": "Choose file",
   "dropAttachment": "Or drop a file here",
   "removeAttachment": "Remove attachment",

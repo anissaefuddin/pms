@@ -2712,6 +2712,21 @@ type Attachment struct {
 	ItemId      openapi_types.UUID `json:"item_id"`
 	SizeBytes   int64              `json:"size_bytes"`
 	Uploader    UserRef            `json:"uploader"`
+
+	// Version Nomor versi terbaru; filename
+	Version *int `json:"version,omitempty"`
+}
+
+// AttachmentVersion defines model for AttachmentVersion.
+type AttachmentVersion struct {
+	AttachmentId openapi_types.UUID `json:"attachment_id"`
+	ContentType  string             `json:"content_type"`
+	CreatedAt    time.Time          `json:"created_at"`
+	Filename     string             `json:"filename"`
+	IsCurrent    bool               `json:"is_current"`
+	SizeBytes    int64              `json:"size_bytes"`
+	Uploader     UserRef            `json:"uploader"`
+	Version      int                `json:"version"`
 }
 
 // AutomationDefinition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
@@ -4525,6 +4540,11 @@ type DecideApprovalJSONBody struct {
 // DecideApprovalJSONBodyDecision defines parameters for DecideApproval.
 type DecideApprovalJSONBodyDecision string
 
+// UploadAttachmentVersionMultipartBody defines parameters for UploadAttachmentVersion.
+type UploadAttachmentVersionMultipartBody struct {
+	File openapi_types.File `json:"file"`
+}
+
 // LoginSecondStepJSONBody defines parameters for LoginSecondStep.
 type LoginSecondStepJSONBody struct {
 	Challenge string `json:"challenge"`
@@ -5146,6 +5166,9 @@ type UpdateApprovalJSONRequestBody = ApprovalPatch
 // DecideApprovalJSONRequestBody defines body for DecideApproval for application/json ContentType.
 type DecideApprovalJSONRequestBody DecideApprovalJSONBody
 
+// UploadAttachmentVersionMultipartRequestBody defines body for UploadAttachmentVersion for multipart/form-data ContentType.
+type UploadAttachmentVersionMultipartRequestBody UploadAttachmentVersionMultipartBody
+
 // AcceptInvitationJSONRequestBody defines body for AcceptInvitation for application/json ContentType.
 type AcceptInvitationJSONRequestBody = AcceptInvitationRequest
 
@@ -5670,6 +5693,15 @@ type ServerInterface interface {
 	// DownloadAttachment Unduh file; izin dicek terhadap item pemilik (SEC-01)
 	// (GET /attachments/{attachmentId}/download)
 	DownloadAttachment(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID)
+	// ListAttachmentVersions Riwayat versi file, terbaru dulu (FIL-01); memerlukan `view` pada item
+	// (GET /attachments/{attachmentId}/versions)
+	ListAttachmentVersions(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID)
+	// UploadAttachmentVersion Unggah versi baru (FIL-01); memerlukan `attach`. Aturan jenis file sama dengan lampiran baru
+	// (POST /attachments/{attachmentId}/versions)
+	UploadAttachmentVersion(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID)
+	// DownloadAttachmentVersion Unduh satu versi; izin dicek terhadap item pemilik. Header sama dengan unduhan lampiran
+	// (GET /attachments/{attachmentId}/versions/{version}/download)
+	DownloadAttachmentVersion(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int)
 	// AcceptInvitation Terima undangan dan aktifkan akun (AUTH-06)
 	// (POST /auth/invitations/accept)
 	AcceptInvitation(w http.ResponseWriter, r *http.Request)
@@ -6436,6 +6468,93 @@ func (siw *ServerInterfaceWrapper) DownloadAttachment(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadAttachment(w, r, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAttachmentVersions operation middleware
+func (siw *ServerInterfaceWrapper) ListAttachmentVersions(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAttachmentVersions(w, r, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UploadAttachmentVersion operation middleware
+func (siw *ServerInterfaceWrapper) UploadAttachmentVersion(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UploadAttachmentVersion(w, r, attachmentId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DownloadAttachmentVersion operation middleware
+func (siw *ServerInterfaceWrapper) DownloadAttachmentVersion(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "attachmentId" -------------
+	var attachmentId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "attachmentId", r.PathValue("attachmentId"), &attachmentId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "attachmentId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "version" -------------
+	var version int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "version", r.PathValue("version"), &version, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "version", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DownloadAttachmentVersion(w, r, attachmentId, version)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12465,6 +12584,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.ListAttachments)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{itemId}/attachments", wrapper.UploadAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/download", wrapper.DownloadAttachment)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.ListAttachmentVersions)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/attachments/{attachmentId}/versions", wrapper.UploadAttachmentVersion)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/attachments/{attachmentId}/versions/{version}/download", wrapper.DownloadAttachmentVersion)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/attachments/{attachmentId}", wrapper.DeleteAttachment)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/relations", wrapper.ListItemRelations)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/activity", wrapper.ListActivity)
@@ -13031,6 +13153,172 @@ type DownloadAttachment404ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response DownloadAttachment404ApplicationProblemPlusJSONResponse) VisitDownloadAttachmentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAttachmentVersionsRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+}
+
+type ListAttachmentVersionsResponseObject interface {
+	VisitListAttachmentVersionsResponse(w http.ResponseWriter) error
+}
+
+type ListAttachmentVersions200JSONResponse struct {
+	Items []AttachmentVersion `json:"items"`
+}
+
+func (response ListAttachmentVersions200JSONResponse) VisitListAttachmentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAttachmentVersions404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAttachmentVersions404ApplicationProblemPlusJSONResponse) VisitListAttachmentVersionsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAttachmentVersionRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Body         *multipart.Reader
+}
+
+type UploadAttachmentVersionResponseObject interface {
+	VisitUploadAttachmentVersionResponse(w http.ResponseWriter) error
+}
+
+type UploadAttachmentVersion201JSONResponse Attachment
+
+func (response UploadAttachmentVersion201JSONResponse) VisitUploadAttachmentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAttachmentVersion403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UploadAttachmentVersion403ApplicationProblemPlusJSONResponse) VisitUploadAttachmentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAttachmentVersion404ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadAttachmentVersion404ApplicationProblemPlusJSONResponse) VisitUploadAttachmentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAttachmentVersion413ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadAttachmentVersion413ApplicationProblemPlusJSONResponse) VisitUploadAttachmentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UploadAttachmentVersion422ApplicationProblemPlusJSONResponse Problem
+
+func (response UploadAttachmentVersion422ApplicationProblemPlusJSONResponse) VisitUploadAttachmentVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DownloadAttachmentVersionRequestObject struct {
+	AttachmentId openapi_types.UUID `json:"attachmentId"`
+	Version      int                `json:"version"`
+}
+
+type DownloadAttachmentVersionResponseObject interface {
+	VisitDownloadAttachmentVersionResponse(w http.ResponseWriter) error
+}
+
+type DownloadAttachmentVersion200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response DownloadAttachmentVersion200ApplicationoctetStreamResponse) VisitDownloadAttachmentVersionResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type DownloadAttachmentVersion404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DownloadAttachmentVersion404ApplicationProblemPlusJSONResponse) VisitDownloadAttachmentVersionResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -23898,6 +24186,15 @@ type StrictServerInterface interface {
 	// DownloadAttachment Unduh file; izin dicek terhadap item pemilik (SEC-01)
 	// (GET /attachments/{attachmentId}/download)
 	DownloadAttachment(ctx context.Context, request DownloadAttachmentRequestObject) (DownloadAttachmentResponseObject, error)
+	// ListAttachmentVersions Riwayat versi file, terbaru dulu (FIL-01); memerlukan `view` pada item
+	// (GET /attachments/{attachmentId}/versions)
+	ListAttachmentVersions(ctx context.Context, request ListAttachmentVersionsRequestObject) (ListAttachmentVersionsResponseObject, error)
+	// UploadAttachmentVersion Unggah versi baru (FIL-01); memerlukan `attach`. Aturan jenis file sama dengan lampiran baru
+	// (POST /attachments/{attachmentId}/versions)
+	UploadAttachmentVersion(ctx context.Context, request UploadAttachmentVersionRequestObject) (UploadAttachmentVersionResponseObject, error)
+	// DownloadAttachmentVersion Unduh satu versi; izin dicek terhadap item pemilik. Header sama dengan unduhan lampiran
+	// (GET /attachments/{attachmentId}/versions/{version}/download)
+	DownloadAttachmentVersion(ctx context.Context, request DownloadAttachmentVersionRequestObject) (DownloadAttachmentVersionResponseObject, error)
 	// AcceptInvitation Terima undangan dan aktifkan akun (AUTH-06)
 	// (POST /auth/invitations/accept)
 	AcceptInvitation(ctx context.Context, request AcceptInvitationRequestObject) (AcceptInvitationResponseObject, error)
@@ -24727,6 +25024,92 @@ func (sh *strictHandler) DownloadAttachment(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadAttachmentResponseObject); ok {
 		if err := validResponse.VisitDownloadAttachmentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAttachmentVersions operation middleware
+func (sh *strictHandler) ListAttachmentVersions(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID) {
+	var request ListAttachmentVersionsRequestObject
+
+	request.AttachmentId = attachmentId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAttachmentVersions(ctx, request.(ListAttachmentVersionsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAttachmentVersions")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAttachmentVersionsResponseObject); ok {
+		if err := validResponse.VisitListAttachmentVersionsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UploadAttachmentVersion operation middleware
+func (sh *strictHandler) UploadAttachmentVersion(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID) {
+	var request UploadAttachmentVersionRequestObject
+
+	request.AttachmentId = attachmentId
+
+	if reader, err := r.MultipartReader(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode multipart body: %w", err))
+		return
+	} else {
+		request.Body = reader
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UploadAttachmentVersion(ctx, request.(UploadAttachmentVersionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UploadAttachmentVersion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UploadAttachmentVersionResponseObject); ok {
+		if err := validResponse.VisitUploadAttachmentVersionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DownloadAttachmentVersion operation middleware
+func (sh *strictHandler) DownloadAttachmentVersion(w http.ResponseWriter, r *http.Request, attachmentId openapi_types.UUID, version int) {
+	var request DownloadAttachmentVersionRequestObject
+
+	request.AttachmentId = attachmentId
+	request.Version = version
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DownloadAttachmentVersion(ctx, request.(DownloadAttachmentVersionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DownloadAttachmentVersion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DownloadAttachmentVersionResponseObject); ok {
+		if err := validResponse.VisitDownloadAttachmentVersionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -676,3 +676,9 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
 - Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
 
+
+## M11 / S11.1.2 versi file (14 Nov 2026)
+
+- PASS (S11.1.2). `TestAttachmentVersionsAreImmutableAndPolicyChecked` (PostgreSQL nyata): v1 lalu v2 (nama dan ukuran berbeda); pembaca read-only 403 dan orang luar 404 saat unggah versi; versi executable 422 dan nomor tidak naik; daftar versi terbaru dulu dengan `is_current`; daftar lampiran lama tetap berbentuk sama dan melaporkan `version` 2; unduh v1 mengembalikan byte lama, unduh biasa byte baru, versi 0 atau 3 404, orang luar 404; UPDATE dan DELETE langsung pada `attachment_versions` ditolak trigger; lampiran yang dihapus menyembunyikan semua versi. `TestSweepFilesRemovesOnlyOldFilesWithoutARow` diperluas: file yang hanya dirujuk versi lama tidak disapu. `web/tests/file-versions.spec.ts` (mock): buka riwayat, unggah versi baru, daftar menjadi dua dengan tautan versi 2 di atas.
+- Keputusan: D-79 (kontrak untuk S11.1.3–S11.1.6). Migrasi 00071 (00070 dipakai sesi lain).
+- Belum: thumbnail yang dihasilkan server (thumbnail saat ini = unduhan versi terbaru; pratinjau di S11.1.3), tes axe untuk panel riwayat, tes UI live.
