@@ -42,6 +42,8 @@
   "inbox.event.status_changed": "{{actor}} changed the status of {{title}}",
   "inbox.event.comment": "{{actor}} commented on {{title}}",
   "inbox.event.shared": "{{actor}} shared {{title}} with you",
+  "inbox.event.approval_requested": "{{actor}} asked you to approve {{title}}",
+  "inbox.event.approval_decided": "{{actor}} reviewed your approval request on {{title}}",
   "help.label": "Help",
   "help.shortcuts": "Keyboard shortcuts",
   "help.documentation": "Documentation",
@@ -59,5 +61,6 @@
   "recycle.blocked.space_deleted": "The original Space was deleted.",
   "recycle.blocked.forbidden": "You do not have permission to restore this item.",
   "todo.sorts.priority": "Priority",
-  "todo.sorts.importance": "Importance"
+  "todo.sorts.importance": "Importance",
+  "requests.label": "Request forms"
 }

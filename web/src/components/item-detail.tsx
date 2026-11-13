@@ -18,6 +18,7 @@ import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker
 import { ItemDates } from "@/components/item-dates";
 import { ItemEffort } from "@/components/item-effort";
 import { ItemLocations } from "@/components/item-locations";
+import { ItemApprovals } from "@/components/item-approvals";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
 import { ItemProgress } from "@/components/project-progress";
@@ -75,7 +76,11 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
   const [assigneeDraft, setAssigneeDraft] = useState<PersonOption[]>();
   const assignees = assigneeDraft ?? item.assignees;
   const path = `/api/v1/items/${item.id}`;
-  const children = useQuery({ queryKey: itemKeys.children(item.id), queryFn: () => listItems(path + "/children") });
+  const children = useQuery({ queryKey: itemKeys.children(item.id), queryFn: () => listItems(path + "/children").catch((err) => {
+    // A requester who can open only this item gets 404 for its children: show none, not an error.
+    if (err instanceof ApiError && err.status === 404) return [];
+    throw err;
+  }) });
   const parentId = item.locations.find((loc) => loc.parent_item_id)?.parent_item_id;
   const parent = useQuery({
     queryKey: itemKeys.detail(parentId ?? ""), queryFn: () => getItem(parentId!), enabled: !!parentId,
@@ -168,7 +173,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
   }
 
   return <article className="space-y-5">
-    {parentId && <Button size="sm" variant="ghost" onClick={() => onOpen(parentId)}>{parent.data?.item.title ?? t("items.parentLink")}</Button>}
+    {parentId && !parent.isError && <Button size="sm" variant="ghost" onClick={() => onOpen(parentId)}>{parent.data?.item.title ?? t("items.parentLink")}</Button>}
     <div className="flex items-start justify-between gap-2">
       <h2 className="min-w-0 break-words text-xl font-semibold">{item.title}</h2>
       <DropdownMenu>
@@ -205,22 +210,22 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
         <Input ref={titleInput} name="title" defaultValue={item.title} onChange={() => beginDraft("title")} maxLength={500} required /></label>
       <Button disabled={busy || stale}>{t("items.save")}</Button>
     </form>}
-    <div className="space-y-1">
+    {canStatus ? <div className="space-y-1">
       <label htmlFor={statusInput}>{t("items.status")}</label>
       <select id={statusInput} className="block w-full rounded border bg-background p-2" value={item.status?.id ?? ""}
-        disabled={!canStatus || busy || stale || !statuses.length} onChange={(event) => void save({ status_id: event.target.value })}>
+        disabled={busy || stale || !statuses.length} onChange={(event) => void save({ status_id: event.target.value })}>
         {!item.status && <option value="" disabled>{t("items.status")}</option>}
         {!statuses.some((status) => status.id === item.status?.id) && item.status && <option value={item.status.id}>{item.status.name}</option>}
         {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
       </select>
-    </div>
-    <div className="space-y-1">
+    </div> : <dl><dt>{t("items.status")}</dt><dd>{item.status?.name}</dd></dl>}
+    {canEdit ? <div className="space-y-1">
       <label htmlFor="item-importance">{t("items.importance.label")}</label>
       <select id="item-importance" className="block w-full rounded border bg-background p-2" value={item.importance ?? "normal"}
-        disabled={!canEdit || busy || stale} onChange={(event) => void save({ importance: event.target.value as NonNullable<Item["importance"]> })}>
+        disabled={busy || stale} onChange={(event) => void save({ importance: event.target.value as NonNullable<Item["importance"]> })}>
         {importanceLevels.map((level) => <option key={level} value={level}>{t(`items.importance.${level}`)}</option>)}
       </select>
-    </div>
+    </div> : <dl><dt>{t("items.importance.label")}</dt><dd>{t(`items.importance.${item.importance ?? "normal"}`)}</dd></dl>}
     <ItemProgress item={item} editable={canEdit} disabled={busy || stale}
       onEdit={() => beginDraft("progress_percent")} onSave={(update) => save(update)} />
     {canEdit ? <form className="space-y-2" onSubmit={saveDates}>
@@ -269,6 +274,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
       </li>)}</ul>
     </section>
     <Suspense fallback={null}><ItemComments item={item} userId={me.id} /></Suspense>
+    <ItemApprovals item={item} userId={me.id} />
     <ItemAttachments item={item} userId={me.id} />
     {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
     <ConfirmDialog open={deleting} onOpenChange={setDeleting} title={t("items.delete")} description={t("items.deleteDescription")}

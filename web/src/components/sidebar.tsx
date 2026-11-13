@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, ChevronDown, ChevronRight, Inbox, MoreHorizontal, PanelLeft, Plus, Search, Settings } from "lucide-react";
+import { Bell, ChevronDown, ClipboardList, ChevronRight, Inbox, MoreHorizontal, PanelLeft, Plus, Search, Settings } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -29,7 +29,7 @@ export function Sidebar({ me }: { me: CurrentUser }) {
         aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}><PanelLeft /></Button>
     </div>
     <nav className="space-y-1" aria-label={t("nav.main.label")}>
-      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} onClick={() => window.dispatchEvent(new Event("pms:open-search"))}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} onClick={() => void navigate({ to: "/inbox" })}/></>}
+      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} onClick={() => window.dispatchEvent(new Event("pms:open-search"))}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} onClick={() => void navigate({ to: "/inbox" })}/><Nav icon={<ClipboardList/>} label={t("nav.requests.label")} onClick={() => void navigate({ to: "/requests" })}/></>}
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}
           className={collapsed ? "w-full px-0" : "w-full justify-start px-3"} />}>

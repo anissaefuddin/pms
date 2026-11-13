@@ -1009,10 +1009,300 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Workflow dan statusnya (WF-01; hanya baca di M1) */
+        /** Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca */
         get: operations["listWorkflows"];
         put?: never;
+        /** Buat workflow dengan status awal (admin saja, WF-02) */
+        post: operations["createWorkflow"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workflows/{workflowId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
         post?: never;
+        /** Hapus workflow yang tidak dipakai (admin saja); workflow default atau yang dipakai item ditolak */
+        delete: operations["deleteWorkflow"];
+        options?: never;
+        head?: never;
+        /** Ubah nama workflow (admin saja) */
+        patch: operations["renameWorkflow"];
+        trace?: never;
+    };
+    "/workflows/{workflowId}/statuses": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tambah status di akhir workflow (admin saja, WF-03A) */
+        post: operations["createStatus"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/workflows/{workflowId}/status-order": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Urutkan status; harus memuat semua status workflow, dan status pertama harus Active */
+        put: operations["reorderStatuses"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/statuses/{statusId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                statusId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus status. Bila dipakai item, `move_to` (status lain di workflow yang sama) wajib */
+        delete: operations["deleteStatus"];
+        options?: never;
+        head?: never;
+        /** Ubah nama, grup, warna, auto-assign, kunci transisi, atau transisi yang diizinkan (admin saja) */
+        patch: operations["updateStatus"];
+        trace?: never;
+    };
+    "/items/{itemId}/approvals": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        /** Approval pada item beserta keputusan tiap approver (SPC-12) */
+        get: operations["listItemApprovals"];
+        put?: never;
+        /** Minta approval (butuh kemampuan edit; approver harus bisa melihat item) */
+        post: operations["createItemApproval"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/approvals/{approvalId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                approvalId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: operations["deleteApproval"];
+        options?: never;
+        head?: never;
+        /** Ubah deskripsi, tenggat, atau daftar approver; approver yang dihapus kehilangan keputusannya */
+        patch: operations["updateApproval"];
+        trace?: never;
+    };
+    "/approvals/{approvalId}/decision": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                approvalId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Approve atau reject; hanya approver yang disebut, boleh diubah kemudian */
+        put: operations["decideApproval"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/forms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Form di Space (butuh kemampuan edit pada Space; FORM-05) */
+        get: operations["listSpaceForms"];
+        put?: never;
+        /** Buat form (FORM-01, FORM-02); butuh edit pada Space dan hak membuat item di tujuan */
+        post: operations["createForm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forms/{formId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        get: operations["getForm"];
+        /** Ganti seluruh isi form (nama, pertanyaan, pengaturan respons) */
+        put: operations["replaceForm"];
+        post?: never;
+        /** Hapus form; item yang sudah dibuat dari form tidak ikut terhapus */
+        delete: operations["deleteForm"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forms": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Semua form yang bisa dikelola user di semua Space (Manage forms, FORM-05) */
+        get: operations["listForms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forms/{formId}/access": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Atur siapa yang boleh mengisi form (FORM-03); butuh kemampuan share pada Space */
+        put: operations["setFormAccess"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/requests": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu */
+        get: operations["listMyRequests"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forms/available": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Form yang boleh diisi user ini (akses internal); dipakai menu "Request forms" */
+        get: operations["listAvailableForms"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forms/{formId}/definition": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        /** Pertanyaan form untuk pengisi; pengaturan respons (tujuan item) tidak ikut */
+        get: operations["getFormDefinition"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forms/{formId}/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
+         * @description `application/json` dengan `{answers}` bila form tanpa lampiran, atau `multipart/form-data` dengan bagian `answers`
+         *     (JSON) dan bagian `file:<key>` untuk tiap berkas pada pertanyaan attachment. Item dibuat atas nama pengisi.
+         *     Semua kesalahan jawaban dikembalikan sekaligus di `errors` (field `answers.<key>`).
+         */
+        post: operations["submitForm"];
         delete?: never;
         options?: never;
         head?: never;
@@ -1316,6 +1606,203 @@ export interface components {
             /** @description Nama token warna, bukan hex */
             color: string;
             group: components["schemas"]["StatusGroup"];
+            /** @description Item yang masuk status ini otomatis menugaskan pengguna yang mengubahnya */
+            auto_assign: boolean;
+            /** @description Bila true, item di status ini hanya boleh pindah ke `allowed_next` */
+            lock_transitions: boolean;
+            allowed_next: string[];
+        };
+        StatusInput: {
+            name: string;
+            group: components["schemas"]["StatusGroup"];
+            color: string;
+            auto_assign?: boolean;
+            lock_transitions?: boolean;
+        };
+        StatusPatch: {
+            name?: string;
+            group?: components["schemas"]["StatusGroup"];
+            color?: string;
+            auto_assign?: boolean;
+            lock_transitions?: boolean;
+            allowed_next?: string[];
+        };
+        WorkflowInput: {
+            name: string;
+        };
+        Approval: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            item_id: string;
+            description: string;
+            /** Format: date */
+            due_date: string | null;
+            created_by: components["schemas"]["UserRef"];
+            /** Format: int32 */
+            version: number;
+            /** Format: date-time */
+            created_at: string;
+            /**
+             * @description rejected bila ada approver yang menolak; approved bila semua approver menyetujui
+             * @enum {string}
+             */
+            status: "pending" | "approved" | "rejected";
+            /**
+             * Format: int32
+             * @description Pembilang penghitung "0/2"
+             */
+            approved_count: number;
+            /** Format: int32 */
+            total: number;
+            approvers: {
+                user: components["schemas"]["UserRef"];
+                /** @enum {string|null} */
+                decision: "approved" | "rejected" | null;
+                comment: string;
+                /** Format: date-time */
+                decided_at: string | null;
+            }[];
+        };
+        ApprovalInput: {
+            description?: string;
+            /** Format: date */
+            due_date?: string | null;
+            approver_ids: string[];
+        };
+        ApprovalPatch: {
+            description?: string;
+            /** Format: date */
+            due_date?: string | null;
+            approver_ids?: string[];
+        };
+        FormElement: {
+            /** @description Stabil di semua revisi form; jawaban tersimpan memakai key ini */
+            key: string;
+            /** @enum {string} */
+            kind: "single_line" | "paragraph" | "single_choice" | "multiple_choice" | "date" | "number" | "attachment" | "assignee" | "importance" | "section";
+            label: string;
+            help?: string;
+            required?: boolean;
+            /** @description Wajib 2-50 untuk single_choice dan multiple_choice */
+            options?: string[];
+            min?: number;
+            max?: number;
+            /** @description Wajib untuk attachment */
+            max_files?: number;
+            /** @description Hanya untuk assignee */
+            multiple?: boolean;
+        };
+        FormPage: {
+            title: string;
+            elements: components["schemas"]["FormElement"][];
+        };
+        FormDefinition: {
+            pages: components["schemas"]["FormPage"][];
+        };
+        FormResponseSettings: {
+            /** @enum {string} */
+            item_type: "task" | "project";
+            /**
+             * Format: uuid
+             * @description Kosong berarti status pertama workflow tujuan
+             */
+            status_id?: string | null;
+            location: {
+                /** Format: uuid */
+                space_id: string;
+                /** Format: uuid */
+                parent_item_id?: string | null;
+            };
+            assignee_ids?: string[];
+            /** @description Key pertanyaan single_line yang menjadi judul item */
+            title_question?: string | null;
+            approval?: {
+                approver_ids: string[];
+                description?: string;
+            } | null;
+        };
+        FormInput: {
+            name: string;
+            description?: string;
+            definition: components["schemas"]["FormDefinition"];
+            response: components["schemas"]["FormResponseSettings"];
+        };
+        Form: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            space_id: string;
+            name: string;
+            description: string;
+            definition: components["schemas"]["FormDefinition"];
+            response: components["schemas"]["FormResponseSettings"];
+            access: components["schemas"]["FormAccess"];
+            /** Format: int32 */
+            version: number;
+            created_by: components["schemas"]["UserRef"];
+            updated_by: components["schemas"]["UserRef"];
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        /**
+         * @description private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+         * @enum {string}
+         */
+        FormAccess: "private" | "internal";
+        FormSummary: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            space_id: string;
+            space_name: string;
+            access: components["schemas"]["FormAccess"];
+            name: string;
+            description: string;
+            /** Format: int32 */
+            question_count: number;
+            updated_by: components["schemas"]["UserRef"];
+            /** Format: date-time */
+            updated_at: string;
+        };
+        MyRequest: {
+            /** Format: uuid */
+            id: string;
+            form_name: string;
+            /** Format: uuid */
+            item_id: string;
+            title: string;
+            status: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                color: string;
+                group: components["schemas"]["StatusGroup"];
+            };
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        FormAvailable: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: string;
+        };
+        FormFill: {
+            /** Format: uuid */
+            id: string;
+            name: string;
+            description: string;
+            definition: components["schemas"]["FormDefinition"];
+        };
+        FormSubmitted: {
+            /** Format: uuid */
+            item_id: string;
+            title: string;
         };
         Workflow: {
             /** Format: uuid */
@@ -1694,7 +2181,7 @@ export interface components {
             items: components["schemas"]["Activity"][];
         };
         /** @enum {string} */
-        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared";
+        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided";
         Notification: {
             /** Format: uuid */
             id: string;
@@ -3793,6 +4280,656 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    createWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["WorkflowInput"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+        };
+    };
+    renameWorkflow: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    createStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusInput"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    reorderStatuses: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    status_ids: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteStatus: {
+        parameters: {
+            query?: {
+                move_to?: string;
+            };
+            header?: never;
+            path: {
+                statusId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Workflow setelah perubahan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    updateStatus: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                statusId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["StatusPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Workflow"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listItemApprovals: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Approval"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createItemApproval: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: components["parameters"]["ItemId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalInput"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Approval"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteApproval: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                approvalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateApproval: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                approvalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ApprovalPatch"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Approval"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    decideApproval: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                approvalId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    decision: "approved" | "rejected";
+                    comment?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Approval"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listSpaceForms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["FormSummary"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    createForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormInput"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    replaceForm: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["FormInput"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    deleteForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listForms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["FormSummary"][];
+                    };
+                };
+            };
+        };
+    };
+    setFormAccess: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    access: components["schemas"]["FormAccess"];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listMyRequests: {
+        parameters: {
+            query?: {
+                limit?: components["parameters"]["Limit"];
+                cursor?: components["parameters"]["Cursor"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["MyRequest"][];
+                        next_cursor: string | null;
+                    };
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    listAvailableForms: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["FormAvailable"][];
+                    };
+                };
+            };
+        };
+    };
+    getFormDefinition: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormFill"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    submitForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    answers: {
+                        [key: string]: unknown;
+                    };
+                };
+                "multipart/form-data": {
+                    /** @description Objek JSON jawaban */
+                    answers: string;
+                } & {
+                    [key: string]: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["FormSubmitted"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     streamEvents: {

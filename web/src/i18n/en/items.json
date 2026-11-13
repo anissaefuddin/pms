@@ -142,5 +142,32 @@
     "project": "Project",
     "root": "Space root",
     "add": "Add location"
-  }
+  },
+  "approvals": {
+    "title": "Approvals",
+    "empty": "No approvals yet.",
+    "add": "Add approval",
+    "description": "Description",
+    "due": "Due date",
+    "approvers": "Approvers",
+    "approversRequired": "Choose at least one approver",
+    "createdBy": "Requested by {{name}}",
+    "counter": "{{approved}}/{{total}} approved",
+    "dueOn": "Due {{date}}",
+    "edit": "Edit approval",
+    "delete": "Delete approval",
+    "deleteDescription": "This removes the approval and all decisions on it.",
+    "save": "Save approval",
+    "status": {
+      "pending": "Pending",
+      "approved": "Approved",
+      "rejected": "Rejected"
+    },
+    "noDecision": "No decision yet",
+    "yourDecision": "Your decision: {{decision}}",
+    "comment": "Comment (optional)",
+    "approve": "Approve",
+    "reject": "Reject"
+  },
+  "usersUnavailable": "The people directory is not available to you."
 }

@@ -15,6 +15,7 @@ import { Route as HelloRouteImport } from './routes/hello'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppFormsRouteImport } from './routes/_app/forms'
 import { Route as AppInboxRouteImport } from './routes/_app/inbox'
 import { Route as AppMyTodoRouteImport } from './routes/_app/my-todo'
 import { Route as AppRecycleBinRouteImport } from './routes/_app/recycle-bin'
@@ -23,16 +24,22 @@ import { Route as AppSettingsRouteImport } from './routes/_app/settings'
 import { Route as AppSharedWithMeRouteImport } from './routes/_app/shared-with-me'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
 import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
+import { Route as AppRequestsIndexRouteImport } from './routes/_app/requests.index'
+import { Route as AppRequestsFormIdRouteImport } from './routes/_app/requests.$formId'
+import { Route as AppRequestsMineRouteImport } from './routes/_app/requests.mine'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as AppSettingsWorkScheduleRouteImport } from './routes/_app/settings/work-schedule'
+import { Route as AppSettingsWorkflowsRouteImport } from './routes/_app/settings/workflows'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces.$spaceId'
 import { Route as AppSpikesGanttRouteImport } from './routes/_app/spikes.gantt'
 import { Route as AppTasksItemIdRouteImport } from './routes/_app/tasks.$itemId'
 import { Route as AppSettingsUsersIndexRouteImport } from './routes/_app/settings/users/index'
 import { Route as AppSettingsUsersTypesRouteImport } from './routes/_app/settings/users/types'
+import { Route as AppSpacesSpaceIdFormsRouteImport } from './routes/_app/spaces_.$spaceId.forms'
+import { Route as AppSpacesSpaceIdFormsFormIdRouteImport } from './routes/_app/spaces_.$spaceId.forms_.$formId'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -61,6 +68,11 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppFormsRoute = AppFormsRouteImport.update({
+  id: '/forms',
+  path: '/forms',
   getParentRoute: () => AppRoute,
 } as any)
 const AppInboxRoute = AppInboxRouteImport.update({
@@ -103,6 +115,21 @@ const AppItemsItemIdRoute = AppItemsItemIdRouteImport.update({
   path: '/items/$itemId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppRequestsIndexRoute = AppRequestsIndexRouteImport.update({
+  id: '/requests/',
+  path: '/requests/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRequestsFormIdRoute = AppRequestsFormIdRouteImport.update({
+  id: '/requests/$formId',
+  path: '/requests/$formId',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppRequestsMineRoute = AppRequestsMineRouteImport.update({
+  id: '/requests/mine',
+  path: '/requests/mine',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -126,6 +153,11 @@ const AppSettingsUsersRoute = AppSettingsUsersRouteImport.update({
 const AppSettingsWorkScheduleRoute = AppSettingsWorkScheduleRouteImport.update({
   id: '/work-schedule',
   path: '/work-schedule',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsWorkflowsRoute = AppSettingsWorkflowsRouteImport.update({
+  id: '/workflows',
+  path: '/workflows',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSpacesSpaceIdRoute = AppSpacesSpaceIdRouteImport.update({
@@ -153,6 +185,17 @@ const AppSettingsUsersTypesRoute = AppSettingsUsersTypesRouteImport.update({
   path: '/types',
   getParentRoute: () => AppSettingsUsersRoute,
 } as any)
+const AppSpacesSpaceIdFormsRoute = AppSpacesSpaceIdFormsRouteImport.update({
+  id: '/spaces_/$spaceId/forms',
+  path: '/spaces/$spaceId/forms',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppSpacesSpaceIdFormsFormIdRoute =
+  AppSpacesSpaceIdFormsFormIdRouteImport.update({
+    id: '/spaces_/$spaceId/forms_/$formId',
+    path: '/spaces/$spaceId/forms/$formId',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -160,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/forms': typeof AppFormsRoute
   '/inbox': typeof AppInboxRoute
   '/my-todo': typeof AppMyTodoRoute
   '/recycle-bin': typeof AppRecycleBinRoute
@@ -168,22 +212,29 @@ export interface FileRoutesByFullPath {
   '/shared-with-me': typeof AppSharedWithMeRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
+  '/requests/$formId': typeof AppRequestsFormIdRoute
+  '/requests/mine': typeof AppRequestsMineRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
+  '/settings/workflows': typeof AppSettingsWorkflowsRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/requests/': typeof AppRequestsIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
+  '/spaces/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
   '/settings/users/': typeof AppSettingsUsersIndexRoute
+  '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/forms': typeof AppFormsRoute
   '/inbox': typeof AppInboxRoute
   '/my-todo': typeof AppMyTodoRoute
   '/recycle-bin': typeof AppRecycleBinRoute
@@ -192,15 +243,21 @@ export interface FileRoutesByTo {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
+  '/requests/$formId': typeof AppRequestsFormIdRoute
+  '/requests/mine': typeof AppRequestsMineRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
+  '/settings/workflows': typeof AppSettingsWorkflowsRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/spikes/gantt': typeof AppSpikesGanttRoute
   '/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/requests': typeof AppRequestsIndexRoute
   '/settings': typeof AppSettingsIndexRoute
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
+  '/spaces/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
   '/settings/users': typeof AppSettingsUsersIndexRoute
+  '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -209,6 +266,7 @@ export interface FileRoutesById {
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/forms': typeof AppFormsRoute
   '/_app/inbox': typeof AppInboxRoute
   '/_app/my-todo': typeof AppMyTodoRoute
   '/_app/recycle-bin': typeof AppRecycleBinRoute
@@ -218,16 +276,22 @@ export interface FileRoutesById {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
   '/_app/items/$itemId': typeof AppItemsItemIdRoute
+  '/_app/requests/$formId': typeof AppRequestsFormIdRoute
+  '/_app/requests/mine': typeof AppRequestsMineRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/_app/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
+  '/_app/settings/workflows': typeof AppSettingsWorkflowsRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
   '/_app/spikes/gantt': typeof AppSpikesGanttRoute
   '/_app/tasks/$itemId': typeof AppTasksItemIdRoute
+  '/_app/requests/': typeof AppRequestsIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
   '/_app/settings/users/types': typeof AppSettingsUsersTypesRoute
+  '/_app/spaces_/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
   '/_app/settings/users/': typeof AppSettingsUsersIndexRoute
+  '/_app/spaces_/$spaceId/forms_/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -237,6 +301,7 @@ export interface FileRouteTypes {
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/forms'
     | '/inbox'
     | '/my-todo'
     | '/recycle-bin'
@@ -245,22 +310,29 @@ export interface FileRouteTypes {
     | '/shared-with-me'
     | '/invitations/$token'
     | '/items/$itemId'
+    | '/requests/$formId'
+    | '/requests/mine'
     | '/settings/profile'
     | '/settings/security'
     | '/settings/users'
     | '/settings/work-schedule'
+    | '/settings/workflows'
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
+    | '/requests/'
     | '/settings/'
     | '/settings/users/types'
+    | '/spaces/$spaceId/forms'
     | '/settings/users/'
+    | '/spaces/$spaceId/forms/$formId'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/forms'
     | '/inbox'
     | '/my-todo'
     | '/recycle-bin'
@@ -269,15 +341,21 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/'
     | '/items/$itemId'
+    | '/requests/$formId'
+    | '/requests/mine'
     | '/settings/profile'
     | '/settings/security'
     | '/settings/work-schedule'
+    | '/settings/workflows'
     | '/spaces/$spaceId'
     | '/spikes/gantt'
     | '/tasks/$itemId'
+    | '/requests'
     | '/settings'
     | '/settings/users/types'
+    | '/spaces/$spaceId/forms'
     | '/settings/users'
+    | '/spaces/$spaceId/forms/$formId'
   id:
     | '__root__'
     | '/_app'
@@ -285,6 +363,7 @@ export interface FileRouteTypes {
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/_app/forms'
     | '/_app/inbox'
     | '/_app/my-todo'
     | '/_app/recycle-bin'
@@ -294,16 +373,22 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/_app/'
     | '/_app/items/$itemId'
+    | '/_app/requests/$formId'
+    | '/_app/requests/mine'
     | '/_app/settings/profile'
     | '/_app/settings/security'
     | '/_app/settings/users'
     | '/_app/settings/work-schedule'
+    | '/_app/settings/workflows'
     | '/_app/spaces/$spaceId'
     | '/_app/spikes/gantt'
     | '/_app/tasks/$itemId'
+    | '/_app/requests/'
     | '/_app/settings/'
     | '/_app/settings/users/types'
+    | '/_app/spaces_/$spaceId/forms'
     | '/_app/settings/users/'
+    | '/_app/spaces_/$spaceId/forms_/$formId'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -357,6 +442,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/forms': {
+      id: '/_app/forms'
+      path: '/forms'
+      fullPath: '/forms'
+      preLoaderRoute: typeof AppFormsRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/inbox': {
@@ -415,6 +507,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppItemsItemIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/requests/': {
+      id: '/_app/requests/'
+      path: '/requests'
+      fullPath: '/requests/'
+      preLoaderRoute: typeof AppRequestsIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/requests/$formId': {
+      id: '/_app/requests/$formId'
+      path: '/requests/$formId'
+      fullPath: '/requests/$formId'
+      preLoaderRoute: typeof AppRequestsFormIdRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/requests/mine': {
+      id: '/_app/requests/mine'
+      path: '/requests/mine'
+      fullPath: '/requests/mine'
+      preLoaderRoute: typeof AppRequestsMineRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/settings/': {
       id: '/_app/settings/'
       path: '/'
@@ -448,6 +561,13 @@ declare module '@tanstack/react-router' {
       path: '/work-schedule'
       fullPath: '/settings/work-schedule'
       preLoaderRoute: typeof AppSettingsWorkScheduleRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/workflows': {
+      id: '/_app/settings/workflows'
+      path: '/workflows'
+      fullPath: '/settings/workflows'
+      preLoaderRoute: typeof AppSettingsWorkflowsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/spaces/$spaceId': {
@@ -485,6 +605,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsUsersTypesRouteImport
       parentRoute: typeof AppSettingsUsersRoute
     }
+    '/_app/spaces_/$spaceId/forms': {
+      id: '/_app/spaces_/$spaceId/forms'
+      path: '/spaces/$spaceId/forms'
+      fullPath: '/spaces/$spaceId/forms'
+      preLoaderRoute: typeof AppSpacesSpaceIdFormsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/spaces_/$spaceId/forms_/$formId': {
+      id: '/_app/spaces_/$spaceId/forms_/$formId'
+      path: '/spaces/$spaceId/forms/$formId'
+      fullPath: '/spaces/$spaceId/forms/$formId'
+      preLoaderRoute: typeof AppSpacesSpaceIdFormsFormIdRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -506,6 +640,7 @@ interface AppSettingsRouteChildren {
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRouteWithChildren
   AppSettingsWorkScheduleRoute: typeof AppSettingsWorkScheduleRoute
+  AppSettingsWorkflowsRoute: typeof AppSettingsWorkflowsRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
 }
 
@@ -514,6 +649,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppSettingsUsersRoute: AppSettingsUsersRouteWithChildren,
   AppSettingsWorkScheduleRoute: AppSettingsWorkScheduleRoute,
+  AppSettingsWorkflowsRoute: AppSettingsWorkflowsRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
 }
 
@@ -522,6 +658,7 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppFormsRoute: typeof AppFormsRoute
   AppInboxRoute: typeof AppInboxRoute
   AppMyTodoRoute: typeof AppMyTodoRoute
   AppRecycleBinRoute: typeof AppRecycleBinRoute
@@ -530,12 +667,18 @@ interface AppRouteChildren {
   AppSharedWithMeRoute: typeof AppSharedWithMeRoute
   AppIndexRoute: typeof AppIndexRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
+  AppRequestsFormIdRoute: typeof AppRequestsFormIdRoute
+  AppRequestsMineRoute: typeof AppRequestsMineRoute
   AppSpacesSpaceIdRoute: typeof AppSpacesSpaceIdRoute
   AppSpikesGanttRoute: typeof AppSpikesGanttRoute
   AppTasksItemIdRoute: typeof AppTasksItemIdRoute
+  AppRequestsIndexRoute: typeof AppRequestsIndexRoute
+  AppSpacesSpaceIdFormsRoute: typeof AppSpacesSpaceIdFormsRoute
+  AppSpacesSpaceIdFormsFormIdRoute: typeof AppSpacesSpaceIdFormsFormIdRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppFormsRoute: AppFormsRoute,
   AppInboxRoute: AppInboxRoute,
   AppMyTodoRoute: AppMyTodoRoute,
   AppRecycleBinRoute: AppRecycleBinRoute,
@@ -544,9 +687,14 @@ const AppRouteChildren: AppRouteChildren = {
   AppSharedWithMeRoute: AppSharedWithMeRoute,
   AppIndexRoute: AppIndexRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
+  AppRequestsFormIdRoute: AppRequestsFormIdRoute,
+  AppRequestsMineRoute: AppRequestsMineRoute,
   AppSpacesSpaceIdRoute: AppSpacesSpaceIdRoute,
   AppSpikesGanttRoute: AppSpikesGanttRoute,
   AppTasksItemIdRoute: AppTasksItemIdRoute,
+  AppRequestsIndexRoute: AppRequestsIndexRoute,
+  AppSpacesSpaceIdFormsRoute: AppSpacesSpaceIdFormsRoute,
+  AppSpacesSpaceIdFormsFormIdRoute: AppSpacesSpaceIdFormsFormIdRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

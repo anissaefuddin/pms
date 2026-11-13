@@ -63,6 +63,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const canRename = shared && can(space, "edit");
   const canDelete = shared && can(space, "delete");
   const canCreate = can(space, "create");
+  const canEditForms = can(space, "edit"); // also gates the Forms link
   const canManageFields = can(space, "share") && can(space, "delete");
   const personal = space.kind === "personal";
   function openItem(item: Item) {
@@ -96,6 +97,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         </div>
         <div className="flex shrink-0 items-center gap-2">
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
+          {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
           {(canRename || canDelete || canManageFields) && (
             <DropdownMenu>

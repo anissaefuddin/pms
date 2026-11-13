@@ -26,6 +26,7 @@ export function ItemUserPicker({ label, selected, onChange, multiple = false, di
     queryKey: ["item-active-users", q],
     queryFn: () => api<{ items: User[] }>(`/api/v1/users?status=active&limit=8&q=${encodeURIComponent(q)}`),
     enabled: canSearch && q.length >= 2,
+    retry: false,
   });
   return <fieldset className="space-y-2">
     <legend className="font-medium">{label}</legend>
@@ -39,6 +40,7 @@ export function ItemUserPicker({ label, selected, onChange, multiple = false, di
     </div>
     <Input type="search" autoFocus={autoFocus} aria-label={`${label}: ${t("items.searchUsers")}`} value={value} disabled={!canSearch}
       onChange={(event) => setValue(event.target.value)} />
+    {users.isError && <p role="status" className="text-sm text-muted-foreground">{t("items.usersUnavailable")}</p>}
     {canSearch && q.length >= 2 && q === value.trim() && users.data?.items.filter((user) => user.status === "active" && !selected.some((entry) => entry.id === user.id)).map((user) => {
       const person = { id: user.id, name: `${user.first_name} ${user.last_name}`.trim() };
       return <Button key={user.id} type="button" variant="ghost" size="sm" onClick={() => {

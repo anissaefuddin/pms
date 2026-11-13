@@ -28,7 +28,7 @@ test.describe("sidebar", () => {
   test("keeps the existing nav items before the Spaces list", async ({ page }) => {
     await mockSpaces(page);
     await page.goto("/");
-    await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button")).toHaveText(["Search", "Inbox", "More"]);
+    await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button")).toHaveText(["Search", "Inbox", "Request forms", "More"]);
   });
 });
 

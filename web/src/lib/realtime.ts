@@ -28,7 +28,9 @@ export function useRealtime(enabled: boolean) {
       const id = event.item_id ?? event.id;
       void client.invalidateQueries({ queryKey: ["item-comments", id] });
       void client.invalidateQueries({ queryKey: ["item-attachments", id] });
+      void client.invalidateQueries({ queryKey: ["item-approvals", id] });
       void client.invalidateQueries({ queryKey: ["shared-items"] });
+      void client.invalidateQueries({ queryKey: ["my-requests"] });
       if (event.type === "item.deleted" || event.type === "item.restored") {
         void client.invalidateQueries({ queryKey: notificationKey });
         void client.invalidateQueries({ queryKey: itemKeys.all });
