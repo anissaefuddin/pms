@@ -210,6 +210,117 @@ paths:
                   id: { type: string, format: uuid }
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /items/{projectId}/gantt-snapshots:
+    parameters:
+      - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: listGanttSnapshots
+      summary: Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/GanttSnapshot' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createGanttSnapshot
+      summary: Bekukan Gantt project menjadi salinan baca-saja yang dapat dibuka lewat tautan rahasia (butuh Edit)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, expires_at]
+              additionalProperties: false
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+                expires_at: { type: string, format: date-time, description: Antara 1 menit dan 90 hari dari sekarang }
+                show_assignees: { type: boolean, default: false }
+      responses:
+        '201':
+          description: Dibuat; token hanya muncul di jawaban ini
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GanttSnapshot' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /gantt-snapshots/{snapshotId}:
+    parameters:
+      - { name: snapshotId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: revokeGanttSnapshot
+      summary: Cabut tautan snapshot (butuh Edit pada project)
+      responses:
+        '204': { description: Dicabut }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /public/gantt/{token}:
+    parameters:
+      - { name: token, in: path, required: true, schema: { type: string } }
+    get:
+      operationId: getPublicGanttSnapshot
+      summary: Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicGanttSnapshot' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /portfolio/timeline:
+    post:
+      operationId: getPortfolioTimeline
+      summary: Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [project_ids]
+              additionalProperties: false
+              properties:
+                project_ids: { type: array, minItems: 1, maxItems: 20, items: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [projects, items, dependencies]
+                properties:
+                  projects:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [project_id, item]
+                      properties:
+                        project_id: { type: string, format: uuid }
+                        item: { $ref: '#/components/schemas/Item' }
+                  dependencies:
+                    type: array
+                    items: { $ref: '#/components/schemas/ItemDependency' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /workload:
     get:
       operationId: getWorkload
@@ -5057,6 +5168,36 @@ components:
         name: { type: string }
         rate_minor: { type: integer, format: int64 }
         effective_from: { type: string, format: date }
+    GanttSnapshot:
+      type: object
+      required: [id, project_id, name, show_assignees, expires_at, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        project_id: { type: string, format: uuid }
+        name: { type: string }
+        show_assignees: { type: boolean }
+        expires_at: { type: string, format: date-time }
+        created_at: { type: string, format: date-time }
+        token: { type: string, description: Hanya pada jawaban pembuatan }
+    PublicGanttSnapshot:
+      type: object
+      required: [project_id, project_title, items]
+      properties:
+        project_id: { type: string, format: uuid }
+        project_title: { type: string }
+        items:
+          type: array
+          items:
+            type: object
+            required: [id, title, parent_id, start_date, due_date, progress_percent]
+            properties:
+              id: { type: string, format: uuid }
+              title: { type: string }
+              parent_id: { type: string, format: uuid, nullable: true }
+              start_date: { type: string, format: date, nullable: true }
+              due_date: { type: string, format: date, nullable: true }
+              progress_percent: { type: integer, format: int32, nullable: true }
+              assignees: { type: array, items: { type: string } }
     UtilizationRow:
       type: object
       required: [id, name, capacity, planned, actual, planned_percent, actual_percent]

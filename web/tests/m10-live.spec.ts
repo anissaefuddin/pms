@@ -30,3 +30,31 @@ test("E2E-PAR-08: a saved baseline stays put while the plan slips, and the varia
   expect(list[0].item_count).toBe(1);
   expect((await new AxeBuilder({ page }).include(".gantt-chart").analyze()).violations).toEqual([]);
 });
+
+test("SPC-16: a public snapshot opens without an account, stays frozen, and stops working once revoked", async ({ browser }) => {
+  const baseURL = test.info().project.use.baseURL!;
+  const context = await browser.newContext({ baseURL, colorScheme: "light" });
+  await context.addCookies([{ name: "pms_session", value: e.PMS_FIXTURE_M10_ADMIN!.split("=")[1], url: baseURL }]);
+  const page = await context.newPage();
+  await page.goto(`/tasks/${e.PMS_FIXTURE_M10_PROJECT}`);
+  await page.getByRole("button", { name: "Plan", exact: true }).click();
+  await page.getByRole("button", { name: "Share snapshot" }).click();
+  const dialog = page.getByRole("dialog", { name: "Share a Gantt snapshot" });
+  await dialog.getByLabel("Snapshot name").fill("For the client");
+  await dialog.getByRole("button", { name: "Create link" }).click();
+  const link = await dialog.getByLabel("Snapshot link").inputValue();
+  expect(link).toMatch(/\/g\/[\w-]{43}$/);
+  await expect(dialog).toHaveCSS("opacity", "1");
+  expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);
+
+  const guest = await (await browser.newContext({ baseURL, colorScheme: "light" })).newPage(); // no cookie
+  await guest.goto(new URL(link).pathname);
+  await expect(guest.getByRole("heading", { name: "Launch" })).toBeVisible();
+  await expect(guest.getByText("Design").first()).toBeVisible();
+  expect((await new AxeBuilder({ page: guest }).analyze()).violations).toEqual([]);
+
+  await dialog.getByRole("button", { name: "Revoke For the client" }).click();
+  await expect(dialog.getByText("No snapshots yet.")).toBeVisible();
+  await guest.reload();
+  await expect(guest.getByRole("heading", { name: "This snapshot is unavailable" })).toBeVisible();
+});

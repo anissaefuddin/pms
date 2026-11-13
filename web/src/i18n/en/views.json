@@ -151,5 +151,22 @@
     "all": "All tasks",
     "active": "All active",
     "mine": "My active"
+  },
+  "snapshot": {
+    "open": "Share snapshot",
+    "title": "Share a Gantt snapshot",
+    "hint": "A frozen, read-only copy of this plan for people without an account. It never changes and never shows comments, files or costs.",
+    "name": "Snapshot name",
+    "expires": "Link expires after",
+    "days": "{{count}} days",
+    "assignees": "Show assignee names",
+    "create": "Create link",
+    "link": "Snapshot link",
+    "linkOnce": "Copy this link now. It is not shown again.",
+    "history": "Snapshots",
+    "empty": "No snapshots yet.",
+    "until": "valid until {{date}}",
+    "revoke": "Revoke",
+    "revokeNamed": "Revoke {{name}}"
   }
 }

@@ -3227,6 +3227,19 @@ type FormSummary struct {
 	UpdatedBy     UserRef            `json:"updated_by"`
 }
 
+// GanttSnapshot defines model for GanttSnapshot.
+type GanttSnapshot struct {
+	CreatedAt     time.Time          `json:"created_at"`
+	ExpiresAt     time.Time          `json:"expires_at"`
+	Id            openapi_types.UUID `json:"id"`
+	Name          string             `json:"name"`
+	ProjectId     openapi_types.UUID `json:"project_id"`
+	ShowAssignees bool               `json:"show_assignees"`
+
+	// Token Hanya pada jawaban pembuatan
+	Token *string `json:"token,omitempty"`
+}
+
 // Group defines model for Group.
 type Group struct {
 	Id        openapi_types.UUID   `json:"id"`
@@ -3794,6 +3807,21 @@ type ProjectProgressMethod string
 
 // ProjectProgressRisk defines model for ProjectProgressRisk.
 type ProjectProgressRisk string
+
+// PublicGanttSnapshot defines model for PublicGanttSnapshot.
+type PublicGanttSnapshot struct {
+	Items []struct {
+		Assignees       *[]string           `json:"assignees,omitempty"`
+		DueDate         *openapi_types.Date `json:"due_date"`
+		Id              openapi_types.UUID  `json:"id"`
+		ParentId        *openapi_types.UUID `json:"parent_id"`
+		ProgressPercent *int32              `json:"progress_percent"`
+		StartDate       *openapi_types.Date `json:"start_date"`
+		Title           string              `json:"title"`
+	} `json:"items"`
+	ProjectId    openapi_types.UUID `json:"project_id"`
+	ProjectTitle string             `json:"project_title"`
+}
 
 // RealtimeEvent defines model for RealtimeEvent.
 type RealtimeEvent struct {
@@ -4769,6 +4797,14 @@ type StartProjectExcelExportJSONBody struct {
 	SpaceId openapi_types.UUID `json:"space_id"`
 }
 
+// CreateGanttSnapshotJSONBody defines parameters for CreateGanttSnapshot.
+type CreateGanttSnapshotJSONBody struct {
+	// ExpiresAt Antara 1 menit dan 90 hari dari sekarang
+	ExpiresAt     time.Time `json:"expires_at"`
+	Name          string    `json:"name"`
+	ShowAssignees *bool     `json:"show_assignees,omitempty"`
+}
+
 // EnableTwoFactorJSONBody defines parameters for EnableTwoFactor.
 type EnableTwoFactorJSONBody struct {
 	Code string `json:"code"`
@@ -4811,6 +4847,11 @@ type ListNotificationsParams struct {
 type UpdateNotificationJSONBody struct {
 	Archived *bool `json:"archived,omitempty"`
 	Read     *bool `json:"read,omitempty"`
+}
+
+// GetPortfolioTimelineJSONBody defines parameters for GetPortfolioTimeline.
+type GetPortfolioTimelineJSONBody struct {
+	ProjectIds []openapi_types.UUID `json:"project_ids"`
 }
 
 // SubmitPublicFormJSONBody defines parameters for SubmitPublicForm.
@@ -5219,6 +5260,9 @@ type CreateBaselineJSONRequestBody CreateBaselineJSONBody
 // StartProjectExcelExportJSONRequestBody defines body for StartProjectExcelExport for application/json ContentType.
 type StartProjectExcelExportJSONRequestBody StartProjectExcelExportJSONBody
 
+// CreateGanttSnapshotJSONRequestBody defines body for CreateGanttSnapshot for application/json ContentType.
+type CreateGanttSnapshotJSONRequestBody CreateGanttSnapshotJSONBody
+
 // UpdateMeJSONRequestBody defines body for UpdateMe for application/json ContentType.
 type UpdateMeJSONRequestBody = MeUpdate
 
@@ -5233,6 +5277,9 @@ type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
 
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
+
+// GetPortfolioTimelineJSONRequestBody defines body for GetPortfolioTimeline for application/json ContentType.
+type GetPortfolioTimelineJSONRequestBody GetPortfolioTimelineJSONBody
 
 // SubmitPublicFormJSONRequestBody defines body for SubmitPublicForm for application/json ContentType.
 type SubmitPublicFormJSONRequestBody SubmitPublicFormJSONBody
@@ -5767,6 +5814,9 @@ type ServerInterface interface {
 	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
 	// (POST /forms/{formId}/submissions)
 	SubmitForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// RevokeGanttSnapshot Cabut tautan snapshot (butuh Edit pada project)
+	// (DELETE /gantt-snapshots/{snapshotId})
+	RevokeGanttSnapshot(w http.ResponseWriter, r *http.Request, snapshotId openapi_types.UUID)
 
 	// (GET /groups)
 	ListGroups(w http.ResponseWriter, r *http.Request)
@@ -5878,6 +5928,12 @@ type ServerInterface interface {
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
+	// ListGanttSnapshots Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat)
+	// (GET /items/{projectId}/gantt-snapshots)
+	ListGanttSnapshots(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
+	// CreateGanttSnapshot Bekukan Gantt project menjadi salinan baca-saja yang dapat dibuka lewat tautan rahasia (butuh Edit)
+	// (POST /items/{projectId}/gantt-snapshots)
+	CreateGanttSnapshot(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID)
 	// GetMe User yang sedang login beserta pengaturan (SET-02)
 	// (GET /me)
 	GetMe(w http.ResponseWriter, r *http.Request)
@@ -5923,12 +5979,18 @@ type ServerInterface interface {
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(w http.ResponseWriter, r *http.Request)
+	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
+	// (POST /portfolio/timeline)
+	GetPortfolioTimeline(w http.ResponseWriter, r *http.Request)
 	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (GET /public/forms/{token})
 	GetPublicForm(w http.ResponseWriter, r *http.Request, token string)
 	// SubmitPublicForm Isi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (POST /public/forms/{token}/submissions)
 	SubmitPublicForm(w http.ResponseWriter, r *http.Request, token string)
+	// GetPublicGanttSnapshot Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut
+	// (GET /public/gantt/{token})
+	GetPublicGanttSnapshot(w http.ResponseWriter, r *http.Request, token string)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(w http.ResponseWriter, r *http.Request)
@@ -7802,6 +7864,32 @@ func (siw *ServerInterfaceWrapper) SubmitForm(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// RevokeGanttSnapshot operation middleware
+func (siw *ServerInterfaceWrapper) RevokeGanttSnapshot(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "snapshotId" -------------
+	var snapshotId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "snapshotId", r.PathValue("snapshotId"), &snapshotId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "snapshotId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeGanttSnapshot(w, r, snapshotId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListGroups operation middleware
 func (siw *ServerInterfaceWrapper) ListGroups(w http.ResponseWriter, r *http.Request) {
 
@@ -9020,6 +9108,58 @@ func (siw *ServerInterfaceWrapper) StartProjectExcelExport(w http.ResponseWriter
 	handler.ServeHTTP(w, r)
 }
 
+// ListGanttSnapshots operation middleware
+func (siw *ServerInterfaceWrapper) ListGanttSnapshots(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "projectId" -------------
+	var projectId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "projectId", r.PathValue("projectId"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "projectId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListGanttSnapshots(w, r, projectId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateGanttSnapshot operation middleware
+func (siw *ServerInterfaceWrapper) CreateGanttSnapshot(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "projectId" -------------
+	var projectId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "projectId", r.PathValue("projectId"), &projectId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "projectId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateGanttSnapshot(w, r, projectId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetMe operation middleware
 func (siw *ServerInterfaceWrapper) GetMe(w http.ResponseWriter, r *http.Request) {
 
@@ -9409,6 +9549,20 @@ func (siw *ServerInterfaceWrapper) CompleteOnboarding(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetPortfolioTimeline operation middleware
+func (siw *ServerInterfaceWrapper) GetPortfolioTimeline(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPortfolioTimeline(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPublicForm operation middleware
 func (siw *ServerInterfaceWrapper) GetPublicForm(w http.ResponseWriter, r *http.Request) {
 
@@ -9452,6 +9606,32 @@ func (siw *ServerInterfaceWrapper) SubmitPublicForm(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SubmitPublicForm(w, r, token)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPublicGanttSnapshot operation middleware
+func (siw *ServerInterfaceWrapper) GetPublicGanttSnapshot(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "token" -------------
+	var token string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "token", r.PathValue("token"), &token, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "token", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPublicGanttSnapshot(w, r, token)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -12147,6 +12327,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/baselines/{baselineId}/variance", wrapper.GetBaselineVariance)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/rates", wrapper.ListRates)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/rates", wrapper.CreateRate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.CreateGanttSnapshot)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/public/gantt/{token}", wrapper.GetPublicGanttSnapshot)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/portfolio/timeline", wrapper.GetPortfolioTimeline)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/workload", wrapper.GetWorkload)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/resource-directory", wrapper.DeleteResourceEntry)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/resource-directory", wrapper.GetResourceDirectory)
@@ -15903,6 +16088,52 @@ func (response SubmitForm422ApplicationProblemPlusJSONResponse) VisitSubmitFormR
 	return err
 }
 
+type RevokeGanttSnapshotRequestObject struct {
+	SnapshotId openapi_types.UUID `json:"snapshotId"`
+}
+
+type RevokeGanttSnapshotResponseObject interface {
+	VisitRevokeGanttSnapshotResponse(w http.ResponseWriter) error
+}
+
+type RevokeGanttSnapshot204Response struct {
+}
+
+func (response RevokeGanttSnapshot204Response) VisitRevokeGanttSnapshotResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeGanttSnapshot403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeGanttSnapshot403ApplicationProblemPlusJSONResponse) VisitRevokeGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeGanttSnapshot404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeGanttSnapshot404ApplicationProblemPlusJSONResponse) VisitRevokeGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListGroupsRequestObject struct {
 }
 
@@ -17779,6 +18010,113 @@ func (response StartProjectExcelExport429ApplicationProblemPlusJSONResponse) Vis
 	return err
 }
 
+type ListGanttSnapshotsRequestObject struct {
+	ProjectId openapi_types.UUID `json:"projectId"`
+}
+
+type ListGanttSnapshotsResponseObject interface {
+	VisitListGanttSnapshotsResponse(w http.ResponseWriter) error
+}
+
+type ListGanttSnapshots200JSONResponse struct {
+	Items []GanttSnapshot `json:"items"`
+}
+
+func (response ListGanttSnapshots200JSONResponse) VisitListGanttSnapshotsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListGanttSnapshots404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListGanttSnapshots404ApplicationProblemPlusJSONResponse) VisitListGanttSnapshotsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGanttSnapshotRequestObject struct {
+	ProjectId openapi_types.UUID `json:"projectId"`
+	Body      *CreateGanttSnapshotJSONRequestBody
+}
+
+type CreateGanttSnapshotResponseObject interface {
+	VisitCreateGanttSnapshotResponse(w http.ResponseWriter) error
+}
+
+type CreateGanttSnapshot201JSONResponse GanttSnapshot
+
+func (response CreateGanttSnapshot201JSONResponse) VisitCreateGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGanttSnapshot403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateGanttSnapshot403ApplicationProblemPlusJSONResponse) VisitCreateGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGanttSnapshot404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateGanttSnapshot404ApplicationProblemPlusJSONResponse) VisitCreateGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateGanttSnapshot422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateGanttSnapshot422ApplicationProblemPlusJSONResponse) VisitCreateGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetMeRequestObject struct {
 }
 
@@ -18366,6 +18704,68 @@ func (response CompleteOnboarding403ApplicationProblemPlusJSONResponse) VisitCom
 	return err
 }
 
+type GetPortfolioTimelineRequestObject struct {
+	Body *GetPortfolioTimelineJSONRequestBody
+}
+
+type GetPortfolioTimelineResponseObject interface {
+	VisitGetPortfolioTimelineResponse(w http.ResponseWriter) error
+}
+
+type GetPortfolioTimeline200JSONResponse struct {
+	Dependencies []ItemDependency `json:"dependencies"`
+	Items        []struct {
+		Item      Item               `json:"item"`
+		ProjectId openapi_types.UUID `json:"project_id"`
+	} `json:"items"`
+	Projects []struct {
+		Id    openapi_types.UUID `json:"id"`
+		Title string             `json:"title"`
+	} `json:"projects"`
+}
+
+func (response GetPortfolioTimeline200JSONResponse) VisitGetPortfolioTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPortfolioTimeline404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPortfolioTimeline404ApplicationProblemPlusJSONResponse) VisitGetPortfolioTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPortfolioTimeline422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPortfolioTimeline422ApplicationProblemPlusJSONResponse) VisitGetPortfolioTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetPublicFormRequestObject struct {
 	Token string `json:"token"`
 }
@@ -18512,6 +18912,44 @@ func (response SubmitPublicForm429ApplicationProblemPlusJSONResponse) VisitSubmi
 		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
 	}
 	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPublicGanttSnapshotRequestObject struct {
+	Token string `json:"token"`
+}
+
+type GetPublicGanttSnapshotResponseObject interface {
+	VisitGetPublicGanttSnapshotResponse(w http.ResponseWriter) error
+}
+
+type GetPublicGanttSnapshot200JSONResponse PublicGanttSnapshot
+
+func (response GetPublicGanttSnapshot200JSONResponse) VisitGetPublicGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPublicGanttSnapshot404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPublicGanttSnapshot404ApplicationProblemPlusJSONResponse) VisitGetPublicGanttSnapshotResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -23604,6 +24042,9 @@ type StrictServerInterface interface {
 	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
 	// (POST /forms/{formId}/submissions)
 	SubmitForm(ctx context.Context, request SubmitFormRequestObject) (SubmitFormResponseObject, error)
+	// RevokeGanttSnapshot Cabut tautan snapshot (butuh Edit pada project)
+	// (DELETE /gantt-snapshots/{snapshotId})
+	RevokeGanttSnapshot(ctx context.Context, request RevokeGanttSnapshotRequestObject) (RevokeGanttSnapshotResponseObject, error)
 
 	// (GET /groups)
 	ListGroups(ctx context.Context, request ListGroupsRequestObject) (ListGroupsResponseObject, error)
@@ -23715,6 +24156,12 @@ type StrictServerInterface interface {
 
 	// (POST /items/{projectId}/excel-exports)
 	StartProjectExcelExport(ctx context.Context, request StartProjectExcelExportRequestObject) (StartProjectExcelExportResponseObject, error)
+	// ListGanttSnapshots Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat)
+	// (GET /items/{projectId}/gantt-snapshots)
+	ListGanttSnapshots(ctx context.Context, request ListGanttSnapshotsRequestObject) (ListGanttSnapshotsResponseObject, error)
+	// CreateGanttSnapshot Bekukan Gantt project menjadi salinan baca-saja yang dapat dibuka lewat tautan rahasia (butuh Edit)
+	// (POST /items/{projectId}/gantt-snapshots)
+	CreateGanttSnapshot(ctx context.Context, request CreateGanttSnapshotRequestObject) (CreateGanttSnapshotResponseObject, error)
 	// GetMe User yang sedang login beserta pengaturan (SET-02)
 	// (GET /me)
 	GetMe(ctx context.Context, request GetMeRequestObject) (GetMeResponseObject, error)
@@ -23760,12 +24207,18 @@ type StrictServerInterface interface {
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(ctx context.Context, request CompleteOnboardingRequestObject) (CompleteOnboardingResponseObject, error)
+	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
+	// (POST /portfolio/timeline)
+	GetPortfolioTimeline(ctx context.Context, request GetPortfolioTimelineRequestObject) (GetPortfolioTimelineResponseObject, error)
 	// GetPublicForm Definisi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (GET /public/forms/{token})
 	GetPublicForm(ctx context.Context, request GetPublicFormRequestObject) (GetPublicFormResponseObject, error)
 	// SubmitPublicForm Isi form lewat tautan publik, tanpa sesi (SEC-05)
 	// (POST /public/forms/{token}/submissions)
 	SubmitPublicForm(ctx context.Context, request SubmitPublicFormRequestObject) (SubmitPublicFormResponseObject, error)
+	// GetPublicGanttSnapshot Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut
+	// (GET /public/gantt/{token})
+	GetPublicGanttSnapshot(ctx context.Context, request GetPublicGanttSnapshotRequestObject) (GetPublicGanttSnapshotResponseObject, error)
 	// ListRates Tarif per jam per orang atau job role, berversi menurut tanggal efektif (admin)
 	// (GET /rates)
 	ListRates(ctx context.Context, request ListRatesRequestObject) (ListRatesResponseObject, error)
@@ -25675,6 +26128,32 @@ func (sh *strictHandler) SubmitForm(w http.ResponseWriter, r *http.Request, form
 	}
 }
 
+// RevokeGanttSnapshot operation middleware
+func (sh *strictHandler) RevokeGanttSnapshot(w http.ResponseWriter, r *http.Request, snapshotId openapi_types.UUID) {
+	var request RevokeGanttSnapshotRequestObject
+
+	request.SnapshotId = snapshotId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeGanttSnapshot(ctx, request.(RevokeGanttSnapshotRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeGanttSnapshot")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeGanttSnapshotResponseObject); ok {
+		if err := validResponse.VisitRevokeGanttSnapshotResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListGroups operation middleware
 func (sh *strictHandler) ListGroups(w http.ResponseWriter, r *http.Request) {
 	var request ListGroupsRequestObject
@@ -26743,6 +27222,65 @@ func (sh *strictHandler) StartProjectExcelExport(w http.ResponseWriter, r *http.
 	}
 }
 
+// ListGanttSnapshots operation middleware
+func (sh *strictHandler) ListGanttSnapshots(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
+	var request ListGanttSnapshotsRequestObject
+
+	request.ProjectId = projectId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListGanttSnapshots(ctx, request.(ListGanttSnapshotsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListGanttSnapshots")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListGanttSnapshotsResponseObject); ok {
+		if err := validResponse.VisitListGanttSnapshotsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateGanttSnapshot operation middleware
+func (sh *strictHandler) CreateGanttSnapshot(w http.ResponseWriter, r *http.Request, projectId openapi_types.UUID) {
+	var request CreateGanttSnapshotRequestObject
+
+	request.ProjectId = projectId
+
+	var body CreateGanttSnapshotJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateGanttSnapshot(ctx, request.(CreateGanttSnapshotRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateGanttSnapshot")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateGanttSnapshotResponseObject); ok {
+		if err := validResponse.VisitCreateGanttSnapshotResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetMe operation middleware
 func (sh *strictHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	var request GetMeRequestObject
@@ -27148,6 +27686,37 @@ func (sh *strictHandler) CompleteOnboarding(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// GetPortfolioTimeline operation middleware
+func (sh *strictHandler) GetPortfolioTimeline(w http.ResponseWriter, r *http.Request) {
+	var request GetPortfolioTimelineRequestObject
+
+	var body GetPortfolioTimelineJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPortfolioTimeline(ctx, request.(GetPortfolioTimelineRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPortfolioTimeline")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPortfolioTimelineResponseObject); ok {
+		if err := validResponse.VisitGetPortfolioTimelineResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetPublicForm operation middleware
 func (sh *strictHandler) GetPublicForm(w http.ResponseWriter, r *http.Request, token string) {
 	var request GetPublicFormRequestObject
@@ -27211,6 +27780,32 @@ func (sh *strictHandler) SubmitPublicForm(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SubmitPublicFormResponseObject); ok {
 		if err := validResponse.VisitSubmitPublicFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPublicGanttSnapshot operation middleware
+func (sh *strictHandler) GetPublicGanttSnapshot(w http.ResponseWriter, r *http.Request, token string) {
+	var request GetPublicGanttSnapshotRequestObject
+
+	request.Token = token
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPublicGanttSnapshot(ctx, request.(GetPublicGanttSnapshotRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPublicGanttSnapshot")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPublicGanttSnapshotResponseObject); ok {
+		if err := validResponse.VisitGetPublicGanttSnapshotResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

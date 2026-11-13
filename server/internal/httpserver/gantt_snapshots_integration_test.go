@@ -31,6 +31,28 @@ func TestGanttSnapshotsHidePrivateDataAndExpire(t *testing.T) {
 	if got := view.body["items"].([]any)[0].(map[string]any)["title"]; got != "Secret plan" {
 		t.Fatalf("snapshot changed: %v", got)
 	}
+	// Only people who can edit the project may list the history, make or revoke links.
+	viewer, outsider := f.person("regular"), f.person("regular")
+	f.share(space, "user", viewer.id, "read")
+	body := map[string]any{"name": "X", "expires_at": time.Now().Add(time.Hour)}
+	f.want(f.call(viewer, "POST", "/items/"+project+"/gantt-snapshots", body), 403, "read cannot publish")
+	f.want(f.call(outsider, "POST", "/items/"+project+"/gantt-snapshots", body), 404, "hidden project")
+	f.want(f.call(outsider, "DELETE", "/gantt-snapshots/"+made.body["id"].(string), nil), 404, "hidden snapshot")
+	f.want(f.call(viewer, "DELETE", "/gantt-snapshots/"+made.body["id"].(string), nil), 403, "read cannot revoke")
+	list := f.call(viewer, "GET", "/items/"+project+"/gantt-snapshots", nil)
+	f.want(list, 200, "history")
+	if len(list.items()) != 1 || list.items()[0]["token"] != nil {
+		t.Fatalf("history must not repeat the link: %v", list.body)
+	}
+	f.want(f.call(admin, "POST", "/items/"+project+"/gantt-snapshots", map[string]any{"name": "Late", "expires_at": time.Now().Add(-time.Hour)}), 422, "past expiry")
+	other := f.call(admin, "POST", "/items/"+project+"/gantt-snapshots", map[string]any{"name": "Revoked", "expires_at": time.Now().Add(time.Hour), "show_assignees": true})
+	f.want(other, 201, "second")
+	named := f.call(nil, "GET", "/public/gantt/"+other.body["token"].(string), nil)
+	if a := named.body["items"].([]any)[0].(map[string]any)["assignees"]; a == nil {
+		t.Fatalf("opt-in shows assignee names: %v", named.body)
+	}
+	f.want(f.call(admin, "DELETE", "/gantt-snapshots/"+other.body["id"].(string), nil), 204, "revoke")
+	f.want(f.call(nil, "GET", "/public/gantt/"+other.body["token"].(string), nil), 404, "revoked link")
 	f.exec("UPDATE gantt_snapshots SET expires_at=now()-interval '1 second'")
 	f.want(f.call(nil, "GET", "/public/gantt/"+token, nil), 404, "expired snapshot")
 	f.want(f.call(nil, "GET", "/public/gantt/not-a-token", nil), 404, "invalid token")

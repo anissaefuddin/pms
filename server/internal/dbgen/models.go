@@ -679,6 +679,18 @@ type FormSubmission struct {
 	RequesterEmail pgtype.Text        `json:"requester_email"`
 }
 
+type GanttSnapshot struct {
+	ID            pgtype.UUID        `json:"id"`
+	ProjectID     pgtype.UUID        `json:"project_id"`
+	Name          string             `json:"name"`
+	TokenHash     []byte             `json:"token_hash"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	ShowAssignees bool               `json:"show_assignees"`
+	ExpiresAt     pgtype.Timestamptz `json:"expires_at"`
+	Payload       []byte             `json:"payload"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
 type Group struct {
 	ID        pgtype.UUID        `json:"id"`
 	Name      string             `json:"name"`

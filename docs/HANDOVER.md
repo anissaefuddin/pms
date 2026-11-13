@@ -323,3 +323,10 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - Bekukan acuan pengukuran lokal pada fixture 50 orang / 2.000 task / 4.000 penempatan, 14 hari, p95 182,4 ms. Retest memakai `PMS_PERF=1` dan `TestWorkloadPerformance`. Untuk E2E-PAR-07 gunakan `PMS_TEST_BROWSER=1` dan `TestBrowserWorkload`.
 - Pengguna biasa melihat kapasitas sendiri dan task yang dapat dilihat. Admin mengelola directory dan booking. Permintaan booking role memakai sisa kapasitas anggota role tanpa memilih individu. Role yang beririsan dapat berbagi kapasitas orang yang sama.
 - Pekerjaan berikutnya S10.2.3 planned vs actual. Bukti lokal di TESTING. CI remote, uji pilot, serta verifikasi SSE lintas browser untuk Workload masih terbuka.
+
+### M10 resource, jadwal, biaya (14 Nov 2026)
+
+- **Berjalan:** workload dan kapasitas, role, skill, booking, utilization planned vs actual, baseline Gantt immutable, snapshot Gantt publik (`/g/{token}`), portfolio (`/portfolio`), tarif per jam dengan snapshot di time entry dan actual cost untuk admin.
+- **Belum:** UAT manusia G2a, kolom cost di report, widget utilization, bar baseline (SVAR PRO), mengubah tanggal dari Portfolio.
+- **Titik hati-hati:** `time_entries.rate_snapshot` diisi trigger basis data (jangan diisi dari kode kecuali untuk impor historis); `baselines` dan `approval_events` immutable lewat trigger; `GET /users/{id}/capacity` 403 bagi orang luar sengaja.
+

@@ -90,5 +90,6 @@
   "stream.action.restore": "{{actor}} restored <item>{{title}}</item>",
   "stream.action.detach": "{{actor}} removed <item>{{title}}</item> from a location",
   "stream.action.create": "{{actor}} created <item>{{title}}</item>",
-  "stream.action.other": "{{actor}} changed <item>{{title}}</item>"
+  "stream.action.other": "{{actor}} changed <item>{{title}}</item>",
+  "portfolio": "Portfolio"
 }

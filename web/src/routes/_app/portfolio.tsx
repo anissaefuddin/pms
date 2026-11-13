@@ -54,7 +54,7 @@ function Portfolio() {
             const width = start && due ? Math.max(1.5, ((due - start) / day + 1) / span * 100) : 0;
             return <div key={item.id} className="grid grid-cols-[16rem_1fr] items-center gap-3 p-2 text-sm">
               <div className="truncate"><span className="text-muted-foreground">{projectByID.get(projectID)} · </span>{item.title}</div>
-              <div className="relative h-6 rounded bg-muted" aria-label={`${item.title}: ${item.start_date ?? "unscheduled"} to ${item.due_date ?? "unscheduled"}`}>
+              <div role="img" className="relative h-6 rounded bg-muted" aria-label={`${item.title}: ${item.start_date ?? "unscheduled"} to ${item.due_date ?? "unscheduled"}`}>
                 {width > 0 && <div className="absolute top-1 h-4 rounded bg-primary" style={{ left: `${left}%`, width: `${width}%` }} />}
               </div>
             </div>;

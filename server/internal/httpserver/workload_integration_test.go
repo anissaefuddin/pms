@@ -208,3 +208,32 @@ func TestBaselinesFreezeDatesAndCannotBeChanged(t *testing.T) {
 	}
 	f.want(f.call(admin, "POST", path, map[string]any{"name": "Eleventh"}), 422, "limit")
 }
+
+func TestCrossProjectDependenciesRespectPermissions(t *testing.T) {
+	f := newFixture(t)
+	admin, member := f.person("admin"), f.person("regular")
+	one, two, hidden := f.space("Alpha"), f.space("Beta"), f.space("Hidden")
+	f.share(one, "user", member.id, "editor")
+	f.share(two, "user", member.id, "editor")
+	mk := func(kind, title, space, parent string) string {
+		id := f.queryID("INSERT INTO items(type,title,created_by,start_date,due_date) VALUES ($1,$2,$3,'2026-11-02','2026-11-06') RETURNING id::text", kind, title, admin.id)
+		if parent == "" {
+			f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", id, space)
+		} else {
+			f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'A')", id, space, parent)
+		}
+		return id
+	}
+	p1, p2, p3 := mk("project", "Alpha", one, ""), mk("project", "Beta", two, ""), mk("project", "Secret", hidden, "")
+	a, b, c := mk("task", "A task", one, p1), mk("task", "B task", two, p2), mk("task", "C task", hidden, p3)
+	dep := func(who *person, pred, succ string) reply {
+		return f.call(who, "POST", "/items/"+succ+"/dependencies", map[string]any{"predecessor_id": pred, "type": "FS", "lag": 0})
+	}
+	f.want(dep(member, a, b), 201, "a dependency may cross projects and Spaces when the actor can edit the successor")
+	f.want(dep(member, b, a), 422, "a cycle across projects is refused")
+	f.want(dep(member, c, b), 404, "a predecessor the actor cannot see looks like it does not exist")
+	f.want(dep(member, a, c), 404, "so does a successor")
+	f.want(dep(admin, c, b), 201, "admin links the hidden project")
+	_ = p3
+
+}

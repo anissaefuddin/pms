@@ -237,6 +237,10 @@ func TestStrangersAndReadersCannotTouchAnotherSpacesResourcesThroughAnyEndpoint(
 		case got.status >= 500:
 			t.Errorf("outsider %s %s answered %d", op.method, op.path, got.status)
 		case op.method == "GET" && op.path == "/users/{userId}": // the directory is open to regular users by design; external users are checked below
+		case op.method == "GET" && op.path == "/users/{userId}/capacity": // private by design (S10.1.1): users are listed openly, so 403 leaks nothing
+			if got.status != 403 {
+				t.Errorf("outsider GET %s answered %d, want 403", op.path, got.status)
+			}
 		case op.method == "GET" && got.status != 404:
 			t.Errorf("outsider GET %s answered %d, want 404", op.path, got.status)
 		case op.method == "DELETE" && strings.HasSuffix(op.path, "/star"): // D-51: removing one's own bookmark needs no access

@@ -1,5 +1,5 @@
 /* eslint-disable i18next/no-literal-string */
-import { useMemo } from "react";
+import { useEffect, useMemo, useRef } from "react";
 import { Gantt, Willow, WillowDark, type ITask } from "@svar-ui/react-gantt";
 import "@svar-ui/react-gantt/style.css";
 
@@ -12,7 +12,7 @@ export type PublicGantt = {
     parent_id?: string | null;
     start_date?: string | null;
     due_date?: string | null;
-    progress_percent: number;
+    progress_percent: number | null;
     assignees?: string[];
   }>;
 };
@@ -31,17 +31,38 @@ export function PublicGanttSnapshot({ snapshot }: { snapshot: PublicGantt }) {
       text: item.title,
       parent: item.parent_id === snapshot.project_id ? 0 : item.parent_id ?? 0,
       open: true,
-      progress: item.progress_percent,
+      progress: item.progress_percent ?? 0,
       ...(start && end ? { start, end } : { unscheduled: true }),
       assignees: item.assignees?.join(", ") ?? "",
     };
   }), [snapshot]);
+  const region = useRef<HTMLDivElement>(null);
+  // Same grid semantics fix as the editable chart: SVAR reports row indices and aria-expanded that axe rejects.
+  useEffect(() => {
+    const node = region.current;
+    if (!node) return;
+    const parents = new Set(snapshot.items.map((item) => item.parent_id).filter(Boolean) as string[]);
+    const fix = () => {
+      for (const grid of node.querySelectorAll(".wx-table-box")) {
+        if (grid.getAttribute("role") !== "treegrid") grid.setAttribute("role", "treegrid");
+        grid.removeAttribute("aria-rowcount");
+        for (const row of grid.querySelectorAll("[role=row][data-id]")) {
+          row.removeAttribute("aria-rowindex");
+          if (!parents.has(row.getAttribute("data-id")?.replace(/^:/, "") ?? "")) row.removeAttribute("aria-expanded");
+        }
+      }
+    };
+    fix();
+    const observer = new MutationObserver(fix);
+    observer.observe(node, { subtree: true, childList: true, attributes: true, attributeFilter: ["data-id", "aria-rowindex", "aria-rowcount", "aria-expanded"] });
+    return () => observer.disconnect();
+  }, [snapshot]);
   return <main className="min-h-screen bg-background p-4 text-foreground sm:p-8">
     <header className="mb-4">
       <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Shared Gantt snapshot</p>
       <h1 className="text-2xl font-semibold">{snapshot.project_title}</h1>
     </header>
-    <div className="h-[calc(100vh-8rem)] overflow-hidden rounded-lg border bg-card" aria-label="Read-only Gantt chart">
+    <div ref={region} className="gantt-chart h-[calc(100vh-8rem)] overflow-hidden rounded-lg border bg-card [&_.wx-theme]:h-full" aria-label="Read-only Gantt chart">
       <Theme><Gantt tasks={tasks} links={[]} readonly={true} columns={[
         { id: "text", header: "Task", width: 260 },
         ...(snapshot.items.some((item) => item.assignees?.length) ? [{ id: "assignees", header: "Assignees", width: 180 }] : []),

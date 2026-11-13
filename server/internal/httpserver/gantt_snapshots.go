@@ -22,6 +22,8 @@ const maxGanttSnapshotsPerProject = 20
 func (s *Server) GanttSnapshotRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/items/{projectId}/gantt-snapshots", s.requireUser(s.listGanttSnapshots))
 	mux.HandleFunc("POST /api/v1/items/{projectId}/gantt-snapshots", s.requireUser(s.createGanttSnapshot))
+	mux.HandleFunc("DELETE /api/v1/gantt-snapshots/{snapshotId}", s.requireUser(s.revokeGanttSnapshot))
+	// No requireUser: a stranger holds the token, and no cookie is read.
 	mux.HandleFunc("GET /api/v1/public/gantt/{token}", s.getPublicGanttSnapshot)
 }
 
@@ -31,7 +33,7 @@ type ganttSnapshotItem struct {
 	ParentID  *string  `json:"parent_id"`
 	StartDate *string  `json:"start_date"`
 	DueDate   *string  `json:"due_date"`
-	Progress  int      `json:"progress_percent"`
+	Progress  *int     `json:"progress_percent"`
 	Assignees []string `json:"assignees,omitempty"`
 }
 
@@ -70,7 +72,7 @@ func (s *Server) listGanttSnapshots(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	rows, err := tx.Query(ctx, `SELECT id::text,project_id::text,name,show_assignees,expires_at,created_at
+	rows, err := tx.Query(ctx, `SELECT id::text,project_id::text,name,show_assignees,expires_at,created_at,''
  FROM gantt_snapshots WHERE project_id=$1 ORDER BY created_at DESC,id`, project)
 	if err != nil {
 		writeItemError(w, err)
@@ -208,6 +210,10 @@ func (s *Server) createGanttSnapshot(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) getPublicGanttSnapshot(w http.ResponseWriter, r *http.Request) {
 	token := r.PathValue("token")
+	if wait := s.publicLimiter.take("read:" + s.clientIP(r)); wait > 0 {
+		writeRateLimit(w, wait)
+		return
+	}
 	if len(token) != 43 {
 		writeItemError(w, items.ErrNotFound)
 		return
@@ -224,4 +230,38 @@ func (s *Server) getPublicGanttSnapshot(w http.ResponseWriter, r *http.Request) 
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(payload)
+}
+
+// revokeGanttSnapshot kills the link at once; the people who got it see the same 404 as for an expired one.
+func (s *Server) revokeGanttSnapshot(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("snapshotId"))
+	if err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	ctx := r.Context()
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	defer tx.Rollback(ctx)
+	var project uuid.UUID
+	if err := tx.QueryRow(ctx, "SELECT project_id FROM gantt_snapshots WHERE id=$1 FOR UPDATE", id).Scan(&project); err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	if _, err := approvalCaps(ctx, tx, actorOf(r), project, policy.Edit); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	if _, err := tx.Exec(ctx, "DELETE FROM gantt_snapshots WHERE id=$1", id); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	if err := tx.Commit(ctx); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

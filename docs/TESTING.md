@@ -669,3 +669,10 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.4.1, S10.4.2). `TestRatesSnapshotKeepHistoryAndCostIsAdminOnly`: anggota biasa 403 untuk tarif; subjek ganda, kosong, negatif dan tanggal berulang 422; entry sebelum tarif pribadi memakai tarif role, entry setelahnya tarif pribadi; tarif baru yang berlaku mundur tidak mengubah entry lama (snapshot oleh trigger basis data); actual cost 22000 = 1 jam x 4000 + 1,5 jam x 6000 + 1 jam x 9000, entry non-billable tidak dihitung; `actual_cost_minor` tidak dikirim ke anggota. `web/tests/rates.spec.ts`: halaman tarif admin (tambah tarif, axe bersih).
 - Belum: kolom cost di report (metrik analytics harus dibatasi admin dulu), tes UI untuk baris actual cost di panel budget, satu mata uang untuk seluruh tarif (cost ditampilkan dengan mata uang field budget).
 
+## M10 / S10.3.2, S10.3.3, S10.5.1 snapshot, portfolio, gate (14 Nov 2026)
+
+- PASS (S10.3.2). `TestGanttSnapshotsHidePrivateDataAndExpire`: snapshot beku (judul yang diubah kemudian tidak ikut), nama assignee hanya bila dipilih, tautan 404 setelah kedaluwarsa, dicabut, atau token salah; hanya yang bisa Edit membuat atau mencabut, riwayat tidak mengulang tautan, kedaluwarsa lampau 422. E2E live (`m10-live.spec.ts`): dialog di Gantt membuat tautan, tamu tanpa cookie membuka halaman publik (axe bersih), cabut dari UI membuat halaman "unavailable".
+- PASS (S10.3.3). `TestPortfolioTimelineCrossProjectDependencyAndPolicy` (timeline gabungan dua project, project tersembunyi 404, daftar kosong 422) dan `TestCrossProjectDependenciesRespectPermissions` (dependensi antar project dan Space diterima bila pengguna bisa Edit ujung hilir, siklus lintas project 422, ujung yang tidak terlihat 404). `portfolio.spec.ts` (halaman Portfolio, axe; perbaikan `role=img` pada bar).
+- PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
+- Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
+

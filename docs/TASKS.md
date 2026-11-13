@@ -1141,19 +1141,19 @@ Memetakan: RSC-01..06, VIEW-05C, SPC-16, SCH-01, TASK-14. Prasyarat: S7.4.1; S8.
 - [x] [TEST] E2E-PAR-08 (baseline immutable)
 
 **S10.3.2 Public snapshot Gantt (SPC-16) — 3 hari**
-- [ ] [API] Buat dan daftar snapshot
-- [ ] [DB] Penyimpanan snapshot
-- [ ] [BE] Token, kedaluwarsa, opsi nama assignee
-- [ ] [FE] Dialog dan riwayat snapshot
-- [ ] [FE] Halaman publik read-only
-- [ ] [TEST] Akses token dan data tersembunyi
+- [x] [API] Buat dan daftar snapshot
+- [x] [DB] Penyimpanan snapshot
+- [x] [BE] Token, kedaluwarsa, opsi nama assignee
+- [x] [FE] Dialog dan riwayat snapshot
+- [x] [FE] Halaman publik read-only
+- [x] [TEST] Akses token dan data tersembunyi
 
 **S10.3.3 Portfolio dan dependensi lintas proyek (SCH-01) — 2.5 hari**
-- [ ] [BE] Dependensi lintas project dengan cek izin
-- [ ] [BE] Endpoint timeline multi-project
-- [ ] [FE] Portfolio Gantt
-- [ ] [TEST] Siklus lintas project
-- [ ] [TEST] Izin lintas Space
+- [x] [BE] Dependensi lintas project dengan cek izin
+- [x] [BE] Endpoint timeline multi-project
+- [x] [FE] Portfolio Gantt
+- [x] [TEST] Siklus lintas project
+- [x] [TEST] Izin lintas Space
 
 ### E10.4 Biaya
 
@@ -1177,7 +1177,7 @@ Memetakan: RSC-01..06, VIEW-05C, SPC-16, SCH-01, TASK-14. Prasyarat: S7.4.1; S8.
 - [ ] [TEST] UAT per requirement M10
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
-- [ ] [DOC] Gate report G2a
+- [x] [DOC] Gate report G2a ([G2A](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md))
 
 ## M11 — File, analitik, dan integrasi (G2/G4)
 

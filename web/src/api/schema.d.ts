@@ -96,6 +96,81 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{projectId}/gantt-snapshots": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        /** Riwayat snapshot Gantt publik sebuah project (tanpa tautan; tautan hanya tampil sekali saat dibuat) */
+        get: operations["listGanttSnapshots"];
+        put?: never;
+        /** Bekukan Gantt project menjadi salinan baca-saja yang dapat dibuka lewat tautan rahasia (butuh Edit) */
+        post: operations["createGanttSnapshot"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/gantt-snapshots/{snapshotId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                snapshotId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cabut tautan snapshot (butuh Edit pada project) */
+        delete: operations["revokeGanttSnapshot"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/public/gantt/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        /** Snapshot Gantt untuk orang tanpa akun; tidak membaca cookie, 404 bila tidak ada, kedaluwarsa, atau dicabut */
+        get: operations["getPublicGanttSnapshot"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/portfolio/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404 */
+        post: operations["getPortfolioTimeline"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workload": {
         parameters: {
             query?: never;
@@ -3663,6 +3738,39 @@ export interface components {
             /** Format: date */
             effective_from: string;
         };
+        GanttSnapshot: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            project_id: string;
+            name: string;
+            show_assignees: boolean;
+            /** Format: date-time */
+            expires_at: string;
+            /** Format: date-time */
+            created_at: string;
+            /** @description Hanya pada jawaban pembuatan */
+            token?: string;
+        };
+        PublicGanttSnapshot: {
+            /** Format: uuid */
+            project_id: string;
+            project_title: string;
+            items: {
+                /** Format: uuid */
+                id: string;
+                title: string;
+                /** Format: uuid */
+                parent_id: string | null;
+                /** Format: date */
+                start_date: string | null;
+                /** Format: date */
+                due_date: string | null;
+                /** Format: int32 */
+                progress_percent: number | null;
+                assignees?: string[];
+            }[];
+        };
         UtilizationRow: {
             /** Format: uuid */
             id: string;
@@ -4472,6 +4580,154 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listGanttSnapshots: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["GanttSnapshot"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    createGanttSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                projectId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    /**
+                     * Format: date-time
+                     * @description Antara 1 menit dan 90 hari dari sekarang
+                     */
+                    expires_at: string;
+                    /** @default false */
+                    show_assignees?: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat; token hanya muncul di jawaban ini */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["GanttSnapshot"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    revokeGanttSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                snapshotId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dicabut */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPublicGanttSnapshot: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                token: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PublicGanttSnapshot"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    getPortfolioTimeline: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    project_ids: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        projects: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                        }[];
+                        items: {
+                            /** Format: uuid */
+                            project_id: string;
+                            item: components["schemas"]["Item"];
+                        }[];
+                        dependencies: components["schemas"]["ItemDependency"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

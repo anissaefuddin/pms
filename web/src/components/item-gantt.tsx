@@ -5,6 +5,7 @@ import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
 import { ApiError, api } from "@/lib/api";
 import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
@@ -49,6 +50,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const [selected, setSelected] = useState<string>();
   const [baselineId, setBaselineId] = useState("");
   const [naming, setNaming] = useState(false);
+  const [sharing, setSharing] = useState(false);
   const chart = useRef<IApi>(undefined);
   const chartRegion = useRef<HTMLDivElement>(null);
   // Every level is fetched with the same cache keys as Table, so SSE updates and PATCH responses reach the chart.
@@ -244,6 +246,8 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
             {baselines.data?.items.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select></label>
         {!readonly && !naming && <Button size="sm" variant="outline" onClick={() => setNaming(true)}>{t("views.gantt.baselineSave")}</Button>}
+        {!readonly && <Button size="sm" variant="outline" onClick={() => setSharing(true)}>{t("views.snapshot.open")}</Button>}
+        <GanttSnapshotDialog projectId={parentId} open={sharing} onOpenChange={setSharing} />
         {!readonly && naming && <form className="flex items-end gap-1" onSubmit={(event) => {
           event.preventDefault();
           const name = String(new FormData(event.currentTarget).get("name") ?? "");
