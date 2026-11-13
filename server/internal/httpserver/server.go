@@ -165,6 +165,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.baselineRoutes(mux)
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)
+	s.bookmarkRoutes(mux)
 	s.portfolioRoutes(mux)
 	s.formRoutes(mux)
 	s.twoFactorRoutes(mux)

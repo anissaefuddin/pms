@@ -676,3 +676,9 @@ Effort dibagi rata menurut assignee dan didistribusikan di hari kerja setiap ass
 - PASS (S10.5.1, dokumen). [Gate report G2a](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): hasil BELUM LULUS; UAT oleh orang belum dilakukan.
 - Perbaikan: sapuan endpoint menerima 403 untuk `GET /users/{userId}/capacity` (privat sengaja).
 
+## M11 / S11.3.7 bookmark dan feedback (14 Nov 2026)
+
+- PASS (BE/TEST). `TestBookmarksAndFeedback` (`bookmarks_integration_test.go`, `PMS_TEST_DATABASE_URL=...55438`): `javascript:`, `data:`, `ftp:`, `//host`, relatif, tanpa host, spasi dan kosong ditolak 422; judul kosong 422; Viewer 403 untuk tambah/ubah/hapus, orang luar 404, hapus lewat Space lain 404; feedback: subject kosong, rating 6 dan page absolut 422, query dan fragment dibuang dari `page`, non-admin 403 pada `GET /feedback`, kiriman ke-6 dalam sejam 429 dengan `Retry-After`, batas per pengguna. Sapuan endpoint (`TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds`) lulus dengan rute baru.
+- PASS (FE/TEST). `web/tests/bookmarks-feedback.spec.ts` (Playwright mock, Chrome, port 4197): tautan bookmark `target=_blank` dengan `rel` memuat `noopener`, tambah dan hapus, form feedback dari menu akun mengirim path halaman; axe tanpa pelanggaran pada kedua dialog. `npm run typecheck` dan eslint bersih.
+- Belum: UAT manual di browser dengan backend nyata; antarmuka admin untuk membaca feedback (hanya API); batas laju proses-lokal (tidak dibagi antar replika).
+

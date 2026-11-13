@@ -1295,9 +1295,9 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [ ] [TEST] Uji dengan akun uji
 
 **S11.3.7 Bookmark dan feedback (NAV-08, NAV-09) — 1.5 hari**
-- [ ] [BE] API bookmark dan feedback
-- [ ] [FE] Bookmark URL di Space
-- [ ] [FE] Form feedback
+- [x] [BE] API bookmark dan feedback
+- [x] [FE] Bookmark URL di Space
+- [x] [FE] Form feedback
 
 ### E11.4 Gate
 

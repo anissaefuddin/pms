@@ -91,5 +91,14 @@
   "stream.action.detach": "{{actor}} removed <item>{{title}}</item> from a location",
   "stream.action.create": "{{actor}} created <item>{{title}}</item>",
   "stream.action.other": "{{actor}} changed <item>{{title}}</item>",
-  "portfolio": "Portfolio"
+  "portfolio": "Portfolio",
+  "feedback.menu": "Send feedback",
+  "feedback.title": "Send feedback",
+  "feedback.hint": "Tell us what works and what does not. We store your message with the page you are on, nothing else.",
+  "feedback.subject": "Subject",
+  "feedback.rating": "Rating",
+  "feedback.noRating": "No rating",
+  "feedback.comment": "Comment",
+  "feedback.send": "Send feedback",
+  "feedback.thanks": "Thank you. Your feedback was sent."
 }

@@ -95,5 +95,22 @@
   "customFields.moveUp": "Move {{name}} up",
   "customFields.moveDown": "Move {{name}} down",
   "customFields.nameRequired": "Enter a field name.",
-  "customFields.required": "Enter a field name and a label for each option."
+  "customFields.required": "Enter a field name and a label for each option.",
+  "bookmarks.link": "Bookmarks",
+  "bookmarks.title": "Bookmarks",
+  "bookmarks.hint": "External links for this Space. Only http and https addresses are accepted.",
+  "bookmarks.empty": "No bookmarks yet.",
+  "bookmarks.newTab": "(opens in a new tab)",
+  "bookmarks.edit": "Edit",
+  "bookmarks.delete": "Delete",
+  "bookmarks.editNamed": "Edit bookmark {{name}}",
+  "bookmarks.deleteNamed": "Delete bookmark {{name}}",
+  "bookmarks.add": "Add a bookmark",
+  "bookmarks.editTitle": "Edit bookmark",
+  "bookmarks.url": "URL",
+  "bookmarks.name": "Title",
+  "bookmarks.description": "Description",
+  "bookmarks.save": "Save",
+  "bookmarks.addButton": "Add bookmark",
+  "bookmarks.cancel": "Cancel"
 }
