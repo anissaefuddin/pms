@@ -94,6 +94,9 @@ func run() error {
 }
 
 func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
+	if cfg.TwoFactorKey == nil {
+		slog.Warn("PMS_2FA_KEY is not set: two-factor authentication is unavailable to every user")
+	}
 	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL))
 	if err != nil {
 		return err
