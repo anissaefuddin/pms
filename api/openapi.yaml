@@ -499,6 +499,18 @@ paths:
                   unchanged: { type: integer }
         '409': { $ref: '#/components/responses/Problem' }
         '502': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/github-webhook:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: githubConnectorWebhook
+      summary: Webhook GitHub (tanpa sesi). Tanda tangan HMAC X-Hub-Signature-256 dengan rahasia webhook_secret konektor; event issues menjadwalkan sinkron segera
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: true } } } }
+      responses:
+        '204': { description: Diterima }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /connectors/{connectorId}/conflicts:
     parameters:
       - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -4730,6 +4742,9 @@ components:
         secret_names: { type: array, items: { type: string } }
         enabled: { type: boolean }
         created_at: { type: string, format: date-time }
+        last_sync_at: { type: string, format: date-time, nullable: true }
+        last_sync_ok: { type: boolean, nullable: true }
+        last_sync_message: { type: string, nullable: true }
     ConnectorConflict:
       type: object
       properties:
@@ -4739,6 +4754,7 @@ components:
         item_title: { type: string }
         remote_title: { type: string }
         base_title: { type: string, nullable: true }
+        differs: { type: string, description: 'Kolom yang berbeda, dipisah koma (title, body, done)' }
         resolution: { type: string, enum: [item, remote], nullable: true }
         resolved_at: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }

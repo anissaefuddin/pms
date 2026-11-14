@@ -2,10 +2,12 @@ package httpserver
 
 import (
 	"errors"
+	"io"
 	"log/slog"
 	"net/http"
 
 	"github.com/anissaefuddin/pms/server/internal/connectors"
+	"github.com/anissaefuddin/pms/server/internal/connectors/github"
 	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/google/uuid"
 )
@@ -58,6 +60,33 @@ func (s *Server) connectorRoutes(mux *http.ServeMux) {
 			writeJSON(w, http.StatusOK, out)
 		})
 	}
+	// GitHub calls this without a session; the HMAC signature of the install's webhook_secret is the credential.
+	// It only marks the install due, so a replayed or forged-then-rejected delivery can do no more than an early poll.
+	mux.HandleFunc("POST /api/v1/connectors/{connectorId}/github-webhook", func(w http.ResponseWriter, r *http.Request) {
+		cid, ok := id(r, "connectorId")
+		body, err := io.ReadAll(http.MaxBytesReader(w, r.Body, 1<<20))
+		if !ok || err != nil {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		svc := s.connectorService()
+		kind, secret, err := svc.Secret(r.Context(), cid, "webhook_secret")
+		if err != nil || kind != "github" {
+			writeError(w, http.StatusNotFound, "not found")
+			return
+		}
+		if !github.VerifySignature(secret, body, r.Header.Get("X-Hub-Signature-256")) {
+			writeError(w, http.StatusUnauthorized, "bad signature")
+			return
+		}
+		if r.Header.Get("X-GitHub-Event") == "issues" {
+			if err := svc.RequestSync(r.Context(), cid); err != nil {
+				writeConnectorError(w, err)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNoContent)
+	})
 	mux.HandleFunc("GET /api/v1/connectors", admin(func(w http.ResponseWriter, r *http.Request) {
 		list, err := s.connectorService().List(r.Context())
 		if err != nil {

@@ -698,18 +698,24 @@ type ConnectorConflict struct {
 	ResolvedBy    pgtype.UUID        `json:"resolved_by"`
 	ResolvedAt    pgtype.Timestamptz `json:"resolved_at"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	Differs       string             `json:"differs"`
 }
 
 type ConnectorInstall struct {
-	ID         pgtype.UUID        `json:"id"`
-	Kind       string             `json:"kind"`
-	Name       string             `json:"name"`
-	Config     []byte             `json:"config"`
-	SecretsEnc pgtype.Text        `json:"secrets_enc"`
-	Enabled    bool               `json:"enabled"`
-	CreatedBy  pgtype.UUID        `json:"created_by"`
-	CreatedAt  pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ID              pgtype.UUID        `json:"id"`
+	Kind            string             `json:"kind"`
+	Name            string             `json:"name"`
+	Config          []byte             `json:"config"`
+	SecretsEnc      pgtype.Text        `json:"secrets_enc"`
+	Enabled         bool               `json:"enabled"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	NextSyncAt      pgtype.Timestamptz `json:"next_sync_at"`
+	Failures        int32              `json:"failures"`
+	LastSyncAt      pgtype.Timestamptz `json:"last_sync_at"`
+	LastSyncOk      pgtype.Bool        `json:"last_sync_ok"`
+	LastSyncMessage pgtype.Text        `json:"last_sync_message"`
 }
 
 type ConnectorLink struct {
@@ -720,6 +726,8 @@ type ConnectorLink struct {
 	SyncedRemoteVersion string             `json:"synced_remote_version"`
 	SyncedItemVersion   pgtype.Int4        `json:"synced_item_version"`
 	SyncedAt            pgtype.Timestamptz `json:"synced_at"`
+	SyncedBody          pgtype.Text        `json:"synced_body"`
+	SyncedDone          pgtype.Bool        `json:"synced_done"`
 }
 
 type CustomField struct {

@@ -22,11 +22,22 @@ type SyncResult struct {
 // Sync applies the policy in docs/DECISIONS.md (DEC-INT-02): a side that changed alone wins; if both sides changed
 // since the last sync and differ, nothing is written on either side and a conflict is recorded for a person to resolve.
 func (s *Service) Sync(ctx context.Context, id string) (SyncResult, error) {
-	var res SyncResult
 	c, cfg, secrets, err := s.load(ctx, s.Pool, id)
 	if err != nil {
-		return res, err
+		return SyncResult{}, err
 	}
+	var res SyncResult
+	if o, ok := c.(Outbound); ok {
+		res, err = s.syncOutbound(ctx, o, id, cfg, secrets)
+	} else {
+		res, err = s.syncTwoWay(ctx, c, id, cfg, secrets)
+	}
+	s.record(ctx, id, res, err)
+	return res, err
+}
+
+func (s *Service) syncTwoWay(ctx context.Context, c Connector, id string, cfg map[string]any, secrets map[string]string) (SyncResult, error) {
+	var res SyncResult
 	remotes, err := c.Fetch(ctx, cfg, secrets)
 	if err != nil {
 		return res, err
@@ -53,7 +64,7 @@ func (s *Service) Sync(ctx context.Context, id string) (SyncResult, error) {
 			return res, err
 		}
 	}
-	return res, nil
+	return res, s.importAndExport(ctx, id, cfg, remotes, &res)
 }
 
 func (s *Service) syncOne(ctx context.Context, c Connector, cfg map[string]any, secrets map[string]string, id, ext string, byID map[string]Remote, res *SyncResult) error {
@@ -64,7 +75,8 @@ func (s *Service) syncOne(ctx context.Context, c Connector, cfg map[string]any, 
 	defer tx.Rollback(ctx)
 	var itemID string
 	var base *string
-	err = tx.QueryRow(ctx, `SELECT item_id::text,synced_title FROM connector_links WHERE connector_id=$1 AND external_id=$2 FOR UPDATE`, id, ext).Scan(&itemID, &base)
+	var baseRec Record
+	err = tx.QueryRow(ctx, `SELECT item_id::text,synced_title,COALESCE(synced_body,''),COALESCE(synced_done,false) FROM connector_links WHERE connector_id=$1 AND external_id=$2 FOR UPDATE`, id, ext).Scan(&itemID, &base, &baseRec.Body, &baseRec.Done)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
@@ -79,8 +91,7 @@ func (s *Service) syncOne(ctx context.Context, c Connector, cfg map[string]any, 
 		res.Pending++
 		return nil
 	}
-	var title string
-	err = tx.QueryRow(ctx, `SELECT title FROM items WHERE id=$1 AND deleted_at IS NULL FOR UPDATE`, itemID).Scan(&title)
+	cur, err := readItem(ctx, tx, itemID, true)
 	remote, found := byID[ext]
 	if errors.Is(err, pgx.ErrNoRows) || !found || strings.TrimSpace(remote.Record.Title) == "" {
 		res.Skipped++
@@ -89,29 +100,32 @@ func (s *Service) syncOne(ctx context.Context, c Connector, cfg map[string]any, 
 	if err != nil {
 		return err
 	}
-	itemChanged := base == nil || title != *base
-	remoteChanged := base == nil || remote.Record.Title != *base
+	if base != nil {
+		baseRec.Title = *base
+	}
+	itemChanged := base == nil || cur != baseRec
+	remoteChanged := base == nil || remote.Record != baseRec
 	switch {
 	case !itemChanged && !remoteChanged:
 		res.Unchanged++
 		return nil
-	case itemChanged && remoteChanged && title == remote.Record.Title:
+	case itemChanged && remoteChanged && cur == remote.Record:
 		// Same content on both sides: adopt it as the new base, nothing to write.
 		res.Unchanged++
 	case itemChanged && remoteChanged:
-		if _, err := tx.Exec(ctx, `INSERT INTO connector_conflicts (connector_id,external_id,item_id,item_title,remote_title,remote_version,base_title) VALUES ($1,$2,$3,$4,$5,$6,$7)`,
-			id, ext, itemID, title, remote.Record.Title, remote.Version, base); err != nil {
+		if _, err := tx.Exec(ctx, `INSERT INTO connector_conflicts (connector_id,external_id,item_id,item_title,remote_title,remote_version,base_title,differs) VALUES ($1,$2,$3,$4,$5,$6,$7,$8)`,
+			id, ext, itemID, cur.Title, remote.Record.Title, remote.Version, base, differs(cur, remote.Record)); err != nil {
 			return err
 		}
 		res.Conflicts++
 		return tx.Commit(ctx)
 	case remoteChanged:
-		if err := setItemTitle(ctx, tx, itemID, remote.Record.Title); err != nil {
+		if err := writeItem(ctx, tx, itemID, cur, remote.Record); err != nil {
 			return err
 		}
 		res.Pulled++
 	default: // only the Item changed
-		pushed, err := c.Push(ctx, cfg, secrets, ext, Record{Title: title})
+		pushed, err := c.Push(ctx, cfg, secrets, ext, cur)
 		if errors.Is(err, ErrReadOnly) {
 			res.Skipped++
 			return nil
@@ -128,14 +142,9 @@ func (s *Service) syncOne(ctx context.Context, c Connector, cfg map[string]any, 
 	return tx.Commit(ctx)
 }
 
-func setItemTitle(ctx context.Context, tx pgx.Tx, itemID, title string) error {
-	_, err := tx.Exec(ctx, `UPDATE items SET title=$2,version=version+1,updated_at=now() WHERE id=$1`, itemID, title)
-	return err
-}
-
 func markSynced(ctx context.Context, tx pgx.Tx, id, ext, itemID string, remote Remote) error {
-	_, err := tx.Exec(ctx, `UPDATE connector_links SET synced_title=$3,synced_remote_version=$4,synced_item_version=(SELECT version FROM items WHERE id=$5),synced_at=now()
- WHERE connector_id=$1 AND external_id=$2`, id, ext, remote.Record.Title, remote.Version, itemID)
+	_, err := tx.Exec(ctx, `UPDATE connector_links SET synced_title=$3,synced_body=$6,synced_done=$7,synced_remote_version=$4,synced_item_version=(SELECT version FROM items WHERE id=$5),synced_at=now()
+ WHERE connector_id=$1 AND external_id=$2`, id, ext, remote.Record.Title, remote.Version, itemID, remote.Record.Body, remote.Record.Done)
 	return err
 }
 
@@ -146,8 +155,7 @@ func (s *Service) Link(ctx context.Context, id, itemID, externalID string) (stri
 	if err != nil {
 		return "", err
 	}
-	var title string
-	err = s.Pool.QueryRow(ctx, `SELECT title FROM items WHERE id=$1 AND deleted_at IS NULL`, itemID).Scan(&title)
+	cur, err := readItem(ctx, s.Pool, itemID, false)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return "", Invalid("item not found")
 	}
@@ -162,12 +170,12 @@ func (s *Service) Link(ctx context.Context, id, itemID, externalID string) (stri
 		}
 		return externalID, nil
 	}
-	remote, err := c.Push(ctx, cfg, secrets, "", Record{Title: title})
+	remote, err := c.Push(ctx, cfg, secrets, "", cur)
 	if err != nil {
 		return "", err
 	}
-	_, err = s.Pool.Exec(ctx, `INSERT INTO connector_links (connector_id,external_id,item_id,synced_title,synced_remote_version,synced_at) VALUES ($1,$2,$3,$4,$5,now())`,
-		id, remote.ExternalID, itemID, remote.Record.Title, remote.Version)
+	_, err = s.Pool.Exec(ctx, `INSERT INTO connector_links (connector_id,external_id,item_id,synced_title,synced_body,synced_done,synced_remote_version,synced_at) VALUES ($1,$2,$3,$4,$6,$7,$5,now())`,
+		id, remote.ExternalID, itemID, remote.Record.Title, remote.Version, remote.Record.Body, remote.Record.Done)
 	if err != nil {
 		return "", Invalid("item is already linked")
 	}
@@ -181,6 +189,7 @@ type Conflict struct {
 	ItemTitle   string     `json:"item_title"`
 	RemoteTitle string     `json:"remote_title"`
 	BaseTitle   *string    `json:"base_title"`
+	Differs     string     `json:"differs"` // comma separated: title, body, done
 	Resolution  *string    `json:"resolution"`
 	ResolvedAt  *time.Time `json:"resolved_at"`
 	CreatedAt   time.Time  `json:"created_at"`
@@ -188,7 +197,7 @@ type Conflict struct {
 
 // Conflicts lists open conflicts, or all of them with all=true.
 func (s *Service) Conflicts(ctx context.Context, id string, all bool) ([]Conflict, error) {
-	rows, err := s.Pool.Query(ctx, `SELECT id::text,external_id,item_id::text,item_title,remote_title,base_title,resolution,resolved_at,created_at
+	rows, err := s.Pool.Query(ctx, `SELECT id::text,external_id,item_id::text,item_title,remote_title,base_title,differs,resolution,resolved_at,created_at
  FROM connector_conflicts WHERE connector_id=$1 AND ($2 OR resolution IS NULL) ORDER BY created_at,id`, id, all)
 	if err != nil {
 		return nil, err
@@ -241,16 +250,16 @@ func (s *Service) Resolve(ctx context.Context, conflictID, choice, actor string)
 	if !found {
 		return Invalid("external record no longer exists")
 	}
+	cur, err := readItem(ctx, tx, itemID, true)
+	if err != nil {
+		return err
+	}
 	if choice == "remote" {
-		if err := setItemTitle(ctx, tx, itemID, remote.Record.Title); err != nil {
+		if err := writeItem(ctx, tx, itemID, cur, remote.Record); err != nil {
 			return err
 		}
 	} else {
-		var title string
-		if err := tx.QueryRow(ctx, `SELECT title FROM items WHERE id=$1`, itemID).Scan(&title); err != nil {
-			return err
-		}
-		if remote, err = c.Push(ctx, cfg, secrets, ext, Record{Title: title}); err != nil {
+		if remote, err = c.Push(ctx, cfg, secrets, ext, cur); err != nil {
 			return err
 		}
 	}

@@ -320,6 +320,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/connectors/{connectorId}/github-webhook": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Webhook GitHub (tanpa sesi). Tanda tangan HMAC X-Hub-Signature-256 dengan rahasia webhook_secret konektor; event issues menjadwalkan sinkron segera */
+        post: operations["githubConnectorWebhook"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/connectors/{connectorId}/conflicts": {
         parameters: {
             query?: {
@@ -3284,6 +3303,10 @@ export interface components {
             enabled: boolean;
             /** Format: date-time */
             created_at: string;
+            /** Format: date-time */
+            last_sync_at?: string | null;
+            last_sync_ok?: boolean | null;
+            last_sync_message?: string | null;
         };
         ConnectorConflict: {
             /** Format: uuid */
@@ -3294,6 +3317,8 @@ export interface components {
             item_title?: string;
             remote_title?: string;
             base_title?: string | null;
+            /** @description Kolom yang berbeda, dipisah koma (title, body, done) */
+            differs?: string;
             /** @enum {string|null} */
             resolution?: "item" | "remote" | null;
             /** Format: date-time */
@@ -5929,6 +5954,34 @@ export interface operations {
             };
             409: components["responses"]["Problem"];
             502: components["responses"]["Problem"];
+        };
+    };
+    githubConnectorWebhook: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                connectorId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    [key: string]: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description Diterima */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     listConnectorConflicts: {
