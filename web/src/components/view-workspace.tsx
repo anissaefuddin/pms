@@ -16,6 +16,7 @@ const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => 
 import { Timelog } from "@/components/timelog";
 import { ProjectChart, ProjectFiles } from "@/components/project-files";
 import { ViewTabs } from "@/components/view-tabs";
+import { useItemTypes } from "@/lib/item-types";
 import { ColumnPicker, FieldFilter } from "@/components/view-columns";
 import type { CustomField } from "@/lib/custom-fields";
 import { fieldSort, sortableField, visibleColumns } from "@/lib/view-columns";
@@ -43,9 +44,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const filter = search.filter ?? "";
   const fieldFilter = search.field ?? "";
   const preset = search.preset ?? "";
+  const typeFilter = typeof search.type === "string" ? search.type : "";
   const viewKey = ["views", base];
   const listKey = parent ? itemKeys.children(parent.id) : itemKeys.root(spaceId);
-  const sortedKey = sort === "manual" && !fieldFilter && !preset ? listKey : [...listKey, sort, fieldFilter, preset];
+  const sortedKey = sort === "manual" && !fieldFilter && !preset && !typeFilter ? listKey : [...listKey, sort, fieldFilter, preset, typeFilter];
   const views = useQuery({ queryKey: viewKey, queryFn: () => api<{ items: SavedView[] }>(base + "/views") });
   const available = views.data?.items ?? [];
   const active = available.find((view) => view.id === search.view) ?? available.find((view) => view.is_default) ?? available[0];
@@ -58,7 +60,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const isCollection = active?.type === "table" || active?.type === "board";
   const items = useQuery({
     queryKey: sortedKey, enabled: !active || isCollection || isGantt || isCalendar || active?.type === "chart",
-    queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, undefined, fieldFilter || undefined, preset || undefined),
+    queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined),
   });
   const fieldQueries = useQuery({
     queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
@@ -73,6 +75,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const workflow = workflows.data?.items.find((wf) => wf.id === parent?.default_workflow_id)
     ?? workflows.data?.items.find((wf) => wf.statuses.some((status) => status.id === parent?.status?.id))
     ?? workflows.data?.items.find((wf) => wf.is_default);
+  const itemTypes = useItemTypes(isCollection);
+  const [blocked, setBlocked] = useState<{ title: string; problems: string[] }>();
   const [pending, setPending] = useState(false);
   const [creating, setCreating] = useState<{ status?: string }>();
   const locked = useRef(false);
@@ -90,6 +94,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     if (locked.current) return;
     locked.current = true;
     setPending(true);
+    setBlocked(undefined);
     const snapshots = qc.getQueriesData<Item[]>(isList);
     const status = workflow?.statuses.find((candidate) => candidate.id === update.status_id);
     let conflict = false;
@@ -108,7 +113,9 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       for (const [key, snapshot] of snapshots) qc.setQueryData(key, snapshot);
       conflict = err instanceof ApiError && (err.status === 409 || err.status === 428);
       if (conflict) await qc.invalidateQueries({ queryKey: itemKeys.detail(item.id), exact: true });
-      else toast.error((err as Error).message);
+      else if (err instanceof ApiError && err.code === "transition_blocked") {
+        setBlocked({ title: item.title, problems: err.fields.length ? err.fields.map((problem) => problem.message) : [err.message] });
+      } else toast.error((err as Error).message);
     } finally {
       await qc.invalidateQueries(isList);
       if (conflict) toast.error(t("items.statusConflict"));
@@ -142,10 +149,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     }
   }
 
-  const hasFilters = !!(filter.trim() || fieldFilter || preset);
+  const hasFilters = !!(filter.trim() || fieldFilter || preset || typeFilter);
   function clearFilters() {
     const url = new URL(window.location.href);
-    for (const key of ["filter", "field", "preset"]) url.searchParams.delete(key);
+    for (const key of ["filter", "field", "preset", "type"]) url.searchParams.delete(key);
     router.history.replace(url.pathname + url.search + url.hash);
   }
   // The existing Space empty state stays available while the View list loads.
@@ -204,6 +211,13 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
             className="block rounded border bg-background p-2">
             {presets.map((value) => <option value={value} key={value}>{t(`views.preset.${value}`)}</option>)}
           </select></label>
+        <label className="space-y-1"><span>{t("views.typeFilter")}</span>
+          <select aria-label={t("views.typeFilter")} value={typeFilter} onChange={(event) => setSearch("type", event.target.value)}
+            className="block rounded border bg-background p-2">
+            <option value="">{t("views.typeAny")}</option>
+            {typeFilter && !itemTypes.data?.some((entry) => entry.key === typeFilter) && <option value={typeFilter}>{typeFilter}</option>}
+            {itemTypes.data?.map((entry) => <option key={entry.id} value={entry.key}>{entry.name}</option>)}
+          </select></label>
         <label className="space-y-1"><span>{t("views.sort")}</span>
           <select aria-label={t("views.sort")} value={sort} onChange={(event) => setSearch("sort", event.target.value)}
             className="block rounded border bg-background p-2">
@@ -219,6 +233,11 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
             {(isBoard ? boardGroups : tableGroups).map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
           </select></label>
       </div>
+      {blocked && <div role="alert" className="space-y-1 rounded border border-destructive p-3 text-sm">
+        <p className="font-medium">{t("views.blocked.title", { title: blocked.title })}</p>
+        <ul className="list-disc pl-5">{blocked.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul>
+        <Button size="sm" variant="outline" onClick={() => setBlocked(undefined)}>{t("views.blocked.dismiss")}</Button>
+      </div>}
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && (!spaceEmpty && noMatches ? emptyResults

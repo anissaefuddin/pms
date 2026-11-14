@@ -17,6 +17,10 @@ export function CustomFieldDisplay({ field, value, people, profile }: {
   field: CustomField; value?: CustomFieldValue; people: PersonOption[]; profile: CurrentUser;
 }) {
   const { t } = useTranslation();
+  if (field.type === "formula" && value == null) {
+    return <span className="inline-flex items-center gap-1 text-muted-foreground" title={t("items.customFields.formulaNoResultHint")}>
+      {t("items.customFields.formulaNoResult")}<span className="sr-only">{t("items.customFields.formulaNoResultHint")}</span></span>;
+  }
   if (value == null || value === "" || Array.isArray(value) && !value.length) {
     return <span className="text-muted-foreground">{t("items.customFields.empty")}</span>;
   }

@@ -49,6 +49,12 @@
   "actions": "Actions",
   "empty": "No matching items",
   "clearFilters": "Clear filters",
+  "typeFilter": "Filter by type",
+  "typeAny": "All types",
+  "blocked": {
+    "title": "{{title}} was not moved",
+    "dismiss": "Dismiss"
+  },
   "attachments_one": "{{count}} attachment",
   "attachments_other": "{{count}} attachments",
   "comments_one": "{{count}} comment",

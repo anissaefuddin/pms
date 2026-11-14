@@ -5844,7 +5844,8 @@ export interface components {
         ItemId: string;
         UserId: string;
         ViewId: string;
-        ItemFilterType: components["schemas"]["ItemType"][];
+        /** @description Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422 */
+        ItemFilterType: string[];
         ItemFilterStatusGroup: components["schemas"]["StatusGroup"][];
         /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
         ItemFilterAssignee: string;
@@ -11107,6 +11108,7 @@ export interface operations {
             query?: {
                 limit?: components["parameters"]["Limit"];
                 cursor?: components["parameters"]["Cursor"];
+                /** @description Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422 */
                 type?: components["parameters"]["ItemFilterType"];
                 status_group?: components["parameters"]["ItemFilterStatusGroup"];
                 /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
@@ -11414,6 +11416,7 @@ export interface operations {
             query?: {
                 limit?: components["parameters"]["Limit"];
                 cursor?: components["parameters"]["Cursor"];
+                /** @description Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422 */
                 type?: components["parameters"]["ItemFilterType"];
                 status_group?: components["parameters"]["ItemFilterStatusGroup"];
                 /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
