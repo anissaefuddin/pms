@@ -7,7 +7,6 @@ import type { components } from "@/api/schema";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { isProjectDetail, itemKeys, listItems, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
 import { ItemBoard } from "@/components/item-board";
@@ -17,12 +16,12 @@ import { Timelog } from "@/components/timelog";
 import { ProjectChart, ProjectFiles } from "@/components/project-files";
 import { ViewTabs } from "@/components/view-tabs";
 import { useItemTypes } from "@/lib/item-types";
-import { ColumnPicker, FieldFilter } from "@/components/view-columns";
+import { ColumnPicker } from "@/components/view-columns";
+import { ViewToolbar } from "@/components/view-toolbar";
 import type { CustomField } from "@/lib/custom-fields";
-import { fieldSort, sortableField, visibleColumns } from "@/lib/view-columns";
+import { visibleColumns } from "@/lib/view-columns";
 
-export const viewSorts = ["manual", "priority", "due_date", "status", "title", "predecessors", "start_date"] as const;
-const presets = ["all", "active", "mine"] as const;
+export { viewSorts } from "@/components/view-toolbar";
 const tableGroups = ["none", "status", "type"] as const;
 const boardGroups = ["none", "assignee"] as const;
 
@@ -169,12 +168,16 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     items: filtered, statuses: workflow?.statuses ?? [], spaceId, parentId: parent?.id, customFields, columns,
     canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string) => setCreating({ status }), onPatch: patch,
   };
+  const toolbar = {
+    filter, preset, typeFilter, sort, fieldFilter, customFields, itemTypes: itemTypes.data, setSearch: (key: string, value: string) => setSearch(key, value),
+    group: group ?? (swimlanes ? "assignee" : "none"),
+  };
   return <section className="min-w-0 space-y-3">
     <ViewTabs views={available} selected={active} canEdit={canEdit}
       project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
     {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? (items.isSuccess ? <ProjectChart items={items.data} /> : <p role="status">{t("items.loading")}</p>) : isGantt ? <>
-      {!!spaceId && customFields.length > 0 && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
+      {!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
         fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
@@ -184,16 +187,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
     </> : isCalendar ? <>
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="space-y-1"><span>{t("views.filter")}</span>
-          <Input value={filter} maxLength={120} onChange={(event) => setSearch("filter", event.target.value)} /></label>
-        <label className="space-y-1"><span>{t("views.preset.label")}</span>
-          <select aria-label={t("views.preset.label")} value={preset || "all"} onChange={(event) => setSearch("preset", event.target.value === "all" ? "" : event.target.value)}
-            className="block rounded border bg-background p-2">
-            {presets.map((value) => <option value={value} key={value}>{t(`views.preset.${value}`)}</option>)}
-          </select></label>
-        <FieldFilter fields={customFields.filter((field) => field.type !== "people")} value={fieldFilter} onChange={(value) => setSearch("field", value)} />
-      </div>
+      <ViewToolbar filterOnly {...toolbar} />
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {noMatches && !spaceEmpty ? emptyResults : items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
@@ -203,36 +197,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>
       <p className="text-sm text-muted-foreground">{t("views.placeholder")}</p>
     </div> : <>
-      <div className="flex flex-wrap items-end gap-3">
-        <label className="space-y-1"><span>{t("views.filter")}</span>
-          <Input value={filter} maxLength={120} onChange={(event) => setSearch("filter", event.target.value)} /></label>
-        <label className="space-y-1"><span>{t("views.preset.label")}</span>
-          <select aria-label={t("views.preset.label")} value={preset || "all"} onChange={(event) => setSearch("preset", event.target.value === "all" ? "" : event.target.value)}
-            className="block rounded border bg-background p-2">
-            {presets.map((value) => <option value={value} key={value}>{t(`views.preset.${value}`)}</option>)}
-          </select></label>
-        <label className="space-y-1"><span>{t("views.typeFilter")}</span>
-          <select aria-label={t("views.typeFilter")} value={typeFilter} onChange={(event) => setSearch("type", event.target.value)}
-            className="block rounded border bg-background p-2">
-            <option value="">{t("views.typeAny")}</option>
-            {typeFilter && !itemTypes.data?.some((entry) => entry.key === typeFilter) && <option value={typeFilter}>{typeFilter}</option>}
-            {itemTypes.data?.map((entry) => <option key={entry.id} value={entry.key}>{entry.name}</option>)}
-          </select></label>
-        <label className="space-y-1"><span>{t("views.sort")}</span>
-          <select aria-label={t("views.sort")} value={sort} onChange={(event) => setSearch("sort", event.target.value)}
-            className="block rounded border bg-background p-2">
-            {viewSorts.map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
-            {customFields.filter(sortableField).map((field) => <option value={fieldSort(field.id)} key={field.id}>{t("views.fieldSort", { name: field.name })}</option>)}
-          </select></label>
-        <FieldFilter fields={customFields.filter((field) => field.type !== "people")} value={fieldFilter}
-          onChange={(value) => setSearch("field", value)} />
-        {!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
-        <label className="space-y-1"><span>{t("views.group")}</span>
-          <select aria-label={t("views.group")} value={group ?? (swimlanes ? "assignee" : "none")} onChange={(event) => setSearch("group", event.target.value === "none" ? "" : event.target.value)}
-            className="block rounded border bg-background p-2">
-            {(isBoard ? boardGroups : tableGroups).map((value) => <option value={value} key={value}>{t(`views.${value}`)}</option>)}
-          </select></label>
-      </div>
+      <ViewToolbar {...toolbar} groups={isBoard ? boardGroups : tableGroups}
+        columns={!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />} />
       {blocked && <div role="alert" className="space-y-1 rounded border border-destructive p-3 text-sm">
         <p className="font-medium">{t("views.blocked.title", { title: blocked.title })}</p>
         <ul className="list-disc pl-5">{blocked.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul>

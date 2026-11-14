@@ -1039,3 +1039,19 @@ Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image ny
 | | `BACKUP_REMOTE` rclone (tujuan lokal) | PASS (regresi) |
 
 Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.
+
+## UI parity lane 2: toolbar, kartu, tab view, Gantt (S-UIP.1.2, 1.3, 2.2, 2.3)
+
+Tanggal 14 Nov 2026, Playwright (Chromium, dev server port 4192 karena 4173 dipakai lane lain), data tiruan. Keputusan: D-120..D-123.
+
+| Cakupan | Tes | Hasil |
+|---|---|---|
+| Toolbar satu baris, popover Sort lulus axe, keadaan di URL (`sort`, `filter`) | `uip-lane2.spec.ts` toolbar | PASS |
+| Tab bersegmen: "..." hanya di tab aktif, urutan tab stop Table, Board, Board options, All views; "Add Gantt view" di dropdown All; axe | `uip-lane2.spec.ts` view tabs | PASS |
+| Kartu Board: chip status, avatar, durasi "(3d)", tanpa combobox; ubah status lewat menu kartu dan lewat seret; axe serius/kritis | `uip-lane2.spec.ts` Board card | PASS |
+| Table: chip status berwarna, avatar assignee | `uip-lane2.spec.ts` Table | PASS |
+| Gantt: kolom Status/Start/Due dapat dipilih, bar berwarna status dengan label "Design • Ann Lee", tombol zoom, tooltip bantuan keyboard, axe | `uip-lane2.spec.ts` Gantt | PASS |
+| Regresi terarah yang diubah ke kontrol baru | `views`, `view-presets`, `view-fields`, `board-lanes`, `m8-collections`, `gantt`, `calendar`, `pilot.a11y`, `m4-live` (hanya disesuaikan) | PASS |
+| Seluruh suite Playwright tiruan (terjalankan tak sengaja) | 447 tes | 446 PASS; `sso.spec.ts:34` gagal sekali, lulus pada ulang (tidak terkait) |
+
+`tsc -b` dan `eslint src` bersih. Tidak diuji: spesifikasi live (`m2-live` memerlukan backend; hanya tombol "Columns"/"Card fields" yang dirujuknya dan tetap ada), peramban selain Chromium. Tidak dikerjakan: label bar di luar ujung bar dan nama chip "Cards"/Expand/undo-redo dari referensi Wrike.

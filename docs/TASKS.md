@@ -1432,15 +1432,17 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 - [ ] [TEST] Urutan `BLOCK_ORDER` dan tata letak per tipe (CUST-04) tetap berlaku; axe dan fokus keyboard pada chip
 
 **S-UIP.1.2 Toolbar view satu baris (gap B3) — 3 hari**
-- [ ] [FE] Chip Filter, Sort, Group, Columns, Cards dengan popover; keadaan tetap di parameter URL
-- [ ] [FE] Pencarian teks sebagai kotak kecil di ujung baris
-- [ ] [TEST] Tes view yang ada tetap lulus; axe popover
+- [x] [FE] Chip Filter, Sort, Group, Columns, Cards dengan popover; keadaan tetap di parameter URL
+- [x] [FE] Pencarian teks sebagai kotak kecil di ujung baris
+- [x] [TEST] Tes view yang ada tetap lulus; axe popover
+- Catatan: D-120; bukti: TESTING.md bagian "UI parity lane 2"
 
 **S-UIP.1.3 Kartu Board dan baris Table (gap B4, B5) — 4 hari**
-- [ ] [FE] Komponen `StatusChip` (warna dari workflow) dan `AvatarStack`
-- [ ] [FE] Kartu Board: header kolom berwarna, ikon tipe, avatar, rentang tanggal dengan durasi, penghitung subitem; `<select>` status dihapus dari kartu
-- [ ] [FE] Table: status berupa chip, assignee berupa avatar
-- [ ] [TEST] Ubah status lewat seret dan lewat menu kartu; axe
+- [x] [FE] Komponen `StatusChip` (warna dari workflow) dan `AvatarStack`
+- [x] [FE] Kartu Board: header kolom berwarna, ikon tipe, avatar, rentang tanggal dengan durasi, penghitung subitem; `<select>` status dihapus dari kartu
+- [x] [FE] Table: status berupa chip, assignee berupa avatar
+- [x] [TEST] Ubah status lewat seret dan lewat menu kartu; axe
+- Catatan: D-121; bukti: TESTING.md bagian "UI parity lane 2"
 
 **S-UIP.1.4 My to-do berkelompok (gap D1) — 3 hari**
 - [ ] [FE] Pengelompokan menurut urutan yang dipilih (status atau tanggal) dengan jumlah di judul grup
@@ -1477,13 +1479,15 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 - [ ] [TEST] Entri tersembunyi mengikuti pengaturan profil
 
 **S-UIP.2.2 Tab view bersegmen (gap B2) — 1 hari**
-- [ ] [FE] Kontrol bersegmen; tombol "..." hanya pada tab aktif; "Add view" di dropdown "All"
-- [ ] [TEST] Urutan tab stop dan axe
+- [x] [FE] Kontrol bersegmen; tombol "..." hanya pada tab aktif; "Add view" di dropdown "All"
+- [x] [TEST] Urutan tab stop dan axe
+- Catatan: D-122; bukti: TESTING.md bagian "UI parity lane 2"
 
 **S-UIP.2.3 Gantt berkolom dan berwarna (gap B6) — 3 hari**
-- [ ] [FE] Kolom Status, Start, Due dapat dipilih di Gantt (sekarang hanya custom field)
-- [ ] [FE] Warna bar menurut status, label assignee, tombol zoom +/- ; bantuan keyboard dipindah ke tooltip
-- [ ] [TEST] Gantt yang ada (drag, dependensi, baseline) tetap lulus; kontras axe
+- [x] [FE] Kolom Status, Start, Due dapat dipilih di Gantt (sekarang hanya custom field)
+- [x] [FE] Warna bar menurut status, label assignee, tombol zoom +/- ; bantuan keyboard dipindah ke tooltip
+- [x] [TEST] Gantt yang ada (drag, dependensi, baseline) tetap lulus; kontras axe
+- Catatan: D-123; bukti: TESTING.md bagian "UI parity lane 2"
 
 **S-UIP.2.4 Toolbar dashboard (gap E1) — 3 hari**
 - [ ] [FE] Judul dengan dropdown pindah dashboard; popover layout bergambar (Vertical, Horizontal); tindakan Share

@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import type { CustomField } from "../src/lib/custom-fields";
+import { chip } from "./view-helpers";
 import { ALL, marketing, mockSpaces } from "./spaces-mock";
 
 const tableId = "55555555-5555-4555-8555-555555555555";
@@ -41,13 +42,16 @@ test("Table shows type and formula columns, filters by type through the URL, for
   await expect(grid.getByText("1,234.5")).toBeVisible();
   await expect(grid.getByText("No result")).toBeVisible(); // Plain has no stored result
   await expect(grid.getByRole("button", { name: /Total:/ })).toHaveCount(0);
+  await chip(page, "Sort");
   await page.getByRole("combobox", { name: "Sort" }).selectOption(`field:${totalId}`);
   await expect.poll(() => calls.some((c) => c.path === `${path}/items` && c.query.get("sort") === `field:${totalId}`)).toBe(true);
+  await chip(page, "Filter");
   await page.getByRole("combobox", { name: "Filter by type" }).selectOption("bug");
   await expect(page).toHaveURL(/type=bug/);
   await expect.poll(() => calls.some((c) => c.path === `${path}/items` && c.query.get("type") === "bug")).toBe(true);
   await expect(grid.getByText("Plain")).toHaveCount(0);
   await page.reload();
+  await chip(page, "Filter");
   await expect(page.getByRole("combobox", { name: "Filter by type" })).toHaveValue("bug");
   expect(await new AxeBuilder({ page }).analyze().then((r) => r.violations)).toEqual([]);
 });
@@ -57,12 +61,13 @@ test("Board card shows the type and a blocked move shows every problem and keeps
   await page.goto(`${path}?view=${boardId}`);
   const card = page.getByRole("listitem").filter({ hasText: "Crash" });
   await expect(card.locator('[data-item-type="bug"]')).toHaveText("Bug");
-  await card.getByRole("combobox", { name: /Move to status/ }).selectOption({ label: "Completed" });
+  await card.getByRole("button", { name: /Move to status/ }).click();
+  await page.getByRole("menuitem", { name: "Completed", exact: true }).click();
   const alert = page.getByRole("alert").filter({ hasText: "this status needs a due date" });
   await expect(alert).toContainText("this status needs an assignee");
   await expect(alert).toContainText("Crash was not moved");
   await expect(page.getByRole("region", { name: "To do" }).getByText("Crash")).toBeVisible();
-  await expect(card.getByRole("combobox", { name: /Move to status/ })).toHaveValue(todo.id);
+  await expect(card.getByRole("button", { name: /Move to status/ })).toContainText("To do");
   expect(await new AxeBuilder({ page }).include('[role="alert"]').analyze().then((r) => r.violations)).toEqual([]);
   await alert.getByRole("button", { name: "Dismiss" }).click();
   await expect(alert).toHaveCount(0);

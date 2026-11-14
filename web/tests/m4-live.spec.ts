@@ -26,8 +26,8 @@ test("timesheet hours appear in project Timelog and alongside its budget", async
     await budget.getByRole("button", { name: "Save", exact: true }).click();
     await expect(fields.getByText("$1,250.75")).toBeVisible();
 
-    await page.getByRole("button", { name: "Add view" }).click();
-    await page.getByRole("menuitem", { name: "Timelog" }).click();
+    await page.getByRole("button", { name: "All views" }).click();
+    await page.getByRole("menuitem", { name: "Add Timelog view" }).click();
     await page.getByRole("dialog", { name: "Add view" }).getByRole("button", { name: "Save" }).click();
     const log = page.getByRole("table", { name: "Timelog" });
     await expect(log.getByText("Delivered")).toBeVisible();

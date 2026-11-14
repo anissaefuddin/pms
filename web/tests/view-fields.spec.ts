@@ -1,6 +1,7 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
 import type { CustomField } from "../src/lib/custom-fields";
+import { chip } from "./view-helpers";
 import { ALL, marketing, mockSpaces } from "./spaces-mock";
 
 const tableId = "55555555-5555-4555-8555-555555555555";
@@ -69,15 +70,18 @@ test("column picker saves custom field columns to the view and the Table edits a
 test("field sort and filter live in the URL and reach the server", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto(path);
+  await chip(page, "Sort");
   await expect(page.getByRole("combobox", { name: "Sort" }).locator("option", { hasText: "Field: Cost" })).toHaveCount(1);
   await expect(page.getByRole("combobox", { name: "Sort" }).locator("option", { hasText: "Field: Tags" })).toHaveCount(0);
   await page.getByRole("combobox", { name: "Sort" }).selectOption(`field:${costId}`);
   await expect.poll(() => calls.some((call) => call.path === `${path}/items` && call.query.get("sort") === `field:${costId}`)).toBe(true);
+  await chip(page, "Filter");
   await page.getByRole("combobox", { name: "Filter by field" }).selectOption(levelId);
   await page.getByRole("combobox", { name: "Field value" }).selectOption(high.id);
   await expect(page).toHaveURL(new RegExp(`field=${levelId}%3A${high.id}`));
   await expect.poll(() => calls.some((call) => call.path === `${path}/items` && call.query.get("field") === `${levelId}:${high.id}`)).toBe(true);
   await page.reload();
+  await chip(page, "Filter");
   await expect(page.getByRole("combobox", { name: "Field value" })).toHaveValue(high.id);
 });
 
