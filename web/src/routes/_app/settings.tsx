@@ -37,6 +37,8 @@ function SettingsLayout() {
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("sso.admin.title")}</Link>}
             {me?.user_type === "admin" && <Link to="/settings/provisioning" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("provisioning.title")}</Link>}
+            {me?.user_type === "admin" && <Link to="/settings/ownership" className={linkClass}
+              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("ownership.title")}</Link>}
             {me?.user_type === "admin" && <Link to="/settings/policy" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("policy.title")}</Link>}
             {me?.user_type === "admin" && <Link to="/settings/roles" className={linkClass}

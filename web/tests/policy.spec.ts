@@ -3,7 +3,7 @@ import { expect, test } from "@playwright/test";
 import { me, problem } from "./mock-api";
 import { marketing, mockSpaces } from "./spaces-mock";
 
-const policy = (over: Record<string, unknown> = {}) => ({ ip_allowlist_enabled: false, ip_allowlist: [], version: 1, your_ip: "203.0.113.7", override_active: false, ...over });
+const policy = (over: Record<string, unknown> = {}) => ({ ip_allowlist_enabled: false, ip_allowlist: [], otp_login_enabled: false, version: 1, your_ip: "203.0.113.7", override_active: false, ...over });
 
 test("admin edits the IP allowlist with If-Match, can add their own address, and axe is clean", async ({ page }) => {
   let current = policy();
@@ -21,11 +21,12 @@ test("admin edits the IP allowlist with If-Match, can add their own address, and
   await expect(page.getByRole("button", { name: "Add my address" })).toBeDisabled();
   await page.getByLabel("Allowed addresses and networks").fill("203.0.113.7\n198.51.100.0/24, 2001:db8::/32");
   await page.getByLabel("Only allow the addresses below").check();
+  await page.getByLabel("Allow signing in with an emailed code").check();
   await page.getByRole("button", { name: "Save policy" }).click();
   await expect.poll(() => calls.some((c) => c.method === "PUT")).toBe(true);
   const put = calls.find((c) => c.method === "PUT")!;
   expect(put.headers["if-match"]).toBe('"1"');
-  expect(put.body).toEqual({ ip_allowlist_enabled: true, ip_allowlist: ["203.0.113.7", "198.51.100.0/24", "2001:db8::/32"] });
+  expect(put.body).toEqual({ ip_allowlist_enabled: true, ip_allowlist: ["203.0.113.7", "198.51.100.0/24", "2001:db8::/32"], otp_login_enabled: true });
   await expect(page.getByLabel("Only allow the addresses below")).toBeChecked();
 });
 

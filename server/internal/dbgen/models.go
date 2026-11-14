@@ -495,6 +495,7 @@ type AccessPolicy struct {
 	Version            int32              `json:"version"`
 	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
 	UpdatedBy          pgtype.UUID        `json:"updated_by"`
+	OtpLoginEnabled    bool               `json:"otp_login_enabled"`
 }
 
 type Account struct {
@@ -502,6 +503,7 @@ type Account struct {
 	Name      string             `json:"name"`
 	Settings  []byte             `json:"settings"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
 }
 
 type Activity struct {
@@ -884,6 +886,16 @@ type ItemTypeDef struct {
 	Layout            []byte             `json:"layout"`
 	Version           int32              `json:"version"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+}
+
+type LoginCode struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	CodeHash  []byte             `json:"code_hash"`
+	Attempts  int16              `json:"attempts"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	UsedAt    pgtype.Timestamptz `json:"used_at"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Notification struct {

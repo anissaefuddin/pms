@@ -268,6 +268,15 @@ func (s *Server) adminChangeUser(w http.ResponseWriter, r *http.Request) {
 				return lastAdmin
 			}
 		}
+		if action == "deactivate" || (action == "type" && in.UserType != policy.Admin) {
+			var isOwner bool
+			if err := tx.QueryRow(ctx, "SELECT COALESCE(owner_id=$1::uuid,false) FROM account WHERE id=1", id).Scan(&isOwner); err != nil {
+				return err
+			}
+			if isOwner && status == "active" {
+				return ownerProtected
+			}
+		}
 		revoke := false
 		switch action {
 		case "type":

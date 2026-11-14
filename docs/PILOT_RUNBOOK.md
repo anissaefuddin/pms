@@ -136,3 +136,9 @@ Settings → Provisioning (admin). Buat token (nama = penyedia, tipe pengguna ba
 
 **IP allowlist:** Settings → Access policy. Isi alamat atau jaringan (satu per baris), tekan Add my address agar alamat Anda ikut, aktifkan, simpan. Server menolak daftar yang tidak memuat alamat Anda. Berlaku untuk login dan semua permintaan setelah login; form publik, tautan dashboard publik, SCIM, dan webhook tidak terpengaruh. Di belakang proxy, pastikan `TRUST_PROXY=true` dan proxy menimpa `X-Forwarded-For`, atau semua orang terlihat dari alamat proxy. **Terkunci?** Setel `PMS_DISABLE_IP_ALLOWLIST=true` di lingkungan server, restart, perbaiki daftar di halaman yang sama, lalu hapus variabel itu dan restart lagi.
 
+## Login OTP dan kepemilikan akun
+
+**Kode masuk lewat email:** Settings → Access policy → "Allow signing in with an emailed code". Setelah menyala, halaman login menampilkan "Email me a sign-in code". Kode enam digit berlaku 10 menit, sekali pakai, lima percobaan, satu permintaan per menit per orang. Orang dengan 2FA tetap ditanya kode 2FA. Butuh SMTP yang berfungsi; tanpa SMTP kode hanya muncul di log server (cocok untuk uji, jangan untuk produksi). Matikan kembali dengan menghapus centang yang sama; kode yang sudah dikirim berhenti berlaku seketika.
+
+**Kepemilikan akun:** Settings → Account ownership. Semua admin dapat melihat pemiliknya; hanya pemilik yang dapat menyerahkannya ke admin aktif lain (butuh kata sandi, atau login dalam 15 menit terakhir bagi yang tidak punya kata sandi). Pemilik tidak dapat diturunkan atau dinonaktifkan oleh admin lain: serahkan dulu. Pemilik lama tetap admin. Bila pemilik hilang akses dan tidak ada jalan lain, ubah lewat database: `UPDATE account SET owner_id = '<id admin aktif>';` lalu catat di Security audit secara manual.
+

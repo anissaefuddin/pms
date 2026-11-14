@@ -609,6 +609,58 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/otp/request": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Kirim kode masuk sekali pakai ke email (AUTH-08); selalu 202 agar tidak membocorkan siapa yang punya akun */
+        post: operations["requestLoginCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/otp/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Masuk dengan kode (AUTH-08); lima percobaan per kode, sekali pakai, berlaku 10 menit */
+        post: operations["verifyLoginCode"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account/ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin) */
+        get: operations["getAccountOwnership"];
+        put?: never;
+        /** Serahkan kepemilikan akun ke admin aktif lain (SET-09); hanya pemilik; butuh password, atau login dalam 15 menit terakhir bila tanpa password */
+        post: operations["transferAccountOwnership"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/access-policy": {
         parameters: {
             query?: never;
@@ -3555,9 +3607,26 @@ export interface components {
             base_url: string;
             items: components["schemas"]["ScimToken"][];
         };
+        AccountOwnership: {
+            owner: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                email: string;
+            } | null;
+            is_owner: boolean;
+            candidates: {
+                /** Format: uuid */
+                id: string;
+                name: string;
+                email: string;
+            }[];
+        };
         AccessPolicyInput: {
             ip_allowlist_enabled: boolean;
             ip_allowlist: string[];
+            /** @description Izinkan masuk dengan kode sekali pakai lewat email (AUTH-08) */
+            otp_login_enabled: boolean;
         };
         AccessPolicy: components["schemas"]["AccessPolicyInput"] & {
             version: number;
@@ -6766,6 +6835,127 @@ export interface operations {
             404: components["responses"]["Problem"];
         };
     };
+    requestLoginCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    email: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Diterima; bila alamat milik pengguna aktif */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    verifyLoginCode: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    email: string;
+                    code: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Berhasil; cookie session diset */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            /** @description Kode benar tetapi user memakai 2FA; lanjutkan dengan `POST /auth/login/2fa` */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TwoFactorChallenge"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    getAccountOwnership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Kepemilikan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOwnership"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    transferAccountOwnership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    new_owner_id: string;
+                    password?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Dipindahkan; kondisi terbaru */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccountOwnership"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
     getAccessPolicy: {
         parameters: {
             query?: never;
@@ -6949,6 +7139,8 @@ export interface operations {
                 };
                 content: {
                     "application/json": {
+                        /** @description Login dengan kode sekali pakai lewat email aktif */
+                        otp_login: boolean;
                         items: {
                             /** @enum {string} */
                             kind: "oidc" | "saml";

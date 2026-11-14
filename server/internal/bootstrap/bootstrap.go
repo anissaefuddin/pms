@@ -65,6 +65,9 @@ func Run(ctx context.Context, pool *pgxpool.Pool, accountName, adminEmail string
 		if err := tx.QueryRow(ctx, "INSERT INTO users(email,user_type,status) VALUES ($1,'admin','invited') RETURNING id::text", adminEmail).Scan(&adminID); err != nil {
 			return Result{}, err
 		}
+		if _, err := tx.Exec(ctx, "UPDATE account SET owner_id=$1 WHERE id=1", adminID); err != nil {
+			return Result{}, err
+		}
 		if _, err := tx.Exec(ctx, "INSERT INTO spaces(name,kind) VALUES ('General','shared')"); err != nil {
 			return Result{}, err
 		}

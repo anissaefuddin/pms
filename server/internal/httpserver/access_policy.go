@@ -23,6 +23,7 @@ const (
 )
 
 type accessPolicy struct {
+	OTP      bool
 	Enabled  bool
 	Prefixes []netip.Prefix
 	Version  int
@@ -42,7 +43,7 @@ func (s *Server) loadPolicy(ctx context.Context) (accessPolicy, error) {
 		return s.policyCache.value, nil
 	}
 	var p accessPolicy
-	if err := s.pool.QueryRow(ctx, "SELECT ip_allowlist_enabled,ip_allowlist,version FROM access_policy WHERE id=1").Scan(&p.Enabled, &p.List, &p.Version); err != nil {
+	if err := s.pool.QueryRow(ctx, "SELECT ip_allowlist_enabled,ip_allowlist,version,otp_login_enabled FROM access_policy WHERE id=1").Scan(&p.Enabled, &p.List, &p.Version, &p.OTP); err != nil {
 		return accessPolicy{}, err
 	}
 	for _, entry := range p.List {
@@ -103,16 +104,16 @@ func (s *Server) accessPolicyRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) policyView(ctx context.Context, r *http.Request) (map[string]any, int, error) {
-	var enabled bool
+	var enabled, otp bool
 	var list []string
 	var version int
-	if err := s.pool.QueryRow(ctx, "SELECT ip_allowlist_enabled,ip_allowlist,version FROM access_policy WHERE id=1").Scan(&enabled, &list, &version); err != nil {
+	if err := s.pool.QueryRow(ctx, "SELECT ip_allowlist_enabled,ip_allowlist,version,otp_login_enabled FROM access_policy WHERE id=1").Scan(&enabled, &list, &version, &otp); err != nil {
 		return nil, 0, err
 	}
 	if list == nil {
 		list = []string{}
 	}
-	return map[string]any{"ip_allowlist_enabled": enabled, "ip_allowlist": list, "version": version, "your_ip": s.clientIP(r), "override_active": s.cfg.DisableIPAllowlist}, version, nil
+	return map[string]any{"ip_allowlist_enabled": enabled, "ip_allowlist": list, "otp_login_enabled": otp, "version": version, "your_ip": s.clientIP(r), "override_active": s.cfg.DisableIPAllowlist}, version, nil
 }
 
 func (s *Server) getAccessPolicy(w http.ResponseWriter, r *http.Request) {
@@ -146,6 +147,7 @@ func (s *Server) putAccessPolicy(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Enabled bool     `json:"ip_allowlist_enabled"`
 		List    []string `json:"ip_allowlist"`
+		OTP     bool     `json:"otp_login_enabled"`
 	}
 	if !decode(w, r, &in) {
 		return
@@ -180,14 +182,14 @@ func (s *Server) putAccessPolicy(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	err := s.adminTx(r, func(ctx context.Context, tx pgx.Tx) error {
-		tag, err := tx.Exec(ctx, "UPDATE access_policy SET ip_allowlist_enabled=$2,ip_allowlist=$3,version=version+1,updated_at=now(),updated_by=$4::uuid WHERE id=1 AND version=$1", version, in.Enabled, clean, actorOf(r).ID)
+		tag, err := tx.Exec(ctx, "UPDATE access_policy SET ip_allowlist_enabled=$2,ip_allowlist=$3,otp_login_enabled=$5,version=version+1,updated_at=now(),updated_by=$4::uuid WHERE id=1 AND version=$1", version, in.Enabled, clean, actorOf(r).ID, in.OTP)
 		if err != nil {
 			return err
 		}
 		if tag.RowsAffected() == 0 {
 			return adminError{409, "version_conflict", "the policy was changed by someone else; reload and try again"}
 		}
-		return s.auditIn(ctx, tx, r, actorOf(r).ID, "", auditEvent{Action: auditIPPolicy, TargetType: "policy", TargetID: "ip_allowlist", Details: map[string]any{"enabled": in.Enabled, "entries": clean}})
+		return s.auditIn(ctx, tx, r, actorOf(r).ID, "", auditEvent{Action: auditIPPolicy, TargetType: "policy", TargetID: "ip_allowlist", Details: map[string]any{"enabled": in.Enabled, "entries": clean, "otp_login": in.OTP}})
 	})
 	if err != nil {
 		adminWriteError(w, err)

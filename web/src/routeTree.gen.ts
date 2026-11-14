@@ -44,6 +44,7 @@ import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/ind
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
+import { Route as AppSettingsOwnershipRouteImport } from './routes/_app/settings/ownership'
 import { Route as AppSettingsPolicyRouteImport } from './routes/_app/settings/policy'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsProvisioningRouteImport } from './routes/_app/settings/provisioning'
@@ -239,6 +240,11 @@ const AppSettingsItemTypesRoute = AppSettingsItemTypesRouteImport.update({
   path: '/item-types',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsOwnershipRoute = AppSettingsOwnershipRouteImport.update({
+  id: '/ownership',
+  path: '/ownership',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsPolicyRoute = AppSettingsPolicyRouteImport.update({
   id: '/policy',
   path: '/policy',
@@ -368,6 +374,7 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
+  '/settings/ownership': typeof AppSettingsOwnershipRoute
   '/settings/policy': typeof AppSettingsPolicyRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/provisioning': typeof AppSettingsProvisioningRoute
@@ -422,6 +429,7 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
+  '/settings/ownership': typeof AppSettingsOwnershipRoute
   '/settings/policy': typeof AppSettingsPolicyRoute
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/provisioning': typeof AppSettingsProvisioningRoute
@@ -478,6 +486,7 @@ export interface FileRoutesById {
   '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/audit': typeof AppSettingsAuditRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
+  '/_app/settings/ownership': typeof AppSettingsOwnershipRoute
   '/_app/settings/policy': typeof AppSettingsPolicyRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/provisioning': typeof AppSettingsProvisioningRoute
@@ -535,6 +544,7 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/audit'
     | '/settings/item-types'
+    | '/settings/ownership'
     | '/settings/policy'
     | '/settings/profile'
     | '/settings/provisioning'
@@ -589,6 +599,7 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/audit'
     | '/settings/item-types'
+    | '/settings/ownership'
     | '/settings/policy'
     | '/settings/profile'
     | '/settings/provisioning'
@@ -644,6 +655,7 @@ export interface FileRouteTypes {
     | '/_app/settings/account'
     | '/_app/settings/audit'
     | '/_app/settings/item-types'
+    | '/_app/settings/ownership'
     | '/_app/settings/policy'
     | '/_app/settings/profile'
     | '/_app/settings/provisioning'
@@ -928,6 +940,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsItemTypesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/ownership': {
+      id: '/_app/settings/ownership'
+      path: '/ownership'
+      fullPath: '/settings/ownership'
+      preLoaderRoute: typeof AppSettingsOwnershipRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/policy': {
       id: '/_app/settings/policy'
       path: '/policy'
@@ -1081,6 +1100,7 @@ interface AppSettingsRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
+  AppSettingsOwnershipRoute: typeof AppSettingsOwnershipRoute
   AppSettingsPolicyRoute: typeof AppSettingsPolicyRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsProvisioningRoute: typeof AppSettingsProvisioningRoute
@@ -1099,6 +1119,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsAuditRoute: AppSettingsAuditRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
+  AppSettingsOwnershipRoute: AppSettingsOwnershipRoute,
   AppSettingsPolicyRoute: AppSettingsPolicyRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsProvisioningRoute: AppSettingsProvisioningRoute,

@@ -276,6 +276,8 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 **Locked space dan kebijakan akses (S12.1.6, migrasi `00304`).** `spaces.locked boolean`; `access_policy(id=1 tunggal, ip_allowlist_enabled, ip_allowlist text[] maks 50, version, updated_at, updated_by)`.
 
+**OTP dan kepemilikan (S12.1.7, migrasi `00305`).** `login_codes(id, user_id, code_hash, attempts, expires_at, used_at, created_at)`; `access_policy.otp_login_enabled boolean default false`; `account.owner_id uuid` (diisi admin tertua untuk instance lama, bootstrap mengisinya untuk instance baru).
+
 ## 8. Data yang sengaja belum ada (M2+)
 
 `reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.

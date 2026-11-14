@@ -81,7 +81,11 @@ func (s *Server) ssoProviders(w http.ResponseWriter, r *http.Request) {
 	for _, p := range list {
 		out = append(out, entry{p.Kind, p.Name})
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"items": out})
+	otp := false
+	if p, err := s.loadPolicy(r.Context()); err == nil {
+		otp = p.OTP
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out, "otp_login": otp})
 }
 
 // sessionUserID returns the user of the request's session cookie, without writing a response.

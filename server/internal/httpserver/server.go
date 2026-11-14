@@ -160,6 +160,8 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.ssoRoutes(mux)
 	s.scimRoutes(mux)
 	s.accessPolicyRoutes(mux)
+	s.otpRoutes(mux)
+	s.ownershipRoutes(mux)
 	s.customRoleRoutes(mux)
 	s.reportRoutes(mux)
 	s.starRoutes(mux)
@@ -306,11 +308,17 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	s.loginAcctFails.clear(account)
+	s.completeSignIn(w, r, id, "password")
+}
+
+// completeSignIn finishes a sign-in whose first factor (a password, an emailed code) has just been proven: the second factor when the
+// person has one, otherwise a fresh session.
+func (s *Server) completeSignIn(w http.ResponseWriter, r *http.Request, id, method string) {
 	if on, err := s.hasTwoFactor(r.Context(), id); err != nil {
 		writeError(w, 500, "could not sign in")
 		return
 	} else if on {
-		// The password is right but the sign-in is not finished: no session until the second step succeeds.
+		// The first factor is right but the sign-in is not finished: no session until the second step succeeds.
 		challenge, err := s.issueChallenge(r.Context(), id)
 		if err != nil {
 			writeError(w, 500, "could not sign in")
@@ -327,7 +335,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, _ = s.pool.Exec(r.Context(), "UPDATE users SET last_login_at=now() WHERE id=$1", id)
-	s.audit(r, id, "", auditEvent{Action: auditLogin, TargetType: "user", TargetID: id, Details: map[string]any{"method": "password"}})
+	s.audit(r, id, "", auditEvent{Action: auditLogin, TargetType: "user", TargetID: id, Details: map[string]any{"method": method}})
 	s.writeMe(w, r, id)
 }
 

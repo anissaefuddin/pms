@@ -35,6 +35,7 @@ function PolicyForm({ policy }: { policy: Policy }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
   const [enabled, setEnabled] = useState(policy.ip_allowlist_enabled);
+  const [otp, setOtp] = useState(policy.otp_login_enabled);
   const [text, setText] = useState(policy.ip_allowlist.join("\n"));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -43,14 +44,14 @@ function PolicyForm({ policy }: { policy: Policy }) {
     event.preventDefault();
     setBusy(true); setError("");
     try {
-      await api<Policy>("/api/v1/access-policy", { method: "PUT", headers: { "If-Match": `"${policy.version}"` }, body: JSON.stringify({ ip_allowlist_enabled: enabled, ip_allowlist: lines() }) });
+      await api<Policy>("/api/v1/access-policy", { method: "PUT", headers: { "If-Match": `"${policy.version}"` }, body: JSON.stringify({ ip_allowlist_enabled: enabled, ip_allowlist: lines(), otp_login_enabled: otp }) });
       toast.success(t("policy.saved"));
       await qc.invalidateQueries({ queryKey: KEY });
     } catch (err) {
       setError(err instanceof ApiError && err.status === 409 ? t("policy.conflict") : (err as Error).message || t("policy.saveFailed"));
     } finally { setBusy(false); }
   }
-  return <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-lg border p-4" aria-label={t("policy.ip.title")}>
+  return <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-lg border p-4" aria-label={t("policy.title")}>
     <h3 className="font-semibold">{t("policy.ip.title")}</h3>
     <p className="text-sm text-muted-foreground">{t("policy.ip.hint")}</p>
     {policy.override_active && <p role="status" className="text-sm text-amber-700 dark:text-amber-400">{t("policy.ip.override")}</p>}
@@ -63,6 +64,9 @@ function PolicyForm({ policy }: { policy: Policy }) {
       <Button type="button" size="sm" variant="outline" disabled={lines().includes(policy.your_ip)} onClick={() => setText([...lines(), policy.your_ip].join("\n"))}>{t("policy.ip.useMine")}</Button>
     </div>
     <p className="text-sm text-muted-foreground">{t("policy.ip.recovery")}</p>
+    <h3 className="pt-2 font-semibold">{t("policy.otp.title")}</h3>
+    <p className="text-sm text-muted-foreground">{t("policy.otp.hint")}</p>
+    <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-6" checked={otp} onChange={(e) => setOtp(e.target.checked)} />{t("policy.otp.enabled")}</label>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
     <Button type="submit" disabled={busy}>{t("policy.save")}</Button>
   </form>;

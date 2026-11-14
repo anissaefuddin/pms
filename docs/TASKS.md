@@ -1353,10 +1353,11 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
   - Catatan: uji dengan IdP/jaringan sungguhan belum; allowlist tidak mencakup form publik, tautan dashboard publik, SCIM, webhook; cache kebijakan 10 detik per proses (D-95).
 
 **S12.1.7 Login OTP dan transfer kepemilikan (AUTH-08, SET-09) — 2 hari**
-- [ ] [BE] Login one-time password
-- [ ] [FE] Layar OTP
-- [ ] [BE] Transfer kepemilikan akun
-- [ ] [TEST] OTP dan transfer
+- [x] [BE] Login one-time password
+- [x] [FE] Layar OTP
+- [x] [BE] Transfer kepemilikan akun
+- [x] [TEST] OTP dan transfer
+  - Catatan: kode OTP dikirim lewat email (SMTP nyata belum diuji); OTP nonaktif sampai admin menyalakannya (D-97).
 
 ### E12.2 Penerimaan
 

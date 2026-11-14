@@ -64,7 +64,7 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 		return nil
 	}
 	sender := w.cfg.SMTPFrom
-	if (args.Template == "set_password" || args.Template == "reset_password") && w.cfg.SMTPFromAuth != "" {
+	if (args.Template == "set_password" || args.Template == "reset_password" || args.Template == "login_code") && w.cfg.SMTPFromAuth != "" {
 		sender = w.cfg.SMTPFromAuth
 	}
 	from, err := mail.ParseAddress(sender)
@@ -237,6 +237,11 @@ func render(args Args) (subject, text, html string, err error) {
 		return "Set your PMS password",
 			note + fmt.Sprintf("Open %s to activate your account and set your password. This link expires in 7 days.", args.URL),
 			page("Activate your PMS account", intro, "This link expires in 7 days."), nil
+	case "login_code":
+		// The code is the whole secret: six digits, ten minutes, one use. Message carries it (like the reset link, it sits in the job row for a while).
+		return "Your PMS sign-in code is " + args.Message,
+			fmt.Sprintf("Your PMS sign-in code is %s. It expires in 10 minutes and works once. If you did not ask for it, ignore this email.", args.Message),
+			fmt.Sprintf(`<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>Your sign-in code</h2><p style="font-size:28px;letter-spacing:6px;font-weight:bold">%s</p><p style="color:#6b7280;font-size:13px">It expires in 10 minutes and works once. If you did not ask for it, ignore this email.</p></body></html>`, htmlpkg.EscapeString(args.Message)), nil
 	case "reset_password":
 		return "Reset your PMS password",
 			fmt.Sprintf("Open %s to reset your password. This link expires in one hour.", args.URL),

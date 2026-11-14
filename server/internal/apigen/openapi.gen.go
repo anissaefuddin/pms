@@ -2701,6 +2701,9 @@ type AccessPolicy struct {
 	IpAllowlist        []string `json:"ip_allowlist"`
 	IpAllowlistEnabled bool     `json:"ip_allowlist_enabled"`
 
+	// OtpLoginEnabled Izinkan masuk dengan kode sekali pakai lewat email (AUTH-08)
+	OtpLoginEnabled bool `json:"otp_login_enabled"`
+
 	// OverrideActive PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan
 	OverrideActive bool `json:"override_active"`
 	Version        int  `json:"version"`
@@ -2713,6 +2716,9 @@ type AccessPolicy struct {
 type AccessPolicyInput struct {
 	IpAllowlist        []string `json:"ip_allowlist"`
 	IpAllowlistEnabled bool     `json:"ip_allowlist_enabled"`
+
+	// OtpLoginEnabled Izinkan masuk dengan kode sekali pakai lewat email (AUTH-08)
+	OtpLoginEnabled bool `json:"otp_login_enabled"`
 }
 
 // Account defines model for Account.
@@ -2727,6 +2733,21 @@ type Account struct {
 	Name      string    `json:"name"`
 	Role      UserType  `json:"role"`
 	Seats     Seats     `json:"seats"`
+}
+
+// AccountOwnership defines model for AccountOwnership.
+type AccountOwnership struct {
+	Candidates []struct {
+		Email string             `json:"email"`
+		Id    openapi_types.UUID `json:"id"`
+		Name  string             `json:"name"`
+	} `json:"candidates"`
+	IsOwner bool `json:"is_owner"`
+	Owner   *struct {
+		Email string             `json:"email"`
+		Id    openapi_types.UUID `json:"id"`
+		Name  string             `json:"name"`
+	} `json:"owner"`
 }
 
 // Activity defines model for Activity.
@@ -5046,6 +5067,12 @@ type RenameAccountJSONBody struct {
 	Name string `json:"name"`
 }
 
+// TransferAccountOwnershipJSONBody defines parameters for TransferAccountOwnership.
+type TransferAccountOwnershipJSONBody struct {
+	NewOwnerId openapi_types.UUID `json:"new_owner_id"`
+	Password   *string            `json:"password,omitempty"`
+}
+
 // UpdateApprovalParams defines parameters for UpdateApproval.
 type UpdateApprovalParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -5114,6 +5141,17 @@ type ExportAuditEventsParams struct {
 type LoginSecondStepJSONBody struct {
 	Challenge string `json:"challenge"`
 	Code      string `json:"code"`
+}
+
+// RequestLoginCodeJSONBody defines parameters for RequestLoginCode.
+type RequestLoginCodeJSONBody struct {
+	Email string `json:"email"`
+}
+
+// VerifyLoginCodeJSONBody defines parameters for VerifyLoginCode.
+type VerifyLoginCodeJSONBody struct {
+	Code  string `json:"code"`
+	Email string `json:"email"`
 }
 
 // ChangePasswordJSONBody defines parameters for ChangePassword.
@@ -5804,6 +5842,9 @@ type PutAccessPolicyJSONRequestBody = AccessPolicyInput
 // RenameAccountJSONRequestBody defines body for RenameAccount for application/json ContentType.
 type RenameAccountJSONRequestBody RenameAccountJSONBody
 
+// TransferAccountOwnershipJSONRequestBody defines body for TransferAccountOwnership for application/json ContentType.
+type TransferAccountOwnershipJSONRequestBody TransferAccountOwnershipJSONBody
+
 // RunAnalyticsQueryJSONRequestBody defines body for RunAnalyticsQuery for application/json ContentType.
 type RunAnalyticsQueryJSONRequestBody = AnalyticsQuery
 
@@ -5830,6 +5871,12 @@ type LoginJSONRequestBody = LoginRequest
 
 // LoginSecondStepJSONRequestBody defines body for LoginSecondStep for application/json ContentType.
 type LoginSecondStepJSONRequestBody LoginSecondStepJSONBody
+
+// RequestLoginCodeJSONRequestBody defines body for RequestLoginCode for application/json ContentType.
+type RequestLoginCodeJSONRequestBody RequestLoginCodeJSONBody
+
+// VerifyLoginCodeJSONRequestBody defines body for VerifyLoginCode for application/json ContentType.
+type VerifyLoginCodeJSONRequestBody VerifyLoginCodeJSONBody
 
 // ChangePasswordJSONRequestBody defines body for ChangePassword for application/json ContentType.
 type ChangePasswordJSONRequestBody ChangePasswordJSONBody
@@ -6376,6 +6423,12 @@ type ServerInterface interface {
 	// RenameAccount Ubah nama workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(w http.ResponseWriter, r *http.Request)
+	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
+	// (GET /account/ownership)
+	GetAccountOwnership(w http.ResponseWriter, r *http.Request)
+	// TransferAccountOwnership Serahkan kepemilikan akun ke admin aktif lain (SET-09); hanya pemilik; butuh password, atau login dalam 15 menit terakhir bila tanpa password
+	// (POST /account/ownership)
+	TransferAccountOwnership(w http.ResponseWriter, r *http.Request)
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(w http.ResponseWriter, r *http.Request)
@@ -6445,6 +6498,12 @@ type ServerInterface interface {
 	// Logout Logout dan cabut session ini (AUTH-02)
 	// (POST /auth/logout)
 	Logout(w http.ResponseWriter, r *http.Request)
+	// RequestLoginCode Kirim kode masuk sekali pakai ke email (AUTH-08); selalu 202 agar tidak membocorkan siapa yang punya akun
+	// (POST /auth/otp/request)
+	RequestLoginCode(w http.ResponseWriter, r *http.Request)
+	// VerifyLoginCode Masuk dengan kode (AUTH-08); lima percobaan per kode, sekali pakai, berlaku 10 menit
+	// (POST /auth/otp/verify)
+	VerifyLoginCode(w http.ResponseWriter, r *http.Request)
 	// ChangePassword Ganti password (AUTH-04)
 	// (POST /auth/password/change)
 	ChangePassword(w http.ResponseWriter, r *http.Request)
@@ -7200,6 +7259,34 @@ func (siw *ServerInterfaceWrapper) RenameAccount(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RenameAccount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAccountOwnership operation middleware
+func (siw *ServerInterfaceWrapper) GetAccountOwnership(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAccountOwnership(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TransferAccountOwnership operation middleware
+func (siw *ServerInterfaceWrapper) TransferAccountOwnership(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TransferAccountOwnership(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8046,6 +8133,34 @@ func (siw *ServerInterfaceWrapper) Logout(w http.ResponseWriter, r *http.Request
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.Logout(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RequestLoginCode operation middleware
+func (siw *ServerInterfaceWrapper) RequestLoginCode(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RequestLoginCode(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// VerifyLoginCode operation middleware
+func (siw *ServerInterfaceWrapper) VerifyLoginCode(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.VerifyLoginCode(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14942,6 +15057,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim-tokens", wrapper.ListScimTokens)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/scim-tokens", wrapper.CreateScimToken)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/scim-tokens/{tokenId}", wrapper.RevokeScimToken)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/otp/request", wrapper.RequestLoginCode)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/otp/verify", wrapper.VerifyLoginCode)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account/ownership", wrapper.GetAccountOwnership)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/account/ownership", wrapper.TransferAccountOwnership)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/access-policy", wrapper.GetAccessPolicy)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/access-policy", wrapper.PutAccessPolicy)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-roles", wrapper.ListCustomRoles)
@@ -15433,6 +15552,142 @@ func (response RenameAccount422ApplicationProblemPlusJSONResponse) VisitRenameAc
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAccountOwnershipRequestObject struct {
+}
+
+type GetAccountOwnershipResponseObject interface {
+	VisitGetAccountOwnershipResponse(w http.ResponseWriter) error
+}
+
+type GetAccountOwnership200JSONResponse AccountOwnership
+
+func (response GetAccountOwnership200JSONResponse) VisitGetAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAccountOwnership401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAccountOwnership401ApplicationProblemPlusJSONResponse) VisitGetAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAccountOwnership403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetAccountOwnership403ApplicationProblemPlusJSONResponse) VisitGetAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAccountOwnershipRequestObject struct {
+	Body *TransferAccountOwnershipJSONRequestBody
+}
+
+type TransferAccountOwnershipResponseObject interface {
+	VisitTransferAccountOwnershipResponse(w http.ResponseWriter) error
+}
+
+type TransferAccountOwnership200JSONResponse AccountOwnership
+
+func (response TransferAccountOwnership200JSONResponse) VisitTransferAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAccountOwnership401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response TransferAccountOwnership401ApplicationProblemPlusJSONResponse) VisitTransferAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAccountOwnership403ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferAccountOwnership403ApplicationProblemPlusJSONResponse) VisitTransferAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAccountOwnership422ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferAccountOwnership422ApplicationProblemPlusJSONResponse) VisitTransferAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAccountOwnership429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response TransferAccountOwnership429ApplicationProblemPlusJSONResponse) VisitTransferAccountOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -16736,6 +16991,170 @@ func (response Logout204Response) VisitLogoutResponse(w http.ResponseWriter) err
 	return nil
 }
 
+type RequestLoginCodeRequestObject struct {
+	Body *RequestLoginCodeJSONRequestBody
+}
+
+type RequestLoginCodeResponseObject interface {
+	VisitRequestLoginCodeResponse(w http.ResponseWriter) error
+}
+
+type RequestLoginCode202Response struct {
+}
+
+func (response RequestLoginCode202Response) VisitRequestLoginCodeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(202)
+	return nil
+}
+
+type RequestLoginCode403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RequestLoginCode403ApplicationProblemPlusJSONResponse) VisitRequestLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestLoginCode404ApplicationProblemPlusJSONResponse Problem
+
+func (response RequestLoginCode404ApplicationProblemPlusJSONResponse) VisitRequestLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RequestLoginCode429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response RequestLoginCode429ApplicationProblemPlusJSONResponse) VisitRequestLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyLoginCodeRequestObject struct {
+	Body *VerifyLoginCodeJSONRequestBody
+}
+
+type VerifyLoginCodeResponseObject interface {
+	VisitVerifyLoginCodeResponse(w http.ResponseWriter) error
+}
+
+type VerifyLoginCode200JSONResponse Me
+
+func (response VerifyLoginCode200JSONResponse) VisitVerifyLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyLoginCode202JSONResponse TwoFactorChallenge
+
+func (response VerifyLoginCode202JSONResponse) VisitVerifyLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyLoginCode401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyLoginCode401ApplicationProblemPlusJSONResponse) VisitVerifyLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyLoginCode403ApplicationProblemPlusJSONResponse Problem
+
+func (response VerifyLoginCode403ApplicationProblemPlusJSONResponse) VisitVerifyLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyLoginCode404ApplicationProblemPlusJSONResponse Problem
+
+func (response VerifyLoginCode404ApplicationProblemPlusJSONResponse) VisitVerifyLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type VerifyLoginCode429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response VerifyLoginCode429ApplicationProblemPlusJSONResponse) VisitVerifyLoginCodeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ChangePasswordRequestObject struct {
 	Body *ChangePasswordJSONRequestBody
 }
@@ -16913,6 +17332,9 @@ type ListSsoProviders200JSONResponse struct {
 		Kind ListSsoProviders200JSONResponseBodyItemsKind `json:"kind"`
 		Name string                                       `json:"name"`
 	} `json:"items"`
+
+	// OtpLogin Login dengan kode sekali pakai lewat email aktif
+	OtpLogin bool `json:"otp_login"`
 }
 
 func (response ListSsoProviders200JSONResponse) VisitListSsoProvidersResponse(w http.ResponseWriter) error {
@@ -30239,6 +30661,12 @@ type StrictServerInterface interface {
 	// RenameAccount Ubah nama workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(ctx context.Context, request RenameAccountRequestObject) (RenameAccountResponseObject, error)
+	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
+	// (GET /account/ownership)
+	GetAccountOwnership(ctx context.Context, request GetAccountOwnershipRequestObject) (GetAccountOwnershipResponseObject, error)
+	// TransferAccountOwnership Serahkan kepemilikan akun ke admin aktif lain (SET-09); hanya pemilik; butuh password, atau login dalam 15 menit terakhir bila tanpa password
+	// (POST /account/ownership)
+	TransferAccountOwnership(ctx context.Context, request TransferAccountOwnershipRequestObject) (TransferAccountOwnershipResponseObject, error)
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(ctx context.Context, request RunAnalyticsQueryRequestObject) (RunAnalyticsQueryResponseObject, error)
@@ -30308,6 +30736,12 @@ type StrictServerInterface interface {
 	// Logout Logout dan cabut session ini (AUTH-02)
 	// (POST /auth/logout)
 	Logout(ctx context.Context, request LogoutRequestObject) (LogoutResponseObject, error)
+	// RequestLoginCode Kirim kode masuk sekali pakai ke email (AUTH-08); selalu 202 agar tidak membocorkan siapa yang punya akun
+	// (POST /auth/otp/request)
+	RequestLoginCode(ctx context.Context, request RequestLoginCodeRequestObject) (RequestLoginCodeResponseObject, error)
+	// VerifyLoginCode Masuk dengan kode (AUTH-08); lima percobaan per kode, sekali pakai, berlaku 10 menit
+	// (POST /auth/otp/verify)
+	VerifyLoginCode(ctx context.Context, request VerifyLoginCodeRequestObject) (VerifyLoginCodeResponseObject, error)
 	// ChangePassword Ganti password (AUTH-04)
 	// (POST /auth/password/change)
 	ChangePassword(ctx context.Context, request ChangePasswordRequestObject) (ChangePasswordResponseObject, error)
@@ -31127,6 +31561,61 @@ func (sh *strictHandler) RenameAccount(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// GetAccountOwnership operation middleware
+func (sh *strictHandler) GetAccountOwnership(w http.ResponseWriter, r *http.Request) {
+	var request GetAccountOwnershipRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAccountOwnership(ctx, request.(GetAccountOwnershipRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAccountOwnership")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAccountOwnershipResponseObject); ok {
+		if err := validResponse.VisitGetAccountOwnershipResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TransferAccountOwnership operation middleware
+func (sh *strictHandler) TransferAccountOwnership(w http.ResponseWriter, r *http.Request) {
+	var request TransferAccountOwnershipRequestObject
+
+	var body TransferAccountOwnershipJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TransferAccountOwnership(ctx, request.(TransferAccountOwnershipRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TransferAccountOwnership")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TransferAccountOwnershipResponseObject); ok {
+		if err := validResponse.VisitTransferAccountOwnershipResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // RunAnalyticsQuery operation middleware
 func (sh *strictHandler) RunAnalyticsQuery(w http.ResponseWriter, r *http.Request) {
 	var request RunAnalyticsQueryRequestObject
@@ -31782,6 +32271,68 @@ func (sh *strictHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(LogoutResponseObject); ok {
 		if err := validResponse.VisitLogoutResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RequestLoginCode operation middleware
+func (sh *strictHandler) RequestLoginCode(w http.ResponseWriter, r *http.Request) {
+	var request RequestLoginCodeRequestObject
+
+	var body RequestLoginCodeJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RequestLoginCode(ctx, request.(RequestLoginCodeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RequestLoginCode")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RequestLoginCodeResponseObject); ok {
+		if err := validResponse.VisitRequestLoginCodeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// VerifyLoginCode operation middleware
+func (sh *strictHandler) VerifyLoginCode(w http.ResponseWriter, r *http.Request) {
+	var request VerifyLoginCodeRequestObject
+
+	var body VerifyLoginCodeJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.VerifyLoginCode(ctx, request.(VerifyLoginCodeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "VerifyLoginCode")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(VerifyLoginCodeResponseObject); ok {
+		if err := validResponse.VisitVerifyLoginCodeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

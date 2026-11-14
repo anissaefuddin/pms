@@ -1023,6 +1023,93 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /auth/otp/request:
+    post:
+      operationId: requestLoginCode
+      summary: Kirim kode masuk sekali pakai ke email (AUTH-08); selalu 202 agar tidak membocorkan siapa yang punya akun
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email]
+              properties:
+                email: { type: string, maxLength: 254 }
+      responses:
+        '202': { description: Diterima; bila alamat milik pengguna aktif, kode dikirim (satu per menit per orang) }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/otp/verify:
+    post:
+      operationId: verifyLoginCode
+      summary: Masuk dengan kode (AUTH-08); lima percobaan per kode, sekali pakai, berlaku 10 menit
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [email, code]
+              properties:
+                email: { type: string, maxLength: 254 }
+                code: { type: string, maxLength: 16 }
+      responses:
+        '200':
+          description: Berhasil; cookie session diset
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        '202':
+          description: Kode benar tetapi user memakai 2FA; lanjutkan dengan `POST /auth/login/2fa`
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TwoFactorChallenge' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /account/ownership:
+    get:
+      operationId: getAccountOwnership
+      summary: Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
+      responses:
+        '200':
+          description: Kepemilikan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccountOwnership' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: transferAccountOwnership
+      summary: Serahkan kepemilikan akun ke admin aktif lain (SET-09); hanya pemilik; butuh password, atau login dalam 15 menit terakhir bila tanpa password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [new_owner_id]
+              properties:
+                new_owner_id: { type: string, format: uuid }
+                password: { type: string, maxLength: 200 }
+      responses:
+        '200':
+          description: Dipindahkan; kondisi terbaru
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccountOwnership' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
   /access-policy:
     get:
       operationId: getAccessPolicy
@@ -1135,8 +1222,9 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [items]
+                required: [items, otp_login]
                 properties:
+                  otp_login: { type: boolean, description: Login dengan kode sekali pakai lewat email aktif }
                   items:
                     type: array
                     items:
@@ -5171,13 +5259,36 @@ components:
       properties:
         base_url: { type: string }
         items: { type: array, items: { $ref: '#/components/schemas/ScimToken' } }
+    AccountOwnership:
+      type: object
+      required: [owner, is_owner, candidates]
+      properties:
+        owner:
+          nullable: true
+          type: object
+          required: [id, name, email]
+          properties:
+            id: { type: string, format: uuid }
+            name: { type: string }
+            email: { type: string }
+        is_owner: { type: boolean }
+        candidates:
+          type: array
+          items:
+            type: object
+            required: [id, name, email]
+            properties:
+              id: { type: string, format: uuid }
+              name: { type: string }
+              email: { type: string }
     AccessPolicyInput:
       type: object
       additionalProperties: false
-      required: [ip_allowlist_enabled, ip_allowlist]
+      required: [ip_allowlist_enabled, ip_allowlist, otp_login_enabled]
       properties:
         ip_allowlist_enabled: { type: boolean }
         ip_allowlist: { type: array, maxItems: 50, items: { type: string, maxLength: 64, description: Alamat IP atau jaringan CIDR } }
+        otp_login_enabled: { type: boolean, description: Izinkan masuk dengan kode sekali pakai lewat email (AUTH-08) }
     AccessPolicy:
       allOf:
         - { $ref: '#/components/schemas/AccessPolicyInput' }
