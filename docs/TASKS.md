@@ -880,6 +880,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [API] CRUD tipe item: key, nama, ikon, kelas task/project, aktif
 - [x] [DB] Migrasi `item_types` dan backfill tipe bawaan
 - [ ] [DB] Query sqlc
+  > Audit 14 Nov 2026: paket `items` memakai SQL pgx langsung untuk `item_type_defs`; hanya model yang dibangkitkan sqlc (D-61). Dibiarkan terbuka sampai ada keputusan memindahkan query.
 - [x] [BE] Validasi: key unik, kelas, nama
 - [x] [BE] Policy admin dan 403
 - [x] [BE] Nonaktifkan tanpa menghapus data
@@ -889,9 +890,12 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 **S8.1.2 Field bawaan, default, inheritance (CUST-02) — 3 hari**
 - [x] [API] Field bawaan dan nilai default per tipe
 - [ ] [DB] Relasi tipe↔custom field dan default
+  > Audit 14 Nov 2026: default disimpan sebagai jsonb di `item_type_defs` dan hanya mencakup field bawaan (importance, durasi); default berdasar custom field belum ada.
 - [ ] [BE] Terapkan default saat create dari UI/API/impor/form
+  > Audit 14 Nov 2026: `items.CreateTx` menerapkan default untuk API, form, template Space dan otomasi; impor Excel belum mengenal tipe kustom.
 - [x] [BE] Inheritance nilai dari parent sesuai aturan tipe
 - [ ] [TEST] Default di keempat jalur create
+  > Audit 14 Nov 2026: hanya jalur API yang diuji (`TestItemTypesCRUDDefaultsAndChildRules`); jalur form dan impor belum.
 - [x] [TEST] Inheritance dan perubahan definisi
 
 **S8.1.3 Aturan subitem dan workflow bawaan (CUST-03) — 2 hari**
@@ -910,9 +914,13 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 **S8.1.5 UI tipe dan menu "+" (CUST-01, SPC-14) — 3 hari**
 - [x] [FE] Dialog "Create a custom item type"
 - [ ] [FE] Toggle menu "+" per Space
+  > Audit 14 Nov 2026: tidak ada kode; belum dikerjakan.
 - [ ] [FE] Menu blueprint: tipe, nama, ikon
+  > Audit 14 Nov 2026: belum ada; dialog buat item hanya memilih tipe.
 - [ ] [FE] Tipe di Table, Board, filter, search
+  > Audit 14 Nov 2026: `item-table.tsx` dan `item-board.tsx` tidak merujuk tipe kustom.
 - [ ] [BE] Tipe di ekspor Excel, laporan, search
+  > Audit 14 Nov 2026: ekspor, laporan dan search tidak merujuk `type_id`.
 - [x] [TEST] E2E-PAR-01 dan E2E-PAR-02, axe
 
 **S8.1.6 Field relasi bertipe (CUST-05) — 2.5 hari**
@@ -931,6 +939,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [BE] Hitung ulang saat field sumber berubah
 - [x] [FE] Editor formula
 - [ ] [FE] Tampilan Table dan filter/sort
+  > Audit 14 Nov 2026: kolom formula hanya tampil di panel item (`item-custom-fields.tsx`); Table belum diverifikasi.
 - [x] [TEST] Tabel ≥ 20 kasus
 - [x] [TEST] Performa 500 item
 
@@ -942,6 +951,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [BE] Error terstruktur tanpa mengubah data
 - [x] [FE] Editor guard di settings workflow
 - [ ] [FE] Pesan error di panel item dan Board
+  > Audit 14 Nov 2026: panel item terbukti (E2E-PAR-03 live: alert memuat semua masalah); Board belum menampilkan pesan `transition_blocked`.
 - [x] [TEST] E2E-PAR-03 lewat UI, REST, impor
 
 **S8.2.3 Validasi lintas record (WF-05) — 1.5 hari**
@@ -965,6 +975,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [FE] Renderer publik dan internal
 - [x] [TEST] Unit evaluator kondisi
 - [ ] [TEST] E2E-PAR-05
+  > Audit 14 Nov 2026: hanya Playwright mock (`m8.spec.ts`, `forms.spec.ts`) dan unit/integrasi Go; E2E live form→Blueprint→item belum ada (routing ke Blueprint belum).
 
 **S8.3.2 Routing form ke tipe custom dan Blueprint (FORM-09) — 1.5 hari**
 - [x] [BE] Pemetaan jawaban ke field tipe custom
@@ -986,6 +997,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 
 **S8.4.1 UAT gate M8 — 2 hari**
 - [ ] [TEST] UAT per requirement M8
+  > Butuh manusia; status NOT RUN ([UAT.md](UAT.md#uat-m8-gate-g1a)).
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
 - [x] [DOC] Gate report G1a
@@ -1069,6 +1081,7 @@ Memetakan: AUT-01..05, APR-01..03. Prasyarat: S8.2.2, S7.3.3.
 
 **S9.3.1 UAT gate M9 — 2 hari · IN_PROGRESS**
 - [ ] [TEST] UAT per requirement M9
+  > Butuh manusia; status NOT RUN ([UAT.md](UAT.md#uat-m9-gate-g1b)).
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
 - [x] [DOC] [Gate report G1b](parity/gate-reports/G1B_AUTOMATION_APPROVALS.md)
@@ -1169,12 +1182,14 @@ Memetakan: RSC-01..06, VIEW-05C, SPC-16, SCH-01, TASK-14. Prasyarat: S7.4.1; S8.
 - [x] [BE] Data finansial hanya untuk admin (tidak dikirim ke yang lain)
 - [x] [FE] Panel budget vs actual (di field budget project)
 - [ ] [FE] Kolom cost di report
+  > Audit 14 Nov 2026: tidak ada UI report dengan kolom biaya; panel budget vs actual ada di field budget project.
 - [x] [TEST] Rumus dan masking
 
 ### E10.5 Gate
 
 **S10.5.1 UAT gate M10 — 2 hari**
 - [ ] [TEST] UAT per requirement M10
+  > Butuh manusia; status NOT RUN ([UAT.md](UAT.md#uat-m10-gate-g2a)).
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
 - [x] [DOC] Gate report G2a ([G2A](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md))
