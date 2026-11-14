@@ -1096,6 +1096,15 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 - Hasil: container `pms-app-1` healthy, `https://dev-lens.losakaenergi.app/` 200, `/healthz` 200, log tanpa baris ERROR. Rollback: kembalikan `PMS_IMAGE=pms:1b76d3a` dan pulihkan backup di atas bila diperlukan (migrasi hanya maju).
 - Belum dilakukan: UAT manusia, konektor Google nyata, backup luar server (`BACKUP_REMOTE` kosong di server).
 
+## Deploy `dev-lens` ke build `eb60b2f` (14 Nov 2026)
+
+- `main` = merge PR #12 (M12b UI parity; CI hijau: test, authorization-matrix, parity-e2e). Tiga putaran perbaikan CI sebelum hijau: tes drag Board, tujuh tes live yang mengikuti layout baru, dan satu bug produk (halaman project untuk item yang tidak boleh dibuka menampilkan loading tanpa henti; kini alert, tes `item-not-found.spec.ts`).
+- Image `pms:eb60b2f` dibangun di `losaka-app`, backup `20261114T164645Z`, `PMS_IMAGE` dari `pms:91d310e`. Hasil: container healthy, `https://dev-lens.losakaenergi.app/` 200, `/healthz` 200, log tanpa ERROR. Rollback: `PMS_IMAGE=pms:91d310e` plus pulihkan backup (migrasi hanya maju; build ini menambah migrasi API tab Sent bila ada).
+- Belum: UAT manusia, konektor Google nyata, avatar di widget daftar (S-UIP.2.5), backup luar server.
+
+### Sample seed: TIMELINE ITA INTERNAL (14 Nov 2026)
+
+`deploy/samples/ita-timeline-seed.sql` membuat Space "ITA Internal Timeline" dari PDF `TIMELINE ITA INTERNAL - 201026` (Gantt Oct 2026 - Mar 2027): 6 project (Lalang Platform, Kurau Plant, Melibur Plant, DC Kuat, AI Selatan, MSTB), 24 folder kelompok (Process Safety, HAZOP, HAZID, MAH, SECE) dan 128 task (termasuk milestone Kick Off Meeting dan Closing Proyek), tanggal dari kolom minggu pada bar. Idempoten. Dijalankan di `dev-lens` setelah uji `BEGIN ... ROLLBACK`: 158 item, tanpa ERROR di log. Semua status New kecuali Kick Off Meeting (Completed); tanpa assignee dan dependensi karena PDF tidak memuatnya. Dibuat lewat SQL langsung (bukan API), jadi tampilan dan hak akses di UI belum diperiksa manusia.
 ## UIP2-A: detail item pass 2
 
 Playwright mock: `items.spec` (tes baru "UIP2-A"), `approvals`, `share`, `item-effort`, `item-locations`, `item-custom-fields`, `blueprints`, `ui-audit` (axe 1440/390): 111 lulus; `tsc --noEmit` dan eslint bersih. Tes live Go belum dijalankan.
@@ -1135,3 +1144,7 @@ Tidak diuji: tampilan 390 px dan tangkapan layar visual; sidebar pada data Space
 - `forms.spec.ts` (15) lulus; `tsc` dan `eslint` bersih.
 - Tes live Go dengan `PMS_TEST_BROWSER=1`, Postgres `pms-pgD`, port web 4184 (4173 dipakai sesi lain): `TestBrowserM5Flows`, `TestBrowserM11AnalyticsFlows`, `TestBrowserM3Flows`, `TestBrowserM8Flows`, `TestBrowserFormBranchingBlueprint` semuanya PASS. Satu kali `m8-live` E2E-PAR-03 gagal pada proses pertama lalu lulus pada dua proses berikutnya tanpa perubahan kode (flaky, tidak diselidiki).
 - `TestBrowserCreateMenu` GAGAL (`Space actions` tidak ditemukan di halaman Space): area lane B, bukan perubahan lane D; dicatat untuk koordinator.
+
+### Deploy dev-lens `a0cbad3` (14 Nov 2026, pass 2 UI parity, PR #14)
+- CI PR #14 hijau (test, authorization-matrix, parity-e2e). Build di server: `pms:a0cbad3`; backup `20261114T225151Z`; build sebelumnya `pms:eb60b2f`.
+- Container `pms-app-1` healthy, `/healthz` 200 (port 8086), 0 baris `level=ERROR` dalam 2 menit.
