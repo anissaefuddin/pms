@@ -14,7 +14,7 @@ import (
 
 func TestBootstrapCreatesFoundationOnce(t *testing.T) {
 	ctx := context.Background()
-	pool, err := database.Open(ctx, testdb.New(t))
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -101,7 +101,7 @@ func TestBootstrapCreatesFoundationOnce(t *testing.T) {
 // (Runs after the first one take the "re-issue" path for the same still-invited admin, so several may report success.)
 func TestBootstrapConcurrentRunsCreateOneAccount(t *testing.T) {
 	ctx := context.Background()
-	pool, err := database.Open(ctx, testdb.New(t))
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
 	if err != nil {
 		t.Fatal(err)
 	}

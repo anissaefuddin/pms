@@ -30,7 +30,7 @@ const publicURL = "http://pms.test"
 
 // TestAuthContract exercises the M0 auth endpoints against api/openapi.yaml (paths, status codes, payloads).
 func TestAuthContract(t *testing.T) {
-	dbURL := testdb.New(t)
+	dbURL := testdb.NewMigrated(t)
 	// Each run owns its collectors, including gauge callbacks that capture its pool.
 	registerer, gatherer := prometheus.DefaultRegisterer, prometheus.DefaultGatherer
 	registry := prometheus.NewRegistry()

@@ -17,7 +17,7 @@ import (
 
 func TestRunKeepsLiveRowsAndRemovesDeadOnes(t *testing.T) {
 	ctx := context.Background()
-	pool, err := database.Open(ctx, testdb.New(t))
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -88,7 +88,7 @@ func TestRunKeepsLiveRowsAndRemovesDeadOnes(t *testing.T) {
 
 func TestSweepFilesRemovesOnlyOldFilesWithoutARow(t *testing.T) {
 	ctx := context.Background()
-	pool, err := database.Open(ctx, testdb.New(t))
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -180,68 +180,68 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Halaman hello memanggil `/healthz` lewat klien hasil generate
 
 **S0.1.2 Tooling database dan migrasi identitas**
-- [ ] Pool `pgx`, konfigurasi `sqlc` (`queries/`, `gen/`), runner goose tertanam di `pms migrate`
-- [ ] Migrasi `0001_extensions` dan `0002_identity` (`account`, `users`, `sessions`, `user_tokens`)
-- [ ] `readyz` memeriksa versi migrasi terbaru; tes migrasi maju pada database kosong di CI
-- [ ] Helper tes: database sementara per paket tes (template DB + clone)
+- [x] Pool `pgx`, konfigurasi `sqlc` (`queries/`, `gen/`), runner goose tertanam di `pms migrate`
+- [x] Migrasi `0001_extensions` dan `0002_identity` (`account`, `users`, `sessions`, `user_tokens`)
+- [x] `readyz` memeriksa versi migrasi terbaru; tes migrasi maju pada database kosong di CI
+- [x] Helper tes: database sementara per paket tes (template DB + clone) — `testdb.NewMigrated` (template + clone) 14 Nov 2026
 
 **S0.1.3 Dockerfile, CI, dan image di GHCR**
 - [x] Dockerfile multi-stage (build web → build Go dengan `go:embed` → image minimal, user non-root)
 - [x] Workflow Actions: lint, typecheck, `go test` + service Postgres, build; cache modul
 - [x] Job rilis pada tag `v*` → push `ghcr.io/anissaefuddin/pms:<versi>` (private)
-- [ ] Verifikasi: image berjalan dan melayani SPA + `/api/v1/healthz`
+- [x] Verifikasi: image berjalan dan melayani SPA + `/api/v1/healthz` — diverifikasi 14 Nov 2026 (TESTING.md, audit M0/M1)
 
 **S0.2.1 Platform HTTP**
-- [ ] Router `net/http` + middleware: request ID, log `slog`, recover, batas body, cek `Origin`
-- [ ] Penulis error `problem+json` + pemetaan `code` (WORKFLOWS §10)
-- [ ] Loader konfigurasi env dengan validasi dan pesan galat jelas
-- [ ] Tes middleware (Origin salah → 403, panic → 500 dengan `request_id`)
+- [x] Router `net/http` + middleware: request ID, log `slog`, recover, batas body, cek `Origin`
+- [x] Penulis error `problem+json` + pemetaan `code` (WORKFLOWS §10)
+- [x] Loader konfigurasi env dengan validasi dan pesan galat jelas
+- [x] Tes middleware (Origin salah → 403, panic → 500 dengan `request_id`)
 
 **S0.2.2 Login, logout, dan session**
-- [ ] Hash argon2id + kebijakan password (≥ 8, daftar password umum)
-- [ ] Tabel/query session: buat, rotasi, perbarui `last_seen` (≤ 1×/5 menit), cabut
-- [ ] Endpoint `login`/`logout`/`me` + middleware autentikasi
-- [ ] Rate limit memori per IP dan per email (+ komentar `shortcut:`)
-- [ ] Tes: kedaluwarsa idle/absolut, pesan error seragam, rotasi ID
+- [x] Hash argon2id + kebijakan password (≥ 8, daftar password umum)
+- [x] Tabel/query session: buat, rotasi, perbarui `last_seen` (≤ 1×/5 menit), cabut
+- [x] Endpoint `login`/`logout`/`me` + middleware autentikasi
+- [x] Rate limit memori per IP dan per email (+ komentar `shortcut:`)
+- [x] Tes: kedaluwarsa idle/absolut, pesan error seragam, rotasi ID
 
 **S0.2.3 Reset dan ganti password**
-- [ ] `forgot` (202 seragam) dan `reset` (token sekali pakai, cabut semua session)
-- [ ] `change` (cabut session lain, rotasi session ini) + tes
+- [x] `forgot` (202 seragam) dan `reset` (token sekali pakai, cabut semua session)
+- [x] `change` (cabut session lain, rotasi session ini) + tes
 
 **S0.2.4 Undangan dan penerimaan undangan**
-- [ ] Pembuat token undangan + `GET /auth/invitations/{token}`
-- [ ] `accept`: aktivasi, hash password, buat Personal space, buat session
-- [ ] Tes: token kedaluwarsa, token terpakai (410), password lemah (422)
+- [x] Pembuat token undangan + `GET /auth/invitations/{token}`
+- [x] `accept`: aktivasi, hash password, buat Personal space, buat session
+- [x] Tes: token kedaluwarsa, token terpakai (410), password lemah (422)
 
 **S0.2.5 Perintah bootstrap**
-- [ ] `pms bootstrap`: account, admin `invited`, workflow dan status default, Space "General"
-- [ ] Idempoten + kode keluar ≠ 0 bila admin sudah ada; cetak link bila SMTP kosong
-- [ ] Tes dua kali jalan
+- [x] `pms bootstrap`: account, admin `invited`, workflow dan status default, Space "General"
+- [x] Idempoten + kode keluar ≠ 0 bila admin sudah ada; cetak link bila SMTP kosong
+- [x] Tes dua kali jalan
 
 **S0.2.6 Email (SMTP + job)**
-- [ ] Pasang River + migrasi River; klien SMTP; mode `log`
-- [ ] Job `send_email` dengan retry; template `en` (undangan, reset)
-- [ ] Tes dengan server SMTP tiruan
+- [x] Pasang River + migrasi River; klien SMTP; mode `log`
+- [x] Job `send_email` dengan retry; template `en` (undangan, reset)
+- [x] Tes dengan server SMTP tiruan
 
 **E0.3** · **S0.3.1 Setup frontend**
-- [ ] TanStack Router/Query, react-i18next (`en`), Tailwind v4, `data-brand`/`data-density`, mode gelap
+- [x] TanStack Router/Query, react-i18next (`en`), Tailwind v4, `data-brand`/`data-density`, mode gelap
 - [x] Salin komponen `ui-kit`; ganti `LinkButton` ke adapter TanStack; font lokal
 - [x] ESLint `no-literal-string`; Playwright + `axe` terpasang
 
 **S0.3.2 Layar autentikasi dan shell kosong**
-- [ ] Login, Forgot, Reset, Accept invitation, `/settings/security`
-- [ ] Shell: sidebar + topbar + menu profil/logout; `?next=` hanya path internal
-- [ ] Tes Playwright klik nyata untuk menu profil
+- [x] Login, Forgot, Reset, Accept invitation, `/settings/security`
+- [x] Shell: sidebar + topbar + menu profil/logout; `?next=` hanya path internal
+- [x] Tes Playwright klik nyata untuk menu profil
 
 **E0.4** · **S0.4.1 Compose klien, update, dan backup**
-- [ ] `deploy/docker-compose.yml` + `.env.example` + label Traefik
-- [ ] `update.sh` (backup pre-deploy → pull → up → tunggu `/readyz`)
-- [ ] `backup.sh` (dump lalu file, retensi 14 hari, salin keluar) dan `restore.sh`
-- [ ] Uji restore penuh pada instance uji; catat waktu terhadap RPO/RTO
+- [x] `deploy/docker-compose.yml` + `.env.example` + label Traefik
+- [x] `update.sh` (backup pre-deploy → pull → up → tunggu `/readyz`)
+- [x] `backup.sh` (dump lalu file, retensi 14 hari, salin keluar) dan `restore.sh`
+- [x] Uji restore penuh pada instance uji; catat waktu terhadap RPO/RTO
 
 **S0.4.2 Observabilitas**
-- [ ] Metrik ARCHITECTURE §11 di `/metrics`; metrik `backup_last_success_timestamp` dari script
-- [ ] Provisioning alert Grafana (5xx, job gagal, backup basi, disk)
+- [x] Metrik ARCHITECTURE §11 di `/metrics`; metrik `backup_last_success_timestamp` dari script
+- [x] Provisioning alert Grafana (5xx, job gagal, backup basi, disk)
 
 **E0.5** · **S0.5.1 Spike Gantt dan penjadwalan**
 - [x] Halaman SVAR dengan ±200 task dan dependensi dummy
@@ -253,9 +253,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E1.1 Space dan otorisasi
 
 **S1.1.1 Data Space dan CRUD**
-- [ ] Migrasi `spaces`, `shares`, `groups`, `group_members` + trigger validasi target share
-- [ ] Query sqlc dan service Space; endpoint `/spaces*`
-- [ ] Personal space saat aktivasi; guard hapus/bagikan
+- [x] Migrasi `spaces`, `shares`, `groups`, `group_members` + trigger validasi target share
+- [x] Query sqlc dan service Space; endpoint `/spaces*`
+- [x] Personal space saat aktivasi; guard hapus/bagikan
 
 **S1.1.2 Paket `policy`**
 - [x] Definisi tunggal matriks (share role, user type, kemampuan) sebagai data
@@ -277,9 +277,9 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E1.2 Item inti
 
 **S1.2.1 Skema item dan workflow default**
-- [ ] Migrasi `workflows`, `statuses`, `items`, `item_locations`, assignees, followers
-- [ ] Trigger anti-siklus + tes; indeks DATABASE §4
-- [ ] Seed workflow default lewat bootstrap
+- [x] Migrasi `workflows`, `statuses`, `items`, `item_locations`, assignees, followers
+- [x] Trigger anti-siklus + tes; indeks DATABASE §4
+- [x] Seed workflow default lewat bootstrap
 
 **S1.2.2 Item service**
 - [x] `POST/GET/PATCH/DELETE /items` + optimistic locking (`If-Match`, 409/428)
@@ -311,23 +311,23 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 ### E1.3 View
 
 **S1.3.1 API view**
-- [ ] Migrasi `views`; CRUD, duplicate, default unik per scope
-- [ ] Pembuatan view bawaan saat container dibuat
+- [x] Migrasi `views`; CRUD, duplicate, default unik per scope
+- [x] Pembuatan view bawaan saat container dibuat
 
 **S1.3.2 Table view**
-- [ ] DataTable (TanStack Table + Virtual) dengan hierarki expand/collapse
-- [ ] Edit inline sel; baris "+ Item"
-- [ ] Reorder drag + "Move to…"; navigasi keyboard
-- [ ] Filter/sort/group di URL; ukur 500 item
+- [x] DataTable (TanStack Table + Virtual) dengan hierarki expand/collapse
+- [x] Edit inline sel; baris "+ Item"
+- [x] Reorder drag + "Move to…"; navigasi keyboard
+- [x] Filter/sort/group di URL; ukur 500 item
 
 **S1.3.3 Board view**
-- [ ] Kolom dari workflow; BoardCard (dnd-kit) + sensor keyboard
-- [ ] Drag ubah status optimistis + rollback + toast
-- [ ] "+ Add" per kolom
+- [x] Kolom dari workflow; BoardCard (dnd-kit) + sensor keyboard — **dipenuhi dengan drag HTML5 bawaan + `<select>` status per kartu sebagai jalur keyboard, bukan dnd-kit** (D-96)
+- [x] Drag ubah status optimistis + rollback + toast
+- [x] "+ Add" per kolom
 
 **S1.3.4 ViewTabs dan pengelolaan view**
-- [ ] Menu per view (copy link, rename, duplicate, default, urut, hapus)
-- [ ] Tes membuka URL tersalin memulihkan tampilan
+- [x] Menu per view (copy link, rename, duplicate, default, urut, hapus)
+- [x] Tes membuka URL tersalin memulihkan tampilan
 
 ### E1.4 Kolaborasi
 

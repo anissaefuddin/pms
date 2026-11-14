@@ -15,7 +15,7 @@ import (
 // id publishes nothing twice. The table is created here on purpose; it becomes a real migration only with S9.1.1.
 func TestSpikeTransactionalOutboxWithRiver(t *testing.T) {
 	ctx := t.Context()
-	pool, err := database.Open(ctx, testdb.New(t))
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
 	if err != nil {
 		t.Fatal(err)
 	}

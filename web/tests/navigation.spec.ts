@@ -140,7 +140,8 @@ test("unknown URLs provide a keyboard path back to the workspace", async ({ page
   await expect(back).toBeFocused();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.keyboard.press("Enter");
-  await expect(page.getByRole("heading", { name: "Your workspace is ready" })).toBeVisible();
+  // The workspace home forwards to the person's own space when there is one (the old "ready" panel only shows with no spaces).
+  await expect(page).toHaveURL(/\/spaces\//);
 });
 
 test("workspace headings follow compact and comfortable density", async ({ page }) => {

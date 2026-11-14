@@ -16,7 +16,7 @@ import (
 // SET-05: a muted group sends no email, every other group still does, and comments are never emailed.
 func TestNotificationWorkerHonoursEmailPreferences(t *testing.T) {
 	ctx := t.Context()
-	pool, err := database.Open(ctx, testdb.New(t))
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
 	if err != nil {
 		t.Fatal(err)
 	}

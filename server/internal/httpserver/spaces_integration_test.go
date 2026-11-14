@@ -94,7 +94,7 @@ func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 
 func newFixtureWith(t *testing.T, maxSeats int, tweak func(*config.Config)) *fixture {
 	t.Helper()
-	dbURL := testdb.New(t)
+	dbURL := testdb.NewMigrated(t)
 	registerer, gatherer := prometheus.DefaultRegisterer, prometheus.DefaultGatherer
 	registry := prometheus.NewRegistry()
 	prometheus.DefaultRegisterer, prometheus.DefaultGatherer = registry, registry

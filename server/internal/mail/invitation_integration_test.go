@@ -17,7 +17,7 @@ import (
 
 func TestInvitationWorkerMakesTokenAtDelivery(t *testing.T) {
 	ctx := t.Context()
-	pool, err := database.Open(ctx, testdb.New(t))
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
 	if err != nil {
 		t.Fatal(err)
 	}
