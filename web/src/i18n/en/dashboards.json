@@ -152,5 +152,10 @@
   "public.open": "Open dashboard",
   "public.unavailable": "This dashboard is unavailable",
   "public.unavailableHint": "The link may have expired or been turned off.",
-  "public.loading": "Loading shared dashboard…"
+  "public.loading": "Loading shared dashboard…",
+  "widget.group.overdue": "Overdue",
+  "widget.group.today": "Today",
+  "widget.group.week": "This week",
+  "widget.group.later": "Later",
+  "widget.group.none": "No date"
 }

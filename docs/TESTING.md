@@ -1039,3 +1039,14 @@ Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image ny
 | | `BACKUP_REMOTE` rclone (tujuan lokal) | PASS (regresi) |
 
 Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.
+
+## M12b lane 3 (UIP): My to-do, Inbox, tab Sent, widget daftar, 2FA
+
+| Uji | Hasil |
+|---|---|
+| Go integrasi `TestNotificationSentAndArchiveBoxes` + `TestNotification*` (Postgres `pms-pg-uip3`): Sent hanya milik sendiri, bukan notifikasi ke diri sendiri, item yang aksesnya dicabut tidak muncul, `box` tidak valid 422, kotak Archive tidak bocor ke orang lain, `unread_count` 0 di Sent | PASS |
+| Playwright `uip3-lists.spec.ts` (grup tanggal dengan jumlah, tambah cepat ke Space pribadi, tab Inbox/Sent/Archive + penerima, widget terkelompok + keadaan kosong, tanpa "Gantt spike", pesan 2FA non-admin tanpa `PMS_2FA_KEY`) dengan axe | PASS |
+| Regresi terarah: `todo`, `dr02-settings-menu`, `settings-nav`, `dashboards`, `navigation`, `ui-audit` (81 tes, 390 dan 1440) | PASS |
+| `tsc`, eslint (route, komponen), `gofmt`, `go vet`, `make gen` drift 0 | PASS |
+
+Tidak diuji: master-detail ≥ 1024 px secara visual (hanya kelas responsif), baseline visual, regresi penuh.
