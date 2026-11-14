@@ -1299,7 +1299,7 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 **S11.3.6 Dua konektor pilot (INT-03) — 1.5 hari**
 - [x] [BE] GitHub Issues dua arah
 - [x] [BE] Google Calendar satu arah
-- [ ] [TEST] Uji dengan akun uji — catatan: uji server palsu hijau; uji akun sungguhan (`TestRealGitHubAccount`, `TestRealGoogleAccount`) ada tetapi BELUM dijalankan (butuh env `PMS_TEST_*`), lihat TESTING.md
+- [ ] [TEST] Uji dengan akun uji — catatan: uji server palsu hijau; uji akun sungguhan (`TestRealGitHubAccount`, `TestRealGoogleAccount`) ada tetapi BELUM dijalankan (butuh env `PMS_TEST_*`), lihat TESTING.md. Pembaruan 14 Nov 2026: bukti awal dari pengguna untuk GitHub nyata di instance dev (satu putaran sinkron, "pushed 1, pulled 2, conflicts 0"); belum diuji konflik nyata, GitHub→PMS status, webhook; Google Calendar nyata belum dicoba; form Google (refresh token) selesai di UI
 
 **S11.3.7 Bookmark dan feedback (NAV-08, NAV-09) — 1.5 hari**
 - [x] [BE] API bookmark dan feedback

@@ -949,3 +949,11 @@ Mencakup S8.1.5 (tipe di Table, Board, filter, search), S8.2.1 (Table/filter/sor
 - **DR-03: tidak terbukti.** `tests/dr03-create-closes.spec.ts` (dialog tertutup, item baru terbuka, dari tombol halaman Space dan top bar) LULUS pada kode lama maupun baru; bug tidak dapat direproduksi pada mock dan tidak ada perubahan kode. Tes hanya penjaga regresi. Perlu cek manusia pada stack nyata.
 - **DR-06**: keputusan, D-100 (tanpa kode).
 - Statis: `gofmt`, `go vet ./...`, `make gen` tanpa drift, `npm run typecheck`, `npm run lint` bersih. `onboarding.spec.ts` "creates the workspace once" sempat flaky sekali (timing axe/animasi), lulus pada ulang.
+
+## Form konektor Google dan autofill (S11.3.6, 14 Nov 2026)
+
+- PASS (Playwright mock, `web/tests/connectors-pilot.spec.ts`, 3 tes bersama `connectors.spec.ts` lulus): form Google menampilkan Client ID, Client secret, Refresh token; submit ditolak di klien bila refresh token terisi sebagian (tanpa panggilan POST); POST `/connectors` mengirim `secrets` `refresh_token`, `client_id`, `client_secret` (tanpa `token`) dengan Calendar ID dan Space; `autocomplete="off"` pada nama/repo/Calendar ID/Client ID dan `new-password` pada kolom rahasia; baris konektor menampilkan "Authentication: refresh token" atau "access token" (dari `secret_names`, nilai tak pernah ditampilkan); axe bersih.
+- Uji mutasi: validasi klien dihapus (`return` pada form Google tidak lengkap) membuat tes gagal; dipulihkan.
+- `typecheck` dan `lint` bersih. Tidak ada perubahan API. Go penuh, Playwright penuh, `go vet`, `make gen` tidak dijalankan di lane ini (regresi penuh di S12.2.1).
+- Bukti awal dari pengguna (bukan hasil uji otomatis): konektor GitHub nyata di instance dev-lens, repo publik `anissaefuddin/pms`, sinkron 20:21 WIB "pushed 1, pulled 2, conflicts 0"; issue #1, #2, #7 di GitHub (asal #7 belum dipastikan). Belum diuji: konflik nyata, GitHub→PMS untuk status, webhook; Google Calendar nyata belum dicoba. Rincian di G2B.
+- Tidak dicek: perilaku autofill Chrome sesungguhnya (hanya atribut yang diuji); alur refresh token dengan Google nyata.

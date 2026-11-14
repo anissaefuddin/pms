@@ -347,7 +347,7 @@ Kolom hasil pada tabel skenario: **Hasil** (`NOT RUN` / Lulus / Gagal / SKIP), *
 ## Kelompok 8 — Integration (WFP-078..085)
 
 **Tujuan/aktor:** impor/ekspor Excel, API key dan OAuth, webhook, konektor GitHub/Google, orkestrasi otomasi. Aktor: `A`, `R1`, `R2`. **Data tambahan:** [LUAR] penerima webhook (mis. layanan penangkap request), repo GitHub uji dan akun Google uji, `PMS_CONNECTOR_KEY` terisi, `curl`/klien HTTP untuk uji API.
-**Rujukan:** WFP-078..083 (WFP-084/085 di luar 1.0); SPC-15, API-01..03, INT-01..03, SET-08. **Bukti:** G2B (atas); [S11_3_RECONCILIATION.md](parity/S11_3_RECONCILIATION.md) memuat catatan implementasi pilihan. Konektor dengan akun nyata **belum pernah dijalankan**.
+**Rujukan:** WFP-078..083 (WFP-084/085 di luar 1.0); SPC-15, API-01..03, INT-01..03, SET-08. **Bukti:** G2B (atas); [S11_3_RECONCILIATION.md](parity/S11_3_RECONCILIATION.md) memuat catatan implementasi pilihan. Konektor dengan akun nyata: *bukti awal dari pengguna* (bukan hasil UAT; kolom Hasil tidak diubah): GitHub Issues dipasang di instance dev pada 14 Nov 2026, satu sinkron "pushed 1, pulled 2, conflicts 0". Konflik, GitHub→PMS status, webhook, dan Google Calendar belum dicoba.
 
 | ID | Peran | Langkah | Hasil yang diharapkan | Mencakup | Hasil | Catatan | Tanggal | Penguji |
 |---|---|---|---|---|---|---|---|---|
