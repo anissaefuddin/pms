@@ -25,12 +25,10 @@ function SettingsLayout() {
             {me?.capabilities.manage_users && <Link to="/settings/users" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.users.title")}</Link>}
             <Link to="/settings/resources" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.resources")}</Link>
-            {me?.user_type === "admin" && <Link to="/settings/apps" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.apps.title")}</Link>}
+            <Link to="/settings/apps" className={linkClass}
+              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("apps.title")}</Link>
             {me?.user_type === "admin" && <Link to="/settings/rates" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.rates")}</Link>}
-            <Link to="/settings/apps" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("oauth.apps.title")}</Link>
             <Link to="/settings/work-schedule" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.workSchedule.title")}</Link>
             <Link to="/settings/item-types" className={linkClass}
@@ -49,8 +47,6 @@ function SettingsLayout() {
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("roles.title")}</Link>}
             {me?.user_type === "admin" && <Link to="/settings/audit" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("audit.title")}</Link>}
-            <Link to="/settings/apps" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("apps.title")}</Link>
             <Link to="/spikes/gantt" className={linkClass}>{t("settings.nav.gantt")}</Link>
           </section>
         </nav>
