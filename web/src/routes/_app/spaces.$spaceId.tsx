@@ -66,7 +66,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const canRename = shared && can(space, "edit");
   const canDelete = shared && can(space, "delete");
   const canCreate = can(space, "create");
-  const canLock = shared && me?.user_type === "admin";
+  const canLock = shared && me?.user_type === "admin" && can(space, "share");
   const canEditForms = can(space, "edit"); // also gates the Forms link
   const canManageFields = can(space, "share") && can(space, "delete");
   const personal = space.kind === "personal";

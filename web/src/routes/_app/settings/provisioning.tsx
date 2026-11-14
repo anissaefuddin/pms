@@ -17,6 +17,7 @@ export const Route = createFileRoute("/_app/settings/provisioning")({ component:
 
 const TYPES = ["regular", "external", "collaborator", "viewer"] as const;
 const KEY = ["scim-tokens"] as const;
+const COLUMNS = ["name", "type", "prefix", "lastUsed", "status"] as const;
 const select = "mt-1 block h-9 rounded-md border border-input bg-background px-2";
 
 function ProvisioningPage() {
@@ -64,7 +65,7 @@ function ProvisioningPage() {
     {tokens.isSuccess && list.length === 0 && <p role="status" className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{t("provisioning.empty")}</p>}
     {list.length > 0 && <table className="w-full text-left text-sm">
       <thead><tr className="border-b">
-        {(["name", "type", "prefix", "lastUsed", "status"] as const).map((k) => <th key={k} scope="col" className="py-2 pr-4">{t(`provisioning.col.${k}`)}</th>)}
+        {COLUMNS.map((k) => <th key={k} scope="col" className="py-2 pr-4">{t(`provisioning.col.${k}`)}</th>)}
         <th scope="col" className="py-2"><span className="sr-only">{t("provisioning.col.actions")}</span></th>
       </tr></thead>
       <tbody>{list.map((token) => <tr key={token.id} className="border-b align-top">

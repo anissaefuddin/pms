@@ -8,6 +8,7 @@ export default defineConfig({
   outputDir: port === 4173 ? "test-results" : `test-results/${port}`,
   use: {
     baseURL,
+    reducedMotion: "reduce", // dialogs and toasts are not mid-fade when axe reads their colours
     channel: process.env.PLAYWRIGHT_CHANNEL || undefined,
   },
   webServer: {

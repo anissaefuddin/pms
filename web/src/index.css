@@ -268,3 +268,12 @@
   line-height: 1.4;
   font-weight: 600;
 }
+
+/* WCAG 2.3.3: people who ask for less motion get none. It also keeps automated contrast checks from reading a dialog halfway through its fade. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
