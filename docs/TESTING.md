@@ -795,7 +795,7 @@ S11.1.1 (VIEW-10): **PASS**. `GET /items/{projectId}/files` mendaftar lampiran h
 
 ## Audit M8/M9/M10: centang TASKS vs kode aktual (14 Nov 2026)
 
-- Hasil: 0 dari 22 item terbuka bisa dicentang; semuanya benar-benar belum selesai atau butuh manusia. Berbeda dengan audit M0/M1 (tidak ada centang basi di M8-M10). Gate report G1a mencatat hal yang sama.
+- Hasil: 0 dari 21 item terbuka (M8 14, M9 3, M10 4) bisa dicentang; semuanya benar-benar belum selesai atau butuh manusia. Berbeda dengan audit M0/M1 (tidak ada centang basi di M8-M10). Gate report G1a mencatat hal yang sama.
 - PASS (dijalankan ulang). `go test ./server/internal/httpserver -run 'ItemType|Formula|StatusGuard|Form|Cost|Budget|Rate|Report|Excel'` (100 s) dan `TestBrowserM8Flows` + `TestBrowserM10Flows` (Chrome + PostgreSQL, 179 s). Playwright mock `m8.spec.ts`, `forms.spec.ts`, `public-form.spec.ts`: 27 lulus. Ini membuktikan item yang sudah dicentang tetap hijau, bukan item terbuka.
 - Terbuka dengan alasan (catatan di TASKS.md): query sqlc item type (SQL pgx langsung, D-61); default berdasar custom field dan impor Excel bertipe; tes default jalur form/impor; toggle menu "+", menu blueprint, tipe di Table/Board/filter/search/ekspor/laporan; kolom formula di Table; pesan guard di Board; E2E-PAR-05 live; kolom cost di report.
 - Penyempurnaan terbukti: pesan guard di panel item (E2E-PAR-03 live). Tidak cukup untuk mencentang item yang meminta panel dan Board.
