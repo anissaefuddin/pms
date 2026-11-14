@@ -16,7 +16,7 @@ import (
 
 var ErrTooLarge = errors.New("project exceeds the Excel export limit")
 
-var Headers = []string{"id", "parent_id", "type", "title", "start_date", "due_date", "duration_days", "is_milestone"}
+var Headers = []string{"id", "parent_id", "type", "title", "start_date", "due_date", "duration_days", "is_milestone", "type_key"}
 
 type ExportArgs struct {
 	ID uuid.UUID `json:"id"`
@@ -126,10 +126,10 @@ func exportRows(ctx context.Context, tx pgx.Tx, actor policy.Actor, project, spa
 	}
 	rows, err := tx.Query(ctx, tree+`
 SELECT i.id,i.type::text,i.title,COALESCE(to_char(i.start_date,'YYYY-MM-DD'),''),
-COALESCE(to_char(i.due_date,'YYYY-MM-DD'),''),COALESCE(i.duration_days::text,''),i.is_milestone::text,
+COALESCE(to_char(i.due_date,'YYYY-MM-DD'),''),COALESCE(i.duration_days::text,''),i.is_milestone::text,ty.key,
 COALESCE((SELECT jsonb_object_agg(f.id,i.fields->f.id::text) FROM custom_fields f
  WHERE $3 AND f.space_id=$2 AND i.fields ? f.id::text),'{}')
-FROM tree t JOIN items i ON i.id=t.id LIMIT $4`, project, space, spaceAccess.Caps.Has(policy.View), MaxRows)
+FROM tree t JOIN items i ON i.id=t.id JOIN item_type_defs ty ON ty.id=i.type_id LIMIT $4`, project, space, spaceAccess.Caps.Has(policy.View), MaxRows)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -144,7 +144,7 @@ FROM tree t JOIN items i ON i.id=t.id LIMIT $4`, project, space, spaceAccess.Cap
 	for rows.Next() {
 		var n node
 		n.values = make([]string, len(Headers))
-		if err := rows.Scan(&n.id, &n.values[2], &n.values[3], &n.values[4], &n.values[5], &n.values[6], &n.values[7], &n.fields); err != nil {
+		if err := rows.Scan(&n.id, &n.values[2], &n.values[3], &n.values[4], &n.values[5], &n.values[6], &n.values[7], &n.values[8], &n.fields); err != nil {
 			rows.Close()
 			return nil, nil, err
 		}

@@ -956,6 +956,12 @@ type ItemTypeDef struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 }
 
+type ItemTypeField struct {
+	TypeID       pgtype.UUID `json:"type_id"`
+	FieldID      pgtype.UUID `json:"field_id"`
+	DefaultValue []byte      `json:"default_value"`
+}
+
 type LoginCode struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`

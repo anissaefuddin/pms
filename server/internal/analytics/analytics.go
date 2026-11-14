@@ -40,6 +40,7 @@ type Filters struct {
 	Assignees      []string `json:"assignees,omitempty"`     // user ids or "me"; for time entries the user who logged them
 	Unassigned     bool     `json:"unassigned,omitempty"`
 	Importance     []string `json:"importance,omitempty"` // high, normal, low
+	TypeKeys       []string `json:"type_keys,omitempty"`  // item type keys, built-in or custom (S8.1.5)
 	Followed       bool     `json:"followed,omitempty"`
 	Starred        bool     `json:"starred,omitempty"` // starred by the caller
 	Overdue        bool     `json:"overdue,omitempty"` // due before today and still active
@@ -129,6 +130,8 @@ func dimension(source, name, n string) (dim, bool) {
 		return dim{"", "i.importance", "i.importance"}, true
 	case "type":
 		return dim{"", "i.type::text", "i.type::text"}, true
+	case "item_type": // the item type, built-in or custom
+		return dim{fmt.Sprintf("LEFT JOIN item_type_defs ity%s ON ity%[1]s.id=i.type_id", n), fmt.Sprintf("COALESCE(ity%s.key,'')", n), fmt.Sprintf("COALESCE(ity%s.name,'')", n)}, true
 	case "space":
 		return dim{"", "sc.space_id::text", "(SELECT sp.name FROM spaces sp WHERE sp.id=sc.space_id)"}, true
 	case "field":
@@ -230,6 +233,9 @@ func (q Query) Validate() error {
 	if err := oneOf("importance", f.Importance, []string{"high", "normal", "low"}); err != nil {
 		return err
 	}
+	if len(f.TypeKeys) > maxIDs {
+		return items.Invalid("type_keys has too many entries")
+	}
 	if len(f.Assignees) > maxIDs {
 		return items.Invalid("assignees has too many entries")
 	}
@@ -252,7 +258,7 @@ func (q Query) Validate() error {
 		}
 	}
 	if q.ReportingOn == "time_entries" {
-		if len(f.StatusGroups)+len(f.Importance) > 0 || f.Followed || f.Starred || f.Overdue || f.DueThisWeek || f.DueThisMonth || f.NoDueDate || f.AwaitingMe || f.Unassigned || f.DueFrom != "" || f.DueTo != "" || f.EffortMin != nil || f.EffortMax != nil {
+		if len(f.StatusGroups)+len(f.Importance)+len(f.TypeKeys) > 0 || f.Followed || f.Starred || f.Overdue || f.DueThisWeek || f.DueThisMonth || f.NoDueDate || f.AwaitingMe || f.Unassigned || f.DueFrom != "" || f.DueTo != "" || f.EffortMin != nil || f.EffortMax != nil {
 			return items.Invalid("these filters apply to tasks and projects, not to time entries")
 		}
 	} else if f.EntryFrom != "" || f.EntryTo != "" || f.Billing != "" || f.EntryThisMonth {
@@ -528,6 +534,9 @@ func build(q Query, actor policy.Actor, list *listSpec) (string, []any) {
 		where = append(where, "i.type::text = "+add(kind, "text"))
 		if len(f.StatusGroups) > 0 {
 			where = append(where, "st.grp::text = ANY("+add(f.StatusGroups, "text[]")+")")
+		}
+		if len(f.TypeKeys) > 0 {
+			where = append(where, "i.type_id IN (SELECT id FROM item_type_defs WHERE key = ANY("+add(f.TypeKeys, "text[]")+"))")
 		}
 		if len(f.Importance) > 0 {
 			where = append(where, "i.importance = ANY("+add(f.Importance, "text[]")+")")

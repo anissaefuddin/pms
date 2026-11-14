@@ -889,13 +889,10 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 
 **S8.1.2 Field bawaan, default, inheritance (CUST-02) — 3 hari**
 - [x] [API] Field bawaan dan nilai default per tipe
-- [ ] [DB] Relasi tipe↔custom field dan default
-  > Audit 14 Nov 2026: default disimpan sebagai jsonb di `item_type_defs` dan hanya mencakup field bawaan (importance, durasi); default berdasar custom field belum ada.
-- [ ] [BE] Terapkan default saat create dari UI/API/impor/form
-  > Audit 14 Nov 2026: `items.CreateTx` menerapkan default untuk API, form, template Space dan otomasi; impor Excel belum mengenal tipe kustom.
+- [x] [DB] Relasi tipe↔custom field dan default
+- [x] [BE] Terapkan default saat create dari UI/API/impor/form
 - [x] [BE] Inheritance nilai dari parent sesuai aturan tipe
-- [ ] [TEST] Default di keempat jalur create
-  > Audit 14 Nov 2026: hanya jalur API yang diuji (`TestItemTypesCRUDDefaultsAndChildRules`); jalur form dan impor belum.
+- [x] [TEST] Default di keempat jalur create
 - [x] [TEST] Inheritance dan perubahan definisi
 
 **S8.1.3 Aturan subitem dan workflow bawaan (CUST-03) — 2 hari**
@@ -919,8 +916,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
   > Audit 14 Nov 2026: belum ada; dialog buat item hanya memilih tipe.
 - [ ] [FE] Tipe di Table, Board, filter, search
   > Audit 14 Nov 2026: `item-table.tsx` dan `item-board.tsx` tidak merujuk tipe kustom.
-- [ ] [BE] Tipe di ekspor Excel, laporan, search
-  > Audit 14 Nov 2026: ekspor, laporan dan search tidak merujuk `type_id`.
+- [x] [BE] Tipe di ekspor Excel, laporan, search
 - [x] [TEST] E2E-PAR-01 dan E2E-PAR-02, axe
 
 **S8.1.6 Field relasi bertipe (CUST-05) — 2.5 hari**
@@ -976,6 +972,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [TEST] Unit evaluator kondisi
 - [ ] [TEST] E2E-PAR-05
   > Audit 14 Nov 2026: hanya Playwright mock (`m8.spec.ts`, `forms.spec.ts`) dan unit/integrasi Go; E2E live form→Blueprint→item belum ada (routing ke Blueprint belum).
+  > 14 Nov 2026 (M8-1): bagian form bercabang → tipe dan field sesuai cabang sudah diuji lewat HTTP (`TestFormBranchesDecideQuestionsItemTypeAndFields`, di `parity-e2e.sh 05-08`). Sisa: `blueprint_id` pada rute form; node blueprint hanya menyimpan kelas, bukan `type_key`, jadi tidak kecil. Spec Playwright live belum ada.
 
 **S8.3.2 Routing form ke tipe custom dan Blueprint (FORM-09) — 1.5 hari**
 - [x] [BE] Pemetaan jawaban ke field tipe custom

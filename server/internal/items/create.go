@@ -150,6 +150,29 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 			return Detail{}, Invalid("locations must use the same workflow")
 		}
 	}
+	spaceIDs := make([]uuid.UUID, 0, len(locations))
+	for _, loc := range locations {
+		spaceIDs = append(spaceIDs, loc.SpaceID)
+	}
+	defaults, err := typeFieldDefaults(ctx, tx, itemType, spaceIDs) // S8.1.2: custom-field defaults; explicit values win
+	if err != nil {
+		return Detail{}, err
+	}
+	if len(defaults) > 0 {
+		var given map[string]json.RawMessage
+		if custom != nil && json.Unmarshal(custom, &given) != nil {
+			return Detail{}, InvalidField{"fields", "fields must be an object keyed by custom field UUID"}
+		}
+		if given == nil {
+			given = map[string]json.RawMessage{}
+		}
+		for id, v := range defaults {
+			if _, ok := given[id]; !ok {
+				given[id] = v
+			}
+		}
+		custom = marshalJSON(given)
+	}
 	if workflowID != nil {
 		var exists bool
 		if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM workflows WHERE id=$1)", *workflowID).Scan(&exists); err != nil {
