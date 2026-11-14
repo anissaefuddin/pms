@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/anissaefuddin/pms/server/internal/items"
@@ -59,4 +60,36 @@ func (s *Server) listItemRelations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": groups})
+}
+
+func (s *Server) listTypeFields(w http.ResponseWriter, r *http.Request) {
+	list, err := items.ListTypeFields(r.Context(), s.pool, actorOf(r), r.PathValue("typeId"))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": list})
+}
+
+func (s *Server) setTypeField(w http.ResponseWriter, r *http.Request) {
+	var in struct {
+		Default json.RawMessage `json:"default"`
+	}
+	if !decode(w, r, &in) {
+		return
+	}
+	t, err := items.SetTypeField(r.Context(), s.pool, actorOf(r), r.PathValue("typeId"), r.PathValue("fieldId"), in.Default)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, t)
+}
+
+func (s *Server) deleteTypeField(w http.ResponseWriter, r *http.Request) {
+	if err := items.DeleteTypeField(r.Context(), s.pool, actorOf(r), r.PathValue("typeId"), r.PathValue("fieldId")); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }

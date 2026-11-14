@@ -897,3 +897,14 @@ Branch `claude/s11-3-gaps-8a2243` (dari `integration/m12-regression`). Keputusan
 - **Uji mutasi (semua GAGAL saat perilaku dihapus, lalu dikembalikan):** hapus audit rotate / grant_revoked / app_removed; salah `target_id` revoke; ganti aksi webhook.updated; salah `target_type` webhook.deleted; bocorkan secret ke detail api_key.created dan oauth.app_created; hapus 100.64/10, 169.254/16, 6to4 dari daftar; matikan `Unmap` (IPv4-mapped lolos); guard dial hanya menolak bila parse gagal; `CheckRedirect` diikuti; lookup nama dimatikan; `seal` menyimpan polos tanpa kunci; konektor kembali 503. 17 mutasi, 17 gagal.
 - Verifikasi: `gofmt -l`, `go vet ./...` bersih; `make gen` hanya mengubah deskripsi operasi InstallConnector; `npm run typecheck` dan `npm run lint` bersih. `go test ./... -count=1` penuh dengan PostgreSQL: semua paket `ok`, tidak ada FAIL.
 - Tidak dijalankan: Playwright (tidak ada tes UI yang berubah selain label i18n); rotasi enkripsi ulang secret webhook lama (belum ada, dicatat di runbook).
+
+## M8 backend: default tipe↔custom field, tipe di impor/ekspor/search/laporan (14 Nov 2026)
+
+Branch `claude/m8-backend-types-4d7ae8`. Migrasi `00312_item_type_fields.sql`.
+
+- PASS. `TestItemTypeDefaultsApplyOnEveryCreatePath` (API, form, otomasi, impor Excel: default bawaan dan custom field; nilai eksplisit menang; tipe tak dikenal/nonaktif ditolak per baris, tidak ada item dibuat), `TestItemTypeDefaultsApplyToSpaceTemplates`, `TestItemTypeFieldDefaultsAdminAPIAndOrphans` (403 non-admin, validasi default, default yatim dari opsi dibuang/field diarsipkan/dihapus tanpa 5xx), `TestItemTypeInExportSearchAndReports` (kolom `type_key` di ekspor dan round-trip, `type_key` di search, `type_keys` dan `group_by=item_type` di analytics/laporan, tanpa kebocoran lintas Space).
+- **Uji mutasi (7, semua GAGAL lalu dikembalikan):** default custom field tidak diterapkan; nilai eksplisit tidak lagi menang; impor mengabaikan tipe kustom; filter search dimatikan; filter analytics dimatikan; kolom type_key ekspor dikosongkan; field arsip tidak dilewati.
+- Tes lama disesuaikan: indeks kolom ekspor (`type_key` kolom ke-9).
+- Terbuka: S8.1.1 sqlc (D-61, sengaja); E2E-PAR-05 (routing form ke Blueprint belum ada, lihat TASKS).
+- Kebutuhan UI (jalur M8-2/M8-3): layar admin pasangan tipe↔field dan default; filter tipe di search/laporan (`type_key`, `type_keys`, `item_type`); kolom `type_key` di impor/ekspor.
+- PASS (hasil nyata, Postgres khusus port 55461). `go test ./... -count=1 -timeout 40m`: 22 paket `ok`, tidak ada FAIL (`httpserver` 70 s). `scripts/parity-e2e.sh 05-08`: 7 tes PASS. `gofmt -l`, `go vet ./...`, `make gen` (tanpa drift di luar perubahan ini), `npm run typecheck`, `npm run lint` bersih. Run awal di Postgres bersama sempat mati (timeout 10 m, lalu `signal: terminated`) karena beban sesi paralel, bukan kegagalan tes.

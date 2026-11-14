@@ -81,7 +81,7 @@ func TestProjectExcelExport(t *testing.T) {
 		t.Fatalf("download: %v %v", res.StatusCode, err)
 	}
 	rows, err := projectexcel.Read(data)
-	if err != nil || len(rows) != 4 || rows[0][8] != "field:"+fixture.field || rows[3][3] != "=2+2" || rows[3][4] != "2026-11-13" || rows[3][8] != "123.45" || !strings.HasPrefix(rows[3][1], "[") {
+	if err != nil || len(rows) != 4 || rows[0][9] != "field:"+fixture.field || rows[0][8] != "type_key" || rows[3][8] != "task" || rows[3][3] != "=2+2" || rows[3][4] != "2026-11-13" || rows[3][9] != "123.45" || !strings.HasPrefix(rows[3][1], "[") {
 		t.Fatalf("export workbook: %v (%v)", rows, err)
 	}
 	f.exec("DELETE FROM item_locations WHERE item_id=$1::uuid", rows[3][0])

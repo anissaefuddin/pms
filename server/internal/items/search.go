@@ -23,6 +23,7 @@ type SearchResults struct {
 type SearchOptions struct {
 	AssignedToMe bool
 	StatusGroup  string // "", "active", "completed", "deferred" or "cancelled"
+	TypeKey      string // "" or the key of an item type (S8.1.5)
 	Sort         string // "" or "relevance" ranks by match, "date_modified" by recency
 }
 
@@ -84,8 +85,9 @@ WITH RECURSIVE subtree(item_id, space_id) AS (
 )
 SELECT m.id::text, m.item_id::text, m.kind FROM matched m
 ORDER BY %[4]s`, scope("i.id"), scope("c.item_id"), `($4::boolean IS FALSE OR EXISTS (SELECT 1 FROM item_assignees a WHERE a.item_id=i.id AND a.user_id=$6::uuid))
-  AND ($5::text='' OR EXISTS (SELECT 1 FROM statuses st WHERE st.id=i.status_id AND st.grp::text=$5))`, order),
-		*prefix, spaces, container, opts.AssignedToMe, opts.StatusGroup, actor.ID)
+  AND ($5::text='' OR EXISTS (SELECT 1 FROM statuses st WHERE st.id=i.status_id AND st.grp::text=$5))
+  AND ($7::text='' OR i.type_id IN (SELECT id FROM item_type_defs WHERE key=$7))`, order),
+		*prefix, spaces, container, opts.AssignedToMe, opts.StatusGroup, actor.ID, opts.TypeKey)
 	if err != nil {
 		return out, err
 	}
