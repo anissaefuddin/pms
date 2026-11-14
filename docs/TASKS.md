@@ -881,8 +881,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 **S8.1.1 Skema dan API tipe item (CUST-01) — 4 hari**
 - [x] [API] CRUD tipe item: key, nama, ikon, kelas task/project, aktif
 - [x] [DB] Migrasi `item_types` dan backfill tipe bawaan
-- [ ] [DB] Query sqlc
-  > Audit 14 Nov 2026: paket `items` memakai SQL pgx langsung untuk `item_type_defs`; hanya model yang dibangkitkan sqlc (D-61). Dibiarkan terbuka sampai ada keputusan memindahkan query.
+- [x] [DB] Query sqlc — penyimpangan diterima (D-103): SQL pgx langsung, hanya model dari sqlc
 - [x] [BE] Validasi: key unik, kelas, nama
 - [x] [BE] Policy admin dan 403
 - [x] [BE] Nonaktifkan tanpa menghapus data
