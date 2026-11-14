@@ -1101,7 +1101,7 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 | Bukti | Hasil |
 |---|---|
 | `tests/uip2-c-shell.spec.ts` (baru, 3 tes): dialog Customize menu menyembunyikan Stream dan sidebar mengikuti, axe bersih; menu akun, entri nav pengaturan unik dan jangkar `#appearance`/`#email`; Recycle bin dengan tombol Empty di samping judul, axe bersih | PASS |
-| `navigation` (Stream memakai radio filter), `settings-nav`, `m1-settings-recycle`, `theme` (axe 8 aksen), `uip3-lists`, `uip4-sidebar`, `spaces`, `work-schedule`, `two-factor`, `auth`, `login.a11y`, `bookmarks-feedback`, `onboarding`, `todo`, `dr02-settings-menu` | PASS (65 tes, 2 pelari) |
+| `navigation` (Stream memakai radio filter), `settings-nav`, `m1-settings-recycle`, `theme` (axe 8 aksen), `uip3-lists`, `uip4-sidebar`, `spaces`, `work-schedule`, `two-factor`, `auth`, `login.a11y`, `bookmarks-feedback`, `onboarding`, `todo`, `dr02-settings-menu` | PASS (rerun terakhir 53 tes; satu putaran awal gagal 19 tes akibat satu pelanggaran axe pada pemicu menu akun, sudah diperbaiki) |
 | `screens.a11y`, `pilot.a11y`, `search`, `otp`, `create-menu`, `stars`, `sse-reconnect`, `ui-audit` | Dijalankan paralel 5 pekerja: 5 tes gagal timeout kemunculan elemen; dijalankan ulang terpisah: PASS. Dugaan: kelambatan Vite dingin, bukan regresi (tidak dibuktikan dengan baseline) |
 | Live: `PMS_TEST_BROWSER=1 go test ./server/internal/httpserver -run TestBrowserTwoFactor` (Postgres 17 `pms-pgC`, tombol "Account menu" dan halaman Security) | PASS |
 | `tsc -b`, `eslint src` | bersih |
