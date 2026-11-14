@@ -913,10 +913,8 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 
 **S8.1.5 UI tipe dan menu "+" (CUST-01, SPC-14) — 3 hari**
 - [x] [FE] Dialog "Create a custom item type"
-- [ ] [FE] Toggle menu "+" per Space
-  > Audit 14 Nov 2026: tidak ada kode; belum dikerjakan.
-- [ ] [FE] Menu blueprint: tipe, nama, ikon
-  > Audit 14 Nov 2026: belum ada; dialog buat item hanya memilih tipe.
+- [x] [FE] Toggle menu "+" per Space (D-99; `create-menu.spec.ts`, `TestSpaceCreateMenu`, `TestBrowserCreateMenu`)
+- [x] [FE] Menu blueprint: tipe, nama, ikon (bagian "Start from blueprint" di dialog buat item; ikon = ikon tipe dasar, D-99)
 - [ ] [FE] Tipe di Table, Board, filter, search
   > Audit 14 Nov 2026: `item-table.tsx` dan `item-board.tsx` tidak merujuk tipe kustom.
 - [ ] [BE] Tipe di ekspor Excel, laporan, search

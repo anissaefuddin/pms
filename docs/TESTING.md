@@ -897,3 +897,14 @@ Branch `claude/s11-3-gaps-8a2243` (dari `integration/m12-regression`). Keputusan
 - **Uji mutasi (semua GAGAL saat perilaku dihapus, lalu dikembalikan):** hapus audit rotate / grant_revoked / app_removed; salah `target_id` revoke; ganti aksi webhook.updated; salah `target_type` webhook.deleted; bocorkan secret ke detail api_key.created dan oauth.app_created; hapus 100.64/10, 169.254/16, 6to4 dari daftar; matikan `Unmap` (IPv4-mapped lolos); guard dial hanya menolak bila parse gagal; `CheckRedirect` diikuti; lookup nama dimatikan; `seal` menyimpan polos tanpa kunci; konektor kembali 503. 17 mutasi, 17 gagal.
 - Verifikasi: `gofmt -l`, `go vet ./...` bersih; `make gen` hanya mengubah deskripsi operasi InstallConnector; `npm run typecheck` dan `npm run lint` bersih. `go test ./... -count=1` penuh dengan PostgreSQL: semua paket `ok`, tidak ada FAIL.
 - Tidak dijalankan: Playwright (tidak ada tes UI yang berubah selain label i18n); rotasi enkripsi ulang secret webhook lama (belum ada, dicatat di runbook).
+
+
+## S8.1.5 menu "+" per Space dan menu blueprint (14 Nov 2026)
+
+Branch `claude/m8-create-menu-6568b4`. Keputusan: D-99. Migrasi 00320.
+
+- PASS. **Toggle menu "+"** `TestSpaceCreateMenu` (PostgreSQL): viewer membaca (200), orang luar 404 (baca dan tulis), viewer menulis 403, tanpa If-Match 428, tipe tak dikenal 422, daftar kosong 422, versi basi 409, daftar mengikuti toggle, `POST /items` untuk tipe yang disembunyikan tetap 201, satu baris audit `space.create_menu_changed`.
+- PASS. **UI mock** `create-menu.spec.ts` (dialog toggle, PUT dengan If-Match, dialog buat item hanya menawarkan tipe aktif, blueprint tampil dengan ikon, nama, tipe; axe bersih) dan `blueprints.spec.ts` (kini memilih radio blueprint). `spaces.spec.ts` diperbarui: pengguna Edit melihat item "“+” menu". **Live** `TestBrowserCreateMenu` + `create-menu-live.spec.ts` (Chromium + PostgreSQL): admin menyembunyikan Folder lewat UI, dialog tidak menawarkannya, API tetap membuat folder.
+- **Uji mutasi (semua GAGAL, lalu dikembalikan):** menu selalu `enabled:true` → `TestSpaceCreateMenu` gagal; UPDATE tanpa cek versi → "stale version want 409"; `menuAllows` selalu true di FE → `create-menu.spec.ts` gagal. Aturan "API tetap membuat tipe tersembunyi" dijaga assert 201 (tidak dimutasi).
+- Verifikasi: `gofmt`, `go vet`, `make gen`, typecheck, lint bersih. Playwright penuh: 394 lulus, 2 gagal (ekspektasi menu di `spaces.spec.ts`, diperbaiki; berkas itu 18/18 lulus setelahnya; run penuh tidak diulang). Go penuh: semua paket selain `httpserver` `ok`; `httpserver` penuh habis waktu (40 menit, mesin berbeban, 0 `--- FAIL` sebelum habis) sehingga subset `Space|Endpoint|Blueprint|Audit|Bookmark|ItemType|Sweep` dijalankan: `ok` (445 dtk, termasuk sapuan endpoint).
+- Tidak dicek: Go `httpserver` penuh sampai selesai; ikon tipe kustom selain tiga bawaan memakai ikon generik.
