@@ -1408,12 +1408,12 @@ Prasyarat: S12.2.3 PASS. GA.1–GA.4 tidak berubah isinya; hanya posisinya yang 
 - [ ] Bootstrap, undang admin klien, dan uji dari image GHCR bertag
 
 **GA.2 Migrasi data pilot**
-- [ ] Skrip dan prosedur migrasi data pilot ke instance klien; uji pada salinan
-- [ ] Verifikasi jumlah data dan akses; rencana rollback
+- [x] Skrip dan prosedur migrasi data pilot ke instance klien; uji pada salinan — selesai 14 Nov 2026 (PR #10); bukti di TESTING.md
+- [x] Verifikasi jumlah data dan akses; rencana rollback — selesai 14 Nov 2026 (PR #10); bukti di TESTING.md
 
 **GA.3 Dokumentasi user**
-- [ ] Panduan penggunaan per fitur utama dalam English
-- [ ] Panduan admin: seat, backup, update, 2FA
+- [x] Panduan penggunaan per fitur utama dalam English — selesai 14 Nov 2026 (PR #10); bukti di TESTING.md
+- [x] Panduan admin: seat, backup, update, 2FA — selesai 14 Nov 2026 (PR #10); bukti di TESTING.md
 
 **GA.4 Pelatihan dan serah terima**
 - [ ] Sesi pelatihan admin dan pengguna; catat pertanyaan
