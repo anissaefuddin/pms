@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { components } from "@/api/schema";
@@ -21,6 +22,8 @@ function Login() {
   // Only the challenge survives the password step; the password stays in the (unmounted) form.
   const [challenge, setChallenge] = useState("");
   const expired = new URLSearchParams(location.search).get("reason") === "expired";
+  const ssoError = new URLSearchParams(location.search).get("sso_error");
+  const providers = useQuery({ queryKey: ["sso-providers"], retry: false, staleTime: 60_000, queryFn: async () => (await api<{ items: { kind: string; name: string }[] }>("/api/v1/auth/sso/providers")).items });
 
   function failure(e: unknown) {
     const status = e instanceof ApiError ? e.status : 0;
@@ -87,6 +90,12 @@ function Login() {
     <AuthCard title={t("auth.login.title")}>
       {expired && <p role="status" className="mb-4 rounded border border-warning bg-warning-subtle p-3 text-sm">{t("auth.login.expired")}</p>}
       {notice && <p role="status" className="mb-4 rounded border border-warning bg-warning-subtle p-3 text-sm">{notice}</p>}
+      {ssoError && <p role="alert" className="mb-4 rounded border border-destructive p-3 text-sm">{t(`auth.sso.error.${ssoError}`, { defaultValue: t("auth.sso.error.failed") })}</p>}
+      {!!providers.data?.length && <div className="mb-4 space-y-2">
+        {providers.data.map((provider) => <a key={provider.kind} href={`/api/v1/auth/sso/${provider.kind}/start?next=${encodeURIComponent(safeNext(new URLSearchParams(location.search).get("next")))}`}
+          className="block rounded-lg border border-input px-3 py-2 text-center text-sm font-medium hover:bg-muted">{t("auth.sso.signInWith", { name: provider.name })}</a>)}
+        <p className="text-center text-xs text-muted-foreground">{t("auth.sso.or")}</p>
+      </div>}
       <form className="space-y-4" onSubmit={submit}>
         <TextField label={t("auth.fields.email")} name="email" type="email" autoComplete="email" required autoFocus />
         <TextField label={t("auth.fields.password")} name="password" type="password" autoComplete="current-password" required />

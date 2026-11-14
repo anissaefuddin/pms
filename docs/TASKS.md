@@ -1314,11 +1314,11 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 ### E12.1 Governance
 
 **S12.1.1 SSO OIDC (ENT-01) — 2.5 hari**
-- [ ] [DOC] ADR adapter identitas (DEC-PAR-05)
-- [ ] [BE] Login OIDC
-- [ ] [BE] Penautan akun dan sesi yang ada
-- [ ] [FE] Konfigurasi dan tombol login
-- [ ] [TEST] State, nonce, akun dinonaktifkan
+- [x] [DOC] ADR adapter identitas (DEC-PAR-05) ([ADR-IDP](parity/adr/ADR-IDP-identity-adapters.md))
+- [x] [BE] Login OIDC
+- [x] [BE] Penautan akun dan sesi yang ada
+- [x] [FE] Konfigurasi dan tombol login
+- [x] [TEST] State, nonce, akun dinonaktifkan
 
 **S12.1.2 SSO SAML (ENT-01) — 2 hari**
 - [ ] [BE] SAML service provider

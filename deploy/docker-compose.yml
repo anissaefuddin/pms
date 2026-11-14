@@ -18,6 +18,8 @@ services:
       SMTP_REPLY_TO: ${SMTP_REPLY_TO:-}
       PMS_2FA_KEY: ${PMS_2FA_KEY:-}
       PMS_2FA_KEY_PREVIOUS: ${PMS_2FA_KEY_PREVIOUS:-}
+      PMS_SSO_KEY: ${PMS_SSO_KEY:-}
+      PMS_SSO_KEY_PREVIOUS: ${PMS_SSO_KEY_PREVIOUS:-}
     volumes:
       - pms_files:/data/files
     depends_on:

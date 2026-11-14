@@ -479,6 +479,118 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/sso/providers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Penyedia SSO yang aktif untuk halaman login (publik; hanya jenis dan nama tampilan) */
+        get: operations["listSsoProviders"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sso/{kind}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        /** Mulai masuk (atau menautkan, link=1 butuh sesi) dan arahkan peramban ke penyedia identitas */
+        get: operations["startSso"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sso/{kind}/callback": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        /** Tujuan pengalihan penyedia. Sukses memulai sesi dan mengalihkan ke next; gagal mengalihkan ke /login?sso_error=<alasan> */
+        get: operations["finishSso"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/sso/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        /** Konfigurasi penyedia (admin); rahasia klien tidak pernah dikembalikan */
+        get: operations["getSsoConfig"];
+        /** Simpan penyedia (admin); mengaktifkan butuh rahasia tersimpan dan discovery yang berhasil */
+        put: operations["putSsoConfig"];
+        post?: never;
+        /** Hapus penyedia beserta semua identitas tertaut (admin) */
+        delete: operations["deleteSsoConfig"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/identities": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Identitas SSO yang tertaut ke pemanggil */
+        get: operations["listMyIdentities"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/identities/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Lepas tautan; ditolak 409 bila pemanggil tidak punya password */
+        delete: operations["unlinkMyIdentity"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/audit-events": {
         parameters: {
             query?: never;
@@ -3191,6 +3303,44 @@ export interface components {
         };
         CustomRoleList: {
             items: components["schemas"]["CustomRole"][];
+        };
+        SsoConfigInput: {
+            name: string;
+            enabled?: boolean;
+            /** @description URL https penyedia OpenID Connect */
+            issuer: string;
+            client_id: string;
+            /** @description Hilangkan untuk mempertahankan rahasia yang tersimpan; string kosong menghapusnya */
+            client_secret?: string | null;
+            /** @description Tautkan masuk pertama ke pengguna aktif dengan email terverifikasi yang sama */
+            auto_link?: boolean;
+            allowed_domains?: string[];
+        };
+        SsoConfig: {
+            configured: boolean;
+            kind: string;
+            name: string;
+            enabled: boolean;
+            issuer: string;
+            client_id: string;
+            secret_set: boolean;
+            auto_link: boolean;
+            allowed_domains: string[];
+            /** @description Daftarkan persis alamat ini di penyedia */
+            redirect_url: string;
+            /** @description PMS_SSO_KEY terisi */
+            key_configured: boolean;
+            /** Format: date-time */
+            updated_at?: string | null;
+        };
+        LinkedIdentity: {
+            kind: string;
+            provider_name: string;
+            email: string;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            last_login_at: string | null;
         };
         AuditEvent: {
             /** Format: int64 */
@@ -5938,6 +6088,204 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             428: components["responses"]["Problem"];
+        };
+    };
+    listSsoProviders: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            kind: "oidc";
+                            name: string;
+                        }[];
+                    };
+                };
+            };
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    startSso: {
+        parameters: {
+            query?: {
+                /** @description Hanya jalur relatif di situs ini; selain itu menjadi / */
+                next?: string;
+                link?: "1";
+            };
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Pengalihan ke penyedia identitas */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    finishSso: {
+        parameters: {
+            query?: {
+                state?: string;
+                code?: string;
+                error?: string;
+            };
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Alasan gagal: state, denied, failed, unavailable, unlinked, unverified, inactive, domain, session, already_linked */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    getSsoConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Konfigurasi, atau nilai bawaan bila belum diatur */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SsoConfig"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    putSsoConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SsoConfigInput"];
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SsoConfig"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteSsoConfig: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listMyIdentities: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["LinkedIdentity"][];
+                    };
+                };
+            };
+        };
+    };
+    unlinkMyIdentity: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                kind: "oidc";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dilepas */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
         };
     };
     listAuditEvents: {

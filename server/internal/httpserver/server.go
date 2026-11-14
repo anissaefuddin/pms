@@ -155,6 +155,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.viewRoutes(mux)
 	s.dashboardRoutes(mux)
 	s.auditRoutes(mux)
+	s.ssoRoutes(mux)
 	s.customRoleRoutes(mux)
 	s.reportRoutes(mux)
 	s.starRoutes(mux)

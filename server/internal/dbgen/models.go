@@ -1033,6 +1033,28 @@ type SpaceTemplateRun struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type SsoProvider struct {
+	ID        pgtype.UUID        `json:"id"`
+	Kind      string             `json:"kind"`
+	Name      string             `json:"name"`
+	Enabled   bool               `json:"enabled"`
+	Config    []byte             `json:"config"`
+	SecretEnc string             `json:"secret_enc"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type SsoState struct {
+	StateHash    []byte             `json:"state_hash"`
+	BrowserHash  []byte             `json:"browser_hash"`
+	ProviderID   pgtype.UUID        `json:"provider_id"`
+	Nonce        string             `json:"nonce"`
+	CodeVerifier string             `json:"code_verifier"`
+	Purpose      string             `json:"purpose"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	Next         string             `json:"next"`
+	ExpiresAt    pgtype.Timestamptz `json:"expires_at"`
+}
+
 type Status struct {
 	ID                  pgtype.UUID   `json:"id"`
 	WorkflowID          pgtype.UUID   `json:"workflow_id"`
@@ -1103,6 +1125,15 @@ type User struct {
 	DefaultTaskEffortMinutes pgtype.Int4        `json:"default_task_effort_minutes"`
 	EmailMuted               []string           `json:"email_muted"`
 	Accent                   string             `json:"accent"`
+}
+
+type UserIdentity struct {
+	ProviderID  pgtype.UUID        `json:"provider_id"`
+	Subject     string             `json:"subject"`
+	UserID      pgtype.UUID        `json:"user_id"`
+	Email       string             `json:"email"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	LastLoginAt pgtype.Timestamptz `json:"last_login_at"`
 }
 
 type UserToken struct {

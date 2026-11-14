@@ -2268,6 +2268,36 @@ func (e DecideApprovalJSONBodyDecision) Valid() bool {
 	}
 }
 
+// Defines values for ListSsoProviders200JSONResponseBodyItemsKind.
+const (
+	Oidc ListSsoProviders200JSONResponseBodyItemsKind = "oidc"
+)
+
+// Valid indicates whether the value is a known member of the ListSsoProviders200JSONResponseBodyItemsKind enum.
+func (e ListSsoProviders200JSONResponseBodyItemsKind) Valid() bool {
+	switch e {
+	case Oidc:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for StartSsoParamsLink.
+const (
+	N1 StartSsoParamsLink = "1"
+)
+
+// Valid indicates whether the value is a known member of the StartSsoParamsLink enum.
+func (e StartSsoParamsLink) Valid() bool {
+	switch e {
+	case N1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListAutomationRunsParamsStatus.
 const (
 	ListAutomationRunsParamsStatusDenied       ListAutomationRunsParamsStatus = "denied"
@@ -3898,6 +3928,15 @@ type ItemUpdateImportance string
 // ItemUpdateRecalculateDuration Hitung durasi hari kerja dari effort dan alokasi terbaru. Kirim tanpa field tanggal, durasi, atau milestone.
 type ItemUpdateRecalculateDuration bool
 
+// LinkedIdentity defines model for LinkedIdentity.
+type LinkedIdentity struct {
+	CreatedAt    time.Time  `json:"created_at"`
+	Email        string     `json:"email"`
+	Kind         string     `json:"kind"`
+	LastLoginAt  *time.Time `json:"last_login_at"`
+	ProviderName string     `json:"provider_name"`
+}
+
 // Location defines model for Location.
 type Location struct {
 	// ParentItemId null berarti langsung di root Space
@@ -4488,6 +4527,43 @@ type SpaceUpdate struct {
 	Name        *string `json:"name,omitempty"`
 }
 
+// SsoConfig defines model for SsoConfig.
+type SsoConfig struct {
+	AllowedDomains []string `json:"allowed_domains"`
+	AutoLink       bool     `json:"auto_link"`
+	ClientId       string   `json:"client_id"`
+	Configured     bool     `json:"configured"`
+	Enabled        bool     `json:"enabled"`
+	Issuer         string   `json:"issuer"`
+
+	// KeyConfigured PMS_SSO_KEY terisi
+	KeyConfigured bool   `json:"key_configured"`
+	Kind          string `json:"kind"`
+	Name          string `json:"name"`
+
+	// RedirectUrl Daftarkan persis alamat ini di penyedia
+	RedirectUrl string     `json:"redirect_url"`
+	SecretSet   bool       `json:"secret_set"`
+	UpdatedAt   *time.Time `json:"updated_at,omitempty"`
+}
+
+// SsoConfigInput defines model for SsoConfigInput.
+type SsoConfigInput struct {
+	AllowedDomains *[]string `json:"allowed_domains,omitempty"`
+
+	// AutoLink Tautkan masuk pertama ke pengguna aktif dengan email terverifikasi yang sama
+	AutoLink *bool  `json:"auto_link,omitempty"`
+	ClientId string `json:"client_id"`
+
+	// ClientSecret Hilangkan untuk mempertahankan rahasia yang tersimpan; string kosong menghapusnya
+	ClientSecret *string `json:"client_secret,omitempty"`
+	Enabled      *bool   `json:"enabled,omitempty"`
+
+	// Issuer URL https penyedia OpenID Connect
+	Issuer string `json:"issuer"`
+	Name   string `json:"name"`
+}
+
 // Status defines model for Status.
 type Status struct {
 	// ActorRule Siapa yang boleh memindahkan item ke status ini
@@ -4949,6 +5025,26 @@ type ResetPasswordJSONBody struct {
 	Password string `json:"password"`
 	Token    string `json:"token"`
 }
+
+// ListSsoProviders200JSONResponseBodyItemsKind defines parameters for ListSsoProviders.
+type ListSsoProviders200JSONResponseBodyItemsKind string
+
+// FinishSsoParams defines parameters for FinishSso.
+type FinishSsoParams struct {
+	State *string `form:"state,omitempty" json:"state,omitempty"`
+	Code  *string `form:"code,omitempty" json:"code,omitempty"`
+	Error *string `form:"error,omitempty" json:"error,omitempty"`
+}
+
+// StartSsoParams defines parameters for StartSso.
+type StartSsoParams struct {
+	// Next Hanya jalur relatif di situs ini; selain itu menjadi /
+	Next *string             `form:"next,omitempty" json:"next,omitempty"`
+	Link *StartSsoParamsLink `form:"link,omitempty" json:"link,omitempty"`
+}
+
+// StartSsoParamsLink defines parameters for StartSso.
+type StartSsoParamsLink string
 
 // UpdateAutomationRuleJSONBody defines parameters for UpdateAutomationRule.
 type UpdateAutomationRuleJSONBody struct {
@@ -5805,6 +5901,9 @@ type CreateFormJSONRequestBody = FormInput
 // ReplaceSpaceSharesJSONRequestBody defines body for ReplaceSpaceShares for application/json ContentType.
 type ReplaceSpaceSharesJSONRequestBody = ShareReplace
 
+// PutSsoConfigJSONRequestBody defines body for PutSsoConfig for application/json ContentType.
+type PutSsoConfigJSONRequestBody = SsoConfigInput
+
 // UpdateStatusJSONRequestBody defines body for UpdateStatus for application/json ContentType.
 type UpdateStatusJSONRequestBody = StatusPatch
 
@@ -6191,6 +6290,15 @@ type ServerInterface interface {
 	// ResetPassword Set password baru dengan token reset (AUTH-03)
 	// (POST /auth/password/reset)
 	ResetPassword(w http.ResponseWriter, r *http.Request)
+	// ListSsoProviders Penyedia SSO yang aktif untuk halaman login (publik; hanya jenis dan nama tampilan)
+	// (GET /auth/sso/providers)
+	ListSsoProviders(w http.ResponseWriter, r *http.Request)
+	// FinishSso Tujuan pengalihan penyedia. Sukses memulai sesi dan mengalihkan ke next; gagal mengalihkan ke /login?sso_error=<alasan>
+	// (GET /auth/sso/{kind}/callback)
+	FinishSso(w http.ResponseWriter, r *http.Request, kind string, params FinishSsoParams)
+	// StartSso Mulai masuk (atau menautkan, link=1 butuh sesi) dan arahkan peramban ke penyedia identitas
+	// (GET /auth/sso/{kind}/start)
+	StartSso(w http.ResponseWriter, r *http.Request, kind string, params StartSsoParams)
 	// DeleteAutomationRule Hapus aturan beserta versi dan lognya
 	// (DELETE /automation-rules/{ruleId})
 	DeleteAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
@@ -6482,6 +6590,12 @@ type ServerInterface interface {
 	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
 	// (POST /me/2fa/setup)
 	SetupTwoFactor(w http.ResponseWriter, r *http.Request)
+	// ListMyIdentities Identitas SSO yang tertaut ke pemanggil
+	// (GET /me/identities)
+	ListMyIdentities(w http.ResponseWriter, r *http.Request)
+	// UnlinkMyIdentity Lepas tautan; ditolak 409 bila pemanggil tidak punya password
+	// (DELETE /me/identities/{kind})
+	UnlinkMyIdentity(w http.ResponseWriter, r *http.Request, kind string)
 	// ListMyRequests Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu
 	// (GET /me/requests)
 	ListMyRequests(w http.ResponseWriter, r *http.Request, params ListMyRequestsParams)
@@ -6668,6 +6782,15 @@ type ServerInterface interface {
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// DeleteSsoConfig Hapus penyedia beserta semua identitas tertaut (admin)
+	// (DELETE /sso/{kind})
+	DeleteSsoConfig(w http.ResponseWriter, r *http.Request, kind string)
+	// GetSsoConfig Konfigurasi penyedia (admin); rahasia klien tidak pernah dikembalikan
+	// (GET /sso/{kind})
+	GetSsoConfig(w http.ResponseWriter, r *http.Request, kind string)
+	// PutSsoConfig Simpan penyedia (admin); mengaktifkan butuh rahasia tersimpan dan discovery yang berhasil
+	// (PUT /sso/{kind})
+	PutSsoConfig(w http.ResponseWriter, r *http.Request, kind string)
 	// ListStars Item berbintang milik pemanggil yang masih dapat dilihat (NAV-02)
 	// (GET /stars)
 	ListStars(w http.ResponseWriter, r *http.Request)
@@ -7682,6 +7805,143 @@ func (siw *ServerInterfaceWrapper) ResetPassword(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ResetPassword(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSsoProviders operation middleware
+func (siw *ServerInterfaceWrapper) ListSsoProviders(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSsoProviders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// FinishSso operation middleware
+func (siw *ServerInterfaceWrapper) FinishSso(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "kind" -------------
+	var kind string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params FinishSsoParams
+
+	// ------------- Optional query parameter "state" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "state", r.URL.Query(), &params.State, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "state"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "state", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "code" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "code", r.URL.Query(), &params.Code, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "code"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "code", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "error" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "error", r.URL.Query(), &params.Error, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "error"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "error", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.FinishSso(w, r, kind, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StartSso operation middleware
+func (siw *ServerInterfaceWrapper) StartSso(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "kind" -------------
+	var kind string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params StartSsoParams
+
+	// ------------- Optional query parameter "next" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "next", r.URL.Query(), &params.Next, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "next"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "next", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "link" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "link", r.URL.Query(), &params.Link, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "link"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "link", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartSso(w, r, kind, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -10660,6 +10920,46 @@ func (siw *ServerInterfaceWrapper) SetupTwoFactor(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListMyIdentities operation middleware
+func (siw *ServerInterfaceWrapper) ListMyIdentities(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListMyIdentities(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnlinkMyIdentity operation middleware
+func (siw *ServerInterfaceWrapper) UnlinkMyIdentity(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "kind" -------------
+	var kind string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnlinkMyIdentity(w, r, kind)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMyRequests operation middleware
 func (siw *ServerInterfaceWrapper) ListMyRequests(w http.ResponseWriter, r *http.Request) {
 
@@ -12564,6 +12864,84 @@ func (siw *ServerInterfaceWrapper) ListSpaceViews(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// DeleteSsoConfig operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSsoConfig(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "kind" -------------
+	var kind string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSsoConfig(w, r, kind)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSsoConfig operation middleware
+func (siw *ServerInterfaceWrapper) GetSsoConfig(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "kind" -------------
+	var kind string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSsoConfig(w, r, kind)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutSsoConfig operation middleware
+func (siw *ServerInterfaceWrapper) PutSsoConfig(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "kind" -------------
+	var kind string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutSsoConfig(w, r, kind)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListStars operation middleware
 func (siw *ServerInterfaceWrapper) ListStars(w http.ResponseWriter, r *http.Request) {
 
@@ -13789,6 +14167,14 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-roles", wrapper.CreateCustomRole)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.UpdateCustomRole)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/sso/providers", wrapper.ListSsoProviders)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/sso/{kind}/start", wrapper.StartSso)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/sso/{kind}/callback", wrapper.FinishSso)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/sso/{kind}", wrapper.DeleteSsoConfig)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/sso/{kind}", wrapper.GetSsoConfig)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/sso/{kind}", wrapper.PutSsoConfig)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/identities", wrapper.ListMyIdentities)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/me/identities/{kind}", wrapper.UnlinkMyIdentity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/audit-events", wrapper.ListAuditEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/audit-events/export", wrapper.ExportAuditEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards", wrapper.ListDashboards)
@@ -15552,6 +15938,155 @@ type ResetPassword429ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ResetPassword429ApplicationProblemPlusJSONResponse) VisitResetPasswordResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSsoProvidersRequestObject struct {
+}
+
+type ListSsoProvidersResponseObject interface {
+	VisitListSsoProvidersResponse(w http.ResponseWriter) error
+}
+
+type ListSsoProviders200JSONResponse struct {
+	Items []struct {
+		Kind ListSsoProviders200JSONResponseBodyItemsKind `json:"kind"`
+		Name string                                       `json:"name"`
+	} `json:"items"`
+}
+
+func (response ListSsoProviders200JSONResponse) VisitListSsoProvidersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSsoProviders429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response ListSsoProviders429ApplicationProblemPlusJSONResponse) VisitListSsoProvidersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type FinishSsoRequestObject struct {
+	Kind   string `json:"kind"`
+	Params FinishSsoParams
+}
+
+type FinishSsoResponseObject interface {
+	VisitFinishSsoResponse(w http.ResponseWriter) error
+}
+
+type FinishSso302Response struct {
+}
+
+func (response FinishSso302Response) VisitFinishSsoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(302)
+	return nil
+}
+
+type FinishSso404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response FinishSso404ApplicationProblemPlusJSONResponse) VisitFinishSsoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type FinishSso429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response FinishSso429ApplicationProblemPlusJSONResponse) VisitFinishSsoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSsoRequestObject struct {
+	Kind   string `json:"kind"`
+	Params StartSsoParams
+}
+
+type StartSsoResponseObject interface {
+	VisitStartSsoResponse(w http.ResponseWriter) error
+}
+
+type StartSso302Response struct {
+}
+
+func (response StartSso302Response) VisitStartSsoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(302)
+	return nil
+}
+
+type StartSso404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response StartSso404ApplicationProblemPlusJSONResponse) VisitStartSsoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSso429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response StartSso429ApplicationProblemPlusJSONResponse) VisitStartSsoResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -21147,6 +21682,75 @@ func (response SetupTwoFactor503ApplicationProblemPlusJSONResponse) VisitSetupTw
 	return err
 }
 
+type ListMyIdentitiesRequestObject struct {
+}
+
+type ListMyIdentitiesResponseObject interface {
+	VisitListMyIdentitiesResponse(w http.ResponseWriter) error
+}
+
+type ListMyIdentities200JSONResponse struct {
+	Items []LinkedIdentity `json:"items"`
+}
+
+func (response ListMyIdentities200JSONResponse) VisitListMyIdentitiesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkMyIdentityRequestObject struct {
+	Kind string `json:"kind"`
+}
+
+type UnlinkMyIdentityResponseObject interface {
+	VisitUnlinkMyIdentityResponse(w http.ResponseWriter) error
+}
+
+type UnlinkMyIdentity204Response struct {
+}
+
+func (response UnlinkMyIdentity204Response) VisitUnlinkMyIdentityResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnlinkMyIdentity404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnlinkMyIdentity404ApplicationProblemPlusJSONResponse) VisitUnlinkMyIdentityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnlinkMyIdentity409ApplicationProblemPlusJSONResponse Problem
+
+func (response UnlinkMyIdentity409ApplicationProblemPlusJSONResponse) VisitUnlinkMyIdentityResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListMyRequestsRequestObject struct {
 	Params ListMyRequestsParams
 }
@@ -24752,6 +25356,171 @@ func (response ListSpaceViews404ApplicationProblemPlusJSONResponse) VisitListSpa
 	return err
 }
 
+type DeleteSsoConfigRequestObject struct {
+	Kind string `json:"kind"`
+}
+
+type DeleteSsoConfigResponseObject interface {
+	VisitDeleteSsoConfigResponse(w http.ResponseWriter) error
+}
+
+type DeleteSsoConfig204Response struct {
+}
+
+func (response DeleteSsoConfig204Response) VisitDeleteSsoConfigResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteSsoConfig403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteSsoConfig403ApplicationProblemPlusJSONResponse) VisitDeleteSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSsoConfig404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteSsoConfig404ApplicationProblemPlusJSONResponse) VisitDeleteSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSsoConfigRequestObject struct {
+	Kind string `json:"kind"`
+}
+
+type GetSsoConfigResponseObject interface {
+	VisitGetSsoConfigResponse(w http.ResponseWriter) error
+}
+
+type GetSsoConfig200JSONResponse SsoConfig
+
+func (response GetSsoConfig200JSONResponse) VisitGetSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSsoConfig403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSsoConfig403ApplicationProblemPlusJSONResponse) VisitGetSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSsoConfig404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSsoConfig404ApplicationProblemPlusJSONResponse) VisitGetSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutSsoConfigRequestObject struct {
+	Kind string `json:"kind"`
+	Body *PutSsoConfigJSONRequestBody
+}
+
+type PutSsoConfigResponseObject interface {
+	VisitPutSsoConfigResponse(w http.ResponseWriter) error
+}
+
+type PutSsoConfig200JSONResponse SsoConfig
+
+func (response PutSsoConfig200JSONResponse) VisitPutSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutSsoConfig403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutSsoConfig403ApplicationProblemPlusJSONResponse) VisitPutSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutSsoConfig404ApplicationProblemPlusJSONResponse Problem
+
+func (response PutSsoConfig404ApplicationProblemPlusJSONResponse) VisitPutSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutSsoConfig422ApplicationProblemPlusJSONResponse Problem
+
+func (response PutSsoConfig422ApplicationProblemPlusJSONResponse) VisitPutSsoConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListStarsRequestObject struct {
 }
 
@@ -26726,6 +27495,15 @@ type StrictServerInterface interface {
 	// ResetPassword Set password baru dengan token reset (AUTH-03)
 	// (POST /auth/password/reset)
 	ResetPassword(ctx context.Context, request ResetPasswordRequestObject) (ResetPasswordResponseObject, error)
+	// ListSsoProviders Penyedia SSO yang aktif untuk halaman login (publik; hanya jenis dan nama tampilan)
+	// (GET /auth/sso/providers)
+	ListSsoProviders(ctx context.Context, request ListSsoProvidersRequestObject) (ListSsoProvidersResponseObject, error)
+	// FinishSso Tujuan pengalihan penyedia. Sukses memulai sesi dan mengalihkan ke next; gagal mengalihkan ke /login?sso_error=<alasan>
+	// (GET /auth/sso/{kind}/callback)
+	FinishSso(ctx context.Context, request FinishSsoRequestObject) (FinishSsoResponseObject, error)
+	// StartSso Mulai masuk (atau menautkan, link=1 butuh sesi) dan arahkan peramban ke penyedia identitas
+	// (GET /auth/sso/{kind}/start)
+	StartSso(ctx context.Context, request StartSsoRequestObject) (StartSsoResponseObject, error)
 	// DeleteAutomationRule Hapus aturan beserta versi dan lognya
 	// (DELETE /automation-rules/{ruleId})
 	DeleteAutomationRule(ctx context.Context, request DeleteAutomationRuleRequestObject) (DeleteAutomationRuleResponseObject, error)
@@ -27017,6 +27795,12 @@ type StrictServerInterface interface {
 	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
 	// (POST /me/2fa/setup)
 	SetupTwoFactor(ctx context.Context, request SetupTwoFactorRequestObject) (SetupTwoFactorResponseObject, error)
+	// ListMyIdentities Identitas SSO yang tertaut ke pemanggil
+	// (GET /me/identities)
+	ListMyIdentities(ctx context.Context, request ListMyIdentitiesRequestObject) (ListMyIdentitiesResponseObject, error)
+	// UnlinkMyIdentity Lepas tautan; ditolak 409 bila pemanggil tidak punya password
+	// (DELETE /me/identities/{kind})
+	UnlinkMyIdentity(ctx context.Context, request UnlinkMyIdentityRequestObject) (UnlinkMyIdentityResponseObject, error)
 	// ListMyRequests Permintaan yang saya kirim lewat form beserta statusnya (FORM-08), terbaru dulu
 	// (GET /me/requests)
 	ListMyRequests(ctx context.Context, request ListMyRequestsRequestObject) (ListMyRequestsResponseObject, error)
@@ -27203,6 +27987,15 @@ type StrictServerInterface interface {
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(ctx context.Context, request ListSpaceViewsRequestObject) (ListSpaceViewsResponseObject, error)
+	// DeleteSsoConfig Hapus penyedia beserta semua identitas tertaut (admin)
+	// (DELETE /sso/{kind})
+	DeleteSsoConfig(ctx context.Context, request DeleteSsoConfigRequestObject) (DeleteSsoConfigResponseObject, error)
+	// GetSsoConfig Konfigurasi penyedia (admin); rahasia klien tidak pernah dikembalikan
+	// (GET /sso/{kind})
+	GetSsoConfig(ctx context.Context, request GetSsoConfigRequestObject) (GetSsoConfigResponseObject, error)
+	// PutSsoConfig Simpan penyedia (admin); mengaktifkan butuh rahasia tersimpan dan discovery yang berhasil
+	// (PUT /sso/{kind})
+	PutSsoConfig(ctx context.Context, request PutSsoConfigRequestObject) (PutSsoConfigResponseObject, error)
 	// ListStars Item berbintang milik pemanggil yang masih dapat dilihat (NAV-02)
 	// (GET /stars)
 	ListStars(ctx context.Context, request ListStarsRequestObject) (ListStarsResponseObject, error)
@@ -28143,6 +28936,84 @@ func (sh *strictHandler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ResetPasswordResponseObject); ok {
 		if err := validResponse.VisitResetPasswordResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSsoProviders operation middleware
+func (sh *strictHandler) ListSsoProviders(w http.ResponseWriter, r *http.Request) {
+	var request ListSsoProvidersRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSsoProviders(ctx, request.(ListSsoProvidersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSsoProviders")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSsoProvidersResponseObject); ok {
+		if err := validResponse.VisitListSsoProvidersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// FinishSso operation middleware
+func (sh *strictHandler) FinishSso(w http.ResponseWriter, r *http.Request, kind string, params FinishSsoParams) {
+	var request FinishSsoRequestObject
+
+	request.Kind = kind
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.FinishSso(ctx, request.(FinishSsoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "FinishSso")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(FinishSsoResponseObject); ok {
+		if err := validResponse.VisitFinishSsoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StartSso operation middleware
+func (sh *strictHandler) StartSso(w http.ResponseWriter, r *http.Request, kind string, params StartSsoParams) {
+	var request StartSsoRequestObject
+
+	request.Kind = kind
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StartSso(ctx, request.(StartSsoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartSso")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StartSsoResponseObject); ok {
+		if err := validResponse.VisitStartSsoResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -30941,6 +31812,56 @@ func (sh *strictHandler) SetupTwoFactor(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// ListMyIdentities operation middleware
+func (sh *strictHandler) ListMyIdentities(w http.ResponseWriter, r *http.Request) {
+	var request ListMyIdentitiesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListMyIdentities(ctx, request.(ListMyIdentitiesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListMyIdentities")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListMyIdentitiesResponseObject); ok {
+		if err := validResponse.VisitListMyIdentitiesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnlinkMyIdentity operation middleware
+func (sh *strictHandler) UnlinkMyIdentity(w http.ResponseWriter, r *http.Request, kind string) {
+	var request UnlinkMyIdentityRequestObject
+
+	request.Kind = kind
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnlinkMyIdentity(ctx, request.(UnlinkMyIdentityRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnlinkMyIdentity")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnlinkMyIdentityResponseObject); ok {
+		if err := validResponse.VisitUnlinkMyIdentityResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListMyRequests operation middleware
 func (sh *strictHandler) ListMyRequests(w http.ResponseWriter, r *http.Request, params ListMyRequestsParams) {
 	var request ListMyRequestsRequestObject
@@ -32690,6 +33611,91 @@ func (sh *strictHandler) ListSpaceViews(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListSpaceViewsResponseObject); ok {
 		if err := validResponse.VisitListSpaceViewsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteSsoConfig operation middleware
+func (sh *strictHandler) DeleteSsoConfig(w http.ResponseWriter, r *http.Request, kind string) {
+	var request DeleteSsoConfigRequestObject
+
+	request.Kind = kind
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteSsoConfig(ctx, request.(DeleteSsoConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteSsoConfig")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteSsoConfigResponseObject); ok {
+		if err := validResponse.VisitDeleteSsoConfigResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSsoConfig operation middleware
+func (sh *strictHandler) GetSsoConfig(w http.ResponseWriter, r *http.Request, kind string) {
+	var request GetSsoConfigRequestObject
+
+	request.Kind = kind
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSsoConfig(ctx, request.(GetSsoConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSsoConfig")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSsoConfigResponseObject); ok {
+		if err := validResponse.VisitGetSsoConfigResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutSsoConfig operation middleware
+func (sh *strictHandler) PutSsoConfig(w http.ResponseWriter, r *http.Request, kind string) {
+	var request PutSsoConfigRequestObject
+
+	request.Kind = kind
+
+	var body PutSsoConfigJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutSsoConfig(ctx, request.(PutSsoConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutSsoConfig")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutSsoConfigResponseObject); ok {
+		if err := validResponse.VisitPutSsoConfigResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

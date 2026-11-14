@@ -818,6 +818,122 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /auth/sso/providers:
+    get:
+      operationId: listSsoProviders
+      summary: Penyedia SSO yang aktif untuk halaman login (publik; hanya jenis dan nama tampilan)
+      security: []
+      responses:
+        '200':
+          description: Daftar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [kind, name]
+                      properties:
+                        kind: { type: string, enum: [oidc] }
+                        name: { type: string }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/sso/{kind}/start:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+    get:
+      operationId: startSso
+      summary: Mulai masuk (atau menautkan, link=1 butuh sesi) dan arahkan peramban ke penyedia identitas
+      security: []
+      parameters:
+        - { name: next, in: query, schema: { type: string, maxLength: 500 }, description: Hanya jalur relatif di situs ini; selain itu menjadi / }
+        - { name: link, in: query, schema: { type: string, enum: ['1'] } }
+      responses:
+        '302': { description: Pengalihan ke penyedia identitas, atau ke /login tanpa sesi bila link=1 }
+        '404': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/sso/{kind}/callback:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+    get:
+      operationId: finishSso
+      summary: Tujuan pengalihan penyedia. Sukses memulai sesi dan mengalihkan ke next; gagal mengalihkan ke /login?sso_error=<alasan>
+      security: []
+      parameters:
+        - { name: state, in: query, schema: { type: string } }
+        - { name: code, in: query, schema: { type: string } }
+        - { name: error, in: query, schema: { type: string } }
+      responses:
+        '302': { description: "Alasan gagal: state, denied, failed, unavailable, unlinked, unverified, inactive, domain, session, already_linked" }
+        '404': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /sso/{kind}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+    get:
+      operationId: getSsoConfig
+      summary: Konfigurasi penyedia (admin); rahasia klien tidak pernah dikembalikan
+      responses:
+        '200':
+          description: Konfigurasi, atau nilai bawaan bila belum diatur
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SsoConfig' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: putSsoConfig
+      summary: Simpan penyedia (admin); mengaktifkan butuh rahasia tersimpan dan discovery yang berhasil
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SsoConfigInput' }
+      responses:
+        '200':
+          description: Tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SsoConfig' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteSsoConfig
+      summary: Hapus penyedia beserta semua identitas tertaut (admin)
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /me/identities:
+    get:
+      operationId: listMyIdentities
+      summary: Identitas SSO yang tertaut ke pemanggil
+      responses:
+        '200':
+          description: Daftar
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/LinkedIdentity' }
+  /me/identities/{kind}:
+    parameters:
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+    delete:
+      operationId: unlinkMyIdentity
+      summary: Lepas tautan; ditolak 409 bila pemanggil tidak punya password
+      responses:
+        '204': { description: Dilepas }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
   /audit-events:
     get:
       operationId: listAuditEvents
@@ -4691,6 +4807,43 @@ components:
       required: [items]
       properties:
         items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/CustomRole' } }
+    SsoConfigInput:
+      type: object
+      additionalProperties: false
+      required: [name, issuer, client_id]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        enabled: { type: boolean }
+        issuer: { type: string, description: URL https penyedia OpenID Connect }
+        client_id: { type: string, maxLength: 255 }
+        client_secret: { type: string, maxLength: 1000, nullable: true, description: Hilangkan untuk mempertahankan rahasia yang tersimpan; string kosong menghapusnya }
+        auto_link: { type: boolean, description: Tautkan masuk pertama ke pengguna aktif dengan email terverifikasi yang sama }
+        allowed_domains: { type: array, maxItems: 50, items: { type: string } }
+    SsoConfig:
+      type: object
+      required: [configured, kind, name, enabled, issuer, client_id, secret_set, auto_link, allowed_domains, redirect_url, key_configured]
+      properties:
+        configured: { type: boolean }
+        kind: { type: string }
+        name: { type: string }
+        enabled: { type: boolean }
+        issuer: { type: string }
+        client_id: { type: string }
+        secret_set: { type: boolean }
+        auto_link: { type: boolean }
+        allowed_domains: { type: array, items: { type: string } }
+        redirect_url: { type: string, description: Daftarkan persis alamat ini di penyedia }
+        key_configured: { type: boolean, description: PMS_SSO_KEY terisi }
+        updated_at: { type: string, format: date-time, nullable: true }
+    LinkedIdentity:
+      type: object
+      required: [kind, provider_name, email, created_at, last_login_at]
+      properties:
+        kind: { type: string }
+        provider_name: { type: string }
+        email: { type: string }
+        created_at: { type: string, format: date-time }
+        last_login_at: { type: string, format: date-time, nullable: true }
     AuditEvent:
       type: object
       required: [id, at, actor_id, actor_name, action, target_type, target_id, ip, details]

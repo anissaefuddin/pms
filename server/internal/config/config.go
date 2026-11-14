@@ -33,6 +33,8 @@ type Config struct {
 	Storage, S3URL, S3Region, S3AccessKey, S3SecretKey, PydioURL, PydioToken string
 	// TwoFactorKey and TwoFactorKeyPrevious are 32-byte keys for TOTP secrets; without TwoFactorKey 2FA cannot be turned on.
 	TwoFactorKey, TwoFactorKeyPrevious []byte
+	// SSOKey and SSOKeyPrevious encrypt the client secret of single sign-on providers (same format and rotation as the 2FA key).
+	SSOKey, SSOKeyPrevious []byte
 }
 
 func Load() (Config, error) {
@@ -64,7 +66,7 @@ func Load() (Config, error) {
 	default:
 		return Config{}, fmt.Errorf("PMS_STORAGE must be local, s3 (needs PMS_S3_URL, PMS_S3_ACCESS_KEY, PMS_S3_SECRET_KEY) or pydio (needs PMS_PYDIO_URL, PMS_PYDIO_TOKEN)")
 	}
-	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious} {
+	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious, "PMS_SSO_KEY": &cfg.SSOKey, "PMS_SSO_KEY_PREVIOUS": &cfg.SSOKeyPrevious} {
 		if raw := os.Getenv(env); raw != "" {
 			key, err := base64.StdEncoding.DecodeString(strings.TrimSpace(raw))
 			if err != nil || len(key) != 32 {
@@ -75,6 +77,9 @@ func Load() (Config, error) {
 	}
 	if cfg.TwoFactorKeyPrevious != nil && cfg.TwoFactorKey == nil {
 		return Config{}, fmt.Errorf("PMS_2FA_KEY_PREVIOUS needs PMS_2FA_KEY")
+	}
+	if cfg.SSOKeyPrevious != nil && cfg.SSOKey == nil {
+		return Config{}, fmt.Errorf("PMS_SSO_KEY_PREVIOUS needs PMS_SSO_KEY")
 	}
 	if cfg.DatabaseURL == "" {
 		// Parts instead of a URL: url.UserPassword escapes the password, so any characters work.

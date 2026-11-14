@@ -270,6 +270,8 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 `audit_events(id, at, actor_id, actor_name, action, target_type, target_id, ip, details jsonb)` (migrasi `00300`): jejak keamanan, aksi `area.verb`, `details` maksimal 4 KiB; baris `security_events` lama disalin sebagai `auth.2fa_*`. `custom_roles(id, name unik tanpa memperhatikan huruf, description, caps_mask 1..255 dengan bit view, version)` dan `shares.custom_role_id` (migrasi `00301`, ON DELETE RESTRICT; CHECK `custom_role_id IS NULL OR role = 'read'`).
 
+`sso_providers(kind unik: oidc|saml, name, enabled, config jsonb, secret_enc)`, `user_identities(provider_id, subject, user_id, email, last_login_at; kunci utama provider+subject)`, dan `sso_states(state_hash, browser_hash, provider_id, nonce, code_verifier, purpose login|link, user_id, next, expires_at)` (migrasi `00302`). `sso_states` bersifat sekali pakai dan dibersihkan saat flow baru dimulai.
+
 ## 8. Data yang sengaja belum ada (M2+)
 
 `reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.

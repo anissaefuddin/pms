@@ -17,6 +17,7 @@ import search from "./i18n/en/search.json";
 import settings from "./i18n/en/settings.json";
 import share from "./i18n/en/share.json";
 import spaces from "./i18n/en/spaces.json";
+import sso from "./i18n/en/sso.json";
 import starred from "./i18n/en/starred.json";
 import time from "./i18n/en/time.json";
 import views from "./i18n/en/views.json";
@@ -28,7 +29,7 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   resources: {
     en: {
-      translation: { audit, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, reports, roles, search, settings, share, spaces, starred, time, views, workspace },
+      translation: { audit, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, reports, roles, search, settings, share, spaces, sso, starred, time, views, workspace },
     },
   },
 });
