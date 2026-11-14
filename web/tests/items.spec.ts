@@ -134,6 +134,7 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
     [`DELETE ${itemPath}`]: { status: 204 },
   } });
   await page.goto(`/tasks/${parentId}`);
+  await page.getByRole("button", { name: "Info" }).click(); // the project page keeps its detail form in the Info panel
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("My draft");
   await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
   await expect(page.getByRole("alert").filter({ hasText: "Review the latest version" })).toBeVisible();
@@ -171,6 +172,7 @@ test("conflicted draft reapplies against the current ETag", async ({ page }) => 
     },
   } });
   await page.goto(`/tasks/${parentId}`);
+  await page.getByRole("button", { name: "Info" }).click();
   const title = page.getByRole("textbox", { name: "Name", exact: true });
   await title.fill("My draft");
   await title.press("Enter");

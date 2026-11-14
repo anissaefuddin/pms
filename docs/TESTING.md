@@ -1039,3 +1039,16 @@ Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image ny
 | | `BACKUP_REMOTE` rclone (tujuan lokal) | PASS (regresi) |
 
 Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.
+
+## Lane 4 (sidebar dan shell): S-UIP.1.8, S-UIP.2.1, S-UIP.3.1 bagian A4/A5 (14 Nov 2026)
+
+Dijalankan sebagian (tanpa regresi penuh): Playwright berbasis mock, `npx tsc -b`, `npx eslint src`.
+
+| Tes | Hasil |
+|---|---|
+| `tests/uip4-sidebar.spec.ts` (baru, 5 tes): node Space (overview, Tools, + , ikon tipe, panah Atas/Bawah) + axe; halaman project header+view, Info membuka formulir, `/tasks/{id}` tetap; menu akun lima entri + petunjuk `⌘K`; More memuat Calendars/Created by me/Customize menu, kedua halaman + axe; status realtime tidak tampil saat terhubung | PASS |
+| `navigation` (entri tersembunyi mengikuti `sidebar_hidden`, termasuk Calendars) | PASS |
+| `spaces`, `items`, `dashboards` (papan analitik kini dari sidebar), `onboarding`, `settings-nav`, `dr02-settings-menu`, `m1-settings-recycle`, `two-factor`, `bookmarks-feedback`, `todo`, `screens.a11y` (terang dan gelap) | PASS (tes lama diperbarui ke tombol/ikon baru) |
+| `tsc -b`, `eslint src` | bersih |
+
+Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (lihat D-142); pemindahan fokus roving pohon (D-140); tampilan 390 px.

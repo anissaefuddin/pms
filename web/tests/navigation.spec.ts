@@ -25,9 +25,14 @@ test("sidebar entries can be hidden per user and the choice is saved on the prof
   await page.getByRole("checkbox", { name: "My to-do" }).uncheck();
   await nav.getByRole("button", { name: "More" }).click();
   await expect(page.getByRole("menuitem", { name: "My to-do" })).toHaveCount(0);
-  await expect(page.getByRole("menuitem", { name: "Recycle bin" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Calendars" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Created by me" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await page.getByRole("checkbox", { name: "Calendars" }).uncheck();
+  await nav.getByRole("button", { name: "More" }).click();
+  await expect(page.getByRole("menuitem", { name: "Calendars" })).toHaveCount(0);
   expect(calls.filter((call) => call.method === "PATCH" && call.path === "/me").map((call) => call.body))
-    .toEqual([{ sidebar_hidden: ["stream"] }, { sidebar_hidden: ["stream", "my_todo"] }]);
+    .toEqual([{ sidebar_hidden: ["stream"] }, { sidebar_hidden: ["stream", "my_todo"] }, { sidebar_hidden: ["stream", "my_todo", "calendars"] }]);
   await expect(nav.getByRole("button", { name: "Search" })).toBeVisible();
   await expect(nav.getByRole("button", { name: "Inbox" })).toBeVisible();
 });

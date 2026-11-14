@@ -10,5 +10,11 @@
   "from": "Start from blueprint",
   "none": "No blueprint",
   "hint": "Dates are counted from the start date you set below. Without one, the new items have no dates.",
-  "typeLine": "{{type}} · {{count}} items"
+  "typeLine": "{{type}} · {{count}} items",
+  "nav": "Blueprints",
+  "page.title": "Blueprints",
+  "page.description": "Reusable project, folder and task templates kept in a Space.",
+  "page.space": "Space",
+  "page.empty": "No blueprints in this Space.",
+  "page.error": "Could not load blueprints."
 }

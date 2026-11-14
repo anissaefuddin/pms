@@ -35,7 +35,7 @@ const timezones = ["UTC", ...Intl.supportedValuesOf("timeZone")];
 
 // Only entries that exist in this version are offered; the other keys the API accepts stay hidden (NAV-02).
 const emailGroups = ["mention", "assigned", "shared", "task_changes", "report"] as const;
-const sidebarChoices = ["workload", "my_todo", "request_forms", "stream", "timesheets"] as const;
+const sidebarChoices = ["my_todo", "request_forms", "stream", "calendars", "created_by_me", "dashboards", "reports", "starred", "workload", "timesheets"] as const;
 
 function ProfileRoute() {
   const profile = useProfile();
