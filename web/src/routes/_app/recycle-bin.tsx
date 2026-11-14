@@ -2,6 +2,7 @@ import { useState } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { FileText, Folder, Trash2 } from "lucide-react";
 import { api } from "@/lib/api";
 import { formatDateTime, useProfile } from "@/lib/profile";
 import { emptyRecycleBin, recycleKey, restoreItem } from "@/lib/recycle";
@@ -35,28 +36,31 @@ function RecycleBin() {
   const empty = useMutation({ mutationFn: () => emptyRecycleBin(client), onSuccess: () => setConfirming(false) });
   const items = bin.data?.pages.flatMap((page) => page.items) ?? [];
   return <main className="space-y-4 p-6">
-    <h1 className="workspace-title">{t("nav.recycle.label")}</h1>
-    <div className="flex flex-wrap gap-3">
+    <div className="flex flex-wrap items-center gap-3">
+      <h1 className="workspace-title">{t("nav.recycle.label")}</h1>
+      {items.length > 0 && <Button variant="secondary" size="sm" onClick={() => setConfirming(true)}><Trash2 />{t("nav.recycle.purge.action")}</Button>}
+    </div>
+    <div className="flex flex-wrap gap-3 border-b pb-3 text-sm">
       <label className="flex items-center gap-2">{t("items.type")}
-        <select className="rounded border bg-background p-2 text-sm" value={type} onChange={(event) => setType(event.target.value)}>
+        <select className="rounded-md border-0 bg-muted px-2 py-1 text-sm" value={type} onChange={(event) => setType(event.target.value)}>
           <option value="">{t("nav.recycle.allTypes")}</option>
           {types.map((kind) => <option key={kind} value={kind}>{t(`items.${kind}`)}</option>)}
         </select>
       </label>
       <label className="flex items-center gap-2">{t("views.sort")}
-        <select className="rounded border bg-background p-2 text-sm" value={sort} onChange={(event) => setSort(event.target.value)}>
+        <select className="rounded-md border-0 bg-muted px-2 py-1 text-sm" value={sort} onChange={(event) => setSort(event.target.value)}>
           <option value="deleted_at">{t("nav.recycle.deletedAt")}</option>
           <option value="title">{t("views.title")}</option>
         </select>
       </label>
     </div>
-    {items.length > 0 && <Button variant="outline" onClick={() => setConfirming(true)}>{t("nav.recycle.purge.action")}</Button>}
     {restore.error && <FormError message={restore.error.message} />}
     {bin.isPending && <p role="status">{t("items.loading")}</p>}
     {bin.isError && <div><FormError message={t("items.loadError")} />
       <Button variant="link" onClick={() => void bin.refetch()}>{t("items.retry")}</Button></div>}
     {bin.isSuccess && !items.length && <p>{t("nav.recycle.empty")}</p>}
-    <ul className="divide-y">{items.map((item) => <li key={item.id} className="flex flex-wrap items-center gap-3 py-3">
+    <ul className="divide-y">{items.map((item) => <li key={item.id} className="flex flex-wrap items-center gap-3 py-2">
+      <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground">{item.type === "folder" ? <Folder className="size-4" /> : <FileText className="size-4" />}</span>
       <div className="min-w-0 flex-1">
         <p className="break-words font-medium">{item.title}</p>
         <p className="text-sm text-muted-foreground">{[
@@ -67,7 +71,7 @@ function RecycleBin() {
         ].filter(Boolean).join(" · ")}</p>
         {item.restore_blocked_reason && <p className="text-sm">{t(`nav.recycle.blocked.${item.restore_blocked_reason}`)}</p>}
       </div>
-      <Button variant="outline" disabled={restore.isPending || !!item.restore_blocked_reason}
+      <Button variant="outline" size="sm" disabled={restore.isPending || !!item.restore_blocked_reason}
         onClick={() => restore.mutate(item.id)}>{t("nav.recycle.restore")}</Button>
     </li>)}</ul>
     {bin.hasNextPage && <Button variant="outline" disabled={bin.isFetchingNextPage}

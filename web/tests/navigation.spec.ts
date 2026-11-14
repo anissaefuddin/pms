@@ -53,7 +53,7 @@ test("Stream filters, hides auto updates, pages with a cursor and has no axe vio
   await expect(page.getByText("Looks good")).toBeVisible();
   expect(calls.some((call) => call.path === "/stream" && call.query.get("cursor") === "page-2")).toBe(true);
 
-  await page.getByRole("button", { name: "Assigned to me" }).click();
+  await page.getByRole("radio", { name: "Assigned to me" }).check();
   await page.getByRole("checkbox", { name: "Hide auto updates" }).check();
   await expect(page).toHaveURL(/filter=assigned&hideAuto=true/);
   await expect.poll(() => calls.some((call) => call.path === "/stream"

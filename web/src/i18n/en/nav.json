@@ -148,5 +148,18 @@
   "created.error": "Could not load your items.",
   "created.retry": "Try again",
   "created.truncated": "Showing the first {{count}} items of each Space.",
-  "breadcrumb": "Breadcrumb"
+  "breadcrumb": "Breadcrumb",
+  "customize.hint": "Choose what you'd like to see in your menu. Search and Inbox always show.",
+  "customize.shown": "Shown in menu",
+  "customize.hidden": "Hidden from menu",
+  "customize.hide": "Hide {{name}}",
+  "customize.show": "Show {{name}}",
+  "customize.done": "Done",
+  "account.appearance": "Workspace appearance",
+  "account.emailPrefs": "Email preferences",
+  "stream.filtersTitle": "Filters",
+  "recycle.emptyBin": "Empty bin",
+  "inbox.emptyHint": "Notifications you receive show up here.",
+  "todo.addItem": "Item",
+  "spaces.addShort": "New Space"
 }

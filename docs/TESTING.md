@@ -1111,3 +1111,16 @@ Gap dan keputusan: [GAP_SCREEN_PASS2_B.md](GAP_SCREEN_PASS2_B.md), D-160..D-164.
 | `tsc -b`, `eslint src` | bersih |
 
 Tidak diuji: `m4-live` (Timelog dengan data nyata, filter kini di popover; hanya membaca tabel sehingga tidak terdampak) dan `pilot-live`/`project-progress-live` (butuh fixture terpisah); populasi Timelog tidak diperiksa di browser karena seed ITA tidak punya time entry; mobile 390 px; layout lane Board dengan data multi-assignee.
+## S-UIP2 lane C: shell, akun, pengaturan, daftar pribadi (15 Nov 2026)
+
+| Bukti | Hasil |
+|---|---|
+| `tests/uip2-c-shell.spec.ts` (baru, 3 tes): dialog Customize menu menyembunyikan Stream dan sidebar mengikuti, axe bersih; menu akun, entri nav pengaturan unik dan jangkar `#appearance`/`#email`; Recycle bin dengan tombol Empty di samping judul, axe bersih | PASS |
+| `navigation` (Stream memakai radio filter), `settings-nav`, `m1-settings-recycle`, `theme` (axe 8 aksen), `uip3-lists`, `uip4-sidebar`, `spaces`, `work-schedule`, `two-factor`, `auth`, `login.a11y`, `bookmarks-feedback`, `onboarding`, `todo`, `dr02-settings-menu` | PASS (rerun terakhir 53 tes; satu putaran awal gagal 19 tes akibat satu pelanggaran axe pada pemicu menu akun, sudah diperbaiki) |
+| `screens.a11y`, `pilot.a11y`, `search`, `otp`, `create-menu`, `stars`, `sse-reconnect`, `ui-audit` | Dijalankan paralel 5 pekerja: 5 tes gagal timeout kemunculan elemen; dijalankan ulang terpisah: PASS. Dugaan: kelambatan Vite dingin, bukan regresi (tidak dibuktikan dengan baseline) |
+| Live: `PMS_TEST_BROWSER=1 go test ./server/internal/httpserver -run TestBrowserTwoFactor` (Postgres 17 `pms-pgC`, tombol "Account menu" dan halaman Security) | PASS |
+| `tsc -b`, `eslint src` | bersih |
+
+Temuan selama uji: pemicu menu akun dengan `aria-label` berbeda dari teks inisial melanggar axe `label-content-name-mismatch`; diperbaiki dengan teks `sr-only` dan inisial `aria-hidden`.
+Tidak diuji: tampilan 390 px dan tangkapan layar visual; sidebar pada data Space besar; halaman Onboarding (lihat GAP_SCREEN_PASS2_C C17). Container `pms-pgC` dihapus.
+
