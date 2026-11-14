@@ -6,6 +6,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { listNotifications, notificationKey } from "@/lib/notifications";
 import { api } from "@/lib/api";
+import { useState } from "react";
+import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
@@ -14,6 +16,7 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () =
   const profile = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [feedback, setFeedback] = useState(false);
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
   async function logout() {
     await api("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
@@ -36,9 +39,11 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () =
           <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile" })}>{t("settings.profile.title")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate({ to: "/settings/security" })}>{t("nav.profile.security")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile" })}>{t("settings.profile.appearance")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setFeedback(true)}>{t("nav.feedback.menu")}</DropdownMenuItem>
           <DropdownMenuItem onClick={logout}>{t("nav.profile.logout")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
+      <FeedbackDialog open={feedback} onOpenChange={setFeedback} />
     </header>
   );
 }

@@ -272,3 +272,13 @@ Semua error memakai `application/problem+json` (lihat openapi). Field `code` sta
 - Pemilik bisa membaca entry yang task-nya masih terlihat. Hanya pemilik dengan `change_status` bisa mengubah atau menghapus entry yang terbuka. Pengguna dengan akses penuh pada task bisa membaca dan mengubah lock, dalam request terpisah dari perubahan durasi atau komentar.
 - PATCH dan DELETE wajib memakai `If-Match`. Versi usang menghasilkan 409 `version_conflict`. Entry terkunci menghasilkan 409 `time_entry_locked` dan sel duplikat menghasilkan 409 `time_entry_exists`.
 - Timelog Project mengikuti jalur lokasi aktif yang terlihat. Akses penuh pada lokasi Project mengizinkan pembacaan entry semua pengguna melalui lokasi itu. Pengguna lain melihat entry sendiri. Budget memakai izin edit Project dan definisi Currency pada Space yang terlihat. Total waktu memakai cakupan yang sama dengan Timelog.
+
+## 12. Konektor dan sinkronisasi (M11, INT-01/INT-02)
+
+Semua endpoint hanya untuk admin; rahasia konektor tidak pernah dikembalikan (hanya nama).
+
+- **Pasang:** `POST /connectors {kind, name, config, secrets}`; `Validate` milik konektor memeriksa config dan rahasia (422 bila salah). Rahasia dienkripsi AES-256-GCM dengan `PMS_CONNECTOR_KEY` dan diikat ke id pemasangan; tanpa kunci pemasangan dengan rahasia ditolak (503), tidak disimpan polos.
+- **Konfigurasi:** `PATCH /connectors/{id}`; rahasia digabung per nama, nilai kosong menghapus rahasia itu. **Nonaktif/aktif:** `POST .../disable|enable`; konektor nonaktif tidak bisa sinkron (409).
+- **Tautan:** `POST /connectors/{id}/links {item_id, external_id?}`. Tanpa `external_id`, record eksternal dibuat dari Item. Dengan `external_id`, hanya ditautkan; sinkronisasi pertama mengadopsi judul yang sama atau mencatat konflik.
+- **Sinkron:** `POST /connectors/{id}/sync` → `{pushed, pulled, conflicts, pending, skipped, unchanged}`. Idempoten: tanpa perubahan tidak ada tulisan ke sisi mana pun.
+- **Konflik:** kebijakan di DECISIONS D-INT-02. `GET /connectors/{id}/conflicts[?status=all]`, `POST /connector-conflicts/{id}/resolve {resolution: item|remote}`; sudah diselesaikan → 409.

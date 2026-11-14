@@ -1,0 +1,28 @@
+{
+  "title": "Resource settings",
+  "person": "Person",
+  "mine": "My schedule",
+  "roles": "Job roles",
+  "skills": "Skills",
+  "roleName": "Job role name",
+  "skillName": "Skill name",
+  "saveName": "Save name",
+  "add": "Add",
+  "rename": "Rename",
+  "remove": "Remove",
+  "inherit": "Use workspace working hours",
+  "days": "Working days",
+  "dayNames": [
+    "Sun",
+    "Mon",
+    "Tue",
+    "Wed",
+    "Thu",
+    "Fri",
+    "Sat"
+  ],
+  "hours": "Daily hours",
+  "leave": "Leave dates",
+  "addLeave": "Add leave date",
+  "saveCapacity": "Save capacity"
+}
