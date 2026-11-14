@@ -1105,3 +1105,42 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 ### Sample seed: TIMELINE ITA INTERNAL (14 Nov 2026)
 
 `deploy/samples/ita-timeline-seed.sql` membuat Space "ITA Internal Timeline" dari PDF `TIMELINE ITA INTERNAL - 201026` (Gantt Oct 2026 - Mar 2027): 6 project (Lalang Platform, Kurau Plant, Melibur Plant, DC Kuat, AI Selatan, MSTB), 24 folder kelompok (Process Safety, HAZOP, HAZID, MAH, SECE) dan 128 task (termasuk milestone Kick Off Meeting dan Closing Proyek), tanggal dari kolom minggu pada bar. Idempoten. Dijalankan di `dev-lens` setelah uji `BEGIN ... ROLLBACK`: 158 item, tanpa ERROR di log. Semua status New kecuali Kick Off Meeting (Completed); tanpa assignee dan dependensi karena PDF tidak memuatnya. Dibuat lewat SQL langsung (bukan API), jadi tampilan dan hak akses di UI belum diperiksa manusia.
+## UIP2-A: detail item pass 2
+
+Playwright mock: `items.spec` (tes baru "UIP2-A"), `approvals`, `share`, `item-effort`, `item-locations`, `item-custom-fields`, `blueprints`, `ui-audit` (axe 1440/390): 111 lulus; `tsc --noEmit` dan eslint bersih. Tes live Go belum dijalankan.
+## Pass 2 lane B: view Table/Board/Gantt/Calendar/Timelog dan dialog pembuatan (15 Nov 2026)
+
+Gap dan keputusan: [GAP_SCREEN_PASS2_B.md](GAP_SCREEN_PASS2_B.md), D-160..D-164. Tanpa API/migrasi baru. Data lihat: seed ITA (158 item) di Postgres `pms-pgB`; Board, Gantt, Timelog dan popover diperiksa manual di browser pane.
+
+| Bukti | Hasil |
+|---|---|
+| `tests/uip2-b.spec.ts` (baru, 4 tes): kartu Board (ikon tipe sebaris judul, avatar dan tanggal sebaris, footer subitem) + axe; Table (ikon tipe, baris "Add item" selebar tabel, ikon pada tab view); Calendar (chip `bg-amber-100`) + axe; Gantt (toolbar chip Filter/Columns, kotak warna status, "Add item" membuka dialog) | PASS |
+| Tes mock terdampak: `board-lanes`, `gantt`, `calendar`, `m8-collections`, `items`, `onboarding`, `dr08-calendar-effort`, `project-progress`, `pilot.a11y`, `screens.a11y` (terang dan gelap), `spaces`, `uip-lane2`, `view-presets`, `view-fields`, `views`, `create-menu`, `project-excel`, `uip-lane1`, `uip-lane4` | PASS (69 + 21 + 10; `views.spec` diperbarui: Gantt kini memiliki toolbar filter, asersi 0 menjadi 1) |
+| Live Go `PMS_TEST_BROWSER=1`: `TestBrowserM2Flows` (kolom custom field di Table/Board/Gantt, drag Calendar dan lane), `TestBrowserM3Flows`, `TestBrowserM8Flows`, `TestBrowserCreateMenu` | PASS. Satu kali `m2-live` flow 2 gagal pada run pertama (kolom "Card fields" Board belum tersimpan saat `page.goto` berikutnya: balapan di tes, bukan di UI); diulang dua kali, keduanya PASS |
+| `tsc -b`, `eslint src` | bersih |
+
+Tidak diuji: `m4-live` (Timelog dengan data nyata, filter kini di popover; hanya membaca tabel sehingga tidak terdampak) dan `pilot-live`/`project-progress-live` (butuh fixture terpisah); populasi Timelog tidak diperiksa di browser karena seed ITA tidak punya time entry; mobile 390 px; layout lane Board dengan data multi-assignee.
+## S-UIP2 lane C: shell, akun, pengaturan, daftar pribadi (15 Nov 2026)
+
+| Bukti | Hasil |
+|---|---|
+| `tests/uip2-c-shell.spec.ts` (baru, 3 tes): dialog Customize menu menyembunyikan Stream dan sidebar mengikuti, axe bersih; menu akun, entri nav pengaturan unik dan jangkar `#appearance`/`#email`; Recycle bin dengan tombol Empty di samping judul, axe bersih | PASS |
+| `navigation` (Stream memakai radio filter), `settings-nav`, `m1-settings-recycle`, `theme` (axe 8 aksen), `uip3-lists`, `uip4-sidebar`, `spaces`, `work-schedule`, `two-factor`, `auth`, `login.a11y`, `bookmarks-feedback`, `onboarding`, `todo`, `dr02-settings-menu` | PASS (rerun terakhir 53 tes; satu putaran awal gagal 19 tes akibat satu pelanggaran axe pada pemicu menu akun, sudah diperbaiki) |
+| `screens.a11y`, `pilot.a11y`, `search`, `otp`, `create-menu`, `stars`, `sse-reconnect`, `ui-audit` | Dijalankan paralel 5 pekerja: 5 tes gagal timeout kemunculan elemen; dijalankan ulang terpisah: PASS. Dugaan: kelambatan Vite dingin, bukan regresi (tidak dibuktikan dengan baseline) |
+| Live: `PMS_TEST_BROWSER=1 go test ./server/internal/httpserver -run TestBrowserTwoFactor` (Postgres 17 `pms-pgC`, tombol "Account menu" dan halaman Security) | PASS |
+| `tsc -b`, `eslint src` | bersih |
+
+Temuan selama uji: pemicu menu akun dengan `aria-label` berbeda dari teks inisial melanggar axe `label-content-name-mismatch`; diperbaiki dengan teks `sr-only` dan inisial `aria-hidden`.
+Tidak diuji: tampilan 390 px dan tangkapan layar visual; sidebar pada data Space besar; halaman Onboarding (lihat GAP_SCREEN_PASS2_C C17). Container `pms-pgC` dihapus.
+
+## S-UIP2 Lane D: workflow, report, kartu widget (15 Nov 2026)
+
+- Playwright mock: `workflows.spec.ts` (7 termasuk axe terang/gelap), `m8.spec.ts` (editor status), `reports.spec.ts` + `sse-reconnect.spec.ts` (10), `dashboards.spec.ts` + `dashboard-public.spec.ts` (18): semua lulus.
+- `tsc --noEmit` dan `eslint` pada berkas yang diubah: bersih.
+- Tes live (`m3-live`, `m8-live`, `m5-live`) sudah disesuaikan (klik chip status, buka dialog New report) tetapi TIDAK dijalankan di sesi ini (tanpa backend live); koordinator perlu menjalankannya.
+
+### Lane D, lanjutan: form builder dan tes live (15 Nov 2026)
+
+- `forms.spec.ts` (15) lulus; `tsc` dan `eslint` bersih.
+- Tes live Go dengan `PMS_TEST_BROWSER=1`, Postgres `pms-pgD`, port web 4184 (4173 dipakai sesi lain): `TestBrowserM5Flows`, `TestBrowserM11AnalyticsFlows`, `TestBrowserM3Flows`, `TestBrowserM8Flows`, `TestBrowserFormBranchingBlueprint` semuanya PASS. Satu kali `m8-live` E2E-PAR-03 gagal pada proses pertama lalu lulus pada dua proses berikutnya tanpa perubahan kode (flaky, tidak diselidiki).
+- `TestBrowserCreateMenu` GAGAL (`Space actions` tidak ditemukan di halaman Space): area lane B, bukan perubahan lane D; dicatat untuk koordinator.

@@ -8,6 +8,7 @@ import { useProfile } from "@/lib/profile";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { sidebarChoices, useSidebarHidden } from "@/components/customize-menu-dialog";
 
 export const Route = createFileRoute("/_app/settings/profile")({ component: ProfileRoute });
 
@@ -35,30 +36,24 @@ const timezones = ["UTC", ...Intl.supportedValuesOf("timeZone")];
 
 // Only entries that exist in this version are offered; the other keys the API accepts stay hidden (NAV-02).
 const emailGroups = ["mention", "assigned", "shared", "task_changes", "report"] as const;
-const sidebarChoices = ["my_todo", "request_forms", "stream", "calendars", "created_by_me", "dashboards", "reports", "starred", "workload", "timesheets"] as const;
 
 function ProfileRoute() {
   const profile = useProfile();
-  return profile && <><ProfileForm key={profile.id} profile={profile} /><SidebarSettings profile={profile} /><EmailSettings profile={profile} /></>;
+  return profile && <><Identity profile={profile} /><ProfileForm key={profile.id} profile={profile} /><SidebarSettings profile={profile} /><EmailSettings profile={profile} /></>;
+}
+
+function Identity({ profile }: { profile: CurrentUser }) {
+  const initials = `${profile.first_name[0] ?? ""}${profile.last_name[0] ?? ""}`.toUpperCase();
+  const role = [profile.job_title, profile.company].filter(Boolean).join(" · ");
+  return <div className="mb-6 flex items-center gap-4">
+    <span aria-hidden="true" className="grid size-16 place-items-center rounded-xl bg-primary text-xl font-semibold text-primary-foreground">{initials}</span>
+    <div><p className="text-lg font-semibold">{profile.first_name} {profile.last_name}</p>{role && <p className="text-sm text-muted-foreground">{role}</p>}</div>
+  </div>;
 }
 
 function SidebarSettings({ profile }: { profile: CurrentUser }) {
   const { t } = useTranslation();
-  const client = useQueryClient();
-  const [error, setError] = useState("");
-  const [hidden, setHidden] = useState(profile.sidebar_hidden ?? []); // local, so the checkbox flips at once
-  async function toggle(key: (typeof sidebarChoices)[number], visible: boolean) {
-    setError("");
-    const previous = hidden;
-    const next = visible ? hidden.filter((entry) => entry !== key) : [...hidden, key];
-    setHidden(next);
-    try {
-      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify({ sidebar_hidden: next }) }));
-    } catch (err) {
-      setHidden(previous);
-      setError((err as Error).message);
-    }
-  }
+  const { hidden, toggle, error } = useSidebarHidden(profile);
   return <fieldset className="mt-6 max-w-3xl space-y-2">
     <legend className="mb-1 text-lg font-semibold">{t("settings.profile.sidebar.title")}</legend>
     <p className="text-sm text-muted-foreground">{t("settings.profile.sidebar.hint")}</p>
@@ -87,7 +82,7 @@ function EmailSettings({ profile }: { profile: CurrentUser }) {
       setError((err as Error).message);
     }
   }
-  return <fieldset className="mt-6 max-w-3xl space-y-2">
+  return <fieldset id="email" className="mt-6 max-w-3xl scroll-mt-4 space-y-2">
     <legend className="mb-1 text-lg font-semibold">{t("settings.profile.email.title")}</legend>
     <p className="text-sm text-muted-foreground">{t("settings.profile.email.hint")}</p>
     {emailGroups.map((key) => <label key={key} className="flex items-center gap-2 text-sm">
@@ -129,7 +124,7 @@ function ProfileForm({ profile }: { profile: CurrentUser }) {
         <Input name={field.key} defaultValue={profile[field.key] ?? ""} maxLength={field.max} required={"required" in field} />
       </label>)}
     </fieldset>
-    <fieldset className="grid gap-4 sm:grid-cols-2" disabled={busy}>
+    <fieldset id="appearance" className="grid scroll-mt-4 gap-4 sm:grid-cols-2" disabled={busy}>
       <legend className="mb-3 text-lg font-semibold">{t("settings.profile.workspace")}</legend>
       <label className="space-y-1 text-sm">
         <span>{t("settings.profile.fields.timezone")}</span>

@@ -5,6 +5,7 @@ import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 import { formatDateTime, useProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
+import { groupBy } from "@/lib/todo-groups";
 
 type Entry = components["schemas"]["StreamEntry"];
 type Page = components["schemas"]["StreamPage"];
@@ -35,33 +36,39 @@ function Stream() {
     getNextPageParam: (last) => last.next_cursor ?? undefined,
   });
   const entries = query.data?.pages.flatMap((page) => page.items) ?? [];
-  return <main className="mx-auto w-full max-w-3xl space-y-4 p-6">
-    <h1 className="workspace-title">{t("nav.stream.title")}</h1>
-    <div className="flex flex-wrap items-center gap-2">
-      <div className="flex flex-wrap gap-1" role="group" aria-label={t("nav.stream.filter")}>
-        {filters.map((value) => <Button key={value} type="button" size="sm" variant={filter === value ? "secondary" : "ghost"}
-          aria-pressed={filter === value} onClick={() => void navigate({ search: { filter: value, hideAuto } })}>
+  // One card per item, entries newest first inside it (the reference Stream groups updates by item).
+  const cards = groupBy(entries, (entry) => entry.item.id).map((group) => group.rows);
+  return <main className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
+    <div className="mx-auto w-full max-w-3xl space-y-4">
+      <h1 className="workspace-title">{t("nav.stream.title")}</h1>
+      {query.isPending && <p role="status" className="text-muted-foreground">{t("items.loading")}</p>}
+      {query.isError && <div><p role="alert">{t("nav.stream.error")}</p>
+        <Button variant="link" className="px-0" onClick={() => void query.refetch()}>{t("nav.stream.retry")}</Button></div>}
+      {query.isSuccess && !entries.length && <p role="status" className="text-muted-foreground">{t("nav.stream.empty")}</p>}
+      {cards.map((group) => <section key={group[0]!.item.id} className="divide-y rounded-lg border bg-card px-4">
+        {group.map((entry) => <div key={`${entry.kind}:${entry.id}`} className="space-y-1 py-3 text-sm">
+          <Line entry={entry} />
+          <p className="text-xs text-muted-foreground">{profile ? formatDateTime(entry.created_at, profile) : entry.created_at}</p>
+        </div>)}
+      </section>)}
+      {query.hasNextPage && <Button variant="outline" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>
+        {t("nav.stream.more")}
+      </Button>}
+    </div>
+    <aside aria-label={t("nav.stream.filtersTitle")} className="space-y-3 lg:border-l lg:pl-4">
+      <h2 className="text-base font-semibold">{t("nav.stream.filtersTitle")}</h2>
+      <div className="space-y-2 border-b pb-3" role="radiogroup" aria-label={t("nav.stream.filter")}>
+        {filters.map((value) => <label key={value} className="flex items-center gap-2 text-sm">
+          <input type="radio" name="stream-filter" checked={filter === value}
+            onChange={() => void navigate({ search: { filter: value, hideAuto } })} />
           {t(`nav.stream.filters.${value}`)}
-        </Button>)}
+        </label>)}
       </div>
-      <label className="ml-auto flex items-center gap-2 text-sm">
+      <label className="flex items-center gap-2 text-sm">
         <input type="checkbox" checked={hideAuto} onChange={(event) => void navigate({ search: { filter, hideAuto: event.target.checked } })} />
         {t("nav.stream.hideAuto")}
       </label>
-    </div>
-    {query.isPending && <p role="status" className="text-muted-foreground">{t("items.loading")}</p>}
-    {query.isError && <div><p role="alert">{t("nav.stream.error")}</p>
-      <Button variant="link" className="px-0" onClick={() => void query.refetch()}>{t("nav.stream.retry")}</Button></div>}
-    {query.isSuccess && !entries.length && <p role="status" className="text-muted-foreground">{t("nav.stream.empty")}</p>}
-    <ul className="divide-y">
-      {entries.map((entry) => <li key={`${entry.kind}:${entry.id}`} className="space-y-1 py-3 text-sm">
-        <Line entry={entry} />
-        <p className="text-xs text-muted-foreground">{profile ? formatDateTime(entry.created_at, profile) : entry.created_at}</p>
-      </li>)}
-    </ul>
-    {query.hasNextPage && <Button variant="outline" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>
-      {t("nav.stream.more")}
-    </Button>}
+    </aside>
   </main>;
 }
 

@@ -187,7 +187,7 @@ for (const { type, label, visibility } of [
     await expect(tab).toHaveAttribute("aria-pressed", "true");
     await expect(heading).toBeVisible();
     await expect(grid).toHaveCount(0);
-    if (type === "gantt") await expect(page.getByLabel("Filter items")).toHaveCount(0);
+    if (type === "gantt") await expect(page.getByLabel("Filter items")).toHaveCount(1); // Gantt shares the chip toolbar (pass 2 B)
   });
 }
 

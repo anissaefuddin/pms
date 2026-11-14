@@ -52,6 +52,7 @@ test("creating a report posts the default definition and opens the editor", asyn
     "POST /reports": (body: any) => ({ status: 201, body: { ...summary(r1, body.name), definition: body.definition }, headers: { ETag: '"1"' } }),
   });
   await page.goto("/reports");
+  await page.getByRole("button", { name: "New report", exact: true }).click();
   await page.getByLabel("Name", { exact: true }).fill("Weekly");
   await page.getByRole("button", { name: "Create report" }).click();
   await expect(page).toHaveURL(`/reports/${r1}`);
@@ -64,6 +65,7 @@ test("a template fills the name and is created by key, without sending a definit
     "POST /reports": (body: any) => ({ status: 201, body: { ...summary(r1, body.name), definition } , headers: { ETag: '"1"' } }),
   });
   await page.goto("/reports");
+  await page.getByRole("button", { name: "New report", exact: true }).click();
   await page.getByLabel("Start from").selectOption("overdue");
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Overdue tasks");
   await page.getByRole("button", { name: "Create report" }).click();

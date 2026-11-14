@@ -1,6 +1,6 @@
 import { formatNumber, useProfile } from "@/lib/profile";
 import type { ReactNode } from "react";
-import { Bell, CircleUser, Plus } from "lucide-react";
+import { Bell, Plus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -10,7 +10,7 @@ import { useState } from "react";
 import { toast } from "sonner";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () => void; live: boolean; search?: ReactNode; navigation?: ReactNode }) {
   const { t } = useTranslation();
@@ -19,6 +19,8 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () =
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState(false);
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
+  const fullName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : "";
+  const initials = `${profile?.first_name?.[0] ?? ""}${profile?.last_name?.[0] ?? ""}`.toUpperCase();
   async function logout() {
     await api("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
     queryClient.clear();
@@ -33,15 +35,23 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () =
         <Bell className="size-5" />
         {!!unread && <span className="absolute -top-1 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}
       </Link>
-      {onCreate && <Button variant="ghost" size="icon" aria-label={t("items.new")} onClick={onCreate}><Plus /></Button>}
+      {onCreate && <Button size="icon" className="mx-1" aria-label={t("items.new")} onClick={onCreate}><Plus /></Button>}
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("nav.profile.label")} />}><CircleUser /></DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-44">
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+          <span className="sr-only">{t("nav.profile.label")}</span>
+          <span aria-hidden="true" className="grid size-7 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end" className="w-56">
+          <div className="px-2 py-2"><p className="truncate text-sm font-semibold">{fullName}</p>
+            {profile?.job_title && <p className="truncate text-xs text-muted-foreground">{profile.job_title}</p>}</div>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>{t("nav.settings.label")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile", hash: "appearance" })}>{t("nav.account.appearance")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}>{t("nav.apps.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}>{t("nav.help.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setFeedback(true)}>{t("nav.feedback.menu")}</DropdownMenuItem>
+          <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout}>{t("nav.profile.logout")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

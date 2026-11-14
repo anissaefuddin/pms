@@ -8,6 +8,8 @@
   "unpin": "Unpin {{task}}",
   "help": "Enter H:MM or whole minutes. Press Alt and an arrow key to move between durations. Clear the duration and comment to delete an entry.",
   "total": "Total",
+  "pageTotal_one": "Total on this page: {{count}} entry, {{time}}",
+  "pageTotal_other": "Total on this page: {{count}} entries, {{time}}",
   "comment": "Comment",
   "locked": "Locked",
   "durationFor": "Duration for {{label}}",

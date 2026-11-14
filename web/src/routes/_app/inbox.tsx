@@ -3,6 +3,7 @@ import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { Archive, Bell } from "lucide-react";
 import { api } from "@/lib/api";
 import { listNotifications, notificationKey, type Notification } from "@/lib/notifications";
 import { Button } from "@/components/ui/button";
@@ -76,11 +77,11 @@ function Inbox() {
     actor: entry.actor?.name ?? t("nav.inbox.someone"), title: entry.item_title ?? entry.space_title,
   });
 
-  return <main className="mx-auto max-w-6xl space-y-4 p-6">
+  return <main className="space-y-4 p-6">
     <h1 className="workspace-title">{t("nav.inbox.label")}</h1>
     <div role="tablist" aria-label={t("nav.inbox.tabs")} className="flex gap-1 border-b">
       {boxes.map((value) => <button key={value} type="button" role="tab" aria-selected={box === value}
-        className={`px-3 py-2 text-sm ${box === value ? "border-b-2 border-primary font-medium" : "text-muted-foreground"}`}
+        className={`-mb-px px-3 py-2 text-sm ${box === value ? "border-b-2 border-primary font-medium" : "text-muted-foreground hover:text-foreground"}`}
         onClick={() => { setSelectedId(null); void navigate({ to: "/inbox", search: (current) => ({ ...current, box: value === "incoming" ? undefined : value }) }); }}>
         {t(`nav.inbox.tab.${value}`)}</button>)}
     </div>
@@ -97,7 +98,11 @@ function Inbox() {
     {query.isPending && <p role="status">{t("items.loading")}</p>}
     {query.isError && <div><FormError message={t("items.loadError")} />
       <Button variant="link" onClick={() => void query.refetch()}>{t("items.retry")}</Button></div>}
-    {query.isSuccess && !entries.length && <p className="text-muted-foreground">{t(box === "archive" ? "nav.inbox.emptyArchive" : box === "sent" ? "nav.inbox.emptySent" : "nav.inbox.empty")}</p>}
+    {query.isSuccess && !entries.length && <div className="flex flex-col items-center gap-2 py-16 text-center text-muted-foreground">
+      <span aria-hidden="true" className="grid size-16 place-items-center rounded-full bg-primary/10 text-primary">{box === "archive" ? <Archive className="size-8" /> : <Bell className="size-8" />}</span>
+      <p className="font-medium text-foreground">{t(box === "archive" ? "nav.inbox.emptyArchive" : box === "sent" ? "nav.inbox.emptySent" : "nav.inbox.empty")}</p>
+      {box === "incoming" && <p className="text-sm">{t("nav.inbox.emptyHint")}</p>}
+    </div>}
     <div className="grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
       <div className={selected ? "hidden lg:block" : ""}>
         {sections.map((section) => <section key={section.key} aria-label={t(`nav.inbox.group.${section.key}`)}>

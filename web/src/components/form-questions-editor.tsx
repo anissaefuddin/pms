@@ -1,10 +1,17 @@
-import { ArrowDown, ArrowUp, Plus, Trash2 } from "lucide-react";
+import { AlignLeft, ArrowDown, ArrowUp, Calendar, CircleDot, Flag, Hash, ListChecks, Minus, Paperclip, Plus, Trash2, Type, User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ELEMENT_KINDS, MAX_ELEMENTS, MAX_PAGES, allKeys, isChoice, moveAt, newElement, uniqueKey, type FormElement, type FormPage } from "@/lib/forms";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+
+const KIND_ICON = { single_line: Type, paragraph: AlignLeft, single_choice: CircleDot, multiple_choice: ListChecks, date: Calendar, number: Hash, attachment: Paperclip, assignee: User, importance: Flag, section: Minus } as const;
+
+const KIND_GROUPS = [
+  { group: "questions", kinds: ELEMENT_KINDS.filter((k) => k !== "section") },
+  { group: "dividers", kinds: ELEMENT_KINDS.filter((k) => k === "section") },
+];
 
 type Props = {
   pages: FormPage[];
@@ -63,7 +70,11 @@ export function FormQuestionsEditor({ pages, lockedKeys, errors, onChange }: Pro
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button type="button" variant="outline" disabled={total >= MAX_ELEMENTS} aria-label={t("forms.questions.addToPage", { n })} />}><Plus />{t("forms.questions.add")}</DropdownMenuTrigger>
           <DropdownMenuContent align="start">
-            {ELEMENT_KINDS.map((kind) => <DropdownMenuItem key={kind} onClick={() => addElement(pi, kind)}>{t(`forms.kind.${kind}`)}</DropdownMenuItem>)}
+            {KIND_GROUPS.map(({ group, kinds }) =>
+              <DropdownMenuGroup key={group}>
+                <DropdownMenuLabel>{t(`forms.questions.group.${group}`)}</DropdownMenuLabel>
+                {kinds.map((kind) => { const Icon = KIND_ICON[kind]; return <DropdownMenuItem key={kind} onClick={() => addElement(pi, kind)}><Icon aria-hidden />{t(`forms.kind.${kind}`)}</DropdownMenuItem>; })}
+              </DropdownMenuGroup>)}
           </DropdownMenuContent>
         </DropdownMenu>
       </fieldset>;

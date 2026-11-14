@@ -115,6 +115,7 @@ test("flow 1: a project manager builds a dashboard from the UI and the numbers m
 
 test("flow 2: a report is built from a template, edited, saved, exported and subscribed", async () => {
   await page.goto("/reports");
+  await page.getByRole("button", { name: "New report", exact: true }).click();
   await page.getByLabel("Start from").selectOption("active_tasks_by_assignee");
   await expect(page.getByLabel("Name", { exact: true })).toHaveValue("Active tasks by assignee");
   await page.getByRole("button", { name: "Create report" }).click();
@@ -152,6 +153,7 @@ test("flow 2: a report is built from a template, edited, saved, exported and sub
   await expect(page.getByRole("row", { name: /Active tasks by importance/ })).toContainText("Monday at 09:00");
 
   // utilization: minutes over the month's working time, per person
+  await page.getByRole("button", { name: "New report", exact: true }).click();
   await page.getByLabel("Start from").selectOption("utilization");
   await page.getByRole("button", { name: "Create report" }).click();
   const util = page.getByRole("region", { name: "Result" });
