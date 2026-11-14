@@ -28,7 +28,7 @@ func writeConnectorError(w http.ResponseWriter, err error) {
 	case errors.Is(err, connectors.ErrDisabled), errors.Is(err, connectors.ErrAlreadyClosed):
 		writeError(w, http.StatusConflict, err.Error())
 	case errors.Is(err, connectors.ErrNoKey):
-		writeError(w, http.StatusServiceUnavailable, "connector secrets need PMS_CONNECTOR_KEY on the server")
+		writeProblem(w, http.StatusUnprocessableEntity, "key_not_configured", "connector secrets need PMS_CONNECTOR_KEY on the server")
 	default:
 		slog.Error("connector operation failed", "error", err)
 		writeError(w, http.StatusBadGateway, "connector operation failed")

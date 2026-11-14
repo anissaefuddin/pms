@@ -13,7 +13,7 @@ type Page = components["schemas"]["AuditPage"];
 
 export const Route = createFileRoute("/_app/settings/audit")({ component: AuditPage });
 
-export const AUDIT_CATEGORIES = ["auth", "user", "share", "role", "sso", "scim", "policy", "api_key", "audit"] as const;
+export const AUDIT_CATEGORIES = ["auth", "user", "share", "role", "sso", "scim", "policy", "api_key", "webhook", "oauth", "audit"] as const;
 const COLUMNS = ["time", "actor", "action", "target", "ip", "details"] as const;
 const select = "mt-1 block h-9 rounded-md border border-input bg-background px-2";
 

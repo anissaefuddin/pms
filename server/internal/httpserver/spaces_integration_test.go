@@ -106,7 +106,7 @@ func newFixtureWith(t *testing.T, maxSeats int, tweak func(*config.Config)) *fix
 	}
 	t.Cleanup(pool.Close)
 	files := t.TempDir()
-	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: files, MaxUploadMB: 1, TwoFactorKey: testTwoFactorKeys.Current, TwoFactorKeyPrevious: testTwoFactorKeys.Previous, SSOKey: bytes.Repeat([]byte{5}, 32)}
+	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: files, MaxUploadMB: 1, TwoFactorKey: testTwoFactorKeys.Current, TwoFactorKeyPrevious: testTwoFactorKeys.Previous, SSOKey: bytes.Repeat([]byte{5}, 32), ConnectorKey: bytes.Repeat([]byte{7}, 32)}
 	if tweak != nil {
 		tweak(&cfg)
 	}

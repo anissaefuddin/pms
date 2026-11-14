@@ -401,7 +401,7 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
     post:
       operationId: installConnector
-      summary: Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada)
+      summary: Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (422 key_not_configured bila kunci tidak ada)
       requestBody:
         required: true
         content:

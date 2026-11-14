@@ -217,7 +217,7 @@ export interface paths {
         /** Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama) */
         get: operations["listConnectors"];
         put?: never;
-        /** Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada) */
+        /** Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (422 key_not_configured bila kunci tidak ada) */
         post: operations["installConnector"];
         delete?: never;
         options?: never;
