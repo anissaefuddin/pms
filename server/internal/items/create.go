@@ -252,6 +252,11 @@ func addInitialShares(ctx context.Context, tx pgx.Tx, id uuid.UUID, actor policy
 			return Invalid("duplicate share principal")
 		}
 		seen[key] = true
+		if ok, err := policy.LockedAllows(ctx, tx, id.String(), sh.PrincipalType, sh.PrincipalID.String()); err != nil {
+			return err
+		} else if !ok {
+			return ErrForbidden
+		}
 		if _, err := tx.Exec(ctx, `
 INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by)
 VALUES('item',$1,$2::principal_type,$3,$4::share_role,$5::uuid)`,

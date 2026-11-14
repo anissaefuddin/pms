@@ -25,6 +25,8 @@ const (
 	auditPasswordReset   = "auth.password_reset"
 	auditUserInvited     = "user.invited"
 	auditUserType        = "user.type_changed"
+	auditSpaceLocked     = "policy.space_locked"
+	auditSpaceUnlocked   = "policy.space_unlocked"
 	auditUserDeactivated = "user.deactivated"
 	auditUserReactivated = "user.reactivated"
 	auditShareSpace      = "share.space_changed"

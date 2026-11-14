@@ -154,6 +154,13 @@ func (s *Server) updateSpace(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+		case "locked":
+			var locked bool
+			if err := json.Unmarshal(raw, &locked); err != nil {
+				writeError(w, http.StatusUnprocessableEntity, "locked must be true or false")
+				return
+			}
+			patch.Locked = &locked
 		default:
 			writeError(w, http.StatusUnprocessableEntity, fmt.Sprintf("unknown field %q", key))
 			return
@@ -163,6 +170,13 @@ func (s *Server) updateSpace(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeSpaceError(w, err)
 		return
+	}
+	if patch.Locked != nil {
+		action := auditSpaceUnlocked
+		if *patch.Locked {
+			action = auditSpaceLocked
+		}
+		s.audit(r, actorOf(r).ID, "", auditEvent{Action: action, TargetType: "space", TargetID: space.ID})
 	}
 	setETag(w, space.Version)
 	writeJSON(w, 200, space)

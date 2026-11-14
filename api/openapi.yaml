@@ -1023,6 +1023,41 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /access-policy:
+    get:
+      operationId: getAccessPolicy
+      summary: Kebijakan akses akun (admin); ETag = versi untuk If-Match
+      responses:
+        '200':
+          description: Kebijakan saat ini
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessPolicy' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: putAccessPolicy
+      summary: Ubah IP allowlist (admin); ditolak bila alamat penyimpan tidak ada di daftar (self_lockout)
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AccessPolicyInput' }
+      responses:
+        '200':
+          description: Kebijakan tersimpan
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AccessPolicy' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /custom-roles:
     get:
       operationId: listCustomRoles
@@ -5136,6 +5171,22 @@ components:
       properties:
         base_url: { type: string }
         items: { type: array, items: { $ref: '#/components/schemas/ScimToken' } }
+    AccessPolicyInput:
+      type: object
+      additionalProperties: false
+      required: [ip_allowlist_enabled, ip_allowlist]
+      properties:
+        ip_allowlist_enabled: { type: boolean }
+        ip_allowlist: { type: array, maxItems: 50, items: { type: string, maxLength: 64, description: Alamat IP atau jaringan CIDR } }
+    AccessPolicy:
+      allOf:
+        - { $ref: '#/components/schemas/AccessPolicyInput' }
+        - type: object
+          required: [version, your_ip, override_active]
+          properties:
+            version: { type: integer }
+            your_ip: { type: string, description: Alamat yang dilihat server untuk permintaan ini }
+            override_active: { type: boolean, description: PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan }
     SsoConfigInput:
       type: object
       additionalProperties: false
@@ -5577,6 +5628,7 @@ components:
         description: { type: string, nullable: true }
         kind: { $ref: '#/components/schemas/SpaceKind' }
         version: { type: integer }
+        locked: { type: boolean, description: 'Dikunci administrator: isi hanya dibagikan ke orang yang sudah punya akses ke space, dan hanya admin yang mengubah sharing space atau memindahkan item keluar (D-95)' }
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }
@@ -5595,6 +5647,7 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 120 }
         description: { type: string, maxLength: 1000, nullable: true }
+        locked: { type: boolean, description: Hanya administrator }
     Capability:
       type: string
       enum: [view, comment, change_status, attach, edit, create, delete, share]

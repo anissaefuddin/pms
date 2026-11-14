@@ -1,0 +1,20 @@
+{
+  "title": "Access policy",
+  "description": "Limit where people can sign in and work from. Locked spaces are set from each space's menu.",
+  "adminOnly": "Only administrators can manage the access policy.",
+  "loading": "Loading the policy…",
+  "error": "The access policy could not be loaded.",
+  "ip.title": "IP allowlist",
+  "ip.hint": "When on, signing in and every request from any other network address is refused. Public forms, public dashboard links, provisioning and webhooks are not affected.",
+  "ip.enabled": "Only allow the addresses below",
+  "ip.list": "Allowed addresses and networks",
+  "ip.listHint": "One per line, for example 203.0.113.7 or 203.0.113.0/24. IPv6 works too. At most 50.",
+  "ip.yourAddress": "Your address as the server sees it: {{ip}}",
+  "ip.override": "The server is running with the allowlist override, so this list is not being enforced.",
+  "ip.recovery": "Locked everyone out? Ask the operator to set PMS_DISABLE_IP_ALLOWLIST=true and restart.",
+  "ip.useMine": "Add my address",
+  "save": "Save policy",
+  "saved": "Policy saved",
+  "conflict": "Someone changed the policy. Reload and try again.",
+  "saveFailed": "The policy could not be saved."
+}

@@ -49,6 +49,7 @@ type Server struct {
 	publicSubmitLimiter *limiter // public form submissions per IP
 	publicLinkLimiter   *limiter // public form submissions per link (D-42)
 	scimLimiter         *limiter // SCIM requests per token
+	policyCache         policyCache
 	requests            *prometheus.CounterVec
 	duration            *prometheus.HistogramVec
 	events              *realtime.Hub
@@ -158,6 +159,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.auditRoutes(mux)
 	s.ssoRoutes(mux)
 	s.scimRoutes(mux)
+	s.accessPolicyRoutes(mux)
 	s.customRoleRoutes(mux)
 	s.reportRoutes(mux)
 	s.starRoutes(mux)
@@ -254,6 +256,10 @@ func loadMe(ctx context.Context, db interface {
 }
 
 func (s *Server) startSession(w http.ResponseWriter, r *http.Request, userID string) bool {
+	if !s.ipAllowed(r) {
+		writeIPDenied(w)
+		return false
+	}
 	plain, tokenHash, err := security.Token()
 	now := time.Now()
 	if err == nil {
@@ -273,6 +279,11 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		Password string `json:"password"`
 	}
 	if !decode(w, r, &input) {
+		return
+	}
+	if !s.ipAllowed(r) { // before the password is looked at, so a blocked network learns nothing about accounts
+		s.audit(r, "", strings.ToLower(strings.TrimSpace(input.Email)), auditEvent{Action: auditLoginFailed, TargetType: "user", Details: map[string]any{"reason": "ip_not_allowed"}})
+		writeIPDenied(w)
 		return
 	}
 	// Only failures count, so a whole office behind one IP can log in; the per-email limit is a 15-minute lockout.
@@ -628,6 +639,10 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 		cookie, err := r.Cookie("pms_session")
 		if err != nil {
 			writeError(w, 401, "authentication required")
+			return
+		}
+		if !s.ipAllowed(r) {
+			writeIPDenied(w)
 			return
 		}
 		var userID, userType string

@@ -274,6 +274,8 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 **SCIM (S12.1.3, migrasi `00303`).** `scim_tokens(name, token_hash unik, prefix, default_user_type <> admin, created_by, last_used_at, revoked_at)`; `users.scim_external_id` (unik bila ada) dan `users.scim_provisioned`; constraint `users_active_has_password` menjadi `status <> 'active' OR password_hash IS NOT NULL OR scim_provisioned`; `groups.scim_external_id` (unik bila ada).
 
+**Locked space dan kebijakan akses (S12.1.6, migrasi `00304`).** `spaces.locked boolean`; `access_policy(id=1 tunggal, ip_allowlist_enabled, ip_allowlist text[] maks 50, version, updated_at, updated_by)`.
+
 ## 8. Data yang sengaja belum ada (M2+)
 
 `reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.

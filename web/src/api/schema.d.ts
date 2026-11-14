@@ -609,6 +609,24 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/access-policy": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Kebijakan akses akun (admin); ETag = versi untuk If-Match */
+        get: operations["getAccessPolicy"];
+        /** Ubah IP allowlist (admin); ditolak bila alamat penyimpan tidak ada di daftar (self_lockout) */
+        put: operations["putAccessPolicy"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/custom-roles": {
         parameters: {
             query?: never;
@@ -3537,6 +3555,17 @@ export interface components {
             base_url: string;
             items: components["schemas"]["ScimToken"][];
         };
+        AccessPolicyInput: {
+            ip_allowlist_enabled: boolean;
+            ip_allowlist: string[];
+        };
+        AccessPolicy: components["schemas"]["AccessPolicyInput"] & {
+            version: number;
+            /** @description Alamat yang dilihat server untuk permintaan ini */
+            your_ip: string;
+            /** @description PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan */
+            override_active: boolean;
+        };
         SsoConfigInput: {
             name: string;
             enabled?: boolean;
@@ -3958,6 +3987,8 @@ export interface components {
             description?: string | null;
             kind: components["schemas"]["SpaceKind"];
             version: number;
+            /** @description Dikunci administrator: isi hanya dibagikan ke orang yang sudah punya akses ke space, dan hanya admin yang mengubah sharing space atau memindahkan item keluar (D-95) */
+            locked?: boolean;
             my_capabilities?: components["schemas"]["Capability"][];
         };
         SpaceCreate: {
@@ -3968,6 +3999,8 @@ export interface components {
         SpaceUpdate: {
             name?: string;
             description?: string | null;
+            /** @description Hanya administrator */
+            locked?: boolean;
         };
         /** @enum {string} */
         Capability: "view" | "comment" | "change_status" | "attach" | "edit" | "create" | "delete" | "share";
@@ -6731,6 +6764,62 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+        };
+    };
+    getAccessPolicy: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Kebijakan saat ini */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPolicy"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    putAccessPolicy: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AccessPolicyInput"];
+            };
+        };
+        responses: {
+            /** @description Kebijakan tersimpan */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AccessPolicy"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
         };
     };
     listCustomRoles: {

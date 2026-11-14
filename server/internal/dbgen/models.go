@@ -488,6 +488,15 @@ func (ns NullViewVisibility) Value() (driver.Value, error) {
 	return string(ns.ViewVisibility), nil
 }
 
+type AccessPolicy struct {
+	ID                 int16              `json:"id"`
+	IpAllowlistEnabled bool               `json:"ip_allowlist_enabled"`
+	IpAllowlist        []string           `json:"ip_allowlist"`
+	Version            int32              `json:"version"`
+	UpdatedAt          pgtype.Timestamptz `json:"updated_at"`
+	UpdatedBy          pgtype.UUID        `json:"updated_by"`
+}
+
 type Account struct {
 	ID        int16              `json:"id"`
 	Name      string             `json:"name"`
@@ -1037,6 +1046,7 @@ type Space struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
 	DeletedBy   pgtype.UUID        `json:"deleted_by"`
+	Locked      bool               `json:"locked"`
 }
 
 type SpaceTemplateRun struct {

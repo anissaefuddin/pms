@@ -17,18 +17,20 @@ type Config struct {
 	MetricsAddress string
 	PublicURL      string
 	CookieSecure   bool
-	TrustProxy     bool // read X-Forwarded-For; only set behind a proxy that overwrites it
-	MaxSeats       int
-	SMTPHost       string
-	SMTPPort       string
-	SMTPUser       string
-	SMTPPassword   string
-	SMTPFrom       string
-	SMTPFromAuth   string // sender for account links (activation, reset); defaults to SMTPFrom
-	SMTPReplyTo    string
-	BackupAlertURL string
-	FilesDir       string
-	MaxUploadMB    int
+	// DisableIPAllowlist is the way back in after an allowlist locked everyone out: the operator sets it and restarts (D-95).
+	DisableIPAllowlist bool
+	TrustProxy         bool // read X-Forwarded-For; only set behind a proxy that overwrites it
+	MaxSeats           int
+	SMTPHost           string
+	SMTPPort           string
+	SMTPUser           string
+	SMTPPassword       string
+	SMTPFrom           string
+	SMTPFromAuth       string // sender for account links (activation, reset); defaults to SMTPFrom
+	SMTPReplyTo        string
+	BackupAlertURL     string
+	FilesDir           string
+	MaxUploadMB        int
 	// Storage is local (PMS_FILES_DIR), s3 (MinIO or AWS; S3URL is endpoint/bucket[/prefix]) or pydio (Cells gateway folder URL).
 	Storage, S3URL, S3Region, S3AccessKey, S3SecretKey, PydioURL, PydioToken string
 	// TwoFactorKey and TwoFactorKeyPrevious are 32-byte keys for TOTP secrets; without TwoFactorKey 2FA cannot be turned on.
@@ -45,7 +47,7 @@ func Load() (Config, error) {
 	cfg := Config{
 		DatabaseURL: os.Getenv("DATABASE_URL"), ListenAddress: value("LISTEN_ADDRESS", ":8080"), MetricsAddress: value("METRICS_ADDRESS", ":9090"),
 		PublicURL:    strings.TrimRight(value("PUBLIC_URL", "http://localhost:8080"), "/"),
-		CookieSecure: value("COOKIE_SECURE", "false") == "true", TrustProxy: value("TRUST_PROXY", "false") == "true", MaxSeats: maxSeats,
+		CookieSecure: value("COOKIE_SECURE", "false") == "true", TrustProxy: value("TRUST_PROXY", "false") == "true", DisableIPAllowlist: value("PMS_DISABLE_IP_ALLOWLIST", "false") == "true", MaxSeats: maxSeats,
 		SMTPHost: os.Getenv("SMTP_HOST"), SMTPPort: value("SMTP_PORT", "587"), SMTPUser: os.Getenv("SMTP_USER"),
 		SMTPPassword: os.Getenv("SMTP_PASSWORD"), SMTPFrom: value("SMTP_FROM", "PMS <noreply@localhost>"),
 		BackupAlertURL: os.Getenv("BACKUP_ALERT_URL"),

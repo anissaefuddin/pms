@@ -1346,10 +1346,11 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 - [x] [TEST] Event tercatat dan hanya admin
 
 **S12.1.6 Locked space dan kebijakan akses (ENT-05) — 2 hari**
-- [ ] [BE] Locked space
-- [ ] [BE] IP allowlist
-- [ ] [FE] Pengaturan kebijakan
-- [ ] [TEST] Akses ditolak sesuai kebijakan
+- [x] [BE] Locked space
+- [x] [BE] IP allowlist
+- [x] [FE] Pengaturan kebijakan
+- [x] [TEST] Akses ditolak sesuai kebijakan
+  - Catatan: uji dengan IdP/jaringan sungguhan belum; allowlist tidak mencakup form publik, tautan dashboard publik, SCIM, webhook; cache kebijakan 10 detik per proses (D-95).
 
 **S12.1.7 Login OTP dan transfer kepemilikan (AUTH-08, SET-09) — 2 hari**
 - [ ] [BE] Login one-time password

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, MoreHorizontal, Share2 } from "lucide-react";
+import { FolderOpen, Lock, MoreHorizontal, Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { useSpace } from "@/lib/space-queries";
@@ -9,7 +9,8 @@ import { itemKeys, listItems } from "@/lib/items";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ViewWorkspace } from "@/components/view-workspace";
 import type { Item } from "@/lib/items";
-import { can, sortSpaces, spaceKeys, type Share, type Space } from "@/lib/spaces";
+import { toast } from "sonner";
+import { can, etag, sortSpaces, spaceKeys, type Share, type Space } from "@/lib/spaces";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import { SpaceExcelImport } from "@/components/space-excel-import";
@@ -65,6 +66,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const canRename = shared && can(space, "edit");
   const canDelete = shared && can(space, "delete");
   const canCreate = can(space, "create");
+  const canLock = shared && me?.user_type === "admin";
   const canEditForms = can(space, "edit"); // also gates the Forms link
   const canManageFields = can(space, "share") && can(space, "delete");
   const personal = space.kind === "personal";
@@ -72,6 +74,15 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
     if (item.type === "task") void navigate({ to: "/spaces/$spaceId", params: { spaceId: space.id },
       search: (previous) => ({ ...previous, task: item.id }) });
     else void navigate({ to: "/tasks/$itemId", params: { itemId: item.id } });
+  }
+
+  async function setLocked(locked: boolean) {
+    try {
+      await api(`/api/v1/spaces/${space.id}`, { method: "PATCH", headers: { "If-Match": etag(space) }, body: JSON.stringify({ locked }) });
+      toast.success(t(locked ? "spaces.lock.locked" : "spaces.lock.unlocked"));
+      await queryClient.invalidateQueries({ queryKey: spaceKeys.all });
+      await queryClient.invalidateQueries({ queryKey: spaceKeys.one(space.id) });
+    } catch (e) { toast.error(e instanceof ApiError && e.status === 409 ? t("spaces.lock.conflict") : (e as Error).message); }
   }
 
   async function remove() {
@@ -96,19 +107,21 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         <div className="min-w-0">
           <h1 className="truncate workspace-title">{personal ? t("spaces.personal") : space.name}</h1>
           {space.description && <p className="mt-1 max-w-2xl text-muted-foreground">{space.description}</p>}
+          {space.locked && <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><Lock className="size-4" aria-hidden="true" />{t("spaces.lock.badge")}<span className="sr-only">. {t("spaces.lock.explain")}</span></p>}
         </div>
         <div className="flex flex-wrap items-center gap-2">
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
           {canEditForms && <Link to="/spaces/$spaceId/automation" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("automation.link")}</Link>}
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
-          {(canRename || canDelete || canManageFields || canCreate) && (
+          {(canRename || canDelete || canManageFields || canCreate || canLock) && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
                 {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
                 {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
+                {canLock && <DropdownMenuItem onClick={() => void setLocked(!space.locked)}>{space.locked ? t("spaces.lock.unlock") : t("spaces.lock.lock")}</DropdownMenuItem>}
                 {canDelete && <DropdownMenuItem variant="destructive" onClick={() => { setDeleteError(""); setDeleting(true); }}>{t("spaces.menu.delete")}</DropdownMenuItem>}
               </DropdownMenuContent>
             </DropdownMenu>

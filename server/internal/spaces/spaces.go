@@ -46,11 +46,12 @@ type Space struct {
 	Description    *string             `json:"description"`
 	Kind           string              `json:"kind"`
 	Version        int                 `json:"version"`
+	Locked         bool                `json:"locked"`
 	MyCapabilities []policy.Capability `json:"my_capabilities"`
 }
 
 func toSpace(a policy.SpaceAccess) Space {
-	s := Space{ID: a.ID, Name: a.Name, Kind: a.Kind, Version: a.Version, MyCapabilities: a.Caps.List()}
+	s := Space{ID: a.ID, Name: a.Name, Kind: a.Kind, Version: a.Version, Locked: a.Locked, MyCapabilities: a.Caps.List()}
 	if a.Description != "" {
 		d := a.Description
 		s.Description = &d
@@ -182,6 +183,7 @@ func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput
 type Patch struct {
 	Name           *string
 	DescriptionSet bool
+	Locked         *bool  // administrators only
 	Description    string // meaningful when DescriptionSet; "" clears it
 }
 
@@ -195,8 +197,11 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 		return Space{}, err
 	}
 	defer tx.Rollback(ctx)
-	if p.Name == nil && !p.DescriptionSet {
-		return Space{}, ValidationError{"nothing to change: send name or description"}
+	if p.Name == nil && !p.DescriptionSet && p.Locked == nil {
+		return Space{}, ValidationError{"nothing to change: send name, description or locked"}
+	}
+	if p.Locked != nil && actor.Type != policy.Admin {
+		return Space{}, forbidden("only an administrator can lock or unlock a space")
 	}
 	decision, access, err := policy.CanOnSpace(ctx, tx, actor, policy.Edit, id)
 	if err != nil {
@@ -221,8 +226,12 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 	if err := validateText(name, description); err != nil {
 		return Space{}, err
 	}
+	locked := access.Locked
+	if p.Locked != nil {
+		locked = *p.Locked
+	}
 	var version int
-	err = tx.QueryRow(ctx, "UPDATE spaces SET name=$3, description=$4, version=version+1 WHERE id=$1 AND version=$2 AND deleted_at IS NULL RETURNING version", id, ifMatch, strings.TrimSpace(name), description).Scan(&version)
+	err = tx.QueryRow(ctx, "UPDATE spaces SET name=$3, description=$4, locked=$5, version=version+1 WHERE id=$1 AND version=$2 AND deleted_at IS NULL RETURNING version", id, ifMatch, strings.TrimSpace(name), description, locked).Scan(&version)
 	if errors.Is(err, pgx.ErrNoRows) {
 		// Either the version moved on, or the Space was deleted after the access check.
 		var live bool
@@ -234,7 +243,7 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 	if err != nil {
 		return Space{}, err
 	}
-	access.Name, access.Description, access.Version = strings.TrimSpace(name), description, version
+	access.Name, access.Description, access.Version, access.Locked = strings.TrimSpace(name), description, version, locked
 	if err := tx.Commit(ctx); err != nil {
 		return Space{}, err
 	}
@@ -382,6 +391,9 @@ func (s *Service) ReplaceShares(ctx context.Context, actor policy.Actor, id stri
 	if decision != policy.Allowed {
 		return nil, 0, forbidden("you cannot share this Space")
 	}
+	if access.Locked && actor.Type != policy.Admin {
+		return nil, 0, forbidden("this space is locked: only an administrator can change who has access")
+	}
 	if access.Version != ifMatch {
 		return nil, 0, ErrVersionConflict
 	}
@@ -501,6 +513,13 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 			return err
 		}
 		if _, wasGranted := existing[key]; !wasGranted {
+			if target == "item" {
+				if ok, err := policy.LockedAllows(ctx, tx, spaceID, key.principalType, key.principalID); err != nil {
+					return err
+				} else if !ok {
+					return forbidden("%s", policy.ErrLockedSpace)
+				}
+			}
 			added = append(added, notifications.Principal{Kind: key.principalType, ID: key.principalID})
 		}
 	}

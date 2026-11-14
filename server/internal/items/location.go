@@ -124,9 +124,19 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			remove++
 		}
 	}
+	// An item in a locked Space stays in it: only an administrator can place it in another Space (D-95).
+	var lockedHere map[string]bool
+	if actor.Type != policy.Admin {
+		if lockedHere, err = policy.LockedSpacesOf(ctx, tx, id); err != nil {
+			return Detail{}, err
+		}
+	}
 	for _, loc := range want {
 		if existing[key(loc)] {
 			continue
+		}
+		if len(lockedHere) > 0 && !lockedHere[loc.SpaceID.String()] {
+			return Detail{}, ErrForbidden
 		}
 		placement, err := locationCaps(ctx, tx, actor, loc)
 		if err != nil {

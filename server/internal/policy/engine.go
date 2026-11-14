@@ -25,13 +25,14 @@ type SpaceAccess struct {
 	Description string
 	Kind        string // "shared" or "personal"
 	Version     int
+	Locked      bool // an administrator locked it: see D-95
 	Caps        Caps // effective capabilities of the actor on this Space; never empty for a returned Space
 }
 
 // spaceRows lists every live Space together with the share roles that reach the actor, directly or through a group.
 // This is the one SQL statement that links shares to actors; every Space decision and list is built on it.
 const spaceRows = `
-SELECT s.id::text, s.name, s.description, s.kind::text, COALESCE(s.owner_id::text, ''), s.version,
+SELECT s.id::text, s.name, s.description, s.kind::text, COALESCE(s.owner_id::text, ''), s.version, s.locked,
        COALESCE(array_agg(DISTINCT CASE WHEN cr.id IS NOT NULL THEN 'mask:' || cr.caps_mask ELSE sh.role::text END) FILTER (WHERE sh.id IS NOT NULL), '{}')
 FROM spaces s
 LEFT JOIN shares sh ON sh.target_type = 'space' AND sh.target_id = s.id AND (
@@ -66,7 +67,7 @@ func visibleSpaces(ctx context.Context, db DB, actor Actor, spaceID string, incl
 		var a SpaceAccess
 		var owner string
 		var roles []string
-		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Kind, &owner, &a.Version, &roles); err != nil {
+		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Kind, &owner, &a.Version, &a.Locked, &roles); err != nil {
 			return nil, err
 		}
 		a.Caps = spaceCaps(actor, a.Kind, owner, roles)

@@ -95,5 +95,12 @@
   "customFields.moveUp": "Move {{name}} up",
   "customFields.moveDown": "Move {{name}} down",
   "customFields.nameRequired": "Enter a field name.",
-  "customFields.required": "Enter a field name and a label for each option."
+  "customFields.required": "Enter a field name and a label for each option.",
+  "lock.lock": "Lock space",
+  "lock.unlock": "Unlock space",
+  "lock.badge": "Locked space",
+  "lock.explain": "Its items can only be shared with people who already have the space, and only an administrator can change who has access or move items out.",
+  "lock.locked": "Space locked",
+  "lock.unlocked": "Space unlocked",
+  "lock.conflict": "Someone changed this space. Reload and try again."
 }

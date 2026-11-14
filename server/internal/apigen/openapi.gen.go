@@ -2696,6 +2696,25 @@ type AcceptInvitationRequest struct {
 // AcceptInvitationRequestAcceptTerms defines model for AcceptInvitationRequest.AcceptTerms.
 type AcceptInvitationRequestAcceptTerms bool
 
+// AccessPolicy defines model for AccessPolicy.
+type AccessPolicy struct {
+	IpAllowlist        []string `json:"ip_allowlist"`
+	IpAllowlistEnabled bool     `json:"ip_allowlist_enabled"`
+
+	// OverrideActive PMS_DISABLE_IP_ALLOWLIST aktif sehingga daftar tidak ditegakkan
+	OverrideActive bool `json:"override_active"`
+	Version        int  `json:"version"`
+
+	// YourIp Alamat yang dilihat server untuk permintaan ini
+	YourIp string `json:"your_ip"`
+}
+
+// AccessPolicyInput defines model for AccessPolicyInput.
+type AccessPolicyInput struct {
+	IpAllowlist        []string `json:"ip_allowlist"`
+	IpAllowlistEnabled bool     `json:"ip_allowlist_enabled"`
+}
+
 // Account defines model for Account.
 type Account struct {
 	Administrators []struct {
@@ -4544,12 +4563,15 @@ type SidebarKey string
 
 // Space defines model for Space.
 type Space struct {
-	Description    *string            `json:"description,omitempty"`
-	Id             openapi_types.UUID `json:"id"`
-	Kind           SpaceKind          `json:"kind"`
-	MyCapabilities *[]Capability      `json:"my_capabilities,omitempty"`
-	Name           string             `json:"name"`
-	Version        int                `json:"version"`
+	Description *string            `json:"description,omitempty"`
+	Id          openapi_types.UUID `json:"id"`
+	Kind        SpaceKind          `json:"kind"`
+
+	// Locked Dikunci administrator: isi hanya dibagikan ke orang yang sudah punya akses ke space, dan hanya admin yang mengubah sharing space atau memindahkan item keluar (D-95)
+	Locked         *bool         `json:"locked,omitempty"`
+	MyCapabilities *[]Capability `json:"my_capabilities,omitempty"`
+	Name           string        `json:"name"`
+	Version        int           `json:"version"`
 }
 
 // SpaceCreate defines model for SpaceCreate.
@@ -4584,7 +4606,10 @@ type SpaceTemplate struct {
 // SpaceUpdate defines model for SpaceUpdate.
 type SpaceUpdate struct {
 	Description *string `json:"description,omitempty"`
-	Name        *string `json:"name,omitempty"`
+
+	// Locked Hanya administrator
+	Locked *bool   `json:"locked,omitempty"`
+	Name   *string `json:"name,omitempty"`
 }
 
 // SsoConfig defines model for SsoConfig.
@@ -5008,6 +5033,12 @@ type VersionedShareList struct {
 // ViewList defines model for ViewList.
 type ViewList struct {
 	Items []View `json:"items"`
+}
+
+// PutAccessPolicyParams defines parameters for PutAccessPolicy.
+type PutAccessPolicyParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
 }
 
 // RenameAccountJSONBody defines parameters for RenameAccount.
@@ -5767,6 +5798,9 @@ type GetWorkloadParams struct {
 	Skill *string            `form:"skill,omitempty" json:"skill,omitempty"`
 }
 
+// PutAccessPolicyJSONRequestBody defines body for PutAccessPolicy for application/json ContentType.
+type PutAccessPolicyJSONRequestBody = AccessPolicyInput
+
 // RenameAccountJSONRequestBody defines body for RenameAccount for application/json ContentType.
 type RenameAccountJSONRequestBody RenameAccountJSONBody
 
@@ -6330,6 +6364,12 @@ func (t *CustomFieldValues_AdditionalProperties) UnmarshalJSON(b []byte) error {
 
 // ServerInterface represents all server handlers.
 type ServerInterface interface {
+	// GetAccessPolicy Kebijakan akses akun (admin); ETag = versi untuk If-Match
+	// (GET /access-policy)
+	GetAccessPolicy(w http.ResponseWriter, r *http.Request)
+	// PutAccessPolicy Ubah IP allowlist (admin); ditolak bila alamat penyimpan tidak ada di daftar (self_lockout)
+	// (PUT /access-policy)
+	PutAccessPolicy(w http.ResponseWriter, r *http.Request, params PutAccessPolicyParams)
 	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
 	// (GET /account)
 	GetAccount(w http.ResponseWriter, r *http.Request)
@@ -7081,6 +7121,65 @@ type ServerInterfaceWrapper struct {
 }
 
 type MiddlewareFunc func(http.Handler) http.Handler
+
+// GetAccessPolicy operation middleware
+func (siw *ServerInterfaceWrapper) GetAccessPolicy(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAccessPolicy(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PutAccessPolicy operation middleware
+func (siw *ServerInterfaceWrapper) PutAccessPolicy(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params PutAccessPolicyParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PutAccessPolicy(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
 
 // GetAccount operation middleware
 func (siw *ServerInterfaceWrapper) GetAccount(w http.ResponseWriter, r *http.Request) {
@@ -14843,6 +14942,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim-tokens", wrapper.ListScimTokens)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/scim-tokens", wrapper.CreateScimToken)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/scim-tokens/{tokenId}", wrapper.RevokeScimToken)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/access-policy", wrapper.GetAccessPolicy)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/access-policy", wrapper.PutAccessPolicy)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-roles", wrapper.ListCustomRoles)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-roles", wrapper.CreateCustomRole)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
@@ -15095,6 +15196,172 @@ type VersionedShareListJSONResponse struct {
 
 type ViewListJSONResponse struct {
 	Items []View `json:"items"`
+}
+
+type GetAccessPolicyRequestObject struct {
+}
+
+type GetAccessPolicyResponseObject interface {
+	VisitGetAccessPolicyResponse(w http.ResponseWriter) error
+}
+
+type GetAccessPolicy200ResponseHeaders struct {
+	ETag *string
+}
+
+type GetAccessPolicy200JSONResponse struct {
+	Body    AccessPolicy
+	Headers GetAccessPolicy200ResponseHeaders
+}
+
+func (response GetAccessPolicy200JSONResponse) VisitGetAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAccessPolicy401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAccessPolicy401ApplicationProblemPlusJSONResponse) VisitGetAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAccessPolicy403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetAccessPolicy403ApplicationProblemPlusJSONResponse) VisitGetAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAccessPolicyRequestObject struct {
+	Params PutAccessPolicyParams
+	Body   *PutAccessPolicyJSONRequestBody
+}
+
+type PutAccessPolicyResponseObject interface {
+	VisitPutAccessPolicyResponse(w http.ResponseWriter) error
+}
+
+type PutAccessPolicy200ResponseHeaders struct {
+	ETag *string
+}
+
+type PutAccessPolicy200JSONResponse struct {
+	Body    AccessPolicy
+	Headers PutAccessPolicy200ResponseHeaders
+}
+
+func (response PutAccessPolicy200JSONResponse) VisitPutAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAccessPolicy401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PutAccessPolicy401ApplicationProblemPlusJSONResponse) VisitPutAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAccessPolicy403ApplicationProblemPlusJSONResponse Problem
+
+func (response PutAccessPolicy403ApplicationProblemPlusJSONResponse) VisitPutAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAccessPolicy409ApplicationProblemPlusJSONResponse Problem
+
+func (response PutAccessPolicy409ApplicationProblemPlusJSONResponse) VisitPutAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAccessPolicy422ApplicationProblemPlusJSONResponse Problem
+
+func (response PutAccessPolicy422ApplicationProblemPlusJSONResponse) VisitPutAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PutAccessPolicy428ApplicationProblemPlusJSONResponse Problem
+
+func (response PutAccessPolicy428ApplicationProblemPlusJSONResponse) VisitPutAccessPolicyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
 }
 
 type GetAccountRequestObject struct {
@@ -29960,6 +30227,12 @@ func (response GetWorkload422ApplicationProblemPlusJSONResponse) VisitGetWorkloa
 
 // StrictServerInterface represents all server handlers.
 type StrictServerInterface interface {
+	// GetAccessPolicy Kebijakan akses akun (admin); ETag = versi untuk If-Match
+	// (GET /access-policy)
+	GetAccessPolicy(ctx context.Context, request GetAccessPolicyRequestObject) (GetAccessPolicyResponseObject, error)
+	// PutAccessPolicy Ubah IP allowlist (admin); ditolak bila alamat penyimpan tidak ada di daftar (self_lockout)
+	// (PUT /access-policy)
+	PutAccessPolicy(ctx context.Context, request PutAccessPolicyRequestObject) (PutAccessPolicyResponseObject, error)
 	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
 	// (GET /account)
 	GetAccount(ctx context.Context, request GetAccountRequestObject) (GetAccountResponseObject, error)
@@ -30740,6 +31013,63 @@ type strictHandler struct {
 	ssi         StrictServerInterface
 	middlewares []StrictMiddlewareFunc
 	options     StrictHTTPServerOptions
+}
+
+// GetAccessPolicy operation middleware
+func (sh *strictHandler) GetAccessPolicy(w http.ResponseWriter, r *http.Request) {
+	var request GetAccessPolicyRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAccessPolicy(ctx, request.(GetAccessPolicyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAccessPolicy")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAccessPolicyResponseObject); ok {
+		if err := validResponse.VisitGetAccessPolicyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PutAccessPolicy operation middleware
+func (sh *strictHandler) PutAccessPolicy(w http.ResponseWriter, r *http.Request, params PutAccessPolicyParams) {
+	var request PutAccessPolicyRequestObject
+
+	request.Params = params
+
+	var body PutAccessPolicyJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PutAccessPolicy(ctx, request.(PutAccessPolicyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PutAccessPolicy")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PutAccessPolicyResponseObject); ok {
+		if err := validResponse.VisitPutAccessPolicyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
 }
 
 // GetAccount operation middleware

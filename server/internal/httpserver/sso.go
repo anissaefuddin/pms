@@ -338,6 +338,10 @@ func (s *Server) ssoComplete(w http.ResponseWriter, r *http.Request, store sso.S
 		s.ssoFinishLink(w, r, store, provider, kind, st, id, checkSession)
 		return
 	}
+	if !s.ipAllowed(r) {
+		s.ssoFail(w, r, "login", "ip", "", kind, nil)
+		return
+	}
 	userID, err := store.UserOf(ctx, provider.ID, id.Subject)
 	if errors.Is(err, sso.ErrNotFound) {
 		userID, err = s.ssoFirstLogin(ctx, store, provider, autoLink, id)
