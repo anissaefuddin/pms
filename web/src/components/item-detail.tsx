@@ -28,6 +28,8 @@ import { ItemActivity } from "@/components/item-activity";
 import { ItemBlocks } from "@/components/item-blocks";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
+import { AvatarStack } from "@/components/avatar-stack";
+import { tintOf } from "@/components/status-chip";
 import { ItemProgress } from "@/components/project-progress";
 const ItemDescription = lazy(async () => ({ default: (await import("@/components/item-description")).ItemDescription }));
 const ItemComments = lazy(async () => ({ default: (await import("@/components/item-comments")).ItemComments }));
@@ -227,7 +229,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
       <Button disabled={busy || stale}>{t("items.save")}</Button>
     </form>}
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("items.chips.group")}>
-      {canStatus ? <select aria-label={t("items.status")} className={chipClass} value={item.status?.id ?? ""}
+      {canStatus ? <select aria-label={t("items.status")} className={`${chipClass} border-transparent font-medium ${tintOf(item.status?.color)}`} value={item.status?.id ?? ""}
         disabled={busy || stale || !statuses.length} onChange={(event) => void save({ status_id: event.target.value })}>
         {!item.status && <option value="" disabled>{t("items.status")}</option>}
         {!statuses.some((status) => status.id === item.status?.id) && item.status && <option value={item.status.id}>{item.status.name}</option>}
@@ -244,11 +246,16 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
       {canEdit ? <PopoverChip disabled={busy || stale} label={t("items.chips.assignees", { value: assigneesText })} content={
         <ItemUserPicker multiple label={t("items.assignees")} selected={item.assignees}
           onChange={(people) => void save({ assignee_ids: people.map((person) => person.id) })} />
-      }>{assigneesText}</PopoverChip> : item.assignees.length > 0 && <span className={chipClass}>{assigneesText}</span>}
+      }><AvatarStack people={item.assignees} max={2} />{assigneesText}</PopoverChip> : item.assignees.length > 0 && <span className={chipClass}><AvatarStack people={item.assignees} max={2} />{assigneesText}</span>}
       {item.locations.length > 0 && <PopoverChip label={t("items.chips.locations", { value: locationText })} content={
         <ItemLocations item={item} editable={canEdit} disabled={busy || stale} />
       }>{locationText}</PopoverChip>}
     </div>
+    {(!!item.child_count || !!item.attachment_count || !!item.comment_count) && <p className="flex flex-wrap gap-x-4 text-sm text-muted-foreground" data-testid="item-counters">
+      {!!item.child_count && <span>{t("items.childCount", { count: item.child_count })}</span>}
+      {!!item.attachment_count && <span>{t("items.fileCount", { count: item.attachment_count })}</span>}
+      {!!item.comment_count && <span>{t("items.commentCount", { count: item.comment_count })}</span>}
+    </p>}
     <ItemBlocks item={item} blocks={{
       status: null, importance: null, dates: null, assignees: null, locations: null,
       effort: <details className="rounded border p-2">

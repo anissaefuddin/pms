@@ -181,3 +181,18 @@ test("conflicted draft reapplies against the current ETag", async ({ page }) => 
   expect(calls.filter((call) => call.method === "PATCH").map((call) => [call.headers["if-match"], call.body.title]))
     .toEqual([['"1"', "My draft"], ['"2"', "My draft"]]);
 });
+
+test("item panel shows counters, coloured status and assignee avatars (UIP2-A)", async ({ page }) => {
+  const task = { ...baseItem, type: "task", child_count: 4, attachment_count: 1, comment_count: 2, assignees: [{ id: grace.id, name: "Grace Hopper" }], status: done };
+  await mockSpaces(page, { extra: extra({
+    [`GET ${itemPath}`]: { headers: { ETag: '"1"' }, body: task },
+    [`GET ${itemPath}/children`]: { body: { items: [] } },
+  }) });
+  await page.goto(`/tasks/${parentId}`);
+  const counters = page.getByTestId("item-counters");
+  await expect(counters).toContainText("4 subitems");
+  await expect(counters).toContainText("1 file");
+  await expect(counters).toContainText("2 comments");
+  await expect(page.getByRole("button", { name: /Assignees/ }).getByRole("img", { name: "Grace Hopper" })).toBeVisible();
+  await expect(page.getByLabel("Status", { exact: true })).toHaveClass(/bg-green-100/);
+});

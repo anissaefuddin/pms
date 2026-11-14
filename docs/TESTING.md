@@ -1095,3 +1095,7 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 - `main` = merge PR #10 (CI hijau: test, authorization-matrix, parity-e2e). Image `pms:91d310e` dibangun di `losaka-app` dari `git archive` main, backup `20261114T144353Z` sebelum ganti, `PMS_IMAGE` di `.env` server diubah dari `pms:1b76d3a`.
 - Hasil: container `pms-app-1` healthy, `https://dev-lens.losakaenergi.app/` 200, `/healthz` 200, log tanpa baris ERROR. Rollback: kembalikan `PMS_IMAGE=pms:1b76d3a` dan pulihkan backup di atas bila diperlukan (migrasi hanya maju).
 - Belum dilakukan: UAT manusia, konektor Google nyata, backup luar server (`BACKUP_REMOTE` kosong di server).
+
+## UIP2-A: detail item pass 2
+
+Playwright mock: `items.spec` (tes baru "UIP2-A"), `approvals`, `share`, `item-effort`, `item-locations`, `item-custom-fields`, `blueprints`, `ui-audit` (axe 1440/390): 111 lulus; `tsc --noEmit` dan eslint bersih. Tes live Go belum dijalankan.

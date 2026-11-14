@@ -9,6 +9,7 @@ import type { Item } from "@/lib/items";
 import { mention, MentionPicker } from "@/components/rich-text-mention";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/auth/form-error";
+import { AvatarStack } from "@/components/avatar-stack";
 import { useProfile } from "@/lib/profile";
 
 type Comment = components["schemas"]["Comment"];
@@ -34,8 +35,10 @@ export function ItemComments({ item, userId }: { item: Item; userId: string }) {
     <FormError message={error} />
     {page.data?.items.map((comment) => {
       const editable = full || (canComment && comment.author.id === userId);
-      return <article key={comment.id} className="space-y-2 rounded border p-3">
-        <p className="font-medium">{comment.author.name}</p>
+      return <article key={comment.id} className="space-y-2 rounded-lg bg-muted/40 p-3">
+        <p className="flex items-center gap-2"><AvatarStack people={[comment.author]} />
+          <span className="font-medium">{comment.author.name}</span>
+          <time className="text-xs text-muted-foreground" dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleString()}</time></p>
         <CommentEditor key={editing?.id === comment.id ? "editing" : comment.version}
           body={editing?.id === comment.id ? editing.body : comment.body}
           editable={editing?.id === comment.id} save={async (body) => {
@@ -55,7 +58,7 @@ export function ItemComments({ item, userId }: { item: Item; userId: string }) {
     })}
     {page.data?.next_cursor && <Button variant="outline" onClick={() => setCursor(page.data?.next_cursor ?? undefined)}>{t("items.olderComments")}</Button>}
     {cursor && <Button variant="ghost" onClick={() => setCursor(undefined)}>{t("items.latestComments")}</Button>}
-    {canComment && <div className="sticky bottom-0 -mx-1 bg-background px-1 pb-1 pt-2"><CommentEditor editable save={async (body) => {
+    {canComment && <div className="sticky bottom-0 -mx-1 rounded-xl border bg-background p-2 shadow-sm"><CommentEditor editable save={async (body) => {
       await api(path, { method: "POST", body: JSON.stringify({ body }) });
       setCursor(undefined); await refresh();
     }} /></div>}
