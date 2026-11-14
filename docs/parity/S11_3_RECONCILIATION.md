@@ -49,6 +49,8 @@ Ditambahkan `s.audit` pada: `api_key.created/rotated/revoked`, `webhook.created/
 - Pemakaian bearer: `itemsAuth` A dan `authenticateKey` B memiliki model otorisasi berbeda; hanya satu yang boleh dipakai.
 
 ## Keputusan yang harus diambil pengguna
+Keputusan 1 SUDAH DIAMBIL (14 Nov 2026): pengguna memilih B untuk semua sub-story S11.3.1 sampai S11.3.7. Butir lain masih terbuka.
+
 1. Pakai B untuk semua sub-story (rekomendasi), atau campuran per sub-story (membutuhkan pekerjaan penyatuan skema)?
 2. Webhook per Space (A) atau per pengguna (B)?
 3. Setujui renomor 00306 sampai 00311 dan pembuatan ulang basis data uji.
