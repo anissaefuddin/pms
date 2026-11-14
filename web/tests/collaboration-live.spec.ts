@@ -59,7 +59,7 @@ test("mentions update a second user's Inbox and attachments still upload", async
     await expect(page.getByRole("link", { name: "Inbox, 1 unread" })).toHaveCount(0);
 
     await expect(page.getByText("Maximum file size: 1 MB")).toBeVisible();
-    await page.locator('input[type="file"]').setInputFiles({
+    await page.locator('input[type="file"]:not([aria-label])').setInputFiles({
       name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("Notes for tomorrow"),
     });
     await expect(page.getByRole("link", { name: "notes.txt" })).toBeVisible();

@@ -272,7 +272,7 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Matriks 5 tipe × 4 role × 4 jalur untuk GET, PATCH, create subtask, dan DELETE Item pada endpoint nyata
 - [x] Tes batas visibilitas Item dan Item di Personal Space
 - [x] Tes batas visibilitas file, komentar, dan lampiran
-- [ ] Jadikan langkah CI yang memblokir merge. GitHub menolak akses pengaturan required check pada paket repo privat saat ini (HTTP 403).
+- [ ] Jadikan langkah CI yang memblokir merge. GitHub menolak akses pengaturan required check pada paket repo privat saat ini (HTTP 403). **Disiapkan 14 Nov 2026:** job CI `authorization-matrix` tersendiri (siap dijadikan required check); sisa langkah adalah pengaturan repo yang memerlukan GitHub Pro atau repo publik.
 
 ### E1.2 Item inti
 
@@ -764,17 +764,17 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Laporan temuan dan bukti perbaikan
 
 **S6.3.4 Uji performa target NFR**
-- [ ] Ukur target NFR PRD §6 pada data skala klien; hasil lokal dan sisa pengujian di TESTING
-- [ ] Optimalkan kueri dan indeks yang melampaui target
+- [x] Ukur target NFR PRD §6 pada data skala klien; hasil lokal dan sisa pengujian di TESTING
+- [x] Optimalkan kueri dan indeks yang melampaui target — tidak ada yang melampaui target pada pengukuran 13–14 Nov 2026 (TESTING.md), jadi tidak ada yang dioptimalkan
 
 **S6.3.5 UAT P0 + P1 dan lima flow Playwright**
 - [x] Daftar UAT dari PRD di [UAT.md](UAT.md)
-- [ ] Hasil UAT dan lima flow Playwright hijau di CI
-- [ ] Bukti per requirement P0 dan P1 di TESTING
+- [ ] Hasil UAT dan lima flow Playwright hijau di CI — lima flow hijau lokal 14 Nov 2026; **UAT belum dijalankan (butuh manusia) dan GitHub Actions belum berjalan**
+- [ ] Bukti per requirement P0 dan P1 di TESTING — menunggu hasil UAT manusia ([UAT.md](UAT.md), 93 baris)
 
 **S6.3.6 Perbaikan bug dan stabilisasi**
-- [ ] Triase temuan UAT dan keamanan; perbaiki sebelum rilis
-- [ ] Bekukan skema dan kontrak; tandai rilis kandidat
+- [ ] Triase temuan UAT dan keamanan; perbaiki sebelum rilis — temuan keamanan S6.3.3 sudah ditriase dan diperbaiki; tidak ada temuan UAT karena UAT belum berjalan
+- [ ] Bekukan skema dan kontrak; tandai rilis kandidat — **keputusan Anda:** skema dan kontrak sudah berkembang sejak M7 sampai M12, dan penandaan tag adalah tindakan rilis
 
 
 ## M7–M12 — Aturan bersama

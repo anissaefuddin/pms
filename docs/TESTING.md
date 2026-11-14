@@ -776,3 +776,10 @@ S11.1.1 (VIEW-10): **PASS**. `GET /items/{projectId}/files` mendaftar lampiran h
 - Penyimpangan yang diterima: Board memakai drag HTML5 + select status, bukan dnd-kit (D-96). Belum dan tidak dapat saya selesaikan: **S1.1.4 "jadikan matriks otorisasi required check"**, karena pengaturan required check di GitHub menolak akses (HTTP 403, tercatat di TASKS); tesnya sendiri berjalan di job `go test` CI.
 - Catatan: pengiriman SMTP ke server nyata, GitHub Actions dan push GHCR belum dijalankan (butuh akun dan jaringan pihak luar).
 
+## M6 penutupan (14 Nov 2026): NFR real-time dan lima flow Playwright
+
+- PASS (S6.3.4 SSE, sebelumnya PARTIAL). `TestSSELatencyUnderClientLoad`: 25 orang (satu pengubah dan 24 pengamat, masing-masing satu koneksi SSE), 10.000 item di Space yang sama, 15 perubahan status dan 15 komentar. **Status: 360 sampel, p50 67 ms, p95 111 ms, maks 123 ms. Komentar: 360 sampel, p50 71 ms, p95 121 ms, maks 132 ms** terhadap target ≤ 3 detik. Setiap pengamat harus menerima setiap kejadian; tes gagal bila ada yang tidak menerima dalam 10 detik. Batas: satu proses dan PostgreSQL lokal, tanpa jaringan nyata dan tanpa proxy.
+- Sisa NFR yang tetap tercatat: Gantt pada build produksi dengan muat dingin dan interaksi, serta pengukuran di instance pilot (NOT RUN).
+- PASS (S6.3.5 lima flow, lokal). `TestBrowserCollaboration` (13 s), `TestBrowserM2Flows` (12 s), `TestBrowserM3Flows` (15 s), `TestBrowserM4Flows` (7 s), `TestBrowserM5Flows` (15 s) pada Chrome dengan PostgreSQL. Satu spec basi diperbaiki: `collaboration-live.spec.ts` memakai `input[type=file]` yang kini ambigu karena ada input "Upload new version"; sekarang `:not([aria-label])`.
+- Belum dan tidak dapat saya selesaikan: UAT P0/P1 (butuh manusia), GitHub Actions hijau (belum berjalan), pembekuan skema/kontrak dan tag rilis kandidat (keputusan Anda), serta required check S1.1.4 (job `authorization-matrix` kini ada; pengaturan repo butuh GitHub Pro atau repo publik).
+

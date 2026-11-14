@@ -56,6 +56,27 @@ jobs:
       - name: Build container
         run: docker build --build-arg VERSION="$GITHUB_REF_NAME" -t pms:test .
 
+  # Its own job so it can be named as a required check (S1.1.4) without waiting for the whole suite; a repository setting, not code,
+  # makes it block merges, and GitHub refuses that setting on a private repository without a paid plan (HTTP 403).
+  authorization-matrix:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_DB: pms_test, POSTGRES_USER: pms, POSTGRES_PASSWORD: pms }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pms -d pms_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod, cache: true }
+      - run: go test -count=1 ./server/internal/httpserver ./server/internal/policy -run 'Authorization|AccessRules|Matrix|Capabilit'
+        env: { PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable" }
+
   image:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test
