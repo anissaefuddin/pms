@@ -1,0 +1,14 @@
+{
+  "title": "Portfolio Gantt",
+  "description": "Compare visible project schedules and their cross-project dependencies.",
+  "ids": "Project IDs, separated by commas",
+  "placeholder": "UUID, UUID",
+  "show": "Show timeline",
+  "loading": "Loading portfolio\u2026",
+  "timeline": "Portfolio timeline",
+  "bar": "{{title}}: {{start}} to {{due}}",
+  "unscheduled": "unscheduled",
+  "deps": "Cross-project dependencies",
+  "noDeps": "No dependency connects the selected projects.",
+  "lag": ", {{lag}}d"
+}

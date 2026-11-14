@@ -14,6 +14,9 @@ import nav from "./i18n/en/nav.json";
 import reports from "./i18n/en/reports.json";
 import ownership from "./i18n/en/ownership.json";
 import policy from "./i18n/en/policy.json";
+import portfolio from "./i18n/en/portfolio.json";
+import workload from "./i18n/en/workload.json";
+import resources from "./i18n/en/resources.json";
 import provisioning from "./i18n/en/provisioning.json";
 import roles from "./i18n/en/roles.json";
 import search from "./i18n/en/search.json";
@@ -32,7 +35,7 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   resources: {
     en: {
-      translation: { audit, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, ownership, policy, provisioning, reports, roles, search, settings, share, spaces, sso, starred, time, views, workspace },
+      translation: { audit, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, ownership, policy, portfolio, provisioning, reports, resources, roles, search, settings, share, spaces, sso, starred, time, views, workload, workspace },
     },
   },
 });
