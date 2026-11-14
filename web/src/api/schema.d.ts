@@ -441,6 +441,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/custom-roles": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share) */
+        get: operations["listCustomRoles"];
+        put?: never;
+        /** Buat peran kustom (admin); wajib memuat view */
+        post: operations["createCustomRole"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/custom-roles/{roleId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                roleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        /** Ubah peran (admin); berlaku segera pada semua share yang memakainya */
+        put: operations["updateCustomRole"];
+        post?: never;
+        /** Hapus peran (admin); ditolak 409 selama masih dipakai share */
+        delete: operations["deleteCustomRole"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/audit-events": {
         parameters: {
             query?: never;
@@ -3134,6 +3172,26 @@ export interface components {
             sharing?: "private" | "space";
             definition?: components["schemas"]["ReportDefinition"];
         };
+        CustomRoleInput: {
+            name: string;
+            description?: string;
+            /** @description Wajib memuat view */
+            capabilities: components["schemas"]["Capability"][];
+        };
+        CustomRole: components["schemas"]["CustomRoleInput"] & {
+            /** Format: uuid */
+            id: string;
+            version: number;
+            /** @description Jumlah share yang memakai peran ini */
+            in_use: number;
+            /** Format: date-time */
+            created_at: string;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        CustomRoleList: {
+            items: components["schemas"]["CustomRole"][];
+        };
         AuditEvent: {
             /** Format: int64 */
             id: number;
@@ -3527,10 +3585,13 @@ export interface components {
             principal_type: components["schemas"]["PrincipalType"];
             /** Format: uuid */
             principal_id: string;
-            role: components["schemas"]["ShareRole"];
+            /** @description Peran bawaan atau custom:<id> dari /custom-roles */
+            role: string;
         };
         Share: components["schemas"]["ShareInput"] & {
             principal_name: string;
+            /** @description Nama peran kustom (kosong untuk peran bawaan) */
+            role_name?: string;
             /**
              * Format: uuid
              * @description Container tempat share ini berasal bila diwarisi
@@ -5766,6 +5827,117 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+        };
+    };
+    listCustomRoles: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar peran */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomRoleList"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    createCustomRole: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomRoleInput"];
+            };
+        };
+        responses: {
+            /** @description Peran dibuat */
+            201: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomRole"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    updateCustomRole: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                roleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["CustomRoleInput"];
+            };
+        };
+        responses: {
+            /** @description Peran diubah */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomRole"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
+        };
+    };
+    deleteCustomRole: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                roleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
         };
     };
     listAuditEvents: {

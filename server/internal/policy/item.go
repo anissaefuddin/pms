@@ -79,8 +79,9 @@ WITH RECURSIVE ancestry(root_id, space_id, item_id, parent_id) AS (
 SELECT a.root_id::text, 'full' FROM ancestry a JOIN spaces s ON s.id=a.space_id
 WHERE s.kind = 'personal' OR ($3::boolean AND s.kind = 'shared')
 UNION
-SELECT t.root_id::text, sh.role::text FROM shares sh
+SELECT t.root_id::text, CASE WHEN cr.id IS NOT NULL THEN 'mask:' || cr.caps_mask ELSE sh.role::text END FROM shares sh
 JOIN targets t ON t.target_type = sh.target_type AND t.target_id = sh.target_id
+LEFT JOIN custom_roles cr ON cr.id = sh.custom_role_id
 WHERE (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
    OR (sh.principal_type = 'group' AND sh.principal_id IN
        (SELECT group_id FROM group_members WHERE user_id = $1::uuid))

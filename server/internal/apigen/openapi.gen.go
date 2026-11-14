@@ -3163,6 +3163,34 @@ type CustomFieldValues_AdditionalProperties struct {
 	union json.RawMessage
 }
 
+// CustomRole defines model for CustomRole.
+type CustomRole struct {
+	// Capabilities Wajib memuat view
+	Capabilities []Capability       `json:"capabilities"`
+	CreatedAt    time.Time          `json:"created_at"`
+	Description  string             `json:"description"`
+	Id           openapi_types.UUID `json:"id"`
+
+	// InUse Jumlah share yang memakai peran ini
+	InUse     int       `json:"in_use"`
+	Name      string    `json:"name"`
+	UpdatedAt time.Time `json:"updated_at"`
+	Version   int       `json:"version"`
+}
+
+// CustomRoleInput defines model for CustomRoleInput.
+type CustomRoleInput struct {
+	// Capabilities Wajib memuat view
+	Capabilities []Capability `json:"capabilities"`
+	Description  *string      `json:"description,omitempty"`
+	Name         string       `json:"name"`
+}
+
+// CustomRoleList defines model for CustomRoleList.
+type CustomRoleList struct {
+	Items []CustomRole `json:"items"`
+}
+
 // Dashboard defines model for Dashboard.
 type Dashboard struct {
 	Id      openapi_types.UUID  `json:"id"`
@@ -4384,14 +4412,21 @@ type Share struct {
 	PrincipalId   openapi_types.UUID  `json:"principal_id"`
 	PrincipalName string              `json:"principal_name"`
 	PrincipalType PrincipalType       `json:"principal_type"`
-	Role          ShareRole           `json:"role"`
+
+	// Role Peran bawaan atau custom:<id> dari /custom-roles
+	Role string `json:"role"`
+
+	// RoleName Nama peran kustom (kosong untuk peran bawaan)
+	RoleName *string `json:"role_name,omitempty"`
 }
 
 // ShareInput defines model for ShareInput.
 type ShareInput struct {
 	PrincipalId   openapi_types.UUID `json:"principal_id"`
 	PrincipalType PrincipalType      `json:"principal_type"`
-	Role          ShareRole          `json:"role"`
+
+	// Role Peran bawaan atau custom:<id> dari /custom-roles
+	Role string `json:"role"`
 }
 
 // ShareReplace defines model for ShareReplace.
@@ -4954,6 +4989,18 @@ type UpdateCommentJSONBody struct {
 
 // UpdateCommentParams defines parameters for UpdateComment.
 type UpdateCommentParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// DeleteCustomRoleParams defines parameters for DeleteCustomRole.
+type DeleteCustomRoleParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// UpdateCustomRoleParams defines parameters for UpdateCustomRole.
+type UpdateCustomRoleParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
 }
@@ -5575,6 +5622,12 @@ type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
 
+// CreateCustomRoleJSONRequestBody defines body for CreateCustomRole for application/json ContentType.
+type CreateCustomRoleJSONRequestBody = CustomRoleInput
+
+// UpdateCustomRoleJSONRequestBody defines body for UpdateCustomRole for application/json ContentType.
+type UpdateCustomRoleJSONRequestBody = CustomRoleInput
+
 // CreateDashboardJSONRequestBody defines body for CreateDashboard for application/json ContentType.
 type CreateDashboardJSONRequestBody = DashboardDestination
 
@@ -6177,6 +6230,18 @@ type ServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID, params UpdateCommentParams)
+	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
+	// (GET /custom-roles)
+	ListCustomRoles(w http.ResponseWriter, r *http.Request)
+	// CreateCustomRole Buat peran kustom (admin); wajib memuat view
+	// (POST /custom-roles)
+	CreateCustomRole(w http.ResponseWriter, r *http.Request)
+	// DeleteCustomRole Hapus peran (admin); ditolak 409 selama masih dipakai share
+	// (DELETE /custom-roles/{roleId})
+	DeleteCustomRole(w http.ResponseWriter, r *http.Request, roleId openapi_types.UUID, params DeleteCustomRoleParams)
+	// UpdateCustomRole Ubah peran (admin); berlaku segera pada semua share yang memakainya
+	// (PUT /custom-roles/{roleId})
+	UpdateCustomRole(w http.ResponseWriter, r *http.Request, roleId openapi_types.UUID, params UpdateCustomRoleParams)
 	// ListDashboards Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat
 	// (GET /dashboards)
 	ListDashboards(w http.ResponseWriter, r *http.Request, params ListDashboardsParams)
@@ -8013,6 +8078,142 @@ func (siw *ServerInterfaceWrapper) UpdateComment(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateComment(w, r, commentId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCustomRoles operation middleware
+func (siw *ServerInterfaceWrapper) ListCustomRoles(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCustomRoles(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateCustomRole operation middleware
+func (siw *ServerInterfaceWrapper) CreateCustomRole(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateCustomRole(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteCustomRole operation middleware
+func (siw *ServerInterfaceWrapper) DeleteCustomRole(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "roleId" -------------
+	var roleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "roleId", r.PathValue("roleId"), &roleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "roleId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DeleteCustomRoleParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteCustomRole(w, r, roleId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateCustomRole operation middleware
+func (siw *ServerInterfaceWrapper) UpdateCustomRole(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "roleId" -------------
+	var roleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "roleId", r.PathValue("roleId"), &roleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "roleId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params UpdateCustomRoleParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateCustomRole(w, r, roleId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -13584,6 +13785,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/{reportId}/export", wrapper.ExportReport)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/reports/{reportId}/subscription", wrapper.UnsubscribeReport)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/reports/{reportId}/subscription", wrapper.SubscribeReport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-roles", wrapper.ListCustomRoles)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-roles", wrapper.CreateCustomRole)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.UpdateCustomRole)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/audit-events", wrapper.ListAuditEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/audit-events/export", wrapper.ExportAuditEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards", wrapper.ListDashboards)
@@ -16134,6 +16339,300 @@ func (response UpdateComment422ApplicationProblemPlusJSONResponse) VisitUpdateCo
 type UpdateComment428ApplicationProblemPlusJSONResponse Problem
 
 func (response UpdateComment428ApplicationProblemPlusJSONResponse) VisitUpdateCommentResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCustomRolesRequestObject struct {
+}
+
+type ListCustomRolesResponseObject interface {
+	VisitListCustomRolesResponse(w http.ResponseWriter) error
+}
+
+type ListCustomRoles200JSONResponse CustomRoleList
+
+func (response ListCustomRoles200JSONResponse) VisitListCustomRolesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCustomRoles401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCustomRoles401ApplicationProblemPlusJSONResponse) VisitListCustomRolesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCustomRoleRequestObject struct {
+	Body *CreateCustomRoleJSONRequestBody
+}
+
+type CreateCustomRoleResponseObject interface {
+	VisitCreateCustomRoleResponse(w http.ResponseWriter) error
+}
+
+type CreateCustomRole201ResponseHeaders struct {
+	ETag *string
+}
+
+type CreateCustomRole201JSONResponse struct {
+	Body    CustomRole
+	Headers CreateCustomRole201ResponseHeaders
+}
+
+func (response CreateCustomRole201JSONResponse) VisitCreateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCustomRole401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateCustomRole401ApplicationProblemPlusJSONResponse) VisitCreateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCustomRole403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCustomRole403ApplicationProblemPlusJSONResponse) VisitCreateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateCustomRole422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateCustomRole422ApplicationProblemPlusJSONResponse) VisitCreateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCustomRoleRequestObject struct {
+	RoleId openapi_types.UUID `json:"roleId"`
+	Params DeleteCustomRoleParams
+}
+
+type DeleteCustomRoleResponseObject interface {
+	VisitDeleteCustomRoleResponse(w http.ResponseWriter) error
+}
+
+type DeleteCustomRole204Response struct {
+}
+
+func (response DeleteCustomRole204Response) VisitDeleteCustomRoleResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteCustomRole403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteCustomRole403ApplicationProblemPlusJSONResponse) VisitDeleteCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCustomRole404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteCustomRole404ApplicationProblemPlusJSONResponse) VisitDeleteCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCustomRole409ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteCustomRole409ApplicationProblemPlusJSONResponse) VisitDeleteCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteCustomRole428ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteCustomRole428ApplicationProblemPlusJSONResponse) VisitDeleteCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCustomRoleRequestObject struct {
+	RoleId openapi_types.UUID `json:"roleId"`
+	Params UpdateCustomRoleParams
+	Body   *UpdateCustomRoleJSONRequestBody
+}
+
+type UpdateCustomRoleResponseObject interface {
+	VisitUpdateCustomRoleResponse(w http.ResponseWriter) error
+}
+
+type UpdateCustomRole200ResponseHeaders struct {
+	ETag *string
+}
+
+type UpdateCustomRole200JSONResponse struct {
+	Body    CustomRole
+	Headers UpdateCustomRole200ResponseHeaders
+}
+
+func (response UpdateCustomRole200JSONResponse) VisitUpdateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCustomRole403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateCustomRole403ApplicationProblemPlusJSONResponse) VisitUpdateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCustomRole404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateCustomRole404ApplicationProblemPlusJSONResponse) VisitUpdateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCustomRole409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateCustomRole409ApplicationProblemPlusJSONResponse) VisitUpdateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCustomRole422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateCustomRole422ApplicationProblemPlusJSONResponse) VisitUpdateCustomRoleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateCustomRole428ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateCustomRole428ApplicationProblemPlusJSONResponse) VisitUpdateCustomRoleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -26266,6 +26765,18 @@ type StrictServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(ctx context.Context, request UpdateCommentRequestObject) (UpdateCommentResponseObject, error)
+	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
+	// (GET /custom-roles)
+	ListCustomRoles(ctx context.Context, request ListCustomRolesRequestObject) (ListCustomRolesResponseObject, error)
+	// CreateCustomRole Buat peran kustom (admin); wajib memuat view
+	// (POST /custom-roles)
+	CreateCustomRole(ctx context.Context, request CreateCustomRoleRequestObject) (CreateCustomRoleResponseObject, error)
+	// DeleteCustomRole Hapus peran (admin); ditolak 409 selama masih dipakai share
+	// (DELETE /custom-roles/{roleId})
+	DeleteCustomRole(ctx context.Context, request DeleteCustomRoleRequestObject) (DeleteCustomRoleResponseObject, error)
+	// UpdateCustomRole Ubah peran (admin); berlaku segera pada semua share yang memakainya
+	// (PUT /custom-roles/{roleId})
+	UpdateCustomRole(ctx context.Context, request UpdateCustomRoleRequestObject) (UpdateCustomRoleResponseObject, error)
 	// ListDashboards Daftar personal sendiri jika space_id dihilangkan, atau dashboard Space yang terlihat
 	// (GET /dashboards)
 	ListDashboards(ctx context.Context, request ListDashboardsRequestObject) (ListDashboardsResponseObject, error)
@@ -27998,6 +28509,122 @@ func (sh *strictHandler) UpdateComment(w http.ResponseWriter, r *http.Request, c
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateCommentResponseObject); ok {
 		if err := validResponse.VisitUpdateCommentResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCustomRoles operation middleware
+func (sh *strictHandler) ListCustomRoles(w http.ResponseWriter, r *http.Request) {
+	var request ListCustomRolesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCustomRoles(ctx, request.(ListCustomRolesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCustomRoles")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCustomRolesResponseObject); ok {
+		if err := validResponse.VisitListCustomRolesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateCustomRole operation middleware
+func (sh *strictHandler) CreateCustomRole(w http.ResponseWriter, r *http.Request) {
+	var request CreateCustomRoleRequestObject
+
+	var body CreateCustomRoleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateCustomRole(ctx, request.(CreateCustomRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateCustomRole")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateCustomRoleResponseObject); ok {
+		if err := validResponse.VisitCreateCustomRoleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteCustomRole operation middleware
+func (sh *strictHandler) DeleteCustomRole(w http.ResponseWriter, r *http.Request, roleId openapi_types.UUID, params DeleteCustomRoleParams) {
+	var request DeleteCustomRoleRequestObject
+
+	request.RoleId = roleId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteCustomRole(ctx, request.(DeleteCustomRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteCustomRole")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteCustomRoleResponseObject); ok {
+		if err := validResponse.VisitDeleteCustomRoleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateCustomRole operation middleware
+func (sh *strictHandler) UpdateCustomRole(w http.ResponseWriter, r *http.Request, roleId openapi_types.UUID, params UpdateCustomRoleParams) {
+	var request UpdateCustomRoleRequestObject
+
+	request.RoleId = roleId
+	request.Params = params
+
+	var body UpdateCustomRoleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateCustomRole(ctx, request.(UpdateCustomRoleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateCustomRole")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateCustomRoleResponseObject); ok {
+		if err := validResponse.VisitUpdateCustomRoleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

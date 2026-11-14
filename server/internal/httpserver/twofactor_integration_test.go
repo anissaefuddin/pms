@@ -153,7 +153,7 @@ func TestTwoFactorLifecycle(t *testing.T) {
 		t.Fatalf("login is single-step again: %d", r.status)
 	}
 	f.want(f.call(sessionOf(done), "GET", "/me", nil), 401, "other sessions are revoked when 2FA is turned off")
-	if n := f.queryID("SELECT count(*)::text FROM security_events WHERE target_id=$1 AND action IN ('2fa_enabled','2fa_disabled')", alice.id); n != "2" {
+	if n := f.queryID("SELECT count(*)::text FROM audit_events WHERE target_id=$1 AND action IN ('auth.2fa_enabled','auth.2fa_disabled')", alice.id); n != "2" {
 		t.Fatalf("enable and disable are recorded, got %s", n)
 	}
 }
@@ -199,7 +199,7 @@ func TestTwoFactorAdminReset(t *testing.T) {
 	f.want(f.call(member, "POST", "/users/"+carol.id+"/2fa/reset", nil), 403, "only admins reset")
 	f.want(f.call(admin, "POST", "/users/00000000-0000-0000-0000-000000000000/2fa/reset", nil), 404, "unknown user")
 	f.want(f.call(admin, "POST", "/users/"+member.id+"/2fa/reset", nil), 204, "a user without 2FA is a no-op")
-	if n := f.queryID("SELECT count(*)::text FROM security_events WHERE action='2fa_reset_by_admin'"); n != "0" {
+	if n := f.queryID("SELECT count(*)::text FROM audit_events WHERE action='auth.2fa_reset_by_admin'"); n != "0" {
 		t.Fatalf("nothing to reset must not be recorded, got %s", n)
 	}
 	f.want(f.call(admin, "POST", "/users/"+carol.id+"/2fa/reset", nil), 204, "reset")
@@ -207,7 +207,7 @@ func TestTwoFactorAdminReset(t *testing.T) {
 	if r := f.loginAs(email); r.status != 200 {
 		t.Fatalf("after a reset the user logs in with the password only: %d", r.status)
 	}
-	if got := f.queryID("SELECT actor_id::text FROM security_events WHERE target_id=$1 AND action='2fa_reset_by_admin'", carol.id); got != admin.id {
+	if got := f.queryID("SELECT actor_id::text FROM audit_events WHERE target_id=$1 AND action='auth.2fa_reset_by_admin'", carol.id); got != admin.id {
 		t.Fatalf("the reset records who did it: %q", got)
 	}
 }

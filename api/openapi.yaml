@@ -753,6 +753,71 @@ paths:
         '204': { description: Langganan dihapus }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /custom-roles:
+    get:
+      operationId: listCustomRoles
+      summary: Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
+      responses:
+        '200':
+          description: Daftar peran
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomRoleList' }
+        '401': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createCustomRole
+      summary: Buat peran kustom (admin); wajib memuat view
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomRoleInput' }
+      responses:
+        '201':
+          description: Peran dibuat
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomRole' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /custom-roles/{roleId}:
+    parameters:
+      - { name: roleId, in: path, required: true, schema: { type: string, format: uuid } }
+    put:
+      operationId: updateCustomRole
+      summary: Ubah peran (admin); berlaku segera pada semua share yang memakainya
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomRoleInput' }
+      responses:
+        '200':
+          description: Peran diubah
+          headers: { ETag: { $ref: '#/components/headers/ETag' } }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomRole' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteCustomRole
+      summary: Hapus peran (admin); ditolak 409 selama masih dipakai share
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /audit-events:
     get:
       operationId: listAuditEvents
@@ -4602,6 +4667,30 @@ components:
         name: { type: string, minLength: 1, maxLength: 120 }
         sharing: { type: string, enum: [private, space] }
         definition: { $ref: '#/components/schemas/ReportDefinition' }
+    CustomRoleInput:
+      type: object
+      additionalProperties: false
+      required: [name, capabilities]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 60 }
+        description: { type: string, maxLength: 300 }
+        capabilities: { type: array, minItems: 1, maxItems: 8, uniqueItems: true, items: { $ref: '#/components/schemas/Capability' }, description: Wajib memuat view }
+    CustomRole:
+      allOf:
+        - { $ref: '#/components/schemas/CustomRoleInput' }
+        - type: object
+          required: [id, description, version, in_use, created_at, updated_at]
+          properties:
+            id: { type: string, format: uuid }
+            version: { type: integer }
+            in_use: { type: integer, description: Jumlah share yang memakai peran ini }
+            created_at: { type: string, format: date-time }
+            updated_at: { type: string, format: date-time }
+    CustomRoleList:
+      type: object
+      required: [items]
+      properties:
+        items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/CustomRole' } }
     AuditEvent:
       type: object
       required: [id, at, actor_id, actor_name, action, target_type, target_id, ip, details]
@@ -5033,7 +5122,7 @@ components:
       properties:
         principal_type: { $ref: '#/components/schemas/PrincipalType' }
         principal_id: { type: string, format: uuid }
-        role: { $ref: '#/components/schemas/ShareRole' }
+        role: { type: string, pattern: '^(read|limited|editor|full|custom:[0-9a-fA-F-]{36})$', description: 'Peran bawaan atau custom:<id> dari /custom-roles' }
     Share:
       allOf:
         - $ref: '#/components/schemas/ShareInput'
@@ -5041,6 +5130,7 @@ components:
           required: [principal_name]
           properties:
             principal_name: { type: string }
+            role_name: { type: string, description: Nama peran kustom (kosong untuk peran bawaan) }
             inherited_from:
               type: string
               format: uuid

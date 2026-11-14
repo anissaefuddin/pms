@@ -1333,11 +1333,11 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 - [ ] [TEST] E2E-PAR-12
 
 **S12.1.4 Role kustom (ENT-03) — 2.5 hari**
-- [ ] [DB] Definisi role
-- [ ] [BE] Policy role kustom
-- [ ] [FE] Editor role
-- [ ] [TEST] Matriks least privilege
-- [ ] [TEST] Regresi policy role bawaan
+- [x] [DB] Definisi role
+- [x] [BE] Policy role kustom
+- [x] [FE] Editor role
+- [x] [TEST] Matriks least privilege
+- [x] [TEST] Regresi policy role bawaan
 
 **S12.1.5 Laporan audit keamanan (ENT-04) — 2 hari**
 - [x] [DB] Event audit: login, role, share, API key

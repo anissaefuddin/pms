@@ -695,6 +695,16 @@ type CustomField struct {
 	Config     []byte             `json:"config"`
 }
 
+type CustomRole struct {
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Description string             `json:"description"`
+	CapsMask    int32              `json:"caps_mask"`
+	Version     int32              `json:"version"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type Dashboard struct {
 	ID      pgtype.UUID `json:"id"`
 	OwnerID pgtype.UUID `json:"owner_id"`
@@ -1000,6 +1010,7 @@ type Share struct {
 	Role          ShareRole          `json:"role"`
 	CreatedBy     pgtype.UUID        `json:"created_by"`
 	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	CustomRoleID  pgtype.UUID        `json:"custom_role_id"`
 }
 
 type Space struct {

@@ -42,5 +42,7 @@
   "access.removeShort": "Remove",
   "conflict.message": "Sharing changed since you opened this; reload",
   "conflict.missing": "Sharing is out of date; reload",
-  "conflict.reload": "Reload"
+  "conflict.reload": "Reload",
+  "role.custom": "Custom role",
+  "role.customGroup": "Custom roles"
 }

@@ -3,12 +3,14 @@ import type { components } from "@/api/schema";
 export type Space = components["schemas"]["Space"];
 export type Share = components["schemas"]["Share"];
 export type ShareInput = components["schemas"]["ShareInput"];
-export type ShareRole = components["schemas"]["ShareRole"];
+/** A built-in role (read, limited, editor, full) or "custom:<id>" (see /custom-roles). */
+export type ShareRole = string;
 export type Group = components["schemas"]["Group"];
 export type User = components["schemas"]["User"];
 
 /** Lowest to highest; mirrors the share role table in ARCHITECTURE §6.1. */
 export const SHARE_ROLES: ShareRole[] = ["read", "limited", "editor", "full"];
+export const isCustomRole = (role: ShareRole) => role.startsWith("custom:");
 export const roleRank = (role: ShareRole) => SHARE_ROLES.indexOf(role);
 
 export const spaceKeys = { all: ["spaces"] as const, one: (id: string) => ["spaces", id] as const };

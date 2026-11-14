@@ -123,8 +123,10 @@ func TestPublicDashboardLinkExpiryPasswordAndFinancialMasking(t *testing.T) {
 	f.want(dash, 201, "dashboard")
 	id := dash.body["id"].(string)
 	version := func() string { return `"` + f.queryID("SELECT version::text FROM dashboards WHERE id=$1", id) + `"` }
+	next := 0 // widgets are listed by position, so give each its own; equal positions come back in random id order
 	add := func(name, typ string, query map[string]any) {
-		f.want(f.call(admin, "POST", "/dashboards/"+id+"/widgets", map[string]any{"name": name, "type": typ, "config": map[string]any{"query": query}}, "If-Match", version()), 201, name)
+		f.want(f.call(admin, "POST", "/dashboards/"+id+"/widgets", map[string]any{"name": name, "type": typ, "position": next, "config": map[string]any{"query": query}}, "If-Match", version()), 201, name)
+		next++
 	}
 	add("Open", "indicator", map[string]any{"reporting_on": "tasks", "metric": "count"})
 	add("Budget total", "indicator", map[string]any{"reporting_on": "projects", "metric": "sum_field", "field_id": money})

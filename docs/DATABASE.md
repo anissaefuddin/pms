@@ -266,6 +266,10 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 - `widgets.type` menerima `area`, `pivot`, `burndown`, `completion` dan `config.description` (00070); `dashboards.layout` (00071); `dashboard_public_links(dashboard_id, token_hash, password_hash, expires_at, created_by, created_at)` (00072); `report_subscriptions.weekday` boleh NULL (setiap hari) dan `timezone` (00073).
 - `automation_rules(id, space_id, container_id, name, owner_id, enabled, current_version_id)`, `automation_rule_versions(id, rule_id, version, definition jsonb, status draft|published|retired)` dengan satu draft per aturan, dan `automation_runs(id, rule_id, rule_version_id, event_id, action_index, item_id, actor_id, status, detail)` (00054). Indeks unik atas `(rule_version_id, event_id, action_index)` untuk status selain `failed` adalah jaminan tepat sekali; `action_index` -1 adalah hasil tingkat aturan. `notifications.kind` menerima `automation`.
 
+### 7.6 Audit dan role kustom (M12)
+
+`audit_events(id, at, actor_id, actor_name, action, target_type, target_id, ip, details jsonb)` (migrasi `00300`): jejak keamanan, aksi `area.verb`, `details` maksimal 4 KiB; baris `security_events` lama disalin sebagai `auth.2fa_*`. `custom_roles(id, name unik tanpa memperhatikan huruf, description, caps_mask 1..255 dengan bit view, version)` dan `shares.custom_role_id` (migrasi `00301`, ON DELETE RESTRICT; CHECK `custom_role_id IS NULL OR role = 'read'`).
+
 ## 8. Data yang sengaja belum ada (M2+)
 
 `reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.

@@ -33,6 +33,8 @@ function SettingsLayout() {
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.itemTypes.title")}</Link>
             <Link to="/settings/workflows" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.workflows.title")}</Link>
+            {me?.user_type === "admin" && <Link to="/settings/roles" className={linkClass}
+              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("roles.title")}</Link>}
             {me?.user_type === "admin" && <Link to="/settings/audit" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("audit.title")}</Link>}
             <Link to="/spikes/gantt" className={linkClass}>{t("settings.nav.gantt")}</Link>

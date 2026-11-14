@@ -5,7 +5,11 @@
 // the ceiling of the actor's user type. "No access" is reported as not found, never as forbidden.
 package policy
 
-import "math/bits"
+import (
+	"math/bits"
+	"strconv"
+	"strings"
+)
 
 type Capability string
 
@@ -102,7 +106,34 @@ var ceilings = map[UserType]Caps{
 }
 
 // RoleCaps returns what a share role grants; an unknown role grants nothing.
-func RoleCaps(r Role) Caps { return roleCaps[r] }
+// RoleCaps returns what a share role grants. A role of the form "mask:N" comes from a custom role (SQL turns such a share into
+// its capability mask); it still passes through Effective, so it can never exceed the user type's ceiling.
+func RoleCaps(r Role) Caps {
+	if raw, ok := strings.CutPrefix(string(r), "mask:"); ok {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 0 || n > 1<<len(AllCapabilities)-1 {
+			return none
+		}
+		return Caps(n)
+	}
+	return roleCaps[r]
+}
+
+// Mask is the stored form of a capability set (one bit per AllCapabilities entry, append-only order).
+func (s Caps) Mask() int { return int(s) }
+
+// CapsFromNames builds a set from capability names; ok is false for an unknown or repeated name.
+func CapsFromNames(names []string) (Caps, bool) {
+	var out Caps
+	for _, n := range names {
+		b := bit(Capability(n))
+		if b == 0 || out&b != 0 {
+			return 0, false
+		}
+		out |= b
+	}
+	return out, true
+}
 
 // Ceiling returns the most a user type may ever do; an unknown type gets nothing.
 func Ceiling(t UserType) Caps { return ceilings[t] }
@@ -114,7 +145,7 @@ func ValidRole(s string) bool { _, ok := roleCaps[Role(s)]; return ok }
 func Effective(t UserType, roles ...Role) Caps {
 	var union Caps
 	for _, r := range roles {
-		union |= roleCaps[r]
+		union |= RoleCaps(r)
 	}
 	return union & ceilings[t]
 }

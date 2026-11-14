@@ -32,11 +32,12 @@ type SpaceAccess struct {
 // This is the one SQL statement that links shares to actors; every Space decision and list is built on it.
 const spaceRows = `
 SELECT s.id::text, s.name, s.description, s.kind::text, COALESCE(s.owner_id::text, ''), s.version,
-       COALESCE(array_agg(DISTINCT sh.role::text) FILTER (WHERE sh.id IS NOT NULL), '{}')
+       COALESCE(array_agg(DISTINCT CASE WHEN cr.id IS NOT NULL THEN 'mask:' || cr.caps_mask ELSE sh.role::text END) FILTER (WHERE sh.id IS NOT NULL), '{}')
 FROM spaces s
 LEFT JOIN shares sh ON sh.target_type = 'space' AND sh.target_id = s.id AND (
        (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
     OR (sh.principal_type = 'group' AND sh.principal_id IN (SELECT group_id FROM group_members WHERE user_id = $1::uuid)))
+LEFT JOIN custom_roles cr ON cr.id = sh.custom_role_id
 WHERE (s.deleted_at IS NULL OR $3::boolean) AND ($2::uuid IS NULL OR s.id = $2::uuid)
 GROUP BY s.id`
 

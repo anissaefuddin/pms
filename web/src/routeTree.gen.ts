@@ -47,6 +47,7 @@ import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsRatesRouteImport } from './routes/_app/settings/rates'
 import { Route as AppSettingsResourcesRouteImport } from './routes/_app/settings/resources'
+import { Route as AppSettingsRolesRouteImport } from './routes/_app/settings/roles'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
 import { Route as AppSettingsWorkScheduleRouteImport } from './routes/_app/settings/work-schedule'
@@ -250,6 +251,11 @@ const AppSettingsResourcesRoute = AppSettingsResourcesRouteImport.update({
   path: '/resources',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsRolesRoute = AppSettingsRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsSecurityRoute = AppSettingsSecurityRouteImport.update({
   id: '/security',
   path: '/security',
@@ -347,6 +353,7 @@ export interface FileRoutesByFullPath {
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/rates': typeof AppSettingsRatesRoute
   '/settings/resources': typeof AppSettingsResourcesRoute
+  '/settings/roles': typeof AppSettingsRolesRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
@@ -397,6 +404,7 @@ export interface FileRoutesByTo {
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/rates': typeof AppSettingsRatesRoute
   '/settings/resources': typeof AppSettingsResourcesRoute
+  '/settings/roles': typeof AppSettingsRolesRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/settings/workflows': typeof AppSettingsWorkflowsRoute
@@ -449,6 +457,7 @@ export interface FileRoutesById {
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/rates': typeof AppSettingsRatesRoute
   '/_app/settings/resources': typeof AppSettingsResourcesRoute
+  '/_app/settings/roles': typeof AppSettingsRolesRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/settings/users': typeof AppSettingsUsersRouteWithChildren
   '/_app/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
@@ -502,6 +511,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/settings/rates'
     | '/settings/resources'
+    | '/settings/roles'
     | '/settings/security'
     | '/settings/users'
     | '/settings/work-schedule'
@@ -552,6 +562,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/settings/rates'
     | '/settings/resources'
+    | '/settings/roles'
     | '/settings/security'
     | '/settings/work-schedule'
     | '/settings/workflows'
@@ -603,6 +614,7 @@ export interface FileRouteTypes {
     | '/_app/settings/profile'
     | '/_app/settings/rates'
     | '/_app/settings/resources'
+    | '/_app/settings/roles'
     | '/_app/settings/security'
     | '/_app/settings/users'
     | '/_app/settings/work-schedule'
@@ -901,6 +913,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsResourcesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/roles': {
+      id: '/_app/settings/roles'
+      path: '/roles'
+      fullPath: '/settings/roles'
+      preLoaderRoute: typeof AppSettingsRolesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/security': {
       id: '/_app/settings/security'
       path: '/security'
@@ -1008,6 +1027,7 @@ interface AppSettingsRouteChildren {
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsRatesRoute: typeof AppSettingsRatesRoute
   AppSettingsResourcesRoute: typeof AppSettingsResourcesRoute
+  AppSettingsRolesRoute: typeof AppSettingsRolesRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRouteWithChildren
   AppSettingsWorkScheduleRoute: typeof AppSettingsWorkScheduleRoute
@@ -1022,6 +1042,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsRatesRoute: AppSettingsRatesRoute,
   AppSettingsResourcesRoute: AppSettingsResourcesRoute,
+  AppSettingsRolesRoute: AppSettingsRolesRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppSettingsUsersRoute: AppSettingsUsersRouteWithChildren,
   AppSettingsWorkScheduleRoute: AppSettingsWorkScheduleRoute,

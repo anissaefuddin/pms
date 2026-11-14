@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { useDebounced } from "@/lib/space-queries";
-import { SHARE_ROLES, ownRank, type Group, type Share, type ShareInput, type ShareRole, type User } from "@/lib/spaces";
+import { useCustomRoles } from "@/lib/roles";
+import { SHARE_ROLES, isCustomRole, ownRank, type Group, type Share, type ShareInput, type ShareRole, type User } from "@/lib/spaces";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,7 +67,15 @@ function Editor({ first, loadShares, saveShares, canShare, me, onSaved, onClose 
   const [pending, setPending] = useState(false);
   const groups = useQuery({ queryKey: ["groups"], queryFn: async () => (await api<{ items: Group[] }>("/api/v1/groups")).items, enabled: canShare });
 
-  const roleLabel = (role: ShareRole) => t(`share.role.${role}`);
+  const custom = useCustomRoles(canShare).data ?? [];
+  const roleLabel = (role: ShareRole) => isCustomRole(role) ? (custom.find((c) => `custom:${c.id}` === role)?.name ?? draft.find((r) => r.role === role)?.role_name ?? t("share.role.custom")) : t(`share.role.${role}`);
+  const roleOptions = (current?: ShareRole) => <>
+    {SHARE_ROLES.map((r) => <option key={r} value={r}>{t(`share.role.${r}`)}</option>)}
+    {(custom.length > 0 || (current && isCustomRole(current))) && <optgroup label={t("share.role.customGroup")}>
+      {custom.map((c) => <option key={c.id} value={`custom:${c.id}`}>{c.name}</option>)}
+      {current && isCustomRole(current) && !custom.some((c) => `custom:${c.id}` === current) && <option value={current}>{roleLabel(current)}</option>}
+    </optgroup>}
+  </>;
   const direct = draft.filter((r) => !r.inherited_from);
   const dirty = JSON.stringify(direct.map(({ principal_type, principal_id, role }) => [principal_type, principal_id, role]))
     !== JSON.stringify(initial.filter((r) => !r.inherited_from).map(({ principal_type, principal_id, role }) => [principal_type, principal_id, role]));
@@ -107,7 +116,7 @@ function Editor({ first, loadShares, saveShares, canShare, me, onSaved, onClose 
 
   return (
     <div className="space-y-4">
-      {canShare && <Search me={me} groups={groups.data ?? []} taken={new Set(direct.map(keyOf))} onAdd={add} />}
+      {canShare && <Search me={me} groups={groups.data ?? []} taken={new Set(direct.map(keyOf))} onAdd={add} roleOptions={roleOptions} />}
       <section aria-labelledby="share-access" className="space-y-2">
         <h3 id="share-access" className="text-sm font-medium">{t("share.access.title")}</h3>
         {draft.length === 0 ? <p className="text-sm text-muted-foreground">{t("share.access.empty")}</p> : (
@@ -124,7 +133,7 @@ function Editor({ first, loadShares, saveShares, canShare, me, onSaved, onClose 
                 ) : canShare ? (
                   <>
                     <select className={selectClass} aria-label={t("share.access.role", { name: row.principal_name })} value={row.role} onChange={(e) => setRole(row, e.target.value as ShareRole)}>
-                      {SHARE_ROLES.map((r) => <option key={r} value={r}>{roleLabel(r)}</option>)}
+                      {roleOptions(row.role)}
                     </select>
                     <Button type="button" variant="ghost" size="sm" aria-label={t("share.access.remove", { name: row.principal_name })} onClick={() => remove(row)}>{t("share.access.removeShort")}</Button>
                   </>
@@ -170,7 +179,7 @@ function Editor({ first, loadShares, saveShares, canShare, me, onSaved, onClose 
 
 type Found = Pick<Share, "principal_type" | "principal_id" | "principal_name"> & { detail?: string };
 
-export function Search({ me, groups, taken, onAdd }: { me: CurrentUser; groups: Group[]; taken: Set<string>; onAdd: (p: Found, role: ShareRole) => void }) {
+export function Search({ me, groups, taken, onAdd, roleOptions }: { me: CurrentUser; groups: Group[]; taken: Set<string>; onAdd: (p: Found, role: ShareRole) => void; roleOptions?: (current?: ShareRole) => React.ReactNode }) {
   const { t } = useTranslation();
   const [q, setQ] = useState("");
   const [roles, setRoles] = useState<Record<string, ShareRole>>({});
@@ -212,7 +221,7 @@ export function Search({ me, groups, taken, onAdd }: { me: CurrentUser; groups: 
                 <span className="text-muted-foreground">{f.principal_type === "group" ? <Users /> : <UserIcon />}</span>
                 <span className="min-w-0 flex-1 text-sm"><span className="block truncate">{f.principal_name}</span>{f.detail && <span className="block truncate text-xs text-muted-foreground">{f.detail}</span>}</span>
                 <select className={selectClass} aria-label={t("share.search.role", { name: f.principal_name })} value={roles[key] ?? "read"} onChange={(e) => setRoles({ ...roles, [key]: e.target.value as ShareRole })}>
-                  {SHARE_ROLES.map((r) => <option key={r} value={r}>{t(`share.role.${r}`)}</option>)}
+                  {roleOptions ? roleOptions() : SHARE_ROLES.map((r) => <option key={r} value={r}>{t(`share.role.${r}`)}</option>)}
                 </select>
                 <Button type="button" size="sm" variant="outline" aria-label={t("share.search.add", { name: f.principal_name })} onClick={() => { onAdd(f, roles[key] ?? "read"); setQ(""); }}>{t("share.search.addButton")}</Button>
               </li>

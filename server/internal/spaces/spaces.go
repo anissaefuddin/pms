@@ -289,17 +289,20 @@ SELECT id,$2::uuid,'delete',jsonb_build_object('space_id',$1::uuid) FROM removed
 type Share struct {
 	PrincipalType string  `json:"principal_type"`
 	PrincipalID   string  `json:"principal_id"`
-	Role          string  `json:"role"`
+	Role          string  `json:"role"`                // read, limited, editor, full, or "custom:<id>"
+	RoleName      string  `json:"role_name,omitempty"` // the custom role's name
 	PrincipalName string  `json:"principal_name"`
 	InheritedFrom *string `json:"inherited_from"`
 }
 
 const listSharesSQL = `
-SELECT sh.principal_type::text, sh.principal_id::text, sh.role::text,
+SELECT sh.principal_type::text, sh.principal_id::text,
+       CASE WHEN sh.custom_role_id IS NOT NULL THEN 'custom:' || sh.custom_role_id ELSE sh.role::text END,
+       COALESCE(cr.name, ''),
        CASE WHEN sh.principal_type = 'user'
             THEN (SELECT COALESCE(NULLIF(btrim(u.first_name || ' ' || u.last_name), ''), CASE WHEN $2 THEN u.email::text ELSE 'Member' END) FROM users u WHERE u.id = sh.principal_id)
             ELSE (SELECT g.name FROM groups g WHERE g.id = sh.principal_id) END AS name
-FROM shares sh
+FROM shares sh LEFT JOIN custom_roles cr ON cr.id = sh.custom_role_id
 WHERE sh.target_type = $3::share_target AND sh.target_id = $1::uuid
 ORDER BY sh.principal_type, name, sh.principal_id`
 
@@ -318,7 +321,7 @@ func readTargetShares(ctx context.Context, db policy.DB, actor policy.Actor, id,
 	for rows.Next() {
 		var sh Share
 		var name *string
-		if err := rows.Scan(&sh.PrincipalType, &sh.PrincipalID, &sh.Role, &name); err != nil {
+		if err := rows.Scan(&sh.PrincipalType, &sh.PrincipalID, &sh.Role, &sh.RoleName, &name); err != nil {
 			return nil, err
 		}
 		if name != nil {
@@ -412,6 +415,7 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		return ValidationError{fmt.Sprintf("a Space can have at most %d shares", maxShares)}
 	}
 	desired := map[shareKey]policy.Role{}
+	custom := map[policy.Role]policy.Caps{} // capabilities of the custom roles named in this request
 	for _, sh := range want {
 		if sh.PrincipalType != "user" && sh.PrincipalType != "group" {
 			return ValidationError{"principal_type must be user or group"}
@@ -419,8 +423,20 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		if !IsID(sh.PrincipalID) {
 			return ValidationError{"principal_id must be a UUID"}
 		}
-		if !policy.ValidRole(sh.Role) {
-			return ValidationError{"role must be read, limited, editor or full"}
+		if id, isCustom := strings.CutPrefix(sh.Role, "custom:"); isCustom {
+			if !IsID(id) {
+				return ValidationError{"a custom role must be written custom:<id>"}
+			}
+			var mask int
+			if err := tx.QueryRow(ctx, "SELECT caps_mask FROM custom_roles WHERE id=$1::uuid", id).Scan(&mask); errors.Is(err, pgx.ErrNoRows) {
+				return ValidationError{"the custom role does not exist"}
+			} else if err != nil {
+				return err
+			}
+			sh.Role = "custom:" + strings.ToLower(id)
+			custom[policy.Role(sh.Role)] = policy.Caps(mask)
+		} else if !policy.ValidRole(sh.Role) {
+			return ValidationError{"role must be read, limited, editor, full or custom:<id>"}
 		}
 		key := shareKey{sh.PrincipalType, strings.ToLower(sh.PrincipalID)}
 		if _, dup := desired[key]; dup {
@@ -429,7 +445,7 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		desired[key] = policy.Role(sh.Role)
 	}
 	existing := map[shareKey]policy.Role{}
-	rows, err := tx.Query(ctx, "SELECT principal_type::text, principal_id::text, role::text FROM shares WHERE target_type=$2::share_target AND target_id=$1", spaceID, target)
+	rows, err := tx.Query(ctx, "SELECT principal_type::text, principal_id::text, CASE WHEN custom_role_id IS NOT NULL THEN 'custom:' || custom_role_id ELSE role::text END FROM shares WHERE target_type=$2::share_target AND target_id=$1", spaceID, target)
 	if err != nil {
 		return err
 	}
@@ -449,7 +465,11 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		if existing[key] == role {
 			continue
 		}
-		if !grantable.Contains(policy.RoleCaps(role)) {
+		caps, isCustom := custom[role]
+		if !isCustom {
+			caps = policy.RoleCaps(role)
+		}
+		if !grantable.Contains(caps) {
 			return forbidden("you cannot grant a role above your own capabilities")
 		}
 	}
@@ -465,10 +485,15 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		if existing[key] == role {
 			continue
 		}
-		if _, err := tx.Exec(ctx, `INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by)
-			VALUES ($6::share_target,$1,$2::principal_type,$3,$4::share_role,$5)
-			ON CONFLICT (target_type,target_id,principal_type,principal_id) DO UPDATE SET role=EXCLUDED.role`,
-			spaceID, key.principalType, key.principalID, string(role), actor.ID, target); err != nil {
+		// A custom share stores role = 'read' as a fail-safe and the real role in custom_role_id (migration 00301).
+		stored, customID := string(role), (*string)(nil)
+		if id, isCustom := strings.CutPrefix(string(role), "custom:"); isCustom {
+			stored, customID = "read", &id
+		}
+		if _, err := tx.Exec(ctx, `INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,custom_role_id,created_by)
+			VALUES ($6::share_target,$1,$2::principal_type,$3,$4::share_role,$7::uuid,$5)
+			ON CONFLICT (target_type,target_id,principal_type,principal_id) DO UPDATE SET role=EXCLUDED.role, custom_role_id=EXCLUDED.custom_role_id`,
+			spaceID, key.principalType, key.principalID, stored, actor.ID, target, customID); err != nil {
 			var pg *pgconn.PgError
 			if errors.As(err, &pg) && pg.Code == "23503" {
 				return ValidationError{"every user or group in the list must exist and be active"}
