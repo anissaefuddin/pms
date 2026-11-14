@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/google/uuid"
 )
@@ -37,7 +38,7 @@ func writeWebhookError(w http.ResponseWriter, err error) {
 }
 
 func (s *Server) listWebhooks(w http.ResponseWriter, r *http.Request) {
-	items, err := webhooks.New(s.pool).List(r.Context(), actorOf(r).ID)
+	items, err := s.hooks().List(r.Context(), actorOf(r).ID)
 	if err != nil {
 		writeWebhookError(w, err)
 		return
@@ -54,7 +55,7 @@ func (s *Server) createWebhook(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &in) {
 		return
 	}
-	sub, err := webhooks.New(s.pool).Create(r.Context(), actorOf(r).ID, in.Name, in.URL, in.EventTypes)
+	sub, err := s.hooks().Create(r.Context(), actorOf(r).ID, in.Name, in.URL, in.EventTypes)
 	if err != nil {
 		writeWebhookError(w, err)
 		return
@@ -72,7 +73,7 @@ func (s *Server) updateWebhook(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &in) {
 		return
 	}
-	sub, err := webhooks.New(s.pool).Update(r.Context(), actorOf(r).ID, webhookID(r), in.Name, in.URL, in.EventTypes, in.Enabled)
+	sub, err := s.hooks().Update(r.Context(), actorOf(r).ID, webhookID(r), in.Name, in.URL, in.EventTypes, in.Enabled)
 	if err != nil {
 		writeWebhookError(w, err)
 		return
@@ -81,7 +82,7 @@ func (s *Server) updateWebhook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) deleteWebhook(w http.ResponseWriter, r *http.Request) {
-	if err := webhooks.New(s.pool).Delete(r.Context(), actorOf(r).ID, webhookID(r)); err != nil {
+	if err := s.hooks().Delete(r.Context(), actorOf(r).ID, webhookID(r)); err != nil {
 		writeWebhookError(w, err)
 		return
 	}
@@ -89,10 +90,15 @@ func (s *Server) deleteWebhook(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) listWebhookDeliveries(w http.ResponseWriter, r *http.Request) {
-	items, err := webhooks.New(s.pool).Deliveries(r.Context(), actorOf(r).ID, webhookID(r))
+	items, err := s.hooks().Deliveries(r.Context(), actorOf(r).ID, webhookID(r))
 	if err != nil {
 		writeWebhookError(w, err)
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": items})
+}
+
+// hooks builds the webhook service with the integration key, so signing secrets are encrypted at rest when it is configured.
+func (s *Server) hooks() *webhooks.Service {
+	return webhooks.New(s.pool).WithKeys(twofactor.Keys{Current: s.cfg.ConnectorKey, Previous: s.cfg.ConnectorKeyPrevious})
 }

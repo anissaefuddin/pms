@@ -1,15 +1,18 @@
 package httpserver_test
 
 import (
+	"bytes"
 	"context"
 	"io"
 	"net/http"
 	"net/http/httptest"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 )
 
@@ -186,5 +189,50 @@ func TestWebhookRetryThenAutoDisable(t *testing.T) {
 	e.f.want(on, 200, "re-enable")
 	if on.body["consecutive_failures"].(float64) != 0 {
 		t.Fatal("counter not reset")
+	}
+}
+
+// With a key configured the signing secret is stored encrypted, deliveries are still signed with the plain secret, and a
+// lost key fails the attempt instead of sending anything unsigned.
+func TestWebhookSecretIsEncryptedAtRest(t *testing.T) {
+	e := newAutoEnv(t)
+	keys := twofactor.Keys{Current: bytes.Repeat([]byte{9}, 32)}
+	svc := webhooks.New(e.f.pool).WithKeys(keys)
+	e.engine.Hook = svc.Handler
+	e.engine.Tick = func(ctx context.Context) error { _, err := svc.Send(ctx); return err }
+	old, oldBackoff := webhooks.AllowInternal, webhooks.Backoff
+	t.Cleanup(func() { webhooks.AllowInternal, webhooks.Backoff = old, oldBackoff })
+	webhooks.AllowInternal = true
+	rcv := newReceiver(t, 200)
+
+	sub, err := svc.Create(context.Background(), e.editor.id, "hook", rcv.srv.URL, []string{"item.created"})
+	if err != nil || sub.Secret == "" {
+		t.Fatalf("create: %v %+v", err, sub)
+	}
+	stored := e.f.queryID("SELECT secret FROM webhook_subscriptions WHERE id=$1", sub.ID)
+	if !strings.HasPrefix(stored, "v1:") || strings.Contains(stored, sub.Secret) {
+		t.Fatalf("secret must be stored encrypted, got %q", stored)
+	}
+	e.item(t, e.admin, "Encrypted secret plan", nil)
+	e.drain(t)
+	calls := rcv.got()
+	if len(calls) != 1 {
+		t.Fatalf("want one delivery, got %d", len(calls))
+	}
+	ts, _ := strconv.ParseInt(calls[0].header.Get("X-PMS-Timestamp"), 10, 64)
+	if calls[0].header.Get("X-PMS-Signature") != webhooks.Sign(sub.Secret, ts, calls[0].body) {
+		t.Fatal("the delivery must be signed with the decrypted secret")
+	}
+
+	// A row copied to another subscription id does not decrypt, and a different key fails the attempt without sending.
+	wrong := webhooks.New(e.f.pool).WithKeys(twofactor.Keys{Current: bytes.Repeat([]byte{1}, 32)})
+	e.engine.Tick = func(ctx context.Context) error { _, err := wrong.Send(ctx); return err }
+	e.item(t, e.admin, "Second plan", nil)
+	e.drain(t)
+	if n := len(rcv.got()); n != 1 {
+		t.Fatalf("with the wrong key nothing may be sent, got %d deliveries", n)
+	}
+	if msg := e.f.queryID("SELECT COALESCE(last_error,'') FROM webhook_deliveries WHERE subscription_id=$1 AND attempts>0 AND status<>'success' ORDER BY created_at DESC LIMIT 1", sub.ID); !strings.Contains(msg, "cannot be decrypted") {
+		t.Fatalf("the failed attempt must say why, got %q", msg)
 	}
 }

@@ -15,7 +15,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"io"
+	"log/slog"
 	"net"
 	"net/http"
 	"net/netip"
@@ -81,6 +83,28 @@ type Service struct {
 	Pool   *pgxpool.Pool
 	Client *http.Client
 	Now    func() time.Time
+	// Keys encrypt the signing secret at rest (the connector key, PMS_CONNECTOR_KEY). Without a key the secret is stored as-is,
+	// the way subscriptions made before the key existed still are; both forms are read.
+	Keys twofactor.Keys
+}
+
+// WithKeys returns the service with at-rest encryption of signing secrets turned on.
+func (s *Service) WithKeys(k twofactor.Keys) *Service { s.Keys = k; return s }
+
+// seal stores a secret encrypted when a key is configured; the subscription id is bound in so a copied value does not decrypt elsewhere.
+func (s *Service) seal(id uuid.UUID, secret string) (string, error) {
+	if len(s.Keys.Current) != 32 {
+		return secret, nil
+	}
+	return s.Keys.Encrypt(secret, id.String())
+}
+
+func (s *Service) open(id uuid.UUID, stored string) (string, error) {
+	if !strings.HasPrefix(stored, "v1:") {
+		return stored, nil // written before a key was configured
+	}
+	plain, _, err := s.Keys.Decrypt(stored, id.String())
+	return plain, err
 }
 
 func New(pool *pgxpool.Pool) *Service {
@@ -199,8 +223,13 @@ func (s *Service) Create(ctx context.Context, owner, name, rawURL string, types 
 	if err != nil {
 		return Subscription{}, err
 	}
+	id := uuid.New()
+	stored, err := s.seal(id, secret)
+	if err != nil {
+		return Subscription{}, err
+	}
 	sub, err := scan(s.Pool.QueryRow(ctx, "INSERT INTO webhook_subscriptions(id,owner_id,name,url,secret,event_types) VALUES ($1,$2,$3,$4,$5,$6) RETURNING "+cols,
-		uuid.New(), owner, name, rawURL, secret, types))
+		id, owner, name, rawURL, stored, types))
 	sub.Secret = secret
 	return sub, err
 }
@@ -369,7 +398,15 @@ WHERE d.status='pending' AND d.next_attempt_at<=$1 AND w.enabled AND w.deleted_a
 		return 0, err
 	}
 	for _, j := range jobs {
-		status, derr := s.post(ctx, j.url, j.secret, j.id.String(), j.event.String(), j.typ, j.payload)
+		var status int
+		var derr error
+		secret, oerr := s.open(j.sub, j.secret)
+		if oerr != nil { // a key was lost or rotated away: this attempt fails instead of sending an unsigned or wrongly signed request
+			slog.Error("webhook secret cannot be decrypted", "subscription", j.sub, "error", oerr)
+			derr = errors.New("the signing secret cannot be decrypted; check PMS_CONNECTOR_KEY")
+		} else {
+			status, derr = s.post(ctx, j.url, secret, j.id.String(), j.event.String(), j.typ, j.payload)
+		}
 		attempts := j.attempts + 1
 		if derr == nil {
 			_, err = s.Pool.Exec(ctx, "UPDATE webhook_deliveries SET status='success',attempts=$2,response_status=$3,last_error=NULL,delivered_at=now() WHERE id=$1", j.id, attempts, status)

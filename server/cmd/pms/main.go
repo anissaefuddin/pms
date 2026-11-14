@@ -19,6 +19,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/httpserver"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
+	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -100,10 +101,10 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 		slog.Warn("PMS_2FA_KEY is not set: two-factor authentication is unavailable to every user")
 	}
 	if cfg.ConnectorKey == nil {
-		slog.Warn("PMS_CONNECTOR_KEY is not set: connectors that need secrets cannot be installed")
+		slog.Warn("PMS_CONNECTOR_KEY is not set: connectors that need secrets cannot be installed, and webhook signing secrets are stored unencrypted")
 	}
 	engine := automation.New(pool)
-	hooks := webhooks.New(pool)
+	hooks := webhooks.New(pool).WithKeys(twofactor.Keys{Current: cfg.ConnectorKey, Previous: cfg.ConnectorKeyPrevious})
 	webhooks.AllowInternal = os.Getenv("PMS_WEBHOOK_ALLOW_INTERNAL") == "true" // test mode only
 	engine.Hook = hooks.Handler
 	engine.Tick = func(ctx context.Context) error { _, err := hooks.Send(ctx); return err }
