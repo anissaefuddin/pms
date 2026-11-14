@@ -25,9 +25,13 @@ test("flow 1: a holiday in the work schedule, then moving a predecessor pushes i
   await expect(page.locator(".wx-line").first()).toBeAttached(); // the link comes from the server
   await page.getByRole("application", { name: "Gantt chart" }).focus();
   const rows = ["Pred task", "Succ task"];
-  for (let i = 0; i < 4; i++) { // select "Pred task" (rows are ordered by the server)
+  // Select "Pred task" (rows are ordered by the server). One key press, then wait for the chart to announce the row: pressing again
+  // while the announcement is still on its way would move the selection to the next row. Only a press that announced nothing is repeated
+  // (a slow runner can press before the chart is ready to take keys).
+  const announced = page.getByRole("status").filter({ hasText: new RegExp(rows.join("|")) });
+  for (let attempt = 0; attempt < 4; attempt++) {
     await page.keyboard.press("ArrowDown");
-    if (await page.getByRole("status").filter({ hasText: rows[0] }).count()) break;
+    if (await announced.first().waitFor({ timeout: 4000 }).then(() => true, () => false)) break;
   }
   await expect(page.getByRole("status").filter({ hasText: "Pred task" })).toBeVisible();
   await page.keyboard.press("ArrowRight"); // 1 Mar -> 2 Mar
