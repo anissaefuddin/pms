@@ -1101,3 +1101,9 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 - Playwright mock: `workflows.spec.ts` (7 termasuk axe terang/gelap), `m8.spec.ts` (editor status), `reports.spec.ts` + `sse-reconnect.spec.ts` (10), `dashboards.spec.ts` + `dashboard-public.spec.ts` (18): semua lulus.
 - `tsc --noEmit` dan `eslint` pada berkas yang diubah: bersih.
 - Tes live (`m3-live`, `m8-live`, `m5-live`) sudah disesuaikan (klik chip status, buka dialog New report) tetapi TIDAK dijalankan di sesi ini (tanpa backend live); koordinator perlu menjalankannya.
+
+### Lane D, lanjutan: form builder dan tes live (15 Nov 2026)
+
+- `forms.spec.ts` (15) lulus; `tsc` dan `eslint` bersih.
+- Tes live Go dengan `PMS_TEST_BROWSER=1`, Postgres `pms-pgD`, port web 4184 (4173 dipakai sesi lain): `TestBrowserM5Flows`, `TestBrowserM11AnalyticsFlows`, `TestBrowserM3Flows`, `TestBrowserM8Flows`, `TestBrowserFormBranchingBlueprint` semuanya PASS. Satu kali `m8-live` E2E-PAR-03 gagal pada proses pertama lalu lulus pada dua proses berikutnya tanpa perubahan kode (flaky, tidak diselidiki).
+- `TestBrowserCreateMenu` GAGAL (`Space actions` tidak ditemukan di halaman Space): area lane B, bukan perubahan lane D; dicatat untuk koordinator.
