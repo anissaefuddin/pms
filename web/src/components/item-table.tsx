@@ -14,6 +14,8 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { ProjectProgress } from "@/components/project-progress";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
+import { AvatarStack } from "@/components/avatar-stack";
+import { tintOf } from "@/components/status-chip";
 import { TypeBadge } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
@@ -101,7 +103,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
       const { item } = row.original;
       const change = item.my_capabilities.includes("change_status");
       return <select data-field="status" aria-label={`${t("items.status")}: ${item.title}`}
-        className="w-full truncate rounded border bg-background px-1 py-1" value={item.status?.id ?? ""} disabled={!change || pending}
+        className={`w-full truncate rounded-full border-0 px-2 py-0.5 text-xs font-medium ${tintOf(item.status?.color)}`} value={item.status?.id ?? ""} disabled={!change || pending}
         onChange={(event) => void onPatch(item, { status_id: event.target.value })}>
         {!item.status && <option value="" disabled>{t("views.noStatus")}</option>}
         {item.status && !statuses.some((status) => status.id === item.status?.id) && <option value={item.status.id}>{item.status.name}</option>}
@@ -114,8 +116,8 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
       return canEdit ? <Button variant="ghost" size="sm" className="max-w-full truncate"
         aria-label={`${t("items.assignees")}: ${item.title}`}
         onClick={() => setEditing({ id: item.id, field: "assignees" })}>
-        {item.assignees.map((person) => person.name).join(", ") || t("items.assignees")}
-      </Button> : <span className="truncate">{item.assignees.map((person) => person.name).join(", ")}</span>;
+        {item.assignees.length ? <AvatarStack people={item.assignees} /> : t("items.assignees")}
+      </Button> : <AvatarStack people={item.assignees} />;
     } },
     ...(["start_date", "due_date"] as const).map((field): ColumnDef<TableRow> => ({
       id: field, header: t(`views.${field}`), cell: ({ row }) => {

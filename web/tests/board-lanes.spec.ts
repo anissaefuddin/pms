@@ -38,11 +38,11 @@ test("group by Assignee makes swimlanes; a multi-assignee item shows in each lan
   await page.goto(`${path}?group=assignee`);
   for (const lane of ["Ann Lee", "Bob Ray", "Unassigned"]) await expect(page.getByRole("region", { name: lane, exact: true })).toBeVisible();
   const lane = (name: string) => page.getByRole("region", { name, exact: true });
-  await expect(lane("Ann Lee").getByRole("button", { name: "Shared work" })).toBeVisible();
-  await expect(lane("Bob Ray").getByRole("button", { name: "Shared work" })).toBeVisible();
-  await expect(lane("Ann Lee").getByRole("button", { name: "Solo work" })).toBeVisible();
-  await expect(lane("Unassigned").getByRole("button", { name: "Nobody's work" })).toBeVisible();
-  await expect(lane("Bob Ray").getByRole("button", { name: "Solo work" })).toHaveCount(0);
+  await expect(lane("Ann Lee").getByRole("button", { name: "Shared work", exact: true })).toBeVisible();
+  await expect(lane("Bob Ray").getByRole("button", { name: "Shared work", exact: true })).toBeVisible();
+  await expect(lane("Ann Lee").getByRole("button", { name: "Solo work", exact: true })).toBeVisible();
+  await expect(lane("Unassigned").getByRole("button", { name: "Nobody's work", exact: true })).toBeVisible();
+  await expect(lane("Bob Ray").getByRole("button", { name: "Solo work", exact: true })).toHaveCount(0);
 });
 
 test("dragging to another lane asks first, then replaces only that assignee", async ({ page }) => {

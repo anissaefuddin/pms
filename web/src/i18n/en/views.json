@@ -43,8 +43,20 @@
     "files": "Files",
     "chart": "Chart"
   },
-  "files": { "empty": "No files in this project", "name": "File", "item": "Item", "size": "Size", "uploader": "Uploaded by", "added": "Added", "kb": "{{count}} KB" },
-  "chart": { "title": "Items by status", "noStatus": "No status", "bar": "{{name}}: {{count}}" },
+  "files": {
+    "empty": "No files in this project",
+    "name": "File",
+    "item": "Item",
+    "size": "Size",
+    "uploader": "Uploaded by",
+    "added": "Added",
+    "kb": "{{count}} KB"
+  },
+  "chart": {
+    "title": "Items by status",
+    "noStatus": "No status",
+    "bar": "{{name}}: {{count}}"
+  },
   "placeholder": "This view is not available yet.",
   "actions": "Actions",
   "empty": "No matching items",
@@ -129,7 +141,10 @@
     "noDeps": "No predecessors.",
     "predecessor": "Predecessor",
     "type": "Type",
-    "addDep": "Add predecessor"
+    "addDep": "Add predecessor",
+    "zoomIn": "Zoom in",
+    "zoomOut": "Zoom out",
+    "keysLabel": "Keyboard help"
   },
   "unassigned": "Unassigned",
   "reassign": {
@@ -140,7 +155,9 @@
   "card": {
     "daysInStatus_one": "{{count}} day in status",
     "daysInStatus_other": "{{count}} days in status",
-    "author": "By {{name}}"
+    "author": "By {{name}}",
+    "duration_one": "{{count}}d",
+    "duration_other": "{{count}}d"
   },
   "assignee": "Assignee",
   "calendar": {
@@ -178,5 +195,16 @@
     "until": "valid until {{date}}",
     "revoke": "Revoke",
     "revokeNamed": "Revoke {{name}}"
-  }
+  },
+  "toolbar": "View toolbar",
+  "searchPlaceholder": "Search",
+  "chip": {
+    "filter": "Filter",
+    "sort": "Sort",
+    "group": "Group"
+  },
+  "segments": "View type",
+  "allViews": "All views",
+  "all": "All",
+  "addType": "Add {{type}} view"
 }

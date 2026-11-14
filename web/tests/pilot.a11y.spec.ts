@@ -47,7 +47,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       await page.getByRole("button", { name: "Board", exact: true }).click();
       await expect(page.getByRole("region", { name: "No status" })).toBeVisible();
       await check(page);
-      await page.getByRole("region", { name: "No status" }).getByRole("button", { name: item.title }).click();
+      await page.getByRole("region", { name: "No status" }).getByRole("button", { name: item.title, exact: true }).click();
       const panel = page.getByRole("dialog", { name: "Item details" });
       await expect(panel.getByRole("heading", { name: item.title })).toBeVisible();
       await expect(panel.getByRole("region", { name: "Comments" })).toBeVisible();
