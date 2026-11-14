@@ -33,6 +33,8 @@
   "view": "Default view",
   "table": "Table",
   "board": "Board",
+  "tableHint": "See your work in a spreadsheet format.",
+  "boardHint": "Organize your work by status on a Kanban board.",
   "sharing": "Sharing",
   "loading": "Loading items…",
   "loadError": "Could not load items.",

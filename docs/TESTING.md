@@ -1095,3 +1095,16 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 - `main` = merge PR #10 (CI hijau: test, authorization-matrix, parity-e2e). Image `pms:91d310e` dibangun di `losaka-app` dari `git archive` main, backup `20261114T144353Z` sebelum ganti, `PMS_IMAGE` di `.env` server diubah dari `pms:1b76d3a`.
 - Hasil: container `pms-app-1` healthy, `https://dev-lens.losakaenergi.app/` 200, `/healthz` 200, log tanpa baris ERROR. Rollback: kembalikan `PMS_IMAGE=pms:1b76d3a` dan pulihkan backup di atas bila diperlukan (migrasi hanya maju).
 - Belum dilakukan: UAT manusia, konektor Google nyata, backup luar server (`BACKUP_REMOTE` kosong di server).
+
+## Pass 2 lane B: view Table/Board/Gantt/Calendar/Timelog dan dialog pembuatan (15 Nov 2026)
+
+Gap dan keputusan: [GAP_SCREEN_PASS2_B.md](GAP_SCREEN_PASS2_B.md), D-160..D-164. Tanpa API/migrasi baru. Data lihat: seed ITA (158 item) di Postgres `pms-pgB`; Board, Gantt, Timelog dan popover diperiksa manual di browser pane.
+
+| Bukti | Hasil |
+|---|---|
+| `tests/uip2-b.spec.ts` (baru, 4 tes): kartu Board (ikon tipe sebaris judul, avatar dan tanggal sebaris, footer subitem) + axe; Table (ikon tipe, baris "Add item" selebar tabel, ikon pada tab view); Calendar (chip `bg-amber-100`) + axe; Gantt (toolbar chip Filter/Columns, kotak warna status, "Add item" membuka dialog) | PASS |
+| Tes mock terdampak: `board-lanes`, `gantt`, `calendar`, `m8-collections`, `items`, `onboarding`, `dr08-calendar-effort`, `project-progress`, `pilot.a11y`, `screens.a11y` (terang dan gelap), `spaces`, `uip-lane2`, `view-presets`, `view-fields`, `views`, `create-menu`, `project-excel`, `uip-lane1`, `uip-lane4` | PASS (69 + 21 + 10; `views.spec` diperbarui: Gantt kini memiliki toolbar filter, asersi 0 menjadi 1) |
+| Live Go `PMS_TEST_BROWSER=1`: `TestBrowserM2Flows` (kolom custom field di Table/Board/Gantt, drag Calendar dan lane), `TestBrowserM3Flows`, `TestBrowserM8Flows`, `TestBrowserCreateMenu` | PASS. Satu kali `m2-live` flow 2 gagal pada run pertama (kolom "Card fields" Board belum tersimpan saat `page.goto` berikutnya: balapan di tes, bukan di UI); diulang dua kali, keduanya PASS |
+| `tsc -b`, `eslint src` | bersih |
+
+Tidak diuji: `m4-live` (Timelog dengan data nyata, filter kini di popover; hanya membaca tabel sehingga tidak terdampak) dan `pilot-live`/`project-progress-live` (butuh fixture terpisah); populasi Timelog tidak diperiksa di browser karena seed ITA tidak punya time entry; mobile 390 px; layout lane Board dengan data multi-assignee.

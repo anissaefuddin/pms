@@ -16,7 +16,7 @@ import { ProjectProgress } from "@/components/project-progress";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
 import { AvatarStack } from "@/components/avatar-stack";
 import { tintOf } from "@/components/status-chip";
-import { TypeBadge } from "@/components/type-badge";
+import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
 import type { ItemCollectionProps } from "./item-collection-types";
@@ -78,6 +78,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
           onClick={() => setExpanded(isExpanded ? expanded.filter((id) => id !== item.id) : [...expanded, item.id])}>
           {isExpanded ? <ChevronDown /> : <ChevronRight />}
         </Button>}
+        <TypeGlyph item={item} className="size-4 text-muted-foreground" />
         {editing?.id === item.id && editing.field === "title"
           ? <form className="min-w-0 flex-1" onSubmit={(event) => {
             event.preventDefault();
@@ -229,7 +230,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
       </div>
     </div>
     {showEmpty && model.length === 0 && <p className="text-muted-foreground">{t("views.empty")}</p>}
-    {canCreate && <Button variant="outline" size="sm" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
+    {canCreate && <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
     {editedField && editedFieldItem && profile && <FieldEdit key={editedFieldItem.id + editedField.id} field={editedField} item={editedFieldItem}
       locale={profile.locale} pending={pending} onCancel={() => setEditing(undefined)}
       onSave={async (value) => { await onPatch(editedFieldItem, { fields: { [editedField.id]: value } }); setEditing(undefined); }} />}
