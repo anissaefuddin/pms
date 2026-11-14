@@ -137,10 +137,11 @@ async function openItem(page: import("@playwright/test").Page, item: object, ext
 }
 
 test("the item panel groups its blocks as the item type's layout says, and keeps unlisted blocks after them", async ({ page }) => {
-  await openItem(page, baseItem({ item_type: { id: bugType.id, key: "bug", name: "Bug", icon: "bug", layout: { sections: [{ title: "Triage", fields: ["importance", "status"] }, { title: "Discussion", fields: ["comments"] }] } } }));
+  await openItem(page, baseItem({ item_type: { id: bugType.id, key: "bug", name: "Bug", icon: "bug", layout: { sections: [{ title: "Triage", fields: ["importance", "status", "effort"] }, { title: "Discussion", fields: ["comments"] }] } } }));
   const triage = page.getByRole("region", { name: "Triage" });
-  await expect(triage.getByLabel("Status")).toBeVisible();
-  await expect(triage.getByLabel("Importance")).toBeVisible();
+  await expect(page.getByLabel("Status", { exact: true })).toBeVisible(); // status and importance are chips above the blocks
+  await expect(page.getByLabel("Importance")).toBeVisible();
+  await expect(triage.getByText("More fields")).toBeVisible();
   await expect(page.getByRole("region", { name: "Discussion" })).toBeVisible();
   await expect(page.getByRole("region", { name: "More" })).toBeVisible(); // everything the layout left out
   // Triage comes before Discussion, which comes before the leftovers.

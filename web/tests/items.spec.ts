@@ -90,12 +90,12 @@ test("detail actions use latest ETag and add a subitem with a parent link", asyn
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").map((c) => c.headers["if-match"])).toEqual(['"1"', '"2"']);
   const description = page.locator('[contenteditable="true"][aria-label="Description"]');
   await description.fill("Agenda for the review");
-  await page.getByRole("heading", { name: "Design review" }).click();
+  await page.getByRole("heading", { name: "Comments" }).click();
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").at(-1)?.body.description?.content[0]?.content[0]?.text).toBe("Agenda for the review");
-  const assignees = page.getByRole("group", { name: "Assignees" });
+  await page.getByRole("button", { name: /^Assignees:/ }).click();
+  const assignees = page.getByRole("group", { name: "Assignees", exact: true });
   await assignees.getByRole("searchbox").fill("gra");
   await assignees.getByRole("button", { name: "Grace Hopper" }).click();
-  await page.getByRole("button", { name: "Save", exact: true }).last().click();
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").at(-1)?.body.assignee_ids).toEqual([grace.id]);
   await page.getByRole("button", { name: "Add subitem" }).click();
   const form = page.getByRole("dialog", { name: "Add subitem" });

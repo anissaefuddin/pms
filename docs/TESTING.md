@@ -1039,3 +1039,17 @@ Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image ny
 | | `BACKUP_REMOTE` rclone (tujuan lokal) | PASS (regresi) |
 
 Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.
+
+## Lane 1 — panel item, toolbar dashboard, editor widget (S-UIP.1.1, 2.4, 2.6, 3.1 bagian C2/C3)
+
+Tanggal: 14 Nov 2026. Playwright (API dimock) di port sendiri `PMS_TEST_BROWSER_PORT=4191` (port 4173 dipakai server lane lain); `tsc -b` dan `eslint src` bersih.
+
+| Berkas | Hasil |
+|---|---|
+| `dashboards.spec.ts` (15, termasuk tes baru: menu judul pindah dashboard, popover Layout, editor pratinjau + tab Data/Design/Filters, axe halaman dan dialog) | PASS |
+| `items.spec.ts` (chip assignee menyimpan tanpa Save; judul tampil sekali) | PASS |
+| `item-locations`, `item-effort`, `dr08-calendar-effort`, `project-progress`, `m8` (layout CUST-04), `approvals`, `item-custom-fields`, `stars`, `dr01-activity`, `file-*`, `pilot.a11y`, `view-fields`, `todo` | PASS (tes yang menunjuk Save lama atau blok yang kini dilipat/di chip diperbarui) |
+
+Satu kali jalan gabungan 18 berkas menampilkan 2 kegagalan `dashboards.spec` yang lolos saat dijalankan ulang sendiri (15/15); dianggap flake beban, tidak ditelusuri lebih lanjut.
+
+Tidak diuji: tes `*-live` (butuh backend), baseline visual 1440/390 (S-UIP.4.1), tampilan di sidebar/halaman `tasks.$itemId` (lane 4), tombol "Go to full details" belum terpasang di `_app.tsx` (lane 4), lokasi di header sebagai chip terverifikasi hanya lewat tes lokasi.

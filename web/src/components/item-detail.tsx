@@ -1,5 +1,5 @@
 import { formatDate } from "@/lib/profile";
-import { lazy, Suspense, useEffect, useId, useRef, useState, type FormEvent } from "react";
+import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
 import { useNavigate } from "@tanstack/react-router";
@@ -11,6 +11,7 @@ import { recycleKey, restoreItem } from "@/lib/recycle";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { getItem, isProjectDetail, isWorkday, itemKeys, listItems, type Item, type ItemUpdate } from "@/lib/items";
 import { Button } from "@/components/ui/button";
+import { PopoverChip, chipClass } from "@/components/ui/chip";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
@@ -18,7 +19,7 @@ import { FormError } from "@/components/auth/form-error";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ProjectExcelExport } from "@/components/project-excel-export";
 import { SaveBlueprintDialog } from "@/components/save-blueprint-dialog";
-import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { ItemUserPicker } from "@/components/item-user-picker";
 import { ItemDates } from "@/components/item-dates";
 import { ItemEffort } from "@/components/item-effort";
 import { ItemLocations } from "@/components/item-locations";
@@ -31,7 +32,9 @@ import { ItemProgress } from "@/components/project-progress";
 const ItemDescription = lazy(async () => ({ default: (await import("@/components/item-description")).ItemDescription }));
 const ItemComments = lazy(async () => ({ default: (await import("@/components/item-comments")).ItemComments }));
 
-type Props = { id: string; me: CurrentUser; onOpen: (id: string) => void; onDeleted: () => void };
+type Props = { id: string; me: CurrentUser; onOpen: (id: string) => void; onDeleted: () => void;
+  /** The side panel passes this to show "Go to full details"; the full page omits it. */
+  onFullDetails?: () => void };
 
 const importanceLevels = ["high", "normal", "low"] as const;
 
@@ -51,7 +54,7 @@ export function ItemDetail(props: Props) {
     reset={() => setRevision((value) => value + 1)} />;
 }
 
-function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> & {
+function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omit<Props, "id"> & {
   detail: Awaited<ReturnType<typeof getItem>>;
   reset: () => void;
 }) {
@@ -82,8 +85,6 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
   const stale = !!conflictDraft;
   const [deleting, setDeleting] = useState(false);
   const [adding, setAdding] = useState(false);
-  const [assigneeDraft, setAssigneeDraft] = useState<PersonOption[]>();
-  const assignees = assigneeDraft ?? item.assignees;
   const path = `/api/v1/items/${item.id}`;
   const children = useQuery({ queryKey: itemKeys.children(item.id), queryFn: () => listItems(path + "/children").catch((err) => {
     // A requester who can open only this item gets 404 for its children: show none, not an error.
@@ -118,7 +119,6 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
       }, (headers) => { tag = headers.get("ETag"); });
       for (const field of fields) delete draftVersions.current[field];
       delete draftVersions.current[draftKey];
-      if (update.assignee_ids) setAssigneeDraft(undefined);
       qc.setQueryData(itemKeys.detail(item.id), { item: updated, etag: tag });
       await qc.invalidateQueries({ queryKey: itemKeys.all,
         predicate: (query) => query.queryKey[1] !== "detail" || (query.queryKey[2] !== item.id && isProjectDetail(query)),
@@ -171,25 +171,25 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
     }
   }
 
-  function saveDates(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const data = new FormData(event.currentTarget);
-    const start = String(data.get("start_date") ?? "");
-    const due = String(data.get("due_date") ?? "");
+  function saveDates(start: string, due: string) {
     if (start && due && due < start) return setError(t("items.dateOrder"));
     if ([start, due].some((day) => day && !isWorkday(day))) return setError(t("items.workingDays"));
     void save({ start_date: start || null, due_date: due || null });
   }
+  const datesText = [item.start_date, item.due_date].filter(Boolean).map((day) => formatDate(day!, me)).join(" – ") || t("items.chips.noDates");
+  const assigneesText = item.assignees.map((person) => person.name).join(", ") || t("items.chips.noAssignee");
+  const locationText = [item.locations[0]?.space_name, item.locations.length > 1 ? `+${item.locations.length - 1}` : ""].filter(Boolean).join(" ");
 
   return <article className="space-y-5">
     {parentId && !parent.isError && <Button size="sm" variant="ghost" onClick={() => onOpen(parentId)}>{parent.data?.item.title ?? t("items.parentLink")}</Button>}
     <div className="flex items-start justify-between gap-2">
-      <h2 className="min-w-0 break-words text-xl font-semibold">{item.title}</h2>
+      <h2 className={canEdit ? "sr-only" : "min-w-0 break-words text-xl font-semibold"}>{item.title}</h2>
       <div className="flex shrink-0 items-center">
       <StarButton itemId={item.id} />
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("items.actions")} />}><MoreHorizontal /></DropdownMenuTrigger>
         <DropdownMenuContent align="end">
+          {onFullDetails && <DropdownMenuItem onClick={onFullDetails}>{t("items.chips.fullDetails")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={async () => {
             try {
               await navigator.clipboard.writeText(new URL(`/tasks/${item.id}`, window.location.origin).href);
@@ -222,60 +222,45 @@ function ItemEditor({ detail, me, onOpen, onDeleted, reset }: Omit<Props, "id"> 
       if (!title) return setError(t("items.nameRequired"));
       if (title !== item.title) void save({ title });
     }}>
-      <label className="min-w-0 flex-1 space-y-1"><span>{t("items.name")}</span>
-        <Input ref={titleInput} name="title" defaultValue={item.title} onChange={() => beginDraft("title")} maxLength={500} required /></label>
+      <label className="min-w-0 flex-1"><span className="sr-only">{t("items.name")}</span>
+        <Input className="text-xl font-semibold" ref={titleInput} name="title" defaultValue={item.title} onChange={() => beginDraft("title")} maxLength={500} required /></label>
       <Button disabled={busy || stale}>{t("items.save")}</Button>
     </form>}
-    <ItemBlocks item={item} blocks={{
-      status: <>
-    {canStatus ? <div className="space-y-1">
-      <label htmlFor={statusInput}>{t("items.status")}</label>
-      <select id={statusInput} className="block w-full rounded border bg-background p-2" value={item.status?.id ?? ""}
+    <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("items.chips.group")}>
+      {canStatus ? <select aria-label={t("items.status")} className={chipClass} value={item.status?.id ?? ""}
         disabled={busy || stale || !statuses.length} onChange={(event) => void save({ status_id: event.target.value })}>
         {!item.status && <option value="" disabled>{t("items.status")}</option>}
         {!statuses.some((status) => status.id === item.status?.id) && item.status && <option value={item.status.id}>{item.status.name}</option>}
         {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
-      </select>
-    </div> : <dl><dt>{t("items.status")}</dt><dd>{item.status?.name}</dd></dl>}
-      </>,
-      importance: <>
-    {canEdit ? <div className="space-y-1">
-      <label htmlFor="item-importance">{t("items.importance.label")}</label>
-      <select id="item-importance" className="block w-full rounded border bg-background p-2" value={item.importance ?? "normal"}
+      </select> : item.status && <span className={chipClass}>{item.status.name}</span>}
+      {canEdit ? <select aria-label={t("items.importance.label")} className={chipClass} value={item.importance ?? "normal"}
         disabled={busy || stale} onChange={(event) => void save({ importance: event.target.value as NonNullable<Item["importance"]> })}>
         {importanceLevels.map((level) => <option key={level} value={level}>{t(`items.importance.${level}`)}</option>)}
-      </select>
-    </div> : <dl><dt>{t("items.importance.label")}</dt><dd>{t(`items.importance.${item.importance ?? "normal"}`)}</dd></dl>}
-      </>,
-      dates: <>
+      </select> : <span className={chipClass}>{t(`items.importance.${item.importance ?? "normal"}`)}</span>}
+      {canEdit ? <PopoverChip disabled={busy || stale} label={t("items.chips.dates", { value: datesText })} content={
+        <ItemDates key={draftVersions.current.start_date ?? etag} initialStart={item.start_date}
+          initialDue={item.due_date} onEdit={() => beginDraft("start_date")} onChange={saveDates} />
+      }>{datesText}</PopoverChip> : datesText !== t("items.chips.noDates") && <span className={chipClass}>{datesText}</span>}
+      {canEdit ? <PopoverChip disabled={busy || stale} label={t("items.chips.assignees", { value: assigneesText })} content={
+        <ItemUserPicker multiple label={t("items.assignees")} selected={item.assignees}
+          onChange={(people) => void save({ assignee_ids: people.map((person) => person.id) })} />
+      }>{assigneesText}</PopoverChip> : item.assignees.length > 0 && <span className={chipClass}>{assigneesText}</span>}
+      {item.locations.length > 0 && <PopoverChip label={t("items.chips.locations", { value: locationText })} content={
+        <ItemLocations item={item} editable={canEdit} disabled={busy || stale} />
+      }>{locationText}</PopoverChip>}
+    </div>
+    <ItemBlocks item={item} blocks={{
+      status: null, importance: null, dates: null, assignees: null, locations: null,
+      effort: <details className="rounded border p-2">
+        <summary className="cursor-pointer font-medium">{t("items.chips.moreFields")}</summary>
+        <div className="space-y-3 pt-2">
     <ItemProgress item={item} editable={canEdit} disabled={busy || stale}
       onEdit={() => beginDraft("progress_percent")} onSave={(update) => save(update)} />
-    {canEdit ? <form className="space-y-2" onSubmit={saveDates}>
-      <ItemDates key={draftVersions.current.start_date ?? etag} initialStart={item.start_date}
-        initialDue={item.due_date} onEdit={() => beginDraft("start_date")} />
-      <Button className="w-fit" variant="outline" disabled={busy || stale}>{t("items.save")}</Button>
-    </form> : <dl className="grid grid-cols-2 gap-2">
-      {item.start_date && <div><dt>{t("items.start")}</dt><dd>{formatDate(item.start_date, me)}</dd></div>}
-      {item.due_date && <div><dt>{t("items.due")}</dt><dd>{formatDate(item.due_date, me)}</dd></div>}
-    </dl>}
-      </>,
-      assignees: <>
-    {canEdit ? <div className="space-y-2">
-      <ItemUserPicker multiple label={t("items.assignees")} selected={assignees} onChange={(people) => {
-        beginDraft("assignee_ids");
-        setAssigneeDraft(people);
-      }} />
-      <Button variant="outline" disabled={busy || stale} onClick={() => void save({ assignee_ids: assignees.map((person) => person.id) })}>{t("items.save")}</Button>
-    </div> : <section><h3>{t("items.assignees")}</h3><p>{item.assignees.map((person) => person.name).join(", ")}</p></section>}
-      </>,
-      effort: <>
     <ItemEffort item={item} editable={canEdit} disabled={busy || stale}
       onEdit={() => beginDraft("effort_minutes")}
       onSave={(update) => save(update, false, "effort_minutes")} />
-      </>,
-      locations: <>
-    <ItemLocations item={item} editable={canEdit} disabled={busy || stale} />
-      </>,
+        </div>
+      </details>,
       custom: <>
     <ItemCustomFields item={item} profile={me} editable={canEdit} disabled={busy || stale}
       onEdit={() => {

@@ -1426,10 +1426,10 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 ### Batch 1 — alur harian (P1)
 
 **S-UIP.1.1 Panel detail item dengan chip edit langsung (gap C1) — 6 hari**
-- [ ] [FE] Status, assignee, tanggal, importance menjadi chip sebaris yang menyimpan saat dipilih (PATCH `If-Match`, toast saat gagal atau konflik)
-- [ ] [FE] Tombol Save hanya untuk Name dan deskripsi; effort, progress, dan custom field di bagian "More fields" yang dilipat
-- [ ] [FE] Komposer komentar menempel di dasar panel; "Go to full details" dan salin tautan
-- [ ] [TEST] Urutan `BLOCK_ORDER` dan tata letak per tipe (CUST-04) tetap berlaku; axe dan fokus keyboard pada chip
+- [x] [FE] Status, assignee, tanggal, importance menjadi chip sebaris yang menyimpan saat dipilih (PATCH `If-Match`, toast saat gagal atau konflik)
+- [x] [FE] Tombol Save hanya untuk Name dan deskripsi; effort, progress, dan custom field di bagian "More fields" yang dilipat
+- [x] [FE] Komposer komentar menempel di dasar panel; "Go to full details" dan salin tautan
+- [x] [TEST] Urutan `BLOCK_ORDER` dan tata letak per tipe (CUST-04) tetap berlaku; axe dan fokus keyboard pada chip
 
 **S-UIP.1.2 Toolbar view satu baris (gap B3) — 3 hari**
 - [ ] [FE] Chip Filter, Sort, Group, Columns, Cards dengan popover; keadaan tetap di parameter URL
@@ -1486,23 +1486,23 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 - [ ] [TEST] Gantt yang ada (drag, dependensi, baseline) tetap lulus; kontras axe
 
 **S-UIP.2.4 Toolbar dashboard (gap E1) — 3 hari**
-- [ ] [FE] Judul dengan dropdown pindah dashboard; popover layout bergambar (Vertical, Horizontal); tindakan Share
-- [ ] [TEST] Pindah dashboard dan ubah layout; axe
+- [x] [FE] Judul dengan dropdown pindah dashboard; popover layout bergambar (Vertical, Horizontal); tindakan Share
+- [x] [TEST] Pindah dashboard dan ubah layout; axe
 
 **S-UIP.2.5 Widget daftar berkelompok (gap E2) — 2 hari**
 - [ ] [FE] Widget task list dikelompokkan menurut tanggal tenggat dengan avatar dan chip status
 - [ ] [TEST] Pengelompokan dan keadaan kosong
 
 **S-UIP.2.6 Editor widget dua panel (gap E3) — 3 hari**
-- [ ] [FE] Pratinjau di kiri, tab Data, Design, Filters di kanan
-- [ ] [TEST] Pratinjau mengikuti perubahan; axe
+- [x] [FE] Pratinjau di kiri, tab Data, Design, Filters di kanan
+- [x] [TEST] Pratinjau mengikuti perubahan; axe
 
 ### Batch 3 — kosmetik (P3)
 
 **S-UIP.3.1 Rapikan pintu masuk dan duplikasi (gap A4, A5, C2, C3) — 1,5 hari**
 - [ ] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
-- [ ] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
-- [ ] [TEST] Tes yang menunjuk tombol lama diperbarui
+- [x] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
+- [x] [TEST] Tes yang menunjuk tombol lama diperbarui
 
 ### Penutup
 

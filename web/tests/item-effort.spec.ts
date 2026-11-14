@@ -39,6 +39,7 @@ test("effort and per-assignee allocation save without rescheduling until request
   }) });
 
   await page.goto(`/tasks/${id}`);
+  await page.getByText("More fields", { exact: true }).click();
   const section = page.getByRole("region", { name: "Effort and allocation" });
   const effort = section.getByRole("spinbutton", { name: "Effort (hours)" });
   const adaAllocation = section.getByRole("spinbutton", { name: "Allocation for Ada Lovelace" });
@@ -80,8 +81,8 @@ test("effort and per-assignee allocation save without rescheduling until request
     effort_minutes: null, assignee_allocations: [{ assignee_id: ada.id, allocation: null }],
   });
 
+  await page.getByRole("button", { name: /^Assignees:/ }).click();
   await page.getByRole("button", { name: "Remove Grace Hopper" }).click();
-  await page.getByRole("button", { name: "Save", exact: true }).last().click();
   await expect(graceAllocation).toHaveCount(0);
   expect(patches().at(-1)?.body).toEqual({ assignee_ids: [ada.id] });
 });
