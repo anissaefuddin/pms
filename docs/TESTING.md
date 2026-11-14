@@ -1020,3 +1020,22 @@ Laporan lengkap: [SECURITY_REVIEW_M12.md](parity/SECURITY_REVIEW_M12.md). Postgr
 | Probe instance lokal (cookie, CSRF, XFF, enumerasi, galat, body besar, SCIM, ACS, tautan publik) | Sesuai harapan; detail di laporan. Instance dan DB dihapus |
 
 Perbaikan kode: SR-01 (allowlist untuk API key/OAuth), SR-05 (header keamanan), SR-06 (X-Request-ID), SR-02 dan SR-03 (naik versi dependensi). Belum ada bukti mutasi tes pengunci (tidak dijalankan). Batas: bukan pentest manual dan bukan WSTG penuh; S6.3.3 tetap PARTIAL sampai itu dilakukan.
+## Perkakas deploy lokal: update-local, migrate-pilot, backup terjadwal (14 Nov 2026)
+
+Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image nyata `pms:m6-rto` dan Postgres 16.10, data: 1 admin aktif, 2 file). Stack, jaringan, image uji, dan `.env` uji sudah dibersihkan; `deploy/.env` tidak dikomit.
+
+| Skrip | Skenario | Hasil |
+|---|---|---|
+| `update-local.sh` | build image bertag commit (`pms-local:<commit>-dirty-<hash>`), backup, naik, health, tulis `PMS_IMAGE` ke `.env` | PASS |
+| | jalan ulang commit yang sama | PASS: "Already running", tanpa backup |
+| | working tree kotor tanpa `ALLOW_DIRTY` | PASS: ditolak |
+| | image rusak (`alpine sleep`, tak pernah ready) | PASS: exit 1 setelah 60 dtk, `restore.sh` otomatis, app kembali di image lama, data admin utuh, `.env` tidak berubah |
+| `migrate-pilot.sh` | export dari sumber, import ke stack kosong, verify | PASS: 43 tabel sama, 2 file, 1 admin aktif, app ready |
+| | tujuan diubah (file dihapus, admin dinonaktifkan) lalu verify | PASS (gagal sebagaimana mestinya): selisih jumlah file dan "no active admin" |
+| | bundel dirusak 1 byte | PASS: checksum mismatch, tidak diekstrak |
+| `restore-test.sh` | set terbaru ke database scratch | PASS 5 dtk; scratch dihapus |
+| | dump terpotong | PASS (gagal): exit 1, tidak ada database scratch tersisa |
+| `backup.sh` | `BACKUP_RSYNC_DEST` (tujuan lokal): set tersalin; cermin menghapus berkas lewat retensi; tujuan tak terjangkau → exit non-zero (255) | PASS |
+| | `BACKUP_REMOTE` rclone (tujuan lokal) | PASS (regresi) |
+
+Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.
