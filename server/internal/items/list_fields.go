@@ -16,7 +16,7 @@ const maxFieldFilters = 10
 // so numbers become fixed-width integers (value + 1e9, six decimals).
 func fieldKey(kind string) (string, bool) {
 	switch {
-	case numericCustomField(kind):
+	case numericCustomField(kind) || kind == "formula": // a formula stores its result as a number
 		return `CASE WHEN jsonb_typeof(i.fields->$9::text)='number' THEN to_char(floor(((i.fields->>$9::text)::numeric+1000000000)*1000000),'FM0000000000000000') END`, true
 	case kind == "text":
 		return `lower(i.fields->>$9::text)`, true
@@ -34,7 +34,7 @@ func fieldCondition(kind string, a, b int) (string, bool) {
 	switch {
 	case kind == "text":
 		return f + " ILIKE '%' || replace(replace(replace(" + v + `,'\','\\'),'%','\%'),'_','\_') || '%'`, true
-	case numericCustomField(kind):
+	case numericCustomField(kind) || kind == "formula": // a formula stores its result as a number
 		return "jsonb_typeof(i.fields->$" + strconv.Itoa(a) + "::text)='number' AND (" + f + ")::numeric=" + v + "::numeric", true
 	case kind == "date" || kind == "checkbox" || kind == "single_select":
 		return f + "=" + v, true

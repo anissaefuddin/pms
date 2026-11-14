@@ -162,6 +162,22 @@ func planExcel(ctx context.Context, tx pgx.Tx, actor policy.Actor, space uuid.UU
 	if err != nil {
 		return p, nil, err
 	}
+	typeRows, err := tx.Query(ctx, "SELECT key,lower(name),base::text FROM item_type_defs WHERE active")
+	if err != nil {
+		return p, nil, err
+	}
+	type typeRef struct{ key, base string }
+	activeTypes := map[string]typeRef{} // by key and by lower-cased name
+	for typeRows.Next() {
+		var key, name, base string
+		if err := typeRows.Scan(&key, &name, &base); err != nil {
+			return p, nil, err
+		}
+		activeTypes[key], activeTypes[name] = typeRef{key, base}, typeRef{key, base}
+	}
+	if err := typeRows.Err(); err != nil {
+		return p, nil, err
+	}
 	definitions := map[string]CustomField{}
 	for _, field := range defs {
 		definitions["field:"+field.ID] = field
@@ -229,14 +245,31 @@ func planExcel(ctx context.Context, tx pgx.Tx, actor policy.Actor, space uuid.UU
 		if kind == "" {
 			kind = "task"
 		}
+		var typeKey string // a custom item type, named by key or name in "type" or by key in "type_key"
 		if !slices.Contains([]string{"project", "folder", "task"}, kind) {
-			add(row, "type", "enter project, folder, or task")
+			if t, ok := activeTypes[kind]; ok {
+				typeKey, kind = t.key, t.base
+			} else {
+				add(row, "type", "unknown or inactive item type; enter project, folder, task or the key of an active item type")
+			}
+		}
+		if given := strings.TrimSpace(values["type_key"]); given != "" {
+			if t, ok := activeTypes[strings.ToLower(given)]; !ok {
+				add(row, "type_key", "unknown or inactive item type")
+			} else if values["type"] != "" && (typeKey != "" && typeKey != t.key || typeKey == "" && kind != t.base) {
+				add(row, "type_key", "type_key does not match the type column")
+			} else {
+				typeKey, kind = t.key, t.base
+			}
 		}
 		title := strings.TrimSpace(values["title"])
 		if n := utf8.RuneCountInString(title); n < 1 || n > 500 || strings.ContainsRune(title, 0) {
 			add(row, "title", "title must be 1 to 500 characters")
 		}
 		node := excelNode{row: row, id: id, kind: kind, fields: map[string]json.RawMessage{"type": marshalJSON(kind), "title": marshalJSON(title)}, custom: map[string]json.RawMessage{}}
+		if typeKey != "" {
+			node.fields["type_key"] = marshalJSON(typeKey)
+		}
 		if parent := strings.TrimSpace(values["parent_id"]); parent != "" {
 			if strings.HasPrefix(parent, "[") {
 				if json.Unmarshal([]byte(parent), &node.parents) != nil {

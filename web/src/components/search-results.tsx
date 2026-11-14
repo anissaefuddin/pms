@@ -1,3 +1,4 @@
+import { TypeBadge } from "@/components/type-badge";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
@@ -55,6 +56,7 @@ export function SearchResultList({ data = empty, query, pending, error, retry, c
           <Link to={item.type === "task" ? "/tasks/$itemId" : "/items/$itemId"} params={{ itemId: item.id }}
             className={resultClass} onClick={close} data-search-result>
             <Highlight value={item.title} query={query} />
+            {item.item_type && <span className="block text-xs text-muted-foreground"><TypeBadge item={item} /></span>}
           </Link>
         </li>)}</ul>
       </section>;

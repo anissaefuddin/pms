@@ -3,7 +3,7 @@ import type { CustomField } from "@/lib/custom-fields";
 export const columnGroups = [
   { id: "management", columns: ["status", "assignee"] },
   { id: "schedule", columns: ["start_date", "due_date"] },
-  { id: "other", columns: ["progress"] },
+  { id: "other", columns: ["progress", "type"] },
 ] as const;
 export const defaultColumns = ["status", "assignee", "start_date", "due_date"];
 

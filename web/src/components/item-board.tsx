@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomFieldDisplay } from "@/components/custom-field-editor";
+import { TypeBadge } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import { peopleOf } from "@/components/item-table";
 import type { Item, ItemUpdate } from "@/lib/items";
@@ -96,7 +97,6 @@ function Card({ item, lane, now, fields, shown, statuses, known, pending, onOpen
   const draggable = (canMove || item.my_capabilities.includes("edit")) && !pending;
   const meta = [
     shown.includes("id") && `#${item.seq}`,
-    shown.includes("type") && t(`items.${item.type}`),
     shown.includes("days_in_status") && item.status_changed_at && t("views.card.daysInStatus", { count: Math.max(0, Math.floor((now - Date.parse(item.status_changed_at)) / DAY)) }),
     shown.includes("author") && item.created_by && t("views.card.author", { name: item.created_by.name }),
     shown.includes("locations") && item.locations.map((loc) => loc.space_name).filter(Boolean).join(", "),
@@ -107,7 +107,8 @@ function Card({ item, lane, now, fields, shown, statuses, known, pending, onOpen
     {shown.includes("cover") && item.cover_attachment_id && <img alt="" loading="lazy" className="h-24 w-full rounded object-cover"
       src={`/api/v1/attachments/${item.cover_attachment_id}/download`} />}
     <Button variant="ghost" size="sm" className="h-auto max-w-full justify-start whitespace-normal text-left" onClick={() => onOpen(item)}>{item.title}</Button>
-    {!!meta.length && <p className="text-xs text-muted-foreground">{meta.join(" · ")}</p>}
+    {(!!meta.length || shown.includes("type")) && <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
+      {shown.includes("type") && <TypeBadge item={item} />}{!!meta.length && <span>{meta.join(" · ")}</span>}</p>}
     {!!item.assignees.length && <p className="text-xs text-muted-foreground">{item.assignees.map((person) => person.name).join(", ")}</p>}
     {(item.start_date || item.due_date) && <p className="flex items-center gap-1 text-xs text-muted-foreground">
       <CalendarDays className="size-3" />{[item.start_date, item.due_date].filter(Boolean).map((date) => formatDate(date, profile)).join(" – ")}

@@ -897,3 +897,43 @@ Branch `claude/s11-3-gaps-8a2243` (dari `integration/m12-regression`). Keputusan
 - **Uji mutasi (semua GAGAL saat perilaku dihapus, lalu dikembalikan):** hapus audit rotate / grant_revoked / app_removed; salah `target_id` revoke; ganti aksi webhook.updated; salah `target_type` webhook.deleted; bocorkan secret ke detail api_key.created dan oauth.app_created; hapus 100.64/10, 169.254/16, 6to4 dari daftar; matikan `Unmap` (IPv4-mapped lolos); guard dial hanya menolak bila parse gagal; `CheckRedirect` diikuti; lookup nama dimatikan; `seal` menyimpan polos tanpa kunci; konektor kembali 503. 17 mutasi, 17 gagal.
 - Verifikasi: `gofmt -l`, `go vet ./...` bersih; `make gen` hanya mengubah deskripsi operasi InstallConnector; `npm run typecheck` dan `npm run lint` bersih. `go test ./... -count=1` penuh dengan PostgreSQL: semua paket `ok`, tidak ada FAIL.
 - Tidak dijalankan: Playwright (tidak ada tes UI yang berubah selain label i18n); rotasi enkripsi ulang secret webhook lama (belum ada, dicatat di runbook).
+
+## M8 backend: default tipe↔custom field, tipe di impor/ekspor/search/laporan (14 Nov 2026)
+
+Branch `claude/m8-backend-types-4d7ae8`. Migrasi `00312_item_type_fields.sql`.
+
+- PASS. `TestItemTypeDefaultsApplyOnEveryCreatePath` (API, form, otomasi, impor Excel: default bawaan dan custom field; nilai eksplisit menang; tipe tak dikenal/nonaktif ditolak per baris, tidak ada item dibuat), `TestItemTypeDefaultsApplyToSpaceTemplates`, `TestItemTypeFieldDefaultsAdminAPIAndOrphans` (403 non-admin, validasi default, default yatim dari opsi dibuang/field diarsipkan/dihapus tanpa 5xx), `TestItemTypeInExportSearchAndReports` (kolom `type_key` di ekspor dan round-trip, `type_key` di search, `type_keys` dan `group_by=item_type` di analytics/laporan, tanpa kebocoran lintas Space).
+- **Uji mutasi (7, semua GAGAL lalu dikembalikan):** default custom field tidak diterapkan; nilai eksplisit tidak lagi menang; impor mengabaikan tipe kustom; filter search dimatikan; filter analytics dimatikan; kolom type_key ekspor dikosongkan; field arsip tidak dilewati.
+- Tes lama disesuaikan: indeks kolom ekspor (`type_key` kolom ke-9).
+- Terbuka: S8.1.1 sqlc (D-61, sengaja); E2E-PAR-05 (routing form ke Blueprint belum ada, lihat TASKS).
+- Kebutuhan UI (jalur M8-2/M8-3): layar admin pasangan tipe↔field dan default; filter tipe di search/laporan (`type_key`, `type_keys`, `item_type`); kolom `type_key` di impor/ekspor.
+- PASS (hasil nyata, Postgres khusus port 55461). `go test ./... -count=1 -timeout 40m`: 22 paket `ok`, tidak ada FAIL (`httpserver` 70 s). `scripts/parity-e2e.sh 05-08`: 7 tes PASS. `gofmt -l`, `go vet ./...`, `make gen` (tanpa drift di luar perubahan ini), `npm run typecheck`, `npm run lint` bersih. Run awal di Postgres bersama sempat mati (timeout 10 m, lalu `signal: terminated`) karena beban sesi paralel, bukan kegagalan tes.
+
+
+## S8.1.5 menu "+" per Space dan menu blueprint (14 Nov 2026)
+
+Branch `claude/m8-create-menu-6568b4`. Keputusan: D-99. Migrasi 00320.
+
+- PASS. **Toggle menu "+"** `TestSpaceCreateMenu` (PostgreSQL): viewer membaca (200), orang luar 404 (baca dan tulis), viewer menulis 403, tanpa If-Match 428, tipe tak dikenal 422, daftar kosong 422, versi basi 409, daftar mengikuti toggle, `POST /items` untuk tipe yang disembunyikan tetap 201, satu baris audit `space.create_menu_changed`.
+- PASS. **UI mock** `create-menu.spec.ts` (dialog toggle, PUT dengan If-Match, dialog buat item hanya menawarkan tipe aktif, blueprint tampil dengan ikon, nama, tipe; axe bersih) dan `blueprints.spec.ts` (kini memilih radio blueprint). `spaces.spec.ts` diperbarui: pengguna Edit melihat item "“+” menu". **Live** `TestBrowserCreateMenu` + `create-menu-live.spec.ts` (Chromium + PostgreSQL): admin menyembunyikan Folder lewat UI, dialog tidak menawarkannya, API tetap membuat folder.
+- **Uji mutasi (semua GAGAL, lalu dikembalikan):** menu selalu `enabled:true` → `TestSpaceCreateMenu` gagal; UPDATE tanpa cek versi → "stale version want 409"; `menuAllows` selalu true di FE → `create-menu.spec.ts` gagal. Aturan "API tetap membuat tipe tersembunyi" dijaga assert 201 (tidak dimutasi).
+- Verifikasi: `gofmt`, `go vet`, `make gen`, typecheck, lint bersih. Pada Postgres khusus (port 55463, commit 69a7331): **Go penuh `go test ./... -count=1` semua 22 paket `ok`** (`httpserver` 61,9 dtk, 0 FAIL) dan **Playwright penuh 396 lulus, 0 gagal** (4,1 menit, `--workers=2`). Run pertama dengan Postgres bersama gagal/habis waktu karena beban, bukan karena kode.
+- Tidak dicek: ikon tipe kustom selain tiga bawaan memakai ikon generik.
+
+
+## M8 koleksi: tipe, kolom formula, galat guard di Board (14 Nov 2026)
+
+Mencakup S8.1.5 (tipe di Table, Board, filter, search), S8.2.1 (Table/filter/sort formula), S8.2.2 (galat guard di Board).
+
+- PASS. **Server** `TestListFiltersByTypeKeyAndFormulaField` (PostgreSQL): `?type=` kini menerima kunci tipe bawaan dan kustom (`bug`, `task`, daftar dipisah koma); kunci tak dikenal (`nope`, `bug,nope`, string injeksi) 422, bukan 5xx; sort `field:<formula>` mengurutkan hasil terhitung (item tanpa hasil terakhir); filter `field=<formula>:<angka>` dan gabungan dengan `type` cocok. Akses tetap lewat `visibleContainer` (tidak diubah). Recycle bin tetap hanya menerima kelas `project/folder/task`. OpenAPI: `ItemFilterType` memuat kunci bebas (maks 20); `make gen` dijalankan.
+- PASS. **Playwright mock** `web/tests/m8-collections.spec.ts` (3 tes, axe bersih pada area yang diubah): kolom Tipe (ikon + nama) di Table; kolom formula menampilkan hasil terformat (`1,234.5`) dan penanda teks "No result" bila tak ada hasil, tidak dapat diedit; sort `field:<id formula>` dan filter Tipe sampai ke server dan tersimpan di URL (`type=bug`, dipulihkan setelah reload); kartu Board menampilkan tipe; perpindahan status ditolak 422 `transition_blocked` menampilkan `role="alert"` berisi semua syarat, tetap tampil sampai ditutup, kartu tetap di kolom asal; hasil pencarian global memuat tipe.
+- Batas: tidak ada alur live baru (fixture live M8 tidak diubah; panel item sudah punya E2E-PAR-03 live); ikon tipe kustom dipetakan ke himpunan kecil ikon (circle, bug, folder, check-square, flag, lightbulb), sisanya lingkaran; hasil formula tidak punya tipe hasil (selalu angka), jadi formatnya desimal biasa; formula tanpa hasil ditampilkan "No result" tanpa pembedaan sebab (input kosong vs pembagian nol).
+- Verifikasi akhir: `go test ./... -count=1` penuh pada Postgres khusus: 22 paket `ok`, tanpa FAIL (di Postgres bersama tiga sesi, paket `httpserver` kena batas waktu 10 dan 40 menit karena rebutan DB; `TestItemLists` dan `TestSpaces` lulus sendiri dalam 29 detik). Playwright penuh `--workers=2`: putaran 1 398 lulus, 30 skip; putaran 2 397 lulus, 1 gagal (`navigation.spec.ts` "mobile navigation is keyboard-accessible at 768px", kadang gagal di `--repeat-each=3`, 5 dari 5 lulus bila dijalankan sendiri; file navigasi tidak diubah, dianggap flaky, belum diselidiki). `gofmt`, `go vet`, `make gen` (hanya schema dan openapi.gen.go berubah), `typecheck`, `lint` bersih. Uji mutasi tidak dijalankan.
+
+## M8 gap fitur, hasil gabungan tiga jalur (14 Nov 2026)
+
+- Basis: `origin/main` (1b76d3a) + M8-1 (backend tipe item, `d1277a3`) + M8-3 (menu "+" dan blueprint, `54501f3`) + M8-2 (Table/Board/formula/guard, `0e39da0`), digabung di branch `pr/m8`; konflik hanya di docs (TESTING.md dan TASKS.md), disatukan.
+- PASS pada hasil gabungan (Postgres khusus, Chrome bawaan): `gofmt`, `go vet`, `make gen` tanpa drift, typecheck, lint 0 error; Go penuh 22 paket `ok` (`httpserver` 43 s); Playwright mock penuh **399 lulus, 0 gagal, 31 dilewati**; `scripts/parity-e2e.sh` tiga kelompok (7 tes PASS masing-masing); flow live Chrome + PostgreSQL 15 lulus (`TestBrowserPilotPerformance` dilewati: opt-in). Job CI untuk flow live diperluas dengan `M8Flows`, `M10Flows`, `M11AnalyticsFlows`, `CreateMenu`, dan `TwoFactor`, yang sebelumnya tidak ikut CI.
+- Masih terbuka di M8: S8.1.1 query sqlc (D-61, keputusan arsitektur), routing form ke Blueprint (S8.3.1, ditunda karena besar; E2E-PAR-05 dibuktikan untuk bagian form bercabang), dan UAT gate M8 (manusia).
+- GitHub Actions untuk basis ini NOT RUN sampai PR dibuka.
+

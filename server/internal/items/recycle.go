@@ -38,6 +38,9 @@ func Recycle(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, filter
 	}
 	types := []string{}
 	if filter.Type != "" {
+		if filter.Type != "project" && filter.Type != "folder" && filter.Type != "task" {
+			return Page{}, Invalid("unknown item type")
+		}
 		types = append(types, filter.Type)
 	}
 	_, cursor, scope, err := validateFilter(actor, "recycle:"+filter.Sort, false,

@@ -148,6 +148,37 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/create-menu:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: getSpaceCreateMenu
+      summary: Tipe item aktif untuk menu "+" sebuah Space (SPC-14), urutan default tipe; hak View
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/CreateMenu' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [spaces]
+      operationId: setSpaceCreateMenu
+      summary: Pilih tipe yang muncul di menu "+" (hak Edit, If-Match versi Space). Hanya kemudahan UI; API tetap menerima tipe apa pun (D-99)
+      parameters:
+        - { name: If-Match, in: header, required: true, schema: { type: string } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [enabled]
+              properties:
+                enabled: { type: array, minItems: 1, items: { type: string }, description: Kunci tipe aktif }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/CreateMenu' } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/bookmarks:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -2832,6 +2863,61 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /item-types/{typeId}/fields:
+    get:
+      tags: [items]
+      operationId: listItemTypeFields
+      summary: Custom field yang berlaku untuk sebuah tipe item beserta nilai defaultnya (S8.1.2; hanya admin)
+      parameters:
+        - { name: typeId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ItemTypeField' } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /item-types/{typeId}/fields/{fieldId}:
+    put:
+      tags: [items]
+      operationId: setItemTypeField
+      summary: Pasang custom field pada tipe item, dengan default opsional yang divalidasi menurut tipe field (hanya admin)
+      parameters:
+        - { name: typeId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                default: { description: 'Nilai awal item baru bertipe ini; null atau kosong = tanpa default. Tidak untuk field people, relation, formula', nullable: true }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ItemTypeField' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [items]
+      operationId: deleteItemTypeField
+      summary: Lepas custom field dari tipe item (hanya admin)
+      parameters:
+        - { name: typeId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/automation-rules:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -4400,6 +4486,7 @@ paths:
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 }, description: Maksimum per grup }
         - { name: assigned_to_me, in: query, schema: { type: boolean, default: false }, description: Hanya item yang ditugaskan ke saya (NAV-07) }
         - { name: status_group, in: query, schema: { type: string, enum: [active, completed, deferred, cancelled] }, description: Hanya item dengan grup status ini (NAV-07) }
+        - { name: type_key, in: query, schema: { type: string }, description: Hanya item (dan komentar pada item) bertipe ini, mis. bug (S8.1.5) }
         - { name: sort, in: query, schema: { type: string, enum: [relevance, date_modified], default: relevance } }
       responses:
         '200':
@@ -5262,9 +5349,11 @@ components:
     ItemFilterType:
       name: type
       in: query
+      description: Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422
       schema:
         type: array
-        items: { $ref: '#/components/schemas/ItemType' }
+        maxItems: 20
+        items: { type: string, maxLength: 64 }
       style: form
       explode: false
     ItemFilterStatusGroup:
@@ -5668,6 +5757,7 @@ components:
         assignees: { type: array, maxItems: 100, items: { type: string, description: 'UUID pengguna atau "me"' } }
         unassigned: { type: boolean }
         importance: { type: array, maxItems: 3, items: { type: string, enum: [high, normal, low] } }
+        type_keys: { type: array, maxItems: 100, items: { type: string }, description: Hanya item bertipe ini (kunci tipe item bawaan atau kustom; S8.1.5) }
         followed: { type: boolean }
         starred: { type: boolean }
         overdue: { type: boolean }
@@ -5688,8 +5778,8 @@ components:
         container_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Project atau Folder; hanya subpohonnya }
         metric: { type: string, enum: [count, effort_minutes, sum_field, avg_field, completion_percent, minutes, billable_minutes, utilization], description: 'tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count' }
         field_id: { type: string, format: uuid, description: 'Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya' }
-        group_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
-        break_by: { type: string, enum: [assignee, status, status_group, importance, type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
+        group_by: { type: string, enum: [assignee, status, status_group, importance, type, item_type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
+        break_by: { type: string, enum: [assignee, status, status_group, importance, type, item_type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
         filters: { $ref: '#/components/schemas/AnalyticsFilters' }
     WidgetData:
       type: object
@@ -6508,6 +6598,16 @@ components:
           additionalProperties: true
         layout: { $ref: '#/components/schemas/ItemTypeLayout' }
         version: { type: integer }
+    ItemTypeField:
+      type: object
+      required: [field_id, space_id, name, type, archived, default]
+      properties:
+        field_id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid }
+        name: { type: string }
+        type: { type: string }
+        archived: { type: boolean, description: Field yang diarsipkan dilewati saat default diterapkan }
+        default: { nullable: true }
     ItemTypeCreate:
       type: object
       required: [key, name, base]
@@ -6803,6 +6903,22 @@ components:
       type: string
       enum: [private, internal]
       description: private = hanya pengelola form di Space; internal = semua user yang login boleh mengisi
+    CreateMenu:
+      type: object
+      required: [items, version]
+      properties:
+        version: { type: integer }
+        items:
+          type: array
+          items:
+            type: object
+            required: [key, name, icon, base, enabled]
+            properties:
+              key: { type: string }
+              name: { type: string }
+              icon: { type: string }
+              base: { $ref: '#/components/schemas/ItemType' }
+              enabled: { type: boolean }
     Blueprint:
       type: object
       required: [id, space_id, name, item_type, item_count, created_at]

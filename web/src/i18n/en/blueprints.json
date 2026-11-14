@@ -9,5 +9,6 @@
   "menu": "Save as blueprint",
   "from": "Start from blueprint",
   "none": "No blueprint",
-  "hint": "Dates are counted from the start date you set below. Without one, the new items have no dates."
+  "hint": "Dates are counted from the start date you set below. Without one, the new items have no dates.",
+  "typeLine": "{{type}} · {{count}} items"
 }

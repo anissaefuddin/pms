@@ -59,6 +59,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/create-menu": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Tipe item aktif untuk menu "+" sebuah Space (SPC-14), urutan default tipe; hak View */
+        get: operations["getSpaceCreateMenu"];
+        /** Pilih tipe yang muncul di menu "+" (hak Edit, If-Match versi Space). Hanya kemudahan UI; API tetap menerima tipe apa pun (D-99) */
+        put: operations["setSpaceCreateMenu"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/spaces/{spaceId}/bookmarks": {
         parameters: {
             query?: never;
@@ -2086,6 +2106,41 @@ export interface paths {
         patch: operations["updateItemType"];
         trace?: never;
     };
+    "/item-types/{typeId}/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Custom field yang berlaku untuk sebuah tipe item beserta nilai defaultnya (S8.1.2; hanya admin) */
+        get: operations["listItemTypeFields"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/item-types/{typeId}/fields/{fieldId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Pasang custom field pada tipe item, dengan default opsional yang divalidasi menurut tipe field (hanya admin) */
+        put: operations["setItemTypeField"];
+        post?: never;
+        /** Lepas custom field dari tipe item (hanya admin) */
+        delete: operations["deleteItemTypeField"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/spaces/{spaceId}/automation-rules": {
         parameters: {
             query?: never;
@@ -3951,6 +4006,8 @@ export interface components {
             assignees?: string[];
             unassigned?: boolean;
             importance?: ("high" | "normal" | "low")[];
+            /** @description Hanya item bertipe ini (kunci tipe item bawaan atau kustom; S8.1.5) */
+            type_keys?: string[];
             followed?: boolean;
             starred?: boolean;
             overdue?: boolean;
@@ -3985,9 +4042,9 @@ export interface components {
              */
             field_id?: string;
             /** @enum {string} */
-            group_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            group_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
             /** @enum {string} */
-            break_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            break_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
             filters?: components["schemas"]["AnalyticsFilters"];
         };
         WidgetData: {
@@ -4732,6 +4789,17 @@ export interface components {
             layout: components["schemas"]["ItemTypeLayout"];
             version: number;
         };
+        ItemTypeField: {
+            /** Format: uuid */
+            field_id: string;
+            /** Format: uuid */
+            space_id: string;
+            name: string;
+            type: string;
+            /** @description Field yang diarsipkan dilewati saat default diterapkan */
+            archived: boolean;
+            default: unknown;
+        };
         ItemTypeCreate: {
             key: string;
             name: string;
@@ -5029,6 +5097,16 @@ export interface components {
          * @enum {string}
          */
         FormAccess: "private" | "internal";
+        CreateMenu: {
+            version: number;
+            items: {
+                key: string;
+                name: string;
+                icon: string;
+                base: components["schemas"]["ItemType"];
+                enabled: boolean;
+            }[];
+        };
         Blueprint: {
             /** Format: uuid */
             id: string;
@@ -5844,7 +5922,8 @@ export interface components {
         ItemId: string;
         UserId: string;
         ViewId: string;
-        ItemFilterType: components["schemas"]["ItemType"][];
+        /** @description Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422 */
+        ItemFilterType: string[];
         ItemFilterStatusGroup: components["schemas"]["StatusGroup"][];
         /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
         ItemFilterAssignee: string;
@@ -6000,6 +6079,64 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getSpaceCreateMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateMenu"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    setSpaceCreateMenu: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": string;
+            };
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Kunci tipe aktif */
+                    enabled: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateMenu"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
@@ -10273,6 +10410,88 @@ export interface operations {
             428: components["responses"]["Problem"];
         };
     };
+    listItemTypeFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                typeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ItemTypeField"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    setItemTypeField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                typeId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Nilai awal item baru bertipe ini; null atau kosong = tanpa default. Tidak untuk field people, relation, formula */
+                    default?: unknown;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ItemTypeField"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteItemTypeField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                typeId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
     listAutomationRules: {
         parameters: {
             query?: never;
@@ -11107,6 +11326,7 @@ export interface operations {
             query?: {
                 limit?: components["parameters"]["Limit"];
                 cursor?: components["parameters"]["Cursor"];
+                /** @description Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422 */
                 type?: components["parameters"]["ItemFilterType"];
                 status_group?: components["parameters"]["ItemFilterStatusGroup"];
                 /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
@@ -11414,6 +11634,7 @@ export interface operations {
             query?: {
                 limit?: components["parameters"]["Limit"];
                 cursor?: components["parameters"]["Cursor"];
+                /** @description Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422 */
                 type?: components["parameters"]["ItemFilterType"];
                 status_group?: components["parameters"]["ItemFilterStatusGroup"];
                 /** @description ID user, atau `me`, atau `none` untuk belum ditugaskan */
@@ -12494,6 +12715,8 @@ export interface operations {
                 assigned_to_me?: boolean;
                 /** @description Hanya item dengan grup status ini (NAV-07) */
                 status_group?: "active" | "completed" | "deferred" | "cancelled";
+                /** @description Hanya item (dan komentar pada item) bertipe ini */
+                type_key?: string;
                 sort?: "relevance" | "date_modified";
             };
             header?: never;

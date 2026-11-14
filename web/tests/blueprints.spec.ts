@@ -31,7 +31,7 @@ test("save an item as a blueprint, then create items from it with a start date",
   // Use it: the chosen blueprint is posted with the locations, title and start date.
   await page.getByRole("button", { name: "Add subitem" }).click();
   const create = page.getByRole("dialog", { name: "Add subitem" });
-  await create.getByLabel("Start from blueprint").selectOption(bp);
+  await create.getByRole("radio", { name: /Standard plan/ }).check();
   await create.getByLabel("Name").fill("Q2 plan");
   await create.getByRole("button", { name: "Start date" }).click();
   await page.getByRole("dialog", { name: "Start date" }).getByRole("button", { name: /Thursday.*November 12/ }).click();

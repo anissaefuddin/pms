@@ -110,6 +110,7 @@ const (
 	AnalyticsQueryBreakByField        AnalyticsQueryBreakBy = "field"
 	AnalyticsQueryBreakByImportance   AnalyticsQueryBreakBy = "importance"
 	AnalyticsQueryBreakByItem         AnalyticsQueryBreakBy = "item"
+	AnalyticsQueryBreakByItemType     AnalyticsQueryBreakBy = "item_type"
 	AnalyticsQueryBreakBySpace        AnalyticsQueryBreakBy = "space"
 	AnalyticsQueryBreakByStatus       AnalyticsQueryBreakBy = "status"
 	AnalyticsQueryBreakByStatusGroup  AnalyticsQueryBreakBy = "status_group"
@@ -138,6 +139,8 @@ func (e AnalyticsQueryBreakBy) Valid() bool {
 		return true
 	case AnalyticsQueryBreakByItem:
 		return true
+	case AnalyticsQueryBreakByItemType:
+		return true
 	case AnalyticsQueryBreakBySpace:
 		return true
 	case AnalyticsQueryBreakByStatus:
@@ -164,6 +167,7 @@ const (
 	AnalyticsQueryGroupByField        AnalyticsQueryGroupBy = "field"
 	AnalyticsQueryGroupByImportance   AnalyticsQueryGroupBy = "importance"
 	AnalyticsQueryGroupByItem         AnalyticsQueryGroupBy = "item"
+	AnalyticsQueryGroupByItemType     AnalyticsQueryGroupBy = "item_type"
 	AnalyticsQueryGroupBySpace        AnalyticsQueryGroupBy = "space"
 	AnalyticsQueryGroupByStatus       AnalyticsQueryGroupBy = "status"
 	AnalyticsQueryGroupByStatusGroup  AnalyticsQueryGroupBy = "status_group"
@@ -191,6 +195,8 @@ func (e AnalyticsQueryGroupBy) Valid() bool {
 	case AnalyticsQueryGroupByImportance:
 		return true
 	case AnalyticsQueryGroupByItem:
+		return true
+	case AnalyticsQueryGroupByItemType:
 		return true
 	case AnalyticsQueryGroupBySpace:
 		return true
@@ -2899,7 +2905,10 @@ type AnalyticsFilters struct {
 	Overdue          *bool                           `json:"overdue,omitempty"`
 	Starred          *bool                           `json:"starred,omitempty"`
 	StatusGroups     *[]AnalyticsFiltersStatusGroups `json:"status_groups,omitempty"`
-	Unassigned       *bool                           `json:"unassigned,omitempty"`
+
+	// TypeKeys Hanya item bertipe ini (kunci tipe item bawaan atau kustom; S8.1.5)
+	TypeKeys   *[]string `json:"type_keys,omitempty"`
+	Unassigned *bool     `json:"unassigned,omitempty"`
 }
 
 // AnalyticsFiltersBilling defines model for AnalyticsFilters.Billing.
@@ -3308,6 +3317,18 @@ type ConnectorInstall struct {
 	LastSyncOk      *bool                  `json:"last_sync_ok,omitempty"`
 	Name            string                 `json:"name"`
 	SecretNames     []string               `json:"secret_names"`
+}
+
+// CreateMenu defines model for CreateMenu.
+type CreateMenu struct {
+	Items []struct {
+		Base    ItemType `json:"base"`
+		Enabled bool     `json:"enabled"`
+		Icon    string   `json:"icon"`
+		Key     string   `json:"key"`
+		Name    string   `json:"name"`
+	} `json:"items"`
+	Version int `json:"version"`
 }
 
 // CustomField defines model for CustomField.
@@ -4105,6 +4126,17 @@ type ItemTypeDef struct {
 	Layout  ItemTypeLayout `json:"layout"`
 	Name    string         `json:"name"`
 	Version int            `json:"version"`
+}
+
+// ItemTypeField defines model for ItemTypeField.
+type ItemTypeField struct {
+	// Archived Field yang diarsipkan dilewati saat default diterapkan
+	Archived bool               `json:"archived"`
+	Default  interface{}        `json:"default"`
+	FieldId  openapi_types.UUID `json:"field_id"`
+	Name     string             `json:"name"`
+	SpaceId  openapi_types.UUID `json:"space_id"`
+	Type     string             `json:"type"`
 }
 
 // ItemTypeLayout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
@@ -5223,7 +5255,7 @@ type ItemFilterField = []string
 type ItemFilterStatusGroup = []StatusGroup
 
 // ItemFilterType defines model for ItemFilterType.
-type ItemFilterType = []ItemType
+type ItemFilterType = []string
 
 // ItemId defines model for ItemId.
 type ItemId = openapi_types.UUID
@@ -5621,6 +5653,12 @@ type ReplaceGroupJSONBody struct {
 	Name      string               `json:"name"`
 }
 
+// SetItemTypeFieldJSONBody defines parameters for SetItemTypeField.
+type SetItemTypeFieldJSONBody struct {
+	// Default Nilai awal item baru bertipe ini; null atau kosong = tanpa default. Tidak untuk field people, relation, formula
+	Default interface{} `json:"default,omitempty"`
+}
+
 // UpdateItemParams defines parameters for UpdateItem.
 type UpdateItemParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -5649,8 +5687,10 @@ type UploadAttachmentMultipartBody struct {
 
 // ListItemChildrenParams defines parameters for ListItemChildren.
 type ListItemChildrenParams struct {
-	Limit       *Limit                 `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor      *Cursor                `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Type Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422
 	Type        *ItemFilterType        `form:"type,omitempty" json:"type,omitempty"`
 	StatusGroup *ItemFilterStatusGroup `form:"status_group,omitempty" json:"status_group,omitempty"`
 
@@ -5920,7 +5960,10 @@ type SearchParams struct {
 
 	// StatusGroup Hanya item dengan grup status ini (NAV-07)
 	StatusGroup *SearchParamsStatusGroup `form:"status_group,omitempty" json:"status_group,omitempty"`
-	Sort        *SearchParamsSort        `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// TypeKey Hanya item (dan komentar pada item) bertipe ini
+	TypeKey *string           `form:"type_key,omitempty" json:"type_key,omitempty"`
+	Sort    *SearchParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
 }
 
 // SearchParamsStatusGroup defines parameters for Search.
@@ -5981,6 +6024,17 @@ type UpdateSpaceBookmarkJSONBody struct {
 	Url         *string `json:"url,omitempty"`
 }
 
+// SetSpaceCreateMenuJSONBody defines parameters for SetSpaceCreateMenu.
+type SetSpaceCreateMenuJSONBody struct {
+	// Enabled Kunci tipe aktif
+	Enabled []string `json:"enabled"`
+}
+
+// SetSpaceCreateMenuParams defines parameters for SetSpaceCreateMenu.
+type SetSpaceCreateMenuParams struct {
+	IfMatch string `json:"If-Match"`
+}
+
 // ImportProjectExcelMultipartBody defines parameters for ImportProjectExcel.
 type ImportProjectExcelMultipartBody struct {
 	Commit *bool   `json:"commit,omitempty"`
@@ -5995,8 +6049,10 @@ type ImportProjectExcelMultipartBody struct {
 
 // ListSpaceRootItemsParams defines parameters for ListSpaceRootItems.
 type ListSpaceRootItemsParams struct {
-	Limit       *Limit                 `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor      *Cursor                `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Type Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422
 	Type        *ItemFilterType        `form:"type,omitempty" json:"type,omitempty"`
 	StatusGroup *ItemFilterStatusGroup `form:"status_group,omitempty" json:"status_group,omitempty"`
 
@@ -6292,6 +6348,9 @@ type CreateItemTypeJSONRequestBody = ItemTypeCreate
 // UpdateItemTypeJSONRequestBody defines body for UpdateItemType for application/json ContentType.
 type UpdateItemTypeJSONRequestBody = ItemTypeUpdate
 
+// SetItemTypeFieldJSONRequestBody defines body for SetItemTypeField for application/json ContentType.
+type SetItemTypeFieldJSONRequestBody SetItemTypeFieldJSONBody
+
 // CreateItemJSONRequestBody defines body for CreateItem for application/json ContentType.
 type CreateItemJSONRequestBody = ItemCreate
 
@@ -6435,6 +6494,9 @@ type CreateSpaceBookmarkJSONRequestBody = SpaceBookmarkInput
 
 // UpdateSpaceBookmarkJSONRequestBody defines body for UpdateSpaceBookmark for application/json ContentType.
 type UpdateSpaceBookmarkJSONRequestBody UpdateSpaceBookmarkJSONBody
+
+// SetSpaceCreateMenuJSONRequestBody defines body for SetSpaceCreateMenu for application/json ContentType.
+type SetSpaceCreateMenuJSONRequestBody SetSpaceCreateMenuJSONBody
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldCreate
@@ -7098,6 +7160,15 @@ type ServerInterface interface {
 	// UpdateItemType Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah
 	// (PATCH /item-types/{typeId})
 	UpdateItemType(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID)
+	// ListItemTypeFields Custom field yang berlaku untuk sebuah tipe item beserta nilai defaultnya (S8.1.2; hanya admin)
+	// (GET /item-types/{typeId}/fields)
+	ListItemTypeFields(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID)
+	// DeleteItemTypeField Lepas custom field dari tipe item (hanya admin)
+	// (DELETE /item-types/{typeId}/fields/{fieldId})
+	DeleteItemTypeField(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID, fieldId openapi_types.UUID)
+	// SetItemTypeField Pasang custom field pada tipe item, dengan default opsional yang divalidasi menurut tipe field (hanya admin)
+	// (PUT /item-types/{typeId}/fields/{fieldId})
+	SetItemTypeField(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID, fieldId openapi_types.UUID)
 	// CreateItem Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
 	// (POST /items)
 	CreateItem(w http.ResponseWriter, r *http.Request)
@@ -7467,6 +7538,12 @@ type ServerInterface interface {
 	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
 	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
 	UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID)
+	// GetSpaceCreateMenu Tipe item aktif untuk menu "+" sebuah Space (SPC-14), urutan default tipe; hak View
+	// (GET /spaces/{spaceId}/create-menu)
+	GetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// SetSpaceCreateMenu Pilih tipe yang muncul di menu "+" (hak Edit, If-Match versi Space). Hanya kemudahan UI; API tetap menerima tipe apa pun (D-99)
+	// (PUT /spaces/{spaceId}/create-menu)
+	SetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params SetSpaceCreateMenuParams)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -10884,6 +10961,102 @@ func (siw *ServerInterfaceWrapper) UpdateItemType(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListItemTypeFields operation middleware
+func (siw *ServerInterfaceWrapper) ListItemTypeFields(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "typeId" -------------
+	var typeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "typeId", r.PathValue("typeId"), &typeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "typeId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListItemTypeFields(w, r, typeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteItemTypeField operation middleware
+func (siw *ServerInterfaceWrapper) DeleteItemTypeField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "typeId" -------------
+	var typeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "typeId", r.PathValue("typeId"), &typeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "typeId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteItemTypeField(w, r, typeId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetItemTypeField operation middleware
+func (siw *ServerInterfaceWrapper) SetItemTypeField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "typeId" -------------
+	var typeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "typeId", r.PathValue("typeId"), &typeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "typeId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetItemTypeField(w, r, typeId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateItem operation middleware
 func (siw *ServerInterfaceWrapper) CreateItem(w http.ResponseWriter, r *http.Request) {
 
@@ -13859,6 +14032,19 @@ func (siw *ServerInterfaceWrapper) Search(w http.ResponseWriter, r *http.Request
 		return
 	}
 
+	// ------------- Optional query parameter "type_key" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "type_key", r.URL.Query(), &params.TypeKey, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "type_key"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type_key", Err: err})
+		}
+		return
+	}
+
 	// ------------- Optional query parameter "sort" -------------
 
 	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
@@ -14373,6 +14559,86 @@ func (siw *ServerInterfaceWrapper) UpdateSpaceBookmark(w http.ResponseWriter, r 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateSpaceBookmark(w, r, spaceId, bookmarkId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpaceCreateMenu operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceCreateMenu(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceCreateMenu(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetSpaceCreateMenu operation middleware
+func (siw *ServerInterfaceWrapper) SetSpaceCreateMenu(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SetSpaceCreateMenuParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetSpaceCreateMenu(w, r, spaceId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -16180,6 +16446,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/utilization", wrapper.GetUtilization)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.ListBaselines)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.CreateBaseline)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/create-menu", wrapper.GetSpaceCreateMenu)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/create-menu", wrapper.SetSpaceCreateMenu)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.ListSpaceBookmarks)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.CreateSpaceBookmark)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks/{bookmarkId}", wrapper.DeleteSpaceBookmark)
@@ -16340,6 +16608,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/item-types", wrapper.ListItemTypes)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/item-types", wrapper.CreateItemType)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/item-types/{typeId}", wrapper.UpdateItemType)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/item-types/{typeId}/fields", wrapper.ListItemTypeFields)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/item-types/{typeId}/fields/{fieldId}", wrapper.DeleteItemTypeField)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/item-types/{typeId}/fields/{fieldId}", wrapper.SetItemTypeField)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules", wrapper.ListAutomationRules)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules", wrapper.CreateAutomationRule)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/automation-rules/{ruleId}", wrapper.DeleteAutomationRule)
@@ -22968,6 +23239,175 @@ func (response UpdateItemType428ApplicationProblemPlusJSONResponse) VisitUpdateI
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemTypeFieldsRequestObject struct {
+	TypeId openapi_types.UUID `json:"typeId"`
+}
+
+type ListItemTypeFieldsResponseObject interface {
+	VisitListItemTypeFieldsResponse(w http.ResponseWriter) error
+}
+
+type ListItemTypeFields200JSONResponse struct {
+	Items []ItemTypeField `json:"items"`
+}
+
+func (response ListItemTypeFields200JSONResponse) VisitListItemTypeFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemTypeFields403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListItemTypeFields403ApplicationProblemPlusJSONResponse) VisitListItemTypeFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListItemTypeFields404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListItemTypeFields404ApplicationProblemPlusJSONResponse) VisitListItemTypeFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteItemTypeFieldRequestObject struct {
+	TypeId  openapi_types.UUID `json:"typeId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type DeleteItemTypeFieldResponseObject interface {
+	VisitDeleteItemTypeFieldResponse(w http.ResponseWriter) error
+}
+
+type DeleteItemTypeField204Response struct {
+}
+
+func (response DeleteItemTypeField204Response) VisitDeleteItemTypeFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteItemTypeField403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteItemTypeField403ApplicationProblemPlusJSONResponse) VisitDeleteItemTypeFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteItemTypeField404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteItemTypeField404ApplicationProblemPlusJSONResponse) VisitDeleteItemTypeFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetItemTypeFieldRequestObject struct {
+	TypeId  openapi_types.UUID `json:"typeId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+	Body    *SetItemTypeFieldJSONRequestBody
+}
+
+type SetItemTypeFieldResponseObject interface {
+	VisitSetItemTypeFieldResponse(w http.ResponseWriter) error
+}
+
+type SetItemTypeField200JSONResponse ItemTypeField
+
+func (response SetItemTypeField200JSONResponse) VisitSetItemTypeFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetItemTypeField403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetItemTypeField403ApplicationProblemPlusJSONResponse) VisitSetItemTypeFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetItemTypeField404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetItemTypeField404ApplicationProblemPlusJSONResponse) VisitSetItemTypeFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetItemTypeField422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetItemTypeField422ApplicationProblemPlusJSONResponse) VisitSetItemTypeFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -30288,6 +30728,126 @@ func (response UpdateSpaceBookmark422ApplicationProblemPlusJSONResponse) VisitUp
 	return err
 }
 
+type GetSpaceCreateMenuRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type GetSpaceCreateMenuResponseObject interface {
+	VisitGetSpaceCreateMenuResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceCreateMenu200JSONResponse CreateMenu
+
+func (response GetSpaceCreateMenu200JSONResponse) VisitGetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceCreateMenu404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceCreateMenu404ApplicationProblemPlusJSONResponse) VisitGetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenuRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Params  SetSpaceCreateMenuParams
+	Body    *SetSpaceCreateMenuJSONRequestBody
+}
+
+type SetSpaceCreateMenuResponseObject interface {
+	VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error
+}
+
+type SetSpaceCreateMenu200JSONResponse CreateMenu
+
+func (response SetSpaceCreateMenu200JSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetSpaceCreateMenu403ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceCreateMenu404ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu409ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceCreateMenu409ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceCreateMenu422ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCustomFieldsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -33627,6 +34187,15 @@ type StrictServerInterface interface {
 	// UpdateItemType Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah
 	// (PATCH /item-types/{typeId})
 	UpdateItemType(ctx context.Context, request UpdateItemTypeRequestObject) (UpdateItemTypeResponseObject, error)
+	// ListItemTypeFields Custom field yang berlaku untuk sebuah tipe item beserta nilai defaultnya (S8.1.2; hanya admin)
+	// (GET /item-types/{typeId}/fields)
+	ListItemTypeFields(ctx context.Context, request ListItemTypeFieldsRequestObject) (ListItemTypeFieldsResponseObject, error)
+	// DeleteItemTypeField Lepas custom field dari tipe item (hanya admin)
+	// (DELETE /item-types/{typeId}/fields/{fieldId})
+	DeleteItemTypeField(ctx context.Context, request DeleteItemTypeFieldRequestObject) (DeleteItemTypeFieldResponseObject, error)
+	// SetItemTypeField Pasang custom field pada tipe item, dengan default opsional yang divalidasi menurut tipe field (hanya admin)
+	// (PUT /item-types/{typeId}/fields/{fieldId})
+	SetItemTypeField(ctx context.Context, request SetItemTypeFieldRequestObject) (SetItemTypeFieldResponseObject, error)
 	// CreateItem Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
 	// (POST /items)
 	CreateItem(ctx context.Context, request CreateItemRequestObject) (CreateItemResponseObject, error)
@@ -33996,6 +34565,12 @@ type StrictServerInterface interface {
 	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
 	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
 	UpdateSpaceBookmark(ctx context.Context, request UpdateSpaceBookmarkRequestObject) (UpdateSpaceBookmarkResponseObject, error)
+	// GetSpaceCreateMenu Tipe item aktif untuk menu "+" sebuah Space (SPC-14), urutan default tipe; hak View
+	// (GET /spaces/{spaceId}/create-menu)
+	GetSpaceCreateMenu(ctx context.Context, request GetSpaceCreateMenuRequestObject) (GetSpaceCreateMenuResponseObject, error)
+	// SetSpaceCreateMenu Pilih tipe yang muncul di menu "+" (hak Edit, If-Match versi Space). Hanya kemudahan UI; API tetap menerima tipe apa pun (D-99)
+	// (PUT /spaces/{spaceId}/create-menu)
+	SetSpaceCreateMenu(ctx context.Context, request SetSpaceCreateMenuRequestObject) (SetSpaceCreateMenuResponseObject, error)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(ctx context.Context, request ListCustomFieldsRequestObject) (ListCustomFieldsResponseObject, error)
@@ -37393,6 +37968,93 @@ func (sh *strictHandler) UpdateItemType(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateItemTypeResponseObject); ok {
 		if err := validResponse.VisitUpdateItemTypeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListItemTypeFields operation middleware
+func (sh *strictHandler) ListItemTypeFields(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID) {
+	var request ListItemTypeFieldsRequestObject
+
+	request.TypeId = typeId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListItemTypeFields(ctx, request.(ListItemTypeFieldsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListItemTypeFields")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListItemTypeFieldsResponseObject); ok {
+		if err := validResponse.VisitListItemTypeFieldsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteItemTypeField operation middleware
+func (sh *strictHandler) DeleteItemTypeField(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request DeleteItemTypeFieldRequestObject
+
+	request.TypeId = typeId
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteItemTypeField(ctx, request.(DeleteItemTypeFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteItemTypeField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteItemTypeFieldResponseObject); ok {
+		if err := validResponse.VisitDeleteItemTypeFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetItemTypeField operation middleware
+func (sh *strictHandler) SetItemTypeField(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request SetItemTypeFieldRequestObject
+
+	request.TypeId = typeId
+	request.FieldId = fieldId
+
+	var body SetItemTypeFieldJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetItemTypeField(ctx, request.(SetItemTypeFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetItemTypeField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetItemTypeFieldResponseObject); ok {
+		if err := validResponse.VisitSetItemTypeFieldResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -40863,6 +41525,66 @@ func (sh *strictHandler) UpdateSpaceBookmark(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateSpaceBookmarkResponseObject); ok {
 		if err := validResponse.VisitUpdateSpaceBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpaceCreateMenu operation middleware
+func (sh *strictHandler) GetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GetSpaceCreateMenuRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceCreateMenu(ctx, request.(GetSpaceCreateMenuRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceCreateMenu")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceCreateMenuResponseObject); ok {
+		if err := validResponse.VisitGetSpaceCreateMenuResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetSpaceCreateMenu operation middleware
+func (sh *strictHandler) SetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params SetSpaceCreateMenuParams) {
+	var request SetSpaceCreateMenuRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	var body SetSpaceCreateMenuJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetSpaceCreateMenu(ctx, request.(SetSpaceCreateMenuRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetSpaceCreateMenu")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetSpaceCreateMenuResponseObject); ok {
+		if err := validResponse.VisitSetSpaceCreateMenuResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

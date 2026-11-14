@@ -956,6 +956,12 @@ type ItemTypeDef struct {
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 }
 
+type ItemTypeField struct {
+	TypeID       pgtype.UUID `json:"type_id"`
+	FieldID      pgtype.UUID `json:"field_id"`
+	DefaultValue []byte      `json:"default_value"`
+}
+
 type LoginCode struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`
@@ -1152,17 +1158,18 @@ type Share struct {
 }
 
 type Space struct {
-	ID          pgtype.UUID        `json:"id"`
-	Name        string             `json:"name"`
-	Description string             `json:"description"`
-	Kind        SpaceKind          `json:"kind"`
-	OwnerID     pgtype.UUID        `json:"owner_id"`
-	Version     int32              `json:"version"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
-	DeletedAt   pgtype.Timestamptz `json:"deleted_at"`
-	DeletedBy   pgtype.UUID        `json:"deleted_by"`
-	Locked      bool               `json:"locked"`
+	ID               pgtype.UUID        `json:"id"`
+	Name             string             `json:"name"`
+	Description      string             `json:"description"`
+	Kind             SpaceKind          `json:"kind"`
+	OwnerID          pgtype.UUID        `json:"owner_id"`
+	Version          int32              `json:"version"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	DeletedAt        pgtype.Timestamptz `json:"deleted_at"`
+	DeletedBy        pgtype.UUID        `json:"deleted_by"`
+	Locked           bool               `json:"locked"`
+	CreateMenuHidden []string           `json:"create_menu_hidden"`
 }
 
 type SpaceBookmark struct {

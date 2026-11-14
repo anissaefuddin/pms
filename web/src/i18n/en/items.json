@@ -99,6 +99,8 @@
     "loading": "Loading custom fields…",
     "loadError": "Could not load custom fields.",
     "empty": "Not set",
+    "formulaNoResult": "No result",
+    "formulaNoResultHint": "The formula has no result: an input is missing or the calculation is invalid.",
     "edit": "Edit",
     "editField": "Edit {{name}}",
     "clear": "Clear value",
