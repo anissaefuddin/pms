@@ -9,9 +9,10 @@ test("S11.2: a Space analytics board shows real numbers, and its public link wor
   const context = await browser.newContext({ baseURL, colorScheme: "light" });
   await context.addCookies([{ name: "pms_session", value: e.PMS_FIXTURE_M11A_ADMIN!.split("=")[1], url: baseURL }]);
   const page = await context.newPage();
-  await page.goto("/dashboards");
-  await page.getByLabel("Show dashboards in").selectOption(e.PMS_FIXTURE_M11A_SPACE!);
-  await page.getByRole("button", { name: "Create analytics board" }).click();
+  await page.goto(`/spaces/${e.PMS_FIXTURE_M11A_SPACE!}`); // S-UIP.1.8: the board is created from the Space's Tools in the sidebar
+  const create = page.getByRole("button", { name: "Create analytics board" });
+  if (!(await create.isVisible())) await page.getByRole("button", { name: "Expand M11 Analytics" }).click();
+  await create.click();
   await expect(page.getByRole("heading", { name: "Analytics", level: 1 })).toBeVisible();
   const done = page.getByRole("region", { name: "Tasks done" });
   await expect(done.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "33.3"); // 1 of 3 tasks is completed
@@ -20,8 +21,10 @@ test("S11.2: a Space analytics board shows real numbers, and its public link wor
   await expect(page.getByRole("region", { name: "Burndown, last 30 days" }).locator('[data-chart="burndown"] svg')).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
-  await page.getByLabel("Layout").selectOption("stack");
-  await page.getByRole("button", { name: "Public link" }).click();
+  await page.getByRole("button", { name: "Layout" }).click(); // S-UIP.2.4: layout popover and Share dialog
+  await page.getByRole("button", { name: "Vertical" }).click();
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Share" }).click();
   const dialog = page.getByRole("dialog", { name: "Public link" });
   await dialog.getByLabel("Password (optional)").fill("correct horse battery");
   await dialog.getByRole("button", { name: "Turn on" }).click();

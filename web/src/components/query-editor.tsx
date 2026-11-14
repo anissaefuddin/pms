@@ -28,7 +28,8 @@ function toggle<T>(list: T[] | undefined, value: T, on: boolean): T[] {
 
 
 /** Data source, measure and filters of an analytics query; used by the report editor and the widget editor. */
-export function QueryEditor({ query, setQuery }: { query: AnalyticsQuery; setQuery: (query: AnalyticsQuery) => void }) {
+/** `part` lets the widget editor show the data and the filter halves on separate tabs. */
+export function QueryEditor({ query, setQuery, part }: { query: AnalyticsQuery; setQuery: (query: AnalyticsQuery) => void; part?: "data" | "filters" }) {
   const { t } = useTranslation();
   const spaces = useSpaces().data ?? [];
   const admin = useProfile()?.user_type === "admin";
@@ -37,6 +38,7 @@ export function QueryEditor({ query, setQuery }: { query: AnalyticsQuery; setQue
   const setFilters = (patch: Partial<AnalyticsFilters>) => setQuery({ ...query, filters: { ...filters, ...patch } });
   const metricLabel = (metric: string) => t(source === "time_entries" && metric === "count" ? "reports.metric.countEntries" : `reports.metric.${metric}`);
   return <>
+    {part !== "filters" && <>
       <Fieldset legend={t("reports.source.legend")}>
       <label className="block text-sm">{t("reports.source.basedOn")}
         <select className={select} value={source} onChange={(e) => setQuery(changeSource(query, e.target.value as Source))}>
@@ -77,6 +79,8 @@ export function QueryEditor({ query, setQuery }: { query: AnalyticsQuery; setQue
       </div>
     </Fieldset>
 
+    </>}
+    {part !== "data" && <>
     <Fieldset legend={t("reports.filters.legend")}>
       {source === "time_entries" ? <div className="flex flex-wrap gap-4">
         <Check label={t("reports.filters.loggedByMe")} checked={!!filters.assignees?.includes("me")} onChange={(on) => setFilters({ assignees: on ? ["me"] : [] })} />
@@ -122,6 +126,7 @@ export function QueryEditor({ query, setQuery }: { query: AnalyticsQuery; setQue
       </div>}
     </Fieldset>
 
+    </>}
   </>;
 }
 

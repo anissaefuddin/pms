@@ -487,3 +487,7 @@ Butir "panduan" belum dibuat. Daftar ini hanya kerangka topik; panduan akhir unt
 | DR-05 | diperbaiki: migrasi diserialkan dengan advisory lock Postgres (`database.go`); tes `TestOpenConcurrentlyOnEmptyDatabase` |
 | DR-06 | disengaja, dicatat sebagai D-100; tanpa perubahan kode |
 | DR-08 | diperbaiki: satu bentuk cache `work-schedule` (`lib/work-schedule.ts`); tes `dr08-calendar-effort.spec.ts` |
+
+## Tambahan: skenario tampilan M12b (14 Nov 2026)
+
+Penguji mengulang alur harian pada tampilan baru: ubah status/assignee/tanggal lewat chip panel detail; atur filter, sort, group, kolom lewat toolbar satu baris; Board dan Table (chip status, avatar); My to-do berkelompok dan tambah cepat; Inbox dua panel dan tab Sent; sidebar per Space dan halaman project; menu More dan Customize menu; menu akun; dashboard (pindah dashboard, layout, editor widget dua panel). Catat hasil dengan skala keparahan yang sama.

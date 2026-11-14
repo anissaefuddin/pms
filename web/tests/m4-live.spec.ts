@@ -18,6 +18,8 @@ test("timesheet hours appear in project Timelog and alongside its budget", async
 
     await page.context().addCookies([{ name: "pms_session", value: admin!.split("=")[1], url: baseURL! }]);
     await page.goto(`/tasks/${project}`);
+    await page.getByRole("button", { name: "Info" }).click(); // S-UIP.1.8
+    await page.getByText("More fields", { exact: true }).click(); // S-UIP.1.1
     const fields = page.getByRole("region", { name: "Custom fields" });
     await expect(fields.getByText("Actual hours: 2:15")).toBeVisible();
     await fields.getByRole("button", { name: "Edit Budget" }).click();
@@ -26,14 +28,17 @@ test("timesheet hours appear in project Timelog and alongside its budget", async
     await budget.getByRole("button", { name: "Save", exact: true }).click();
     await expect(fields.getByText("$1,250.75")).toBeVisible();
 
-    await page.getByRole("button", { name: "Add view" }).click();
-    await page.getByRole("menuitem", { name: "Timelog" }).click();
+    await page.keyboard.press("Escape"); // close the Info panel (S-UIP.1.8)
+    await page.getByRole("button", { name: "All views" }).click();
+    await page.getByRole("menuitem", { name: "Add Timelog view" }).click();
     await page.getByRole("dialog", { name: "Add view" }).getByRole("button", { name: "Save" }).click();
     const log = page.getByRole("table", { name: "Timelog" });
     await expect(log.getByText("Delivered")).toBeVisible();
     await expect(log.getByRole("cell", { name: "2:15", exact: true })).toBeVisible();
     await page.reload();
     await expect(log.getByText("Delivered")).toBeVisible();
+    await page.getByRole("button", { name: "Info" }).click();
+    await page.getByText("More fields", { exact: true }).click();
     await expect(fields.getByText("$1,250.75")).toBeVisible();
   } finally { await worker.close(); }
 });

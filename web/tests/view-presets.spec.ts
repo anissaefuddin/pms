@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { chip } from "./view-helpers";
 import { ALL, marketing, mockSpaces } from "./spaces-mock";
 
 const tableId = "55555555-5555-4555-8555-555555555555";
@@ -28,20 +29,25 @@ const listCalls = (calls: Awaited<ReturnType<typeof mock>>["calls"]) => calls.fi
 test("presets and sorts go to the server and the URL, in Table and Calendar", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto(path);
+  await chip(page, "Sort");
   const sort = page.getByRole("combobox", { name: "Sort" });
   await expect(sort.locator("option")).toHaveText(["Manual order", "Priority", "Finish date", "Status", "Name", "Predecessors", "Start date"]);
+  await chip(page, "Filter");
   await page.getByRole("combobox", { name: "Preset" }).selectOption("mine");
   await expect.poll(() => listCalls(calls).some((call) => call.query.get("status_group") === "active" && call.query.get("assignee") === "me")).toBe(true);
   await expect(page).toHaveURL(/preset=mine/);
   await page.getByRole("combobox", { name: "Preset" }).selectOption("active");
   await expect.poll(() => listCalls(calls).some((call) => call.query.get("status_group") === "active" && !call.query.get("assignee"))).toBe(true);
+  await chip(page, "Sort");
   await sort.selectOption("priority");
   await expect.poll(() => listCalls(calls).some((call) => call.query.get("sort") === "priority" && call.query.get("status_group") === "active")).toBe(true);
   await sort.selectOption("predecessors");
   await expect(page).toHaveURL(/sort=predecessors/);
+  await chip(page, "Filter");
   await page.getByRole("combobox", { name: "Preset" }).selectOption("all");
   await expect.poll(() => listCalls(calls).at(-1)?.query.get("status_group")).toBeNull();
   await page.goto(`${path}?view=${calId}&preset=mine`);
+  await chip(page, "Filter");
   await expect(page.getByRole("combobox", { name: "Preset" })).toHaveValue("mine");
   await expect.poll(() => listCalls(calls).filter((call) => call.query.get("assignee") === "me").length).toBeGreaterThan(1); // Table above, Calendar here
 });

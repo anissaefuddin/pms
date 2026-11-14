@@ -2553,6 +2553,27 @@ func (e ListMyTodoParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for ListNotificationsParamsBox.
+const (
+	Archive  ListNotificationsParamsBox = "archive"
+	Incoming ListNotificationsParamsBox = "incoming"
+	Sent     ListNotificationsParamsBox = "sent"
+)
+
+// Valid indicates whether the value is a known member of the ListNotificationsParamsBox enum.
+func (e ListNotificationsParamsBox) Valid() bool {
+	switch e {
+	case Archive:
+		return true
+	case Incoming:
+		return true
+	case Sent:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod.
 const (
 	S256 ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod = "S256"
@@ -4381,6 +4402,7 @@ type Notification struct {
 	ItemTitle  *string             `json:"item_title,omitempty"`
 	Kind       NotificationKind    `json:"kind"`
 	ReadAt     *time.Time          `json:"read_at,omitempty"`
+	Recipient  *UserRef            `json:"recipient,omitempty"`
 	Snippet    *string             `json:"snippet,omitempty"`
 	SpaceId    *openapi_types.UUID `json:"space_id,omitempty"`
 	SpaceTitle *string             `json:"space_title,omitempty"`
@@ -5831,7 +5853,13 @@ type ListNotificationsParams struct {
 	Limit      *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
 	Cursor     *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
 	UnreadOnly *bool   `form:"unread_only,omitempty" json:"unread_only,omitempty"`
+
+	// Box incoming (default), archive (milik sendiri yang diarsipkan), sent (notifikasi yang dipicu pemanggil untuk orang lain; hanya yang masih bisa dilihat pemanggil; unread_count selalu 0 di luar incoming)
+	Box *ListNotificationsParamsBox `form:"box,omitempty" json:"box,omitempty"`
 }
+
+// ListNotificationsParamsBox defines parameters for ListNotifications.
+type ListNotificationsParamsBox string
 
 // UpdateNotificationJSONBody defines parameters for UpdateNotification.
 type UpdateNotificationJSONBody struct {
@@ -12582,6 +12610,19 @@ func (siw *ServerInterfaceWrapper) ListNotifications(w http.ResponseWriter, r *h
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "unread_only"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "unread_only", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "box" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "box", r.URL.Query(), &params.Box, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "box"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "box", Err: err})
 		}
 		return
 	}

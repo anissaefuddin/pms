@@ -87,7 +87,8 @@ function AppShell() {
       <Dialog open={!!task} onOpenChange={(open) => { if (!open) setTask(); }}>
         <DialogContent className="inset-y-0 right-0 left-auto w-full max-w-xl translate-none overflow-y-auto rounded-none sm:max-w-xl">
           <DialogTitle>{t("items.detail")}</DialogTitle>
-          {task && <ItemDetail key={task} id={task} me={me.data} onOpen={setTask} onDeleted={() => setTask()} />}
+          {task && <ItemDetail key={task} id={task} me={me.data} onOpen={setTask} onDeleted={() => setTask()}
+            onFullDetails={() => { const id = task; setTask(); void router.navigate({ to: "/tasks/$itemId", params: { itemId: id } }); }} />}
         </DialogContent>
       </Dialog>
     </div>

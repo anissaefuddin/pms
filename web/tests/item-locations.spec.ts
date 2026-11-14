@@ -25,6 +25,7 @@ function mock(page: import("@playwright/test").Page, refuse = false) {
 test("lists locations, adds a project in another Space, and removes one but never the last", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto(`/tasks/${id}`);
+  await page.getByRole("button", { name: /^Locations:/ }).click();
   const section = page.getByRole("region", { name: "Locations" });
   await expect(section.getByText("Marketing")).toBeVisible();
   await expect(section.getByRole("button", { name: /Remove location/ })).toBeDisabled();
@@ -45,6 +46,7 @@ test("lists locations, adds a project in another Space, and removes one but neve
 test("a refused location (cycle) shows the server's message and changes nothing", async ({ page }) => {
   await mock(page, true);
   await page.goto(`/tasks/${id}`);
+  await page.getByRole("button", { name: /^Locations:/ }).click();
   const section = page.getByRole("region", { name: "Locations" });
   await section.getByRole("button", { name: "Add location" }).click();
   await section.getByRole("combobox", { name: "Space", exact: true }).selectOption(ops.id);

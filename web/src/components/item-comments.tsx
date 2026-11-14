@@ -55,10 +55,10 @@ export function ItemComments({ item, userId }: { item: Item; userId: string }) {
     })}
     {page.data?.next_cursor && <Button variant="outline" onClick={() => setCursor(page.data?.next_cursor ?? undefined)}>{t("items.olderComments")}</Button>}
     {cursor && <Button variant="ghost" onClick={() => setCursor(undefined)}>{t("items.latestComments")}</Button>}
-    {canComment && <CommentEditor editable save={async (body) => {
+    {canComment && <div className="sticky bottom-0 -mx-1 bg-background px-1 pb-1 pt-2"><CommentEditor editable save={async (body) => {
       await api(path, { method: "POST", body: JSON.stringify({ body }) });
       setCursor(undefined); await refresh();
-    }} />}
+    }} /></div>}
   </section>;
 }
 

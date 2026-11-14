@@ -7,6 +7,7 @@ test.skip(!project || !space || !field || !cookie, "Requires Go/PostgreSQL Excel
 test("exports and re-imports a Project workbook with dates and multi-parent hierarchy", async ({ page, baseURL }) => {
   await page.context().addCookies([{ name: "pms_session", value: cookie!.split("=")[1], url: baseURL! }]);
   await page.goto(`/tasks/${project}`);
+  await page.getByRole("button", { name: "Info" }).click(); // S-UIP.1.8
   await page.getByRole("button", { name: "Item actions" }).click();
   await page.getByRole("menuitem", { name: "Export to Excel" }).click();
   const exportDialog = page.getByRole("dialog", { name: "Export to Excel" });

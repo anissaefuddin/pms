@@ -5,6 +5,8 @@ import { ApiError } from "@/lib/api";
 import { OTHERS_KEY, foldOthers, toGrid } from "@/lib/charts";
 import { isChart, type WidgetData, type WidgetType } from "@/lib/dashboards";
 import type { AnalyticsQuery } from "@/lib/reports";
+import { StatusPill } from "@/components/todo-chips";
+import { bucketOrder, dueBucket, groupBy } from "@/lib/todo-groups";
 import { ResultTable, useResultLabels } from "@/components/result-table";
 
 const WidgetChart = lazy(() => import("@/components/widget-chart"));
@@ -50,9 +52,15 @@ function PivotTable({ result, query }: { result: NonNullable<WidgetData["result"
 function TaskList({ items }: { items: NonNullable<WidgetData["items"]> }) {
   const { t } = useTranslation();
   if (items.length === 0) return <p role="status" className="text-sm text-muted-foreground">{t("dashboards.widget.noTasks")}</p>;
-  return <ul className="divide-y text-sm">{items.map((task) => <li key={task.id} className="flex items-baseline justify-between gap-3 py-1.5">
-    <Link to="/tasks/$itemId" params={{ itemId: task.id }} className="min-w-0 truncate underline">{task.title}</Link>
-    <span className="shrink-0 text-muted-foreground">{task.due_date || t("dashboards.widget.noDate")}</span></li>)}</ul>;
+  const today = new Date().toLocaleDateString("sv");
+  const groups = groupBy(items, (task) => dueBucket(task.due_date, today), bucketOrder);
+  return <div className="space-y-3 text-sm">{groups.map((group) => <div role="group" key={group.key} aria-label={t(`dashboards.widget.group.${group.key}`)}>
+    <h3 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(`dashboards.widget.group.${group.key}`)} ({group.rows.length})</h3>
+    <ul className="divide-y">{group.rows.map((task) => <li key={task.id} className="flex items-center justify-between gap-3 py-1.5">
+      <Link to="/tasks/$itemId" params={{ itemId: task.id }} className="min-w-0 truncate underline">{task.title}</Link>
+      <span className="flex shrink-0 items-center gap-2">
+        <StatusPill name={task.status} group={task.status_group} />
+        <span className="text-muted-foreground">{task.due_date || t("dashboards.widget.noDate")}</span></span></li>)}</ul></div>)}</div>;
 }
 
 function Series({ type, config, query, result }: { type: WidgetType; config: WidgetConfig; query: AnalyticsQuery; result: NonNullable<WidgetData["result"]> }) {

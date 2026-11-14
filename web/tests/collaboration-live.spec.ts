@@ -18,7 +18,7 @@ test("two sessions preserve a conflicting draft and reapply with the new ETag", 
     const firstTitle = page.getByRole("textbox", { name: "Name", exact: true });
     const secondTitle = other.getByRole("textbox", { name: "Name", exact: true });
     await expect(secondTitle).toHaveValue("Original title");
-    await expect(other.getByText("Live", { exact: true })).toBeVisible();
+    await expect(other.locator('[data-live="true"]')).toBeAttached();
     await secondTitle.fill("Second session draft");
     await firstTitle.fill("First session edit");
     await firstTitle.press("Enter");
@@ -44,7 +44,7 @@ test("mentions update a second user's Inbox and attachments still upload", async
   try {
     const recipient = await context.newPage();
     await Promise.all([connect(page, firstCookie!), connect(recipient, secondCookie!, "/inbox")]);
-    await expect(recipient.getByText("Live", { exact: true })).toBeVisible();
+    await expect(recipient.locator('[data-live="true"]')).toBeAttached();
     await expect(recipient.getByText("You're all caught up")).toBeVisible();
 
     const comments = page.getByRole("region", { name: "Comments" });
@@ -54,7 +54,7 @@ test("mentions update a second user's Inbox and attachments still upload", async
     await expect(comments.getByText("@Followers", { exact: true })).toBeVisible();
     await expect(recipient.getByRole("link", { name: "Inbox, 1 unread" })).toBeVisible({ timeout: 3000 });
     await recipient.getByRole("button", { name: /mentioned you in/ }).click();
-    await expect(recipient.getByRole("dialog")).toBeVisible();
+    await expect(recipient.getByRole("link", { name: "Open item" })).toBeVisible(); // S-UIP.1.5: the notification opens in the Inbox detail pane
     await expect(recipient.getByRole("link", { name: "Inbox, 1 unread" })).toHaveCount(0);
     await expect(page.getByRole("link", { name: "Inbox, 1 unread" })).toHaveCount(0);
 

@@ -152,7 +152,8 @@
   "profile.sidebar.timesheets": "Timesheets",
   "twoFactor.title": "Two-factor authentication",
   "twoFactor.description": "Ask for a code from your authenticator app each time you sign in.",
-  "twoFactor.notConfigured": "Two-factor authentication is not available on this server yet. An admin must set PMS_2FA_KEY to turn it on.",
+  "twoFactor.notConfigured": "Two-factor authentication is not available on this server yet. Ask your administrator to turn it on.",
+  "twoFactor.notConfiguredAdmin": "Two-factor authentication is not available on this server yet. Set PMS_2FA_KEY on the server to turn it on.",
   "twoFactor.off": "Two-factor authentication is off.",
   "twoFactor.setUp": "Set up two-factor authentication",
   "twoFactor.scan": "Scan this QR code with your authenticator app.",
@@ -261,5 +262,10 @@
       "neverSynced": "Not synced yet.", "syncOk": "Last sync {{when}}: {{message}}", "syncFailed": "Last sync failed {{when}}: {{message}}"
     }
   },
-  "rates": "Hourly rates"
+  "rates": "Hourly rates",
+  "profile.sidebar.calendars": "Calendars",
+  "profile.sidebar.created_by_me": "Created by me",
+  "profile.sidebar.dashboards": "Dashboards",
+  "profile.sidebar.reports": "Reports",
+  "profile.sidebar.starred": "Starred"
 }

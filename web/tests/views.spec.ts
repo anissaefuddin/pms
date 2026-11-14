@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { ALL, marketing, mockSpaces } from "./spaces-mock";
+import { chip } from "./view-helpers";
 import { problem, type Handler } from "./mock-api";
 
 const tableId = "55555555-5555-4555-8555-555555555555";
@@ -78,12 +79,16 @@ test("Table keyboard edit and reorder, and URL restores the view state", async (
   await rename.getByRole("button", { name: "Save" }).click();
   await page.getByRole("navigation", { name: "Views" }).getByRole("button", { name: "Planning", exact: true }).click();
   await page.getByLabel("Filter items").fill("Road");
+  await chip(page, "Sort");
   await page.getByLabel("Sort", { exact: true }).selectOption("title");
+  await chip(page, "Group");
   await page.getByLabel("Group", { exact: true }).selectOption("status");
   await page.reload();
   await expect(page.getByRole("button", { name: "Planning", exact: true })).toHaveAttribute("aria-pressed", "true");
   await expect(page.getByLabel("Filter items")).toHaveValue("Road");
+  await chip(page, "Sort");
   await expect(page.getByLabel("Sort", { exact: true })).toHaveValue("title");
+  await chip(page, "Group");
   await expect(page.getByLabel("Group", { exact: true })).toHaveValue("status");
 });
 
@@ -113,6 +118,7 @@ test("ViewTabs duplicates, reorders, changes default, copies and deletes", async
   } });
   await page.goto(path + "?filter=Plan&sort=title");
   const nav = page.getByRole("navigation", { name: "Views" });
+  await nav.getByRole("button", { name: "Board", exact: true }).click(); // options exist only on the active segment
   await nav.getByRole("button", { name: "Board options", exact: true }).click();
   await page.getByRole("menuitem", { name: "Move left" }).click();
   await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toEqual({ position: 0 });
@@ -153,8 +159,8 @@ for (const { type, label, visibility } of [
     } });
     await page.goto(path);
     const nav = page.getByRole("navigation", { name: "Views" });
-    await nav.getByRole("button", { name: "Add view" }).click();
-    await page.getByRole("menuitem", { name: label, exact: true }).click();
+    await nav.getByRole("button", { name: "All views" }).click();
+    await page.getByRole("menuitem", { name: `Add ${label} view`, exact: true }).click();
     const form = page.getByRole("dialog", { name: "Add view" });
     const name = `${label} plan`;
     const input = form.getByRole("textbox", { name: "View name" });
@@ -205,13 +211,14 @@ test("Board rolls back conflict, supports drag and creates in the target column"
   const before = page.getByRole("region", { name: "New", exact: true });
   const after = page.getByRole("region", { name: "Completed", exact: true });
   await expect(before.getByText("2 subitems")).toBeVisible();
-  await before.getByRole("combobox", { name: "Move to status: Plan" }).selectOption(completed.id);
+  await before.getByRole("button", { name: "Move to status: Plan" }).click();
+  await page.getByRole("menuitem", { name: "Completed", exact: true }).click();
   await expect(page.getByText("Item was updated by someone else. Latest version loaded.", { exact: true })).toBeVisible();
   await expect(before.getByRole("button", { name: "Plan", exact: true })).toBeVisible();
-  await expect(before.getByRole("combobox", { name: "Move to status: Plan" })).toBeEnabled();
+  await expect(before.getByRole("button", { name: "Move to status: Plan" })).toBeEnabled();
   await before.getByRole("listitem").dragTo(after);
   await expect(after.getByRole("button", { name: "Plan", exact: true })).toBeVisible();
-  await expect(after.getByRole("combobox", { name: "Move to status: Plan" })).toBeEnabled();
+  await expect(after.getByRole("button", { name: "Move to status: Plan" })).toBeEnabled();
   await after.getByRole("button", { name: "Add item", exact: true }).click();
   const form = page.getByRole("dialog", { name: "Create item" });
   await form.getByRole("textbox", { name: "Name", exact: true }).fill("Checklist");

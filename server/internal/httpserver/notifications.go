@@ -24,10 +24,11 @@ func (s *Server) publishNotifications(batch *notifications.Batch) {
 const notificationJSON = `jsonb_build_object('id',n.id,'kind',n.kind,'created_at',n.created_at,
 'read_at',n.read_at,'archived_at',n.archived_at,'snippet',n.snippet,'item_id',n.item_id,
 'item_title',i.title,'space_id',n.space_id,'space_title',s.name,
-'actor',CASE WHEN u.id IS NOT NULL THEN jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)) END)`
+'actor',CASE WHEN u.id IS NOT NULL THEN jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)) END,
+'recipient',CASE WHEN ru.id IS NOT NULL THEN jsonb_build_object('id',ru.id,'name',concat_ws(' ',ru.first_name,ru.last_name)) END)`
 
 const notificationJoins = ` FROM notifications n LEFT JOIN items i ON i.id=n.item_id
-LEFT JOIN spaces s ON s.id=n.space_id LEFT JOIN users u ON u.id=n.actor_id`
+LEFT JOIN spaces s ON s.id=n.space_id LEFT JOIN users u ON u.id=n.actor_id LEFT JOIN users ru ON ru.id=n.recipient_id`
 
 type inboxRow struct {
 	ID     string
@@ -64,6 +65,20 @@ func (s *Server) listNotifications(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
+	// box: incoming (default), archive (own archived) or sent (notifications the caller triggered for others).
+	filter := "n.recipient_id=$1::uuid AND n.archived_at IS NULL"
+	incoming := false
+	switch q.Get("box") {
+	case "", "incoming":
+		incoming = true
+	case "archive":
+		filter = "n.recipient_id=$1::uuid AND n.archived_at IS NOT NULL"
+	case "sent":
+		filter = "n.actor_id=$1::uuid AND n.recipient_id<>$1::uuid"
+	default:
+		writeItemError(w, items.Invalid("box must be incoming, archive or sent"))
+		return
+	}
 	ctx := r.Context()
 	actor := actorOf(r)
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
@@ -72,8 +87,9 @@ func (s *Server) listNotifications(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	defer tx.Rollback(ctx)
+	// Visibility is always checked for the caller, so Sent never reveals items the sender can no longer see.
 	// shortcut: scan active Inbox metadata to count only accessible entries. Move this into a policy-filtered query when Inbox volume grows.
-	rows, err := tx.Query(ctx, `SELECT n.id::text,COALESCE(n.item_id::text,''),COALESCE(n.space_id::text,''),n.read_at IS NULL FROM notifications n WHERE n.recipient_id=$1::uuid AND n.archived_at IS NULL ORDER BY n.id DESC`, actor.ID)
+	rows, err := tx.Query(ctx, `SELECT n.id::text,COALESCE(n.item_id::text,''),COALESCE(n.space_id::text,''),n.read_at IS NULL FROM notifications n WHERE `+filter+` ORDER BY n.id DESC`, actor.ID)
 	if err != nil {
 		writeItemError(w, err)
 		return
@@ -117,7 +133,7 @@ func (s *Server) listNotifications(w http.ResponseWriter, r *http.Request) {
 		if !visible {
 			continue
 		}
-		if n.Unread {
+		if n.Unread && incoming {
 			unread++
 		}
 		if (unreadOnly && !n.Unread) || (cursor != "" && n.ID >= cursor) {

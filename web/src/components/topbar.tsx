@@ -7,6 +7,7 @@ import { useTranslation } from "react-i18next";
 import { listNotifications, notificationKey } from "@/lib/notifications";
 import { api } from "@/lib/api";
 import { useState } from "react";
+import { toast } from "sonner";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -26,7 +27,7 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () =
   return (
     <header className="flex h-12 shrink-0 items-center justify-end border-b px-2 sm:px-4">
       {navigation}
-      <span role="status" className="mr-auto text-xs text-muted-foreground">{t(live ? "nav.realtime.live" : "nav.realtime.reconnecting")}</span>
+      <span role="status" data-live={live ? "true" : "false"} className="mr-auto text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
       {search}
       <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
         <Bell className="size-5" />
@@ -36,9 +37,10 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () =
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("nav.profile.label")} />}><CircleUser /></DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-44">
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile" })}>{t("settings.profile.title")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings/security" })}>{t("nav.profile.security")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile" })}>{t("settings.profile.appearance")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>{t("nav.settings.label")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}>{t("nav.apps.label")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}>{t("nav.help.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setFeedback(true)}>{t("nav.feedback.menu")}</DropdownMenuItem>
           <DropdownMenuItem onClick={logout}>{t("nav.profile.logout")}</DropdownMenuItem>
         </DropdownMenuContent>

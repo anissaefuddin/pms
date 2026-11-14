@@ -5772,6 +5772,7 @@ export interface components {
             id: string;
             kind: components["schemas"]["NotificationKind"];
             actor?: components["schemas"]["UserRef"] | null;
+            recipient?: components["schemas"]["UserRef"] | null;
             /** Format: uuid */
             item_id?: string | null;
             item_title?: string | null;
@@ -12589,6 +12590,8 @@ export interface operations {
                 limit?: components["parameters"]["Limit"];
                 cursor?: components["parameters"]["Cursor"];
                 unread_only?: boolean;
+                /** @description incoming (default), archive (milik sendiri yang diarsipkan), sent (notifikasi yang dipicu pemanggil untuk orang lain; hanya yang masih bisa dilihat pemanggil; unread_count selalu 0 di luar incoming) */
+                box?: "incoming" | "archive" | "sent";
             };
             header?: never;
             path?: never;

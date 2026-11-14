@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { MoreHorizontal, Plus } from "lucide-react";
+import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -8,7 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormError } from "@/components/auth/form-error";
 
 const viewTypes = ["table", "board", "gantt", "calendar", "timelog", "files", "chart"] as const satisfies readonly SavedView["type"][];
@@ -77,16 +77,18 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
     });
   }
   return <div className="space-y-2">
-    <nav aria-label={t("views.views")} className="flex flex-wrap gap-2 border-b pb-2">
+    <nav aria-label={t("views.views")} className="flex flex-wrap items-center gap-2 border-b pb-2">
+      <div role="group" aria-label={t("views.segments")} className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border bg-muted/40 p-0.5">
       {views.map((view) => {
         const editable = view.visibility === "personal" || canEdit;
         const siblings = views.filter((candidate) => candidate.visibility === view.visibility);
         const i = siblings.findIndex((candidate) => candidate.id === view.id);
         const previous = siblings[i - 1], next = siblings[i + 1];
-        return <div key={view.id} className="flex items-center gap-0.5">
-          <Button size="sm" variant={view.id === selected.id ? "secondary" : "ghost"} aria-pressed={view.id === selected.id}
+        const current = view.id === selected.id;
+        return <div key={view.id} className={`flex items-center rounded-md ${current ? "bg-background shadow-xs" : ""}`}>
+          <Button size="sm" variant="ghost" aria-pressed={current} className={current ? "font-semibold" : "text-muted-foreground"}
             onClick={() => onSelect(view.id)}>{view.name}</Button>
-          <DropdownMenu>
+          {current && <DropdownMenu>
             <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={t("views.options", { name: view.name })} />}><MoreHorizontal /></DropdownMenuTrigger>
             <DropdownMenuContent align="start">
               <DropdownMenuItem onClick={() => void copy(view)}>{t("items.copyLink")}</DropdownMenuItem>
@@ -100,17 +102,26 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
               {editable && !view.is_default && <DropdownMenuItem variant="destructive" disabled={busy}
                 onClick={() => { setError(""); setDeleting(view); }}>{t("views.delete")}</DropdownMenuItem>}
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu>}
         </div>;
       })}
+      </div>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button size="sm" variant="ghost" disabled={busy} />}>
-          <Plus /> {t("views.addView")}
+        <DropdownMenuTrigger render={<Button size="sm" variant="ghost" disabled={busy} aria-label={t("views.allViews")} />}>
+          {t("views.all")} <ChevronDown />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          {viewTypes.filter((type) => (type !== "timelog" && type !== "files" && type !== "chart") || project).map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
-            {t(`views.types.${type}`)}
-          </DropdownMenuItem>)}
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>{t("views.views")}</DropdownMenuLabel>
+            {views.map((view) => <DropdownMenuItem key={view.id} onClick={() => onSelect(view.id)}>{view.name}</DropdownMenuItem>)}
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuLabel><Plus className="inline size-3" /> {t("views.addView")}</DropdownMenuLabel>
+            {viewTypes.filter((type) => (type !== "timelog" && type !== "files" && type !== "chart") || project).map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
+              {t("views.addType", { type: t(`views.types.${type}`) })}
+            </DropdownMenuItem>)}
+          </DropdownMenuGroup>
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>

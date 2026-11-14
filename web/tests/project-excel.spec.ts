@@ -13,6 +13,7 @@ test("exports the selected visible Project location and polls until ready", asyn
     [`GET /excel-exports/${job}`]: () => ({ body: { id: job, status: ++polls > 1 ? "ready" : "pending" } }),
   } });
   await page.goto(`/tasks/${project}`);
+  await page.getByRole("button", { name: "Info" }).click(); // S-UIP.1.8: project detail lives in the Info panel
   await page.getByRole("button", { name: "Item actions" }).click();
   await page.getByRole("menuitem", { name: "Export to Excel" }).click();
   const dialog = page.getByRole("dialog", { name: "Export to Excel" });

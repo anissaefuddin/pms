@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { CustomField } from "@/lib/custom-fields";
-import { cardFieldGroups, columnGroups, fieldColumn, fieldFilterRef } from "@/lib/view-columns";
+import { cardFieldGroups, ganttColumnGroups, columnGroups, fieldColumn, fieldFilterRef } from "@/lib/view-columns";
 
 export function ColumnPicker({ board, fieldsOnly, selected, fields, canSave, saving, onSave }: {
   board?: boolean; fieldsOnly?: boolean; selected: string[]; fields: CustomField[]; canSave: boolean; saving: boolean; onSave: (columns: string[]) => void;
@@ -24,7 +24,7 @@ export function ColumnPicker({ board, fieldsOnly, selected, fields, canSave, sav
         <DialogTitle>{t(board ? "views.columns.cardTitle" : "views.columns.title")}</DialogTitle>
         <p className="text-sm text-muted-foreground">{t("views.columns.hint")}</p>
         <div className="max-h-[60vh] space-y-3 overflow-y-auto">
-          {(fieldsOnly ? [] : board ? cardFieldGroups : columnGroups).map((group) => <fieldset key={group.id} className="space-y-1">
+          {(fieldsOnly ? ganttColumnGroups : board ? cardFieldGroups : columnGroups).map((group) => <fieldset key={group.id} className="space-y-1">
             <legend className="font-medium">{t(`views.columns.${group.id}`)}</legend>
             {group.columns.map((id) => box(id, t(`views.columns.${id}`)))}
           </fieldset>)}

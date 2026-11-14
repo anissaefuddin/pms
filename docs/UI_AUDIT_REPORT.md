@@ -196,3 +196,7 @@ Setiap sel merujuk ke capture pada ukuran yang tertera. **D** berarti state diti
 | Aksesibilitas dasar | 13/20 | 18/20 | Axe bersih pada 76 kombinasi dan 18 tes layar terang/gelap; semantik Gantt diperbaiki (UI-03). Screen reader, Safari dan Firefox NOT TESTED |
 
 Skor dimensi memakai rubrik baseline dan bukti terukur di atas; dimensi yang bergantung penilaian visual tidak dinaikkan melebihi bukti. Kunci sidebar `workload` (STAB-08, Q-01): sidebar tidak merender tautan Workload dan pengaturan profil hanya menawarkan empat entri nyata; kunci tetap diterima API sampai S10.1.3. Tes memastikan tidak ada entri menu yang mengarah ke 404.
+
+## Pembaruan 14 Nov 2026: kesetaraan tampilan (M12b, S-UIP)
+
+Batch S-UIP.1.1–1.8, 2.1–2.6 dan 3.1 dikerjakan dari [GAP_TAMPILAN_FE_VS_SCREEN.md](GAP_TAMPILAN_FE_VS_SCREEN.md): panel detail dengan chip edit langsung, toolbar view satu baris, kartu Board/baris Table dengan chip status dan avatar, My to-do berkelompok, Inbox dua panel dengan tab Sent, sidebar per Space dan halaman project, menu More dan akun, Gantt berkolom, toolbar dashboard dan editor widget dua panel. Bukti: bagian per lane di [TESTING.md](TESTING.md), tangkapan layar 1440 dan 390 px di [ui-parity-evidence](ui-parity-evidence/) (`UIP_SHOTS=1 npx playwright test tests/ui-parity-shots.spec.ts`), sapuan fit-viewport + axe `ui-audit.spec.ts` pada empat viewport. Belum ada baseline piksel otomatis: perbedaan piksel antar runner terlalu rapuh, jadi gambar dipakai sebagai bukti tinjauan manusia. Gap yang ditunda: avatar pada widget daftar (S-UIP.2.5).

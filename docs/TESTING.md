@@ -1040,6 +1040,56 @@ Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image ny
 
 Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.
 
+## Lane 1 — panel item, toolbar dashboard, editor widget (S-UIP.1.1, 2.4, 2.6, 3.1 bagian C2/C3)
+
+Tanggal: 14 Nov 2026. Playwright (API dimock) di port sendiri `PMS_TEST_BROWSER_PORT=4191` (port 4173 dipakai server lane lain); `tsc -b` dan `eslint src` bersih.
+
+| Berkas | Hasil |
+|---|---|
+| `dashboards.spec.ts` (15, termasuk tes baru: menu judul pindah dashboard, popover Layout, editor pratinjau + tab Data/Design/Filters, axe halaman dan dialog) | PASS |
+| `items.spec.ts` (chip assignee menyimpan tanpa Save; judul tampil sekali) | PASS |
+| `item-locations`, `item-effort`, `dr08-calendar-effort`, `project-progress`, `m8` (layout CUST-04), `approvals`, `item-custom-fields`, `stars`, `dr01-activity`, `file-*`, `pilot.a11y`, `view-fields`, `todo` | PASS (tes yang menunjuk Save lama atau blok yang kini dilipat/di chip diperbarui) |
+
+Satu kali jalan gabungan 18 berkas menampilkan 2 kegagalan `dashboards.spec` yang lolos saat dijalankan ulang sendiri (15/15); dianggap flake beban, tidak ditelusuri lebih lanjut.
+
+Tidak diuji: tes `*-live` (butuh backend), baseline visual 1440/390 (S-UIP.4.1), tampilan di sidebar/halaman `tasks.$itemId` (lane 4), tombol "Go to full details" belum terpasang di `_app.tsx` (lane 4), lokasi di header sebagai chip terverifikasi hanya lewat tes lokasi.
+## UI parity lane 2: toolbar, kartu, tab view, Gantt (S-UIP.1.2, 1.3, 2.2, 2.3)
+
+Tanggal 14 Nov 2026, Playwright (Chromium, dev server port 4192 karena 4173 dipakai lane lain), data tiruan. Keputusan: D-120..D-123.
+
+| Cakupan | Tes | Hasil |
+|---|---|---|
+| Toolbar satu baris, popover Sort lulus axe, keadaan di URL (`sort`, `filter`) | `uip-lane2.spec.ts` toolbar | PASS |
+| Tab bersegmen: "..." hanya di tab aktif, urutan tab stop Table, Board, Board options, All views; "Add Gantt view" di dropdown All; axe | `uip-lane2.spec.ts` view tabs | PASS |
+| Kartu Board: chip status, avatar, durasi "(3d)", tanpa combobox; ubah status lewat menu kartu dan lewat seret; axe serius/kritis | `uip-lane2.spec.ts` Board card | PASS |
+| Table: chip status berwarna, avatar assignee | `uip-lane2.spec.ts` Table | PASS |
+| Gantt: kolom Status/Start/Due dapat dipilih, bar berwarna status dengan label "Design • Ann Lee", tombol zoom, tooltip bantuan keyboard, axe | `uip-lane2.spec.ts` Gantt | PASS |
+| Regresi terarah yang diubah ke kontrol baru | `views`, `view-presets`, `view-fields`, `board-lanes`, `m8-collections`, `gantt`, `calendar`, `pilot.a11y`, `m4-live` (hanya disesuaikan) | PASS |
+| Seluruh suite Playwright tiruan (terjalankan tak sengaja) | 447 tes | 446 PASS; `sso.spec.ts:34` gagal sekali, lulus pada ulang (tidak terkait) |
+
+`tsc -b` dan `eslint src` bersih. Tidak diuji: spesifikasi live (`m2-live` memerlukan backend; hanya tombol "Columns"/"Card fields" yang dirujuknya dan tetap ada), peramban selain Chromium. Tidak dikerjakan: label bar di luar ujung bar dan nama chip "Cards"/Expand/undo-redo dari referensi Wrike.
+## M12b lane 3 (UIP): My to-do, Inbox, tab Sent, widget daftar, 2FA
+
+| Uji | Hasil |
+|---|---|
+| Go integrasi `TestNotificationSentAndArchiveBoxes` + `TestNotification*` (Postgres `pms-pg-uip3`): Sent hanya milik sendiri, bukan notifikasi ke diri sendiri, item yang aksesnya dicabut tidak muncul, `box` tidak valid 422, kotak Archive tidak bocor ke orang lain, `unread_count` 0 di Sent | PASS |
+| Playwright `uip3-lists.spec.ts` (grup tanggal dengan jumlah, tambah cepat ke Space pribadi, tab Inbox/Sent/Archive + penerima, widget terkelompok + keadaan kosong, tanpa "Gantt spike", pesan 2FA non-admin tanpa `PMS_2FA_KEY`) dengan axe | PASS |
+| Regresi terarah: `todo`, `dr02-settings-menu`, `settings-nav`, `dashboards`, `navigation`, `ui-audit` (81 tes, 390 dan 1440) | PASS |
+| `tsc`, eslint (route, komponen), `gofmt`, `go vet`, `make gen` drift 0 | PASS |
+
+Tidak diuji: master-detail ≥ 1024 px secara visual (hanya kelas responsif), baseline visual, regresi penuh.
+## Lane 4 (sidebar dan shell): S-UIP.1.8, S-UIP.2.1, S-UIP.3.1 bagian A4/A5 (14 Nov 2026)
+
+Dijalankan sebagian (tanpa regresi penuh): Playwright berbasis mock, `npx tsc -b`, `npx eslint src`.
+
+| Tes | Hasil |
+|---|---|
+| `tests/uip4-sidebar.spec.ts` (baru, 5 tes): node Space (overview, Tools, + , ikon tipe, panah Atas/Bawah) + axe; halaman project header+view, Info membuka formulir, `/tasks/{id}` tetap; menu akun lima entri + petunjuk `⌘K`; More memuat Calendars/Created by me/Customize menu, kedua halaman + axe; status realtime tidak tampil saat terhubung | PASS |
+| `navigation` (entri tersembunyi mengikuti `sidebar_hidden`, termasuk Calendars) | PASS |
+| `spaces`, `items`, `dashboards` (papan analitik kini dari sidebar), `onboarding`, `settings-nav`, `dr02-settings-menu`, `m1-settings-recycle`, `two-factor`, `bookmarks-feedback`, `todo`, `screens.a11y` (terang dan gelap) | PASS (tes lama diperbarui ke tombol/ikon baru) |
+| `tsc -b`, `eslint src` | bersih |
+
+Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (lihat D-142); pemindahan fokus roving pohon (D-140); tampilan 390 px.
 ## Deploy `dev-lens` ke build `91d310e` (14 Nov 2026)
 
 - `main` = merge PR #10 (CI hijau: test, authorization-matrix, parity-e2e). Image `pms:91d310e` dibangun di `losaka-app` dari `git archive` main, backup `20261114T144353Z` sebelum ganti, `PMS_IMAGE` di `.env` server diubah dari `pms:1b76d3a`.

@@ -29,6 +29,7 @@ test("shows the hierarchy with progress, a milestone and the three scales", asyn
   await expect(page.getByRole("button", { name: "Months" })).toHaveAttribute("aria-pressed", "true");
   await expect.poll(width).toBeLessThan(weekWidth);
   await page.getByRole("button", { name: "Days" }).click();
+  await page.setViewportSize({ width: 1800, height: 900 }); // the Status/Start/Due grid columns push today off a 1280px chart
   await expect(page.locator(".gantt-today").first()).toBeVisible();
 });
 

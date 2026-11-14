@@ -1419,6 +1419,101 @@ Prasyarat: S12.2.3 PASS. GA.1–GA.4 tidak berubah isinya; hanya posisinya yang 
 - [ ] Sesi pelatihan admin dan pengguna; catat pertanyaan
 - [ ] Serah terima runbook dan kontak dukungan
 
+## M12b — Kesetaraan tampilan FE (UIP, dari [GAP_TAMPILAN_FE_VS_SCREEN.md](GAP_TAMPILAN_FE_VS_SCREEN.md))
+
+Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tidak ada story di sini yang mengubah API kecuali S-UIP.1.6 (tab Sent). Prasyarat tiap story: tes Playwright dan axe untuk rute yang diubah; baseline visual 1440 dan 390 px diperbarui di akhir batch.
+
+### Batch 1 — alur harian (P1)
+
+**S-UIP.1.1 Panel detail item dengan chip edit langsung (gap C1) — 6 hari**
+- [x] [FE] Status, assignee, tanggal, importance menjadi chip sebaris yang menyimpan saat dipilih (PATCH `If-Match`, toast saat gagal atau konflik)
+- [x] [FE] Tombol Save hanya untuk Name dan deskripsi; effort, progress, dan custom field di bagian "More fields" yang dilipat
+- [x] [FE] Komposer komentar menempel di dasar panel; "Go to full details" dan salin tautan
+- [x] [TEST] Urutan `BLOCK_ORDER` dan tata letak per tipe (CUST-04) tetap berlaku; axe dan fokus keyboard pada chip
+
+**S-UIP.1.2 Toolbar view satu baris (gap B3) — 3 hari**
+- [x] [FE] Chip Filter, Sort, Group, Columns, Cards dengan popover; keadaan tetap di parameter URL
+- [x] [FE] Pencarian teks sebagai kotak kecil di ujung baris
+- [x] [TEST] Tes view yang ada tetap lulus; axe popover
+- Catatan: D-120; bukti: TESTING.md bagian "UI parity lane 2"
+
+**S-UIP.1.3 Kartu Board dan baris Table (gap B4, B5) — 4 hari**
+- [x] [FE] Komponen `StatusChip` (warna dari workflow) dan `AvatarStack`
+- [x] [FE] Kartu Board: header kolom berwarna, ikon tipe, avatar, rentang tanggal dengan durasi, penghitung subitem; `<select>` status dihapus dari kartu
+- [x] [FE] Table: status berupa chip, assignee berupa avatar
+- [x] [TEST] Ubah status lewat seret dan lewat menu kartu; axe
+- Catatan: D-121; bukti: TESTING.md bagian "UI parity lane 2"
+
+**S-UIP.1.4 My to-do berkelompok (gap D1) — 3 hari**
+- [x] [FE] Pengelompokan menurut urutan yang dipilih (status atau tanggal) dengan jumlah di judul grup
+- [x] [FE] Baris tambah cepat dengan pemilih tipe (`POST /items` ke Space pribadi)
+- [x] [FE] Menu opsi tampilan: kartu satu atau dua baris, daftar datar atau hierarki, tampilkan durasi
+- [x] [TEST] Pengelompokan, tambah cepat, axe
+
+**S-UIP.1.5 Inbox dua panel (gap D2) — 3 hari**
+- [x] [FE] Tab Incoming dan Archive, pengelompokan Today dan tanggal, titik belum dibaca, keadaan kosong
+- [x] [FE] Master-detail di lebar ≥ 1024 px; layar penuh di bawahnya
+- [x] [TEST] Tab, tandai dibaca, arsip, axe
+
+**S-UIP.1.6 Tab Sent di Inbox (gap D2) — 2 hari**
+- [x] [API] Daftar notifikasi atau pesan yang dikirim pengguna (kebijakan dan paginasi)
+- [x] [FE] Tab Sent
+- [x] [TEST] Hanya milik sendiri; tidak membocorkan item tersembunyi
+
+**S-UIP.1.7 Bersihkan sisa pengembangan di UI (gap A6) — 0,5 hari**
+- [x] [FE] Hapus tautan "Gantt spike" dari navigasi Settings produksi
+- [x] [FE] Pesan 2FA netral untuk non-admin; nama variabel lingkungan hanya untuk admin
+- [x] [TEST] Tes navigasi Settings
+
+**S-UIP.1.8 Sidebar per Space dan halaman project (gap A1, B1) — 6 hari**
+- [x] [FE] Isi Space di sidebar: Space overview, Tools (Dashboard dan papan analitik), Projects and folders dengan tombol +, ikon tipe; Shared with me dan Blueprints di sidebar
+- [x] [FE] Halaman project berbentuk header + view; detail item pindah ke panel "Info"
+- [x] [FE] Pindahkan pembuatan papan analitik Space ke Tools (gap E4)
+- [x] [TEST] Navigasi keyboard pohon, rute lama `/tasks/{id}` tetap bekerja, axe
+
+### Batch 2 — kematangan (P2)
+
+**S-UIP.2.1 Menu More dan status realtime (gap A2, A3) — 1,5 hari**
+- [x] [FE] Tambah Calendars, Created by me, dan layar Customize menu (memakai `sidebar_hidden`)
+- [x] [FE] Status realtime hanya tampil saat terputus
+- [x] [TEST] Entri tersembunyi mengikuti pengaturan profil
+
+**S-UIP.2.2 Tab view bersegmen (gap B2) — 1 hari**
+- [x] [FE] Kontrol bersegmen; tombol "..." hanya pada tab aktif; "Add view" di dropdown "All"
+- [x] [TEST] Urutan tab stop dan axe
+- Catatan: D-122; bukti: TESTING.md bagian "UI parity lane 2"
+
+**S-UIP.2.3 Gantt berkolom dan berwarna (gap B6) — 3 hari**
+- [x] [FE] Kolom Status, Start, Due dapat dipilih di Gantt (sekarang hanya custom field)
+- [x] [FE] Warna bar menurut status, label assignee, tombol zoom +/- ; bantuan keyboard dipindah ke tooltip
+- [x] [TEST] Gantt yang ada (drag, dependensi, baseline) tetap lulus; kontras axe
+- Catatan: D-123; bukti: TESTING.md bagian "UI parity lane 2"
+
+**S-UIP.2.4 Toolbar dashboard (gap E1) — 3 hari**
+- [x] [FE] Judul dengan dropdown pindah dashboard; popover layout bergambar (Vertical, Horizontal); tindakan Share
+- [x] [TEST] Pindah dashboard dan ubah layout; axe
+
+**S-UIP.2.5 Widget daftar berkelompok (gap E2) — 2 hari**
+- [x] [FE] Widget task list dikelompokkan menurut tanggal tenggat dengan chip status (avatar menunggu data assignee di `WidgetData`, lihat D-130)
+- [x] [TEST] Pengelompokan dan keadaan kosong
+
+**S-UIP.2.6 Editor widget dua panel (gap E3) — 3 hari**
+- [x] [FE] Pratinjau di kiri, tab Data, Design, Filters di kanan
+- [x] [TEST] Pratinjau mengikuti perubahan; axe
+
+### Batch 3 — kosmetik (P3)
+
+**S-UIP.3.1 Rapikan pintu masuk dan duplikasi (gap A4, A5, C2, C3) — 1,5 hari**
+- [x] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
+- [x] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
+- [x] [TEST] Tes yang menunjuk tombol lama diperbarui
+
+### Penutup
+
+**S-UIP.4.1 Verifikasi visual dan dokumen — 2 hari**
+- [x] [TEST] Baseline visual Playwright per rute (1440 dan 390 px) dan axe penuh — bukti tangkapan layar (bukan diff piksel, D-105) dan sapuan axe `ui-audit.spec.ts`
+- [x] [DOC] Perbarui [UI_AUDIT_REPORT.md](UI_AUDIT_REPORT.md) dan [UAT.md](UAT.md); ringkasan estimasi M7–M12 tidak diubah (story ini di luar rilis 1.0 sampai pemilik menyetujui)
+
 ## M13 — Backlog (di luar rilis 1.0, D-55)
 
 Tidak dipecah menjadi story dan tidak dihitung dalam parity rilis 1.0. Status WFP di matriks parity: `N/A_APPROVED` untuk 1.0 dengan rujukan D-55. Klaim parity rilis 1.0 wajib menyebut pengecualian ini.

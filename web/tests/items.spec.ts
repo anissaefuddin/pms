@@ -90,12 +90,12 @@ test("detail actions use latest ETag and add a subitem with a parent link", asyn
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").map((c) => c.headers["if-match"])).toEqual(['"1"', '"2"']);
   const description = page.locator('[contenteditable="true"][aria-label="Description"]');
   await description.fill("Agenda for the review");
-  await page.getByRole("heading", { name: "Design review" }).click();
+  await page.getByRole("heading", { name: "Comments" }).click();
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").at(-1)?.body.description?.content[0]?.content[0]?.text).toBe("Agenda for the review");
-  const assignees = page.getByRole("group", { name: "Assignees" });
+  await page.getByRole("button", { name: /^Assignees:/ }).click();
+  const assignees = page.getByRole("group", { name: "Assignees", exact: true });
   await assignees.getByRole("searchbox").fill("gra");
   await assignees.getByRole("button", { name: "Grace Hopper" }).click();
-  await page.getByRole("button", { name: "Save", exact: true }).last().click();
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").at(-1)?.body.assignee_ids).toEqual([grace.id]);
   await page.getByRole("button", { name: "Add subitem" }).click();
   const form = page.getByRole("dialog", { name: "Add subitem" });
@@ -134,6 +134,7 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
     [`DELETE ${itemPath}`]: { status: 204 },
   } });
   await page.goto(`/tasks/${parentId}`);
+  await page.getByRole("button", { name: "Info" }).click(); // the project page keeps its detail form in the Info panel
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("My draft");
   await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
   await expect(page.getByRole("alert").filter({ hasText: "Review the latest version" })).toBeVisible();
@@ -171,6 +172,7 @@ test("conflicted draft reapplies against the current ETag", async ({ page }) => 
     },
   } });
   await page.goto(`/tasks/${parentId}`);
+  await page.getByRole("button", { name: "Info" }).click();
   const title = page.getByRole("textbox", { name: "Name", exact: true });
   await title.fill("My draft");
   await title.press("Enter");

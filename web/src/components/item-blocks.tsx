@@ -28,7 +28,7 @@ export function ItemBlocks({ item, blocks }: { item: Item; blocks: Record<BlockK
   });
   const rest = BLOCK_ORDER.filter((key) => !placed.has(key));
   return <>
-    {sections.filter((section) => section.keys.length).map((section) => <section key={section.title} className="space-y-3" aria-label={section.title}>
+    {sections.filter((section) => section.keys.some((key) => blocks[key] != null)).map((section) => <section key={section.title} className="space-y-3" aria-label={section.title}>
       <h2 className="border-b pb-1 text-sm font-semibold uppercase tracking-wide text-muted-foreground">{section.title}</h2>
       {section.keys.map((key) => <div key={key} className="contents">{blocks[key]}</div>)}
     </section>)}

@@ -163,9 +163,10 @@ test("adding a widget previews the draft and saves the config with If-Match", as
   const dialog = page.getByRole("dialog", { name: "Add widget" });
   await dialog.getByLabel("Widget name").fill("My donut");
   await dialog.getByLabel(/^Widget type/).selectOption("pie");
+  await dialog.getByLabel(/^Group by/).selectOption("importance");
+  await dialog.getByRole("tab", { name: "Design" }).click();
   await dialog.getByLabel(/^Pie style/).selectOption("ring");
   await dialog.getByLabel("Show labels").check();
-  await dialog.getByLabel(/^Group by/).selectOption("importance");
   await expect.poll(() => calls.filter((c) => c.path === "/analytics/query").at(-1)?.body?.group_by).toBe("importance");
   await expect(dialog.locator('[data-chart="pie"] svg')).toBeVisible(); // preview
   expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);
@@ -273,9 +274,9 @@ test("a Space gets a ready-made analytics board of five widgets", async ({ page 
     "POST /dashboards": (body: any) => ({ status: 201, body: { ...board({ widgets: [] }), name: body.name, version } }),
     [`POST /dashboards/${d1}/widgets`]: () => ({ status: 201, body: { ...board({ widgets: [] }), version: ++version } }),
   });
-  await page.goto("/dashboards");
-  await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // personal scope has no Space
-  await page.getByLabel("Show dashboards in").selectOption(marketing.id);
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // Tools only show once a Space is open
+  await page.getByRole("button", { name: "Expand Marketing" }).click();
   await page.getByRole("button", { name: "Create analytics board" }).click();
   await expect(page).toHaveURL(`/dashboards/${d1}`);
   const posts = calls.filter((c) => c.method === "POST" && c.path === `/dashboards/${d1}/widgets`);
@@ -291,8 +292,34 @@ test("a widget shows its description and the layout can switch to one column", a
   }, dash);
   await page.goto(`/dashboards/${d1}`);
   await expect(page.getByRole("region", { name: "Open" })).toContainText("Everything not done yet");
-  await page.getByLabel("Layout").selectOption("stack");
+  await page.getByRole("button", { name: "Layout" }).click();
+  await page.getByRole("button", { name: "Vertical" }).click();
   await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toEqual({ layout: "stack" });
   expect(calls.find((c) => c.method === "PATCH")?.headers["if-match"]).toBe('"3"');
   await expect(page.locator("main > div.grid").first()).not.toHaveClass(/lg:grid-cols-2/);
+});
+
+test("the title menu switches dashboard, the layout popover changes it, and the editor keeps preview beside Data, Design and Filters tabs", async ({ page }) => {
+  const calls = await mock(page, { [`PATCH /dashboards/${d1}`]: (body: any) => ({ body: { ...board(), ...body, version: 4 } }) });
+  await page.goto(`/dashboards/${d1}`);
+  await page.getByRole("button", { name: "Team board: switch dashboard" }).click();
+  await expect(page.getByRole("menuitem", { name: "Second" })).toHaveAttribute("href", `/dashboards/${d2}`);
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Layout" }).click();
+  await expect(page.getByRole("button", { name: "Horizontal" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Vertical" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toEqual({ layout: "stack" });
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("button", { name: "Share" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByRole("button", { name: "Actions for By status" }).click();
+  await page.getByRole("menuitem", { name: "Edit" }).click();
+  const dialog = page.getByRole("dialog", { name: "Edit widget" });
+  await expect(dialog.getByRole("region", { name: "Preview" })).toBeVisible();
+  await dialog.getByRole("tab", { name: "Filters" }).click();
+  await expect(dialog.getByRole("tabpanel")).toContainText("Filters");
+  await dialog.getByRole("tab", { name: "Design" }).click();
+  await dialog.getByLabel("Show labels").uncheck();
+  await expect(dialog.getByRole("region", { name: "Preview" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);
 });

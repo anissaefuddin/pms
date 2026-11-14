@@ -135,6 +135,16 @@
   "mentionSearch": "Find a user or group to mention",
   "followers": "Mention followers",
   "followersLabel": "Followers",
+  "chips": {
+    "group": "Item properties",
+    "noDates": "Add dates",
+    "noAssignee": "Unassigned",
+    "dates": "Dates: {{value}}",
+    "assignees": "Assignees: {{value}}",
+    "locations": "Locations: {{value}}",
+    "moreFields": "More fields",
+    "fullDetails": "Go to full details"
+  },
   "importance": {
     "label": "Importance",
     "high": "High",
@@ -247,5 +257,6 @@
   "proofResolved": "resolved",
   "proofResolve": "Resolve",
   "proofReopen": "Reopen",
-  "proofDelete": "Delete"
+  "proofDelete": "Delete",
+  "info": "Info"
 }

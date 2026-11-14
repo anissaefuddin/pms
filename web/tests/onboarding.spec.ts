@@ -60,6 +60,7 @@ test("DR-04: one Skip closes the wizard even when /me still reports it pending",
   await page.goto("/");
   await page.getByRole("button", { name: "Skip setup" }).click();
   await expect(page.getByRole("dialog", { name: "Set up your workspace" })).toBeHidden();
-  await page.getByRole("link", { name: "Settings" }).first().click();
+  await page.getByRole("button", { name: "Account menu" }).click();
+  await page.getByRole("menuitem", { name: "Settings" }).click();
   await expect(page.getByRole("dialog", { name: "Set up your workspace" })).toHaveCount(0);
 });

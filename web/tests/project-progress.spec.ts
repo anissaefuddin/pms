@@ -63,6 +63,8 @@ test("Project panel and Table refresh when a task changes inside an unloaded fol
   await expect(row.getByText("Yellow risk")).toBeVisible();
 
   await row.getByRole("button", { name: "Campaign", exact: true }).click();
+  await page.getByRole("button", { name: "Info" }).click(); // S-UIP.1.8: project detail lives in the Info panel
+  await page.getByText("More fields", { exact: true }).click();
   const panel = page.getByRole("region", { name: "Project progress" });
   await expect(panel.getByText("30%")).toBeVisible();
   const method = panel.getByRole("combobox", { name: "Progress method" });
@@ -97,6 +99,7 @@ test("Task manual progress accepts a bounded integer, can be cleared, and is 100
   } });
 
   await page.goto(`/tasks/${taskId}`);
+  await page.getByText("More fields", { exact: true }).click();
   const panel = page.getByRole("region", { name: "Task progress" });
   const percent = panel.getByRole("spinbutton", { name: "Manual progress (%)" });
   const save = panel.getByRole("button", { name: "Save progress" });
