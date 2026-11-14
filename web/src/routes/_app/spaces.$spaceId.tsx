@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import { SpaceExcelImport } from "@/components/space-excel-import";
 import { CustomFieldsDialog } from "@/components/custom-fields-dialog";
+import { CreateMenuDialog } from "@/components/create-menu-dialog";
 import { SpaceBookmarksDialog } from "@/components/space-bookmarks-dialog";
 import { SpaceDialog } from "@/components/space-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -57,6 +58,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const [managingFields, setManagingFields] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [bookmarks, setBookmarks] = useState(false);
+  const [menuConfig, setMenuConfig] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [pending, setPending] = useState(false);
@@ -117,11 +119,12 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
           {canEditForms && <Link to="/spaces/$spaceId/automation" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("automation.link")}</Link>}
           <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
-          {(canRename || canDelete || canManageFields || canCreate || canLock) && (
+          {(canRename || canDelete || canManageFields || canCreate || canLock || canEditForms) && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
+                {canEditForms && <DropdownMenuItem onClick={() => setMenuConfig(true)}>{t("spaces.createMenu.link")}</DropdownMenuItem>}
                 {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
                 {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
                 {canLock && <DropdownMenuItem onClick={() => void setLocked(!space.locked)}>{space.locked ? t("spaces.lock.unlock") : t("spaces.lock.lock")}</DropdownMenuItem>}
@@ -144,6 +147,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         onCreated={openItem} />}
       {importingExcel && <SpaceExcelImport open={importingExcel} onOpenChange={setImportingExcel} spaceId={space.id} />}
       {canManageFields && <CustomFieldsDialog open={managingFields} onOpenChange={setManagingFields} spaceId={space.id} />}
+      {canEditForms && <CreateMenuDialog spaceId={space.id} open={menuConfig} onOpenChange={setMenuConfig} />}
       <SpaceBookmarksDialog spaceId={space.id} canEdit={canEditForms} open={bookmarks} onOpenChange={setBookmarks} />
       <SpaceDialog open={renaming} onOpenChange={setRenaming} space={space} />
       {me && (

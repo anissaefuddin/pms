@@ -3319,6 +3319,18 @@ type ConnectorInstall struct {
 	SecretNames     []string               `json:"secret_names"`
 }
 
+// CreateMenu defines model for CreateMenu.
+type CreateMenu struct {
+	Items []struct {
+		Base    ItemType `json:"base"`
+		Enabled bool     `json:"enabled"`
+		Icon    string   `json:"icon"`
+		Key     string   `json:"key"`
+		Name    string   `json:"name"`
+	} `json:"items"`
+	Version int `json:"version"`
+}
+
 // CustomField defines model for CustomField.
 type CustomField struct {
 	ArchivedAt *time.Time          `json:"archived_at,omitempty"`
@@ -6010,6 +6022,17 @@ type UpdateSpaceBookmarkJSONBody struct {
 	Url         *string `json:"url,omitempty"`
 }
 
+// SetSpaceCreateMenuJSONBody defines parameters for SetSpaceCreateMenu.
+type SetSpaceCreateMenuJSONBody struct {
+	// Enabled Kunci tipe aktif
+	Enabled []string `json:"enabled"`
+}
+
+// SetSpaceCreateMenuParams defines parameters for SetSpaceCreateMenu.
+type SetSpaceCreateMenuParams struct {
+	IfMatch string `json:"If-Match"`
+}
+
 // ImportProjectExcelMultipartBody defines parameters for ImportProjectExcel.
 type ImportProjectExcelMultipartBody struct {
 	Commit *bool   `json:"commit,omitempty"`
@@ -6467,6 +6490,9 @@ type CreateSpaceBookmarkJSONRequestBody = SpaceBookmarkInput
 
 // UpdateSpaceBookmarkJSONRequestBody defines body for UpdateSpaceBookmark for application/json ContentType.
 type UpdateSpaceBookmarkJSONRequestBody UpdateSpaceBookmarkJSONBody
+
+// SetSpaceCreateMenuJSONRequestBody defines body for SetSpaceCreateMenu for application/json ContentType.
+type SetSpaceCreateMenuJSONRequestBody SetSpaceCreateMenuJSONBody
 
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldCreate
@@ -7508,6 +7534,12 @@ type ServerInterface interface {
 	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
 	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
 	UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID)
+	// GetSpaceCreateMenu Tipe item aktif untuk menu "+" sebuah Space (SPC-14), urutan default tipe; hak View
+	// (GET /spaces/{spaceId}/create-menu)
+	GetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// SetSpaceCreateMenu Pilih tipe yang muncul di menu "+" (hak Edit, If-Match versi Space). Hanya kemudahan UI; API tetap menerima tipe apa pun (D-99)
+	// (PUT /spaces/{spaceId}/create-menu)
+	SetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params SetSpaceCreateMenuParams)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -14532,6 +14564,86 @@ func (siw *ServerInterfaceWrapper) UpdateSpaceBookmark(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// GetSpaceCreateMenu operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceCreateMenu(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceCreateMenu(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetSpaceCreateMenu operation middleware
+func (siw *ServerInterfaceWrapper) SetSpaceCreateMenu(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params SetSpaceCreateMenuParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch string
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetSpaceCreateMenu(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListCustomFields operation middleware
 func (siw *ServerInterfaceWrapper) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 
@@ -16330,6 +16442,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/utilization", wrapper.GetUtilization)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.ListBaselines)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.CreateBaseline)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/create-menu", wrapper.GetSpaceCreateMenu)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/create-menu", wrapper.SetSpaceCreateMenu)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.ListSpaceBookmarks)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.CreateSpaceBookmark)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks/{bookmarkId}", wrapper.DeleteSpaceBookmark)
@@ -30610,6 +30724,126 @@ func (response UpdateSpaceBookmark422ApplicationProblemPlusJSONResponse) VisitUp
 	return err
 }
 
+type GetSpaceCreateMenuRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type GetSpaceCreateMenuResponseObject interface {
+	VisitGetSpaceCreateMenuResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceCreateMenu200JSONResponse CreateMenu
+
+func (response GetSpaceCreateMenu200JSONResponse) VisitGetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceCreateMenu404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceCreateMenu404ApplicationProblemPlusJSONResponse) VisitGetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenuRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Params  SetSpaceCreateMenuParams
+	Body    *SetSpaceCreateMenuJSONRequestBody
+}
+
+type SetSpaceCreateMenuResponseObject interface {
+	VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error
+}
+
+type SetSpaceCreateMenu200JSONResponse CreateMenu
+
+func (response SetSpaceCreateMenu200JSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetSpaceCreateMenu403ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceCreateMenu404ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu409ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceCreateMenu409ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceCreateMenu422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceCreateMenu422ApplicationProblemPlusJSONResponse) VisitSetSpaceCreateMenuResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCustomFieldsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -34327,6 +34561,12 @@ type StrictServerInterface interface {
 	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
 	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
 	UpdateSpaceBookmark(ctx context.Context, request UpdateSpaceBookmarkRequestObject) (UpdateSpaceBookmarkResponseObject, error)
+	// GetSpaceCreateMenu Tipe item aktif untuk menu "+" sebuah Space (SPC-14), urutan default tipe; hak View
+	// (GET /spaces/{spaceId}/create-menu)
+	GetSpaceCreateMenu(ctx context.Context, request GetSpaceCreateMenuRequestObject) (GetSpaceCreateMenuResponseObject, error)
+	// SetSpaceCreateMenu Pilih tipe yang muncul di menu "+" (hak Edit, If-Match versi Space). Hanya kemudahan UI; API tetap menerima tipe apa pun (D-99)
+	// (PUT /spaces/{spaceId}/create-menu)
+	SetSpaceCreateMenu(ctx context.Context, request SetSpaceCreateMenuRequestObject) (SetSpaceCreateMenuResponseObject, error)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(ctx context.Context, request ListCustomFieldsRequestObject) (ListCustomFieldsResponseObject, error)
@@ -41281,6 +41521,66 @@ func (sh *strictHandler) UpdateSpaceBookmark(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateSpaceBookmarkResponseObject); ok {
 		if err := validResponse.VisitUpdateSpaceBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpaceCreateMenu operation middleware
+func (sh *strictHandler) GetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GetSpaceCreateMenuRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceCreateMenu(ctx, request.(GetSpaceCreateMenuRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceCreateMenu")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceCreateMenuResponseObject); ok {
+		if err := validResponse.VisitGetSpaceCreateMenuResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetSpaceCreateMenu operation middleware
+func (sh *strictHandler) SetSpaceCreateMenu(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params SetSpaceCreateMenuParams) {
+	var request SetSpaceCreateMenuRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	var body SetSpaceCreateMenuJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetSpaceCreateMenu(ctx, request.(SetSpaceCreateMenuRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetSpaceCreateMenu")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetSpaceCreateMenuResponseObject); ok {
+		if err := validResponse.VisitSetSpaceCreateMenuResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

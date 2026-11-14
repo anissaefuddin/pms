@@ -11,8 +11,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
-import { useItemTypes } from "@/lib/item-types";
+import { useItemTypes, type ItemTypeDef } from "@/lib/item-types";
 import { useBlueprints } from "@/lib/blueprints";
+import { menuAllows, useCreateMenu } from "@/lib/create-menu";
+import { TypeIcon } from "@/components/type-icon";
 import { ItemDates } from "@/components/item-dates";
 
 type Props = {
@@ -42,7 +44,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const queryClient = useQueryClient();
   const spaces = useSpaces();
   const fixedParent = location?.parent_item_id;
-  const [kind, setKind] = useState<ItemType>(fixedParent || taskOnly ? "task" : "project");
+  const [chosenKind, setKind] = useState<ItemType>(fixedParent || taskOnly ? "task" : "project");
   const [spaceID, setSpaceID] = useState(location?.space_id ?? me.personal_space_id);
   const [parentID, setParentID] = useState(fixedParent ?? "");
   const [trail, setTrail] = useState<Item[]>([]);
@@ -52,8 +54,17 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [fieldError, setFieldError] = useState<"title" | "due_date" | "locations" | null>(null);
   const [busy, setBusy] = useState(false);
   const [blueprintID, setBlueprintID] = useState("");
-  const [typeKey, setTypeKey] = useState("");
-  const customTypes = (useItemTypes().data ?? []).filter((def) => !def.is_builtin && def.active && def.base === kind);
+  const [typeKeyChoice, setTypeKey] = useState("");
+  const typeDefs = useItemTypes().data ?? [];
+  // SPC-14: the Space's "+" menu narrows what is offered; a fixed parent or the board's task-only add is not a menu.
+  const menu = useCreateMenu(spaceID, !fixedParent && !taskOnly).data;
+  const offered = (def: ItemTypeDef) => fixedParent || taskOnly || menuAllows(menu, def.key);
+  const customOf = (base: ItemType) => typeDefs.filter((def) => !def.is_builtin && def.active && def.base === base && offered(def));
+  const kinds = itemTypes.filter((base) => menuAllows(menu, base) || customOf(base).length > 0);
+  const kind = kinds.includes(chosenKind as (typeof itemTypes)[number]) || fixedParent || taskOnly ? chosenKind : kinds[0] ?? chosenKind;
+  const customTypes = customOf(kind);
+  const baseHidden = !fixedParent && !taskOnly && !menuAllows(menu, kind);
+  const typeKey = customTypes.some((def) => def.key === typeKeyChoice) ? typeKeyChoice : baseHidden ? customTypes[0]?.key ?? "" : "";
   const choices = spaces.data?.filter((space) => space.my_capabilities?.includes("create")) ?? [];
   const selected = choices.find((space) => space.id === spaceID);
   const directory = trail.at(-1);
@@ -160,24 +171,30 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
           </div>
           {!taskOnly && !blueprint && <fieldset className="flex gap-3">
             <legend>{t("items.type")}</legend>
-            {itemTypes.map((type) => <label className="flex items-center gap-1" key={type}>
+            {kinds.map((type) => <label className="flex items-center gap-1" key={type}>
               <input type="radio" name="kind" checked={type === kind} onChange={() => { setKind(type); setTypeKey(""); }} />{t(`items.${type}`)}
             </label>)}
           </fieldset>}
-          {!blueprint && customTypes.length > 0 && <label className="block space-y-1"><span>{t("items.type.label")}</span>
+          {!blueprint && (customTypes.length > 1 || (customTypes.length > 0 && !baseHidden)) && <label className="block space-y-1"><span>{t("items.type.label")}</span>
             <select value={typeKey} onChange={(event) => setTypeKey(event.target.value)} className="block w-full rounded border bg-background p-2">
-              <option value="">{t(`items.${kind}`)}</option>
+              {!baseHidden && <option value="">{t(`items.${kind}`)}</option>}
               {customTypes.map((def) => <option key={def.key} value={def.key}>{def.name}</option>)}
             </select></label>}
           {kind !== "task" && <p>{t("items.workflow")}: {t("items.defaultWorkflow")}</p>}
         </>}
-        {blueprints.length > 0 && <label className="block space-y-1"><span>{t("blueprints.from")}</span>
-          <select value={blueprintID} onChange={(e) => setBlueprintID(e.target.value)} className="block w-full rounded border bg-background p-2">
-            <option value="">{t("blueprints.none")}</option>
-            {blueprints.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
-          </select>
+        {blueprints.length > 0 && <fieldset className="space-y-1">
+          <legend>{t("blueprints.from")}</legend>
+          <label className="flex items-center gap-2"><input type="radio" name="blueprint" checked={!blueprint} onChange={() => setBlueprintID("")} />{t("blueprints.none")}</label>
+          {blueprints.map((entry) => {
+            const def = typeDefs.find((d) => d.key === entry.item_type);
+            return <label key={entry.id} className="flex items-center gap-2">
+              <input type="radio" name="blueprint" checked={entry.id === blueprintID} onChange={() => setBlueprintID(entry.id)} />
+              <TypeIcon name={def?.icon} />{entry.name}
+              <small className="text-muted-foreground">{t("blueprints.typeLine", { type: def?.name ?? entry.item_type, count: entry.item_count })}</small>
+            </label>;
+          })}
           {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
-        </label>}
+        </fieldset>}
       </div>
       <div className="space-y-3">
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}

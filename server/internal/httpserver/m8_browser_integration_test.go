@@ -29,3 +29,15 @@ func TestBrowserM8Flows(t *testing.T) {
 		"PMS_FIXTURE_M8_WORK="+work, "PMS_FIXTURE_M8_TASK="+task.body["id"].(string),
 	)
 }
+
+// SPC-14 live: the Space "+" menu toggled in a real browser.
+func TestBrowserCreateMenu(t *testing.T) {
+	if os.Getenv("PMS_TEST_BROWSER") != "1" {
+		t.Skip("set PMS_TEST_BROWSER=1 to run the browser against the PostgreSQL fixture")
+	}
+	f := newFixture(t)
+	admin := f.person("admin")
+	space := f.space("Menu Space")
+	f.share(space, "user", admin.id, "full")
+	runBrowserFixture(t, f, []string{"create-menu-live.spec.ts"}, "PMS_FIXTURE_MENU_ADMIN="+admin.cookie.String(), "PMS_FIXTURE_MENU_SPACE="+space)
+}

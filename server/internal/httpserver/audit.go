@@ -27,6 +27,7 @@ const (
 	auditUserType          = "user.type_changed"
 	auditSpaceLocked       = "policy.space_locked"
 	auditSpaceUnlocked     = "policy.space_unlocked"
+	auditCreateMenu        = "space.create_menu_changed"
 	auditUserDeactivated   = "user.deactivated"
 	auditUserReactivated   = "user.reactivated"
 	auditShareSpace        = "share.space_changed"

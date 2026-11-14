@@ -59,6 +59,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/create-menu": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Tipe item aktif untuk menu "+" sebuah Space (SPC-14), urutan default tipe; hak View */
+        get: operations["getSpaceCreateMenu"];
+        /** Pilih tipe yang muncul di menu "+" (hak Edit, If-Match versi Space). Hanya kemudahan UI; API tetap menerima tipe apa pun (D-99) */
+        put: operations["setSpaceCreateMenu"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/spaces/{spaceId}/bookmarks": {
         parameters: {
             query?: never;
@@ -5077,6 +5097,16 @@ export interface components {
          * @enum {string}
          */
         FormAccess: "private" | "internal";
+        CreateMenu: {
+            version: number;
+            items: {
+                key: string;
+                name: string;
+                icon: string;
+                base: components["schemas"]["ItemType"];
+                enabled: boolean;
+            }[];
+        };
         Blueprint: {
             /** Format: uuid */
             id: string;
@@ -6048,6 +6078,64 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getSpaceCreateMenu: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateMenu"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    setSpaceCreateMenu: {
+        parameters: {
+            query?: never;
+            header: {
+                "If-Match": string;
+            };
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @description Kunci tipe aktif */
+                    enabled: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CreateMenu"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

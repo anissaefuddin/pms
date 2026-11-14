@@ -908,3 +908,14 @@ Branch `claude/m8-backend-types-4d7ae8`. Migrasi `00312_item_type_fields.sql`.
 - Terbuka: S8.1.1 sqlc (D-61, sengaja); E2E-PAR-05 (routing form ke Blueprint belum ada, lihat TASKS).
 - Kebutuhan UI (jalur M8-2/M8-3): layar admin pasangan tipe↔field dan default; filter tipe di search/laporan (`type_key`, `type_keys`, `item_type`); kolom `type_key` di impor/ekspor.
 - PASS (hasil nyata, Postgres khusus port 55461). `go test ./... -count=1 -timeout 40m`: 22 paket `ok`, tidak ada FAIL (`httpserver` 70 s). `scripts/parity-e2e.sh 05-08`: 7 tes PASS. `gofmt -l`, `go vet ./...`, `make gen` (tanpa drift di luar perubahan ini), `npm run typecheck`, `npm run lint` bersih. Run awal di Postgres bersama sempat mati (timeout 10 m, lalu `signal: terminated`) karena beban sesi paralel, bukan kegagalan tes.
+
+
+## S8.1.5 menu "+" per Space dan menu blueprint (14 Nov 2026)
+
+Branch `claude/m8-create-menu-6568b4`. Keputusan: D-99. Migrasi 00320.
+
+- PASS. **Toggle menu "+"** `TestSpaceCreateMenu` (PostgreSQL): viewer membaca (200), orang luar 404 (baca dan tulis), viewer menulis 403, tanpa If-Match 428, tipe tak dikenal 422, daftar kosong 422, versi basi 409, daftar mengikuti toggle, `POST /items` untuk tipe yang disembunyikan tetap 201, satu baris audit `space.create_menu_changed`.
+- PASS. **UI mock** `create-menu.spec.ts` (dialog toggle, PUT dengan If-Match, dialog buat item hanya menawarkan tipe aktif, blueprint tampil dengan ikon, nama, tipe; axe bersih) dan `blueprints.spec.ts` (kini memilih radio blueprint). `spaces.spec.ts` diperbarui: pengguna Edit melihat item "“+” menu". **Live** `TestBrowserCreateMenu` + `create-menu-live.spec.ts` (Chromium + PostgreSQL): admin menyembunyikan Folder lewat UI, dialog tidak menawarkannya, API tetap membuat folder.
+- **Uji mutasi (semua GAGAL, lalu dikembalikan):** menu selalu `enabled:true` → `TestSpaceCreateMenu` gagal; UPDATE tanpa cek versi → "stale version want 409"; `menuAllows` selalu true di FE → `create-menu.spec.ts` gagal. Aturan "API tetap membuat tipe tersembunyi" dijaga assert 201 (tidak dimutasi).
+- Verifikasi: `gofmt`, `go vet`, `make gen`, typecheck, lint bersih. Pada Postgres khusus (port 55463, commit 69a7331): **Go penuh `go test ./... -count=1` semua 22 paket `ok`** (`httpserver` 61,9 dtk, 0 FAIL) dan **Playwright penuh 396 lulus, 0 gagal** (4,1 menit, `--workers=2`). Run pertama dengan Postgres bersama gagal/habis waktu karena beban, bukan karena kode.
+- Tidak dicek: ikon tipe kustom selain tiga bawaan memakai ikon generik.
