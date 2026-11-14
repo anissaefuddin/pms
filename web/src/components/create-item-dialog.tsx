@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { LayoutGrid, Table2 } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
@@ -199,10 +200,12 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       <div className="space-y-3">
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}
         {kind !== "folder" && <ItemDates invalid={fieldError === "due_date"} />}
-        {kind !== "task" && <fieldset className="flex gap-3">
-          <legend>{t("items.view")}</legend>
-          {viewTypes.map((view) => <label key={view} className="flex items-center gap-1 rounded border p-2">
-            <input type="radio" name="default_view_type" value={view} defaultChecked={view === "table"} />{t(`items.${view}`)}
+        {kind !== "task" && <fieldset className="space-y-2">
+          <legend className="font-medium">{t("items.view")}</legend>
+          {viewTypes.map((view) => <label key={view} className="flex cursor-pointer items-start gap-3 rounded-lg border p-3 has-[:checked]:border-primary has-[:checked]:bg-primary/5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring">
+            <input type="radio" name="default_view_type" value={view} aria-label={t(`items.${view}`)} defaultChecked={view === "table"} className="mt-1" />
+            {view === "table" ? <Table2 className="size-5 shrink-0" aria-hidden /> : <LayoutGrid className="size-5 shrink-0" aria-hidden />}
+            <span><span className="block font-medium" aria-hidden>{t(`items.${view}`)}</span><span className="block text-sm text-muted-foreground">{t(`items.${view}Hint`)}</span></span>
           </label>)}
         </fieldset>}
       </div>

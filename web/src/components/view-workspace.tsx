@@ -177,12 +177,12 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
     {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? (items.isSuccess ? <ProjectChart items={items.data} /> : <p role="status">{t("items.loading")}</p>) : isGantt ? <>
-      {!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
-        fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />}
+      <ViewToolbar filterOnly {...toolbar} columns={!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
+        fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />} />
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
-        <ItemGantt items={items.data} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen}
+        <ItemGantt items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
           customFields={customFields} columns={visibleColumns(active.config, false)}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
@@ -210,8 +210,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
         : active.type === "board"
         ? <ItemBoard {...collection} swimlanes={swimlanes} />
         : <ItemTable {...collection} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
-      {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-        taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
     </>}
+    {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
+      taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
   </section>;
 }

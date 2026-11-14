@@ -10,3 +10,9 @@ export function TypeBadge({ item }: { item: Pick<Item, "item_type"> }) {
   const Icon = icons[type.icon] ?? Circle;
   return <span className="inline-flex items-center gap-1" data-item-type={type.key}><Icon className="size-3 shrink-0" aria-hidden />{type.name}</span>;
 }
+
+/** Icon only, decorative: the type name is already shown as text elsewhere on the row or card. */
+export function TypeGlyph({ item, className = "size-4" }: { item: Pick<Item, "item_type">; className?: string }) {
+  const Icon = icons[item.item_type?.icon ?? ""] ?? Circle;
+  return <Icon className={`${className} shrink-0`} aria-hidden />;
+}

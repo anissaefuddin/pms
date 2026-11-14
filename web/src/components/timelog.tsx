@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/auth/form-error";
 import { api } from "@/lib/api";
@@ -29,30 +31,37 @@ export function Timelog({ project }: { project: string }) {
     setFilter({ ...filter, [key]: value });
   }
   return <section aria-label={t("time.timelog")} className="min-w-0 space-y-3">
-    <div className="flex flex-wrap items-end gap-3">
-      {dateFilters.map((key) => <label key={key} className="space-y-1">
-        <span>{t(key === "category" ? "time.category" : `time.${key}Date`)}</span>
-        <Input type={key === "category" ? "text" : "date"} value={filter[key]} onChange={(event) => change(key, event.target.value)} />
-      </label>)}
-      <label className="grid gap-1">{t("time.billing")}
-        <select className={selectClass} value={filter.billing_type} onChange={(e) => change("billing_type", e.target.value)}>
-          <option value="">{t("time.all")}</option>
-          <option value="billable">{t("time.billable")}</option>
-          <option value="non_billable">{t("time.non_billable")}</option>
-        </select>
-      </label>
-      <label className="grid gap-1">{t("time.locked")}
-        <select className={selectClass} value={filter.locked} onChange={(e) => change("locked", e.target.value)}>
-          <option value="">{t("time.all")}</option>
-          <option value="true">{t("time.locked")}</option>
-          <option value="false">{t("time.unlocked")}</option>
-        </select>
-      </label>
-      <label className="grid gap-1">{t("time.sort")}
-        <select className={selectClass} value={filter.sort} onChange={(e) => change("sort", e.target.value)}>
-          {Object.entries(sorts).map(([key, value]) => <option key={key} value={key}>{t(`time.${value}`)}</option>)}
-        </select>
-      </label>
+    <div role="toolbar" aria-label={t("views.toolbar")} className="flex flex-wrap items-center gap-2">
+      <Popover>
+        <PopoverTrigger render={<Button variant={filter.from || filter.to || filter.category || filter.billing_type || filter.locked ? "secondary" : "outline"} size="sm" />}><Filter />{t("views.chip.filter")}</PopoverTrigger>
+        <PopoverContent align="start" aria-label={t("views.options", { name: t("views.chip.filter") })} className="w-72">
+    <div className="space-y-3">
+        {dateFilters.map((key) => <label key={key} className="space-y-1">
+          <span>{t(key === "category" ? "time.category" : `time.${key}Date`)}</span>
+          <Input type={key === "category" ? "text" : "date"} value={filter[key]} onChange={(event) => change(key, event.target.value)} />
+        </label>)}
+        <label className="grid gap-1">{t("time.billing")}
+          <select className={selectClass} value={filter.billing_type} onChange={(e) => change("billing_type", e.target.value)}>
+            <option value="">{t("time.all")}</option>
+            <option value="billable">{t("time.billable")}</option>
+            <option value="non_billable">{t("time.non_billable")}</option>
+          </select>
+        </label>
+        <label className="grid gap-1">{t("time.locked")}
+          <select className={selectClass} value={filter.locked} onChange={(e) => change("locked", e.target.value)}>
+            <option value="">{t("time.all")}</option>
+            <option value="true">{t("time.locked")}</option>
+            <option value="false">{t("time.unlocked")}</option>
+          </select>
+        </label>
+        <label className="grid gap-1">{t("time.sort")}
+          <select className={selectClass} value={filter.sort} onChange={(e) => change("sort", e.target.value)}>
+            {Object.entries(sorts).map(([key, value]) => <option key={key} value={key}>{t(`time.${value}`)}</option>)}
+          </select>
+        </label>
+      </div>
+        </PopoverContent>
+      </Popover>
     </div>
     <FormError message={result.error?.message ?? ""} />
     {result.isPending && <p role="status">{t("items.loading")}</p>}
@@ -73,6 +82,7 @@ export function Timelog({ project }: { project: string }) {
         </tr>)}</tbody>
       </table>
     </div>}
+    {!!result.data?.items.length && <p className="text-sm text-muted-foreground">{t("time.pageTotal", { count: result.data.items.length, time: formatMinutes(result.data.items.reduce((sum, entry) => sum + (entry.minutes ?? 0), 0)) })}</p>}
     {(offset > 0 || result.data?.next_offset != null) && <div className="flex gap-2">
       <Button variant="outline" disabled={!offset || result.isPending} onClick={() => setOffset(Math.max(0, offset - pageSize))}>{t("time.previousPage")}</Button>
       <Button variant="outline" disabled={result.data?.next_offset == null} onClick={() => setOffset(result.data?.next_offset ?? offset)}>{t("time.nextPage")}</Button>

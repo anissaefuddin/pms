@@ -1099,3 +1099,15 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 ## UIP2-A: detail item pass 2
 
 Playwright mock: `items.spec` (tes baru "UIP2-A"), `approvals`, `share`, `item-effort`, `item-locations`, `item-custom-fields`, `blueprints`, `ui-audit` (axe 1440/390): 111 lulus; `tsc --noEmit` dan eslint bersih. Tes live Go belum dijalankan.
+## Pass 2 lane B: view Table/Board/Gantt/Calendar/Timelog dan dialog pembuatan (15 Nov 2026)
+
+Gap dan keputusan: [GAP_SCREEN_PASS2_B.md](GAP_SCREEN_PASS2_B.md), D-160..D-164. Tanpa API/migrasi baru. Data lihat: seed ITA (158 item) di Postgres `pms-pgB`; Board, Gantt, Timelog dan popover diperiksa manual di browser pane.
+
+| Bukti | Hasil |
+|---|---|
+| `tests/uip2-b.spec.ts` (baru, 4 tes): kartu Board (ikon tipe sebaris judul, avatar dan tanggal sebaris, footer subitem) + axe; Table (ikon tipe, baris "Add item" selebar tabel, ikon pada tab view); Calendar (chip `bg-amber-100`) + axe; Gantt (toolbar chip Filter/Columns, kotak warna status, "Add item" membuka dialog) | PASS |
+| Tes mock terdampak: `board-lanes`, `gantt`, `calendar`, `m8-collections`, `items`, `onboarding`, `dr08-calendar-effort`, `project-progress`, `pilot.a11y`, `screens.a11y` (terang dan gelap), `spaces`, `uip-lane2`, `view-presets`, `view-fields`, `views`, `create-menu`, `project-excel`, `uip-lane1`, `uip-lane4` | PASS (69 + 21 + 10; `views.spec` diperbarui: Gantt kini memiliki toolbar filter, asersi 0 menjadi 1) |
+| Live Go `PMS_TEST_BROWSER=1`: `TestBrowserM2Flows` (kolom custom field di Table/Board/Gantt, drag Calendar dan lane), `TestBrowserM3Flows`, `TestBrowserM8Flows`, `TestBrowserCreateMenu` | PASS. Satu kali `m2-live` flow 2 gagal pada run pertama (kolom "Card fields" Board belum tersimpan saat `page.goto` berikutnya: balapan di tes, bukan di UI); diulang dua kali, keduanya PASS |
+| `tsc -b`, `eslint src` | bersih |
+
+Tidak diuji: `m4-live` (Timelog dengan data nyata, filter kini di popover; hanya membaca tabel sehingga tidak terdampak) dan `pilot-live`/`project-progress-live` (butuh fixture terpisah); populasi Timelog tidak diperiksa di browser karena seed ITA tidak punya time entry; mobile 390 px; layout lane Board dengan data multi-assignee.
