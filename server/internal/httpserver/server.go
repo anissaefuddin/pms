@@ -663,6 +663,12 @@ func (s *Server) csrf(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+		// The SAML answer is a form posted by the identity provider's page, so its Origin is the provider's. It carries no ambient authority:
+		// it is only accepted together with the single-use state and the browser cookie that started the sign-in.
+		if r.URL.Path == "/api/v1/auth/sso/saml/acs" {
+			next.ServeHTTP(w, r)
+			return
+		}
 		origin := r.Header.Get("Origin")
 		if origin == "" || strings.TrimRight(origin, "/") != s.cfg.PublicURL {
 			writeError(w, 403, "invalid request origin")

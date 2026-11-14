@@ -128,11 +128,16 @@ type State struct {
 func (s Store) NewState(ctx context.Context, providerID, purpose, userID, next string) (state, browser string, st State, err error) {
 	state, browser = RandomToken(32), RandomToken(32)
 	st = State{ProviderID: providerID, Nonce: RandomToken(24), Verifier: RandomToken(48), Purpose: purpose, Next: next, UserID: userID}
+	return state, browser, st, s.SaveState(ctx, state, browser, st)
+}
+
+// SaveState stores a flow whose values the caller chose (SAML keeps the ID of its request in Nonce, because the request is built from the state).
+func (s Store) SaveState(ctx context.Context, state, browser string, st State) error {
 	_, _ = s.Pool.Exec(ctx, "DELETE FROM sso_states WHERE expires_at < now()") // housekeeping: expired flows are useless
-	_, err = s.Pool.Exec(ctx, `INSERT INTO sso_states(state_hash,browser_hash,provider_id,nonce,code_verifier,purpose,user_id,next,expires_at)
+	_, err := s.Pool.Exec(ctx, `INSERT INTO sso_states(state_hash,browser_hash,provider_id,nonce,code_verifier,purpose,user_id,next,expires_at)
 VALUES ($1,$2,$3::uuid,$4,$5,$6,NULLIF($7,'')::uuid,$8,$9)`,
-		security.TokenHash(state), security.TokenHash(browser), providerID, st.Nonce, st.Verifier, purpose, userID, next, time.Now().Add(StateTTL))
-	return state, browser, st, err
+		security.TokenHash(state), security.TokenHash(browser), st.ProviderID, st.Nonce, st.Verifier, st.Purpose, st.UserID, st.Next, time.Now().Add(StateTTL))
+	return err
 }
 
 // TakeState consumes the flow: it is deleted whether or not the rest of the sign-in succeeds, so a state works once.

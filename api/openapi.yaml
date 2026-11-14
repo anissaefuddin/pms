@@ -838,12 +838,42 @@ paths:
                       type: object
                       required: [kind, name]
                       properties:
-                        kind: { type: string, enum: [oidc] }
+                        kind: { type: string, enum: [oidc, saml] }
                         name: { type: string }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/sso/saml/acs:
+    post:
+      operationId: samlAssertionConsumer
+      summary: Tujuan jawaban SAML dari penyedia (form POST lintas situs; satu-satunya rute yang tidak memeriksa Origin). Diikat ke state sekali pakai dan cookie browser; sukses mengalihkan ke next, gagal ke /login?sso_error=<alasan>
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/x-www-form-urlencoded:
+            schema:
+              type: object
+              required: [SAMLResponse, RelayState]
+              properties:
+                SAMLResponse: { type: string, description: Base64 dari XML Response bertanda tangan }
+                RelayState: { type: string }
+      responses:
+        '302': { description: "Alasan gagal: state, failed, unavailable, unlinked, unverified, inactive, domain, session, already_linked" }
+        '429': { $ref: '#/components/responses/RateLimited' }
+  /auth/sso/saml/metadata:
+    get:
+      operationId: samlServiceProviderMetadata
+      summary: Metadata penyedia layanan untuk administrator penyedia identitas (publik; tanpa rahasia)
+      security: []
+      responses:
+        '200':
+          description: EntityDescriptor
+          content:
+            application/samlmetadata+xml:
+              schema: { type: string }
         '429': { $ref: '#/components/responses/RateLimited' }
   /auth/sso/{kind}/start:
     parameters:
-      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc, saml] } }
     get:
       operationId: startSso
       summary: Mulai masuk (atau menautkan, link=1 butuh sesi) dan arahkan peramban ke penyedia identitas
@@ -857,7 +887,7 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
   /auth/sso/{kind}/callback:
     parameters:
-      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc, saml] } }
     get:
       operationId: finishSso
       summary: Tujuan pengalihan penyedia. Sukses memulai sesi dan mengalihkan ke next; gagal mengalihkan ke /login?sso_error=<alasan>
@@ -872,7 +902,7 @@ paths:
         '429': { $ref: '#/components/responses/RateLimited' }
   /sso/{kind}:
     parameters:
-      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc, saml] } }
     get:
       operationId: getSsoConfig
       summary: Konfigurasi penyedia (admin); rahasia klien tidak pernah dikembalikan
@@ -926,7 +956,7 @@ paths:
                     items: { $ref: '#/components/schemas/LinkedIdentity' }
   /me/identities/{kind}:
     parameters:
-      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc] } }
+      - { name: kind, in: path, required: true, schema: { type: string, enum: [oidc, saml] } }
     delete:
       operationId: unlinkMyIdentity
       summary: Lepas tautan; ditolak 409 bila pemanggil tidak punya password
@@ -4810,10 +4840,12 @@ components:
     SsoConfigInput:
       type: object
       additionalProperties: false
-      required: [name, issuer, client_id]
+      required: [name]
       properties:
         name: { type: string, minLength: 1, maxLength: 60 }
         enabled: { type: boolean }
+        idp_metadata_xml: { type: string, maxLength: 262144, description: 'SAML: metadata penyedia; kosong mempertahankan yang tersimpan. OIDC memakai issuer, client_id, client_secret' }
+        email_attribute: { type: string, maxLength: 200, description: 'SAML: nama atribut yang memuat email (opsional)' }
         issuer: { type: string, description: URL https penyedia OpenID Connect }
         client_id: { type: string, maxLength: 255 }
         client_secret: { type: string, maxLength: 1000, nullable: true, description: Hilangkan untuk mempertahankan rahasia yang tersimpan; string kosong menghapusnya }
@@ -4835,6 +4867,13 @@ components:
         redirect_url: { type: string, description: Daftarkan persis alamat ini di penyedia }
         key_configured: { type: boolean, description: PMS_SSO_KEY terisi }
         updated_at: { type: string, format: date-time, nullable: true }
+        entity_id: { type: string, description: 'SAML: entity ID penyedia layanan ini' }
+        acs_url: { type: string, description: 'SAML: alamat ACS (HTTP-POST)' }
+        metadata_url: { type: string }
+        idp_entity_id: { type: string }
+        idp_sign_on_url: { type: string }
+        email_attribute: { type: string }
+        has_metadata: { type: boolean }
     LinkedIdentity:
       type: object
       required: [kind, provider_name, email, created_at, last_login_at]

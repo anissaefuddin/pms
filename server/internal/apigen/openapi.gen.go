@@ -2271,12 +2271,15 @@ func (e DecideApprovalJSONBodyDecision) Valid() bool {
 // Defines values for ListSsoProviders200JSONResponseBodyItemsKind.
 const (
 	Oidc ListSsoProviders200JSONResponseBodyItemsKind = "oidc"
+	Saml ListSsoProviders200JSONResponseBodyItemsKind = "saml"
 )
 
 // Valid indicates whether the value is a known member of the ListSsoProviders200JSONResponseBodyItemsKind enum.
 func (e ListSsoProviders200JSONResponseBodyItemsKind) Valid() bool {
 	switch e {
 	case Oidc:
+		return true
+	case Saml:
 		return true
 	default:
 		return false
@@ -4529,17 +4532,27 @@ type SpaceUpdate struct {
 
 // SsoConfig defines model for SsoConfig.
 type SsoConfig struct {
+	// AcsUrl SAML: alamat ACS (HTTP-POST)
+	AcsUrl         *string  `json:"acs_url,omitempty"`
 	AllowedDomains []string `json:"allowed_domains"`
 	AutoLink       bool     `json:"auto_link"`
 	ClientId       string   `json:"client_id"`
 	Configured     bool     `json:"configured"`
+	EmailAttribute *string  `json:"email_attribute,omitempty"`
 	Enabled        bool     `json:"enabled"`
-	Issuer         string   `json:"issuer"`
+
+	// EntityId SAML: entity ID penyedia layanan ini
+	EntityId     *string `json:"entity_id,omitempty"`
+	HasMetadata  *bool   `json:"has_metadata,omitempty"`
+	IdpEntityId  *string `json:"idp_entity_id,omitempty"`
+	IdpSignOnUrl *string `json:"idp_sign_on_url,omitempty"`
+	Issuer       string  `json:"issuer"`
 
 	// KeyConfigured PMS_SSO_KEY terisi
-	KeyConfigured bool   `json:"key_configured"`
-	Kind          string `json:"kind"`
-	Name          string `json:"name"`
+	KeyConfigured bool    `json:"key_configured"`
+	Kind          string  `json:"kind"`
+	MetadataUrl   *string `json:"metadata_url,omitempty"`
+	Name          string  `json:"name"`
 
 	// RedirectUrl Daftarkan persis alamat ini di penyedia
 	RedirectUrl string     `json:"redirect_url"`
@@ -4552,16 +4565,22 @@ type SsoConfigInput struct {
 	AllowedDomains *[]string `json:"allowed_domains,omitempty"`
 
 	// AutoLink Tautkan masuk pertama ke pengguna aktif dengan email terverifikasi yang sama
-	AutoLink *bool  `json:"auto_link,omitempty"`
-	ClientId string `json:"client_id"`
+	AutoLink *bool   `json:"auto_link,omitempty"`
+	ClientId *string `json:"client_id,omitempty"`
 
 	// ClientSecret Hilangkan untuk mempertahankan rahasia yang tersimpan; string kosong menghapusnya
 	ClientSecret *string `json:"client_secret,omitempty"`
-	Enabled      *bool   `json:"enabled,omitempty"`
+
+	// EmailAttribute SAML: nama atribut yang memuat email (opsional)
+	EmailAttribute *string `json:"email_attribute,omitempty"`
+	Enabled        *bool   `json:"enabled,omitempty"`
+
+	// IdpMetadataXml SAML: metadata penyedia; kosong mempertahankan yang tersimpan. OIDC memakai issuer, client_id, client_secret
+	IdpMetadataXml *string `json:"idp_metadata_xml,omitempty"`
 
 	// Issuer URL https penyedia OpenID Connect
-	Issuer string `json:"issuer"`
-	Name   string `json:"name"`
+	Issuer *string `json:"issuer,omitempty"`
+	Name   string  `json:"name"`
 }
 
 // Status defines model for Status.
@@ -5028,6 +5047,14 @@ type ResetPasswordJSONBody struct {
 
 // ListSsoProviders200JSONResponseBodyItemsKind defines parameters for ListSsoProviders.
 type ListSsoProviders200JSONResponseBodyItemsKind string
+
+// SamlAssertionConsumerFormdataBody defines parameters for SamlAssertionConsumer.
+type SamlAssertionConsumerFormdataBody struct {
+	RelayState string `form:"RelayState" json:"RelayState"`
+
+	// SAMLResponse Base64 dari XML Response bertanda tangan
+	SAMLResponse string `form:"SAMLResponse" json:"SAMLResponse"`
+}
 
 // FinishSsoParams defines parameters for FinishSso.
 type FinishSsoParams struct {
@@ -5706,6 +5733,9 @@ type ForgotPasswordJSONRequestBody ForgotPasswordJSONBody
 // ResetPasswordJSONRequestBody defines body for ResetPassword for application/json ContentType.
 type ResetPasswordJSONRequestBody ResetPasswordJSONBody
 
+// SamlAssertionConsumerFormdataRequestBody defines body for SamlAssertionConsumer for application/x-www-form-urlencoded ContentType.
+type SamlAssertionConsumerFormdataRequestBody SamlAssertionConsumerFormdataBody
+
 // UpdateAutomationRuleJSONRequestBody defines body for UpdateAutomationRule for application/json ContentType.
 type UpdateAutomationRuleJSONRequestBody UpdateAutomationRuleJSONBody
 
@@ -6293,6 +6323,12 @@ type ServerInterface interface {
 	// ListSsoProviders Penyedia SSO yang aktif untuk halaman login (publik; hanya jenis dan nama tampilan)
 	// (GET /auth/sso/providers)
 	ListSsoProviders(w http.ResponseWriter, r *http.Request)
+	// SamlAssertionConsumer Tujuan jawaban SAML dari penyedia (form POST lintas situs; satu-satunya rute yang tidak memeriksa Origin). Diikat ke state sekali pakai dan cookie browser; sukses mengalihkan ke next, gagal ke /login?sso_error=<alasan>
+	// (POST /auth/sso/saml/acs)
+	SamlAssertionConsumer(w http.ResponseWriter, r *http.Request)
+	// SamlServiceProviderMetadata Metadata penyedia layanan untuk administrator penyedia identitas (publik; tanpa rahasia)
+	// (GET /auth/sso/saml/metadata)
+	SamlServiceProviderMetadata(w http.ResponseWriter, r *http.Request)
 	// FinishSso Tujuan pengalihan penyedia. Sukses memulai sesi dan mengalihkan ke next; gagal mengalihkan ke /login?sso_error=<alasan>
 	// (GET /auth/sso/{kind}/callback)
 	FinishSso(w http.ResponseWriter, r *http.Request, kind string, params FinishSsoParams)
@@ -7819,6 +7855,34 @@ func (siw *ServerInterfaceWrapper) ListSsoProviders(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListSsoProviders(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SamlAssertionConsumer operation middleware
+func (siw *ServerInterfaceWrapper) SamlAssertionConsumer(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SamlAssertionConsumer(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SamlServiceProviderMetadata operation middleware
+func (siw *ServerInterfaceWrapper) SamlServiceProviderMetadata(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SamlServiceProviderMetadata(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14168,6 +14232,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.UpdateCustomRole)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/sso/providers", wrapper.ListSsoProviders)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/auth/sso/saml/acs", wrapper.SamlAssertionConsumer)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/sso/saml/metadata", wrapper.SamlServiceProviderMetadata)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/sso/{kind}/start", wrapper.StartSso)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/auth/sso/{kind}/callback", wrapper.FinishSso)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/sso/{kind}", wrapper.DeleteSsoConfig)
@@ -15983,6 +16049,87 @@ type ListSsoProviders429ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ListSsoProviders429ApplicationProblemPlusJSONResponse) VisitListSsoProvidersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SamlAssertionConsumerRequestObject struct {
+	Body *SamlAssertionConsumerFormdataRequestBody
+}
+
+type SamlAssertionConsumerResponseObject interface {
+	VisitSamlAssertionConsumerResponse(w http.ResponseWriter) error
+}
+
+type SamlAssertionConsumer302Response struct {
+}
+
+func (response SamlAssertionConsumer302Response) VisitSamlAssertionConsumerResponse(w http.ResponseWriter) error {
+	w.WriteHeader(302)
+	return nil
+}
+
+type SamlAssertionConsumer429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response SamlAssertionConsumer429ApplicationProblemPlusJSONResponse) VisitSamlAssertionConsumerResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	if response.Headers.RetryAfter != nil {
+		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
+	}
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SamlServiceProviderMetadataRequestObject struct {
+}
+
+type SamlServiceProviderMetadataResponseObject interface {
+	VisitSamlServiceProviderMetadataResponse(w http.ResponseWriter) error
+}
+
+type SamlServiceProviderMetadata200ApplicationsamlmetadataXmlResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response SamlServiceProviderMetadata200ApplicationsamlmetadataXmlResponse) VisitSamlServiceProviderMetadataResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/samlmetadata+xml")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type SamlServiceProviderMetadata429ApplicationProblemPlusJSONResponse struct {
+	RateLimitedApplicationProblemPlusJSONResponse
+}
+
+func (response SamlServiceProviderMetadata429ApplicationProblemPlusJSONResponse) VisitSamlServiceProviderMetadataResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
@@ -27498,6 +27645,12 @@ type StrictServerInterface interface {
 	// ListSsoProviders Penyedia SSO yang aktif untuk halaman login (publik; hanya jenis dan nama tampilan)
 	// (GET /auth/sso/providers)
 	ListSsoProviders(ctx context.Context, request ListSsoProvidersRequestObject) (ListSsoProvidersResponseObject, error)
+	// SamlAssertionConsumer Tujuan jawaban SAML dari penyedia (form POST lintas situs; satu-satunya rute yang tidak memeriksa Origin). Diikat ke state sekali pakai dan cookie browser; sukses mengalihkan ke next, gagal ke /login?sso_error=<alasan>
+	// (POST /auth/sso/saml/acs)
+	SamlAssertionConsumer(ctx context.Context, request SamlAssertionConsumerRequestObject) (SamlAssertionConsumerResponseObject, error)
+	// SamlServiceProviderMetadata Metadata penyedia layanan untuk administrator penyedia identitas (publik; tanpa rahasia)
+	// (GET /auth/sso/saml/metadata)
+	SamlServiceProviderMetadata(ctx context.Context, request SamlServiceProviderMetadataRequestObject) (SamlServiceProviderMetadataResponseObject, error)
 	// FinishSso Tujuan pengalihan penyedia. Sukses memulai sesi dan mengalihkan ke next; gagal mengalihkan ke /login?sso_error=<alasan>
 	// (GET /auth/sso/{kind}/callback)
 	FinishSso(ctx context.Context, request FinishSsoRequestObject) (FinishSsoResponseObject, error)
@@ -28960,6 +29113,65 @@ func (sh *strictHandler) ListSsoProviders(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListSsoProvidersResponseObject); ok {
 		if err := validResponse.VisitListSsoProvidersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SamlAssertionConsumer operation middleware
+func (sh *strictHandler) SamlAssertionConsumer(w http.ResponseWriter, r *http.Request) {
+	var request SamlAssertionConsumerRequestObject
+
+	if err := r.ParseForm(); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode formdata: %w", err))
+		return
+	}
+	var body SamlAssertionConsumerFormdataRequestBody
+	if err := runtime.BindForm(&body, r.Form, nil, nil); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't bind formdata: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SamlAssertionConsumer(ctx, request.(SamlAssertionConsumerRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SamlAssertionConsumer")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SamlAssertionConsumerResponseObject); ok {
+		if err := validResponse.VisitSamlAssertionConsumerResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SamlServiceProviderMetadata operation middleware
+func (sh *strictHandler) SamlServiceProviderMetadata(w http.ResponseWriter, r *http.Request) {
+	var request SamlServiceProviderMetadataRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SamlServiceProviderMetadata(ctx, request.(SamlServiceProviderMetadataRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SamlServiceProviderMetadata")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SamlServiceProviderMetadataResponseObject); ok {
+		if err := validResponse.VisitSamlServiceProviderMetadataResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

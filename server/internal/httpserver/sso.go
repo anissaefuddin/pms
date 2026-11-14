@@ -39,6 +39,8 @@ func (s *Server) ssoRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/auth/sso/providers", s.ssoProviders)
 	mux.HandleFunc("GET /api/v1/auth/sso/{kind}/start", s.ssoStart)
 	mux.HandleFunc("GET /api/v1/auth/sso/{kind}/callback", s.ssoCallback)
+	mux.HandleFunc("POST /api/v1/auth/sso/saml/acs", s.samlACS)
+	mux.HandleFunc("GET /api/v1/auth/sso/saml/metadata", s.samlMetadata)
 	mux.HandleFunc("GET /api/v1/sso/{kind}", s.requireUser(requireAdmin(s.ssoGetConfig)))
 	mux.HandleFunc("PUT /api/v1/sso/{kind}", s.requireUser(requireAdmin(s.ssoPutConfig)))
 	mux.HandleFunc("DELETE /api/v1/sso/{kind}", s.requireUser(requireAdmin(s.ssoDeleteConfig)))
@@ -57,7 +59,7 @@ func localPath(next string) string {
 	return next
 }
 
-func knownSSOKind(kind string) bool { return kind == "oidc" }
+func knownSSOKind(kind string) bool { return kind == "oidc" || kind == "saml" }
 
 // ssoProviders lists the enabled providers for the sign-in page. It is public and says nothing but the kind and display name.
 func (s *Server) ssoProviders(w http.ResponseWriter, r *http.Request) {
@@ -109,7 +111,13 @@ func (s *Server) ssoOIDC(ctx context.Context, p sso.Provider) (sso.OIDC, error) 
 }
 
 func (s *Server) ssoSetBrowserCookie(w http.ResponseWriter, value string, maxAge int) {
-	http.SetCookie(w, &http.Cookie{Name: ssoCookie, Value: value, Path: "/api/v1/auth/sso", HttpOnly: true, Secure: s.cfg.CookieSecure, SameSite: http.SameSiteLaxMode, MaxAge: maxAge})
+	// SAML answers arrive in a cross-site POST, which a Lax cookie does not accompany; SameSite=None needs Secure, so SAML sign-in
+	// works only on https (CookieSecure). OIDC answers are top-level GET navigations, for which Lax is enough.
+	site := http.SameSiteLaxMode
+	if s.cfg.CookieSecure {
+		site = http.SameSiteNoneMode
+	}
+	http.SetCookie(w, &http.Cookie{Name: ssoCookie, Value: value, Path: "/api/v1/auth/sso", HttpOnly: true, Secure: s.cfg.CookieSecure, SameSite: site, MaxAge: maxAge})
 }
 
 // ssoStart sends the browser to the identity provider. purpose "link" (query link=1) needs a signed-in user and ties the identity to that user.
@@ -140,26 +148,58 @@ func (s *Server) ssoStart(w http.ResponseWriter, r *http.Request) {
 		purpose = "link"
 	}
 	next := localPath(r.URL.Query().Get("next"))
-	client, err := s.ssoOIDC(ctx, provider)
+	state, browser := sso.RandomToken(32), sso.RandomToken(32)
+	st := sso.State{ProviderID: provider.ID, Purpose: purpose, UserID: user, Next: next}
+	var target string
+	switch kind {
+	case "oidc":
+		client, cerr := s.ssoOIDC(ctx, provider)
+		if cerr != nil {
+			slog.Error("sso start", "error", cerr)
+			s.ssoFail(w, r, purpose, "failed", "", kind, nil)
+			return
+		}
+		st.Nonce, st.Verifier = sso.RandomToken(24), sso.RandomToken(48)
+		target, err = client.Begin(ctx, state, st.Nonce, st.Verifier)
+	case "saml":
+		var sp sso.SAML
+		if sp, err = s.ssoSAML(provider); err == nil {
+			target, st.Nonce, err = sp.Begin(state) // the request ID rides in Nonce: the answer must refer to it
+		}
+	}
 	if err != nil {
-		slog.Error("sso start", "error", err)
-		s.ssoFail(w, r, purpose, "failed", "", kind, nil)
+		slog.Error("sso begin", "kind", kind, "error", err)
+		s.ssoFail(w, r, purpose, "unavailable", "", kind, nil)
 		return
 	}
-	state, browser, st, err := store.NewState(ctx, provider.ID, purpose, user, next)
-	if err != nil {
+	if err := store.SaveState(ctx, state, browser, st); err != nil {
 		slog.Error("sso state", "error", err)
 		s.ssoFail(w, r, purpose, "failed", "", kind, nil)
 		return
 	}
-	target, err := client.Begin(ctx, state, st.Nonce, st.Verifier)
-	if err != nil {
-		slog.Error("sso discovery", "kind", kind, "error", err)
-		s.ssoFail(w, r, purpose, "unavailable", "", kind, nil)
-		return
-	}
 	s.ssoSetBrowserCookie(w, browser, int(sso.StateTTL.Seconds()))
 	http.Redirect(w, r, target, http.StatusFound)
+}
+
+func (s *Server) ssoSAML(p sso.Provider) (sso.SAML, error) {
+	var cfg sso.SAMLConfig
+	if err := json.Unmarshal(p.Config, &cfg); err != nil {
+		return sso.SAML{}, err
+	}
+	return sso.SAML{Config: cfg, EntityID: s.samlEntityID(), ACSURL: s.samlACSURL()}, nil
+}
+
+func (s *Server) samlEntityID() string { return s.cfg.PublicURL + "/api/v1/auth/sso/saml/metadata" }
+func (s *Server) samlACSURL() string   { return s.cfg.PublicURL + "/api/v1/auth/sso/saml/acs" }
+
+// samlMetadata is what an identity provider administrator imports. It is public and holds no secret.
+func (s *Server) samlMetadata(w http.ResponseWriter, r *http.Request) {
+	if wait := s.publicLimiter.take("sso:" + s.clientIP(r)); wait > 0 {
+		writeRateLimit(w, wait)
+		return
+	}
+	w.Header().Set("Content-Type", "application/samlmetadata+xml; charset=utf-8")
+	_, _ = w.Write(sso.SPMetadata(s.samlEntityID(), s.samlACSURL()))
 }
 
 // ssoFail records the failure, forgets the browser cookie and sends the person back with a fixed reason code. The identity provider's
@@ -192,7 +232,7 @@ func (s *Server) newSession(ctx context.Context, userID string) (token string, e
 // then the provider's answer, then the link rules, and only then a session.
 func (s *Server) ssoCallback(w http.ResponseWriter, r *http.Request) {
 	kind := r.PathValue("kind")
-	if !knownSSOKind(kind) {
+	if kind != "oidc" { // SAML answers arrive by POST at /auth/sso/saml/acs
 		writeError(w, http.StatusNotFound, "single sign-on is not available")
 		return
 	}
@@ -240,13 +280,67 @@ func (s *Server) ssoCallback(w http.ResponseWriter, r *http.Request) {
 		s.ssoFail(w, r, st.Purpose, "failed", st.UserID, kind, nil)
 		return
 	}
+	s.ssoComplete(w, r, store, provider, kind, st, id, client.Config.AutoLink, true)
+}
+
+// samlACS receives the identity provider's signed answer (a form posted by the provider's page).
+func (s *Server) samlACS(w http.ResponseWriter, r *http.Request) {
+	const kind = "saml"
+	if wait := s.publicLimiter.take("sso:" + s.clientIP(r)); wait > 0 {
+		writeRateLimit(w, wait)
+		return
+	}
+	r.Body = http.MaxBytesReader(w, r.Body, 2<<20)
+	if err := r.ParseForm(); err != nil {
+		s.ssoFail(w, r, "login", "failed", "", kind, nil)
+		return
+	}
+	ctx, store := r.Context(), s.ssoStore()
+	cookie := ""
+	if c, err := r.Cookie(ssoCookie); err == nil {
+		cookie = c.Value
+	}
+	st, err := store.TakeState(ctx, r.PostForm.Get("RelayState"), cookie)
+	if err != nil {
+		s.ssoFail(w, r, "login", "state", "", kind, nil)
+		return
+	}
+	provider, err := store.ByID(ctx, st.ProviderID)
+	if err != nil || !provider.Enabled || provider.Kind != kind {
+		s.ssoFail(w, r, st.Purpose, "unavailable", st.UserID, kind, nil)
+		return
+	}
+	client, err := s.ssoSAML(provider)
+	if err != nil {
+		slog.Error("saml config", "error", err)
+		s.ssoFail(w, r, st.Purpose, "failed", st.UserID, kind, nil)
+		return
+	}
+	id, err := client.Complete(r.PostForm.Get("SAMLResponse"), st.Nonce)
+	switch {
+	case errors.Is(err, sso.ErrDomain):
+		s.ssoFail(w, r, st.Purpose, "domain", st.UserID, kind, nil)
+		return
+	case err != nil:
+		slog.Warn("saml verification failed", "error", err)
+		s.ssoFail(w, r, st.Purpose, "failed", st.UserID, kind, nil)
+		return
+	}
+	// The session cookie is Lax and is not sent with the provider's cross-site POST, so a link cannot check it here; the single-use
+	// state and the browser cookie (SameSite=None) bind the answer to the browser and to the user who started the link.
+	s.ssoComplete(w, r, store, provider, kind, st, id, client.Config.AutoLink, false)
+}
+
+// ssoComplete turns a verified identity into a link or a session, the same way for every adapter.
+func (s *Server) ssoComplete(w http.ResponseWriter, r *http.Request, store sso.Store, provider sso.Provider, kind string, st sso.State, id sso.Identity, autoLink, checkSession bool) {
+	ctx := r.Context()
 	if st.Purpose == "link" {
-		s.ssoFinishLink(w, r, store, provider, kind, st, id)
+		s.ssoFinishLink(w, r, store, provider, kind, st, id, checkSession)
 		return
 	}
 	userID, err := store.UserOf(ctx, provider.ID, id.Subject)
 	if errors.Is(err, sso.ErrNotFound) {
-		userID, err = s.ssoFirstLogin(ctx, store, provider, client.Config, id)
+		userID, err = s.ssoFirstLogin(ctx, store, provider, autoLink, id)
 	}
 	if err != nil {
 		reason := "failed"
@@ -296,8 +390,8 @@ var (
 
 // ssoFirstLogin links a first-time identity to the active user with the same verified email, when the provider allows it.
 // It never creates a user (ADR-IDP): people arrive by invitation or provisioning.
-func (s *Server) ssoFirstLogin(ctx context.Context, store sso.Store, p sso.Provider, cfg sso.OIDCConfig, id sso.Identity) (string, error) {
-	if !cfg.AutoLink {
+func (s *Server) ssoFirstLogin(ctx context.Context, store sso.Store, p sso.Provider, autoLink bool, id sso.Identity) (string, error) {
+	if !autoLink {
 		return "", errSSOUnlinked
 	}
 	if id.Email == "" || !id.EmailVerified {
@@ -322,9 +416,9 @@ func (s *Server) ssoFirstLogin(ctx context.Context, store sso.Store, p sso.Provi
 	return userID, nil
 }
 
-func (s *Server) ssoFinishLink(w http.ResponseWriter, r *http.Request, store sso.Store, p sso.Provider, kind string, st sso.State, id sso.Identity) {
+func (s *Server) ssoFinishLink(w http.ResponseWriter, r *http.Request, store sso.Store, p sso.Provider, kind string, st sso.State, id sso.Identity, checkSession bool) {
 	ctx := r.Context()
-	if st.UserID == "" || s.sessionUserID(r) != st.UserID { // the person who finishes must still be the one who started
+	if st.UserID == "" || (checkSession && s.sessionUserID(r) != st.UserID) { // the person who finishes must still be the one who started
 		s.ssoFail(w, r, "link", "session", st.UserID, kind, nil)
 		return
 	}
@@ -361,6 +455,8 @@ type ssoConfigBody struct {
 	ClientSecret   *string  `json:"client_secret"` // nil keeps the stored secret
 	AutoLink       bool     `json:"auto_link"`
 	AllowedDomains []string `json:"allowed_domains"`
+	IdPMetadataXML string   `json:"idp_metadata_xml"` // SAML: the provider's metadata document
+	EmailAttribute string   `json:"email_attribute"`  // SAML: optional attribute that carries the email address
 }
 
 type ssoConfigView struct {
@@ -376,11 +472,43 @@ type ssoConfigView struct {
 	RedirectURL    string     `json:"redirect_url"`
 	KeyConfigured  bool       `json:"key_configured"`
 	UpdatedAt      *time.Time `json:"updated_at"`
+	// SAML only: what to give the provider's administrator, and what was read from the metadata they supplied.
+	EntityID       string `json:"entity_id,omitempty"`
+	ACSURL         string `json:"acs_url,omitempty"`
+	MetadataURL    string `json:"metadata_url,omitempty"`
+	IdPEntityID    string `json:"idp_entity_id,omitempty"`
+	IdPSignOnURL   string `json:"idp_sign_on_url,omitempty"`
+	EmailAttribute string `json:"email_attribute,omitempty"`
+	HasMetadata    bool   `json:"has_metadata"`
 }
 
 func (s *Server) ssoView(kind string, p *sso.Provider) ssoConfigView {
 	v := ssoConfigView{Kind: kind, Name: "Single sign-on", AutoLink: true, AllowedDomains: []string{}, RedirectURL: s.ssoRedirectURL(kind), KeyConfigured: len(s.cfg.SSOKey) == 32}
+	if kind == "saml" {
+		v.RedirectURL, v.EntityID, v.ACSURL, v.MetadataURL = s.samlACSURL(), s.samlEntityID(), s.samlACSURL(), s.samlEntityID()
+		v.KeyConfigured = true // SAML stores no secret
+	}
 	if p == nil {
+		return v
+	}
+	v.Configured, v.Name, v.Enabled, v.SecretSet, v.UpdatedAt = true, p.Name, p.Enabled, p.SecretSet, &p.UpdatedAt
+	if kind == "saml" {
+		var cfg sso.SAMLConfig
+		_ = json.Unmarshal(p.Config, &cfg)
+		if cfg.AllowedDomains == nil {
+			cfg.AllowedDomains = []string{}
+		}
+		v.AutoLink, v.AllowedDomains, v.EmailAttribute = cfg.AutoLink, cfg.AllowedDomains, cfg.EmailAttribute
+		if meta, err := sso.ParseMetadata(cfg.IdPMetadataXML); err == nil {
+			v.HasMetadata, v.IdPEntityID = true, meta.EntityID
+			for _, d := range meta.IDPSSODescriptors {
+				for _, svc := range d.SingleSignOnServices {
+					if svc.Binding == "urn:oasis:names:tc:SAML:2.0:bindings:HTTP-Redirect" {
+						v.IdPSignOnURL = svc.Location
+					}
+				}
+			}
+		}
 		return v
 	}
 	var cfg sso.OIDCConfig
@@ -388,7 +516,6 @@ func (s *Server) ssoView(kind string, p *sso.Provider) ssoConfigView {
 	if cfg.AllowedDomains == nil {
 		cfg.AllowedDomains = []string{}
 	}
-	v.Configured, v.Name, v.Enabled, v.SecretSet, v.UpdatedAt = true, p.Name, p.Enabled, p.SecretSet, &p.UpdatedAt
 	v.Issuer, v.ClientID, v.AutoLink, v.AllowedDomains = cfg.Issuer, cfg.ClientID, cfg.AutoLink, cfg.AllowedDomains
 	return v
 }
@@ -427,6 +554,10 @@ func (s *Server) ssoPutConfig(w http.ResponseWriter, r *http.Request) {
 	in.Name = strings.TrimSpace(in.Name)
 	if n := len([]rune(in.Name)); n < 1 || n > 60 {
 		writeError(w, http.StatusUnprocessableEntity, "name must be 1 to 60 characters")
+		return
+	}
+	if kind == "saml" {
+		s.putSAMLConfig(w, r, in)
 		return
 	}
 	if in.ClientSecret != nil && len(*in.ClientSecret) > 1000 {
@@ -534,4 +665,35 @@ func (s *Server) unlinkIdentity(w http.ResponseWriter, r *http.Request) {
 	}
 	s.audit(r, user, "", auditEvent{Action: auditSSOUnlinked, TargetType: "sso", TargetID: kind})
 	w.WriteHeader(http.StatusNoContent)
+}
+
+// putSAMLConfig saves a SAML provider. There is no secret: the provider's signing certificate arrives in its metadata.
+func (s *Server) putSAMLConfig(w http.ResponseWriter, r *http.Request, in ssoConfigBody) {
+	if in.ClientSecret != nil || in.Issuer != "" || in.ClientID != "" {
+		writeError(w, http.StatusUnprocessableEntity, "SAML has no issuer, client_id or client_secret: send idp_metadata_xml")
+		return
+	}
+	if in.IdPMetadataXML == "" { // keep the metadata on file when none is sent
+		if existing, err := s.ssoStore().ByKind(r.Context(), "saml"); err == nil {
+			var old sso.SAMLConfig
+			if json.Unmarshal(existing.Config, &old) == nil {
+				in.IdPMetadataXML = old.IdPMetadataXML
+			}
+		}
+	}
+	cfg := sso.SAMLConfig{IdPMetadataXML: in.IdPMetadataXML, EmailAttribute: strings.TrimSpace(in.EmailAttribute), AutoLink: in.AutoLink, AllowedDomains: in.AllowedDomains}
+	if err := cfg.Validate(); err != nil {
+		writeError(w, http.StatusUnprocessableEntity, strings.TrimPrefix(err.Error(), sso.ErrConfig.Error()+": "))
+		return
+	}
+	p, err := s.ssoStore().Save(r.Context(), "saml", in.Name, cfg, nil, in.Enabled)
+	if err != nil {
+		slog.Error("saml save", "error", err)
+		writeError(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	meta, _ := sso.ParseMetadata(cfg.IdPMetadataXML)
+	s.audit(r, actorOf(r).ID, "", auditEvent{Action: auditSSOConfigured, TargetType: "sso", TargetID: "saml",
+		Details: map[string]any{"enabled": p.Enabled, "idp_entity_id": meta.EntityID, "auto_link": cfg.AutoLink, "allowed_domains": cfg.AllowedDomains}})
+	writeJSON(w, http.StatusOK, s.ssoView("saml", &p))
 }

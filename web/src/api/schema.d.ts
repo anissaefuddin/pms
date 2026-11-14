@@ -496,12 +496,46 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/auth/sso/saml/acs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Tujuan jawaban SAML dari penyedia (form POST lintas situs; satu-satunya rute yang tidak memeriksa Origin). Diikat ke state sekali pakai dan cookie browser; sukses mengalihkan ke next, gagal ke /login?sso_error=<alasan> */
+        post: operations["samlAssertionConsumer"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/auth/sso/saml/metadata": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Metadata penyedia layanan untuk administrator penyedia identitas (publik; tanpa rahasia) */
+        get: operations["samlServiceProviderMetadata"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/auth/sso/{kind}/start": {
         parameters: {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -520,7 +554,7 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -539,7 +573,7 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -577,7 +611,7 @@ export interface paths {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -3307,9 +3341,13 @@ export interface components {
         SsoConfigInput: {
             name: string;
             enabled?: boolean;
+            /** @description SAML: metadata penyedia; kosong mempertahankan yang tersimpan. OIDC memakai issuer, client_id, client_secret */
+            idp_metadata_xml?: string;
+            /** @description SAML: nama atribut yang memuat email (opsional) */
+            email_attribute?: string;
             /** @description URL https penyedia OpenID Connect */
-            issuer: string;
-            client_id: string;
+            issuer?: string;
+            client_id?: string;
             /** @description Hilangkan untuk mempertahankan rahasia yang tersimpan; string kosong menghapusnya */
             client_secret?: string | null;
             /** @description Tautkan masuk pertama ke pengguna aktif dengan email terverifikasi yang sama */
@@ -3332,6 +3370,15 @@ export interface components {
             key_configured: boolean;
             /** Format: date-time */
             updated_at?: string | null;
+            /** @description SAML: entity ID penyedia layanan ini */
+            entity_id?: string;
+            /** @description SAML: alamat ACS (HTTP-POST) */
+            acs_url?: string;
+            metadata_url?: string;
+            idp_entity_id?: string;
+            idp_sign_on_url?: string;
+            email_attribute?: string;
+            has_metadata?: boolean;
         };
         LinkedIdentity: {
             kind: string;
@@ -6108,10 +6155,58 @@ export interface operations {
                     "application/json": {
                         items: {
                             /** @enum {string} */
-                            kind: "oidc";
+                            kind: "oidc" | "saml";
                             name: string;
                         }[];
                     };
+                };
+            };
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    samlAssertionConsumer: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/x-www-form-urlencoded": {
+                    /** @description Base64 dari XML Response bertanda tangan */
+                    SAMLResponse: string;
+                    RelayState: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Alasan gagal: state, failed, unavailable, unlinked, unverified, inactive, domain, session, already_linked */
+            302: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            429: components["responses"]["RateLimited"];
+        };
+    };
+    samlServiceProviderMetadata: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description EntityDescriptor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/samlmetadata+xml": string;
                 };
             };
             429: components["responses"]["RateLimited"];
@@ -6126,7 +6221,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -6152,7 +6247,7 @@ export interface operations {
             };
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -6174,7 +6269,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -6198,7 +6293,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -6227,7 +6322,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };
@@ -6271,7 +6366,7 @@ export interface operations {
             query?: never;
             header?: never;
             path: {
-                kind: "oidc";
+                kind: "oidc" | "saml";
             };
             cookie?: never;
         };

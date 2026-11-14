@@ -86,7 +86,7 @@ func TestSSOConfigurationAdminOnlyEncryptedAndAudited(t *testing.T) {
 	f.want(f.call(regular, "PUT", "/sso/oidc", body(nil)), 403, "regular writes")
 	f.want(f.call(regular, "DELETE", "/sso/oidc", nil), 403, "regular deletes")
 	f.want(f.call(nil, "GET", "/sso/oidc", nil), 401, "anonymous")
-	f.want(f.call(admin, "GET", "/sso/saml", nil), 404, "unknown kind")
+	f.want(f.call(admin, "GET", "/sso/ldap", nil), 404, "unknown kind")
 	view := f.call(admin, "GET", "/sso/oidc", nil)
 	f.want(view, 200, "empty config")
 	if view.body["configured"] != false || view.body["key_configured"] != true || !strings.HasSuffix(view.body["redirect_url"].(string), "/api/v1/auth/sso/oidc/callback") {
@@ -212,7 +212,7 @@ func TestSSOSignInLinksBySubjectAndKeepsPasswordLogin(t *testing.T) {
 	if status, _, _ := newBrowser(f).get("/api/v1/auth/sso/oidc/start"); status != 404 {
 		t.Fatalf("a disabled provider cannot be started, got %d", status)
 	}
-	if status, _, _ := newBrowser(f).get("/api/v1/auth/sso/saml/start"); status != 404 {
+	if status, _, _ := newBrowser(f).get("/api/v1/auth/sso/ldap/start"); status != 404 {
 		t.Fatalf("an unknown kind = %d", status)
 	}
 }

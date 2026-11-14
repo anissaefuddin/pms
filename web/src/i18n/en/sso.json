@@ -38,5 +38,18 @@
   "admin.cancel": "Cancel",
   "admin.removed": "Removed",
   "admin.issuerExample": "https://accounts.example.com",
-  "admin.domainsExample": "example.com, example.org"
+  "admin.domainsExample": "example.com, example.org",
+  "saml.title": "SAML 2.0",
+  "saml.description": "Let people sign in with a SAML identity provider. Passwords keep working.",
+  "saml.entityId": "Entity ID (audience)",
+  "saml.acsUrl": "Assertion consumer service URL (ACS, HTTP-POST)",
+  "saml.metadataUrl": "Service provider metadata",
+  "saml.hint": "Give these to your identity provider's administrator, or import the metadata address. Responses must be signed; encrypted assertions and provider-initiated sign-in are not supported. Sign-in needs HTTPS.",
+  "saml.current": "Provider on file: {{entity}}",
+  "saml.noMetadata": "The stored metadata cannot be read. Paste it again.",
+  "saml.formLabel": "SAML settings",
+  "saml.metadata": "Identity provider metadata (XML)",
+  "saml.metadataHint": "Paste the whole EntityDescriptor. It holds the provider's sign-on address and signing certificate. The stored copy is never shown; leave this empty to keep it.",
+  "saml.attribute": "Email attribute (optional)",
+  "saml.attributeHint": "Name of the attribute that carries the email. Empty tries email, mail and the usual claim names, then an email-format NameID."
 }

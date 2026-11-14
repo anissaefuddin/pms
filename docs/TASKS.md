@@ -1321,10 +1321,10 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 - [x] [TEST] State, nonce, akun dinonaktifkan
 
 **S12.1.2 SSO SAML (ENT-01) — 2 hari**
-- [ ] [BE] SAML service provider
-- [ ] [BE] Validasi tanda tangan dan replay
-- [ ] [FE] Konfigurasi
-- [ ] [TEST] Assertion palsu ditolak
+- [x] [BE] SAML service provider
+- [x] [BE] Validasi tanda tangan dan replay
+- [x] [FE] Konfigurasi
+- [x] [TEST] Assertion palsu ditolak
 
 **S12.1.3 Provisioning SCIM (ENT-02) — 2 hari**
 - [ ] [BE] SCIM users
