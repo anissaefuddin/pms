@@ -336,3 +336,11 @@ Acceptance criteria tiap story ada di [BACKLOG.md](BACKLOG.md). Setelah M0 seles
 - **Belum:** pemilih custom field di editor query, pratinjau burndown, riwayat status untuk burndown yang akurat.
 - **Titik hati-hati:** migrasi analitik bernomor 00070 sampai 00073 sengaja melompati 00063 sampai 00069 untuk sesi lain yang mengerjakan file dan integrasi M11; basis data yang sudah menerapkan nomor lebih tinggi lebih dulu perlu goose `-allow-missing`. Playwright untuk sesi paralel memakai `PMS_TEST_BROWSER_PORT` berbeda.
 
+
+### Penutupan M11 (14 Nov 2026)
+
+- **Status:** seluruh story M11 selesai di cabang `integration/s11-3` (S11.1.x dan S11.2.x dari `main`, S11.3.1 sampai S11.3.7 digabung di sini). Gate G2b: BELUM LULUS (UAT manusia dan akun uji GitHub/Google belum dijalankan).
+- **Yang perlu diputuskan:** cabang ini belum digabung ke `main` dan belum di-push.
+- **Konfigurasi baru:** `PMS_CONNECTOR_KEY` (dan `_PREVIOUS`): mengenkripsi rahasia konektor dan secret webhook; tanpa kunci, konektor yang butuh rahasia tidak bisa dipasang dan secret webhook tersimpan polos. Migrasi baru: `00210`, `00220`, `00230`, `00240`, `00260` sampai `00279` (celah disengaja); migrasi file dinomori ulang `00090`-`00092`.
+- **Titik hati-hati:** token OAuth tidak boleh mengelola `/api/v1/api-keys`, `/auth`, `/oauth` (diblokir di `bearerUser`); API key diperiksa lebih dulu di `requireUser`, lalu token OAuth lewat `bearerResolvers`.
+- **Belum:** rotasi secret webhook, enkripsi ulang langganan lama, akun sungguhan untuk konektor, SMTP sungguhan untuk jadwal report.

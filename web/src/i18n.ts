@@ -1,5 +1,6 @@
 import i18n from "i18next";
 import { initReactI18next } from "react-i18next";
+import apps from "./i18n/en/apps.json";
 import audit from "./i18n/en/audit.json";
 import auth from "./i18n/en/auth.json";
 import common from "./i18n/en/common.json";
@@ -11,6 +12,7 @@ import forms from "./i18n/en/forms.json";
 import gantt from "./i18n/en/gantt.json";
 import items from "./i18n/en/items.json";
 import nav from "./i18n/en/nav.json";
+import oauth from "./i18n/en/oauth.json";
 import reports from "./i18n/en/reports.json";
 import ownership from "./i18n/en/ownership.json";
 import policy from "./i18n/en/policy.json";
@@ -24,6 +26,7 @@ import sso from "./i18n/en/sso.json";
 import starred from "./i18n/en/starred.json";
 import time from "./i18n/en/time.json";
 import views from "./i18n/en/views.json";
+import webhooks from "./i18n/en/webhooks.json";
 import workspace from "./i18n/en/workspace.json";
 
 i18n.use(initReactI18next).init({
@@ -32,7 +35,7 @@ i18n.use(initReactI18next).init({
   interpolation: { escapeValue: false },
   resources: {
     en: {
-      translation: { audit, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, ownership, policy, provisioning, reports, roles, search, settings, share, spaces, sso, starred, time, views, workspace },
+      translation: { apps, audit, auth, automation, blueprints, common, dashboards, excel, forms, gantt, items, nav, oauth, ownership, policy, provisioning, reports, roles, search, settings, share, spaces, sso, starred, time, views, webhooks, workspace },
     },
   },
 });

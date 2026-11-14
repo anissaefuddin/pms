@@ -35,6 +35,7 @@ import { Route as InvitationsTokenRouteImport } from './routes/invitations.$toke
 import { Route as AppDashboardsIndexRouteImport } from './routes/_app/dashboards.index'
 import { Route as AppDashboardsDashboardIdRouteImport } from './routes/_app/dashboards.$dashboardId'
 import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
+import { Route as AppOauthAuthorizeRouteImport } from './routes/_app/oauth.authorize'
 import { Route as AppReportsIndexRouteImport } from './routes/_app/reports.index'
 import { Route as AppReportsReportIdRouteImport } from './routes/_app/reports.$reportId'
 import { Route as AppRequestsIndexRouteImport } from './routes/_app/requests.index'
@@ -42,6 +43,7 @@ import { Route as AppRequestsFormIdRouteImport } from './routes/_app/requests.$f
 import { Route as AppRequestsMineRouteImport } from './routes/_app/requests.mine'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
+import { Route as AppSettingsAppsRouteImport } from './routes/_app/settings/apps'
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
 import { Route as AppSettingsOwnershipRouteImport } from './routes/_app/settings/ownership'
@@ -195,6 +197,11 @@ const AppItemsItemIdRoute = AppItemsItemIdRouteImport.update({
   path: '/items/$itemId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppOauthAuthorizeRoute = AppOauthAuthorizeRouteImport.update({
+  id: '/oauth/authorize',
+  path: '/oauth/authorize',
+  getParentRoute: () => AppRoute,
+} as any)
 const AppReportsIndexRoute = AppReportsIndexRouteImport.update({
   id: '/reports/',
   path: '/reports/',
@@ -228,6 +235,11 @@ const AppSettingsIndexRoute = AppSettingsIndexRouteImport.update({
 const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
   id: '/account',
   path: '/account',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsAppsRoute = AppSettingsAppsRouteImport.update({
+  id: '/apps',
+  path: '/apps',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsAuditRoute = AppSettingsAuditRouteImport.update({
@@ -368,10 +380,12 @@ export interface FileRoutesByFullPath {
   '/invitations/$token': typeof InvitationsTokenRoute
   '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
+  '/oauth/authorize': typeof AppOauthAuthorizeRoute
   '/reports/$reportId': typeof AppReportsReportIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/ownership': typeof AppSettingsOwnershipRoute
@@ -423,10 +437,12 @@ export interface FileRoutesByTo {
   '/': typeof AppIndexRoute
   '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
+  '/oauth/authorize': typeof AppOauthAuthorizeRoute
   '/reports/$reportId': typeof AppReportsReportIdRoute
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/ownership': typeof AppSettingsOwnershipRoute
@@ -480,10 +496,12 @@ export interface FileRoutesById {
   '/_app/': typeof AppIndexRoute
   '/_app/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/_app/items/$itemId': typeof AppItemsItemIdRoute
+  '/_app/oauth/authorize': typeof AppOauthAuthorizeRoute
   '/_app/reports/$reportId': typeof AppReportsReportIdRoute
   '/_app/requests/$formId': typeof AppRequestsFormIdRoute
   '/_app/requests/mine': typeof AppRequestsMineRoute
   '/_app/settings/account': typeof AppSettingsAccountRoute
+  '/_app/settings/apps': typeof AppSettingsAppsRoute
   '/_app/settings/audit': typeof AppSettingsAuditRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
   '/_app/settings/ownership': typeof AppSettingsOwnershipRoute
@@ -538,10 +556,12 @@ export interface FileRouteTypes {
     | '/invitations/$token'
     | '/dashboards/$dashboardId'
     | '/items/$itemId'
+    | '/oauth/authorize'
     | '/reports/$reportId'
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/account'
+    | '/settings/apps'
     | '/settings/audit'
     | '/settings/item-types'
     | '/settings/ownership'
@@ -593,10 +613,12 @@ export interface FileRouteTypes {
     | '/'
     | '/dashboards/$dashboardId'
     | '/items/$itemId'
+    | '/oauth/authorize'
     | '/reports/$reportId'
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/account'
+    | '/settings/apps'
     | '/settings/audit'
     | '/settings/item-types'
     | '/settings/ownership'
@@ -649,10 +671,12 @@ export interface FileRouteTypes {
     | '/_app/'
     | '/_app/dashboards/$dashboardId'
     | '/_app/items/$itemId'
+    | '/_app/oauth/authorize'
     | '/_app/reports/$reportId'
     | '/_app/requests/$formId'
     | '/_app/requests/mine'
     | '/_app/settings/account'
+    | '/_app/settings/apps'
     | '/_app/settings/audit'
     | '/_app/settings/item-types'
     | '/_app/settings/ownership'
@@ -877,6 +901,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppItemsItemIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/oauth/authorize': {
+      id: '/_app/oauth/authorize'
+      path: '/oauth/authorize'
+      fullPath: '/oauth/authorize'
+      preLoaderRoute: typeof AppOauthAuthorizeRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/reports/': {
       id: '/_app/reports/'
       path: '/reports'
@@ -924,6 +955,13 @@ declare module '@tanstack/react-router' {
       path: '/account'
       fullPath: '/settings/account'
       preLoaderRoute: typeof AppSettingsAccountRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/apps': {
+      id: '/_app/settings/apps'
+      path: '/apps'
+      fullPath: '/settings/apps'
+      preLoaderRoute: typeof AppSettingsAppsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/audit': {
@@ -1098,6 +1136,7 @@ const AppSettingsUsersRouteWithChildren =
 
 interface AppSettingsRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
+  AppSettingsAppsRoute: typeof AppSettingsAppsRoute
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
   AppSettingsOwnershipRoute: typeof AppSettingsOwnershipRoute
@@ -1117,6 +1156,7 @@ interface AppSettingsRouteChildren {
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
+  AppSettingsAppsRoute: AppSettingsAppsRoute,
   AppSettingsAuditRoute: AppSettingsAuditRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
   AppSettingsOwnershipRoute: AppSettingsOwnershipRoute,
@@ -1155,6 +1195,7 @@ interface AppRouteChildren {
   AppIndexRoute: typeof AppIndexRoute
   AppDashboardsDashboardIdRoute: typeof AppDashboardsDashboardIdRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
+  AppOauthAuthorizeRoute: typeof AppOauthAuthorizeRoute
   AppReportsReportIdRoute: typeof AppReportsReportIdRoute
   AppRequestsFormIdRoute: typeof AppRequestsFormIdRoute
   AppRequestsMineRoute: typeof AppRequestsMineRoute
@@ -1186,6 +1227,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppIndexRoute: AppIndexRoute,
   AppDashboardsDashboardIdRoute: AppDashboardsDashboardIdRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
+  AppOauthAuthorizeRoute: AppOauthAuthorizeRoute,
   AppReportsReportIdRoute: AppReportsReportIdRoute,
   AppRequestsFormIdRoute: AppRequestsFormIdRoute,
   AppRequestsMineRoute: AppRequestsMineRoute,

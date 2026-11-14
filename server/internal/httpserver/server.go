@@ -170,11 +170,15 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.resourceRoutes(mux)
 	s.workflowRoutes(mux)
 	s.automationRoutes(mux)
+	s.webhookRoutes(mux)
 	s.approvalRoutes(mux)
 	s.fileApprovalRoutes(mux)
 	s.baselineRoutes(mux)
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)
+	s.connectorRoutes(mux)
+	s.OAuthRoutes(mux)
+	s.bookmarkRoutes(mux)
 	s.portfolioRoutes(mux)
 	s.publicDashboardRoutes(mux)
 	s.formRoutes(mux)
@@ -186,6 +190,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.ProjectFileRoutes(mux)
 	s.timeEntryRoutes(mux)
 	s.projectExcelRoutes(mux)
+	s.apiKeyRoutes(mux)
 	mux.HandleFunc("GET /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))
 	mux.HandleFunc("PUT /api/v1/items/{itemId}/shares", s.requireUser(s.itemShares))
 	mux.HandleFunc("POST /api/v1/items", s.requireUser(s.createItem))
@@ -644,9 +649,18 @@ func (s *Server) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		if token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok && strings.HasPrefix(token, keyPrefix) {
+			if ctx, ok := s.authenticateKey(w, r, token); ok {
+				next(w, r.WithContext(ctx))
+			}
+			return
+		}
 		cookie, err := r.Cookie("pms_session")
 		if err != nil {
-			writeError(w, 401, "authentication required")
+			p, ok := s.bearerUser(w, r)
+			if ok {
+				next(w, r.WithContext(context.WithValue(context.WithValue(r.Context(), userKey, p.UserID), userTypeKey, p.UserType)))
+			}
 			return
 		}
 		if !s.ipAllowed(r) {
@@ -685,6 +699,20 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 func (s *Server) csrf(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		if r.Method == http.MethodGet || r.Method == http.MethodHead || r.Method == http.MethodOptions {
+			next.ServeHTTP(w, r)
+			return
+		}
+		// A GitHub webhook has no browser and no cookie; its handler verifies the HMAC signature instead.
+		if strings.HasPrefix(r.URL.Path, "/api/v1/connectors/") && strings.HasSuffix(r.URL.Path, "/github-webhook") {
+			next.ServeHTTP(w, r)
+			return
+		}
+		// Bearer calls carry no cookie, so there is nothing to forge; the token endpoint uses the client secret.
+		if _, err := r.Cookie("pms_session"); err != nil && (r.URL.Path == "/api/v1/oauth/token" || strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ")) {
+			next.ServeHTTP(w, r)
+			return
+		}
+		if strings.HasPrefix(r.Header.Get("Authorization"), "Bearer "+keyPrefix) { // an API key never reads the cookie, so there is no CSRF
 			next.ServeHTTP(w, r)
 			return
 		}

@@ -264,6 +264,24 @@ func (e AnalyticsQueryReportingOn) Valid() bool {
 	}
 }
 
+// Defines values for ApiKeyScope.
+const (
+	ApiKeyScopeRead  ApiKeyScope = "read"
+	ApiKeyScopeWrite ApiKeyScope = "write"
+)
+
+// Valid indicates whether the value is a known member of the ApiKeyScope enum.
+func (e ApiKeyScope) Valid() bool {
+	switch e {
+	case ApiKeyScopeRead:
+		return true
+	case ApiKeyScopeWrite:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ApprovalApproversDecision.
 const (
 	ApprovalApproversDecisionApproved ApprovalApproversDecision = "approved"
@@ -561,6 +579,24 @@ func (e Capability) Valid() bool {
 	case CapabilityShare:
 		return true
 	case CapabilityView:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ConnectorConflictResolution.
+const (
+	ConnectorConflictResolutionItem   ConnectorConflictResolution = "item"
+	ConnectorConflictResolutionRemote ConnectorConflictResolution = "remote"
+)
+
+// Valid indicates whether the value is a known member of the ConnectorConflictResolution enum.
+func (e ConnectorConflictResolution) Valid() bool {
+	switch e {
+	case ConnectorConflictResolutionItem:
+		return true
+	case ConnectorConflictResolutionRemote:
 		return true
 	default:
 		return false
@@ -1922,22 +1958,22 @@ func (e ScimTokenInputDefaultUserType) Valid() bool {
 
 // Defines values for ShareRole.
 const (
-	Editor  ShareRole = "editor"
-	Full    ShareRole = "full"
-	Limited ShareRole = "limited"
-	Read    ShareRole = "read"
+	ShareRoleEditor  ShareRole = "editor"
+	ShareRoleFull    ShareRole = "full"
+	ShareRoleLimited ShareRole = "limited"
+	ShareRoleRead    ShareRole = "read"
 )
 
 // Valid indicates whether the value is a known member of the ShareRole enum.
 func (e ShareRole) Valid() bool {
 	switch e {
-	case Editor:
+	case ShareRoleEditor:
 		return true
-	case Full:
+	case ShareRoleFull:
 		return true
-	case Limited:
+	case ShareRoleLimited:
 		return true
-	case Read:
+	case ShareRoleRead:
 		return true
 	default:
 		return false
@@ -2274,6 +2310,24 @@ func (e WidgetDataKind) Valid() bool {
 	}
 }
 
+// Defines values for CreateApiKeyJSONBodyScope.
+const (
+	CreateApiKeyJSONBodyScopeRead  CreateApiKeyJSONBodyScope = "read"
+	CreateApiKeyJSONBodyScopeWrite CreateApiKeyJSONBodyScope = "write"
+)
+
+// Valid indicates whether the value is a known member of the CreateApiKeyJSONBodyScope enum.
+func (e CreateApiKeyJSONBodyScope) Valid() bool {
+	switch e {
+	case CreateApiKeyJSONBodyScopeRead:
+		return true
+	case CreateApiKeyJSONBodyScopeWrite:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for DecideApprovalJSONBodyDecision.
 const (
 	DecideApprovalJSONBodyDecisionApproved DecideApprovalJSONBodyDecision = "approved"
@@ -2349,6 +2403,24 @@ func (e ListAutomationRunsParamsStatus) Valid() bool {
 	case ListAutomationRunsParamsStatusQuotaBlocked:
 		return true
 	case ListAutomationRunsParamsStatusSkipped:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ResolveConnectorConflictJSONBodyResolution.
+const (
+	ResolveConnectorConflictJSONBodyResolutionItem   ResolveConnectorConflictJSONBodyResolution = "item"
+	ResolveConnectorConflictJSONBodyResolutionRemote ResolveConnectorConflictJSONBodyResolution = "remote"
+)
+
+// Valid indicates whether the value is a known member of the ResolveConnectorConflictJSONBodyResolution enum.
+func (e ResolveConnectorConflictJSONBodyResolution) Valid() bool {
+	switch e {
+	case ResolveConnectorConflictJSONBodyResolutionItem:
+		return true
+	case ResolveConnectorConflictJSONBodyResolutionRemote:
 		return true
 	default:
 		return false
@@ -2466,6 +2538,21 @@ func (e ListMyTodoParamsSort) Valid() bool {
 	case ListMyTodoParamsSortStatus:
 		return true
 	case ListMyTodoParamsSortTitle:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod.
+const (
+	S256 ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod = "S256"
+)
+
+// Valid indicates whether the value is a known member of the ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod enum.
+func (e ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod) Valid() bool {
+	switch e {
+	case S256:
 		return true
 	default:
 		return false
@@ -2682,6 +2769,27 @@ func (e UpdateTimeEntryJSONBodyBillingType) Valid() bool {
 	}
 }
 
+// Defines values for ListWebhookDeliveries200JSONResponseBodyItemsStatus.
+const (
+	ListWebhookDeliveries200JSONResponseBodyItemsStatusFailed  ListWebhookDeliveries200JSONResponseBodyItemsStatus = "failed"
+	ListWebhookDeliveries200JSONResponseBodyItemsStatusPending ListWebhookDeliveries200JSONResponseBodyItemsStatus = "pending"
+	ListWebhookDeliveries200JSONResponseBodyItemsStatusSuccess ListWebhookDeliveries200JSONResponseBodyItemsStatus = "success"
+)
+
+// Valid indicates whether the value is a known member of the ListWebhookDeliveries200JSONResponseBodyItemsStatus enum.
+func (e ListWebhookDeliveries200JSONResponseBodyItemsStatus) Valid() bool {
+	switch e {
+	case ListWebhookDeliveries200JSONResponseBodyItemsStatusFailed:
+		return true
+	case ListWebhookDeliveries200JSONResponseBodyItemsStatusPending:
+		return true
+	case ListWebhookDeliveries200JSONResponseBodyItemsStatusSuccess:
+		return true
+	default:
+		return false
+	}
+}
+
 // AcceptInvitationRequest defines model for AcceptInvitationRequest.
 type AcceptInvitationRequest struct {
 	AcceptTerms AcceptInvitationRequestAcceptTerms `json:"accept_terms"`
@@ -2849,6 +2957,28 @@ type AnalyticsResult struct {
 		Value float32         `json:"value"`
 	} `json:"rows"`
 	Total float32 `json:"total"`
+}
+
+// ApiKey defines model for ApiKey.
+type ApiKey struct {
+	CreatedAt  time.Time          `json:"created_at"`
+	ExpiresAt  *time.Time         `json:"expires_at"`
+	Id         openapi_types.UUID `json:"id"`
+	LastUsedAt *time.Time         `json:"last_used_at"`
+	Name       string             `json:"name"`
+	Prefix     string             `json:"prefix"`
+	Scope      ApiKeyScope        `json:"scope"`
+}
+
+// ApiKeyScope defines model for ApiKey.Scope.
+type ApiKeyScope string
+
+// ApiKeyCreated defines model for ApiKeyCreated.
+type ApiKeyCreated struct {
+	Key ApiKey `json:"key"`
+
+	// Secret Dikirim sekali saja; hanya hash yang disimpan
+	Secret string `json:"secret"`
 }
 
 // Approval defines model for Approval.
@@ -3145,6 +3275,39 @@ type Comment struct {
 type CommentPage struct {
 	Items      []Comment `json:"items"`
 	NextCursor *string   `json:"next_cursor,omitempty"`
+}
+
+// ConnectorConflict defines model for ConnectorConflict.
+type ConnectorConflict struct {
+	BaseTitle *string    `json:"base_title,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Differs Kolom yang berbeda, dipisah koma (title, body, done)
+	Differs     *string                      `json:"differs,omitempty"`
+	ExternalId  *string                      `json:"external_id,omitempty"`
+	Id          *openapi_types.UUID          `json:"id,omitempty"`
+	ItemId      *openapi_types.UUID          `json:"item_id,omitempty"`
+	ItemTitle   *string                      `json:"item_title,omitempty"`
+	RemoteTitle *string                      `json:"remote_title,omitempty"`
+	Resolution  *ConnectorConflictResolution `json:"resolution,omitempty"`
+	ResolvedAt  *time.Time                   `json:"resolved_at,omitempty"`
+}
+
+// ConnectorConflictResolution defines model for ConnectorConflict.Resolution.
+type ConnectorConflictResolution string
+
+// ConnectorInstall defines model for ConnectorInstall.
+type ConnectorInstall struct {
+	Config          map[string]interface{} `json:"config"`
+	CreatedAt       time.Time              `json:"created_at"`
+	Enabled         bool                   `json:"enabled"`
+	Id              openapi_types.UUID     `json:"id"`
+	Kind            string                 `json:"kind"`
+	LastSyncAt      *time.Time             `json:"last_sync_at,omitempty"`
+	LastSyncMessage *string                `json:"last_sync_message,omitempty"`
+	LastSyncOk      *bool                  `json:"last_sync_ok,omitempty"`
+	Name            string                 `json:"name"`
+	SecretNames     []string               `json:"secret_names"`
 }
 
 // CustomField defines model for CustomField.
@@ -3444,6 +3607,17 @@ type ExcelPreview struct {
 	} `json:"errors"`
 	Rows   int        `json:"rows"`
 	Sample [][]string `json:"sample"`
+}
+
+// FeedbackEntry defines model for FeedbackEntry.
+type FeedbackEntry struct {
+	Comment   string             `json:"comment"`
+	CreatedAt time.Time          `json:"created_at"`
+	Id        openapi_types.UUID `json:"id"`
+	Page      string             `json:"page"`
+	Rating    *int               `json:"rating"`
+	Subject   string             `json:"subject"`
+	User      *string            `json:"user"`
 }
 
 // FileReview defines model for FileReview.
@@ -4595,6 +4769,22 @@ type Space struct {
 	Version        int           `json:"version"`
 }
 
+// SpaceBookmark defines model for SpaceBookmark.
+type SpaceBookmark struct {
+	Description string             `json:"description"`
+	Id          openapi_types.UUID `json:"id"`
+	Position    int                `json:"position"`
+	Title       string             `json:"title"`
+	Url         string             `json:"url"`
+}
+
+// SpaceBookmarkInput defines model for SpaceBookmarkInput.
+type SpaceBookmarkInput struct {
+	Description *string `json:"description,omitempty"`
+	Title       string  `json:"title"`
+	Url         string  `json:"url"`
+}
+
 // SpaceCreate defines model for SpaceCreate.
 type SpaceCreate struct {
 	Description *string       `json:"description,omitempty"`
@@ -4923,6 +5113,21 @@ type ViewUpdate struct {
 // ViewVisibility defines model for ViewVisibility.
 type ViewVisibility string
 
+// Webhook defines model for Webhook.
+type Webhook struct {
+	ConsecutiveFailures int                `json:"consecutive_failures"`
+	CreatedAt           time.Time          `json:"created_at"`
+	DisabledReason      *string            `json:"disabled_reason,omitempty"`
+	Enabled             bool               `json:"enabled"`
+	EventTypes          []string           `json:"event_types"`
+	Id                  openapi_types.UUID `json:"id"`
+	Name                string             `json:"name"`
+
+	// Secret Hanya pada respons pembuatan
+	Secret *string `json:"secret,omitempty"`
+	Url    string  `json:"url"`
+}
+
 // WidgetData defines model for WidgetData.
 type WidgetData struct {
 	Items *[]struct {
@@ -5072,6 +5277,18 @@ type TransferAccountOwnershipJSONBody struct {
 	NewOwnerId openapi_types.UUID `json:"new_owner_id"`
 	Password   *string            `json:"password,omitempty"`
 }
+
+// CreateApiKeyJSONBody defines parameters for CreateApiKey.
+type CreateApiKeyJSONBody struct {
+	ExpiresAt *time.Time `json:"expires_at,omitempty"`
+	Name      string     `json:"name"`
+
+	// Scope read = hanya GET; write = semua metode. Hak tetap mengikuti pembuatnya (policy).
+	Scope CreateApiKeyJSONBodyScope `json:"scope"`
+}
+
+// CreateApiKeyJSONBodyScope defines parameters for CreateApiKey.
+type CreateApiKeyJSONBodyScope string
 
 // UpdateApprovalParams defines parameters for UpdateApproval.
 type UpdateApprovalParams struct {
@@ -5242,6 +5459,43 @@ type UpdateCommentParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// ResolveConnectorConflictJSONBody defines parameters for ResolveConnectorConflict.
+type ResolveConnectorConflictJSONBody struct {
+	Resolution ResolveConnectorConflictJSONBodyResolution `json:"resolution"`
+}
+
+// ResolveConnectorConflictJSONBodyResolution defines parameters for ResolveConnectorConflict.
+type ResolveConnectorConflictJSONBodyResolution string
+
+// InstallConnectorJSONBody defines parameters for InstallConnector.
+type InstallConnectorJSONBody struct {
+	Config  *map[string]interface{} `json:"config,omitempty"`
+	Kind    string                  `json:"kind"`
+	Name    string                  `json:"name"`
+	Secrets *map[string]string      `json:"secrets,omitempty"`
+}
+
+// ConfigureConnectorJSONBody defines parameters for ConfigureConnector.
+type ConfigureConnectorJSONBody struct {
+	Config  *map[string]interface{} `json:"config,omitempty"`
+	Name    *string                 `json:"name,omitempty"`
+	Secrets *map[string]string      `json:"secrets,omitempty"`
+}
+
+// ListConnectorConflictsParams defines parameters for ListConnectorConflicts.
+type ListConnectorConflictsParams struct {
+	Status *string `form:"status,omitempty" json:"status,omitempty"`
+}
+
+// GithubConnectorWebhookJSONBody defines parameters for GithubConnectorWebhook.
+type GithubConnectorWebhookJSONBody map[string]interface{}
+
+// LinkConnectorItemJSONBody defines parameters for LinkConnectorItem.
+type LinkConnectorItemJSONBody struct {
+	ExternalId *string            `json:"external_id,omitempty"`
+	ItemId     openapi_types.UUID `json:"item_id"`
+}
+
 // DeleteCustomRoleParams defines parameters for DeleteCustomRole.
 type DeleteCustomRoleParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -5319,6 +5573,16 @@ type UpdateItemDependencyJSONBody struct {
 // StreamEventsParams defines parameters for StreamEvents.
 type StreamEventsParams struct {
 	LastEventID *string `json:"Last-Event-ID,omitempty"`
+}
+
+// CreateFeedbackJSONBody defines parameters for CreateFeedback.
+type CreateFeedbackJSONBody struct {
+	Comment *string `json:"comment,omitempty"`
+
+	// Page Path aplikasi asal; query dan fragment dibuang
+	Page    *string `json:"page,omitempty"`
+	Rating  *int    `json:"rating,omitempty"`
+	Subject string  `json:"subject"`
 }
 
 // ReplaceFormParams defines parameters for ReplaceForm.
@@ -5530,6 +5794,28 @@ type UpdateNotificationJSONBody struct {
 	Read     *bool `json:"read,omitempty"`
 }
 
+// ApproveOAuthAuthorizeJSONBody defines parameters for ApproveOAuthAuthorize.
+type ApproveOAuthAuthorizeJSONBody struct {
+	Approve             bool                                             `json:"approve"`
+	ClientId            string                                           `json:"client_id"`
+	CodeChallenge       string                                           `json:"code_challenge"`
+	CodeChallengeMethod ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod `json:"code_challenge_method"`
+	RedirectUri         string                                           `json:"redirect_uri"`
+
+	// Scope read, write (dipisah spasi)
+	Scope string `json:"scope"`
+	State string `json:"state"`
+}
+
+// ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod defines parameters for ApproveOAuthAuthorize.
+type ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod string
+
+// CreateOAuthClientJSONBody defines parameters for CreateOAuthClient.
+type CreateOAuthClientJSONBody struct {
+	Name         string   `json:"name"`
+	RedirectUris []string `json:"redirect_uris"`
+}
+
 // GetPortfolioTimelineJSONBody defines parameters for GetPortfolioTimeline.
 type GetPortfolioTimelineJSONBody struct {
 	ProjectIds []openapi_types.UUID `json:"project_ids"`
@@ -5687,6 +5973,14 @@ type CreateBlueprintJSONBody struct {
 	SourceItemId openapi_types.UUID `json:"source_item_id"`
 }
 
+// UpdateSpaceBookmarkJSONBody defines parameters for UpdateSpaceBookmark.
+type UpdateSpaceBookmarkJSONBody struct {
+	Description *string `json:"description,omitempty"`
+	Position    *int    `json:"position,omitempty"`
+	Title       *string `json:"title,omitempty"`
+	Url         *string `json:"url,omitempty"`
+}
+
 // ImportProjectExcelMultipartBody defines parameters for ImportProjectExcel.
 type ImportProjectExcelMultipartBody struct {
 	Commit *bool   `json:"commit,omitempty"`
@@ -5818,6 +6112,24 @@ type DuplicateViewJSONBody struct {
 	Visibility ViewVisibility `json:"visibility"`
 }
 
+// CreateWebhookJSONBody defines parameters for CreateWebhook.
+type CreateWebhookJSONBody struct {
+	EventTypes []string `json:"event_types"`
+	Name       string   `json:"name"`
+	Url        string   `json:"url"`
+}
+
+// UpdateWebhookJSONBody defines parameters for UpdateWebhook.
+type UpdateWebhookJSONBody struct {
+	Enabled    *bool     `json:"enabled,omitempty"`
+	EventTypes *[]string `json:"event_types,omitempty"`
+	Name       *string   `json:"name,omitempty"`
+	Url        *string   `json:"url,omitempty"`
+}
+
+// ListWebhookDeliveries200JSONResponseBodyItemsStatus defines parameters for ListWebhookDeliveries.
+type ListWebhookDeliveries200JSONResponseBodyItemsStatus string
+
 // RenameWorkflowJSONBody defines parameters for RenameWorkflow.
 type RenameWorkflowJSONBody struct {
 	Name string `json:"name"`
@@ -5847,6 +6159,9 @@ type TransferAccountOwnershipJSONRequestBody TransferAccountOwnershipJSONBody
 
 // RunAnalyticsQueryJSONRequestBody defines body for RunAnalyticsQuery for application/json ContentType.
 type RunAnalyticsQueryJSONRequestBody = AnalyticsQuery
+
+// CreateApiKeyJSONRequestBody defines body for CreateApiKey for application/json ContentType.
+type CreateApiKeyJSONRequestBody CreateApiKeyJSONBody
 
 // UpdateApprovalJSONRequestBody defines body for UpdateApproval for application/json ContentType.
 type UpdateApprovalJSONRequestBody = ApprovalPatch
@@ -5902,6 +6217,21 @@ type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
 
+// ResolveConnectorConflictJSONRequestBody defines body for ResolveConnectorConflict for application/json ContentType.
+type ResolveConnectorConflictJSONRequestBody ResolveConnectorConflictJSONBody
+
+// InstallConnectorJSONRequestBody defines body for InstallConnector for application/json ContentType.
+type InstallConnectorJSONRequestBody InstallConnectorJSONBody
+
+// ConfigureConnectorJSONRequestBody defines body for ConfigureConnector for application/json ContentType.
+type ConfigureConnectorJSONRequestBody ConfigureConnectorJSONBody
+
+// GithubConnectorWebhookJSONRequestBody defines body for GithubConnectorWebhook for application/json ContentType.
+type GithubConnectorWebhookJSONRequestBody GithubConnectorWebhookJSONBody
+
+// LinkConnectorItemJSONRequestBody defines body for LinkConnectorItem for application/json ContentType.
+type LinkConnectorItemJSONRequestBody LinkConnectorItemJSONBody
+
 // CreateCustomRoleJSONRequestBody defines body for CreateCustomRole for application/json ContentType.
 type CreateCustomRoleJSONRequestBody = CustomRoleInput
 
@@ -5934,6 +6264,9 @@ type QueryDependenciesJSONRequestBody QueryDependenciesJSONBody
 
 // UpdateItemDependencyJSONRequestBody defines body for UpdateItemDependency for application/json ContentType.
 type UpdateItemDependencyJSONRequestBody UpdateItemDependencyJSONBody
+
+// CreateFeedbackJSONRequestBody defines body for CreateFeedback for application/json ContentType.
+type CreateFeedbackJSONRequestBody CreateFeedbackJSONBody
 
 // ReplaceFormJSONRequestBody defines body for ReplaceForm for application/json ContentType.
 type ReplaceFormJSONRequestBody = FormInput
@@ -6016,6 +6349,12 @@ type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
 
+// ApproveOAuthAuthorizeJSONRequestBody defines body for ApproveOAuthAuthorize for application/json ContentType.
+type ApproveOAuthAuthorizeJSONRequestBody ApproveOAuthAuthorizeJSONBody
+
+// CreateOAuthClientJSONRequestBody defines body for CreateOAuthClient for application/json ContentType.
+type CreateOAuthClientJSONRequestBody CreateOAuthClientJSONBody
+
 // GetPortfolioTimelineJSONRequestBody defines body for GetPortfolioTimeline for application/json ContentType.
 type GetPortfolioTimelineJSONRequestBody GetPortfolioTimelineJSONBody
 
@@ -6091,6 +6430,12 @@ type DryRunAutomationJSONRequestBody DryRunAutomationJSONBody
 // CreateBlueprintJSONRequestBody defines body for CreateBlueprint for application/json ContentType.
 type CreateBlueprintJSONRequestBody CreateBlueprintJSONBody
 
+// CreateSpaceBookmarkJSONRequestBody defines body for CreateSpaceBookmark for application/json ContentType.
+type CreateSpaceBookmarkJSONRequestBody = SpaceBookmarkInput
+
+// UpdateSpaceBookmarkJSONRequestBody defines body for UpdateSpaceBookmark for application/json ContentType.
+type UpdateSpaceBookmarkJSONRequestBody UpdateSpaceBookmarkJSONBody
+
 // CreateCustomFieldJSONRequestBody defines body for CreateCustomField for application/json ContentType.
 type CreateCustomFieldJSONRequestBody = CustomFieldCreate
 
@@ -6135,6 +6480,12 @@ type UpdateViewJSONRequestBody = ViewUpdate
 
 // DuplicateViewJSONRequestBody defines body for DuplicateView for application/json ContentType.
 type DuplicateViewJSONRequestBody DuplicateViewJSONBody
+
+// CreateWebhookJSONRequestBody defines body for CreateWebhook for application/json ContentType.
+type CreateWebhookJSONRequestBody CreateWebhookJSONBody
+
+// UpdateWebhookJSONRequestBody defines body for UpdateWebhook for application/json ContentType.
+type UpdateWebhookJSONRequestBody UpdateWebhookJSONBody
 
 // CreateWorkflowJSONRequestBody defines body for CreateWorkflow for application/json ContentType.
 type CreateWorkflowJSONRequestBody = WorkflowInput
@@ -6432,6 +6783,18 @@ type ServerInterface interface {
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(w http.ResponseWriter, r *http.Request)
+	// ListApiKeys API key milik pemanggil (tanpa nilai rahasia; hanya sesi)
+	// (GET /api-keys)
+	ListApiKeys(w http.ResponseWriter, r *http.Request)
+	// CreateApiKey Buat API key; nilai penuh hanya dikembalikan sekali di respons ini (hanya sesi)
+	// (POST /api-keys)
+	CreateApiKey(w http.ResponseWriter, r *http.Request)
+	// RevokeApiKey Cabut API key; efektif segera (hanya sesi)
+	// (DELETE /api-keys/{keyId})
+	RevokeApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID)
+	// RotateApiKey Ganti nilai rahasia; nilai lama langsung tidak berlaku (hanya sesi)
+	// (POST /api-keys/{keyId}/rotate)
+	RotateApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID)
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
@@ -6567,6 +6930,36 @@ type ServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID, params UpdateCommentParams)
+	// ResolveConnectorConflict Admin. Pilih sisi yang dipakai (item atau remote); sisi lain ditimpa dengan sengaja, teksnya tetap di catatan konflik
+	// (POST /connector-conflicts/{conflictId}/resolve)
+	ResolveConnectorConflict(w http.ResponseWriter, r *http.Request, conflictId openapi_types.UUID)
+	// ListConnectors Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama)
+	// (GET /connectors)
+	ListConnectors(w http.ResponseWriter, r *http.Request)
+	// InstallConnector Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada)
+	// (POST /connectors)
+	InstallConnector(w http.ResponseWriter, r *http.Request)
+	// ConfigureConnector Admin. Ubah nama, config, atau rahasia (digabung per nama; nilai kosong menghapus)
+	// (PATCH /connectors/{connectorId})
+	ConfigureConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// ListConnectorConflicts Admin. Konflik sinkronisasi (default hanya yang terbuka)
+	// (GET /connectors/{connectorId}/conflicts)
+	ListConnectorConflicts(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID, params ListConnectorConflictsParams)
+	// DisableConnector Admin. Nonaktifkan; sinkronisasi ditolak (409) sampai diaktifkan lagi
+	// (POST /connectors/{connectorId}/disable)
+	DisableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// EnableConnector Admin. Aktifkan kembali
+	// (POST /connectors/{connectorId}/enable)
+	EnableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// GithubConnectorWebhook Webhook GitHub (tanpa sesi). Tanda tangan HMAC X-Hub-Signature-256 dengan rahasia webhook_secret konektor; event issues menjadwalkan sinkron segera
+	// (POST /connectors/{connectorId}/github-webhook)
+	GithubConnectorWebhook(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// LinkConnectorItem Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
+	// (POST /connectors/{connectorId}/links)
+	LinkConnectorItem(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// SyncConnector Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
+	// (POST /connectors/{connectorId}/sync)
+	SyncConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
 	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
 	// (GET /custom-roles)
 	ListCustomRoles(w http.ResponseWriter, r *http.Request)
@@ -6639,6 +7032,12 @@ type ServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID)
+	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
+	// (GET /feedback)
+	ListFeedback(w http.ResponseWriter, r *http.Request)
+	// CreateFeedback Kirim umpan balik; 5 per pengguna per jam, 429 bila lebih
+	// (POST /feedback)
+	CreateFeedback(w http.ResponseWriter, r *http.Request)
 	// ListFileReviews Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04)
 	// (GET /file-reviews)
 	ListFileReviews(w http.ResponseWriter, r *http.Request)
@@ -6846,6 +7245,30 @@ type ServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(w http.ResponseWriter, r *http.Request, notificationId openapi_types.UUID)
+	// GetOAuthAuthorizeInfo Validasi permintaan otorisasi untuk layar persetujuan (redirect URI harus sama persis, PKCE S256 wajib)
+	// (GET /oauth/authorize)
+	GetOAuthAuthorizeInfo(w http.ResponseWriter, r *http.Request)
+	// ApproveOAuthAuthorize Setujui atau tolak; mengembalikan redirect_to berisi code sekali pakai (60 detik) dan state. Hanya lewat sesi cookie
+	// (POST /oauth/authorize)
+	ApproveOAuthAuthorize(w http.ResponseWriter, r *http.Request)
+	// ListOAuthClients Daftar OAuth app terdaftar (admin; secret tidak pernah dikembalikan lagi)
+	// (GET /oauth/clients)
+	ListOAuthClients(w http.ResponseWriter, r *http.Request)
+	// CreateOAuthClient Daftarkan OAuth app (admin); client_secret hanya tampil sekali di respons ini
+	// (POST /oauth/clients)
+	CreateOAuthClient(w http.ResponseWriter, r *http.Request)
+	// DeleteOAuthClient Hapus OAuth app dan cabut semua grant-nya (admin)
+	// (DELETE /oauth/clients/{id})
+	DeleteOAuthClient(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ListOAuthGrants Authorized apps milik pengguna
+	// (GET /oauth/grants)
+	ListOAuthGrants(w http.ResponseWriter, r *http.Request)
+	// RevokeOAuthGrant Cabut app; access dan refresh token langsung tidak berlaku
+	// (DELETE /oauth/grants/{id})
+	RevokeOAuthGrant(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// OauthToken Tukar code (+ code_verifier) atau refresh_token dengan token; form-urlencoded, klien memakai client_id dan client_secret. Token disimpan sebagai hash
+	// (POST /oauth/token)
+	OauthToken(w http.ResponseWriter, r *http.Request)
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(w http.ResponseWriter, r *http.Request)
@@ -7032,6 +7455,18 @@ type ServerInterface interface {
 	// CreateBlueprint Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
 	// (POST /spaces/{spaceId}/blueprints)
 	CreateBlueprint(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ListSpaceBookmarks Bookmark URL eksternal sebuah Space (NAV-08); hak View
+	// (GET /spaces/{spaceId}/bookmarks)
+	ListSpaceBookmarks(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// CreateSpaceBookmark Tambah bookmark; hanya URL http/https (hak Edit, maks 100 per Space)
+	// (POST /spaces/{spaceId}/bookmarks)
+	CreateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// DeleteSpaceBookmark Hapus bookmark (hak Edit)
+	// (DELETE /spaces/{spaceId}/bookmarks/{bookmarkId})
+	DeleteSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID)
+	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
+	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
+	UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -7149,6 +7584,21 @@ type ServerInterface interface {
 	// DuplicateView Duplikat view (VIEW-08)
 	// (POST /views/{viewId}/duplicate)
 	DuplicateView(w http.ResponseWriter, r *http.Request, viewId ViewId)
+	// ListWebhooks Langganan webhook milik pengguna (tanpa secret)
+	// (GET /webhooks)
+	ListWebhooks(w http.ResponseWriter, r *http.Request)
+	// CreateWebhook Buat langganan; secret hanya muncul di respons ini
+	// (POST /webhooks)
+	CreateWebhook(w http.ResponseWriter, r *http.Request)
+	// DeleteWebhook Hapus langganan
+	// (DELETE /webhooks/{webhookId})
+	DeleteWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID)
+	// UpdateWebhook Ubah atau aktifkan kembali (enabled=true mereset penghitung gagal)
+	// (PATCH /webhooks/{webhookId})
+	UpdateWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID)
+	// ListWebhookDeliveries Log pengiriman terbaru (100)
+	// (GET /webhooks/{webhookId}/deliveries)
+	ListWebhookDeliveries(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID)
 	// ListWorkflows Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca
 	// (GET /workflows)
 	ListWorkflows(w http.ResponseWriter, r *http.Request)
@@ -7301,6 +7751,86 @@ func (siw *ServerInterfaceWrapper) RunAnalyticsQuery(w http.ResponseWriter, r *h
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RunAnalyticsQuery(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListApiKeys operation middleware
+func (siw *ServerInterfaceWrapper) ListApiKeys(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListApiKeys(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateApiKey operation middleware
+func (siw *ServerInterfaceWrapper) CreateApiKey(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateApiKey(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeApiKey operation middleware
+func (siw *ServerInterfaceWrapper) RevokeApiKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "keyId" -------------
+	var keyId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "keyId", r.PathValue("keyId"), &keyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keyId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeApiKey(w, r, keyId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RotateApiKey operation middleware
+func (siw *ServerInterfaceWrapper) RotateApiKey(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "keyId" -------------
+	var keyId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "keyId", r.PathValue("keyId"), &keyId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "keyId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RotateApiKey(w, r, keyId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -8773,6 +9303,258 @@ func (siw *ServerInterfaceWrapper) UpdateComment(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ResolveConnectorConflict operation middleware
+func (siw *ServerInterfaceWrapper) ResolveConnectorConflict(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "conflictId" -------------
+	var conflictId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "conflictId", r.PathValue("conflictId"), &conflictId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "conflictId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ResolveConnectorConflict(w, r, conflictId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListConnectors operation middleware
+func (siw *ServerInterfaceWrapper) ListConnectors(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListConnectors(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// InstallConnector operation middleware
+func (siw *ServerInterfaceWrapper) InstallConnector(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.InstallConnector(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ConfigureConnector operation middleware
+func (siw *ServerInterfaceWrapper) ConfigureConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ConfigureConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListConnectorConflicts operation middleware
+func (siw *ServerInterfaceWrapper) ListConnectorConflicts(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListConnectorConflictsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListConnectorConflicts(w, r, connectorId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DisableConnector operation middleware
+func (siw *ServerInterfaceWrapper) DisableConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DisableConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EnableConnector operation middleware
+func (siw *ServerInterfaceWrapper) EnableConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EnableConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GithubConnectorWebhook operation middleware
+func (siw *ServerInterfaceWrapper) GithubConnectorWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GithubConnectorWebhook(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// LinkConnectorItem operation middleware
+func (siw *ServerInterfaceWrapper) LinkConnectorItem(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.LinkConnectorItem(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SyncConnector operation middleware
+func (siw *ServerInterfaceWrapper) SyncConnector(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SyncConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListCustomRoles operation middleware
 func (siw *ServerInterfaceWrapper) ListCustomRoles(w http.ResponseWriter, r *http.Request) {
 
@@ -9613,6 +10395,34 @@ func (siw *ServerInterfaceWrapper) DownloadProjectExcelExport(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadProjectExcelExport(w, r, exportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListFeedback operation middleware
+func (siw *ServerInterfaceWrapper) ListFeedback(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFeedback(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateFeedback operation middleware
+func (siw *ServerInterfaceWrapper) CreateFeedback(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateFeedback(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11663,6 +12473,142 @@ func (siw *ServerInterfaceWrapper) UpdateNotification(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetOAuthAuthorizeInfo operation middleware
+func (siw *ServerInterfaceWrapper) GetOAuthAuthorizeInfo(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOAuthAuthorizeInfo(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ApproveOAuthAuthorize operation middleware
+func (siw *ServerInterfaceWrapper) ApproveOAuthAuthorize(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ApproveOAuthAuthorize(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOAuthClients operation middleware
+func (siw *ServerInterfaceWrapper) ListOAuthClients(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOAuthClients(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateOAuthClient operation middleware
+func (siw *ServerInterfaceWrapper) CreateOAuthClient(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateOAuthClient(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteOAuthClient operation middleware
+func (siw *ServerInterfaceWrapper) DeleteOAuthClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteOAuthClient(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListOAuthGrants operation middleware
+func (siw *ServerInterfaceWrapper) ListOAuthGrants(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListOAuthGrants(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeOAuthGrant operation middleware
+func (siw *ServerInterfaceWrapper) RevokeOAuthGrant(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeOAuthGrant(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// OauthToken operation middleware
+func (siw *ServerInterfaceWrapper) OauthToken(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.OauthToken(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CompleteOnboarding operation middleware
 func (siw *ServerInterfaceWrapper) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
 
@@ -13314,6 +14260,128 @@ func (siw *ServerInterfaceWrapper) CreateBlueprint(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ListSpaceBookmarks operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceBookmarks(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceBookmarks(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateSpaceBookmark operation middleware
+func (siw *ServerInterfaceWrapper) CreateSpaceBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateSpaceBookmark(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSpaceBookmark operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSpaceBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "bookmarkId" -------------
+	var bookmarkId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "bookmarkId", r.PathValue("bookmarkId"), &bookmarkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "bookmarkId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSpaceBookmark(w, r, spaceId, bookmarkId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateSpaceBookmark operation middleware
+func (siw *ServerInterfaceWrapper) UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "bookmarkId" -------------
+	var bookmarkId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "bookmarkId", r.PathValue("bookmarkId"), &bookmarkId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "bookmarkId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateSpaceBookmark(w, r, spaceId, bookmarkId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListCustomFields operation middleware
 func (siw *ServerInterfaceWrapper) ListCustomFields(w http.ResponseWriter, r *http.Request) {
 
@@ -14677,6 +15745,112 @@ func (siw *ServerInterfaceWrapper) DuplicateView(w http.ResponseWriter, r *http.
 	handler.ServeHTTP(w, r)
 }
 
+// ListWebhooks operation middleware
+func (siw *ServerInterfaceWrapper) ListWebhooks(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWebhooks(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWebhook operation middleware
+func (siw *ServerInterfaceWrapper) CreateWebhook(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWebhook(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteWebhook operation middleware
+func (siw *ServerInterfaceWrapper) DeleteWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", r.PathValue("webhookId"), &webhookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "webhookId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteWebhook(w, r, webhookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWebhook operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", r.PathValue("webhookId"), &webhookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "webhookId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWebhook(w, r, webhookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWebhookDeliveries operation middleware
+func (siw *ServerInterfaceWrapper) ListWebhookDeliveries(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "webhookId" -------------
+	var webhookId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "webhookId", r.PathValue("webhookId"), &webhookId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "webhookId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWebhookDeliveries(w, r, webhookId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListWorkflows operation middleware
 func (siw *ServerInterfaceWrapper) ListWorkflows(w http.ResponseWriter, r *http.Request) {
 
@@ -15006,12 +16180,40 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/utilization", wrapper.GetUtilization)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.ListBaselines)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/baselines", wrapper.CreateBaseline)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.ListSpaceBookmarks)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks", wrapper.CreateSpaceBookmark)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks/{bookmarkId}", wrapper.DeleteSpaceBookmark)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/spaces/{spaceId}/bookmarks/{bookmarkId}", wrapper.UpdateSpaceBookmark)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/feedback", wrapper.ListFeedback)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/feedback", wrapper.CreateFeedback)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/baselines/{baselineId}/variance", wrapper.GetBaselineVariance)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/api-keys", wrapper.ListApiKeys)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api-keys", wrapper.CreateApiKey)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/api-keys/{keyId}/rotate", wrapper.RotateApiKey)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/api-keys/{keyId}", wrapper.RevokeApiKey)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/rates", wrapper.ListRates)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/rates", wrapper.CreateRate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors", wrapper.ListConnectors)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors", wrapper.InstallConnector)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/connectors/{connectorId}", wrapper.ConfigureConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/disable", wrapper.DisableConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/enable", wrapper.EnableConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/links", wrapper.LinkConnectorItem)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/sync", wrapper.SyncConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/github-webhook", wrapper.GithubConnectorWebhook)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors/{connectorId}/conflicts", wrapper.ListConnectorConflicts)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connector-conflicts/{conflictId}/resolve", wrapper.ResolveConnectorConflict)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.CreateGanttSnapshot)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/clients", wrapper.ListOAuthClients)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/oauth/clients", wrapper.CreateOAuthClient)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/oauth/clients/{id}", wrapper.DeleteOAuthClient)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/authorize", wrapper.GetOAuthAuthorizeInfo)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/oauth/authorize", wrapper.ApproveOAuthAuthorize)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/oauth/token", wrapper.OauthToken)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/grants", wrapper.ListOAuthGrants)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/oauth/grants/{id}", wrapper.RevokeOAuthGrant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/public/gantt/{token}", wrapper.GetPublicGanttSnapshot)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/portfolio/timeline", wrapper.GetPortfolioTimeline)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.DeleteDashboardPublicLink)
@@ -15146,6 +16348,11 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/automation-rules/{ruleId}/draft", wrapper.SaveAutomationDraft)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/publish", wrapper.PublishAutomationRule)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation-rules/{ruleId}/runs", wrapper.ListAutomationRuns)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/webhooks", wrapper.ListWebhooks)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/webhooks", wrapper.CreateWebhook)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/webhooks/{webhookId}", wrapper.DeleteWebhook)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/webhooks/{webhookId}", wrapper.UpdateWebhook)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/webhooks/{webhookId}/deliveries", wrapper.ListWebhookDeliveries)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation/dead-events", wrapper.ListDeadAutomationEvents)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation/events/{eventId}/replay", wrapper.ReplayAutomationEvent)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules/dry-run", wrapper.DryRunAutomation)
@@ -15740,6 +16947,195 @@ func (response RunAnalyticsQuery503ApplicationProblemPlusJSONResponse) VisitRunA
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListApiKeysRequestObject struct {
+}
+
+type ListApiKeysResponseObject interface {
+	VisitListApiKeysResponse(w http.ResponseWriter) error
+}
+
+type ListApiKeys200JSONResponse struct {
+	Items []ApiKey `json:"items"`
+}
+
+func (response ListApiKeys200JSONResponse) VisitListApiKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListApiKeys403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListApiKeys403ApplicationProblemPlusJSONResponse) VisitListApiKeysResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateApiKeyRequestObject struct {
+	Body *CreateApiKeyJSONRequestBody
+}
+
+type CreateApiKeyResponseObject interface {
+	VisitCreateApiKeyResponse(w http.ResponseWriter) error
+}
+
+type CreateApiKey201JSONResponse ApiKeyCreated
+
+func (response CreateApiKey201JSONResponse) VisitCreateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateApiKey403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateApiKey403ApplicationProblemPlusJSONResponse) VisitCreateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateApiKey422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateApiKey422ApplicationProblemPlusJSONResponse) VisitCreateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeApiKeyRequestObject struct {
+	KeyId openapi_types.UUID `json:"keyId"`
+}
+
+type RevokeApiKeyResponseObject interface {
+	VisitRevokeApiKeyResponse(w http.ResponseWriter) error
+}
+
+type RevokeApiKey204Response struct {
+}
+
+func (response RevokeApiKey204Response) VisitRevokeApiKeyResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeApiKey403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeApiKey403ApplicationProblemPlusJSONResponse) VisitRevokeApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeApiKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeApiKey404ApplicationProblemPlusJSONResponse) VisitRevokeApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateApiKeyRequestObject struct {
+	KeyId openapi_types.UUID `json:"keyId"`
+}
+
+type RotateApiKeyResponseObject interface {
+	VisitRotateApiKeyResponse(w http.ResponseWriter) error
+}
+
+type RotateApiKey200JSONResponse ApiKeyCreated
+
+func (response RotateApiKey200JSONResponse) VisitRotateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateApiKey403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RotateApiKey403ApplicationProblemPlusJSONResponse) VisitRotateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RotateApiKey404ApplicationProblemPlusJSONResponse Problem
+
+func (response RotateApiKey404ApplicationProblemPlusJSONResponse) VisitRotateApiKeyResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -18337,6 +19733,490 @@ func (response UpdateComment428ApplicationProblemPlusJSONResponse) VisitUpdateCo
 	return err
 }
 
+type ResolveConnectorConflictRequestObject struct {
+	ConflictId openapi_types.UUID `json:"conflictId"`
+	Body       *ResolveConnectorConflictJSONRequestBody
+}
+
+type ResolveConnectorConflictResponseObject interface {
+	VisitResolveConnectorConflictResponse(w http.ResponseWriter) error
+}
+
+type ResolveConnectorConflict204Response struct {
+}
+
+func (response ResolveConnectorConflict204Response) VisitResolveConnectorConflictResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ResolveConnectorConflict404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ResolveConnectorConflict404ApplicationProblemPlusJSONResponse) VisitResolveConnectorConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ResolveConnectorConflict409ApplicationProblemPlusJSONResponse Problem
+
+func (response ResolveConnectorConflict409ApplicationProblemPlusJSONResponse) VisitResolveConnectorConflictResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectorsRequestObject struct {
+}
+
+type ListConnectorsResponseObject interface {
+	VisitListConnectorsResponse(w http.ResponseWriter) error
+}
+
+type ListConnectors200JSONResponse struct {
+	Items *[]ConnectorInstall `json:"items,omitempty"`
+	Kinds *[]string           `json:"kinds,omitempty"`
+}
+
+func (response ListConnectors200JSONResponse) VisitListConnectorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectors403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListConnectors403ApplicationProblemPlusJSONResponse) VisitListConnectorsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnectorRequestObject struct {
+	Body *InstallConnectorJSONRequestBody
+}
+
+type InstallConnectorResponseObject interface {
+	VisitInstallConnectorResponse(w http.ResponseWriter) error
+}
+
+type InstallConnector201JSONResponse ConnectorInstall
+
+func (response InstallConnector201JSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnector403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response InstallConnector403ApplicationProblemPlusJSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnector422ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallConnector422ApplicationProblemPlusJSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type InstallConnector503ApplicationProblemPlusJSONResponse Problem
+
+func (response InstallConnector503ApplicationProblemPlusJSONResponse) VisitInstallConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfigureConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Body        *ConfigureConnectorJSONRequestBody
+}
+
+type ConfigureConnectorResponseObject interface {
+	VisitConfigureConnectorResponse(w http.ResponseWriter) error
+}
+
+type ConfigureConnector200JSONResponse ConnectorInstall
+
+func (response ConfigureConnector200JSONResponse) VisitConfigureConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfigureConnector404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ConfigureConnector404ApplicationProblemPlusJSONResponse) VisitConfigureConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ConfigureConnector422ApplicationProblemPlusJSONResponse Problem
+
+func (response ConfigureConnector422ApplicationProblemPlusJSONResponse) VisitConfigureConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectorConflictsRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Params      ListConnectorConflictsParams
+}
+
+type ListConnectorConflictsResponseObject interface {
+	VisitListConnectorConflictsResponse(w http.ResponseWriter) error
+}
+
+type ListConnectorConflicts200JSONResponse struct {
+	Items *[]ConnectorConflict `json:"items,omitempty"`
+}
+
+func (response ListConnectorConflicts200JSONResponse) VisitListConnectorConflictsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListConnectorConflicts404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListConnectorConflicts404ApplicationProblemPlusJSONResponse) VisitListConnectorConflictsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+}
+
+type DisableConnectorResponseObject interface {
+	VisitDisableConnectorResponse(w http.ResponseWriter) error
+}
+
+type DisableConnector200JSONResponse ConnectorInstall
+
+func (response DisableConnector200JSONResponse) VisitDisableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DisableConnector404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DisableConnector404ApplicationProblemPlusJSONResponse) VisitDisableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+}
+
+type EnableConnectorResponseObject interface {
+	VisitEnableConnectorResponse(w http.ResponseWriter) error
+}
+
+type EnableConnector200JSONResponse ConnectorInstall
+
+func (response EnableConnector200JSONResponse) VisitEnableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EnableConnector404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response EnableConnector404ApplicationProblemPlusJSONResponse) VisitEnableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GithubConnectorWebhookRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Body        *GithubConnectorWebhookJSONRequestBody
+}
+
+type GithubConnectorWebhookResponseObject interface {
+	VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error
+}
+
+type GithubConnectorWebhook204Response struct {
+}
+
+func (response GithubConnectorWebhook204Response) VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type GithubConnectorWebhook401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GithubConnectorWebhook401ApplicationProblemPlusJSONResponse) VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GithubConnectorWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response GithubConnectorWebhook404ApplicationProblemPlusJSONResponse) VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkConnectorItemRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Body        *LinkConnectorItemJSONRequestBody
+}
+
+type LinkConnectorItemResponseObject interface {
+	VisitLinkConnectorItemResponse(w http.ResponseWriter) error
+}
+
+type LinkConnectorItem200JSONResponse struct {
+	ExternalId *string `json:"external_id,omitempty"`
+}
+
+func (response LinkConnectorItem200JSONResponse) VisitLinkConnectorItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkConnectorItem409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response LinkConnectorItem409ApplicationProblemPlusJSONResponse) VisitLinkConnectorItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type LinkConnectorItem422ApplicationProblemPlusJSONResponse Problem
+
+func (response LinkConnectorItem422ApplicationProblemPlusJSONResponse) VisitLinkConnectorItemResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SyncConnectorRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+}
+
+type SyncConnectorResponseObject interface {
+	VisitSyncConnectorResponse(w http.ResponseWriter) error
+}
+
+type SyncConnector200JSONResponse struct {
+	Conflicts *int `json:"conflicts,omitempty"`
+	Pending   *int `json:"pending,omitempty"`
+	Pulled    *int `json:"pulled,omitempty"`
+	Pushed    *int `json:"pushed,omitempty"`
+	Skipped   *int `json:"skipped,omitempty"`
+	Unchanged *int `json:"unchanged,omitempty"`
+}
+
+func (response SyncConnector200JSONResponse) VisitSyncConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SyncConnector409ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SyncConnector409ApplicationProblemPlusJSONResponse) VisitSyncConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SyncConnector502ApplicationProblemPlusJSONResponse Problem
+
+func (response SyncConnector502ApplicationProblemPlusJSONResponse) VisitSyncConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCustomRolesRequestObject struct {
 }
 
@@ -20090,6 +21970,99 @@ func (response DownloadProjectExcelExport409ApplicationProblemPlusJSONResponse) 
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFeedbackRequestObject struct {
+}
+
+type ListFeedbackResponseObject interface {
+	VisitListFeedbackResponse(w http.ResponseWriter) error
+}
+
+type ListFeedback200JSONResponse struct {
+	Items []FeedbackEntry `json:"items"`
+}
+
+func (response ListFeedback200JSONResponse) VisitListFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFeedback403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListFeedback403ApplicationProblemPlusJSONResponse) VisitListFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFeedbackRequestObject struct {
+	Body *CreateFeedbackJSONRequestBody
+}
+
+type CreateFeedbackResponseObject interface {
+	VisitCreateFeedbackResponse(w http.ResponseWriter) error
+}
+
+type CreateFeedback201JSONResponse struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+func (response CreateFeedback201JSONResponse) VisitCreateFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFeedback422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateFeedback422ApplicationProblemPlusJSONResponse) VisitCreateFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateFeedback429ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateFeedback429ApplicationProblemPlusJSONResponse) VisitCreateFeedbackResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -23423,6 +25396,256 @@ func (response UpdateNotification422ApplicationProblemPlusJSONResponse) VisitUpd
 	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
+}
+
+type GetOAuthAuthorizeInfoRequestObject struct {
+}
+
+type GetOAuthAuthorizeInfoResponseObject interface {
+	VisitGetOAuthAuthorizeInfoResponse(w http.ResponseWriter) error
+}
+
+type GetOAuthAuthorizeInfo200Response struct {
+}
+
+func (response GetOAuthAuthorizeInfo200Response) VisitGetOAuthAuthorizeInfoResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type GetOAuthAuthorizeInfo400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOAuthAuthorizeInfo400ApplicationProblemPlusJSONResponse) VisitGetOAuthAuthorizeInfoResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ApproveOAuthAuthorizeRequestObject struct {
+	Body *ApproveOAuthAuthorizeJSONRequestBody
+}
+
+type ApproveOAuthAuthorizeResponseObject interface {
+	VisitApproveOAuthAuthorizeResponse(w http.ResponseWriter) error
+}
+
+type ApproveOAuthAuthorize200Response struct {
+}
+
+func (response ApproveOAuthAuthorize200Response) VisitApproveOAuthAuthorizeResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ApproveOAuthAuthorize400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ApproveOAuthAuthorize400ApplicationProblemPlusJSONResponse) VisitApproveOAuthAuthorizeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOAuthClientsRequestObject struct {
+}
+
+type ListOAuthClientsResponseObject interface {
+	VisitListOAuthClientsResponse(w http.ResponseWriter) error
+}
+
+type ListOAuthClients200Response struct {
+}
+
+func (response ListOAuthClients200Response) VisitListOAuthClientsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type ListOAuthClients403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListOAuthClients403ApplicationProblemPlusJSONResponse) VisitListOAuthClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOAuthClientRequestObject struct {
+	Body *CreateOAuthClientJSONRequestBody
+}
+
+type CreateOAuthClientResponseObject interface {
+	VisitCreateOAuthClientResponse(w http.ResponseWriter) error
+}
+
+type CreateOAuthClient201Response struct {
+}
+
+func (response CreateOAuthClient201Response) VisitCreateOAuthClientResponse(w http.ResponseWriter) error {
+	w.WriteHeader(201)
+	return nil
+}
+
+type CreateOAuthClient403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateOAuthClient403ApplicationProblemPlusJSONResponse) VisitCreateOAuthClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateOAuthClient422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateOAuthClient422ApplicationProblemPlusJSONResponse) VisitCreateOAuthClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteOAuthClientRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type DeleteOAuthClientResponseObject interface {
+	VisitDeleteOAuthClientResponse(w http.ResponseWriter) error
+}
+
+type DeleteOAuthClient204Response struct {
+}
+
+func (response DeleteOAuthClient204Response) VisitDeleteOAuthClientResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteOAuthClient404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteOAuthClient404ApplicationProblemPlusJSONResponse) VisitDeleteOAuthClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListOAuthGrantsRequestObject struct {
+}
+
+type ListOAuthGrantsResponseObject interface {
+	VisitListOAuthGrantsResponse(w http.ResponseWriter) error
+}
+
+type ListOAuthGrants200Response struct {
+}
+
+func (response ListOAuthGrants200Response) VisitListOAuthGrantsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type RevokeOAuthGrantRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type RevokeOAuthGrantResponseObject interface {
+	VisitRevokeOAuthGrantResponse(w http.ResponseWriter) error
+}
+
+type RevokeOAuthGrant204Response struct {
+}
+
+func (response RevokeOAuthGrant204Response) VisitRevokeOAuthGrantResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeOAuthGrant404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeOAuthGrant404ApplicationProblemPlusJSONResponse) VisitRevokeOAuthGrantResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type OauthTokenRequestObject struct {
+}
+
+type OauthTokenResponseObject interface {
+	VisitOauthTokenResponse(w http.ResponseWriter) error
+}
+
+type OauthToken200Response struct {
+}
+
+func (response OauthToken200Response) VisitOauthTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type OauthToken400Response struct {
+}
+
+func (response OauthToken400Response) VisitOauthTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(400)
+	return nil
+}
+
+type OauthToken401Response struct {
+}
+
+func (response OauthToken401Response) VisitOauthTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(401)
+	return nil
 }
 
 type CompleteOnboardingRequestObject struct {
@@ -27843,6 +30066,228 @@ func (response CreateBlueprint422ApplicationProblemPlusJSONResponse) VisitCreate
 	return err
 }
 
+type ListSpaceBookmarksRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListSpaceBookmarksResponseObject interface {
+	VisitListSpaceBookmarksResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceBookmarks200JSONResponse struct {
+	Items []SpaceBookmark `json:"items"`
+}
+
+func (response ListSpaceBookmarks200JSONResponse) VisitListSpaceBookmarksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceBookmarks404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceBookmarks404ApplicationProblemPlusJSONResponse) VisitListSpaceBookmarksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmarkRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *CreateSpaceBookmarkJSONRequestBody
+}
+
+type CreateSpaceBookmarkResponseObject interface {
+	VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error
+}
+
+type CreateSpaceBookmark201JSONResponse SpaceBookmark
+
+func (response CreateSpaceBookmark201JSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmark403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateSpaceBookmark403ApplicationProblemPlusJSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmark404ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateSpaceBookmark404ApplicationProblemPlusJSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateSpaceBookmark422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateSpaceBookmark422ApplicationProblemPlusJSONResponse) VisitCreateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSpaceBookmarkRequestObject struct {
+	SpaceId    SpaceId            `json:"spaceId"`
+	BookmarkId openapi_types.UUID `json:"bookmarkId"`
+}
+
+type DeleteSpaceBookmarkResponseObject interface {
+	VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error
+}
+
+type DeleteSpaceBookmark204Response struct {
+}
+
+func (response DeleteSpaceBookmark204Response) VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteSpaceBookmark403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteSpaceBookmark403ApplicationProblemPlusJSONResponse) VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSpaceBookmark404ApplicationProblemPlusJSONResponse Problem
+
+func (response DeleteSpaceBookmark404ApplicationProblemPlusJSONResponse) VisitDeleteSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmarkRequestObject struct {
+	SpaceId    SpaceId            `json:"spaceId"`
+	BookmarkId openapi_types.UUID `json:"bookmarkId"`
+	Body       *UpdateSpaceBookmarkJSONRequestBody
+}
+
+type UpdateSpaceBookmarkResponseObject interface {
+	VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error
+}
+
+type UpdateSpaceBookmark200JSONResponse SpaceBookmark
+
+func (response UpdateSpaceBookmark200JSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmark403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateSpaceBookmark403ApplicationProblemPlusJSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmark404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateSpaceBookmark404ApplicationProblemPlusJSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateSpaceBookmark422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateSpaceBookmark422ApplicationProblemPlusJSONResponse) VisitUpdateSpaceBookmarkResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCustomFieldsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -30203,6 +32648,203 @@ func (response DuplicateView422ApplicationProblemPlusJSONResponse) VisitDuplicat
 	return err
 }
 
+type ListWebhooksRequestObject struct {
+}
+
+type ListWebhooksResponseObject interface {
+	VisitListWebhooksResponse(w http.ResponseWriter) error
+}
+
+type ListWebhooks200JSONResponse struct {
+	EventTypes []string  `json:"event_types"`
+	Items      []Webhook `json:"items"`
+}
+
+func (response ListWebhooks200JSONResponse) VisitListWebhooksResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWebhookRequestObject struct {
+	Body *CreateWebhookJSONRequestBody
+}
+
+type CreateWebhookResponseObject interface {
+	VisitCreateWebhookResponse(w http.ResponseWriter) error
+}
+
+type CreateWebhook201JSONResponse Webhook
+
+func (response CreateWebhook201JSONResponse) VisitCreateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWebhook422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWebhook422ApplicationProblemPlusJSONResponse) VisitCreateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteWebhookRequestObject struct {
+	WebhookId openapi_types.UUID `json:"webhookId"`
+}
+
+type DeleteWebhookResponseObject interface {
+	VisitDeleteWebhookResponse(w http.ResponseWriter) error
+}
+
+type DeleteWebhook204Response struct {
+}
+
+func (response DeleteWebhook204Response) VisitDeleteWebhookResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteWebhook404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteWebhook404ApplicationProblemPlusJSONResponse) VisitDeleteWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWebhookRequestObject struct {
+	WebhookId openapi_types.UUID `json:"webhookId"`
+	Body      *UpdateWebhookJSONRequestBody
+}
+
+type UpdateWebhookResponseObject interface {
+	VisitUpdateWebhookResponse(w http.ResponseWriter) error
+}
+
+type UpdateWebhook200JSONResponse Webhook
+
+func (response UpdateWebhook200JSONResponse) VisitUpdateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWebhook404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateWebhook404ApplicationProblemPlusJSONResponse) VisitUpdateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWebhook422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateWebhook422ApplicationProblemPlusJSONResponse) VisitUpdateWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWebhookDeliveriesRequestObject struct {
+	WebhookId openapi_types.UUID `json:"webhookId"`
+}
+
+type ListWebhookDeliveriesResponseObject interface {
+	VisitListWebhookDeliveriesResponse(w http.ResponseWriter) error
+}
+
+type ListWebhookDeliveries200JSONResponse struct {
+	Items []struct {
+		Attempts       int                                                 `json:"attempts"`
+		CreatedAt      time.Time                                           `json:"created_at"`
+		DeliveredAt    *time.Time                                          `json:"delivered_at,omitempty"`
+		EventId        openapi_types.UUID                                  `json:"event_id"`
+		EventType      string                                              `json:"event_type"`
+		Id             openapi_types.UUID                                  `json:"id"`
+		LastError      *string                                             `json:"last_error,omitempty"`
+		ResponseStatus *int                                                `json:"response_status,omitempty"`
+		Status         ListWebhookDeliveries200JSONResponseBodyItemsStatus `json:"status"`
+	} `json:"items"`
+}
+
+func (response ListWebhookDeliveries200JSONResponse) VisitListWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWebhookDeliveries404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListWebhookDeliveries404ApplicationProblemPlusJSONResponse) VisitListWebhookDeliveriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListWorkflowsRequestObject struct {
 }
 
@@ -30670,6 +33312,18 @@ type StrictServerInterface interface {
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(ctx context.Context, request RunAnalyticsQueryRequestObject) (RunAnalyticsQueryResponseObject, error)
+	// ListApiKeys API key milik pemanggil (tanpa nilai rahasia; hanya sesi)
+	// (GET /api-keys)
+	ListApiKeys(ctx context.Context, request ListApiKeysRequestObject) (ListApiKeysResponseObject, error)
+	// CreateApiKey Buat API key; nilai penuh hanya dikembalikan sekali di respons ini (hanya sesi)
+	// (POST /api-keys)
+	CreateApiKey(ctx context.Context, request CreateApiKeyRequestObject) (CreateApiKeyResponseObject, error)
+	// RevokeApiKey Cabut API key; efektif segera (hanya sesi)
+	// (DELETE /api-keys/{keyId})
+	RevokeApiKey(ctx context.Context, request RevokeApiKeyRequestObject) (RevokeApiKeyResponseObject, error)
+	// RotateApiKey Ganti nilai rahasia; nilai lama langsung tidak berlaku (hanya sesi)
+	// (POST /api-keys/{keyId}/rotate)
+	RotateApiKey(ctx context.Context, request RotateApiKeyRequestObject) (RotateApiKeyResponseObject, error)
 
 	// (DELETE /approvals/{approvalId})
 	DeleteApproval(ctx context.Context, request DeleteApprovalRequestObject) (DeleteApprovalResponseObject, error)
@@ -30805,6 +33459,36 @@ type StrictServerInterface interface {
 	// UpdateComment Edit komentar sendiri (atau semua bila `full`)
 	// (PATCH /comments/{commentId})
 	UpdateComment(ctx context.Context, request UpdateCommentRequestObject) (UpdateCommentResponseObject, error)
+	// ResolveConnectorConflict Admin. Pilih sisi yang dipakai (item atau remote); sisi lain ditimpa dengan sengaja, teksnya tetap di catatan konflik
+	// (POST /connector-conflicts/{conflictId}/resolve)
+	ResolveConnectorConflict(ctx context.Context, request ResolveConnectorConflictRequestObject) (ResolveConnectorConflictResponseObject, error)
+	// ListConnectors Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama)
+	// (GET /connectors)
+	ListConnectors(ctx context.Context, request ListConnectorsRequestObject) (ListConnectorsResponseObject, error)
+	// InstallConnector Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada)
+	// (POST /connectors)
+	InstallConnector(ctx context.Context, request InstallConnectorRequestObject) (InstallConnectorResponseObject, error)
+	// ConfigureConnector Admin. Ubah nama, config, atau rahasia (digabung per nama; nilai kosong menghapus)
+	// (PATCH /connectors/{connectorId})
+	ConfigureConnector(ctx context.Context, request ConfigureConnectorRequestObject) (ConfigureConnectorResponseObject, error)
+	// ListConnectorConflicts Admin. Konflik sinkronisasi (default hanya yang terbuka)
+	// (GET /connectors/{connectorId}/conflicts)
+	ListConnectorConflicts(ctx context.Context, request ListConnectorConflictsRequestObject) (ListConnectorConflictsResponseObject, error)
+	// DisableConnector Admin. Nonaktifkan; sinkronisasi ditolak (409) sampai diaktifkan lagi
+	// (POST /connectors/{connectorId}/disable)
+	DisableConnector(ctx context.Context, request DisableConnectorRequestObject) (DisableConnectorResponseObject, error)
+	// EnableConnector Admin. Aktifkan kembali
+	// (POST /connectors/{connectorId}/enable)
+	EnableConnector(ctx context.Context, request EnableConnectorRequestObject) (EnableConnectorResponseObject, error)
+	// GithubConnectorWebhook Webhook GitHub (tanpa sesi). Tanda tangan HMAC X-Hub-Signature-256 dengan rahasia webhook_secret konektor; event issues menjadwalkan sinkron segera
+	// (POST /connectors/{connectorId}/github-webhook)
+	GithubConnectorWebhook(ctx context.Context, request GithubConnectorWebhookRequestObject) (GithubConnectorWebhookResponseObject, error)
+	// LinkConnectorItem Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
+	// (POST /connectors/{connectorId}/links)
+	LinkConnectorItem(ctx context.Context, request LinkConnectorItemRequestObject) (LinkConnectorItemResponseObject, error)
+	// SyncConnector Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
+	// (POST /connectors/{connectorId}/sync)
+	SyncConnector(ctx context.Context, request SyncConnectorRequestObject) (SyncConnectorResponseObject, error)
 	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
 	// (GET /custom-roles)
 	ListCustomRoles(ctx context.Context, request ListCustomRolesRequestObject) (ListCustomRolesResponseObject, error)
@@ -30877,6 +33561,12 @@ type StrictServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(ctx context.Context, request DownloadProjectExcelExportRequestObject) (DownloadProjectExcelExportResponseObject, error)
+	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
+	// (GET /feedback)
+	ListFeedback(ctx context.Context, request ListFeedbackRequestObject) (ListFeedbackResponseObject, error)
+	// CreateFeedback Kirim umpan balik; 5 per pengguna per jam, 429 bila lebih
+	// (POST /feedback)
+	CreateFeedback(ctx context.Context, request CreateFeedbackRequestObject) (CreateFeedbackResponseObject, error)
 	// ListFileReviews Approval file yang menunjuk saya sebagai approver, tanpa nama item (FIL-04)
 	// (GET /file-reviews)
 	ListFileReviews(ctx context.Context, request ListFileReviewsRequestObject) (ListFileReviewsResponseObject, error)
@@ -31084,6 +33774,30 @@ type StrictServerInterface interface {
 	// UpdateNotification Tandai dibaca atau arsipkan satu notifikasi
 	// (PATCH /notifications/{notificationId})
 	UpdateNotification(ctx context.Context, request UpdateNotificationRequestObject) (UpdateNotificationResponseObject, error)
+	// GetOAuthAuthorizeInfo Validasi permintaan otorisasi untuk layar persetujuan (redirect URI harus sama persis, PKCE S256 wajib)
+	// (GET /oauth/authorize)
+	GetOAuthAuthorizeInfo(ctx context.Context, request GetOAuthAuthorizeInfoRequestObject) (GetOAuthAuthorizeInfoResponseObject, error)
+	// ApproveOAuthAuthorize Setujui atau tolak; mengembalikan redirect_to berisi code sekali pakai (60 detik) dan state. Hanya lewat sesi cookie
+	// (POST /oauth/authorize)
+	ApproveOAuthAuthorize(ctx context.Context, request ApproveOAuthAuthorizeRequestObject) (ApproveOAuthAuthorizeResponseObject, error)
+	// ListOAuthClients Daftar OAuth app terdaftar (admin; secret tidak pernah dikembalikan lagi)
+	// (GET /oauth/clients)
+	ListOAuthClients(ctx context.Context, request ListOAuthClientsRequestObject) (ListOAuthClientsResponseObject, error)
+	// CreateOAuthClient Daftarkan OAuth app (admin); client_secret hanya tampil sekali di respons ini
+	// (POST /oauth/clients)
+	CreateOAuthClient(ctx context.Context, request CreateOAuthClientRequestObject) (CreateOAuthClientResponseObject, error)
+	// DeleteOAuthClient Hapus OAuth app dan cabut semua grant-nya (admin)
+	// (DELETE /oauth/clients/{id})
+	DeleteOAuthClient(ctx context.Context, request DeleteOAuthClientRequestObject) (DeleteOAuthClientResponseObject, error)
+	// ListOAuthGrants Authorized apps milik pengguna
+	// (GET /oauth/grants)
+	ListOAuthGrants(ctx context.Context, request ListOAuthGrantsRequestObject) (ListOAuthGrantsResponseObject, error)
+	// RevokeOAuthGrant Cabut app; access dan refresh token langsung tidak berlaku
+	// (DELETE /oauth/grants/{id})
+	RevokeOAuthGrant(ctx context.Context, request RevokeOAuthGrantRequestObject) (RevokeOAuthGrantResponseObject, error)
+	// OauthToken Tukar code (+ code_verifier) atau refresh_token dengan token; form-urlencoded, klien memakai client_id dan client_secret. Token disimpan sebagai hash
+	// (POST /oauth/token)
+	OauthToken(ctx context.Context, request OauthTokenRequestObject) (OauthTokenResponseObject, error)
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(ctx context.Context, request CompleteOnboardingRequestObject) (CompleteOnboardingResponseObject, error)
@@ -31270,6 +33984,18 @@ type StrictServerInterface interface {
 	// CreateBlueprint Simpan item beserta turunan yang terlihat sebagai blueprint (butuh edit pada Space dan view pada item)
 	// (POST /spaces/{spaceId}/blueprints)
 	CreateBlueprint(ctx context.Context, request CreateBlueprintRequestObject) (CreateBlueprintResponseObject, error)
+	// ListSpaceBookmarks Bookmark URL eksternal sebuah Space (NAV-08); hak View
+	// (GET /spaces/{spaceId}/bookmarks)
+	ListSpaceBookmarks(ctx context.Context, request ListSpaceBookmarksRequestObject) (ListSpaceBookmarksResponseObject, error)
+	// CreateSpaceBookmark Tambah bookmark; hanya URL http/https (hak Edit, maks 100 per Space)
+	// (POST /spaces/{spaceId}/bookmarks)
+	CreateSpaceBookmark(ctx context.Context, request CreateSpaceBookmarkRequestObject) (CreateSpaceBookmarkResponseObject, error)
+	// DeleteSpaceBookmark Hapus bookmark (hak Edit)
+	// (DELETE /spaces/{spaceId}/bookmarks/{bookmarkId})
+	DeleteSpaceBookmark(ctx context.Context, request DeleteSpaceBookmarkRequestObject) (DeleteSpaceBookmarkResponseObject, error)
+	// UpdateSpaceBookmark Ubah url, title, description, atau position (hak Edit)
+	// (PATCH /spaces/{spaceId}/bookmarks/{bookmarkId})
+	UpdateSpaceBookmark(ctx context.Context, request UpdateSpaceBookmarkRequestObject) (UpdateSpaceBookmarkResponseObject, error)
 	// ListCustomFields Daftar definisi custom field di Space, termasuk yang diarsipkan
 	// (GET /spaces/{spaceId}/custom-fields)
 	ListCustomFields(ctx context.Context, request ListCustomFieldsRequestObject) (ListCustomFieldsResponseObject, error)
@@ -31387,6 +34113,21 @@ type StrictServerInterface interface {
 	// DuplicateView Duplikat view (VIEW-08)
 	// (POST /views/{viewId}/duplicate)
 	DuplicateView(ctx context.Context, request DuplicateViewRequestObject) (DuplicateViewResponseObject, error)
+	// ListWebhooks Langganan webhook milik pengguna (tanpa secret)
+	// (GET /webhooks)
+	ListWebhooks(ctx context.Context, request ListWebhooksRequestObject) (ListWebhooksResponseObject, error)
+	// CreateWebhook Buat langganan; secret hanya muncul di respons ini
+	// (POST /webhooks)
+	CreateWebhook(ctx context.Context, request CreateWebhookRequestObject) (CreateWebhookResponseObject, error)
+	// DeleteWebhook Hapus langganan
+	// (DELETE /webhooks/{webhookId})
+	DeleteWebhook(ctx context.Context, request DeleteWebhookRequestObject) (DeleteWebhookResponseObject, error)
+	// UpdateWebhook Ubah atau aktifkan kembali (enabled=true mereset penghitung gagal)
+	// (PATCH /webhooks/{webhookId})
+	UpdateWebhook(ctx context.Context, request UpdateWebhookRequestObject) (UpdateWebhookResponseObject, error)
+	// ListWebhookDeliveries Log pengiriman terbaru (100)
+	// (GET /webhooks/{webhookId}/deliveries)
+	ListWebhookDeliveries(ctx context.Context, request ListWebhookDeliveriesRequestObject) (ListWebhookDeliveriesResponseObject, error)
 	// ListWorkflows Workflow dan statusnya (WF-01, WF-02, WF-03A); semua user yang login boleh membaca
 	// (GET /workflows)
 	ListWorkflows(ctx context.Context, request ListWorkflowsRequestObject) (ListWorkflowsResponseObject, error)
@@ -31640,6 +34381,113 @@ func (sh *strictHandler) RunAnalyticsQuery(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RunAnalyticsQueryResponseObject); ok {
 		if err := validResponse.VisitRunAnalyticsQueryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListApiKeys operation middleware
+func (sh *strictHandler) ListApiKeys(w http.ResponseWriter, r *http.Request) {
+	var request ListApiKeysRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListApiKeys(ctx, request.(ListApiKeysRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListApiKeys")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListApiKeysResponseObject); ok {
+		if err := validResponse.VisitListApiKeysResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateApiKey operation middleware
+func (sh *strictHandler) CreateApiKey(w http.ResponseWriter, r *http.Request) {
+	var request CreateApiKeyRequestObject
+
+	var body CreateApiKeyJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateApiKey(ctx, request.(CreateApiKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateApiKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateApiKeyResponseObject); ok {
+		if err := validResponse.VisitCreateApiKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeApiKey operation middleware
+func (sh *strictHandler) RevokeApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID) {
+	var request RevokeApiKeyRequestObject
+
+	request.KeyId = keyId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeApiKey(ctx, request.(RevokeApiKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeApiKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeApiKeyResponseObject); ok {
+		if err := validResponse.VisitRevokeApiKeyResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RotateApiKey operation middleware
+func (sh *strictHandler) RotateApiKey(w http.ResponseWriter, r *http.Request, keyId openapi_types.UUID) {
+	var request RotateApiKeyRequestObject
+
+	request.KeyId = keyId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RotateApiKey(ctx, request.(RotateApiKeyRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RotateApiKey")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RotateApiKeyResponseObject); ok {
+		if err := validResponse.VisitRotateApiKeyResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -32936,6 +35784,298 @@ func (sh *strictHandler) UpdateComment(w http.ResponseWriter, r *http.Request, c
 	}
 }
 
+// ResolveConnectorConflict operation middleware
+func (sh *strictHandler) ResolveConnectorConflict(w http.ResponseWriter, r *http.Request, conflictId openapi_types.UUID) {
+	var request ResolveConnectorConflictRequestObject
+
+	request.ConflictId = conflictId
+
+	var body ResolveConnectorConflictJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ResolveConnectorConflict(ctx, request.(ResolveConnectorConflictRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ResolveConnectorConflict")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ResolveConnectorConflictResponseObject); ok {
+		if err := validResponse.VisitResolveConnectorConflictResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListConnectors operation middleware
+func (sh *strictHandler) ListConnectors(w http.ResponseWriter, r *http.Request) {
+	var request ListConnectorsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListConnectors(ctx, request.(ListConnectorsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListConnectors")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListConnectorsResponseObject); ok {
+		if err := validResponse.VisitListConnectorsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// InstallConnector operation middleware
+func (sh *strictHandler) InstallConnector(w http.ResponseWriter, r *http.Request) {
+	var request InstallConnectorRequestObject
+
+	var body InstallConnectorJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.InstallConnector(ctx, request.(InstallConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "InstallConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(InstallConnectorResponseObject); ok {
+		if err := validResponse.VisitInstallConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ConfigureConnector operation middleware
+func (sh *strictHandler) ConfigureConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request ConfigureConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	var body ConfigureConnectorJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ConfigureConnector(ctx, request.(ConfigureConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ConfigureConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ConfigureConnectorResponseObject); ok {
+		if err := validResponse.VisitConfigureConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListConnectorConflicts operation middleware
+func (sh *strictHandler) ListConnectorConflicts(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID, params ListConnectorConflictsParams) {
+	var request ListConnectorConflictsRequestObject
+
+	request.ConnectorId = connectorId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListConnectorConflicts(ctx, request.(ListConnectorConflictsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListConnectorConflicts")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListConnectorConflictsResponseObject); ok {
+		if err := validResponse.VisitListConnectorConflictsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DisableConnector operation middleware
+func (sh *strictHandler) DisableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request DisableConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DisableConnector(ctx, request.(DisableConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DisableConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DisableConnectorResponseObject); ok {
+		if err := validResponse.VisitDisableConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EnableConnector operation middleware
+func (sh *strictHandler) EnableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request EnableConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EnableConnector(ctx, request.(EnableConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EnableConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EnableConnectorResponseObject); ok {
+		if err := validResponse.VisitEnableConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GithubConnectorWebhook operation middleware
+func (sh *strictHandler) GithubConnectorWebhook(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request GithubConnectorWebhookRequestObject
+
+	request.ConnectorId = connectorId
+
+	var body GithubConnectorWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GithubConnectorWebhook(ctx, request.(GithubConnectorWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GithubConnectorWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GithubConnectorWebhookResponseObject); ok {
+		if err := validResponse.VisitGithubConnectorWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// LinkConnectorItem operation middleware
+func (sh *strictHandler) LinkConnectorItem(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request LinkConnectorItemRequestObject
+
+	request.ConnectorId = connectorId
+
+	var body LinkConnectorItemJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.LinkConnectorItem(ctx, request.(LinkConnectorItemRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "LinkConnectorItem")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(LinkConnectorItemResponseObject); ok {
+		if err := validResponse.VisitLinkConnectorItemResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SyncConnector operation middleware
+func (sh *strictHandler) SyncConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request SyncConnectorRequestObject
+
+	request.ConnectorId = connectorId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SyncConnector(ctx, request.(SyncConnectorRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SyncConnector")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SyncConnectorResponseObject); ok {
+		if err := validResponse.VisitSyncConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListCustomRoles operation middleware
 func (sh *strictHandler) ListCustomRoles(w http.ResponseWriter, r *http.Request) {
 	var request ListCustomRolesRequestObject
@@ -33633,6 +36773,61 @@ func (sh *strictHandler) DownloadProjectExcelExport(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadProjectExcelExportResponseObject); ok {
 		if err := validResponse.VisitDownloadProjectExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListFeedback operation middleware
+func (sh *strictHandler) ListFeedback(w http.ResponseWriter, r *http.Request) {
+	var request ListFeedbackRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFeedback(ctx, request.(ListFeedbackRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFeedback")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFeedbackResponseObject); ok {
+		if err := validResponse.VisitListFeedbackResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateFeedback operation middleware
+func (sh *strictHandler) CreateFeedback(w http.ResponseWriter, r *http.Request) {
+	var request CreateFeedbackRequestObject
+
+	var body CreateFeedbackJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateFeedback(ctx, request.(CreateFeedbackRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateFeedback")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateFeedbackResponseObject); ok {
+		if err := validResponse.VisitCreateFeedbackResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -35596,6 +38791,216 @@ func (sh *strictHandler) UpdateNotification(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// GetOAuthAuthorizeInfo operation middleware
+func (sh *strictHandler) GetOAuthAuthorizeInfo(w http.ResponseWriter, r *http.Request) {
+	var request GetOAuthAuthorizeInfoRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOAuthAuthorizeInfo(ctx, request.(GetOAuthAuthorizeInfoRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOAuthAuthorizeInfo")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOAuthAuthorizeInfoResponseObject); ok {
+		if err := validResponse.VisitGetOAuthAuthorizeInfoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ApproveOAuthAuthorize operation middleware
+func (sh *strictHandler) ApproveOAuthAuthorize(w http.ResponseWriter, r *http.Request) {
+	var request ApproveOAuthAuthorizeRequestObject
+
+	var body ApproveOAuthAuthorizeJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ApproveOAuthAuthorize(ctx, request.(ApproveOAuthAuthorizeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ApproveOAuthAuthorize")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ApproveOAuthAuthorizeResponseObject); ok {
+		if err := validResponse.VisitApproveOAuthAuthorizeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOAuthClients operation middleware
+func (sh *strictHandler) ListOAuthClients(w http.ResponseWriter, r *http.Request) {
+	var request ListOAuthClientsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOAuthClients(ctx, request.(ListOAuthClientsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOAuthClients")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOAuthClientsResponseObject); ok {
+		if err := validResponse.VisitListOAuthClientsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateOAuthClient operation middleware
+func (sh *strictHandler) CreateOAuthClient(w http.ResponseWriter, r *http.Request) {
+	var request CreateOAuthClientRequestObject
+
+	var body CreateOAuthClientJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateOAuthClient(ctx, request.(CreateOAuthClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateOAuthClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateOAuthClientResponseObject); ok {
+		if err := validResponse.VisitCreateOAuthClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteOAuthClient operation middleware
+func (sh *strictHandler) DeleteOAuthClient(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request DeleteOAuthClientRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteOAuthClient(ctx, request.(DeleteOAuthClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteOAuthClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteOAuthClientResponseObject); ok {
+		if err := validResponse.VisitDeleteOAuthClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListOAuthGrants operation middleware
+func (sh *strictHandler) ListOAuthGrants(w http.ResponseWriter, r *http.Request) {
+	var request ListOAuthGrantsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListOAuthGrants(ctx, request.(ListOAuthGrantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListOAuthGrants")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListOAuthGrantsResponseObject); ok {
+		if err := validResponse.VisitListOAuthGrantsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeOAuthGrant operation middleware
+func (sh *strictHandler) RevokeOAuthGrant(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request RevokeOAuthGrantRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeOAuthGrant(ctx, request.(RevokeOAuthGrantRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeOAuthGrant")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeOAuthGrantResponseObject); ok {
+		if err := validResponse.VisitRevokeOAuthGrantResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// OauthToken operation middleware
+func (sh *strictHandler) OauthToken(w http.ResponseWriter, r *http.Request) {
+	var request OauthTokenRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.OauthToken(ctx, request.(OauthTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "OauthToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(OauthTokenResponseObject); ok {
+		if err := validResponse.VisitOauthTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CompleteOnboarding operation middleware
 func (sh *strictHandler) CompleteOnboarding(w http.ResponseWriter, r *http.Request) {
 	var request CompleteOnboardingRequestObject
@@ -37345,6 +40750,126 @@ func (sh *strictHandler) CreateBlueprint(w http.ResponseWriter, r *http.Request,
 	}
 }
 
+// ListSpaceBookmarks operation middleware
+func (sh *strictHandler) ListSpaceBookmarks(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListSpaceBookmarksRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceBookmarks(ctx, request.(ListSpaceBookmarksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceBookmarks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceBookmarksResponseObject); ok {
+		if err := validResponse.VisitListSpaceBookmarksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateSpaceBookmark operation middleware
+func (sh *strictHandler) CreateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request CreateSpaceBookmarkRequestObject
+
+	request.SpaceId = spaceId
+
+	var body CreateSpaceBookmarkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateSpaceBookmark(ctx, request.(CreateSpaceBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateSpaceBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateSpaceBookmarkResponseObject); ok {
+		if err := validResponse.VisitCreateSpaceBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteSpaceBookmark operation middleware
+func (sh *strictHandler) DeleteSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID) {
+	var request DeleteSpaceBookmarkRequestObject
+
+	request.SpaceId = spaceId
+	request.BookmarkId = bookmarkId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteSpaceBookmark(ctx, request.(DeleteSpaceBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteSpaceBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteSpaceBookmarkResponseObject); ok {
+		if err := validResponse.VisitDeleteSpaceBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateSpaceBookmark operation middleware
+func (sh *strictHandler) UpdateSpaceBookmark(w http.ResponseWriter, r *http.Request, spaceId SpaceId, bookmarkId openapi_types.UUID) {
+	var request UpdateSpaceBookmarkRequestObject
+
+	request.SpaceId = spaceId
+	request.BookmarkId = bookmarkId
+
+	var body UpdateSpaceBookmarkJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateSpaceBookmark(ctx, request.(UpdateSpaceBookmarkRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateSpaceBookmark")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateSpaceBookmarkResponseObject); ok {
+		if err := validResponse.VisitUpdateSpaceBookmarkResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListCustomFields operation middleware
 func (sh *strictHandler) ListCustomFields(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ListCustomFieldsRequestObject
@@ -38454,6 +41979,146 @@ func (sh *strictHandler) DuplicateView(w http.ResponseWriter, r *http.Request, v
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DuplicateViewResponseObject); ok {
 		if err := validResponse.VisitDuplicateViewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListWebhooks operation middleware
+func (sh *strictHandler) ListWebhooks(w http.ResponseWriter, r *http.Request) {
+	var request ListWebhooksRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWebhooks(ctx, request.(ListWebhooksRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWebhooks")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWebhooksResponseObject); ok {
+		if err := validResponse.VisitListWebhooksResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateWebhook operation middleware
+func (sh *strictHandler) CreateWebhook(w http.ResponseWriter, r *http.Request) {
+	var request CreateWebhookRequestObject
+
+	var body CreateWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateWebhook(ctx, request.(CreateWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateWebhookResponseObject); ok {
+		if err := validResponse.VisitCreateWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteWebhook operation middleware
+func (sh *strictHandler) DeleteWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID) {
+	var request DeleteWebhookRequestObject
+
+	request.WebhookId = webhookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteWebhook(ctx, request.(DeleteWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteWebhookResponseObject); ok {
+		if err := validResponse.VisitDeleteWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateWebhook operation middleware
+func (sh *strictHandler) UpdateWebhook(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID) {
+	var request UpdateWebhookRequestObject
+
+	request.WebhookId = webhookId
+
+	var body UpdateWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateWebhook(ctx, request.(UpdateWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateWebhookResponseObject); ok {
+		if err := validResponse.VisitUpdateWebhookResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListWebhookDeliveries operation middleware
+func (sh *strictHandler) ListWebhookDeliveries(w http.ResponseWriter, r *http.Request, webhookId openapi_types.UUID) {
+	var request ListWebhookDeliveriesRequestObject
+
+	request.WebhookId = webhookId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWebhookDeliveries(ctx, request.(ListWebhookDeliveriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWebhookDeliveries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWebhookDeliveriesResponseObject); ok {
+		if err := validResponse.VisitListWebhookDeliveriesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

@@ -15,6 +15,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import { SpaceExcelImport } from "@/components/space-excel-import";
 import { CustomFieldsDialog } from "@/components/custom-fields-dialog";
+import { SpaceBookmarksDialog } from "@/components/space-bookmarks-dialog";
 import { SpaceDialog } from "@/components/space-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -55,6 +56,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const [importingExcel, setImportingExcel] = useState(false);
   const [managingFields, setManagingFields] = useState(false);
   const [sharing, setSharing] = useState(false);
+  const [bookmarks, setBookmarks] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [pending, setPending] = useState(false);
@@ -113,6 +115,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
           {canEditForms && <Link to="/spaces/$spaceId/automation" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("automation.link")}</Link>}
+          <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
           {(canRename || canDelete || canManageFields || canCreate || canLock) && (
             <DropdownMenu>
@@ -141,6 +144,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         onCreated={openItem} />}
       {importingExcel && <SpaceExcelImport open={importingExcel} onOpenChange={setImportingExcel} spaceId={space.id} />}
       {canManageFields && <CustomFieldsDialog open={managingFields} onOpenChange={setManagingFields} spaceId={space.id} />}
+      <SpaceBookmarksDialog spaceId={space.id} canEdit={canEditForms} open={bookmarks} onOpenChange={setBookmarks} />
       <SpaceDialog open={renaming} onOpenChange={setRenaming} space={space} />
       {me && (
         <ShareDialog
