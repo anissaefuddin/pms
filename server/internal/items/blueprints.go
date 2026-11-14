@@ -255,6 +255,13 @@ type BlueprintUse struct {
 	Locations []Location `json:"locations"`
 	Title     *string    `json:"title"`
 	StartDate *string    `json:"start_date"` // anchors the relative dates; without it the new items have no dates
+	// Overrides replace the blueprint's defaults on the root item (a form's answers win over the blueprint).
+	Overrides map[string]json.RawMessage `json:"-"`
+}
+
+// UseBlueprintTx is UseBlueprint inside the caller's transaction.
+func UseBlueprintTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, use BlueprintUse, batch *notifications.Batch) (Detail, error) {
+	return useBlueprint(ctx, tx, actor, id, use, batch)
 }
 
 // UseBlueprint creates the whole tree in one transaction and returns the root item.
@@ -348,6 +355,14 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 				if offset != nil {
 					fields[key] = marshalJSON(anchor.AddDate(0, 0, *offset).Format(time.DateOnly))
 				}
+			}
+		}
+		if i == 0 {
+			for k, v := range use.Overrides {
+				fields[k] = v
+			}
+			if _, ok := use.Overrides["status_id"]; ok {
+				n.StatusID = nil
 			}
 		}
 		item, err := create(ctx, tx, actor, fields, batch)

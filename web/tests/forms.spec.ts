@@ -234,3 +234,23 @@ test("a question can be shown only for an earlier answer; the condition is saved
   expect(put.body.definition.pages[1].elements[0].show_if).toEqual({ key: "kind", op: "equals", value: "Laptop" });
   expect(put.body.response.email).toMatchObject({ greeting: "Hi <b>{name}</b>" });
 });
+
+test("a route picks a Blueprint of the destination Space, shows it in its summary, and is saved as blueprint_id", async ({ page }) => {
+  const bp = "b0000000-0000-4000-8000-000000000001";
+  const calls = await mock(page, { extra: {
+    "GET /item-types": { body: { items: [{ id: sid(50), key: "bug", name: "Bug", base: "task", is_builtin: false, active: true, defaults: {}, layout: {} }] } },
+    [`GET /spaces/${marketing.id}/blueprints`]: { body: { items: [{ id: bp, name: "Bug triage", item_type: "task", item_count: 3 }] } },
+  } });
+  await page.goto(`/spaces/${marketing.id}/forms/${fid}`);
+  await page.getByRole("button", { name: "Add a route" }).click();
+  await page.getByLabel("Route 1: when").selectOption("kind");
+  await page.getByLabel("Route 1: is").selectOption("Laptop");
+  await page.getByLabel("Route 1: create").selectOption("bug");
+  await page.getByLabel("Route 1: blueprint").selectOption(bp);
+  await expect(page.getByText("Route 1: when Kind is Laptop, create Bug with blueprint: Bug triage")).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByRole("button", { name: "Save form" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PUT")?.body).toBeTruthy();
+  expect(calls.find((c) => c.method === "PUT")!.body.response.routes).toEqual([
+    { when: { key: "kind", op: "equals", value: "Laptop" }, type_key: "bug", blueprint_id: bp }]);
+});

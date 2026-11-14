@@ -937,3 +937,15 @@ Mencakup S8.1.5 (tipe di Table, Board, filter, search), S8.2.1 (Table/filter/sor
 - Masih terbuka di M8: S8.1.1 query sqlc (D-61, keputusan arsitektur), routing form ke Blueprint (S8.3.1, ditunda karena besar; E2E-PAR-05 dibuktikan untuk bagian form bercabang), dan UAT gate M8 (manusia).
 - GitHub Actions untuk basis ini NOT RUN sampai PR dibuka.
 
+
+## S8.3.1 — Form bercabang → Blueprint → item (E2E-PAR-05, 14 Nov 2026)
+
+Perubahan: `blueprint_id` pada rute form (`forms.Route`, OpenAPI, validasi Space tujuan di `checkRouting`), penerapan di `createFromSubmission` lewat `items.UseBlueprintTx` + `BlueprintUse.Overrides` (isian form menang), UI pilih Blueprint + ringkasan aturan di `form-routing-settings.tsx`, i18n. Keputusan: D-100. Perbaikan a11y ikutan: pratinjau form tidak lagi merender radio kosong untuk opsi kosong.
+
+Bukti (Postgres khusus lane, Chrome bawaan Playwright):
+- Go: `TestFormBranchingBlueprintItem` (HTTP end-to-end: cabang Bug → tipe `bug` + anak Reproduce/Fix, cabang Idea → `idea` + Evaluate; jawaban Importance menang atas default Blueprint, default berlaku bila tidak dijawab; pertanyaan di luar cabang wajib/tidak bocor; Blueprint lintas Space dan tak dikenal ditolak 422; Blueprint terhapus → item tetap 201 tanpa anak) PASS; ikut `scripts/parity-e2e.sh 05-08`. Regresi terarah `TestFormBranchesDecideQuestionsItemTypeAndFields`, `TestBlueprintSaveAndUse` PASS.
+- Playwright mock: `forms.spec.ts` (rute memilih Blueprint, ringkasan, axe bersih, body PUT berisi `blueprint_id`) + `forms/public-form/manage-forms` 26 lulus.
+- LIVE Chrome + PostgreSQL: `TestBrowserFormBranchingBlueprint` (`form-blueprint-live.spec.ts`; admin membuat form bercabang dan rute di UI, link publik, pengunjung tanpa sesi mengisi dua cabang, item/anak sesuai cabang; axe WCAG 2.x AA bersih) PASS; ditambahkan ke regex CI "Browser workflows with PostgreSQL".
+- Uji mutasi: (1) Blueprint diterapkan tanpa memeriksa kecocokan cabang → `TestFormBranchingBlueprintItem` GAGAL (anak cabang salah); (2) override isian form dimatikan → GAGAL (importance `low`, bukan `high`). Keduanya dipulihkan.
+- Statis: gofmt, `go vet ./...`, `make gen` tanpa drift, typecheck, lint 0 error. Suite Go/Playwright penuh tidak dijalankan (strategi: S12.2.1).
+- Tidak dicakup: `start_date` jangkar tanggal relatif Blueprint (item dari form tanpa tanggal); hanya satu Blueprint per rute (rute tanpa kecocokan tidak punya Blueprint bawaan form-level); nomor D-100 mungkin bentrok dengan lane lain saat merge.

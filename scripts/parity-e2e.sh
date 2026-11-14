@@ -5,7 +5,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 case "${1:?group 01-04, 05-08 or 09-12}" in
   01-04) tests=(TestItemTypesCRUDDefaultsAndChildRules TestCustomFieldTypesAndConfig TestItemAuthorizationMatrix TestStatusGuardsRequireFieldsAndActorAndWriteNothingOnRefusal TestTriggersConditionsAndActions TestRuleEffectIsExactlyOnceOnRedelivery TestOutboxEmitsWithTheChangeAndDispatchesReliably) ;;
-  05-08) tests=(TestFormBranchesDecideQuestionsItemTypeAndFields TestBlueprintSaveAndUse TestApprovals TestApprovalHistoryIsAppendOnlyAndPinnedToItemVersion TestApprovalPoliciesReassignAndDeadlines TestResourceWorkload TestBaselinesFreezeDatesAndCannotBeChanged) ;;
+  05-08) tests=(TestFormBranchesDecideQuestionsItemTypeAndFields TestFormBranchingBlueprintItem TestBlueprintSaveAndUse TestApprovals TestApprovalHistoryIsAppendOnlyAndPinnedToItemVersion TestApprovalPoliciesReassignAndDeadlines TestResourceWorkload TestBaselinesFreezeDatesAndCannotBeChanged) ;;
   09-12) tests=(TestFileApprovalPinnedToVersionWithExternalReviewer TestFormulaFieldsAreValidatedRecalculatedAndProtected TestAnalyticsEngineMatchesRawDataAndPolicy TestAPIKeysScopeRotateRevokeAndOwnerLimits TestWebhookSignedDeliveryAndVisibility TestWebhookRetryThenAutoDisable TestSCIMProvisionSignInDeprovisionAndRestore) ;;
   *) echo "unknown group $1" >&2; exit 2 ;;
 esac

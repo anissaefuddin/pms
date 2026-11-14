@@ -41,3 +41,29 @@ func TestBrowserCreateMenu(t *testing.T) {
 	f.share(space, "user", admin.id, "full")
 	runBrowserFixture(t, f, []string{"create-menu-live.spec.ts"}, "PMS_FIXTURE_MENU_ADMIN="+admin.cookie.String(), "PMS_FIXTURE_MENU_SPACE="+space)
 }
+
+// E2E-PAR-05 live: an admin builds a branching form routed to Blueprints in the UI, an outside visitor fills the public
+// link, and the item with its Blueprint children appears for the branch taken.
+func TestBrowserFormBranchingBlueprint(t *testing.T) {
+	if os.Getenv("PMS_TEST_BROWSER") != "1" {
+		t.Skip("set PMS_TEST_BROWSER=1 to run the browser against the PostgreSQL fixture")
+	}
+	f := newFixture(t)
+	admin := f.person("admin")
+	f.exec("UPDATE users SET first_name='Ada',last_name='Admin' WHERE id=$1", admin.id)
+	work := f.space("Branch Work")
+	f.share(work, "user", admin.id, "full")
+	for _, key := range []string{"bug", "idea"} {
+		f.want(f.call(admin, http.MethodPost, "/item-types", map[string]any{"key": key, "name": map[string]string{"bug": "Bug", "idea": "Idea"}[key], "base": "task"}), http.StatusCreated, key)
+	}
+	for name, children := range map[string][]string{"Bug triage": {"Reproduce", "Fix"}, "Idea review": {"Evaluate"}} {
+		root := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": name, "locations": []map[string]any{{"space_id": work}}})
+		f.want(root, http.StatusCreated, name)
+		for _, c := range children {
+			f.want(f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": c,
+				"locations": []map[string]any{{"space_id": work, "parent_item_id": root.body["id"]}}}), http.StatusCreated, c)
+		}
+		f.want(f.call(admin, http.MethodPost, "/spaces/"+work+"/blueprints", map[string]any{"name": name, "source_item_id": root.body["id"]}), http.StatusCreated, "blueprint "+name)
+	}
+	runBrowserFixture(t, f, []string{"form-blueprint-live.spec.ts"}, "PMS_FIXTURE_FB_ADMIN="+admin.cookie.String(), "PMS_FIXTURE_FB_SPACE="+work)
+}

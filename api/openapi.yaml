@@ -6865,6 +6865,7 @@ components:
             properties:
               when: { $ref: '#/components/schemas/FormCondition' }
               type_key: { type: string }
+              blueprint_id: { type: string, format: uuid, nullable: true, description: 'Blueprint di Space tujuan yang diterapkan pada item cabang ini (struktur anak dan default; isian form menang). Blueprint yang kemudian dihapus dilewati dan item tetap dibuat tanpa struktur' }
         approval:
           type: object
           nullable: true
