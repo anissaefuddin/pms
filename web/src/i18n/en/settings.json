@@ -119,6 +119,7 @@
   "workflows.moveUp": "Move up",
   "workflows.moveDown": "Move down",
   "workflows.addStatus": "Add status",
+  "workflows.addStatusSubmit": "Add",
   "workflows.deleteStatus": "Delete status",
   "workflows.deleteStatusTitle": "Delete this status?",
   "workflows.deleteStatusDescription": "“{{name}}” will be removed from the workflow.",

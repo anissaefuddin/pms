@@ -8,6 +8,8 @@ import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { addDays, daysBetween, fromDay, toDay } from "@/lib/calendar-days";
 import { useProfile } from "@/lib/profile";
 import type { Item } from "@/lib/items";
+import { tintOf } from "@/components/status-chip";
+import { TypeGlyph } from "@/components/type-badge";
 
 type Update = { start_date: string | null; due_date: string | null };
 
@@ -62,7 +64,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
       <button type="button" draggable={canEdit} onClick={() => onOpen(item)} onKeyDown={(event) => keyboard(event, item)}
         onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); setDrag({ id: item.id, from: day }); }} onDragEnd={() => setDrag(undefined)}
         aria-label={item.start_date || item.due_date ? t("views.calendar.item", { title: item.title, start: item.start_date ?? item.due_date, end: item.due_date ?? item.start_date }) : item.title}
-        className="block w-full truncate rounded bg-secondary px-1 text-left text-xs">{item.title}</button>
+        className={`flex w-full items-center gap-1 truncate rounded border-l-4 border-current px-1.5 py-0.5 text-left text-xs font-medium ${tintOf(item.status?.color)}`}><TypeGlyph item={item} className="size-3" /><span className="truncate">{item.title}</span></button>
     </li>;
   };
   const names = Array.from({ length: 7 }, (_, index) => addDays(first, index));

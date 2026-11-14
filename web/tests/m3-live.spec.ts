@@ -26,12 +26,14 @@ test("flow 1: locked transitions are enforced in the item panel and auto-assign 
   const admin = await as(browser, e.PMS_FIXTURE_M3_ADMIN!);
   await admin.goto("/settings/workflows");
   await admin.getByRole("combobox", { name: "Workflow", exact: true }).selectOption(e.PMS_FIXTURE_M3_WORKFLOW!);
+  await admin.getByRole("button", { name: "New", exact: true }).click();
   await expect(admin.getByLabel("Status name: New")).toBeVisible();
   await admin.getByLabel("Lock transitions: New").click(); // controlled: flips once the server answers
   await expect(admin.getByLabel("Lock transitions: New")).toBeChecked();
   const allowed = admin.getByRole("group", { name: "Allowed next statuses: New" });
   await allowed.getByLabel("In Progress", { exact: true }).click();
   await expect(allowed.getByLabel("In Progress", { exact: true })).toBeChecked();
+  await admin.getByRole("button", { name: "In Progress", exact: true }).click();
   await admin.getByLabel("Auto-assign: In Progress").click();
   await expect(admin.getByLabel("Auto-assign: In Progress")).toBeChecked();
   await axe(admin);

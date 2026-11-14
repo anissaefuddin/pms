@@ -31,13 +31,21 @@ test("every entry in the navigation opens a real page", async ({ page }) => {
   const targets: string[] = [];
   await nav.getByRole("button", { name: "More" }).click();
   await expect(page.getByRole("menuitem").first()).toBeVisible();
-  const entries = await page.getByRole("menuitem").count();
+  let entries = await page.getByRole("menuitem").count();
   expect(entries).toBeGreaterThan(3);
   await page.keyboard.press("Escape");
   for (let i = 0; i < entries; i++) {
     await nav.getByRole("button", { name: "More" }).click();
     await expect(page.getByRole("menuitem").first()).toBeVisible();
-    await page.getByRole("menuitem").nth(i).click();
+    const entry = page.getByRole("menuitem").nth(i);
+    if ((await entry.innerText()).trim() === "Customize menu") { // S-UIP.2.1: opens a dialog, not a page
+      await entry.click();
+      await expect(page.getByRole("dialog")).toBeVisible();
+      await page.keyboard.press("Escape");
+      entries--;
+      continue;
+    }
+    await entry.click();
     await page.waitForLoadState("networkidle");
     targets.push(new URL(page.url()).pathname);
     await expect(page.getByText("Not Found", { exact: true }), `dead entry ${i} -> ${page.url()}`).toHaveCount(0);

@@ -11,6 +11,7 @@ import { useSpaces } from "@/lib/space-queries";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 
 export const Route = createFileRoute("/_app/reports/")({ component: Reports });
@@ -34,6 +35,7 @@ function Reports() {
   const [name, setName] = useState("");
   const [location, setLocation] = useState("");
   const [sharing, setSharing] = useState<"private" | "space">("private");
+  const [creating, setCreating] = useState(false);
   const [deleting, setDeleting] = useState<ReportSummary>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -69,7 +71,11 @@ function Reports() {
       <h1 className="workspace-title">{t("reports.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("reports.description")}</p>
     </header>
-    <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => void create(e)} aria-label={t("reports.create.title")}>
+    <div><Button onClick={() => { setError(""); setCreating(true); }}>{t("reports.create.title")}</Button></div>
+    <Dialog open={creating} onOpenChange={setCreating}>
+      <DialogContent className="sm:max-w-lg">
+        <DialogHeader><DialogTitle>{t("reports.create.dialogTitle")}</DialogTitle></DialogHeader>
+    <form className="grid gap-3" onSubmit={(e) => void create(e)} aria-label={t("reports.create.title")}>
       {!!templates.data?.length && <label className="block text-sm">{t("reports.create.template")}
         <select className="mt-1 block h-9 rounded-md border border-input bg-background px-2" value={template}
           onChange={(e) => { setTemplate(e.target.value); if (e.target.value && !name.trim()) setName(t(`reports.template.${e.target.value}`)); }}>
@@ -90,7 +96,9 @@ function Reports() {
         </select></label>}
       <Button type="submit" disabled={busy || !name.trim()}>{t("reports.create.submit")}</Button>
     </form>
-    {error && !deleting && <p role="alert" className="text-sm text-destructive">{error}</p>}
+        {error && !deleting && <p role="alert" className="text-sm text-destructive">{error}</p>}
+      </DialogContent>
+    </Dialog>
     {list.isPending && <p role="status" className="text-sm text-muted-foreground">{t("reports.loading")}</p>}
     {list.isError && <div><p role="alert">{t("reports.error")}</p><Button variant="outline" className="mt-3" onClick={() => list.refetch()}>{t("reports.retry")}</Button></div>}
     {list.data?.length === 0 && <section className="rounded-xl border border-dashed bg-card p-12 text-center">

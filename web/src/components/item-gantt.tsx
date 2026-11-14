@@ -14,6 +14,7 @@ import { itemKeys, listItems, type Item } from "@/lib/items";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 import { customFieldText, type CustomField } from "@/lib/custom-fields";
 import { fieldColumn } from "@/lib/view-columns";
+import { statusDotClass } from "@/lib/status-colors";
 
 type Baseline = components["schemas"]["Baseline"];
 type Variance = components["schemas"]["BaselineVariance"];
@@ -40,6 +41,11 @@ function BarLabel({ data }: { data: ITask }) {
   </div>;
 }
 
+/** Status column: workflow colour square + name (the name stays text, colour is only a cue). */
+function StatusCell({ row }: { row: ITask }) {
+  return <span className="inline-flex items-center gap-1.5"><span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${statusDotClass(String(row.status_color ?? ""))}`} />{String(row.status_name ?? "")}</span>;
+}
+
 export function ganttTask(item: Item, parent?: string): ITask {
   const start = toDay(item.start_date) ?? toDay(item.due_date);
   const finish = toDay(item.due_date) ?? start;
@@ -52,7 +58,7 @@ export function ganttTask(item: Item, parent?: string): ITask {
   };
 }
 
-export function ItemGantt({ items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch }: {
+export function ItemGantt({ items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd }: {
   items: Item[];
   customFields: CustomField[];
   columns: string[];
@@ -60,6 +66,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   parentId?: string;
   readonly: boolean;
   onOpen: (item: Item) => void;
+  onAdd?: () => void;
   onPatch: (item: Item, update: { start_date: string | null; due_date: string | null }) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation();
@@ -291,13 +298,14 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
       <Theme>
         <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
           highlightTime={(date, unit) => unit === "day" && date.getTime() === today.getTime() ? "gantt-today" : ""} schedule={{ auto: false }} unscheduledTasks
-          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 110 }] : []),
-            ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 100 }] : []),
-            ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 100 }] : []),
+          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
+            ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
+            ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),
             ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
             ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 }))]} />
       </Theme>
     </div>
+    {onAdd && <Button variant="ghost" size="sm" className="text-primary" onClick={onAdd}><Plus />{t("views.add")}</Button>}
     {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">
       <h2 className="font-medium">{t("views.gantt.dependencies", { name: current.title })}</h2>
       <ul className="space-y-1">

@@ -48,6 +48,8 @@
   "questions.movePageUp": "Move page {{n}} up",
   "questions.movePageDown": "Move page {{n}} down",
   "questions.add": "Add question",
+  "questions.group.questions": "Questions",
+  "questions.group.dividers": "Dividers",
   "questions.addToPage": "Add question to page {{n}}",
   "questions.noQuestions": "No questions on this page yet.",
   "questions.label": "Label",

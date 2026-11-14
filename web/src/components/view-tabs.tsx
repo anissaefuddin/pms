@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { ChevronDown, MoreHorizontal, Plus } from "lucide-react";
+import { CalendarDays, ChartGantt, ChevronDown, Files, LayoutGrid, MoreHorizontal, PieChart, Plus, Table2, Timer, type LucideIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -11,6 +11,7 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/u
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormError } from "@/components/auth/form-error";
 
+const viewIcons: Record<SavedView["type"], LucideIcon> = { table: Table2, board: LayoutGrid, gantt: ChartGantt, calendar: CalendarDays, timelog: Timer, files: Files, chart: PieChart };
 const viewTypes = ["table", "board", "gantt", "calendar", "timelog", "files", "chart"] as const satisfies readonly SavedView["type"][];
 
 export function ViewTabs({ views, selected, scope, canEdit, project = false, onSelect, onRefresh }: {
@@ -87,7 +88,7 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
         const current = view.id === selected.id;
         return <div key={view.id} className={`flex items-center rounded-md ${current ? "bg-background shadow-xs" : ""}`}>
           <Button size="sm" variant="ghost" aria-pressed={current} className={current ? "font-semibold" : "text-muted-foreground"}
-            onClick={() => onSelect(view.id)}>{view.name}</Button>
+            onClick={() => onSelect(view.id)}>{(() => { const Icon = viewIcons[view.type]; return Icon ? <Icon aria-hidden /> : null; })()}{view.name}</Button>
           {current && <DropdownMenu>
             <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={t("views.options", { name: view.name })} />}><MoreHorizontal /></DropdownMenuTrigger>
             <DropdownMenuContent align="start">
