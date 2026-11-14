@@ -45,6 +45,7 @@ import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/a
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
+import { Route as AppSettingsProvisioningRouteImport } from './routes/_app/settings/provisioning'
 import { Route as AppSettingsRatesRouteImport } from './routes/_app/settings/rates'
 import { Route as AppSettingsResourcesRouteImport } from './routes/_app/settings/resources'
 import { Route as AppSettingsRolesRouteImport } from './routes/_app/settings/roles'
@@ -242,6 +243,11 @@ const AppSettingsProfileRoute = AppSettingsProfileRouteImport.update({
   path: '/profile',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsProvisioningRoute = AppSettingsProvisioningRouteImport.update({
+  id: '/provisioning',
+  path: '/provisioning',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsRatesRoute = AppSettingsRatesRouteImport.update({
   id: '/rates',
   path: '/rates',
@@ -357,6 +363,7 @@ export interface FileRoutesByFullPath {
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/provisioning': typeof AppSettingsProvisioningRoute
   '/settings/rates': typeof AppSettingsRatesRoute
   '/settings/resources': typeof AppSettingsResourcesRoute
   '/settings/roles': typeof AppSettingsRolesRoute
@@ -409,6 +416,7 @@ export interface FileRoutesByTo {
   '/settings/audit': typeof AppSettingsAuditRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/profile': typeof AppSettingsProfileRoute
+  '/settings/provisioning': typeof AppSettingsProvisioningRoute
   '/settings/rates': typeof AppSettingsRatesRoute
   '/settings/resources': typeof AppSettingsResourcesRoute
   '/settings/roles': typeof AppSettingsRolesRoute
@@ -463,6 +471,7 @@ export interface FileRoutesById {
   '/_app/settings/audit': typeof AppSettingsAuditRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
+  '/_app/settings/provisioning': typeof AppSettingsProvisioningRoute
   '/_app/settings/rates': typeof AppSettingsRatesRoute
   '/_app/settings/resources': typeof AppSettingsResourcesRoute
   '/_app/settings/roles': typeof AppSettingsRolesRoute
@@ -518,6 +527,7 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/item-types'
     | '/settings/profile'
+    | '/settings/provisioning'
     | '/settings/rates'
     | '/settings/resources'
     | '/settings/roles'
@@ -570,6 +580,7 @@ export interface FileRouteTypes {
     | '/settings/audit'
     | '/settings/item-types'
     | '/settings/profile'
+    | '/settings/provisioning'
     | '/settings/rates'
     | '/settings/resources'
     | '/settings/roles'
@@ -623,6 +634,7 @@ export interface FileRouteTypes {
     | '/_app/settings/audit'
     | '/_app/settings/item-types'
     | '/_app/settings/profile'
+    | '/_app/settings/provisioning'
     | '/_app/settings/rates'
     | '/_app/settings/resources'
     | '/_app/settings/roles'
@@ -911,6 +923,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsProfileRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/provisioning': {
+      id: '/_app/settings/provisioning'
+      path: '/provisioning'
+      fullPath: '/settings/provisioning'
+      preLoaderRoute: typeof AppSettingsProvisioningRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/rates': {
       id: '/_app/settings/rates'
       path: '/rates'
@@ -1044,6 +1063,7 @@ interface AppSettingsRouteChildren {
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
+  AppSettingsProvisioningRoute: typeof AppSettingsProvisioningRoute
   AppSettingsRatesRoute: typeof AppSettingsRatesRoute
   AppSettingsResourcesRoute: typeof AppSettingsResourcesRoute
   AppSettingsRolesRoute: typeof AppSettingsRolesRoute
@@ -1060,6 +1080,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAuditRoute: AppSettingsAuditRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
+  AppSettingsProvisioningRoute: AppSettingsProvisioningRoute,
   AppSettingsRatesRoute: AppSettingsRatesRoute,
   AppSettingsResourcesRoute: AppSettingsResourcesRoute,
   AppSettingsRolesRoute: AppSettingsRolesRoute,

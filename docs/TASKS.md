@@ -1327,10 +1327,10 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 - [x] [TEST] Assertion palsu ditolak
 
 **S12.1.3 Provisioning SCIM (ENT-02) — 2 hari**
-- [ ] [BE] SCIM users
-- [ ] [BE] SCIM groups
-- [ ] [BE] Deprovision mencabut sesi dan seat
-- [ ] [TEST] E2E-PAR-12
+- [x] [BE] SCIM users
+- [x] [BE] SCIM groups
+- [x] [BE] Deprovision mencabut sesi dan seat
+- [x] [TEST] E2E-PAR-12 — lulus dengan IdP OIDC palsu (TESTING.md, M12 / S12.1.3); **belum** diuji dengan Okta/Entra sungguhan
 
 **S12.1.4 Role kustom (ENT-03) — 2.5 hari**
 - [x] [DB] Definisi role
@@ -1340,7 +1340,7 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 - [x] [TEST] Regresi policy role bawaan
 
 **S12.1.5 Laporan audit keamanan (ENT-04) — 2 hari**
-- [x] [DB] Event audit: login, role, share, API key
+- [x] [DB] Event audit: login, role, share, API key — login, role, share, user, SSO, SCIM tercatat; **event API key belum tersambung** (kodenya ada di `integration/s11-3`, belum di-merge; kategori `api_key` sudah disiapkan)
 - [x] [BE] Endpoint dan ekspor
 - [x] [FE] Halaman audit
 - [x] [TEST] Event tercatat dan hanya admin

@@ -1896,6 +1896,30 @@ func (e RichTextType) Valid() bool {
 	}
 }
 
+// Defines values for ScimTokenInputDefaultUserType.
+const (
+	ScimTokenInputDefaultUserTypeCollaborator ScimTokenInputDefaultUserType = "collaborator"
+	ScimTokenInputDefaultUserTypeExternal     ScimTokenInputDefaultUserType = "external"
+	ScimTokenInputDefaultUserTypeRegular      ScimTokenInputDefaultUserType = "regular"
+	ScimTokenInputDefaultUserTypeViewer       ScimTokenInputDefaultUserType = "viewer"
+)
+
+// Valid indicates whether the value is a known member of the ScimTokenInputDefaultUserType enum.
+func (e ScimTokenInputDefaultUserType) Valid() bool {
+	switch e {
+	case ScimTokenInputDefaultUserTypeCollaborator:
+		return true
+	case ScimTokenInputDefaultUserTypeExternal:
+		return true
+	case ScimTokenInputDefaultUserTypeRegular:
+		return true
+	case ScimTokenInputDefaultUserTypeViewer:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ShareRole.
 const (
 	Editor  ShareRole = "editor"
@@ -4419,6 +4443,39 @@ type ScheduleItemVersion struct {
 	Version int                `json:"version"`
 }
 
+// ScimResource Sumber daya SCIM 2.0 (User, Group, ListResponse, PatchOp atau Error); bentuk lengkap mengikuti RFC 7643/7644
+type ScimResource map[string]interface{}
+
+// ScimToken defines model for ScimToken.
+type ScimToken struct {
+	CreatedAt       time.Time          `json:"created_at"`
+	DefaultUserType string             `json:"default_user_type"`
+	Id              openapi_types.UUID `json:"id"`
+	LastUsedAt      *time.Time         `json:"last_used_at,omitempty"`
+	Name            string             `json:"name"`
+	Prefix          string             `json:"prefix"`
+	RevokedAt       *time.Time         `json:"revoked_at,omitempty"`
+
+	// Token Hanya ada saat dibuat
+	Token *string `json:"token,omitempty"`
+}
+
+// ScimTokenInput defines model for ScimTokenInput.
+type ScimTokenInput struct {
+	// DefaultUserType Tipe untuk pengguna yang dibuat lewat token ini (admin tidak boleh)
+	DefaultUserType *ScimTokenInputDefaultUserType `json:"default_user_type,omitempty"`
+	Name            string                         `json:"name"`
+}
+
+// ScimTokenInputDefaultUserType Tipe untuk pengguna yang dibuat lewat token ini (admin tidak boleh)
+type ScimTokenInputDefaultUserType string
+
+// ScimTokenList defines model for ScimTokenList.
+type ScimTokenList struct {
+	BaseUrl string      `json:"base_url"`
+	Items   []ScimToken `json:"items"`
+}
+
 // SearchResults defines model for SearchResults.
 type SearchResults struct {
 	Comments []struct {
@@ -5478,6 +5535,22 @@ type DeleteResourceEntryParams struct {
 	Id   openapi_types.UUID `form:"id" json:"id"`
 }
 
+// ScimListGroupsParams defines parameters for ScimListGroups.
+type ScimListGroupsParams struct {
+	// Filter Hanya bentuk atribut eq "nilai"
+	Filter     *string `form:"filter,omitempty" json:"filter,omitempty"`
+	StartIndex *int    `form:"startIndex,omitempty" json:"startIndex,omitempty"`
+	Count      *int    `form:"count,omitempty" json:"count,omitempty"`
+}
+
+// ScimListUsersParams defines parameters for ScimListUsers.
+type ScimListUsersParams struct {
+	// Filter Hanya bentuk atribut eq "nilai"
+	Filter     *string `form:"filter,omitempty" json:"filter,omitempty"`
+	StartIndex *int    `form:"startIndex,omitempty" json:"startIndex,omitempty"`
+	Count      *int    `form:"count,omitempty" json:"count,omitempty"`
+}
+
 // SearchParams defines parameters for Search.
 type SearchParams struct {
 	Q           string              `form:"q" json:"q"`
@@ -5894,6 +5967,27 @@ type CreateResourceEntryJSONRequestBody = ResourceDirectoryInput
 
 // UpdateResourceEntryJSONRequestBody defines body for UpdateResourceEntry for application/json ContentType.
 type UpdateResourceEntryJSONRequestBody = ResourceDirectoryInput
+
+// CreateScimTokenJSONRequestBody defines body for CreateScimToken for application/json ContentType.
+type CreateScimTokenJSONRequestBody = ScimTokenInput
+
+// ScimCreateGroupApplicationScimPlusJSONRequestBody defines body for ScimCreateGroup for application/scim+json ContentType.
+type ScimCreateGroupApplicationScimPlusJSONRequestBody = ScimResource
+
+// ScimPatchGroupApplicationScimPlusJSONRequestBody defines body for ScimPatchGroup for application/scim+json ContentType.
+type ScimPatchGroupApplicationScimPlusJSONRequestBody = ScimResource
+
+// ScimPutGroupApplicationScimPlusJSONRequestBody defines body for ScimPutGroup for application/scim+json ContentType.
+type ScimPutGroupApplicationScimPlusJSONRequestBody = ScimResource
+
+// ScimCreateUserApplicationScimPlusJSONRequestBody defines body for ScimCreateUser for application/scim+json ContentType.
+type ScimCreateUserApplicationScimPlusJSONRequestBody = ScimResource
+
+// ScimPatchUserApplicationScimPlusJSONRequestBody defines body for ScimPatchUser for application/scim+json ContentType.
+type ScimPatchUserApplicationScimPlusJSONRequestBody = ScimResource
+
+// ScimPutUserApplicationScimPlusJSONRequestBody defines body for ScimPutUser for application/scim+json ContentType.
+type ScimPutUserApplicationScimPlusJSONRequestBody = ScimResource
 
 // ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
 type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
@@ -6737,6 +6831,60 @@ type ServerInterface interface {
 
 	// (PUT /resource-directory)
 	UpdateResourceEntry(w http.ResponseWriter, r *http.Request)
+	// ListScimTokens Token SCIM dan alamat dasar (admin); token utuh tidak pernah dikembalikan lagi
+	// (GET /scim-tokens)
+	ListScimTokens(w http.ResponseWriter, r *http.Request)
+	// CreateScimToken Buat token SCIM (admin); nilai token hanya tampil di respons ini
+	// (POST /scim-tokens)
+	CreateScimToken(w http.ResponseWriter, r *http.Request)
+	// RevokeScimToken Cabut token SCIM (admin); langsung berhenti berlaku
+	// (DELETE /scim-tokens/{tokenId})
+	RevokeScimToken(w http.ResponseWriter, r *http.Request, tokenId openapi_types.UUID)
+	// ScimListGroups SCIM: daftar Group, filter eq, startIndex, count (maks 200)
+	// (GET /scim/v2/Groups)
+	ScimListGroups(w http.ResponseWriter, r *http.Request, params ScimListGroupsParams)
+	// ScimCreateGroup SCIM: buat Group
+	// (POST /scim/v2/Groups)
+	ScimCreateGroup(w http.ResponseWriter, r *http.Request)
+	// ScimDeleteGroup SCIM: hapus grup beserta share-nya
+	// (DELETE /scim/v2/Groups/{id})
+	ScimDeleteGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ScimGetGroup SCIM: baca Group
+	// (GET /scim/v2/Groups/{id})
+	ScimGetGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ScimPatchGroup SCIM: ubah sebagian Group (PatchOp)
+	// (PATCH /scim/v2/Groups/{id})
+	ScimPatchGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ScimPutGroup SCIM: ganti Group
+	// (PUT /scim/v2/Groups/{id})
+	ScimPutGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ScimResourceTypes SCIM ResourceTypes (bearer token SCIM)
+	// (GET /scim/v2/ResourceTypes)
+	ScimResourceTypes(w http.ResponseWriter, r *http.Request)
+	// ScimSchemas SCIM Schemas (bearer token SCIM)
+	// (GET /scim/v2/Schemas)
+	ScimSchemas(w http.ResponseWriter, r *http.Request)
+	// ScimServiceProviderConfig SCIM ServiceProviderConfig (bearer token SCIM)
+	// (GET /scim/v2/ServiceProviderConfig)
+	ScimServiceProviderConfig(w http.ResponseWriter, r *http.Request)
+	// ScimListUsers SCIM: daftar User, filter eq, startIndex, count (maks 200)
+	// (GET /scim/v2/Users)
+	ScimListUsers(w http.ResponseWriter, r *http.Request, params ScimListUsersParams)
+	// ScimCreateUser SCIM: buat User (akun aktif tanpa kata sandi, memakai satu seat)
+	// (POST /scim/v2/Users)
+	ScimCreateUser(w http.ResponseWriter, r *http.Request)
+	// ScimDeleteUser SCIM: deprovision (sesi dicabut, seat bebas; baris dan riwayat tetap)
+	// (DELETE /scim/v2/Users/{id})
+	ScimDeleteUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ScimGetUser SCIM: baca User
+	// (GET /scim/v2/Users/{id})
+	ScimGetUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ScimPatchUser SCIM: ubah sebagian User (PatchOp)
+	// (PATCH /scim/v2/Users/{id})
+	ScimPatchUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
+	// ScimPutUser SCIM: ganti User
+	// (PUT /scim/v2/Users/{id})
+	ScimPutUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID)
 	// Search Pencarian global (NAV-06)
 	// (GET /search)
 	Search(w http.ResponseWriter, r *http.Request, params SearchParams)
@@ -12014,6 +12162,456 @@ func (siw *ServerInterfaceWrapper) UpdateResourceEntry(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ListScimTokens operation middleware
+func (siw *ServerInterfaceWrapper) ListScimTokens(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListScimTokens(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateScimToken operation middleware
+func (siw *ServerInterfaceWrapper) CreateScimToken(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateScimToken(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeScimToken operation middleware
+func (siw *ServerInterfaceWrapper) RevokeScimToken(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "tokenId" -------------
+	var tokenId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "tokenId", r.PathValue("tokenId"), &tokenId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "tokenId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeScimToken(w, r, tokenId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimListGroups operation middleware
+func (siw *ServerInterfaceWrapper) ScimListGroups(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ScimListGroupsParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "startIndex" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "startIndex", r.URL.Query(), &params.StartIndex, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "startIndex"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "startIndex", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "count" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "count", r.URL.Query(), &params.Count, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "count"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "count", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimListGroups(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimCreateGroup operation middleware
+func (siw *ServerInterfaceWrapper) ScimCreateGroup(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimCreateGroup(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimDeleteGroup operation middleware
+func (siw *ServerInterfaceWrapper) ScimDeleteGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimDeleteGroup(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimGetGroup operation middleware
+func (siw *ServerInterfaceWrapper) ScimGetGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimGetGroup(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimPatchGroup operation middleware
+func (siw *ServerInterfaceWrapper) ScimPatchGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimPatchGroup(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimPutGroup operation middleware
+func (siw *ServerInterfaceWrapper) ScimPutGroup(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimPutGroup(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimResourceTypes operation middleware
+func (siw *ServerInterfaceWrapper) ScimResourceTypes(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimResourceTypes(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimSchemas operation middleware
+func (siw *ServerInterfaceWrapper) ScimSchemas(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimSchemas(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimServiceProviderConfig operation middleware
+func (siw *ServerInterfaceWrapper) ScimServiceProviderConfig(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimServiceProviderConfig(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimListUsers operation middleware
+func (siw *ServerInterfaceWrapper) ScimListUsers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ScimListUsersParams
+
+	// ------------- Optional query parameter "filter" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "filter", r.URL.Query(), &params.Filter, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "filter"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "filter", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "startIndex" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "startIndex", r.URL.Query(), &params.StartIndex, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "startIndex"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "startIndex", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "count" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "count", r.URL.Query(), &params.Count, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "count"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "count", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimListUsers(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimCreateUser operation middleware
+func (siw *ServerInterfaceWrapper) ScimCreateUser(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimCreateUser(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimDeleteUser operation middleware
+func (siw *ServerInterfaceWrapper) ScimDeleteUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimDeleteUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimGetUser operation middleware
+func (siw *ServerInterfaceWrapper) ScimGetUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimGetUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimPatchUser operation middleware
+func (siw *ServerInterfaceWrapper) ScimPatchUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimPatchUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ScimPutUser operation middleware
+func (siw *ServerInterfaceWrapper) ScimPutUser(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "id" -------------
+	var id openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "id", r.PathValue("id"), &id, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "id", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ScimPutUser(w, r, id)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // Search operation middleware
 func (siw *ServerInterfaceWrapper) Search(w http.ResponseWriter, r *http.Request) {
 
@@ -14227,6 +14825,24 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/reports/{reportId}/export", wrapper.ExportReport)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/reports/{reportId}/subscription", wrapper.UnsubscribeReport)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/reports/{reportId}/subscription", wrapper.SubscribeReport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim/v2/ServiceProviderConfig", wrapper.ScimServiceProviderConfig)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim/v2/ResourceTypes", wrapper.ScimResourceTypes)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim/v2/Schemas", wrapper.ScimSchemas)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim/v2/Users", wrapper.ScimListUsers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/scim/v2/Users", wrapper.ScimCreateUser)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/scim/v2/Users/{id}", wrapper.ScimDeleteUser)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim/v2/Users/{id}", wrapper.ScimGetUser)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/scim/v2/Users/{id}", wrapper.ScimPatchUser)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/scim/v2/Users/{id}", wrapper.ScimPutUser)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim/v2/Groups", wrapper.ScimListGroups)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/scim/v2/Groups", wrapper.ScimCreateGroup)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/scim/v2/Groups/{id}", wrapper.ScimDeleteGroup)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim/v2/Groups/{id}", wrapper.ScimGetGroup)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/scim/v2/Groups/{id}", wrapper.ScimPatchGroup)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/scim/v2/Groups/{id}", wrapper.ScimPutGroup)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/scim-tokens", wrapper.ListScimTokens)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/scim-tokens", wrapper.CreateScimToken)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/scim-tokens/{tokenId}", wrapper.RevokeScimToken)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-roles", wrapper.ListCustomRoles)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-roles", wrapper.CreateCustomRole)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-roles/{roleId}", wrapper.DeleteCustomRole)
@@ -23825,6 +24441,1792 @@ func (response UpdateResourceEntry422ApplicationProblemPlusJSONResponse) VisitUp
 	return err
 }
 
+type ListScimTokensRequestObject struct {
+}
+
+type ListScimTokensResponseObject interface {
+	VisitListScimTokensResponse(w http.ResponseWriter) error
+}
+
+type ListScimTokens200JSONResponse ScimTokenList
+
+func (response ListScimTokens200JSONResponse) VisitListScimTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListScimTokens401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListScimTokens401ApplicationProblemPlusJSONResponse) VisitListScimTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListScimTokens403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListScimTokens403ApplicationProblemPlusJSONResponse) VisitListScimTokensResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateScimTokenRequestObject struct {
+	Body *CreateScimTokenJSONRequestBody
+}
+
+type CreateScimTokenResponseObject interface {
+	VisitCreateScimTokenResponse(w http.ResponseWriter) error
+}
+
+type CreateScimToken201JSONResponse ScimToken
+
+func (response CreateScimToken201JSONResponse) VisitCreateScimTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateScimToken401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateScimToken401ApplicationProblemPlusJSONResponse) VisitCreateScimTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateScimToken403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateScimToken403ApplicationProblemPlusJSONResponse) VisitCreateScimTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateScimToken422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateScimToken422ApplicationProblemPlusJSONResponse) VisitCreateScimTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeScimTokenRequestObject struct {
+	TokenId openapi_types.UUID `json:"tokenId"`
+}
+
+type RevokeScimTokenResponseObject interface {
+	VisitRevokeScimTokenResponse(w http.ResponseWriter) error
+}
+
+type RevokeScimToken204Response struct {
+}
+
+func (response RevokeScimToken204Response) VisitRevokeScimTokenResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeScimToken401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeScimToken401ApplicationProblemPlusJSONResponse) VisitRevokeScimTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeScimToken403ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeScimToken403ApplicationProblemPlusJSONResponse) VisitRevokeScimTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeScimToken404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeScimToken404ApplicationProblemPlusJSONResponse) VisitRevokeScimTokenResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListGroupsRequestObject struct {
+	Params ScimListGroupsParams
+}
+
+type ScimListGroupsResponseObject interface {
+	VisitScimListGroupsResponse(w http.ResponseWriter) error
+}
+
+type ScimListGroups200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimListGroups200ApplicationScimPlusJSONResponse) VisitScimListGroupsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListGroups400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimListGroups400ApplicationProblemPlusJSONResponse) VisitScimListGroupsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListGroups401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListGroups401ApplicationProblemPlusJSONResponse) VisitScimListGroupsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListGroups403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListGroups403ApplicationProblemPlusJSONResponse) VisitScimListGroupsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListGroups404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListGroups404ApplicationProblemPlusJSONResponse) VisitScimListGroupsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListGroups409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListGroups409ApplicationProblemPlusJSONResponse) VisitScimListGroupsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListGroups429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListGroups429ApplicationProblemPlusJSONResponse) VisitScimListGroupsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateGroupRequestObject struct {
+	Body *ScimCreateGroupApplicationScimPlusJSONRequestBody
+}
+
+type ScimCreateGroupResponseObject interface {
+	VisitScimCreateGroupResponse(w http.ResponseWriter) error
+}
+
+type ScimCreateGroup201ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimCreateGroup201ApplicationScimPlusJSONResponse) VisitScimCreateGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateGroup400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimCreateGroup400ApplicationProblemPlusJSONResponse) VisitScimCreateGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateGroup401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateGroup401ApplicationProblemPlusJSONResponse) VisitScimCreateGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateGroup403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateGroup403ApplicationProblemPlusJSONResponse) VisitScimCreateGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateGroup404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateGroup404ApplicationProblemPlusJSONResponse) VisitScimCreateGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateGroup409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateGroup409ApplicationProblemPlusJSONResponse) VisitScimCreateGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateGroup429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateGroup429ApplicationProblemPlusJSONResponse) VisitScimCreateGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteGroupRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ScimDeleteGroupResponseObject interface {
+	VisitScimDeleteGroupResponse(w http.ResponseWriter) error
+}
+
+type ScimDeleteGroup204Response struct {
+}
+
+func (response ScimDeleteGroup204Response) VisitScimDeleteGroupResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ScimDeleteGroup400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimDeleteGroup400ApplicationProblemPlusJSONResponse) VisitScimDeleteGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteGroup401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteGroup401ApplicationProblemPlusJSONResponse) VisitScimDeleteGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteGroup403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteGroup403ApplicationProblemPlusJSONResponse) VisitScimDeleteGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteGroup404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteGroup404ApplicationProblemPlusJSONResponse) VisitScimDeleteGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteGroup409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteGroup409ApplicationProblemPlusJSONResponse) VisitScimDeleteGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteGroup429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteGroup429ApplicationProblemPlusJSONResponse) VisitScimDeleteGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetGroupRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ScimGetGroupResponseObject interface {
+	VisitScimGetGroupResponse(w http.ResponseWriter) error
+}
+
+type ScimGetGroup200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimGetGroup200ApplicationScimPlusJSONResponse) VisitScimGetGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetGroup400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimGetGroup400ApplicationProblemPlusJSONResponse) VisitScimGetGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetGroup401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetGroup401ApplicationProblemPlusJSONResponse) VisitScimGetGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetGroup403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetGroup403ApplicationProblemPlusJSONResponse) VisitScimGetGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetGroup404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetGroup404ApplicationProblemPlusJSONResponse) VisitScimGetGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetGroup409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetGroup409ApplicationProblemPlusJSONResponse) VisitScimGetGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetGroup429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetGroup429ApplicationProblemPlusJSONResponse) VisitScimGetGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchGroupRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ScimPatchGroupApplicationScimPlusJSONRequestBody
+}
+
+type ScimPatchGroupResponseObject interface {
+	VisitScimPatchGroupResponse(w http.ResponseWriter) error
+}
+
+type ScimPatchGroup200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimPatchGroup200ApplicationScimPlusJSONResponse) VisitScimPatchGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchGroup400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimPatchGroup400ApplicationProblemPlusJSONResponse) VisitScimPatchGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchGroup401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchGroup401ApplicationProblemPlusJSONResponse) VisitScimPatchGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchGroup403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchGroup403ApplicationProblemPlusJSONResponse) VisitScimPatchGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchGroup404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchGroup404ApplicationProblemPlusJSONResponse) VisitScimPatchGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchGroup409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchGroup409ApplicationProblemPlusJSONResponse) VisitScimPatchGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchGroup429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchGroup429ApplicationProblemPlusJSONResponse) VisitScimPatchGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutGroupRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ScimPutGroupApplicationScimPlusJSONRequestBody
+}
+
+type ScimPutGroupResponseObject interface {
+	VisitScimPutGroupResponse(w http.ResponseWriter) error
+}
+
+type ScimPutGroup200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimPutGroup200ApplicationScimPlusJSONResponse) VisitScimPutGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutGroup400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimPutGroup400ApplicationProblemPlusJSONResponse) VisitScimPutGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutGroup401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutGroup401ApplicationProblemPlusJSONResponse) VisitScimPutGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutGroup403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutGroup403ApplicationProblemPlusJSONResponse) VisitScimPutGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutGroup404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutGroup404ApplicationProblemPlusJSONResponse) VisitScimPutGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutGroup409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutGroup409ApplicationProblemPlusJSONResponse) VisitScimPutGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutGroup429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutGroup429ApplicationProblemPlusJSONResponse) VisitScimPutGroupResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimResourceTypesRequestObject struct {
+}
+
+type ScimResourceTypesResponseObject interface {
+	VisitScimResourceTypesResponse(w http.ResponseWriter) error
+}
+
+type ScimResourceTypes200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimResourceTypes200ApplicationScimPlusJSONResponse) VisitScimResourceTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimResourceTypes400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimResourceTypes400ApplicationProblemPlusJSONResponse) VisitScimResourceTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimResourceTypes401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimResourceTypes401ApplicationProblemPlusJSONResponse) VisitScimResourceTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimResourceTypes403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimResourceTypes403ApplicationProblemPlusJSONResponse) VisitScimResourceTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimResourceTypes404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimResourceTypes404ApplicationProblemPlusJSONResponse) VisitScimResourceTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimResourceTypes409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimResourceTypes409ApplicationProblemPlusJSONResponse) VisitScimResourceTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimResourceTypes429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimResourceTypes429ApplicationProblemPlusJSONResponse) VisitScimResourceTypesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimSchemasRequestObject struct {
+}
+
+type ScimSchemasResponseObject interface {
+	VisitScimSchemasResponse(w http.ResponseWriter) error
+}
+
+type ScimSchemas200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimSchemas200ApplicationScimPlusJSONResponse) VisitScimSchemasResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimSchemas400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimSchemas400ApplicationProblemPlusJSONResponse) VisitScimSchemasResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimSchemas401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimSchemas401ApplicationProblemPlusJSONResponse) VisitScimSchemasResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimSchemas403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimSchemas403ApplicationProblemPlusJSONResponse) VisitScimSchemasResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimSchemas404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimSchemas404ApplicationProblemPlusJSONResponse) VisitScimSchemasResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimSchemas409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimSchemas409ApplicationProblemPlusJSONResponse) VisitScimSchemasResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimSchemas429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimSchemas429ApplicationProblemPlusJSONResponse) VisitScimSchemasResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimServiceProviderConfigRequestObject struct {
+}
+
+type ScimServiceProviderConfigResponseObject interface {
+	VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error
+}
+
+type ScimServiceProviderConfig200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimServiceProviderConfig200ApplicationScimPlusJSONResponse) VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimServiceProviderConfig400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimServiceProviderConfig400ApplicationProblemPlusJSONResponse) VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimServiceProviderConfig401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimServiceProviderConfig401ApplicationProblemPlusJSONResponse) VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimServiceProviderConfig403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimServiceProviderConfig403ApplicationProblemPlusJSONResponse) VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimServiceProviderConfig404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimServiceProviderConfig404ApplicationProblemPlusJSONResponse) VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimServiceProviderConfig409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimServiceProviderConfig409ApplicationProblemPlusJSONResponse) VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimServiceProviderConfig429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimServiceProviderConfig429ApplicationProblemPlusJSONResponse) VisitScimServiceProviderConfigResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListUsersRequestObject struct {
+	Params ScimListUsersParams
+}
+
+type ScimListUsersResponseObject interface {
+	VisitScimListUsersResponse(w http.ResponseWriter) error
+}
+
+type ScimListUsers200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimListUsers200ApplicationScimPlusJSONResponse) VisitScimListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListUsers400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimListUsers400ApplicationProblemPlusJSONResponse) VisitScimListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListUsers401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListUsers401ApplicationProblemPlusJSONResponse) VisitScimListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListUsers403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListUsers403ApplicationProblemPlusJSONResponse) VisitScimListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListUsers404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListUsers404ApplicationProblemPlusJSONResponse) VisitScimListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListUsers409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListUsers409ApplicationProblemPlusJSONResponse) VisitScimListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimListUsers429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimListUsers429ApplicationProblemPlusJSONResponse) VisitScimListUsersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateUserRequestObject struct {
+	Body *ScimCreateUserApplicationScimPlusJSONRequestBody
+}
+
+type ScimCreateUserResponseObject interface {
+	VisitScimCreateUserResponse(w http.ResponseWriter) error
+}
+
+type ScimCreateUser201ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimCreateUser201ApplicationScimPlusJSONResponse) VisitScimCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateUser400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimCreateUser400ApplicationProblemPlusJSONResponse) VisitScimCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateUser401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateUser401ApplicationProblemPlusJSONResponse) VisitScimCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateUser403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateUser403ApplicationProblemPlusJSONResponse) VisitScimCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateUser404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateUser404ApplicationProblemPlusJSONResponse) VisitScimCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateUser409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateUser409ApplicationProblemPlusJSONResponse) VisitScimCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimCreateUser429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimCreateUser429ApplicationProblemPlusJSONResponse) VisitScimCreateUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteUserRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ScimDeleteUserResponseObject interface {
+	VisitScimDeleteUserResponse(w http.ResponseWriter) error
+}
+
+type ScimDeleteUser204Response struct {
+}
+
+func (response ScimDeleteUser204Response) VisitScimDeleteUserResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ScimDeleteUser400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimDeleteUser400ApplicationProblemPlusJSONResponse) VisitScimDeleteUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteUser401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteUser401ApplicationProblemPlusJSONResponse) VisitScimDeleteUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteUser403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteUser403ApplicationProblemPlusJSONResponse) VisitScimDeleteUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteUser404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteUser404ApplicationProblemPlusJSONResponse) VisitScimDeleteUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteUser409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteUser409ApplicationProblemPlusJSONResponse) VisitScimDeleteUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimDeleteUser429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimDeleteUser429ApplicationProblemPlusJSONResponse) VisitScimDeleteUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetUserRequestObject struct {
+	Id openapi_types.UUID `json:"id"`
+}
+
+type ScimGetUserResponseObject interface {
+	VisitScimGetUserResponse(w http.ResponseWriter) error
+}
+
+type ScimGetUser200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimGetUser200ApplicationScimPlusJSONResponse) VisitScimGetUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetUser400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimGetUser400ApplicationProblemPlusJSONResponse) VisitScimGetUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetUser401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetUser401ApplicationProblemPlusJSONResponse) VisitScimGetUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetUser403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetUser403ApplicationProblemPlusJSONResponse) VisitScimGetUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetUser404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetUser404ApplicationProblemPlusJSONResponse) VisitScimGetUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetUser409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetUser409ApplicationProblemPlusJSONResponse) VisitScimGetUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimGetUser429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimGetUser429ApplicationProblemPlusJSONResponse) VisitScimGetUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchUserRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ScimPatchUserApplicationScimPlusJSONRequestBody
+}
+
+type ScimPatchUserResponseObject interface {
+	VisitScimPatchUserResponse(w http.ResponseWriter) error
+}
+
+type ScimPatchUser200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimPatchUser200ApplicationScimPlusJSONResponse) VisitScimPatchUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchUser400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimPatchUser400ApplicationProblemPlusJSONResponse) VisitScimPatchUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchUser401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchUser401ApplicationProblemPlusJSONResponse) VisitScimPatchUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchUser403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchUser403ApplicationProblemPlusJSONResponse) VisitScimPatchUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchUser404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchUser404ApplicationProblemPlusJSONResponse) VisitScimPatchUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchUser409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchUser409ApplicationProblemPlusJSONResponse) VisitScimPatchUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPatchUser429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPatchUser429ApplicationProblemPlusJSONResponse) VisitScimPatchUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutUserRequestObject struct {
+	Id   openapi_types.UUID `json:"id"`
+	Body *ScimPutUserApplicationScimPlusJSONRequestBody
+}
+
+type ScimPutUserResponseObject interface {
+	VisitScimPutUserResponse(w http.ResponseWriter) error
+}
+
+type ScimPutUser200ApplicationScimPlusJSONResponse ScimResource
+
+func (response ScimPutUser200ApplicationScimPlusJSONResponse) VisitScimPutUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/scim+json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutUser400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ScimPutUser400ApplicationProblemPlusJSONResponse) VisitScimPutUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutUser401ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutUser401ApplicationProblemPlusJSONResponse) VisitScimPutUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutUser403ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutUser403ApplicationProblemPlusJSONResponse) VisitScimPutUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutUser404ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutUser404ApplicationProblemPlusJSONResponse) VisitScimPutUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutUser409ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutUser409ApplicationProblemPlusJSONResponse) VisitScimPutUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ScimPutUser429ApplicationProblemPlusJSONResponse Problem
+
+func (response ScimPutUser429ApplicationProblemPlusJSONResponse) VisitScimPutUserResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type SearchRequestObject struct {
 	Params SearchParams
 }
@@ -28059,6 +30461,60 @@ type StrictServerInterface interface {
 
 	// (PUT /resource-directory)
 	UpdateResourceEntry(ctx context.Context, request UpdateResourceEntryRequestObject) (UpdateResourceEntryResponseObject, error)
+	// ListScimTokens Token SCIM dan alamat dasar (admin); token utuh tidak pernah dikembalikan lagi
+	// (GET /scim-tokens)
+	ListScimTokens(ctx context.Context, request ListScimTokensRequestObject) (ListScimTokensResponseObject, error)
+	// CreateScimToken Buat token SCIM (admin); nilai token hanya tampil di respons ini
+	// (POST /scim-tokens)
+	CreateScimToken(ctx context.Context, request CreateScimTokenRequestObject) (CreateScimTokenResponseObject, error)
+	// RevokeScimToken Cabut token SCIM (admin); langsung berhenti berlaku
+	// (DELETE /scim-tokens/{tokenId})
+	RevokeScimToken(ctx context.Context, request RevokeScimTokenRequestObject) (RevokeScimTokenResponseObject, error)
+	// ScimListGroups SCIM: daftar Group, filter eq, startIndex, count (maks 200)
+	// (GET /scim/v2/Groups)
+	ScimListGroups(ctx context.Context, request ScimListGroupsRequestObject) (ScimListGroupsResponseObject, error)
+	// ScimCreateGroup SCIM: buat Group
+	// (POST /scim/v2/Groups)
+	ScimCreateGroup(ctx context.Context, request ScimCreateGroupRequestObject) (ScimCreateGroupResponseObject, error)
+	// ScimDeleteGroup SCIM: hapus grup beserta share-nya
+	// (DELETE /scim/v2/Groups/{id})
+	ScimDeleteGroup(ctx context.Context, request ScimDeleteGroupRequestObject) (ScimDeleteGroupResponseObject, error)
+	// ScimGetGroup SCIM: baca Group
+	// (GET /scim/v2/Groups/{id})
+	ScimGetGroup(ctx context.Context, request ScimGetGroupRequestObject) (ScimGetGroupResponseObject, error)
+	// ScimPatchGroup SCIM: ubah sebagian Group (PatchOp)
+	// (PATCH /scim/v2/Groups/{id})
+	ScimPatchGroup(ctx context.Context, request ScimPatchGroupRequestObject) (ScimPatchGroupResponseObject, error)
+	// ScimPutGroup SCIM: ganti Group
+	// (PUT /scim/v2/Groups/{id})
+	ScimPutGroup(ctx context.Context, request ScimPutGroupRequestObject) (ScimPutGroupResponseObject, error)
+	// ScimResourceTypes SCIM ResourceTypes (bearer token SCIM)
+	// (GET /scim/v2/ResourceTypes)
+	ScimResourceTypes(ctx context.Context, request ScimResourceTypesRequestObject) (ScimResourceTypesResponseObject, error)
+	// ScimSchemas SCIM Schemas (bearer token SCIM)
+	// (GET /scim/v2/Schemas)
+	ScimSchemas(ctx context.Context, request ScimSchemasRequestObject) (ScimSchemasResponseObject, error)
+	// ScimServiceProviderConfig SCIM ServiceProviderConfig (bearer token SCIM)
+	// (GET /scim/v2/ServiceProviderConfig)
+	ScimServiceProviderConfig(ctx context.Context, request ScimServiceProviderConfigRequestObject) (ScimServiceProviderConfigResponseObject, error)
+	// ScimListUsers SCIM: daftar User, filter eq, startIndex, count (maks 200)
+	// (GET /scim/v2/Users)
+	ScimListUsers(ctx context.Context, request ScimListUsersRequestObject) (ScimListUsersResponseObject, error)
+	// ScimCreateUser SCIM: buat User (akun aktif tanpa kata sandi, memakai satu seat)
+	// (POST /scim/v2/Users)
+	ScimCreateUser(ctx context.Context, request ScimCreateUserRequestObject) (ScimCreateUserResponseObject, error)
+	// ScimDeleteUser SCIM: deprovision (sesi dicabut, seat bebas; baris dan riwayat tetap)
+	// (DELETE /scim/v2/Users/{id})
+	ScimDeleteUser(ctx context.Context, request ScimDeleteUserRequestObject) (ScimDeleteUserResponseObject, error)
+	// ScimGetUser SCIM: baca User
+	// (GET /scim/v2/Users/{id})
+	ScimGetUser(ctx context.Context, request ScimGetUserRequestObject) (ScimGetUserResponseObject, error)
+	// ScimPatchUser SCIM: ubah sebagian User (PatchOp)
+	// (PATCH /scim/v2/Users/{id})
+	ScimPatchUser(ctx context.Context, request ScimPatchUserRequestObject) (ScimPatchUserResponseObject, error)
+	// ScimPutUser SCIM: ganti User
+	// (PUT /scim/v2/Users/{id})
+	ScimPutUser(ctx context.Context, request ScimPutUserRequestObject) (ScimPutUserResponseObject, error)
 	// Search Pencarian global (NAV-06)
 	// (GET /search)
 	Search(ctx context.Context, request SearchRequestObject) (SearchResponseObject, error)
@@ -33042,6 +35498,509 @@ func (sh *strictHandler) UpdateResourceEntry(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateResourceEntryResponseObject); ok {
 		if err := validResponse.VisitUpdateResourceEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListScimTokens operation middleware
+func (sh *strictHandler) ListScimTokens(w http.ResponseWriter, r *http.Request) {
+	var request ListScimTokensRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListScimTokens(ctx, request.(ListScimTokensRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListScimTokens")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListScimTokensResponseObject); ok {
+		if err := validResponse.VisitListScimTokensResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateScimToken operation middleware
+func (sh *strictHandler) CreateScimToken(w http.ResponseWriter, r *http.Request) {
+	var request CreateScimTokenRequestObject
+
+	var body CreateScimTokenJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateScimToken(ctx, request.(CreateScimTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateScimToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateScimTokenResponseObject); ok {
+		if err := validResponse.VisitCreateScimTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeScimToken operation middleware
+func (sh *strictHandler) RevokeScimToken(w http.ResponseWriter, r *http.Request, tokenId openapi_types.UUID) {
+	var request RevokeScimTokenRequestObject
+
+	request.TokenId = tokenId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeScimToken(ctx, request.(RevokeScimTokenRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeScimToken")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeScimTokenResponseObject); ok {
+		if err := validResponse.VisitRevokeScimTokenResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimListGroups operation middleware
+func (sh *strictHandler) ScimListGroups(w http.ResponseWriter, r *http.Request, params ScimListGroupsParams) {
+	var request ScimListGroupsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimListGroups(ctx, request.(ScimListGroupsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimListGroups")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimListGroupsResponseObject); ok {
+		if err := validResponse.VisitScimListGroupsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimCreateGroup operation middleware
+func (sh *strictHandler) ScimCreateGroup(w http.ResponseWriter, r *http.Request) {
+	var request ScimCreateGroupRequestObject
+
+	var body ScimCreateGroupApplicationScimPlusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimCreateGroup(ctx, request.(ScimCreateGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimCreateGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimCreateGroupResponseObject); ok {
+		if err := validResponse.VisitScimCreateGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimDeleteGroup operation middleware
+func (sh *strictHandler) ScimDeleteGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimDeleteGroupRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimDeleteGroup(ctx, request.(ScimDeleteGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimDeleteGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimDeleteGroupResponseObject); ok {
+		if err := validResponse.VisitScimDeleteGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimGetGroup operation middleware
+func (sh *strictHandler) ScimGetGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimGetGroupRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimGetGroup(ctx, request.(ScimGetGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimGetGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimGetGroupResponseObject); ok {
+		if err := validResponse.VisitScimGetGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimPatchGroup operation middleware
+func (sh *strictHandler) ScimPatchGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimPatchGroupRequestObject
+
+	request.Id = id
+
+	var body ScimPatchGroupApplicationScimPlusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimPatchGroup(ctx, request.(ScimPatchGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimPatchGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimPatchGroupResponseObject); ok {
+		if err := validResponse.VisitScimPatchGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimPutGroup operation middleware
+func (sh *strictHandler) ScimPutGroup(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimPutGroupRequestObject
+
+	request.Id = id
+
+	var body ScimPutGroupApplicationScimPlusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimPutGroup(ctx, request.(ScimPutGroupRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimPutGroup")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimPutGroupResponseObject); ok {
+		if err := validResponse.VisitScimPutGroupResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimResourceTypes operation middleware
+func (sh *strictHandler) ScimResourceTypes(w http.ResponseWriter, r *http.Request) {
+	var request ScimResourceTypesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimResourceTypes(ctx, request.(ScimResourceTypesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimResourceTypes")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimResourceTypesResponseObject); ok {
+		if err := validResponse.VisitScimResourceTypesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimSchemas operation middleware
+func (sh *strictHandler) ScimSchemas(w http.ResponseWriter, r *http.Request) {
+	var request ScimSchemasRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimSchemas(ctx, request.(ScimSchemasRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimSchemas")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimSchemasResponseObject); ok {
+		if err := validResponse.VisitScimSchemasResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimServiceProviderConfig operation middleware
+func (sh *strictHandler) ScimServiceProviderConfig(w http.ResponseWriter, r *http.Request) {
+	var request ScimServiceProviderConfigRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimServiceProviderConfig(ctx, request.(ScimServiceProviderConfigRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimServiceProviderConfig")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimServiceProviderConfigResponseObject); ok {
+		if err := validResponse.VisitScimServiceProviderConfigResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimListUsers operation middleware
+func (sh *strictHandler) ScimListUsers(w http.ResponseWriter, r *http.Request, params ScimListUsersParams) {
+	var request ScimListUsersRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimListUsers(ctx, request.(ScimListUsersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimListUsers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimListUsersResponseObject); ok {
+		if err := validResponse.VisitScimListUsersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimCreateUser operation middleware
+func (sh *strictHandler) ScimCreateUser(w http.ResponseWriter, r *http.Request) {
+	var request ScimCreateUserRequestObject
+
+	var body ScimCreateUserApplicationScimPlusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimCreateUser(ctx, request.(ScimCreateUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimCreateUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimCreateUserResponseObject); ok {
+		if err := validResponse.VisitScimCreateUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimDeleteUser operation middleware
+func (sh *strictHandler) ScimDeleteUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimDeleteUserRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimDeleteUser(ctx, request.(ScimDeleteUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimDeleteUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimDeleteUserResponseObject); ok {
+		if err := validResponse.VisitScimDeleteUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimGetUser operation middleware
+func (sh *strictHandler) ScimGetUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimGetUserRequestObject
+
+	request.Id = id
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimGetUser(ctx, request.(ScimGetUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimGetUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimGetUserResponseObject); ok {
+		if err := validResponse.VisitScimGetUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimPatchUser operation middleware
+func (sh *strictHandler) ScimPatchUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimPatchUserRequestObject
+
+	request.Id = id
+
+	var body ScimPatchUserApplicationScimPlusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimPatchUser(ctx, request.(ScimPatchUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimPatchUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimPatchUserResponseObject); ok {
+		if err := validResponse.VisitScimPatchUserResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ScimPutUser operation middleware
+func (sh *strictHandler) ScimPutUser(w http.ResponseWriter, r *http.Request, id openapi_types.UUID) {
+	var request ScimPutUserRequestObject
+
+	request.Id = id
+
+	var body ScimPutUserApplicationScimPlusJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ScimPutUser(ctx, request.(ScimPutUserRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ScimPutUser")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ScimPutUserResponseObject); ok {
+		if err := validResponse.VisitScimPutUserResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

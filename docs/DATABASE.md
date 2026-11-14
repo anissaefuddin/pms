@@ -272,6 +272,8 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 `sso_providers(kind unik: oidc|saml, name, enabled, config jsonb, secret_enc)`, `user_identities(provider_id, subject, user_id, email, last_login_at; kunci utama provider+subject)`, dan `sso_states(state_hash, browser_hash, provider_id, nonce, code_verifier, purpose login|link, user_id, next, expires_at)` (migrasi `00302`). `sso_states` bersifat sekali pakai dan dibersihkan saat flow baru dimulai.
 
+**SCIM (S12.1.3, migrasi `00303`).** `scim_tokens(name, token_hash unik, prefix, default_user_type <> admin, created_by, last_used_at, revoked_at)`; `users.scim_external_id` (unik bila ada) dan `users.scim_provisioned`; constraint `users_active_has_password` menjadi `status <> 'active' OR password_hash IS NOT NULL OR scim_provisioned`; `groups.scim_external_id` (unik bila ada).
+
 ## 8. Data yang sengaja belum ada (M2+)
 
 `reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.

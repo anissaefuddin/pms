@@ -48,6 +48,7 @@ type Server struct {
 	publicLimiter       *limiter // public form reads per IP
 	publicSubmitLimiter *limiter // public form submissions per IP
 	publicLinkLimiter   *limiter // public form submissions per link (D-42)
+	scimLimiter         *limiter // SCIM requests per token
 	requests            *prometheus.CounterVec
 	duration            *prometheus.HistogramVec
 	events              *realtime.Hub
@@ -118,7 +119,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	if err != nil {
 		panic(err) // only fails if the system random source does
 	}
-	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), publicLimiter: newLimiter(120, time.Minute), publicSubmitLimiter: newLimiter(30, time.Hour), publicLinkLimiter: newLimiter(300, time.Hour), requests: requests, duration: duration}
+	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), publicLimiter: newLimiter(120, time.Minute), publicSubmitLimiter: newLimiter(30, time.Hour), publicLinkLimiter: newLimiter(300, time.Hour), scimLimiter: newLimiter(600, time.Minute), requests: requests, duration: duration}
 	mux := http.NewServeMux()
 	s.events = realtime.New()
 	s.eventEpoch = uuid.NewString()
@@ -156,6 +157,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.dashboardRoutes(mux)
 	s.auditRoutes(mux)
 	s.ssoRoutes(mux)
+	s.scimRoutes(mux)
 	s.customRoleRoutes(mux)
 	s.reportRoutes(mux)
 	s.starRoutes(mux)
@@ -665,7 +667,8 @@ func (s *Server) csrf(next http.Handler) http.Handler {
 		}
 		// The SAML answer is a form posted by the identity provider's page, so its Origin is the provider's. It carries no ambient authority:
 		// it is only accepted together with the single-use state and the browser cookie that started the sign-in.
-		if r.URL.Path == "/api/v1/auth/sso/saml/acs" {
+		// SCIM calls authenticate with a bearer token and never read the session cookie, so there is no ambient authority to forge.
+		if r.URL.Path == "/api/v1/auth/sso/saml/acs" || strings.HasPrefix(r.URL.Path, "/api/v1/scim/v2/") {
 			next.ServeHTTP(w, r)
 			return
 		}

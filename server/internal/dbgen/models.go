@@ -764,10 +764,11 @@ type GanttSnapshot struct {
 }
 
 type Group struct {
-	ID        pgtype.UUID        `json:"id"`
-	Name      string             `json:"name"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	ID             pgtype.UUID        `json:"id"`
+	Name           string             `json:"name"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt      pgtype.Timestamptz `json:"updated_at"`
+	ScimExternalID pgtype.Text        `json:"scim_external_id"`
 }
 
 type GroupMember struct {
@@ -985,6 +986,18 @@ type ResourceUserSkill struct {
 	SkillID pgtype.UUID `json:"skill_id"`
 }
 
+type ScimToken struct {
+	ID              pgtype.UUID        `json:"id"`
+	Name            string             `json:"name"`
+	TokenHash       []byte             `json:"token_hash"`
+	Prefix          string             `json:"prefix"`
+	DefaultUserType UserType           `json:"default_user_type"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	LastUsedAt      pgtype.Timestamptz `json:"last_used_at"`
+	RevokedAt       pgtype.Timestamptz `json:"revoked_at"`
+}
+
 type SecurityEvent struct {
 	ID        int64              `json:"id"`
 	ActorID   pgtype.UUID        `json:"actor_id"`
@@ -1125,6 +1138,8 @@ type User struct {
 	DefaultTaskEffortMinutes pgtype.Int4        `json:"default_task_effort_minutes"`
 	EmailMuted               []string           `json:"email_muted"`
 	Accent                   string             `json:"accent"`
+	ScimExternalID           pgtype.Text        `json:"scim_external_id"`
+	ScimProvisioned          bool               `json:"scim_provisioned"`
 }
 
 type UserIdentity struct {

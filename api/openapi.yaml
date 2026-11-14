@@ -753,6 +753,276 @@ paths:
         '204': { description: Langganan dihapus }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  # SCIM 2.0: otentikasi bearer token (bukan sesi), jadi security [] di sini; token dibuat admin lewat /scim-tokens.
+  /scim/v2/ServiceProviderConfig:
+    get:
+      operationId: scimServiceProviderConfig
+      summary: "SCIM ServiceProviderConfig (bearer token SCIM)"
+      security: []
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /scim/v2/ResourceTypes:
+    get:
+      operationId: scimResourceTypes
+      summary: "SCIM ResourceTypes (bearer token SCIM)"
+      security: []
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /scim/v2/Schemas:
+    get:
+      operationId: scimSchemas
+      summary: "SCIM Schemas (bearer token SCIM)"
+      security: []
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /scim/v2/Users:
+    get:
+      operationId: scimListUsers
+      summary: "SCIM: daftar User, filter eq, startIndex, count (maks 200)"
+      security: []
+      parameters:
+        - { name: filter, in: query, schema: { type: string, maxLength: 400 }, description: 'Hanya bentuk atribut eq "nilai"' }
+        - { name: startIndex, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: count, in: query, schema: { type: integer, minimum: 0, maximum: 200 } }
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: scimCreateUser
+      summary: "SCIM: buat User (akun aktif tanpa kata sandi, memakai satu seat)"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: '#/components/schemas/ScimResource' }
+      responses:
+        '201': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /scim/v2/Users/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: scimGetUser
+      summary: "SCIM: baca User"
+      security: []
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: scimPutUser
+      summary: "SCIM: ganti User"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: '#/components/schemas/ScimResource' }
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: scimPatchUser
+      summary: "SCIM: ubah sebagian User (PatchOp)"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: '#/components/schemas/ScimResource' }
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: scimDeleteUser
+      summary: "SCIM: deprovision (sesi dicabut, seat bebas; baris dan riwayat tetap)"
+      security: []
+      responses:
+        '204': { description: Berhasil, tanpa isi }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /scim/v2/Groups:
+    get:
+      operationId: scimListGroups
+      summary: "SCIM: daftar Group, filter eq, startIndex, count (maks 200)"
+      security: []
+      parameters:
+        - { name: filter, in: query, schema: { type: string, maxLength: 400 }, description: 'Hanya bentuk atribut eq "nilai"' }
+        - { name: startIndex, in: query, schema: { type: integer, minimum: 1 } }
+        - { name: count, in: query, schema: { type: integer, minimum: 0, maximum: 200 } }
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: scimCreateGroup
+      summary: "SCIM: buat Group"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: '#/components/schemas/ScimResource' }
+      responses:
+        '201': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /scim/v2/Groups/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: scimGetGroup
+      summary: "SCIM: baca Group"
+      security: []
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    put:
+      operationId: scimPutGroup
+      summary: "SCIM: ganti Group"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: '#/components/schemas/ScimResource' }
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: scimPatchGroup
+      summary: "SCIM: ubah sebagian Group (PatchOp)"
+      security: []
+      requestBody:
+        required: true
+        content:
+          application/scim+json:
+            schema: { $ref: '#/components/schemas/ScimResource' }
+      responses:
+        '200': { description: 'Sumber daya SCIM', content: { application/scim+json: { schema: { $ref: '#/components/schemas/ScimResource' } } } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: scimDeleteGroup
+      summary: "SCIM: hapus grup beserta share-nya"
+      security: []
+      responses:
+        '204': { description: Berhasil, tanpa isi }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
+  /scim-tokens:
+    get:
+      operationId: listScimTokens
+      summary: Token SCIM dan alamat dasar (admin); token utuh tidak pernah dikembalikan lagi
+      responses:
+        '200':
+          description: Daftar token
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScimTokenList' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createScimToken
+      summary: Buat token SCIM (admin); nilai token hanya tampil di respons ini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScimTokenInput' }
+      responses:
+        '201':
+          description: Token dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScimToken' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /scim-tokens/{tokenId}:
+    parameters:
+      - { name: tokenId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: revokeScimToken
+      summary: Cabut token SCIM (admin); langsung berhenti berlaku
+      responses:
+        '204': { description: Dicabut }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /custom-roles:
     get:
       operationId: listCustomRoles
@@ -4837,6 +5107,35 @@ components:
       required: [items]
       properties:
         items: { type: array, maxItems: 100, items: { $ref: '#/components/schemas/CustomRole' } }
+    ScimResource:
+      type: object
+      additionalProperties: true
+      description: Sumber daya SCIM 2.0 (User, Group, ListResponse, PatchOp atau Error); bentuk lengkap mengikuti RFC 7643/7644
+    ScimTokenInput:
+      type: object
+      additionalProperties: false
+      required: [name]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 80 }
+        default_user_type: { type: string, enum: [regular, external, collaborator, viewer], description: Tipe untuk pengguna yang dibuat lewat token ini (admin tidak boleh) }
+    ScimToken:
+      type: object
+      required: [id, name, prefix, default_user_type, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        prefix: { type: string }
+        default_user_type: { type: string }
+        created_at: { type: string, format: date-time }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        revoked_at: { type: string, format: date-time, nullable: true }
+        token: { type: string, description: Hanya ada saat dibuat }
+    ScimTokenList:
+      type: object
+      required: [items, base_url]
+      properties:
+        base_url: { type: string }
+        items: { type: array, items: { $ref: '#/components/schemas/ScimToken' } }
     SsoConfigInput:
       type: object
       additionalProperties: false
