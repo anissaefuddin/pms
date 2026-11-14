@@ -12,8 +12,11 @@ export function useResultLabels(query: AnalyticsQuery) {
 }
 
 export function ResultTable({ result, query, caption }: { result: AnalyticsResult; query: AnalyticsQuery; caption?: string }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const labels = useResultLabels(query);
+  // Cost comes in minor units (cents); shown with two decimals like the rates page.
+  const money = query.metric === "actual_cost_minor";
+  const fmt = (v: number) => money ? new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v / 100) : String(v);
   return <table className="w-full text-left text-sm">
     {caption && <caption className="sr-only">{caption}</caption>}
     <thead><tr className="border-b">
@@ -24,8 +27,8 @@ export function ResultTable({ result, query, caption }: { result: AnalyticsResul
     <tbody>{result.rows.map((row) => <tr key={`${row.group.key}/${row.break?.key ?? ""}`} className="border-b">
       <th scope="row" className="py-2 pr-4 font-normal">{labels.value(query.group_by, row.group.key, row.group.label)}</th>
       {query.break_by && <td className="py-2 pr-4">{row.break ? labels.value(query.break_by, row.break.key, row.break.label) : ""}</td>}
-      <td className="py-2 pr-4 text-right tabular-nums">{row.value}</td>
+      <td className="py-2 pr-4 text-right tabular-nums">{fmt(row.value)}</td>
     </tr>)}</tbody>
-    <tfoot><tr><th scope="row" colSpan={query.break_by ? 2 : 1} className="py-2 pr-4 text-left">{t("reports.result.total", { count: result.total })}</th><td /></tr></tfoot>
+    <tfoot><tr><th scope="row" colSpan={query.break_by ? 2 : 1} className="py-2 pr-4 text-left">{money ? t("reports.result.totalMoney", { amount: fmt(result.total) }) : t("reports.result.total", { count: result.total })}</th><td /></tr></tfoot>
   </table>;
 }

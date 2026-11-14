@@ -64,7 +64,7 @@ export function useRealtime(enabled: boolean) {
         setLive(false);
         if (source.readyState === EventSource.CLOSED) {
           void client.invalidateQueries({ queryKey: ["me"] });
-          retry = setTimeout(() => connect(true), 3000);
+          retry = setTimeout(() => connect(true), 1000);
         }
       };
       for (const event of events) source.addEventListener(event, update);

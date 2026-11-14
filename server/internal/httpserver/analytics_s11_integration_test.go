@@ -131,6 +131,7 @@ func TestPublicDashboardLinkExpiryPasswordAndFinancialMasking(t *testing.T) {
 	add("Open", "indicator", map[string]any{"reporting_on": "tasks", "metric": "count"})
 	add("Budget total", "indicator", map[string]any{"reporting_on": "projects", "metric": "sum_field", "field_id": money})
 	add("Billable", "indicator", map[string]any{"reporting_on": "time_entries", "metric": "billable_minutes"})
+	add("Actual cost", "indicator", map[string]any{"reporting_on": "time_entries", "metric": "actual_cost_minor"})
 
 	link := "/dashboards/" + id + "/public-link"
 	soon := time.Now().Add(time.Hour)
@@ -158,7 +159,7 @@ func TestPublicDashboardLinkExpiryPasswordAndFinancialMasking(t *testing.T) {
 	got := view(token, "correct horse battery")
 	f.want(got, 200, "public view")
 	widgets := got.body["widgets"].([]any)
-	if len(widgets) != 3 || widgets[0].(map[string]any)["masked"] != nil || widgets[1].(map[string]any)["masked"] != true || widgets[2].(map[string]any)["masked"] != true {
+	if len(widgets) != 4 || widgets[3].(map[string]any)["masked"] != true || widgets[0].(map[string]any)["masked"] != nil || widgets[1].(map[string]any)["masked"] != true || widgets[2].(map[string]any)["masked"] != true {
 		t.Fatalf("money must be masked, the rest shown: %v", widgets)
 	}
 	for _, w := range widgets[1:] {

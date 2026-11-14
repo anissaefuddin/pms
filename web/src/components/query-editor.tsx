@@ -2,8 +2,9 @@ import { useState, type ReactNode } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
+import { useProfile } from "@/lib/profile";
 import {
-  DIMENSIONS, IMPORTANCE, METRICS, SOURCES, STATUS_GROUPS, changeSource,
+  ADMIN_METRICS, DIMENSIONS, IMPORTANCE, METRICS, SOURCES, STATUS_GROUPS, changeSource,
   type AnalyticsFilters, type AnalyticsQuery, type Source,
 } from "@/lib/reports";
 import { useSearchResults } from "@/lib/search";
@@ -30,6 +31,7 @@ function toggle<T>(list: T[] | undefined, value: T, on: boolean): T[] {
 export function QueryEditor({ query, setQuery }: { query: AnalyticsQuery; setQuery: (query: AnalyticsQuery) => void }) {
   const { t } = useTranslation();
   const spaces = useSpaces().data ?? [];
+  const admin = useProfile()?.user_type === "admin";
   const source = query.reporting_on as Source;
   const filters = query.filters ?? {};
   const setFilters = (patch: Partial<AnalyticsFilters>) => setQuery({ ...query, filters: { ...filters, ...patch } });
@@ -58,7 +60,7 @@ export function QueryEditor({ query, setQuery }: { query: AnalyticsQuery; setQue
               // Utilization is per person over a period, so choosing it sets both.
               setQuery(metric === "utilization" ? { ...query, metric, group_by: "user", break_by: undefined, filters: { ...filters, entry_this_month: filters.entry_from || filters.entry_to ? undefined : true } } : { ...query, metric });
             }}>
-            {METRICS[source].map((value) => <option key={value} value={value}>{metricLabel(value)}</option>)}
+            {METRICS[source].filter((value) => admin || !ADMIN_METRICS.includes(value)).map((value) => <option key={value} value={value}>{metricLabel(value)}</option>)}
           </select></label>
         <label className="block text-sm">{t("reports.measure.groupBy")}
           <select className={select} value={query.group_by ?? ""} onChange={(e) => setQuery({ ...query, group_by: (e.target.value || undefined) as AnalyticsQuery["group_by"],

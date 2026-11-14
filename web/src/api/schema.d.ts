@@ -4032,10 +4032,10 @@ export interface components {
             /** @description Project atau Folder; hanya subpohonnya */
             container_ids?: string[];
             /**
-             * @description tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count
+             * @description tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, actual_cost_minor (biaya aktual dalam satuan minor, hanya administrator; selain itu 403), count
              * @enum {string}
              */
-            metric: "count" | "effort_minutes" | "sum_field" | "avg_field" | "completion_percent" | "minutes" | "billable_minutes" | "utilization";
+            metric: "count" | "effort_minutes" | "sum_field" | "avg_field" | "completion_percent" | "minutes" | "billable_minutes" | "actual_cost_minor" | "utilization";
             /**
              * Format: uuid
              * @description Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya
