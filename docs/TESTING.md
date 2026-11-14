@@ -937,3 +937,37 @@ Mencakup S8.1.5 (tipe di Table, Board, filter, search), S8.2.1 (Table/filter/sor
 - Masih terbuka di M8: S8.1.1 query sqlc (D-61, keputusan arsitektur), routing form ke Blueprint (S8.3.1, ditunda karena besar; E2E-PAR-05 dibuktikan untuk bagian form bercabang), dan UAT gate M8 (manusia).
 - GitHub Actions untuk basis ini NOT RUN sampai PR dibuka.
 
+
+
+## Rekonsiliasi M7 dan kolom cost report (14 November 2026)
+
+Postgres khusus lane (`pms-pg-lane4`). Hanya tes terarah; regresi penuh menunggu S12.2.1. Centang M7 di checkout utama yang belum dikomit dibaca sebagai petunjuk, bukan disalin; hanya yang dapat saya buktikan di repo ini yang dicentang.
+
+### S10.4.2 · kolom cost di report
+
+- Metrik baru `actual_cost_minor` (sumber time entries): menit billable x `rate_snapshot` / 60, satuan minor, aturan sama dengan panel budget project. **Hanya admin**: `analytics.Run` menjawab 403 untuk selain admin (tidak ada angka dikirim), editor query tidak menawarkan metrik itu, widget di tautan publik dimask (`financialQuery`). Tabel hasil memformat nilai dan total sebagai uang dua desimal (`Intl.NumberFormat`, pola halaman tarif); teks lewat i18n.
+- PASS `TestReportActualCostIsAdminOnly` (admin menerima 6000 = 90 menit billable x 4000/jam, non-billable tidak dihitung; pembaca 403), `TestPublicDashboardLinkExpiryPasswordAndFinancialMasking` (widget cost ikut termask, `data` kosong), `TestRatesSnapshotKeepHistoryAndCostIsAdminOnly`.
+- Mutasi: gerbang admin dimatikan lalu `TestReportActualCostIsAdminOnly` GAGAL; klausa `actual_cost_minor` dihapus dari `financialQuery` lalu tes masking GAGAL. Keduanya dikembalikan.
+- PASS Playwright mock `reports.spec.ts` (9 tes): kolom "Actual cost", baris `1,234.56` dan total untuk admin, opsi metrik tidak ada untuk non-admin, axe bersih.
+- Batas: yang ditambahkan adalah kolom actual cost. Budget (field currency) dan selisih budget vs actual tetap di panel field budget project; belum ada kolom budget/variance lintas-sumber di report (butuh join sumber item dan time entry, ditunda). Mata uang tidak ditampilkan (tarif tanpa mata uang, D-73).
+
+### S7.1.1 · RCA HTTP 500 intermiten (dicentang)
+
+- Akar masalah (RCA lengkap di bagian S7.1.1 di atas): permintaan yang dibatalkan browser (navigasi, abort) membuat `requireUser` dan handler baca profil, daftar view, dan time entry menulis 500 setelah konteks `Canceled`. 26 dari 28 entri 500 historis ada di `GET /me`. Paralelisme sendiri tidak mereproduksi (24 request paralel semua 200).
+- Perbaikan: jalur error berhenti tanpa jawaban bila konteks sudah dibatalkan (commit `b6c1ee8` untuk kueri sesi, lalu handler pembacaan).
+- Verifikasi ulang, tiga kali berurutan: PASS `TestAbandonedRequestIsNotAServerError`, `TestReadRequestsCanceledAfterSessionLookup` (`/me`, daftar view, time entries), `TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds` (nol 5xx pada seluruh operasi terlindungi). Batas: atribusi tiap 500 historis tidak diketahui (log lama tanpa detail error); jalur daftar item (`item_locations`) ada di draf checkout utama dan belum dikomit.
+
+### S7.1.2 · SSE multi-user (dicentang)
+
+- PASS (3 kali) `TestSSETwoUsersLatencyOrderReconnectAndResync` (latensi status 12 sampai 36 ms, komentar 3 sampai 6 ms; urutan dan tanpa duplikat; putus lalu replay dari `Last-Event-ID`; cursor kedaluwarsa memicu `resync`), `TestEventReplayRespectsCurrentAccess`, `TestSSELatencyUnderClientLoad` (24 pengamat: p95 status 57 sampai 64 ms, komentar 30 ms).
+- Temuan dan perbaikan: klien menunggu 3000 ms sebelum membuka ulang EventSource, sehingga reload data setelah putus tidak muat dalam 3 detik. Interval diturunkan menjadi 1000 ms (`web/src/lib/realtime.ts`). Tes baru `web/tests/sse-reconnect.spec.ts` (EventSource palsu, putus lalu buka ulang): GAGAL dengan 3000 ms, PASS dengan 1000 ms; data yang tampil di-fetch ulang dalam 3 detik. Batas: tes ini memakai EventSource tiruan, bukan Chrome melawan server nyata; skenario live itu NOT RUN.
+
+### Item M7 yang sengaja tetap terbuka (M7 kini 45 selesai / 6 terbuka, sebelumnya 35 / 16)
+
+| Item | Status | Menunggu |
+|---|---|---|
+| S7.2.1 rekonsiliasi WFP-001..106 (2 DOC) | Terbuka | Draf ada di sesi lain (belum dikomit dan belum diaudit); perlu ditulis ulang atau diaudit terhadap flow screen |
+| S7.2.1 REVIEW freeze dan tag | Terbuka | Owner produk |
+| S7.2.2 REVIEW PRD v0.4 | Terbuka | Persetujuan user |
+| S7.3.2 REVIEW DEC-PAR-03/04 | Terbuka | Keputusan user |
+| S7.4.1 REVIEW Gate G0 | Terbuka, BLOCKED | UAT pilot, CI kandidat, persetujuan keputusan |
