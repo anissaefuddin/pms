@@ -1095,3 +1095,9 @@ Tidak diuji: backend live; `/calendars` dan `/created-by-me` dengan data besar (
 - `main` = merge PR #10 (CI hijau: test, authorization-matrix, parity-e2e). Image `pms:91d310e` dibangun di `losaka-app` dari `git archive` main, backup `20261114T144353Z` sebelum ganti, `PMS_IMAGE` di `.env` server diubah dari `pms:1b76d3a`.
 - Hasil: container `pms-app-1` healthy, `https://dev-lens.losakaenergi.app/` 200, `/healthz` 200, log tanpa baris ERROR. Rollback: kembalikan `PMS_IMAGE=pms:1b76d3a` dan pulihkan backup di atas bila diperlukan (migrasi hanya maju).
 - Belum dilakukan: UAT manusia, konektor Google nyata, backup luar server (`BACKUP_REMOTE` kosong di server).
+
+## S-UIP2 Lane D: workflow, report, kartu widget (15 Nov 2026)
+
+- Playwright mock: `workflows.spec.ts` (7 termasuk axe terang/gelap), `m8.spec.ts` (editor status), `reports.spec.ts` + `sse-reconnect.spec.ts` (10), `dashboards.spec.ts` + `dashboard-public.spec.ts` (18): semua lulus.
+- `tsc --noEmit` dan `eslint` pada berkas yang diubah: bersih.
+- Tes live (`m3-live`, `m8-live`, `m5-live`) sudah disesuaikan (klik chip status, buka dialog New report) tetapi TIDAK dijalankan di sesi ini (tanpa backend live); koordinator perlu menjalankannya.

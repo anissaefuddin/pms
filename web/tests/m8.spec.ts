@@ -75,6 +75,7 @@ test("the workflow editor saves entry rules, the actor rule and the approval out
   } });
   await page.goto("/settings/workflows");
   const patches = () => calls.filter((c) => c.method === "PATCH" && c.path === `/statuses/${sid(2)}`).map((c) => c.body);
+  await page.getByRole("button", { name: "Review", exact: true }).click();
   await page.getByRole("checkbox", { name: /Needs a due date\s*:\s*Review/ }).click();
   await expect.poll(patches).toContainEqual({ required_fields: ["due_date"] });
   await page.getByLabel("Who can move items here: Review").selectOption("assignee");

@@ -158,8 +158,8 @@ function WidgetCard({ dashboardId, version, widget, canEdit, first, last, onEdit
     queryKey: ["widget-data", dashboardId, widget.id, version], retry: false,
     queryFn: () => api<WidgetData>(`/api/v1/dashboards/${dashboardId}/widgets/${widget.id}/data`),
   });
-  return <section aria-labelledby={`w-${widget.id}`} className="rounded-xl border bg-card p-4">
-    <header className="mb-3 flex items-start justify-between gap-2">
+  return <section aria-labelledby={`w-${widget.id}`} className="rounded-xl border bg-card p-4 shadow-sm">
+    <header className="-mx-4 -mt-4 mb-3 flex items-start justify-between gap-2 border-b px-4 py-2.5">
       <div className="min-w-0">
         <h2 id={`w-${widget.id}`} className="text-base font-semibold">{widget.name}</h2>
         {(widget.config as WidgetConfig).description && <p className="text-sm text-muted-foreground">{(widget.config as WidgetConfig).description}</p>}

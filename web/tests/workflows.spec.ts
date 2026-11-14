@@ -48,11 +48,14 @@ test("admin creates a workflow, adds and reorders statuses, and locks transition
   await page.getByLabel("Workflow name").fill("Support");
   await page.getByRole("button", { name: "Create workflow" }).click();
   await expect(page.getByRole("combobox", { name: "Workflow", exact: true })).toHaveValue(id(200));
-  await expect(page.getByLabel("Status name: In Progress")).toBeVisible();
+  await expect(page.getByRole("group", { name: "Active" }).getByRole("button", { name: "In Progress" })).toBeVisible();
+  await expect(page.getByRole("group", { name: "Completed" }).getByRole("button", { name: "Completed" })).toBeVisible();
 
   await page.getByRole("combobox", { name: "Workflow", exact: true }).selectOption(id(100));
+  await page.getByRole("group", { name: "Active" }).getByRole("button", { name: "Add status" }).click();
   await page.getByLabel("Status name", { exact: true }).fill("Review");
-  await page.getByRole("button", { name: "Add status" }).click();
+  await page.getByRole("button", { name: "Add", exact: true }).click();
+  await page.getByRole("button", { name: "Review", exact: true }).click();
   await expect(page.getByLabel("Status name: Review")).toBeVisible();
   expect(calls.find((c) => c.method === "POST" && c.path.endsWith("/statuses"))?.body).toEqual({ name: "Review", group: "active", color: "slate" });
 
@@ -61,6 +64,7 @@ test("admin creates a workflow, adds and reorders statuses, and locks transition
   expect(calls.find((c) => c.method === "PUT")?.body).toEqual({ status_ids: [id(1), id(2), id(4), id(3)] });
 
   await expect(page.getByText("Allowed next statuses")).toHaveCount(0);
+  await page.getByRole("button", { name: "New", exact: true }).click();
   await page.getByLabel("Lock transitions: New").click(); // controlled: flips once the server answers
   await expect(page.getByText("Allowed next statuses: New")).toBeVisible();
   await page.getByLabel("In Progress", { exact: true }).click();
@@ -74,6 +78,7 @@ test("deleting a status in use asks where to move its items, then retries with m
   const { calls } = await mockSpaces(page, { extra: workflowApi(state) });
   await page.goto("/settings/workflows");
 
+  await page.getByRole("button", { name: "In Progress", exact: true }).click();
   await page.getByRole("button", { name: "Delete status: In Progress" }).click();
   await page.getByRole("button", { name: "Delete", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Move items to another status" });
@@ -89,6 +94,7 @@ test("server rule errors are shown inline", async ({ page }) => {
   const state = { items: seed() };
   await mockSpaces(page, { extra: { ...workflowApi(state), [`PATCH /statuses/${id(3)}`]: problem(422, "the workflow needs at least one Completed status", "validation_failed") } });
   await page.goto("/settings/workflows");
+  await page.getByRole("button", { name: "Completed", exact: true }).click();
   await page.getByLabel("Group: Completed").selectOption("active");
   await expect(page.getByRole("alert")).toHaveText("the workflow needs at least one Completed status");
 });
@@ -97,6 +103,7 @@ test("a regular user sees the workflows without edit controls", async ({ page })
   await mockSpaces(page, { me: { ...me, user_type: "regular" }, extra: workflowApi({ items: seed() }) });
   await page.goto("/settings/workflows");
   await expect(page.getByText("Only administrators can change workflows.")).toBeVisible();
+  await page.getByRole("button", { name: "New", exact: true }).click();
   await expect(page.getByLabel("Status name: New")).toBeDisabled();
   for (const name of ["Create workflow", "Add status", "Delete workflow", "Rename workflow"]) await expect(page.getByRole("button", { name })).toHaveCount(0);
 });
@@ -108,7 +115,8 @@ for (const scheme of ["light", "dark"] as const) {
     items[0].statuses[1].lock_transitions = true;
     await mockSpaces(page, { extra: workflowApi({ items }) });
     await page.goto("/settings/workflows");
-    await expect(page.getByLabel("Status name: New")).toBeVisible();
+    await page.getByRole("button", { name: "In Progress", exact: true }).click();
+    await expect(page.getByLabel("Status name: In Progress")).toBeVisible();
     const result = await new AxeBuilder({ page }).analyze();
     expect(result.violations.map((v) => `${v.id}: ${v.nodes[0]?.html}`)).toEqual([]);
   });
