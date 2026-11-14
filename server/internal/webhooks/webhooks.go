@@ -43,12 +43,16 @@ const (
 // AllowInternal lifts the SSRF guard (test mode only; set from PMS_WEBHOOK_ALLOW_INTERNAL).
 var AllowInternal bool
 
+// lookupIP is net.LookupIP; tests replace it.
+var lookupIP = net.LookupIP
+
 // Backoff is the wait before attempt n+1 (n = attempts so far, starting at 1).
 var Backoff = func(n int) time.Duration { return time.Minute * time.Duration(1<<(2*(n-1))) } // 1m, 4m, 16m, 64m, ~4h
 
 var (
 	ErrNotFound = errors.New("not found")
 	ErrInvalid  = errors.New("invalid")
+	ErrNoKey    = errors.New("PMS_CONNECTOR_KEY is not set")
 )
 
 // EventTypes are the types a subscription may name.
@@ -83,8 +87,8 @@ type Service struct {
 	Pool   *pgxpool.Pool
 	Client *http.Client
 	Now    func() time.Time
-	// Keys encrypt the signing secret at rest (the connector key, PMS_CONNECTOR_KEY). Without a key the secret is stored as-is,
-	// the way subscriptions made before the key existed still are; both forms are read.
+	// Keys encrypt the signing secret at rest (the connector key, PMS_CONNECTOR_KEY). Create refuses without a key (ErrNoKey);
+	// subscriptions stored plain before that rule still are read, both forms are accepted.
 	Keys twofactor.Keys
 }
 
@@ -94,7 +98,7 @@ func (s *Service) WithKeys(k twofactor.Keys) *Service { s.Keys = k; return s }
 // seal stores a secret encrypted when a key is configured; the subscription id is bound in so a copied value does not decrypt elsewhere.
 func (s *Service) seal(id uuid.UUID, secret string) (string, error) {
 	if len(s.Keys.Current) != 32 {
-		return secret, nil
+		return "", ErrNoKey
 	}
 	return s.Keys.Encrypt(secret, id.String())
 }
@@ -119,16 +123,43 @@ func guardDial(_, address string, _ syscall.RawConn) error {
 	if err != nil {
 		return err
 	}
-	if ip, err := netip.ParseAddr(host); err == nil && internal(ip) && !AllowInternal {
+	if AllowInternal {
+		return nil
+	}
+	if ip, err := netip.ParseAddr(host); err != nil || internal(ip) {
 		return errors.New("address is not allowed")
 	}
 	return nil
 }
 
+// reserved lists the ranges a webhook must never reach (IANA special-purpose registries). IPv6 outside 2000::/3 (::, ::1, fe80::/10,
+// fc00::/7, ff00::/8, NAT64 64:ff9b::/96, IPv4-compatible) is refused as a whole by internal(); the entries below carve up what is left.
+var reserved = mustPrefixes("0.0.0.0/8", "10.0.0.0/8", "100.64.0.0/10", "127.0.0.0/8", "169.254.0.0/16", "172.16.0.0/12", "192.0.0.0/24",
+	"192.0.2.0/24", "192.168.0.0/16", "198.18.0.0/15", "198.51.100.0/24", "203.0.113.0/24", "224.0.0.0/4", "240.0.0.0/4",
+	"2001::/23", "2001:db8::/32", "2002::/16") // 2001::/23 covers Teredo; 2002::/16 is 6to4, which can wrap a private IPv4
+
+var publicIPv6 = netip.MustParsePrefix("2000::/3")
+
+func mustPrefixes(p ...string) []netip.Prefix {
+	out := make([]netip.Prefix, len(p))
+	for i, v := range p {
+		out[i] = netip.MustParsePrefix(v)
+	}
+	return out
+}
+
+// internal reports whether ip is not a routable public unicast address. IPv4-mapped IPv6 is judged as the IPv4 it carries.
 func internal(ip netip.Addr) bool {
-	ip = ip.Unmap()
-	return ip.IsLoopback() || ip.IsPrivate() || ip.IsLinkLocalUnicast() || ip.IsLinkLocalMulticast() || ip.IsMulticast() || ip.IsUnspecified() ||
-		ip.IsInterfaceLocalMulticast() || (ip.Is4() && ip.As4()[0] == 100 && ip.As4()[1]&0xc0 == 64) // 100.64.0.0/10 carrier NAT
+	ip = ip.Unmap().WithZone("")
+	if !ip.IsValid() || (ip.Is6() && !publicIPv6.Contains(ip)) {
+		return true
+	}
+	for _, p := range reserved {
+		if p.Contains(ip) {
+			return true
+		}
+	}
+	return false
 }
 
 // CheckURL is the create-time SSRF guard: https (http only in test mode) and no host that is, or resolves to, an internal address.
@@ -156,7 +187,7 @@ func CheckURL(raw string) error {
 	if host == "localhost" || strings.HasSuffix(host, ".localhost") || strings.HasSuffix(host, ".internal") || strings.HasSuffix(host, ".local") {
 		return fmt.Errorf("%w: url points to an internal address", ErrInvalid)
 	}
-	addrs, err := net.LookupIP(host)
+	addrs, err := lookupIP(host)
 	if err != nil {
 		return fmt.Errorf("%w: host does not resolve", ErrInvalid)
 	}

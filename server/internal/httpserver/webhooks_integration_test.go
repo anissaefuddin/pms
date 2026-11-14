@@ -53,7 +53,7 @@ func (r *receiver) answer(status int) { r.mu.Lock(); r.status = status; r.mu.Unl
 
 func webhookEnv(t *testing.T) *autoEnv {
 	e := newAutoEnv(t)
-	svc := webhooks.New(e.f.pool)
+	svc := webhooks.New(e.f.pool).WithKeys(twofactor.Keys{Current: bytes.Repeat([]byte{7}, 32)})
 	e.engine.Hook = svc.Handler
 	e.engine.Tick = func(ctx context.Context) error { _, err := svc.Send(ctx); return err }
 	old, oldBackoff := webhooks.AllowInternal, webhooks.Backoff

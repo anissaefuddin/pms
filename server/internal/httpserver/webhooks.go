@@ -30,6 +30,8 @@ func writeWebhookError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, webhooks.ErrNotFound):
 		writeError(w, http.StatusNotFound, "not found")
+	case errors.Is(err, webhooks.ErrNoKey):
+		writeProblem(w, http.StatusUnprocessableEntity, "key_not_configured", "webhook secrets need PMS_CONNECTOR_KEY on the server")
 	case errors.Is(err, webhooks.ErrInvalid):
 		writeError(w, http.StatusUnprocessableEntity, err.Error())
 	default:

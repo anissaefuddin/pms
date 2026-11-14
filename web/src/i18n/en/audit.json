@@ -27,6 +27,8 @@
   "categories.scim": "Provisioning",
   "categories.policy": "Access policy",
   "categories.api_key": "API keys",
+  "categories.webhook": "Webhooks",
+  "categories.oauth": "Connected apps",
   "categories.audit": "Audit",
   "action.auth.login": "Signed in",
   "action.auth.login_failed": "Failed sign-in",
@@ -43,5 +45,14 @@
   "action.user.reactivated": "Reactivated a user",
   "action.share.space_changed": "Changed Space sharing",
   "action.share.item_changed": "Changed Item sharing",
-  "action.audit.exported": "Exported the audit trail"
+  "action.audit.exported": "Exported the audit trail",
+  "action.api_key.created": "Created an API key",
+  "action.api_key.rotated": "Rotated an API key",
+  "action.api_key.revoked": "Revoked an API key",
+  "action.webhook.created": "Created a webhook",
+  "action.webhook.updated": "Changed a webhook",
+  "action.webhook.deleted": "Deleted a webhook",
+  "action.oauth.app_created": "Registered an OAuth app",
+  "action.oauth.app_removed": "Removed an OAuth app",
+  "action.oauth.grant_revoked": "Revoked an app's access"
 }
