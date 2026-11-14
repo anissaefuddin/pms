@@ -1504,18 +1504,15 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 ### Batch 3 — kosmetik (P3)
 
 **S-UIP.3.1 Rapikan pintu masuk dan duplikasi (gap A4, A5, C2, C3) — 1,5 hari**
-- [ ] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
+- [x] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
 - [x] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
 - [x] [TEST] Tes yang menunjuk tombol lama diperbarui
-- [x] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
-- [ ] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
-- [ ] [TEST] Tes yang menunjuk tombol lama diperbarui
 
 ### Penutup
 
 **S-UIP.4.1 Verifikasi visual dan dokumen — 2 hari**
-- [ ] [TEST] Baseline visual Playwright per rute (1440 dan 390 px) dan axe penuh
-- [ ] [DOC] Perbarui [UI_AUDIT_REPORT.md](UI_AUDIT_REPORT.md) dan [UAT.md](UAT.md); ringkasan estimasi M7–M12 tidak diubah (story ini di luar rilis 1.0 sampai pemilik menyetujui)
+- [x] [TEST] Baseline visual Playwright per rute (1440 dan 390 px) dan axe penuh — bukti tangkapan layar (bukan diff piksel, D-105) dan sapuan axe `ui-audit.spec.ts`
+- [x] [DOC] Perbarui [UI_AUDIT_REPORT.md](UI_AUDIT_REPORT.md) dan [UAT.md](UAT.md); ringkasan estimasi M7–M12 tidak diubah (story ini di luar rilis 1.0 sampai pemilik menyetujui)
 
 ## M13 — Backlog (di luar rilis 1.0, D-55)
 
