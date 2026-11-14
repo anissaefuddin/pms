@@ -937,3 +937,15 @@ Mencakup S8.1.5 (tipe di Table, Board, filter, search), S8.2.1 (Table/filter/sor
 - Masih terbuka di M8: S8.1.1 query sqlc (D-61, keputusan arsitektur), routing form ke Blueprint (S8.3.1, ditunda karena besar; E2E-PAR-05 dibuktikan untuk bagian form bercabang), dan UAT gate M8 (manusia).
 - GitHub Actions untuk basis ini NOT RUN sampai PR dibuka.
 
+
+## Perbaikan temuan dry-run UAT (DR-01..DR-08), 14 Nov 2026
+
+- Lingkup: hanya tes terarah (regresi penuh dijalankan sekali di S12.2.1). Postgres khusus lane (`pms-pg-lane1`), Playwright mock di port 4391.
+- **DR-08 (S2)**: `tests/dr08-calendar-effort.spec.ts` (buka Calendar di halaman project, lalu item ber-assignee dengan blok Effort). Kode lama: GAGAL (halaman crash); kode baru: LULUS.
+- **DR-05 (S3)**: `TestOpenConcurrentlyOnEmptyDatabase` (4 `database.Open` bersamaan pada DB kosong). Kode lama `-count=5`: FAIL (balapan migrasi); kode baru `-count=5`: ok.
+- **DR-04**: tes baru di `onboarding.spec.ts` (/me tetap melapor pending; satu Skip menutup wizard). Kode lama: FAIL; baru: PASS. Catatan: penyebab pasti di stack nyata (Skip pertama gagal menutup) tidak terlihat pada mock; perbaikan membuat penutupan tidak bergantung pada refetch /me. Perlu cek ulang manusia.
+- **DR-01**: `tests/dr01-activity.spec.ts`. Kode lama: FAIL; baru: PASS (entri update tetap menyebut field yang berubah).
+- **DR-02**: `tests/dr02-settings-menu.spec.ts`. Kode lama: FAIL; baru: PASS. Tautan dihapus total; halaman tetap terjangkau lewat `/spikes/gantt`.
+- **DR-03: tidak terbukti.** `tests/dr03-create-closes.spec.ts` (dialog tertutup, item baru terbuka, dari tombol halaman Space dan top bar) LULUS pada kode lama maupun baru; bug tidak dapat direproduksi pada mock dan tidak ada perubahan kode. Tes hanya penjaga regresi. Perlu cek manusia pada stack nyata.
+- **DR-06**: keputusan, D-100 (tanpa kode).
+- Statis: `gofmt`, `go vet ./...`, `make gen` tanpa drift, `npm run typecheck`, `npm run lint` bersih. `onboarding.spec.ts` "creates the workspace once" sempat flaky sekali (timing axe/animasi), lulus pada ulang.
