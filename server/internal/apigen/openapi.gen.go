@@ -215,6 +215,7 @@ func (e AnalyticsQueryGroupBy) Valid() bool {
 
 // Defines values for AnalyticsQueryMetric.
 const (
+	AnalyticsQueryMetricActualCostMinor   AnalyticsQueryMetric = "actual_cost_minor"
 	AnalyticsQueryMetricAvgField          AnalyticsQueryMetric = "avg_field"
 	AnalyticsQueryMetricBillableMinutes   AnalyticsQueryMetric = "billable_minutes"
 	AnalyticsQueryMetricCompletionPercent AnalyticsQueryMetric = "completion_percent"
@@ -228,6 +229,8 @@ const (
 // Valid indicates whether the value is a known member of the AnalyticsQueryMetric enum.
 func (e AnalyticsQueryMetric) Valid() bool {
 	switch e {
+	case AnalyticsQueryMetricActualCostMinor:
+		return true
 	case AnalyticsQueryMetricAvgField:
 		return true
 	case AnalyticsQueryMetricBillableMinutes:
@@ -2938,7 +2941,7 @@ type AnalyticsQuery struct {
 	Filters *AnalyticsFilters      `json:"filters,omitempty"`
 	GroupBy *AnalyticsQueryGroupBy `json:"group_by,omitempty"`
 
-	// Metric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count
+	// Metric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, actual_cost_minor (biaya aktual dalam satuan minor, hanya administrator; selain itu 403), count
 	Metric      AnalyticsQueryMetric      `json:"metric"`
 	ReportingOn AnalyticsQueryReportingOn `json:"reporting_on"`
 
@@ -2952,7 +2955,7 @@ type AnalyticsQueryBreakBy string
 // AnalyticsQueryGroupBy defines model for AnalyticsQuery.GroupBy.
 type AnalyticsQueryGroupBy string
 
-// AnalyticsQueryMetric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, count
+// AnalyticsQueryMetric tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, actual_cost_minor (biaya aktual dalam satuan minor, hanya administrator; selain itu 403), count
 type AnalyticsQueryMetric string
 
 // AnalyticsQueryReportingOn defines model for AnalyticsQuery.ReportingOn.

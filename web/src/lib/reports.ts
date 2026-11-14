@@ -11,8 +11,10 @@ export type Source = (typeof SOURCES)[number];
 
 const itemDimensions = ["assignee", "status", "status_group", "importance", "type", "space", "due_month", "created_month"];
 export const METRICS: Record<Source, string[]> = {
-  tasks: ["count", "effort_minutes", "completion_percent"], projects: ["count", "effort_minutes", "completion_percent"], time_entries: ["minutes", "billable_minutes", "utilization", "count"],
+  tasks: ["count", "effort_minutes", "completion_percent"], projects: ["count", "effort_minutes", "completion_percent"], time_entries: ["minutes", "billable_minutes", "actual_cost_minor", "utilization", "count"],
 };
+/** Metrics only an administrator may ask for; the server refuses anyone else, the editor does not even offer them. */
+export const ADMIN_METRICS = ["actual_cost_minor"];
 export const DIMENSIONS: Record<Source, string[]> = {
   tasks: itemDimensions, projects: itemDimensions, time_entries: ["user", "item", "category", "billing_type", "entry_month"],
 };
