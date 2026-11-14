@@ -937,3 +937,11 @@ Mencakup S8.1.5 (tipe di Table, Board, filter, search), S8.2.1 (Table/filter/sor
 - Masih terbuka di M8: S8.1.1 query sqlc (D-61, keputusan arsitektur), routing form ke Blueprint (S8.3.1, ditunda karena besar; E2E-PAR-05 dibuktikan untuk bagian form bercabang), dan UAT gate M8 (manusia).
 - GitHub Actions untuk basis ini NOT RUN sampai PR dibuka.
 
+
+## Form konektor Google dan autofill (S11.3.6, 14 Nov 2026)
+
+- PASS (Playwright mock, `web/tests/connectors-pilot.spec.ts`, 3 tes bersama `connectors.spec.ts` lulus): form Google menampilkan Client ID, Client secret, Refresh token; submit ditolak di klien bila refresh token terisi sebagian (tanpa panggilan POST); POST `/connectors` mengirim `secrets` `refresh_token`, `client_id`, `client_secret` (tanpa `token`) dengan Calendar ID dan Space; `autocomplete="off"` pada nama/repo/Calendar ID/Client ID dan `new-password` pada kolom rahasia; baris konektor menampilkan "Authentication: refresh token" atau "access token" (dari `secret_names`, nilai tak pernah ditampilkan); axe bersih.
+- Uji mutasi: validasi klien dihapus (`return` pada form Google tidak lengkap) membuat tes gagal; dipulihkan.
+- `typecheck` dan `lint` bersih. Tidak ada perubahan API. Go penuh, Playwright penuh, `go vet`, `make gen` tidak dijalankan di lane ini (regresi penuh di S12.2.1).
+- Bukti awal dari pengguna (bukan hasil uji otomatis): konektor GitHub nyata di instance dev-lens, repo publik `anissaefuddin/pms`, sinkron 20:21 WIB "pushed 1, pulled 2, conflicts 0"; issue #1, #2, #7 di GitHub (asal #7 belum dipastikan). Belum diuji: konflik nyata, GitHub→PMS untuk status, webhook; Google Calendar nyata belum dicoba. Rincian di G2B.
+- Tidak dicek: perilaku autofill Chrome sesungguhnya (hanya atribut yang diuji); alur refresh token dengan Google nyata.
