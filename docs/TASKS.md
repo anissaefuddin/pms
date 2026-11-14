@@ -1305,7 +1305,7 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [ ] [TEST] UAT per requirement M11
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
-- [ ] [DOC] Gate report G2b
+- [x] [DOC] Gate report G2b ([G2B](parity/gate-reports/G2B_FILES_ANALYTICS_INTEGRATION.md)); hasil BELUM LULUS: UAT oleh orang dan uji akun sungguhan belum dijalankan
 
 ## M12 — Enterprise dan penerimaan parity (G4)
 
