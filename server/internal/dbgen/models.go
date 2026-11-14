@@ -593,6 +593,18 @@ type AttachmentVersion struct {
 	CreatedAt    pgtype.Timestamptz `json:"created_at"`
 }
 
+type AuditEvent struct {
+	ID         int64              `json:"id"`
+	At         pgtype.Timestamptz `json:"at"`
+	ActorID    pgtype.UUID        `json:"actor_id"`
+	ActorName  string             `json:"actor_name"`
+	Action     string             `json:"action"`
+	TargetType string             `json:"target_type"`
+	TargetID   string             `json:"target_id"`
+	Ip         string             `json:"ip"`
+	Details    []byte             `json:"details"`
+}
+
 type AutomationRule struct {
 	ID               pgtype.UUID        `json:"id"`
 	SpaceID          pgtype.UUID        `json:"space_id"`

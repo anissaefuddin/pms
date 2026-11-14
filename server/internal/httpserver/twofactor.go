@@ -41,7 +41,9 @@ func (s *Server) twoFactorOn() bool { return len(s.cfg.TwoFactorKey) == 32 }
 
 // securityEvent notes a security-relevant change. It is part of the caller's transaction, so it cannot be skipped.
 func securityEvent(ctx context.Context, tx pgx.Tx, actor, target, action string) error {
-	_, err := tx.Exec(ctx, "INSERT INTO security_events(actor_id,target_id,action) VALUES($1::uuid,$2::uuid,$3)", actor, target, action)
+	// The trail lives in audit_events (migration 00300); security_events only keeps what was recorded before it.
+	_, err := tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id)
+VALUES($1::uuid, COALESCE((SELECT email::text FROM users WHERE id=$1::uuid),''), 'auth.'||$3, 'user', $2)`, actor, target, action)
 	return err
 }
 
@@ -151,6 +153,7 @@ func (s *Server) loginSecondStep(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		s.mfaFails.hit(guard)
 		s.loginIPFails.hit(ip)
+		s.audit(r, userID, "", auditEvent{Action: auditLoginFailed, TargetType: "user", TargetID: userID, Details: map[string]any{"reason": "second_factor"}})
 		writeError(w, http.StatusUnauthorized, errInvalidSecond)
 		return
 	}
@@ -170,6 +173,7 @@ func (s *Server) loginSecondStep(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, _ = s.pool.Exec(ctx, "UPDATE users SET last_login_at=now() WHERE id=$1", userID)
+	s.audit(r, userID, "", auditEvent{Action: auditLogin, TargetType: "user", TargetID: userID, Details: map[string]any{"method": "password+2fa"}})
 	s.writeMe(w, r, userID)
 }
 

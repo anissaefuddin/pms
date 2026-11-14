@@ -202,11 +202,13 @@ func (s *Server) replaceSpaceShares(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	batch := s.notificationBatch()
+	before, _, _ := s.spaces.ListShares(r.Context(), actorOf(r), r.PathValue("spaceId")) // only for the audit diff
 	list, newVersion, err := s.spaces.ReplaceShares(r.Context(), actorOf(r), r.PathValue("spaceId"), version, input.Shares, batch)
 	if err != nil {
 		writeSpaceError(w, err)
 		return
 	}
+	s.auditShares(r, auditShareSpace, "space", r.PathValue("spaceId"), before, list)
 	s.publishNotifications(batch)
 	setETag(w, newVersion)
 	writeJSON(w, 200, map[string]any{"items": list})

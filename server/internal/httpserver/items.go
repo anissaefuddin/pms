@@ -29,10 +29,17 @@ func (s *Server) itemShares(w http.ResponseWriter, r *http.Request) {
 		version = &v
 	}
 	batch := s.notificationBatch()
+	var before []spaces.Share
+	if version != nil {
+		before, _, _ = s.spaces.ItemShares(r.Context(), actorOf(r), r.PathValue("itemId"), nil, nil, nil) // only for the audit diff
+	}
 	rows, current, err := s.spaces.ItemShares(r.Context(), actorOf(r), r.PathValue("itemId"), version, input.Shares, batch)
 	if err != nil {
 		writeSpaceError(w, err)
 		return
+	}
+	if version != nil {
+		s.auditShares(r, auditShareItem, "item", r.PathValue("itemId"), before, rows)
 	}
 	s.publishNotifications(batch)
 	setETag(w, current)

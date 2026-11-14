@@ -214,6 +214,9 @@ VALUES($1,$2,'user',$3,$4,$5)`, share.Type, share.ID, id, share.Role, actorOf(r)
 		if err := s.mail.InviteTx(ctx, tx, id); err != nil {
 			return err
 		}
+		if err := s.auditIn(ctx, tx, r, actorOf(r).ID, "", auditEvent{Action: auditUserInvited, TargetType: "user", TargetID: id, Details: map[string]any{"user_type": in.UserType}}); err != nil {
+			return err
+		}
 		var err error
 		user, err = adminUser(ctx, tx, id, true)
 		return err
@@ -272,6 +275,9 @@ func (s *Server) adminChangeUser(w http.ResponseWriter, r *http.Request) {
 				if _, err := tx.Exec(ctx, "UPDATE users SET user_type=$2 WHERE id=$1", id, in.UserType); err != nil {
 					return err
 				}
+				if err := s.auditIn(ctx, tx, r, actorOf(r).ID, "", auditEvent{Action: auditUserType, TargetType: "user", TargetID: id, Details: map[string]any{"from": current, "to": in.UserType}}); err != nil {
+					return err
+				}
 				revoke = true
 			}
 		case "deactivate":
@@ -280,6 +286,9 @@ func (s *Server) adminChangeUser(w http.ResponseWriter, r *http.Request) {
 					return err
 				}
 				if _, err := tx.Exec(ctx, "DELETE FROM user_tokens WHERE user_id=$1 AND used_at IS NULL", id); err != nil {
+					return err
+				}
+				if err := s.auditIn(ctx, tx, r, actorOf(r).ID, "", auditEvent{Action: auditUserDeactivated, TargetType: "user", TargetID: id}); err != nil {
 					return err
 				}
 				revoke = true
@@ -301,6 +310,10 @@ func (s *Server) adminChangeUser(w http.ResponseWriter, r *http.Request) {
 						return err
 					}
 				}
+				if err := s.auditIn(ctx, tx, r, actorOf(r).ID, "", auditEvent{Action: auditUserReactivated, TargetType: "user", TargetID: id}); err != nil {
+					return err
+				}
+
 			}
 		case "invitation/resend":
 			if status != "invited" {

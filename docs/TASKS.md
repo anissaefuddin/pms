@@ -1340,10 +1340,10 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 - [ ] [TEST] Regresi policy role bawaan
 
 **S12.1.5 Laporan audit keamanan (ENT-04) — 2 hari**
-- [ ] [DB] Event audit: login, role, share, API key
-- [ ] [BE] Endpoint dan ekspor
-- [ ] [FE] Halaman audit
-- [ ] [TEST] Event tercatat dan hanya admin
+- [x] [DB] Event audit: login, role, share, API key
+- [x] [BE] Endpoint dan ekspor
+- [x] [FE] Halaman audit
+- [x] [TEST] Event tercatat dan hanya admin
 
 **S12.1.6 Locked space dan kebijakan akses (ENT-05) — 2 hari**
 - [ ] [BE] Locked space

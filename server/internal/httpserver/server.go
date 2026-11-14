@@ -154,6 +154,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.spaceRoutes(mux)
 	s.viewRoutes(mux)
 	s.dashboardRoutes(mux)
+	s.auditRoutes(mux)
 	s.reportRoutes(mux)
 	s.starRoutes(mux)
 	s.commentRoutes(mux)
@@ -285,6 +286,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 	if !security.CheckPassword(hash, input.Password) || id == "" {
 		s.loginIPFails.hit(ip)
 		s.loginAcctFails.hit(account)
+		s.audit(r, "", account, auditEvent{Action: auditLoginFailed, TargetType: "user", Details: map[string]any{"reason": "password"}})
 		writeError(w, http.StatusUnauthorized, "invalid email or password")
 		return
 	}
@@ -310,6 +312,7 @@ func (s *Server) login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	_, _ = s.pool.Exec(r.Context(), "UPDATE users SET last_login_at=now() WHERE id=$1", id)
+	s.audit(r, id, "", auditEvent{Action: auditLogin, TargetType: "user", TargetID: id, Details: map[string]any{"method": "password"}})
 	s.writeMe(w, r, id)
 }
 
@@ -327,7 +330,10 @@ func (s *Server) writeMe(w http.ResponseWriter, r *http.Request, userID string) 
 
 func (s *Server) logout(w http.ResponseWriter, r *http.Request) {
 	if cookie, err := r.Cookie("pms_session"); err == nil {
-		_, _ = s.pool.Exec(r.Context(), "DELETE FROM sessions WHERE token_hash=$1", security.TokenHash(cookie.Value))
+		var userID string
+		if s.pool.QueryRow(r.Context(), "DELETE FROM sessions WHERE token_hash=$1 RETURNING user_id::text", security.TokenHash(cookie.Value)).Scan(&userID) == nil {
+			s.audit(r, userID, "", auditEvent{Action: auditLogout, TargetType: "user", TargetID: userID})
+		}
 	}
 	s.clearSessionCookie(w)
 	w.WriteHeader(http.StatusNoContent)
@@ -428,6 +434,10 @@ func (s *Server) resetPassword(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 500, "could not reset password")
 		return
 	}
+	if err = s.auditIn(r.Context(), tx, r, userID, "", auditEvent{Action: auditPasswordReset, TargetType: "user", TargetID: userID}); err != nil {
+		writeError(w, 500, "could not reset password")
+		return
+	}
 	if err = tx.Commit(r.Context()); err != nil {
 		writeError(w, 500, "could not reset password")
 		return
@@ -494,6 +504,10 @@ func (s *Server) changePassword(w http.ResponseWriter, r *http.Request) {
 	}
 	var expires time.Time
 	if err = tx.QueryRow(r.Context(), "UPDATE sessions SET token_hash=$1 WHERE token_hash=$2 RETURNING absolute_expires_at", newHash, oldHash).Scan(&expires); err != nil {
+		writeError(w, 500, "could not change password")
+		return
+	}
+	if err = s.auditIn(r.Context(), tx, r, userID, "", auditEvent{Action: auditPasswordChanged, TargetType: "user", TargetID: userID}); err != nil {
 		writeError(w, 500, "could not change password")
 		return
 	}
