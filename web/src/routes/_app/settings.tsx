@@ -47,7 +47,6 @@ function SettingsLayout() {
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("roles.title")}</Link>}
             {me?.user_type === "admin" && <Link to="/settings/audit" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("audit.title")}</Link>}
-            <Link to="/spikes/gantt" className={linkClass}>{t("settings.nav.gantt")}</Link>
           </section>
         </nav>
         <div className="min-w-0"><Outlet /></div>
