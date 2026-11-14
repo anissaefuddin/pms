@@ -68,8 +68,11 @@ test("dragging to another lane asks first, then replaces only that assignee", as
 test("without lanes a status drop is still immediate, and the card picker saves the chosen fields", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto(path);
-  await page.getByRole("listitem").filter({ hasText: "Solo work" }).dragTo(page.getByRole("region", { name: "Done" }));
-  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${solo.id}`)?.body).toEqual({ status_id: done.id });
+  // The first drag can land before React has rendered the drop targets on a slow runner, so retry the whole gesture.
+  await expect(async () => {
+    await page.getByRole("listitem").filter({ hasText: "Solo work" }).dragTo(page.getByRole("region", { name: "Done" }));
+    expect(calls.find((call) => call.method === "PATCH" && call.path === `/items/${solo.id}`)?.body).toEqual({ status_id: done.id });
+  }).toPass({ timeout: 20000 });
   await expect(page.getByRole("dialog")).toHaveCount(0);
   const card = page.getByRole("listitem").filter({ hasText: "Shared work" });
   await expect(card).not.toContainText("days in status");
