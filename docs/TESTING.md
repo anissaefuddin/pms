@@ -774,3 +774,9 @@ S11.1.1 (VIEW-10): **PASS**. `GET /items/{projectId}/files` mendaftar lampiran h
 
 - PASS. `server/internal/httpserver/connectors_integration_test.go` (`TestConnectorRoutes`, `PMS_TEST_DATABASE_URL=...55444`): tanpa sesi 401; pengguna regular 403 untuk daftar, pasang, ubah, nonaktifkan, daftar konflik, dan selesaikan konflik; jenis tak dikenal dan konfigurasi tak valid 422; id tak dikenal atau bukan uuid 404; sinkron saat nonaktif 409; pasang, ubah nama, nonaktif/aktif, daftar konflik terbuka, resolusi tak valid 422; respons daftar dan pasang hanya memuat nama rahasia (nilai `TOPSECRET-*` tidak pernah muncul). Penyelesaian konflik yang sukses (memanggil remote) sudah tercakup tes layanan.
 - PASS. `web/tests/connectors.spec.ts` (Playwright mock, Chrome, port 4193): daftar, nonaktifkan (tombol Sync hilang), selesaikan konflik (`resolution: remote`), pasang Google Calendar; axe tanpa pelanggaran sebelum dan sesudah.
+
+## M11 / S11.4.1 verifikasi akhir cabang `integration/s11-3` (14 Nov 2026)
+
+- PASS. Cabang gabungan (S11.3.1 sampai S11.3.7 dan `main`): `go vet` bersih; `go test ./...` hijau dengan PostgreSQL (`httpserver` 364 detik); typecheck (`npm run typecheck`), 25 tes unit, dan build web lulus; Chrome mock suite 371 lulus, 30 dilewati, 1 gagal (`ViewTabs duplicates...`, flake yang lulus bila dijalankan sendiri, 6 dari 6); alur live `TestBrowserM2Flows`, `M3Flows`, `M4Flows`, `M5Flows` lulus.
+- Lint web: 78 galat lama di berkas M10 (`portfolio.tsx`, `workload.tsx`, `settings/resources.tsx`), bukan dari M11.
+- Gate report: [G2b](parity/gate-reports/G2B_FILES_ANALYTICS_INTEGRATION.md), hasil BELUM LULUS (UAT oleh orang dan uji akun GitHub/Google sungguhan belum dijalankan).
