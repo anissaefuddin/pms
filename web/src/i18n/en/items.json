@@ -257,5 +257,6 @@
   "proofResolved": "resolved",
   "proofResolve": "Resolve",
   "proofReopen": "Reopen",
-  "proofDelete": "Delete"
+  "proofDelete": "Delete",
+  "info": "Info"
 }

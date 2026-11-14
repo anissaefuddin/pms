@@ -1466,17 +1466,17 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 - [x] [TEST] Tes navigasi Settings
 
 **S-UIP.1.8 Sidebar per Space dan halaman project (gap A1, B1) — 6 hari**
-- [ ] [FE] Isi Space di sidebar: Space overview, Tools (Dashboard dan papan analitik), Projects and folders dengan tombol +, ikon tipe; Shared with me dan Blueprints di sidebar
-- [ ] [FE] Halaman project berbentuk header + view; detail item pindah ke panel "Info"
-- [ ] [FE] Pindahkan pembuatan papan analitik Space ke Tools (gap E4)
-- [ ] [TEST] Navigasi keyboard pohon, rute lama `/tasks/{id}` tetap bekerja, axe
+- [x] [FE] Isi Space di sidebar: Space overview, Tools (Dashboard dan papan analitik), Projects and folders dengan tombol +, ikon tipe; Shared with me dan Blueprints di sidebar
+- [x] [FE] Halaman project berbentuk header + view; detail item pindah ke panel "Info"
+- [x] [FE] Pindahkan pembuatan papan analitik Space ke Tools (gap E4)
+- [x] [TEST] Navigasi keyboard pohon, rute lama `/tasks/{id}` tetap bekerja, axe
 
 ### Batch 2 — kematangan (P2)
 
 **S-UIP.2.1 Menu More dan status realtime (gap A2, A3) — 1,5 hari**
-- [ ] [FE] Tambah Calendars, Created by me, dan layar Customize menu (memakai `sidebar_hidden`)
-- [ ] [FE] Status realtime hanya tampil saat terputus
-- [ ] [TEST] Entri tersembunyi mengikuti pengaturan profil
+- [x] [FE] Tambah Calendars, Created by me, dan layar Customize menu (memakai `sidebar_hidden`)
+- [x] [FE] Status realtime hanya tampil saat terputus
+- [x] [TEST] Entri tersembunyi mengikuti pengaturan profil
 
 **S-UIP.2.2 Tab view bersegmen (gap B2) — 1 hari**
 - [x] [FE] Kontrol bersegmen; tombol "..." hanya pada tab aktif; "Add view" di dropdown "All"
@@ -1507,6 +1507,9 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 - [ ] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
 - [x] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
 - [x] [TEST] Tes yang menunjuk tombol lama diperbarui
+- [x] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
+- [ ] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
+- [ ] [TEST] Tes yang menunjuk tombol lama diperbarui
 
 ### Penutup
 

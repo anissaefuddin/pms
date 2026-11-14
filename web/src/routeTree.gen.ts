@@ -15,6 +15,9 @@ import { Route as HelloRouteImport } from './routes/hello'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as AppIndexRouteImport } from './routes/_app/index'
+import { Route as AppBlueprintsRouteImport } from './routes/_app/blueprints'
+import { Route as AppCalendarsRouteImport } from './routes/_app/calendars'
+import { Route as AppCreatedByMeRouteImport } from './routes/_app/created-by-me'
 import { Route as AppFormsRouteImport } from './routes/_app/forms'
 import { Route as AppInboxRouteImport } from './routes/_app/inbox'
 import { Route as AppMyTodoRouteImport } from './routes/_app/my-todo'
@@ -94,6 +97,21 @@ const ResetPasswordRoute = ResetPasswordRouteImport.update({
 const AppIndexRoute = AppIndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppBlueprintsRoute = AppBlueprintsRouteImport.update({
+  id: '/blueprints',
+  path: '/blueprints',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCalendarsRoute = AppCalendarsRouteImport.update({
+  id: '/calendars',
+  path: '/calendars',
+  getParentRoute: () => AppRoute,
+} as any)
+const AppCreatedByMeRoute = AppCreatedByMeRouteImport.update({
+  id: '/created-by-me',
+  path: '/created-by-me',
   getParentRoute: () => AppRoute,
 } as any)
 const AppFormsRoute = AppFormsRouteImport.update({
@@ -361,6 +379,9 @@ export interface FileRoutesByFullPath {
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/blueprints': typeof AppBlueprintsRoute
+  '/calendars': typeof AppCalendarsRoute
+  '/created-by-me': typeof AppCreatedByMeRoute
   '/forms': typeof AppFormsRoute
   '/inbox': typeof AppInboxRoute
   '/my-todo': typeof AppMyTodoRoute
@@ -418,6 +439,9 @@ export interface FileRoutesByTo {
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/blueprints': typeof AppBlueprintsRoute
+  '/calendars': typeof AppCalendarsRoute
+  '/created-by-me': typeof AppCreatedByMeRoute
   '/forms': typeof AppFormsRoute
   '/inbox': typeof AppInboxRoute
   '/my-todo': typeof AppMyTodoRoute
@@ -476,6 +500,9 @@ export interface FileRoutesById {
   '/hello': typeof HelloRoute
   '/login': typeof LoginRoute
   '/reset-password': typeof ResetPasswordRoute
+  '/_app/blueprints': typeof AppBlueprintsRoute
+  '/_app/calendars': typeof AppCalendarsRoute
+  '/_app/created-by-me': typeof AppCreatedByMeRoute
   '/_app/forms': typeof AppFormsRoute
   '/_app/inbox': typeof AppInboxRoute
   '/_app/my-todo': typeof AppMyTodoRoute
@@ -537,6 +564,9 @@ export interface FileRouteTypes {
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/blueprints'
+    | '/calendars'
+    | '/created-by-me'
     | '/forms'
     | '/inbox'
     | '/my-todo'
@@ -594,6 +624,9 @@ export interface FileRouteTypes {
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/blueprints'
+    | '/calendars'
+    | '/created-by-me'
     | '/forms'
     | '/inbox'
     | '/my-todo'
@@ -651,6 +684,9 @@ export interface FileRouteTypes {
     | '/hello'
     | '/login'
     | '/reset-password'
+    | '/_app/blueprints'
+    | '/_app/calendars'
+    | '/_app/created-by-me'
     | '/_app/forms'
     | '/_app/inbox'
     | '/_app/my-todo'
@@ -759,6 +795,27 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof AppIndexRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/blueprints': {
+      id: '/_app/blueprints'
+      path: '/blueprints'
+      fullPath: '/blueprints'
+      preLoaderRoute: typeof AppBlueprintsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/calendars': {
+      id: '/_app/calendars'
+      path: '/calendars'
+      fullPath: '/calendars'
+      preLoaderRoute: typeof AppCalendarsRouteImport
+      parentRoute: typeof AppRoute
+    }
+    '/_app/created-by-me': {
+      id: '/_app/created-by-me'
+      path: '/created-by-me'
+      fullPath: '/created-by-me'
+      preLoaderRoute: typeof AppCreatedByMeRouteImport
       parentRoute: typeof AppRoute
     }
     '/_app/forms': {
@@ -1179,6 +1236,9 @@ const AppSettingsRouteWithChildren = AppSettingsRoute._addFileChildren(
 )
 
 interface AppRouteChildren {
+  AppBlueprintsRoute: typeof AppBlueprintsRoute
+  AppCalendarsRoute: typeof AppCalendarsRoute
+  AppCreatedByMeRoute: typeof AppCreatedByMeRoute
   AppFormsRoute: typeof AppFormsRoute
   AppInboxRoute: typeof AppInboxRoute
   AppMyTodoRoute: typeof AppMyTodoRoute
@@ -1211,6 +1271,9 @@ interface AppRouteChildren {
 }
 
 const AppRouteChildren: AppRouteChildren = {
+  AppBlueprintsRoute: AppBlueprintsRoute,
+  AppCalendarsRoute: AppCalendarsRoute,
+  AppCreatedByMeRoute: AppCreatedByMeRoute,
   AppFormsRoute: AppFormsRoute,
   AppInboxRoute: AppInboxRoute,
   AppMyTodoRoute: AppMyTodoRoute,

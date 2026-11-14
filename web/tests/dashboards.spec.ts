@@ -274,9 +274,9 @@ test("a Space gets a ready-made analytics board of five widgets", async ({ page 
     "POST /dashboards": (body: any) => ({ status: 201, body: { ...board({ widgets: [] }), name: body.name, version } }),
     [`POST /dashboards/${d1}/widgets`]: () => ({ status: 201, body: { ...board({ widgets: [] }), version: ++version } }),
   });
-  await page.goto("/dashboards");
-  await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // personal scope has no Space
-  await page.getByLabel("Show dashboards in").selectOption(marketing.id);
+  await page.goto("/");
+  await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // Tools only show once a Space is open
+  await page.getByRole("button", { name: "Expand Marketing" }).click();
   await page.getByRole("button", { name: "Create analytics board" }).click();
   await expect(page).toHaveURL(`/dashboards/${d1}`);
   const posts = calls.filter((c) => c.method === "POST" && c.path === `/dashboards/${d1}/widgets`);

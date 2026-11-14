@@ -9,7 +9,7 @@ test.describe("sidebar", () => {
     await mockSpaces(page, { spaces: [marketing, personal, ops] });
     await page.goto("/");
     const links = sidebar(page).getByRole("link");
-    await expect(links).toHaveText(["Personal", "Marketing", "Operations"]);
+    await expect(links).toHaveText(["Personal", "Marketing", "Operations", "Shared with me", "Blueprints"]);
     await sidebar(page).getByRole("link", { name: "Marketing" }).click();
     await expect(page).toHaveURL(new RegExp(`/spaces/${marketing.id}$`));
     await expect(page.getByRole("heading", { name: "Marketing", level: 1 })).toBeVisible();
@@ -28,7 +28,7 @@ test.describe("sidebar", () => {
   test("keeps the existing nav items before the Spaces list", async ({ page }) => {
     await mockSpaces(page);
     await page.goto("/");
-    await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button")).toHaveText(["Search", "Inbox", "Request forms", "Stream", "More"]);
+    await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button")).toHaveText([/^Search/, "Inbox", "Request forms", "Stream", "More"]);
   });
 });
 
@@ -225,10 +225,10 @@ test("sidebar expands ranked containers by keyboard, remembers collapse and open
   await page.getByRole("button", { name: "Collapse sidebar" }).press("Enter");
   await page.reload();
   await expect(page.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
-  await page.getByRole("button", { name: "More", exact: true }).press("Enter");
-  await page.getByRole("menuitem", { name: "Shared with me" }).click();
+  await page.getByRole("button", { name: "Expand sidebar" }).click();
+  await page.getByRole("link", { name: "Shared with me" }).click();
   await expect(page.getByRole("link", { name: "Shared specs" })).toHaveAttribute("href", `/items/${folder}`);
-  await page.getByRole("button", { name: "More", exact: true }).click();
+  await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("menuitem", { name: "Recycle bin" }).click();
   await expect(page.getByRole("heading", { name: "Recycle bin" })).toBeVisible();
 });

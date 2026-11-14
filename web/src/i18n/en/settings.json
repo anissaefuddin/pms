@@ -262,5 +262,10 @@
       "neverSynced": "Not synced yet.", "syncOk": "Last sync {{when}}: {{message}}", "syncFailed": "Last sync failed {{when}}: {{message}}"
     }
   },
-  "rates": "Hourly rates"
+  "rates": "Hourly rates",
+  "profile.sidebar.calendars": "Calendars",
+  "profile.sidebar.created_by_me": "Created by me",
+  "profile.sidebar.dashboards": "Dashboards",
+  "profile.sidebar.reports": "Reports",
+  "profile.sidebar.starred": "Starred"
 }
