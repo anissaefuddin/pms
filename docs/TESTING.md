@@ -1003,3 +1003,20 @@ Postgres khusus lane (`pms-pg-lane4`). Hanya tes terarah; regresi penuh menunggu
 | S7.2.2 REVIEW PRD v0.4 | Terbuka | Persetujuan user |
 | S7.3.2 REVIEW DEC-PAR-03/04 | Terbuka | Keputusan user |
 | S7.4.1 REVIEW Gate G0 | Terbuka, BLOCKED | UAT pilot, CI kandidat, persetujuan keputusan |
+
+## S12.2.3 prasyarat · tinjauan keamanan permukaan M8–M12 (14 Nov 2026)
+
+Laporan lengkap: [SECURITY_REVIEW_M12.md](parity/SECURITY_REVIEW_M12.md). Postgres khusus lane (`pms-pg-sec`), Go 1.27.4, hanya pemeriksaan keamanan dan tes terarah (regresi penuh menunggu S12.2.1).
+
+| Pemeriksaan | Hasil |
+|---|---|
+| `govulncheck ./...` (awal) | 3 kerentanan terjangkau: GO-2026-6909 `crewjam/saml` (tanpa perbaikan), GO-2026-4945 `go-jose` v4.0.5, GO-2026-4753 `goxmldsig` v1.4.0 |
+| `govulncheck ./...` (sesudah naik `goxmldsig` v1.6.0, `go-jose` v4.1.6) | 1 terjangkau: GO-2026-6909 (tanpa versi perbaikan; panik ditangkap `recover()`; lihat SR-04). 0 pada paket diimpor selain itu |
+| `npm audit --omit=dev` (web/) | 0 kerentanan |
+| Trivy `pms:secrev` (HIGH,CRITICAL, vuln) | Awal: 1 HIGH (`go-jose` CVE-2026-116587, fix 4.1.6). Sesudah naik versi dan build ulang: Alpine 3.23.8 0, `usr/local/bin/pms` 0. Image uji dihapus; image `aquasec/trivy` dibiarkan di Docker |
+| `go test -race` `./internal/httpserver -run 'SCIM\|OTP\|Webhook\|SSO\|SAML\|APIKey\|OAuth\|Audit'`, `webhooks`, `connectors/...`, `realtime` | PASS, tanpa data race (`sso`, `events`, `connectors/gcal`, `connectors/github` tidak punya berkas tes) |
+| Tes baru `security_review_m12_integration_test.go` | PASS: `TestSecurityReviewPublicOperationsRefuseAnonymousCallers`, `TestSecurityReviewAPIKeyAndOAuthTokenHonourTheIPAllowlist`, `TestSecurityReviewResponseHeadersAndRequestID` |
+| `go test ./server/internal/httpserver ./server/internal/security` penuh setelah perubahan `requireUser` dan header | PASS; `SAML|SSO|SecurityReview` diulang PASS setelah `go-jose` 4.1.6; `gofmt` bersih, `go vet ./server/...` bersih |
+| Probe instance lokal (cookie, CSRF, XFF, enumerasi, galat, body besar, SCIM, ACS, tautan publik) | Sesuai harapan; detail di laporan. Instance dan DB dihapus |
+
+Perbaikan kode: SR-01 (allowlist untuk API key/OAuth), SR-05 (header keamanan), SR-06 (X-Request-ID), SR-02 dan SR-03 (naik versi dependensi). Belum ada bukti mutasi tes pengunci (tidak dijalankan). Batas: bukan pentest manual dan bukan WSTG penuh; S6.3.3 tetap PARTIAL sampai itu dilakukan.
