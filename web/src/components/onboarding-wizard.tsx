@@ -31,7 +31,9 @@ export function OnboardingWizard({ me }: { me: CurrentUser }) {
 
   async function finish(open?: string) {
     await post("/api/v1/onboarding/complete");
-    await Promise.all([client.invalidateQueries({ queryKey: ["me"] }), client.invalidateQueries({ queryKey: spaceKeys.all })]);
+    // DR-04: close the wizard from what we just saved instead of waiting for (or trusting) a refetch of /me.
+    client.setQueryData<CurrentUser>(["me"], (old) => old && { ...old, onboarding_pending: false });
+    await client.invalidateQueries({ queryKey: spaceKeys.all });
     if (open) await navigate({ to: "/tasks/$itemId", params: { itemId: open } });
   }
   async function guarded(action: () => Promise<void>) {

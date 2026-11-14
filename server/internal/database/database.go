@@ -26,15 +26,33 @@ func Open(ctx context.Context, databaseURL string) (*pgxpool.Pool, error) {
 		pool.Close()
 		return nil, err
 	}
-	if err := migrate(ctx, databaseURL); err != nil {
-		pool.Close()
-		return nil, err
-	}
-	if err := migrateRiver(ctx, pool); err != nil {
+	if err := migrateLocked(ctx, pool, databaseURL); err != nil {
 		pool.Close()
 		return nil, err
 	}
 	return pool, nil
+}
+
+// migrateKey is the advisory-lock id that serializes migrations: two processes starting together (the app and `pms bootstrap`)
+// otherwise both apply the same migration and fail with "already exists", leaving the database half migrated (DR-05).
+const migrateKey = 7_201_127
+
+// migrateLocked holds a session advisory lock while migrating; a second process waits, then finds nothing left to apply.
+// The lock dies with the connection, so a crashed process cannot leave it held.
+func migrateLocked(ctx context.Context, pool *pgxpool.Pool, databaseURL string) error {
+	conn, err := pool.Acquire(ctx)
+	if err != nil {
+		return err
+	}
+	defer conn.Release()
+	if _, err := conn.Exec(ctx, "SELECT pg_advisory_lock($1)", migrateKey); err != nil {
+		return fmt.Errorf("wait for migration lock: %w", err)
+	}
+	defer func() { _, _ = conn.Exec(context.WithoutCancel(ctx), "SELECT pg_advisory_unlock($1)", migrateKey) }()
+	if err := migrate(ctx, databaseURL); err != nil {
+		return err
+	}
+	return migrateRiver(ctx, pool)
 }
 
 func migrate(ctx context.Context, databaseURL string) error {

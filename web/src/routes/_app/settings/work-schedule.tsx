@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { useProfile } from "@/lib/profile";
-import type { WorkSchedule } from "@/lib/work-schedule";
+import { loadWorkSchedule, workScheduleKey, type WorkSchedule } from "@/lib/work-schedule";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,12 +20,8 @@ function WorkScheduleRoute() {
   const client = useQueryClient();
   const [conflict, setConflict] = useState(false); // outlives the form, which remounts on the new version
   const query = useQuery({
-    queryKey: ["work-schedule"],
-    queryFn: async () => {
-      let etag = "";
-      const data = await api<WorkSchedule>(path, undefined, (h) => { etag = h.get("ETag") ?? ""; });
-      return { data, etag };
-    },
+    queryKey: workScheduleKey,
+    queryFn: loadWorkSchedule,
   });
   if (!query.data) return null;
   const { data, etag } = query.data;
@@ -33,7 +29,7 @@ function WorkScheduleRoute() {
   return <>
     {conflict && <p role="alert" className="mb-4 max-w-2xl text-sm text-destructive">{t("settings.workSchedule.conflict")}</p>}
     <ScheduleForm key={data.version} schedule={data} etag={etag}
-      reload={(stale) => { setConflict(stale); return client.invalidateQueries({ queryKey: ["work-schedule"] }); }} />
+      reload={(stale) => { setConflict(stale); return client.invalidateQueries({ queryKey: workScheduleKey }); }} />
   </>;
 }
 

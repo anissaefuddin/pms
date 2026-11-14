@@ -51,3 +51,15 @@ test("skipping saves the choice without creating anything", async ({ page }) => 
   await expect.poll(() => calls.some((call) => call.path === "/onboarding/complete")).toBe(true);
   expect(calls.some((call) => call.method === "POST" && (call.path === "/spaces" || call.path === "/items"))).toBe(false);
 });
+
+test("DR-04: one Skip closes the wizard even when /me still reports it pending", async ({ page }) => {
+  await mockSpaces(page, { extra: {
+    "GET /me": { body: admin }, // never flips: a stale or lagging read must not bring the wizard back
+    "POST /onboarding/complete": { status: 204 },
+  } });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Skip setup" }).click();
+  await expect(page.getByRole("dialog", { name: "Set up your workspace" })).toBeHidden();
+  await page.getByRole("link", { name: "Settings" }).first().click();
+  await expect(page.getByRole("dialog", { name: "Set up your workspace" })).toHaveCount(0);
+});
