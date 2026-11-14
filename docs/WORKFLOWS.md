@@ -277,7 +277,7 @@ Semua error memakai `application/problem+json` (lihat openapi). Field `code` sta
 
 Semua endpoint hanya untuk admin; rahasia konektor tidak pernah dikembalikan (hanya nama).
 
-- **Pasang:** `POST /connectors {kind, name, config, secrets}`; `Validate` milik konektor memeriksa config dan rahasia (422 bila salah). Rahasia dienkripsi AES-256-GCM dengan `PMS_CONNECTOR_KEY` dan diikat ke id pemasangan; tanpa kunci pemasangan dengan rahasia ditolak (503), tidak disimpan polos.
+- **Pasang:** `POST /connectors {kind, name, config, secrets}`; `Validate` milik konektor memeriksa config dan rahasia (422 bila salah). Rahasia dienkripsi AES-256-GCM dengan `PMS_CONNECTOR_KEY` dan diikat ke id pemasangan; tanpa kunci pemasangan dengan rahasia ditolak (422 `key_not_configured`), tidak disimpan polos.
 - **Konfigurasi:** `PATCH /connectors/{id}`; rahasia digabung per nama, nilai kosong menghapus rahasia itu. **Nonaktif/aktif:** `POST .../disable|enable`; konektor nonaktif tidak bisa sinkron (409).
 - **Tautan:** `POST /connectors/{id}/links {item_id, external_id?}`. Tanpa `external_id`, record eksternal dibuat dari Item. Dengan `external_id`, hanya ditautkan; sinkronisasi pertama mengadopsi judul yang sama atau mencatat konflik.
 - **Sinkron:** `POST /connectors/{id}/sync` → `{pushed, pulled, conflicts, pending, skipped, unchanged}`. Idempoten: tanpa perubahan tidak ada tulisan ke sisi mana pun.
