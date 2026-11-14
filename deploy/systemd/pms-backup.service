@@ -1,0 +1,14 @@
+# Install: copy systemd/pms-*.{service,timer} to /etc/systemd/system/, adjust WorkingDirectory/User, then
+#   systemctl daemon-reload && systemctl enable --now pms-backup.timer pms-restore-test.timer
+# Secrets stay in deploy/.env (mode 600), read by backup.sh itself; nothing secret in these units.
+[Unit]
+Description=PMS backup (database, files, off-server copy)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=pms
+WorkingDirectory=/opt/pms/deploy
+ExecStart=/opt/pms/deploy/backup.sh
+TimeoutStartSec=2h
