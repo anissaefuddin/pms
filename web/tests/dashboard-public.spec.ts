@@ -46,7 +46,7 @@ test("an editor turns the public link on, sees it once, and turns it off", async
     [`DELETE /dashboards/${d1}/public-link`]: () => { on = false; return { status: 204 }; },
   } });
   await page.goto(`/dashboards/${d1}`);
-  await page.getByRole("button", { name: "Public link" }).click();
+  await page.getByRole("button", { name: "Share" }).click(); // S-UIP.2.4: Share opens the Public link dialog
   const dialog = page.getByRole("dialog", { name: "Public link" });
   await expect(dialog.getByRole("status").first()).toContainText("The link is off.");
   await dialog.getByLabel("Password (optional)").fill("correct horse battery");

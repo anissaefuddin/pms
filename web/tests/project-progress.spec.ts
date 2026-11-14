@@ -63,6 +63,7 @@ test("Project panel and Table refresh when a task changes inside an unloaded fol
   await expect(row.getByText("Yellow risk")).toBeVisible();
 
   await row.getByRole("button", { name: "Campaign", exact: true }).click();
+  await page.getByRole("button", { name: "Info" }).click(); // S-UIP.1.8: project detail lives in the Info panel
   await page.getByText("More fields", { exact: true }).click();
   const panel = page.getByRole("region", { name: "Project progress" });
   await expect(panel.getByText("30%")).toBeVisible();

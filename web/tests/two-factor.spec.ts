@@ -198,7 +198,7 @@ test.describe("security settings", () => {
 
   test("not configured explains and has no setup button", async ({ page }) => {
     await security(page, { ...off, configured: false });
-    await expect(section(page)).toContainText("An admin must set PMS_2FA_KEY");
+    await expect(section(page)).toContainText("Set PMS_2FA_KEY on the server");
     await expect(page.getByRole("button", { name: "Set up two-factor authentication" })).toHaveCount(0);
   });
 });
