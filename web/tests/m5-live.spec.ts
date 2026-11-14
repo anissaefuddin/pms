@@ -49,6 +49,7 @@ test("flow 1: a project manager builds a dashboard from the UI and the numbers m
 
   // a pie of all tasks by status group: 4 active, 1 completed
   await addWidget("By status", "pie", async (dialog) => {
+    await dialog.getByRole("tab", { name: "Design" }).click(); // S-UIP.2.6: style lives on the Design tab
     await dialog.getByLabel(/^Pie style/).selectOption("donut");
     await expect(dialog.locator('[data-chart="pie"] svg')).toBeVisible(); // live preview
   });

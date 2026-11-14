@@ -11,7 +11,7 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     await context.addCookies([{ name: "pms_session", value: secondCookie!.split("=")[1], url: baseURL! }]);
     const recipient = await context.newPage();
     await recipient.goto("/inbox");
-    await expect(recipient.getByText("Live", { exact: true })).toBeVisible();
+    await expect(recipient.locator('[data-live="true"]')).toBeAttached();
 
     const destination = `/spaces/${space}`;
     await page.goto(`/login?next=${encodeURIComponent(destination)}`);
@@ -35,15 +35,17 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     await task.getByLabel("Name").fill("Prepare pilot checklist");
     await task.getByRole("button", { name: "Create item" }).click();
 
-    await expect(page.getByRole("heading", { name: "Prepare pilot checklist" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Prepare pilot checklist", exact: true })).toBeVisible();
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Pilot launch" })).toBeVisible();
     const card = initial.getByRole("listitem").filter({ hasText: "Prepare pilot checklist" });
-    await card.dragTo(done);
-    await expect(done.getByRole("button", { name: "Prepare pilot checklist" })).toBeVisible();
-    await expect(initial.getByRole("button", { name: "Prepare pilot checklist" })).toHaveCount(0);
+    await expect(async () => { // the drop target can render after the first drag on a slow runner
+      await card.dragTo(done);
+      await expect(done.getByRole("button", { name: "Prepare pilot checklist", exact: true })).toBeVisible({ timeout: 3000 });
+    }).toPass({ timeout: 20000 });
+    await expect(initial.getByRole("button", { name: "Prepare pilot checklist", exact: true })).toHaveCount(0);
 
-    await done.getByRole("button", { name: "Prepare pilot checklist" }).click();
+    await done.getByRole("button", { name: "Prepare pilot checklist", exact: true }).click();
     const comments = page.getByRole("region", { name: "Comments" });
     const editor = comments.locator('[contenteditable="true"][aria-label="Comment"]');
     await editor.fill("Please review");

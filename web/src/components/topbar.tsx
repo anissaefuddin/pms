@@ -27,7 +27,7 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: () =
   return (
     <header className="flex h-12 shrink-0 items-center justify-end border-b px-2 sm:px-4">
       {navigation}
-      <span role="status" className="mr-auto text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
+      <span role="status" data-live={live ? "true" : "false"} className="mr-auto text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
       {search}
       <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
         <Bell className="size-5" />

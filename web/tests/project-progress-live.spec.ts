@@ -13,19 +13,22 @@ test("editing a nested task refreshes the Project panel and Space Table in other
     await editorContext.addCookies([{ name: "pms_session", value: editor!.split("=")[1], url: baseURL! }]);
     const taskPage = await editorContext.newPage();
     await Promise.all([page.goto(`/tasks/${project}`), overview.goto(`/spaces/${space}`), taskPage.goto(`/tasks/${task}`)]);
+    await page.getByRole("button", { name: "Info" }).click(); // S-UIP.1.8
+    await page.getByText("More fields", { exact: true }).click(); // S-UIP.1.1
     const panel = page.getByRole("region", { name: "Project progress" });
     const table = overview.getByRole("table", { name: "Table" });
     const row = table.getByRole("row").filter({ has: overview.getByRole("button", { name: "Progress roadmap", exact: true }) });
     await expect(panel.getByText("0%")).toBeVisible();
     await expect(row.getByText("Green risk")).toBeVisible();
-    await expect(page.getByText("Live", { exact: true })).toBeVisible();
-    await expect(overview.getByText("Live", { exact: true })).toBeVisible();
+    await expect(page.locator('[data-live="true"]')).toBeAttached();
+    await expect(overview.locator('[data-live="true"]')).toBeAttached();
     const method = panel.getByRole("combobox", { name: "Progress method" });
     const savedMethod = page.waitForResponse((res) => res.url().endsWith(`/api/v1/items/${project}`) && res.request().method() === "PATCH");
     await method.selectOption("average_percent");
     expect((await savedMethod).ok()).toBe(true);
     await expect(method).toBeEnabled();
 
+    await taskPage.getByText("More fields", { exact: true }).click(); // S-UIP.1.1
     const taskPanel = taskPage.getByRole("region", { name: "Task progress" });
     await taskPanel.getByRole("spinbutton", { name: "Manual progress (%)" }).fill("60");
     await taskPanel.getByRole("button", { name: "Save progress" }).click();

@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { getItem, itemKeys } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
+import { FormError } from "@/components/auth/form-error";
 import { ViewWorkspace } from "@/components/view-workspace";
 
 export const Route = createFileRoute("/_app/tasks/$itemId")({ component: ItemPage });
@@ -37,6 +38,7 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
   const canCreate = !!container?.my_capabilities.includes("create");
   const canEdit = !!container?.my_capabilities.includes("edit");
   if (!me) return null;
+  if (detail.isError) return <main className="mx-auto w-full space-y-2 p-6"><FormError message={t("items.loadError")} /><Button variant="outline" onClick={() => void detail.refetch()}>{t("items.retry")}</Button></main>;
   if (item && !container) return <main className="mx-auto w-full p-6"><ProjectInfoPanel itemId={itemId} me={me} /></main>;
   const spaceId = container?.locations[0]?.space_id ?? "";
   const space = spaces.data?.find((entry) => entry.id === spaceId);
