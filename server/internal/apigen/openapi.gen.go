@@ -3162,8 +3162,11 @@ type CommentPage struct {
 
 // ConnectorConflict defines model for ConnectorConflict.
 type ConnectorConflict struct {
-	BaseTitle   *string                      `json:"base_title,omitempty"`
-	CreatedAt   *time.Time                   `json:"created_at,omitempty"`
+	BaseTitle *string    `json:"base_title,omitempty"`
+	CreatedAt *time.Time `json:"created_at,omitempty"`
+
+	// Differs Kolom yang berbeda, dipisah koma (title, body, done)
+	Differs     *string                      `json:"differs,omitempty"`
 	ExternalId  *string                      `json:"external_id,omitempty"`
 	Id          *openapi_types.UUID          `json:"id,omitempty"`
 	ItemId      *openapi_types.UUID          `json:"item_id,omitempty"`
@@ -3178,13 +3181,16 @@ type ConnectorConflictResolution string
 
 // ConnectorInstall defines model for ConnectorInstall.
 type ConnectorInstall struct {
-	Config      map[string]interface{} `json:"config"`
-	CreatedAt   time.Time              `json:"created_at"`
-	Enabled     bool                   `json:"enabled"`
-	Id          openapi_types.UUID     `json:"id"`
-	Kind        string                 `json:"kind"`
-	Name        string                 `json:"name"`
-	SecretNames []string               `json:"secret_names"`
+	Config          map[string]interface{} `json:"config"`
+	CreatedAt       time.Time              `json:"created_at"`
+	Enabled         bool                   `json:"enabled"`
+	Id              openapi_types.UUID     `json:"id"`
+	Kind            string                 `json:"kind"`
+	LastSyncAt      *time.Time             `json:"last_sync_at,omitempty"`
+	LastSyncMessage *string                `json:"last_sync_message,omitempty"`
+	LastSyncOk      *bool                  `json:"last_sync_ok,omitempty"`
+	Name            string                 `json:"name"`
+	SecretNames     []string               `json:"secret_names"`
 }
 
 // CustomField defines model for CustomField.
@@ -5154,6 +5160,9 @@ type ListConnectorConflictsParams struct {
 	Status *string `form:"status,omitempty" json:"status,omitempty"`
 }
 
+// GithubConnectorWebhookJSONBody defines parameters for GithubConnectorWebhook.
+type GithubConnectorWebhookJSONBody map[string]interface{}
+
 // LinkConnectorItemJSONBody defines parameters for LinkConnectorItem.
 type LinkConnectorItemJSONBody struct {
 	ExternalId *string            `json:"external_id,omitempty"`
@@ -5847,6 +5856,9 @@ type InstallConnectorJSONRequestBody InstallConnectorJSONBody
 // ConfigureConnectorJSONRequestBody defines body for ConfigureConnector for application/json ContentType.
 type ConfigureConnectorJSONRequestBody ConfigureConnectorJSONBody
 
+// GithubConnectorWebhookJSONRequestBody defines body for GithubConnectorWebhook for application/json ContentType.
+type GithubConnectorWebhookJSONRequestBody GithubConnectorWebhookJSONBody
+
 // LinkConnectorItemJSONRequestBody defines body for LinkConnectorItem for application/json ContentType.
 type LinkConnectorItemJSONRequestBody LinkConnectorItemJSONBody
 
@@ -6500,6 +6512,9 @@ type ServerInterface interface {
 	// EnableConnector Admin. Aktifkan kembali
 	// (POST /connectors/{connectorId}/enable)
 	EnableConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// GithubConnectorWebhook Webhook GitHub (tanpa sesi). Tanda tangan HMAC X-Hub-Signature-256 dengan rahasia webhook_secret konektor; event issues menjadwalkan sinkron segera
+	// (POST /connectors/{connectorId}/github-webhook)
+	GithubConnectorWebhook(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
 	// LinkConnectorItem Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
 	// (POST /connectors/{connectorId}/links)
 	LinkConnectorItem(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
@@ -8457,6 +8472,32 @@ func (siw *ServerInterfaceWrapper) EnableConnector(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.EnableConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GithubConnectorWebhook operation middleware
+func (siw *ServerInterfaceWrapper) GithubConnectorWebhook(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "connectorId" -------------
+	var connectorId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "connectorId", r.PathValue("connectorId"), &connectorId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "connectorId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GithubConnectorWebhook(w, r, connectorId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14459,6 +14500,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/enable", wrapper.EnableConnector)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/links", wrapper.LinkConnectorItem)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/sync", wrapper.SyncConnector)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/github-webhook", wrapper.GithubConnectorWebhook)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors/{connectorId}/conflicts", wrapper.ListConnectorConflicts)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connector-conflicts/{conflictId}/resolve", wrapper.ResolveConnectorConflict)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
@@ -17426,6 +17468,53 @@ type EnableConnector404ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response EnableConnector404ApplicationProblemPlusJSONResponse) VisitEnableConnectorResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GithubConnectorWebhookRequestObject struct {
+	ConnectorId openapi_types.UUID `json:"connectorId"`
+	Body        *GithubConnectorWebhookJSONRequestBody
+}
+
+type GithubConnectorWebhookResponseObject interface {
+	VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error
+}
+
+type GithubConnectorWebhook204Response struct {
+}
+
+func (response GithubConnectorWebhook204Response) VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type GithubConnectorWebhook401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GithubConnectorWebhook401ApplicationProblemPlusJSONResponse) VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GithubConnectorWebhook404ApplicationProblemPlusJSONResponse Problem
+
+func (response GithubConnectorWebhook404ApplicationProblemPlusJSONResponse) VisitGithubConnectorWebhookResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -28461,6 +28550,9 @@ type StrictServerInterface interface {
 	// EnableConnector Admin. Aktifkan kembali
 	// (POST /connectors/{connectorId}/enable)
 	EnableConnector(ctx context.Context, request EnableConnectorRequestObject) (EnableConnectorResponseObject, error)
+	// GithubConnectorWebhook Webhook GitHub (tanpa sesi). Tanda tangan HMAC X-Hub-Signature-256 dengan rahasia webhook_secret konektor; event issues menjadwalkan sinkron segera
+	// (POST /connectors/{connectorId}/github-webhook)
+	GithubConnectorWebhook(ctx context.Context, request GithubConnectorWebhookRequestObject) (GithubConnectorWebhookResponseObject, error)
 	// LinkConnectorItem Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
 	// (POST /connectors/{connectorId}/links)
 	LinkConnectorItem(ctx context.Context, request LinkConnectorItemRequestObject) (LinkConnectorItemResponseObject, error)
@@ -30511,6 +30603,39 @@ func (sh *strictHandler) EnableConnector(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(EnableConnectorResponseObject); ok {
 		if err := validResponse.VisitEnableConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GithubConnectorWebhook operation middleware
+func (sh *strictHandler) GithubConnectorWebhook(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID) {
+	var request GithubConnectorWebhookRequestObject
+
+	request.ConnectorId = connectorId
+
+	var body GithubConnectorWebhookJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GithubConnectorWebhook(ctx, request.(GithubConnectorWebhookRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GithubConnectorWebhook")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GithubConnectorWebhookResponseObject); ok {
+		if err := validResponse.VisitGithubConnectorWebhookResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

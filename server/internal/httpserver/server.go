@@ -661,6 +661,11 @@ func (s *Server) csrf(next http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 			return
 		}
+		// A GitHub webhook has no browser and no cookie; its handler verifies the HMAC signature instead.
+		if strings.HasPrefix(r.URL.Path, "/api/v1/connectors/") && strings.HasSuffix(r.URL.Path, "/github-webhook") {
+			next.ServeHTTP(w, r)
+			return
+		}
 		// Bearer calls carry no cookie, so there is nothing to forge; the token endpoint uses the client secret.
 		if _, err := r.Cookie("pms_session"); err != nil && (r.URL.Path == "/api/v1/oauth/token" || strings.HasPrefix(r.Header.Get("Authorization"), "Bearer ")) {
 			next.ServeHTTP(w, r)

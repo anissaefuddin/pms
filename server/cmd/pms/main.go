@@ -15,10 +15,14 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/automation"
 	"github.com/anissaefuddin/pms/server/internal/bootstrap"
 	"github.com/anissaefuddin/pms/server/internal/config"
+	"github.com/anissaefuddin/pms/server/internal/connectors"
+	"github.com/anissaefuddin/pms/server/internal/connectors/gcal"
+	"github.com/anissaefuddin/pms/server/internal/connectors/github"
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/httpserver"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
+	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -107,7 +111,10 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	webhooks.AllowInternal = os.Getenv("PMS_WEBHOOK_ALLOW_INTERNAL") == "true" // test mode only
 	engine.Hook = hooks.Handler
 	engine.Tick = func(ctx context.Context) error { _, err := hooks.Send(ctx); return err }
-	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL), engine.Option(), httpserver.ApprovalDeadlines(pool))
+	connectors.Default.Register(github.New())
+	connectors.Default.Register(gcal.New())
+	connectorSync := &connectors.Service{Pool: pool, Keys: twofactor.Keys{Current: cfg.ConnectorKey, Previous: cfg.ConnectorKeyPrevious}}
+	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL), engine.Option(), httpserver.ApprovalDeadlines(pool), connectors.Option(connectorSync))
 	if err != nil {
 		return err
 	}

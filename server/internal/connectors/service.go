@@ -29,6 +29,9 @@ type Install struct {
 	SecretNames []string       `json:"secret_names"` // names only: a secret value is never returned
 	Enabled     bool           `json:"enabled"`
 	CreatedAt   time.Time      `json:"created_at"`
+	LastSyncAt  *time.Time     `json:"last_sync_at"`
+	LastSyncOK  *bool          `json:"last_sync_ok"`
+	LastSyncMsg *string        `json:"last_sync_message"`
 }
 
 func (s *Service) registry() *Registry {
@@ -181,7 +184,7 @@ func (s *Service) Get(ctx context.Context, id string) (Install, error) {
 func (s *Service) List(ctx context.Context) ([]Install, error) { return s.list(ctx, "") }
 
 func (s *Service) list(ctx context.Context, id string) ([]Install, error) {
-	rows, err := s.Pool.Query(ctx, `SELECT id::text,kind,name,config,COALESCE(secrets_enc,''),enabled,created_at FROM connector_installs
+	rows, err := s.Pool.Query(ctx, `SELECT id::text,kind,name,config,COALESCE(secrets_enc,''),enabled,created_at,last_sync_at,last_sync_ok,last_sync_message FROM connector_installs
  WHERE ($1='' OR id::text=$1) ORDER BY created_at,id`, id)
 	if err != nil {
 		return nil, err
@@ -192,7 +195,7 @@ func (s *Service) list(ctx context.Context, id string) ([]Install, error) {
 		var in Install
 		var raw []byte
 		var stored string
-		if err := rows.Scan(&in.ID, &in.Kind, &in.Name, &raw, &stored, &in.Enabled, &in.CreatedAt); err != nil {
+		if err := rows.Scan(&in.ID, &in.Kind, &in.Name, &raw, &stored, &in.Enabled, &in.CreatedAt, &in.LastSyncAt, &in.LastSyncOK, &in.LastSyncMsg); err != nil {
 			return nil, err
 		}
 		_ = json.Unmarshal(raw, &in.Config)
@@ -236,4 +239,22 @@ func (s *Service) load(ctx context.Context, q interface {
 	cfg := map[string]any{}
 	_ = json.Unmarshal(raw, &cfg)
 	return c, cfg, secrets, nil
+}
+
+// Secret returns one decrypted secret of an enabled install and its kind, for verifying an inbound webhook.
+func (s *Service) Secret(ctx context.Context, id, name string) (kind, value string, err error) {
+	var stored string
+	var enabled bool
+	err = s.Pool.QueryRow(ctx, `SELECT kind,COALESCE(secrets_enc,''),enabled FROM connector_installs WHERE id=$1`, id).Scan(&kind, &stored, &enabled)
+	if errors.Is(err, pgx.ErrNoRows) || (err == nil && !enabled) {
+		return "", "", ErrNotFound
+	}
+	if err != nil {
+		return "", "", err
+	}
+	secrets, err := s.open(id, stored)
+	if err != nil {
+		return "", "", ErrNoKey
+	}
+	return kind, secrets[name], nil
 }

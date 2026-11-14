@@ -8,11 +8,16 @@ import (
 	"fmt"
 	"sort"
 	"sync"
+	"time"
 )
 
-// Record is the content that is synced. Only the title is synced for now; adding a field means adding it here,
-// to the link snapshot and to the compare in sync.go.
-type Record struct{ Title string }
+// Record is the content that is synced. Adding a field means adding it here, to the link snapshot (connector_links
+// synced_*), to the compare in sync.go and to readItem/writeItem.
+type Record struct {
+	Title string
+	Body  string // plain text
+	Done  bool   // Item status group completed/cancelled <-> remote closed
+}
 
 // Remote is one external record as the connector sees it. Version must change whenever the remote content changes
 // (an etag, an updated_at, a revision number).
@@ -32,6 +37,28 @@ type Connector interface {
 	// Push creates (externalID == "") or updates a remote record and returns its new state.
 	// A one-way inbound connector returns ErrReadOnly.
 	Push(ctx context.Context, config map[string]any, secrets map[string]string, externalID string, rec Record) (Remote, error)
+}
+
+// Outbound is a one-way connector (Items go out, nothing is read back or written to an Item). It replaces Fetch/Push:
+// Sync publishes the Items inside config "space_id" that have a due date and that the install's creator can see.
+type Outbound interface {
+	Connector
+	// Upsert creates (externalID == "") or updates the remote entry and returns its ID.
+	Upsert(ctx context.Context, config map[string]any, secrets map[string]string, externalID string, it OutItem) (string, error)
+	// Remove deletes the remote entry; an entry that is already gone is not an error.
+	Remove(ctx context.Context, config map[string]any, secrets map[string]string, externalID string) error
+}
+
+// OutItem is an Item as an outbound connector sees it. Start and End are calendar dates (End inclusive).
+type OutItem struct {
+	Title, Body, Start, End string
+}
+
+// RateLimited is returned by a connector when the remote asks to slow down; the scheduler waits until After.
+type RateLimited struct{ After time.Time }
+
+func (e RateLimited) Error() string {
+	return "rate limited by the remote until " + e.After.UTC().Format(time.RFC3339)
 }
 
 // OAuth is optional. A connector that signs in through OAuth implements it; the callback route (S11.3.3 / S11.3.6)
