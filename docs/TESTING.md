@@ -1039,3 +1039,9 @@ Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image ny
 | | `BACKUP_REMOTE` rclone (tujuan lokal) | PASS (regresi) |
 
 Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.
+
+## Deploy `dev-lens` ke build `91d310e` (14 Nov 2026)
+
+- `main` = merge PR #10 (CI hijau: test, authorization-matrix, parity-e2e). Image `pms:91d310e` dibangun di `losaka-app` dari `git archive` main, backup `20261114T144353Z` sebelum ganti, `PMS_IMAGE` di `.env` server diubah dari `pms:1b76d3a`.
+- Hasil: container `pms-app-1` healthy, `https://dev-lens.losakaenergi.app/` 200, `/healthz` 200, log tanpa baris ERROR. Rollback: kembalikan `PMS_IMAGE=pms:1b76d3a` dan pulihkan backup di atas bila diperlukan (migrasi hanya maju).
+- Belum dilakukan: UAT manusia, konektor Google nyata, backup luar server (`BACKUP_REMOTE` kosong di server).
