@@ -10,6 +10,8 @@ import { Button } from "./ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
+import { CustomizeMenuDialog } from "./customize-menu-dialog";
+import { listNotifications, notificationKey } from "@/lib/notifications";
 import { CreateItemDialog } from "./create-item-dialog";
 import { createAnalyticsBoard } from "@/lib/analytics-board";
 import { toast } from "sonner";
@@ -59,6 +61,8 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
     void navigate({ to });
   }
 
+  const [customizing, setCustomizing] = useState(false);
+  const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
   const hidden = me.sidebar_hidden ?? [];
   const showRequests = !hidden.includes("request_forms"), showStream = !hidden.includes("stream"), showTodo = !hidden.includes("my_todo");
   return <aside className={`flex min-h-0 flex-col border-r border-border bg-sidebar text-sidebar-foreground ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "w-14 p-1" : "w-[var(--sidebar-width)] p-3"}`}`}>
@@ -68,7 +72,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
         aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}><PanelLeft /></Button>}
     </div>
     <nav className="space-y-1" aria-label={t("nav.main.label")}>
-      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} onClick={() => go("/inbox")}/>{showRequests && <Nav icon={<ClipboardList/>} label={t("nav.requests.label")} onClick={() => go("/requests")}/>}{showStream && <Nav icon={<Activity/>} label={t("nav.stream.label")} onClick={() => go("/stream")}/>}</>}
+      {!collapsed && <><Nav icon={<Search/>} label={t("nav.search.label")} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }}/><Nav icon={<Inbox/>} label={t("nav.inbox.label")} badge={unread} onClick={() => go("/inbox")}/>{showRequests && <Nav icon={<ClipboardList/>} label={t("nav.requests.label")} onClick={() => go("/requests")}/>}{showStream && <Nav icon={<Activity/>} label={t("nav.stream.label")} onClick={() => go("/stream")}/>}</>}
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}
           className={collapsed ? "w-full px-0" : "w-full justify-start px-3"} />}>
@@ -85,14 +89,15 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
           {!hidden.includes("calendars") && <DropdownMenuItem onClick={() => go("/calendars")}>{t("nav.calendars.label")}</DropdownMenuItem>}
           {!hidden.includes("created_by_me") && <DropdownMenuItem onClick={() => go("/created-by-me")}>{t("nav.created.label")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => go("/reviews")}>{t("items.fileReview.nav")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => go("/settings/profile")}>{t("nav.customize.label")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => setCustomizing(true)}>{t("nav.customize.label")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>
     {!collapsed && <SpacesNav me={me} />}
+    <CustomizeMenuDialog me={me} open={customizing} onOpenChange={setCustomizing} />
   </aside>;
 }
-function Nav({ icon, label, hint, onClick }: { icon: React.ReactElement<{className?: string}>; label: string; hint?: string; onClick: () => void }) { return <button onClick={onClick} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent"><span className="[&>svg]:size-4">{icon}</span>{label}{hint && <kbd aria-hidden="true" className="ml-auto text-xs text-muted-foreground">{hint}</kbd>}</button>; }
+function Nav({ icon, label, hint, badge, onClick }: { icon: React.ReactElement<{className?: string}>; label: string; hint?: string; badge?: number; onClick: () => void }) { return <button onClick={onClick} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent"><span className="[&>svg]:size-4">{icon}</span>{label}{!!badge && <span className="ml-auto rounded-full bg-destructive px-1.5 text-[10px] font-medium text-white" aria-hidden="true">{badge}</span>}{hint && <kbd aria-hidden="true" className="ml-auto text-xs text-muted-foreground">{hint}</kbd>}</button>; }
 
 function SpacesNav({ me }: { me: CurrentUser }) {
   const { t } = useTranslation();
@@ -109,7 +114,10 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   }
   return (
     <nav className="mt-5 min-h-0 flex-1 space-y-1 overflow-y-auto" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
-      <h2 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("spaces.nav.label")}</h2>
+      <div className="flex items-center justify-between pr-1">
+        <h2 className="px-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("spaces.nav.label")}</h2>
+        {me.capabilities.create_space && <Button variant="ghost" size="icon-sm" aria-label={t("spaces.new")} onClick={() => setCreating(true)}><Plus /></Button>}
+      </div>
       {spaces.isPending && <p role="status" className="px-3 py-2 text-sm text-muted-foreground">{t("spaces.nav.loading")}</p>}
       {spaces.isError && (
         <div className="px-3 py-2 text-sm"><p role="alert">{t("spaces.nav.error")}</p><Button variant="link" size="sm" className="px-0" onClick={() => spaces.refetch()}>{t("spaces.nav.retry")}</Button></div>
@@ -119,9 +127,6 @@ function SpacesNav({ me }: { me: CurrentUser }) {
           <Branch key={s.id} id={s.id} space me={me} canCreate={!!s.my_capabilities?.includes("create")} name={s.kind === "personal" ? t("spaces.personal") : s.name} />
         ))}
       </ul>
-      {me.capabilities.create_space && (
-        <Button variant="ghost" size="sm" className="w-full justify-start gap-3 px-3" onClick={() => setCreating(true)}><Plus />{t("spaces.new")}</Button>
-      )}
       <ul className="border-t pt-1">
         <li><Link to="/shared-with-me" className={linkClass} activeProps={activeLink}>{t("nav.shared.label")}</Link></li>
         <li><Link to="/blueprints" className={linkClass} activeProps={activeLink}>{t("blueprints.nav")}</Link></li>

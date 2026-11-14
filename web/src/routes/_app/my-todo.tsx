@@ -3,6 +3,7 @@ import { createFileRoute, Link, useLocation, useRouter } from "@tanstack/react-r
 import { useState, type FormEvent } from "react";
 import { useInfiniteQuery, useMutation, useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import { ArrowDownUp, Filter, ListChecks, Plus } from "lucide-react";
 import { toast } from "sonner";
 import type { components } from "@/api/schema";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ export const Route = createFileRoute("/_app/my-todo")({ component: MyTodo });
 const filters = ["all", "active", "overdue"];
 const sorts = ["date", "priority", "importance", "date_modified", "date_created", "status", "title"];
 const quickTypes = ["task", "project", "folder"];
-const selectClass = "rounded border bg-background px-2 py-1 text-sm";
+const selectClass = "rounded-md border-0 bg-transparent px-1 py-1 text-sm font-medium text-primary hover:bg-muted";
 
 function MyTodo() {
   const { t } = useTranslation();
@@ -98,19 +99,19 @@ function MyTodo() {
 
   return <main className="space-y-4 p-6">
     <h1 className="workspace-title">{t("nav.todo.label")}</h1>
-    <div className="flex flex-wrap gap-4">
-      <label className="flex items-center gap-2 text-sm">{t("nav.todo.filter")}
+    <div className="flex flex-wrap items-center gap-3 border-b pb-2">
+      <label className="flex items-center gap-1 text-sm"><Filter aria-hidden="true" className="size-4 text-primary" /><span className="sr-only">{t("nav.todo.filter")}</span>
         <select className={selectClass} value={filter} onChange={(event) => updateSearch("filter", event.target.value)}>
           {filters.map((value) => <option key={value} value={value}>{t(`nav.todo.filters.${value}`)}</option>)}
         </select>
       </label>
-      <label className="flex items-center gap-2 text-sm">{t("nav.todo.sort")}
+      <label className="flex items-center gap-1 text-sm"><ArrowDownUp aria-hidden="true" className="size-4" /><span className="sr-only">{t("nav.todo.sort")}</span>
         <select className={selectClass} value={sort} onChange={(event) => updateSearch("sort", event.target.value)}>
           {sorts.map((value) => <option key={value} value={value}>{t(`nav.todo.sorts.${value}`)}</option>)}
         </select>
       </label>
       <details className="relative text-sm">
-        <summary className="cursor-pointer rounded border px-2 py-1">{t("nav.todo.options")}</summary>
+        <summary className="flex cursor-pointer items-center gap-1 rounded-md px-2 py-1 hover:bg-muted"><ListChecks aria-hidden="true" className="size-4" />{t("nav.todo.options")}</summary>
         <div className="absolute z-10 mt-1 space-y-1 rounded border bg-background p-3 shadow">
           <label className="flex items-center gap-2"><input type="checkbox" checked={twoLine} onChange={(e) => setTwoLine(e.target.checked)} />{t("nav.todo.opt.twoLine")}</label>
           <label className="flex items-center gap-2"><input type="checkbox" checked={byLocation} onChange={(e) => setByLocation(e.target.checked)} />{t("nav.todo.opt.hierarchy")}</label>
@@ -118,13 +119,14 @@ function MyTodo() {
         </div>
       </details>
     </div>
-    {personal && <form className="flex flex-wrap gap-2" onSubmit={submitQuick}>
-      <input className={`${selectClass} min-w-48 flex-1`} aria-label={t("nav.todo.quick.title")} placeholder={t("nav.todo.quick.title")}
+    {personal && <form className="flex flex-wrap items-center gap-2 border-b pb-2" onSubmit={submitQuick}>
+      <Plus aria-hidden="true" className="size-4 text-muted-foreground" />
+      <input className="min-w-48 flex-1 bg-transparent px-1 py-1 text-sm outline-none focus-visible:ring-1 focus-visible:ring-ring" aria-label={t("nav.todo.quick.title")} placeholder={t("nav.todo.quick.title")}
         value={quickTitle} onChange={(e) => setQuickTitle(e.target.value)} />
       <select className={selectClass} aria-label={t("nav.todo.quick.type")} value={quickType} onChange={(e) => setQuickType(e.target.value)}>
         {quickTypes.map((type) => <option key={type} value={type}>{t(`nav.todo.quick.types.${type}`)}</option>)}
       </select>
-      <Button type="submit" size="sm" disabled={quickAdd.isPending || !quickTitle.trim()}>{t("nav.todo.quick.add")}</Button>
+      <Button type="submit" size="sm" variant="ghost" disabled={quickAdd.isPending || !quickTitle.trim()}>{t("nav.todo.quick.add")}</Button>
     </form>}
     {query.isPending && <p role="status">{t("items.loading")}</p>}
     {query.isError && <div>
@@ -133,7 +135,7 @@ function MyTodo() {
     </div>}
     {query.isSuccess && items.length === 0 && <p>{t("nav.todo.empty")}</p>}
     {groups.map((group) => <section key={group.key} aria-label={group.key || undefined}>
-      {group.key && <h2 className="mt-4 text-sm font-semibold">{group.key} ({group.rows.length})</h2>}
+      {group.key && <h2 className="mt-4 text-xs font-semibold uppercase tracking-wide">{group.key} ({group.rows.length})</h2>}
     <ul className="divide-y">
       {group.rows.map((item) => {
         const statuses = (workflows.data?.items.find((workflow) => workflow.statuses.some((status) => status.id === item.status?.id))
@@ -144,6 +146,7 @@ function MyTodo() {
           return name ? [name] : [];
         });
         return <li key={item.id} className={`flex flex-wrap items-center gap-3 text-sm ${twoLine ? "py-4" : "py-2"}`}>
+          <Avatars people={item.assignees ?? []} />
           <Link className="min-w-40 flex-1 font-medium hover:underline" to="/tasks/$itemId" params={{ itemId: item.id }}>{item.title}</Link>
           {locations.length > 0 && <span className="rounded bg-muted px-2 py-1 text-foreground">{[...new Set(locations)].join(", ")}</span>}
           {item.due_date && <time className="text-muted-foreground" dateTime={item.due_date}>{formatDate(item.due_date, profile)}</time>}
@@ -155,7 +158,6 @@ function MyTodo() {
                 {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
               </select>
             : item.status && <StatusPill name={item.status.name} color={item.status.color} group={item.status.group} />}
-          <Avatars people={item.assignees ?? []} />
           {showDuration && item.duration_days != null && <span className="text-muted-foreground">{t("nav.todo.duration", { count: item.duration_days })}</span>}
         </li>;
       })}

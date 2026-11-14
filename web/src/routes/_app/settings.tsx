@@ -16,8 +16,12 @@ function SettingsLayout() {
         <nav className="grid grid-cols-2 gap-3 lg:block lg:space-y-6" aria-label={t("settings.nav.label")}>
           <section>
             <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("settings.nav.personal")}</h2>
-            <Link to="/settings/profile" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.profile.title")}</Link>
+            <Link to="/settings/profile" activeOptions={{ includeHash: true }} className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.profile.title")}</Link>
+            <Link to="/settings/work-schedule" className={linkClass}
+              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.workSchedule.title")}</Link>
             <Link to="/settings/account" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.account.title")}</Link>
+            <Link to="/settings/profile" hash="email" activeOptions={{ includeHash: true }} className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("nav.account.emailPrefs")}</Link>
+            <Link to="/settings/profile" hash="appearance" activeOptions={{ includeHash: true }} className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("nav.account.appearance")}</Link>
             <Link to="/settings/security" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.security.title")}</Link>
           </section>
           <section>
@@ -29,8 +33,6 @@ function SettingsLayout() {
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("apps.title")}</Link>
             {me?.user_type === "admin" && <Link to="/settings/rates" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.rates")}</Link>}
-            <Link to="/settings/work-schedule" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.workSchedule.title")}</Link>
             <Link to="/settings/item-types" className={linkClass}
               activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.itemTypes.title")}</Link>
             <Link to="/settings/workflows" className={linkClass}
