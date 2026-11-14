@@ -10,6 +10,7 @@
   "filter": "Filter reports",
   "noMatch": "No report matches that name.",
   "create.title": "New report",
+  "create.dialogTitle": "Create report",
   "create.name": "Name",
   "create.location": "Location",
   "create.personal": "My reports (private)",

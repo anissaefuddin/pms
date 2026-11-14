@@ -48,6 +48,7 @@ test("E2E-PAR-03: a status guard blocks the move the same way in the UI and over
   const editor = await as(browser, e.PMS_FIXTURE_M8_EDITOR!);
   await admin.goto("/settings/workflows");
   await admin.getByRole("combobox", { name: "Workflow", exact: true }).selectOption(e.PMS_FIXTURE_M8_WORKFLOW!);
+  await admin.getByRole("button", { name: "Completed", exact: true }).click();
   await admin.getByRole("checkbox", { name: /Needs a due date\s*:\s*Completed/ }).click();
   await expect(admin.getByRole("checkbox", { name: /Needs a due date\s*:\s*Completed/ })).toBeChecked();
   await admin.getByRole("checkbox", { name: /Needs an assignee\s*:\s*Completed/ }).click();

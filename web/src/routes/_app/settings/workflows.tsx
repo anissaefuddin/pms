@@ -28,6 +28,8 @@ function WorkflowsRoute() {
   const [name, setName] = useState("");
   const [rename, setRename] = useState<string>();
   const [newStatus, setNewStatus] = useState("");
+  const [adding, setAdding] = useState<(typeof statusGroups)[number]>(); // column whose inline "add status" field is open
+  const [selected, setSelected] = useState(""); // status shown in the editor under the board
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [removing, setRemoving] = useState<WorkflowStatus>(); // status awaiting a delete confirmation
   const [moveFrom, setMoveFrom] = useState<WorkflowStatus>(); // status in use: ask where its items go
@@ -75,8 +77,8 @@ function WorkflowsRoute() {
     event.preventDefault();
     if (!newStatus.trim()) return;
     const updated = await run(() => send<Workflow>(`/workflows/${workflow.id}/statuses`, "POST",
-      { name: newStatus.trim(), group: "active", color: "slate" }));
-    if (updated) { store(updated); setNewStatus(""); }
+      { name: newStatus.trim(), group: adding ?? "active", color: "slate" }));
+    if (updated) { store(updated); setNewStatus(""); setAdding(undefined); }
   }
   async function reorder(status: WorkflowStatus, delta: -1 | 1) {
     const ids = moveId(workflow.statuses.map((s) => s.id), status.id, delta);
@@ -127,16 +129,32 @@ function WorkflowsRoute() {
     <FormError message={error} />
     <section aria-labelledby="wf-statuses" className="space-y-3">
       <h3 id="wf-statuses" className="text-sm font-medium">{t("settings.workflows.statuses")}</h3>
-      <ol className="space-y-3">
-        {workflow.statuses.map((status, index) => <StatusRow key={`${status.id}:${status.name}`} status={status} siblings={workflow.statuses}
-          admin={admin} busy={busy} first={index === 0} last={index === workflow.statuses.length - 1}
-          onPatch={(patch) => saveStatus(status, patch)} onMove={(delta) => reorder(status, delta)} onRemove={() => setRemoving(status)} />)}
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {statusGroups.map((group) => <div key={group} role="group" aria-label={t(`settings.workflows.group.${group}`)} className="space-y-2">
+          <h4 className="text-sm font-semibold">{t(`settings.workflows.group.${group}`)}</h4>
+          {workflow.statuses.filter((s) => s.group === group).map((s) => <button key={s.id} type="button" aria-pressed={selected === s.id}
+            onClick={() => setSelected(selected === s.id ? "" : s.id)}
+            className="flex w-full items-center gap-2 rounded-lg border bg-card px-3 py-2 text-left text-sm hover:bg-muted aria-pressed:border-primary aria-pressed:ring-1 aria-pressed:ring-primary focus-visible:outline-2 focus-visible:outline-ring">
+            <span aria-hidden className={`size-3 shrink-0 rounded-full ${statusDotClass(s.color)}`} />{s.name}</button>)}
+          {admin && (adding === group
+            ? <form className="space-y-1" onSubmit={addStatus}>
+                <Input autoFocus aria-label={t("settings.workflows.statusName")} value={newStatus} maxLength={120} onChange={(event) => setNewStatus(event.target.value)} />
+                <div className="flex gap-2">
+                  <Button type="submit" size="sm" disabled={busy || !newStatus.trim()}>{t("settings.workflows.addStatusSubmit")}</Button>
+                  <Button type="button" size="sm" variant="ghost" onClick={() => { setAdding(undefined); setNewStatus(""); }}>{t("settings.workflows.cancel")}</Button>
+                </div>
+              </form>
+            : <Button type="button" variant="ghost" size="sm" className="text-primary" onClick={() => { setAdding(group); setNewStatus(""); }}>+ {t("settings.workflows.addStatus")}</Button>)}
+        </div>)}
+      </div>
+      <ol>
+        {workflow.statuses.filter((s) => s.id === selected).map((status) => {
+          const index = workflow.statuses.indexOf(status);
+          return <StatusRow key={`${status.id}:${status.name}`} status={status} siblings={workflow.statuses}
+            admin={admin} busy={busy} first={index === 0} last={index === workflow.statuses.length - 1}
+            onPatch={(patch) => saveStatus(status, patch)} onMove={(delta) => reorder(status, delta)} onRemove={() => setRemoving(status)} />;
+        })}
       </ol>
-      {admin && <form className="flex flex-wrap items-end gap-2" onSubmit={addStatus}>
-        <label className="space-y-1 text-sm"><span className="block">{t("settings.workflows.statusName")}</span>
-          <Input value={newStatus} maxLength={120} onChange={(event) => setNewStatus(event.target.value)} /></label>
-        <Button type="submit" variant="outline" disabled={busy || !newStatus.trim()}>{t("settings.workflows.addStatus")}</Button>
-      </form>}
     </section>
 
     <ConfirmDialog open={confirmDelete} onOpenChange={setConfirmDelete} busy={busy} error={error}
@@ -175,17 +193,18 @@ function StatusRow({ status, siblings, admin, busy, first, last, onPatch, onMove
   const label = (text: string) => `${text}: ${status.name}`;
   const toggleNext = (id: string) => onPatch({
     allowed_next: status.allowed_next.includes(id) ? status.allowed_next.filter((x) => x !== id) : [...status.allowed_next, id] });
-  return <li className="space-y-2 rounded border p-3">
+  return <li className="list-none space-y-2 rounded-lg border bg-card p-4">
     <fieldset disabled={!admin || busy} className="flex flex-wrap items-center gap-3">
       <legend className="sr-only">{status.name}</legend>
       <span aria-hidden className={`size-3 shrink-0 rounded-full ${statusDotClass(status.color)}`} />
       <Input className="w-44" aria-label={label(t("settings.workflows.statusName"))} value={name} maxLength={120}
         onChange={(event) => setName(event.target.value)}
         onBlur={() => name.trim() && name.trim() !== status.name && onPatch({ name: name.trim() })} />
-      <select className={selectClass} aria-label={label(t("settings.workflows.color"))} value={status.color}
-        onChange={(event) => onPatch({ color: event.target.value })}>
-        {statusColorTokens.map((token) => <option key={token} value={token}>{token}</option>)}
-      </select>
+      <div role="group" aria-label={label(t("settings.workflows.color"))} className="flex flex-wrap gap-1">
+        {statusColorTokens.map((token) => <button key={token} type="button" aria-label={token} aria-pressed={status.color === token} title={token}
+          onClick={() => onPatch({ color: token })}
+          className={`size-6 rounded-full ${statusDotClass(token)} aria-pressed:ring-2 aria-pressed:ring-foreground aria-pressed:ring-offset-2 focus-visible:outline-2 focus-visible:outline-ring`} />)}
+      </div>
       <select className={selectClass} aria-label={label(t("settings.workflows.group"))} value={status.group}
         onChange={(event) => onPatch({ group: event.target.value })}>
         {statusGroups.map((group) => <option key={group} value={group}>{t(`settings.workflows.group.${group}`)}</option>)}
