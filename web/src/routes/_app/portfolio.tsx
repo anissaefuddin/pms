@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useMemo, useState } from "react";
@@ -16,6 +17,7 @@ const day = 86_400_000;
 const atDay = (value?: string | null) => value ? Date.parse(`${value}T00:00:00Z`) : undefined;
 
 function Portfolio() {
+  const { t } = useTranslation();
   const initial = new URLSearchParams(window.location.search).get("projects") ?? "";
   const [draft, setDraft] = useState(initial);
   const [projectIDs, setProjectIDs] = useState(() => initial.split(",").map(x => x.trim()).filter(Boolean));
@@ -31,20 +33,20 @@ function Portfolio() {
   const itemByID = new Map(timeline.data?.items.map(x => [x.item.id, x.item.title]));
 
   return <main className="min-w-0 space-y-5 p-4 sm:p-8">
-    <header><h1 className="workspace-title">Portfolio Gantt</h1><p className="text-sm text-muted-foreground">Compare visible project schedules and their cross-project dependencies.</p></header>
+    <header><h1 className="workspace-title">{t("portfolio.title")}</h1><p className="text-sm text-muted-foreground">{t("portfolio.description")}</p></header>
     <form className="flex max-w-3xl items-end gap-2" onSubmit={event => {
       event.preventDefault();
       const ids = draft.split(",").map(x => x.trim()).filter(Boolean);
       setProjectIDs(ids);
       window.history.replaceState(null, "", ids.length ? `/portfolio?projects=${encodeURIComponent(ids.join(","))}` : "/portfolio");
     }}>
-      <label className="grow text-sm">Project IDs, separated by commas<Input value={draft} onChange={event => setDraft(event.target.value)} placeholder="UUID, UUID" /></label>
-      <Button type="submit">Show timeline</Button>
+      <label className="grow text-sm">{t("portfolio.ids")}<Input value={draft} onChange={event => setDraft(event.target.value)} placeholder={t("portfolio.placeholder")} /></label>
+      <Button type="submit">{t("portfolio.show")}</Button>
     </form>
-    {timeline.isPending && projectIDs.length > 0 && <p role="status">Loading portfolio…</p>}
+    {timeline.isPending && projectIDs.length > 0 && <p role="status">{t("portfolio.loading")}</p>}
     {timeline.error && <p role="alert">{timeline.error.message}</p>}
     {timeline.data && <>
-      <section aria-label="Portfolio timeline" className="overflow-x-auto rounded-lg border">
+      <section aria-label={t("portfolio.timeline")} className="overflow-x-auto rounded-lg border">
         <div className="min-w-[720px] divide-y">
           {timeline.data.items.map(({ project_id: projectID, item }) => {
             const start = atDay(item.start_date) ?? atDay(item.due_date);
@@ -54,17 +56,17 @@ function Portfolio() {
             const width = start && due ? Math.max(1.5, ((due - start) / day + 1) / span * 100) : 0;
             return <div key={item.id} className="grid grid-cols-[16rem_1fr] items-center gap-3 p-2 text-sm">
               <div className="truncate"><span className="text-muted-foreground">{projectByID.get(projectID)} · </span>{item.title}</div>
-              <div role="img" className="relative h-6 rounded bg-muted" aria-label={`${item.title}: ${item.start_date ?? "unscheduled"} to ${item.due_date ?? "unscheduled"}`}>
+              <div role="img" className="relative h-6 rounded bg-muted" aria-label={t("portfolio.bar", { title: item.title, start: item.start_date ?? t("portfolio.unscheduled"), due: item.due_date ?? t("portfolio.unscheduled") })}>
                 {width > 0 && <div className="absolute top-1 h-4 rounded bg-primary" style={{ left: `${left}%`, width: `${width}%` }} />}
               </div>
             </div>;
           })}
         </div>
       </section>
-      <section><h2 className="font-semibold">Cross-project dependencies</h2>
-        {timeline.data.dependencies.length === 0 ? <p className="text-sm text-muted-foreground">No dependency connects the selected projects.</p> :
+      <section><h2 className="font-semibold">{t("portfolio.deps")}</h2>
+        {timeline.data.dependencies.length === 0 ? <p className="text-sm text-muted-foreground">{t("portfolio.noDeps")}</p> :
           <ul className="divide-y">{timeline.data.dependencies.map(dep => <li className="py-2 text-sm" key={dep.id}>
-            {itemByID.get(dep.predecessor_id)} → {itemByID.get(dep.successor_id)} ({dep.type}{dep.lag ? `, ${dep.lag}d` : ""})
+            {itemByID.get(dep.predecessor_id)} → {itemByID.get(dep.successor_id)} ({dep.type}{dep.lag ? t("portfolio.lag", { lag: dep.lag }) : ""})
           </li>)}</ul>}
       </section>
     </>}
