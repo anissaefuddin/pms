@@ -1258,46 +1258,46 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 ### E11.3 API dan integrasi
 
 **S11.3.1 API key dan scope (API-01, SET-08) — 2.5 hari**
-- [ ] [API] Kelola API key
-- [ ] [DB] Key disimpan sebagai hash
-- [ ] [BE] Middleware auth key dan scope
-- [ ] [FE] Halaman Apps & Integrations: tab API
-- [ ] [TEST] Scope, rotasi, pencabutan
+- [x] [API] Kelola API key
+- [x] [DB] Key disimpan sebagai hash
+- [x] [BE] Middleware auth key dan scope
+- [x] [FE] Halaman Apps & Integrations: tab API
+- [x] [TEST] Scope, rotasi, pencabutan
 
 **S11.3.2 Webhook (API-02) — 3 hari**
-- [ ] [API] Kelola langganan webhook
-- [ ] [DB] Langganan dan log pengiriman
-- [ ] [BE] Kirim lewat outbox; tanda tangan HMAC dan timestamp
-- [ ] [BE] Retry dan nonaktif otomatis
-- [ ] [FE] UI webhook
-- [ ] [TEST] E2E-PAR-11
+- [x] [API] Kelola langganan webhook
+- [x] [DB] Langganan dan log pengiriman
+- [x] [BE] Kirim lewat outbox; tanda tangan HMAC dan timestamp
+- [x] [BE] Retry dan nonaktif otomatis
+- [x] [FE] UI webhook
+- [x] [TEST] E2E-PAR-11
 
 **S11.3.3 OAuth app dan Authorized apps (API-03) — 2 hari**
-- [ ] [BE] OAuth2 authorization code + PKCE
-- [ ] [BE] Penyimpanan token dan pencabutan
-- [ ] [FE] Layar persetujuan dan daftar Authorized apps
-- [ ] [TEST] Pencabutan efektif
+- [x] [BE] OAuth2 authorization code + PKCE
+- [x] [BE] Penyimpanan token dan pencabutan
+- [x] [FE] Layar persetujuan dan daftar Authorized apps
+- [x] [TEST] Pencabutan efektif
 
 **S11.3.4 Framework konektor (INT-01) — 1.5 hari**
-- [ ] [BE] Lifecycle pasang, konfigurasi, nonaktif
-- [ ] [BE] Penyimpanan rahasia terenkripsi
-- [ ] [TEST] Lifecycle
+- [x] [BE] Lifecycle pasang, konfigurasi, nonaktif
+- [x] [BE] Penyimpanan rahasia terenkripsi
+- [x] [TEST] Lifecycle
 
 **S11.3.5 Sinkronisasi dua arah dan konflik (INT-02) — 2 hari**
-- [ ] [DOC] Kebijakan konflik
-- [ ] [BE] Pemetaan ID eksternal
-- [ ] [BE] Deteksi dan penyelesaian konflik
-- [ ] [TEST] Tidak ada penimpaan diam-diam
+- [x] [DOC] Kebijakan konflik
+- [x] [BE] Pemetaan ID eksternal
+- [x] [BE] Deteksi dan penyelesaian konflik
+- [x] [TEST] Tidak ada penimpaan diam-diam
 
 **S11.3.6 Dua konektor pilot (INT-03) — 1.5 hari**
-- [ ] [BE] GitHub Issues dua arah
-- [ ] [BE] Google Calendar satu arah
-- [ ] [TEST] Uji dengan akun uji
+- [x] [BE] GitHub Issues dua arah
+- [x] [BE] Google Calendar satu arah
+- [ ] [TEST] Uji dengan akun uji — catatan: uji server palsu hijau; uji akun sungguhan (`TestRealGitHubAccount`, `TestRealGoogleAccount`) ada tetapi BELUM dijalankan (butuh env `PMS_TEST_*`), lihat TESTING.md
 
 **S11.3.7 Bookmark dan feedback (NAV-08, NAV-09) — 1.5 hari**
-- [ ] [BE] API bookmark dan feedback
-- [ ] [FE] Bookmark URL di Space
-- [ ] [FE] Form feedback
+- [x] [BE] API bookmark dan feedback
+- [x] [FE] Bookmark URL di Space
+- [x] [FE] Form feedback
 
 ### E11.4 Gate
 
@@ -1305,7 +1305,7 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [ ] [TEST] UAT per requirement M11
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
-- [ ] [DOC] Gate report G2b
+- [x] [DOC] Gate report G2b ([G2B](parity/gate-reports/G2B_FILES_ANALYTICS_INTEGRATION.md)); hasil BELUM LULUS: UAT oleh orang dan uji akun sungguhan belum dijalankan
 
 ## M12 — Enterprise dan penerimaan parity (G4)
 

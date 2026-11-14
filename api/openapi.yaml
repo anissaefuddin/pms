@@ -17,6 +17,7 @@ info:
 servers:
   - url: /api/v1
 tags:
+  - { name: webhooks, description: "Langganan webhook (API-02)" }
   - { name: auth, description: "Login, session, password, undangan" }
   - { name: users, description: "Profil, user, grup, seat" }
   - { name: spaces, description: "Space dan sharing" }
@@ -32,6 +33,7 @@ tags:
 
 security:
   - cookieAuth: []
+  - bearerKey: []
 
 paths:
   /users/{userId}/capacity:
@@ -146,6 +148,122 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/bookmarks:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      operationId: listSpaceBookmarks
+      summary: Bookmark URL eksternal sebuah Space (NAV-08); hak View
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/SpaceBookmark' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createSpaceBookmark
+      summary: Tambah bookmark; hanya URL http/https (hak Edit, maks 100 per Space)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SpaceBookmarkInput' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SpaceBookmark' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/bookmarks/{bookmarkId}:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+      - { name: bookmarkId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: updateSpaceBookmark
+      summary: Ubah url, title, description, atau position (hak Edit)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              additionalProperties: false
+              properties:
+                url: { type: string, maxLength: 2000 }
+                title: { type: string, minLength: 1, maxLength: 200 }
+                description: { type: string, maxLength: 1000 }
+                position: { type: integer, minimum: 0 }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SpaceBookmark' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteSpaceBookmark
+      summary: Hapus bookmark (hak Edit)
+      responses:
+        '204': { description: Dihapus }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /feedback:
+    get:
+      operationId: listFeedback
+      summary: Umpan balik terbaru (maks 200); hanya admin (NAV-09)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/FeedbackEntry' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createFeedback
+      summary: Kirim umpan balik; 5 per pengguna per jam, 429 bila lebih
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [subject]
+              additionalProperties: false
+              properties:
+                subject: { type: string, minLength: 1, maxLength: 200 }
+                rating: { type: integer, minimum: 1, maximum: 5, nullable: true }
+                comment: { type: string, maxLength: 4000 }
+                page: { type: string, maxLength: 200, description: 'Path aplikasi asal; query dan fragment dibuang' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [id]
+                properties:
+                  id: { type: string, format: uuid }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
   /baselines/{baselineId}/variance:
     parameters:
       - { name: baselineId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -164,6 +282,70 @@ paths:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/BaselineVariance' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /api-keys:
+    get:
+      operationId: listApiKeys
+      summary: API key milik pemanggil (tanpa nilai rahasia; hanya sesi)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/ApiKey' }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createApiKey
+      summary: Buat API key; nilai penuh hanya dikembalikan sekali di respons ini (hanya sesi)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, scope]
+              additionalProperties: false
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+                scope: { type: string, enum: [read, write], description: "read = hanya GET; write = semua metode. Hak tetap mengikuti pembuatnya (policy)." }
+                expires_at: { type: string, format: date-time, nullable: true }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKeyCreated' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /api-keys/{keyId}/rotate:
+    post:
+      operationId: rotateApiKey
+      summary: Ganti nilai rahasia; nilai lama langsung tidak berlaku (hanya sesi)
+      parameters:
+        - { name: keyId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiKeyCreated' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /api-keys/{keyId}:
+    delete:
+      operationId: revokeApiKey
+      summary: Cabut API key; efektif segera (hanya sesi)
+      parameters:
+        - { name: keyId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Dicabut }
+        '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
   /rates:
     get:
@@ -210,6 +392,154 @@ paths:
                   id: { type: string, format: uuid }
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /connectors:
+    get:
+      operationId: listConnectors
+      summary: Admin. Jenis konektor terdaftar dan pemasangan (rahasia hanya nama)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { kinds: { type: array, items: { type: string } }, items: { type: array, items: { $ref: '#/components/schemas/ConnectorInstall' } } } } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: installConnector
+      summary: Admin. Pasang konektor; rahasia dienkripsi dengan PMS_CONNECTOR_KEY (503 bila kunci tidak ada)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [kind, name]
+              properties:
+                kind: { type: string }
+                name: { type: string, minLength: 1, maxLength: 120 }
+                config: { type: object, additionalProperties: true }
+                secrets: { type: object, additionalProperties: { type: string } }
+      responses:
+        '201': { description: Dibuat, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      operationId: configureConnector
+      summary: Admin. Ubah nama, config, atau rahasia (digabung per nama; nilai kosong menghapus)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+                config: { type: object, additionalProperties: true }
+                secrets: { type: object, additionalProperties: { type: string } }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/disable:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: disableConnector
+      summary: Admin. Nonaktifkan; sinkronisasi ditolak (409) sampai diaktifkan lagi
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/enable:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: enableConnector
+      summary: Admin. Aktifkan kembali
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { $ref: '#/components/schemas/ConnectorInstall' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/links:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: linkConnectorItem
+      summary: Admin. Tautkan Item ke record eksternal (tanpa external_id record eksternal dibuat dari Item)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [item_id]
+              properties:
+                item_id: { type: string, format: uuid }
+                external_id: { type: string }
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { external_id: { type: string } } } } } }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/sync:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: syncConnector
+      summary: Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  pushed: { type: integer }
+                  pulled: { type: integer }
+                  conflicts: { type: integer }
+                  pending: { type: integer }
+                  skipped: { type: integer }
+                  unchanged: { type: integer }
+        '409': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/github-webhook:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: githubConnectorWebhook
+      summary: Webhook GitHub (tanpa sesi). Tanda tangan HMAC X-Hub-Signature-256 dengan rahasia webhook_secret konektor; event issues menjadwalkan sinkron segera
+      security: []
+      requestBody: { required: true, content: { application/json: { schema: { type: object, additionalProperties: true } } } }
+      responses:
+        '204': { description: Diterima }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /connectors/{connectorId}/conflicts:
+    parameters:
+      - { name: connectorId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: status, in: query, required: false, schema: { type: string, enum: [open, all] } }
+    get:
+      operationId: listConnectorConflicts
+      summary: Admin. Konflik sinkronisasi (default hanya yang terbuka)
+      responses:
+        '200': { description: OK, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { $ref: '#/components/schemas/ConnectorConflict' } } } } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /connector-conflicts/{conflictId}/resolve:
+    parameters:
+      - { name: conflictId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: resolveConnectorConflict
+      summary: Admin. Pilih sisi yang dipakai (item atau remote); sisi lain ditimpa dengan sengaja, teksnya tetap di catatan konflik
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [resolution]
+              properties:
+                resolution: { type: string, enum: [item, remote] }
+      responses:
+        '204': { description: Diselesaikan }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
   /items/{projectId}/gantt-snapshots:
     parameters:
       - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -262,6 +592,91 @@ paths:
       responses:
         '204': { description: Dicabut }
         '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /oauth/clients:
+    get:
+      operationId: listOAuthClients
+      summary: Daftar OAuth app terdaftar (admin; secret tidak pernah dikembalikan lagi)
+      responses:
+        '200': { description: OK }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createOAuthClient
+      summary: Daftarkan OAuth app (admin); client_secret hanya tampil sekali di respons ini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, redirect_uris]
+              properties:
+                name: { type: string }
+                redirect_uris: { type: array, items: { type: string } }
+      responses:
+        '201': { description: Dibuat }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /oauth/clients/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: deleteOAuthClient
+      summary: Hapus OAuth app dan cabut semua grant-nya (admin)
+      responses:
+        '204': { description: Dihapus }
+        '404': { $ref: '#/components/responses/Problem' }
+  /oauth/authorize:
+    get:
+      operationId: getOAuthAuthorizeInfo
+      summary: Validasi permintaan otorisasi untuk layar persetujuan (redirect URI harus sama persis, PKCE S256 wajib)
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: approveOAuthAuthorize
+      summary: Setujui atau tolak; mengembalikan redirect_to berisi code sekali pakai (60 detik) dan state. Hanya lewat sesi cookie
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [client_id, redirect_uri, scope, state, code_challenge, code_challenge_method, approve]
+              properties:
+                client_id: { type: string }
+                redirect_uri: { type: string }
+                scope: { type: string, description: 'read, write (dipisah spasi)' }
+                state: { type: string }
+                code_challenge: { type: string }
+                code_challenge_method: { type: string, enum: [S256] }
+                approve: { type: boolean }
+      responses:
+        '200': { description: OK }
+        '400': { $ref: '#/components/responses/Problem' }
+  /oauth/token:
+    post:
+      operationId: oauthToken
+      summary: Tukar code (+ code_verifier) atau refresh_token dengan token; form-urlencoded, klien memakai client_id dan client_secret. Token disimpan sebagai hash
+      security: []
+      responses:
+        '200': { description: access_token, refresh_token, token_type, expires_in, scope }
+        '400': { description: invalid_grant atau unsupported_grant_type }
+        '401': { description: invalid_client }
+  /oauth/grants:
+    get:
+      operationId: listOAuthGrants
+      summary: Authorized apps milik pengguna
+      responses:
+        '200': { description: OK }
+  /oauth/grants/{id}:
+    parameters:
+      - { name: id, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      operationId: revokeOAuthGrant
+      summary: Cabut app; access dan refresh token langsung tidak berlaku
+      responses:
+        '204': { description: Dicabut }
         '404': { $ref: '#/components/responses/Problem' }
   /public/gantt/{token}:
     parameters:
@@ -2571,6 +2986,115 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /webhooks:
+    get:
+      tags: [webhooks]
+      operationId: listWebhooks
+      summary: Langganan webhook milik pengguna (tanpa secret)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, event_types]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Webhook' } }
+                  event_types: { type: array, items: { type: string } }
+    post:
+      tags: [webhooks]
+      operationId: createWebhook
+      summary: Buat langganan; secret hanya muncul di respons ini
+      description: |
+        Setiap pengiriman adalah POST JSON dengan header X-PMS-Event, X-PMS-Delivery (id event, tetap sama pada retry; gunakan untuk dedupe),
+        X-PMS-Timestamp (detik unix) dan X-PMS-Signature = "v1=" + hex(HMAC-SHA256(secret, timestamp + "." + body)).
+        Penerima WAJIB memverifikasi tanda tangan dan menolak permintaan bila timestamp berselisih > 5 menit dari jam penerima (anti-replay).
+        Hanya event atas item yang boleh dilihat pemilik langganan yang dikirim. URL harus https dan tidak boleh menuju alamat internal.
+        Gagal berturut-turut 10 kali menonaktifkan langganan; retry dengan backoff 1m, 4m, 16m, 64m, 4j (maks 6 percobaan per pengiriman).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, url, event_types]
+              properties:
+                name: { type: string, maxLength: 100 }
+                url: { type: string, format: uri }
+                event_types: { type: array, minItems: 1, items: { type: string } }
+      responses:
+        '201':
+          description: Dibuat; berisi secret
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Webhook' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /webhooks/{webhookId}:
+    parameters:
+      - { name: webhookId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [webhooks]
+      operationId: updateWebhook
+      summary: Ubah atau aktifkan kembali (enabled=true mereset penghitung gagal)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string, maxLength: 100 }
+                url: { type: string, format: uri }
+                event_types: { type: array, minItems: 1, items: { type: string } }
+                enabled: { type: boolean }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Webhook' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [webhooks]
+      operationId: deleteWebhook
+      summary: Hapus langganan
+      responses:
+        '204': { description: Dihapus }
+        '404': { $ref: '#/components/responses/Problem' }
+  /webhooks/{webhookId}/deliveries:
+    parameters:
+      - { name: webhookId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [webhooks]
+      operationId: listWebhookDeliveries
+      summary: Log pengiriman terbaru (100)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, event_id, event_type, status, attempts, created_at]
+                      properties:
+                        id: { type: string, format: uuid }
+                        event_id: { type: string, format: uuid }
+                        event_type: { type: string }
+                        status: { type: string, enum: [pending, success, failed] }
+                        attempts: { type: integer }
+                        response_status: { type: integer, nullable: true }
+                        last_error: { type: string, nullable: true }
+                        created_at: { type: string, format: date-time }
+                        delivered_at: { type: string, format: date-time, nullable: true }
+        '404': { $ref: '#/components/responses/Problem' }
   /automation/dead-events:
     get:
       tags: [automation]
@@ -4690,6 +5214,10 @@ components:
       type: apiKey
       in: cookie
       name: pms_session
+    bearerKey:
+      type: http
+      scheme: bearer
+      description: "API key `pmsk_...` (Authorization: Bearer). Bertindak sebagai pembuatnya lewat policy; scope read hanya GET."
 
   headers:
     ETag:
@@ -4847,6 +5375,74 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
+    ConnectorInstall:
+      type: object
+      required: [id, kind, name, config, secret_names, enabled, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        kind: { type: string }
+        name: { type: string }
+        config: { type: object, additionalProperties: true }
+        secret_names: { type: array, items: { type: string } }
+        enabled: { type: boolean }
+        created_at: { type: string, format: date-time }
+        last_sync_at: { type: string, format: date-time, nullable: true }
+        last_sync_ok: { type: boolean, nullable: true }
+        last_sync_message: { type: string, nullable: true }
+    ConnectorConflict:
+      type: object
+      properties:
+        id: { type: string, format: uuid }
+        external_id: { type: string }
+        item_id: { type: string, format: uuid }
+        item_title: { type: string }
+        remote_title: { type: string }
+        base_title: { type: string, nullable: true }
+        differs: { type: string, description: 'Kolom yang berbeda, dipisah koma (title, body, done)' }
+        resolution: { type: string, enum: [item, remote], nullable: true }
+        resolved_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    Webhook:
+      type: object
+      required: [id, name, url, event_types, enabled, consecutive_failures, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        url: { type: string }
+        event_types: { type: array, items: { type: string } }
+        enabled: { type: boolean }
+        consecutive_failures: { type: integer }
+        disabled_reason: { type: string, nullable: true }
+        created_at: { type: string, format: date-time }
+        secret: { type: string, description: Hanya pada respons pembuatan }
+    SpaceBookmark:
+      type: object
+      required: [id, url, title, description, position]
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string }
+        title: { type: string }
+        description: { type: string }
+        position: { type: integer }
+    SpaceBookmarkInput:
+      type: object
+      required: [url, title]
+      additionalProperties: false
+      properties:
+        url: { type: string, maxLength: 2000 }
+        title: { type: string, minLength: 1, maxLength: 200 }
+        description: { type: string, maxLength: 1000 }
+    FeedbackEntry:
+      type: object
+      required: [id, user, subject, rating, comment, page, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        user: { type: string, nullable: true }
+        subject: { type: string }
+        rating: { type: integer, nullable: true }
+        comment: { type: string }
+        page: { type: string }
+        created_at: { type: string, format: date-time }
     ResourceSchedule:
       type: object
       properties:
@@ -6312,6 +6908,23 @@ components:
         due: { type: string, format: date, nullable: true }
         start_variance_days: { type: integer, format: int32, nullable: true }
         due_variance_days: { type: integer, format: int32, nullable: true }
+    ApiKey:
+      type: object
+      required: [id, name, scope, prefix, expires_at, last_used_at, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        scope: { type: string, enum: [read, write] }
+        prefix: { type: string }
+        expires_at: { type: string, format: date-time, nullable: true }
+        last_used_at: { type: string, format: date-time, nullable: true }
+        created_at: { type: string, format: date-time }
+    ApiKeyCreated:
+      type: object
+      required: [key, secret]
+      properties:
+        key: { $ref: '#/components/schemas/ApiKey' }
+        secret: { type: string, description: "Dikirim sekali saja; hanya hash yang disimpan" }
     HourlyRate:
       type: object
       required: [id, user_id, role_id, name, rate_minor, effective_from]

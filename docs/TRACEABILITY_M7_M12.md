@@ -71,24 +71,24 @@
 
 | Req | Story | Kriteria penerimaan ringkas | Tes | Bukti |
 |---|---|---|---|---|
-| VIEW-10 | S11.1.1 | View Files dan Chart hanya menampilkan data berizin | Izin + Playwright | |
-| FIL-01 | S11.1.2 | Versi immutable; akses per versi dicek | Tes izin versi | |
-| FIL-02 | S11.1.3 | Anotasi tetap di versinya | Integrasi | |
+| VIEW-10 | S11.1.1 | View Files dan Chart hanya menampilkan data berizin | Izin + Playwright | `TestProjectFiles`, `project-files.spec.ts` |
+| FIL-01 | S11.1.2 | Versi immutable; akses per versi dicek | Tes izin versi | `TestAttachmentVersionsAreImmutableAndPolicyChecked` |
+| FIL-02 | S11.1.3 | Anotasi tetap di versinya | Integrasi | `TestProofingAnnotationsStayOnTheirVersion` |
 | FIL-03 | S11.1.4 | Dua versi tampil berdampingan | Playwright | `web/tests/file-compare.spec.ts` |
-| FIL-04 | S11.1.5 | Approval v1 tidak pindah ke v2 | E2E-PAR-09 | |
-| TASK-08B | S11.1.6 | Adapter eksternal tetap menegakkan izin dan pemindaian | Integrasi | |
-| DASH-03B | S11.2.1 | Area dan pivot cocok dengan data mentah | Tes kecocokan angka | |
-| DASH-08 | S11.2.2 | Widget pustaka benar dan dapat ditambah ke papan | Tes angka + Playwright | |
-| DASH-04, 05 | S11.2.3 | Deskripsi dan layout tersimpan | Playwright | |
-| DASH-07 | S11.2.4 | Link kedaluwarsa dan password ditegakkan; finansial tersembunyi | Tes akses | |
-| RPT-04 | S11.2.5 | Report terkirim pada hari dan jam terpilih | Integrasi waktu | |
-| API-01, SET-08 | S11.3.1 | Key terbatas scope; rotasi dan cabut efektif | Integrasi | |
-| API-02 | S11.3.2 | Webhook bertanda tangan, idempoten, retry | E2E-PAR-11 | |
-| API-03 | S11.3.3 | Token OAuth dicabut efektif | Integrasi | |
-| INT-01 | S11.3.4 | Konektor dapat dipasang, diatur, dinonaktifkan | Integrasi | |
-| INT-02 | S11.3.5 | Konflik tidak menimpa diam-diam | Tes konflik | |
-| INT-03 | S11.3.6 | GitHub dua arah dan Google Calendar satu arah berjalan | Uji akun uji | |
-| NAV-08, 09 | S11.3.7 | Bookmark dan feedback tersimpan | Playwright | |
+| FIL-04 | S11.1.5 | Approval v1 tidak pindah ke v2 | E2E-PAR-09 | `TestFileApprovalPinnedToVersionWithExternalReviewer` |
+| TASK-08B | S11.1.6 | Adapter eksternal tetap menegakkan izin dan pemindaian | Integrasi | `TestS3AdapterAgainstFakeServer`, `TestPydioAdapterAgainstFakeServer` |
+| DASH-03B | S11.2.1 | Area dan pivot cocok dengan data mentah | Tes kecocokan angka | `TestAnalyticsWidgetsAreaPivotBurndownCompletion` |
+| DASH-08 | S11.2.2 | Widget pustaka benar dan dapat ditambah ke papan | Tes angka + Playwright | `TestAnalyticsWidgetsAreaPivotBurndownCompletion` |
+| DASH-04, 05 | S11.2.3 | Deskripsi dan layout tersimpan | Playwright | `TestDashboardLayoutAndWidgetDescription` |
+| DASH-07 | S11.2.4 | Link kedaluwarsa dan password ditegakkan; finansial tersembunyi | Tes akses | `TestPublicDashboardLinkExpiryPasswordAndFinancialMasking` |
+| RPT-04 | S11.2.5 | Report terkirim pada hari dan jam terpilih | Integrasi waktu | `TestReportScheduleDailyAndChosenTimeZone` |
+| API-01, SET-08 | S11.3.1 | Key terbatas scope; rotasi dan cabut efektif | Integrasi | `TestAPIKeysScopeRotateRevokeAndOwnerLimits` |
+| API-02 | S11.3.2 | Webhook bertanda tangan, idempoten, retry | E2E-PAR-11 | `TestWebhook*` (E2E-PAR-11) |
+| API-03 | S11.3.3 | Token OAuth dicabut efektif | Integrasi | `TestOAuthCodePKCEAndRevocation` |
+| INT-01 | S11.3.4 | Konektor dapat dipasang, diatur, dinonaktifkan | Integrasi | `TestLifecycleAndSecrets`, `TestConnectorRoutes` |
+| INT-02 | S11.3.5 | Konflik tidak menimpa diam-diam | Tes konflik | `TestSyncBothWaysNoSilentOverwriteAndIdempotent` |
+| INT-03 | S11.3.6 | GitHub dua arah dan Google Calendar satu arah berjalan | Uji akun uji | Server palsu lulus; akun sungguhan BELUM dijalankan |
+| NAV-08, 09 | S11.3.7 | Bookmark dan feedback tersimpan | Playwright | `TestBookmarksAndFeedback`, `bookmarks-feedback.spec.ts` |
 
 ## M12 — Enterprise dan penerimaan
 

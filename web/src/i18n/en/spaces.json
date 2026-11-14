@@ -102,5 +102,22 @@
   "lock.explain": "Its items can only be shared with people who already have the space, and only an administrator can change who has access or move items out.",
   "lock.locked": "Space locked",
   "lock.unlocked": "Space unlocked",
-  "lock.conflict": "Someone changed this space. Reload and try again."
+  "lock.conflict": "Someone changed this space. Reload and try again.",
+  "bookmarks.link": "Bookmarks",
+  "bookmarks.title": "Bookmarks",
+  "bookmarks.hint": "External links for this Space. Only http and https addresses are accepted.",
+  "bookmarks.empty": "No bookmarks yet.",
+  "bookmarks.newTab": "(opens in a new tab)",
+  "bookmarks.edit": "Edit",
+  "bookmarks.delete": "Delete",
+  "bookmarks.editNamed": "Edit bookmark {{name}}",
+  "bookmarks.deleteNamed": "Delete bookmark {{name}}",
+  "bookmarks.add": "Add a bookmark",
+  "bookmarks.editTitle": "Edit bookmark",
+  "bookmarks.url": "URL",
+  "bookmarks.name": "Title",
+  "bookmarks.description": "Description",
+  "bookmarks.save": "Save",
+  "bookmarks.addButton": "Add bookmark",
+  "bookmarks.cancel": "Cancel"
 }

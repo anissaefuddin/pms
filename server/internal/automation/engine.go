@@ -33,6 +33,9 @@ type Engine struct {
 	Pool  *pgxpool.Pool
 	Queue *mail.Queue // optional: without it notifications are in-app only
 	Now   func() time.Time
+	// Hook sees every dispatched event after the rules ran (webhooks ride the same outbox); Tick runs once per dispatch round.
+	Hook events.Handler
+	Tick func(context.Context) error
 }
 
 func New(pool *pgxpool.Pool) *Engine { return &Engine{Pool: pool, Now: time.Now} }
@@ -45,7 +48,17 @@ type candidate struct {
 
 // Dispatch hands pending domain events to the engine.
 func (g *Engine) Dispatch(ctx context.Context) (int, error) {
-	return events.Dispatch(ctx, g.Pool, g.Handle, 100)
+	handle := g.Handle
+	if g.Hook != nil {
+		handle = func(ctx context.Context, e events.Event) error {
+			return errors.Join(g.Handle(ctx, e), g.Hook(ctx, e))
+		}
+	}
+	n, err := events.Dispatch(ctx, g.Pool, handle, 100)
+	if err == nil && g.Tick != nil {
+		err = g.Tick(ctx)
+	}
+	return n, err
 }
 
 // Handle is the events.Handler: it finds the rules that watch the event and runs them.

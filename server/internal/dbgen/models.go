@@ -516,6 +516,19 @@ type Activity struct {
 	Auto      bool               `json:"auto"`
 }
 
+type ApiKey struct {
+	ID         pgtype.UUID        `json:"id"`
+	UserID     pgtype.UUID        `json:"user_id"`
+	Name       string             `json:"name"`
+	Scope      string             `json:"scope"`
+	Prefix     string             `json:"prefix"`
+	TokenHash  []byte             `json:"token_hash"`
+	ExpiresAt  pgtype.Timestamptz `json:"expires_at"`
+	LastUsedAt pgtype.Timestamptz `json:"last_used_at"`
+	RevokedAt  pgtype.Timestamptz `json:"revoked_at"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
 type Approval struct {
 	ID                 pgtype.UUID        `json:"id"`
 	ItemID             pgtype.UUID        `json:"item_id"`
@@ -695,6 +708,51 @@ type CommentMention struct {
 	TargetID    pgtype.UUID `json:"target_id"`
 }
 
+type ConnectorConflict struct {
+	ID            pgtype.UUID        `json:"id"`
+	ConnectorID   pgtype.UUID        `json:"connector_id"`
+	ExternalID    string             `json:"external_id"`
+	ItemID        pgtype.UUID        `json:"item_id"`
+	ItemTitle     string             `json:"item_title"`
+	RemoteTitle   string             `json:"remote_title"`
+	RemoteVersion string             `json:"remote_version"`
+	BaseTitle     pgtype.Text        `json:"base_title"`
+	Resolution    pgtype.Text        `json:"resolution"`
+	ResolvedBy    pgtype.UUID        `json:"resolved_by"`
+	ResolvedAt    pgtype.Timestamptz `json:"resolved_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	Differs       string             `json:"differs"`
+}
+
+type ConnectorInstall struct {
+	ID              pgtype.UUID        `json:"id"`
+	Kind            string             `json:"kind"`
+	Name            string             `json:"name"`
+	Config          []byte             `json:"config"`
+	SecretsEnc      pgtype.Text        `json:"secrets_enc"`
+	Enabled         bool               `json:"enabled"`
+	CreatedBy       pgtype.UUID        `json:"created_by"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt       pgtype.Timestamptz `json:"updated_at"`
+	NextSyncAt      pgtype.Timestamptz `json:"next_sync_at"`
+	Failures        int32              `json:"failures"`
+	LastSyncAt      pgtype.Timestamptz `json:"last_sync_at"`
+	LastSyncOk      pgtype.Bool        `json:"last_sync_ok"`
+	LastSyncMessage pgtype.Text        `json:"last_sync_message"`
+}
+
+type ConnectorLink struct {
+	ConnectorID         pgtype.UUID        `json:"connector_id"`
+	ExternalID          string             `json:"external_id"`
+	ItemID              pgtype.UUID        `json:"item_id"`
+	SyncedTitle         pgtype.Text        `json:"synced_title"`
+	SyncedRemoteVersion string             `json:"synced_remote_version"`
+	SyncedItemVersion   pgtype.Int4        `json:"synced_item_version"`
+	SyncedAt            pgtype.Timestamptz `json:"synced_at"`
+	SyncedBody          pgtype.Text        `json:"synced_body"`
+	SyncedDone          pgtype.Bool        `json:"synced_done"`
+}
+
 type CustomField struct {
 	ID         pgtype.UUID        `json:"id"`
 	SpaceID    pgtype.UUID        `json:"space_id"`
@@ -748,6 +806,16 @@ type DomainEvent struct {
 	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
 	Attempts     int32              `json:"attempts"`
 	LastError    pgtype.Text        `json:"last_error"`
+}
+
+type Feedback struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Subject   string             `json:"subject"`
+	Rating    pgtype.Int2        `json:"rating"`
+	Comment   string             `json:"comment"`
+	Page      string             `json:"page"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type FormSubmission struct {
@@ -911,6 +979,42 @@ type Notification struct {
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 }
 
+type OauthClient struct {
+	ID           pgtype.UUID        `json:"id"`
+	ClientID     string             `json:"client_id"`
+	Name         string             `json:"name"`
+	SecretHash   []byte             `json:"secret_hash"`
+	RedirectUris []string           `json:"redirect_uris"`
+	CreatedBy    pgtype.UUID        `json:"created_by"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	RevokedAt    pgtype.Timestamptz `json:"revoked_at"`
+}
+
+type OauthCode struct {
+	CodeHash      []byte             `json:"code_hash"`
+	ClientUuid    pgtype.UUID        `json:"client_uuid"`
+	UserID        pgtype.UUID        `json:"user_id"`
+	RedirectUri   string             `json:"redirect_uri"`
+	Scopes        []string           `json:"scopes"`
+	CodeChallenge string             `json:"code_challenge"`
+	ExpiresAt     pgtype.Timestamptz `json:"expires_at"`
+	UsedAt        pgtype.Timestamptz `json:"used_at"`
+	GrantID       pgtype.UUID        `json:"grant_id"`
+}
+
+type OauthGrant struct {
+	ID               pgtype.UUID        `json:"id"`
+	ClientUuid       pgtype.UUID        `json:"client_uuid"`
+	UserID           pgtype.UUID        `json:"user_id"`
+	Scopes           []string           `json:"scopes"`
+	AccessHash       []byte             `json:"access_hash"`
+	RefreshHash      []byte             `json:"refresh_hash"`
+	AccessExpiresAt  pgtype.Timestamptz `json:"access_expires_at"`
+	RefreshExpiresAt pgtype.Timestamptz `json:"refresh_expires_at"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	RevokedAt        pgtype.Timestamptz `json:"revoked_at"`
+}
+
 type ProjectExcelExport struct {
 	ID             pgtype.UUID        `json:"id"`
 	ProjectID      pgtype.UUID        `json:"project_id"`
@@ -1061,6 +1165,18 @@ type Space struct {
 	Locked      bool               `json:"locked"`
 }
 
+type SpaceBookmark struct {
+	ID          pgtype.UUID        `json:"id"`
+	SpaceID     pgtype.UUID        `json:"space_id"`
+	Url         string             `json:"url"`
+	Title       string             `json:"title"`
+	Description string             `json:"description"`
+	Position    int32              `json:"position"`
+	CreatedBy   pgtype.UUID        `json:"created_by"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type SpaceTemplateRun struct {
 	RequestID pgtype.UUID        `json:"request_id"`
 	UserID    pgtype.UUID        `json:"user_id"`
@@ -1208,6 +1324,35 @@ type View struct {
 	OwnerID      pgtype.UUID    `json:"owner_id"`
 	Position     int32          `json:"position"`
 	IsDefault    bool           `json:"is_default"`
+}
+
+type WebhookDelivery struct {
+	ID             pgtype.UUID        `json:"id"`
+	SubscriptionID pgtype.UUID        `json:"subscription_id"`
+	EventID        pgtype.UUID        `json:"event_id"`
+	EventType      string             `json:"event_type"`
+	Payload        []byte             `json:"payload"`
+	Status         string             `json:"status"`
+	Attempts       int32              `json:"attempts"`
+	NextAttemptAt  pgtype.Timestamptz `json:"next_attempt_at"`
+	ResponseStatus pgtype.Int4        `json:"response_status"`
+	LastError      pgtype.Text        `json:"last_error"`
+	CreatedAt      pgtype.Timestamptz `json:"created_at"`
+	DeliveredAt    pgtype.Timestamptz `json:"delivered_at"`
+}
+
+type WebhookSubscription struct {
+	ID                  pgtype.UUID        `json:"id"`
+	OwnerID             pgtype.UUID        `json:"owner_id"`
+	Name                string             `json:"name"`
+	Url                 string             `json:"url"`
+	Secret              string             `json:"secret"`
+	EventTypes          []string           `json:"event_types"`
+	Enabled             bool               `json:"enabled"`
+	ConsecutiveFailures int32              `json:"consecutive_failures"`
+	DisabledReason      pgtype.Text        `json:"disabled_reason"`
+	CreatedAt           pgtype.Timestamptz `json:"created_at"`
+	DeletedAt           pgtype.Timestamptz `json:"deleted_at"`
 }
 
 type Widget struct {
