@@ -165,3 +165,45 @@ func TestNotificationReplayChecksCurrentAccess(t *testing.T) {
 	}
 	t.Fatalf("authorized notification missing: %v", replayed.Err())
 }
+
+func TestNotificationSentAndArchiveBoxes(t *testing.T) {
+	f := newFixture(t)
+	admin, member, other := f.person("admin"), f.person("regular"), f.person("regular")
+	open, hidden := f.space("Open"), f.space("Hidden")
+	f.share(open, "user", member.id, "read")
+	f.share(hidden, "user", member.id, "read")
+	f.share(open, "user", admin.id, "read")
+	f.share(open, "user", other.id, "read")
+	// member sends one visible and one (later) hidden notification to admin; other sends to admin too.
+	ins := func(actor, rcpt *person, space string) {
+		f.exec("INSERT INTO notifications(id,recipient_id,actor_id,kind,space_id) VALUES (gen_random_uuid(),$1,$2,'shared',$3)", rcpt.id, actor.id, space)
+	}
+	ins(member, admin, open)
+	ins(member, admin, hidden)
+	ins(other, admin, open)
+	ins(member, member, open) // self-notification is not "sent"
+	f.exec("DELETE FROM shares WHERE target_id=$1 AND principal_id=$2", hidden, member.id)
+	sent := f.call(member, "GET", "/notifications?box=sent", nil)
+	if sent.status != 200 || len(sent.items()) != 1 || sent.body["unread_count"] != float64(0) {
+		t.Fatalf("sent must be own and only visible: %+v", sent)
+	}
+	if r := sent.items()[0]["recipient"].(map[string]any); r["id"] != admin.id {
+		t.Fatalf("recipient: %+v", sent.items()[0])
+	}
+	if got := f.call(other, "GET", "/notifications?box=sent&limit=1", nil); got.status != 200 || len(got.items()) != 1 {
+		t.Fatalf("other sent: %+v", got)
+	}
+	if got := f.call(member, "GET", "/notifications?box=bogus", nil); got.status != 422 {
+		t.Fatalf("bad box: %+v", got)
+	}
+	id := f.queryID("SELECT id::text FROM notifications WHERE recipient_id=$1 AND actor_id=$2 AND space_id=$3", admin.id, member.id, open)
+	if got := f.call(admin, "PATCH", "/notifications/"+id, map[string]bool{"archived": true}); got.status != 200 {
+		t.Fatalf("archive: %+v", got)
+	}
+	if got := f.call(admin, "GET", "/notifications?box=archive", nil); len(got.items()) != 1 {
+		t.Fatalf("archive box: %+v", got)
+	}
+	if got := f.call(member, "GET", "/notifications?box=archive", nil); len(got.items()) != 0 {
+		t.Fatalf("archive leaks: %+v", got)
+	}
+}

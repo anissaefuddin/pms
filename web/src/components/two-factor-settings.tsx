@@ -66,7 +66,7 @@ export function TwoFactorSettings() {
     body = (
       <BackupCodes codes={codes} enabled={justEnabled} onDone={() => { setCodes(null); setJustEnabled(false); }} />
     );
-  } else if (!data.configured) body = <p className="text-sm text-muted-foreground">{t("settings.twoFactor.notConfigured")}</p>;
+  } else if (!data.configured) body = <p className="text-sm text-muted-foreground">{t(profile?.user_type === "admin" ? "settings.twoFactor.notConfiguredAdmin" : "settings.twoFactor.notConfigured")}</p>;
   else if (setup) {
     body = (
       <div className="space-y-4">

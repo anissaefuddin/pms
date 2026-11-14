@@ -1068,3 +1068,13 @@ Tanggal 14 Nov 2026, Playwright (Chromium, dev server port 4192 karena 4173 dipa
 | Seluruh suite Playwright tiruan (terjalankan tak sengaja) | 447 tes | 446 PASS; `sso.spec.ts:34` gagal sekali, lulus pada ulang (tidak terkait) |
 
 `tsc -b` dan `eslint src` bersih. Tidak diuji: spesifikasi live (`m2-live` memerlukan backend; hanya tombol "Columns"/"Card fields" yang dirujuknya dan tetap ada), peramban selain Chromium. Tidak dikerjakan: label bar di luar ujung bar dan nama chip "Cards"/Expand/undo-redo dari referensi Wrike.
+## M12b lane 3 (UIP): My to-do, Inbox, tab Sent, widget daftar, 2FA
+
+| Uji | Hasil |
+|---|---|
+| Go integrasi `TestNotificationSentAndArchiveBoxes` + `TestNotification*` (Postgres `pms-pg-uip3`): Sent hanya milik sendiri, bukan notifikasi ke diri sendiri, item yang aksesnya dicabut tidak muncul, `box` tidak valid 422, kotak Archive tidak bocor ke orang lain, `unread_count` 0 di Sent | PASS |
+| Playwright `uip3-lists.spec.ts` (grup tanggal dengan jumlah, tambah cepat ke Space pribadi, tab Inbox/Sent/Archive + penerima, widget terkelompok + keadaan kosong, tanpa "Gantt spike", pesan 2FA non-admin tanpa `PMS_2FA_KEY`) dengan axe | PASS |
+| Regresi terarah: `todo`, `dr02-settings-menu`, `settings-nav`, `dashboards`, `navigation`, `ui-audit` (81 tes, 390 dan 1440) | PASS |
+| `tsc`, eslint (route, komponen), `gofmt`, `go vet`, `make gen` drift 0 | PASS |
+
+Tidak diuji: master-detail ≥ 1024 px secara visual (hanya kelas responsif), baseline visual, regresi penuh.

@@ -4399,6 +4399,10 @@ paths:
         - { $ref: '#/components/parameters/Limit' }
         - { $ref: '#/components/parameters/Cursor' }
         - { name: unread_only, in: query, schema: { type: boolean, default: false } }
+        - name: box
+          in: query
+          description: incoming (default), archive (milik sendiri yang diarsipkan), sent (notifikasi yang dipicu pemanggil untuk orang lain; hanya yang masih bisa dilihat pemanggil; unread_count selalu 0 di luar incoming)
+          schema: { type: string, enum: [incoming, archive, sent], default: incoming }
       responses:
         '200':
           description: OK
@@ -7609,6 +7613,7 @@ components:
         id: { type: string, format: uuid }
         kind: { $ref: '#/components/schemas/NotificationKind' }
         actor: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
+        recipient: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
         item_id: { type: string, format: uuid, nullable: true }
         item_title: { type: string, nullable: true }
         space_id: { type: string, format: uuid, nullable: true }

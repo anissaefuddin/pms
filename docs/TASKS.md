@@ -1445,25 +1445,25 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 - Catatan: D-121; bukti: TESTING.md bagian "UI parity lane 2"
 
 **S-UIP.1.4 My to-do berkelompok (gap D1) — 3 hari**
-- [ ] [FE] Pengelompokan menurut urutan yang dipilih (status atau tanggal) dengan jumlah di judul grup
-- [ ] [FE] Baris tambah cepat dengan pemilih tipe (`POST /items` ke Space pribadi)
-- [ ] [FE] Menu opsi tampilan: kartu satu atau dua baris, daftar datar atau hierarki, tampilkan durasi
-- [ ] [TEST] Pengelompokan, tambah cepat, axe
+- [x] [FE] Pengelompokan menurut urutan yang dipilih (status atau tanggal) dengan jumlah di judul grup
+- [x] [FE] Baris tambah cepat dengan pemilih tipe (`POST /items` ke Space pribadi)
+- [x] [FE] Menu opsi tampilan: kartu satu atau dua baris, daftar datar atau hierarki, tampilkan durasi
+- [x] [TEST] Pengelompokan, tambah cepat, axe
 
 **S-UIP.1.5 Inbox dua panel (gap D2) — 3 hari**
-- [ ] [FE] Tab Incoming dan Archive, pengelompokan Today dan tanggal, titik belum dibaca, keadaan kosong
-- [ ] [FE] Master-detail di lebar ≥ 1024 px; layar penuh di bawahnya
-- [ ] [TEST] Tab, tandai dibaca, arsip, axe
+- [x] [FE] Tab Incoming dan Archive, pengelompokan Today dan tanggal, titik belum dibaca, keadaan kosong
+- [x] [FE] Master-detail di lebar ≥ 1024 px; layar penuh di bawahnya
+- [x] [TEST] Tab, tandai dibaca, arsip, axe
 
 **S-UIP.1.6 Tab Sent di Inbox (gap D2) — 2 hari**
-- [ ] [API] Daftar notifikasi atau pesan yang dikirim pengguna (kebijakan dan paginasi)
-- [ ] [FE] Tab Sent
-- [ ] [TEST] Hanya milik sendiri; tidak membocorkan item tersembunyi
+- [x] [API] Daftar notifikasi atau pesan yang dikirim pengguna (kebijakan dan paginasi)
+- [x] [FE] Tab Sent
+- [x] [TEST] Hanya milik sendiri; tidak membocorkan item tersembunyi
 
 **S-UIP.1.7 Bersihkan sisa pengembangan di UI (gap A6) — 0,5 hari**
-- [ ] [FE] Hapus tautan "Gantt spike" dari navigasi Settings produksi
-- [ ] [FE] Pesan 2FA netral untuk non-admin; nama variabel lingkungan hanya untuk admin
-- [ ] [TEST] Tes navigasi Settings
+- [x] [FE] Hapus tautan "Gantt spike" dari navigasi Settings produksi
+- [x] [FE] Pesan 2FA netral untuk non-admin; nama variabel lingkungan hanya untuk admin
+- [x] [TEST] Tes navigasi Settings
 
 **S-UIP.1.8 Sidebar per Space dan halaman project (gap A1, B1) — 6 hari**
 - [ ] [FE] Isi Space di sidebar: Space overview, Tools (Dashboard dan papan analitik), Projects and folders dengan tombol +, ikon tipe; Shared with me dan Blueprints di sidebar
@@ -1494,8 +1494,8 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 - [x] [TEST] Pindah dashboard dan ubah layout; axe
 
 **S-UIP.2.5 Widget daftar berkelompok (gap E2) — 2 hari**
-- [ ] [FE] Widget task list dikelompokkan menurut tanggal tenggat dengan avatar dan chip status
-- [ ] [TEST] Pengelompokan dan keadaan kosong
+- [x] [FE] Widget task list dikelompokkan menurut tanggal tenggat dengan chip status (avatar menunggu data assignee di `WidgetData`, lihat D-130)
+- [x] [TEST] Pengelompokan dan keadaan kosong
 
 **S-UIP.2.6 Editor widget dua panel (gap E3) — 3 hari**
 - [x] [FE] Pratinjau di kiri, tab Data, Design, Filters di kanan
