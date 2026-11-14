@@ -47,6 +47,14 @@ jobs:
         env:
           PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable"
           PMS_TEST_BROWSER: "1"
+      - name: Keep browser results when something failed
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-test-results
+          path: web/test-results
+          retention-days: 7
+          if-no-files-found: ignore
       - name: Generated code is up to date
         run: |
           go install github.com/sqlc-dev/sqlc/cmd/sqlc@v1.31.1

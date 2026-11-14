@@ -25,13 +25,16 @@ test("flow 1: a holiday in the work schedule, then moving a predecessor pushes i
   await expect(page.locator(".wx-line").first()).toBeAttached(); // the link comes from the server
   await page.getByRole("application", { name: "Gantt chart" }).focus();
   const rows = ["Pred task", "Succ task"];
-  // Select "Pred task" (rows are ordered by the server). One key press, then wait for the chart to announce the row: pressing again
-  // while the announcement is still on its way would move the selection to the next row. Only a press that announced nothing is repeated
-  // (a slow runner can press before the chart is ready to take keys).
-  const announced = page.getByRole("status").filter({ hasText: new RegExp(rows.join("|")) });
-  for (let attempt = 0; attempt < 4; attempt++) {
+  // Select "Pred task". The two rows may come back in either order (equal ranks), and the chart announces the selected row a moment after
+  // each key press. So: press once, wait for the announcement to change, and only then decide whether to press again. Pressing again
+  // before the announcement arrives would skip a row; a press that changes nothing (the chart is not ready for keys yet) is repeated.
+  const announcement = async () => (await page.getByRole("status").filter({ hasText: new RegExp(rows.join("|")) }).allTextContents()).join(" ");
+  let seen = await announcement();
+  for (let attempt = 0; attempt < 6 && !seen.includes(rows[0]); attempt++) {
+    const before = seen;
     await page.keyboard.press("ArrowDown");
-    if (await announced.first().waitFor({ timeout: 4000 }).then(() => true, () => false)) break;
+    await expect.poll(announcement, { timeout: 4000 }).not.toBe(before).catch(() => undefined);
+    seen = await announcement();
   }
   await expect(page.getByRole("status").filter({ hasText: "Pred task" })).toBeVisible();
   await page.keyboard.press("ArrowRight"); // 1 Mar -> 2 Mar
