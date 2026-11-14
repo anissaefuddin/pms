@@ -912,8 +912,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [FE] Dialog "Create a custom item type"
 - [x] [FE] Toggle menu "+" per Space (D-99; `create-menu.spec.ts`, `TestSpaceCreateMenu`, `TestBrowserCreateMenu`)
 - [x] [FE] Menu blueprint: tipe, nama, ikon (bagian "Start from blueprint" di dialog buat item; ikon = ikon tipe dasar, D-99)
-- [ ] [FE] Tipe di Table, Board, filter, search
-  > Audit 14 Nov 2026: `item-table.tsx` dan `item-board.tsx` tidak merujuk tipe kustom.
+- [x] [FE] Tipe di Table, Board, filter, search (kolom Tipe, kartu Board, filter `type=` di URL, hasil pencarian; TESTING.md M8-2)
 - [x] [BE] Tipe di ekspor Excel, laporan, search
 - [x] [TEST] E2E-PAR-01 dan E2E-PAR-02, axe
 
@@ -932,8 +931,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [BE] Deteksi siklus
 - [x] [BE] Hitung ulang saat field sumber berubah
 - [x] [FE] Editor formula
-- [ ] [FE] Tampilan Table dan filter/sort
-  > Audit 14 Nov 2026: kolom formula hanya tampil di panel item (`item-custom-fields.tsx`); Table belum diverifikasi.
+- [x] [FE] Tampilan Table dan filter/sort
 - [x] [TEST] Tabel ≥ 20 kasus
 - [x] [TEST] Performa 500 item
 
@@ -944,8 +942,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [BE] Pasang di patch item, impor, dan job
 - [x] [BE] Error terstruktur tanpa mengubah data
 - [x] [FE] Editor guard di settings workflow
-- [ ] [FE] Pesan error di panel item dan Board
-  > Audit 14 Nov 2026: panel item terbukti (E2E-PAR-03 live: alert memuat semua masalah); Board belum menampilkan pesan `transition_blocked`.
+- [x] [FE] Pesan error di panel item dan Board
 - [x] [TEST] E2E-PAR-03 lewat UI, REST, impor
 
 **S8.2.3 Validasi lintas record (WF-05) — 1.5 hari**

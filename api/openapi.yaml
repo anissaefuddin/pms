@@ -5349,9 +5349,11 @@ components:
     ItemFilterType:
       name: type
       in: query
+      description: Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422
       schema:
         type: array
-        items: { $ref: '#/components/schemas/ItemType' }
+        maxItems: 20
+        items: { type: string, maxLength: 64 }
       style: form
       explode: false
     ItemFilterStatusGroup:

@@ -5255,7 +5255,7 @@ type ItemFilterField = []string
 type ItemFilterStatusGroup = []StatusGroup
 
 // ItemFilterType defines model for ItemFilterType.
-type ItemFilterType = []ItemType
+type ItemFilterType = []string
 
 // ItemId defines model for ItemId.
 type ItemId = openapi_types.UUID
@@ -5687,8 +5687,10 @@ type UploadAttachmentMultipartBody struct {
 
 // ListItemChildrenParams defines parameters for ListItemChildren.
 type ListItemChildrenParams struct {
-	Limit       *Limit                 `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor      *Cursor                `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Type Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422
 	Type        *ItemFilterType        `form:"type,omitempty" json:"type,omitempty"`
 	StatusGroup *ItemFilterStatusGroup `form:"status_group,omitempty" json:"status_group,omitempty"`
 
@@ -6047,8 +6049,10 @@ type ImportProjectExcelMultipartBody struct {
 
 // ListSpaceRootItemsParams defines parameters for ListSpaceRootItems.
 type ListSpaceRootItemsParams struct {
-	Limit       *Limit                 `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor      *Cursor                `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor *Cursor `form:"cursor,omitempty" json:"cursor,omitempty"`
+
+	// Type Kunci tipe item (bawaan project, folder, task, atau kunci tipe kustom); kunci yang tidak dikenal ditolak 422
 	Type        *ItemFilterType        `form:"type,omitempty" json:"type,omitempty"`
 	StatusGroup *ItemFilterStatusGroup `form:"status_group,omitempty" json:"status_group,omitempty"`
 

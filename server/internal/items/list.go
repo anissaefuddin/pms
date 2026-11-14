@@ -61,6 +61,9 @@ func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, container
 		return Page{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err := checkTypeKeys(ctx, tx, filter.Types); err != nil {
+		return Page{}, err
+	}
 	spaceIDs, parentID, err := visibleContainer(ctx, tx, actor, container, children)
 	if err != nil {
 		return Page{}, err
@@ -80,7 +83,7 @@ WITH candidates AS (
  WHERE l.space_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid))
    AND l.parent_item_id IS NOT DISTINCT FROM $2::uuid
    AND l.deleted_root_id IS NULL AND i.deleted_at IS NULL
-   AND (COALESCE(cardinality($3::text[]),0)=0 OR i.type::text=ANY($3))
+   AND (COALESCE(cardinality($3::text[]),0)=0 OR i.type_id IN (SELECT id FROM item_type_defs WHERE key=ANY($3)))
    AND (COALESCE(cardinality($4::text[]),0)=0 OR st.grp::text=ANY($4))
    AND ($5::text='' OR CASE WHEN $5='none' THEN NOT EXISTS (
      SELECT 1 FROM item_assignees a WHERE a.item_id=i.id
@@ -128,6 +131,25 @@ ORDER BY key COLLATE "C" NULLS LAST,id LIMIT $8`,
 		page.Items = append(page.Items, item.Body)
 	}
 	return page, tx.Commit(ctx)
+}
+
+// checkTypeKeys refuses a type filter that names an unknown item type key (built-in or custom).
+func checkTypeKeys(ctx context.Context, tx pgx.Tx, keys []string) error {
+	if len(keys) == 0 {
+		return nil
+	}
+	var known int
+	if err := tx.QueryRow(ctx, "SELECT count(*) FROM item_type_defs WHERE key=ANY($1::text[])", keys).Scan(&known); err != nil {
+		return err
+	}
+	distinct := map[string]bool{}
+	for _, key := range keys {
+		distinct[key] = true
+	}
+	if known != len(distinct) {
+		return Invalid("unknown item type")
+	}
+	return nil
 }
 
 func visibleContainer(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, children bool) ([]string, *string, error) {
@@ -180,10 +202,8 @@ func validateFilter(actor policy.Actor, id string, children bool, filter *ListFi
 	if !ok {
 		return "", nil, scope, Invalid("unknown sort")
 	}
-	for _, kind := range filter.Types {
-		if kind != "project" && kind != "folder" && kind != "task" {
-			return "", nil, scope, Invalid("unknown item type")
-		}
+	if len(filter.Types) > 20 {
+		return "", nil, scope, Invalid("at most 20 item types")
 	}
 	for _, group := range filter.StatusGroups {
 		if group != "active" && group != "completed" && group != "deferred" && group != "cancelled" {

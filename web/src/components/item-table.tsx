@@ -14,6 +14,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { ProjectProgress } from "@/components/project-progress";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
+import { TypeBadge } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
 import type { ItemCollectionProps } from "./item-collection-types";
@@ -95,6 +96,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
     { id: "progress", header: t("items.progress.column"), cell: ({ row }) => (
       <span className="text-sm"><ProjectProgress item={row.original.item} /></span>
     ) },
+    { id: "type", header: t("views.columns.type"), cell: ({ row }) => <TypeBadge item={row.original.item} /> },
     { id: "status", header: t("items.status"), cell: ({ row }) => {
       const { item } = row.original;
       const change = item.my_capabilities.includes("change_status");
@@ -131,7 +133,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
         const { item } = row.original;
         const value = item.fields?.[field.id];
         const display = profile ? <CustomFieldDisplay field={field} value={value} people={peopleOf(item, field, value)} profile={profile} /> : null;
-        return item.my_capabilities.includes("edit") && !field.archived_at && profile
+        return item.my_capabilities.includes("edit") && !field.archived_at && field.type !== "formula" && profile
           ? <Button variant="ghost" size="sm" className="max-w-full justify-start truncate" aria-label={`${field.name}: ${item.title}`}
             onClick={() => setEditing({ id: item.id, field: fieldColumn(field.id) as `field:${string}` })}>{display}</Button>
           : display;

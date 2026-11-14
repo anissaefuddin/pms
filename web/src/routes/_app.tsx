@@ -15,13 +15,14 @@ import { ItemDetail } from "@/components/item-detail";
 import { OnboardingWizard } from "@/components/onboarding-wizard";
 
 export const Route = createFileRoute("/_app")({
-  validateSearch: (search: Record<string, unknown>): { task?: string; view?: string; filter?: string; sort?: string; group?: string; field?: string; preset?: string } => ({
+  validateSearch: (search: Record<string, unknown>): { task?: string; view?: string; filter?: string; sort?: string; group?: string; field?: string; preset?: string; type?: string } => ({
     task: typeof search.task === "string" && /^[0-9a-f-]{36}$/i.test(search.task) ? search.task : undefined,
     view: typeof search.view === "string" && /^[0-9a-f-]{36}$/i.test(search.view) ? search.view : undefined,
     filter: typeof search.filter === "string" ? search.filter.slice(0, 120) : undefined,
     sort: typeof search.sort === "string" && (["manual", "title", "status", "start_date", "due_date", "priority", "predecessors"].includes(search.sort) || /^field:[0-9a-f-]{36}$/i.test(search.sort)) ? search.sort : undefined,
     preset: search.preset === "active" || search.preset === "mine" ? search.preset : undefined,
     field: typeof search.field === "string" && /^[0-9a-f-]{36}:.{0,200}$/is.test(search.field) ? search.field : undefined,
+    type: typeof search.type === "string" && /^[a-z0-9_-]{1,64}$/.test(search.type) ? search.type : undefined,
     group: search.group === "type" || search.group === "status" || search.group === "assignee" ? search.group : undefined,
   }),
   component: AppShell,
