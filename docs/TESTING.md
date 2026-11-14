@@ -1144,3 +1144,7 @@ Tidak diuji: tampilan 390 px dan tangkapan layar visual; sidebar pada data Space
 - `forms.spec.ts` (15) lulus; `tsc` dan `eslint` bersih.
 - Tes live Go dengan `PMS_TEST_BROWSER=1`, Postgres `pms-pgD`, port web 4184 (4173 dipakai sesi lain): `TestBrowserM5Flows`, `TestBrowserM11AnalyticsFlows`, `TestBrowserM3Flows`, `TestBrowserM8Flows`, `TestBrowserFormBranchingBlueprint` semuanya PASS. Satu kali `m8-live` E2E-PAR-03 gagal pada proses pertama lalu lulus pada dua proses berikutnya tanpa perubahan kode (flaky, tidak diselidiki).
 - `TestBrowserCreateMenu` GAGAL (`Space actions` tidak ditemukan di halaman Space): area lane B, bukan perubahan lane D; dicatat untuk koordinator.
+
+### Deploy dev-lens `a0cbad3` (14 Nov 2026, pass 2 UI parity, PR #14)
+- CI PR #14 hijau (test, authorization-matrix, parity-e2e). Build di server: `pms:a0cbad3`; backup `20261114T225151Z`; build sebelumnya `pms:eb60b2f`.
+- Container `pms-app-1` healthy, `/healthz` 200 (port 8086), 0 baris `level=ERROR` dalam 2 menit.
