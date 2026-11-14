@@ -36,6 +36,7 @@ test("the profile menu sends feedback with the current page and shows the thanks
   await page.getByRole("menuitem", { name: "Send feedback" }).click();
   await page.getByLabel("Subject").fill("Nice");
   await page.getByLabel("Rating").selectOption("4");
+  await expect(page.locator("[data-starting-style], [data-ending-style]")).toHaveCount(0); // let the dialog finish fading in before axe measures contrast
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await page.getByRole("button", { name: "Send feedback" }).click();
   await expect(page.getByText("Your feedback was sent.")).toBeVisible();
