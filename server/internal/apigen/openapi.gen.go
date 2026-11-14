@@ -3783,7 +3783,9 @@ type FormResponseSettings struct {
 
 	// Routes Cabang jawaban ke tipe item; rute pertama yang cocok menang
 	Routes *[]struct {
-		TypeKey string `json:"type_key"`
+		// BlueprintId Blueprint di Space tujuan yang diterapkan pada item cabang ini (struktur anak dan default; isian form menang). Blueprint yang kemudian dihapus dilewati dan item tetap dibuat tanpa struktur
+		BlueprintId *openapi_types.UUID `json:"blueprint_id,omitempty"`
+		TypeKey     string              `json:"type_key"`
 
 		// When Logika kondisional (FORM-07): tampil hanya bila pertanyaan sebelumnya dijawab tertentu; pertanyaan tersembunyi tidak wajib dan jawabannya dibuang
 		When FormCondition `json:"when"`

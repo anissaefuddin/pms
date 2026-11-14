@@ -229,6 +229,18 @@ func ConfirmationText(value, title, form, name string) string {
 type Route struct {
 	When    Condition `json:"when"`
 	TypeKey string    `json:"type_key"`
+	// BlueprintID, when set, is applied to the created item (children and defaults; the form's own values win).
+	BlueprintID *uuid.UUID `json:"blueprint_id,omitempty"`
+}
+
+// ResolveBlueprint returns the blueprint of the first matching route, or nil.
+func (r Response) ResolveBlueprint(answers map[string]any) *uuid.UUID {
+	for _, route := range r.Routes {
+		if route.When.Holds(answers) {
+			return route.BlueprintID
+		}
+	}
+	return nil
 }
 
 // ResolveTypeKey returns the item type key a submission creates: the first matching route, else the form's own.

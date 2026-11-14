@@ -70,7 +70,7 @@ export type FormDraft = {
   approval_description: string;
   /** FORM-09: custom item type, answer-based routes, and answer to custom field mapping. */
   type_key: string;
-  routes: { question: string; value: string; type_key: string }[];
+  routes: { question: string; value: string; type_key: string; blueprint_id: string }[];
   field_map: Record<string, string>;
   /** FORM-04: wording of the confirmation sent to public requesters. */
   email: { sender_name: string; logo_url: string; greeting: string; message: string; closing: string };
@@ -111,7 +111,7 @@ export function buildInput(d: FormDraft): FormInput {
   };
   // FORM-04 and FORM-09 settings are sent only when used, so a plain form keeps its old request body.
   if (d.type_key) response.type_key = d.type_key;
-  const routes = d.routes.filter((r) => r.question && r.type_key).map((r) => ({ when: { key: r.question, op: "equals" as const, value: r.value }, type_key: r.type_key }));
+  const routes = d.routes.filter((r) => r.question && r.type_key).map((r) => ({ when: { key: r.question, op: "equals" as const, value: r.value }, type_key: r.type_key, ...(r.blueprint_id ? { blueprint_id: r.blueprint_id } : {}) }));
   if (routes.length) response.routes = routes;
   const fieldMap = Object.fromEntries(Object.entries(d.field_map).filter(([, id]) => id));
   if (Object.keys(fieldMap).length) response.field_map = fieldMap;
@@ -132,7 +132,7 @@ export function draftFromForm(f: Form): FormDraft {
     assignees: (r.assignee_ids ?? []).map((id) => ({ id, name: id })), title_question: r.title_question ?? "",
     approval: !!r.approval, approvers: (r.approval?.approver_ids ?? []).map((id) => ({ id, name: id })), approval_description: r.approval?.description ?? "",
     type_key: r.type_key ?? "",
-    routes: (r.routes ?? []).map((route) => ({ question: route.when.key, value: route.when.value ?? "", type_key: route.type_key })),
+    routes: (r.routes ?? []).map((route) => ({ question: route.when.key, value: route.when.value ?? "", type_key: route.type_key, blueprint_id: route.blueprint_id ?? "" })),
     field_map: { ...(r.field_map ?? {}) },
     email: { ...emptyEmail, ...(r.email ?? {}) },
   };

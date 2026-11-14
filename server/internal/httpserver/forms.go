@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"slices"
 
@@ -426,6 +427,18 @@ func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
 		}
 		if err != nil {
 			return err
+		}
+	}
+	for i, route := range resp.Routes {
+		if route.BlueprintID == nil {
+			continue
+		}
+		var ok bool
+		if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM blueprints WHERE id=$1 AND space_id=$2)", *route.BlueprintID, resp.Location.SpaceID).Scan(&ok); err != nil {
+			return err
+		}
+		if !ok {
+			return forms.Error{Field: fmt.Sprintf("response.routes[%d].blueprint_id", i), Message: "choose a blueprint of the destination Space"}
 		}
 	}
 	for _, id := range resp.FieldMap {

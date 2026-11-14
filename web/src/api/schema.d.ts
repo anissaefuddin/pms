@@ -5059,6 +5059,11 @@ export interface components {
             routes?: {
                 when: components["schemas"]["FormCondition"];
                 type_key: string;
+                /**
+                 * Format: uuid
+                 * @description Blueprint di Space tujuan yang diterapkan pada item cabang ini (struktur anak dan default; isian form menang). Blueprint yang kemudian dihapus dilewati dan item tetap dibuat tanpa struktur
+                 */
+                blueprint_id?: string | null;
             }[];
             approval?: {
                 approver_ids: string[];

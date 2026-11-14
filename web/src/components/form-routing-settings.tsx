@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
+import { useBlueprints } from "@/lib/blueprints";
 import { useItemTypes } from "@/lib/item-types";
 import { emptyEmail, type FormDraft, type FormPage } from "@/lib/forms";
 import { FormError } from "@/components/auth/form-error";
@@ -20,6 +21,7 @@ export function FormRoutingSettings({ draft, pages, errors, onChange }: Props) {
   const types = (useItemTypes().data ?? []).filter((def) => !def.is_builtin && def.active && def.base === draft.item_type);
   const fields = useQuery({ queryKey: ["custom-fields", draft.space_id], enabled: !!draft.space_id, retry: false,
     queryFn: async () => (await api<{ items: Field[] }>(`/api/v1/spaces/${draft.space_id}/custom-fields`)).items });
+  const blueprints = useBlueprints(draft.space_id, !!draft.space_id).data ?? [];
   const usable = (fields.data ?? []).filter((field) => mappable.includes(field.type));
   const questions = pages.flatMap((p) => p.elements).filter((e) => e.kind !== "section" && e.kind !== "attachment");
   const choices = questions.filter((e) => e.kind === "single_choice");
@@ -46,13 +48,18 @@ export function FormRoutingSettings({ draft, pages, errors, onChange }: Props) {
           <label className="space-y-1"><span>{t("forms.routing.create", { number: index + 1 })}</span>
             <select className={select} value={route.type_key} onChange={(e) => patch({ type_key: e.target.value })}>
               <option value="">—</option>{types.map((def) => <option key={def.key} value={def.key}>{def.name}</option>)}</select></label>
+          <label className="space-y-1"><span>{t("forms.routing.blueprint", { number: index + 1 })}</span>
+            <select className={select} value={route.blueprint_id} onChange={(e) => patch({ blueprint_id: e.target.value })}>
+              <option value="">{t("forms.routing.noBlueprint")}</option>{blueprints.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}</select></label>
+          <p className="basis-full text-muted-foreground">{t("forms.routing.summary", { number: index + 1, question: source?.label || route.question || "—", value: route.value || "—",
+            type: types.find((d) => d.key === route.type_key)?.name ?? "—", blueprint: blueprints.find((b) => b.id === route.blueprint_id)?.name ?? t("forms.routing.noBlueprint") })}</p>
           <Button type="button" variant="ghost" size="sm" aria-label={t("forms.routing.remove", { number: index + 1 })}
             onClick={() => onChange({ routes: draft.routes.filter((_, i) => i !== index) })}>×</Button>
         </div>;
       })}
       <FormError message={err("response.routes")} />
       <Button type="button" variant="outline" size="sm" disabled={draft.routes.length >= 10 || !choices.length}
-        onClick={() => onChange({ routes: [...draft.routes, { question: "", value: "", type_key: "" }] })}>{t("forms.routing.addRoute")}</Button>
+        onClick={() => onChange({ routes: [...draft.routes, { question: "", value: "", type_key: "", blueprint_id: "" }] })}>{t("forms.routing.addRoute")}</Button>
     </div>}
     {usable.length > 0 && <fieldset className="space-y-2 text-sm"><legend className="font-medium">{t("forms.routing.fields")}</legend>
       <p className="text-muted-foreground">{t("forms.routing.fieldsHint")}</p>

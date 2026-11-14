@@ -965,7 +965,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [FE] Editor kondisi
 - [x] [FE] Renderer publik dan internal
 - [x] [TEST] Unit evaluator kondisi
-- [ ] [TEST] E2E-PAR-05
+- [x] [TEST] E2E-PAR-05 — bukti: bagian baru akhir docs/TESTING.md (S8.3.1 routing Blueprint, D-101)
   > Audit 14 Nov 2026: hanya Playwright mock (`m8.spec.ts`, `forms.spec.ts`) dan unit/integrasi Go; E2E live form→Blueprint→item belum ada (routing ke Blueprint belum).
   > 14 Nov 2026 (M8-1): bagian form bercabang → tipe dan field sesuai cabang sudah diuji lewat HTTP (`TestFormBranchesDecideQuestionsItemTypeAndFields`, di `parity-e2e.sh 05-08`). Sisa: `blueprint_id` pada rute form; node blueprint hanya menyimpan kelas, bukan `type_key`, jadi tidak kecil. Spec Playwright live belum ada.
 
