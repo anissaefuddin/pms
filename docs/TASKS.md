@@ -272,7 +272,7 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Matriks 5 tipe × 4 role × 4 jalur untuk GET, PATCH, create subtask, dan DELETE Item pada endpoint nyata
 - [x] Tes batas visibilitas Item dan Item di Personal Space
 - [x] Tes batas visibilitas file, komentar, dan lampiran
-- [ ] Jadikan langkah CI yang memblokir merge. GitHub menolak akses pengaturan required check pada paket repo privat saat ini (HTTP 403). **Disiapkan 14 Nov 2026:** job CI `authorization-matrix` tersendiri (siap dijadikan required check); sisa langkah adalah pengaturan repo yang memerlukan GitHub Pro atau repo publik.
+- [x] Jadikan langkah CI yang memblokir merge. **Selesai 14 Nov 2026:** repo kini publik; job `authorization-matrix` menjadi required status check di branch `main` (`enforce_admins` mati, tanpa syarat review; force push dan penghapusan dilarang). Run hijau: PR #3.
 
 ### E1.2 Item inti
 
@@ -1377,9 +1377,9 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 ### E12.2 Penerimaan
 
 **S12.2.1 Regresi parity penuh — 3 hari**
-- [ ] [TEST] E2E-PAR-01..04 di CI — lulus lokal 14 Nov 2026 lewat `scripts/parity-e2e.sh 01-04`; job CI `parity-e2e` ada; **hijau di GitHub menunggu push dan CI hijau**
-- [ ] [TEST] E2E-PAR-05..08 di CI — lulus lokal (`scripts/parity-e2e.sh 05-08`) dan flow live `TestBrowserWorkload` (PAR-07, spec basi diperbaiki); hijau di GitHub menunggu push
-- [ ] [TEST] E2E-PAR-09..12 di CI — lulus lokal (`scripts/parity-e2e.sh 09-12`); hijau di GitHub menunggu push
+- [x] [TEST] E2E-PAR-01..04 di CI — hijau di GitHub Actions (job `parity-e2e`, PR #3, run 14 Nov 2026) dan lokal lewat `scripts/parity-e2e.sh`
+- [x] [TEST] E2E-PAR-05..08 di CI — hijau di GitHub Actions (job `parity-e2e`, PR #3, run 14 Nov 2026) dan lokal lewat `scripts/parity-e2e.sh`
+- [x] [TEST] E2E-PAR-09..12 di CI — hijau di GitHub Actions (job `parity-e2e`, PR #3, run 14 Nov 2026) dan lokal lewat `scripts/parity-e2e.sh`
 - [x] [TEST] Regresi performa NFR — target PRD lulus (Table 1.074 ms dan Board 1.192 ms p95 < 1,5 s; pencarian < 800 ms; real-time p95 0,48 s); tes internal 500 task penjadwalan 300 ms gagal di mesin ini namun A/B dengan commit lama membuktikan ini lingkungan, bukan regresi kode (TESTING.md, S12.2.1)
 - [x] [TEST] Sweep keamanan endpoint baru M8–M12 — 286 operasi OpenAPI: 250 berbasis sesi lulus sapuan (401 anonim, tanpa 5xx, tanpa 2xx untuk id tak dikenal), 36 publik/bearer masing-masing punya tes sendiri (TESTING.md, S12.2.1)
 - [x] [TEST] Restore drill dan migrasi rehearsal — drill pada image dari branch integrasi: backup 10 s, hapus total, pulih 26 s (compose up sampai sehat 44 s), hitungan identik; `TestUpgradeFromTheEarlySchemaKeepsEveryRow` (TESTING.md, S12.2.1)

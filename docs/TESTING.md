@@ -879,3 +879,10 @@ Basis: branch `integration/m12-regression` = `origin/main` (05dc754) + perbaikan
 - PASS. **Migrasi rehearsal** `TestUpgradeFromTheEarlySchemaKeepsEveryRow`: database pada skema awal (versi 45) berisi 4 user, 5 Space, 200 item dengan lokasi, 111 komentar, grup dan share, dinaikkan ke versi 311 seperti saat update; semua hitungan sama, admin tertua menjadi pemilik akun, setiap item mendapat tipe, tabel audit ada, `database.Open` tidak menerapkan apa pun lagi dan `Ready` lulus. Uji mutasi: migrasi yang menghapus komentar membuat tes GAGAL ("111 rows before, 0 after"). Batas: skema awal disiapkan dari berkas migrasi saat ini sampai versi 45, bukan dump instance pilot sungguhan.
 - Belum dan butuh pihak lain: hijau di GitHub Actions untuk tiga kelompok PAR dan seluruh pipeline, uji dengan data klien sungguhan, pengukuran NFR pada mesin tenang, dan UAT manusia (S12.2.2).
 
+## CI GitHub Actions hijau untuk basis M12 (14 Nov 2026)
+
+- PR #3 (`integration/m12-regression`, head `f4304a6`) hijau penuh: `test` (lint, typecheck, Go penuh, Playwright mock penuh, flow live Chrome + PostgreSQL, drift kode generated, build container), `parity-e2e` (tiga kelompok E2E-PAR-01..04, 05..08, 09..12) dan `authorization-matrix`. Di-merge ke `main` (`5e66cdf`).
+- Dua putaran pertama gagal di satu tes, `TestBrowserM2Flows` (Gantt, pemilihan baris lewat keyboard) di langkah flow live; semua yang lain hijau. Spec diperkuat dua kali (tunggu pengumuman, urutan baris bisa terbalik) dan CI kini meng-upload `web/test-results` bila langkah gagal. Penyebab tepat di runner disimpulkan dari kode dan log, bukan dari artifact.
+- `main` dilindungi: required status check `authorization-matrix`, tanpa syarat review, `enforce_admins` mati (admin repo masih dapat mendorong langsung), force push dan penghapusan dilarang.
+- Masih belum: UAT manusia (S12.2.2), rilis kandidat (S12.2.3), dan pengukuran NFR di mesin tenang.
+
