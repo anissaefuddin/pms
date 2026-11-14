@@ -85,6 +85,9 @@ test("Share dialog creates, replaces and turns off the public link", async ({ pa
   await dialog.getByRole("button", { name: "Turn off link" }).click();
   await expect(dialog.getByText("No public link yet.")).toBeVisible();
   expect(calls.filter((call) => call.path === `/forms/${f1}/public-link`).map((call) => call.method)).toEqual(["POST", "POST", "DELETE"]);
+  // A button that has just finished its request is still fading from its pending colour; axe would read the in-between contrast.
+  await expect(dialog.getByRole("button", { name: "Create public link" })).toBeEnabled();
+  await page.waitForFunction(() => document.getAnimations().length === 0);
   const results = await new AxeBuilder({ page }).include('[role="dialog"]').analyze();
   expect(results.violations).toEqual([]);
 });
