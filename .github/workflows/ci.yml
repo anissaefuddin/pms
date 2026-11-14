@@ -77,6 +77,34 @@ jobs:
       - run: go test -count=1 ./server/internal/httpserver ./server/internal/policy -run 'Authorization|AccessRules|Matrix|Capabilit'
         env: { PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable" }
 
+  # S12.2.1: the twelve parity scenarios (docs/PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md, E2E-PAR-01..12) in three visible groups.
+  # Each pattern names the tests that carry the scenario; a pattern that matches nothing fails (-run with no match passes, so the
+  # step counts what ran).
+  parity-e2e:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env: { POSTGRES_DB: pms_test, POSTGRES_USER: pms, POSTGRES_PASSWORD: pms }
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U pms -d pms_test"
+          --health-interval 5s --health-timeout 3s --health-retries 20
+    env:
+      PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable"
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-go@v5
+        with: { go-version-file: go.mod, cache: true }
+      - name: E2E-PAR-01..04 (custom types, read-only refusal, status guards, automation)
+        run: scripts/parity-e2e.sh 01-04
+      - name: E2E-PAR-05..08 (form branching, approvals, workload, baselines)
+        run: scripts/parity-e2e.sh 05-08
+      - name: E2E-PAR-09..12 (file approval pinning, formulas and reports, API and webhooks, SCIM)
+        run: scripts/parity-e2e.sh 09-12
+
   image:
     if: startsWith(github.ref, 'refs/tags/v')
     needs: test

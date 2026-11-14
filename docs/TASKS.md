@@ -1377,12 +1377,12 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 ### E12.2 Penerimaan
 
 **S12.2.1 Regresi parity penuh — 3 hari**
-- [ ] [TEST] E2E-PAR-01..04 di CI
-- [ ] [TEST] E2E-PAR-05..08 di CI
-- [ ] [TEST] E2E-PAR-09..12 di CI
-- [ ] [TEST] Regresi performa NFR
-- [ ] [TEST] Sweep keamanan endpoint baru M8–M12
-- [ ] [TEST] Restore drill dan migrasi rehearsal
+- [ ] [TEST] E2E-PAR-01..04 di CI — lulus lokal 14 Nov 2026 lewat `scripts/parity-e2e.sh 01-04`; job CI `parity-e2e` ada; **hijau di GitHub menunggu push dan CI hijau**
+- [ ] [TEST] E2E-PAR-05..08 di CI — lulus lokal (`scripts/parity-e2e.sh 05-08`) dan flow live `TestBrowserWorkload` (PAR-07, spec basi diperbaiki); hijau di GitHub menunggu push
+- [ ] [TEST] E2E-PAR-09..12 di CI — lulus lokal (`scripts/parity-e2e.sh 09-12`); hijau di GitHub menunggu push
+- [x] [TEST] Regresi performa NFR — target PRD lulus (Table 1.074 ms dan Board 1.192 ms p95 < 1,5 s; pencarian < 800 ms; real-time p95 0,48 s); tes internal 500 task penjadwalan 300 ms gagal di mesin ini namun A/B dengan commit lama membuktikan ini lingkungan, bukan regresi kode (TESTING.md, S12.2.1)
+- [x] [TEST] Sweep keamanan endpoint baru M8–M12 — 286 operasi OpenAPI: 250 berbasis sesi lulus sapuan (401 anonim, tanpa 5xx, tanpa 2xx untuk id tak dikenal), 36 publik/bearer masing-masing punya tes sendiri (TESTING.md, S12.2.1)
+- [x] [TEST] Restore drill dan migrasi rehearsal — drill pada image dari branch integrasi: backup 10 s, hapus total, pulih 26 s (compose up sampai sehat 44 s), hitungan identik; `TestUpgradeFromTheEarlySchemaKeepsEveryRow` (TESTING.md, S12.2.1)
 
 **S12.2.2 UAT parity final (PAR-UAT) — 7 hari**
 - [ ] [TEST] UAT WFP kelompok Work management
