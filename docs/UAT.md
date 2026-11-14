@@ -97,3 +97,16 @@ Gunakan instance pilot dengan versi yang dicatat. Untuk setiap requirement, cata
 | OPS-01 | P0 | Backup: RPO ≤ 24 jam, RTO ≤ 4 jam per klien. Database di-dump lebih dulu, lalu file. Karena file tidak pernah ditimpa (SEC-01), setiap file yang dirujuk database pasti ikut di backup. Restore penuh diuji sebelum GA dan setiap bulan setelahnya | NOT RUN | — |
 | OPS-02 | P0 | Update & migrasi: script update menjalankan backup pre-deploy otomatis → pull image versi baru → start. Migrasi hanya maju (forward-only), dan setiap migrasi berjalan dalam transaksi. Jika migrasi gagal, app menolak start; pemulihan dilakukan dengan restore dump pre-deploy dan kembali ke image versi lama | NOT RUN | — |
 | OPS-03 | P0 | Observability: log JSON terstruktur (`slog`) dengan request ID; metrik Prometheus (error rate, latency, panjang antrian dan job gagal di River); alert Grafana untuk error rate, job gagal, backup gagal, dan disk hampir penuh | NOT RUN | — |
+
+## UAT M8, M9, M10 (gate G1a, G1b, G2a)
+
+Requirement M8 sampai M10 tidak ada di tabel 93 baris di atas. Matriksnya ada di gate report; semua hasil UAT manusia **NOT RUN** (14 Nov 2026).
+
+### UAT M8 gate G1a
+[G1A_CONFIG.md](parity/gate-reports/G1A_CONFIG.md): CUST-01..05, SPC-14, TASK-11B, WF-03B/04/05, FORM-04/07/09, SET-06. Hasil UAT: NOT RUN.
+
+### UAT M9 gate G1b
+[G1B_AUTOMATION_APPROVALS.md](parity/gate-reports/G1B_AUTOMATION_APPROVALS.md): AUT-01..05, APR-01..03. Hasil UAT: NOT RUN.
+
+### UAT M10 gate G2a
+[G2A_RESOURCE_SCHEDULE_COST.md](parity/gate-reports/G2A_RESOURCE_SCHEDULE_COST.md): requirement resource, schedule dan cost M10. Hasil UAT: NOT RUN.
