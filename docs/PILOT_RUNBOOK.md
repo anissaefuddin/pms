@@ -151,3 +151,25 @@ Settings → Provisioning (admin). Buat token (nama = penyedia, tipe pengguna ba
 
 **Kepemilikan akun:** Settings → Account ownership. Semua admin dapat melihat pemiliknya; hanya pemilik yang dapat menyerahkannya ke admin aktif lain (butuh kata sandi, atau login dalam 15 menit terakhir bagi yang tidak punya kata sandi). Pemilik tidak dapat diturunkan atau dinonaktifkan oleh admin lain: serahkan dulu. Pemilik lama tetap admin. Bila pemilik hilang akses dan tidak ada jalan lain, ubah lewat database: `UPDATE account SET owner_id = '<id admin aktif>';` lalu catat di Security audit secara manual.
 
+
+## Update dari image build lokal (`update-local.sh`)
+
+`update.sh` menjalankan `docker compose pull`, jadi gagal untuk image yang hanya ada di host. Untuk image yang dibangun dari checkout ini, dari `deploy`: `./update-local.sh`. Urutannya: tag `pms-local:<12 hex commit>` (working tree kotor ditolak kecuali `ALLOW_DIRTY=1`, tag menjadi `<commit>-dirty-<hash diff>`), `docker build` bila image belum ada, `./backup.sh`, `docker compose up -d --pull never app`, tunggu readiness 60 detik. Berhasil: tag baru ditulis ke `PMS_IMAGE` di `deploy/.env` (matikan dengan `NO_PERSIST=1`). Gagal: `./restore.sh <stamp pra-update> --force` otomatis dengan image lama, lalu exit 1. Dijalankan ulang pada commit yang sama: "Already running", tanpa backup. Variabel: `PMS_LOCAL_REPO` (nama image), `BUILD_FILE`, `BUILD_CONTEXT`. Rollback otomatis membuang data yang dibuat sejak backup pra-update (sama seperti rollback manual di atas).
+
+## Backup terjadwal, salinan luar server, uji restore
+
+- Jadwal: salin `deploy/systemd/pms-*.{service,timer}` ke `/etc/systemd/system/`, sesuaikan `User` dan `WorkingDirectory`, lalu `systemctl enable --now pms-backup.timer pms-restore-test.timer` (backup harian 02:30, uji restore tiap Minggu 04:00). Alternatif cron: `deploy/systemd/pms.cron.example`.
+- Salinan luar server, tanpa rahasia di unit atau skrip, semuanya dari `deploy/.env`: `BACKUP_REMOTE` (rclone, disarankan remote `crypt`) dan/atau `BACKUP_RSYNC_DEST=user@host:/path` dengan `BACKUP_RSYNC_SSH="ssh -i /root/.ssh/pms_backup -o BatchMode=yes"`. rsync mencerminkan folder lokal (retensi sama), dengan `--max-delete` (bawaan 20) agar folder lokal yang kosong tidak menghapus salinan luar. Pakai tujuan khusus satu instance.
+- Retensi: `BACKUP_RETENTION_DAYS` (bawaan 14) berlaku lokal, di rclone, dan (lewat cermin) di rsync. Kunci `PMS_*_KEY` tidak ikut backup; simpan di secret store.
+- Uji restore: `./restore-test.sh [stamp]` memulihkan set terbaru ke database scratch di Postgres stack itu (data hidup tidak disentuh), memeriksa arsip file, skema sama dengan database hidup, dan ada user, lalu menghapus scratch. Gagal: exit non-zero, `BACKUP_ALERT_URL` dipanggil. Sukses menulis `pms_restore_test_last_success_timestamp_seconds` ke `BACKUP_TEXTFILE_DIR`. Latihan restore penuh ke instance terpisah tetap dilakukan bulanan (bagian Backup dan restore).
+
+## Migrasi pilot ke instance klien (`migrate-pilot.sh`)
+
+Prasyarat di instance tujuan: server baru dengan `deploy/.env` sendiri (`PMS_IMAGE` sama atau lebih baru dari sumber, `PMS_HOST`, `PUBLIC_URL`, password DB baru) dan **`PMS_2FA_KEY`, `PMS_SSO_KEY`, `PMS_CONNECTOR_KEY` sama dengan sumber** (dibawa lewat secret store, tidak lewat bundel). `docker compose up -d` sudah dijalankan.
+
+1. Sumber, jendela pemeliharaan: `./migrate-pilot.sh export`. App dihentikan, `backup.sh` berjalan, jumlah baris per tabel (tanpa `river_*`), jumlah file, dan admin aktif dicatat, lalu `migration/pms-migration-<stamp>.tar.gz` + `.sha256` dibuat. App sumber **tetap berhenti** (`KEEP_RUNNING=1` untuk menolak).
+2. Salin bundel dan `.sha256` ke tujuan lewat saluran aman.
+3. Tujuan: `./migrate-pilot.sh import <bundel>`. Memeriksa checksum dan isi bundel (hanya empat nama berkas yang diizinkan), memulihkan dengan `restore.sh` (yang punya rollback sendiri), lalu `verify`: jumlah baris semua tabel sama, jumlah file sama, ada admin aktif, app ready, dan peringatan bila ada data 2FA/SSO/konektor tetapi kuncinya kosong. `./migrate-pilot.sh verify [counts]` dapat diulang kapan saja. Bila image tujuan lebih baru, migrasi baru ikut berjalan dan jumlah baris tabel bawaan migrasi dapat berbeda: periksa selisihnya satu per satu.
+4. Manual: login admin, buka satu project, unduh satu lampiran, kirim email uji. Arahkan DNS ke tujuan.
+
+**Rencana rollback.** Sumber tidak diubah oleh export (hanya dihentikan) dan dipertahankan sampai klien menerima. (a) Import gagal atau verify merah sebelum DNS dipindah: perbaiki atau ulangi `import` (restore.sh sudah mengembalikan database dan file tujuan bila cutover-nya gagal); sumber tidak perlu disentuh selain `docker compose start app`. (b) Masalah setelah DNS pindah: kembalikan DNS ke sumber lalu `docker compose start app` di sumber. Data yang dibuat di tujuan setelah cutover tidak ada di sumber; jika sudah ada kerja baru, jalankan `export` di tujuan dan `import` ke sumber alih-alih membuangnya. (c) Hapus sumber (`decommission.sh`) hanya setelah klien menerima dan backup akhir tersimpan.

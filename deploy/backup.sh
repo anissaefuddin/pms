@@ -31,8 +31,16 @@ if [ -n "${BACKUP_REMOTE:-}" ]; then
   command -v rclone >/dev/null || { echo "BACKUP_REMOTE is set but rclone is not installed" >&2; exit 1; }
   rclone copy "$backup_dir" "$BACKUP_REMOTE" --include "$stamp-*"
   rclone delete "$BACKUP_REMOTE" --min-age "${retention_days}d"
-else
-  echo "WARNING: BACKUP_REMOTE is not set; backups exist only on this server." >&2
+fi
+# Alternative or addition: plain rsync over SSH (BACKUP_RSYNC_DEST=user@host:/path used only by this instance). It mirrors the local
+# directory, so the remote keeps the same retention window; --max-delete stops an emptied local dir from wiping the remote.
+# BACKUP_RSYNC_SSH: ssh command with the key, e.g. "ssh -i /root/.ssh/pms_backup -o BatchMode=yes". No secrets are stored here.
+if [ -n "${BACKUP_RSYNC_DEST:-}" ]; then
+  command -v rsync >/dev/null || { echo "BACKUP_RSYNC_DEST is set but rsync is not installed" >&2; exit 1; }
+  rsync -a --delete --max-delete="${BACKUP_RSYNC_MAX_DELETE:-20}" --exclude '.pms-rollback.*' -e "${BACKUP_RSYNC_SSH:-ssh -o BatchMode=yes}" "$backup_dir"/ "$BACKUP_RSYNC_DEST"/
+fi
+if [ -z "${BACKUP_REMOTE:-}" ] && [ -z "${BACKUP_RSYNC_DEST:-}" ]; then
+  echo "WARNING: neither BACKUP_REMOTE nor BACKUP_RSYNC_DEST is set; backups exist only on this server." >&2
 fi
 # Metric for the "backup too old" alert: node_exporter's textfile collector reads this directory.
 if [ -n "${BACKUP_TEXTFILE_DIR:-}" ]; then

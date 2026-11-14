@@ -48,3 +48,10 @@
 - Perilaku GitHub dan Google nyata (format respons, batas laju, izin token) hanya diverifikasi terhadap tiruan yang ditulis dari dokumentasi API.
 - Rahasia webhook dan konektor memakai satu kunci (`PMS_CONNECTOR_KEY`); kehilangan kunci membuat semuanya tidak terbaca. Rotasi secret webhook belum ada, dan langganan lama yang tersimpan polos tidak dienkripsi ulang.
 - Bukti performa file besar dan banyak versi belum diukur.
+
+## Bukti awal konektor pilot dari pengguna dan form Google (14 Nov 2026)
+
+- **GitHub nyata, satu putaran sinkron (bukti awal dari pengguna, belum diverifikasi independen):** pengguna memasang konektor GitHub Issues di instance dev-lens (repo publik `anissaefuddin/pms`, token fine-grained dengan Issues Read and write). Sinkron terakhir pukul 20:21 WIB melaporkan "pushed 1, pulled 2, conflicts 0". Di GitHub ada issue #1 dan #2 (diimpor) dan #7 "UAT" (kemungkinan dihasilkan konektor, belum dipastikan). Sesi ini tidak mengakses instance atau akun itu; angka di atas dikutip dari laporan pengguna.
+- **Belum diuji dengan akun nyata:** konflik nyata, arah GitHub→PMS untuk perubahan status, webhook GitHub, dan **Google Calendar nyata (belum dicoba sama sekali)**. `TestRealGitHubAccount` dan `TestRealGoogleAccount` tetap belum dijalankan.
+- **Form Google di UI:** kolom Client ID, Client secret, Refresh token ditambahkan (jalur tahan lama; access token kedaluwarsa ±1 jam; consent berstatus Testing membuat refresh token kedaluwarsa 7 hari). Autofill peramban dimatikan pada kolom non-login. Bukti: TESTING.md bagian "Form konektor Google".
+- **Status G2b tetap BELUM LULUS** sampai UAT manusia selesai.

@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"regexp"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -651,6 +652,10 @@ func (s *Server) acceptInvitation(w http.ResponseWriter, r *http.Request) {
 func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		if token, ok := strings.CutPrefix(r.Header.Get("Authorization"), "Bearer "); ok && strings.HasPrefix(token, keyPrefix) {
+			if !s.ipAllowed(r) { // SR-01: an API key acts as a person, so the network allowlist applies to it like to a session
+				writeIPDenied(w)
+				return
+			}
 			if ctx, ok := s.authenticateKey(w, r, token); ok {
 				next(w, r.WithContext(ctx))
 			}
@@ -658,6 +663,10 @@ func (s *Server) requireUser(next http.HandlerFunc) http.HandlerFunc {
 		}
 		cookie, err := r.Cookie("pms_session")
 		if err != nil {
+			if !s.ipAllowed(r) { // SR-01: same for OAuth access tokens
+				writeIPDenied(w)
+				return
+			}
 			p, ok := s.bearerUser(w, r)
 			if ok {
 				next(w, r.WithContext(context.WithValue(context.WithValue(r.Context(), userKey, p.UserID), userTypeKey, p.UserType)))
@@ -816,10 +825,21 @@ func recoverPanic(next http.Handler) http.Handler {
 	})
 }
 
+var requestIDFormat = regexp.MustCompile(`^[A-Za-z0-9._-]{1,64}$`)
+
 func (s *Server) requestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// SR-02: headers every response carries; handlers that need a stricter value (attachments: CSP sandbox) overwrite it.
+		h := w.Header()
+		h.Set("X-Content-Type-Options", "nosniff")
+		h.Set("X-Frame-Options", "DENY")
+		h.Set("Content-Security-Policy", "frame-ancestors 'none'")
+		h.Set("Referrer-Policy", "same-origin")
+		if s.cfg.CookieSecure {
+			h.Set("Strict-Transport-Security", "max-age=31536000")
+		}
 		id := r.Header.Get("X-Request-ID")
-		if id == "" {
+		if !requestIDFormat.MatchString(id) { // SR-03: a client-chosen id is echoed and logged, so only a short plain token is kept
 			plain, _, _ := security.Token()
 			id = plain[:16]
 		}

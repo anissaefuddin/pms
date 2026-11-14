@@ -794,21 +794,22 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 ### E7.1 Stabilisasi (dikerjakan pertama)
 
 **S7.1.1 RCA HTTP 500 intermiten (STAB-02) — 4 hari**
-- [ ] [TEST] Reproduksi `GET /me` di bawah request paralel
-- [ ] [TEST] Reproduksi daftar view dan time entries
-- [ ] [BE] Analisis log dan trace; tulis hipotesis akar masalah
-- [ ] [BE] Perbaikan akar masalah bagian 1
-- [ ] [BE] Perbaikan akar masalah bagian 2 / jalur error tersisa
-- [ ] [TEST] Tes regresi yang mereproduksi kegagalan
-- [ ] [TEST] Run skenario uji: nol 5xx
-- [ ] [DOC] RCA di TESTING
+- [x] [TEST] Reproduksi `GET /me` di bawah request paralel
+- [x] [TEST] Reproduksi daftar view dan time entries
+- [x] [BE] Analisis log dan trace; tulis hipotesis akar masalah
+- [x] [BE] Perbaikan akar masalah bagian 1
+- [x] [BE] Perbaikan akar masalah bagian 2 / jalur error tersisa
+- [x] [TEST] Tes regresi yang mereproduksi kegagalan
+- [x] [TEST] Run skenario uji: nol 5xx
+- [x] [DOC] RCA di TESTING
+  > Verifikasi 14 Nov 2026 (sesi rekonsiliasi): RCA, perbaikan, dan bukti di [TESTING](TESTING.md#rekonsiliasi-m7-dan-kolom-cost-report-14-november-2026). Atribusi setiap 500 historis tetap tidak diketahui (log lama tanpa detail error).
 
 **S7.1.2 Verifikasi SSE multi-user (STAB-05) — 3 hari**
 - [x] [TEST] Harness dua pengguna browser
 - [x] [TEST] Latensi status dan komentar ≤ 3 detik
-- [ ] [TEST] Reconnect dan pemuatan ulang data setelah putus
+- [x] [TEST] Reconnect dan pemuatan ulang data setelah putus
 - [x] [TEST] Urutan event dan duplikasi
-- [ ] [FIX] Perbaikan temuan
+- [x] [FIX] Interval retry klien SSE 1 detik (sebelumnya 3 detik) agar reconnect dan reload muat dalam anggaran 3 detik
 - [x] [DOC] Hasil di TESTING
 
 **S7.1.3 Cakupan keamanan endpoint (STAB-04) — 3.5 hari**
@@ -828,7 +829,8 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 
 ### E7.2 Katalog, PRD, dan traceability
 
-**S7.2.1 Freeze katalog fitur Wrike (PAR-CAT-01) — 4 hari**
+**S7.2.1 Freeze katalog fitur Wrike (PAR-CAT-01) — 4 hari** · STATUS: menunggu review owner produk
+> Status jujur 14 Nov 2026: butir rekonsiliasi WFP dan [REVIEW] tidak dicentang di sini. Draf rekonsiliasi ada di sesi lain (belum dikomit, belum diaudit); freeze dan tag menunggu owner produk.
 - [x] [DOC] Kerangka `docs/parity/WRIKE_SOURCE_CATALOG_<tanggal>.md`
 - [x] [DOC] Verifikasi plan Free dan Team
 - [x] [DOC] Verifikasi plan Business
@@ -838,7 +840,7 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 - [ ] [DOC] Rekonsiliasi WFP-054..106 dengan flow screen
 - [ ] [REVIEW] Review owner produk, freeze, tag versi
 
-**S7.2.2 Finalisasi PRD v0.4 dan traceability (REV-04, REV-05) — 2 hari**
+**S7.2.2 Finalisasi PRD v0.4 dan traceability (REV-04, REV-05) — 2 hari** · STATUS: menunggu persetujuan user
 - [x] [DOC] Matriks WFP → ID PRD
 - [x] [DOC] Lengkapi TRACEABILITY dengan hasil katalog
 - [ ] [REVIEW] Review PRD v0.4 dan persetujuan user
@@ -853,7 +855,7 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 - [x] [TEST] Benchmark Table/Board setelah perubahan
 - [x] [DOC] ADR CIT: tipe sebagai data, layout, subitem, default, inheritance
 
-**S7.3.2 ADR kontrak registry dan relasi bertipe (REG-00) — 2 hari**
+**S7.3.2 ADR kontrak registry dan relasi bertipe (REG-00) — 2 hari** · STATUS: menunggu keputusan DEC-PAR-03/04 (user)
 - [x] [DOC] Model `record_type`, `master_record`, `record_version` (desain saja)
 - [x] [DOC] Relasi bertipe item↔item dan item↔record; dampak custom field
 - [x] [DOC] Ownership, scope, versi, privasi, retensi
@@ -866,7 +868,7 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 
 ### E7.4 Gate
 
-**S7.4.1 Gate G0 — 1 hari**
+**S7.4.1 Gate G0 — 1 hari** · STATUS: BLOCKED, menunggu UAT pilot, CI kandidat, dan persetujuan keputusan (G0)
 - [ ] [REVIEW] Checklist STAB-01..10 tertutup atau BLOCKED dengan keputusan
 - [x] [DOC] `docs/parity/gate-reports/G0_STABILIZATION.md`
 
@@ -879,8 +881,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 **S8.1.1 Skema dan API tipe item (CUST-01) — 4 hari**
 - [x] [API] CRUD tipe item: key, nama, ikon, kelas task/project, aktif
 - [x] [DB] Migrasi `item_types` dan backfill tipe bawaan
-- [ ] [DB] Query sqlc
-  > Audit 14 Nov 2026: paket `items` memakai SQL pgx langsung untuk `item_type_defs`; hanya model yang dibangkitkan sqlc (D-61). Dibiarkan terbuka sampai ada keputusan memindahkan query.
+- [x] [DB] Query sqlc — penyimpangan diterima (D-103): SQL pgx langsung, hanya model dari sqlc
 - [x] [BE] Validasi: key unik, kelas, nama
 - [x] [BE] Policy admin dan 403
 - [x] [BE] Nonaktifkan tanpa menghapus data
@@ -965,7 +966,7 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 - [x] [FE] Editor kondisi
 - [x] [FE] Renderer publik dan internal
 - [x] [TEST] Unit evaluator kondisi
-- [ ] [TEST] E2E-PAR-05
+- [x] [TEST] E2E-PAR-05 — bukti: bagian baru akhir docs/TESTING.md (S8.3.1 routing Blueprint, D-101)
   > Audit 14 Nov 2026: hanya Playwright mock (`m8.spec.ts`, `forms.spec.ts`) dan unit/integrasi Go; E2E live form→Blueprint→item belum ada (routing ke Blueprint belum).
   > 14 Nov 2026 (M8-1): bagian form bercabang → tipe dan field sesuai cabang sudah diuji lewat HTTP (`TestFormBranchesDecideQuestionsItemTypeAndFields`, di `parity-e2e.sh 05-08`). Sisa: `blueprint_id` pada rute form; node blueprint hanya menyimpan kelas, bukan `type_key`, jadi tidak kecil. Spec Playwright live belum ada.
 
@@ -1173,8 +1174,8 @@ Memetakan: RSC-01..06, VIEW-05C, SPC-16, SCH-01, TASK-14. Prasyarat: S7.4.1; S8.
 - [x] [BE] Kalkulasi actual cost
 - [x] [BE] Data finansial hanya untuk admin (tidak dikirim ke yang lain)
 - [x] [FE] Panel budget vs actual (di field budget project)
-- [ ] [FE] Kolom cost di report
-  > Audit 14 Nov 2026: tidak ada UI report dengan kolom biaya; panel budget vs actual ada di field budget project.
+- [x] [FE] Kolom cost di report
+  > 14 Nov 2026: metrik laporan "Actual cost" (`actual_cost_minor`, sumber time entries) hanya untuk admin: 403 bagi yang lain, tidak ditawarkan di editor, dimask di tautan publik. Budget dan selisih tetap di panel field budget project; belum ada kolom budget/variance lintas-sumber di report (lihat TESTING).
 - [x] [TEST] Rumus dan masking
 
 ### E10.5 Gate
@@ -1299,7 +1300,7 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 **S11.3.6 Dua konektor pilot (INT-03) — 1.5 hari**
 - [x] [BE] GitHub Issues dua arah
 - [x] [BE] Google Calendar satu arah
-- [ ] [TEST] Uji dengan akun uji — catatan: uji server palsu hijau; uji akun sungguhan (`TestRealGitHubAccount`, `TestRealGoogleAccount`) ada tetapi BELUM dijalankan (butuh env `PMS_TEST_*`), lihat TESTING.md
+- [ ] [TEST] Uji dengan akun uji — catatan: uji server palsu hijau; uji akun sungguhan (`TestRealGitHubAccount`, `TestRealGoogleAccount`) ada tetapi BELUM dijalankan (butuh env `PMS_TEST_*`), lihat TESTING.md. Pembaruan 14 Nov 2026: bukti awal dari pengguna untuk GitHub nyata di instance dev (satu putaran sinkron, "pushed 1, pulled 2, conflicts 0"); belum diuji konflik nyata, GitHub→PMS status, webhook; Google Calendar nyata belum dicoba; form Google (refresh token) selesai di UI
 
 **S11.3.7 Bookmark dan feedback (NAV-08, NAV-09) — 1.5 hari**
 - [x] [BE] API bookmark dan feedback

@@ -29,7 +29,7 @@ export function ItemActivity({ item }: { item: Item }) {
     {log.isSuccess && !entries.length && <p className="text-sm text-muted-foreground">{t("items.activity.empty")}</p>}
     <ul className="space-y-1 text-sm">{entries.map((entry) => <li key={entry.id}>
       {t(`items.activity.action.${known.includes(entry.action) ? entry.action : "other"}`, { actor: entry.actor.name })}
-      {Object.keys(entry.changes).length > 0 && <> · {Object.keys(entry.changes).join(", ")}</>}
+      {entry.action === "update" && Object.keys(entry.changes).length > 0 && <> · {Object.keys(entry.changes).join(", ")}</>}
       <span className="text-muted-foreground"> · {formatDateTime(entry.created_at, profile)}</span>
     </li>)}</ul>
     {log.hasNextPage && <Button variant="outline" disabled={log.isFetchingNextPage} onClick={() => void log.fetchNextPage()}>{t("items.activity.more")}</Button>}

@@ -1,0 +1,11 @@
+[Unit]
+Description=PMS restore drill into a scratch database (never touches live data)
+After=docker.service
+Requires=docker.service
+
+[Service]
+Type=oneshot
+User=pms
+WorkingDirectory=/opt/pms/deploy
+ExecStart=/opt/pms/deploy/restore-test.sh
+TimeoutStartSec=2h

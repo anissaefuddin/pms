@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import type { Item, ItemUpdate } from "@/lib/items";
-import type { WorkSchedule } from "@/lib/work-schedule";
+import { loadWorkSchedule, workScheduleKey, type WorkSchedule } from "@/lib/work-schedule";
 
 type Allocation = NonNullable<Item["assignees"][number]["allocation"]>;
 type AllocationDraft = { unit: Allocation["unit"]; value: string };
@@ -33,15 +33,9 @@ export function ItemEffort({ item, editable, disabled, onEdit, onSave }: {
   const [effortDraft, setEffortDraft] = useState<string>();
   const [allocations, setAllocations] = useState<Record<string, AllocationDraft>>({});
   const schedule = useQuery({
-    queryKey: ["work-schedule"],
+    queryKey: workScheduleKey,
     enabled: item.assignees.length > 0,
-    queryFn: async () => {
-      let etag = "";
-      const data = await api<WorkSchedule>("/api/v1/settings/work-schedule", undefined, (headers) => {
-        etag = headers.get("ETag") ?? "";
-      });
-      return { data, etag };
-    },
+    queryFn: loadWorkSchedule,
   });
   useEffect(() => {
     const ids = new Set(item.assignees.map(({ id }) => id));

@@ -133,7 +133,7 @@ type publicWidget struct {
 
 // financialQuery says whether a widget would show money: a currency field, or anything about billing.
 func financialQuery(ctx context.Context, tx pgx.Tx, q analytics.Query) (bool, error) {
-	if q.Metric == "billable_minutes" || q.GroupBy == "billing_type" || q.BreakBy == "billing_type" || q.Filters.Billing != "" {
+	if q.Metric == "billable_minutes" || q.Metric == "actual_cost_minor" || q.GroupBy == "billing_type" || q.BreakBy == "billing_type" || q.Filters.Billing != "" {
 		return true, nil
 	}
 	if q.FieldID == "" {

@@ -428,7 +428,32 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 		}
 	}
 	elevated := policy.Actor{ID: actor.ID, Type: policy.Admin}
-	item, err := items.CreateTx(ctx, tx, elevated, fields, batch)
+	var item items.Detail
+	blueprint := row.Response.ResolveBlueprint(answers)
+	if blueprint != nil {
+		// A blueprint deleted after the form was saved is skipped: the request still creates its item, without the structure.
+		var exists bool
+		if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM blueprints WHERE id=$1 AND space_id=$2)", *blueprint, row.Response.Location.SpaceID).Scan(&exists); err != nil {
+			return createdItem{}, err
+		}
+		if !exists {
+			blueprint = nil
+		}
+	}
+	if blueprint != nil {
+		// The form's values win over the blueprint's defaults; empty ones leave the default alone.
+		overrides := map[string]json.RawMessage{}
+		for k, v := range fields {
+			if k != "locations" && k != "title" && !(k == "assignee_ids" && len(assignees) == 0) {
+				overrides[k] = v
+			}
+		}
+		item, err = items.UseBlueprintTx(ctx, tx, elevated, *blueprint, items.BlueprintUse{
+			Locations: []items.Location{{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID}},
+			Title:     &title, Overrides: overrides}, batch)
+	} else {
+		item, err = items.CreateTx(ctx, tx, elevated, fields, batch)
+	}
 	if err != nil {
 		return createdItem{}, err
 	}

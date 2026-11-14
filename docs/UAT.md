@@ -347,7 +347,7 @@ Kolom hasil pada tabel skenario: **Hasil** (`NOT RUN` / Lulus / Gagal / SKIP), *
 ## Kelompok 8 — Integration (WFP-078..085)
 
 **Tujuan/aktor:** impor/ekspor Excel, API key dan OAuth, webhook, konektor GitHub/Google, orkestrasi otomasi. Aktor: `A`, `R1`, `R2`. **Data tambahan:** [LUAR] penerima webhook (mis. layanan penangkap request), repo GitHub uji dan akun Google uji, `PMS_CONNECTOR_KEY` terisi, `curl`/klien HTTP untuk uji API.
-**Rujukan:** WFP-078..083 (WFP-084/085 di luar 1.0); SPC-15, API-01..03, INT-01..03, SET-08. **Bukti:** G2B (atas); [S11_3_RECONCILIATION.md](parity/S11_3_RECONCILIATION.md) memuat catatan implementasi pilihan. Konektor dengan akun nyata **belum pernah dijalankan**.
+**Rujukan:** WFP-078..083 (WFP-084/085 di luar 1.0); SPC-15, API-01..03, INT-01..03, SET-08. **Bukti:** G2B (atas); [S11_3_RECONCILIATION.md](parity/S11_3_RECONCILIATION.md) memuat catatan implementasi pilihan. Konektor dengan akun nyata: *bukti awal dari pengguna* (bukan hasil UAT; kolom Hasil tidak diubah): GitHub Issues dipasang di instance dev pada 14 Nov 2026, satu sinkron "pushed 1, pulled 2, conflicts 0". Konflik, GitHub→PMS status, webhook, dan Google Calendar belum dicoba.
 
 | ID | Peran | Langkah | Hasil yang diharapkan | Mencakup | Hasil | Catatan | Tanggal | Penguji |
 |---|---|---|---|---|---|---|---|---|
@@ -474,3 +474,16 @@ Butir "panduan" belum dibuat. Daftar ini hanya kerangka topik; panduan akhir unt
 **Per fitur utama (pengguna):** masuk, undangan, 2FA, dan OTP; Space, project, folder, dan sharing; task, subitem, lokasi ganda, tanggal, effort; view (Table, Board, Gantt, Calendar, Timelog, Files, Chart) dan view tersimpan; custom field, formula, tipe item kustom; workflow, status, dan approval; form dan permintaan (My requests); otomasi (aturan WHEN/IF/THEN dan log); workload, booking, dan baseline; time entry dan timesheet; komentar, file, versi, proofing, dan review file; dashboard, report, dan langganan; impor/ekspor Excel; API key, OAuth, webhook, dan konektor; pencarian, Inbox, Stream, Starred, My to-do; Recycle bin.
 
 **Per tugas admin:** bootstrap dan undangan pertama ([PILOT_RUNBOOK.md](PILOT_RUNBOOK.md#bootstrap)); **seat** dan user ([Menambah seat](PILOT_RUNBOOK.md#menambah-seat)); **backup dan restore** ([Backup dan restore](PILOT_RUNBOOK.md#backup-dan-restore)); **update** dan rollback ([Update](PILOT_RUNBOOK.md#update)); **2FA** dan kunci ([Kunci 2FA](PILOT_RUNBOOK.md#kunci-2fa-pms_2fa_key)), reset 2FA; SSO OIDC/SAML ([OIDC](PILOT_RUNBOOK.md#single-sign-on-oidc-pms_sso_key), [SAML](PILOT_RUNBOOK.md#single-sign-on-saml)); SCIM ([Provisioning SCIM](PILOT_RUNBOOK.md#provisioning-scim)); role kustom, locked space, dan IP allowlist ([Locked space dan IP allowlist](PILOT_RUNBOOK.md#locked-space-dan-ip-allowlist)); OTP dan kepemilikan akun ([Login OTP dan kepemilikan akun](PILOT_RUNBOOK.md#login-otp-dan-kepemilikan-akun)); kunci konektor ([Kunci konektor](PILOT_RUNBOOK.md#kunci-konektor-pms_connector_key)); audit keamanan; work schedule, rates, dan resource; ekspor dan penghentian instance ([Menghentikan instance](PILOT_RUNBOOK.md#menghentikan-instance-usr-04)); triase masalah ([Triase pilot](PILOT_RUNBOOK.md#triase-pilot)); monitoring dan alert.
+
+
+## Status perbaikan temuan dry-run (diisi sesi perbaikan; kolom hasil UAT manusia tidak diubah)
+
+| ID | Status |
+|---|---|
+| DR-01 | diperbaiki: entri "created" tidak lagi memuat daftar nama kolom (`item-activity.tsx`); tes `dr01-activity.spec.ts` |
+| DR-02 | diperbaiki bagian kedua: tautan "Gantt spike" dihapus dari menu Settings; tes `dr02-settings-menu.spec.ts` (menu Apps & Integrations dobel: PR #9) |
+| DR-03 | belum dapat direproduksi pada tes mock (dialog tertutup dan item baru dibuka); tes penjaga `dr03-create-closes.spec.ts` ditambahkan, perlu dicek ulang manusia |
+| DR-04 | diperbaiki: Skip menutup wizard dari status yang baru disimpan (`onboarding-wizard.tsx`); tes di `onboarding.spec.ts` |
+| DR-05 | diperbaiki: migrasi diserialkan dengan advisory lock Postgres (`database.go`); tes `TestOpenConcurrentlyOnEmptyDatabase` |
+| DR-06 | disengaja, dicatat sebagai D-100; tanpa perubahan kode |
+| DR-08 | diperbaiki: satu bentuk cache `work-schedule` (`lib/work-schedule.ts`); tes `dr08-calendar-effort.spec.ts` |

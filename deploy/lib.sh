@@ -10,3 +10,11 @@ wait_ready() {
   done
   return 1
 }
+
+# entity_counts DB: "table rowcount" per public table, sorted. river_* (job queue) is excluded: it changes while the app runs.
+entity_counts() {
+  docker compose exec -T postgres psql -U pms -d "$1" -At -F ' ' -v ON_ERROR_STOP=1 -c "SELECT table_name, (xpath('/row/c/text()', query_to_xml(format('select count(*) as c from %I.%I', table_schema, table_name), false, true, '')))[1]::text FROM information_schema.tables WHERE table_schema='public' AND table_type='BASE TABLE' AND table_name NOT LIKE 'river\_%' ORDER BY 1"
+}
+
+# sha_cmd: portable SHA-256 (Linux sha256sum, macOS shasum).
+sha_cmd() { if command -v sha256sum >/dev/null; then sha256sum "$@"; else shasum -a 256 "$@"; fi; }

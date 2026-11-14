@@ -1,0 +1,4 @@
+# Alternative to systemd timers: /etc/cron.d/pms (user column required). Output goes to syslog via logger.
+# Configure BACKUP_REMOTE or BACKUP_RSYNC_DEST, BACKUP_RETENTION_DAYS and BACKUP_ALERT_URL in /opt/pms/deploy/.env.
+30 2 * * *  pms  cd /opt/pms/deploy && ./backup.sh 2>&1 | logger -t pms-backup
+0 4 * * 0   pms  cd /opt/pms/deploy && ./restore-test.sh 2>&1 | logger -t pms-restore-test

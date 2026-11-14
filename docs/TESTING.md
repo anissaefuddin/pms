@@ -937,3 +937,105 @@ Mencakup S8.1.5 (tipe di Table, Board, filter, search), S8.2.1 (Table/filter/sor
 - Masih terbuka di M8: S8.1.1 query sqlc (D-61, keputusan arsitektur), routing form ke Blueprint (S8.3.1, ditunda karena besar; E2E-PAR-05 dibuktikan untuk bagian form bercabang), dan UAT gate M8 (manusia).
 - GitHub Actions untuk basis ini NOT RUN sampai PR dibuka.
 
+
+## Perbaikan temuan dry-run UAT (DR-01..DR-08), 14 Nov 2026
+
+- Lingkup: hanya tes terarah (regresi penuh dijalankan sekali di S12.2.1). Postgres khusus lane (`pms-pg-lane1`), Playwright mock di port 4391.
+- **DR-08 (S2)**: `tests/dr08-calendar-effort.spec.ts` (buka Calendar di halaman project, lalu item ber-assignee dengan blok Effort). Kode lama: GAGAL (halaman crash); kode baru: LULUS.
+- **DR-05 (S3)**: `TestOpenConcurrentlyOnEmptyDatabase` (4 `database.Open` bersamaan pada DB kosong). Kode lama `-count=5`: FAIL (balapan migrasi); kode baru `-count=5`: ok.
+- **DR-04**: tes baru di `onboarding.spec.ts` (/me tetap melapor pending; satu Skip menutup wizard). Kode lama: FAIL; baru: PASS. Catatan: penyebab pasti di stack nyata (Skip pertama gagal menutup) tidak terlihat pada mock; perbaikan membuat penutupan tidak bergantung pada refetch /me. Perlu cek ulang manusia.
+- **DR-01**: `tests/dr01-activity.spec.ts`. Kode lama: FAIL; baru: PASS (entri update tetap menyebut field yang berubah).
+- **DR-02**: `tests/dr02-settings-menu.spec.ts`. Kode lama: FAIL; baru: PASS. Tautan dihapus total; halaman tetap terjangkau lewat `/spikes/gantt`.
+- **DR-03: tidak terbukti.** `tests/dr03-create-closes.spec.ts` (dialog tertutup, item baru terbuka, dari tombol halaman Space dan top bar) LULUS pada kode lama maupun baru; bug tidak dapat direproduksi pada mock dan tidak ada perubahan kode. Tes hanya penjaga regresi. Perlu cek manusia pada stack nyata.
+- **DR-06**: keputusan, D-100 (tanpa kode).
+- Statis: `gofmt`, `go vet ./...`, `make gen` tanpa drift, `npm run typecheck`, `npm run lint` bersih. `onboarding.spec.ts` "creates the workspace once" sempat flaky sekali (timing axe/animasi), lulus pada ulang.
+
+## Form konektor Google dan autofill (S11.3.6, 14 Nov 2026)
+
+- PASS (Playwright mock, `web/tests/connectors-pilot.spec.ts`, 3 tes bersama `connectors.spec.ts` lulus): form Google menampilkan Client ID, Client secret, Refresh token; submit ditolak di klien bila refresh token terisi sebagian (tanpa panggilan POST); POST `/connectors` mengirim `secrets` `refresh_token`, `client_id`, `client_secret` (tanpa `token`) dengan Calendar ID dan Space; `autocomplete="off"` pada nama/repo/Calendar ID/Client ID dan `new-password` pada kolom rahasia; baris konektor menampilkan "Authentication: refresh token" atau "access token" (dari `secret_names`, nilai tak pernah ditampilkan); axe bersih.
+- Uji mutasi: validasi klien dihapus (`return` pada form Google tidak lengkap) membuat tes gagal; dipulihkan.
+- `typecheck` dan `lint` bersih. Tidak ada perubahan API. Go penuh, Playwright penuh, `go vet`, `make gen` tidak dijalankan di lane ini (regresi penuh di S12.2.1).
+- Bukti awal dari pengguna (bukan hasil uji otomatis): konektor GitHub nyata di instance dev-lens, repo publik `anissaefuddin/pms`, sinkron 20:21 WIB "pushed 1, pulled 2, conflicts 0"; issue #1, #2, #7 di GitHub (asal #7 belum dipastikan). Belum diuji: konflik nyata, GitHub→PMS untuk status, webhook; Google Calendar nyata belum dicoba. Rincian di G2B.
+- Tidak dicek: perilaku autofill Chrome sesungguhnya (hanya atribut yang diuji); alur refresh token dengan Google nyata.
+
+## S8.3.1 — Form bercabang → Blueprint → item (E2E-PAR-05, 14 Nov 2026)
+
+Perubahan: `blueprint_id` pada rute form (`forms.Route`, OpenAPI, validasi Space tujuan di `checkRouting`), penerapan di `createFromSubmission` lewat `items.UseBlueprintTx` + `BlueprintUse.Overrides` (isian form menang), UI pilih Blueprint + ringkasan aturan di `form-routing-settings.tsx`, i18n. Keputusan: D-101. Perbaikan a11y ikutan: pratinjau form tidak lagi merender radio kosong untuk opsi kosong.
+
+Bukti (Postgres khusus lane, Chrome bawaan Playwright):
+- Go: `TestFormBranchingBlueprintItem` (HTTP end-to-end: cabang Bug → tipe `bug` + anak Reproduce/Fix, cabang Idea → `idea` + Evaluate; jawaban Importance menang atas default Blueprint, default berlaku bila tidak dijawab; pertanyaan di luar cabang wajib/tidak bocor; Blueprint lintas Space dan tak dikenal ditolak 422; Blueprint terhapus → item tetap 201 tanpa anak) PASS; ikut `scripts/parity-e2e.sh 05-08`. Regresi terarah `TestFormBranchesDecideQuestionsItemTypeAndFields`, `TestBlueprintSaveAndUse` PASS.
+- Playwright mock: `forms.spec.ts` (rute memilih Blueprint, ringkasan, axe bersih, body PUT berisi `blueprint_id`) + `forms/public-form/manage-forms` 26 lulus.
+- LIVE Chrome + PostgreSQL: `TestBrowserFormBranchingBlueprint` (`form-blueprint-live.spec.ts`; admin membuat form bercabang dan rute di UI, link publik, pengunjung tanpa sesi mengisi dua cabang, item/anak sesuai cabang; axe WCAG 2.x AA bersih) PASS; ditambahkan ke regex CI "Browser workflows with PostgreSQL".
+- Uji mutasi: (1) Blueprint diterapkan tanpa memeriksa kecocokan cabang → `TestFormBranchingBlueprintItem` GAGAL (anak cabang salah); (2) override isian form dimatikan → GAGAL (importance `low`, bukan `high`). Keduanya dipulihkan.
+- Statis: gofmt, `go vet ./...`, `make gen` tanpa drift, typecheck, lint 0 error. Suite Go/Playwright penuh tidak dijalankan (strategi: S12.2.1).
+- Tidak dicakup: `start_date` jangkar tanggal relatif Blueprint (item dari form tanpa tanggal); hanya satu Blueprint per rute (rute tanpa kecocokan tidak punya Blueprint bawaan form-level); nomor D-101 mungkin bentrok dengan lane lain saat merge.
+
+
+## Rekonsiliasi M7 dan kolom cost report (14 November 2026)
+
+Postgres khusus lane (`pms-pg-lane4`). Hanya tes terarah; regresi penuh menunggu S12.2.1. Centang M7 di checkout utama yang belum dikomit dibaca sebagai petunjuk, bukan disalin; hanya yang dapat saya buktikan di repo ini yang dicentang.
+
+### S10.4.2 · kolom cost di report
+
+- Metrik baru `actual_cost_minor` (sumber time entries): menit billable x `rate_snapshot` / 60, satuan minor, aturan sama dengan panel budget project. **Hanya admin**: `analytics.Run` menjawab 403 untuk selain admin (tidak ada angka dikirim), editor query tidak menawarkan metrik itu, widget di tautan publik dimask (`financialQuery`). Tabel hasil memformat nilai dan total sebagai uang dua desimal (`Intl.NumberFormat`, pola halaman tarif); teks lewat i18n.
+- PASS `TestReportActualCostIsAdminOnly` (admin menerima 6000 = 90 menit billable x 4000/jam, non-billable tidak dihitung; pembaca 403), `TestPublicDashboardLinkExpiryPasswordAndFinancialMasking` (widget cost ikut termask, `data` kosong), `TestRatesSnapshotKeepHistoryAndCostIsAdminOnly`.
+- Mutasi: gerbang admin dimatikan lalu `TestReportActualCostIsAdminOnly` GAGAL; klausa `actual_cost_minor` dihapus dari `financialQuery` lalu tes masking GAGAL. Keduanya dikembalikan.
+- PASS Playwright mock `reports.spec.ts` (9 tes): kolom "Actual cost", baris `1,234.56` dan total untuk admin, opsi metrik tidak ada untuk non-admin, axe bersih.
+- Batas: yang ditambahkan adalah kolom actual cost. Budget (field currency) dan selisih budget vs actual tetap di panel field budget project; belum ada kolom budget/variance lintas-sumber di report (butuh join sumber item dan time entry, ditunda). Mata uang tidak ditampilkan (tarif tanpa mata uang, D-73).
+
+### S7.1.1 · RCA HTTP 500 intermiten (dicentang)
+
+- Akar masalah (RCA lengkap di bagian S7.1.1 di atas): permintaan yang dibatalkan browser (navigasi, abort) membuat `requireUser` dan handler baca profil, daftar view, dan time entry menulis 500 setelah konteks `Canceled`. 26 dari 28 entri 500 historis ada di `GET /me`. Paralelisme sendiri tidak mereproduksi (24 request paralel semua 200).
+- Perbaikan: jalur error berhenti tanpa jawaban bila konteks sudah dibatalkan (commit `b6c1ee8` untuk kueri sesi, lalu handler pembacaan).
+- Verifikasi ulang, tiga kali berurutan: PASS `TestAbandonedRequestIsNotAServerError`, `TestReadRequestsCanceledAfterSessionLookup` (`/me`, daftar view, time entries), `TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds` (nol 5xx pada seluruh operasi terlindungi). Batas: atribusi tiap 500 historis tidak diketahui (log lama tanpa detail error); jalur daftar item (`item_locations`) ada di draf checkout utama dan belum dikomit.
+
+### S7.1.2 · SSE multi-user (dicentang)
+
+- PASS (3 kali) `TestSSETwoUsersLatencyOrderReconnectAndResync` (latensi status 12 sampai 36 ms, komentar 3 sampai 6 ms; urutan dan tanpa duplikat; putus lalu replay dari `Last-Event-ID`; cursor kedaluwarsa memicu `resync`), `TestEventReplayRespectsCurrentAccess`, `TestSSELatencyUnderClientLoad` (24 pengamat: p95 status 57 sampai 64 ms, komentar 30 ms).
+- Temuan dan perbaikan: klien menunggu 3000 ms sebelum membuka ulang EventSource, sehingga reload data setelah putus tidak muat dalam 3 detik. Interval diturunkan menjadi 1000 ms (`web/src/lib/realtime.ts`). Tes baru `web/tests/sse-reconnect.spec.ts` (EventSource palsu, putus lalu buka ulang): GAGAL dengan 3000 ms, PASS dengan 1000 ms; data yang tampil di-fetch ulang dalam 3 detik. Batas: tes ini memakai EventSource tiruan, bukan Chrome melawan server nyata; skenario live itu NOT RUN.
+
+### Item M7 yang sengaja tetap terbuka (M7 kini 45 selesai / 6 terbuka, sebelumnya 35 / 16)
+
+| Item | Status | Menunggu |
+|---|---|---|
+| S7.2.1 rekonsiliasi WFP-001..106 (2 DOC) | Terbuka | Draf ada di sesi lain (belum dikomit dan belum diaudit); perlu ditulis ulang atau diaudit terhadap flow screen |
+| S7.2.1 REVIEW freeze dan tag | Terbuka | Owner produk |
+| S7.2.2 REVIEW PRD v0.4 | Terbuka | Persetujuan user |
+| S7.3.2 REVIEW DEC-PAR-03/04 | Terbuka | Keputusan user |
+| S7.4.1 REVIEW Gate G0 | Terbuka, BLOCKED | UAT pilot, CI kandidat, persetujuan keputusan |
+
+## S12.2.3 prasyarat · tinjauan keamanan permukaan M8–M12 (14 Nov 2026)
+
+Laporan lengkap: [SECURITY_REVIEW_M12.md](parity/SECURITY_REVIEW_M12.md). Postgres khusus lane (`pms-pg-sec`), Go 1.27.4, hanya pemeriksaan keamanan dan tes terarah (regresi penuh menunggu S12.2.1).
+
+| Pemeriksaan | Hasil |
+|---|---|
+| `govulncheck ./...` (awal) | 3 kerentanan terjangkau: GO-2026-6909 `crewjam/saml` (tanpa perbaikan), GO-2026-4945 `go-jose` v4.0.5, GO-2026-4753 `goxmldsig` v1.4.0 |
+| `govulncheck ./...` (sesudah naik `goxmldsig` v1.6.0, `go-jose` v4.1.6) | 1 terjangkau: GO-2026-6909 (tanpa versi perbaikan; panik ditangkap `recover()`; lihat SR-04). 0 pada paket diimpor selain itu |
+| `npm audit --omit=dev` (web/) | 0 kerentanan |
+| Trivy `pms:secrev` (HIGH,CRITICAL, vuln) | Awal: 1 HIGH (`go-jose` CVE-2026-116587, fix 4.1.6). Sesudah naik versi dan build ulang: Alpine 3.23.8 0, `usr/local/bin/pms` 0. Image uji dihapus; image `aquasec/trivy` dibiarkan di Docker |
+| `go test -race` `./internal/httpserver -run 'SCIM\|OTP\|Webhook\|SSO\|SAML\|APIKey\|OAuth\|Audit'`, `webhooks`, `connectors/...`, `realtime` | PASS, tanpa data race (`sso`, `events`, `connectors/gcal`, `connectors/github` tidak punya berkas tes) |
+| Tes baru `security_review_m12_integration_test.go` | PASS: `TestSecurityReviewPublicOperationsRefuseAnonymousCallers`, `TestSecurityReviewAPIKeyAndOAuthTokenHonourTheIPAllowlist`, `TestSecurityReviewResponseHeadersAndRequestID` |
+| `go test ./server/internal/httpserver ./server/internal/security` penuh setelah perubahan `requireUser` dan header | PASS; `SAML|SSO|SecurityReview` diulang PASS setelah `go-jose` 4.1.6; `gofmt` bersih, `go vet ./server/...` bersih |
+| Probe instance lokal (cookie, CSRF, XFF, enumerasi, galat, body besar, SCIM, ACS, tautan publik) | Sesuai harapan; detail di laporan. Instance dan DB dihapus |
+
+Perbaikan kode: SR-01 (allowlist untuk API key/OAuth), SR-05 (header keamanan), SR-06 (X-Request-ID), SR-02 dan SR-03 (naik versi dependensi). Belum ada bukti mutasi tes pengunci (tidak dijalankan). Batas: bukan pentest manual dan bukan WSTG penuh; S6.3.3 tetap PARTIAL sampai itu dilakukan.
+## Perkakas deploy lokal: update-local, migrate-pilot, backup terjadwal (14 Nov 2026)
+
+Diuji di compose sementara (project `pmsdt` sumber dan `pmsdt2` tujuan, image nyata `pms:m6-rto` dan Postgres 16.10, data: 1 admin aktif, 2 file). Stack, jaringan, image uji, dan `.env` uji sudah dibersihkan; `deploy/.env` tidak dikomit.
+
+| Skrip | Skenario | Hasil |
+|---|---|---|
+| `update-local.sh` | build image bertag commit (`pms-local:<commit>-dirty-<hash>`), backup, naik, health, tulis `PMS_IMAGE` ke `.env` | PASS |
+| | jalan ulang commit yang sama | PASS: "Already running", tanpa backup |
+| | working tree kotor tanpa `ALLOW_DIRTY` | PASS: ditolak |
+| | image rusak (`alpine sleep`, tak pernah ready) | PASS: exit 1 setelah 60 dtk, `restore.sh` otomatis, app kembali di image lama, data admin utuh, `.env` tidak berubah |
+| `migrate-pilot.sh` | export dari sumber, import ke stack kosong, verify | PASS: 43 tabel sama, 2 file, 1 admin aktif, app ready |
+| | tujuan diubah (file dihapus, admin dinonaktifkan) lalu verify | PASS (gagal sebagaimana mestinya): selisih jumlah file dan "no active admin" |
+| | bundel dirusak 1 byte | PASS: checksum mismatch, tidak diekstrak |
+| `restore-test.sh` | set terbaru ke database scratch | PASS 5 dtk; scratch dihapus |
+| | dump terpotong | PASS (gagal): exit 1, tidak ada database scratch tersisa |
+| `backup.sh` | `BACKUP_RSYNC_DEST` (tujuan lokal): set tersalin; cermin menghapus berkas lewat retensi; tujuan tak terjangkau → exit non-zero (255) | PASS |
+| | `BACKUP_REMOTE` rclone (tujuan lokal) | PASS (regresi) |
+
+Tidak diuji: shellcheck (tidak terpasang; hanya `bash -n`/`dash -n`, `sh -n`), build image penuh dari `Dockerfile` (node:24 tidak ada lokal, tanpa akses jaringan; diganti `BUILD_FILE` uji), unit systemd dan cron (tidak ada systemd di macOS; tidak dijalankan), rsync lewat SSH sungguhan dan remote rclone nyata, migrasi antar dua server fisik/DNS, verifikasi kunci 2FA/SSO/konektor dengan data sungguhan (cabang peringatan tidak dipicu karena tabelnya kosong), login dan unduh lampiran manual pada instance tujuan, `import` ke image tujuan yang lebih baru dari sumber.

@@ -163,3 +163,23 @@ test("a source that is too large explains what to change", async ({ page }) => {
   await page.goto(`/reports/${r1}`);
   await expect(page.getByRole("alert")).toContainText("The data source is too large.");
 });
+
+test("the actual cost metric is offered and shown as money to an admin only; axe is clean", async ({ page }) => {
+  const cost = { reporting_on: "time_entries", metric: "actual_cost_minor", group_by: "user", filters: {} };
+  const def = { layout: "table", query: cost };
+  const money = { total: 123456, rows: [{ group: { key: "u1", label: "Grace Hopper" }, break: null, value: 123456 }] };
+  const open = async (user_type: string) => {
+    await mock(page, { "GET /me": { body: { ...me, user_type } },
+      [`GET /reports/${r1}`]: () => ({ body: { ...summary(r1, "Cost"), definition: def }, headers: { ETag: '"1"' } }), "POST /analytics/query": { body: money } });
+    await page.goto(`/reports/${r1}`);
+  };
+  await open("admin");
+  await expect(page.getByRole("columnheader", { name: "Actual cost" })).toBeVisible();
+  await expect(page.getByRole("row", { name: /Grace Hopper 1,234\.56/ })).toBeVisible();
+  await expect(page.getByText("Total: 1,234.56")).toBeVisible();
+  await expect(page.getByLabel("Metric").getByRole("option", { name: "Actual cost" })).toHaveCount(1);
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.unrouteAll();
+  await open("regular");
+  await expect(page.getByLabel("Metric").getByRole("option", { name: "Actual cost" })).toHaveCount(0);
+});

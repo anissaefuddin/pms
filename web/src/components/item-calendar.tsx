@@ -4,11 +4,11 @@ import { ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
+import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { addDays, daysBetween, fromDay, toDay } from "@/lib/calendar-days";
 import { useProfile } from "@/lib/profile";
 import type { Item } from "@/lib/items";
 
-type Schedule = { working_days: number[]; exceptions: { date: string; name: string }[] };
 type Update = { start_date: string | null; due_date: string | null };
 
 const monthFormat: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
@@ -24,9 +24,9 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
   const profile = useProfile();
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   const [drag, setDrag] = useState<{ id: string; from?: Date }>();
-  const schedule = useQuery({ queryKey: ["work-schedule"], queryFn: () => api<Schedule>("/api/v1/settings/work-schedule") });
-  const holidays = useMemo(() => new Map((schedule.data?.exceptions ?? []).map((entry) => [entry.date, entry.name])), [schedule.data]);
-  const working = new Set(schedule.data?.working_days ?? [1, 2, 3, 4, 5]);
+  const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
+  const holidays = useMemo(() => new Map((schedule.data?.data.exceptions ?? []).map((entry) => [entry.date, entry.name])), [schedule.data]);
+  const working = new Set(schedule.data?.data.working_days ?? [1, 2, 3, 4, 5]);
   const weekStart = profile?.week_start === "sunday" ? 0 : profile?.week_start === "saturday" ? 6 : 1;
   const locale = i18n.language;
   const fmt = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, options);
