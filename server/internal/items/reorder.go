@@ -25,15 +25,17 @@ func Reorder(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id str
 	if input.AfterID != nil && *input.AfterID == itemID {
 		return Invalid("after_item_id must name a sibling")
 	}
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		return err
+	var keys []string
+	if input.SpaceID != nil || input.ParentID != nil { // a root reorder without a Space is ambiguous; the retry covers it
+		space := uuid.Nil
+		if input.SpaceID != nil {
+			space = *input.SpaceID
+		}
+		keys = locationLockKeys([]Location{{SpaceID: space, ParentID: input.ParentID}})
 	}
-	defer tx.Rollback(ctx)
-	if err := reorder(ctx, tx, actor, itemID, input); err != nil {
-		return writeError(err)
-	}
-	return writeError(tx.Commit(ctx))
+	return writeError(inSerializable(ctx, pool, keys, func(tx pgx.Tx) error {
+		return reorder(ctx, tx, actor, itemID, input)
+	}, func() {}))
 }
 
 func reorder(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, input ReorderInput) error {

@@ -30,30 +30,41 @@ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields 
 	if batch != nil {
 		kept = len(batch.Deliveries)
 	}
-	for attempt := 0; ; attempt++ {
-		item, err := createOnce(ctx, pool, actor, fields, batch)
-		if pgCode(err) != "40001" || attempt >= 15 {
-			return item, writeError(err)
-		}
+	var item Detail
+	err := inSerializable(ctx, pool, parentLockKeys(fields), func(tx pgx.Tx) (err error) {
+		item, err = create(ctx, tx, actor, fields, batch)
+		return err
+	}, func() {
 		if batch != nil {
 			batch.Deliveries = batch.Deliveries[:kept] // drop what the aborted attempt queued
 		}
+	})
+	return item, writeError(err)
+}
+
+// inSerializable runs work in a Serializable transaction after taking a session advisory lock per key BEFORE the snapshot starts,
+// so writers that change sibling order under one parent (create, reorder, move) queue up instead of aborting each other (40001).
+// A 40001 that still happens is retried (up to 15 times); reset undoes in-memory side effects of an aborted attempt.
+func inSerializable(ctx context.Context, pool *pgxpool.Pool, keys []string, work func(pgx.Tx) error, reset func()) error {
+	for attempt := 0; ; attempt++ {
+		err := lockedOnce(ctx, pool, keys, work)
+		if pgCode(err) != "40001" || attempt >= 15 {
+			return err
+		}
+		reset()
 		select {
 		case <-ctx.Done():
-			return Detail{}, ctx.Err()
+			return ctx.Err()
 		case <-time.After(time.Duration(5+rand.IntN(25*(attempt+1))) * time.Millisecond):
 		}
 	}
 }
 
-// createOnce serializes sibling creates per parent with a session advisory lock taken BEFORE the Serializable snapshot starts,
-// so concurrent creates under one parent queue up instead of aborting each other (40001). The retry in Create stays as a fallback.
-func createOnce(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
+func lockedOnce(ctx context.Context, pool *pgxpool.Pool, keys []string, work func(pgx.Tx) error) error {
 	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		return Detail{}, err
+		return err
 	}
-	keys := parentLockKeys(fields)
 	locked := 0
 	defer func() {
 		for ; locked > 0; locked-- {
@@ -66,40 +77,48 @@ func createOnce(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fie
 	}()
 	for _, key := range keys {
 		if _, err := conn.Exec(ctx, "SELECT pg_advisory_lock(hashtextextended($1,0))", key); err != nil {
-			return Detail{}, err
+			return err
 		}
 		locked++
 	}
 	tx, err := conn.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
-		return Detail{}, err
+		return err
 	}
 	defer tx.Rollback(ctx)
-	item, err := create(ctx, tx, actor, fields, batch)
-	if err == nil {
-		err = tx.Commit(ctx)
+	if err := work(tx); err != nil {
+		return err
 	}
-	return item, err
+	return tx.Commit(ctx)
 }
 
-// parentLockKeys lists the distinct (space, parent) placements of a create in a stable order, so two creates never lock in opposite order.
-func parentLockKeys(fields map[string]json.RawMessage) []string {
-	var locations []struct {
-		SpaceID  string  `json:"space_id"`
-		ParentID *string `json:"parent_item_id"`
+// rankLockKey names the sibling list of one parent. A parent item has one list per Space it sits in, but keying on the parent alone
+// is simply coarser; the root of a Space is keyed by the Space.
+func rankLockKey(space, parent string) string {
+	if parent != "" {
+		return "rank:item:" + parent
 	}
+	return "rank:space:" + space
+}
+
+// parentLockKeys lists the distinct placements of a create in a stable order, so two writers never lock in opposite order.
+func parentLockKeys(fields map[string]json.RawMessage) []string {
+	var locations []Location
 	if json.Unmarshal(fields["locations"], &locations) != nil {
 		return nil
 	}
+	return locationLockKeys(locations)
+}
+
+func locationLockKeys(locations []Location) []string {
 	seen := map[string]bool{}
 	keys := make([]string, 0, len(locations))
 	for _, l := range locations {
 		parent := ""
 		if l.ParentID != nil {
-			parent = *l.ParentID
+			parent = l.ParentID.String()
 		}
-		k := "rank:" + l.SpaceID + ":" + parent
-		if !seen[k] {
+		if k := rankLockKey(l.SpaceID.String(), parent); !seen[k] {
 			seen[k] = true
 			keys = append(keys, k)
 		}

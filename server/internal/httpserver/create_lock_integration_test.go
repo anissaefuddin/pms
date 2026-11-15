@@ -114,14 +114,14 @@ func TestCancelledCreateReleasesParentLock(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := holder.Exec(context.Background(), "SELECT pg_advisory_lock(hashtextextended($1,0))", "rank:"+space+":"+parent); err != nil {
+	if _, err := holder.Exec(context.Background(), "SELECT pg_advisory_lock(hashtextextended($1,0))", "rank:item:"+parent); err != nil {
 		t.Fatal(err)
 	}
 	released := false
 	release := func() {
 		if !released {
 			released = true
-			_, _ = holder.Exec(context.Background(), "SELECT pg_advisory_unlock(hashtextextended($1,0))", "rank:"+space+":"+parent)
+			_, _ = holder.Exec(context.Background(), "SELECT pg_advisory_unlock(hashtextextended($1,0))", "rank:item:"+parent)
 			holder.Release()
 		}
 	}

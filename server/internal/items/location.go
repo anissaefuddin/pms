@@ -72,11 +72,15 @@ func ReplaceLocations(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 	if len(want) == 0 || len(want) > 50 {
 		return Detail{}, Invalid("an item needs between 1 and 50 locations")
 	}
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		return Detail{}, err
-	}
-	defer tx.Rollback(ctx)
+	var detail Detail
+	err = inSerializable(ctx, pool, locationLockKeys(want), func(tx pgx.Tx) (err error) {
+		detail, err = replaceLocations(ctx, tx, actor, id, itemID, want)
+		return err
+	}, func() {})
+	return detail, writeError(err)
+}
+
+func replaceLocations(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, itemID uuid.UUID, want []Location) (Detail, error) {
 	caps, err := policy.ItemCaps(ctx, tx, actor, id)
 	if err != nil {
 		return Detail{}, err
@@ -202,11 +206,7 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 	if _, err = tx.Exec(ctx, "UPDATE items SET updated_at=now() WHERE id=$1", itemID); err != nil {
 		return Detail{}, err
 	}
-	detail, err := readDetail(ctx, tx, actor, id)
-	if err == nil {
-		err = tx.Commit(ctx)
-	}
-	return detail, writeError(err)
+	return readDetail(ctx, tx, actor, id)
 }
 
 func countExisting(want []Location, existing map[[2]uuid.UUID]bool, key func(Location) [2]uuid.UUID) int {
