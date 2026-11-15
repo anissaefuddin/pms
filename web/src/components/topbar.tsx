@@ -6,6 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { listNotifications, notificationKey } from "@/lib/notifications";
 import { api } from "@/lib/api";
+import { clearSessionState } from "@/lib/session-state";
 import { nextIndex } from "@/lib/ui-kit";
 import type { CreateKind } from "@/lib/create-item-validate";
 import { toast } from "sonner";
@@ -26,6 +27,7 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kin
   const initials = `${profile?.first_name?.[0] ?? ""}${profile?.last_name?.[0] ?? ""}`.toUpperCase();
   async function logout() {
     await api("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
+    if (profile) clearSessionState(globalThis.localStorage, profile.id);
     queryClient.clear();
     location.assign("/login");
   }

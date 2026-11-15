@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomFieldDisplay } from "@/components/custom-field-editor";
-import { AvatarStack } from "@/components/avatar-stack";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { StatusChip, tintOf } from "@/components/status-chip";
 import { statusDotClass } from "@/lib/status-colors";
 import { TypeBadge, TypeGlyph } from "@/components/type-badge";

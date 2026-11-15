@@ -27,9 +27,9 @@ type Scale = "day" | "week" | "month";
 const scaleOptions: Scale[] = ["day", "week", "month"];
 /** Bar colours by workflow colour token: 700/900 shades keep white labels above 4.5:1. */
 const barColors: Record<string, [string, string]> = {
-  slate: ["#334155", "#0f172a"], blue: ["#1d4ed8", "#1e3a8a"], sky: ["#0369a1", "#0c4a6e"], teal: ["#0f766e", "#134e4a"],
-  green: ["#15803d", "#14532d"], lime: ["#4d7c0f", "#365314"], amber: ["#b45309", "#78350f"], orange: ["#c2410c", "#7c2d12"],
-  red: ["#b91c1c", "#7f1d1d"], pink: ["#be185d", "#831843"], purple: ["#7e22ce", "#581c87"], indigo: ["#4338ca", "#312e81"],
+  slate: ["#334155", "#0f172a"], blue: ["#1d4ed8", "#1e3a8a"], sky: ["#0369a1", "#0c4a6e"], teal: ["#0f766e", "#134e4a"], // allow-hex
+  green: ["#15803d", "#14532d"], lime: ["#4d7c0f", "#365314"], amber: ["#b45309", "#78350f"], orange: ["#c2410c", "#7c2d12"], // allow-hex
+  red: ["#b91c1c", "#7f1d1d"], pink: ["#be185d", "#831843"], purple: ["#7e22ce", "#581c87"], indigo: ["#4338ca", "#312e81"], // allow-hex
 };
 /** Bar content: fill coloured by status (darker part = progress) plus "name • assignees". */
 function BarLabel({ data }: { data: ITask }) {
@@ -58,7 +58,9 @@ export function ganttTask(item: Item, parent?: string): ITask {
   };
 }
 
-export function ItemGantt({ items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd }: {
+export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd }: {
+  initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
+  onOpenChange?: (open: boolean) => void;
   items: Item[];
   customFields: CustomField[];
   columns: string[];
@@ -75,7 +77,9 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const [selected, setSelected] = useState<string>();
   const [baselineId, setBaselineId] = useState("");
   const [naming, setNaming] = useState(false);
-  const [allOpen, setAllOpen] = useState(true);
+  // WA-D05: the collapse state comes from the server profile for this view and every change is sent back.
+  const [allOpen, setAllOpenState] = useState(() => initialOpen ?? true);
+  const setAllOpen = (open: boolean) => { setAllOpenState(open); onOpenChange?.(open); };
   const [sharing, setSharing] = useState(false);
   const chart = useRef<IApi>(undefined);
   const chartRegion = useRef<HTMLDivElement>(null);

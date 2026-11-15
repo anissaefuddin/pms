@@ -222,7 +222,9 @@
     "share": "Share",
     "addTask": "Add task",
     "more": "More actions",
-    "percent": "{{value}}%"
+    "percent": "{{value}}%",
+    "summary": "Summary",
+    "directScope": "Direct children of this project only"
   },
   "searchPlaceholder": "Search",
   "chip": {

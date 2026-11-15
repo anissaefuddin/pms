@@ -65,36 +65,37 @@ const userTypeKey contextKey = "user_type"
 
 // Me matches the OpenAPI `Me` schema.
 type me struct {
-	AccountName              string     `json:"account_name"`
-	ID                       string     `json:"id"`
-	Email                    string     `json:"email"`
-	FirstName                string     `json:"first_name"`
-	LastName                 string     `json:"last_name"`
-	UserType                 string     `json:"user_type"`
-	Status                   string     `json:"status"`
-	JobTitle                 *string    `json:"job_title"`
-	Department               *string    `json:"department"`
-	LastLoginAt              *time.Time `json:"last_login_at"`
-	Locale                   string     `json:"locale"`
-	Timezone                 string     `json:"timezone"`
-	DateFormat               string     `json:"date_format"`
-	TimeFormat               string     `json:"time_format"`
-	WeekStart                string     `json:"week_start"`
-	PersonalSpaceID          string     `json:"personal_space_id"`
-	Company                  *string    `json:"company"`
-	Country                  *string    `json:"country"`
-	Location                 *string    `json:"location"`
-	Phone                    *string    `json:"phone"`
-	Density                  string     `json:"density"`
-	Theme                    string     `json:"theme"`
-	Accent                   string     `json:"accent"`
-	CommentShortcut          string     `json:"comment_shortcut"`
-	SidebarHidden            []string   `json:"sidebar_hidden"`
-	SidebarPinned            []string   `json:"sidebar_pinned"`
-	EmailMuted               []string   `json:"email_muted"`
-	OnboardingPending        bool       `json:"onboarding_pending"`
-	DefaultTaskDurationDays  *int       `json:"default_task_duration_days"`
-	DefaultTaskEffortMinutes *int       `json:"default_task_effort_minutes"`
+	AccountName              string          `json:"account_name"`
+	ID                       string          `json:"id"`
+	Email                    string          `json:"email"`
+	FirstName                string          `json:"first_name"`
+	LastName                 string          `json:"last_name"`
+	UserType                 string          `json:"user_type"`
+	Status                   string          `json:"status"`
+	JobTitle                 *string         `json:"job_title"`
+	Department               *string         `json:"department"`
+	LastLoginAt              *time.Time      `json:"last_login_at"`
+	Locale                   string          `json:"locale"`
+	Timezone                 string          `json:"timezone"`
+	DateFormat               string          `json:"date_format"`
+	TimeFormat               string          `json:"time_format"`
+	WeekStart                string          `json:"week_start"`
+	PersonalSpaceID          string          `json:"personal_space_id"`
+	Company                  *string         `json:"company"`
+	Country                  *string         `json:"country"`
+	Location                 *string         `json:"location"`
+	Phone                    *string         `json:"phone"`
+	Density                  string          `json:"density"`
+	Theme                    string          `json:"theme"`
+	Accent                   string          `json:"accent"`
+	CommentShortcut          string          `json:"comment_shortcut"`
+	SidebarHidden            []string        `json:"sidebar_hidden"`
+	ViewExpansion            json.RawMessage `json:"view_expansion"`
+	SidebarPinned            []string        `json:"sidebar_pinned"`
+	EmailMuted               []string        `json:"email_muted"`
+	OnboardingPending        bool            `json:"onboarding_pending"`
+	DefaultTaskDurationDays  *int            `json:"default_task_duration_days"`
+	DefaultTaskEffortMinutes *int            `json:"default_task_effort_minutes"`
 	Capabilities             struct {
 		ManageUsers bool `json:"manage_users"`
 		CreateSpace bool `json:"create_space"`
@@ -137,6 +138,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("POST /api/v1/auth/logout", s.requireUser(s.logout))
 	mux.HandleFunc("GET /api/v1/me", s.requireUser(s.me))
 	mux.HandleFunc("PATCH /api/v1/me", s.requireUser(s.updateMe))
+	mux.HandleFunc("PUT /api/v1/me/view-expansion/{viewId}", s.requireUser(s.saveViewExpansion))
 	mux.HandleFunc("GET /api/v1/account", s.requireUser(s.accountInfo))
 	mux.HandleFunc("PATCH /api/v1/account", s.requireUser(requireAdmin(s.renameAccount)))
 	mux.HandleFunc("POST /api/v1/onboarding/complete", s.requireUser(requireAdmin(s.completeOnboarding)))
@@ -249,8 +251,8 @@ func loadMe(ctx context.Context, db interface {
 }, userID string) (me, error) {
 	var m me
 	var jobTitle, department string
-	err := db.QueryRow(ctx, `SELECT u.id::text,u.email::text,u.first_name,u.last_name,u.user_type::text,u.status::text,u.job_title,u.department,u.last_login_at,u.locale,u.timezone,u.date_format,u.time_format,u.week_start,COALESCE((SELECT id::text FROM spaces WHERE owner_id=u.id AND kind='personal'),''),a.name,u.company,u.country,u.location,u.phone,u.density,u.theme,u.accent,u.comment_shortcut,u.sidebar_hidden,u.sidebar_pinned,u.email_muted,u.default_task_duration_days,u.default_task_effort_minutes,u.user_type='admin' AND NOT COALESCE((a.settings->>'onboarding_done')::boolean,false) FROM users u CROSS JOIN account a WHERE u.id=$1`, userID).
-		Scan(&m.ID, &m.Email, &m.FirstName, &m.LastName, &m.UserType, &m.Status, &jobTitle, &department, &m.LastLoginAt, &m.Locale, &m.Timezone, &m.DateFormat, &m.TimeFormat, &m.WeekStart, &m.PersonalSpaceID, &m.AccountName, &m.Company, &m.Country, &m.Location, &m.Phone, &m.Density, &m.Theme, &m.Accent, &m.CommentShortcut, &m.SidebarHidden, &m.SidebarPinned, &m.EmailMuted, &m.DefaultTaskDurationDays, &m.DefaultTaskEffortMinutes, &m.OnboardingPending)
+	err := db.QueryRow(ctx, `SELECT u.id::text,u.email::text,u.first_name,u.last_name,u.user_type::text,u.status::text,u.job_title,u.department,u.last_login_at,u.locale,u.timezone,u.date_format,u.time_format,u.week_start,COALESCE((SELECT id::text FROM spaces WHERE owner_id=u.id AND kind='personal'),''),a.name,u.company,u.country,u.location,u.phone,u.density,u.theme,u.accent,u.comment_shortcut,u.sidebar_hidden,u.sidebar_pinned,u.view_expansion,u.email_muted,u.default_task_duration_days,u.default_task_effort_minutes,u.user_type='admin' AND NOT COALESCE((a.settings->>'onboarding_done')::boolean,false) FROM users u CROSS JOIN account a WHERE u.id=$1`, userID).
+		Scan(&m.ID, &m.Email, &m.FirstName, &m.LastName, &m.UserType, &m.Status, &jobTitle, &department, &m.LastLoginAt, &m.Locale, &m.Timezone, &m.DateFormat, &m.TimeFormat, &m.WeekStart, &m.PersonalSpaceID, &m.AccountName, &m.Company, &m.Country, &m.Location, &m.Phone, &m.Density, &m.Theme, &m.Accent, &m.CommentShortcut, &m.SidebarHidden, &m.SidebarPinned, &m.ViewExpansion, &m.EmailMuted, &m.DefaultTaskDurationDays, &m.DefaultTaskEffortMinutes, &m.OnboardingPending)
 	if err != nil {
 		return me{}, err
 	}

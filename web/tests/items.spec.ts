@@ -143,7 +143,9 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Updated by teammate");
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("Reviewed");
   await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
+  await page.keyboard.press("Escape"); // the detail panel is modal; the header title is visible once it closes
   await expect(page.getByRole("heading", { name: "Reviewed", level: 1 })).toBeVisible();
+  await page.getByRole("button", { name: "Info" }).click(); // item actions live in the detail panel
   await page.getByRole("button", { name: "Item actions" }).click();
   await page.getByRole("menuitem", { name: "Copy link" }).click();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(new RegExp(`/tasks/${parentId}$`));
@@ -178,6 +180,7 @@ test("conflicted draft reapplies against the current ETag", async ({ page }) => 
   await title.fill("My draft");
   await title.press("Enter");
   await page.getByRole("button", { name: "Reapply my changes" }).click();
+  await page.keyboard.press("Escape");
   await expect(page.getByRole("heading", { name: "My draft", level: 1 })).toBeVisible();
   expect(calls.filter((call) => call.method === "PATCH").map((call) => [call.headers["if-match"], call.body.title]))
     .toEqual([['"1"', "My draft"], ['"2"', "My draft"]]);

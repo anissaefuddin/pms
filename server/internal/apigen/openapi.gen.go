@@ -4416,8 +4416,14 @@ type Me struct {
 	TimeFormat    MeTimeFormat  `json:"time_format"`
 
 	// Timezone Example: Asia/Jakarta
-	Timezone  string      `json:"timezone"`
-	UserType  UserType    `json:"user_type"`
+	Timezone string   `json:"timezone"`
+	UserType UserType `json:"user_type"`
+
+	// ViewExpansion Expansi hierarki per view milik user ini (WA-D05); kunci = id view. Hanya user ini yang membacanya
+	ViewExpansion *map[string]struct {
+		GanttCollapsed bool                 `json:"gantt_collapsed"`
+		Rows           []openapi_types.UUID `json:"rows"`
+	} `json:"view_expansion,omitempty"`
 	WeekStart MeWeekStart `json:"week_start"`
 }
 
@@ -6039,6 +6045,12 @@ type ListMyTodoParamsFilter string
 // ListMyTodoParamsSort defines parameters for ListMyTodo.
 type ListMyTodoParamsSort string
 
+// SaveViewExpansionJSONBody defines parameters for SaveViewExpansion.
+type SaveViewExpansionJSONBody struct {
+	GanttCollapsed bool                 `json:"gantt_collapsed"`
+	Rows           []openapi_types.UUID `json:"rows"`
+}
+
 // ListNotificationsParams defines parameters for ListNotifications.
 type ListNotificationsParams struct {
 	Limit      *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -6631,6 +6643,9 @@ type DisableTwoFactorJSONRequestBody = TwoFactorReauth
 
 // EnableTwoFactorJSONRequestBody defines body for EnableTwoFactor for application/json ContentType.
 type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
+
+// SaveViewExpansionJSONRequestBody defines body for SaveViewExpansion for application/json ContentType.
+type SaveViewExpansionJSONRequestBody SaveViewExpansionJSONBody
 
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
@@ -7531,6 +7546,9 @@ type ServerInterface interface {
 	// ListMyTodo My to-do (NAV-05)
 	// (GET /me/todo)
 	ListMyTodo(w http.ResponseWriter, r *http.Request, params ListMyTodoParams)
+	// SaveViewExpansion Simpan expansi hierarki untuk satu view milik user (WA-D05)
+	// (PUT /me/view-expansion/{viewId})
+	SaveViewExpansion(w http.ResponseWriter, r *http.Request, viewId openapi_types.UUID)
 	// ListNotifications Inbox (NAV-03)
 	// (GET /notifications)
 	ListNotifications(w http.ResponseWriter, r *http.Request, params ListNotificationsParams)
@@ -12760,6 +12778,32 @@ func (siw *ServerInterfaceWrapper) ListMyTodo(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// SaveViewExpansion operation middleware
+func (siw *ServerInterfaceWrapper) SaveViewExpansion(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "viewId" -------------
+	var viewId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "viewId", r.PathValue("viewId"), &viewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "viewId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveViewExpansion(w, r, viewId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListNotifications operation middleware
 func (siw *ServerInterfaceWrapper) ListNotifications(w http.ResponseWriter, r *http.Request) {
 
@@ -16841,6 +16885,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/invitations", wrapper.InviteUser)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}", wrapper.GetUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/users/{userId}", wrapper.UpdateUser)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/me/view-expansion/{viewId}", wrapper.SaveViewExpansion)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/2fa", wrapper.GetTwoFactor)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/setup", wrapper.SetupTwoFactor)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/enable", wrapper.EnableTwoFactor)
@@ -25984,6 +26029,39 @@ func (response ListMyTodo422ApplicationProblemPlusJSONResponse) VisitListMyTodoR
 	return err
 }
 
+type SaveViewExpansionRequestObject struct {
+	ViewId openapi_types.UUID `json:"viewId"`
+	Body   *SaveViewExpansionJSONRequestBody
+}
+
+type SaveViewExpansionResponseObject interface {
+	VisitSaveViewExpansionResponse(w http.ResponseWriter) error
+}
+
+type SaveViewExpansion204Response struct {
+}
+
+func (response SaveViewExpansion204Response) VisitSaveViewExpansionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SaveViewExpansion422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveViewExpansion422ApplicationProblemPlusJSONResponse) VisitSaveViewExpansionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListNotificationsRequestObject struct {
 	Params ListNotificationsParams
 }
@@ -34598,6 +34676,9 @@ type StrictServerInterface interface {
 	// ListMyTodo My to-do (NAV-05)
 	// (GET /me/todo)
 	ListMyTodo(ctx context.Context, request ListMyTodoRequestObject) (ListMyTodoResponseObject, error)
+	// SaveViewExpansion Simpan expansi hierarki untuk satu view milik user (WA-D05)
+	// (PUT /me/view-expansion/{viewId})
+	SaveViewExpansion(ctx context.Context, request SaveViewExpansionRequestObject) (SaveViewExpansionResponseObject, error)
 	// ListNotifications Inbox (NAV-03)
 	// (GET /notifications)
 	ListNotifications(ctx context.Context, request ListNotificationsRequestObject) (ListNotificationsResponseObject, error)
@@ -39606,6 +39687,39 @@ func (sh *strictHandler) ListMyTodo(w http.ResponseWriter, r *http.Request, para
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListMyTodoResponseObject); ok {
 		if err := validResponse.VisitListMyTodoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveViewExpansion operation middleware
+func (sh *strictHandler) SaveViewExpansion(w http.ResponseWriter, r *http.Request, viewId openapi_types.UUID) {
+	var request SaveViewExpansionRequestObject
+
+	request.ViewId = viewId
+
+	var body SaveViewExpansionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveViewExpansion(ctx, request.(SaveViewExpansionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveViewExpansion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveViewExpansionResponseObject); ok {
+		if err := validResponse.VisitSaveViewExpansionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

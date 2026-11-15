@@ -63,7 +63,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const queryClient = useQueryClient();
   const spaces = useSpaces();
   const fixedParent = location?.parent_item_id;
-  const lockedKind: CreateKind | undefined = fixedParent || taskOnly ? "task" : undefined;
+  // WA-D04: only an explicit taskOnly locks the kind. A fixed parent offers every kind its parent allows; the server enforces the rule.
+  const lockedKind: CreateKind | undefined = taskOnly ? "task" : undefined;
   const [chosenKind, setKind] = useState<CreateKind>(lockedKind ?? initialKind ?? "project");
   const [spaceID, setSpaceID] = useState(location?.space_id ?? me.personal_space_id);
   const [parentID, setParentID] = useState(fixedParent ?? "");
@@ -271,7 +272,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-sm font-medium">{t("items.sharing")}</p>
           <div className="flex items-center gap-2">
-            {shares.length > 0 && <AvatarStack names={shares.map((share) => share.principal_name)} />}
+            {shares.length > 0 && <AvatarStack people={shares.map((share) => ({ id: `${share.principal_type}:${share.principal_id}`, name: share.principal_name }))} />}
             <Button type="button" variant="outline" size="sm" aria-expanded={sharingOpen} onClick={() => setSharingOpen(!sharingOpen)}>
               <Plus />{t("items.addUser")}
             </Button>

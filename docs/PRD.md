@@ -479,6 +479,19 @@ pms/                     github.com/anissaefuddin/pms
 - **Backup:** `pg_dump` harian + snapshot volume file, disalin ke luar server, retensi 14 hari, uji restore otomatis setiap bulan.
 - **Seat:** `MAX_SEATS` di env Compose klien.
 
+### 10.3 Keputusan Work Area (disetujui pemilik produk)
+
+Ringkasan keputusan; status implementasi dan verifikasi ada di [DECISIONS.md](DECISIONS.md) bagian 5 dan di M12d pada [TASKS.md](TASKS.md).
+
+| ID | Keputusan | Status |
+|---|---|---|
+| WA-D01 | Satu header ruang kerja untuk Space, Project, dan Folder; detail di panel kanan, bukan judul ganda | Diimplementasikan untuk Folder dan Project; diuji |
+| WA-D02 | In progress hanya status aktif non-awal workflow (berdasarkan id); Active ditampilkan terpisah | Diimplementasikan; diuji unit |
+| WA-D03 | Hitungan item kerja rekursif lintas hierarki, tanpa kontainer, dengan milestone terpisah | Dicatat; dikerjakan setelah PR berjalan dengan CI |
+| WA-D04 | Matriks anak yang diizinkan: Space, Project, dan Folder berisi Project, Folder, dan Task; Task berisi Subtask | Server sudah; frontend diperbaiki; sebagian diuji |
+| WA-D05 | Ekspansi Table dan Gantt disimpan di server per user dan per view | Diimplementasikan; diuji (tes Go belum dijalankan lokal) |
+| WA-D06 | Sign-out menghapus Space terakhir dan keadaan sesi; preferensi tersimpan tetap | Diimplementasikan sebagian; diuji unit |
+
 ## Lampiran — Cakupan Flow
 
 Seluruh 99 flow di [ANALISA_FITUR_SCREEN.md](ANALISA_FITUR_SCREEN.md) dirujuk minimal sekali di kolom "Screen" pada §5.

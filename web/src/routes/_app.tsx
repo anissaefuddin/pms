@@ -10,6 +10,7 @@ import { CreateItemDialog } from "@/components/create-item-dialog";
 import type { CreateKind } from "@/lib/create-item-validate";
 import type { Location } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
+import { lastSpaceKey } from "@/lib/session-state";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ProfileContext, useAppearance } from "@/lib/profile";
 import { useRealtime } from "@/lib/realtime";
@@ -54,7 +55,7 @@ function AppShell() {
   const canCreate = spaces.data?.some((space) => space.my_capabilities?.includes("create"));
   useEffect(() => {
     if (me.data && spaceId && spaces.data?.some((space) => space.id === spaceId)) {
-      localStorage.setItem(`pms:last-space:${me.data.id}`, spaceId);
+      localStorage.setItem(lastSpaceKey(me.data.id), spaceId);
     }
   }, [me.data, spaceId, spaces.data]);
   function setTask(id?: string) {
@@ -98,7 +99,7 @@ function AppShell() {
       <Dialog open={!!task} onOpenChange={(open) => { if (!open) setTask(); }}>
         <DialogContent className="inset-y-0 right-0 left-auto w-full max-w-xl translate-none overflow-y-auto rounded-none sm:max-w-xl">
           <DialogTitle>{t("items.detail")}</DialogTitle>
-          {task && <ItemDetail key={task} id={task} me={me.data} onOpen={setTask} onDeleted={() => setTask()}
+          {task && <ItemDetail key={task} id={task} me={me.data} onOpen={setTask} onDeleted={() => { const pageItemDeleted = task === itemId; setTask(); if (pageItemDeleted) void router.navigate({ to: "/" }); }}
             onFullDetails={() => { const id = task; setTask(); void router.navigate({ to: "/tasks/$itemId", params: { itemId: id } }); }} />}
         </DialogContent>
       </Dialog>

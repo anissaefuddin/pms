@@ -2543,6 +2543,29 @@ paths:
               schema: { $ref: '#/components/schemas/User' }
         '403': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /me/view-expansion/{viewId}:
+    put:
+      tags: [users]
+      operationId: saveViewExpansion
+      summary: Simpan expansi hierarki untuk satu view milik user (WA-D05)
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows, gantt_collapsed]
+              properties:
+                rows: { type: array, maxItems: 500, items: { type: string, format: uuid } }
+                gantt_collapsed: { type: boolean }
+      responses:
+        '204': { description: Tersimpan }
+        '422': { $ref: '#/components/responses/Problem' }
   /me/2fa:
     get:
       tags: [auth]
@@ -6301,6 +6324,15 @@ components:
               type: array
               description: Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk
               items: { $ref: '#/components/schemas/SidebarKey' }
+            view_expansion:
+              type: object
+              description: Expansi hierarki per view milik user ini (WA-D05); kunci = id view. Hanya user ini yang membacanya
+              additionalProperties:
+                type: object
+                required: [rows, gantt_collapsed]
+                properties:
+                  rows: { type: array, items: { type: string, format: uuid } }
+                  gantt_collapsed: { type: boolean }
             email_muted:
               type: array
               description: Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif

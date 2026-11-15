@@ -14,7 +14,7 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { ProjectProgress } from "@/components/project-progress";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
-import { AvatarStack } from "@/components/avatar-stack";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { tintOf } from "@/components/status-chip";
 import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
@@ -25,8 +25,10 @@ import type { ItemCollectionProps } from "./item-collection-types";
 type PathStep = { id: string; title: string; type: string };
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string; path?: PathStep[] };
 
-export function ItemTable({ items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
+export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
   showEmpty?: boolean;
+  initialExpanded?: string[]; // WA-D05: rows expanded when the view opens
+  onExpandedChange?: (rows: string[]) => void;
   filter?: string; // RT-37: title filter applied to the whole tree, so loaded nested rows match too
   noResults?: React.ReactNode;
   group?: "status" | "type";
@@ -35,7 +37,13 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
 }) {
   const { t } = useTranslation();
   const profile = useProfile();
-  const [expanded, setExpanded] = useState<string[]>([]);
+  // WA-D05: the caller restores expanded rows from the server profile and receives every change to save them.
+  const [expanded, setExpandedState] = useState<string[]>(() => initialExpanded ?? []);
+  const setExpanded = (update: (open: string[]) => string[]) => {
+    const next = update(expanded);
+    setExpandedState(next);
+    onExpandedChange?.(next);
+  };
   const [selected, setSelected] = useState(0);
   const [editing, setEditing] = useState<{ id: string; field: "title" | "assignees" | `field:${string}` }>();
   const dragging = useRef<string | undefined>(undefined);

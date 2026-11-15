@@ -6,11 +6,12 @@ export type MetricItem = {
   is_milestone?: boolean;
   progress_percent?: number | null;
   due_date?: string | null;
-  status?: { group?: string } | null;
+  status?: { id?: string; group?: string } | null;
 };
 
 export const isDone = (item: MetricItem) => item.status?.group === "completed";
-export const isInProgress = (item: MetricItem) => item.status?.group === "active";
+/** Active = any status in the workflow's active group, including the initial status (WA-D02). */
+export const isActive = (item: MetricItem) => item.status?.group === "active";
 
 /** Persentase item selesai dari daftar anak; 0 bila kosong. */
 export function completionPercent(items: MetricItem[]): number {
@@ -23,11 +24,29 @@ export function projectProgressPercent(project: Pick<MetricItem, "progress_perce
   return project.progress_percent ?? completionPercent(children);
 }
 
-export function workItemCounts(children: MetricItem[]) {
+/**
+ * Stable ids of the In progress statuses: every active status of a workflow except its initial one (the first active status in order).
+ * Matched by id, never by name (WA-D02). An active status the workflow does not define is never counted.
+ */
+export function inProgressStatusIds(workflows: { statuses: { id: string; group: string }[] }[]): Set<string> {
+  const ids = new Set<string>();
+  for (const workflow of workflows) {
+    workflow.statuses.filter((status) => status.group === "active").slice(1).forEach((status) => ids.add(status.id));
+  }
+  return ids;
+}
+
+/** In progress: the item's status id is one of the workflow's non-initial active statuses. Empty input gives 0 (WA-D02). */
+export const isInProgress = (item: MetricItem, inProgressIds: ReadonlySet<string>) =>
+  !!item.status?.id && inProgressIds.has(item.status.id);
+
+/** KPI counts for a project's direct children. `active` counts every active item; `inProgress` only the non-initial ones. */
+export function workItemCounts(children: MetricItem[], inProgressIds: ReadonlySet<string> = new Set()) {
   return {
     total: children.length,
     done: children.filter(isDone).length,
-    inProgress: children.filter(isInProgress).length,
+    active: children.filter(isActive).length,
+    inProgress: children.filter((item) => isInProgress(item, inProgressIds)).length,
   };
 }
 

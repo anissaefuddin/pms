@@ -1286,6 +1286,7 @@ type User struct {
 	ScimExternalID           pgtype.Text        `json:"scim_external_id"`
 	ScimProvisioned          bool               `json:"scim_provisioned"`
 	SidebarPinned            []string           `json:"sidebar_pinned"`
+	ViewExpansion            []byte             `json:"view_expansion"`
 }
 
 type UserIdentity struct {

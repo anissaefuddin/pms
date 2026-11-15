@@ -37,7 +37,7 @@ test("a project page is header plus view; details live in the Info panel and /ta
   await expect(page.getByRole("heading", { name: "Roadmap", level: 1 })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Info" }).click();
-  await expect(page.getByRole("region", { name: "Info" }).getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Roadmap");
+  await expect(page.getByRole("dialog").getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Roadmap");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 

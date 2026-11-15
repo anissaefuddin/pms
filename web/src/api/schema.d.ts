@@ -1828,6 +1828,23 @@ export interface paths {
         patch: operations["updateUser"];
         trace?: never;
     };
+    "/me/view-expansion/{viewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Simpan expansi hierarki untuk satu view milik user (WA-D05) */
+        put: operations["saveViewExpansion"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/2fa": {
         parameters: {
             query?: never;
@@ -4521,6 +4538,13 @@ export interface components {
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
             /** @description Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk */
             sidebar_pinned?: components["schemas"]["SidebarKey"][];
+            /** @description Expansi hierarki per view milik user ini (WA-D05); kunci = id view. Hanya user ini yang membacanya */
+            view_expansion?: {
+                [key: string]: {
+                    rows: string[];
+                    gantt_collapsed: boolean;
+                };
+            };
             /** @description Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif */
             email_muted?: components["schemas"]["EmailGroup"][];
             /** @description true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati */
@@ -9946,6 +9970,34 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    saveViewExpansion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    rows: string[];
+                    gantt_collapsed: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Problem"];
         };
     };
     getTwoFactor: {

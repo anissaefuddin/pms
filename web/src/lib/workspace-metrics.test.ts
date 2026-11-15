@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { completionPercent, ganttTone, groupBlueprintsBySpace, projectProgressPercent, suggestedBlueprints, upcomingMilestones, workItemCounts } from "./workspace-metrics.ts";
+import { completionPercent, ganttTone, groupBlueprintsBySpace, inProgressStatusIds, projectProgressPercent, suggestedBlueprints, upcomingMilestones, workItemCounts } from "./workspace-metrics.ts";
 
 const done = { id: "d", status: { group: "completed" } };
 const active = { id: "a", status: { group: "active" } };
@@ -18,7 +18,30 @@ test("projectProgressPercent: nilai server dipakai bila ada, selain itu hitung d
 });
 
 test("workItemCounts: total, selesai, dan sedang berjalan", () => {
-  assert.deepEqual(workItemCounts([done, active, open]), { total: 3, done: 1, inProgress: 1 });
+  assert.deepEqual(workItemCounts([done, active, open]), { total: 3, done: 1, active: 1, inProgress: 0 });
+});
+
+const newStatus = { id: "new", group: "active" };
+const progressStatus = { id: "prog", group: "active" };
+const inProgress = inProgressStatusIds([{ statuses: [newStatus, progressStatus] }]);
+const isNew = { id: "n", status: { id: "new", group: "active" } };
+const isProgress = { id: "p", status: { id: "prog", group: "active" } };
+
+test("WA-D02: six New items give In progress 0 and Active 6", () => {
+  const six = Array.from({ length: 6 }, (_, i) => ({ id: `n${i}`, status: { id: "new", group: "active" } }));
+  assert.deepEqual(workItemCounts(six, inProgress), { total: 6, done: 0, active: 6, inProgress: 0 });
+});
+
+test("WA-D02: only non-initial active statuses count as In progress", () => {
+  assert.deepEqual(workItemCounts([isNew, isProgress, done], inProgress), { total: 3, done: 1, active: 2, inProgress: 1 });
+});
+
+test("WA-D02: without workflow data no active item is shown as In progress", () => {
+  assert.deepEqual(workItemCounts([isNew, isProgress], new Set()), { total: 2, done: 0, active: 2, inProgress: 0 });
+});
+
+test("WA-D02: inProgressStatusIds takes the first active status of each workflow by id", () => {
+  assert.deepEqual([...inProgressStatusIds([{ statuses: [{ id: "x", group: "deferred" }, { id: "a1", group: "active" }, { id: "a2", group: "active" }] }, { statuses: [] }])], ["a2"]);
 });
 
 test("upcomingMilestones: hanya milestone belum selesai yang belum lewat, urut tanggal", () => {

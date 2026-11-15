@@ -1845,3 +1845,46 @@ Dihitung otomatis dari jumlah tugas (× 0,5 hari). Cadangan risiko +20%. Satu de
 | **Total** | **76** | **380** | **190** | **228** | **49** |
 
 Pemetaan P2 lama: AUTH-08→M12; NAV-08/09→M11; SPC-14→M8, SPC-16→M10; VIEW-05C→M10, VIEW-10→M11; TASK-08B→M11, TASK-11B→M8, TASK-14→M10; WF-03B→M8; DASH-03B/04/05/07/08→M11; FORM-04/07→M8; RPT-04→M11; CUST-01→M8; SET-06→M8, SET-08→M11, SET-09→M12.
+
+## M12d — Keputusan Work Area dan fondasi (WA-D01 s.d. WA-D06)
+
+Sumber: [DECISIONS.md](DECISIONS.md) bagian 5 dan dokumen `WORK_AREA_*.md`. Keputusan disetujui pemilik produk; status di bawah dipisah: [x] berarti sudah diimplementasikan dan ada tes yang membuktikannya.
+
+**S-WA.1 Header ruang kerja tunggal (WA-D01) — 2 hari**
+- [x] [FE] `WorkspaceHeader` untuk Space, Project, dan Folder; judul utama hanya di header
+- [x] [FE] Info pada Project dan Folder membuka panel detail kanan (`?task=`), view dan filter tetap
+- [x] [TEST] `folder-header.spec.ts`: satu judul h1, Info membuka panel, URL view tidak berubah
+- [ ] [FE] Halaman `/tasks/<id>` untuk task masih memakai ItemDetail inline (di luar lingkup ini)
+
+**S-WA.2 Arti KPI In progress (WA-D02) — 1 hari**
+- [x] [FE] In progress = status aktif yang bukan status awal workflow, dicocokkan dengan id status (bukan nama)
+- [x] [TEST] Unit: enam item New menghasilkan In progress 0 dan Active 6; tanpa data workflow In progress 0
+- [ ] [DOC] Keterbatasan: data model belum punya flag In Progress eksplisit (lihat DECISIONS.md)
+
+**S-WA.3 Hitungan rekursif item kerja (WA-D03) — DICATAT, dikerjakan setelah PR berjalan dengan CI**
+- [ ] [BE] Endpoint hitungan rekursif yang menghormati akses, mengecualikan kontainer, milestone, dan item terhapus/terarsip, dan tanpa dobel
+- [ ] [TEST] Tes integrasi Go untuk folder bersarang, project bersarang, izin, dan milestone (butuh database test di CI)
+- [ ] [FE] Angka rekursif di header project, dengan keterangan cakupan
+- Catatan: UI sekarang menulis "Direct children of this project only". Perubahan kontrak API butuh tinjauan.
+
+**S-WA.4 Hierarki fleksibel (WA-D04) — 2 hari**
+- [x] [BE] Sudah ada: `allowed_children` per tipe dan aturan "task hanya berisi task" di `server/internal/items/create.go`
+- [x] [FE] Parent tetap tidak mengunci tipe ke Task; subitem dari Task memakai task-only
+- [x] [TEST] `creation-context.spec.ts`: entry point Space dan Project membuat di parent yang benar
+- [ ] [TEST] Cycle, batas kedalaman, dan create dari Board, Gantt, serta sidebar di dalam folder belum diverifikasi
+
+**S-WA.5 Ekspansi hierarki disimpan di server (WA-D05) — 2 hari**
+- [x] [BE] Migrasi `00323_view_expansion.sql`: kolom `users.view_expansion` (jsonb, per view, hanya milik user itu)
+- [x] [BE] `PUT /api/v1/me/view-expansion/{viewId}` dan field `view_expansion` di `GET /me`; batas 500 baris per view dan 200 view
+- [x] [TEST] Tes integrasi Go `view_expansion_integration_test.go` (butuh database test; belum dijalankan lokal)
+- [x] [FE] Table dan Gantt membaca dari profil dan menyimpan dengan debounce 400 ms (satu PUT per rangkaian klik)
+- [x] [TEST] `hierarchy-persistence.spec.ts`: ekspansi bertahan setelah reload lewat penyimpanan server
+- [ ] [TEST] Gantt: tes e2e untuk flag collapse belum ada; id baris yang sudah dihapus belum dibersihkan dari penyimpanan
+
+**S-WA.6 Sign-out (WA-D06) — 1 hari**
+- [x] [FE] Sign-out menghapus Space terakhir pengguna itu (`lib/session-state.ts`); cache query dibersihkan seperti sebelumnya
+- [x] [TEST] Unit `session-state.test.ts`: hanya kunci pengguna itu yang dihapus; preferensi lain tetap
+- [ ] [TEST] E2E sign-out lalu sign-in ulang belum ada; sesi yang kedaluwarsa belum membersihkan Space terakhir
+
+**S-WA.7 Gerbang fondasi (Phase 1.1)**
+- [ ] [TEST] Gerbang READY belum tercapai: S-WA.3 diblokir, dan pengujian integrasi Go belum dijalankan di lingkungan ini
