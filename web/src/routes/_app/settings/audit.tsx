@@ -57,12 +57,12 @@ function AuditPage() {
     {query.isError && <div><p role="alert">{(query.error as ApiError).status === 403 ? t("audit.adminOnly") : t("audit.error")}</p>
       <Button variant="outline" className="mt-3" onClick={() => void query.refetch()}>{t("audit.retry")}</Button></div>}
     {query.isSuccess && events.length === 0 && <p role="status" className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{t("audit.empty")}</p>}
-    {events.length > 0 && <table className="w-full text-left text-sm">
+    {events.length > 0 && <div className="relative overflow-x-auto" role="region" tabIndex={0} aria-label={t("audit.title")}><table className="w-full text-left text-sm">
       <thead><tr className="border-b">
         {COLUMNS.map((key) => <th key={key} scope="col" className="py-2 pr-4">{t(`audit.col.${key}`)}</th>)}
       </tr></thead>
       <tbody>{events.map((event) => <Row key={event.id} event={event} />)}</tbody>
-    </table>}
+    </table></div>}
     {query.hasNextPage && <Button variant="outline" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>{t("audit.more")}</Button>}
   </section>;
 }

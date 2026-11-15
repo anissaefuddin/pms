@@ -28,7 +28,7 @@ function Apps() {
   const current = tabs.find((x) => x.id === active) ?? tabs[0];
   return <section className="space-y-5">
     <h2 className="text-lg font-semibold">{t("apps.title")}</h2>
-    <div role="tablist" aria-label={t("apps.tabs")} className="flex gap-2 border-b">
+    <div role="tablist" aria-label={t("apps.tabs")} className="flex flex-wrap gap-2 border-b">
       {tabs.map((x) => <button key={x.id} role="tab" type="button" id={`apps-tab-${x.id}`} aria-selected={x.id === current.id} aria-controls={`apps-panel-${x.id}`} onClick={() => setActive(x.id)}
         className={`px-3 py-2 text-sm ${x.id === current.id ? "border-b-2 border-foreground font-medium" : "text-muted-foreground"}`}>{x.label}</button>)}
     </div>
