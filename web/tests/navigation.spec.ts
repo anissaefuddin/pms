@@ -10,29 +10,26 @@ const entry = (over: Record<string, unknown>) => ({
   item: { id: taskId, title: "Prepare brief", type: "task" }, ...over,
 });
 
-test("sidebar entries can be hidden per user and the choice is saved on the profile", async ({ page }) => {
-  let hidden: string[] = [];
+test("the profile checklist pins shortcuts, the sidebar shows exactly the checked ones, and checking a hidden one opens it", async ({ page }) => {
+  let profile = { ...me, sidebar_pinned: ["request_forms", "stream"], sidebar_hidden: ["workload"] };
   const { calls } = await mockSpaces(page, { extra: {
-    "GET /me": () => ({ body: { ...me, sidebar_hidden: hidden } }),
-    "PATCH /me": (body) => { hidden = body.sidebar_hidden; return { body: { ...me, sidebar_hidden: hidden } }; },
+    "GET /me": () => ({ body: profile }),
+    "PATCH /me": (body) => { profile = { ...profile, ...body }; return { body: profile }; },
   } });
   await page.goto("/settings/profile");
   const nav = page.getByRole("navigation", { name: "Main navigation" });
   await expect(nav.getByRole("button", { name: "Stream" })).toBeVisible();
-  await expect(nav.getByRole("button", { name: "Request forms" })).toBeVisible();
-  await page.getByRole("checkbox", { name: "Stream" }).uncheck();
+  await page.getByRole("checkbox", { name: "Reports" }).click();
+  await expect(nav.getByRole("button", { name: "Reports" })).toBeVisible();
+  await page.getByRole("checkbox", { name: "Stream" }).click();
   await expect(nav.getByRole("button", { name: "Stream" })).toHaveCount(0);
-  await page.getByRole("checkbox", { name: "My to-do" }).uncheck();
-  await nav.getByRole("button", { name: "More" }).click();
-  await expect(page.getByRole("menuitem", { name: "My to-do" })).toHaveCount(0);
-  await expect(page.getByRole("menuitem", { name: "Calendars" })).toBeVisible();
-  await expect(page.getByRole("menuitem", { name: "Created by me" })).toBeVisible();
-  await page.keyboard.press("Escape");
-  await page.getByRole("checkbox", { name: "Calendars" }).uncheck();
-  await nav.getByRole("button", { name: "More" }).click();
-  await expect(page.getByRole("menuitem", { name: "Calendars" })).toHaveCount(0);
-  expect(calls.filter((call) => call.method === "PATCH" && call.path === "/me").map((call) => call.body))
-    .toEqual([{ sidebar_hidden: ["stream"] }, { sidebar_hidden: ["stream", "my_todo"] }, { sidebar_hidden: ["stream", "my_todo", "calendars"] }]);
+  await page.getByRole("checkbox", { name: "Workload" }).click();
+  await expect(nav.getByRole("button", { name: "Workload" })).toBeVisible();
+  expect(calls.filter((call) => call.method === "PATCH" && call.path === "/me").map((call) => call.body)).toEqual([
+    { sidebar_pinned: ["request_forms", "stream", "reports"], sidebar_hidden: ["workload"] },
+    { sidebar_pinned: ["request_forms", "reports"], sidebar_hidden: ["workload"] },
+    { sidebar_pinned: ["request_forms", "reports", "workload"], sidebar_hidden: [] },
+  ]);
   await expect(nav.getByRole("button", { name: "Search" })).toBeVisible();
   await expect(nav.getByRole("button", { name: "Inbox" })).toBeVisible();
 });

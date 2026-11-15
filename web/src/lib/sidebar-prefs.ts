@@ -78,6 +78,12 @@ export function togglePin(order: readonly ShortcutId[], id: ShortcutId): Shortcu
   return order.includes(id) ? order.filter((entry) => entry !== id) : [...order, id];
 }
 
+/** Body PATCH /me untuk menyimpan pin: shortcut yang disematkan juga dibuka dari Preferences agar checklist dan sidebar sama. */
+export function pinPatch(order: readonly ShortcutId[], hidden: readonly string[]) {
+  const keys = sanitizePinOrder(order).map((id) => SHORTCUT_HIDE_KEY[id]);
+  return { sidebar_pinned: sanitizePinOrder(order), sidebar_hidden: hidden.filter((key) => !keys.includes(key)) };
+}
+
 export function isShortcutVisible(id: ShortcutId, hidden: readonly string[]): boolean {
   const key = SHORTCUT_HIDE_KEY[id];
   return !key || !hidden.includes(key);

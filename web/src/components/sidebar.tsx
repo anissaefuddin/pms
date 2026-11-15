@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
-import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Star, Trash2, Users } from "lucide-react";
+import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,7 @@ import { itemKeys, listItems, type Item } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
 import type { Space } from "@/lib/spaces";
 import {
-  SHORTCUT_HIDE_KEY, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
+  pinPatch, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
   readOpenSpaces, readWidth, sanitizePinOrder, toggleOpen, writeOpenSpaces, writeWidth, type ShortcutId,
 } from "@/lib/sidebar-prefs";
 import { Button } from "./ui/button";
@@ -21,6 +21,8 @@ import { SpaceDialog } from "./space-dialog";
 import { CustomizeSidebarDialog, openCustomizeSidebar } from "./customize-sidebar-dialog";
 
 const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-2 text-sm hover:bg-nav-hover";
+const navRow = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-nav-hover";
+const activeNav = { className: `${navRow} bg-nav-active font-medium`, "aria-current": "page" as const };
 const activeLink = { className: `${linkClass} bg-nav-active font-medium`, "aria-current": "page" as const };
 
 const SHORTCUT_ROUTE = {
@@ -126,9 +128,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
 
   async function savePins(order: ShortcutId[]) {
     try {
-      const pinnedKeys = sanitizePinOrder(order).map((id) => SHORTCUT_HIDE_KEY[id]);
-      const body = { sidebar_pinned: sanitizePinOrder(order), sidebar_hidden: hidden.filter((key) => !pinnedKeys.includes(key)) };
-      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify(body) }));
+      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify(pinPatch(order, hidden)) }));
     } catch {
       toast.error(t("nav.customize.saveFailed"));
     }
@@ -194,12 +194,17 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   const { t } = useTranslation();
   const [creating, setCreating] = useState(false);
   const [openSpaces, setOpenSpaces] = useState(() => readOpenSpaces(me.id));
+  const [finding, setFinding] = useState(false);
+  const [query, setQuery] = useState("");
   useEffect(() => {
     const open = () => setCreating(true);
     window.addEventListener("pms:open-space-create", open);
     return () => window.removeEventListener("pms:open-space-create", open);
   }, []);
   const spaces = useSpaces();
+  const q = query.trim().toLowerCase();
+  // Spaces are filtered by name only; items stay in the Space pages and the global search.
+  const shownSpaces = spaces.data?.filter((s) => !q || (s.kind === "personal" ? t("spaces.personal") : s.name).toLowerCase().includes(q));
 
   // Up/Down walk every link and button of the tree; Left/Right (on the toggles) open and close branches.
   function walk(event: KeyboardEvent<HTMLElement>) {
@@ -221,23 +226,29 @@ function SpacesNav({ me }: { me: CurrentUser }) {
     <nav className="mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
       <div className="flex items-center justify-between px-3 pb-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("spaces.nav.label")}</h2>
-        {me.capabilities.create_space && (
-          <Button variant="ghost" size="icon-sm" aria-label={t("spaces.new")} title={t("spaces.new")} className="text-nav-text hover:bg-nav-hover" onClick={() => setCreating(true)}><Plus /></Button>
-        )}
+        <div className="flex items-center">
+          {me.capabilities.create_space && (
+            <Button variant="ghost" size="icon-sm" aria-label={t("spaces.new")} title={t("spaces.new")} className="text-nav-text hover:bg-nav-hover" onClick={() => setCreating(true)}><Plus /></Button>
+          )}
+          <Button variant="ghost" size="icon-sm" aria-label={t("spaces.find")} aria-expanded={finding} title={t("spaces.find")} className="text-nav-text hover:bg-nav-hover"
+            onClick={() => { setFinding(!finding); setQuery(""); }}><Search /></Button>
+        </div>
       </div>
+      {finding && <input type="search" autoFocus aria-label={t("spaces.find")} placeholder={t("spaces.find")} value={query} onChange={(event) => setQuery(event.target.value)}
+        className="mx-3 mb-2 rounded-md border border-nav-hover bg-nav-hover px-2 py-1 text-sm text-nav-text placeholder:text-nav-muted outline-none focus-visible:ring-2 focus-visible:ring-nav-active" />}
       {spaces.isPending && <p role="status" className="px-3 py-2 text-sm text-nav-muted">{t("spaces.nav.loading")}</p>}
       {spaces.isError && (
         <div className="px-3 py-2 text-sm"><p role="alert">{t("spaces.nav.error")}</p><Button variant="link" size="sm" className="px-0 text-nav-text" onClick={() => spaces.refetch()}>{t("spaces.nav.retry")}</Button></div>
       )}
       <ul>
-        {spaces.data?.map((s) => (
+        {shownSpaces?.map((s) => (
           <SpaceNode key={s.id} space={s} name={s.kind === "personal" ? t("spaces.personal") : s.name}
             open={openSpaces.includes(s.id)} onToggle={() => toggleSpace(s.id)} />
         ))}
       </ul>
       <ul className="border-t border-border pt-1">
-        <li><Link to="/shared-with-me" className={linkClass} activeProps={activeLink}>{t("nav.shared.label")}</Link></li>
-        <li><Link to="/blueprints" className={linkClass} activeProps={activeLink}>{t("blueprints.nav")}</Link></li>
+        <li><Link to="/shared-with-me" className={navRow} activeProps={activeNav}><Share2 className="size-4" aria-hidden />{t("nav.shared.label")}</Link></li>
+        <li><Link to="/blueprints" className={navRow} activeProps={activeNav}><LayoutTemplate className="size-4" aria-hidden />{t("blueprints.nav")}</Link></li>
       </ul>
       <SpaceDialog open={creating} onOpenChange={setCreating} />
     </nav>

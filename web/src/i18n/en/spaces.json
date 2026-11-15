@@ -127,5 +127,6 @@
   "createMenu.hint": "Choose which item types people are offered when they create an item here. Existing items are not changed, and the type stays available elsewhere.",
   "createMenu.legend": "Item types in the menu",
   "createMenu.save": "Save menu",
-  "createMenu.loadError": "The menu could not be loaded"
+  "createMenu.loadError": "The menu could not be loaded",
+  "find": "Find a Space"
 }

@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  DEFAULT_PINNED, PINNABLE_IDS, clampWidth, isShortcutVisible, movePin, readWidth, sanitizePinOrder, togglePin, toggleOpen,
+  DEFAULT_PINNED, PINNABLE_IDS, clampWidth, pinPatch, isShortcutVisible, movePin, readWidth, sanitizePinOrder, togglePin, toggleOpen,
   type ShortcutId,
 } from "./sidebar-prefs.ts";
 
@@ -37,6 +37,10 @@ test("only shortcuts with an API key can be pinned, so the others never reach si
   assert.equal(PINNABLE_IDS.includes("reviews"), true);
   assert.equal(PINNABLE_IDS.includes("recycle"), false);
   assert.deepEqual(sanitizePinOrder(undefined), [...DEFAULT_PINNED]);
+});
+
+test("saving pins also opens those shortcuts from Preferences", () => {
+  assert.deepEqual(pinPatch(["workload", "stream"], ["workload", "timesheets"]), { sidebar_pinned: ["workload", "stream"], sidebar_hidden: ["timesheets"] });
 });
 
 test("visibility follows sidebar_hidden and ignores shortcuts without a key", () => {
