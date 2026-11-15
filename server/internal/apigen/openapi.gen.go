@@ -6896,7 +6896,7 @@ type ServerInterface interface {
 	// UpdateApproval Ubah kebijakan, deskripsi, tenggat, atau reassign daftar approver dengan If-Match. Keputusan approver yang dipertahankan tetap berlaku; penghapusan dan penambahan dicatat pada riwayat.
 	// (PATCH /approvals/{approvalId})
 	UpdateApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID, params UpdateApprovalParams)
-	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
+	// DecideApproval Approve atau reject; hanya approver yang disebut. Suara boleh diubah selama hasil belum final; setelah final 409 `approval_final` (APR-03)
 	// (PUT /approvals/{approvalId}/decision)
 	DecideApproval(w http.ResponseWriter, r *http.Request, approvalId openapi_types.UUID)
 	// CompareAttachmentVersions Pratinjau dua versi file yang sama untuk tampilan berdampingan (FIL-03); memerlukan `view` pada keduanya
@@ -17668,6 +17668,20 @@ func (response DecideApproval404ApplicationProblemPlusJSONResponse) VisitDecideA
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DecideApproval409ApplicationProblemPlusJSONResponse Problem
+
+func (response DecideApproval409ApplicationProblemPlusJSONResponse) VisitDecideApprovalResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -33936,7 +33950,7 @@ type StrictServerInterface interface {
 	// UpdateApproval Ubah kebijakan, deskripsi, tenggat, atau reassign daftar approver dengan If-Match. Keputusan approver yang dipertahankan tetap berlaku; penghapusan dan penambahan dicatat pada riwayat.
 	// (PATCH /approvals/{approvalId})
 	UpdateApproval(ctx context.Context, request UpdateApprovalRequestObject) (UpdateApprovalResponseObject, error)
-	// DecideApproval Approve atau reject; hanya approver yang disebut, boleh diubah kemudian
+	// DecideApproval Approve atau reject; hanya approver yang disebut. Suara boleh diubah selama hasil belum final; setelah final 409 `approval_final` (APR-03)
 	// (PUT /approvals/{approvalId}/decision)
 	DecideApproval(ctx context.Context, request DecideApprovalRequestObject) (DecideApprovalResponseObject, error)
 	// CompareAttachmentVersions Pratinjau dua versi file yang sama untuk tampilan berdampingan (FIL-03); memerlukan `view` pada keduanya
