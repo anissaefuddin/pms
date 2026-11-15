@@ -20,6 +20,8 @@ func (s *Server) connectorService() *connectors.Service {
 
 func writeConnectorError(w http.ResponseWriter, err error) {
 	var invalid connectors.Invalid
+	var httpErr connectors.HTTPError
+	var limited connectors.RateLimited
 	switch {
 	case errors.As(err, &invalid):
 		writeError(w, http.StatusUnprocessableEntity, invalid.Error())
@@ -29,6 +31,9 @@ func writeConnectorError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, err.Error())
 	case errors.Is(err, connectors.ErrNoKey):
 		writeProblem(w, http.StatusUnprocessableEntity, "key_not_configured", "connector secrets need PMS_CONNECTOR_KEY on the server")
+	case errors.As(err, &httpErr), errors.As(err, &limited):
+		// These messages come from the connector package and never carry the remote body or the token.
+		writeProblem(w, http.StatusBadGateway, "provider_error", err.Error())
 	default:
 		slog.Error("connector operation failed", "error", err)
 		writeError(w, http.StatusBadGateway, "connector operation failed")
