@@ -60,7 +60,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
       for (const item of list) {
         if (ancestors.has(item.id)) continue;
         const label = depth !== 0 ? undefined : group === "status" ? item.status?.name ?? t("views.noStatus")
-          : group === "type" ? t(`items.${item.type}`) : undefined;
+          : group === "type" ? (item.item_type && item.item_type.key !== item.type ? item.item_type.name : t(`items.${item.type}`)) : undefined;
         output.push({ item, depth, parent, groupLabel: label !== lastGroup ? label : undefined, path: depth === 0 ? (item as Item & { path?: PathStep[] }).path : undefined });
         lastGroup = label;
         const branch = branches.get(item.id);

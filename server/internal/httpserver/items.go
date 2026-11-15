@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"log/slog"
@@ -94,7 +95,9 @@ func (s *Server) listItems(w http.ResponseWriter, r *http.Request, container str
 		Fields: query["field"],
 	})
 	if err != nil {
-		writeItemError(w, err)
+		if !errors.Is(r.Context().Err(), context.Canceled) {
+			writeItemError(w, err)
+		}
 		return
 	}
 	writeJSON(w, http.StatusOK, page)

@@ -1,17 +1,23 @@
 import { useState, type FormEvent } from "react";
-import { CalendarDays, ChartGantt, ChevronDown, Files, LayoutGrid, MoreHorizontal, PieChart, Plus, Table2, Timer, type LucideIcon } from "lucide-react";
+import { CalendarDays, ChartColumn, ChartGantt, Clock, Folder, Kanban, MoreHorizontal, Plus, Table2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import type { SavedView } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { SegmentedControl } from "@/components/ui/segmented-control";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormError } from "@/components/auth/form-error";
 
-const viewIcons: Record<SavedView["type"], LucideIcon> = { table: Table2, board: LayoutGrid, gantt: ChartGantt, calendar: CalendarDays, timelog: Timer, files: Files, chart: PieChart };
+const viewIcons = { table: Table2, board: Kanban, gantt: ChartGantt, calendar: CalendarDays, timelog: Clock, files: Folder, chart: ChartColumn } as const;
+function ViewIcon({ type }: { type: SavedView["type"] }) {
+  const Icon = viewIcons[type];
+  return <Icon aria-hidden="true" />;
+}
+
 const viewTypes = ["table", "board", "gantt", "calendar", "timelog", "files", "chart"] as const satisfies readonly SavedView["type"][];
 
 export function ViewTabs({ views, selected, scope, canEdit, project = false, onSelect, onRefresh }: {
@@ -77,52 +83,38 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
       onSelect(created.id);
     });
   }
+  const selectedIndex = views.findIndex((view) => view.id === selected.id);
+  const selectedSiblings = views.filter((candidate) => candidate.visibility === selected.visibility);
+  const i = selectedSiblings.findIndex((candidate) => candidate.id === selected.id);
+  const previous = selectedSiblings[i - 1], next = selectedSiblings[i + 1];
+  const editable = selected.visibility === "personal" || canEdit;
   return <div className="space-y-2">
     <nav aria-label={t("views.views")} className="flex flex-wrap items-center gap-2 border-b pb-2">
-      <div role="group" aria-label={t("views.segments")} className="inline-flex flex-wrap items-center gap-0.5 rounded-lg border bg-muted/40 p-0.5">
-      {views.map((view) => {
-        const editable = view.visibility === "personal" || canEdit;
-        const siblings = views.filter((candidate) => candidate.visibility === view.visibility);
-        const i = siblings.findIndex((candidate) => candidate.id === view.id);
-        const previous = siblings[i - 1], next = siblings[i + 1];
-        const current = view.id === selected.id;
-        return <div key={view.id} className={`flex items-center rounded-md ${current ? "bg-background shadow-xs" : ""}`}>
-          <Button size="sm" variant="ghost" aria-pressed={current} className={current ? "font-semibold" : "text-muted-foreground"}
-            onClick={() => onSelect(view.id)}>{(() => { const Icon = viewIcons[view.type]; return Icon ? <Icon aria-hidden /> : null; })()}{view.name}</Button>
-          {current && <DropdownMenu>
-            <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={t("views.options", { name: view.name })} />}><MoreHorizontal /></DropdownMenuTrigger>
-            <DropdownMenuContent align="start">
-              <DropdownMenuItem onClick={() => void copy(view)}>{t("items.copyLink")}</DropdownMenuItem>
-              {editable && <DropdownMenuItem disabled={busy} onClick={() => { setError(""); setRenaming(view); }}>{t("views.rename")}</DropdownMenuItem>}
-              {canEdit && <DropdownMenuItem disabled={busy} onClick={() => void duplicate(view, "public")}>{t("views.duplicatePublic")}</DropdownMenuItem>}
-              <DropdownMenuItem disabled={busy} onClick={() => void duplicate(view, "personal")}>{t("views.duplicatePersonal")}</DropdownMenuItem>
-              {canEdit && view.visibility === "public" && !view.is_default && <DropdownMenuItem disabled={busy}
-                onClick={() => void update(view.id, { is_default: true })}>{t("views.setDefault")}</DropdownMenuItem>}
-              {editable && previous && <DropdownMenuItem disabled={busy} onClick={() => void update(view.id, { position: previous.position })}>{t("views.moveLeft")}</DropdownMenuItem>}
-              {editable && next && <DropdownMenuItem disabled={busy} onClick={() => void update(view.id, { position: next.position })}>{t("views.moveRight")}</DropdownMenuItem>}
-              {editable && !view.is_default && <DropdownMenuItem variant="destructive" disabled={busy}
-                onClick={() => { setError(""); setDeleting(view); }}>{t("views.delete")}</DropdownMenuItem>}
-            </DropdownMenuContent>
-          </DropdownMenu>}
-        </div>;
-      })}
-      </div>
+      <SegmentedControl aria-label={t("views.views")} value={selected.id} onChange={onSelect}
+        items={views.map((view) => ({ value: view.id, label: view.name, icon: <ViewIcon type={view.type} /> }))} />
+      {selectedIndex >= 0 && <DropdownMenu>
+        <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={t("views.options", { name: selected.name })} />}><MoreHorizontal /></DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => void copy(selected)}>{t("items.copyLink")}</DropdownMenuItem>
+          {editable && <DropdownMenuItem disabled={busy} onClick={() => { setError(""); setRenaming(selected); }}>{t("views.rename")}</DropdownMenuItem>}
+          {canEdit && <DropdownMenuItem disabled={busy} onClick={() => void duplicate(selected, "public")}>{t("views.duplicatePublic")}</DropdownMenuItem>}
+          <DropdownMenuItem disabled={busy} onClick={() => void duplicate(selected, "personal")}>{t("views.duplicatePersonal")}</DropdownMenuItem>
+          {canEdit && selected.visibility === "public" && !selected.is_default && <DropdownMenuItem disabled={busy}
+            onClick={() => void update(selected.id, { is_default: true })}>{t("views.setDefault")}</DropdownMenuItem>}
+          {editable && previous && <DropdownMenuItem disabled={busy} onClick={() => void update(selected.id, { position: previous.position })}>{t("views.moveLeft")}</DropdownMenuItem>}
+          {editable && next && <DropdownMenuItem disabled={busy} onClick={() => void update(selected.id, { position: next.position })}>{t("views.moveRight")}</DropdownMenuItem>}
+          {editable && !selected.is_default && <DropdownMenuItem variant="destructive" disabled={busy}
+            onClick={() => { setError(""); setDeleting(selected); }}>{t("views.delete")}</DropdownMenuItem>}
+        </DropdownMenuContent>
+      </DropdownMenu>}
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button size="sm" variant="ghost" disabled={busy} aria-label={t("views.allViews")} />}>
-          {t("views.all")} <ChevronDown />
+        <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" disabled={busy} aria-label={t("views.addView")} title={t("views.addView")} />}>
+          <Plus />
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>{t("views.views")}</DropdownMenuLabel>
-            {views.map((view) => <DropdownMenuItem key={view.id} onClick={() => onSelect(view.id)}>{view.name}</DropdownMenuItem>)}
-          </DropdownMenuGroup>
-          <DropdownMenuSeparator />
-          <DropdownMenuGroup>
-            <DropdownMenuLabel><Plus className="inline size-3" /> {t("views.addView")}</DropdownMenuLabel>
-            {viewTypes.filter((type) => (type !== "timelog" && type !== "files" && type !== "chart") || project).map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
-              {t("views.addType", { type: t(`views.types.${type}`) })}
-            </DropdownMenuItem>)}
-          </DropdownMenuGroup>
+          {viewTypes.filter((type) => (type !== "timelog" && type !== "files" && type !== "chart") || project).map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
+            <ViewIcon type={type} />{t(`views.types.${type}`)}
+          </DropdownMenuItem>)}
         </DropdownMenuContent>
       </DropdownMenu>
     </nav>

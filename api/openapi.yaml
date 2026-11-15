@@ -3533,7 +3533,7 @@ paths:
       summary: Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
       description: |
         `locations` wajib berisi minimal satu lokasi. Untuk subtask, isi `parent_item_id` dengan task induk.
-        `default_view_type` hanya berlaku untuk project/folder.
+        `default_view_type` hanya berlaku untuk project/folder; nilainya table, board, gantt, calendar, files, atau chart.
       requestBody:
         required: true
         content:
@@ -6294,7 +6294,12 @@ components:
             comment_shortcut: { type: string, enum: [mod_enter, enter], default: mod_enter }
             sidebar_hidden:
               type: array
-              description: Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
+              deprecated: true
+              description: Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil. Dipertahankan satu rilis setelah sidebar_pinned
+              items: { $ref: '#/components/schemas/SidebarKey' }
+            sidebar_pinned:
+              type: array
+              description: Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk
               items: { $ref: '#/components/schemas/SidebarKey' }
             email_muted:
               type: array
@@ -6333,6 +6338,11 @@ components:
         comment_shortcut: { type: string, enum: [mod_enter, enter] }
         sidebar_hidden:
           type: array
+          deprecated: true
+          items: { $ref: '#/components/schemas/SidebarKey' }
+        sidebar_pinned:
+          type: array
+          description: Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422)
           items: { $ref: '#/components/schemas/SidebarKey' }
         email_muted:
           type: array
@@ -7284,7 +7294,7 @@ components:
         is_milestone: { type: boolean }
         owner: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
         default_workflow_id: { type: string, format: uuid, nullable: true }
-        default_view_type: { type: string, enum: [table, board], nullable: true }
+        default_view_type: { type: string, enum: [table, board, gantt, calendar, files, chart], nullable: true }
         assignees:
           type: array
           items: { $ref: '#/components/schemas/ItemAssignee' }
@@ -7336,7 +7346,7 @@ components:
         is_milestone: { type: boolean }
         owner_id: { type: string, format: uuid, description: Hanya project }
         default_workflow_id: { type: string, format: uuid, description: Hanya project/folder }
-        default_view_type: { type: string, enum: [table, board], description: Hanya project/folder }
+        default_view_type: { type: string, enum: [table, board, gantt, calendar, files, chart], description: Hanya project/folder }
         assignee_ids:
           type: array
           items: { type: string, format: uuid }

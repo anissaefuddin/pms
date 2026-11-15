@@ -4,6 +4,8 @@ import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 import { formatDate, useProfile } from "@/lib/profile";
 import type { Item } from "@/lib/items";
+import { EmptyState } from "@/components/ui/empty-state";
+import { FilesIllustration, ProjectIllustration } from "@/components/ui/empty-illustrations";
 
 type ProjectFile = components["schemas"]["ProjectFile"];
 
@@ -13,7 +15,7 @@ export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item
   const files = useQuery({ queryKey: ["project-files", project.id], queryFn: () => api<{ items: ProjectFile[] }>(`/api/v1/items/${project.id}/files`) });
   if (files.isPending) return <p role="status">{t("items.loading")}</p>;
   if (files.isError) return <p role="alert">{t("items.loadError")}</p>;
-  if (!files.data.items.length) return <p role="status">{t("views.files.empty")}</p>;
+  if (!files.data.items.length) return <EmptyState icon={<FilesIllustration />} title={t("views.files.empty")} description={t("views.files.emptyHint")} />;
   return <table aria-label={t("views.types.files")} className="w-full text-left text-sm">
     <thead><tr>
       <th className="p-2">{t("views.files.name")}</th><th className="p-2">{t("views.files.item")}</th><th className="p-2">{t("views.files.size")}</th>
@@ -32,7 +34,7 @@ export function ProjectChart({ items }: { items: Item[] }) {
   const { t } = useTranslation();
   const counts = new Map<string, number>();
   for (const item of items) counts.set(item.status?.name ?? t("views.chart.noStatus"), (counts.get(item.status?.name ?? t("views.chart.noStatus")) ?? 0) + 1);
-  if (!items.length) return <p role="status">{t("views.empty")}</p>;
+  if (!items.length) return <EmptyState icon={<ProjectIllustration />} title={t("views.noItems.title")} description={t("views.noItems.description")} />;
   return <figure className="space-y-2">
     <figcaption className="font-medium">{t("views.chart.title")}</figcaption>
     <ul className="space-y-1">{[...counts].map(([name, count]) => <li key={name} className="flex items-center gap-2">

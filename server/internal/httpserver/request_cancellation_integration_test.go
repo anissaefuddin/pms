@@ -18,6 +18,7 @@ func TestReadRequestsCanceledAfterSessionLookup(t *testing.T) {
 		{"/me", "account"},
 		{"/spaces/" + space + "/views", "views"},
 		{"/time-entries", "time_entries"},
+		{"/spaces/" + space + "/items", "item_locations"},
 	} {
 		t.Run(tc.table, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(t.Context(), 10*time.Second)

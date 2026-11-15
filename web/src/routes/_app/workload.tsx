@@ -43,44 +43,44 @@ function Workload() {
   const columns = Array.from({ length: days }, (_, i) => i).filter((i) => !weekly || i % 7 === 0);
 
   return <main className="min-w-0 space-y-5 p-4 sm:p-8">
-    <h1 className="workspace-title">{t("workload.title")}</h1>
+    <h1 className="workspace-title">{t("settings.workload.workload")}</h1>
     <div className="flex flex-wrap items-end gap-3">
-      <label>{t("workload.from")}<Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
-      <label>{t("workload.to")}<Input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
-      <label>{t("workload.role")}<select className="block rounded border bg-background p-2" value={role} onChange={e => setRole(e.target.value)}><option value="">{t("workload.all")}</option>{directory.data?.roles.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
-      <label>{t("workload.skill")}<select className="block rounded border bg-background p-2" value={skill} onChange={e => setSkill(e.target.value)}><option value="">{t("workload.all")}</option>{directory.data?.skills.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
-      <label className="flex gap-2"><input type="checkbox" checked={weekly} onChange={e => setWeekly(e.target.checked)} /> {t("workload.weekly")}</label>
+      <label>{t("settings.workload.from")}<Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
+      <label>{t("settings.workload.to")}<Input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>
+      <label className="min-w-0 max-w-full">{t("settings.workload.jobRole")}<select className="block max-w-full rounded border bg-background p-2" value={role} onChange={e => setRole(e.target.value)}><option value="">{t("settings.workload.all")}</option>{directory.data?.roles.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+      <label className="min-w-0 max-w-full">{t("settings.workload.skill")}<select className="block max-w-full rounded border bg-background p-2" value={skill} onChange={e => setSkill(e.target.value)}><option value="">{t("settings.workload.all")}</option>{directory.data?.skills.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}</select></label>
+      <label className="flex gap-2"><input type="checkbox" checked={weekly} onChange={e => setWeekly(e.target.checked)} /> {t("settings.workload.groupByWeek")}</label>
     </div>
-    {data.isPending && <p role="status">{t("workload.loading")}</p>}
+    {data.isPending && <p role="status">{t("settings.workload.loadingWorkload")}</p>}
     {(data.error || save.error) && <p role="alert">{(save.error ?? data.error)?.message}</p>}
     {data.data && <>
-      <p className="text-sm text-muted-foreground">{t("workload.hint")}</p>
-      <div className="relative overflow-x-auto" role="region" tabIndex={0} aria-label={t("workload.caption")}>
-        <table className="w-full text-left text-sm">
-          <caption className="sr-only">{t("workload.caption")}</caption>
-          <thead><tr><th scope="col" className="p-2">{t("workload.resource")}</th>{columns.map(i => <th scope="col" key={i} className="whitespace-nowrap p-2">{iso(dayAt(from, i))}</th>)}</tr></thead>
+      <p className="text-sm text-muted-foreground">{t("settings.workload.minutesPlannedBookedCapacityWeeklyColumnsGroupSevenDaysFromTheSelectedStart")}</p>
+      <div role="region" aria-label={t("settings.workload.dailyWorkloadColumns")} tabIndex={0} className="relative overflow-x-auto rounded focus-visible:outline-2 focus-visible:outline-ring">
+        <table aria-label={t("settings.workload.dailyWorkload")} className="w-full text-left text-sm">
+          <caption className="sr-only">{t("settings.workload.workloadAndCapacity")}</caption>
+          <thead><tr><th scope="col" className="p-2">{t("settings.workload.resource")}</th>{columns.map(i => <th scope="col" key={i} className="whitespace-nowrap p-2">{iso(dayAt(from, i))}</th>)}</tr></thead>
           <tbody>{[...data.data.people, ...(data.data.role_demand ?? [])].map(p => <tr key={p.id} className="border-t"><th scope="row" className="p-2">{p.name}</th>
             {columns.map(i => {
               const range = (values: number[]) => values.slice(i, i + (weekly ? 7 : 1));
               const sum = (values: number[]) => range(values).reduce((total, n) => total + n, 0);
               const over = range(p.capacity).some((cap, k) => p.planned[i+k] + p.booked[i+k] > cap);
               return <td key={i} className={over ? "bg-destructive/10 p-2 font-medium text-foreground" : "p-2"}>
-                {sum(p.planned)} + {sum(p.booked)} / {sum(p.capacity)}{over && <span className="block">{t("workload.over")}</span>}
+                {sum(p.planned)} + {sum(p.booked)} / {sum(p.capacity)}{over && <span className="block">{t("settings.workload.overCapacity")}</span>}
               </td>;
             })}
           </tr>)}</tbody>
         </table>
       </div>
-      {util.data && <section className="space-y-2"><h2 className="font-semibold">{t("workload.utilization")}</h2>
-        <div className="overflow-x-auto" role="region" tabIndex={0} aria-label={t("workload.utilCaption")}><table className="w-full text-left text-sm">
-          <caption className="sr-only">{t("workload.utilCaption")}</caption>
-          <thead><tr><th scope="col" className="p-2">{t("workload.resource")}</th><th scope="col" className="p-2">{t("workload.capacity")}</th><th scope="col" className="p-2">{t("workload.planned")}</th><th scope="col" className="p-2">{t("workload.actual")}</th></tr></thead>
+      {util.data && <section className="space-y-2"><h2 id="workload-utilization" className="font-semibold">{t("settings.workload.utilizationPlannedVsActual")}</h2>
+        <div role="region" aria-labelledby="workload-utilization" tabIndex={0} className="overflow-x-auto rounded focus-visible:outline-2 focus-visible:outline-ring"><table aria-labelledby="workload-utilization" className="w-full text-left text-sm">
+          <caption className="sr-only">{t("settings.workload.plannedAndLoggedMinutesAgainstCapacity")}</caption>
+          <thead><tr><th scope="col" className="p-2">{t("settings.workload.resource")}</th><th scope="col" className="p-2">{t("settings.workload.capacityMin")}</th><th scope="col" className="p-2">{t("settings.workload.planned")}</th><th scope="col" className="p-2">{t("settings.workload.actual")}</th></tr></thead>
           <tbody>{util.data.items.map(u => <tr key={u.id} className="border-t"><th scope="row" className="p-2">{u.name}</th><td className="p-2">{u.capacity}</td>
             <td className="p-2">{u.planned} ({u.planned_percent}%)</td><td className="p-2">{u.actual} ({u.actual_percent}%)</td></tr>)}</tbody>
         </table></div></section>}
-      <TaskList title={t("workload.backlog")} tasks={data.data.tasks.filter(x => !x.assignee_ids.length)} onSave={(task, ids) => save.mutate({ path: `/api/v1/items/${task.id}`, method: "PATCH", version: task.version, body: { assignee_ids: ids } })} busy={save.isPending} />
-      <TaskList title={t("workload.assigned")} tasks={data.data.tasks.filter(x => x.assignee_ids.length > 0)} onSave={(task, ids) => save.mutate({ path: `/api/v1/items/${task.id}`, method: "PATCH", version: task.version, body: { assignee_ids: ids } })} busy={save.isPending} />
-      {profile?.user_type === "admin" && <section className="space-y-3"><h2 className="font-semibold">{t("workload.bookings")}</h2>
+      <TaskList title={t("settings.workload.unassignedBacklog")} tasks={data.data.tasks.filter(t => !t.assignee_ids.length)} onSave={(task, ids) => save.mutate({ path: `/api/v1/items/${task.id}`, method: "PATCH", version: task.version, body: { assignee_ids: ids } })} busy={save.isPending} />
+      <TaskList title={t("settings.workload.assignedTasks")} tasks={data.data.tasks.filter(t => t.assignee_ids.length > 0)} onSave={(task, ids) => save.mutate({ path: `/api/v1/items/${task.id}`, method: "PATCH", version: task.version, body: { assignee_ids: ids } })} busy={save.isPending} />
+      {profile?.user_type === "admin" && <section className="space-y-3"><h2 className="font-semibold">{t("settings.workload.bookings")}</h2>
         <form className="flex flex-wrap items-end gap-3" onSubmit={event => {
           event.preventDefault();
           const fields = new FormData(event.currentTarget);
@@ -90,18 +90,18 @@ function Workload() {
             ...(resource.startsWith("role:") ? { role_id: resource.slice(5) } : { user_id: resource }),
           } });
         }}>
-          <label>{t("workload.findProject")}<Input type="search" value={projectQuery} onChange={e => { setProject(""); setProjectQuery(e.target.value); }} /></label>
-          <label>{t("workload.project")}<select value={project} required className="block rounded border bg-background p-2" onChange={e => setProject(e.target.value)}>
-            <option value="">{t("workload.select")}</option>{projects.data?.items.filter(x => x.type === "project").map(x => <option key={x.id} value={x.id}>{x.title}</option>)}
+          <label>{t("settings.workload.findAProject")}<Input type="search" value={projectQuery} onChange={e => { setProject(""); setProjectQuery(e.target.value); }} /></label>
+          <label className="min-w-0 max-w-full">{t("settings.workload.project")}<select value={project} required className="block max-w-full rounded border bg-background p-2" onChange={e => setProject(e.target.value)}>
+            <option value="">{t("settings.workload.select")}</option>{projects.data?.items.filter(x => x.type === "project").map(x => <option key={x.id} value={x.id}>{x.title}</option>)}
           </select></label>
-          <label>{t("workload.resource")}<select name="resource" required className="block rounded border bg-background p-2"><option value="">{t("workload.select")}</option>
+          <label className="min-w-0 max-w-full">{t("settings.workload.resource")}<select name="resource" required className="block max-w-full rounded border bg-background p-2"><option value="">{t("settings.workload.select")}</option>
             {data.data.people.map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-            {directory.data?.roles.map(x => <option key={x.id} value={`role:${x.id}`}>{t("workload.roleSuffix", { name: x.name })}</option>)}</select></label>
-          <label>{t("workload.minutes")}<Input type="number" name="minutes" min={1} max={1440} required /></label><Button type="submit" disabled={save.isPending}>{t("workload.add")}</Button>
+            {directory.data?.roles.map(x => <option key={x.id} value={`role:${x.id}`}>{t("settings.workload.roleOption", { name: x.name })}</option>)}</select></label>
+          <label>{t("settings.workload.minutesPerDay")}<Input type="number" name="minutes" min={1} max={1440} required /></label><Button type="submit" disabled={save.isPending}>{t("settings.workload.addBooking")}</Button>
         </form>
         <ul>{data.data.bookings.map(x => <li key={x.id} className="flex flex-wrap items-center gap-2 py-1">
-          <span>{t("workload.perDay", { name: data.data.people.find(p => p.id === x.user_id)?.name ?? directory.data?.roles.find(p => p.id === x.role_id)?.name, start: x.start_date, end: x.end_date, min: x.minutes_per_day })}</span>
-          <Button size="sm" variant="outline" disabled={save.isPending} onClick={() => save.mutate({path:`/api/v1/resource-bookings/${x.id}`,method:"DELETE"})}>{t("workload.remove")}</Button>
+          <span>{t("settings.workload.bookingSummary", { name: data.data.people.find(p => p.id === x.user_id)?.name ?? directory.data?.roles.find(p => p.id === x.role_id)?.name ?? "", start: x.start_date, end: x.end_date, minutes: x.minutes_per_day })}</span>
+          <Button size="sm" variant="outline" disabled={save.isPending} onClick={() => save.mutate({path:`/api/v1/resource-bookings/${x.id}`,method:"DELETE"})}>{t("settings.workload.removeBooking")}</Button>
         </li>)}</ul>
       </section>}
     </>}
@@ -113,14 +113,14 @@ function TaskList({ title, tasks, onSave, busy }: { title: string; tasks: Task[]
   const [editing, setEditing] = useState<string>();
   const [people, setPeople] = useState<Choice[]>([]);
   return <section><h2 className="font-semibold">{title}</h2>
-    {tasks.length === 0 ? <p>{t("workload.noTasks")}</p> : <ul className="divide-y">{tasks.map(task => <li key={task.id} className="space-y-2 py-2">
+    {tasks.length === 0 ? <p>{t("settings.workload.noTasksInThisPeriod")}</p> : <ul className="divide-y">{tasks.map(task => <li key={task.id} className="space-y-2 py-2">
       <span>{task.title}</span>
-      {task.editable && <Button className="ml-2" size="sm" variant="outline" onClick={() => { setEditing(task.id); setPeople(task.assignee_ids.map((id, index) => ({ id, name: task.assignee_names[index] ?? id }))); }}>{t("workload.reassign")}</Button>}
+      {task.editable && <Button className="ml-2" size="sm" variant="outline" onClick={() => { setEditing(task.id); setPeople(task.assignee_ids.map((id, index) => ({ id, name: task.assignee_names[index] ?? id }))); }}>{t("settings.workload.reassign")}</Button>}
       {editing === task.id && <div className="space-y-2">
-        <p className="text-sm">{t("workload.pick")}</p>
-        <ItemUserPicker multiple maxSelected={20} label={t("workload.replacement")} selected={people} onChange={setPeople} />
-        <Button size="sm" disabled={busy} onClick={() => { onSave(task, people.map(p => p.id)); setEditing(undefined); }}>{t("workload.save")}</Button>
-        <Button size="sm" variant="ghost" onClick={() => setEditing(undefined)}>{t("workload.cancel")}</Button>
+        <p className="text-sm">{t("settings.workload.selectTheCompleteReplacementAssigneeList")}</p>
+        <ItemUserPicker multiple maxSelected={20} label={t("settings.workload.replacementAssignees")} selected={people} onChange={setPeople} />
+        <Button size="sm" disabled={busy} onClick={() => { onSave(task, people.map(p => p.id)); setEditing(undefined); }}>{t("settings.workload.saveAssignment")}</Button>
+        <Button size="sm" variant="ghost" onClick={() => setEditing(undefined)}>{t("settings.workload.cancel")}</Button>
       </div>}
     </li>)}</ul>}
   </section>;

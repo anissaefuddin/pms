@@ -37,6 +37,10 @@ Master Record dan custom item type **berbeda** (DEC-PAR-04): item adalah pekerja
 
 Field `relation` menjadi tipe ke-11 di `custom_field_types` (setelah 10 tipe yang ada). Validasi nilai memeriksa keberadaan target dan hak View pemanggil; ekspor Excel menulis nama target; laporan memperlakukannya sebagai dimensi kategori dengan nama target.
 
+## Kesesuaian dengan baseline yang berjalan
+
+D-55 menetapkan implementasi registry sebagai backlog M13. DEC-PAR-03 di sini meminta konfirmasi gate vertikal dan batas klaim parity untuk registry. DEC-PAR-04 meminta review arsitektur atas pemisahan Work Item dan Master Record. Implementasi M8 saat ini memakai tabel khusus item-ke-item menurut D-62. Migrasi ke relasi registry generik merupakan bagian dari desain ini untuk implementasi mendatang.
+
 ## Keputusan yang diminta
 
 - **DEC-PAR-03:** registry diperlakukan sebagai **ekstensi vertikal** (gate sendiri), bukan klaim parity Wrike. Rekomendasi: setuju.

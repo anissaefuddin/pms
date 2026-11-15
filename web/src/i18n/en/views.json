@@ -51,7 +51,8 @@
     "size": "Size",
     "uploader": "Uploaded by",
     "added": "Added",
-    "kb": "{{count}} KB"
+    "kb": "{{count}} KB",
+    "emptyHint": "Attach files to an item in this project to see them here."
   },
   "chart": {
     "title": "Items by status",
@@ -144,6 +145,10 @@
     "predecessor": "Predecessor",
     "type": "Type",
     "addDep": "Add predecessor",
+    "toolbar": "Gantt toolbar",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "today": "Today",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
     "keysLabel": "Keyboard help"
@@ -199,6 +204,26 @@
     "revokeNamed": "Revoke {{name}}"
   },
   "toolbar": "View toolbar",
+  "emptyHint": "Try another search or clear the filters.",
+  "noItems": {
+    "title": "No items in this view yet",
+    "description": "Add the first item to start this view."
+  },
+  "project": {
+    "breadcrumb": "Breadcrumb",
+    "progress": "Project progress",
+    "workItems": "Work items",
+    "done_one": "{{count}} done",
+    "done_other": "{{count}} done",
+    "inProgress": "In progress",
+    "milestones": "Upcoming milestones",
+    "noMilestones": "No upcoming milestones",
+    "info": "Info",
+    "share": "Share",
+    "addTask": "Add task",
+    "more": "More actions",
+    "percent": "{{value}}%"
+  },
   "searchPlaceholder": "Search",
   "chip": {
     "filter": "Filter",

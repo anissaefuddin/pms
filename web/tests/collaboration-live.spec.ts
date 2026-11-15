@@ -59,11 +59,59 @@ test("mentions update a second user's Inbox and attachments still upload", async
     await expect(page.getByRole("link", { name: "Inbox, 1 unread" })).toHaveCount(0);
 
     await expect(page.getByText("Maximum file size: 1 MB")).toBeVisible();
-    await page.locator('input[type="file"]:not([aria-label])').setInputFiles({
+    const chooserPromise = page.waitForEvent("filechooser");
+    await page.getByRole("button", { name: "Choose file" }).click();
+    const chooser = await chooserPromise;
+    await chooser.setFiles({
       name: "notes.txt", mimeType: "text/plain", buffer: Buffer.from("Notes for tomorrow"),
     });
     await expect(page.getByRole("link", { name: "notes.txt" })).toBeVisible();
   } finally {
+    await context.close();
+  }
+});
+
+test("SSE reconnect resync refreshes a task in a second browser session", async ({ page, browser }) => {
+  const context = await browser.newContext({ baseURL: test.info().project.use.baseURL });
+  let resume!: () => void;
+  const reconnect = new Promise<void>((resolve) => { resume = resolve; });
+  try {
+    let reconnectRequested = false;
+    let streamRequests = 0;
+    await context.route("**/api/v1/events", async (route) => {
+      if (++streamRequests === 1) {
+        // A truncated connection models a disconnect before Chrome receives a complete event.
+        await route.abort("connectionreset");
+        return;
+      }
+      reconnectRequested = true;
+      await reconnect;
+      await route.continue({
+        headers: { ...await route.request().allHeaders(), "last-event-id": "previous-process:0" },
+      });
+    });
+    const watcher = await context.newPage();
+    await Promise.all([connect(page, firstCookie!), connect(watcher, secondCookie!)]);
+    const watcherTitle = watcher.getByRole("textbox", { name: "Name", exact: true });
+    await expect(watcherTitle).toBeVisible();
+    const before = await watcherTitle.inputValue();
+    await expect.poll(() => reconnectRequested).toBe(true);
+    await expect(watcher.getByText("Connecting…", { exact: true })).toBeVisible();
+    const title = page.getByRole("textbox", { name: "Name", exact: true });
+    await title.fill("During disconnect");
+    await title.press("Enter");
+    await expect(page.getByRole("heading", { name: "During disconnect", exact: true })).toBeVisible();
+    await expect(watcher.getByRole("heading", { name: before, exact: true })).toBeVisible();
+
+    resume();
+    await expect(watcher.getByRole("heading", { name: "During disconnect", exact: true })).toBeVisible({ timeout: 3000 });
+    await expect(watcher.getByText("Live", { exact: true })).toBeVisible();
+
+    await title.fill("After reconnect");
+    await title.press("Enter");
+    await expect(watcher.getByRole("heading", { name: "After reconnect", exact: true })).toBeVisible({ timeout: 3000 });
+  } finally {
+    resume();
     await context.close();
   }
 });

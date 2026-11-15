@@ -1148,14 +1148,26 @@ func (e FormResponseSettingsItemType) Valid() bool {
 
 // Defines values for ItemDefaultViewType.
 const (
-	ItemDefaultViewTypeBoard ItemDefaultViewType = "board"
-	ItemDefaultViewTypeTable ItemDefaultViewType = "table"
+	ItemDefaultViewTypeBoard    ItemDefaultViewType = "board"
+	ItemDefaultViewTypeCalendar ItemDefaultViewType = "calendar"
+	ItemDefaultViewTypeChart    ItemDefaultViewType = "chart"
+	ItemDefaultViewTypeFiles    ItemDefaultViewType = "files"
+	ItemDefaultViewTypeGantt    ItemDefaultViewType = "gantt"
+	ItemDefaultViewTypeTable    ItemDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the ItemDefaultViewType enum.
 func (e ItemDefaultViewType) Valid() bool {
 	switch e {
 	case ItemDefaultViewTypeBoard:
+		return true
+	case ItemDefaultViewTypeCalendar:
+		return true
+	case ItemDefaultViewTypeChart:
+		return true
+	case ItemDefaultViewTypeFiles:
+		return true
+	case ItemDefaultViewTypeGantt:
 		return true
 	case ItemDefaultViewTypeTable:
 		return true
@@ -1205,14 +1217,26 @@ func (e ItemRestoreBlockedReason) Valid() bool {
 
 // Defines values for ItemCreateDefaultViewType.
 const (
-	ItemCreateDefaultViewTypeBoard ItemCreateDefaultViewType = "board"
-	ItemCreateDefaultViewTypeTable ItemCreateDefaultViewType = "table"
+	ItemCreateDefaultViewTypeBoard    ItemCreateDefaultViewType = "board"
+	ItemCreateDefaultViewTypeCalendar ItemCreateDefaultViewType = "calendar"
+	ItemCreateDefaultViewTypeChart    ItemCreateDefaultViewType = "chart"
+	ItemCreateDefaultViewTypeFiles    ItemCreateDefaultViewType = "files"
+	ItemCreateDefaultViewTypeGantt    ItemCreateDefaultViewType = "gantt"
+	ItemCreateDefaultViewTypeTable    ItemCreateDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the ItemCreateDefaultViewType enum.
 func (e ItemCreateDefaultViewType) Valid() bool {
 	switch e {
 	case ItemCreateDefaultViewTypeBoard:
+		return true
+	case ItemCreateDefaultViewTypeCalendar:
+		return true
+	case ItemCreateDefaultViewTypeChart:
+		return true
+	case ItemCreateDefaultViewTypeFiles:
+		return true
+	case ItemCreateDefaultViewTypeGantt:
 		return true
 	case ItemCreateDefaultViewTypeTable:
 		return true
@@ -1223,14 +1247,26 @@ func (e ItemCreateDefaultViewType) Valid() bool {
 
 // Defines values for ItemPatchResultDefaultViewType.
 const (
-	ItemPatchResultDefaultViewTypeBoard ItemPatchResultDefaultViewType = "board"
-	ItemPatchResultDefaultViewTypeTable ItemPatchResultDefaultViewType = "table"
+	ItemPatchResultDefaultViewTypeBoard    ItemPatchResultDefaultViewType = "board"
+	ItemPatchResultDefaultViewTypeCalendar ItemPatchResultDefaultViewType = "calendar"
+	ItemPatchResultDefaultViewTypeChart    ItemPatchResultDefaultViewType = "chart"
+	ItemPatchResultDefaultViewTypeFiles    ItemPatchResultDefaultViewType = "files"
+	ItemPatchResultDefaultViewTypeGantt    ItemPatchResultDefaultViewType = "gantt"
+	ItemPatchResultDefaultViewTypeTable    ItemPatchResultDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the ItemPatchResultDefaultViewType enum.
 func (e ItemPatchResultDefaultViewType) Valid() bool {
 	switch e {
 	case ItemPatchResultDefaultViewTypeBoard:
+		return true
+	case ItemPatchResultDefaultViewTypeCalendar:
+		return true
+	case ItemPatchResultDefaultViewTypeChart:
+		return true
+	case ItemPatchResultDefaultViewTypeFiles:
+		return true
+	case ItemPatchResultDefaultViewTypeGantt:
 		return true
 	case ItemPatchResultDefaultViewTypeTable:
 		return true
@@ -1967,14 +2003,26 @@ func (e ScimTokenInputDefaultUserType) Valid() bool {
 
 // Defines values for SearchResultsItemsDefaultViewType.
 const (
-	SearchResultsItemsDefaultViewTypeBoard SearchResultsItemsDefaultViewType = "board"
-	SearchResultsItemsDefaultViewTypeTable SearchResultsItemsDefaultViewType = "table"
+	SearchResultsItemsDefaultViewTypeBoard    SearchResultsItemsDefaultViewType = "board"
+	SearchResultsItemsDefaultViewTypeCalendar SearchResultsItemsDefaultViewType = "calendar"
+	SearchResultsItemsDefaultViewTypeChart    SearchResultsItemsDefaultViewType = "chart"
+	SearchResultsItemsDefaultViewTypeFiles    SearchResultsItemsDefaultViewType = "files"
+	SearchResultsItemsDefaultViewTypeGantt    SearchResultsItemsDefaultViewType = "gantt"
+	SearchResultsItemsDefaultViewTypeTable    SearchResultsItemsDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the SearchResultsItemsDefaultViewType enum.
 func (e SearchResultsItemsDefaultViewType) Valid() bool {
 	switch e {
 	case SearchResultsItemsDefaultViewTypeBoard:
+		return true
+	case SearchResultsItemsDefaultViewTypeCalendar:
+		return true
+	case SearchResultsItemsDefaultViewTypeChart:
+		return true
+	case SearchResultsItemsDefaultViewTypeFiles:
+		return true
+	case SearchResultsItemsDefaultViewTypeGantt:
 		return true
 	case SearchResultsItemsDefaultViewTypeTable:
 		return true
@@ -4351,8 +4399,12 @@ type Me struct {
 	PersonalSpaceId   openapi_types.UUID `json:"personal_space_id"`
 	Phone             *string            `json:"phone,omitempty"`
 
-	// SidebarHidden Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
+	// SidebarHidden Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil. Dipertahankan satu rilis setelah sidebar_pinned
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	SidebarHidden *[]SidebarKey `json:"sidebar_hidden,omitempty"`
+
+	// SidebarPinned Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk
+	SidebarPinned *[]SidebarKey `json:"sidebar_pinned,omitempty"`
 	Status        UserStatus    `json:"status"`
 	Theme         *MeTheme      `json:"theme,omitempty"`
 	TimeFormat    MeTimeFormat  `json:"time_format"`
@@ -4402,11 +4454,15 @@ type MeUpdate struct {
 	Locale                   *MeUpdateLocale          `json:"locale,omitempty"`
 	Location                 *string                  `json:"location,omitempty"`
 	Phone                    *string                  `json:"phone,omitempty"`
-	SidebarHidden            *[]SidebarKey            `json:"sidebar_hidden,omitempty"`
-	Theme                    *MeUpdateTheme           `json:"theme,omitempty"`
-	TimeFormat               *MeUpdateTimeFormat      `json:"time_format,omitempty"`
-	Timezone                 *string                  `json:"timezone,omitempty"`
-	WeekStart                *MeUpdateWeekStart       `json:"week_start,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	SidebarHidden *[]SidebarKey `json:"sidebar_hidden,omitempty"`
+
+	// SidebarPinned Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422)
+	SidebarPinned *[]SidebarKey       `json:"sidebar_pinned,omitempty"`
+	Theme         *MeUpdateTheme      `json:"theme,omitempty"`
+	TimeFormat    *MeUpdateTimeFormat `json:"time_format,omitempty"`
+	Timezone      *string             `json:"timezone,omitempty"`
+	WeekStart     *MeUpdateWeekStart  `json:"week_start,omitempty"`
 }
 
 // MeUpdateAccent defines model for MeUpdate.Accent.

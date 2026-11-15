@@ -1285,6 +1285,7 @@ type User struct {
 	Accent                   string             `json:"accent"`
 	ScimExternalID           pgtype.Text        `json:"scim_external_id"`
 	ScimProvisioned          bool               `json:"scim_provisioned"`
+	SidebarPinned            []string           `json:"sidebar_pinned"`
 }
 
 type UserIdentity struct {

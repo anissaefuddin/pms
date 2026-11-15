@@ -23,21 +23,11 @@ test("flow 1: a holiday in the work schedule, then moving a predecessor pushes i
   await predBar.scrollIntoViewIfNeeded();
   await expect(predBar).toBeVisible();
   await expect(page.locator(".wx-line").first()).toBeAttached(); // the link comes from the server
-  await page.getByRole("application", { name: "Gantt chart" }).focus();
-  const rows = ["Pred task", "Succ task"];
-  // Select "Pred task". The two rows may come back in either order (equal ranks), and the chart announces the selected row a moment after
-  // each key press. So: press once, wait for the announcement to change, and only then decide whether to press again. Pressing again
-  // before the announcement arrives would skip a row; a press that changes nothing (the chart is not ready for keys yet) is repeated.
-  const announcement = async () => (await page.getByRole("status").filter({ hasText: new RegExp(rows.join("|")) }).allTextContents()).join(" ");
-  let seen = await announcement();
-  for (let attempt = 0; attempt < 6 && !seen.includes(rows[0]); attempt++) {
-    const before = seen;
-    await page.keyboard.press("ArrowDown");
-    await expect.poll(announcement, { timeout: 4000 }).not.toBe(before).catch(() => undefined);
-    seen = await announcement();
-  }
-  await expect(page.getByRole("status").filter({ hasText: "Pred task" })).toBeVisible();
-  await page.keyboard.press("ArrowRight"); // 1 Mar -> 2 Mar
+  const chart = page.getByRole("application", { name: "Gantt chart" });
+  const selection = page.getByRole("status").filter({ hasText: "Pred task" });
+  await predBar.click(); // Select the fixture predecessor independent of row order.
+  await expect(selection).toBeVisible();
+  await chart.press("ArrowRight"); // 1 Mar -> 2 Mar
   await expect.poll(async () => (await item(page, e.PMS_FIXTURE_M2_PRED!)).start_date).toBe("2027-03-02");
   // Finish-to-start: the next working day after 2 Mar is 4 Mar because 3 Mar is a holiday.
   await expect.poll(async () => (await item(page, e.PMS_FIXTURE_M2_SUCC!)).start_date).toBe("2027-03-04");

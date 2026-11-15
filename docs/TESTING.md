@@ -581,12 +581,13 @@ Log historis lima alur Chrome pada 13 November 2026 mencatat 28 entri HTTP 500. 
 | Request paralel tanpa pembatalan | 24 request paralel, delapan per rute, semuanya mendapat HTTP 200 sebelum patch. Paralelisme sendiri tidak mereproduksi gejala. |
 | Perbaikan | Jalur error pembacaan profil, transaksi view, serta daftar time entry pribadi dan proyek berhenti sebelum menulis problem response jika context request sudah `Canceled`. Deadline dan error DB ketika context masih aktif tetap mengikuti pemetaan existing. |
 | Cakupan | Reproduksi membuktikan mekanisme kegagalan setelah autentikasi. Atribusi setiap 500 historis tetap tidak diketahui tanpa detail error dari permintaan aslinya. |
+| Retest 14 Nov 2026 | PASS pada PostgreSQL 16, 3 run masing-masing untuk `TestAbandonedRequestIsNotAServerError` dan `TestReadRequestsCanceledAfterSessionLookup`. Nol respons 5xx pada log request skenario, termasuk 24 request aktif per run. `go test -timeout=25m -count=1 ./server/...` dengan database integrasi juga PASS sebelum perubahan SSE. |
 
 ## M7 / S7.1.2, S7.1.3, S7.1.4, S7.3.x (13 Nov 2026)
 
 - PASS (S7.1.3, inventaris). `contractOps` membaca seluruh operasi `api/openapi.yaml` dan memisahkan publik (`security: []`) dari terlindungi. `TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds`: semua operasi terlindungi menjawab 401 tanpa sesi; dengan pengguna biasa dan id tak ada tidak ada 5xx dan tidak ada operasi atas id yang berhasil.
 - PASS (S7.1.3, 403 dan IDOR). `TestStrangersAndReadersCannotTouchAnotherSpacesResourcesThroughAnyEndpoint`: fixture satu Space privat dengan Space, task, project, form, view, custom field, dashboard, widget, report, komentar, lampiran, notifikasi, approval, time entry, dependensi, blueprint, grup, user, workflow dan status; **97 operasi** dicoba oleh pengguna tanpa share (baca 404, tulis tidak berhasil) dan pengguna dengan peran baca (semua tulis ditolak). Pengguna eksternal tidak dapat menelusuri direktori (404). Tiga operasi tanpa id nyata dicatat di log tes sebagai sisa. `TestHostilePublicTokensAreNotFound`: token terlalu pendek, 5.000 karakter, injeksi SQL dan traversal menjawab 404. Token publik kedaluwarsa tidak berlaku (tidak ada kedaluwarsa menurut desain); rotasi dan pencabutan diuji di `forms_public_integration_test.go`.
-- PASS (S7.1.2). `TestSSETwoUsersLatencyOrderReconnectAndResync` (tiga kali berturut-turut): dua pengguna sungguhan lewat HTTP, penonton hanya-baca dan penyunting. Latensi perubahan status 124 ms dan komentar 4 ms (target 3 detik). Burst 20 perubahan: id event naik ketat, tanpa duplikat. Koneksi diputus lalu tiga perubahan terjadi: replay dari `Last-Event-ID` memberi tepat tiga event berurutan tanpa tambahan. Id dari epoch lain atau tidak valid menghasilkan `resync`. `TestAfterAsksForResyncBeyondHistory`: riwayat 1.000 event terlampaui atau id masa depan meminta resync. Klien (`useRealtime`) memanggil `invalidateQueries` pada `resync` dan pada restart server; itu hanya diperiksa lewat kode, belum lewat Playwright dengan koneksi yang diputus.
+- PASS (S7.1.2). `TestSSETwoUsersLatencyOrderReconnectAndResync` (tiga kali berturut-turut): dua pengguna sungguhan lewat HTTP, penonton hanya-baca dan penyunting. Latensi perubahan status 124 ms dan komentar 4 ms (target 3 detik). Burst 20 perubahan: id event naik ketat, tanpa duplikat. Koneksi diputus lalu tiga perubahan terjadi: replay dari `Last-Event-ID` memberi tepat tiga event berurutan tanpa tambahan. Id dari epoch lain atau tidak valid menghasilkan `resync`. `TestAfterAsksForResyncBeyondHistory`: riwayat 1.000 event terlampaui atau id masa depan meminta resync. Klien (`useRealtime`) memanggil `invalidateQueries` pada `resync` dan pada restart server; cakupan browser terbaru ada di bagian retest di bawah.
 - PASS (S7.1.4). `web/tests/ui-audit.spec.ts`: 19 layar utama × 1440, 1280, 768 dan 390 px (76 kombinasi) tanpa scroll horizontal dan tanpa pelanggaran axe, serta setiap entri menu More membuka halaman nyata. Menemukan Dashboards 442 px pada 390 px; diperbaiki. Skor audit ulang 85/100 (lihat UI_AUDIT_REPORT). Tautan `workload` tidak pernah dirender; tidak ada entri sidebar yang mengarah ke 404.
 - PASS (S7.3.1, spike, basis data sementara 10.000 item). Migrasi `item_types` + `items.type_id` + backfill tiga tipe: UPDATE 234 ms. Kueri daftar Space (500 baris), p95 dari 200 eksekusi: enum 1,99 ms, join `item_types` 2,30 ms; filter task 0,67 ms lawan 0,95 ms; group by tipe 1,11 ms lawan 1,79 ms. Table dan Board end-to-end di browser tidak diukur ulang. Pemetaan dampak per modul ada di ADR-CIT.
 - PASS (S7.3.3, spike). `TestSpikeTransactionalOutboxWithRiver` (PostgreSQL): event dan job River hilang bersama saat rollback; commit memberi satu event dan satu job; penerbitan ulang `event_id` yang sama tidak menambah job. Tabel dibuat di dalam tes; tidak ada migrasi produk.
@@ -732,6 +733,98 @@ S11.1.1 (VIEW-10): **PASS**. `GET /items/{projectId}/files` mendaftar lampiran h
 - Jalan penuh: `go vet`, `go test ./...` (PMS_TEST_DATABASE_URL, httpserver 753 dtk), `tsc --noEmit`, `eslint` pada berkas yang diubah, Playwright mock (`PMS_TEST_BROWSER_PORT=4276`) 353 lulus, 29 dilewati bawaan.
 - **Batas yang jujur:** MinIO/S3 dan Pydio Cells hanya diuji terhadap **server HTTP palsu** (tanda tangan SigV4 hanya dicek ada dan berawalan benar, bukan diverifikasi ulang oleh server; Cells tidak ada di lingkungan ini). Belum dicoba pada MinIO atau Cells nyata; jalur Pydio (gateway S3 + Bearer PAT) adalah asumsi dari dokumentasi. Sweeper berkas yatim tidak berjalan untuk backend jarak jauh; backup bucket di luar dump. Lihat D-83. `eslint src` penuh punya 79 error i18n lama di berkas lain (bukan dari perubahan ini). Migrasi 00092 (dinomori ulang saat merge; semula 00080).
 
+
+## Retest stabilitas 14 November 2026
+
+Baseline `main` di `247ca12`, PostgreSQL 16 lokal dengan database fixture terpisah per tes, Chrome melalui Vite. Bukti ini berlaku untuk lingkungan lokal.
+
+| Gate | Hasil | Bukti |
+|---|---|---|
+| S7.1.1 | PASS | Nol 5xx dari tiga pengulangan reproduksi pembatalan request di fase sesi dan handler. Lihat RCA di atas. |
+| S7.1.2 | PASS | `TestSSETwoUsersLatencyOrderReconnectAndResync` dan `TestEventReplayRespectsCurrentAccess`: urutan, replay, isolasi berdasarkan izin, dan resync saat cursor kedaluwarsa. Pada Chrome, koneksi watcher diputus sebelum event lengkap. Saat watcher masih menampilkan judul lama, editor menyimpan perubahan. Koneksi ulang memakai cursor lama yang disisipkan tes; backend mengirim `resync` dan browser memuat perubahan dalam 3 detik setelah koneksi kembali tersedia. Perubahan berikutnya juga diterima dalam 3 detik. Jalur replay dengan cursor asli diuji di integrasi HTTP. |
+| S6.3.4 Table, Board, Search | PASS lokal | Fixture 10.000 Item, 500 dalam satu proyek. Table p95 392,0 ms, Board 492,3 ms (anggaran 1.500 ms), search 26,6 ms (anggaran 800 ms). Status dan komentar lewat SSE lulus batas 3 detik di HTTP dua pengguna; notifikasi mention juga lulus di Chrome. Pengujian di pilot berskala klien masih terbuka. |
+| S6.3.4 Gantt | PASS terisolasi, pilot NOT RUN | Chrome, mock API, 10 sampel hangat per ukuran. p95 984 ms (500 bar) dan 1.081 ms (1.000 bar). Saat berjalan bersamaan dengan suite lain, 1.000 bar mencapai 1.928 ms dan gagal terhadap anggaran 1.500 ms. Kecepatan saat pemuatan dingin dan interaksi pada build pilot belum diverifikasi. |
+| S6.3.5 lima suite Playwright | PASS lokal, CI NOT RUN | Collaboration 4 tes, M2 3 tes, M3 4 tes, M4 dan M5 lulus. Tes lampiran diperbaiki untuk membuka file picker melalui tombol yang digunakan pengguna. Tes Gantt sekarang mengirim tombol ke chart secara langsung karena fokus dapat berpindah saat chart memproses selection. |
+| S6.3.5 UAT P0/P1 | NOT RUN | 93 requirement di [UAT.md](UAT.md) menunggu bukti penerimaan pada instance pilot. |
+| S6.3.6 stabilisasi | PARTIAL | Regresi 5xx dan SSE serta dua kegagalan harness browser ditangani. Typecheck dan unit web 25/25 lulus. Triase UAT dan pembekuan skema/kontrak serta tag kandidat masih menunggu gate. |
+
+
+## Retest teknis gate M8–M10 (14 November 2026)
+
+PostgreSQL 16 terisolasi, Chrome lokal, baseline `247ca12` dengan perubahan working tree. Status penerimaan pengguna tetap NOT RUN.
+
+| Gate | Hasil | Bukti |
+|---|---|---|
+| G0 | BLOCKED | STAB-02/05 lulus lokal. Pilot UAT, required check, CI kandidat, dan persetujuan keputusan serta katalog masih terbuka. |
+| G1a | PARTIAL | CRUD tipe, default UI/API, routing form dan field, serta E2E-PAR-01/02/03 lulus. Tipe kustom tampil di Table dan Board saat opsi Type aktif. |
+| G1b | PASS teknis | E2E-PAR-04/06, outbox dan redelivery, versi aturan, loop guard, izin, kuota, dry-run, metrik, histori approval, reassign dan deadline lulus. Grafana dan SMTP pilot NOT RUN. |
+| G2a | PASS teknis sesuai cakupan | E2E-PAR-07/08, snapshot publik, kapasitas dan realokasi, utilization, baseline, portfolio, dependensi lintas Space, dan masking biaya lulus. Workload p95 139,4 ms pada 50 orang, 2.000 task, 4.000 placement (20 sampel). Tes PAR-07 sempat gagal karena locator menemukan baris di dua tabel; memberi nama aksesibel dan membatasi locator ke Daily workload memperbaiki regresi. |
+| CI | NOT RUN | Workflow sekarang memasukkan `TestBrowserM8Flows` dan `TestBrowserM10Flows` bersama M9 dan Workload. |
+
+
+## S11.4.1 · Retest teknis Gate G2b
+
+- PASS 32/32 tes Chrome dengan mock API untuk Files/Chart, versi, proofing, perbandingan, approval, dashboard dan laporan. `TestBrowserM11AnalyticsFlows` juga PASS dengan PostgreSQL dan API nyata.
+- Integrasi PostgreSQL lulus untuk file, versi, proofing PNG, approval versi, custom widget, layout, dan jadwal laporan. Adapter S3 dan Pydio lulus terhadap server uji. Tes masking dashboard gagal pada asumsi urutan widget, lalu PASS pada tiga pengulangan setelah assertion diperbaiki. Integrasi analitik dengan fixture mentah dan policy juga PASS pada tiga pengulangan.
+- Gate BLOCKED, UAT pilot dan CI kandidat NOT RUN. Matriks lengkap dan skenario penerimaan tersedia di [G2b](parity/gate-reports/G2B_FILES_ANALYTICS_INTEGRATIONS.md).
+
+
+## S11.3.1 dan S11.3.7 · API key, bookmark dan feedback
+
+- PASS PostgreSQL. `TestIntegrationAPIKeyLifecycle` mencakup penyimpanan hash, scope baca dan tulis, rotasi, pencabutan, kepemilikan key, izin item dan operasi bearer tanpa Origin. Dua sapuan policy endpoint juga lulus.
+- PASS PostgreSQL. `TestSpaceBookmarksAndProductFeedback` mencakup akses Space, izin tulis, validasi URL dan rating, serta penyimpanan feedback.
+- PASS Chrome + API + PostgreSQL. `TestBrowserIntegrationSettings` menjalankan pembuatan, rotasi dan pencabutan key, pembuatan dan penghapusan bookmark, serta pengiriman feedback. Suite tercantum di workflow CI. CI kandidat NOT RUN.
+- S11.3.2–S11.3.6 masih terbuka. E2E-PAR-11 dan sinkronisasi dengan akun provider pilot NOT RUN.
+
+
+## S11.3.2 · Webhook dan E2E-PAR-11
+
+- PASS PostgreSQL. `TestWebhookSettings` memakai session untuk membuat langganan lalu bearer key untuk membuat item. Satu event muncul di log pengiriman; secret terenkripsi, hanya muncul saat dibuat, dan akses dibatasi ke pengelola sharing Space.
+- PASS PostgreSQL + receiver fixture. `TestWebhookDeliveryFromOutbox` memeriksa rollback dan deduplikasi antrean, HMAC dan header timestamp, payload minimum, retry dari 503 ke 204, pembatalan akses pemilik, habisnya percobaan, dan penonaktifan langganan. `TestWebhookDestinationPolicy` memeriksa pembatasan tujuan jaringan. Regresi outbox otomasi dan dua sapuan otorisasi juga PASS.
+- PASS Chrome + API + PostgreSQL. `TestBrowserIntegrationSettings` membuat dan menghapus langganan dari menu Space serta memeriksa pengungkapan secret sekali. Suite tersedia di CI. CI kandidat dan UAT penerima HTTPS nyata masih NOT RUN.
+
+
+## S11.3.3–S11.3.6 · OAuth dan konektor pilot
+
+- PASS PostgreSQL. `TestOAuthPKCEAndRevocation` memverifikasi redirect persis, PKCE S256, code sekali pakai, scope bearer, kepemilikan grant dan pencabutan. `TestConnectorLifecycle` memverifikasi akses Space, penyimpanan credential terenkripsi, instalasi unik, konfigurasi dan penonaktifan.
+- PASS PostgreSQL dan fixture HTTP provider. `TestPilotConnectorsWithProviderFixtures` memverifikasi perubahan judul dua arah, konflik tanpa overwrite, penolakan resolusi basi, resolusi eksplisit, dan ekspor Calendar satu arah dengan tanggal akhir eksklusif. Akun pilot GitHub dan Google Calendar NOT RUN, termasuk perilaku `If-Match` GitHub.
+- PASS Chrome live untuk registrasi fixture, consent, callback dengan code dan state, dan pencabutan melalui Authorized apps. Sapuan kontrak endpoint terlindungi juga PASS. CI remote NOT RUN.
+
+- Preflight akun pilot S11.3.6: kedua tes fixture diulang dan PASS pada PostgreSQL terisolasi. Uji provider nyata masih NOT RUN. Sesi GitHub CLI tidak valid dan target issue, Calendar ID serta akses kredensial pilot belum tersedia di workspace. Tidak ada perubahan pada provider.
+
+## Verifikasi penutupan M7
+
+- PASS. Tiga pengulangan masing-masing untuk `TestAbandonedRequestIsNotAServerError`, `TestReadRequestsCanceledAfterSessionLookup` dan `TestSSETwoUsersLatencyOrderReconnectAndResync` pada PostgreSQL 16 lokal. Sembilan eksekusi lulus dan tidak ada status 5xx pada log skenario.
+- PASS. Register katalog, matriks PRD, dan rekonsiliasi alur masing-masing memiliki persis 106 ID unik dalam urutan WFP-001 sampai WFP-106. Status gap di rekonsiliasi menandai bukti layar yang belum tersedia.
+- M7 47/51 centang pada checkout main. UAT pilot, hasil CI kandidat, dan persetujuan pemilik masih terbuka. Lihat [G0](parity/gate-reports/G0_STABILIZATION.md).
+
+
+## Pelaksanaan teknis UAT G0
+
+Lima suite Chrome lulus di PostgreSQL lokal terisolasi melalui run utama dan retest terarah. Rinciannya dicatat di [UAT.md](UAT.md#pelaksanaan-uat-teknis-lokal). Run awal mencatat satu 500 dengan `context canceled` pada daftar item Space. Setelah handler mengabaikan pembatalan klien dan regresi berbasis lock `item_locations` ditambahkan, tes regresi lulus dan log retest bebas 5xx. Akun uji dan URL instance pilot kandidat belum tersedia untuk penerimaan formal.
+
+
+## Kesiapan kandidat lokal Gate G0
+
+- Build produksi Go dengan frontend terbundel berjalan di localhost:18082. PostgreSQL 16 terisolasi, bootstrap dan aktivasi admin sintetis berhasil. Health, readiness, aset frontend, login, sesi dan daftar Space semuanya menjawab HTTP 200.
+- Lint awal mencatat 85 error i18n pada Portfolio, Workload, dan Resource settings. Seluruh teks terkait dipindah ke katalog terjemahan. Lint, typecheck, build produksi, 25 tes unit, dan 9 tes Chrome Workload/Portfolio lulus.
+- Penerimaan pengguna, required check dan run GitHub Actions kandidat masih terbuka. Smoke lokal belum memvalidasi NFR pada data skala klien atau operasi host pilot.
+
+
+## NFR dan rehearsal kandidat G0 (14 November 2026)
+
+Binary produksi lokal `g0-local-247ca12` dengan frontend terbundel, Chrome 1440×900, dan PostgreSQL 16 terisolasi. Kandidat UAT di port 18082 memakai database terpisah dari benchmark di port 18083. Dataset sintetis memuat 10.000 task, termasuk 500 dalam proyek Table/Board dan 1.000 dalam proyek Gantt.
+
+| Pemeriksaan | Sampel | Hasil |
+|---|---|---|
+| Table, baris pertama | 20 setelah 2 pemanasan | p95 214,5 ms (target <1.500 ms) |
+| Board, kartu pertama | 20 setelah 2 pemanasan | p95 395,0 ms (target <1.500 ms) |
+| Gantt, bar pertama | 20 setelah 2 pemanasan | p95 865,6 ms. Pada satu pemeriksaan, perubahan seleksi keyboard terlihat dalam 46,6 ms. DOM menampilkan 17 bar karena virtualisasi. |
+| Pencarian HTTP | 24 setelah 4 pemanasan | p95 13,9 ms (target <800 ms) |
+
+Dump dan restore PostgreSQL ke database baru lulus. Jumlah item (10.002 termasuk project), lokasi (10.002), view (11), dan entri migrasi (75) cocok sebelum dan sesudah. Binary kandidat menyatakan skema hasil restore mutakhir. Arsip dan ekstraksi fixture file menghasilkan SHA-256 yang sama. Drill ini memakai satu host lokal. Runbook lengkap dengan volume aplikasi, target backup off-host dan host klien belum dijalankan.
+
+GitHub API baca-saja mengonfirmasi repo privat. Endpoint aturan main mengembalikan 403 dengan pesan upgrade paket atau ubah visibilitas. Run terakhir yang terlihat adalah [43392473372](https://github.com/anissaefuddin/pms/actions/runs/43392473372) pada `b779d29`, gagal di Browser regression and accessibility. Revisi kandidat lokal belum punya bukti CI remote.
 ## M12 / S12.1.5 laporan audit keamanan (14 Nov 2026)
 
 - PASS. `TestAuditTrailRecordsSecurityChangesForAdminsOnly` (PostgreSQL): login gagal (pelaku kosong, email yang dicoba, alasan), login berhasil (pelaku, email, IP, metode), ganti password dan logout, undangan, ganti tipe (dari dan ke), nonaktifkan dan aktifkan ulang, share Space (tambah, ubah peran dengan peran lama, hapus) dan share Item, 2FA masuk ke jejak yang sama; perubahan tanpa efek (tipe sama, daftar share sama) tidak dicatat; filter area, pelaku, dan rentang waktu; paginasi kursor mengembalikan setiap aksi sekali; `%` pada area tidak melebar (literal); tidak ada password (lama, baru, yang salah) di jejak; hanya admin (user regular 403, anonim 401, ekspor regular 403); parameter salah 422.

@@ -44,7 +44,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(page.locator("html")).toHaveCSS("color-scheme", colorScheme);
       await expect(page.getByRole("table", { name: "Table" })).toBeVisible();
       await check(page);
-      await page.getByRole("button", { name: "Board", exact: true }).click();
+      await page.getByRole("radio", { name: "Board", exact: true }).click();
       await expect(page.getByRole("region", { name: "No status" })).toBeVisible();
       await check(page);
       await page.getByRole("region", { name: "No status" }).getByRole("button", { name: item.title, exact: true }).click();

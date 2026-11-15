@@ -18,6 +18,8 @@ import { ViewTabs } from "@/components/view-tabs";
 import { useItemTypes } from "@/lib/item-types";
 import { ColumnPicker } from "@/components/view-columns";
 import { ViewToolbar } from "@/components/view-toolbar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import type { CustomField } from "@/lib/custom-fields";
 import { visibleColumns } from "@/lib/view-columns";
 
@@ -206,7 +208,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       </div>}
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
-      {items.isSuccess && (active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} />)
+      {items.isSuccess && (!spaceEmpty && !noMatches && items.data.length === 0 ? <EmptyState icon={<ProjectIllustration />} title={t("views.noItems.title")}
+          description={t("views.noItems.description")} canCreate={canCreate}
+          primaryAction={{ label: t("items.new"), onClick: () => setCreating({}) }} />
+        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} />)
         : <ItemTable {...collection} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}

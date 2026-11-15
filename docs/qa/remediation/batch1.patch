@@ -1,0 +1,478 @@
+diff --git a/Dockerfile b/Dockerfile
+index 430a1d3..a537862 100644
+--- a/Dockerfile
++++ b/Dockerfile
+@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
+     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/pms ./server/cmd/pms
+ 
+ FROM alpine:3.23 AS runtime
+-RUN apk add --no-cache ca-certificates tzdata \
++RUN apk add --no-cache ca-certificates tzdata poppler-utils \
+     && addgroup -S pms && adduser -S -G pms pms \
+     && mkdir -p /data/files && chown -R pms:pms /data
+ COPY --from=server /out/pms /usr/local/bin/pms
+diff --git a/server/internal/httpserver/approvals.go b/server/internal/httpserver/approvals.go
+index 483ed1c..608f1eb 100644
+--- a/server/internal/httpserver/approvals.go
++++ b/server/internal/httpserver/approvals.go
+@@ -19,6 +19,9 @@ import (
+ 	"github.com/jackc/pgx/v5/pgconn"
+ )
+ 
++// errApprovalFinal: a vote that is part of a final outcome (approved or rejected) cannot be changed (APR-03).
++var errApprovalFinal = errors.New("approval is final")
++
+ const approvalOutcome = `CASE
+  WHEN a.policy='any' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='approved') THEN 'approved'
+  WHEN a.policy='all' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='rejected') THEN 'rejected'
+@@ -465,6 +468,15 @@ func decideApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, item
+ 	if err := tx.QueryRow(ctx, "SELECT created_by::text FROM approvals WHERE id=$1 FOR UPDATE", id).Scan(&creator); err != nil {
+ 		return items.Detail{}, items.ErrNotFound
+ 	}
++	// An approver who already voted cannot change that vote once the outcome is final; others who have not voted still can.
++	var closed bool
++	if err := tx.QueryRow(ctx, `SELECT (`+approvalOutcome+`)<>'pending' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.user_id=$2::uuid AND x.decision IS NOT NULL)
++FROM approvals a WHERE a.id=$1`, id, actor.ID).Scan(&closed); err != nil {
++		return items.Detail{}, err
++	}
++	if closed {
++		return items.Detail{}, errApprovalFinal
++	}
+ 	tag, err := tx.Exec(ctx, "UPDATE approval_approvers SET decision=$3,comment=$4,decided_at=now() WHERE approval_id=$1 AND user_id=$2::uuid", id, actor.ID, decision, comment)
+ 	if err != nil {
+ 		return items.Detail{}, err
+diff --git a/server/internal/httpserver/approvals_integration_test.go b/server/internal/httpserver/approvals_integration_test.go
+index 32ec561..0caf715 100644
+--- a/server/internal/httpserver/approvals_integration_test.go
++++ b/server/internal/httpserver/approvals_integration_test.go
+@@ -68,10 +68,11 @@ func TestApprovals(t *testing.T) {
+ 	if two.body["status"] != "approved" || two.body["approved_count"] != float64(2) {
+ 		t.Fatalf("all approved: %v", two.body)
+ 	}
+-	flipped := decide(viewer, "rejected")
+-	if flipped.body["status"] != "rejected" || flipped.body["approved_count"] != float64(1) {
+-		t.Fatalf("one rejection rejects the approval: %v", flipped.body)
++	// QA-D-lane2-011: the approval is final, so a voter cannot flip their vote afterwards.
++	if flipped := decide(viewer, "rejected"); flipped.status != 409 || flipped.body["code"] != "approval_final" {
++		t.Fatalf("final approval must refuse a changed vote: %d %v", flipped.status, flipped.body)
+ 	}
++	flipped := two
+ 
+ 	// Editing: needs edit rights and the current version; removing an approver drops their decision.
+ 	version := flipped.header.Get("ETag")
+@@ -109,23 +110,20 @@ func TestApprovalHistoryIsAppendOnlyAndPinnedToItemVersion(t *testing.T) {
+ 	id := made.body["id"].(string)
+ 	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "approved", "comment": "fine"}), 200, "decide")
+ 
+-	// The decision is pinned to the item version at that moment, even when the item moves on afterwards.
++	// QA-D-lane2-011: a finalized approval is immutable; a second decision is refused and the history keeps one decision.
+ 	f.exec("UPDATE items SET version=version+5 WHERE id=$1", itemID)
+-	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "rejected", "comment": "changed my mind"}), 200, "re-decide")
++	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "rejected", "comment": "changed my mind"}), 409, "final approval cannot be re-decided")
+ 	hist := f.call(admin, "GET", "/items/"+itemID+"/approval-events", nil)
+ 	f.want(hist, 200, "history")
+ 	ev := hist.items()
+-	if len(ev) != 3 || ev[0]["kind"] != "decided" || ev[0]["decision"] != "rejected" || ev[2]["kind"] != "approver_requested" {
+-		t.Fatalf("history newest first: %v", ev)
+-	}
+-	if ev[1]["item_version"] == ev[0]["item_version"] || ev[0]["comment"] != "changed my mind" {
+-		t.Fatalf("decisions must keep their own item version: %v", ev)
++	if len(ev) != 2 || ev[0]["kind"] != "decided" || ev[0]["decision"] != "approved" || ev[1]["kind"] != "approver_requested" {
++		t.Fatalf("history newest first, one decision: %v", ev)
+ 	}
+ 	f.want(f.call(outsider, "GET", "/items/"+itemID+"/approval-events", nil), 404, "no access is 404")
+ 
+ 	// Deleting the approval is recorded, and the rows can never be changed or removed, not even by SQL.
+ 	f.want(f.call(admin, "DELETE", "/approvals/"+id, nil), 204, "withdraw")
+-	if n := f.queryID("SELECT count(*)::text FROM approval_events WHERE item_id=$1", itemID); n != "4" {
++	if n := f.queryID("SELECT count(*)::text FROM approval_events WHERE item_id=$1", itemID); n != "3" {
+ 		t.Fatalf("history survives the approval: %s", n)
+ 	}
+ 	for _, q := range []string{"UPDATE approval_events SET comment='x'", "DELETE FROM approval_events", "TRUNCATE approval_events"} {
+@@ -163,7 +161,8 @@ func TestApprovalPoliciesReassignAndDeadlines(t *testing.T) {
+ 	anyApproval := makeApproval("any")
+ 	decide(anyApproval, first, "rejected", "pending")
+ 	decide(anyApproval, second, "rejected", "rejected")
+-	decide(anyApproval, second, "approved", "approved")
++	// QA-D-lane2-011: the rejected outcome is final; changing a vote afterwards is refused.
++	f.want(f.call(second, "PUT", "/approvals/"+anyApproval.body["id"].(string)+"/decision", map[string]string{"decision": "approved"}), 409, "final vote is immutable")
+ 	all := makeApproval("all")
+ 	decide(all, first, "approved", "pending")
+ 	id := all.body["id"].(string)
+diff --git a/server/internal/httpserver/attachment_pdf_skipped_integration_test.go b/server/internal/httpserver/attachment_pdf_skipped_integration_test.go
+new file mode 100644
+index 0000000..3319799
+--- /dev/null
++++ b/server/internal/httpserver/attachment_pdf_skipped_integration_test.go
+@@ -0,0 +1,58 @@
++package httpserver_test
++
++import (
++	"bytes"
++	"encoding/json"
++	"mime/multipart"
++	"net/http"
++	"testing"
++
++	"github.com/anissaefuddin/pms/server/internal/previews"
++	"github.com/anissaefuddin/pms/server/internal/storage"
++	"github.com/google/uuid"
++)
++
++// QA-D-lane4-001/002: when pages cannot be rendered (no pdftoppm), the page URL answers 404, never 500, and the preview reports "skipped".
++func TestPDFPreviewWithoutRendererIsSkippedAndPageIs404(t *testing.T) {
++	t.Setenv("PATH", t.TempDir()) // no pdftoppm on PATH
++	f := newFixture(t)
++	owner := f.person("admin")
++	space := f.space("Docs")
++	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Doc',$1) RETURNING id::text", owner.id)
++	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
++	var body bytes.Buffer
++	form := multipart.NewWriter(&body)
++	part, _ := form.CreateFormFile("file", "sample.pdf")
++	part.Write([]byte("%PDF-1.4\n1 0 obj<<>>endobj\ntrailer<<>>\n%%EOF\n"))
++	form.Close()
++	req, _ := http.NewRequest("POST", f.srv.URL+"/api/v1/items/"+item+"/attachments", &body)
++	req.AddCookie(owner.cookie)
++	req.Header.Set("Origin", publicURL)
++	req.Header.Set("Content-Type", form.FormDataContentType())
++	res, err := f.srv.Client().Do(req)
++	if err != nil {
++		t.Fatal(err)
++	}
++	var out map[string]any
++	_ = json.NewDecoder(res.Body).Decode(&out)
++	res.Body.Close()
++	if res.StatusCode != 201 {
++		t.Fatalf("upload: %d %v", res.StatusCode, out)
++	}
++	id := out["id"].(string)
++	if err := previews.Generate(f.ctx, f.pool, storage.LocalStorage{Dir: f.files}, uuid.MustParse(id), 1); err != nil {
++		t.Fatal(err)
++	}
++	v := "/attachments/" + id + "/versions/1/"
++	if p := f.call(owner, "GET", v+"preview", nil); p.status != 200 || p.body["status"] != "skipped" {
++		t.Fatalf("preview: %+v", p)
++	}
++	if p := f.call(owner, "GET", v+"preview/1", nil); p.status != 404 {
++		t.Fatalf("page of a skipped preview: %d, want 404 (%v)", p.status, p.body)
++	}
++	// And before any preview row exists at all.
++	f.exec("DELETE FROM attachment_previews")
++	if p := f.call(owner, "GET", v+"preview/1", nil); p.status != 404 {
++		t.Fatalf("page without preview row: %d, want 404 (%v)", p.status, p.body)
++	}
++}
+diff --git a/server/internal/httpserver/attachment_proofing.go b/server/internal/httpserver/attachment_proofing.go
+index 5c2901a..f6e87d4 100644
+--- a/server/internal/httpserver/attachment_proofing.go
++++ b/server/internal/httpserver/attachment_proofing.go
+@@ -117,7 +117,7 @@ func (s *Server) getPreviewPage(w http.ResponseWriter, r *http.Request) {
+ 	}
+ 	var key string
+ 	if err == nil {
+-		err = s.pool.QueryRow(r.Context(), `SELECT p->>'key' FROM attachment_previews, jsonb_array_elements(pages) p
++		err = s.pool.QueryRow(r.Context(), `SELECT p->>'key' FROM attachment_previews, jsonb_array_elements(CASE WHEN jsonb_typeof(pages)='array' THEN pages ELSE '[]'::jsonb END) p
+ WHERE attachment_id=$1 AND version=$2 AND (p->>'page')::int=$3`, att, version, page).Scan(&key)
+ 		if errors.Is(err, pgx.ErrNoRows) {
+ 			err = items.ErrNotFound
+diff --git a/server/internal/httpserver/custom_field_item_share_integration_test.go b/server/internal/httpserver/custom_field_item_share_integration_test.go
+new file mode 100644
+index 0000000..11ed7d5
+--- /dev/null
++++ b/server/internal/httpserver/custom_field_item_share_integration_test.go
+@@ -0,0 +1,31 @@
++package httpserver_test
++
++import (
++	"net/http"
++	"strconv"
++	"testing"
++)
++
++// QA-D-lane2-004: someone who may edit an item through an item-level share (no Space share) can set the Space's custom field values on it.
++func TestItemLevelEditorCanSetSpaceCustomFieldValues(t *testing.T) {
++	f := newFixture(t)
++	admin, editor, reader := f.person("admin"), f.person("regular"), f.person("regular")
++	space := f.space("Work")
++	field := f.call(admin, http.MethodPost, "/spaces/"+space+"/custom-fields", map[string]any{"name": "Budget", "type": "number"})
++	f.want(field, 201, "field")
++	fid := field.body["id"].(string)
++	item := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": "P", "locations": []map[string]any{{"space_id": space}}})
++	f.want(item, 201, "item")
++	id := item.body["id"].(string)
++	cur := f.call(admin, "GET", "/items/"+id+"/shares", nil)
++	f.want(f.call(admin, "PUT", "/items/"+id+"/shares", map[string]any{"shares": []map[string]any{
++		{"principal_type": "user", "principal_id": editor.id, "role": "editor"},
++		{"principal_type": "user", "principal_id": reader.id, "role": "read"},
++	}}, "If-Match", cur.header.Get("ETag")), 200, "item shares")
++	version := strconv.Itoa(int(f.call(editor, "GET", "/items/"+id, nil).body["version"].(float64)))
++	got := f.call(editor, "PATCH", "/items/"+id, map[string]any{"fields": map[string]any{fid: 1500}}, "If-Match", `"`+version+`"`)
++	f.want(got, 200, "item-level editor sets a Space custom field")
++	if v := f.call(reader, "PATCH", "/items/"+id, map[string]any{"fields": map[string]any{fid: 2}}, "If-Match", `"`+version+`"`); v.status != 403 && v.status != 404 {
++		t.Fatalf("a read-only item share must not edit custom fields: %d", v.status)
++	}
++}
+diff --git a/server/internal/httpserver/item_create_concurrency_integration_test.go b/server/internal/httpserver/item_create_concurrency_integration_test.go
+new file mode 100644
+index 0000000..44b2c62
+--- /dev/null
++++ b/server/internal/httpserver/item_create_concurrency_integration_test.go
+@@ -0,0 +1,33 @@
++package httpserver_test
++
++import (
++	"net/http"
++	"sync"
++	"testing"
++)
++
++// QA-D-lane3-002: independent creates under one parent must all succeed, not fail with a serialization 409.
++func TestConcurrentCreatesUnderOneParentAllSucceed(t *testing.T) {
++	f := newFixture(t)
++	admin := f.person("admin")
++	space := f.space("Work")
++	parent := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "folder", "title": "Parent", "locations": []map[string]any{{"space_id": space}}})
++	f.want(parent, 201, "parent")
++	pid := parent.body["id"].(string)
++	const n = 12
++	got := make([]int, n)
++	var wg sync.WaitGroup
++	for i := range n {
++		wg.Add(1)
++		go func() {
++			defer wg.Done()
++			got[i] = f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": "T", "locations": []map[string]any{{"space_id": space, "parent_item_id": pid}}}).status
++		}()
++	}
++	wg.Wait()
++	for i, s := range got {
++		if s != 201 {
++			t.Fatalf("create %d: status %d, all of %v must be 201", i, s, got)
++		}
++	}
++}
+diff --git a/server/internal/httpserver/items.go b/server/internal/httpserver/items.go
+index 7eda6dc..8665407 100644
+--- a/server/internal/httpserver/items.go
++++ b/server/internal/httpserver/items.go
+@@ -198,6 +198,8 @@ func writeItemError(w http.ResponseWriter, err error) {
+ 		writeError(w, http.StatusForbidden, "item operation forbidden")
+ 	case errors.Is(err, items.ErrConflict):
+ 		writeError(w, http.StatusConflict, "the Item changed; reload and try again")
++	case errors.Is(err, errApprovalFinal):
++		writeProblem(w, http.StatusConflict, "approval_final", "this approval is already decided and cannot be changed")
+ 	case errors.As(err, &guard):
+ 		problems := make([]map[string]string, len(guard.Problems))
+ 		for i, p := range guard.Problems {
+diff --git a/server/internal/httpserver/status_guards_integration_test.go b/server/internal/httpserver/status_guards_integration_test.go
+index 7cf814e..b2d3c62 100644
+--- a/server/internal/httpserver/status_guards_integration_test.go
++++ b/server/internal/httpserver/status_guards_integration_test.go
+@@ -60,6 +60,12 @@ func TestStatusGuardsRequireFieldsAndActorAndWriteNothingOnRefusal(t *testing.T)
+ 	if len(guard["required_fields"].([]any)) != 3 || guard["actor_rule"] != "assignee" {
+ 		t.Fatalf("guard not stored or not deduplicated: %+v", guard)
+ 	}
++	// QA-D-lane2-005: an empty list clears the requirement instead of failing with 500.
++	f.want(f.call(admin, "PATCH", "/statuses/"+done, map[string]any{"required_fields": []string{}}), 200, "clear required fields")
++	if n := f.queryID("SELECT cardinality(required_fields)::text FROM statuses WHERE id=$1", done); n != "0" {
++		t.Fatalf("required_fields not cleared: %s", n)
++	}
++	f.want(f.call(admin, "PATCH", "/statuses/"+done, map[string]any{"required_fields": []string{"due_date", "assignees", fid}}), 200, "restore guard")
+ 	// Refused: every unmet requirement is named, and nothing about the item changed.
+ 	refused := patch(editor, map[string]any{"status_id": done})
+ 	if refused.status != 422 || refused.body["code"] != "transition_blocked" || len(refused.body["errors"].([]any)) != 4 {
+diff --git a/server/internal/httpserver/workflows.go b/server/internal/httpserver/workflows.go
+index b970b93..a2e42f4 100644
+--- a/server/internal/httpserver/workflows.go
++++ b/server/internal/httpserver/workflows.go
+@@ -377,6 +377,9 @@ func (s *Server) updateStatus(w http.ResponseWriter, r *http.Request) {
+ 		}
+ 		if in.RequiredFields != nil {
+ 			unique := slices.Compact(slices.Sorted(slices.Values(*in.RequiredFields)))
++			if unique == nil {
++				unique = []string{} // NOT NULL column: an empty list clears the requirement
++			}
+ 			if len(unique) > 20 || slices.ContainsFunc(unique, func(k string) bool { return !items.ValidGuardField(k) }) {
+ 				return workflow, wfProblem{422, "validation_failed", "required_fields may list due_date, start_date, assignees, description, effort_minutes or custom field ids (at most 20)"}
+ 			}
+diff --git a/server/internal/items/create.go b/server/internal/items/create.go
+index b1a8c78..465ba5a 100644
+--- a/server/internal/items/create.go
++++ b/server/internal/items/create.go
+@@ -5,8 +5,10 @@ import (
+ 	"encoding/json"
+ 	"errors"
+ 	"maps"
++	"math/rand/v2"
+ 	"slices"
+ 	"sort"
++	"time"
+ 
+ 	"github.com/anissaefuddin/pms/server/internal/notifications"
+ 	"github.com/anissaefuddin/pms/server/internal/policy"
+@@ -21,7 +23,30 @@ type initialShare struct {
+ 	Role          string    `json:"role"`
+ }
+ 
++// Create retries when a concurrent create under the same parent made Postgres abort this Serializable transaction (40001):
++// the creates are independent, so the caller should not see a 409.
+ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
++	var kept int
++	if batch != nil {
++		kept = len(batch.Deliveries)
++	}
++	for attempt := 0; ; attempt++ {
++		item, err := createOnce(ctx, pool, actor, fields, batch)
++		if pgCode(err) != "40001" || attempt >= 15 {
++			return item, writeError(err)
++		}
++		if batch != nil {
++			batch.Deliveries = batch.Deliveries[:kept] // drop what the aborted attempt queued
++		}
++		select {
++		case <-ctx.Done():
++			return Detail{}, ctx.Err()
++		case <-time.After(time.Duration(5+rand.IntN(25*(attempt+1))) * time.Millisecond):
++		}
++	}
++}
++
++func createOnce(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
+ 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+ 	if err != nil {
+ 		return Detail{}, err
+@@ -31,7 +56,7 @@ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields
+ 	if err == nil {
+ 		err = tx.Commit(ctx)
+ 	}
+-	return item, writeError(err)
++	return item, err
+ }
+ 
+ // CreateTx creates an Item inside the caller's transaction (Serializable); the caller commits.
+@@ -220,7 +245,7 @@ SELECT COALESCE(max(rank COLLATE "C"),'') FROM item_locations
+ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_root_id IS NULL`, loc.SpaceID, loc.ParentID).Scan(&last); err != nil {
+ 			return Detail{}, err
+ 		}
+-		rank := rankBetween(last, "")
++		rank := rankAfter(last)
+ 		if len(rank) > 512 || rank <= last {
+ 			return Detail{}, ErrConflict
+ 		}
+diff --git a/server/internal/items/custom_fields.go b/server/internal/items/custom_fields.go
+index c03c680..91fdf8a 100644
+--- a/server/internal/items/custom_fields.go
++++ b/server/internal/items/custom_fields.go
+@@ -363,14 +363,24 @@ func updateCustomFieldValues(ctx context.Context, tx pgx.Tx, actor policy.Actor,
+ 	if len(ids) == 0 {
+ 		return json.Marshal(current)
+ 	}
+-	spaces, err := policy.VisibleSpaces(ctx, tx, actor, "")
++	// A field is available when the item sits in its Space and the actor can see the item there: through the Space or through an
++	// item-level share (a Space share alone is not required, so item-level editors can set values).
++	locations, err := tx.Query(ctx, "SELECT DISTINCT space_id::text FROM item_locations WHERE item_id=$1::uuid AND deleted_root_id IS NULL", itemID)
+ 	if err != nil {
+ 		return nil, err
+ 	}
+-	visibleSpaces := make([]string, 0, len(spaces))
+-	for _, space := range spaces {
+-		if space.Caps.Has(policy.View) {
+-			visibleSpaces = append(visibleSpaces, space.ID)
++	itemSpaces, err := pgx.CollectRows(locations, pgx.RowTo[string])
++	if err != nil {
++		return nil, err
++	}
++	visibleSpaces := make([]string, 0, len(itemSpaces))
++	for _, space := range itemSpaces {
++		caps, err := policy.ItemCapsInSpace(ctx, tx, actor, itemID, space)
++		if err != nil {
++			return nil, err
++		}
++		if caps.Has(policy.View) {
++			visibleSpaces = append(visibleSpaces, space)
+ 		}
+ 	}
+ 	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+` FROM custom_fields f
+diff --git a/server/internal/items/location.go b/server/internal/items/location.go
+index f951982..96f6d3e 100644
+--- a/server/internal/items/location.go
++++ b/server/internal/items/location.go
+@@ -25,6 +25,19 @@ func locationCaps(ctx context.Context, tx pgx.Tx, actor policy.Actor, loc Locati
+ 	return access.Caps, err
+ }
+ 
++// rankAfter is the rank for a new last sibling. It steps the final character up, so the rank grows by one character only
++// every ~35 appends (not on every append, which capped a parent at ~512 children).
++func rankAfter(last string) string {
++	const top = byte('y') // stay below the 'z' upper bound used by rankBetween
++	if last == "" {
++		return rankBetween("", "")
++	}
++	if c := last[len(last)-1]; c < top {
++		return last[:len(last)-1] + string(c+1)
++	}
++	return last + string(byte('V'))
++}
++
+ // rankBetween uses bytewise order. Generated ranks never end at the smallest
+ // digit, so another rank can always be inserted before an existing one.
+ func rankBetween(left, right string) string {
+@@ -172,7 +185,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
+ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_root_id IS NULL`, loc.SpaceID, loc.ParentID).Scan(&last); err != nil {
+ 			return Detail{}, err
+ 		}
+-		rank := rankBetween(last, "")
++		rank := rankAfter(last)
+ 		if len(rank) > 512 || rank <= last {
+ 			return Detail{}, ErrConflict
+ 		}
+diff --git a/server/internal/items/rank_test.go b/server/internal/items/rank_test.go
+new file mode 100644
+index 0000000..2817d9c
+--- /dev/null
++++ b/server/internal/items/rank_test.go
+@@ -0,0 +1,15 @@
++package items
++
++import "testing"
++
++// QA-D-lane3-001: appending siblings must not grow the rank one character per child, or a folder stops accepting children at ~512 (capacity is now ~18,000 per parent).
++func TestAppendRankStaysShortAndOrdered(t *testing.T) {
++	last := ""
++	for i := 0; i < 18000; i++ {
++		next := rankAfter(last)
++		if next <= last || len(next) > 512 || next[len(next)-1] == '0' {
++			t.Fatalf("child %d: %q after %q", i, next, last)
++		}
++		last = next
++	}
++}
+diff --git a/server/internal/previews/previews.go b/server/internal/previews/previews.go
+index e09d906..9cb969d 100644
+--- a/server/internal/previews/previews.go
++++ b/server/internal/previews/previews.go
+@@ -78,6 +78,9 @@ func Generate(ctx context.Context, pool *pgxpool.Pool, store storage.Storage, id
+ 	default:
+ 		status, note = "skipped", "no preview for this file type"
+ 	}
++	if pages == nil {
++		pages = []Page{} // a skipped render must store [], not JSON null (jsonb_array_elements fails on null)
++	}
+ 	raw, _ := json.Marshal(pages)
+ 	_, err = pool.Exec(ctx, `INSERT INTO attachment_previews(attachment_id,version,status,pages,note) VALUES($1,$2,$3,$4,$5)
+ ON CONFLICT (attachment_id,version) DO UPDATE SET status=$3,pages=$4,note=$5,updated_at=now()`, id, version, status, raw, note)
+diff --git a/web/tests/sso.spec.ts b/web/tests/sso.spec.ts
+index f55ad0c..33f97fb 100644
+--- a/web/tests/sso.spec.ts
++++ b/web/tests/sso.spec.ts
+@@ -54,6 +54,9 @@ test("admin configures the provider: redirect URI shown, secret kept when left e
+   expect(put.allowed_domains).toEqual(["example.com", "corp.example"]);
+   expect("client_secret" in put).toBe(false); // an empty secret field keeps the stored one
+ 
++  // The save handler clears the secret field after the response; wait for it to finish (button re-enabled) before typing,
++  // or a slow runner clears the new value (QA-D-lane3-007 flake).
++  await expect(oidc.getByRole("button", { name: "Save" })).toBeEnabled();
+   await page.getByLabel("Client secret").fill("new-secret-value");
+   await oidc.getByRole("button", { name: "Save" }).click();
+   await expect.poll(() => calls.filter((c) => c.method === "PUT").length).toBe(2);

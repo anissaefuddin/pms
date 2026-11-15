@@ -264,5 +264,26 @@
   "proofResolve": "Resolve",
   "proofReopen": "Reopen",
   "proofDelete": "Delete",
+  "addUser": "Add user",
+  "created": "{{name}} created.",
+  "openCreated": "Open item",
+  "general": "General information",
+  "typeLegend": "Item type",
+  "settings": "Settings",
+  "typeDesc": {
+    "project": "Plan work with tasks, dates, an owner and a default view.",
+    "folder": "Group projects and folders. No dates.",
+    "task": "A single piece of work inside a project."
+  },
+  "viewDesc": {
+    "table": "List items in rows with columns.",
+    "board": "Move items across status columns.",
+    "gantt": "Plan items on a timeline with dates and dependencies.",
+    "calendar": "See items by due date in a month view.",
+    "files": "Browse the files attached to items in this project.",
+    "chart": "See how many items are in each status."
+  },
+  "taskParent": "Choose a project in the same Space as the parent",
+  "noDates": "Folders have no start or finish date.",
   "info": "Info"
 }

@@ -4,7 +4,7 @@
 
 - **ID PRD:** diambil dari kolom "PMS baseline" register bila ada; untuk baris tanpa ID, dipetakan manual ke ID yang sudah ada atau ke ID baru §5.15. `N/A_APPROVED (…)` = di luar rilis 1.0 menurut PRD v0.4 (M13) dan masih menunggu persetujuan pemilik produk (DEC-PAR-01/05/06).
 - **Cakupan 1.0:** `Ada` bila ID PRD sudah DONE di M0–M6, `M8..M12` bila ID baru §5.15 menjadi story di milestone itu (lihat [TRACEABILITY](../TRACEABILITY_M7_M12.md)), `M13` bila di luar 1.0.
-- Baris yang tidak punya ID PRD sama sekali: **tidak ada**; setiap WFP terpetakan.
+- [Rekonsiliasi alur layar](WFP_SCREEN_FLOW_RECONCILIATION.md) mencatat bukti per WFP. Retest 14 Nov 2026 mencocokkan 106 ID unik (WFP-001–106) di register, katalog, dan matriks. WFP-102 mengacu pada PRD §6 NFR Aksesibilitas dan gate STAB-07 di TRACEABILITY. Entri M13 mengacu pada keputusan scope. Label Ada (M0–M6) menunjukkan pemetaan milestone dan perlu diverifikasi terhadap bukti masing-masing requirement.
 
 | WFP | Capability | ID PRD | Cakupan | Status katalog |
 |---|---|---|---|---|
@@ -29,8 +29,8 @@
 | WFP-019 | Four dependency types | VIEW-05B | Ada (M0–M6) | NOT_IN_TABLE |
 | WFP-020 | Automatic dependency scheduling | VIEW-05B | Ada (M0–M6) | NOT_IN_TABLE |
 | WFP-021 | Gantt baselines / variance | VIEW-05C | M10 | RESOLVED |
-| WFP-022 | Project/programme portfolio Gantt | SCH-01 | M10 | AMBIGUOUS |
-| WFP-023 | Cross-project dependencies | SCH-01 | M10 | NOT_IN_TABLE |
+| WFP-022 | Project/programme portfolio Gantt | SCH-01 | M10 | RESOLVED |
+| WFP-023 | Cross-project dependencies | SCH-01 | M10 | RESOLVED |
 | WFP-024 | Calendar view | VIEW-06 | Ada (M0–M6) | RESOLVED |
 | WFP-025 | Timelog view | VIEW-07 | Ada (M0–M6) | NOT_IN_TABLE |
 | WFP-026 | Files view | VIEW-10 | M11 | NOT_IN_TABLE |
@@ -114,3 +114,7 @@
 | WFP-104 | Localization and language settings | NFR i18n (SET-03) | Ada (M0–M6) | RESOLVED |
 | WFP-105 | Native mobile/desktop experiences | N/A_APPROVED (aplikasi native, M13; DEC-PAR-06) | M13 (di luar 1.0) | RESOLVED |
 | WFP-106 | Offline behaviors / push notifications | N/A_APPROVED (offline/push, M13) | M13 (di luar 1.0) | NOT_IN_TABLE |
+
+# Batch 5 reconciliation note — 15 November 2026
+
+The canonical scope mapping remains unchanged. Acceptance evidence changed as follows without changing PRD scope: AUTH-08 gained keyed-HMAC and concurrent-single-use LOCAL_PASS evidence but remains BLOCKED for mail-sink/deployed acceptance; SPC-14 remains implemented under D-99 with deployed evidence PARTIAL; VIEW-04 gained configurable assignee/date/priority LOCAL_PASS evidence but remains PARTIAL until deployed cross-user verification. See `../qa/BATCH_5_EXECUTION_REPORT.md`.

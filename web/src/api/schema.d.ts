@@ -2538,7 +2538,7 @@ export interface paths {
         /**
          * Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
          * @description `locations` wajib berisi minimal satu lokasi. Untuk subtask, isi `parent_item_id` dengan task induk.
-         *     `default_view_type` hanya berlaku untuk project/folder.
+         *     `default_view_type` hanya berlaku untuk project/folder; nilainya table, board, gantt, calendar, files, atau chart.
          */
         post: operations["createItem"];
         delete?: never;
@@ -4514,8 +4514,13 @@ export interface components {
              * @enum {string}
              */
             comment_shortcut: "mod_enter" | "enter";
-            /** @description Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil */
+            /**
+             * @deprecated
+             * @description Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil. Dipertahankan satu rilis setelah sidebar_pinned
+             */
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
+            /** @description Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk */
+            sidebar_pinned?: components["schemas"]["SidebarKey"][];
             /** @description Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif */
             email_muted?: components["schemas"]["EmailGroup"][];
             /** @description true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati */
@@ -4560,7 +4565,10 @@ export interface components {
             accent?: "blue" | "teal" | "violet" | "green";
             /** @enum {string} */
             comment_shortcut?: "mod_enter" | "enter";
+            /** @deprecated */
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
+            /** @description Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422) */
+            sidebar_pinned?: components["schemas"]["SidebarKey"][];
             email_muted?: components["schemas"]["EmailGroup"][];
             default_task_duration_days?: number | null;
             default_task_effort_minutes?: number | null;
@@ -5457,7 +5465,7 @@ export interface components {
             /** Format: uuid */
             default_workflow_id?: string | null;
             /** @enum {string|null} */
-            default_view_type?: "table" | "board" | null;
+            default_view_type?: "table" | "board" | "gantt" | "calendar" | "files" | "chart" | null;
             assignees: components["schemas"]["ItemAssignee"][];
             locations: components["schemas"]["Location"][];
             child_count?: number;
@@ -5533,7 +5541,7 @@ export interface components {
              * @description Hanya project/folder
              * @enum {string}
              */
-            default_view_type?: "table" | "board";
+            default_view_type?: "table" | "board" | "gantt" | "calendar" | "files" | "chart";
             assignee_ids?: string[];
             assignee_allocations?: components["schemas"]["AssigneeAllocationUpdate"][];
             locations: components["schemas"]["Location"][];

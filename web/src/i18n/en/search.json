@@ -32,5 +32,6 @@
   "statuses.cancelled": "Cancelled",
   "sort": "Sort by",
   "sorts.relevance": "Relevance",
-  "sorts.date_modified": "Date modified"
+  "sorts.date_modified": "Date modified",
+  "emptyTitle": "No results"
 }

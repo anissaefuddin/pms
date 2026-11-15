@@ -37,7 +37,7 @@ type Task struct {
 
 type Project struct {
 	Title       string `json:"title"`
-	DefaultView string `json:"default_view,omitempty"` // table or board
+	DefaultView string `json:"default_view,omitempty"` // table, board, gantt, calendar, files or chart
 	Tasks       []Task `json:"tasks"`
 }
 

@@ -4,7 +4,7 @@
 |---|---|
 | **Versi** | 0.3.1 (draft) — revisi hasil review: ketergantungan antar milestone, pemisahan requirement, keamanan & operasional. 0.3.1: AUTH-03 (min. 8 karakter) dan SEC-04 (ganti password) diselaraskan dengan `api/openapi.yaml` (keputusan D-11) 0.3.2: baseline M1 12 minggu, GA minggu 39 (D-16). **0.4 (draft, 13 Nov 2026):** rilis 1.0 = M0–M12 dengan target parity Wrike pada katalog in-scope; GA dipindah ke setelah M12; M13 hanya backlog (D-55); requirement baru §5.15; definisi prioritas P2 diubah. |
 | **Tanggal** | 13 November 2026 |
-| **Status** | Draft untuk review |
+| **Status** | Draft v0.4 siap review pemilik produk. [Matriks WFP](parity/WFP_TO_PRD_MATRIX.md) dan [rekonsiliasi layar](parity/WFP_SCREEN_FLOW_RECONCILIATION.md) tersedia. |
 | **Repo** | [github.com/anissaefuddin/pms](https://github.com/anissaefuddin/pms) |
 | **Sumber input** | [ANALISA_FITUR_SCREEN.md](ANALISA_FITUR_SCREEN.md) (99 flow, 540 screen Wrike Web), [Wrike_Feature_Scanning.md](Wrike_Feature_Scanning.md) (inventaris fitur dan paket) |
 
@@ -306,7 +306,7 @@ Semua P2 (M7–M12). Story, kriteria penerimaan ringkas, dan tes per ID ada di [
 | RSC-04 | Job role dan skill | P2 | Wrike_Feature_Scanning |
 | RSC-05 | Resource booking per project, orang, atau role | P2 | Wrike_Feature_Scanning |
 | RSC-06 | Utilization planned vs actual | P2 | Wrike_Feature_Scanning |
-| SCH-01 | Dependensi lintas project dan portfolio Gantt multi-project | P2 | Wrike_Feature_Scanning |
+| SCH-01 | Dependensi lintas project dan portfolio Gantt multi-project | P2 | [Alur Gantt portofolio Wrike](https://help.wrike.com/hc/en-us/articles/39230471408786-Creating-and-Managing-Programme-and-Portfolio-Timelines-in-Gantt-Chart) |
 | FIL-01 | Versi file immutable dan riwayat versi | P2 | Adding a file |
 | FIL-02 | Pratinjau dan proofing: anotasi yang dipin ke versi | P2 | Wrike_Feature_Scanning |
 | FIL-03 | Bandingkan dua versi | P2 | Wrike_Feature_Scanning |

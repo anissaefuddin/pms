@@ -1,0 +1,632 @@
+[
+  {
+    "name": "workload",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          [
+            ".relative.overflow-x-auto"
+          ]
+        ]
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "portfolio",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "reviews-empty",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "resources",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "rates",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "item-types",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "integrations",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "consent",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "feedback-error",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "automation-empty",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "bookmarks",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "webhooks",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard-password",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt-error",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt",
+    "width": 1440,
+    "doc": 1440,
+    "view": 1440,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "workload",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          [
+            ".relative.overflow-x-auto"
+          ]
+        ]
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "portfolio",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "reviews-empty",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "resources",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "rates",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "item-types",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "integrations",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "consent",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "feedback-error",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "automation-empty",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "bookmarks",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "webhooks",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard-password",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt-error",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt",
+    "width": 1280,
+    "doc": 1280,
+    "view": 1280,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "workload",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          [
+            ".relative.overflow-x-auto"
+          ]
+        ]
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "portfolio",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          [
+            ".overflow-x-auto"
+          ]
+        ]
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "reviews-empty",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "resources",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "rates",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "item-types",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "integrations",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "consent",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "feedback-error",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "automation-empty",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "bookmarks",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "webhooks",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard-password",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt-error",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt",
+    "width": 768,
+    "doc": 768,
+    "view": 768,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "workload",
+    "width": 390,
+    "doc": 563,
+    "view": 390,
+    "clipped": [],
+    "axe": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          [
+            ".relative.overflow-x-auto"
+          ]
+        ]
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "portfolio",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [
+      {
+        "id": "scrollable-region-focusable",
+        "nodes": [
+          [
+            ".overflow-x-auto"
+          ]
+        ]
+      }
+    ],
+    "errors": []
+  },
+  {
+    "name": "reviews-empty",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "resources",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "rates",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "item-types",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "integrations",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "consent",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "feedback-error",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "automation-empty",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "bookmarks",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "webhooks",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard-password",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-dashboard",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt-error",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  },
+  {
+    "name": "public-gantt",
+    "width": 390,
+    "doc": 390,
+    "view": 390,
+    "clipped": [],
+    "axe": [],
+    "errors": []
+  }
+]

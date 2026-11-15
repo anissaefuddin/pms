@@ -19,6 +19,8 @@ import { CreateMenuDialog } from "@/components/create-menu-dialog";
 import { SpaceBookmarksDialog } from "@/components/space-bookmarks-dialog";
 import { SpaceDialog } from "@/components/space-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_app/spaces/$spaceId")({ component: SpacePage });
@@ -136,11 +138,10 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
       </header>
       {items.isPending && <p className="mt-6" role="status">{t("items.loading")}</p>}
       {items.isError && <p className="mt-6" role="alert">{t("items.loadError")}</p>}
-      {items.data?.length === 0 && <section className="mt-8 rounded-xl border border-dashed bg-card p-12 text-center">
-        <FolderOpen className="mx-auto size-8 text-muted-foreground" />
-        <h2 className="mt-3 text-lg font-semibold">{t("spaces.empty.title")}</h2>
-        <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t("spaces.empty.description")}</p>
-      </section>}
+      {items.data?.length === 0 && <EmptyState className="mt-8 p-12" icon={<ProjectIllustration />} title={t("spaces.empty.title")}
+        description={t("spaces.empty.description")} canCreate={canCreate}
+        primaryAction={{ label: t("spaces.empty.newProject"), onClick: () => setCreating(true) }}
+        secondaryAction={{ label: t("spaces.empty.browseBlueprints"), onClick: () => void navigate({ to: "/blueprints" }) }} />}
       <div className="mt-6"><ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
 
       {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}

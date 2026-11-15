@@ -38,7 +38,7 @@ export function ItemUserPicker({ label, selected, onChange, multiple = false, di
           onClick={() => onChange(selected.filter((entry) => entry.id !== person.id))}>{name}</Button>;
       })}
     </div>
-    <Input type="search" autoFocus={autoFocus} aria-label={`${label}: ${t("items.searchUsers")}`} value={value} disabled={!canSearch}
+    <Input type="search" autoFocus={autoFocus} aria-label={`${label}: ${t("items.searchUsers")}`} placeholder={t("items.searchUsers")} value={value} disabled={!canSearch}
       onChange={(event) => setValue(event.target.value)} />
     {users.isError && <p role="status" className="text-sm text-muted-foreground">{t("items.usersUnavailable")}</p>}
     {canSearch && q.length >= 2 && q === value.trim() && users.data?.items.filter((user) => user.status === "active" && !selected.some((entry) => entry.id === user.id)).map((user) => {

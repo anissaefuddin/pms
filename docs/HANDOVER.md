@@ -7,6 +7,40 @@
 | **Git** | branch `main`; commit M0: `d2c9785` (server), `f831d5e` (web), `bf851a6` (build/deploy), `2eee4fe` (docs) + satu commit handover; **4–5 commit lokal di depan `origin/main`, belum di-push** |
 | **Working tree** | Bersih setelah commit handover (file lokal di luar git: `deploy/backups/`, `deploy/.env`, `web/node_modules`, `web/dist`) |
 
+## Retest stabilitas 14 November 2026
+
+- S7.1.1 DONE. Pembatalan pada fase autentikasi dan saat handler membaca PostgreSQL terverifikasi, dengan nol 5xx dalam tiga run. Perbaikan handler sudah ada pada baseline.
+- S7.1.2 DONE. Retry SSE 1 detik, replay dan resync lulus di integrasi HTTP, pemulihan data setelah reconnect lulus di dua sesi Chrome. Kelima suite Playwright S6.3.5 lulus lokal.
+- S6.3.4–S6.3.6 tetap IN_PROGRESS. Jalankan benchmark pada instance pilot, isi hasil penerimaan 93 requirement di [UAT.md](UAT.md), verifikasi CI pada revisi kandidat, lalu triase temuan sebelum pembekuan skema/kontrak dan tag. Hasil dan batas tiap tes ada di [TESTING.md](TESTING.md#retest-stabilitas-14-november-2026).
+
+## Gate G0 dan retest M8–M10
+
+- G0 masih BLOCKED. Register, katalog, dan matriks masing-masing memiliki 106 ID WFP unik. Rekonsiliasi flow untuk 106 WFP selesai, termasuk resolusi paket WFP-022/023. Freeze katalog, persetujuan PRD dan ADR, serta hasil pilot/CI tetap terbuka.
+- M8 menampilkan nama tipe kustom di Table dan Board. Gap berikutnya adalah default custom field lintas create dan impor, menu Blueprint/Space, dan type-aware filter, search, Excel serta laporan. Lihat [G1a](parity/gate-reports/G1A_CONFIG.md).
+- M9 dan M10 lulus retest teknis sesuai cakupan. UAT pengguna, hasil CI kandidat, dan pemeriksaan Grafana/SMTP pilot masih terbuka. Lihat [TESTING](TESTING.md#retest-teknis-gate-m8m10-14-november-2026).
+
+## UAT M11 · S11.4.1
+
+- Gate G2b BLOCKED. Retest file dan analitik lulus pada cakupan lokal. S11.3.1 dan S11.3.7 DONE dengan bukti PostgreSQL dan Chrome. S11.3.2 DONE lokal (webhook outbox, receiver fixture, dan UI), CI kandidat dan UAT penerima HTTPS nyata masih terbuka. S11.3.3–S11.3.5 lulus lokal. S11.3.6 masih IN_PROGRESS: jalankan akun uji GitHub dan Calendar, khususnya precondition `If-Match` GitHub. Cara sinkronisasi manual dan batas pilot ada di DECISIONS. Gunakan [matriks G2b](parity/gate-reports/G2B_FILES_ANALYTICS_INTEGRATIONS.md) untuk verifikasi storage nyata, PDF, SMTP, CI kandidat, dan penerimaan pilot.
+
+## Pelaksanaan teknis UAT G0
+
+- Lima suite Chrome, API Go, dan PostgreSQL lokal lulus setelah retest. Satu HTTP 500 saat request daftar item Space dibatalkan sudah ditangani dengan regresi PostgreSQL. [Cakupan dan bukti](UAT.md#pelaksanaan-uat-teknis-lokal).
+- Container manual berhenti pada image M1. Kandidat lokal baru tersedia di http://127.0.0.1:18082 dengan akun admin sintetis dan smoke PASS. Lint yang memblokir CI lokal diperbaiki. Jalankan penerimaan pengguna, validasi required check dan CI remote, serta NFR dan rehearsal pilot untuk G0.
+
+## NFR dan rehearsal G0
+
+- Kandidat UAT tetap tersedia di 127.0.0.1:18082. Benchmark lokal pada instance 18083 memakai database terpisah dengan 10.000 task. Table, Board, Search, dan pemeriksaan awal Gantt lulus. Restore database serta arsip fixture file lulus. [Bukti](TESTING.md#nfr-dan-rehearsal-kandidat-g0-14-november-2026).
+- GitHub API baca-saja mengonfirmasi 403 pada aturan branch repo privat. Run terbaru yang terlihat gagal pada commit lama. G0 menunggu keputusan required check, publikasi kandidat yang diotorisasi, penerimaan pilot, dan verifikasi operasional host klien.
+
+## Preflight S12.1.7
+
+Checkout enterprise `pms-s12`, branch `s12-1-enterprise`, HEAD `8bf55a8`. Ada perubahan lokal di fixture bootstrap, housekeeping, HTTP, mail, dan testdb. Empat butir S12.1.7 masih terbuka. TASKS menetapkan G1a, G1b, G2a, dan G2b PASS sebagai prasyarat M12.
+
+- AUTH-08, rancangan untuk review. Tambahkan alur login dengan kode email untuk akun aktif. Gunakan pola rate limit, penolakan generik, audit dan queue mail yang sudah ada. Kode berumur pendek, disimpan dalam bentuk yang tahan tebakan offline, sekali pakai secara atomik. Jalur autentikasi tetap menegakkan IP allowlist dan TOTP bila aktif sebelum membuat sesi. Uji kode benar, kedaluwarsa, konsumsi ulang, balapan, akun nonaktif, dan TOTP.
+- SET-09, rancangan untuk review. Simpan identitas pemilik akun secara eksplisit. Karena skema lama memiliki admin tanpa pemilik eksplisit, tentukan backfill dan penanganan workspace tanpa calon yang jelas sebelum migrasi. Transfer memerlukan pemilik aktif, autentikasi ulang, target admin aktif, dan audit atomik. Uji akses selain pemilik, input tidak sah, transfer bersamaan, dan pencegahan deaktivasi pemilik aktif sebelum transfer.
+- Status BLOCKED. Persetujuan pengecualian M12, bila diberikan, perlu menyebut S12.1.7. Transfer kepemilikan dan login menyentuh kontrol autentikasi sehingga implementasi juga memerlukan review independen sebelum eksekusi pada lingkungan bersama.
+
 ## 1. Status aktual
 
 - **Dokumen (committed):** PRD v0.3, analisa screen, ARCHITECTURE, DATABASE, WORKFLOWS, openapi.yaml, DESIGN_SYSTEM, UI_SPEC, BACKLOG, TASKS. Status `PROPOSED`, belum disetujui user (lihat [DECISIONS.md](DECISIONS.md) §2).

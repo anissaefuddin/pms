@@ -41,6 +41,17 @@ test("E2E-PAR-01/02: an admin defines a Bug type in the UI, and a Bug made from 
   await expect(admin.getByLabel("Importance", { exact: true })).toHaveValue("high");
   const list = (await (await admin.request.get(`/api/v1/spaces/${e.PMS_FIXTURE_M8_WORK}/items`)).json()).items as { id: string; title: string; item_type: { key: string } }[];
   expect(list.find((i) => i.title === "Crash on save")?.item_type.key).toBe("bug");
+
+  await admin.goto(`/spaces/${e.PMS_FIXTURE_M8_WORK}`);
+  await admin.getByRole("button", { name: "Columns", exact: true }).click();
+  await admin.getByRole("checkbox", { name: "Type", exact: true }).check();
+  await admin.getByRole("button", { name: "Save columns" }).click();
+  await expect(admin.getByRole("row").filter({ hasText: "Crash on save" })).toContainText("Bug");
+  await admin.getByRole("radio", { name: "Board", exact: true }).click();
+  await admin.getByRole("button", { name: "Card fields", exact: true }).click();
+  await admin.getByRole("checkbox", { name: "Type", exact: true }).check();
+  await admin.getByRole("button", { name: "Save columns" }).click();
+  await expect(admin.getByRole("listitem").filter({ hasText: "Crash on save" })).toContainText("Bug");
 });
 
 test("E2E-PAR-03: a status guard blocks the move the same way in the UI and over REST, and passes when the item is ready", async ({ browser }) => {

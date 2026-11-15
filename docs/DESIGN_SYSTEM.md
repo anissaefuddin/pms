@@ -42,9 +42,87 @@ Token baru yang dibutuhkan PMS (ditambahkan ke `design-tokens.json`, bukan di PM
 | `semantic.color.priority.{low,medium,high}` (M2) | Disiapkan untuk custom field berwarna |
 | `semantic.size.board-column-width` = 280 px | Lebar kolom Board |
 | `semantic.size.detail-panel-width` = 560 px | Lebar panel detail item |
-| `semantic.size.sidebar-width` = 248 px (ciut: 56 px) | |
+| `semantic.size.sidebar-width` = 270 px (min 220, maks 400, ciut 56 px) | Sekarang token CSS `--sidebar-width*`, lihat §2.1 |
 | `semantic.z.{dropdown,sticky,panel,modal,toast}` | Skala z-index tunggal: 10 / 20 / 30 / 40 / 50 |
 | `semantic.motion.{fast,base}` = 120 ms / 200 ms, easing `cubic-bezier(.2,0,0,1)`; nol pada `prefers-reduced-motion` | |
+
+### 2.1 Token CSS (`web/src/index.css`)
+
+Sumber tunggal untuk warna, ukuran, dan motion di PMS. Light didefinisikan di `:root`, dark di `.dark`. Nilai di tabel adalah nilai light kecuali kolom "Dark".
+
+**Navigasi dan permukaan (S-UX.0.1)**
+
+| Token | Light / Dark | Fungsi |
+|---|---|---|
+| `--nav` | `#192238` / `#192238` | Latar sidebar navigasi (navy). Belum menjadi default `--sidebar`, menunggu persetujuan pemilik |
+| `--nav-muted` | `#A0AEC5` | Teks sekunder di navigasi (grup, hint) |
+| `--nav-text` | `#E2E8F3` | Teks item navigasi |
+| `--nav-hover` | `#283650` | Latar item navigasi saat hover |
+| `--nav-active` | `#354866` | Latar item navigasi yang aktif |
+| `--selection` | `#EAF1FF` / `#1E3A5F` | Latar baris atau item terpilih |
+| `--surface-2` | `#F0F4F8` / `#263245` | Permukaan kedua (panel samping, area kelompok) di atas `--card` |
+| `--shadow-overlay` | `0 12px 40px rgba(23,32,51,0.2)` / `0 12px 40px rgba(0,0,0,0.5)` | Bayangan popover, menu, dan panel mengambang |
+| `--sidebar` | `#FFFFFF` / `var(--card)` | Tidak diubah. Sidebar masih putih sampai keputusan navy disetujui |
+
+Token navigasi juga tersedia sebagai kelas Tailwind: `bg-nav`, `text-nav-text`, `text-nav-muted`, `bg-nav-hover`, `bg-nav-active`, `bg-selection`, `bg-surface-2`.
+
+**Skala tipografi (px)**: `--font-size-12`, `--font-size-13`, `--font-size-14`, `--font-size-16`, `--font-size-19`, `--font-size-24`. Berat: `--font-weight-regular` (400), `--font-weight-semibold` (600), `--font-weight-bold` (650).
+
+**Spasi (kelipatan 4 px)**: `--space-1` (4), `--space-2` (8), `--space-3` (12), `--space-4` (16), `--space-5` (20), `--space-6` (24), `--space-8` (32), `--space-10` (40), `--space-12` (48).
+
+**Tinggi**
+
+| Token | Nilai | Fungsi |
+|---|---|---|
+| `--control-h` | 32 px | Tinggi tombol, input, dan select (compact) |
+| `--control-h-lg` | 40 px | Tinggi kontrol di mode comfortable atau aksi utama |
+| `--table-row-h` | 40 px | Tinggi baris tabel baru |
+| `--row-h` | 32 px compact / 40 px comfortable | Sudah ada, mengikuti `data-density`. Tidak diubah di S-UX.0.1 |
+
+**Lebar sidebar**: `--sidebar-width` 270 px (default), `--sidebar-width-min` 220 px, `--sidebar-width-max` 400 px, `--sidebar-width-collapsed` 56 px.
+
+**Motion**: `--motion-fast` 120 ms, `--motion-base` 160 ms, `--motion-slow` 200 ms. Di `@media (prefers-reduced-motion: reduce)` ketiganya menjadi 0 ms.
+
+**Radius** sudah ada di `@theme inline` (`--radius-sm` sampai `--radius-4xl`). Jangan mendefinisikan ulang.
+
+**Contoh pemakaian**
+
+```tsx
+// Benar: token
+<aside className="w-[var(--sidebar-width)] bg-nav text-nav-text">
+<li className="hover:bg-nav-hover data-[active=true]:bg-nav-active transition-colors duration-[var(--motion-fast)]">
+<div className="text-[length:var(--font-size-13)] p-[var(--space-3)] h-[var(--control-h)]">
+
+// Salah: nilai langsung di komponen
+<aside className="w-[248px] bg-[#192238] text-[#E2E8F3]">
+<li className="transition-colors duration-150">
+```
+
+**Aturan**
+
+1. Tidak ada kode hex (`#RRGGBB`, `#RGB`) dan `rgb()`/`hsl()` literal di `web/src/components` dan `web/src/routes`. Pakai token.
+2. Tidak ada ukuran font, spasi, tinggi, lebar sidebar, atau durasi yang ditulis angka langsung bila sudah ada token. Pakai `var(--...)`.
+3. Warna baru ditambahkan dulu sebagai token di `index.css` (light dan `.dark`), baru dipakai.
+4. Teks utama dan teks status harus memenuhi kontras 4.5:1 di light dan dark. Lihat tabel di bawah.
+5. Langkah CI yang memindai hex di dua folder tersebut ditambahkan di S-UX.0.2.
+
+**Kontras yang sudah dihitung (WCAG, rasio)**
+
+| Pasangan | Light | Dark | Status |
+|---|---|---|---|
+| `--foreground` di `--background` / `--card` | 16,98 / 17,74 | 16,98 / 14,05 | Lulus |
+| `--foreground` di `--surface-2` | 16,05 | 12,37 | Lulus |
+| `--muted-foreground` di `--background` / `--card` | 4,63 / 4,83 | 12,04 / 9,96 | Lulus |
+| `--muted-foreground` di `--surface-2` | **4,37** | 8,77 | **Gagal (light)** |
+| `--nav-text` di `--nav` | 12,86 | 12,86 | Lulus |
+| `--nav-muted` di `--nav` | 7,05 | 7,05 | Lulus |
+| `--nav-text` di `--nav-hover` / `--nav-active` | 9,85 / 7,52 | 9,85 / 7,52 | Lulus |
+| `--info` di `--card` | 5,17 (di putih) | 8,14 | Lulus |
+| `--destructive` di `--card` | 4,83 | 7,73 | Lulus |
+| `--success` di `--card` | **3,30** | 10,45 | **Gagal (light)** |
+| `--warning` di `--card` | **3,19** | 10,18 | **Gagal (light)** |
+
+Teks status `--success` dan `--warning` di light belum memenuhi 4.5:1 sebagai teks. Nilai token tidak diubah karena dipakai di tempat lain. Usulan: tambah token teks terpisah (mis. `--success-text` dan `--warning-text`) dengan nilai yang lebih gelap, atau pakai warna ini hanya sebagai ikon/titik dengan teks netral. Keputusan menunggu. Untuk `--muted-foreground` di `--surface-2`, jangan dipakai sebagai teks di atas permukaan itu sampai nilainya disetel ulang.
 
 ## 3. Tipografi
 

@@ -8,6 +8,11 @@ const item = (id: string, title: string, start: string, due: string) => ({ id, t
 
 test("the portfolio lists tasks of several projects with their cross-project dependency; axe is clean", async ({ page }) => {
   const { calls } = await mockSpaces(page, { extra: {
+    "GET /search": (_, { query }) => ({ body: { items: [
+      { id: "p1", title: "Alpha", type: "project" },
+      { id: "p2", title: "Beta", type: "project" },
+      { id: "task", title: "Alpha task", type: "task" },
+    ].filter(item => item.title.toLowerCase().includes(query.get("q")?.toLowerCase() ?? "")) } }),
     "POST /portfolio/timeline": { body: {
       projects: [{ id: "p1", title: "Alpha" }, { id: "p2", title: "Beta" }],
       items: [{ project_id: "p1", item: item(a, "Design", "2026-11-02", "2026-11-06") }, { project_id: "p2", item: item(b, "Build", "2026-11-09", "2026-11-13") }],
@@ -15,9 +20,20 @@ test("the portfolio lists tasks of several projects with their cross-project dep
     } },
   } });
   await page.goto("/portfolio");
-  await page.getByLabel("Project IDs, separated by commas").fill("p1, p2");
+  const search = page.getByRole("searchbox", { name: "Find projects by name" });
+  await search.fill("Al");
+  await expect(page.getByRole("button", { name: "Alpha", exact: true })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Alpha task" })).toHaveCount(0);
+  await search.press("Tab");
+  await expect(page.getByRole("button", { name: "Alpha", exact: true })).toBeFocused();
+  await page.keyboard.press("Enter");
+  await expect(search).toBeFocused();
+  await search.fill("Be");
+  await page.getByRole("button", { name: "Beta", exact: true }).click();
   await page.getByRole("button", { name: "Show timeline" }).click();
   await expect(page.getByText("Design → Build (FS)")).toBeVisible();
   expect(calls.find((c) => c.path === "/portfolio/timeline")?.body).toEqual({ project_ids: ["p1", "p2"] });
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Remove Alpha" })).toBeVisible();
   expect((await new AxeBuilder({ page }).include("main").analyze()).violations).toEqual([]);
 });

@@ -2,6 +2,8 @@
 
 **Tanggal pengambilan:** 13 November 2026. **Status:** DRAFT-SIAP-REVIEW. Pembekuan dan tag versi menunggu review pemilik produk (S7.2.1, tugas REVIEW); sebelum itu katalog ini tidak boleh dipakai sebagai klaim cakupan.
 
+Retest 14 Nov 2026 mencocokkan seluruh WFP-001–106 dengan register dan matriks. Tabel perbandingan dan harga resmi masih memuat Free, Team, Business, Pinnacle, dan Apex. [Rekonsiliasi flow per baris](WFP_SCREEN_FLOW_RECONCILIATION.md) sudah mencatat bukti dan gap. Persetujuan freeze oleh pemilik produk masih terbuka.
+
 ## Sumber dan batas
 
 - Tabel perbandingan resmi: <https://www.wrike.com/comparison-table/>. Halaman harga: <https://www.wrike.com/pricing/>. Keduanya dibaca otomatis (ekstraksi teks) pada tanggal di atas; tanda centang pada halaman diterjemahkan menjadi daftar paket. Tanda `*` pada fitur AI mengikuti sumber (fitur kuota AI Elite). Hasil bacaan otomatis perlu dicocokkan sekali oleh manusia dengan halaman asli sebelum pembekuan.
@@ -84,8 +86,8 @@ Ringkasan: 24 CONFIRMED, 42 RESOLVED, 8 CORRECTED, 1 AMBIGUOUS, 31 NOT_IN_TABLE 
 | WFP-019 | Four dependency types | Verify | Tidak ada baris yang sepadan pada tabel resmi | - | NOT_IN_TABLE |
 | WFP-020 | Automatic dependency scheduling | Verify | Tidak ada baris yang sepadan pada tabel resmi | - | NOT_IN_TABLE |
 | WFP-021 | Gantt baselines / variance | Verify | Baseline Tracking | B,P,A | RESOLVED |
-| WFP-022 | Project/programme portfolio Gantt | Pinnacle+ Verify | Tabel memuat Project portfolio management (T+) dan task-level work schedules (P+); tidak jelas apakah Gantt portofolio sama dengan salah satunya | T,B,P,A | AMBIGUOUS |
-| WFP-023 | Cross-project dependencies | Pinnacle+ Verify | Tidak ada baris yang sepadan pada tabel resmi | - | NOT_IN_TABLE |
+| WFP-022 | Project/programme portfolio Gantt | Pinnacle+ Verify | [Alur Gantt portofolio resmi](https://help.wrike.com/hc/en-us/articles/39230471408786-Creating-and-Managing-Programme-and-Portfolio-Timelines-in-Gantt-Chart) | P,A | RESOLVED |
+| WFP-023 | Cross-project dependencies | Pinnacle+ Verify | [Dependensi proyek pada Gantt portofolio resmi](https://help.wrike.com/hc/en-us/articles/39230471408786-Creating-and-Managing-Programme-and-Portfolio-Timelines-in-Gantt-Chart) | P,A | RESOLVED |
 | WFP-024 | Calendar view | Verify | Calendars | T,B,P,A | RESOLVED |
 | WFP-025 | Timelog view | Verify | Tidak ada baris yang sepadan pada tabel resmi | - | NOT_IN_TABLE |
 | WFP-026 | Files view | Verify | Tidak ada baris yang sepadan pada tabel resmi | - | NOT_IN_TABLE |
@@ -172,7 +174,7 @@ Ringkasan: 24 CONFIRMED, 42 RESOLVED, 8 CORRECTED, 1 AMBIGUOUS, 31 NOT_IN_TABLE 
 
 ## C. Koreksi terhadap register dan dampaknya
 
-- Tidak ada paket Enterprise. Baris WFP-089 sampai WFP-094 (SSO, peran akses khusus, audit, locked spaces, IP, enkripsi) berada di **Pinnacle dan Apex**; kunci enkripsi milik klien adalah add-on Wrike Lock. Kelompok `ENT` di roadmap tetap valid sebagai kelompok teknis, bukan nama paket.
+- Halaman pricing publik mencantumkan lima paket. Istilah Enterprise masih muncul dalam [panduan kuota AI Wrike](https://help.wrike.com/hc/en-us/articles/35483473840023-Understanding-Wrike-AI-Pricing-and-Usage). Baris WFP-089 sampai WFP-094 (SSO, peran akses khusus, audit, locked spaces, IP, enkripsi) berada di **Pinnacle dan Apex**; kunci enkripsi milik klien adalah add-on Wrike Lock. Kelompok `ENT` di roadmap tetap valid sebagai kelompok teknis, bukan nama paket.
 - WFP-031 (workflow dan status khusus) dan WFP-070 (dashboard) tersedia sejak **Team**, bukan Business. WFP-056/058/059 (budgeting) hanya **Pinnacle dan Apex**.
 - WFP-008 (template Space) tersedia di Business ("templatized workspaces"); PMS M6 sudah memiliki template Space bawaan, tetapi template buatan pengguna belum ada (lihat WFP-007).
 - Fitur AI sebagian (MCP Server, ringkasan komentar, AI content) ada di semua paket; fitur kuota AI Elite (Copilot, Agents, widget generation) mulai Business. Keputusan cakupan AI mengikuti DEC-PAR-02 (functional equivalent).

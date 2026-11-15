@@ -46,22 +46,18 @@ test("toolbar is a single row of chips with accessible popovers; state stays in 
   await expect(page).toHaveURL(/filter=Pl/);
 });
 
-test("view tabs are segmented: options only on the active tab, Add view lives in All", async ({ page }) => {
+test("view tabs are segmented: options only on the active tab, Add view is a button", async ({ page }) => {
   await mock(page);
   await page.goto(path);
   const nav = page.getByRole("navigation", { name: "Views" });
   await expect(nav.getByRole("button", { name: /options$/ })).toHaveCount(1);
   await expect(nav.getByRole("button", { name: "Table options" })).toBeVisible();
-  await nav.getByRole("button", { name: "Board", exact: true }).click();
+  await nav.getByRole("radio", { name: "Board", exact: true }).click();
   await expect(nav.getByRole("button", { name: "Board options" })).toBeVisible();
   await expect(nav.getByRole("button", { name: /options$/ })).toHaveCount(1);
-  // tab order: Table, Board, Board options, All
-  await nav.getByRole("button", { name: "Table", exact: true }).focus();
-  const order: string[] = [];
-  for (let i = 0; i < 4; i++) { order.push(await page.evaluate(() => document.activeElement?.getAttribute("aria-label") ?? document.activeElement?.textContent?.trim() ?? "")); await page.keyboard.press("Tab"); }
-  expect(order).toEqual(["Table", "Board", "Board options", "All views"]);
-  await nav.getByRole("button", { name: "All views" }).click();
-  await expect(page.getByRole("menuitem", { name: "Add Gantt view" })).toBeVisible();
+  await nav.getByRole("button", { name: "Add view" }).click();
+  await expect(page.getByRole("menuitem", { name: "Gantt", exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
   expect(await new AxeBuilder({ page }).include("nav").analyze().then((r) => r.violations)).toEqual([]);
 });
 

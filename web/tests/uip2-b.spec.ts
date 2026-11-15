@@ -47,7 +47,7 @@ test("Table: type icon in the name cell, Add item is a full-width row; view tabs
   const add = page.getByRole("button", { name: "Add item" });
   const table = await page.getByRole("table", { name: "Table", exact: true }).boundingBox();
   expect((await add.boundingBox())!.width).toBeGreaterThan(table!.width - 4);
-  await expect(page.getByRole("navigation", { name: "Views" }).getByRole("button", { name: "Board", exact: true }).locator("svg")).toHaveCount(1);
+  await expect(page.getByRole("navigation", { name: "Views" }).getByRole("radio", { name: "Board", exact: true }).locator("svg")).toHaveCount(1);
 });
 
 test("Calendar: chips are tinted by status and keep an accessible name", async ({ page }) => {

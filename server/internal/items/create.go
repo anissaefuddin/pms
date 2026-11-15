@@ -17,6 +17,9 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// DefaultViewTypes are the views a project or folder may open first (migration 00322 seeds the extra ones).
+var DefaultViewTypes = []string{"table", "board", "gantt", "calendar", "files", "chart"}
+
 type initialShare struct {
 	PrincipalType string    `json:"principal_type"`
 	PrincipalID   uuid.UUID `json:"principal_id"`
@@ -175,8 +178,8 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 	}
 	var view *string
 	if raw, ok := fields["default_view_type"]; ok {
-		if json.Unmarshal(raw, &view) != nil || view == nil || (*view != "table" && *view != "board") || kind == "task" {
-			return Detail{}, Invalid("default_view_type must be table or board on a project or folder")
+		if json.Unmarshal(raw, &view) != nil || view == nil || !slices.Contains(DefaultViewTypes, *view) || kind == "task" {
+			return Detail{}, Invalid("default_view_type must be one of table, board, gantt, calendar, files, chart on a project or folder")
 		}
 	}
 
