@@ -4595,7 +4595,7 @@ export interface components {
             seats: components["schemas"]["Seats"];
         };
         /** @enum {string} */
-        SidebarKey: "created_by_me" | "workload" | "calendars" | "dashboards" | "my_todo" | "request_forms" | "timesheets" | "reports" | "stream" | "starred";
+        SidebarKey: "created_by_me" | "workload" | "calendars" | "dashboards" | "my_todo" | "request_forms" | "timesheets" | "reports" | "stream" | "starred" | "portfolio" | "reviews";
         InviteRequest: {
             /** Format: email */
             email: string;

@@ -23,7 +23,7 @@ var profileChoices = map[string][]string{
 }
 
 // sidebarKeys are the optional sidebar entries a user may hide (NAV-02); Search and Inbox are not listed because they always show.
-var sidebarKeys = []string{"created_by_me", "workload", "calendars", "dashboards", "my_todo", "request_forms", "timesheets", "reports", "stream", "starred"}
+var sidebarKeys = []string{"created_by_me", "workload", "calendars", "dashboards", "my_todo", "request_forms", "timesheets", "reports", "stream", "starred", "portfolio", "reviews"}
 
 // profileNumbers are optional whole-number defaults with their upper limit (the table has the same CHECK).
 var profileNumbers = map[string]int{"default_task_duration_days": 3650, "default_task_effort_minutes": 525600}

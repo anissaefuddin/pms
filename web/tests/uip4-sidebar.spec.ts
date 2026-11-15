@@ -71,3 +71,15 @@ test("the realtime status shows only while disconnected", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByText("Live", { exact: true })).toHaveCount(0);
 });
+
+test("on a project page a task opens in the slide-right panel, not a new page", async ({ page }) => {
+  const taskId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const task = { ...projectItem, id: taskId, type: "task", title: "Draft brief", seq: 2 };
+  await mockSpaces(page, { extra: { ...common, "GET /spaces/x/views": { body: { items: [] } },
+    [`GET ${itemPath}/children`]: { body: { items: [task] } }, [`GET /items/${taskId}`]: { headers: { ETag: '"1"' }, body: task },
+    [`GET /items/${taskId}/children`]: { body: { items: [] } } } as never });
+  await page.goto(`/tasks/${project}`);
+  await page.getByRole("button", { name: "Draft brief", exact: true }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/tasks/${project}\\?.*task=${taskId}`));
+  await expect(page.getByRole("dialog", { name: "Item detail" })).toBeVisible();
+});

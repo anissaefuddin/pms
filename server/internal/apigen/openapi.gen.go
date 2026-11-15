@@ -2118,8 +2118,10 @@ const (
 	SidebarKeyCreatedByMe  SidebarKey = "created_by_me"
 	SidebarKeyDashboards   SidebarKey = "dashboards"
 	SidebarKeyMyTodo       SidebarKey = "my_todo"
+	SidebarKeyPortfolio    SidebarKey = "portfolio"
 	SidebarKeyReports      SidebarKey = "reports"
 	SidebarKeyRequestForms SidebarKey = "request_forms"
+	SidebarKeyReviews      SidebarKey = "reviews"
 	SidebarKeyStarred      SidebarKey = "starred"
 	SidebarKeyStream       SidebarKey = "stream"
 	SidebarKeyTimesheets   SidebarKey = "timesheets"
@@ -2137,9 +2139,13 @@ func (e SidebarKey) Valid() bool {
 		return true
 	case SidebarKeyMyTodo:
 		return true
+	case SidebarKeyPortfolio:
+		return true
 	case SidebarKeyReports:
 		return true
 	case SidebarKeyRequestForms:
+		return true
+	case SidebarKeyReviews:
 		return true
 	case SidebarKeyStarred:
 		return true

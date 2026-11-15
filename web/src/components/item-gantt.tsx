@@ -4,7 +4,7 @@ import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Keyboard, Minus, Plus } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Keyboard, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
 import { ApiError, api } from "@/lib/api";
@@ -75,6 +75,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const [selected, setSelected] = useState<string>();
   const [baselineId, setBaselineId] = useState("");
   const [naming, setNaming] = useState(false);
+  const [allOpen, setAllOpen] = useState(true);
   const [sharing, setSharing] = useState(false);
   const chart = useRef<IApi>(undefined);
   const chartRegion = useRef<HTMLDivElement>(null);
@@ -112,14 +113,15 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const variance = useQuery({ queryKey: ["baseline-variance", baselineId], enabled: !!baselineId,
     queryFn: () => api<{ items: Variance[] }>(`/api/v1/baselines/${baselineId}/variance`) });
   const varianceById = useMemo(() => new Map((baselineId ? variance.data?.items ?? [] : []).map((v) => [v.item_id, v])), [baselineId, variance.data]);
-  const shownTasks = useMemo(() => tasks.map((task) => {
+  const shownTasks = useMemo(() => tasks.map((open) => {
+    const task = { ...open, open: allOpen };
     const v = varianceById.get(String(task.id));
     if (!v) return task;
     // shortcut: the free SVAR build has no baseline bars, so the frozen dates are shown as grid columns; upgrade with SVAR PRO.
     const range = (a?: string | null, b?: string | null) => [a ?? b, b ?? a].filter(Boolean).map((d) => formatDate(d, profile)).join(" – ");
     return { ...task, baseline: range(v.baseline_start, v.baseline_due),
       variance: v.due_variance_days == null ? "" : `${v.due_variance_days > 0 ? "+" : ""}${t("views.gantt.varianceValue", { days: v.due_variance_days })}` };
-  }), [tasks, varianceById, t, profile]);
+  }), [tasks, varianceById, t, profile, allOpen]);
   const itemIds = useMemo(() => [...byId.keys()].sort().slice(0, 1000), [byId]);
   const dependencies = useQuery({
     queryKey: ["gantt-dependencies", itemIds], enabled: itemIds.length > 1,
@@ -265,6 +267,8 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
         {scaleOptions.map((value) => <Button key={value} size="sm" variant={scale === value ? "default" : "outline"}
           aria-pressed={scale === value} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</Button>)}
       </div>
+      <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
+      <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(".gantt-today")?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.today")}</Button>
       {!!parentId && <>
         <label className="flex items-center gap-1 text-sm">{t("views.gantt.baseline")}
           <select value={baselineId} onChange={(event) => setBaselineId(event.target.value)} className="rounded border bg-background p-1">

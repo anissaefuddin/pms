@@ -6373,7 +6373,7 @@ components:
         seats: { $ref: '#/components/schemas/Seats' }
     SidebarKey:
       type: string
-      enum: [created_by_me, workload, calendars, dashboards, my_todo, request_forms, timesheets, reports, stream, starred]
+      enum: [created_by_me, workload, calendars, dashboards, my_todo, request_forms, timesheets, reports, stream, starred, portfolio, reviews]
     InviteRequest:
       type: object
       required: [email, user_type]

@@ -37,6 +37,11 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
   const [infoOpen, setInfoOpen] = useState(false);
   const [addingTask, setAddingTask] = useState(false);
   const [sharing, setSharing] = useState(false);
+  // Tasks open in the slide-right panel (?task=); projects and folders open as pages.
+  function openChild(child: Item) {
+    if (child.type === "task") void navigate({ to: ".", search: (previous) => ({ ...previous, task: child.id }) });
+    else void navigate({ to: "/tasks/$itemId", params: { itemId: child.id } });
+  }
   if (!me) return null;
   if (detail.isError) return <main className="mx-auto w-full space-y-2 p-6"><FormError message={t("items.loadError")} /><Button variant="outline" onClick={() => void detail.refetch()}>{t("items.retry")}</Button></main>;
   return <main className="mx-auto w-full space-y-6 p-6">
@@ -53,10 +58,10 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
       onOpen={(id) => void navigate({ to: "/tasks/$itemId", params: { itemId: id } })}
       onDeleted={() => void navigate({ to: "/" })} />}
     {container && <ViewWorkspace spaceId={container.locations[0]?.space_id ?? ""} parent={container} me={me}
-      canCreate={canCreate} canEdit={canEdit} onOpen={(child) => void navigate({ to: "/tasks/$itemId", params: { itemId: child.id } })} />}
+      canCreate={canCreate} canEdit={canEdit} onOpen={openChild} />}
     {isProject && item && <CreateItemDialog open={addingTask} onOpenChange={setAddingTask} taskOnly me={me}
       location={{ space_id: item.locations[0]?.space_id ?? "", parent_item_id: item.id }}
-      onCreated={(created: Item) => void navigate({ to: "/tasks/$itemId", params: { itemId: created.id } })} />}
+      onCreated={openChild} />}
     {isProject && item && <ShareDialog
       open={sharing}
       onOpenChange={setSharing}

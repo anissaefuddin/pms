@@ -10,7 +10,7 @@ export type ShortcutId = (typeof SHORTCUT_IDS)[number];
 /** Kunci sidebar_hidden (profil) yang menyembunyikan shortcut; shortcut tanpa kunci selalu tampil. */
 export const SHORTCUT_HIDE_KEY: Partial<Record<ShortcutId, string>> = {
   request_forms: "request_forms", stream: "stream", workload: "workload", timesheets: "timesheets",
-  starred: "starred", dashboards: "dashboards", reports: "reports", my_todo: "my_todo", calendars: "calendars", created_by_me: "created_by_me",
+  starred: "starred", dashboards: "dashboards", reports: "reports", my_todo: "my_todo", calendars: "calendars", created_by_me: "created_by_me", portfolio: "portfolio", reviews: "reviews",
 };
 
 export const SHORTCUT_LABEL_KEY: Record<ShortcutId, string> = {
