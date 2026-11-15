@@ -47,7 +47,7 @@ function CustomizeForm({ pinOrder, hidden, onCancel, onSave }: {
     const label = name(id);
     const blocked = !isShortcutVisible(id, hidden);
     return <li key={id} className="flex items-center gap-2 rounded-md px-2 py-1 hover:bg-muted">
-      <input type="checkbox" className="size-4 shrink-0" checked={pinned} disabled={blocked}
+      <input type="checkbox" className="size-4 shrink-0" checked={pinned}
         aria-label={t("nav.customize.pin", { name: label })}
         onChange={() => setDraft(togglePin(draft, id))} />
       <span className="min-w-0 flex-1 truncate text-sm">{label}</span>

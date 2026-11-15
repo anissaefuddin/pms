@@ -116,4 +116,4 @@ export function toggleOpen(ids: readonly string[], id: string): string[] {
 }
 
 /** Kelas tema sidebar. Default terang; ganti ke "sidebar-navy" setelah D-84 disetujui. */
-export const SIDEBAR_THEME = "sidebar-light";
+export const SIDEBAR_THEME = "sidebar-navy";

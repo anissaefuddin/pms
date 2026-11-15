@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
-import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings, Star, Trash2, Users } from "lucide-react";
+import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Star, Trash2, Users } from "lucide-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -11,7 +11,7 @@ import { itemKeys, listItems, type Item } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
 import type { Space } from "@/lib/spaces";
 import {
-  SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
+  SHORTCUT_HIDE_KEY, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
   readOpenSpaces, readWidth, sanitizePinOrder, toggleOpen, writeOpenSpaces, writeWidth, type ShortcutId,
 } from "@/lib/sidebar-prefs";
 import { Button } from "./ui/button";
@@ -126,7 +126,9 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
 
   async function savePins(order: ShortcutId[]) {
     try {
-      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify({ sidebar_pinned: sanitizePinOrder(order) }) }));
+      const pinnedKeys = sanitizePinOrder(order).map((id) => SHORTCUT_HIDE_KEY[id]);
+      const body = { sidebar_pinned: sanitizePinOrder(order), sidebar_hidden: hidden.filter((key) => !pinnedKeys.includes(key)) };
+      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify(body) }));
     } catch {
       toast.error(t("nav.customize.saveFailed"));
     }
@@ -168,10 +170,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
         </DropdownMenu>
       </nav>
       {!collapsed && <SpacesNav me={me} />}
-      <div className="mt-auto space-y-1 border-t border-border pt-3">
-        <Nav icon={<Settings />} label={t("nav.settings.label")} collapsed={collapsed} current={isCurrent("/settings")} onClick={() => go("/settings")} />
-        {!collapsed && <p className="px-3 text-xs text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
-      </div>
+      {!collapsed && <p className="mt-auto px-3 pt-3 text-xs text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
       {!mobile && !collapsed && <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
         onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
         className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none hover:bg-nav-hover focus-visible:bg-nav-active focus-visible:outline-none" />}
@@ -219,7 +218,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   }
 
   return (
-    <nav className="mt-5 flex min-h-0 max-h-[42vh] flex-col overflow-y-auto" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
+    <nav className="mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
       <div className="flex items-center justify-between px-3 pb-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("spaces.nav.label")}</h2>
         {me.capabilities.create_space && (
@@ -228,7 +227,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
       </div>
       {spaces.isPending && <p role="status" className="px-3 py-2 text-sm text-nav-muted">{t("spaces.nav.loading")}</p>}
       {spaces.isError && (
-        <div className="px-3 py-2 text-sm"><p role="alert">{t("spaces.nav.error")}</p><Button variant="link" size="sm" className="px-0" onClick={() => spaces.refetch()}>{t("spaces.nav.retry")}</Button></div>
+        <div className="px-3 py-2 text-sm"><p role="alert">{t("spaces.nav.error")}</p><Button variant="link" size="sm" className="px-0 text-nav-text" onClick={() => spaces.refetch()}>{t("spaces.nav.retry")}</Button></div>
       )}
       <ul>
         {spaces.data?.map((s) => (
@@ -299,7 +298,7 @@ function ItemTree({ id, space = false }: { id: string; space?: boolean }) {
   });
   return <ul>
     {query.isPending && <li className="p-1 text-xs" role="status">{t("items.loading")}</li>}
-    {query.isError && <li><Button variant="link" size="sm" onClick={() => void query.refetch()}>{t("items.retry")}</Button></li>}
+    {query.isError && <li><Button variant="link" size="sm" className="text-nav-text" onClick={() => void query.refetch()}>{t("items.retry")}</Button></li>}
     {query.data?.filter((item: Item) => item.type !== "task").map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} />)}
   </ul>;
 }

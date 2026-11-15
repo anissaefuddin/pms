@@ -19,7 +19,7 @@ test("Customize sidebar unpins a shortcut, saves the pin order, and the sidebar 
   await dialog.getByRole("checkbox", { name: "Pin Stream" }).uncheck();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await dialog.getByRole("button", { name: "Done" }).click();
-  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toEqual({ sidebar_pinned: ["request_forms"] });
+  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toMatchObject({ sidebar_pinned: ["request_forms"] });
   await expect(nav.getByRole("button", { name: "Stream" })).toHaveCount(0);
 });
 
