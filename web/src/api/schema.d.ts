@@ -3449,7 +3449,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Approve atau reject; hanya approver yang disebut, boleh diubah kemudian */
+        /** Approve atau reject; hanya approver yang disebut. Suara boleh diubah selama hasil belum final; setelah final 409 `approval_final` (APR-03) */
         put: operations["decideApproval"];
         post?: never;
         delete?: never;
@@ -13223,6 +13223,7 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };
