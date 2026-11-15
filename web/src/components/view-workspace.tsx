@@ -206,10 +206,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       </div>}
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
-      {items.isSuccess && (!spaceEmpty && noMatches ? emptyResults
-        : active.type === "board"
-        ? <ItemBoard {...collection} swimlanes={swimlanes} />
-        : <ItemTable {...collection} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
+      {items.isSuccess && (active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} />)
+        : <ItemTable {...collection} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
       taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
