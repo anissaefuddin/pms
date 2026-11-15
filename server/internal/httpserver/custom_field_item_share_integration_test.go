@@ -29,3 +29,28 @@ func TestItemLevelEditorCanSetSpaceCustomFieldValues(t *testing.T) {
 		t.Fatalf("a read-only item share must not edit custom fields: %d", v.status)
 	}
 }
+
+// QA-D-r3lane2-001: a relation field can never newly store an item the writer cannot view.
+func TestRelationFieldRejectsHiddenTarget(t *testing.T) {
+	f := newFixture(t)
+	admin, editor := f.person("admin"), f.person("regular")
+	space, hidden := f.space("Work"), f.space("Confidential")
+	field := f.call(admin, http.MethodPost, "/spaces/"+space+"/custom-fields", map[string]any{"name": "Related", "type": "relation", "config": map[string]any{}})
+	f.want(field, 201, "relation field")
+	fid := field.body["id"].(string)
+	mk := func(sp, title string) string {
+		r := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": title, "locations": []map[string]any{{"space_id": sp}}})
+		f.want(r, 201, title)
+		return r.body["id"].(string)
+	}
+	src, ok, secret := mk(space, "Source"), mk(space, "Visible"), mk(hidden, "Secret")
+	cur := f.call(admin, "GET", "/items/"+src+"/shares", nil)
+	f.want(f.call(admin, "PUT", "/items/"+src+"/shares", map[string]any{"shares": []map[string]any{{"principal_type": "user", "principal_id": editor.id, "role": "editor"}}}, "If-Match", cur.header.Get("ETag")), 200, "share")
+	cur = f.call(admin, "GET", "/items/"+ok+"/shares", nil)
+	f.want(f.call(admin, "PUT", "/items/"+ok+"/shares", map[string]any{"shares": []map[string]any{{"principal_type": "user", "principal_id": editor.id, "role": "read"}}}, "If-Match", cur.header.Get("ETag")), 200, "share visible")
+	version := strconv.Itoa(int(f.call(editor, "GET", "/items/"+src, nil).body["version"].(float64)))
+	got := f.call(editor, "PATCH", "/items/"+src, map[string]any{"fields": map[string]any{fid: []string{ok, secret}}}, "If-Match", `"`+version+`"`)
+	if got.status != 422 {
+		t.Fatalf("a hidden relation target must be refused: %d %v", got.status, got.body)
+	}
+}
