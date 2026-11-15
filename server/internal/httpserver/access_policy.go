@@ -152,6 +152,10 @@ func (s *Server) putAccessPolicy(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &in) {
 		return
 	}
+	if in.OTP && len(s.cfg.OTPKey) != 32 {
+		writeProblem(w, 422, "key_not_configured", "one-time-code sign-in needs PMS_OTP_KEY on the server")
+		return
+	}
 	if len(in.List) > 50 {
 		writeError(w, 422, "an allowlist can hold at most 50 entries")
 		return

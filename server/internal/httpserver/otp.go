@@ -1,6 +1,7 @@
 package httpserver
 
 import (
+	"crypto/hmac"
 	"crypto/rand"
 	"crypto/sha256"
 	"crypto/subtle"
@@ -19,8 +20,7 @@ import (
 
 // Sign-in with a one-time code mailed to the person (AUTH-08, D-97). It replaces the password, not the second factor: a person with
 // two-factor still answers it. Off until an administrator turns it on.
-// shortcut: a six-digit code is only as strong as the attempt limit around it (5 tries per code, the per-address and per-network
-// failure limits shared with password sign-in); move to a longer code if the limits ever loosen.
+// The short code is stored as an HMAC under a server-only key, so a database copy is not an offline guessing oracle.
 
 const (
 	auditOTPRequested = "auth.otp_requested"
@@ -36,9 +36,10 @@ func (s *Server) otpRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/auth/otp/verify", s.otpVerify)
 }
 
-func otpHash(codeID, code string) []byte {
-	sum := sha256.Sum256([]byte(codeID + ":" + code))
-	return sum[:]
+func otpHash(key []byte, codeID, code string) []byte {
+	mac := hmac.New(sha256.New, key)
+	_, _ = mac.Write([]byte(codeID + ":" + code))
+	return mac.Sum(nil)
 }
 
 // otpGate answers whether the feature can be used from here; it writes the refusal itself.
@@ -54,6 +55,10 @@ func (s *Server) otpGate(w http.ResponseWriter, r *http.Request) bool {
 	}
 	if !p.OTP {
 		writeError(w, http.StatusNotFound, "signing in with a code is not turned on")
+		return false
+	}
+	if len(s.cfg.OTPKey) != 32 {
+		writeError(w, http.StatusServiceUnavailable, "signing in with a code is temporarily unavailable")
 		return false
 	}
 	return true
@@ -109,7 +114,7 @@ func (s *Server) issueCode(r *http.Request, userID, email, locale string) error 
 		return err
 	}
 	codeID := uuid.NewString() // the id salts the hash, so it is chosen before the row exists
-	if _, err := tx.Exec(ctx, "INSERT INTO login_codes(id,user_id,code_hash,expires_at) VALUES($1,$2,$3,$4)", codeID, userID, otpHash(codeID, code), time.Now().Add(otpLifetime)); err != nil {
+	if _, err := tx.Exec(ctx, "INSERT INTO login_codes(id,user_id,code_hash,expires_at) VALUES($1,$2,$3,$4)", codeID, userID, otpHash(s.cfg.OTPKey, codeID, code), time.Now().Add(otpLifetime)); err != nil {
 		return err
 	}
 	if err := s.mail.SendTx(ctx, tx, mailqueue.Args{To: email, Template: "login_code", Message: code, Locale: locale}); err != nil {
@@ -178,7 +183,7 @@ RETURNING id::text,code_hash,attempts`, userID).Scan(&id, &hash, &attempts)
 		}
 		return userID, false
 	}
-	match := otpFormat.MatchString(code) && subtle.ConstantTimeCompare(hash, otpHash(id, code)) == 1
+	match := otpFormat.MatchString(code) && subtle.ConstantTimeCompare(hash, otpHash(s.cfg.OTPKey, id, code)) == 1
 	if match && attempts <= otpMaxAttempts {
 		tag, err := tx.Exec(ctx, "UPDATE login_codes SET used_at=now() WHERE id=$1 AND used_at IS NULL", id)
 		if err != nil || tag.RowsAffected() != 1 {

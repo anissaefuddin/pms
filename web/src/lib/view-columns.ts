@@ -26,8 +26,8 @@ export const fieldFilterRef = (field?: string) => {
   return { id: id ?? "", value: value.join(":") };
 };
 
-/** Optional facts on a Board card; the title, assignees, dates and counts are always shown. */
-export const cardFieldGroups = [{ id: "card", columns: ["cover", "id", "type", "locations", "author", "days_in_status"] }] as const;
+/** Optional facts on a Board card; the title and activity counts are always shown. */
+export const cardFieldGroups = [{ id: "card", columns: ["cover", "id", "type", "assignee", "start_date", "due_date", "importance", "locations", "author", "days_in_status"] }] as const;
 
 /** Built-in columns the Gantt grid can show next to the name. */
 export const ganttColumnGroups = [{ id: "management", columns: ["status"] }, { id: "schedule", columns: ["start_date", "due_date"] }] as const;

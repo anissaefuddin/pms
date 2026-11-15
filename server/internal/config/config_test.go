@@ -69,6 +69,23 @@ func TestTwoFactorKeys(t *testing.T) {
 	}
 }
 
+func TestOTPKey(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	for _, tc := range []struct {
+		value string
+		ok    bool
+	}{{"", true}, {"AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=", true}, {"c2hvcnQ=", false}, {"not base64!", false}} {
+		t.Setenv("PMS_OTP_KEY", tc.value)
+		cfg, err := Load()
+		if (err == nil) != tc.ok {
+			t.Errorf("PMS_OTP_KEY=%q: %v", tc.value, err)
+		}
+		if err == nil && (tc.value != "") != (len(cfg.OTPKey) == 32) {
+			t.Errorf("PMS_OTP_KEY=%q loaded %d bytes", tc.value, len(cfg.OTPKey))
+		}
+	}
+}
+
 func TestStorageBackendNeedsItsSettings(t *testing.T) {
 	t.Setenv("DATABASE_URL", "postgres://x")
 	for _, c := range []struct {

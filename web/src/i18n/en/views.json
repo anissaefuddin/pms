@@ -91,6 +91,7 @@
     "assignee": "Assignees",
     "start_date": "Start date",
     "due_date": "Finish date",
+    "importance": "Priority",
     "progress": "Progress",
     "archived": "archived",
     "card": "Card",

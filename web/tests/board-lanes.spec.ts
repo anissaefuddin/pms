@@ -12,7 +12,9 @@ const mk = (n: number, title: string, assignees: object[], extra: object = {}) =
   id: `b0000000-0000-4000-8000-00000000000${n}`, seq: n, type: "task", title, version: 1, status: nw, my_capabilities: ALL, assignees,
   locations: [{ space_id: marketing.id, space_name: "Marketing" }], created_by: { id: ann.id, name: ann.name }, status_changed_at: day(4), ...extra,
 });
-const shared = mk(1, "Shared work", [ann, bob], { cover_attachment_id: "c1000000-0000-4000-8000-000000000001" });
+const shared = mk(1, "Shared work", [ann, bob], {
+  cover_attachment_id: "c1000000-0000-4000-8000-000000000001", importance: "high", start_date: "2026-11-10", due_date: "2026-11-20",
+});
 const solo = mk(2, "Solo work", [ann]);
 const orphan = mk(3, "Nobody's work", []);
 
@@ -78,13 +80,19 @@ test("without lanes a status drop is still immediate, and the card picker saves 
   await expect(card).not.toContainText("days in status");
   await page.getByRole("button", { name: "Card fields" }).click();
   const dialog = page.getByRole("dialog", { name: "Choose card fields" });
-  for (const name of ["Cover image", "ID", "Type", "Days in status", "Author", "Locations"]) await dialog.getByLabel(name, { exact: true }).check();
+  for (const name of ["Cover image", "ID", "Type", "Priority", "Days in status", "Author", "Locations"]) await dialog.getByLabel(name, { exact: true }).check();
+  await dialog.getByLabel("Assignees", { exact: true }).uncheck();
+  await dialog.getByLabel("Start date", { exact: true }).uncheck();
   await dialog.getByRole("button", { name: "Save columns" }).click();
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/views/${boardId}`)?.body.config.columns)
-    .toEqual(["status", "assignee", "start_date", "due_date", "cover", "id", "type", "days_in_status", "author", "locations"]);
+    .toEqual(["status", "due_date", "cover", "id", "type", "importance", "days_in_status", "author", "locations"]);
   await expect(card).toContainText("#1");
   await expect(card).toContainText("4 days in status");
   await expect(card).toContainText("By Ann Lee");
   await expect(card).toContainText("Marketing");
+  await expect(card).toContainText("High");
+  await expect(card).not.toContainText("Ann Lee, Bob Ray");
+  await expect(card).not.toContainText("2026-11-10");
+  await expect(card).toContainText("2026-11-20");
   await expect(card.locator("img")).toHaveAttribute("src", "/api/v1/attachments/c1000000-0000-4000-8000-000000000001/download");
 });

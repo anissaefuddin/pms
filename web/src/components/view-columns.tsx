@@ -22,7 +22,7 @@ export function ColumnPicker({ board, fieldsOnly, selected, fields, canSave, sav
     {open && <Dialog open onOpenChange={setOpen}>
       <DialogContent>
         <DialogTitle>{t(board ? "views.columns.cardTitle" : "views.columns.title")}</DialogTitle>
-        <p className="text-sm text-muted-foreground">{t("views.columns.hint")}</p>
+        <p className="text-sm text-foreground">{t("views.columns.hint")}</p>
         <div className="max-h-[60vh] space-y-3 overflow-y-auto">
           {(fieldsOnly ? ganttColumnGroups : board ? cardFieldGroups : columnGroups).map((group) => <fieldset key={group.id} className="space-y-1">
             <legend className="font-medium">{t(`views.columns.${group.id}`)}</legend>
