@@ -63,7 +63,7 @@ function option(p: ChartProps, el: Element): echarts.EChartsCoreOption {
   const categories = p.grid.categories.map((c) => c.label);
   const horizontal = p.type === "bar";
   const category = { type: "category" as const, data: categories, axisLabel: { color: text, interval: 0, hideOverlap: true }, axisLine: { lineStyle: { color: text } } };
-  const value = { type: "value" as const, name: p.metric, nameTextStyle: { color: text }, axisLabel: { color: text }, splitLine: { lineStyle: { opacity: 0.25 } } };
+  const value = { type: "value" as const, name: p.metric, nameTextStyle: { color: text, align: horizontal ? "right" as const : "left" as const }, axisLabel: { color: text }, splitLine: { lineStyle: { opacity: 0.25 } } };
   return { ...base, grid: { left: 8, right: 16, top: 28, bottom: p.showLegend ? 40 : 8, containLabel: true },
     xAxis: horizontal ? value : category, yAxis: horizontal ? category : value,
     series: p.grid.series.map((s) => ({ type: lineLike ? "line" : "bar", name: s.name, data: s.values,
