@@ -23,8 +23,10 @@ import type { ItemCollectionProps } from "./item-collection-types";
 
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string };
 
-export function ItemTable({ items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder, showEmpty = true }: ItemCollectionProps & {
+export function ItemTable({ items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
   showEmpty?: boolean;
+  filter?: string; // RT-37: title filter applied to the whole tree, so loaded nested rows match too
+  noResults?: React.ReactNode;
   group?: "status" | "type";
   manual: boolean;
   onReorder: (item: Item, parent: string | undefined, after: string | null) => Promise<void>;
@@ -62,8 +64,17 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
       }
     }
     visit(roots, 0, parentId);
-    return output;
-  }, [items, expanded, children, group, spaceId, parentId, t]);
+    const needle = filter.trim().toLocaleLowerCase();
+    if (!needle) return output;
+    // keep a row when it matches or when any row below it (deeper, until the next row at its level) matches
+    return output.filter((row, index) => {
+      if (row.item.title.toLocaleLowerCase().includes(needle)) return true;
+      for (let next = index + 1; next < output.length && output[next].depth > row.depth; next++) {
+        if (output[next].item.title.toLocaleLowerCase().includes(needle)) return true;
+      }
+      return false;
+    });
+  }, [items, expanded, children, group, spaceId, parentId, t, filter]);
 
   const allColumns: ColumnDef<TableRow>[] = [
     { id: "name", header: t("items.name"), cell: ({ row }) => {
@@ -115,8 +126,8 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
       const { item } = row.original;
       const canEdit = item.my_capabilities.includes("edit");
       return canEdit ? <Button variant="ghost" size="sm" className="max-w-full truncate"
-        aria-label={`${t("items.assignees")}: ${item.title}`}
         onClick={() => setEditing({ id: item.id, field: "assignees" })}>
+        <span className="sr-only">{`${t("items.assignees")}: ${item.title}`}</span>
         {item.assignees.length ? <AvatarStack people={item.assignees} /> : t("items.assignees")}
       </Button> : <AvatarStack people={item.assignees} />;
     } },
@@ -229,7 +240,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
         })}
       </div>
     </div>
-    {showEmpty && model.length === 0 && <p className="text-muted-foreground">{t("views.empty")}</p>}
+    {showEmpty && model.length === 0 && (filter.trim() && noResults ? noResults : <p className="text-muted-foreground">{t("views.empty")}</p>)}
     {canCreate && <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
     {editedField && editedFieldItem && profile && <FieldEdit key={editedFieldItem.id + editedField.id} field={editedField} item={editedFieldItem}
       locale={profile.locale} pending={pending} onCancel={() => setEditing(undefined)}
