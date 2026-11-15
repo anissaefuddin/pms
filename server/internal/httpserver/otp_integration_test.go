@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"regexp"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -139,6 +140,7 @@ func TestOTPConcurrentVerificationSucceedsOnce(t *testing.T) {
 	f.want(f.otpRequest(email), 202, "request")
 	_, code := f.lastCode()
 
+	before := f.queryID("SELECT count(*)::text FROM sessions WHERE user_id=$1", alice.id) // the fixture already holds one session for alice
 	const requests = 5
 	results := make(chan reply, requests)
 	var ready, start sync.WaitGroup
@@ -165,7 +167,7 @@ func TestOTPConcurrentVerificationSucceedsOnce(t *testing.T) {
 	if success != 1 {
 		t.Fatalf("concurrent verification succeeded %d times, want once", success)
 	}
-	if f.queryID("SELECT count(*)::text FROM sessions WHERE user_id=$1", alice.id) != "1" {
+	if n, _ := strconv.Atoi(before); f.queryID("SELECT count(*)::text FROM sessions WHERE user_id=$1", alice.id) != strconv.Itoa(n+1) {
 		t.Fatal("one code must create exactly one session")
 	}
 }
