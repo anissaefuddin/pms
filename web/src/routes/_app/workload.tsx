@@ -55,7 +55,7 @@ function Workload() {
     {(data.error || save.error) && <p role="alert">{(save.error ?? data.error)?.message}</p>}
     {data.data && <>
       <p className="text-sm text-muted-foreground">{t("workload.hint")}</p>
-      <div className="relative overflow-x-auto">
+      <div className="relative overflow-x-auto" role="region" tabIndex={0} aria-label={t("workload.caption")}>
         <table className="w-full text-left text-sm">
           <caption className="sr-only">{t("workload.caption")}</caption>
           <thead><tr><th scope="col" className="p-2">{t("workload.resource")}</th>{columns.map(i => <th scope="col" key={i} className="whitespace-nowrap p-2">{iso(dayAt(from, i))}</th>)}</tr></thead>
@@ -72,7 +72,7 @@ function Workload() {
         </table>
       </div>
       {util.data && <section className="space-y-2"><h2 className="font-semibold">{t("workload.utilization")}</h2>
-        <div className="overflow-x-auto"><table className="w-full text-left text-sm">
+        <div className="overflow-x-auto" role="region" tabIndex={0} aria-label={t("workload.utilCaption")}><table className="w-full text-left text-sm">
           <caption className="sr-only">{t("workload.utilCaption")}</caption>
           <thead><tr><th scope="col" className="p-2">{t("workload.resource")}</th><th scope="col" className="p-2">{t("workload.capacity")}</th><th scope="col" className="p-2">{t("workload.planned")}</th><th scope="col" className="p-2">{t("workload.actual")}</th></tr></thead>
           <tbody>{util.data.items.map(u => <tr key={u.id} className="border-t"><th scope="row" className="p-2">{u.name}</th><td className="p-2">{u.capacity}</td>
