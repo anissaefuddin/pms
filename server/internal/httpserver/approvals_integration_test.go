@@ -68,10 +68,11 @@ func TestApprovals(t *testing.T) {
 	if two.body["status"] != "approved" || two.body["approved_count"] != float64(2) {
 		t.Fatalf("all approved: %v", two.body)
 	}
-	flipped := decide(viewer, "rejected")
-	if flipped.body["status"] != "rejected" || flipped.body["approved_count"] != float64(1) {
-		t.Fatalf("one rejection rejects the approval: %v", flipped.body)
+	// QA-D-lane2-011: the approval is final, so a voter cannot flip their vote afterwards.
+	if flipped := decide(viewer, "rejected"); flipped.status != 409 || flipped.body["code"] != "approval_final" {
+		t.Fatalf("final approval must refuse a changed vote: %d %v", flipped.status, flipped.body)
 	}
+	flipped := two
 
 	// Editing: needs edit rights and the current version; removing an approver drops their decision.
 	version := flipped.header.Get("ETag")
@@ -109,23 +110,20 @@ func TestApprovalHistoryIsAppendOnlyAndPinnedToItemVersion(t *testing.T) {
 	id := made.body["id"].(string)
 	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "approved", "comment": "fine"}), 200, "decide")
 
-	// The decision is pinned to the item version at that moment, even when the item moves on afterwards.
+	// QA-D-lane2-011: a finalized approval is immutable; a second decision is refused and the history keeps one decision.
 	f.exec("UPDATE items SET version=version+5 WHERE id=$1", itemID)
-	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "rejected", "comment": "changed my mind"}), 200, "re-decide")
+	f.want(f.call(approver, "PUT", "/approvals/"+id+"/decision", map[string]any{"decision": "rejected", "comment": "changed my mind"}), 409, "final approval cannot be re-decided")
 	hist := f.call(admin, "GET", "/items/"+itemID+"/approval-events", nil)
 	f.want(hist, 200, "history")
 	ev := hist.items()
-	if len(ev) != 3 || ev[0]["kind"] != "decided" || ev[0]["decision"] != "rejected" || ev[2]["kind"] != "approver_requested" {
-		t.Fatalf("history newest first: %v", ev)
-	}
-	if ev[1]["item_version"] == ev[0]["item_version"] || ev[0]["comment"] != "changed my mind" {
-		t.Fatalf("decisions must keep their own item version: %v", ev)
+	if len(ev) != 2 || ev[0]["kind"] != "decided" || ev[0]["decision"] != "approved" || ev[1]["kind"] != "approver_requested" {
+		t.Fatalf("history newest first, one decision: %v", ev)
 	}
 	f.want(f.call(outsider, "GET", "/items/"+itemID+"/approval-events", nil), 404, "no access is 404")
 
 	// Deleting the approval is recorded, and the rows can never be changed or removed, not even by SQL.
 	f.want(f.call(admin, "DELETE", "/approvals/"+id, nil), 204, "withdraw")
-	if n := f.queryID("SELECT count(*)::text FROM approval_events WHERE item_id=$1", itemID); n != "4" {
+	if n := f.queryID("SELECT count(*)::text FROM approval_events WHERE item_id=$1", itemID); n != "3" {
 		t.Fatalf("history survives the approval: %s", n)
 	}
 	for _, q := range []string{"UPDATE approval_events SET comment='x'", "DELETE FROM approval_events", "TRUNCATE approval_events"} {
@@ -163,7 +161,8 @@ func TestApprovalPoliciesReassignAndDeadlines(t *testing.T) {
 	anyApproval := makeApproval("any")
 	decide(anyApproval, first, "rejected", "pending")
 	decide(anyApproval, second, "rejected", "rejected")
-	decide(anyApproval, second, "approved", "approved")
+	// QA-D-lane2-011: the rejected outcome is final; changing a vote afterwards is refused.
+	f.want(f.call(second, "PUT", "/approvals/"+anyApproval.body["id"].(string)+"/decision", map[string]string{"decision": "approved"}), 409, "final vote is immutable")
 	all := makeApproval("all")
 	decide(all, first, "approved", "pending")
 	id := all.body["id"].(string)

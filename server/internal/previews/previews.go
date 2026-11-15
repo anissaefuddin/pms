@@ -78,6 +78,9 @@ func Generate(ctx context.Context, pool *pgxpool.Pool, store storage.Storage, id
 	default:
 		status, note = "skipped", "no preview for this file type"
 	}
+	if pages == nil {
+		pages = []Page{} // a skipped render must store [], not JSON null (jsonb_array_elements fails on null)
+	}
 	raw, _ := json.Marshal(pages)
 	_, err = pool.Exec(ctx, `INSERT INTO attachment_previews(attachment_id,version,status,pages,note) VALUES($1,$2,$3,$4,$5)
 ON CONFLICT (attachment_id,version) DO UPDATE SET status=$3,pages=$4,note=$5,updated_at=now()`, id, version, status, raw, note)

@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"maps"
+	"math/rand/v2"
 	"slices"
 	"sort"
+	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
@@ -21,7 +23,30 @@ type initialShare struct {
 	Role          string    `json:"role"`
 }
 
+// Create retries when a concurrent create under the same parent made Postgres abort this Serializable transaction (40001):
+// the creates are independent, so the caller should not see a 409.
 func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
+	var kept int
+	if batch != nil {
+		kept = len(batch.Deliveries)
+	}
+	for attempt := 0; ; attempt++ {
+		item, err := createOnce(ctx, pool, actor, fields, batch)
+		if pgCode(err) != "40001" || attempt >= 15 {
+			return item, writeError(err)
+		}
+		if batch != nil {
+			batch.Deliveries = batch.Deliveries[:kept] // drop what the aborted attempt queued
+		}
+		select {
+		case <-ctx.Done():
+			return Detail{}, ctx.Err()
+		case <-time.After(time.Duration(5+rand.IntN(25*(attempt+1))) * time.Millisecond):
+		}
+	}
+}
+
+func createOnce(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return Detail{}, err
@@ -31,7 +56,7 @@ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields 
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
-	return item, writeError(err)
+	return item, err
 }
 
 // CreateTx creates an Item inside the caller's transaction (Serializable); the caller commits.
@@ -220,7 +245,7 @@ SELECT COALESCE(max(rank COLLATE "C"),'') FROM item_locations
 WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_root_id IS NULL`, loc.SpaceID, loc.ParentID).Scan(&last); err != nil {
 			return Detail{}, err
 		}
-		rank := rankBetween(last, "")
+		rank := rankAfter(last)
 		if len(rank) > 512 || rank <= last {
 			return Detail{}, ErrConflict
 		}

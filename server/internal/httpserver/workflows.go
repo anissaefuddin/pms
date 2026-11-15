@@ -377,6 +377,9 @@ func (s *Server) updateStatus(w http.ResponseWriter, r *http.Request) {
 		}
 		if in.RequiredFields != nil {
 			unique := slices.Compact(slices.Sorted(slices.Values(*in.RequiredFields)))
+			if unique == nil {
+				unique = []string{} // NOT NULL column: an empty list clears the requirement
+			}
 			if len(unique) > 20 || slices.ContainsFunc(unique, func(k string) bool { return !items.ValidGuardField(k) }) {
 				return workflow, wfProblem{422, "validation_failed", "required_fields may list due_date, start_date, assignees, description, effort_minutes or custom field ids (at most 20)"}
 			}

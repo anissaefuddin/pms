@@ -363,14 +363,24 @@ func updateCustomFieldValues(ctx context.Context, tx pgx.Tx, actor policy.Actor,
 	if len(ids) == 0 {
 		return json.Marshal(current)
 	}
-	spaces, err := policy.VisibleSpaces(ctx, tx, actor, "")
+	// A field is available when the item sits in its Space and the actor can see the item there: through the Space or through an
+	// item-level share (a Space share alone is not required, so item-level editors can set values).
+	locations, err := tx.Query(ctx, "SELECT DISTINCT space_id::text FROM item_locations WHERE item_id=$1::uuid AND deleted_root_id IS NULL", itemID)
 	if err != nil {
 		return nil, err
 	}
-	visibleSpaces := make([]string, 0, len(spaces))
-	for _, space := range spaces {
-		if space.Caps.Has(policy.View) {
-			visibleSpaces = append(visibleSpaces, space.ID)
+	itemSpaces, err := pgx.CollectRows(locations, pgx.RowTo[string])
+	if err != nil {
+		return nil, err
+	}
+	visibleSpaces := make([]string, 0, len(itemSpaces))
+	for _, space := range itemSpaces {
+		caps, err := policy.ItemCapsInSpace(ctx, tx, actor, itemID, space)
+		if err != nil {
+			return nil, err
+		}
+		if caps.Has(policy.View) {
+			visibleSpaces = append(visibleSpaces, space)
 		}
 	}
 	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+` FROM custom_fields f
