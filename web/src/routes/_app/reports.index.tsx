@@ -109,7 +109,7 @@ function Reports() {
       <label className="block max-w-sm text-sm"><span className="sr-only">{t("reports.filter")}</span>
         <Input type="search" placeholder={t("reports.filter")} value={filter} onChange={(e) => setFilter(e.target.value)} /></label>
       {rows.length === 0 ? <p role="status" className="text-sm text-muted-foreground">{t("reports.noMatch")}</p> :
-      <table className="w-full text-left text-sm">
+      <div className="relative overflow-x-auto" role="region" tabIndex={0} aria-label={t("reports.title")}><table className="w-full text-left text-sm">
         <thead><tr className="border-b">
           <th scope="col" className="py-2 pr-4">{t("reports.col.name")}</th>
           <th scope="col" className="py-2 pr-4">{t("reports.col.owner")}</th>
@@ -141,7 +141,7 @@ function Reports() {
             </DropdownMenu>
           </td>
         </tr>)}</tbody>
-      </table>}
+      </table></div>}
     </>}
     <ConfirmDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(undefined)} busy={busy} error={error}
       title={t("reports.delete.title")} description={t("reports.delete.description", { name: deleting?.name ?? "" })}

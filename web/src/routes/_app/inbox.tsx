@@ -104,7 +104,7 @@ function Inbox() {
       {box === "incoming" && <p className="text-sm">{t("nav.inbox.emptyHint")}</p>}
     </div>}
     <div className="grid gap-4 lg:grid-cols-[minmax(0,26rem)_minmax(0,1fr)]">
-      <div className={selected ? "hidden lg:block" : ""}>
+      <div className={selected ? "hidden min-w-0 lg:block" : "min-w-0"}>
         {sections.map((section) => <section key={section.key} aria-label={t(`nav.inbox.group.${section.key}`)}>
           <h2 className="mt-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">{t(`nav.inbox.group.${section.key}`)}</h2>
           <ul className="divide-y">
@@ -130,7 +130,7 @@ function Inbox() {
             )}
           </ul></section>)}
       </div>
-      <aside aria-label={t("nav.inbox.label")} className={`rounded border p-4 ${selected ? "" : "hidden lg:block"}`}>
+      <aside aria-label={t("nav.inbox.label")} className={`min-w-0 rounded border p-4 ${selected ? "" : "hidden lg:block"}`}>
         {selected ? <div className="space-y-3">
           <Button variant="link" className="px-0 lg:hidden" onClick={() => setSelectedId(null)}>{t("nav.inbox.back")}</Button>
           <p className="text-sm font-medium">{eventText(selected)}</p>
