@@ -11,6 +11,7 @@
   "none": "None",
   "type": "Type",
   "expand": "Expand {{name}}",
+  "loadMore": "Load more results",
   "editTitle": "Edit name: {{name}}",
   "collapse": "Collapse {{name}}",
   "add": "Add item",

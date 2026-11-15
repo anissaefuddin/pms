@@ -1965,6 +1965,63 @@ func (e ScimTokenInputDefaultUserType) Valid() bool {
 	}
 }
 
+// Defines values for SearchResultsItemsDefaultViewType.
+const (
+	SearchResultsItemsDefaultViewTypeBoard SearchResultsItemsDefaultViewType = "board"
+	SearchResultsItemsDefaultViewTypeTable SearchResultsItemsDefaultViewType = "table"
+)
+
+// Valid indicates whether the value is a known member of the SearchResultsItemsDefaultViewType enum.
+func (e SearchResultsItemsDefaultViewType) Valid() bool {
+	switch e {
+	case SearchResultsItemsDefaultViewTypeBoard:
+		return true
+	case SearchResultsItemsDefaultViewTypeTable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchResultsItemsImportance.
+const (
+	SearchResultsItemsImportanceHigh   SearchResultsItemsImportance = "high"
+	SearchResultsItemsImportanceLow    SearchResultsItemsImportance = "low"
+	SearchResultsItemsImportanceNormal SearchResultsItemsImportance = "normal"
+)
+
+// Valid indicates whether the value is a known member of the SearchResultsItemsImportance enum.
+func (e SearchResultsItemsImportance) Valid() bool {
+	switch e {
+	case SearchResultsItemsImportanceHigh:
+		return true
+	case SearchResultsItemsImportanceLow:
+		return true
+	case SearchResultsItemsImportanceNormal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SearchResultsItemsRestoreBlockedReason.
+const (
+	SearchResultsItemsRestoreBlockedReasonForbidden    SearchResultsItemsRestoreBlockedReason = "forbidden"
+	SearchResultsItemsRestoreBlockedReasonSpaceDeleted SearchResultsItemsRestoreBlockedReason = "space_deleted"
+)
+
+// Valid indicates whether the value is a known member of the SearchResultsItemsRestoreBlockedReason enum.
+func (e SearchResultsItemsRestoreBlockedReason) Valid() bool {
+	switch e {
+	case SearchResultsItemsRestoreBlockedReasonForbidden:
+		return true
+	case SearchResultsItemsRestoreBlockedReasonSpaceDeleted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ShareRole.
 const (
 	ShareRoleEditor  ShareRole = "editor"
@@ -4759,9 +4816,81 @@ type SearchResults struct {
 	} `json:"comments"`
 
 	// Items Task, project, dan folder
-	Items []Item    `json:"items"`
+	Items []struct {
+		Assignees       []ItemAssignee `json:"assignees"`
+		AttachmentCount *int           `json:"attachment_count,omitempty"`
+		ChildCount      *int           `json:"child_count,omitempty"`
+		CommentCount    *int           `json:"comment_count,omitempty"`
+		CompletedAt     *time.Time     `json:"completed_at,omitempty"`
+
+		// CoverAttachmentId Lampiran gambar pertama yang masih ada
+		CoverAttachmentId *openapi_types.UUID                `json:"cover_attachment_id,omitempty"`
+		CreatedAt         time.Time                          `json:"created_at"`
+		CreatedBy         *UserRef                           `json:"created_by,omitempty"`
+		DefaultViewType   *SearchResultsItemsDefaultViewType `json:"default_view_type,omitempty"`
+		DefaultWorkflowId *openapi_types.UUID                `json:"default_workflow_id,omitempty"`
+		DeletedAt         *time.Time                         `json:"deleted_at,omitempty"`
+		DeletedBy         *UserRef                           `json:"deleted_by,omitempty"`
+
+		// Description Dokumen ProseMirror JSON (TipTap). Server memvalidasi node dan mark yang diizinkan.
+		Description   *RichText           `json:"description,omitempty"`
+		DueDate       *openapi_types.Date `json:"due_date,omitempty"`
+		DurationDays  *int                `json:"duration_days,omitempty"`
+		EffortMinutes *int32              `json:"effort_minutes,omitempty"`
+
+		// FieldPeople Metadata orang yang sudah dipilih pada nilai People yang terlihat, berkunci UUID user
+		FieldPeople *map[string]CustomFieldPerson `json:"field_people,omitempty"`
+
+		// Fields Nilai berkunci UUID definisi. Text, Date (YYYY-MM-DD), dan Single select (UUID) memakai string. Multiple select dan People memakai array UUID. Number, Currency dan Percent memakai angka desimal. Duration adalah jumlah hari bulat nonnegatif. Checkbox memakai boolean. Pada PATCH, null menghapus nilai.
+		Fields *CustomFieldValues `json:"fields,omitempty"`
+		Id     openapi_types.UUID `json:"id"`
+
+		// Importance Prioritas item (D-36)
+		Importance  *SearchResultsItemsImportance `json:"importance,omitempty"`
+		IsMilestone *bool                         `json:"is_milestone,omitempty"`
+
+		// ItemType Tipe item (bawaan atau kustom); type tetap kelas perilakunya
+		ItemType       *ItemTypeRef `json:"item_type,omitempty"`
+		Locations      []Location   `json:"locations"`
+		MyCapabilities []Capability `json:"my_capabilities"`
+		Owner          *UserRef     `json:"owner,omitempty"`
+
+		// Path Induk dari terluar ke terdekat pada penempatan pertama dalam cakupan; berhenti di atas induk yang tidak boleh dilihat pemanggil
+		Path *[]struct {
+			Id    openapi_types.UUID `json:"id"`
+			Title string             `json:"title"`
+			Type  string             `json:"type"`
+		} `json:"path,omitempty"`
+		ProgressMethod *ProjectProgressMethod `json:"progress_method,omitempty"`
+
+		// ProgressPercent Progres manual pada task atau progres hasil perhitungan pada project
+		ProgressPercent      *int                                    `json:"progress_percent,omitempty"`
+		ProgressRisk         *ProjectProgressRisk                    `json:"progress_risk,omitempty"`
+		RestoreBlockedReason *SearchResultsItemsRestoreBlockedReason `json:"restore_blocked_reason,omitempty"`
+
+		// Seq ID yang ditampilkan ke user
+		Seq       int64               `json:"seq"`
+		StartDate *openapi_types.Date `json:"start_date,omitempty"`
+		Status    *Status             `json:"status,omitempty"`
+
+		// StatusChangedAt Terakhir status berubah (days in status di kartu Board)
+		StatusChangedAt *time.Time `json:"status_changed_at,omitempty"`
+		Title           string     `json:"title"`
+		Type            ItemType   `json:"type"`
+		UpdatedAt       time.Time  `json:"updated_at"`
+		Version         int        `json:"version"`
+	} `json:"items"`
 	Users []UserRef `json:"users"`
 }
+
+// SearchResultsItemsDefaultViewType defines model for SearchResults.Items.DefaultViewType.
+type SearchResultsItemsDefaultViewType string
+
+// SearchResultsItemsImportance Prioritas item (D-36)
+type SearchResultsItemsImportance string
+
+// SearchResultsItemsRestoreBlockedReason defines model for SearchResults.Items.RestoreBlockedReason.
+type SearchResultsItemsRestoreBlockedReason string
 
 // Seats defines model for Seats.
 type Seats struct {
@@ -5997,6 +6126,9 @@ type SearchParams struct {
 	// TypeKey Hanya item (dan komentar pada item) bertipe ini
 	TypeKey *string           `form:"type_key,omitempty" json:"type_key,omitempty"`
 	Sort    *SearchParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+
+	// Offset Lewati sekian hasil yang boleh dilihat per grup
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
 // SearchParamsStatusGroup defines parameters for Search.
@@ -14100,6 +14232,19 @@ func (siw *ServerInterfaceWrapper) Search(w http.ResponseWriter, r *http.Request
 			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
 		} else {
 			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
 		}
 		return
 	}
