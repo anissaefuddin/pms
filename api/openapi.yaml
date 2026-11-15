@@ -4492,6 +4492,7 @@ paths:
         - { name: status_group, in: query, schema: { type: string, enum: [active, completed, deferred, cancelled] }, description: Hanya item dengan grup status ini (NAV-07) }
         - { name: type_key, in: query, schema: { type: string }, description: Hanya item (dan komentar pada item) bertipe ini, mis. bug (S8.1.5) }
         - { name: sort, in: query, schema: { type: string, enum: [relevance, date_modified], default: relevance } }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, maximum: 10000, default: 0 }, description: Lewati sekian hasil yang boleh dilihat per grup, untuk paginasi }
       responses:
         '200':
           description: OK
@@ -7640,7 +7641,21 @@ components:
         items:
           type: array
           description: Task, project, dan folder
-          items: { $ref: '#/components/schemas/Item' }
+          items:
+            allOf:
+              - { $ref: '#/components/schemas/Item' }
+              - type: object
+                properties:
+                  path:
+                    type: array
+                    description: Induk dari terluar ke terdekat pada penempatan pertama dalam cakupan; berhenti di atas induk yang tidak boleh dilihat pemanggil
+                    items:
+                      type: object
+                      required: [id, title, type]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        type: { type: string }
         comments:
           type: array
           items:
