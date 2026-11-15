@@ -1,4 +1,4 @@
-import { useQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
 import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 
@@ -26,6 +26,23 @@ export function useSearchResults(query: string, scope: SearchScope, context: Sea
   return useQuery({
     queryKey: ["search", params.toString()],
     queryFn: ({ signal }) => api<SearchResults>(`/api/v1/search?${params}`, { signal }),
+    enabled: enabled && query.length >= 2,
+    retry: false,
+  });
+}
+
+export const SEARCH_PAGE = 50;
+
+/** Server-side hierarchical search for a Table filter: pages of hits, each with its ancestor `path` (RT-37). */
+export function useSearchPages(query: string, context: SearchContext, enabled: boolean) {
+  const base = new URLSearchParams({ q: query, limit: String(SEARCH_PAGE) });
+  if (context.spaceId) base.set("space_id", context.spaceId);
+  if (context.containerId) base.set("container_id", context.containerId);
+  return useInfiniteQuery({
+    queryKey: ["search-pages", base.toString()],
+    initialPageParam: 0,
+    queryFn: ({ pageParam, signal }) => api<SearchResults>(`/api/v1/search?${base}&offset=${pageParam}`, { signal }),
+    getNextPageParam: (last, pages) => (last.items.length >= SEARCH_PAGE ? pages.length * SEARCH_PAGE : undefined),
     enabled: enabled && query.length >= 2,
     retry: false,
   });

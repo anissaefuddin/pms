@@ -18,10 +18,12 @@ import { AvatarStack } from "@/components/avatar-stack";
 import { tintOf } from "@/components/status-chip";
 import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
+import { useSearchPages } from "@/lib/search";
 import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
 import type { ItemCollectionProps } from "./item-collection-types";
 
-type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string };
+type PathStep = { id: string; title: string; type: string };
+type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string; path?: PathStep[] };
 
 export function ItemTable({ items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
   showEmpty?: boolean;
@@ -45,9 +47,12 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
     })),
     combine: (results) => results.map((result) => result.data),
   });
+  const needle = filter.trim();
+  const remote = useSearchPages(needle, { spaceId: spaceId || undefined, containerId: parentId }, !!spaceId);
+  const hits = useMemo(() => remote.data?.pages.flatMap((page) => page.items as (Item & { path?: PathStep[] })[]), [remote.data]);
   const rows = useMemo(() => {
     const branches = new Map(expanded.map((id, index) => [id, children[index] ?? []]));
-    const roots = group ? [...items].sort((a, b) => (group === "status" ? a.status?.name ?? "" : a.type)
+    const roots = hits ? hits : group ? [...items].sort((a, b) => (group === "status" ? a.status?.name ?? "" : a.type)
       .localeCompare(group === "status" ? b.status?.name ?? "" : b.type)) : items;
     const output: TableRow[] = [];
     function visit(list: Item[], depth: number, parent?: string, ancestors = new Set<string>()) {
@@ -56,7 +61,7 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
         if (ancestors.has(item.id)) continue;
         const label = depth !== 0 ? undefined : group === "status" ? item.status?.name ?? t("views.noStatus")
           : group === "type" ? t(`items.${item.type}`) : undefined;
-        output.push({ item, depth, parent, groupLabel: label !== lastGroup ? label : undefined });
+        output.push({ item, depth, parent, groupLabel: label !== lastGroup ? label : undefined, path: depth === 0 ? (item as Item & { path?: PathStep[] }).path : undefined });
         lastGroup = label;
         const branch = branches.get(item.id);
         if (branch) visit(branch.filter((child) => child.locations.some((loc) => loc.space_id === spaceId && loc.parent_item_id === item.id)),
@@ -64,21 +69,21 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
       }
     }
     visit(roots, 0, parentId);
-    const needle = filter.trim().toLocaleLowerCase();
-    if (!needle) return output;
+    if (hits || !needle) return output; // server hits already match; until they arrive the loaded rows are filtered locally
+    const lowered = needle.toLocaleLowerCase();
     // keep a row when it matches or when any row below it (deeper, until the next row at its level) matches
     return output.filter((row, index) => {
-      if (row.item.title.toLocaleLowerCase().includes(needle)) return true;
+      if (row.item.title.toLocaleLowerCase().includes(lowered)) return true;
       for (let next = index + 1; next < output.length && output[next].depth > row.depth; next++) {
-        if (output[next].item.title.toLocaleLowerCase().includes(needle)) return true;
+        if (output[next].item.title.toLocaleLowerCase().includes(lowered)) return true;
       }
       return false;
     });
-  }, [items, expanded, children, group, spaceId, parentId, t, filter]);
+  }, [items, expanded, children, group, spaceId, parentId, t, needle, hits]);
 
   const allColumns: ColumnDef<TableRow>[] = [
     { id: "name", header: t("items.name"), cell: ({ row }) => {
-      const { item, depth, groupLabel } = row.original;
+      const { item, depth, groupLabel, path } = row.original;
       const isExpanded = expanded.includes(item.id);
       const expandable = item.type !== "task" || !!item.child_count;
       const canEditTitle = item.my_capabilities.includes("edit") && editing?.id !== item.id;
@@ -86,10 +91,11 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
         {groupLabel && <span className="shrink-0 rounded bg-secondary px-1 text-xs">{groupLabel}</span>}
         {expandable && <Button size="icon-sm" variant="ghost" aria-expanded={isExpanded}
           aria-label={t(isExpanded ? "views.collapse" : "views.expand", { name: item.title })}
-          onClick={() => setExpanded(isExpanded ? expanded.filter((id) => id !== item.id) : [...expanded, item.id])}>
+          onClick={() => setExpanded((open) => (open.includes(item.id) ? open.filter((id) => id !== item.id) : [...open, item.id]))}>
           {isExpanded ? <ChevronDown /> : <ChevronRight />}
         </Button>}
         <TypeGlyph item={item} className="size-4 text-muted-foreground" />
+        {!!path?.length && <span className="max-w-48 shrink-0 truncate text-xs text-muted-foreground" title={path.map((step) => step.title).join(" › ")}>{path.map((step) => step.title).join(" › ")}</span>}
         {editing?.id === item.id && editing.field === "title"
           ? <form className="min-w-0 flex-1" onSubmit={(event) => {
             event.preventDefault();
@@ -234,13 +240,15 @@ export function ItemTable({ items, statuses, spaceId, parentId, customFields, co
               dragging.current = undefined;
             }}>
             {row.getVisibleCells().map((cell) => <div role="cell" key={cell.id} className="flex min-w-0 items-center px-2">
-              {flexRender(cell.column.columnDef.cell, cell.getContext())}
+              {/* called, not rendered as a component: a new component type per render would remount the cell between mousedown and mouseup and swallow the click (QA-D-lane3-010) */}
+              {(cell.column.columnDef.cell as (context: ReturnType<typeof cell.getContext>) => React.ReactNode)(cell.getContext())}
             </div>)}
           </div>;
         })}
       </div>
     </div>
     {showEmpty && model.length === 0 && (filter.trim() && noResults ? noResults : <p className="text-muted-foreground">{t("views.empty")}</p>)}
+    {remote.hasNextPage && <Button variant="outline" size="sm" disabled={remote.isFetchingNextPage} onClick={() => void remote.fetchNextPage()}>{t("views.loadMore")}</Button>}
     {canCreate && <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
     {editedField && editedFieldItem && profile && <FieldEdit key={editedFieldItem.id + editedField.id} field={editedField} item={editedFieldItem}
       locale={profile.locale} pending={pending} onCancel={() => setEditing(undefined)}
