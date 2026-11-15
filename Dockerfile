@@ -18,7 +18,7 @@ RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache
     CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/pms ./server/cmd/pms
 
 FROM alpine:3.23 AS runtime
-RUN apk add --no-cache ca-certificates tzdata \
+RUN apk add --no-cache ca-certificates tzdata poppler-utils \
     && addgroup -S pms && adduser -S -G pms pms \
     && mkdir -p /data/files && chown -R pms:pms /data
 COPY --from=server /out/pms /usr/local/bin/pms

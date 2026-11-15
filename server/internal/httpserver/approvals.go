@@ -19,6 +19,9 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
+// errApprovalFinal: a vote that is part of a final outcome (approved or rejected) cannot be changed (APR-03).
+var errApprovalFinal = errors.New("approval is final")
+
 const approvalOutcome = `CASE
  WHEN a.policy='any' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='approved') THEN 'approved'
  WHEN a.policy='all' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.decision='rejected') THEN 'rejected'
@@ -464,6 +467,15 @@ func decideApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, item
 	var creator string
 	if err := tx.QueryRow(ctx, "SELECT created_by::text FROM approvals WHERE id=$1 FOR UPDATE", id).Scan(&creator); err != nil {
 		return items.Detail{}, items.ErrNotFound
+	}
+	// An approver who already voted cannot change that vote once the outcome is final; others who have not voted still can.
+	var closed bool
+	if err := tx.QueryRow(ctx, `SELECT (`+approvalOutcome+`)<>'pending' AND EXISTS(SELECT 1 FROM approval_approvers x WHERE x.approval_id=a.id AND x.user_id=$2::uuid AND x.decision IS NOT NULL)
+FROM approvals a WHERE a.id=$1`, id, actor.ID).Scan(&closed); err != nil {
+		return items.Detail{}, err
+	}
+	if closed {
+		return items.Detail{}, errApprovalFinal
 	}
 	tag, err := tx.Exec(ctx, "UPDATE approval_approvers SET decision=$3,comment=$4,decided_at=now() WHERE approval_id=$1 AND user_id=$2::uuid", id, actor.ID, decision, comment)
 	if err != nil {

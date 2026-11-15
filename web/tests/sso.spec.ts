@@ -54,6 +54,9 @@ test("admin configures the provider: redirect URI shown, secret kept when left e
   expect(put.allowed_domains).toEqual(["example.com", "corp.example"]);
   expect("client_secret" in put).toBe(false); // an empty secret field keeps the stored one
 
+  // The save handler clears the secret field after the response; wait for it to finish (button re-enabled) before typing,
+  // or a slow runner clears the new value (QA-D-lane3-007 flake).
+  await expect(oidc.getByRole("button", { name: "Save" })).toBeEnabled();
   await page.getByLabel("Client secret").fill("new-secret-value");
   await oidc.getByRole("button", { name: "Save" }).click();
   await expect.poll(() => calls.filter((c) => c.method === "PUT").length).toBe(2);

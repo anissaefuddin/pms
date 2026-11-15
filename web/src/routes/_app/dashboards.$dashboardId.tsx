@@ -97,7 +97,7 @@ function DashboardPage() {
     </header>
     {error && !editing && !deleting && <p role="alert" className="text-sm text-destructive">{error}</p>}
     {widgets.length === 0 && <p className="rounded-xl border border-dashed bg-card p-12 text-center text-sm text-muted-foreground">{t("dashboards.board.empty")}</p>}
-    <div className={data.layout === "stack" ? "grid gap-4" : "grid gap-4 lg:grid-cols-2"}>
+    <div className={data.layout === "stack" ? "grid gap-4 [&>*]:min-w-0" : "grid gap-4 lg:grid-cols-2 [&>*]:min-w-0"}>
       {widgets.map((widget, index) => <WidgetCard key={widget.id} dashboardId={dashboardId} version={data.version} widget={widget} canEdit={canEdit}
         first={index === 0} last={index === widgets.length - 1} onEdit={() => { setError(""); setEditing(widget); }} onDelete={() => { setError(""); setDeleting(widget); }} onShift={(by) => void shift(widget, by)} />)}
     </div>

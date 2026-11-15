@@ -25,6 +25,19 @@ func locationCaps(ctx context.Context, tx pgx.Tx, actor policy.Actor, loc Locati
 	return access.Caps, err
 }
 
+// rankAfter is the rank for a new last sibling. It steps the final character up, so the rank grows by one character only
+// every ~35 appends (not on every append, which capped a parent at ~512 children).
+func rankAfter(last string) string {
+	const top = byte('y') // stay below the 'z' upper bound used by rankBetween
+	if last == "" {
+		return rankBetween("", "")
+	}
+	if c := last[len(last)-1]; c < top {
+		return last[:len(last)-1] + string(c+1)
+	}
+	return last + string(byte('V'))
+}
+
 // rankBetween uses bytewise order. Generated ranks never end at the smallest
 // digit, so another rank can always be inserted before an existing one.
 func rankBetween(left, right string) string {
@@ -59,11 +72,15 @@ func ReplaceLocations(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 	if len(want) == 0 || len(want) > 50 {
 		return Detail{}, Invalid("an item needs between 1 and 50 locations")
 	}
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		return Detail{}, err
-	}
-	defer tx.Rollback(ctx)
+	var detail Detail
+	err = inSerializable(ctx, pool, locationLockKeys(want), func(tx pgx.Tx) (err error) {
+		detail, err = replaceLocations(ctx, tx, actor, id, itemID, want)
+		return err
+	}, func() {})
+	return detail, writeError(err)
+}
+
+func replaceLocations(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, itemID uuid.UUID, want []Location) (Detail, error) {
 	caps, err := policy.ItemCaps(ctx, tx, actor, id)
 	if err != nil {
 		return Detail{}, err
@@ -172,7 +189,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_root_id IS NULL`, loc.SpaceID, loc.ParentID).Scan(&last); err != nil {
 			return Detail{}, err
 		}
-		rank := rankBetween(last, "")
+		rank := rankAfter(last)
 		if len(rank) > 512 || rank <= last {
 			return Detail{}, ErrConflict
 		}
@@ -189,11 +206,7 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 	if _, err = tx.Exec(ctx, "UPDATE items SET updated_at=now() WHERE id=$1", itemID); err != nil {
 		return Detail{}, err
 	}
-	detail, err := readDetail(ctx, tx, actor, id)
-	if err == nil {
-		err = tx.Commit(ctx)
-	}
-	return detail, writeError(err)
+	return readDetail(ctx, tx, actor, id)
 }
 
 func countExisting(want []Location, existing map[[2]uuid.UUID]bool, key func(Location) [2]uuid.UUID) int {

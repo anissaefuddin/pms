@@ -142,7 +142,28 @@ func (s *Server) submitPublicForm(w http.ResponseWriter, r *http.Request) {
 		writeFieldErrors(w, problems)
 		return
 	}
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	lockKey := publicFormRankLock(row)
+	locked := false
+	defer func() {
+		if locked {
+			if _, err := conn.Exec(context.WithoutCancel(ctx), "SELECT pg_advisory_unlock(hashtextextended($1,0))", lockKey); err != nil {
+				conn.Hijack().Close(context.WithoutCancel(ctx))
+				return
+			}
+		}
+		conn.Release()
+	}()
+	if _, err = conn.Exec(ctx, "SELECT pg_advisory_lock(hashtextextended($1,0))", lockKey); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	locked = true
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		writeItemError(w, err)
 		return
@@ -171,6 +192,14 @@ func (s *Server) submitPublicForm(w http.ResponseWriter, r *http.Request) {
 	s.publishItem(r, "item.created", created.ID.String(), created.ID.String(), 1)
 	// Nothing from the item is returned: the person gets a receipt, not an id they could probe with.
 	writeJSON(w, http.StatusCreated, map[string]any{"received": true})
+}
+
+// Public submissions join the sibling-order lock used by normal creates before taking a Serializable snapshot.
+func publicFormRankLock(row formRow) string {
+	if row.Response.Location.ParentItemID != nil {
+		return "rank:item:" + row.Response.Location.ParentItemID.String()
+	}
+	return "rank:space:" + row.Response.Location.SpaceID.String()
 }
 
 // rotatePublicLink creates a public link, or replaces the current one so the old link stops working at once.

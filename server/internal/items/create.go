@@ -5,8 +5,10 @@ import (
 	"encoding/json"
 	"errors"
 	"maps"
+	"math/rand/v2"
 	"slices"
 	"sort"
+	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
@@ -21,17 +23,108 @@ type initialShare struct {
 	Role          string    `json:"role"`
 }
 
+// Create retries when a concurrent create under the same parent made Postgres abort this Serializable transaction (40001):
+// the creates are independent, so the caller should not see a 409.
 func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	var kept int
+	if batch != nil {
+		kept = len(batch.Deliveries)
+	}
+	var item Detail
+	err := inSerializable(ctx, pool, parentLockKeys(fields), func(tx pgx.Tx) (err error) {
+		item, err = create(ctx, tx, actor, fields, batch)
+		return err
+	}, func() {
+		if batch != nil {
+			batch.Deliveries = batch.Deliveries[:kept] // drop what the aborted attempt queued
+		}
+	})
+	return item, writeError(err)
+}
+
+// inSerializable runs work in a Serializable transaction after taking a session advisory lock per key BEFORE the snapshot starts,
+// so writers that change sibling order under one parent (create, reorder, move) queue up instead of aborting each other (40001).
+// A 40001 that still happens is retried (up to 15 times); reset undoes in-memory side effects of an aborted attempt.
+func inSerializable(ctx context.Context, pool *pgxpool.Pool, keys []string, work func(pgx.Tx) error, reset func()) error {
+	for attempt := 0; ; attempt++ {
+		err := lockedOnce(ctx, pool, keys, work)
+		if pgCode(err) != "40001" || attempt >= 15 {
+			return err
+		}
+		reset()
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(time.Duration(5+rand.IntN(25*(attempt+1))) * time.Millisecond):
+		}
+	}
+}
+
+func lockedOnce(ctx context.Context, pool *pgxpool.Pool, keys []string, work func(pgx.Tx) error) error {
+	conn, err := pool.Acquire(ctx)
 	if err != nil {
-		return Detail{}, err
+		return err
+	}
+	locked := 0
+	defer func() {
+		for ; locked > 0; locked-- {
+			if _, err := conn.Exec(context.WithoutCancel(ctx), "SELECT pg_advisory_unlock(hashtextextended($1,0))", keys[locked-1]); err != nil {
+				conn.Hijack().Close(context.WithoutCancel(ctx)) // never return a connection that may still hold a lock
+				return
+			}
+		}
+		conn.Release()
+	}()
+	for _, key := range keys {
+		if _, err := conn.Exec(ctx, "SELECT pg_advisory_lock(hashtextextended($1,0))", key); err != nil {
+			return err
+		}
+		locked++
+	}
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		return err
 	}
 	defer tx.Rollback(ctx)
-	item, err := create(ctx, tx, actor, fields, batch)
-	if err == nil {
-		err = tx.Commit(ctx)
+	if err := work(tx); err != nil {
+		return err
 	}
-	return item, writeError(err)
+	return tx.Commit(ctx)
+}
+
+// rankLockKey names the sibling list of one parent. A parent item has one list per Space it sits in, but keying on the parent alone
+// is simply coarser; the root of a Space is keyed by the Space.
+func rankLockKey(space, parent string) string {
+	if parent != "" {
+		return "rank:item:" + parent
+	}
+	return "rank:space:" + space
+}
+
+// parentLockKeys lists the distinct placements of a create in a stable order, so two writers never lock in opposite order.
+func parentLockKeys(fields map[string]json.RawMessage) []string {
+	var locations []Location
+	if json.Unmarshal(fields["locations"], &locations) != nil {
+		return nil
+	}
+	return locationLockKeys(locations)
+}
+
+func locationLockKeys(locations []Location) []string {
+	seen := map[string]bool{}
+	keys := make([]string, 0, len(locations))
+	for _, l := range locations {
+		parent := ""
+		if l.ParentID != nil {
+			parent = l.ParentID.String()
+		}
+		if k := rankLockKey(l.SpaceID.String(), parent); !seen[k] {
+			seen[k] = true
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // CreateTx creates an Item inside the caller's transaction (Serializable); the caller commits.
@@ -220,7 +313,7 @@ SELECT COALESCE(max(rank COLLATE "C"),'') FROM item_locations
 WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_root_id IS NULL`, loc.SpaceID, loc.ParentID).Scan(&last); err != nil {
 			return Detail{}, err
 		}
-		rank := rankBetween(last, "")
+		rank := rankAfter(last)
 		if len(rank) > 512 || rank <= last {
 			return Detail{}, ErrConflict
 		}

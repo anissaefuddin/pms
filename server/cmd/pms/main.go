@@ -103,6 +103,9 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	if cfg.TwoFactorKey == nil {
 		slog.Warn("PMS_2FA_KEY is not set: two-factor authentication is unavailable to every user")
 	}
+	if cfg.OTPKey == nil {
+		slog.Warn("PMS_OTP_KEY is not set: one-time-code sign-in cannot be enabled")
+	}
 	if cfg.ConnectorKey == nil {
 		slog.Warn("PMS_CONNECTOR_KEY is not set: connectors that need secrets cannot be installed, and webhook signing secrets are stored unencrypted")
 	}

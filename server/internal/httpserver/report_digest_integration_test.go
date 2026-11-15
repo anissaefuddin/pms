@@ -74,7 +74,7 @@ FROM users u WHERE u.id = rs.user_id`)
 		t.Fatalf("unexpected email: %+v", mail)
 	}
 	// The reader's email holds only what the reader may see: 30 minutes, not the secret Space's 600.
-	if !strings.Contains(mail.Message, "Total: 30") || strings.Contains(mail.Message, "Hidden task") || strings.Contains(mail.HTML, "Hidden task") || strings.Contains(mail.Message, "600") {
+	if !strings.Contains(mail.Message, "Total: 30") || strings.Contains(mail.Message, "Hidden task") || strings.Contains(mail.HTML, "Hidden task") || strings.Contains(mail.Message, ": 600") { // not a bare "600": the random report id in the link can contain it
 		t.Fatalf("digest leaks or miscounts:\n%s", mail.Message)
 	}
 	// Every label from the data is escaped in the HTML part.

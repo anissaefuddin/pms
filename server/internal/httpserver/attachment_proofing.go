@@ -117,7 +117,7 @@ func (s *Server) getPreviewPage(w http.ResponseWriter, r *http.Request) {
 	}
 	var key string
 	if err == nil {
-		err = s.pool.QueryRow(r.Context(), `SELECT p->>'key' FROM attachment_previews, jsonb_array_elements(pages) p
+		err = s.pool.QueryRow(r.Context(), `SELECT p->>'key' FROM attachment_previews, jsonb_array_elements(CASE WHEN jsonb_typeof(pages)='array' THEN pages ELSE '[]'::jsonb END) p
 WHERE attachment_id=$1 AND version=$2 AND (p->>'page')::int=$3`, att, version, page).Scan(&key)
 		if errors.Is(err, pgx.ErrNoRows) {
 			err = items.ErrNotFound

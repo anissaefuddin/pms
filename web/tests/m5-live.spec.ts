@@ -124,7 +124,7 @@ test("flow 2: a report is built from a template, edited, saved, exported and sub
   const rows = page.getByRole("region", { name: "Result" });
   await expect(rows.getByRole("row", { name: /Bob Builder/ })).toContainText("2");
   await expect(rows.getByRole("row", { name: /Ada Admin/ })).toContainText("1");
-  await expect(rows.getByRole("row", { name: /\(none\)/ })).toContainText("1");
+  await expect(rows.getByRole("row", { name: /Unassigned/ })).toContainText("1");
   await expect(rows.getByText("Total: 4")).toBeVisible();
   await axe();
 

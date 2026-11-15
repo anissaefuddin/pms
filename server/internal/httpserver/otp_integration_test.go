@@ -1,9 +1,15 @@
 package httpserver_test
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"regexp"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
+
+	"github.com/anissaefuddin/pms/server/internal/config"
 )
 
 var sixDigits = regexp.MustCompile(`^[0-9]{6}$`)
@@ -70,6 +76,18 @@ func TestOTPIsOffUntilAnAdministratorTurnsItOn(t *testing.T) {
 	f.want(f.otpRequest(email), 404, "off again")
 }
 
+func TestOTPCannotBeEnabledWithoutAHashKey(t *testing.T) {
+	f := newFixtureWith(t, 25, func(cfg *config.Config) { cfg.OTPKey = nil })
+	admin := f.person("admin")
+	r := f.setPolicy(admin, true, nil)
+	if r.status != 422 || r.body["code"] != "key_not_configured" {
+		t.Fatalf("enable without PMS_OTP_KEY: %d %v", r.status, r.body)
+	}
+	f2 := newFixtureWith(t, 25, func(cfg *config.Config) { cfg.OTPKey = nil })
+	f2.exec("UPDATE access_policy SET otp_login_enabled=true WHERE id=1") // an enabled policy carried across an upgrade
+	f2.want(f2.otpRequest(f2.email(f2.person("regular"))), 503, "enabled policy without key")
+}
+
 func TestOTPSignInWorksOnceAndIsAudited(t *testing.T) {
 	f := newFixture(t)
 	admin, alice := f.person("admin"), f.withPassword(f.person("regular"))
@@ -83,6 +101,11 @@ func TestOTPSignInWorksOnceAndIsAudited(t *testing.T) {
 	}
 	if f.queryID("SELECT count(*)::text FROM login_codes WHERE encode(code_hash,'hex') LIKE '%'||$1||'%'", code) != "0" {
 		t.Fatal("the code itself must not be stored")
+	}
+	id := f.queryID("SELECT id::text FROM login_codes WHERE user_id=$1", alice.id)
+	plain := sha256.Sum256([]byte(id + ":" + code))
+	if stored := f.queryID("SELECT encode(code_hash,'hex') FROM login_codes WHERE id=$1", id); stored == hex.EncodeToString(plain[:]) {
+		t.Fatal("a database-only salted hash permits offline guessing; the stored value must be keyed")
 	}
 	if r := f.otpVerify(email, wrongCode(code)); r.status != 401 || r.body["code"] != "unauthenticated" {
 		t.Fatalf("a wrong code: %d %v", r.status, r.body)
@@ -107,6 +130,46 @@ func TestOTPSignInWorksOnceAndIsAudited(t *testing.T) {
 	}
 	// The password still works beside it.
 	f.want(f.loginAs(email), 200, "password sign-in is unchanged")
+}
+
+func TestOTPConcurrentVerificationSucceedsOnce(t *testing.T) {
+	f := newFixture(t)
+	admin, alice := f.person("admin"), f.withPassword(f.person("regular"))
+	email := f.email(alice)
+	f.want(f.setPolicy(admin, true, nil), 200, "turn on")
+	f.want(f.otpRequest(email), 202, "request")
+	_, code := f.lastCode()
+
+	before := f.queryID("SELECT count(*)::text FROM sessions WHERE user_id=$1", alice.id) // the fixture already holds one session for alice
+	const requests = 5
+	results := make(chan reply, requests)
+	var ready, start sync.WaitGroup
+	ready.Add(requests)
+	start.Add(1)
+	for i := 0; i < requests; i++ {
+		go func() {
+			ready.Done()
+			start.Wait()
+			results <- f.otpVerify(email, code, "X-Forwarded-For", "203.0.113.42")
+		}()
+	}
+	ready.Wait()
+	start.Done()
+	var success int
+	for i := 0; i < requests; i++ {
+		r := <-results
+		if r.status == 200 {
+			success++
+		} else if r.status != 401 {
+			t.Errorf("concurrent verify status %d: %v", r.status, r.body)
+		}
+	}
+	if success != 1 {
+		t.Fatalf("concurrent verification succeeded %d times, want once", success)
+	}
+	if n, _ := strconv.Atoi(before); f.queryID("SELECT count(*)::text FROM sessions WHERE user_id=$1", alice.id) != strconv.Itoa(n+1) {
+		t.Fatal("one code must create exactly one session")
+	}
 }
 
 func wrongCode(code string) string {

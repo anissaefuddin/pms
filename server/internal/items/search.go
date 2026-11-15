@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -25,6 +26,7 @@ type SearchOptions struct {
 	StatusGroup  string // "", "active", "completed", "deferred" or "cancelled"
 	TypeKey      string // "" or the key of an item type (S8.1.5)
 	Sort         string // "" or "relevance" ranks by match, "date_modified" by recency
+	Offset       int    // visible hits to skip in each group, for paging (RT-37)
 }
 
 func Search(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, query, spaceID, containerID string, limit int, opts SearchOptions) (SearchResults, error) {
@@ -40,6 +42,9 @@ func Search(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, query, 
 		order = "m.ts DESC, m.id"
 	default:
 		return out, Invalid("unknown search sort")
+	}
+	if opts.Offset < 0 || opts.Offset > 10000 {
+		return out, Invalid("offset must be between 0 and 10000")
 	}
 	switch opts.StatusGroup {
 	case "", "active", "completed", "deferred", "cancelled":
@@ -97,26 +102,30 @@ ORDER BY %[4]s`, scope("i.id"), scope("c.item_id"), `($4::boolean IS FALSE OR EX
 		return out, err
 	}
 	ids, commentIDs := []string{}, []string{}
-	tasks, containers := 0, 0
-	for start := 0; start < len(hits) && (tasks < limit || containers < limit || len(commentIDs) < limit); start += 128 {
+	tasks, containers := 0, 0 // accepted per group
+	seen := map[string]int{}  // visible hits per group, to skip the first Offset of them
+	groupOf := func(kind string) string {
+		if kind == "task" || kind == "comment" {
+			return kind
+		}
+		return "container"
+	}
+	room := func(group string) bool {
+		switch group {
+		case "task":
+			return tasks < limit
+		case "comment":
+			return len(commentIDs) < limit
+		}
+		return containers < limit
+	}
+	for start := 0; start < len(hits) && (room("task") || room("container") || room("comment")); start += 128 {
 		batch := hits[start:min(start+128, len(hits))]
 		check := make([]string, 0, len(batch))
 		for _, hit := range batch {
-			switch hit.Kind {
-			case "task":
-				if tasks >= limit {
-					continue
-				}
-			case "comment":
-				if len(commentIDs) >= limit {
-					continue
-				}
-			default:
-				if containers >= limit {
-					continue
-				}
+			if room(groupOf(hit.Kind)) {
+				check = append(check, hit.ItemID)
 			}
-			check = append(check, hit.ItemID)
 		}
 		if len(check) == 0 {
 			continue
@@ -126,24 +135,23 @@ ORDER BY %[4]s`, scope("i.id"), scope("c.item_id"), `($4::boolean IS FALSE OR EX
 			return out, err
 		}
 		for _, hit := range batch {
-			if !caps[hit.ItemID].Has(policy.View) {
+			group := groupOf(hit.Kind)
+			if !room(group) || !caps[hit.ItemID].Has(policy.View) {
 				continue
 			}
-			switch hit.Kind {
+			seen[group]++
+			if seen[group] <= opts.Offset {
+				continue
+			}
+			switch group {
 			case "task":
-				if tasks < limit {
-					tasks++
-					ids = append(ids, hit.ID)
-				}
+				tasks++
+				ids = append(ids, hit.ID)
 			case "comment":
-				if len(commentIDs) < limit {
-					commentIDs = append(commentIDs, hit.ID)
-				}
+				commentIDs = append(commentIDs, hit.ID)
 			default:
-				if containers < limit {
-					containers++
-					ids = append(ids, hit.ID)
-				}
+				containers++
+				ids = append(ids, hit.ID)
 			}
 		}
 	}
@@ -152,8 +160,22 @@ ORDER BY %[4]s`, scope("i.id"), scope("c.item_id"), `($4::boolean IS FALSE OR EX
 	if err != nil {
 		return out, err
 	}
+	paths, err := ancestorPaths(ctx, tx, actor, spaces, ids)
+	if err != nil {
+		return out, err
+	}
 	for _, detail := range details {
-		out.Items = append(out.Items, detail.Body)
+		body := detail.Body
+		var m map[string]json.RawMessage
+		if json.Unmarshal(body, &m) == nil {
+			var id string
+			_ = json.Unmarshal(m["id"], &id)
+			if path := paths[id]; len(path) != 0 {
+				m["path"], _ = json.Marshal(path)
+				body, _ = json.Marshal(m)
+			}
+		}
+		out.Items = append(out.Items, body)
 	}
 	if len(commentIDs) != 0 {
 		rows, err = tx.Query(ctx, `
@@ -289,4 +311,77 @@ func scope(column string) string {
     WHERE l.item_id=` + column + ` AND l.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)) AND l.deleted_root_id IS NULL
   ))
   OR ($3::uuid IS NOT NULL AND EXISTS (SELECT 1 FROM subtree p WHERE p.item_id=` + column + `)))`
+}
+
+type PathStep struct {
+	ID    string `json:"id"`
+	Title string `json:"title"`
+	Type  string `json:"type"`
+}
+
+// ancestorPaths gives, for each hit, the chain of ancestors from the outermost down to its parent, taken from the
+// first live placement (by Space, then parent) inside the search scope. The chain stops above the first ancestor the
+// actor cannot view, so a hidden parent is neither named nor counted. shortcut: only the first placement of a multi-location item.
+func ancestorPaths(ctx context.Context, tx pgx.Tx, actor policy.Actor, spaces, ids []string) (map[string][]PathStep, error) {
+	out := map[string][]PathStep{}
+	if len(ids) == 0 {
+		return out, nil
+	}
+	rows, err := tx.Query(ctx, `
+WITH RECURSIVE first_place AS (
+  SELECT DISTINCT ON (l.item_id) l.item_id, l.space_id, l.parent_item_id
+  FROM item_locations l
+  WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_id IS NULL
+    AND (COALESCE(cardinality($2::text[]),0)=0 OR l.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)))
+  ORDER BY l.item_id, l.space_id, l.parent_item_id NULLS FIRST
+), up(item_id, space_id, anc, depth) AS (
+  SELECT item_id, space_id, parent_item_id, 1 FROM first_place WHERE parent_item_id IS NOT NULL
+  UNION ALL
+  SELECT up.item_id, up.space_id, l.parent_item_id, up.depth+1
+  FROM up JOIN LATERAL (SELECT l.parent_item_id FROM item_locations l
+    WHERE l.item_id=up.anc AND l.space_id=up.space_id AND l.deleted_root_id IS NULL
+    ORDER BY l.parent_item_id NULLS FIRST LIMIT 1) l ON true
+  WHERE up.depth < 20 AND l.parent_item_id IS NOT NULL
+)
+SELECT up.item_id::text, up.space_id::text, a.id::text, a.title, a.type::text, up.depth
+FROM up JOIN items a ON a.id=up.anc AND a.deleted_at IS NULL ORDER BY up.item_id, up.depth`, ids, spaces)
+	if err != nil {
+		return nil, err
+	}
+	type step struct {
+		Item, Space, ID, Title, Type string
+		Depth                        int
+	}
+	steps, err := pgx.CollectRows(rows, pgx.RowToStructByPos[step])
+	if err != nil {
+		return nil, err
+	}
+	all := make([]string, 0, len(steps))
+	for _, st := range steps {
+		all = append(all, st.ID)
+	}
+	if len(all) == 0 {
+		return out, nil
+	}
+	caps, err := policy.ItemsCaps(ctx, tx, actor, all, nil)
+	if err != nil {
+		return nil, err
+	}
+	blocked := map[string]bool{}
+	nearest := map[string][]PathStep{} // nearest ancestor first, until the first hidden one
+	for _, st := range steps {
+		if blocked[st.Item] {
+			continue
+		}
+		if !caps[st.ID].Has(policy.View) {
+			blocked[st.Item] = true
+			continue
+		}
+		nearest[st.Item] = append(nearest[st.Item], PathStep{ID: st.ID, Title: st.Title, Type: st.Type})
+	}
+	for id, chain := range nearest {
+		slices.Reverse(chain)
+		out[id] = chain
+	}
+	return out, nil
 }

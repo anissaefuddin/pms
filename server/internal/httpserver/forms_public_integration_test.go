@@ -5,7 +5,9 @@ import (
 	"encoding/json"
 	"mime/multipart"
 	"net/http"
+	"strconv"
 	"strings"
+	"sync"
 	"testing"
 )
 
@@ -205,6 +207,47 @@ func TestPublicFormLink(t *testing.T) {
 func mustJSON(v any) []byte {
 	b, _ := json.Marshal(v)
 	return b
+}
+
+func TestConcurrentPublicFormSubmissionsAllSucceedOnce(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	intake, work := f.space("Intake"), f.space("Work")
+	body := map[string]any{"name": "Concurrent", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
+		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
+	}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": work}, "title_question": "subject"}}
+	created := f.call(admin, "POST", "/spaces/"+intake+"/forms", body)
+	f.want(created, 201, "build form")
+	token := f.call(admin, "POST", "/forms/"+created.body["id"].(string)+"/public-link", nil).body["public_token"].(string)
+
+	const n = 30
+	statuses := make([]int, n)
+	var wg sync.WaitGroup
+	for i := range n {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			statuses[i] = f.call(nil, "POST", "/public/forms/"+token+"/submissions", map[string]any{
+				"answers":   map[string]any{"subject": "Request " + strconv.Itoa(i)},
+				"requester": map[string]string{"name": "Pat", "email": "pat@example.com"},
+			}).status
+		}()
+	}
+	wg.Wait()
+	for i, status := range statuses {
+		if status != http.StatusCreated {
+			t.Fatalf("submission %d: status %d, all of %v must be 201", i, status, statuses)
+		}
+	}
+	for what, query := range map[string]string{
+		"items":       "SELECT count(*)::text FROM items WHERE title LIKE 'Request %'",
+		"submissions": "SELECT count(*)::text FROM form_submissions WHERE form_name='Concurrent'",
+		"mail jobs":   "SELECT count(*)::text FROM river_job WHERE kind='send_email' AND args->>'template'='request_received' AND args->>'to'='pat@example.com'",
+	} {
+		if got := f.queryID(query); got != strconv.Itoa(n) {
+			t.Errorf("%s = %s, want %d", what, got, n)
+		}
+	}
 }
 
 // FORM-04: the wording an author saves is what the public requester's confirmation carries.

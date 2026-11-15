@@ -60,6 +60,12 @@ func TestStatusGuardsRequireFieldsAndActorAndWriteNothingOnRefusal(t *testing.T)
 	if len(guard["required_fields"].([]any)) != 3 || guard["actor_rule"] != "assignee" {
 		t.Fatalf("guard not stored or not deduplicated: %+v", guard)
 	}
+	// QA-D-lane2-005: an empty list clears the requirement instead of failing with 500.
+	f.want(f.call(admin, "PATCH", "/statuses/"+done, map[string]any{"required_fields": []string{}}), 200, "clear required fields")
+	if n := f.queryID("SELECT cardinality(required_fields)::text FROM statuses WHERE id=$1", done); n != "0" {
+		t.Fatalf("required_fields not cleared: %s", n)
+	}
+	f.want(f.call(admin, "PATCH", "/statuses/"+done, map[string]any{"required_fields": []string{"due_date", "assignees", fid}}), 200, "restore guard")
 	// Refused: every unmet requirement is named, and nothing about the item changed.
 	refused := patch(editor, map[string]any{"status_id": done})
 	if refused.status != 422 || refused.body["code"] != "transition_blocked" || len(refused.body["errors"].([]any)) != 4 {

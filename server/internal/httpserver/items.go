@@ -198,6 +198,8 @@ func writeItemError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusForbidden, "item operation forbidden")
 	case errors.Is(err, items.ErrConflict):
 		writeError(w, http.StatusConflict, "the Item changed; reload and try again")
+	case errors.Is(err, errApprovalFinal):
+		writeProblem(w, http.StatusConflict, "approval_final", "this approval is already decided and cannot be changed")
 	case errors.As(err, &guard):
 		problems := make([]map[string]string, len(guard.Problems))
 		for i, p := range guard.Problems {

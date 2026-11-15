@@ -133,7 +133,7 @@ function Timesheet({ user, start, today }: { user: string; start: "monday" | "su
     <p className="text-sm text-muted-foreground">{t("time.help")}</p>
     <FormError message={error || entries.error?.message || ""} />
     {entries.isPending && <p role="status">{t("items.loading")}</p>}
-    {entries.isSuccess && <div className="overflow-auto rounded border">
+    {entries.isSuccess && <div className="overflow-auto rounded border" role="region" tabIndex={0} aria-label={t("time.timesheet")}>
       <table aria-label={t("time.timesheet")} className="w-full border-collapse text-sm">
         <thead><tr className="bg-muted">
           <th scope="col" className="p-2 text-left">{t("items.task")}</th>

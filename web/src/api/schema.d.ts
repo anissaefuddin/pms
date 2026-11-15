@@ -3449,7 +3449,7 @@ export interface paths {
             cookie?: never;
         };
         get?: never;
-        /** Approve atau reject; hanya approver yang disebut, boleh diubah kemudian */
+        /** Approve atau reject; hanya approver yang disebut. Suara boleh diubah selama hasil belum final; setelah final 409 `approval_final` (APR-03) */
         put: operations["decideApproval"];
         post?: never;
         delete?: never;
@@ -5793,7 +5793,15 @@ export interface components {
         };
         SearchResults: {
             /** @description Task, project, dan folder */
-            items: components["schemas"]["Item"][];
+            items: (components["schemas"]["Item"] & {
+                /** @description Induk dari terluar ke terdekat pada penempatan pertama dalam cakupan; berhenti di atas induk yang tidak boleh dilihat pemanggil */
+                path?: {
+                    /** Format: uuid */
+                    id: string;
+                    title: string;
+                    type: string;
+                }[];
+            })[];
             comments: {
                 /** Format: uuid */
                 comment_id: string;
@@ -12726,6 +12734,8 @@ export interface operations {
                 /** @description Hanya item (dan komentar pada item) bertipe ini */
                 type_key?: string;
                 sort?: "relevance" | "date_modified";
+                /** @description Lewati sekian hasil yang boleh dilihat per grup */
+                offset?: number;
             };
             header?: never;
             path?: never;
@@ -13223,6 +13233,7 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

@@ -103,6 +103,7 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
   const draggable = (canMove || item.my_capabilities.includes("edit")) && !pending;
   const meta = [
     shown.includes("id") && `#${item.seq}`,
+    shown.includes("importance") && t(`items.importance.${item.importance ?? "normal"}`),
     shown.includes("days_in_status") && item.status_changed_at && t("views.card.daysInStatus", { count: Math.max(0, Math.floor((now - Date.parse(item.status_changed_at)) / DAY)) }),
     shown.includes("author") && item.created_by && t("views.card.author", { name: item.created_by.name }),
     shown.includes("locations") && item.locations.map((loc) => loc.space_name).filter(Boolean).join(", "),
@@ -119,9 +120,12 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
       </div>
       {(!!meta.length || !!item.item_type) && <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
         {<TypeBadge item={item} />}{!!meta.length && <span>{meta.join(" · ")}</span>}</p>}
-      {(item.start_date || item.due_date || item.assignees.length > 0) && <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
-        <AvatarStack people={item.assignees} />
-        {(item.start_date || item.due_date) && <p className="ml-auto flex items-center gap-1"><CalendarDays className="size-3" aria-hidden />{[item.start_date, item.due_date].filter(Boolean).map((date) => formatDate(date, profile)).join(" – ")}
+      {((shown.includes("start_date") && item.start_date) || (shown.includes("due_date") && item.due_date) || (shown.includes("assignee") && item.assignees.length > 0)) && <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
+        {shown.includes("assignee") && <AvatarStack people={item.assignees} />}
+        {((shown.includes("start_date") && item.start_date) || (shown.includes("due_date") && item.due_date)) && <p className="ml-auto flex items-center gap-1"><CalendarDays className="size-3" aria-hidden />{[
+          shown.includes("start_date") && item.start_date,
+          shown.includes("due_date") && item.due_date,
+        ].filter((date): date is string => !!date).map((date) => formatDate(date, profile)).join(" – ")}
           {item.start_date && item.due_date && <span>({t("views.card.duration", { count: Math.max(1, Math.round((Date.parse(item.due_date) - Date.parse(item.start_date)) / DAY) + 1) })})</span>}
         </p>}
       </div>}

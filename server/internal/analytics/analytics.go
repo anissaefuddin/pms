@@ -123,7 +123,7 @@ func dimension(source, name, n string) (dim, bool) {
 	switch name {
 	case "assignee":
 		return dim{fmt.Sprintf("LEFT JOIN item_assignees a%[1]s ON a%[1]s.item_id=i.id LEFT JOIN users ua%[1]s ON ua%[1]s.id=a%[1]s.user_id", n),
-			fmt.Sprintf("COALESCE(a%s.user_id::text,'')", n), userLabel("ua" + n)}, true
+			fmt.Sprintf("COALESCE(a%s.user_id::text,'')", n), fmt.Sprintf("CASE WHEN a%s.user_id IS NULL THEN 'Unassigned' ELSE %s END", n, userLabel("ua"+n))}, true
 	case "status":
 		return dim{"", "COALESCE(st.name,'')", "COALESCE(st.name,'')"}, true
 	case "status_group":

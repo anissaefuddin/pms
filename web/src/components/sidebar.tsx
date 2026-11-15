@@ -97,7 +97,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
     <CustomizeMenuDialog me={me} open={customizing} onOpenChange={setCustomizing} />
   </aside>;
 }
-function Nav({ icon, label, hint, badge, onClick }: { icon: React.ReactElement<{className?: string}>; label: string; hint?: string; badge?: number; onClick: () => void }) { return <button onClick={onClick} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent"><span className="[&>svg]:size-4">{icon}</span>{label}{!!badge && <span className="ml-auto rounded-full bg-destructive px-1.5 text-[10px] font-medium text-white" aria-hidden="true">{badge}</span>}{hint && <kbd aria-hidden="true" className="ml-auto text-xs text-muted-foreground">{hint}</kbd>}</button>; }
+function Nav({ icon, label, hint, badge, onClick }: { icon: React.ReactElement<{className?: string}>; label: string; hint?: string; badge?: number; onClick: () => void }) { return <button onClick={onClick} className="flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-sidebar-accent"><span className="[&>svg]:size-4">{icon}</span>{label}{!!badge && <span className="ml-auto rounded-full bg-destructive px-1.5 text-[10px] font-medium text-destructive-foreground" aria-hidden="true">{badge}</span>}{hint && <kbd aria-hidden="true" className="ml-auto text-xs text-muted-foreground">{hint}</kbd>}</button>; }
 
 function SpacesNav({ me }: { me: CurrentUser }) {
   const { t } = useTranslation();
