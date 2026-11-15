@@ -39,7 +39,9 @@ test("admin toggles item types of the '+' menu; the dialog passes axe; the creat
   await dialog.getByRole("checkbox", { name: "Folder" }).check();
   await dialog.getByRole("checkbox", { name: "Bug" }).uncheck();
   await dialog.getByRole("button", { name: "Save menu" }).click();
-  const put = calls.find((c) => c.method === "PUT" && c.path.endsWith("/create-menu"));
+  const isPut = (c: { method: string; path: string }) => c.method === "PUT" && c.path.endsWith("/create-menu");
+  await expect.poll(() => calls.some(isPut)).toBe(true); // the click returns before the request is recorded on a slow runner
+  const put = calls.find(isPut);
   expect(put?.body).toEqual({ enabled: ["task", "project", "folder"] });
   expect(put?.headers["if-match"]).toBe('"4"');
   await page.getByRole("main").getByRole("button", { name: "New item" }).click();
