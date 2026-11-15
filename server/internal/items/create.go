@@ -46,8 +46,31 @@ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields 
 	}
 }
 
+// createOnce serializes sibling creates per parent with a session advisory lock taken BEFORE the Serializable snapshot starts,
+// so concurrent creates under one parent queue up instead of aborting each other (40001). The retry in Create stays as a fallback.
 func createOnce(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	conn, err := pool.Acquire(ctx)
+	if err != nil {
+		return Detail{}, err
+	}
+	keys := parentLockKeys(fields)
+	locked := 0
+	defer func() {
+		for ; locked > 0; locked-- {
+			if _, err := conn.Exec(context.WithoutCancel(ctx), "SELECT pg_advisory_unlock(hashtextextended($1,0))", keys[locked-1]); err != nil {
+				conn.Hijack().Close(context.WithoutCancel(ctx)) // never return a connection that may still hold a lock
+				return
+			}
+		}
+		conn.Release()
+	}()
+	for _, key := range keys {
+		if _, err := conn.Exec(ctx, "SELECT pg_advisory_lock(hashtextextended($1,0))", key); err != nil {
+			return Detail{}, err
+		}
+		locked++
+	}
+	tx, err := conn.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return Detail{}, err
 	}
@@ -57,6 +80,32 @@ func createOnce(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fie
 		err = tx.Commit(ctx)
 	}
 	return item, err
+}
+
+// parentLockKeys lists the distinct (space, parent) placements of a create in a stable order, so two creates never lock in opposite order.
+func parentLockKeys(fields map[string]json.RawMessage) []string {
+	var locations []struct {
+		SpaceID  string  `json:"space_id"`
+		ParentID *string `json:"parent_item_id"`
+	}
+	if json.Unmarshal(fields["locations"], &locations) != nil {
+		return nil
+	}
+	seen := map[string]bool{}
+	keys := make([]string, 0, len(locations))
+	for _, l := range locations {
+		parent := ""
+		if l.ParentID != nil {
+			parent = *l.ParentID
+		}
+		k := "rank:" + l.SpaceID + ":" + parent
+		if !seen[k] {
+			seen[k] = true
+			keys = append(keys, k)
+		}
+	}
+	sort.Strings(keys)
+	return keys
 }
 
 // CreateTx creates an Item inside the caller's transaction (Serializable); the caller commits.
