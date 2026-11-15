@@ -77,7 +77,7 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
             </ul>
             {mine && <Decision key={`${approval.id}-${mine.decision}-${mine.decided_at}`} current={mine} busy={busy} final={approval.status !== "pending"}
               onDecide={(decision, comment) => void run(() => send(`/api/v1/approvals/${approval.id}/decision`, "PUT", { decision, comment }))} />}
-            {canEdit && <div className="flex gap-2">
+            {canEdit && <div className="flex flex-wrap gap-2">
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => { setReassigning(false); setEditing(approval.id); }}>{t("items.approvals.edit")}</Button>
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => { setReassigning(true); setEditing(approval.id); }}>{t("items.approvals.reassign")}</Button>
               <Button size="sm" variant="ghost" disabled={busy} onClick={() => setDeleting(approval)}>{t("items.approvals.delete")}</Button>
