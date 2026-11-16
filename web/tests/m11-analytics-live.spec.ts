@@ -11,7 +11,10 @@ test("S11.2: a Space analytics board shows real numbers, and its public link wor
   const page = await context.newPage();
   await page.goto(`/spaces/${e.PMS_FIXTURE_M11A_SPACE!}`); // S-UIP.1.8: the board is created from the Space's Tools in the sidebar
   const create = page.getByRole("button", { name: "Create analytics board" });
-  if (!(await create.isVisible())) await page.getByRole("button", { name: "Expand M11 Analytics" }).click();
+  if (!(await create.isVisible())) {
+    await page.getByRole("button", { name: "Expand M11 Analytics" }).click();
+    await page.getByRole("navigation", { name: "Spaces" }).getByRole("button", { name: "Tools" }).click(); // SB-05: Tools starts collapsed
+  }
   await create.click();
   await expect(page.getByRole("heading", { name: "Analytics", level: 1 })).toBeVisible();
   const done = page.getByRole("region", { name: "Tasks done" });
