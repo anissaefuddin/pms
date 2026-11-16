@@ -21,7 +21,7 @@ function AccountRoute() {
   const { data } = account;
   const { seats } = data;
   const percent = seats.max > 0 ? Math.min(100, Math.round((seats.used / seats.max) * 100)) : 0;
-  return <div className="max-w-3xl space-y-8">
+  return <div className="space-y-8">
     <section className="flex items-start gap-4">
       <span aria-hidden="true" className="grid size-14 shrink-0 place-items-center rounded-xl bg-primary text-lg font-semibold text-primary-foreground">{data.name.slice(0, 1).toUpperCase()}</span>
       <div className="min-w-0 flex-1">

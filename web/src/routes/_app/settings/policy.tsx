@@ -51,7 +51,7 @@ function PolicyForm({ policy }: { policy: Policy }) {
     } finally { setBusy(false); }
   }
   // Two separate cards in one form: the IP allowlist and the emailed sign-in code are saved together but read apart.
-  return <form onSubmit={(e) => void submit(e)} className="max-w-2xl space-y-5" aria-label={t("policy.title")}>
+  return <form onSubmit={(e) => void submit(e)} className="space-y-5" aria-label={t("policy.title")}>
     <section className="space-y-4 rounded-lg border p-5">
     <h2 className="font-semibold">{t("policy.ip.title")}</h2>
     <p className="text-sm text-muted-foreground">{t("policy.ip.hint")}</p>

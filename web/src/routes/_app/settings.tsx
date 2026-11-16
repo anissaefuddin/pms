@@ -6,13 +6,12 @@ import { useProfile } from "@/lib/profile";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsLayout });
 
-// One content width per page type, so pages line up: forms narrow, tables medium, boards wide.
-const FORM_PAGES = ["/settings/profile", "/settings/language", "/settings/work-preferences", "/settings/account", "/settings/email",
-  "/settings/appearance", "/settings/security", "/settings/sso", "/settings/provisioning", "/settings/policy", "/settings/ownership"];
-const BOARD_PAGES = ["/settings/work-schedule", "/settings/workflows"];
+// Three content widths from the design standard: form 720–800px, standard 960–1120px, full-width = available width.
+const FORM_PAGES = ["/settings/profile", "/settings/language", "/settings/work-preferences", "/settings/security", "/settings/email", "/settings/ownership"];
+const FULL_PAGES = ["/settings/users", "/settings/spaces", "/settings/workflows", "/settings/work-schedule", "/settings/audit"];
 function contentWidth(pathname: string) {
-  if (BOARD_PAGES.some((page) => pathname.startsWith(page))) return "max-w-6xl";
-  if (FORM_PAGES.some((page) => pathname.startsWith(page))) return "max-w-2xl";
+  if (FULL_PAGES.some((page) => pathname.startsWith(page))) return "";
+  if (FORM_PAGES.some((page) => pathname.startsWith(page))) return "max-w-3xl";
   return "max-w-5xl";
 }
 

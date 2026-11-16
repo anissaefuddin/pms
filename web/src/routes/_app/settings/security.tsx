@@ -21,7 +21,7 @@ function Security() {
   const me = useProfile();
   const [open, setOpen] = useState(false);
   return (
-    <div className="max-w-3xl space-y-8">
+    <div className="space-y-8">
       <SettingsSection title={t("settings.security.authentication")} description={t("settings.security.description")}>
         <div>
           <SettingsRow icon={<Mail />} label={t("settings.security.email")} hint={t("settings.security.emailHint")}>

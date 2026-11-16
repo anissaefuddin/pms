@@ -23,7 +23,7 @@ function SsoPage() {
   const profile = useProfile();
   const admin = profile?.user_type === "admin";
   if (profile && !admin) return <p role="alert">{t("sso.admin.adminOnly")}</p>;
-  return <div className="max-w-2xl space-y-6">
+  return <div className="space-y-6">
     <Provider kind="oidc" />
     <Provider kind="saml" />
   </div>;

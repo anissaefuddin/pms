@@ -48,7 +48,7 @@ function Resources() {
         className={`-mb-px border-b-2 px-1 pb-2 ${tab === item.id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{item.label}</button>)}
     </nav>
 
-    {tab === "capacity" && <section className="max-w-3xl space-y-6">
+    {tab === "capacity" && <section className="space-y-6">
       {admin && <label className="block max-w-sm space-y-1 text-sm">{t("settings.resourceSettings.person")}
         <select value={user} onChange={(event) => setUser(event.target.value)} className="block h-9 w-full rounded-md border border-input bg-background px-2">
           <option value="">{t("settings.resourceSettings.mySchedule")}</option>
@@ -76,7 +76,7 @@ function AssignmentList({ kind, entries, assigned, person, busy, onSave, onPerso
   const [editing, setEditing] = useState<Choice>();
   const title = kind === "role" ? t("settings.resourceSettings.jobRoles") : t("settings.resourceSettings.skills");
   const description = kind === "role" ? t("settings.resources.rolesScope") : t("settings.resources.skillsScope");
-  return <section className="max-w-3xl space-y-5">
+  return <section className="space-y-5">
     <p className="text-sm text-muted-foreground">{description}</p>
     <form key={editing?.id ?? "new"} className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
       event.preventDefault();
