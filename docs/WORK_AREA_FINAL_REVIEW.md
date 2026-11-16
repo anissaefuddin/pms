@@ -74,3 +74,40 @@ Result: **CHANGES REQUIRED**. Blockers: decisions DEF-P3-05 and DEF-P3-06, scena
 2. Run E2E-02 rename and the All views menu, E2E-07 edit and filter checks, E2E-01 Board/Chart layout checks, and the remaining E2E-06 keyboard move.
 3. Visual audit at 1280, 1440 and 1920, light and dark, compact and comfortable.
 4. Commit the fixes, the regression spec and the updated docs only after approval.
+
+## 7. Phase 3.1 status (this pass)
+
+Execution method: sequential, single operator (no parallel agents were run). Local environment only: `pms_qa`, Go on localhost:8080, Vite on localhost:5173.
+
+| ID | Phase | Owner | Priority | Decision status | Implementation | Verification | Evidence | Remaining limitation |
+|---|---|---|---|---|---|---|---|---|
+| DEF-P3-05 | 3 | A | P1 | APPROVED (DECISIONS §8) | DONE (uncommitted) | PASS (mock QA-P3-04; live calendar check) | `item-calendar`, `view-workspace` | none |
+| DEF-P3-06 | 3 | A | P2 | APPROVED (DECISIONS §8) | DONE (uncommitted): milestone label, column split, chart scope label | PASS (mock QA-P3-05; live board check) | `item-board`, `project-files` | Chart still shows status counts only, not a task/milestone split |
+| WA-03 / WA-D03 | 2 / 2.1 | A | P2 | APPROVED (DECISIONS §8) | DONE (server analytics, unchanged) | PASS (live: Work items 28 = analytics) | analytics query | none |
+| WA-02 / WA-D02 | 2 | A | P2 | APPROVED (DECISIONS §8) | DONE (group-based, unchanged) | PASS (live: In progress 9 = Board = Chart) | header, board | none |
+| A2 Upcoming milestones | 3.1 | A | P1 | — | DONE (uncommitted): full subtree walk | PASS (mock QA-P3-06, three folder levels) | `project-header.tsx` | client walk, not server-side; one request per container |
+| A3 traversal audit | 3.1 | A | P1 | — | PARTIAL: subtree walk now covers subitems; filter-during-traversal not audited | NOT RUN for filters, pagination, duplicates | `lib/items.ts` | filters apply to the top list only |
+| A5 performance (50/200/500) | 3.1 | A | P2 | — | NOT RUN | NOT RUN | — | — |
+| FND-02 Folder header | 1 | B | P2 | — | NOT VERIFIED in this pass (earlier decision register marks DONE) | NOT RUN | DECISIONS | — |
+| FND-06 duplicate components | 1 | B | P2 | — | OPEN | NOT RUN | — | — |
+| FND-07 states | 1 | B | P2 | — | NOT VERIFIED | NOT RUN | — | — |
+| FND-08 / WA-D04 creation policy | 1/2 | B | P2 | — | NOT VERIFIED | NOT RUN | — | — |
+| FND-09 / WA-D05/06 session lifecycle | 1/2 | B | P2 | — | NOT VERIFIED | NOT RUN | — | — |
+| C1 drag tab reorder (WA-D07) | 2.1 | C | P1 | — | NOT VERIFIED in this pass | NOT RUN | — | — |
+| C2 Table and Board interactions | 2 | C | P1 | — | NOT VERIFIED | NOT RUN | — | — |
+| C3 Gantt and Calendar | 2 | C | P1 | — | NOT VERIFIED | NOT RUN | — | — |
+| C4 ItemDetail | 2 | C | P1 | — | NOT VERIFIED | NOT RUN | — | — |
+| D1–D12 live E2E | 3.1 | D | P1 | — | see section 3 above | PARTIAL | `WORK_AREA_TEST_EVIDENCE.md` | multi-user and approvals not run with real users |
+| E visual audit and a11y | 3.1 | E | P2 | — | NOT RUN | NOT RUN | — | — |
+
+Automated checks on the current working tree (not committed): lint PASS, token lint PASS, typecheck PASS, unit 85/85 PASS, production build PASS, mock Playwright 503 passed, Go `gofmt`/`go vet`/`go test ./server/...` PASS. Browser Go list: 15 pass; `TestBrowserCollaboration` failed once in `pilot-live.spec.ts` (mention notification not visible within 3 s) and passed on two reruns, so it is intermittent.
+
+Remote: last reviewed `bffe6b9` (pushed). Local uncommitted changes are listed in `git status`.
+
+Overall status: **CHANGES REQUIRED** (Wave 1 agents B, C, D (except as noted), and E not executed; A5 not measured; DEF-P3-06 chart split not done).
+
+### CI on bffe6b9 (failed)
+
+- Job `test`, step "Generated code is up to date" failed. Cause: `server/internal/dbgen/models.go` was stale. The `ApprovalEvent` struct lacked `attachment_id` and `attachment_version` from migration 00325 (commit 3867409). The other checks passed (`authorization-matrix`, `parity-e2e`).
+- Fix applied locally, not committed: regenerated with `sqlc generate` (v1.31.1). Only `models.go` changed. `gofmt`, `go vet`, and approval and file-review tests pass.
+- Lesson recorded for the next pass: run the generated-code check before pushing.

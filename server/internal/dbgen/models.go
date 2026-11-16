@@ -556,16 +556,18 @@ type ApprovalApprover struct {
 }
 
 type ApprovalEvent struct {
-	ID          int64              `json:"id"`
-	ApprovalID  pgtype.UUID        `json:"approval_id"`
-	ItemID      pgtype.UUID        `json:"item_id"`
-	Kind        string             `json:"kind"`
-	ActorID     pgtype.UUID        `json:"actor_id"`
-	SubjectID   pgtype.UUID        `json:"subject_id"`
-	Decision    pgtype.Text        `json:"decision"`
-	Comment     string             `json:"comment"`
-	ItemVersion pgtype.Int4        `json:"item_version"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ID                int64              `json:"id"`
+	ApprovalID        pgtype.UUID        `json:"approval_id"`
+	ItemID            pgtype.UUID        `json:"item_id"`
+	Kind              string             `json:"kind"`
+	ActorID           pgtype.UUID        `json:"actor_id"`
+	SubjectID         pgtype.UUID        `json:"subject_id"`
+	Decision          pgtype.Text        `json:"decision"`
+	Comment           string             `json:"comment"`
+	ItemVersion       pgtype.Int4        `json:"item_version"`
+	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	AttachmentID      pgtype.UUID        `json:"attachment_id"`
+	AttachmentVersion pgtype.Int4        `json:"attachment_version"`
 }
 
 type Attachment struct {

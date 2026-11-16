@@ -287,5 +287,8 @@
     "selectAll": "Select all loaded rows",
     "selectRow": "Select {{title}}",
     "toolbar": "Bulk actions"
-  }
+  },
+  "milestone": "Milestone",
+  "boardBreakdown": "{{tasks}} tasks · {{milestones}} milestones",
+  "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded."
 }

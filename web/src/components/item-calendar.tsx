@@ -1,6 +1,6 @@
 import { useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Diamond, ChevronLeft, ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
@@ -71,7 +71,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
       <button type="button" draggable={canEdit} onClick={() => onOpen(item)} onKeyDown={(event) => keyboard(event, item)}
         onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); setDrag({ id: item.id, from: day }); }} onDragEnd={() => setDrag(undefined)}
         aria-label={item.start_date || item.due_date ? t("views.calendar.item", { title: item.title, start: item.start_date ?? item.due_date, end: item.due_date ?? item.start_date }) : item.title}
-        className={`flex w-full items-center gap-1 truncate rounded border-l-4 border-current px-1.5 py-0.5 text-left text-xs font-medium ${tintOf(item.status?.color)}`}><TypeGlyph item={item} className="size-3" /><span className="truncate">{item.title}</span></button>
+        className={`flex w-full items-center gap-1 truncate rounded border-l-4 border-current px-1.5 py-0.5 text-left text-xs font-medium ${tintOf(item.status?.color)}`}><TypeGlyph item={item} className="size-3" /><span className="flex min-w-0 items-center gap-1">{item.is_milestone && <Diamond aria-hidden className="size-3 shrink-0" />}<span className="truncate">{item.title}</span></span></button>
     </li>;
   };
   const names = Array.from({ length: 7 }, (_, index) => addDays(first, index));
@@ -85,7 +85,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
         onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); setDrag({ id: item.id, from }); }}
         onDragEnd={() => setDrag(undefined)} aria-label={`${label}${bar.continuesBefore ? ` · ${t("views.calendar.continuesBefore")}` : ""}${bar.continuesAfter ? ` · ${t("views.calendar.continuesAfter")}` : ""}`}
         className={`flex h-6 w-full items-center gap-1 truncate rounded border-l-4 border-current px-1.5 text-left text-xs font-medium ${tintOf(item.status?.color)} ${bar.continuesBefore ? "rounded-l-none" : ""} ${bar.continuesAfter ? "rounded-r-none" : ""}`}>
-        {bar.continuesBefore && <span aria-hidden>‹</span>}<TypeGlyph item={item} className="size-3 shrink-0" /><span className="truncate">{item.title}</span>{bar.continuesAfter && <span aria-hidden className="ml-auto">›</span>}
+        {bar.continuesBefore && <span aria-hidden>‹</span>}<TypeGlyph item={item} className="size-3 shrink-0" /><span className="flex min-w-0 items-center gap-1">{item.is_milestone && <Diamond aria-hidden className="size-3 shrink-0" />}<span className="truncate">{item.title}</span></span>{bar.continuesAfter && <span aria-hidden className="ml-auto">›</span>}
       </button>
       <span role="tooltip" id={cardId} className="pointer-events-none invisible absolute left-0 top-full z-40 mt-1 w-64 space-y-1 rounded-md border bg-popover p-3 text-xs text-popover-foreground shadow-md group-focus-within:visible group-hover:visible">
         <span className="block font-medium">{item.title}</span>

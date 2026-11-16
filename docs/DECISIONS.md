@@ -239,3 +239,10 @@ Batasan yang diterima: withdrawal sebelum migrasi 00325 tetap tampil sebagai "No
 
 Belum diverifikasi di lingkungan ini: semua tes Go integrasi (butuh database test di CI).
 
+
+## 8. Phase 3.1 decisions (Product Owner, approved)
+
+- **DEF-P3-05 — kelayakan item kalender (APPROVED).** Folder adalah kontainer organisasi: tidak tampil sebagai event atau di tray Unscheduled. Traversal tetap menelusuri folder untuk mengambil descendant yang layak. Task dan subtask terjadwal tampil sebagai event; yang belum terjadwal masuk tray. Milestone terjadwal tampil dengan penanda milestone; milestone tanpa tanggal masuk tray. Ini aturan presentasi dan kelayakan view, bukan migrasi data. Folder tetap boleh punya tanggal di model data.
+- **DEF-P3-06 — milestone di Board (APPROVED).** Milestone tetap tampil di Board dengan penanda tipe. Kartu folder tidak tampil di Board proyek. Board Space tetap menampilkan kartu proyek. Jumlah kolom menghitung semua kartu yang tampil, dengan rincian task dan milestone bila keduanya ada. KPI "Work items" tidak menghitung milestone. KPI "Upcoming milestones" tetap metrik terpisah. Chart diberi label cakupan yang menyatakan milestone dan folder dikecualikan.
+- **WA-02 / WA-D02 — In progress (dikonfirmasi).** Yang dihitung adalah status non-awal dari grup aktif berdasarkan ID status stabil, bukan nama. Istilah "Active" dan "In progress" dibedakan secara eksplisit.
+- **WA-03 / WA-D03 — hitungan item kerja rekursif (dikonfirmasi).** Dihitung di server lewat analytics: Task dan Subtask unik, rekursif, milestone dan kontainer dikecualikan. Rumus progres tidak diubah.

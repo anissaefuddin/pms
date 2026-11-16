@@ -55,3 +55,32 @@ test("QA-P3-03: a project board shows tasks inside folders, and folders are not 
   await expect(page.getByText("Calendar task inside folder").first()).toBeVisible();
   await expect(page.getByText("Workstream", { exact: true })).toHaveCount(0);
 });
+
+test("QA-P3-04: the calendar shows no folder entries, neither as events nor in the Unscheduled tray", async ({ page }) => {
+  await mockSpaces(page, { extra: mocks() });
+  await page.goto(`/tasks/${projectId}?view=${calendarView}`);
+  await expect(page.getByText("Calendar task inside folder").first()).toBeVisible();
+  await expect(page.getByText("Workstream", { exact: true })).toHaveCount(0);
+});
+
+test("QA-P3-05: milestones carry a milestone label on the Board, and the column shows the task and milestone split", async ({ page }) => {
+  await mockSpaces(page, { extra: mocks() });
+  await page.goto(`/tasks/${projectId}?view=${boardView}`);
+  await expect(page.getByText("Nested milestone").first()).toBeVisible();
+  await expect(page.getByText("Milestone", { exact: true }).first()).toBeVisible();
+  await expect(page.getByText("1 tasks · 1 milestones")).toBeVisible();
+});
+
+test("QA-P3-06: upcoming milestones count a milestone three folder levels down", async ({ page }) => {
+  const subfolderId = "dddddddd-dddd-4ddd-8ddd-dddddddddd01";
+  const deep = { ...milestone, id: "33333333-3333-4333-8333-333333333333", title: "Deep milestone",
+    locations: [{ space_id: marketing.id, parent_item_id: subfolderId }] } as Item;
+  const subfolder = { ...folder, id: subfolderId, title: "Sub workstream", locations: [{ space_id: marketing.id, parent_item_id: folderId }] } as Item;
+  await mockSpaces(page, { extra: {
+    ...mocks(),
+    [`GET /items/${folderId}/children`]: { body: { items: [task, subfolder] } },
+    [`GET /items/${subfolderId}/children`]: { body: { items: [deep] } },
+  } });
+  await page.goto(`/tasks/${projectId}?view=${tableView}`);
+  await expect(page.locator("span.tabular-nums").filter({ hasText: "Upcoming milestones" })).toContainText("1");
+});

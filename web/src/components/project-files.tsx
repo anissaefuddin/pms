@@ -60,6 +60,7 @@ export function ProjectChart({ project }: { project: Item }) {
       <span>{t("views.chart.title")}</span>
       <span className="text-sm font-normal text-muted-foreground">{t("views.chart.total", { count: total })}</span>
     </figcaption>
+    <p className="text-xs text-muted-foreground">{t("views.chartScope")}</p>
     <ul className="space-y-1">{rows.map((row) => {
       const percent = Math.round((row.value / total) * 100);
       const color = colors.get(row.group.key) ?? "";
