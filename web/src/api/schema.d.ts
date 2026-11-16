@@ -4057,6 +4057,8 @@ export interface components {
             entry_to?: string;
             /** @enum {string} */
             billing?: "billable" | "non_billable";
+            /** @description Milestone tidak dihitung sebagai task (WA-D03); hanya untuk reporting_on tasks */
+            exclude_milestones?: boolean;
         };
         AnalyticsQuery: {
             /** @enum {string} */
@@ -4076,9 +4078,9 @@ export interface components {
              */
             field_id?: string;
             /** @enum {string} */
-            group_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            group_by?: "assignee" | "status" | "status_id" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
             /** @enum {string} */
-            break_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            break_by?: "assignee" | "status" | "status_id" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
             filters?: components["schemas"]["AnalyticsFilters"];
         };
         WidgetData: {
@@ -4419,6 +4421,10 @@ export interface components {
         TimeEntryPage: {
             items: components["schemas"]["TimeEntry"][];
             next_offset: number | null;
+            /** @description Total menit seluruh hasil yang difilter (bukan halaman); hanya Timelog project */
+            total_minutes?: number;
+            billable_minutes?: number;
+            non_billable_minutes?: number;
         };
         Problem: {
             /** @example about:blank */
@@ -4991,6 +4997,13 @@ export interface components {
             id: number;
             /** Format: uuid */
             approval_id: string;
+            /**
+             * Format: uuid
+             * @description WA-D08: file yang dirujuk approval; kosong untuk event lama
+             */
+            attachment_id?: string | null;
+            /** Format: int32 */
+            attachment_version?: number | null;
             /** @enum {string} */
             kind: "approver_requested" | "approver_removed" | "decided" | "withdrawn";
             actor: components["schemas"]["UserRef"] | null;
@@ -5750,6 +5763,11 @@ export interface components {
         };
         ProjectFile: components["schemas"]["Attachment"] & {
             item_title: string;
+            /**
+             * @description WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
+             * @enum {string}
+             */
+            review_status?: "not_requested" | "in_review" | "approved" | "rejected" | "cancelled";
         };
         AttachmentPreview: {
             /** Format: uuid */

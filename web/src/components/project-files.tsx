@@ -9,6 +9,7 @@ import { FilesIllustration, ProjectIllustration } from "@/components/ui/empty-il
 import { statusDotClass } from "@/lib/status-colors";
 
 type ProjectFile = components["schemas"]["ProjectFile"];
+const reviewKey: Record<string, string> = { not_requested: "notRequested", in_review: "inReview", approved: "approved", rejected: "rejected", cancelled: "cancelled" };
 
 export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item: Item) => void }) {
   const { t } = useTranslation();
@@ -19,7 +20,7 @@ export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item
   if (!files.data.items.length) return <EmptyState icon={<FilesIllustration />} title={t("views.files.empty")} description={t("views.files.emptyHint")} />;
   return <table aria-label={t("views.types.files")} className="w-full text-left text-sm">
     <thead><tr>
-      <th className="p-2">{t("views.files.name")}</th><th className="p-2">{t("views.files.type")}</th><th className="p-2">{t("views.files.version")}</th><th className="p-2">{t("views.files.item")}</th><th className="p-2">{t("views.files.size")}</th>
+      <th className="p-2">{t("views.files.name")}</th><th className="p-2">{t("views.files.type")}</th><th className="p-2">{t("views.files.version")}</th><th className="p-2">{t("items.reviewLabel")}</th><th className="p-2">{t("views.files.item")}</th><th className="p-2">{t("views.files.size")}</th>
       <th className="p-2">{t("views.files.uploader")}</th><th className="p-2">{t("views.files.added")}</th></tr></thead>
     <tbody>{files.data.items.map((file) => <tr key={file.id} className="border-t">
       {/* Link attachments have no file to download: they open their URL instead (E2). */}
@@ -28,6 +29,8 @@ export function ProjectFiles({ project, onOpen }: { project: Item; onOpen: (item
         : <a className="underline" href={`/api/v1/attachments/${file.id}/download`} download>{file.filename}</a>}</td>
       <td className="p-2 text-muted-foreground">{file.link_url ? t("views.files.linkOnly") : file.content_type}</td>
       <td className="p-2">{file.version ? t("views.files.versionNumber", { version: file.version }) : "—"}</td>
+      {/* WA-D08: review status of the newest version of this file (not inherited from older versions). */}
+      <td className="p-2"><span data-review-status={file.review_status}>{t(`items.reviewState.${reviewKey[file.review_status ?? "not_requested"] ?? "notRequested"}`)}</span></td>
       <td className="p-2"><button type="button" className="underline" onClick={() => onOpen({ id: file.item_id, title: file.item_title } as Item)}>{file.item_title}</button></td>
       <td className="p-2">{file.link_url ? t("views.files.dash") : t("views.files.kb", { count: Math.max(1, Math.round(file.size_bytes / 1024)) })}</td>
       <td className="p-2">{file.uploader.name}</td>

@@ -17,6 +17,17 @@ type Attachment = components["schemas"]["Attachment"];
 type ApprovalEvent = components["schemas"]["ApprovalEvent"];
 
 /** Item approvals (SPC-12). Status is always text, never colour alone. */
+// D-08: status colours come from the design tokens. Finalized approvals show a final label and keep the existing decision guard.
+// Text stays in the foreground colour for contrast (AA); the tint carries the state.
+const statusTone: Record<string, string> = {
+  pending: "bg-warning-subtle text-foreground",
+  approved: "bg-success-subtle text-foreground",
+  rejected: "bg-danger-subtle text-foreground",
+};
+/** Tenggat sudah lewat dan approval masih pending. Dihitung dari tanggal (YYYY-MM-DD) hari ini. */
+const isOverdue = (approval: { status: string; due_date?: string | null }) =>
+  approval.status === "pending" && !!approval.due_date && approval.due_date < new Date().toISOString().slice(0, 10);
+
 export function ItemApprovals({ item, userId }: { item: Item; userId: string }) {
   const { t } = useTranslation();
   const heading = useId();
@@ -60,11 +71,14 @@ export function ItemApprovals({ item, userId }: { item: Item; userId: string }) 
           : <>
             <div className="flex flex-wrap items-center gap-2">
               <p className="min-w-0 flex-1 break-words font-medium">{approval.description || t("items.approvals.title")}</p>
-              <span className="rounded border px-2 py-0.5 text-xs font-medium">
-                {t("items.approvals.counter", { approved: approval.approved_count, total: approval.total })} · {t(`items.approvals.status.${approval.status}`)} · {t(`items.approvals.policy.${approval.policy ?? "all"}`)}
+              <span data-approval-status={approval.status} className={`rounded px-2 py-0.5 text-xs font-medium ${statusTone[approval.status]}`}>
+                {t(`items.approvals.status.${approval.status}`)}{approval.status === "pending" ? "" : ` · ${t("items.approvals.final")}`}
               </span>
+              <span className="text-xs text-muted-foreground">{t("items.approvals.counter", { approved: approval.approved_count, total: approval.total })} · {t(`items.approvals.policy.${approval.policy ?? "all"}`)}</span>
+              {isOverdue(approval) && <span className="text-xs font-medium text-destructive">{t("items.approvals.overdue")}</span>}
             </div>
             {approval.attachment_id && <p className="text-sm"><a className="underline" href={`/api/v1/attachments/${approval.attachment_id}/versions/${approval.attachment_version}/download`} download>{t("items.fileReview.pinned", { version: approval.attachment_version })}</a></p>}
+            <progress className="h-1.5 w-full" max={approval.total || 1} value={approval.approved_count} aria-label={t("items.approvals.counter", { approved: approval.approved_count, total: approval.total })} />
             <p className="text-sm text-muted-foreground">
               {t("items.approvals.createdBy", { name: approval.created_by.name })}
               {approval.due_date && ` · ${t("items.approvals.dueOn", { date: formatDate(approval.due_date, profile) })}`}

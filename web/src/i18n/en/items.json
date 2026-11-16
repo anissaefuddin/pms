@@ -213,7 +213,9 @@
     "yourDecision": "Your decision: {{decision}}",
     "comment": "Comment (optional)",
     "approve": "Approve",
-    "reject": "Reject"
+    "reject": "Reject",
+    "final": "final",
+    "overdue": "Overdue"
   },
   "usersUnavailable": "The people directory is not available to you.",
   "activity.title": "Activity",
@@ -292,6 +294,15 @@
     "notRequested": "Not requested",
     "inReview": "In review",
     "approved": "Approved",
-    "rejected": "Rejected"
-  }
+    "rejected": "Rejected",
+    "cancelled": "Cancelled"
+  },
+  "upload": {
+    "uploading": "Uploading {{name}}",
+    "progress": "{{percent}}% sent",
+    "pending": "Sending… progress cannot be measured",
+    "failed": "Upload failed: {{message}}",
+    "retry": "Try again"
+  },
+  "reviewLabel": "Review"
 }

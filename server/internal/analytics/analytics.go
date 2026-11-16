@@ -56,6 +56,8 @@ type Filters struct {
 	EntryFrom      string   `json:"entry_from,omitempty"`       // time entries only
 	EntryTo        string   `json:"entry_to,omitempty"`
 	Billing        string   `json:"billing,omitempty"` // billable, non_billable; time entries only
+	// ExcludeMilestones leaves milestones out of task counts (they are reported separately, WA-D03).
+	ExcludeMilestones bool `json:"exclude_milestones,omitempty"`
 }
 
 type Query struct {
@@ -126,6 +128,9 @@ func dimension(source, name, n string) (dim, bool) {
 			fmt.Sprintf("COALESCE(a%s.user_id::text,'')", n), fmt.Sprintf("CASE WHEN a%s.user_id IS NULL THEN 'Unassigned' ELSE %s END", n, userLabel("ua"+n))}, true
 	case "status":
 		return dim{"", "COALESCE(st.name,'')", "COALESCE(st.name,'')"}, true
+	// status_id groups by the stable status id; the label is the name. Use it when names may repeat across workflows (F-01).
+	case "status_id":
+		return dim{"", "COALESCE(i.status_id::text,'')", "COALESCE(st.name,'')"}, true
 	case "status_group":
 		return dim{"", "COALESCE(st.grp::text,'')", "COALESCE(st.grp::text,'')"}, true
 	case "importance":
@@ -537,6 +542,9 @@ func build(q Query, actor policy.Actor, list *listSpec) (string, []any) {
 			kind = "project"
 		}
 		where = append(where, "i.type::text = "+add(kind, "text"))
+		if f.ExcludeMilestones && kind == "task" {
+			where = append(where, "NOT i.is_milestone")
+		}
 		if len(f.StatusGroups) > 0 {
 			where = append(where, "st.grp::text = ANY("+add(f.StatusGroups, "text[]")+")")
 		}

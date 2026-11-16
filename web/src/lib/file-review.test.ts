@@ -38,3 +38,11 @@ test("WA-D08: an open review wins over an older decision for the same version", 
 test("WA-D08: approvals for other files are ignored", () => {
   assert.equal(reviewStateFor([approval("x", "approved", 1, "2026-11-10T10:00:00Z", "other")], file, 1, "ok").state, "notRequested");
 });
+
+test("WA-D08: a withdrawn review shows Cancelled for its version only, and not for a new version", () => {
+  const withdrawn = [{ attachment_id: file, attachment_version: 1 }];
+  assert.equal(reviewStateFor([], file, 1, "ok", withdrawn).state, "cancelled");
+  assert.equal(reviewStateFor([], file, 2, "ok", withdrawn).state, "notRequested");
+  // An active review for the same version wins over an older withdrawal.
+  assert.equal(reviewStateFor([approval("n", "pending", 1, "2026-11-12T10:00:00Z")], file, 1, "ok", withdrawn).state, "inReview");
+});

@@ -56,5 +56,9 @@
   },
   "noEntries": "No time entries yet. Logged time for this project appears here.",
   "clearFilters": "Clear filters",
-  "loadFailed": "Time entries could not be loaded."
+  "loadFailed": "Time entries could not be loaded.",
+  "filteredTotal": "Total for the filtered entries: {{time}}",
+  "billableTotal": "Billable: {{time}}",
+  "nonBillableTotal": "Non-billable: {{time}}",
+  "pageOnlyTotal": "On this page only: {{time}}"
 }

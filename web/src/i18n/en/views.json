@@ -244,7 +244,8 @@
     "more": "More actions",
     "percent": "{{value}}%",
     "summary": "Summary",
-    "directScope": "Direct children of this project only"
+    "directScope": "Direct children of this project only",
+    "subtreeScope": "Tasks in this project and its folders and subprojects; milestones excluded"
   },
   "searchPlaceholder": "Search",
   "chip": {

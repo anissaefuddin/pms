@@ -44,3 +44,11 @@ test("a failed load shows an alert with retry, and retry loads the entries", asy
   await page.getByRole("button", { name: "Reload" }).click();
   await expect(page.getByRole("table", { name: "Timelog" })).toBeVisible();
 });
+
+test("E-01: the Timelog shows the server's total for all filtered entries, not only this page", async ({ page }) => {
+  const row = { id: "e1", item_title: "Campaign", user_name: "Ada", date: "2026-11-15", minutes: 60, category: "Design", comment: "", billing_type: "billable", locked: false };
+  await open(page, () => ({ body: { items: [row], next_offset: 1, total_minutes: 180, billable_minutes: 150, non_billable_minutes: 30 } }));
+  await expect(page.getByText("Total for the filtered entries: 3:00", { exact: false })).toBeVisible();
+  await expect(page.getByText("Billable: 2:30", { exact: false })).toBeVisible();
+  await expect(page.getByText("On this page only", { exact: false })).toHaveCount(0);
+});

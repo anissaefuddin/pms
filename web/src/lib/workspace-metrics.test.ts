@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { completionPercent, ganttTone, groupBlueprintsBySpace, inProgressStatusIds, projectProgressPercent, suggestedBlueprints, upcomingMilestones, workItemCounts } from "./workspace-metrics.ts";
+import { completionPercent, ganttTone, groupBlueprintsBySpace, inProgressStatusIds, projectProgressPercent, suggestedBlueprints, tallyCounts, upcomingMilestones, workItemCounts } from "./workspace-metrics.ts";
 
 const done = { id: "d", status: { group: "completed" } };
 const active = { id: "a", status: { group: "active" } };
@@ -74,4 +74,13 @@ test("suggestedBlueprints: tiga preset dengan nama yang diharapkan", () => {
 test("ganttTone: setiap grup status punya token cat-*", () => {
   assert.equal(ganttTone("completed"), "cat-2");
   assert.equal(ganttTone(undefined), "cat-1");
+});
+
+test("F-01 / WA-D03: tally rows from analytics give total, done, active, and In progress by status id", () => {
+  const groups = new Map([["n", "active"], ["p", "active"], ["c", "completed"]]);
+  const inProgress = new Set(["p"]);
+  // six New items and nothing In progress: In progress 0, Active 6 (WA-D02 verification case)
+  assert.deepEqual(tallyCounts([{ key: "n", value: 6 }], groups, new Set()), { total: 6, done: 0, active: 6, inProgress: 0 });
+  assert.deepEqual(tallyCounts([{ key: "n", value: 2 }, { key: "p", value: 3 }, { key: "c", value: 1 }], groups, inProgress), { total: 6, done: 1, active: 5, inProgress: 3 });
+  assert.deepEqual(tallyCounts([], groups, inProgress), { total: 0, done: 0, active: 0, inProgress: 0 });
 });

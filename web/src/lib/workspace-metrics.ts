@@ -87,3 +87,19 @@ export function ganttTone(group?: string): "cat-5" | "cat-2" | "cat-4" | "cat-3"
     default: return "cat-1";
   }
 }
+
+/**
+ * KPI project dari baris analytics (reporting_on tasks, group_by status_id, milestone tidak dihitung): WA-D03 dan F-01.
+ * Hitungan mencakup seluruh subpohon project, bukan anak langsung. `groups` memetakan id status ke grup workflow.
+ */
+export function tallyCounts(rows: { key: string; value: number }[], groups: ReadonlyMap<string, string>, inProgressIds: ReadonlySet<string>) {
+  let total = 0, done = 0, active = 0, inProgress = 0;
+  for (const row of rows) {
+    total += row.value;
+    const group = groups.get(row.key);
+    if (group === "completed") done += row.value;
+    if (group === "active") active += row.value;
+    if (inProgressIds.has(row.key)) inProgress += row.value;
+  }
+  return { total, done, active, inProgress };
+}

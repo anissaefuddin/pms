@@ -114,6 +114,7 @@ const (
 	AnalyticsQueryBreakBySpace        AnalyticsQueryBreakBy = "space"
 	AnalyticsQueryBreakByStatus       AnalyticsQueryBreakBy = "status"
 	AnalyticsQueryBreakByStatusGroup  AnalyticsQueryBreakBy = "status_group"
+	AnalyticsQueryBreakByStatusId     AnalyticsQueryBreakBy = "status_id"
 	AnalyticsQueryBreakByType         AnalyticsQueryBreakBy = "type"
 	AnalyticsQueryBreakByUser         AnalyticsQueryBreakBy = "user"
 )
@@ -147,6 +148,8 @@ func (e AnalyticsQueryBreakBy) Valid() bool {
 		return true
 	case AnalyticsQueryBreakByStatusGroup:
 		return true
+	case AnalyticsQueryBreakByStatusId:
+		return true
 	case AnalyticsQueryBreakByType:
 		return true
 	case AnalyticsQueryBreakByUser:
@@ -171,6 +174,7 @@ const (
 	AnalyticsQueryGroupBySpace        AnalyticsQueryGroupBy = "space"
 	AnalyticsQueryGroupByStatus       AnalyticsQueryGroupBy = "status"
 	AnalyticsQueryGroupByStatusGroup  AnalyticsQueryGroupBy = "status_group"
+	AnalyticsQueryGroupByStatusId     AnalyticsQueryGroupBy = "status_id"
 	AnalyticsQueryGroupByType         AnalyticsQueryGroupBy = "type"
 	AnalyticsQueryGroupByUser         AnalyticsQueryGroupBy = "user"
 )
@@ -203,6 +207,8 @@ func (e AnalyticsQueryGroupBy) Valid() bool {
 	case AnalyticsQueryGroupByStatus:
 		return true
 	case AnalyticsQueryGroupByStatusGroup:
+		return true
+	case AnalyticsQueryGroupByStatusId:
 		return true
 	case AnalyticsQueryGroupByType:
 		return true
@@ -1728,6 +1734,33 @@ func (e PrincipalType) Valid() bool {
 	}
 }
 
+// Defines values for ProjectFileReviewStatus.
+const (
+	ProjectFileReviewStatusApproved     ProjectFileReviewStatus = "approved"
+	ProjectFileReviewStatusCancelled    ProjectFileReviewStatus = "cancelled"
+	ProjectFileReviewStatusInReview     ProjectFileReviewStatus = "in_review"
+	ProjectFileReviewStatusNotRequested ProjectFileReviewStatus = "not_requested"
+	ProjectFileReviewStatusRejected     ProjectFileReviewStatus = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ProjectFileReviewStatus enum.
+func (e ProjectFileReviewStatus) Valid() bool {
+	switch e {
+	case ProjectFileReviewStatusApproved:
+		return true
+	case ProjectFileReviewStatusCancelled:
+		return true
+	case ProjectFileReviewStatusInReview:
+		return true
+	case ProjectFileReviewStatusNotRequested:
+		return true
+	case ProjectFileReviewStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ProjectProgressMethod.
 const (
 	AveragePercent   ProjectProgressMethod = "average_percent"
@@ -3022,24 +3055,27 @@ type ActivityPage struct {
 
 // AnalyticsFilters defines model for AnalyticsFilters.
 type AnalyticsFilters struct {
-	Assignees        *[]string                       `json:"assignees,omitempty"`
-	AwaitingMyReview *bool                           `json:"awaiting_my_review,omitempty"`
-	Billing          *AnalyticsFiltersBilling        `json:"billing,omitempty"`
-	DueFrom          *openapi_types.Date             `json:"due_from,omitempty"`
-	DueThisMonth     *bool                           `json:"due_this_month,omitempty"`
-	DueThisWeek      *bool                           `json:"due_this_week,omitempty"`
-	DueTo            *openapi_types.Date             `json:"due_to,omitempty"`
-	EffortMax        *int                            `json:"effort_max,omitempty"`
-	EffortMin        *int                            `json:"effort_min,omitempty"`
-	EntryFrom        *openapi_types.Date             `json:"entry_from,omitempty"`
-	EntryThisMonth   *bool                           `json:"entry_this_month,omitempty"`
-	EntryTo          *openapi_types.Date             `json:"entry_to,omitempty"`
-	Followed         *bool                           `json:"followed,omitempty"`
-	Importance       *[]AnalyticsFiltersImportance   `json:"importance,omitempty"`
-	NoDueDate        *bool                           `json:"no_due_date,omitempty"`
-	Overdue          *bool                           `json:"overdue,omitempty"`
-	Starred          *bool                           `json:"starred,omitempty"`
-	StatusGroups     *[]AnalyticsFiltersStatusGroups `json:"status_groups,omitempty"`
+	Assignees        *[]string                `json:"assignees,omitempty"`
+	AwaitingMyReview *bool                    `json:"awaiting_my_review,omitempty"`
+	Billing          *AnalyticsFiltersBilling `json:"billing,omitempty"`
+	DueFrom          *openapi_types.Date      `json:"due_from,omitempty"`
+	DueThisMonth     *bool                    `json:"due_this_month,omitempty"`
+	DueThisWeek      *bool                    `json:"due_this_week,omitempty"`
+	DueTo            *openapi_types.Date      `json:"due_to,omitempty"`
+	EffortMax        *int                     `json:"effort_max,omitempty"`
+	EffortMin        *int                     `json:"effort_min,omitempty"`
+	EntryFrom        *openapi_types.Date      `json:"entry_from,omitempty"`
+	EntryThisMonth   *bool                    `json:"entry_this_month,omitempty"`
+	EntryTo          *openapi_types.Date      `json:"entry_to,omitempty"`
+
+	// ExcludeMilestones Milestone tidak dihitung sebagai task (WA-D03); hanya untuk reporting_on tasks
+	ExcludeMilestones *bool                           `json:"exclude_milestones,omitempty"`
+	Followed          *bool                           `json:"followed,omitempty"`
+	Importance        *[]AnalyticsFiltersImportance   `json:"importance,omitempty"`
+	NoDueDate         *bool                           `json:"no_due_date,omitempty"`
+	Overdue           *bool                           `json:"overdue,omitempty"`
+	Starred           *bool                           `json:"starred,omitempty"`
+	StatusGroups      *[]AnalyticsFiltersStatusGroups `json:"status_groups,omitempty"`
 
 	// TypeKeys Hanya item bertipe ini (kunci tipe item bawaan atau kustom; S8.1.5)
 	TypeKeys   *[]string `json:"type_keys,omitempty"`
@@ -3162,12 +3198,16 @@ type ApprovalStatus string
 
 // ApprovalEvent defines model for ApprovalEvent.
 type ApprovalEvent struct {
-	Actor      *UserRef               `json:"actor"`
-	ApprovalId openapi_types.UUID     `json:"approval_id"`
-	Comment    string                 `json:"comment"`
-	CreatedAt  time.Time              `json:"created_at"`
-	Decision   *ApprovalEventDecision `json:"decision"`
-	Id         int64                  `json:"id"`
+	Actor      *UserRef           `json:"actor"`
+	ApprovalId openapi_types.UUID `json:"approval_id"`
+
+	// AttachmentId WA-D08: file yang dirujuk approval; kosong untuk event lama
+	AttachmentId      *openapi_types.UUID    `json:"attachment_id,omitempty"`
+	AttachmentVersion *int32                 `json:"attachment_version,omitempty"`
+	Comment           string                 `json:"comment"`
+	CreatedAt         time.Time              `json:"created_at"`
+	Decision          *ApprovalEventDecision `json:"decision"`
+	Id                int64                  `json:"id"`
 
 	// ItemVersion Versi item saat peristiwa terjadi
 	ItemVersion *int32            `json:"item_version"`
@@ -4587,13 +4627,19 @@ type ProjectFile struct {
 	ItemTitle   string             `json:"item_title"`
 
 	// LinkUrl Terisi untuk lampiran tautan (tanpa berkas)
-	LinkUrl   *string `json:"link_url,omitempty"`
-	SizeBytes int64   `json:"size_bytes"`
-	Uploader  UserRef `json:"uploader"`
+	LinkUrl *string `json:"link_url,omitempty"`
+
+	// ReviewStatus WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
+	ReviewStatus *ProjectFileReviewStatus `json:"review_status,omitempty"`
+	SizeBytes    int64                    `json:"size_bytes"`
+	Uploader     UserRef                  `json:"uploader"`
 
 	// Version Nomor versi terbaru; filename
 	Version *int `json:"version,omitempty"`
 }
+
+// ProjectFileReviewStatus WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
+type ProjectFileReviewStatus string
 
 // ProjectProgressMethod defines model for ProjectProgressMethod.
 type ProjectProgressMethod string
@@ -5264,8 +5310,13 @@ type TimeEntryFieldsBillingType string
 
 // TimeEntryPage defines model for TimeEntryPage.
 type TimeEntryPage struct {
-	Items      []TimeEntry `json:"items"`
-	NextOffset *int        `json:"next_offset"`
+	BillableMinutes    *int        `json:"billable_minutes,omitempty"`
+	Items              []TimeEntry `json:"items"`
+	NextOffset         *int        `json:"next_offset"`
+	NonBillableMinutes *int        `json:"non_billable_minutes,omitempty"`
+
+	// TotalMinutes Total menit seluruh hasil yang difilter (bukan halaman); hanya Timelog project
+	TotalMinutes *int `json:"total_minutes,omitempty"`
 }
 
 // TwoFactorChallenge defines model for TwoFactorChallenge.

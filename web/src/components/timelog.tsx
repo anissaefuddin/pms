@@ -87,7 +87,14 @@ export function Timelog({ project }: { project: string }) {
         </tr>)}</tbody>
       </table>
     </div>}
-    {!!result.data?.items.length && <p className="text-sm text-muted-foreground">{t("time.pageTotal", { count: result.data.items.length, time: formatMinutes(result.data.items.reduce((sum, entry) => sum + (entry.minutes ?? 0), 0)) })}</p>}
+    {!!result.data?.items.length && (result.data.total_minutes != null
+      // E-01: the server's total covers every filtered entry, not only this page.
+      ? <div className="flex flex-wrap gap-x-4 text-sm">
+        <p className="font-medium">{t("time.filteredTotal", { time: formatMinutes(result.data.total_minutes) })}</p>
+        <p className="text-muted-foreground">{t("time.billableTotal", { time: formatMinutes(result.data.billable_minutes ?? 0) })}</p>
+        <p className="text-muted-foreground">{t("time.nonBillableTotal", { time: formatMinutes(result.data.non_billable_minutes ?? 0) })}</p>
+      </div>
+      : <p className="text-sm text-muted-foreground">{t("time.pageOnlyTotal", { time: formatMinutes(result.data.items.reduce((sum, entry) => sum + (entry.minutes ?? 0), 0)) })}</p>)}
     {(offset > 0 || result.data?.next_offset != null) && <div className="flex gap-2">
       <Button variant="outline" disabled={!offset || result.isPending} onClick={() => setOffset(Math.max(0, offset - pageSize))}>{t("time.previousPage")}</Button>
       <Button variant="outline" disabled={result.data?.next_offset == null} onClick={() => setOffset(result.data?.next_offset ?? offset)}>{t("time.nextPage")}</Button>
