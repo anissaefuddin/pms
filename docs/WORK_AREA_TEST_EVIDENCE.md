@@ -141,3 +141,22 @@ P3-E11-c | Project | Upcoming milestones counts nested milestones | 2 for seed |
 P3-E12 | Mock suite | Failed load, retry, upload retry, star failure | Clear feedback and retry | Covered by mock tests (in 499 passed) | PASS (mocked) | `npx playwright test` | none
 P3-VIS-01 | All | Resolutions 1280, 1440, 1920 | No overflow, readable | Not run | NOT RUN | none | none
 P3-VIS-02 | All | Light theme, compact and comfortable density | Readable | Only dark observed | NOT RUN | none | none
+
+## Phase 3 second pass (16 Nov 2026, local)
+
+Test ID | Page | Scenario | Expected result | Actual result | Status | Evidence | Defect reference
+--- | --- | --- | --- | --- | --- | --- | ---
+P3-E01-g | Project | Board shows tasks in folders | Executable items under the project | Before: folder cards only; after: New 15, In Progress 9, Completed 7 | PASS (after fix) | QA-P3-03; browser screenshot | DEF-P3-03
+P3-E01-h | Project | Calendar and Board include subitems | Subitem listed | Before missing; after listed | PASS (after fix) | browser screenshot | DEF-P3-04
+P3-E02-a | Views | Personal view private | Admin and reader cannot read or change the editor's personal view | 404 on GET and PATCH | PASS | API calls, 16 Nov | none
+P3-E02-b | Views | Public view shared | Visible to admin, reader, and editor | Visible to admin and reader | PASS | API list | none
+P3-E02-c | Views | Hide and show persists | Hidden view stays hidden after reload | Hidden after reload, restored | PASS | preferences API and reload | none
+P3-E04 | Project | Status change propagates | Board, Chart, KPI, Calendar agree | Workshop to Completed: Board, Chart (7 completed, 9 in progress), KPI match | PASS | browser screenshots | none
+P3-E05-a | Task | Valid schedule change | Calendar, detail and API agree | 18 Nov – 2 Dec in all three | PASS | browser screenshots and API | none
+P3-E05-b | Task | Invalid schedule change | 422 and no change | 422, version unchanged | PASS | API call | none
+P3-E06-b | Calendar | Overflow and continuation | "+N more" and continuation markers | Visible | PASS | browser screenshot | none
+P3-E07-a | Calendar | Detail panel opened and closed | Same view kept | View param kept after close | PASS (partial) | browser screenshot | none
+P3-E07-b | Detail | Edit, filter, scroll preserved | Preserved | Not run | NOT RUN | none | none
+P3-E08 | Approvals | Multi-person approval | Decisions by other users | Not run | NOT RUN | none | none
+P3-DEC-01 | Calendar | Folders in unscheduled tray | Owner decision | Decision pending | DECISION REQUIRED | none | DEF-P3-05
+P3-DEC-02 | Board | Milestones on the Board | Owner decision | Decision pending | DECISION REQUIRED | none | DEF-P3-06

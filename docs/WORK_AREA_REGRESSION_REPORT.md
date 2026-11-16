@@ -52,3 +52,17 @@ No frame timing, render counts or memory measurements were taken. Performance cl
 - Go integration suites that need the browser fixture and were not part of the CI list.
 - Visual regression at three resolutions and dark/light/density combinations (see `WORK_AREA_VISUAL_AUDIT.md`).
 - Live network interruption, conflict response and multi-user permission scenarios.
+
+## 6. Second pass (same day)
+
+| Check | Result |
+|---|---|
+| Web lint, typecheck, token lint | PASS |
+| Unit tests | PASS, 85/85 |
+| Mock e2e (`npx playwright test --workers=2`) | PASS, 500 passed, 43 skipped. Two old board tests needed an empty `children` mock for a card with subitems (`uip-lane2.spec.ts`, `uip2-b.spec.ts`). Their assertions are unchanged. |
+| New regression tests | QA-P3-01, QA-P3-02, QA-P3-03 (board shows tasks inside folders; no folder cards). All PASS. |
+| Live: project Board | Before: 0 tasks, folder cards only. After: New 15, In Progress 9, Completed 7. |
+| Live: project Calendar with subitems | Before: subitem missing. After: subitem listed in the tray. |
+| Live: invalid schedule (due before start) | 422, no change, version unchanged. |
+| Live: personal view isolation | Admin and reader get 404 on the editor's personal view (GET and PATCH). Public view visible to all three. |
+| Live: view hide persistence | Hidden through preferences API, visible as hidden after reload, restored. |

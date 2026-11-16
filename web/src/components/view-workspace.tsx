@@ -61,13 +61,15 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const swimlanes = isBoard && search.group === "assignee";
   const isGantt = active?.type === "gantt";
   const isCalendar = active?.type === "calendar";
+  const flat = isCalendar || isBoard;
   const isCollection = active?.type === "table" || active?.type === "board";
   const items = useQuery({
-    queryKey: isCalendar ? [...sortedKey, "subtree"] : sortedKey, enabled: !active || isCollection || isGantt || isCalendar || active?.type === "chart",
+    queryKey: flat ? [...sortedKey, "subtree"] : sortedKey, enabled: !active || isCollection || isGantt || isCalendar || active?.type === "chart",
     queryFn: async () => {
       const query = (path: string) => listItems(path, sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined);
       const top = await query(base + (parent ? "/children" : "/items"));
-      return isCalendar ? listSubtree(top, (id) => query(`/api/v1/items/${id}/children`)) : top;
+      // Calendar and Board are flat: they show the executable items under the start list (folders are walked, not shown on the Board).
+      return flat ? listSubtree(top, (id) => query(`/api/v1/items/${id}/children`)) : top;
     },
   });
   const fieldQueries = useQuery({
@@ -189,7 +191,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     ? <ul className="mt-4 divide-y rounded border">{items.data.map((item) => <li key={item.id}>
       <button type="button" className="block w-full p-3 text-left" onClick={() => onOpen(item)}>{item.title}</button>
     </li>)}</ul> : null;
-  const filtered = (items.data ?? []).filter((item) => item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
+  const filtered = (items.data ?? []).filter((item) => (!isBoard || item.type !== "folder") && item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
   const noMatches = items.isSuccess && filtered.length === 0 && hasFilters;
   const emptyResults = <div className="space-y-2"><p role="status">{t("views.empty")}</p>
     <Button variant="outline" onClick={clearFilters}>{t("views.clearFilters")}</Button></div>;

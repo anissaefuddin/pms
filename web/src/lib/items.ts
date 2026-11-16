@@ -39,7 +39,8 @@ export async function listSubtree(start: Item[], childrenOf: (id: string) => Pro
     const fresh = level.filter((item) => !seen.has(item.id));
     for (const item of fresh) seen.add(item.id);
     out.push(...fresh);
-    const containers = fresh.filter((item) => item.type === "folder" || item.type === "project");
+    // Any item with children is walked, so subitems under a task are included too.
+    const containers = fresh.filter((item) => item.type === "folder" || item.type === "project" || (item.child_count ?? 0) > 0);
     level = (await Promise.all(containers.map((item) => childrenOf(item.id)))).flat();
   }
   return out;

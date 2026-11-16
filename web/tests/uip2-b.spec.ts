@@ -18,6 +18,8 @@ const views = [
   { id: calId, type: "calendar", name: "Calendar", visibility: "public", position: 2, is_default: false },
 ];
 const mock = (page: import("@playwright/test").Page) => mockSpaces(page, { extra: {
+    // The board walks items with subitems (child_count > 0); this card has none in the mock.
+    [`GET /items/${card.id}/children`]: { body: { items: [] } },
   [`GET ${path}/views`]: { body: { items: views } },
   [`GET ${path}/items`]: { body: { items: [card] } },
   "GET /workflows": { body: { items: [{ is_default: true, statuses: [todo] }] } },

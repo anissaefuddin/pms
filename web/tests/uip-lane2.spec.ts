@@ -22,6 +22,8 @@ function mock(page: import("@playwright/test").Page) {
   let item: any = card;
   const patches: any[] = [];
   return mockSpaces(page, { extra: {
+    // The board walks items with subitems (child_count > 0); this card has none in the mock.
+    [`GET /items/${card.id}/children`]: { body: { items: [] } },
     [`GET ${path}/views`]: { body: { items: views } },
     [`GET ${path}/items`]: () => ({ body: { items: [item] } }),
     "GET /workflows": { body: { items: [{ is_default: true, statuses: [todo, done] }] } },

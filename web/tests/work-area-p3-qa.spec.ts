@@ -6,6 +6,7 @@ import { ALL, marketing, mockSpaces } from "./spaces-mock";
 const projectId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
 const folderId = "cccccccc-cccc-4ccc-8ccc-cccccccccccc";
 const calendarView = "b1b1b1b1-b1b1-4b1b-8b1b-b1b1b1b1b1b1";
+const boardView = "b2b2b2b2-b2b2-4b2b-8b2b-b2b2b2b2b2b2";
 const tableView = "b0b0b0b0-b0b0-4b0b-8b0b-b0b0b0b0b0b0";
 const timestamp = "2026-11-15T10:00:00Z";
 const newStatus = { id: "dddddddd-dddd-4ddd-8ddd-dddddddddddd", name: "New", color: "slate", group: "active" } as const;
@@ -29,6 +30,7 @@ function mocks() {
     [`GET /items/${projectId}/views`]: { body: { items: [
       { id: tableView, name: "Table", type: "table", is_default: true, visibility: "public", position: 0 },
       { id: calendarView, name: "Calendar", type: "calendar", is_default: false, visibility: "public", position: 1 },
+      { id: boardView, name: "Board", type: "board", is_default: false, visibility: "public", position: 2 },
     ] } },
     "GET /workflows": { body: { items: [{ id: "wf", is_default: true, statuses: [newStatus] }] } },
     "POST /analytics/query": { body: { total: 1, rows: [{ group: { key: newStatus.id, label: "New" }, break: null, value: 1 }] } },
@@ -45,4 +47,11 @@ test("QA-P3-02: upcoming milestones count milestones inside folders", async ({ p
   await mockSpaces(page, { extra: mocks() });
   await page.goto(`/tasks/${projectId}?view=${tableView}`);
   await expect(page.locator("span.tabular-nums").filter({ hasText: "Upcoming milestones" })).toContainText("1");
+});
+
+test("QA-P3-03: a project board shows tasks inside folders, and folders are not cards", async ({ page }) => {
+  await mockSpaces(page, { extra: mocks() });
+  await page.goto(`/tasks/${projectId}?view=${boardView}`);
+  await expect(page.getByText("Calendar task inside folder").first()).toBeVisible();
+  await expect(page.getByText("Workstream", { exact: true })).toHaveCount(0);
 });
