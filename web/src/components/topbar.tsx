@@ -1,6 +1,6 @@
 import { useProfile, formatNumber } from "@/lib/profile";
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Bell, Blocks, ChevronDown, Layers, Plus, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, UserPlus } from "lucide-react";
+import { Bell, Blocks, ChevronDown, CircleHelp, Languages, Layers, LogOut, MessageSquare, Palette, Plus, Settings, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, Trash2, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -8,8 +8,6 @@ import { listNotifications, notificationKey } from "@/lib/notifications";
 import { api, type CurrentUser } from "@/lib/api";
 import { LANGUAGES, isLanguage, setLanguage, type Language } from "@/i18n";
 
-// Each language is named in its own language, so it stays readable whichever UI language is active.
-const LANGUAGE_NAMES: Record<Language, string> = { en: "English", id: "Bahasa Indonesia" };
 import { clearSessionState } from "@/lib/session-state";
 import { nextIndex } from "@/lib/ui-kit";
 import type { CreateKind } from "@/lib/create-item-validate";
@@ -20,7 +18,11 @@ import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
-export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kind?: CreateKind) => void; live: boolean; search?: ReactNode; navigation?: ReactNode }) {
+// Each language is named in its own language, so it stays readable whichever UI language is active.
+const LANGUAGE_NAMES: Record<Language, string> = { en: "English", id: "Bahasa Indonesia" };
+const LANGUAGE_SHORT: Record<Language, string> = { en: "EN", id: "ID" };
+
+export function Topbar({ onCreate, live, search, navigation, inSettings = false }: { onCreate?: (kind?: CreateKind) => void; live: boolean; search?: ReactNode; navigation?: ReactNode; inSettings?: boolean }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
@@ -29,11 +31,11 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kin
       {navigation}
       <span role="status" data-live={live ? "true" : "false"} className="mr-auto text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
       {search}
-      <CreateMenu onCreate={onCreate} />
-      <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
+      {!inSettings && <CreateMenu onCreate={onCreate} />}
+      {!inSettings && <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
         <Bell className="size-5" />
         {!!unread && <span className="absolute -top-1 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}
-      </Link>
+      </Link>}
     </header>
   );
 }
@@ -72,29 +74,41 @@ export function ProfileMenu({ compact = false }: { compact?: boolean }) {
           <span aria-hidden="true" className="grid size-7 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
           {!compact && <ChevronDown aria-hidden="true" className="size-3.5 text-nav-muted" />}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuContent align="end" className="w-64">
           <div className="flex items-center gap-3 px-2 py-2">
-            <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{initials}</span>
+            <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{initials}</span>
             <div className="min-w-0"><p className="truncate text-sm font-semibold">{fullName}</p>
               {profile?.job_title && <p className="truncate text-xs text-muted-foreground">{profile.job_title}</p>}
               {profile?.company && <p className="truncate text-xs text-muted-foreground">{profile.company}</p>}</div>
           </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>{t("nav.settings.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile", hash: "appearance" })}>{t("nav.account.appearance")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}>{t("nav.apps.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}>{t("nav.help.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setFeedback(true)}>{t("nav.feedback.menu")}</DropdownMenuItem>
-          <DropdownMenuSeparator />
           <DropdownMenuGroup>
-            <DropdownMenuLabel>{t("nav.profile.language")}</DropdownMenuLabel>
-            <DropdownMenuRadioGroup value={i18n.resolvedLanguage} onValueChange={(value) => { if (isLanguage(value)) void changeLanguage(value); }}>
-              {LANGUAGES.map((language) => <DropdownMenuRadioItem key={language} value={language}>{LANGUAGE_NAMES[language]}</DropdownMenuRadioItem>)}
-            </DropdownMenuRadioGroup>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}><Settings />{t("nav.settings.label")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile", hash: "appearance" })}><Palette />{t("nav.account.appearance")}</DropdownMenuItem>
+            <div className="flex items-center gap-2 px-1.5 py-1 text-sm">
+              <Languages className="size-4 shrink-0" aria-hidden="true" />
+              <span className="flex-1">{t("nav.profile.language")}</span>
+              <DropdownMenuRadioGroup value={i18n.resolvedLanguage} onValueChange={(value) => { if (isLanguage(value)) void changeLanguage(value); }}
+                className="flex gap-0.5 rounded-md border p-0.5">
+                {LANGUAGES.map((language) => <DropdownMenuRadioItem key={language} value={language} aria-label={LANGUAGE_NAMES[language]}
+                  className="justify-center rounded px-2 py-0.5 text-xs font-medium pr-2 data-checked:bg-primary data-checked:text-primary-foreground [&>[data-slot=dropdown-menu-radio-item-indicator]]:hidden">
+                  {LANGUAGE_SHORT[language]}
+                </DropdownMenuRadioItem>)}
+              </DropdownMenuRadioGroup>
+            </div>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">{t("nav.profile.logout")}</DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => navigate({ to: "/recycle-bin" })}><Trash2 />{t("nav.recycle.label")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}><Blocks />{t("nav.apps.label")}</DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}><CircleHelp />{t("nav.help.section")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFeedback(true)}><MessageSquare />{t("nav.feedback.menu")}</DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive"><LogOut />{t("nav.profile.logout")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <FeedbackDialog open={feedback} onOpenChange={setFeedback} />

@@ -24,7 +24,6 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/profile", hash: "email", label: t("nav.account.emailPrefs") },
       { to: "/settings/profile", hash: "appearance", label: t("nav.account.appearance") },
       { to: "/settings/security", label: t("settings.security.title") },
-      { to: "/settings/design-guide", label: t("settings.designGuide.title") },
     ] },
     { title: t("settings.nav.accountManagement"), items: [
       ...(me?.capabilities.manage_users ? [{ to: "/settings/users", label: t("settings.users.title") }] : []),

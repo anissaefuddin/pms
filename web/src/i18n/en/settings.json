@@ -31,8 +31,6 @@
   },
   "resources": "Resources",
   "spaceSettings": "Space settings",
-  "designGuide.title": "Design guide",
-  "designGuide.description": "How the settings pages are grouped. Each group lists its pages; select one to open it.",
   "profile.sidebar.workload": "Workload",
   "profile.title": "Profile",
   "profile.workspace": "Workspace preferences",

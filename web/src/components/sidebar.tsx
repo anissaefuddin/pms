@@ -151,13 +151,15 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
   const style = mobile ? undefined : { width: collapsed ? "var(--sidebar-width-collapsed)" : `${width}px` };
   return <>
     <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex min-h-0 flex-col border-r border-border bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
-      <div className={`mb-4 flex items-center justify-between gap-1 ${collapsed ? "flex-col" : ""}`}>
-        {!collapsed && <p className="min-w-0 truncate px-2 font-semibold" title={me.account_name}>{me.account_name}</p>}
-        <ProfileMenu compact={collapsed} />
-        {!collapsed && !mobile && <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-nav-hover" />}
-        {!mobile && <Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed}
-          aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")} title={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
-          className="shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted">{collapsed ? <ChevronRight /> : <ChevronLeft />}</Button>}
+      <div className={`mb-4 flex items-center gap-1 ${collapsed ? "flex-col" : ""}`}>
+        {!collapsed && <p className="min-w-0 flex-1 truncate px-2 font-semibold" title={me.account_name}>{me.account_name}</p>}
+        <div className={`flex shrink-0 items-center gap-1 ${collapsed ? "flex-col" : "ml-auto"}`}>
+          <ProfileMenu compact={collapsed} />
+          {!collapsed && !mobile && <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-nav-hover" />}
+          {!mobile && <Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed}
+            aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")} title={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
+            className="shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted">{collapsed ? <ChevronRight /> : <ChevronLeft />}</Button>}
+        </div>
       </div>
       <nav className="space-y-1" aria-label={t("nav.main.label")}>
         <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />

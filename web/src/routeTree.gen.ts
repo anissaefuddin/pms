@@ -48,7 +48,6 @@ import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/ind
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
 import { Route as AppSettingsAppsRouteImport } from './routes/_app/settings/apps'
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
-import { Route as AppSettingsDesignGuideRouteImport } from './routes/_app/settings/design-guide'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
 import { Route as AppSettingsOwnershipRouteImport } from './routes/_app/settings/ownership'
 import { Route as AppSettingsPolicyRouteImport } from './routes/_app/settings/policy'
@@ -266,11 +265,6 @@ const AppSettingsAuditRoute = AppSettingsAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppSettingsRoute,
 } as any)
-const AppSettingsDesignGuideRoute = AppSettingsDesignGuideRouteImport.update({
-  id: '/design-guide',
-  path: '/design-guide',
-  getParentRoute: () => AppSettingsRoute,
-} as any)
 const AppSettingsItemTypesRoute = AppSettingsItemTypesRouteImport.update({
   id: '/item-types',
   path: '/item-types',
@@ -414,7 +408,6 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
-  '/settings/design-guide': typeof AppSettingsDesignGuideRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/ownership': typeof AppSettingsOwnershipRoute
   '/settings/policy': typeof AppSettingsPolicyRoute
@@ -475,7 +468,6 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AppSettingsAccountRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
-  '/settings/design-guide': typeof AppSettingsDesignGuideRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/ownership': typeof AppSettingsOwnershipRoute
   '/settings/policy': typeof AppSettingsPolicyRoute
@@ -538,7 +530,6 @@ export interface FileRoutesById {
   '/_app/settings/account': typeof AppSettingsAccountRoute
   '/_app/settings/apps': typeof AppSettingsAppsRoute
   '/_app/settings/audit': typeof AppSettingsAuditRoute
-  '/_app/settings/design-guide': typeof AppSettingsDesignGuideRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
   '/_app/settings/ownership': typeof AppSettingsOwnershipRoute
   '/_app/settings/policy': typeof AppSettingsPolicyRoute
@@ -602,7 +593,6 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/apps'
     | '/settings/audit'
-    | '/settings/design-guide'
     | '/settings/item-types'
     | '/settings/ownership'
     | '/settings/policy'
@@ -663,7 +653,6 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/settings/apps'
     | '/settings/audit'
-    | '/settings/design-guide'
     | '/settings/item-types'
     | '/settings/ownership'
     | '/settings/policy'
@@ -725,7 +714,6 @@ export interface FileRouteTypes {
     | '/_app/settings/account'
     | '/_app/settings/apps'
     | '/_app/settings/audit'
-    | '/_app/settings/design-guide'
     | '/_app/settings/item-types'
     | '/_app/settings/ownership'
     | '/_app/settings/policy'
@@ -1040,13 +1028,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAuditRouteImport
       parentRoute: typeof AppSettingsRoute
     }
-    '/_app/settings/design-guide': {
-      id: '/_app/settings/design-guide'
-      path: '/design-guide'
-      fullPath: '/settings/design-guide'
-      preLoaderRoute: typeof AppSettingsDesignGuideRouteImport
-      parentRoute: typeof AppSettingsRoute
-    }
     '/_app/settings/item-types': {
       id: '/_app/settings/item-types'
       path: '/item-types'
@@ -1214,7 +1195,6 @@ interface AppSettingsRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
   AppSettingsAppsRoute: typeof AppSettingsAppsRoute
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
-  AppSettingsDesignGuideRoute: typeof AppSettingsDesignGuideRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
   AppSettingsOwnershipRoute: typeof AppSettingsOwnershipRoute
   AppSettingsPolicyRoute: typeof AppSettingsPolicyRoute
@@ -1235,7 +1215,6 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
   AppSettingsAppsRoute: AppSettingsAppsRoute,
   AppSettingsAuditRoute: AppSettingsAuditRoute,
-  AppSettingsDesignGuideRoute: AppSettingsDesignGuideRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
   AppSettingsOwnershipRoute: AppSettingsOwnershipRoute,
   AppSettingsPolicyRoute: AppSettingsPolicyRoute,
