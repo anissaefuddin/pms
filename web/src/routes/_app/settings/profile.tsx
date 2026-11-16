@@ -38,6 +38,29 @@ const timezones = ["UTC", ...Intl.supportedValuesOf("timeZone")];
 // Only entries that exist in this version are offered; the other keys the API accepts stay hidden (NAV-02).
 const emailGroups = ["mention", "assigned", "shared", "task_changes", "report"] as const;
 
+/** Density as two visual choices. The value is submitted with the profile form (hidden input named "density"). */
+const densities = ["compact", "comfortable"] as const;
+function DensityPicker({ defaultValue }: { defaultValue: string }) {
+  const { t } = useTranslation();
+  const [value, setValue] = useState(defaultValue);
+  return <fieldset className="space-y-2 sm:col-span-2">
+    <legend className="text-sm font-medium">{t("settings.profile.fields.density")}</legend>
+    <input type="hidden" name="density" value={value} />
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+      {densities.map((option) => <button key={option} type="button" aria-pressed={value === option} onClick={() => setValue(option)}
+        className={`flex items-start gap-3 rounded-lg border p-3 text-left ${value === option ? "border-primary ring-2 ring-ring" : "hover:bg-accent"}`}>
+        <span className="mt-1 flex w-10 shrink-0 flex-col gap-1" aria-hidden="true">
+          {[0, 1, 2].map((row) => <span key={row} className={`h-1.5 rounded-sm bg-muted-foreground/40 ${option === "compact" ? "" : "mt-1"}`} />)}
+        </span>
+        <span className="min-w-0">
+          <span className="block text-sm font-medium">{t(`settings.profile.options.${option}`, { defaultValue: option })}</span>
+          <span className="block text-xs text-muted-foreground">{t(`settings.profile.density.${option}`)}</span>
+        </span>
+      </button>)}
+    </div>
+  </fieldset>;
+}
+
 /** Sidebar colour themes (Settings V2 prototype). The choice is kept in this browser. */
 function SidebarThemePicker() {
   const { t } = useTranslation();
@@ -178,7 +201,8 @@ function ProfileForm({ profile }: { profile: CurrentUser }) {
         <span>{t("settings.profile.fields.default_task_effort_minutes")}</span>
         <Input name="default_task_effort_minutes" type="number" min={0} max={525600} step={1} defaultValue={profile.default_task_effort_minutes ?? ""} />
       </label>
-      {Object.entries(choices).map(([key, options]) => <label key={key} className="space-y-1 text-sm">
+      <DensityPicker defaultValue={profile.density ?? "compact"} />
+      {Object.entries(choices).filter(([key]) => key !== "density").map(([key, options]) => <label key={key} className="space-y-1 text-sm">
         <span>{t(`settings.profile.fields.${key}`)}</span>
         <select className="block h-8 w-full rounded-md border border-input bg-background px-2 focus-visible:outline-ring"
           name={key} defaultValue={profile[key as keyof typeof choices] ?? (key === "theme" ? "system" : options[0])}>

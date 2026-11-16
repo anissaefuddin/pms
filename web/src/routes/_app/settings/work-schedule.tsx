@@ -33,6 +33,66 @@ function WorkScheduleRoute() {
   </>;
 }
 
+
+/** 1 Jan 2024 was a Monday: these seven dates give Monday-first weekday labels without literal strings. */
+const locale = "en";
+const weekdayFormat: Intl.DateTimeFormatOptions = { weekday: "narrow" };
+const mondayFirst = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i));
+
+/** Tailwind class strings for calendar days (kept as constants so every class is listed literally). */
+const dayTone = { exception: "bg-warning/30 text-foreground", working: "bg-card ring-1 ring-border", off: "bg-muted text-foreground" };
+
+const dayKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+/** 12-month view: working days, non-working days, and exceptions. Clicking a day prepares it as a new exception (or removes it). */
+function AnnualCalendar({ year, days, holidays, disabled, onYear, onPick }: {
+  year: number; days: Set<number>; holidays: { date: string; name: string }[]; disabled: boolean;
+  onYear: (year: number) => void; onPick: (key: string, exception?: string) => void;
+}) {
+  const { t } = useTranslation();
+  const exceptions = new Map(holidays.map((h) => [h.date, h.name]));
+  const months = Array.from({ length: 12 }, (_, month) => {
+    const first = new Date(year, month, 1);
+    const offset = (first.getDay() + 6) % 7; // Monday first
+    const count = new Date(year, month + 1, 0).getDate();
+    const cells: (Date | null)[] = [...Array(offset).fill(null), ...Array.from({ length: count }, (_, i) => new Date(year, month, i + 1))];
+    return { label: first.toLocaleString("en", { month: "long" }), cells };
+  });
+  return <div className="space-y-3">
+    <div className="flex items-center gap-2">
+      <Button type="button" variant="outline" size="sm" aria-label={t("settings.workSchedule.prevYear")} onClick={() => onYear(year - 1)}>‹</Button>
+      <span className="min-w-16 text-center text-base font-semibold tabular-nums">{year}</span>
+      <Button type="button" variant="outline" size="sm" aria-label={t("settings.workSchedule.nextYear")} onClick={() => onYear(year + 1)}>›</Button>
+      <span className="ml-auto flex flex-wrap gap-3 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-card ring-1 ring-border" aria-hidden="true" />{t("settings.workSchedule.legendWorking")}</span>
+        <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-muted" aria-hidden="true" />{t("settings.workSchedule.legendOff")}</span>
+        <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-warning/30" aria-hidden="true" />{t("settings.workSchedule.legendException")}</span>
+      </span>
+    </div>
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+      {months.map((month) => <section key={month.label} className="space-y-1">
+        <h3 className="text-sm font-medium">{month.label}</h3>
+        <div className="grid grid-cols-7 gap-0.5 text-center text-[11px]">
+          {mondayFirst.map((d) => <span key={d.toISOString()} className="pb-0.5 text-muted-foreground" aria-hidden="true">{d.toLocaleString(locale, weekdayFormat)}</span>)}
+          {month.cells.map((date, index) => {
+            if (!date) return <span key={`blank-${index}`} aria-hidden="true" />;
+            const key = dayKey(date);
+            const exception = exceptions.get(key);
+            const working = days.has(date.getDay()) && !exception;
+            const tone = exception ? dayTone.exception : working ? dayTone.working : dayTone.off;
+            const label = exception ? `${key}: ${exception}` : `${key}: ${working ? t("settings.workSchedule.legendWorking") : t("settings.workSchedule.legendOff")}`;
+            const name = `${date.getDate()} · ${label}`; // the visible day number must stay part of the accessible name
+            return <button key={key} type="button" disabled={disabled} aria-label={name} title={label}
+              onClick={() => onPick(key, exception)} className={`rounded-sm py-1 tabular-nums hover:outline hover:outline-1 hover:outline-ring ${tone}`}>
+              {date.getDate()}
+            </button>;
+          })}
+        </div>
+      </section>)}
+    </div>
+  </div>;
+}
+
 function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag: string; reload: (conflict: boolean) => Promise<unknown> }) {
   const { t } = useTranslation();
   const admin = useProfile()?.user_type === "admin";
@@ -40,6 +100,7 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
   const [hours, setHours] = useState(String(schedule.daily_hours));
   const [holidays, setHolidays] = useState(schedule.exceptions);
   const [draft, setDraft] = useState({ date: "", name: "" });
+  const [year, setYear] = useState(new Date().getFullYear());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -109,6 +170,14 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
           <Input value={draft.name} maxLength={120} onChange={(event) => setDraft({ ...draft, name: event.target.value })} /></label>
         <Button type="button" variant="outline" onClick={addHoliday}>{t("settings.workSchedule.addHoliday")}</Button>
       </div>
+    </fieldset>
+    <fieldset className="space-y-3" disabled={!admin || busy}>
+      <legend className="mb-2 text-sm font-medium">{t("settings.workSchedule.calendar")}</legend>
+      <AnnualCalendar year={year} days={days} holidays={holidays} disabled={!admin || busy} onYear={setYear}
+        onPick={(key, exception) => {
+          if (exception) { setHolidays(holidays.filter((h) => h.date !== key)); return; }
+          setDraft({ date: key, name: draft.name });
+        }} />
     </fieldset>
     <FormError message={error} />
     {admin && <Button type="submit" disabled={busy || days.size === 0}>{t("settings.workSchedule.save")}</Button>}
