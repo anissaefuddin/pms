@@ -19,18 +19,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kind?: CreateKind) => void; live: boolean; search?: ReactNode; navigation?: ReactNode }) {
   const { t } = useTranslation();
   const profile = useProfile();
-  const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const [feedback, setFeedback] = useState(false);
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
-  const fullName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : "";
-  const initials = `${profile?.first_name?.[0] ?? ""}${profile?.last_name?.[0] ?? ""}`.toUpperCase();
-  async function logout() {
-    await api("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
-    if (profile) clearSessionState(globalThis.localStorage, profile.id);
-    queryClient.clear();
-    location.assign("/login");
-  }
   return (
     <header className="flex h-12 shrink-0 items-center justify-end border-b px-2 sm:px-4">
       {navigation}
@@ -41,6 +30,27 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kin
         <Bell className="size-5" />
         {!!unread && <span className="absolute -top-1 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}
       </Link>
+    </header>
+  );
+}
+
+/** Profile menu. It lives in the sidebar header (top right), not in the top bar. */
+export function ProfileMenu() {
+  const { t } = useTranslation();
+  const profile = useProfile();
+  const navigate = useNavigate();
+  const queryClient = useQueryClient();
+  const [feedback, setFeedback] = useState(false);
+  const fullName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : "";
+  const initials = `${profile?.first_name?.[0] ?? ""}${profile?.last_name?.[0] ?? ""}`.toUpperCase();
+  async function logout() {
+    await api("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
+    if (profile) clearSessionState(globalThis.localStorage, profile.id);
+    queryClient.clear();
+    location.assign("/login");
+  }
+  return (
+    <>
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
           <span className="sr-only">{t("nav.profile.label")}</span>
@@ -61,7 +71,7 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kin
         </DropdownMenuContent>
       </DropdownMenu>
       <FeedbackDialog open={feedback} onOpenChange={setFeedback} />
-    </header>
+    </>
   );
 }
 
