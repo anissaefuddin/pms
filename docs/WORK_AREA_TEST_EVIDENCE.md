@@ -68,3 +68,15 @@ Temuan F1 sampai F4 sudah diperbaiki di kode dan diuji dengan `dev-lens-findings
 | F2 | Breadcrumb di halaman folder | "QA | Engineering / QA-E2E03 Folder", h1 tampil sekali | PASS |
 | F3 | Footer dialog Add item di folder | "Task · QA | Engineering · QA-E2E03 Folder"; teks "Space root" tidak ada | PASS |
 | F4 | Tipe di bawah task | Project dan Folder radio disabled, Task terpilih, kelas gaya terkunci aktif | PASS |
+
+## E2E-04 di dev-lens (cross-view status, item uji QA-E2E03 Task)
+
+| Test ID | Page | Scenario | Expected | Actual | Status | Evidence | Defect reference |
+|---|---|---|---|---|---|---|---|
+| E2E-04a | Folder, Table | Ubah status New → In Progress lewat dropdown | Tersimpan | PATCH /items/{id} 200 | PASS | network log | - |
+| E2E-04b | Folder, Board | Task pindah ke kolom In Progress | Kolom In Progress 1, New 0 | In Progress 1 (kartu QA-E2E03 Task), New 0 | PASS | screenshot | - |
+| E2E-04c | Project, KPI | Work items dan In progress sesuai | Work items 2 (task + subtask), In progress 1 | Work items 2, In progress 1 | PASS | teks strip | - |
+| E2E-04d | Gantt, Calendar | Status presentation | Bar dan event dengan warna status | NOT RUN: folder dan project hanya punya view Table dan Board; menambah view adalah mutasi yang belum disetujui | NOT RUN | - | - |
+| E2E-04e | Chart | Agregat chart | Sama dengan KPI | NOT RUN: tidak ada view Chart di folder atau project QA ini | NOT RUN | - | - |
+
+Status item uji tetap In Progress setelah tes. Tidak ada data operasional yang diubah.

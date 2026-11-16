@@ -17,6 +17,7 @@ test("project Files lists files across items and Chart counts items by status; p
     [`GET /spaces/${marketing.id}/views`]: { body: { items: [views[0]] } },
     [`GET /items/${projectId}`]: { body: project, headers: { ETag: '"1"' } },
     [`GET /items/${projectId}/children`]: { body: { items: [task] } },
+    "POST /analytics/query": { body: { total: 1, rows: [{ group: { key: "s1", label: "In review" }, break: null, value: 1 }] } },
     [`GET /items/${projectId}/views`]: { body: { items: views } },
     [`GET /items/${projectId}/files`]: { body: { items: [{ id: "f1", item_id: taskId, item_title: "Banner", filename: "banner.png", content_type: "image/png", size_bytes: 2048, uploader: { id: "u", name: "Ada Lovelace" }, created_at: ts }] } },
   } });
