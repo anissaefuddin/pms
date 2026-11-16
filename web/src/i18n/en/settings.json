@@ -580,5 +580,7 @@
   "resources.emptyTitle": "No {{title}} yet",
   "resources.assignTo": "Assign {{item}} to {{name}}",
   "resources.removeLeave": "Remove leave date {{date}}",
-  "resources.noLeave": "No leave dates. Add one to exclude a day from availability."
+  "resources.noLeave": "No leave dates. Add one to exclude a day from availability.",
+  "sidebar.reorderHint": "Drag to reorder, or press Alt with the arrow keys.",
+  "sidebar.position": "position {{index}} of {{count}}"
 }

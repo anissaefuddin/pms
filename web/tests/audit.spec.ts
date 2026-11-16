@@ -15,7 +15,7 @@ test("admin sees the trail, filters it, loads more, and exports with the same fi
     },
   } });
   await page.goto("/settings/audit");
-  await expect(page.getByRole("heading", { name: "Security audit", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Security audit", level: 1 })).toBeVisible();
   const rows = page.getByRole("row");
   await expect(rows.nth(1)).toContainText("Signed in");
   await expect(rows.nth(1)).toContainText("ada@example.test");
@@ -29,8 +29,8 @@ test("admin sees the trail, filters it, loads more, and exports with the same fi
 
   await page.getByLabel("Area").selectOption("auth");
   await expect(page.getByRole("row", { name: /Failed sign-in/ })).toContainText("who@example.test");
-  await page.getByLabel("From").fill("2026-11-01");
-  await page.getByLabel("To").fill("2026-11-14");
+  await page.getByLabel("From", { exact: true }).fill("2026-11-01");
+  await page.getByLabel("To", { exact: true }).fill("2026-11-14");
   await expect.poll(() => calls.filter((c) => c.path === "/audit-events").at(-1)?.query.get("to")).toBe("2026-11-14T23:59:59Z");
   const last = calls.filter((c) => c.path === "/audit-events").at(-1)!.query;
   expect(last.get("category")).toBe("auth");

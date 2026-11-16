@@ -52,7 +52,6 @@ function AuditPage() {
   const shown = needle ? events.filter((event) => searchText(event, t(`audit.action.${event.action}`, { defaultValue: event.action })).includes(needle)) : events;
   return <section className="space-y-5">
     <header>
-      <h2 className="text-lg font-semibold">{t("audit.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("audit.description")}</p>
     </header>
     <div className="flex flex-wrap items-end gap-4">

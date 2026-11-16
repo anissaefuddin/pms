@@ -15,7 +15,7 @@ function UserTypes() {
   const concepts = ["userType", "customRole", "group", "jobRole"] as const;
   return <section className="space-y-6">
     <section aria-labelledby="concepts-title" className="space-y-3">
-      <h3 id="concepts-title" className="text-base font-semibold">{t("settings.users.concepts.title")}</h3>
+      <h2 id="concepts-title" className="text-base font-semibold">{t("settings.users.concepts.title")}</h2>
       <dl className="grid gap-3 sm:grid-cols-2">
         {concepts.map((key) => <div key={key} className="rounded-lg border p-3">
           <dt className="text-sm font-medium">{t(`settings.users.concepts.${key}`)}</dt>
@@ -23,7 +23,7 @@ function UserTypes() {
         </div>)}
       </dl>
     </section>
-    <h3 className="text-base font-semibold">{t("settings.users.types")}</h3>
+    <h2 className="text-base font-semibold">{t("settings.users.types")}</h2>
     {query.isPending && <p role="status">{t("items.loading")}</p>}
     {query.isError && <p role="alert">{t("items.loadError")}</p>}
     {query.data && (() => {

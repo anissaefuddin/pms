@@ -17,7 +17,7 @@ test("admin lists, creates, edits and deletes roles with If-Match, and axe is cl
     "DELETE /custom-roles/c0000000-0000-4000-8000-000000000002": () => { roles = roles.filter((r) => r.id !== "c0000000-0000-4000-8000-000000000002"); return { status: 204 }; },
   } });
   await page.goto("/settings/roles");
-  await expect(page.getByRole("heading", { name: "Custom roles", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Custom roles", level: 1 })).toBeVisible();
   const row = page.getByRole("row", { name: /Reviewer/ });
   await expect(row).toContainText("View, Comment");
   await expect(row).toContainText("2");

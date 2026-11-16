@@ -2,7 +2,6 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import type { CurrentUser } from "@/lib/api";
 import { useProfile } from "@/lib/profile";
-import { Input } from "@/components/ui/input";
 import { ProfileSettingsForm, SelectField, SettingsSection } from "@/components/settings/settings-ui";
 
 export const Route = createFileRoute("/_app/settings/language")({ component: LanguageRoute });
@@ -31,13 +30,8 @@ function LanguageSection({ profile }: { profile: CurrentUser }) {
       <div className="grid gap-4 sm:grid-cols-2">
         <SelectField name="locale" label={t("settings.profile.fields.locale")} value={profile.locale ?? "en"} options={selects.locale}
           optionLabel={(value) => t(`settings.profile.options.${value}`, { defaultValue: value })} />
-        <label className="space-y-1 text-sm">
-          <span>{t("settings.profile.fields.timezone")}</span>
-          <Input name="timezone" defaultValue={profile.timezone} list="profile-timezones" required />
-        </label>
-        <datalist id="profile-timezones">
-          {timezones.map((zone) => <option value={zone} key={zone} />)}
-        </datalist>
+        <SelectField name="timezone" label={t("settings.profile.fields.timezone")} value={profile.timezone} options={timezones}
+          optionLabel={(zone) => zone} />
       </div>
     </SettingsSection>
     <SettingsSection title={t("settings.sections.formats")}>

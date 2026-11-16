@@ -17,7 +17,7 @@ test("admin creates a token that is shown once, then revokes it after a confirma
     "DELETE /scim-tokens/d0000000-0000-4000-8000-000000000002": () => { tokens = tokens.map((x) => x.id.endsWith("2") ? { ...x, revoked_at: "2026-11-14T00:00:00Z" } : x); return { status: 204 }; },
   } });
   await page.goto("/settings/provisioning");
-  await expect(page.getByRole("heading", { name: "Provisioning", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Provisioning", level: 1 })).toBeVisible();
   await expect(page.getByLabel("SCIM base URL")).toHaveValue(BASE);
   const row = page.getByRole("row", { name: /Okta/ });
   await expect(row).toContainText("Never");

@@ -78,7 +78,6 @@ function OidcForm({ config }: { config: Config }) {
 
   return <section className="max-w-2xl space-y-5">
     <header>
-      <h2 className="text-lg font-semibold">{t("sso.admin.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("sso.admin.description")}</p>
     </header>
     {!config.key_configured && <p role="alert" className="rounded border border-warning bg-warning-subtle p-3 text-sm">{t("sso.admin.noKey")}</p>}

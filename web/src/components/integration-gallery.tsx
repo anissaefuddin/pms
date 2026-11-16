@@ -18,7 +18,7 @@ export function IntegrationGallery({ admin, onOpen }: { admin: boolean; onOpen: 
   const { t } = useTranslation();
   return <section className="space-y-6" aria-labelledby="integration-gallery-title">
     <div className="space-y-1">
-      <h3 id="integration-gallery-title" className="text-base font-semibold">{t("apps.gallery.title")}</h3>
+      <h2 id="integration-gallery-title" className="text-base font-semibold">{t("apps.gallery.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("apps.gallery.hint")}</p>
     </div>
     <ul className="grid gap-4 sm:grid-cols-2">

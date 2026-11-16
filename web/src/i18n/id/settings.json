@@ -576,5 +576,7 @@
   "resources.emptyTitle": "Belum ada {{title}}",
   "resources.assignTo": "Tetapkan {{item}} untuk {{name}}",
   "resources.removeLeave": "Hapus tanggal cuti {{date}}",
-  "resources.noLeave": "Belum ada tanggal cuti. Tambahkan untuk mengecualikan hari dari ketersediaan."
+  "resources.noLeave": "Belum ada tanggal cuti. Tambahkan untuk mengecualikan hari dari ketersediaan.",
+  "sidebar.reorderHint": "Seret untuk mengurutkan, atau tekan Alt dengan tombol panah.",
+  "sidebar.position": "posisi {{index}} dari {{count}}"
 }

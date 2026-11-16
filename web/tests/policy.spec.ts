@@ -12,7 +12,7 @@ test("admin edits the IP allowlist with If-Match, can add their own address, and
     "PUT /access-policy": (body: any) => { current = policy({ ...body, version: current.version + 1 }); return { headers: { ETag: `"${current.version}"` }, body: current }; },
   } });
   await page.goto("/settings/policy");
-  await expect(page.getByRole("heading", { name: "Access policy", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Access policy", level: 1 })).toBeVisible();
   await expect(page.getByText("Your address as the server sees it: 203.0.113.7")).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 

@@ -22,7 +22,6 @@ function PolicyPage() {
   if (profile && !admin) return <p role="alert">{t("policy.adminOnly")}</p>;
   return <section className="space-y-5">
     <header>
-      <h2 className="text-lg font-semibold">{t("policy.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("policy.description")}</p>
     </header>
     {query.isPending && <p role="status" className="text-sm text-muted-foreground">{t("policy.loading")}</p>}
@@ -52,7 +51,7 @@ function PolicyForm({ policy }: { policy: Policy }) {
     } finally { setBusy(false); }
   }
   return <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-lg border p-4" aria-label={t("policy.title")}>
-    <h3 className="font-semibold">{t("policy.ip.title")}</h3>
+    <h2 className="font-semibold">{t("policy.ip.title")}</h2>
     <p className="text-sm text-muted-foreground">{t("policy.ip.hint")}</p>
     {policy.override_active && <p role="status" className="text-sm text-amber-700 dark:text-amber-400">{t("policy.ip.override")}</p>}
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-6" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />{t("policy.ip.enabled")}</label>
@@ -64,7 +63,7 @@ function PolicyForm({ policy }: { policy: Policy }) {
       <Button type="button" size="sm" variant="outline" disabled={lines().includes(policy.your_ip)} onClick={() => setText([...lines(), policy.your_ip].join("\n"))}>{t("policy.ip.useMine")}</Button>
     </div>
     <p className="text-sm text-muted-foreground">{t("policy.ip.recovery")}</p>
-    <h3 className="pt-2 font-semibold">{t("policy.otp.title")}</h3>
+    <h2 className="pt-2 font-semibold">{t("policy.otp.title")}</h2>
     <p className="text-sm text-muted-foreground">{t("policy.otp.hint")}</p>
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-6" checked={otp} onChange={(e) => setOtp(e.target.checked)} />{t("policy.otp.enabled")}</label>
     {error && <p role="alert" className="text-sm text-destructive">{error}</p>}

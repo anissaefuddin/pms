@@ -26,7 +26,6 @@ function ItemTypesRoute() {
   if (!types.data) return null;
   return <div className="max-w-3xl space-y-4">
     <header className="space-y-1">
-      <h2 className="text-lg font-semibold">{t("settings.itemTypes.title")}</h2>
       <p className="text-sm text-muted-foreground">{admin ? t("settings.itemTypes.description") : t("settings.itemTypes.readOnly")}</p>
     </header>
     {admin && <Button onClick={() => setEditing("new")}>{t("settings.itemTypes.create")}</Button>}

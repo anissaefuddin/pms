@@ -41,7 +41,6 @@ function RolesPage() {
   return <section className="space-y-5">
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="text-lg font-semibold">{t("roles.title")}</h2>
         <p className="text-sm text-muted-foreground">{t("roles.description")}</p>
       </div>
       <Button onClick={() => setEditing("new")}>{t("roles.new")}</Button>
@@ -108,7 +107,7 @@ function RoleForm({ role, onClose }: { role?: CustomRole; onClose: () => void })
     } finally { setBusy(false); }
   }
   return <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-lg border p-4" aria-label={t(role ? "roles.editTitle" : "roles.newTitle")}>
-    <h3 className="font-semibold">{t(role ? "roles.editTitle" : "roles.newTitle")}</h3>
+    <h2 className="font-semibold">{t(role ? "roles.editTitle" : "roles.newTitle")}</h2>
     <label className="block text-sm">{t("roles.name")}<Input required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 max-w-sm" /></label>
     <label className="block text-sm">{t("roles.descriptionLabel")}<Input maxLength={300} value={description} onChange={(e) => setDescription(e.target.value)} className="mt-1" /></label>
     <fieldset className="space-y-1">

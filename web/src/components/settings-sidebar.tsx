@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Search } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CurrentUser } from "@/lib/api";
 import { ProfileMenu } from "@/components/topbar";
 import { SIDEBAR_THEME } from "@/lib/sidebar-prefs";
@@ -67,13 +68,18 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
   })).filter((group) => group.items.length > 0);
   return (
     <aside style={sidebarThemeVars(sidebarTheme)} className={`${SIDEBAR_THEME} relative flex h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
-      <div className="mb-3 flex items-center justify-between gap-1">
-        <p className="min-w-0 truncate px-2 font-semibold">{t("nav.settings.label")}</p>
-        <ProfileMenu />
+      <div className="mb-3 flex items-center gap-1">
+        <Tooltip>
+          <TooltipTrigger render={<Link to="/" aria-label={t("settings.nav.backToWorkspace")}
+            className="grid size-8 shrink-0 place-items-center rounded-md text-nav-muted hover:bg-nav-hover hover:text-nav-text" />}>
+            <ArrowLeft aria-hidden="true" className="size-4" />
+          </TooltipTrigger>
+          <TooltipContent>{t("settings.nav.backToWorkspace")}</TooltipContent>
+        </Tooltip>
+        <div className="ml-auto flex items-center gap-1">
+          <ProfileMenu />
+        </div>
       </div>
-      <Link to="/" className="mb-2 flex items-center gap-2 rounded-md px-3 py-1.5 text-sm text-nav-muted hover:bg-nav-hover hover:text-nav-text">
-        <ArrowLeft aria-hidden="true" className="size-4" />{t("settings.nav.backToWorkspace")}
-      </Link>
       <label className="mb-3 flex items-center gap-2 rounded-md border border-nav-hover px-2 py-1.5 text-sm text-nav-muted">
         <Search aria-hidden="true" className="size-4 shrink-0" />
         <span className="sr-only">{t("settings.nav.find")}</span>

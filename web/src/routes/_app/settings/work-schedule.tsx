@@ -71,7 +71,7 @@ function AnnualCalendar({ year, days, holidays, disabled, onYear, onPick }: {
     </div>
     <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
       {months.map((month) => <section key={month.label} className="space-y-1">
-        <h3 className="text-sm font-medium">{month.label}</h3>
+        <h2 className="text-sm font-medium">{month.label}</h2>
         <div className="grid grid-cols-7 gap-0.5 text-center text-[11px]">
           {mondayFirst.map((d) => <span key={d.toISOString()} className="pb-0.5 text-muted-foreground" aria-hidden="true">{d.toLocaleString(locale, weekdayFormat)}</span>)}
           {month.cells.map((date, index) => {
@@ -132,11 +132,13 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
     } finally { setBusy(false); }
   }
 
-  return <form className="max-w-2xl space-y-6" onSubmit={save}>
+  // Wide layout: rules on the left, the annual calendar uses the remaining width instead of leaving it empty.
+  return <form className="space-y-6" onSubmit={save}>
     <header>
-      <h2 className="text-lg font-semibold">{t("settings.workSchedule.title")}</h2>
       <p className="text-sm text-muted-foreground">{admin ? t("settings.workSchedule.description") : t("settings.workSchedule.readOnly")}</p>
     </header>
+    <div className="grid gap-8 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
+    <div className="space-y-6">
     <fieldset className="space-y-2" disabled={!admin || busy}>
       <legend className="mb-2 text-sm font-medium">{t("settings.workSchedule.workingDays")}</legend>
       <div className="flex flex-wrap gap-4">
@@ -171,6 +173,8 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
         <Button type="button" variant="outline" onClick={addHoliday}>{t("settings.workSchedule.addHoliday")}</Button>
       </div>
     </fieldset>
+    </div>
+    <div className="min-w-0">
     <fieldset className="space-y-3" disabled={!admin || busy}>
       <legend className="mb-2 text-sm font-medium">{t("settings.workSchedule.calendar")}</legend>
       <AnnualCalendar year={year} days={days} holidays={holidays} disabled={!admin || busy} onYear={setYear}
@@ -179,6 +183,8 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
           setDraft({ date: key, name: draft.name });
         }} />
     </fieldset>
+    </div>
+    </div>
     <FormError message={error} />
     {admin && <Button type="submit" disabled={busy || days.size === 0}>{t("settings.workSchedule.save")}</Button>}
   </form>;

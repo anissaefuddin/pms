@@ -2,7 +2,7 @@ import { useState, type ReactNode } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { Plus, X } from "lucide-react";
+import { GripVertical, Plus, X } from "lucide-react";
 import { api, type CurrentUser } from "@/lib/api";
 import { useProfile } from "@/lib/profile";
 import { FormError } from "@/components/auth/form-error";
@@ -80,16 +80,17 @@ function SidebarThemeSection() {
   </SettingsSection>;
 }
 
-/** Pinned and available sidebar entries, side by side. Changes apply to the sidebar immediately. */
+/** Pinned and available sidebar entries, side by side. Pinned entries can be reordered by dragging or Alt+Arrow. Changes apply at once. */
 function SidebarSection({ profile }: { profile: CurrentUser }) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const [error, setError] = useState("");
+  const [dragging, setDragging] = useState<ShortcutId>();
   const pins = sanitizePinOrder(profile.sidebar_pinned);
   const available = PINNABLE_IDS.filter((id) => !pins.includes(id));
-  async function toggle(id: ShortcutId) {
+  async function save(order: ShortcutId[]) {
     setError("");
-    const body = pinPatch(togglePin(pins, id), profile.sidebar_hidden ?? []);
+    const body = pinPatch(order, profile.sidebar_hidden ?? []);
     client.setQueryData(["me"], { ...profile, ...body });
     try {
       client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify(body) }));
@@ -98,18 +99,43 @@ function SidebarSection({ profile }: { profile: CurrentUser }) {
       setError((err as Error).message);
     }
   }
+  const toggle = (id: ShortcutId) => void save(togglePin(pins, id));
+  // Moves `id` so it lands at `index` in the pinned order.
+  const moveTo = (id: ShortcutId, index: number) => {
+    const from = pins.indexOf(id);
+    if (from < 0 || index < 0 || index >= pins.length || from === index) return;
+    const order = pins.filter((entry) => entry !== id);
+    order.splice(index, 0, id);
+    void save(order);
+  };
+  const name = (id: ShortcutId) => t(SHORTCUT_LABEL_KEY[id]);
   return <SettingsSection title={t("settings.profile.sidebar.title")} description={t("settings.profile.sidebar.hint")}>
     <div className="grid gap-4 sm:grid-cols-2">
       <EntryList title={t("settings.sidebar.pinned")} hint={t("settings.sidebar.pinnedHint")} empty={t("settings.sidebar.emptyPinned")}>
-        {pins.map((id) => <EntryRow key={id} label={t(SHORTCUT_LABEL_KEY[id])} action="remove" onClick={() => void toggle(id)} actionLabel={t("settings.sidebar.remove", { name: t(SHORTCUT_LABEL_KEY[id]) })} />)}
+        {pins.map((id, index) => <EntryRow key={id} label={name(id)} action="remove" onClick={() => toggle(id)}
+          actionLabel={t("settings.sidebar.remove", { name: name(id) })} reorder={{
+            hint: t("settings.sidebar.reorderHint"),
+            dragging: dragging === id,
+            onDragStart: () => setDragging(id),
+            onDragEnd: () => setDragging(undefined),
+            onDrop: () => { if (dragging) moveTo(dragging, index); setDragging(undefined); },
+            onKey: (key) => {
+              if (key === ARROW_UP) moveTo(id, index - 1);
+              if (key === ARROW_DOWN) moveTo(id, index + 1);
+            },
+            position: t("settings.sidebar.position", { index: index + 1, count: pins.length }),
+          }} />)}
       </EntryList>
       <EntryList title={t("settings.sidebar.available")} hint={t("settings.sidebar.availableHint")} empty={t("settings.sidebar.emptyAvailable")}>
-        {available.map((id) => <EntryRow key={id} label={t(SHORTCUT_LABEL_KEY[id])} action="add" onClick={() => void toggle(id)} actionLabel={t("settings.sidebar.add", { name: t(SHORTCUT_LABEL_KEY[id]) })} />)}
+        {available.map((id) => <EntryRow key={id} label={name(id)} action="add" onClick={() => toggle(id)} actionLabel={t("settings.sidebar.add", { name: name(id) })} />)}
       </EntryList>
     </div>
     <FormError message={error} />
   </SettingsSection>;
 }
+
+const ARROW_UP = "ArrowUp" as const;
+const ARROW_DOWN = "ArrowDown" as const;
 
 function EntryList({ title, hint, empty, children }: { title: string; hint: string; empty: string; children: ReactNode }) {
   const items = Array.isArray(children) ? children : [children];
@@ -120,9 +146,17 @@ function EntryList({ title, hint, empty, children }: { title: string; hint: stri
   </div>;
 }
 
-function EntryRow({ label, action, actionLabel, onClick }: { label: string; action: "add" | "remove"; actionLabel: string; onClick: () => void }) {
-  return <li className="flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent">
-    <span>{label}</span>
+type Reorder = { hint: string; dragging: boolean; position: string; onDragStart: () => void; onDragEnd: () => void; onDrop: () => void; onKey: (key: string) => void };
+
+function EntryRow({ label, action, actionLabel, onClick, reorder }: { label: string; action: "add" | "remove"; actionLabel: string; onClick: () => void; reorder?: Reorder }) {
+  return <li draggable={!!reorder} aria-label={reorder ? `${label}, ${reorder.position}. ${reorder.hint}` : undefined}
+    tabIndex={reorder ? 0 : undefined}
+    onDragStart={reorder?.onDragStart} onDragEnd={reorder?.onDragEnd}
+    onDragOver={reorder ? (event) => event.preventDefault() : undefined} onDrop={reorder ? (event) => { event.preventDefault(); reorder.onDrop(); } : undefined}
+    onKeyDown={reorder ? (event) => { if (event.altKey) { event.preventDefault(); reorder.onKey(event.key); } } : undefined}
+    className={`flex items-center justify-between gap-2 rounded-md px-2 py-1 text-sm hover:bg-accent ${reorder?.dragging ? "opacity-50" : ""} ${reorder ? "cursor-grab" : ""}`}>
+    {reorder && <GripVertical aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
+    <span className="min-w-0 flex-1 truncate">{label}</span>
     <Button type="button" variant="ghost" size="icon-sm" aria-label={actionLabel} onClick={onClick}>{action === "add" ? <Plus /> : <X />}</Button>
   </li>;
 }

@@ -25,7 +25,7 @@ export function SsoIdentities() {
     } catch (err) { toast.error(err instanceof ApiError && err.status === 409 ? t("sso.needPassword") : t("sso.unlinkFailed")); }
   }
   return <section aria-labelledby="sso-identities" className="mt-8 space-y-3">
-    <h3 id="sso-identities" className="text-base font-semibold">{t("sso.title")}</h3>
+    <h2 id="sso-identities" className="text-base font-semibold">{t("sso.title")}</h2>
     <p className="text-sm text-muted-foreground">{t("sso.description")}</p>
     {result.get("sso") === "linked" && <p role="status" className="rounded border border-success p-2 text-sm">{t("sso.linked")}</p>}
     {errorCode && <p role="alert" className="rounded border border-destructive p-2 text-sm">{t(`auth.sso.error.${errorCode}`, { defaultValue: t("auth.sso.error.failed") })}</p>}

@@ -102,7 +102,6 @@ function WorkflowsRoute() {
 
   return <div className="max-w-3xl space-y-6">
     <header>
-      <h2 className="text-lg font-semibold">{t("settings.workflows.title")}</h2>
       <p className="text-sm text-muted-foreground">{admin ? t("settings.workflows.description") : t("settings.workflows.readOnly")}</p>
     </header>
     <div className="flex flex-wrap items-end gap-3">
@@ -128,11 +127,11 @@ function WorkflowsRoute() {
     </form>}
     <FormError message={error} />
     <section aria-labelledby="wf-statuses" className="space-y-3">
-      <h3 id="wf-statuses" className="text-sm font-medium">{t("settings.workflows.statuses")}</h3>
+      <h2 id="wf-statuses" className="text-sm font-medium">{t("settings.workflows.statuses")}</h2>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
       <div className="grid gap-4 sm:grid-cols-2">
         {statusGroups.map((group) => <div key={group} role="group" aria-label={t(`settings.workflows.group.${group}`)} className="space-y-2">
-          <h4 className="text-sm font-semibold">{t(`settings.workflows.group.${group}`)}</h4>
+          <h3 className="text-sm font-semibold">{t(`settings.workflows.group.${group}`)}</h3>
           {workflow.statuses.filter((s) => s.group === group).map((s) => <button key={s.id} type="button" aria-pressed={selected === s.id}
             onClick={() => setSelected(selected === s.id ? "" : s.id)}
             className="flex w-full items-center gap-2 rounded-lg border bg-card px-3 py-2 text-left text-sm hover:bg-muted aria-pressed:border-primary aria-pressed:ring-1 aria-pressed:ring-primary focus-visible:outline-2 focus-visible:outline-ring">
@@ -149,7 +148,7 @@ function WorkflowsRoute() {
         </div>)}
       </div>
       <aside aria-label={t("settings.workflows.editor")} className="space-y-3 rounded-lg border bg-card p-4 lg:sticky lg:top-4 lg:self-start">
-        <h4 className="text-sm font-semibold">{t("settings.workflows.editor")}</h4>
+        <h3 className="text-sm font-semibold">{t("settings.workflows.editor")}</h3>
         {workflow.statuses.some((s) => s.id === selected)
           ? <ol>
               {workflow.statuses.filter((s) => s.id === selected).map((status) => {
