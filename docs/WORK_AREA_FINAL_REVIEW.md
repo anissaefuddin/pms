@@ -117,3 +117,14 @@ Overall status: **CHANGES REQUIRED** (Wave 1 agents B, C, D (except as noted), a
 - A5 performance at 500 items: measured. Board children requests reduced from 22 to 12 by a shared cached child fetch. Filter and mutation timing NOT RUN. 50 and 200 item fixtures NOT RUN.
 - E visual audit: automated capture of 7 views at three viewports, light and dark (42 screenshots). No horizontal overflow. Three findings recorded (VIS-01 P3 open). Density, Stream, All views, ItemDetail, dialogs, and approval card NOT RUN.
 - Overall status unchanged: **CHANGES REQUIRED**.
+
+### Wave 1 closure log (this pass)
+
+| ID | Status | Evidence |
+|---|---|---|
+| FND-06 | DONE | `git ls-files`: one StatusChip (`components/ui/status-chip.tsx`, moved from `components/status-chip.tsx`), one AvatarStack (`components/ui/avatar-stack.tsx`). Four importers updated. Lint, typecheck, and 508 mock tests pass. |
+| FND-07, FND-08, FND-09, B2–B6 | OPEN | Not verified in this pass. |
+| C1–C4 | OPEN | Not verified in this pass. |
+| D1–D12 (E2E) | PARTIAL, see section 3 | |
+| Agent A traversal and performance | PARTIAL | See regression report section 7. |
+| Agent E visual and accessibility | PARTIAL | See visual audit section 4. |

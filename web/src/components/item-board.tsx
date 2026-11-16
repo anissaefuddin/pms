@@ -7,7 +7,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomFieldDisplay } from "@/components/custom-field-editor";
 import { AvatarStack } from "@/components/ui/avatar-stack";
-import { StatusChip, tintOf } from "@/components/status-chip";
+import { StatusChip, tintOf } from "@/components/ui/status-chip";
 import { statusDotClass } from "@/lib/status-colors";
 import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";

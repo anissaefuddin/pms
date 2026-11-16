@@ -15,7 +15,7 @@ import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker
 import { ProjectProgress } from "@/components/project-progress";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
 import { AvatarStack } from "@/components/ui/avatar-stack";
-import { tintOf } from "@/components/status-chip";
+import { tintOf } from "@/components/ui/status-chip";
 import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import { useSearchPages } from "@/lib/search";
