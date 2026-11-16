@@ -29,7 +29,7 @@ import { ItemBlocks } from "@/components/item-blocks";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
 import { AvatarStack } from "@/components/ui/avatar-stack";
-import { tintOf } from "@/components/status-chip";
+import { tintOf } from "@/components/ui/status-chip";
 import { ItemProgress } from "@/components/project-progress";
 const ItemDescription = lazy(async () => ({ default: (await import("@/components/item-description")).ItemDescription }));
 const ItemComments = lazy(async () => ({ default: (await import("@/components/item-comments")).ItemComments }));

@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
 import { CustomizeSidebarDialog, openCustomizeSidebar } from "./customize-sidebar-dialog";
 
-const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-2 text-sm hover:bg-nav-hover";
+const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-sm hover:bg-nav-hover";
 const navRow = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-nav-hover";
 const activeNav = { className: `${navRow} bg-nav-active font-medium`, "aria-current": "page" as const };
 const activeLink = { className: `${linkClass} bg-nav-active font-medium`, "aria-current": "page" as const };
@@ -223,7 +223,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   }
 
   return (
-    <nav className="mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
+    <nav className="sidebar-scroll mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
       <div className="flex items-center justify-between px-3 pb-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("spaces.nav.label")}</h2>
         <div className="flex items-center">
@@ -255,6 +255,9 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   );
 }
 
+/** SB-01: sidebar disclosure buttons keep nav colours when expanded (the ghost variant otherwise paints aria-expanded light). */
+const treeToggle = "shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-text";
+
 function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string; open: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -269,9 +272,12 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
     } catch (err) { toast.error((err as Error).message || t("dashboards.actionFailed")); }
     finally { setBusy(false); }
   }
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const onTool = pathname.startsWith("/dashboards") || pathname.startsWith("/reports");
+  const [toolsOpen, setToolsOpen] = useState(onTool);
   return <li>
     <div className="flex min-w-0 items-center">
-      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" aria-expanded={open}
+      <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={open}
         aria-label={t(open ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={onToggle} onKeyDown={(event) => {
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
@@ -279,15 +285,20 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
             if (open !== (event.key === "ArrowRight")) onToggle();
           }
         }}>{open ? <ChevronDown /> : <ChevronRight />}</Button>
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={linkClass} activeProps={activeLink}>{name}</Link>
+      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={linkClass} title={name} activeProps={{ "aria-current": undefined }}>{name}</Link>
     </div>
-    {open && <div className="ml-3 space-y-2 border-l border-border pl-2 pb-2">
+    {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} text-sm`} activeOptions={{ exact: true }} activeProps={activeLink}>{t("nav.space.overview")}</Link>
       <div>
-        <p className="px-2 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.space.tools")}</p>
-        <Link to="/dashboards" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
-        <Link to="/reports" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("reports.nav.label")}</Link>
-        {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
+        <button type="button" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}
+          className="flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider text-nav-muted hover:text-nav-text focus-visible:outline-2 focus-visible:outline-ring">
+          {toolsOpen ? <ChevronDown aria-hidden="true" className="size-3" /> : <ChevronRight aria-hidden="true" className="size-3" />}{t("nav.space.tools")}
+        </button>
+        {toolsOpen && <>
+          <Link to="/dashboards" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
+          <Link to="/reports" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("reports.nav.label")}</Link>
+          {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
+        </>}
       </div>
       <div>
         <div className="flex items-center justify-between pr-1">
@@ -319,7 +330,7 @@ function Branch({ id, name, type }: { id: string; name: string; type?: string })
   const [expanded, setExpanded] = useState(false);
   return <li>
     <div className="flex min-w-0 items-center">
-      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" aria-expanded={expanded}
+      <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={expanded}
         aria-label={t(expanded ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={() => setExpanded(!expanded)} onKeyDown={(event) => {
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
@@ -327,8 +338,8 @@ function Branch({ id, name, type }: { id: string; name: string; type?: string })
             setExpanded(event.key === "ArrowRight");
           }
         }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>
-      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} activeProps={activeLink}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
+      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} activeProps={activeLink}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
     </div>
-    {expanded && <div className="ml-3 border-l border-border pl-1"><ItemTree id={id} /></div>}
+    {expanded && <div className="ml-3 border-l border-nav-hover pl-1"><ItemTree id={id} /></div>}
   </li>;
 }

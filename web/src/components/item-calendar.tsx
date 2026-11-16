@@ -9,7 +9,7 @@ import { addDays, daysBetween, fromDay, toDay } from "@/lib/calendar-days";
 import { MAX_LANES, layoutWeek, type Bar } from "@/lib/calendar-layout";
 import { useProfile } from "@/lib/profile";
 import type { Item } from "@/lib/items";
-import { tintOf } from "@/components/status-chip";
+import { tintOf } from "@/components/ui/status-chip";
 import { TypeGlyph } from "@/components/type-badge";
 
 type Update = { start_date: string | null; due_date: string | null };
