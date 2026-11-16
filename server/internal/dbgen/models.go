@@ -1080,6 +1080,7 @@ type RequestForm struct {
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 	Access      string             `json:"access"`
 	PublicToken pgtype.Text        `json:"public_token"`
+	PublishedAt pgtype.Timestamptz `json:"published_at"`
 }
 
 type ResourceBooking struct {

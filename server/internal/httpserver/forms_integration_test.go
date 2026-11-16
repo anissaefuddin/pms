@@ -124,6 +124,7 @@ func TestFormAccessAndManageList(t *testing.T) {
 	f.share(intake, "user", reader.id, "read")
 	made := f.call(editor, "POST", "/spaces/"+intake+"/forms", formBody(intake, nil))
 	f.want(made, 201, "editor builds a form")
+	f.publishForm(editor, made.body["id"].(string))
 	if made.body["access"] != "private" {
 		t.Fatalf("new forms start private: %v", made.body["access"])
 	}
@@ -162,4 +163,10 @@ func TestFormAccessAndManageList(t *testing.T) {
 			t.Fatalf("%s manages nothing: %v", name, got.body)
 		}
 	}
+}
+
+// publishForm makes a draft live. New forms start as drafts, so tests that let requesters in publish first.
+func (f *fixture) publishForm(p *person, id string) {
+	f.t.Helper()
+	f.want(f.call(p, "POST", "/forms/"+id+"/publish", nil), 200, "publish form")
 }

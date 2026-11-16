@@ -3613,6 +3613,44 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/forms/{formId}/publish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Terbitkan form sehingga pelapor bisa melihat dan mengirim; minimal satu pertanyaan (RF-06) */
+        post: operations["publishForm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/forms/{formId}/unpublish": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Kembalikan form ke draft; pelapor tidak bisa melihat atau mengirim lagi (RF-06) */
+        post: operations["unpublishForm"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/forms/{formId}/access": {
         parameters: {
             query?: never;
@@ -5145,6 +5183,8 @@ export interface components {
             definition: components["schemas"]["FormDefinition"];
             response: components["schemas"]["FormResponseSettings"];
         };
+        /** @enum {string} */
+        FormStatus: "draft" | "published";
         Form: {
             /** Format: uuid */
             id: string;
@@ -5157,6 +5197,7 @@ export interface components {
             access: components["schemas"]["FormAccess"];
             /** @description Token tautan publik; kosong bila tidak ada tautan */
             public_token?: string | null;
+            status: components["schemas"]["FormStatus"];
             /** Format: int32 */
             version: number;
             created_by: components["schemas"]["UserRef"];
@@ -5201,6 +5242,7 @@ export interface components {
             space_name: string;
             access: components["schemas"]["FormAccess"];
             public_token?: string | null;
+            status: components["schemas"]["FormStatus"];
             name: string;
             description: string;
             /** Format: int32 */
@@ -13642,6 +13684,57 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    publishForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK; status menjadi published */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    unpublishForm: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                formId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK; status menjadi draft */
+            200: {
+                headers: {
+                    ETag: components["headers"]["ETag"];
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Form"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     setFormAccess: {

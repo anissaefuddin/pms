@@ -363,6 +363,7 @@ func TestTriggersConditionsAndActions(t *testing.T) {
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true}}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": e.space}, "title_question": "subject"}})
 	f.want(form, 201, "form")
 	formID := form.body["id"].(string)
+	f.publishForm(e.editor, formID)
 	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", formID)
 	e.rule(t, e.editor, "Form intake", `{"when":{"type":"form.submitted","form_id":"`+formID+`"},"then":[{"type":"comment","text":"Received"}]}`)
 	f.want(f.submit(watcher, formID, map[string]any{"subject": "Need a laptop"}), 201, "submit")

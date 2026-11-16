@@ -47,6 +47,7 @@ func TestFormBranchingBlueprintItem(t *testing.T) {
 	form := f.call(editor, "POST", "/spaces/"+intake+"/forms", response(route("Bug", "bug", bpBug), route("Idea", "idea", bpIdea)))
 	f.want(form, 201, "form")
 	id := form.body["id"].(string)
+	f.publishForm(editor, id)
 	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", id)
 
 	children := func(item string) string {

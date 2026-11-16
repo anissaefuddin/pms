@@ -19,6 +19,7 @@ func TestMyRequests(t *testing.T) {
 	}))
 	f.want(form, 201, "form into the project")
 	formID := form.body["id"].(string)
+	f.publishForm(admin, formID)
 	f.want(f.call(admin, "PUT", "/forms/"+formID+"/access", map[string]any{"access": "internal"}), 200, "publish")
 
 	sent := f.submit(requester, formID, map[string]any{"subject": "First"})

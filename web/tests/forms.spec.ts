@@ -10,8 +10,8 @@ const wf = { id: sid(100), name: "Default flow", is_default: true, statuses: [
   { id: sid(1), name: "New", color: "slate", group: "active", auto_assign: false, lock_transitions: false, allowed_next: [] },
   { id: sid(2), name: "In Progress", color: "blue", group: "active", auto_assign: false, lock_transitions: false, allowed_next: [] }] };
 
-const stored = (version = 3) => ({
-  id: fid, space_id: marketing.id, name: "IT request", description: "Ask IT", version, created_by: ada, updated_by: ada,
+const stored = (version = 3, status = "draft") => ({
+  id: fid, space_id: marketing.id, name: "IT request", description: "Ask IT", version, status, created_by: ada, updated_by: ada,
   created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-02T10:00:00Z",
   definition: { pages: [{ title: "Details", elements: [
     { key: "your_name", kind: "single_line", label: "Your name", required: true },
@@ -37,6 +37,8 @@ async function mock(page: Page, opts: { spaces?: any[]; extra?: Record<string, a
       return { body: current, headers: { ETag: `"${current.version}"` } };
     },
     [`DELETE /forms/${fid}`]: () => ({ status: 204 }),
+    [`POST /forms/${fid}/publish`]: () => { current = { ...current, status: "published", version: current.version + 1 }; return { body: current, headers: { ETag: `"${current.version}"` } }; },
+    [`POST /forms/${fid}/unpublish`]: () => { current = { ...current, status: "draft", version: current.version + 1 }; return { body: current, headers: { ETag: `"${current.version}"` } }; },
     ...opts.extra,
   } });
   return calls;
@@ -253,4 +255,16 @@ test("a route picks a Blueprint of the destination Space, shows it in its summar
   await expect.poll(() => calls.find((c) => c.method === "PUT")?.body).toBeTruthy();
   expect(calls.find((c) => c.method === "PUT")!.body.response.routes).toEqual([
     { when: { key: "kind", op: "equals", value: "Laptop" }, type_key: "bug", blueprint_id: bp }]);
+});
+
+test("a draft is published from the builder and can be moved back to draft", async ({ page }) => {
+  const calls = await mock(page);
+  await page.goto(`/spaces/${marketing.id}/forms/${fid}`);
+  await expect(page.getByText("Draft", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Publish" }).click();
+  await expect(page.getByText("Published", { exact: true })).toBeVisible();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${fid}/publish`)).toBe(true);
+  await page.getByRole("button", { name: "Move to draft" }).click();
+  await expect(page.getByText("Draft", { exact: true })).toBeVisible();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${fid}/unpublish`)).toBe(true);
 });

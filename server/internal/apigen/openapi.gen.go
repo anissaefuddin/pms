@@ -524,19 +524,19 @@ func (e AutomationRunStatus) Valid() bool {
 
 // Defines values for AutomationVersionStatus.
 const (
-	Draft     AutomationVersionStatus = "draft"
-	Published AutomationVersionStatus = "published"
-	Retired   AutomationVersionStatus = "retired"
+	AutomationVersionStatusDraft     AutomationVersionStatus = "draft"
+	AutomationVersionStatusPublished AutomationVersionStatus = "published"
+	AutomationVersionStatusRetired   AutomationVersionStatus = "retired"
 )
 
 // Valid indicates whether the value is a known member of the AutomationVersionStatus enum.
 func (e AutomationVersionStatus) Valid() bool {
 	switch e {
-	case Draft:
+	case AutomationVersionStatusDraft:
 		return true
-	case Published:
+	case AutomationVersionStatusPublished:
 		return true
-	case Retired:
+	case AutomationVersionStatusRetired:
 		return true
 	default:
 		return false
@@ -1146,6 +1146,24 @@ func (e FormResponseSettingsItemType) Valid() bool {
 	case FormResponseSettingsItemTypeProject:
 		return true
 	case FormResponseSettingsItemTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FormStatus.
+const (
+	FormStatusDraft     FormStatus = "draft"
+	FormStatusPublished FormStatus = "published"
+)
+
+// Valid indicates whether the value is a known member of the FormStatus enum.
+func (e FormStatus) Valid() bool {
+	switch e {
+	case FormStatusDraft:
+		return true
+	case FormStatusPublished:
 		return true
 	default:
 		return false
@@ -3851,6 +3869,7 @@ type Form struct {
 	PublicToken *string              `json:"public_token,omitempty"`
 	Response    FormResponseSettings `json:"response"`
 	SpaceId     openapi_types.UUID   `json:"space_id"`
+	Status      FormStatus           `json:"status"`
 	UpdatedAt   time.Time            `json:"updated_at"`
 	UpdatedBy   UserRef              `json:"updated_by"`
 	Version     int32                `json:"version"`
@@ -3982,6 +4001,9 @@ type FormResponseSettings struct {
 // FormResponseSettingsItemType defines model for FormResponseSettings.ItemType.
 type FormResponseSettingsItemType string
 
+// FormStatus defines model for FormStatus.
+type FormStatus string
+
 // FormSubmitted defines model for FormSubmitted.
 type FormSubmitted struct {
 	ItemId openapi_types.UUID `json:"item_id"`
@@ -3999,6 +4021,7 @@ type FormSummary struct {
 	QuestionCount int32              `json:"question_count"`
 	SpaceId       openapi_types.UUID `json:"space_id"`
 	SpaceName     string             `json:"space_name"`
+	Status        FormStatus         `json:"status"`
 	UpdatedAt     time.Time          `json:"updated_at"`
 	UpdatedBy     UserRef            `json:"updated_by"`
 }
@@ -7441,9 +7464,15 @@ type ServerInterface interface {
 	// RotateFormPublicLink Buat tautan publik, atau ganti yang ada sehingga tautan lama langsung mati (FORM-03); butuh kemampuan share pada Space
 	// (POST /forms/{formId}/public-link)
 	RotateFormPublicLink(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// PublishForm Terbitkan form sehingga pelapor bisa melihat dan mengirim; minimal satu pertanyaan (RF-06)
+	// (POST /forms/{formId}/publish)
+	PublishForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
 	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
 	// (POST /forms/{formId}/submissions)
 	SubmitForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
+	// UnpublishForm Kembalikan form ke draft; pelapor tidak bisa melihat atau mengirim lagi (RF-06)
+	// (POST /forms/{formId}/unpublish)
+	UnpublishForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID)
 	// RevokeGanttSnapshot Cabut tautan snapshot (butuh Edit pada project)
 	// (DELETE /gantt-snapshots/{snapshotId})
 	RevokeGanttSnapshot(w http.ResponseWriter, r *http.Request, snapshotId openapi_types.UUID)
@@ -11078,6 +11107,32 @@ func (siw *ServerInterfaceWrapper) RotateFormPublicLink(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// PublishForm operation middleware
+func (siw *ServerInterfaceWrapper) PublishForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PublishForm(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // SubmitForm operation middleware
 func (siw *ServerInterfaceWrapper) SubmitForm(w http.ResponseWriter, r *http.Request) {
 
@@ -11095,6 +11150,32 @@ func (siw *ServerInterfaceWrapper) SubmitForm(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SubmitForm(w, r, formId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnpublishForm operation middleware
+func (siw *ServerInterfaceWrapper) UnpublishForm(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "formId" -------------
+	var formId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "formId", r.PathValue("formId"), &formId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "formId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnpublishForm(w, r, formId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17117,6 +17198,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}", wrapper.GetForm)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/forms/{formId}", wrapper.ReplaceForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms", wrapper.ListForms)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/forms/{formId}/publish", wrapper.PublishForm)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/forms/{formId}/unpublish", wrapper.UnpublishForm)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/forms/{formId}/access", wrapper.SetFormAccess)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/forms/{formId}/public-link", wrapper.RevokeFormPublicLink)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/forms/{formId}/public-link", wrapper.RotateFormPublicLink)
@@ -23251,6 +23334,82 @@ func (response RotateFormPublicLink404ApplicationProblemPlusJSONResponse) VisitR
 	return err
 }
 
+type PublishFormRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+}
+
+type PublishFormResponseObject interface {
+	VisitPublishFormResponse(w http.ResponseWriter) error
+}
+
+type PublishForm200ResponseHeaders struct {
+	ETag *string
+}
+
+type PublishForm200JSONResponse struct {
+	Body    Form
+	Headers PublishForm200ResponseHeaders
+}
+
+func (response PublishForm200JSONResponse) VisitPublishFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PublishForm403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PublishForm403ApplicationProblemPlusJSONResponse) VisitPublishFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PublishForm404ApplicationProblemPlusJSONResponse Problem
+
+func (response PublishForm404ApplicationProblemPlusJSONResponse) VisitPublishFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PublishForm422ApplicationProblemPlusJSONResponse Problem
+
+func (response PublishForm422ApplicationProblemPlusJSONResponse) VisitPublishFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type SubmitFormRequestObject struct {
 	FormId        openapi_types.UUID `json:"formId"`
 	JSONBody      *SubmitFormJSONRequestBody
@@ -23315,6 +23474,68 @@ func (response SubmitForm422ApplicationProblemPlusJSONResponse) VisitSubmitFormR
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpublishFormRequestObject struct {
+	FormId openapi_types.UUID `json:"formId"`
+}
+
+type UnpublishFormResponseObject interface {
+	VisitUnpublishFormResponse(w http.ResponseWriter) error
+}
+
+type UnpublishForm200ResponseHeaders struct {
+	ETag *string
+}
+
+type UnpublishForm200JSONResponse struct {
+	Body    Form
+	Headers UnpublishForm200ResponseHeaders
+}
+
+func (response UnpublishForm200JSONResponse) VisitUnpublishFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpublishForm403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnpublishForm403ApplicationProblemPlusJSONResponse) VisitUnpublishFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnpublishForm404ApplicationProblemPlusJSONResponse Problem
+
+func (response UnpublishForm404ApplicationProblemPlusJSONResponse) VisitUnpublishFormResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -34634,9 +34855,15 @@ type StrictServerInterface interface {
 	// RotateFormPublicLink Buat tautan publik, atau ganti yang ada sehingga tautan lama langsung mati (FORM-03); butuh kemampuan share pada Space
 	// (POST /forms/{formId}/public-link)
 	RotateFormPublicLink(ctx context.Context, request RotateFormPublicLinkRequestObject) (RotateFormPublicLinkResponseObject, error)
+	// PublishForm Terbitkan form sehingga pelapor bisa melihat dan mengirim; minimal satu pertanyaan (RF-06)
+	// (POST /forms/{formId}/publish)
+	PublishForm(ctx context.Context, request PublishFormRequestObject) (PublishFormResponseObject, error)
 	// SubmitForm Isi form; membuat item sesuai pengaturan respons dalam satu transaksi (FORM-06)
 	// (POST /forms/{formId}/submissions)
 	SubmitForm(ctx context.Context, request SubmitFormRequestObject) (SubmitFormResponseObject, error)
+	// UnpublishForm Kembalikan form ke draft; pelapor tidak bisa melihat atau mengirim lagi (RF-06)
+	// (POST /forms/{formId}/unpublish)
+	UnpublishForm(ctx context.Context, request UnpublishFormRequestObject) (UnpublishFormResponseObject, error)
 	// RevokeGanttSnapshot Cabut tautan snapshot (butuh Edit pada project)
 	// (DELETE /gantt-snapshots/{snapshotId})
 	RevokeGanttSnapshot(ctx context.Context, request RevokeGanttSnapshotRequestObject) (RevokeGanttSnapshotResponseObject, error)
@@ -38162,6 +38389,32 @@ func (sh *strictHandler) RotateFormPublicLink(w http.ResponseWriter, r *http.Req
 	}
 }
 
+// PublishForm operation middleware
+func (sh *strictHandler) PublishForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request PublishFormRequestObject
+
+	request.FormId = formId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PublishForm(ctx, request.(PublishFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PublishForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PublishFormResponseObject); ok {
+		if err := validResponse.VisitPublishFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // SubmitForm operation middleware
 func (sh *strictHandler) SubmitForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
 	var request SubmitFormRequestObject
@@ -38199,6 +38452,32 @@ func (sh *strictHandler) SubmitForm(w http.ResponseWriter, r *http.Request, form
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SubmitFormResponseObject); ok {
 		if err := validResponse.VisitSubmitFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnpublishForm operation middleware
+func (sh *strictHandler) UnpublishForm(w http.ResponseWriter, r *http.Request, formId openapi_types.UUID) {
+	var request UnpublishFormRequestObject
+
+	request.FormId = formId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnpublishForm(ctx, request.(UnpublishFormRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnpublishForm")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnpublishFormResponseObject); ok {
+		if err := validResponse.VisitUnpublishFormResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

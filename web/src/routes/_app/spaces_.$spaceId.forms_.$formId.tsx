@@ -9,6 +9,7 @@ import { useSpace } from "@/lib/space-queries";
 import { can } from "@/lib/spaces";
 import { FormAccessDialog } from "@/components/form-access-dialog";
 import { FormError } from "@/components/auth/form-error";
+import { AdminStatus } from "@/components/admin/admin-ui";
 import { FormQuestionsEditor } from "@/components/form-questions-editor";
 import { FormRenderer } from "@/components/form-renderer";
 import { FormResponseSettings } from "@/components/form-response-settings";
@@ -73,29 +74,48 @@ function Builder({ spaceId, form, onReload }: { spaceId: string; form?: Form; on
     setDraft((d) => ({ ...d, pages, title_question: rename && d.title_question === rename[0] ? rename[1] : d.title_question }));
   }
 
-  async function save() {
+  // Save keeps the form's status. Publish saves first, then makes the saved version live for requesters.
+  async function save(publish = false) {
     if (busy) return;
     setConflict(false);
     if (!draft.name.trim()) { setErrors({ byControl: { name: t("forms.builder.nameRequired") }, summary: [] }); return; }
     setBusy(true); setErrors({ byControl: {}, summary: [] });
     try {
       const body = JSON.stringify(buildInput(draft));
-      const saved = form
+      let saved = form
         ? await api<Form>(`/api/v1/forms/${form.id}`, { method: "PUT", body, headers: { "If-Match": `"${form.version}"` } })
         : await api<Form>(`/api/v1/spaces/${spaceId}/forms`, { method: "POST", body });
-      toast.success(t("forms.builder.saved"));
+      if (publish) saved = await api<Form>(`/api/v1/forms/${saved.id}/publish`, { method: "POST" });
+      toast.success(t(publish ? "forms.builder.published" : "forms.builder.saved"));
       qc.setQueryData(formKeys.one(saved.id), saved);
       await qc.invalidateQueries({ queryKey: formKeys.list(spaceId) });
       if (!form) await navigate({ to: "/spaces/$spaceId/forms/$formId", params: { spaceId, formId: saved.id }, replace: true });
     } catch (err) {
       if (err instanceof ApiError && err.status === 409 && err.code !== "name_taken") setConflict(true);
       else if (err instanceof ApiError && err.code === "name_taken") setErrors({ byControl: { name: t("forms.builder.nameTaken") }, summary: [] });
-      else if (err instanceof ApiError && err.fields.length) setErrors(mapErrors(err.fields));
+      else if (err instanceof ApiError && err.fields.length) {
+        // A field the form has no control for (such as the question count on publish) is shown as a summary line.
+        const mapped = mapErrors(err.fields);
+        setErrors(mapped.summary.length || Object.keys(mapped.byControl).length ? mapped : { byControl: {}, summary: [err.message] });
+      }
       else setErrors({ byControl: {}, summary: [(err as Error).message] });
     } finally { setBusy(false); }
   }
 
+  async function setPublished(publish: boolean) {
+    if (!form || busy) return;
+    setBusy(true); setErrors({ byControl: {}, summary: [] });
+    try {
+      const saved = await api<Form>(`/api/v1/forms/${form.id}/${publish ? "publish" : "unpublish"}`, { method: "POST" });
+      toast.success(t(publish ? "forms.builder.published" : "forms.builder.unpublished"));
+      qc.setQueryData(formKeys.one(saved.id), saved);
+      await qc.invalidateQueries({ queryKey: formKeys.list(spaceId) });
+    } catch (err) { setErrors({ byControl: {}, summary: [(err as Error).message] }); }
+    finally { setBusy(false); }
+  }
+
   const definition = { pages: draft.pages };
+  const published = form?.status === "published";
   const nameError = errors.byControl.name ?? "";
   const descError = errors.byControl.description ?? "";
   const hasQuestions = draft.pages.some((p) => p.elements.length > 0);
@@ -103,7 +123,10 @@ function Builder({ spaceId, form, onReload }: { spaceId: string; form?: Form; on
     <header className="space-y-1 border-b pb-5">
       <Link to="/spaces/$spaceId/forms" params={{ spaceId }} className="text-sm text-muted-foreground underline">{t("forms.builder.back")}</Link>
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="workspace-title">{t(form ? "forms.builder.titleEdit" : "forms.builder.titleNew")}</h1>
+        <div className="flex flex-wrap items-center gap-3">
+          <h1 className="workspace-title">{t(form ? "forms.builder.titleEdit" : "forms.builder.titleNew")}</h1>
+          <AdminStatus tone={published ? "success" : "neutral"} label={t(published ? "forms.builder.statusPublished" : "forms.builder.statusDraft")} />
+        </div>
         {form && <Button type="button" variant="outline" onClick={() => setSharing(true)}>{t("forms.access.share")}</Button>}
       </div>
       {form && <FormAccessDialog form={sharing ? form : undefined} onOpenChange={setSharing} />}
@@ -135,7 +158,12 @@ function Builder({ spaceId, form, onReload }: { spaceId: string; form?: Form; on
             : <p className="text-sm text-muted-foreground">{t("forms.preview.empty")}</p>}
         </section>
       </div>
-      <div><Button type="button" disabled={busy} onClick={() => void save()}>{busy ? t("forms.builder.saving") : t("forms.builder.save")}</Button></div>
+      <div className="flex flex-wrap gap-2">
+        <Button type="button" variant="outline" disabled={busy} onClick={() => void save()}>{busy ? t("forms.builder.saving") : t("forms.builder.save")}</Button>
+        {published
+          ? <Button type="button" variant="outline" disabled={busy} onClick={() => void setPublished(false)}>{t("forms.builder.unpublish")}</Button>
+          : <Button type="button" disabled={busy} onClick={() => void save(true)}>{t("forms.builder.publish")}</Button>}
+      </div>
     </div>
   </main>;
 }

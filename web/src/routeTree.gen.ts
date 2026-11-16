@@ -57,6 +57,7 @@ import { Route as AppSettingsPolicyRouteImport } from './routes/_app/settings/po
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
 import { Route as AppSettingsProvisioningRouteImport } from './routes/_app/settings/provisioning'
 import { Route as AppSettingsRatesRouteImport } from './routes/_app/settings/rates'
+import { Route as AppSettingsRequestFormsRouteImport } from './routes/_app/settings/request-forms'
 import { Route as AppSettingsResourcesRouteImport } from './routes/_app/settings/resources'
 import { Route as AppSettingsRolesRouteImport } from './routes/_app/settings/roles'
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
@@ -315,6 +316,11 @@ const AppSettingsRatesRoute = AppSettingsRatesRouteImport.update({
   path: '/rates',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsRequestFormsRoute = AppSettingsRequestFormsRouteImport.update({
+  id: '/request-forms',
+  path: '/request-forms',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsResourcesRoute = AppSettingsResourcesRouteImport.update({
   id: '/resources',
   path: '/resources',
@@ -448,6 +454,7 @@ export interface FileRoutesByFullPath {
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/provisioning': typeof AppSettingsProvisioningRoute
   '/settings/rates': typeof AppSettingsRatesRoute
+  '/settings/request-forms': typeof AppSettingsRequestFormsRoute
   '/settings/resources': typeof AppSettingsResourcesRoute
   '/settings/roles': typeof AppSettingsRolesRoute
   '/settings/security': typeof AppSettingsSecurityRoute
@@ -513,6 +520,7 @@ export interface FileRoutesByTo {
   '/settings/profile': typeof AppSettingsProfileRoute
   '/settings/provisioning': typeof AppSettingsProvisioningRoute
   '/settings/rates': typeof AppSettingsRatesRoute
+  '/settings/request-forms': typeof AppSettingsRequestFormsRoute
   '/settings/resources': typeof AppSettingsResourcesRoute
   '/settings/roles': typeof AppSettingsRolesRoute
   '/settings/security': typeof AppSettingsSecurityRoute
@@ -580,6 +588,7 @@ export interface FileRoutesById {
   '/_app/settings/profile': typeof AppSettingsProfileRoute
   '/_app/settings/provisioning': typeof AppSettingsProvisioningRoute
   '/_app/settings/rates': typeof AppSettingsRatesRoute
+  '/_app/settings/request-forms': typeof AppSettingsRequestFormsRoute
   '/_app/settings/resources': typeof AppSettingsResourcesRoute
   '/_app/settings/roles': typeof AppSettingsRolesRoute
   '/_app/settings/security': typeof AppSettingsSecurityRoute
@@ -648,6 +657,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/settings/provisioning'
     | '/settings/rates'
+    | '/settings/request-forms'
     | '/settings/resources'
     | '/settings/roles'
     | '/settings/security'
@@ -713,6 +723,7 @@ export interface FileRouteTypes {
     | '/settings/profile'
     | '/settings/provisioning'
     | '/settings/rates'
+    | '/settings/request-forms'
     | '/settings/resources'
     | '/settings/roles'
     | '/settings/security'
@@ -779,6 +790,7 @@ export interface FileRouteTypes {
     | '/_app/settings/profile'
     | '/_app/settings/provisioning'
     | '/_app/settings/rates'
+    | '/_app/settings/request-forms'
     | '/_app/settings/resources'
     | '/_app/settings/roles'
     | '/_app/settings/security'
@@ -1152,6 +1164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsRatesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/request-forms': {
+      id: '/_app/settings/request-forms'
+      path: '/request-forms'
+      fullPath: '/settings/request-forms'
+      preLoaderRoute: typeof AppSettingsRequestFormsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/resources': {
       id: '/_app/settings/resources'
       path: '/resources'
@@ -1300,6 +1319,7 @@ interface AppSettingsRouteChildren {
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
   AppSettingsProvisioningRoute: typeof AppSettingsProvisioningRoute
   AppSettingsRatesRoute: typeof AppSettingsRatesRoute
+  AppSettingsRequestFormsRoute: typeof AppSettingsRequestFormsRoute
   AppSettingsResourcesRoute: typeof AppSettingsResourcesRoute
   AppSettingsRolesRoute: typeof AppSettingsRolesRoute
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
@@ -1325,6 +1345,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsProfileRoute: AppSettingsProfileRoute,
   AppSettingsProvisioningRoute: AppSettingsProvisioningRoute,
   AppSettingsRatesRoute: AppSettingsRatesRoute,
+  AppSettingsRequestFormsRoute: AppSettingsRequestFormsRoute,
   AppSettingsResourcesRoute: AppSettingsResourcesRoute,
   AppSettingsRolesRoute: AppSettingsRolesRoute,
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,

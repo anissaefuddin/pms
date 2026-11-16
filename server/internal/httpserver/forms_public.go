@@ -50,7 +50,7 @@ func loadPublicForm(ctx context.Context, tx pgx.Tx, token string) (formRow, erro
 	var row formRow
 	var definition, response []byte
 	err := tx.QueryRow(ctx, `SELECT f.id,f.name,f.description,f.definition,f.response
-FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL WHERE f.public_token=$1`, token).Scan(&row.ID, &row.Name, &row.Desc, &definition, &response)
+FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL WHERE f.public_token=$1 AND f.published_at IS NOT NULL`, token).Scan(&row.ID, &row.Name, &row.Desc, &definition, &response)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return row, items.ErrNotFound
 	}

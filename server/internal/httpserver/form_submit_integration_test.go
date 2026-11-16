@@ -80,6 +80,7 @@ func TestFormSubmission(t *testing.T) {
 	}}
 	created := f.call(editor, "POST", "/spaces/"+intake+"/forms", body)
 	f.want(created, 201, "build form")
+	f.publishForm(editor, created.body["id"].(string))
 	id := created.body["id"].(string)
 
 	// A private form is invisible to the requester; managers still see it.

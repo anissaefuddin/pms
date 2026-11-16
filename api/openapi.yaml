@@ -5094,6 +5094,41 @@ paths:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/FormSummary' }
+  /forms/{formId}/publish:
+    parameters:
+      - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [forms]
+      operationId: publishForm
+      summary: Terbitkan form sehingga pelapor bisa melihat dan mengirim; minimal satu pertanyaan (RF-06)
+      responses:
+        '200':
+          description: OK; status menjadi published
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /forms/{formId}/unpublish:
+    parameters:
+      - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [forms]
+      operationId: unpublishForm
+      summary: Kembalikan form ke draft; pelapor tidak bisa melihat atau mengirim lagi (RF-06)
+      responses:
+        '200':
+          description: OK; status menjadi draft
+          headers:
+            ETag: { $ref: '#/components/headers/ETag' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Form' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /forms/{formId}/access:
     parameters:
       - { name: formId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -6969,9 +7004,12 @@ components:
         description: { type: string, maxLength: 2000 }
         definition: { $ref: '#/components/schemas/FormDefinition' }
         response: { $ref: '#/components/schemas/FormResponseSettings' }
+    FormStatus:
+      type: string
+      enum: [draft, published]
     Form:
       type: object
-      required: [id, space_id, name, description, definition, response, access, version, created_by, updated_by, created_at, updated_at]
+      required: [id, space_id, name, description, definition, response, access, status, version, created_by, updated_by, created_at, updated_at]
       properties:
         id: { type: string, format: uuid }
         space_id: { type: string, format: uuid }
@@ -6981,6 +7019,7 @@ components:
         response: { $ref: '#/components/schemas/FormResponseSettings' }
         access: { $ref: '#/components/schemas/FormAccess' }
         public_token: { type: string, nullable: true, description: Token tautan publik; kosong bila tidak ada tautan }
+        status: { $ref: '#/components/schemas/FormStatus' }
         version: { type: integer, format: int32 }
         created_by: { $ref: '#/components/schemas/UserRef' }
         updated_by: { $ref: '#/components/schemas/UserRef' }
@@ -7018,13 +7057,14 @@ components:
         created_at: { type: string, format: date-time }
     FormSummary:
       type: object
-      required: [id, space_id, space_name, name, description, access, question_count, updated_by, updated_at]
+      required: [id, space_id, space_name, name, description, access, status, question_count, updated_by, updated_at]
       properties:
         id: { type: string, format: uuid }
         space_id: { type: string, format: uuid }
         space_name: { type: string }
         access: { $ref: '#/components/schemas/FormAccess' }
         public_token: { type: string, nullable: true }
+        status: { $ref: '#/components/schemas/FormStatus' }
         name: { type: string }
         description: { type: string }
         question_count: { type: integer, format: int32 }

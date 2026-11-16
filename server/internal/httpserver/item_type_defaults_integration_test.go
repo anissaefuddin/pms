@@ -70,6 +70,7 @@ func TestItemTypeDefaultsApplyOnEveryCreatePath(t *testing.T) {
 		"response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": e.space}, "title_question": "t", "type_key": "bug"}})
 	f.want(form, 201, "form")
 	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", form.body["id"])
+	f.publishForm(e.editor, form.body["id"].(string))
 	f.want(f.submit(requester, form.body["id"].(string), map[string]any{"t": "via form"}), 201, "form submit")
 	d.wantDefaults(t, "via form", "form")
 

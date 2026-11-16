@@ -1,109 +1,17 @@
-import { useState } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { MoreHorizontal } from "lucide-react";
+import { createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { toast } from "sonner";
-import { api } from "@/lib/api";
-import { type FormSummary } from "@/lib/forms";
-import { formatDate, useProfile } from "@/lib/profile";
-import { ConfirmDialog } from "@/components/confirm-dialog";
-import { FormAccessDialog } from "@/components/form-access-dialog";
-import { Button } from "@/components/ui/button";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { FormManagePanel } from "@/components/form-manage-panel";
 
 export const Route = createFileRoute("/_app/forms")({ component: ManageForms });
 
-const publicUrl = (token: string) => new URL(`/f/${token}`, window.location.origin).href;
-const fillUrl = (id: string) => new URL(`/requests/${id}`, window.location.origin).href;
-
+// Kept for existing links; the same list is the Settings > Request forms page.
 function ManageForms() {
   const { t } = useTranslation();
-  const qc = useQueryClient();
-  const profile = useProfile();
-  const list = useQuery({
-    queryKey: ["forms", "manage"], retry: false,
-    queryFn: async () => (await api<{ items: FormSummary[] }>("/api/v1/forms")).items,
-  });
-  const [filter, setFilter] = useState("");
-  const [sharing, setSharing] = useState<FormSummary>();
-  const [deleting, setDeleting] = useState<FormSummary>();
-  const [error, setError] = useState("");
-  const [busy, setBusy] = useState(false);
-  const rows = (list.data ?? []).filter((f) => f.name.toLowerCase().includes(filter.trim().toLowerCase()));
-
-  async function remove() {
-    if (!deleting) return;
-    setBusy(true); setError("");
-    try {
-      await api(`/api/v1/forms/${deleting.id}`, { method: "DELETE" });
-      setDeleting(undefined);
-      toast.success(t("forms.list.deleted"));
-      await qc.invalidateQueries({ queryKey: ["forms"] });
-    } catch (err) { setError((err as Error).message); }
-    finally { setBusy(false); }
-  }
-
-  async function copy(url: string) {
-    try { await navigator.clipboard.writeText(url); toast.success(t("forms.manage.copied")); }
-    catch { toast.error(t("forms.manage.copyFailed")); }
-  }
-
   return <main className="space-y-5 p-8">
     <header className="border-b pb-5">
       <h1 className="workspace-title">{t("forms.manage.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("forms.manage.description")}</p>
     </header>
-    {list.isPending && <p role="status" className="text-sm text-muted-foreground">{t("forms.list.loading")}</p>}
-    {list.isError && <div><p role="alert">{t("forms.list.error")}</p><Button variant="outline" className="mt-3" onClick={() => list.refetch()}>{t("forms.list.retry")}</Button></div>}
-    {list.data?.length === 0 && <section className="rounded-xl border border-dashed bg-card p-12 text-center">
-      <h2 className="text-lg font-semibold">{t("forms.manage.empty.title")}</h2>
-      <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t("forms.manage.empty.description")}</p>
-    </section>}
-    {!!list.data?.length && <>
-      <label className="block max-w-sm text-sm"><span className="sr-only">{t("forms.manage.filter")}</span>
-        <Input type="search" placeholder={t("forms.manage.filter")} value={filter} onChange={(e) => setFilter(e.target.value)} /></label>
-      {rows.length === 0 ? <p role="status" className="text-sm text-muted-foreground">{t("forms.manage.noMatch")}</p> :
-      <div className="relative overflow-x-auto"><table className="w-full text-left text-sm">
-        <thead><tr className="border-b">
-          <th scope="col" className="py-2 pr-4">{t("forms.list.name")}</th>
-          <th scope="col" className="py-2 pr-4">{t("forms.manage.space")}</th>
-          <th scope="col" className="py-2 pr-4">{t("forms.manage.access")}</th>
-          <th scope="col" className="py-2 pr-4">{t("forms.manage.link")}</th>
-          <th scope="col" className="py-2 pr-4">{t("forms.manage.modified")}</th>
-          <th scope="col" className="py-2"><span className="sr-only">{t("forms.list.actions")}</span></th>
-        </tr></thead>
-        <tbody>{rows.map((form) => {
-          const url = fillUrl(form.id);
-          return <tr key={form.id} className="border-b align-top">
-            <th scope="row" className="py-2 pr-4 font-medium">
-              <Link to="/spaces/$spaceId/forms/$formId" params={{ spaceId: form.space_id, formId: form.id }} className="underline">{form.name}</Link></th>
-            <td className="py-2 pr-4"><Link to="/spaces/$spaceId" params={{ spaceId: form.space_id }} className="underline">{form.space_name}</Link></td>
-            <td className="py-2 pr-4"><span className="rounded-full border px-2 py-0.5 text-xs">{t(`forms.access.${form.access}`)}</span></td>
-            <td className="space-y-1 py-2 pr-4">{form.access === "internal" && <span className="flex items-center gap-2"><a href={url} className="whitespace-nowrap underline">{t("forms.manage.openInternal")}</a>
-                <Button size="sm" variant="outline" aria-label={t("forms.manage.copyNamed", { name: form.name })} onClick={() => void copy(url)}>{t("forms.manage.copy")}</Button></span>}
-              {form.public_token && <span className="flex items-center gap-2"><a href={publicUrl(form.public_token)} className="whitespace-nowrap underline">{t("forms.manage.openPublic")}</a>
-                <Button size="sm" variant="outline" aria-label={t("forms.manage.copyPublicNamed", { name: form.name })} onClick={() => void copy(publicUrl(form.public_token!))}>{t("forms.manage.copyPublic")}</Button></span>}
-              {form.access !== "internal" && !form.public_token && <span aria-label={t("forms.manage.noLink")}>—</span>}</td>
-            <td className="py-2 pr-4">{form.updated_by.name}<span className="block text-muted-foreground">{formatDate(form.updated_at, profile)}</span></td>
-            <td className="py-2">
-              <DropdownMenu>
-                <DropdownMenuTrigger render={<Button size="sm" variant="outline" aria-label={t("forms.manage.actionsNamed", { name: form.name })} />}><MoreHorizontal /></DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem render={<Link to="/spaces/$spaceId/forms/$formId" params={{ spaceId: form.space_id, formId: form.id }} />}>{t("forms.list.edit")}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => setSharing(form)}>{t("forms.access.menu")}</DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => { setError(""); setDeleting(form); }}>{t("forms.list.delete")}</DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </td>
-          </tr>;
-        })}</tbody>
-      </table></div>}
-    </>}
-    <FormAccessDialog form={sharing} onOpenChange={(open) => !open && setSharing(undefined)} />
-    <ConfirmDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(undefined)} busy={busy} error={error}
-      title={t("forms.list.deleteTitle")} description={t("forms.list.deleteDescription", { name: deleting?.name ?? "" })}
-      confirmLabel={t("forms.list.deleteConfirm")} cancelLabel={t("forms.list.cancel")} onConfirm={() => void remove()} />
+    <FormManagePanel />
   </main>;
 }

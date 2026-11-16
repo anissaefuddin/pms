@@ -18,6 +18,7 @@ import (
 
 const formSelect = `SELECT f.version, jsonb_build_object('id',f.id,'space_id',f.space_id,'name',f.name,'description',f.description,
  'definition',f.definition,'response',f.response,'access',f.access,'public_token',f.public_token,'version',f.version,
+ 'status',CASE WHEN f.published_at IS NULL THEN 'draft' ELSE 'published' END,
  'created_by',jsonb_build_object('id',c.id,'name',concat_ws(' ',c.first_name,c.last_name)),
  'updated_by',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),
  'created_at',f.created_at,'updated_at',f.updated_at)
@@ -26,6 +27,8 @@ FROM request_forms f JOIN users c ON c.id=f.created_by JOIN users u ON u.id=f.up
 func (s *Server) formRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/forms", s.requireUser(s.listAllForms))
 	mux.HandleFunc("PUT /api/v1/forms/{formId}/access", s.requireUser(s.setFormAccess))
+	mux.HandleFunc("POST /api/v1/forms/{formId}/publish", s.requireUser(s.publishForm))
+	mux.HandleFunc("POST /api/v1/forms/{formId}/unpublish", s.requireUser(s.unpublishForm))
 	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/forms", s.requireUser(s.listForms))
 	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/forms", s.requireUser(s.writeForm))
 	mux.HandleFunc("GET /api/v1/forms/{formId}", s.requireUser(s.writeForm))
@@ -97,7 +100,7 @@ func formSummaries(ctx context.Context, tx pgx.Tx, where string, arg any) (json.
 	var out json.RawMessage
 	err := tx.QueryRow(ctx, `
 SELECT COALESCE(jsonb_agg(jsonb_build_object('id',f.id,'space_id',f.space_id,'space_name',sp.name,'name',f.name,'description',f.description,
- 'access',f.access,'public_token',f.public_token,
+ 'access',f.access,'public_token',f.public_token,'status',CASE WHEN f.published_at IS NULL THEN 'draft' ELSE 'published' END,
  'question_count',(SELECT count(*) FROM jsonb_array_elements(f.definition->'pages') p, jsonb_array_elements(p->'elements') e WHERE e->>'kind'<>'section'),
  'updated_by',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),'updated_at',f.updated_at)
  ORDER BY lower(sp.name),lower(f.name),f.id),'[]'::jsonb)
@@ -184,6 +187,69 @@ func (s *Server) setFormAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeItem(w, http.StatusOK, out, nil)
+}
+
+func (s *Server) publishForm(w http.ResponseWriter, r *http.Request) { s.setFormPublished(w, r, true) }
+func (s *Server) unpublishForm(w http.ResponseWriter, r *http.Request) {
+	s.setFormPublished(w, r, false)
+}
+
+// setFormPublished moves a form between draft and published. Publishing needs at least one question, so a requester
+// never lands on an empty form. The version goes up, so an open builder sees the change as a new version.
+func (s *Server) setFormPublished(w http.ResponseWriter, r *http.Request, publish bool) {
+	id, err := uuid.Parse(r.PathValue("formId"))
+	if err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	ctx := r.Context()
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	defer tx.Rollback(ctx)
+	var spaceID uuid.UUID
+	var definition []byte
+	if err = tx.QueryRow(ctx, "SELECT space_id,definition FROM request_forms WHERE id=$1", id).Scan(&spaceID, &definition); errors.Is(err, pgx.ErrNoRows) {
+		err = items.ErrNotFound
+	}
+	if err == nil {
+		_, err = formSpace(ctx, tx, actorOf(r), spaceID)
+	}
+	if err == nil && publish {
+		var def forms.Definition
+		if err = json.Unmarshal(definition, &def); err == nil && !hasQuestion(def) {
+			err = items.InvalidField{Field: "definition", Message: "add at least one question before publishing"}
+		}
+	}
+	if err == nil {
+		_, err = tx.Exec(ctx, `UPDATE request_forms SET published_at=CASE WHEN $2 THEN COALESCE(published_at, now()) ELSE NULL END,
+version=version+1,updated_by=$3::uuid WHERE id=$1`, id, publish, actorOf(r).ID)
+	}
+	var out items.Detail
+	if err == nil {
+		err = tx.QueryRow(ctx, formSelect+"WHERE f.id=$1", id).Scan(&out.Version, &out.Body)
+	}
+	if err == nil {
+		err = tx.Commit(ctx)
+	}
+	if err != nil {
+		writeFormError(w, err)
+		return
+	}
+	writeItem(w, http.StatusOK, out, nil)
+}
+
+func hasQuestion(def forms.Definition) bool {
+	for _, page := range def.Pages {
+		for _, el := range page.Elements {
+			if el.Kind != forms.Section {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (s *Server) writeForm(w http.ResponseWriter, r *http.Request) {

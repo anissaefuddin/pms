@@ -62,6 +62,7 @@ func TestFormBranchesDecideQuestionsItemTypeAndFields(t *testing.T) {
 	form := f.call(editor, "POST", "/spaces/"+intake+"/forms", response(nil))
 	f.want(form, 201, "form")
 	id := form.body["id"].(string)
+	f.publishForm(editor, id)
 	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", id)
 
 	// The Bug branch: its questions are required, the route picks Bug, and the answers fill the mapped fields.
