@@ -5,7 +5,9 @@ import { MoreHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
-import { type FormSummary } from "@/lib/forms";
+import { buildInput, draftFromForm, type Form, type FormSummary } from "@/lib/forms";
+import { ApiError } from "@/lib/api";
+import { ConfigureEmailsDialog } from "@/components/configure-emails-dialog";
 import { formatDate, useProfile } from "@/lib/profile";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormAccessDialog } from "@/components/form-access-dialog";
@@ -32,6 +34,29 @@ export function FormManagePanel() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const rows = (list.data ?? []).filter((f) => f.name.toLowerCase().includes(filter.trim().toLowerCase()));
+  const [emailing, setEmailing] = useState<string>();
+
+  /** Publish or move back to draft from the list; the builder shows the same status. */
+  async function setPublished(form: FormSummary) {
+    try {
+      await api(`/api/v1/forms/${form.id}/${form.status === "published" ? "unpublish" : "publish"}`, { method: "POST" });
+      toast.success(t(form.status === "published" ? "forms.builder.unpublished" : "forms.builder.published"));
+      await qc.invalidateQueries({ queryKey: ["forms"] });
+    } catch (err) { toast.error((err as Error).message); }
+  }
+
+  /** A copy starts as a draft in the same Space, with the same questions and routing. Public links are not copied. */
+  async function duplicate(form: FormSummary) {
+    try {
+      const source = await api<Form>(`/api/v1/forms/${form.id}`);
+      const name = t("forms.list.copyName", { name: form.name }).slice(0, 120);
+      await api(`/api/v1/spaces/${form.space_id}/forms`, { method: "POST", body: JSON.stringify(buildInput({ ...draftFromForm(source), name })) });
+      toast.success(t("forms.list.duplicated"));
+      await qc.invalidateQueries({ queryKey: ["forms"] });
+    } catch (err) {
+      toast.error(err instanceof ApiError && err.status === 409 ? t("forms.list.duplicateTaken") : (err as Error).message);
+    }
+  }
 
   async function remove() {
     if (!deleting) return;
@@ -92,6 +117,10 @@ export function FormManagePanel() {
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem render={<Link to="/spaces/$spaceId/forms/$formId" params={{ spaceId: form.space_id, formId: form.id }} />}>{t("forms.list.edit")}</DropdownMenuItem>
                   <DropdownMenuItem onClick={() => setSharing(form)}>{t("forms.access.menu")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => void setPublished(form)}>{t(form.status === "published" ? "forms.list.unpublish" : "forms.list.publish")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => setEmailing(form.id)}>{t("forms.list.configureEmails")}</DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => void duplicate(form)}>{t("forms.list.duplicate")}</DropdownMenuItem>
+                  {form.access === "internal" && <DropdownMenuItem onClick={() => void copy(url)}>{t("forms.list.copyLink")}</DropdownMenuItem>}
                   <DropdownMenuItem onClick={() => { setError(""); setDeleting(form); }}>{t("forms.list.delete")}</DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -101,6 +130,7 @@ export function FormManagePanel() {
       </table></div>}
     </>}
     <FormAccessDialog form={sharing} onOpenChange={(open) => !open && setSharing(undefined)} />
+    <ConfigureEmailsDialog open={!!emailing} initialFormId={emailing} onOpenChange={(open) => !open && setEmailing(undefined)} />
     <ConfirmDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(undefined)} busy={busy} error={error}
       title={t("forms.list.deleteTitle")} description={t("forms.list.deleteDescription", { name: deleting?.name ?? "" })}
       confirmLabel={t("forms.list.deleteConfirm")} cancelLabel={t("forms.list.cancel")} onConfirm={() => void remove()} />

@@ -71,7 +71,7 @@ func (s *Server) listAvailableForms(w http.ResponseWriter, r *http.Request) {
 	var out json.RawMessage
 	err := s.pool.QueryRow(r.Context(), `
 SELECT COALESCE(jsonb_agg(x ORDER BY lower(x->>'name'),x->>'id'),'[]'::jsonb) FROM (
-  SELECT jsonb_build_object('id',f.id,'name',f.name,'description',f.description) AS x
+  SELECT jsonb_build_object('id',f.id,'name',f.name,'description',f.description,'space_name',s.name) AS x
   FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL
   WHERE f.access='internal' AND f.published_at IS NOT NULL ORDER BY lower(f.name),f.id LIMIT 200) t`).Scan(&out)
 	if err != nil {

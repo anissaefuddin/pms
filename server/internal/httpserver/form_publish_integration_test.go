@@ -42,4 +42,11 @@ func TestFormDraftPublishLifecycle(t *testing.T) {
 	// Unpublishing takes it back from requesters; existing submissions stay.
 	f.want(f.call(editor, "POST", "/forms/"+id+"/unpublish", nil), 200, "manager unpublishes")
 	f.want(f.call(requester, "GET", "/forms/"+id+"/definition", nil), 404, "requester cannot open it again")
+
+	// A form needs at least one question to be saved at all, so an empty form can never reach publish.
+	empty := f.call(editor, "POST", path, formBody(intake, func(b map[string]any) {
+		b["name"] = "Only a heading"
+		b["definition"] = map[string]any{"pages": []map[string]any{{"title": "Intro", "elements": []map[string]any{{"key": "intro", "kind": "section", "label": "Intro"}}}}}
+	}))
+	f.want(empty, 422, "a form with only a heading is refused")
 }

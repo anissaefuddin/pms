@@ -87,7 +87,8 @@ test("flow 2: a form built in the UI is shared, filled by a requester, approved,
   await admin.getByRole("searchbox", { name: /Approvers/ }).fill("Avery");
   await admin.getByRole("button", { name: "Avery Approver", exact: true }).click();
   await axe(admin);
-  await admin.getByRole("button", { name: "Save form" }).click();
+  // New forms are drafts: publishing saves and makes the form visible to requesters.
+  await admin.getByRole("button", { name: "Publish", exact: true }).click();
   await expect(admin).toHaveURL(new RegExp(`/spaces/${e.PMS_FIXTURE_M3_INTAKE}/forms/[0-9a-f-]{36}$`));
   const formId = admin.url().split("/").pop()!;
 

@@ -3883,6 +3883,9 @@ type FormAvailable struct {
 	Description string             `json:"description"`
 	Id          openapi_types.UUID `json:"id"`
 	Name        string             `json:"name"`
+
+	// SpaceName Ruang tempat form dibuat; ditampilkan agar pelapor tahu asal form
+	SpaceName string `json:"space_name"`
 }
 
 // FormCondition Logika kondisional (FORM-07): tampil hanya bila pertanyaan sebelumnya dijawab tertentu; pertanyaan tersembunyi tidak wajib dan jawabannya dibuang

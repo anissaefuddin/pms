@@ -295,3 +295,16 @@ test("a new form asks for a save before access can be set", async ({ page }) => 
   await expect(page.getByText("Save the form first. Then you can choose who can fill it and create a public link.")).toBeVisible();
   await expect(page.locator("#sec-access").getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
 });
+
+test("a new form is saved as a draft and published from the builder in one step", async ({ page }) => {
+  const calls = await mock(page, { extra: {
+    [`POST /spaces/${marketing.id}/forms`]: (body: any) => ({ status: 201, body: { ...stored(1, "draft"), ...body, id: fid, status: "draft" }, headers: { ETag: '"1"' } }),
+  } });
+  await page.goto(`/spaces/${marketing.id}/forms/new`);
+  await page.getByLabel("Form name").fill("Facilities request");
+  await page.getByRole("button", { name: "Add question to page 1" }).click();
+  await page.getByRole("menuitem", { name: "Single line text", exact: true }).click();
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/spaces/${marketing.id}/forms`)).toBe(true);
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${fid}/publish`)).toBe(true);
+});

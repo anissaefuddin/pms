@@ -5275,6 +5275,8 @@ export interface components {
             id: string;
             name: string;
             description: string;
+            /** @description Ruang tempat form dibuat; ditampilkan agar pelapor tahu asal form */
+            space_name: string;
         };
         FormFill: {
             /** Format: uuid */

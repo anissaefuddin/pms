@@ -21,9 +21,11 @@ test("admin reaches request forms from Settings, creates one by choosing a Space
 });
 
 test("requesters see request forms as cards", async ({ page }) => {
-  await mockSpaces(page, { extra: { "GET /forms/available": () => ({ body: { items: [{ id: f1, name: "IT request", description: "Laptop or access" }] } }) } });
+  await mockSpaces(page, { extra: { "GET /forms/available": () => ({ body: { items: [{ id: f1, name: "IT request", description: "Laptop or access", space_name: marketing.name }] } }) } });
   await page.goto("/requests");
-  await expect(page.getByRole("listitem").filter({ hasText: "IT request" }).getByRole("link", { name: "Start IT request" })).toBeVisible();
+  const card = page.getByRole("listitem").filter({ hasText: "IT request" });
+  await expect(card.getByText(marketing.name)).toBeVisible();
+  await expect(card.getByRole("link", { name: "Start IT request" })).toBeVisible();
 });
 
 test("Configure emails edits one form's confirmation wording with a live preview and saves it as a form change", async ({ page }) => {
@@ -51,4 +53,31 @@ test("Configure emails edits one form's confirmation wording with a live preview
   await expect.poll(() => calls.find((c) => c.method === "PUT")?.body?.response?.email?.greeting).toBe("Hi {name}");
   await expect(page.getByRole("dialog")).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test("row actions publish a draft, duplicate it as a draft copy, and open Configure emails for that form", async ({ page }) => {
+  const row = { id: f1, space_id: marketing.id, space_name: marketing.name, name: "IT request", description: "", access: "private", status: "draft", question_count: 1, updated_by: { id: me.id, name: "Ada Lovelace" }, updated_at: "2026-11-02T10:00:00Z" };
+  const full = { id: f1, space_id: marketing.id, name: "IT request", description: "", access: "private", status: "draft", version: 1, public_token: null,
+    created_by: { id: me.id, name: "Ada Lovelace" }, updated_by: { id: me.id, name: "Ada Lovelace" }, created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-02T10:00:00Z",
+    definition: { pages: [{ title: "Details", elements: [{ key: "subject", kind: "single_line", label: "Subject" }] }] },
+    response: { item_type: "task", status_id: null, location: { space_id: marketing.id, parent_item_id: null }, assignee_ids: [], title_question: "subject", approval: null,
+      email: { sender_name: "", logo_url: "", greeting: "", message: "", closing: "" } } };
+  const { calls } = await mockSpaces(page, { me: { ...me, user_type: "admin" }, extra: {
+    "GET /forms": { body: { items: [row] } },
+    [`GET /forms/${f1}`]: { body: full, headers: { ETag: '"1"' } },
+    [`POST /forms/${f1}/publish`]: { body: { ...full, status: "published", version: 2 }, headers: { ETag: '"2"' } },
+    [`POST /spaces/${marketing.id}/forms`]: { status: 201, body: { ...full, id: "f0000000-0000-4000-8000-000000000009", name: "Copy of IT request", status: "draft" } },
+  } });
+  await page.goto("/settings/request-forms");
+  await page.getByRole("button", { name: "Actions for IT request" }).click();
+  await page.getByRole("menuitem", { name: "Publish", exact: true }).click();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${f1}/publish`)).toBe(true);
+
+  await page.getByRole("button", { name: "Actions for IT request" }).click();
+  await page.getByRole("menuitem", { name: "Duplicate", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === `/spaces/${marketing.id}/forms`)?.body?.name).toBe("Copy of IT request");
+
+  await page.getByRole("button", { name: "Actions for IT request" }).click();
+  await page.getByRole("menuitem", { name: "Configure emails", exact: true }).click();
+  await expect(page.getByRole("dialog", { name: "Configure confirmation emails" })).toBeVisible();
 });

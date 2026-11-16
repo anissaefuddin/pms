@@ -7090,11 +7090,12 @@ components:
         updated_at: { type: string, format: date-time }
     FormAvailable:
       type: object
-      required: [id, name, description]
+      required: [id, name, description, space_name]
       properties:
         id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
+        space_name: { type: string, description: Ruang tempat form dibuat; ditampilkan agar pelapor tahu asal form }
     FormFill:
       type: object
       required: [id, name, description, definition]

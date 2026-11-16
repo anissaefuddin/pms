@@ -15,12 +15,12 @@ const select = "block w-full rounded-lg border border-input bg-background px-2 p
  * RF-10: the confirmation email for one form, separate from personal Email preferences. Wording on the left, the
  * requester's view on the right. Saved as a form change, so an open builder sees it as a new version.
  */
-export function ConfigureEmailsDialog({ open, onOpenChange }: { open: boolean; onOpenChange: (open: boolean) => void }) {
+export function ConfigureEmailsDialog({ open, onOpenChange, initialFormId }: { open: boolean; onOpenChange: (open: boolean) => void; initialFormId?: string }) {
   const { t } = useTranslation();
   const forms = useQuery({ queryKey: ["forms", "manage"], enabled: open, retry: false,
     queryFn: async () => (await api<{ items: FormSummary[] }>("/api/v1/forms")).items });
   const [picked, setPicked] = useState<string>();
-  const formId = picked ?? forms.data?.[0]?.id;
+  const formId = picked ?? initialFormId ?? forms.data?.[0]?.id;
   const current = useQuery({ queryKey: formKeys.one(formId ?? ""), enabled: open && !!formId, retry: false, staleTime: 0,
     queryFn: () => api<Form>(`/api/v1/forms/${formId}`) });
 
