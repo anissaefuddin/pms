@@ -2,7 +2,6 @@ import { useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Search } from "lucide-react";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import type { CurrentUser } from "@/lib/api";
 import { ProfileMenu } from "@/components/topbar";
 import { SIDEBAR_THEME } from "@/lib/sidebar-prefs";
@@ -69,14 +68,11 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
   return (
     <aside style={sidebarThemeVars(sidebarTheme)} className={`${SIDEBAR_THEME} relative flex h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
       <div className="mb-3 flex items-center gap-1">
-        <Tooltip>
-          <TooltipTrigger render={<Link to="/" aria-label={t("settings.nav.backToWorkspace")}
-            className="grid size-8 shrink-0 place-items-center rounded-md text-nav-muted hover:bg-nav-hover hover:text-nav-text" />}>
-            <ArrowLeft aria-hidden="true" className="size-4" />
-          </TooltipTrigger>
-          <TooltipContent>{t("settings.nav.backToWorkspace")}</TooltipContent>
-        </Tooltip>
-        <div className="ml-auto flex items-center gap-1">
+        <Link to="/" className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm text-nav-muted hover:bg-nav-hover hover:text-nav-text">
+          <ArrowLeft aria-hidden="true" className="size-4 shrink-0" />
+          <span className="truncate">{t("settings.nav.backToWorkspace")}</span>
+        </Link>
+        <div className="flex shrink-0 items-center gap-1">
           <ProfileMenu />
         </div>
       </div>
