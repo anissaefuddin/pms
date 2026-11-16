@@ -45,3 +45,32 @@ test("SB-T14 / SB-02: the Spaces list uses a thin scrollbar", async ({ page }) =
   const width = await page.getByRole("navigation", { name: "Spaces" }).evaluate((el) => getComputedStyle(el).scrollbarWidth);
   expect(width).toBe("thin");
 });
+
+test("SB-T15 / SB-14: a long project name is truncated and its full name is available on hover", async ({ page }) => {
+  const longTitle = "Lalang Platform — Process Safety, HAZOP, HAZID, MAH and SECE workstream reviews for 2026";
+  const longProject = { ...projectItem, id: "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb", title: longTitle };
+  await mockSpaces(page, { extra: {
+    ...common,
+    [`GET /spaces/${marketing.id}/items`]: { body: { items: [longProject] } },
+    [`GET /items/${longProject.id}`]: { headers: { ETag: '"1"' }, body: longProject },
+    [`GET /items/${longProject.id}/children`]: { body: { items: [] } },
+  } as never });
+  await page.goto(`/spaces/${marketing.id}`);
+  const tree = page.getByRole("navigation", { name: "Spaces" });
+  await tree.getByRole("button", { name: "Expand Marketing" }).click();
+  const link = tree.getByRole("link", { name: longTitle });
+  await expect(link).toHaveAttribute("title", longTitle);
+  await expect(link).toHaveCSS("text-overflow", "ellipsis");
+});
+
+test("only Space overview is highlighted on a Space page; the Space name row is not active too", async ({ page }) => {
+  await mockSpaces(page, { extra: common as never });
+  await page.goto(`/spaces/${marketing.id}`);
+  const tree = page.getByRole("navigation", { name: "Spaces" });
+  await tree.getByRole("button", { name: "Expand Marketing" }).click();
+  await expect(tree.getByRole("link", { name: "Space overview" })).toHaveAttribute("aria-current", "page");
+  // Visual highlight only on the overview; the Space name row keeps its normal background.
+  const nameBg = await tree.getByRole("link", { name: "Marketing", exact: true }).evaluate((el) => getComputedStyle(el).backgroundColor);
+  const overviewBg = await tree.getByRole("link", { name: "Space overview" }).evaluate((el) => getComputedStyle(el).backgroundColor);
+  expect(nameBg).not.toBe(overviewBg);
+});

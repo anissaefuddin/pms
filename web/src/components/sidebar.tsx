@@ -20,7 +20,7 @@ import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
 import { CustomizeSidebarDialog, openCustomizeSidebar } from "./customize-sidebar-dialog";
 
-const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-2 text-sm hover:bg-nav-hover";
+const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-sm hover:bg-nav-hover";
 const navRow = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-nav-hover";
 const activeNav = { className: `${navRow} bg-nav-active font-medium`, "aria-current": "page" as const };
 const activeLink = { className: `${linkClass} bg-nav-active font-medium`, "aria-current": "page" as const };
@@ -285,9 +285,9 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
             if (open !== (event.key === "ArrowRight")) onToggle();
           }
         }}>{open ? <ChevronDown /> : <ChevronRight />}</Button>
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={linkClass} activeProps={activeLink}>{name}</Link>
+      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={linkClass} title={name} activeProps={{ "aria-current": undefined }}>{name}</Link>
     </div>
-    {open && <div className="ml-3 space-y-2 border-l border-border pl-2 pb-2">
+    {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} text-sm`} activeOptions={{ exact: true }} activeProps={activeLink}>{t("nav.space.overview")}</Link>
       <div>
         <button type="button" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}
@@ -338,8 +338,8 @@ function Branch({ id, name, type }: { id: string; name: string; type?: string })
             setExpanded(event.key === "ArrowRight");
           }
         }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>
-      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} activeProps={activeLink}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
+      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} activeProps={activeLink}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
     </div>
-    {expanded && <div className="ml-3 border-l border-border pl-1"><ItemTree id={id} /></div>}
+    {expanded && <div className="ml-3 border-l border-nav-hover pl-1"><ItemTree id={id} /></div>}
   </li>;
 }

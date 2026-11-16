@@ -52,3 +52,11 @@ Captures show the expanded-toggle light box removed and Tools collapsed under th
 | SB-T25 | PASS | Work Area layout and project tests in the mock suite |
 | SB-T26 | NOT RUN | Create Project and Folder from sidebar |
 | SB-T27 | NOT RUN | Short viewport height |
+
+## Bug fix: duplicate active highlight (user report)
+
+- Symptom: on a Space page, both the Space name row and "Space overview" showed the selected background.
+- Cause: the Space name link had `activeProps={activeLink}`, so it highlighted whenever its route was active, which is also true for the overview.
+- Fix: the Space name link no longer receives the active class. Only "Space overview" is highlighted.
+- Test: `sidebar-p32.spec.ts` "only Space overview is highlighted" (PASS).
+- Known limitation: TanStack Router sets `aria-current="page"` on any active link, so the Space name link still announces `aria-current` in the accessibility tree. Removing it would require changing the element from a link to a button, which would break existing link-based tests. Not changed.
