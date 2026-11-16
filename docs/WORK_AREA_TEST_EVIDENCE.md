@@ -112,3 +112,32 @@ Status item uji tetap In Progress setelah tes. Tidak ada data operasional yang d
 | E2E-06f | Calendar | Pindah dengan drag | Rentang berubah, tanpa item baru | NOT RUN | NOT RUN | - | - |
 | E2E-06g | Calendar | Pergantian bulan (navigasi ke Desember) | Segmen tampil di bulan berikutnya | NOT RUN | NOT RUN | - | - |
 | E2E-06h | Calendar | Overflow (+N) di dev-lens | Daftar terbuka dengan item tersembunyi | NOT RUN di dev-lens; tercakup tes mock (calendar-c2.spec) | NOT RUN | - | - |
+
+## Phase 3 local QA pass (16 Nov 2026)
+
+Environment: local `pms_qa` database, Go API on localhost:8080, Vite on localhost:5173. Seed: `docs/qa/seed/ux_qa_seed.py` (ledger `ux_qa_ledger.json`). dev-lens was not used.
+
+Test ID | Page | Scenario | Expected result | Actual result | Status | Evidence | Defect reference
+--- | --- | --- | --- | --- | --- | --- | ---
+P3-E01-a | Project | Gantt tree shows statuses and bars | Tree and bars for seeded items | Tree, statuses and bars shown | PASS | browser screenshot 16 Nov | none
+P3-E01-b | Project | Calendar shows tasks inside folders | Bars for scheduled tasks in folders | Only folders listed before fix; bars shown after fix | PASS (after fix) | QA-P3-01; browser screenshot | DEF-P3-01
+P3-E01-c | Project | Timelog empty state | Empty state message | "No time entries yet" | PASS | browser screenshot | none
+P3-E01-d | Project | Files empty state | Empty state message | "No files in this project" | PASS | browser screenshot | none
+P3-E01-e | Project | Board view | Columns by status | Not run in this pass | NOT RUN | none | none
+P3-E01-f | Project | Chart view | Chart of the subtree | Not run in this pass | NOT RUN | none | none
+P3-E02 | Project | Saved view lifecycle incl. second user | Personal view private, public view shared | Not run; needs second user | BLOCKED | none | none
+P3-E03 | Project | Contextual creation | Hierarchy and type correct | Passed on dev-lens earlier; not re-run locally | NOT RUN | WORK_AREA_TEST_EVIDENCE.md (dev-lens sections) | none
+P3-E04 | Project | Status sync across views | Same status in Table, Board, Gantt, Calendar, Chart | Not run | NOT RUN | none | none
+P3-E05 | Project | Schedule sync | Dates match in Gantt, Calendar, Table, detail | Not run | NOT RUN | none | none
+P3-E06-a | Calendar | Cross-week segments render | Continuous segments across week rows | "Late review" and "Equipment Datasheet" segments render across rows | PASS | browser screenshot | none
+P3-E06-b | Calendar | Keyboard move and month transition | Move and synced views | Not run | NOT RUN | none | none
+P3-E07 | Detail | Panel from each view | Panel keeps view, filters, selection | Not run | NOT RUN | none | none
+P3-E08 | Approvals | Approval lifecycle | Decisions and guards | Needs approvers other than admin | BLOCKED | none | none
+P3-E09 | Files | Upload and version | Metadata and history | Not run (files empty; no upload) | NOT RUN | none | none
+P3-E10 | Timelog | Entries, filters, totals, locked | Totals and rules | Empty state only; no entries seeded | PARTIAL | browser screenshot | none
+P3-E11-a | Project | Work items equals analytics total | Same number | 28 = 28 | PASS | API analytics query and header | none
+P3-E11-b | Project | In progress equals In Progress count | Same number | 10 = 10 | PASS | API and header | none
+P3-E11-c | Project | Upcoming milestones counts nested milestones | 2 for seed | 0 before fix, 2 after | PASS (after fix) | QA-P3-02 | DEF-P3-02
+P3-E12 | Mock suite | Failed load, retry, upload retry, star failure | Clear feedback and retry | Covered by mock tests (in 499 passed) | PASS (mocked) | `npx playwright test` | none
+P3-VIS-01 | All | Resolutions 1280, 1440, 1920 | No overflow, readable | Not run | NOT RUN | none | none
+P3-VIS-02 | All | Light theme, compact and comfortable density | Readable | Only dark observed | NOT RUN | none | none

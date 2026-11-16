@@ -30,6 +30,21 @@ export function isProjectDetail(query: Query) {
     && (query.state.data as Awaited<ReturnType<typeof getItem>> | undefined)?.item.type === "project";
 }
 
+/** Flat views (Calendar) need every item under the start list, not just the first folder level. Walks folders one level at a time. */
+export async function listSubtree(start: Item[], childrenOf: (id: string) => Promise<Item[]>): Promise<Item[]> {
+  const out: Item[] = [];
+  const seen = new Set<string>();
+  let level = start;
+  while (level.length) {
+    const fresh = level.filter((item) => !seen.has(item.id));
+    for (const item of fresh) seen.add(item.id);
+    out.push(...fresh);
+    const containers = fresh.filter((item) => item.type === "folder" || item.type === "project");
+    level = (await Promise.all(containers.map((item) => childrenOf(item.id)))).flat();
+  }
+  return out;
+}
+
 export async function listItems(path: string, sort?: string, type?: string, field?: string, preset?: string): Promise<Item[]> {
   const items: Item[] = [];
   const seen = new Set<string>();

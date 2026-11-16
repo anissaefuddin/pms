@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueries } from "@tanstack/react-query";
 import { ChevronDown, Info, MoreHorizontal, Plus, Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 import { formatDate, useProfile } from "@/lib/profile";
 import { useSpace } from "@/lib/space-queries";
-import type { Item } from "@/lib/items";
+import { itemKeys, listItems, type Item } from "@/lib/items";
 import { inProgressStatusIds, projectProgressPercent, tallyCounts, upcomingMilestones } from "@/lib/workspace-metrics";
 import type { components as analyticsTypes } from "@/api/schema";
 import { useId, useState } from "react";
@@ -51,7 +51,12 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
     : undefined;
   const progress = projectProgressPercent(item, kids);
   const today = new Date().toISOString().slice(0, 10);
-  const milestones = upcomingMilestones(kids, today);
+  // Milestones live inside folders, so the KPI reads one more level down (shortcut: folders of folders are not walked; upgrade with a server-side milestone count).
+  const folderKids = kids.filter((kid) => kid.type === "folder" || kid.type === "project");
+  const nested = useQueries({ queries: folderKids.map((folder) => ({
+    queryKey: itemKeys.children(folder.id), queryFn: () => listItems(`/api/v1/items/${folder.id}/children`),
+  })) });
+  const milestones = upcomingMilestones([...kids, ...nested.flatMap((query) => query.data ?? [])], today);
   const range = [item.start_date, item.due_date].filter(Boolean).map((d) => formatDate(d, profile)).join(" – ");
   const meta = [workflow?.name, range].filter(Boolean).join(" · ");
   const detailsId = useId();
