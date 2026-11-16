@@ -29,6 +29,7 @@ test("connectors tab: list, install, disable and resolve a conflict", async ({ p
   expect(calls.find((c) => c.path === "/connector-conflicts/x1/resolve")?.body).toEqual({ resolution: "remote" });
   await expect(page.getByRole("list", { name: "Sync conflicts" })).toHaveCount(0);
 
+  await page.getByRole("button", { name: "Add connector" }).click();
   const form = page.getByRole("form", { name: "Add a connector" });
   await form.getByLabel("Type").selectOption("google_calendar");
   await form.getByLabel("Name").fill("Cal");
@@ -37,5 +38,6 @@ test("connectors tab: list, install, disable and resolve a conflict", async ({ p
   await form.getByLabel("Google access token").fill("ya29");
   await form.getByRole("button", { name: "Install" }).click();
   await expect(page.getByText("Cal", { exact: true })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Add connector" })).toHaveCount(0);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });

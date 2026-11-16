@@ -32,7 +32,7 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/resources", label: t("settings.resources") },
       { to: "/settings/apps", label: t("apps.title") },
       ...(isAdmin ? [{ to: "/settings/rates", label: t("settings.rates") }] : []),
-      ...inPersonalSpace("/spaces/$spaceId", t("settings.spaceSettings")),
+      { to: "/settings/spaces", label: t("settings.spacesManagement") },
     ] },
     { title: t("settings.nav.workConfiguration"), items: [
       { to: "/settings/item-types", label: t("settings.itemTypes.title") },

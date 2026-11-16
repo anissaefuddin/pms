@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
-import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronLeft, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
+import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronLeft, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
 import { ProfileMenu } from "@/components/topbar";
@@ -18,6 +18,9 @@ import {
 } from "@/lib/sidebar-prefs";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
+import { can, type Space as SpaceType } from "@/lib/spaces";
+
+const EDIT_CAPABILITY = "edit" as const;
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
@@ -272,6 +275,7 @@ const treeToggle = "shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-tex
 
 function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string; open: boolean; onToggle: () => void }) {
   const { t } = useTranslation();
+  const [editing, setEditing] = useState(false);
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [busy, setBusy] = useState(false);
@@ -297,7 +301,10 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
             if (open !== (event.key === "ArrowRight")) onToggle();
           }
         }}>{open ? <ChevronDown /> : <ChevronRight />}</Button>
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={linkClass} title={name} activeProps={{ "aria-current": undefined }}>{name}</Link>
+      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeProps={{ "aria-current": undefined }}>{name}</Link>
+      {can(space as SpaceType, EDIT_CAPABILITY) && <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text"
+        aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })} onClick={() => setEditing(true)}><Settings /></Button>}
+      <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
     {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} text-sm`} activeOptions={{ exact: true }} activeProps={activeLink}>{t("nav.space.overview")}</Link>

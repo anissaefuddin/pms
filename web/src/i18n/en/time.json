@@ -52,7 +52,12 @@
     "from": "Effective from",
     "add": "Add rate",
     "empty": "No rates yet.",
-    "name": "Name"
+    "name": "Name",
+    "status": {
+      "current": "Current",
+      "scheduled": "Scheduled",
+      "historical": "Historical"
+    }
   },
   "noEntries": "No time entries yet. Logged time for this project appears here.",
   "clearFilters": "Clear filters",
@@ -60,8 +65,5 @@
   "filteredTotal": "Total for the filtered entries: {{time}}",
   "billableTotal": "Billable: {{time}}",
   "nonBillableTotal": "Non-billable: {{time}}",
-  "pageOnlyTotal": "On this page only: {{time}}",
-  "rates.status.current": "Current",
-  "rates.status.scheduled": "Scheduled",
-  "rates.status.historical": "Historical"
+  "pageOnlyTotal": "On this page only: {{time}}"
 }

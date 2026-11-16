@@ -11,9 +11,16 @@
     "scopes": "Akses",
     "since": "Diotorisasi",
     "revoke": "Cabut",
-    "revokeConfirm": "Cabut {{name}}?"
+    "revokeConfirm": "Cabut {{name}}?",
+    "emptyTitle": "Belum ada aplikasi yang diotorisasi",
+    "personalNote": "Hanya Anda yang bisa melihat dan mencabut aplikasi ini. Konektor milik ruang kerja atau Ruang dan dikelola di Aplikasi & Integrasi.",
+    "revokeBody": "Aplikasi langsung kehilangan akses ke akun Anda. Anda bisa mengotorisasinya lagi nanti.",
+    "revokeTitle": "Cabut akses {{name}}?"
   },
-  "scope": { "read": "Membaca pekerjaan Anda", "write": "Membaca dan mengubah pekerjaan Anda" },
+  "scope": {
+    "read": "Membaca pekerjaan Anda",
+    "write": "Membaca dan mengubah pekerjaan Anda"
+  },
   "clients": {
     "hint": "Daftarkan aplikasi yang memasukkan pengguna dengan OAuth 2.0 (authorization code + PKCE).",
     "name": "Nama aplikasi",
@@ -23,7 +30,20 @@
     "clientId": "ID klien",
     "remove": "Hapus",
     "secretTitle": "Secret klien",
-    "secretHint": "Salin sekarang. Secret hanya ditampilkan sekali dan tidak dapat dipulihkan."
+    "secretHint": "Salin sekarang. Secret hanya ditampilkan sekali dan tidak dapat dipulihkan.",
+    "addRedirect": "Tambah URI pengalihan",
+    "authCodePkce": "Kode otorisasi + PKCE",
+    "copyNamed": "Salin client ID {{name}}",
+    "emptyTitle": "Belum ada aplikasi OAuth",
+    "redirectNumber": "URI pengalihan {{number}}",
+    "redirectPlaceholder": "https://contoh.com/callback",
+    "redirectUris": "URI pengalihan",
+    "registerDescription": "Beri nama aplikasi dan daftar setiap URI pengalihan yang boleh dipakai. Secret ditampilkan sekali.",
+    "registerTitle": "Daftarkan aplikasi",
+    "removeBody": "Aplikasi yang memakai klien ini tidak bisa lagi memasukkan pengguna.",
+    "removeNamed": "Hapus {{name}}",
+    "removeRedirect": "Hapus URI pengalihan {{number}}",
+    "removeTitle": "Hapus {{name}}?"
   },
   "consent": {
     "title": "Otorisasi {{name}}",

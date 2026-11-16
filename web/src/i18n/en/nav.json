@@ -196,5 +196,12 @@
   "recycle.emptyBin": "Empty bin",
   "inbox.emptyHint": "Notifications you receive show up here.",
   "todo.addItem": "Item",
-  "spaces.addShort": "New Space"
+  "spaces.addShort": "New Space",
+  "recycle.description": "Deleted items you can restore. Items stay here until they are restored or removed permanently.",
+  "recycle.emptyDescription": "Items you delete from a Space appear here, so you can restore them.",
+  "recycle.searchPlaceholder": "Search deleted items",
+  "recycle.spaceFilter": "Filter by Space",
+  "recycle.allSpaces": "All Spaces",
+  "recycle.noMatch": "No deleted items match these filters.",
+  "space.settingsFor": "Settings for {{name}}"
 }

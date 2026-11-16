@@ -51,7 +51,12 @@
     "from": "Berlaku mulai",
     "add": "Tambah tarif",
     "empty": "Belum ada tarif.",
-    "name": "Nama"
+    "name": "Nama",
+    "status": {
+      "current": "Berlaku",
+      "scheduled": "Dijadwalkan",
+      "historical": "Historis"
+    }
   },
   "noEntries": "Belum ada entri waktu. Waktu yang dicatat untuk proyek ini muncul di sini.",
   "clearFilters": "Hapus filter",
@@ -59,8 +64,5 @@
   "filteredTotal": "Total untuk entri yang difilter: {{time}}",
   "billableTotal": "Dapat ditagihkan: {{time}}",
   "nonBillableTotal": "Tidak dapat ditagihkan: {{time}}",
-  "pageOnlyTotal": "Hanya di halaman ini: {{time}}",
-  "rates.status.current": "Berlaku",
-  "rates.status.scheduled": "Dijadwalkan",
-  "rates.status.historical": "Historis"
+  "pageOnlyTotal": "Hanya di halaman ini: {{time}}"
 }

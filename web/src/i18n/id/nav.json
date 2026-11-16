@@ -196,5 +196,12 @@
   "recycle.emptyBin": "Kosongkan tempat sampah",
   "inbox.emptyHint": "Notifikasi yang Anda terima akan muncul di sini.",
   "todo.addItem": "Item",
-  "spaces.addShort": "Ruang baru"
+  "spaces.addShort": "Ruang baru",
+  "recycle.description": "Item yang dihapus dan dapat dipulihkan. Item tetap di sini sampai dipulihkan atau dihapus permanen.",
+  "recycle.emptyDescription": "Item yang Anda hapus dari sebuah Ruang muncul di sini agar bisa dipulihkan.",
+  "recycle.searchPlaceholder": "Cari item terhapus",
+  "recycle.spaceFilter": "Filter menurut Ruang",
+  "recycle.allSpaces": "Semua Ruang",
+  "recycle.noMatch": "Tidak ada item terhapus yang cocok dengan filter ini.",
+  "space.settingsFor": "Pengaturan {{name}}"
 }
