@@ -16,5 +16,17 @@
   "delete": "Delete",
   "log": "Delivery log",
   "noLog": "No deliveries yet.",
-  "attempts": "{{count}} attempts"
+  "attempts": "{{count}} attempts",
+  "groups.items": "Items",
+  "groups.scheduling": "Scheduling",
+  "groups.forms": "Forms & approvals",
+  "groups.collaboration": "Collaboration",
+  "groups.other": "Other",
+  "selectedEvents_one": "{{count}} event selected",
+  "selectedEvents_other": "{{count}} events selected",
+  "endpoint": "Endpoint",
+  "eventCount": "Events",
+  "status": "Status",
+  "eventsSubscribed_one": "{{count}} event",
+  "eventsSubscribed_other": "{{count}} events"
 }

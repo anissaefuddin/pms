@@ -26,7 +26,7 @@ function Apps() {
     { id: "clients", label: t("oauth.apps.clients"), body: <OAuthClients />, adminOnly: true },
   ].filter((x) => admin || !x.adminOnly);
   const tabs = [
-    { id: "gallery", label: t("apps.tab.gallery"), body: <IntegrationGallery sections={sections.map(({ id, label }) => ({ id, label }))} onOpen={setActive} /> },
+    { id: "gallery", label: t("apps.tab.gallery"), body: <IntegrationGallery admin={admin} onOpen={setActive} /> },
     ...sections,
   ];
   const current = tabs.find((x) => x.id === active) ?? tabs[0];

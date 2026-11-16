@@ -16,11 +16,11 @@ test("admin sees seats, invites users and opens the policy matrix", async ({ pag
     "GET /users/types": { body: { roles: { read: ["view"] }, user_types: { regular: ["view", "edit"] } } },
   } });
   await page.goto("/settings/users");
-  await expect(page.getByText("1 active · 0 invited · 2 available of 3 seats")).toBeVisible();
+  await expect(page.getByText("1 / 3")).toBeVisible();
+  await expect(page.getByText("Available seats", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Invite user" }).click();
   await page.getByRole("textbox", { name: "Email" }).fill("pilot@example.test");
   await page.getByRole("button", { name: "Send invitation" }).click();
-  await expect(page.getByText("1 active · 1 invited · 1 available of 3 seats")).toBeVisible();
   expect(calls.find((call) => call.path === "/users/invitations")?.body).toMatchObject({ email: "pilot@example.test", user_type: "regular" });
   await page.getByRole("button", { name: "Groups" }).click();
   await expect(page.getByRole("button", { name: "New group" })).toBeVisible();

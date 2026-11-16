@@ -16,5 +16,15 @@
   "delete": "Hapus",
   "log": "Log pengiriman",
   "noLog": "Belum ada pengiriman.",
-  "attempts": "{{count}} percobaan"
+  "attempts": "{{count}} percobaan",
+  "groups.items": "Item",
+  "groups.scheduling": "Penjadwalan",
+  "groups.forms": "Formulir & persetujuan",
+  "groups.collaboration": "Kolaborasi",
+  "groups.other": "Lainnya",
+  "selectedEvents_other": "{{count}} event dipilih",
+  "endpoint": "Endpoint",
+  "eventCount": "Event",
+  "status": "Status",
+  "eventsSubscribed_other": "{{count}} event"
 }

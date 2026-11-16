@@ -59,5 +59,8 @@
   "filteredTotal": "Total untuk entri yang difilter: {{time}}",
   "billableTotal": "Dapat ditagihkan: {{time}}",
   "nonBillableTotal": "Tidak dapat ditagihkan: {{time}}",
-  "pageOnlyTotal": "Hanya di halaman ini: {{time}}"
+  "pageOnlyTotal": "Hanya di halaman ini: {{time}}",
+  "rates.status.current": "Berlaku",
+  "rates.status.scheduled": "Dijadwalkan",
+  "rates.status.historical": "Historis"
 }

@@ -60,5 +60,8 @@
   "filteredTotal": "Total for the filtered entries: {{time}}",
   "billableTotal": "Billable: {{time}}",
   "nonBillableTotal": "Non-billable: {{time}}",
-  "pageOnlyTotal": "On this page only: {{time}}"
+  "pageOnlyTotal": "On this page only: {{time}}",
+  "rates.status.current": "Current",
+  "rates.status.scheduled": "Scheduled",
+  "rates.status.historical": "Historical"
 }

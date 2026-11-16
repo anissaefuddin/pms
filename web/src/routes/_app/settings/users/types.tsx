@@ -12,8 +12,18 @@ function UserTypes() {
     roles: Record<string, string[]>;
     user_types: Record<string, string[]>;
   }>("/api/v1/users/types") });
-  return <section className="space-y-3">
-    <h2 className="text-xl font-semibold">{t("settings.users.types")}</h2>
+  const concepts = ["userType", "customRole", "group", "jobRole"] as const;
+  return <section className="space-y-6">
+    <section aria-labelledby="concepts-title" className="space-y-3">
+      <h3 id="concepts-title" className="text-base font-semibold">{t("settings.users.concepts.title")}</h3>
+      <dl className="grid gap-3 sm:grid-cols-2">
+        {concepts.map((key) => <div key={key} className="rounded-lg border p-3">
+          <dt className="text-sm font-medium">{t(`settings.users.concepts.${key}`)}</dt>
+          <dd className="mt-1 text-sm text-muted-foreground">{t(`settings.users.concepts.${key}Desc`)}</dd>
+        </div>)}
+      </dl>
+    </section>
+    <h3 className="text-base font-semibold">{t("settings.users.types")}</h3>
     {query.isPending && <p role="status">{t("items.loading")}</p>}
     {query.isError && <p role="alert">{t("items.loadError")}</p>}
     {query.data && (() => {

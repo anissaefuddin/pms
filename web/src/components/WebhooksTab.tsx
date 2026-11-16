@@ -8,6 +8,20 @@ import { Input } from "@/components/ui/input";
 type Hook = { id: string; name: string; url: string; event_types: string[]; enabled: boolean; consecutive_failures: number; disabled_reason: string | null; secret?: string };
 type Delivery = { id: string; event_type: string; status: string; attempts: number; response_status: number | null; last_error: string | null; created_at: string };
 
+// Events are grouped by the domain they come from, so the selector stays readable as the list grows.
+const EVENT_GROUPS = [
+  { id: "items", types: ["item.created", "item.updated", "item.status_changed", "item.assigned"] },
+  { id: "scheduling", types: ["item.due_changed", "item.due_reached"] },
+  { id: "forms", types: ["form.submitted", "approval.decided"] },
+  { id: "collaboration", types: ["comment.created"] },
+];
+function groupEvents(all: string[]) {
+  const known = new Set(EVENT_GROUPS.flatMap((group) => group.types));
+  const groups = EVENT_GROUPS.map((group) => ({ id: group.id, types: group.types.filter((type) => all.includes(type)) }));
+  const other = all.filter((type) => !known.has(type));
+  return [...groups.filter((group) => group.types.length), ...(other.length ? [{ id: "other", types: other }] : [])];
+}
+
 // Webhook management tab for Apps & Integrations (API-02).
 export function WebhooksTab() {
   const { t } = useTranslation("translation", { keyPrefix: "webhooks" });
@@ -43,9 +57,14 @@ export function WebhooksTab() {
     }}>
       <label className="block text-sm">{t("name")}<Input name="name" required maxLength={100} /></label>
       <label className="block text-sm">{t("url")}<Input name="url" type="url" required /></label>
-      <fieldset className="flex flex-wrap gap-3 text-sm"><legend>{t("events")}</legend>
-        {hooks.data?.event_types.map((type) => <label key={type} className="flex items-center gap-1">
-          <input type="checkbox" checked={picked.includes(type)} onChange={(e) => setPicked(e.target.checked ? [...picked, type] : picked.filter((x) => x !== type))} />{type}</label>)}
+      <fieldset className="space-y-3 text-sm"><legend className="mb-2 font-medium">{t("events")}</legend>
+        {groupEvents(hooks.data?.event_types ?? []).map((group) => <fieldset key={group.id} className="space-y-1 rounded-md border p-3">
+          <legend className="px-1 text-xs font-medium text-muted-foreground">{t(`groups.${group.id}`)}</legend>
+          {group.types.map((type) => <label key={type} className="flex items-center gap-2">
+            <input type="checkbox" checked={picked.includes(type)} onChange={(e) => setPicked(e.target.checked ? [...picked, type] : picked.filter((x) => x !== type))} />
+            <code className="text-xs">{type}</code></label>)}
+        </fieldset>)}
+        <p className="text-xs text-muted-foreground">{t("selectedEvents", { count: picked.length })}</p>
       </fieldset>
       <Button type="submit" disabled={create.isPending || !picked.length}>{t("create")}</Button>
     </form>
@@ -53,7 +72,11 @@ export function WebhooksTab() {
     <ul className="space-y-3">{hooks.data?.items.map((h) => <li key={h.id} className="rounded border p-3">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <div><p className="font-medium">{h.name}</p><p className="break-all text-sm text-muted-foreground">{h.url}</p>
-          <p className="text-xs">{h.event_types.join(", ")}</p>
+          <dl className="mt-2 grid grid-cols-2 gap-x-6 gap-y-1 text-xs sm:grid-cols-4">
+            <div><dt className="text-muted-foreground">{t("endpoint")}</dt><dd className="break-all">{h.url}</dd></div>
+            <div><dt className="text-muted-foreground">{t("eventCount")}</dt><dd>{t("eventsSubscribed", { count: h.event_types.length })}</dd></div>
+            <div><dt className="text-muted-foreground">{t("status")}</dt><dd>{h.enabled ? t("enabled") : t("disabled", { reason: h.disabled_reason ?? "" })}</dd></div>
+          </dl>
           {!h.enabled && <p role="status" className="text-sm text-destructive">{t("disabled", { reason: h.disabled_reason ?? "" })}</p>}</div>
         <div className="flex gap-2">
           <Button type="button" variant="outline" onClick={() => patch.mutate({ id: h.id, enabled: !h.enabled })}>{h.enabled ? t("disable") : t("enable")}</Button>
