@@ -268,3 +268,26 @@ test("a draft is published from the builder and can be moved back to draft", asy
   await expect(page.getByText("Draft", { exact: true })).toBeVisible();
   await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${fid}/unpublish`)).toBe(true);
 });
+
+test("the builder has four sections; access is chosen in Access & sharing and saved on its own", async ({ page }) => {
+  const calls = await mock(page, { extra: {
+    [`PUT /forms/${fid}/access`]: (body: any) => ({ body: { ...stored(4), access: body.access }, headers: { ETag: '"4"' } }),
+  } });
+  await page.goto(`/spaces/${marketing.id}/forms/${fid}`);
+  const nav = page.getByRole("navigation", { name: "Form sections" });
+  for (const label of ["Questions", "Submission settings", "Access & sharing", "Confirmation"]) {
+    await expect(nav.getByRole("link", { name: label })).toBeVisible();
+  }
+  await nav.getByRole("link", { name: "Access & sharing" }).click();
+  await expect(page.getByRole("radio", { name: /Everyone in the workspace/ })).not.toBeChecked();
+  await page.getByRole("radio", { name: /Everyone in the workspace/ }).check();
+  await page.locator("#sec-access").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PUT" && c.path === `/forms/${fid}/access`)?.body).toEqual({ access: "internal" });
+});
+
+test("a new form asks for a save before access can be set", async ({ page }) => {
+  await mock(page);
+  await page.goto(`/spaces/${marketing.id}/forms/new`);
+  await expect(page.getByText("Save the form first. Then you can choose who can fill it and create a public link.")).toBeVisible();
+  await expect(page.locator("#sec-access").getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
+});

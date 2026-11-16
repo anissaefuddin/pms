@@ -8,7 +8,7 @@ import type { Workflow } from "@/lib/status-colors";
 import { FormError } from "@/components/auth/form-error";
 import { ItemUserPicker } from "@/components/item-user-picker";
 import { Input } from "@/components/ui/input";
-import { FormEmailSettings, FormRoutingSettings } from "@/components/form-routing-settings";
+import { FormRoutingSettings } from "@/components/form-routing-settings";
 
 const select = "block w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm";
 
@@ -85,6 +85,5 @@ export function FormResponseSettings({ draft, pages, errors, onChange }: Props) 
       </div>}
     </div>
     <FormRoutingSettings draft={draft} pages={pages} errors={errors} onChange={onChange} />
-    <FormEmailSettings draft={draft} errors={errors} onChange={onChange} />
   </section>;
 }
