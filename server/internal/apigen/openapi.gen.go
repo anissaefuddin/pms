@@ -1602,12 +1602,15 @@ func (e MeUpdateDensity) Valid() bool {
 // Defines values for MeUpdateLocale.
 const (
 	En MeUpdateLocale = "en"
+	Id MeUpdateLocale = "id"
 )
 
 // Valid indicates whether the value is a known member of the MeUpdateLocale enum.
 func (e MeUpdateLocale) Valid() bool {
 	switch e {
 	case En:
+		return true
+	case Id:
 		return true
 	default:
 		return false

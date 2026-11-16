@@ -24,7 +24,7 @@ const personalFields = [
   { key: "phone", max: 32 },
 ] as const;
 const choices = {
-  locale: ["en"],
+  locale: ["en", "id"],
   date_format: ["dd/mm/yyyy", "mm/dd/yyyy", "yyyy-mm-dd"],
   time_format: ["12h", "24h"],
   week_start: ["monday", "sunday", "saturday"],

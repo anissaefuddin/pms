@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { Outlet, createFileRoute, useParams, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import i18n, { isLanguage, setLanguage } from "@/i18n";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { MobileSidebar, Sidebar } from "@/components/sidebar";
 import { SettingsSidebar } from "@/components/settings-sidebar";
@@ -39,6 +40,11 @@ function AppShell() {
     retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
   });
   useAppearance(me.data);
+  // The saved profile language wins over the browser choice once signed in.
+  const locale = me.data?.locale;
+  useEffect(() => {
+    if (isLanguage(locale) && locale !== i18n.resolvedLanguage) void setLanguage(locale);
+  }, [locale]);
   const live = useRealtime(!!me.data && !me.isError);
   const router = useRouter();
   const { task } = Route.useSearch();

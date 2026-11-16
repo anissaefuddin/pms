@@ -4603,7 +4603,7 @@ export interface components {
             location?: string;
             phone?: string;
             /** @enum {string} */
-            locale?: "en";
+            locale?: "en" | "id";
             timezone?: string;
             /** @enum {string} */
             date_format?: "dd/mm/yyyy" | "mm/dd/yyyy" | "yyyy-mm-dd";

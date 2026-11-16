@@ -1,0 +1,35 @@
+{
+  "apps": {
+    "title": "Aplikasi & Integrasi",
+    "tabs": "Bagian integrasi",
+    "authorized": "Aplikasi yang diotorisasi",
+    "clients": "Aplikasi OAuth"
+  },
+  "authorized": {
+    "hint": "Aplikasi yang Anda izinkan masuk sebagai Anda. Mencabut akses langsung memutus aksesnya.",
+    "empty": "Tidak ada aplikasi yang memiliki akses ke akun Anda.",
+    "scopes": "Akses",
+    "since": "Diotorisasi",
+    "revoke": "Cabut",
+    "revokeConfirm": "Cabut {{name}}?"
+  },
+  "scope": { "read": "Membaca pekerjaan Anda", "write": "Membaca dan mengubah pekerjaan Anda" },
+  "clients": {
+    "hint": "Daftarkan aplikasi yang memasukkan pengguna dengan OAuth 2.0 (authorization code + PKCE).",
+    "name": "Nama aplikasi",
+    "redirects": "URI pengalihan (satu per baris, harus sama persis)",
+    "create": "Daftarkan aplikasi",
+    "empty": "Belum ada aplikasi OAuth.",
+    "clientId": "ID klien",
+    "remove": "Hapus",
+    "secretTitle": "Secret klien",
+    "secretHint": "Salin sekarang. Secret hanya ditampilkan sekali dan tidak dapat dipulihkan."
+  },
+  "consent": {
+    "title": "Otorisasi {{name}}",
+    "intro": "{{name}} ingin mengakses akun Anda. Aplikasi itu tidak akan pernah bisa melakukan lebih dari yang bisa Anda lakukan.",
+    "allow": "Izinkan",
+    "deny": "Tolak",
+    "invalid": "Permintaan otorisasi ini tidak valid."
+  }
+}

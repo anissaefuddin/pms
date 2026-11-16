@@ -54,6 +54,8 @@
   "profile.label": "Account menu",
   "profile.security": "Security",
   "profile.logout": "Log out",
+  "profile.language": "Language",
+  "profile.languageSaved": "Language updated",
   "recycle.empty": "Recycle bin is empty",
   "recycle.allTypes": "All types",
   "recycle.purge.action": "Empty Recycle bin",

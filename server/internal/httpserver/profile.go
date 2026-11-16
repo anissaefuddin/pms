@@ -16,7 +16,7 @@ var profileTextLimits = map[string]int{
 }
 
 var profileChoices = map[string][]string{
-	"locale": {"en"}, "date_format": {"dd/mm/yyyy", "mm/dd/yyyy", "yyyy-mm-dd"},
+	"locale": {"en", "id"},"date_format": {"dd/mm/yyyy", "mm/dd/yyyy", "yyyy-mm-dd"},
 	"time_format": {"12h", "24h"}, "week_start": {"monday", "sunday", "saturday"},
 	"density": {"compact", "comfortable"}, "theme": {"light", "dark", "system"}, "accent": {"blue", "teal", "violet", "green"},
 	"comment_shortcut": {"mod_enter", "enter"},

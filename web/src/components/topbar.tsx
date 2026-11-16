@@ -5,7 +5,11 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { listNotifications, notificationKey } from "@/lib/notifications";
-import { api } from "@/lib/api";
+import { api, type CurrentUser } from "@/lib/api";
+import { LANGUAGES, isLanguage, setLanguage, type Language } from "@/i18n";
+
+// Each language is named in its own language, so it stays readable whichever UI language is active.
+const LANGUAGE_NAMES: Record<Language, string> = { en: "English", id: "Bahasa Indonesia" };
 import { clearSessionState } from "@/lib/session-state";
 import { nextIndex } from "@/lib/ui-kit";
 import type { CreateKind } from "@/lib/create-item-validate";
@@ -13,7 +17,7 @@ import { toast } from "sonner";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kind?: CreateKind) => void; live: boolean; search?: ReactNode; navigation?: ReactNode }) {
@@ -37,11 +41,21 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kin
 /** Profile menu. It lives in the sidebar header (top right), not in the top bar. */
 /** Profile control: avatar plus a dropdown indicator. Compact (collapsed sidebar) shows the avatar only. */
 export function ProfileMenu({ compact = false }: { compact?: boolean }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const profile = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState(false);
+  async function changeLanguage(language: Language) {
+    if (language === i18n.resolvedLanguage) return;
+    await setLanguage(language);
+    try {
+      const updated = await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify({ locale: language }) });
+      queryClient.setQueryData(["me"], updated);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
   const fullName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : "";
   const initials = `${profile?.first_name?.[0] ?? ""}${profile?.last_name?.[0] ?? ""}`.toUpperCase();
   async function logout() {
@@ -72,6 +86,13 @@ export function ProfileMenu({ compact = false }: { compact?: boolean }) {
           <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}>{t("nav.apps.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}>{t("nav.help.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setFeedback(true)}>{t("nav.feedback.menu")}</DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>{t("nav.profile.language")}</DropdownMenuLabel>
+            <DropdownMenuRadioGroup value={i18n.resolvedLanguage} onValueChange={(value) => { if (isLanguage(value)) void changeLanguage(value); }}>
+              {LANGUAGES.map((language) => <DropdownMenuRadioItem key={language} value={language}>{LANGUAGE_NAMES[language]}</DropdownMenuRadioItem>)}
+            </DropdownMenuRadioGroup>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">{t("nav.profile.logout")}</DropdownMenuItem>
         </DropdownMenuContent>

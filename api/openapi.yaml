@@ -6395,7 +6395,7 @@ components:
         country: { type: string, maxLength: 2 }
         location: { type: string, maxLength: 120 }
         phone: { type: string, maxLength: 32 }
-        locale: { type: string, enum: [en] }
+        locale: { type: string, enum: [en, id] }
         timezone: { type: string }
         date_format: { type: string, enum: [dd/mm/yyyy, mm/dd/yyyy, yyyy-mm-dd] }
         time_format: { type: string, enum: ['12h', '24h'] }
