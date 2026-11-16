@@ -16,14 +16,17 @@ test("the profile checklist pins shortcuts, the sidebar shows exactly the checke
     "GET /me": () => ({ body: profile }),
     "PATCH /me": (body) => { profile = { ...profile, ...body }; return { body: profile }; },
   } });
-  await page.goto("/settings/profile");
+  // Settings has its own shell sidebar, so the workspace sidebar is checked from the workspace page.
+  await page.goto("/");
   const nav = page.getByRole("navigation", { name: "Main navigation" });
   await expect(nav.getByRole("button", { name: "Stream" })).toBeVisible();
+  await page.goto("/settings/profile");
   await page.getByRole("checkbox", { name: "Reports" }).click();
-  await expect(nav.getByRole("button", { name: "Reports" })).toBeVisible();
   await page.getByRole("checkbox", { name: "Stream" }).click();
-  await expect(nav.getByRole("button", { name: "Stream" })).toHaveCount(0);
   await page.getByRole("checkbox", { name: "Workload" }).click();
+  await page.getByRole("link", { name: "Back to workspace" }).click();
+  await expect(nav.getByRole("button", { name: "Reports" })).toBeVisible();
+  await expect(nav.getByRole("button", { name: "Stream" })).toHaveCount(0);
   await expect(nav.getByRole("button", { name: "Workload" })).toBeVisible();
   expect(calls.filter((call) => call.method === "PATCH" && call.path === "/me").map((call) => call.body)).toEqual([
     { sidebar_pinned: ["request_forms", "stream", "reports"], sidebar_hidden: ["workload"] },

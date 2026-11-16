@@ -1,9 +1,10 @@
 import { useEffect, useState } from "react";
-import { Outlet, createFileRoute, useParams, useRouter } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useParams, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { MobileSidebar, Sidebar } from "@/components/sidebar";
+import { SettingsSidebar } from "@/components/settings-sidebar";
 import { SearchPalette } from "@/components/search-palette";
 import { Topbar } from "@/components/topbar";
 import { CreateItemDialog } from "@/components/create-item-dialog";
@@ -32,6 +33,7 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppShell() {
+  const inSettings = useRouterState({ select: (state) => state.location.pathname.startsWith("/settings") });
   const { t } = useTranslation();
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<CurrentUser>("/api/v1/me"),
     retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
@@ -84,7 +86,7 @@ function AppShell() {
   return (
     <ProfileContext.Provider value={me.data}>
     <div className="flex min-h-screen">
-      <div className="sticky top-0 hidden self-start shrink-0 lg:block"><Sidebar key={me.data.id} me={me.data} /></div>
+      <div className="sticky top-0 hidden self-start shrink-0 lg:block">{inSettings ? <SettingsSidebar me={me.data} /> : <Sidebar key={me.data.id} me={me.data} />}</div>
       <div className="flex min-w-0 flex-1 flex-col">
         <Topbar navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />
         <div className="min-w-0 flex-1"><Outlet /></div>

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
 import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
+import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
 import { ProfileMenu } from "@/components/topbar";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -66,6 +67,7 @@ export function MobileSidebar({ me }: { me: CurrentUser }) {
 }
 
 export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; mobile?: boolean; onNavigate?: () => void }) {
+  const sidebarTheme = useSidebarTheme();
   const { t } = useTranslation();
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
@@ -148,7 +150,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
 
   const style = mobile ? undefined : { width: collapsed ? "var(--sidebar-width-collapsed)" : `${width}px` };
   return <>
-    <aside style={style} className={`${SIDEBAR_THEME} relative flex min-h-0 flex-col border-r border-border bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
+    <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex min-h-0 flex-col border-r border-border bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
       <div className="mb-4 flex items-center justify-between gap-1">
         {!collapsed && <p className="min-w-0 truncate px-2 font-semibold" title={me.account_name}>{me.account_name}</p>}
         {!collapsed && <ProfileMenu />}

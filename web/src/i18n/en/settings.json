@@ -411,5 +411,9 @@
   "profile.sidebar.starred": "Starred",
   "nav.workConfiguration": "Work configuration",
   "nav.security": "Security & access",
-  "nav.backToWorkspace": "Back to workspace"
+  "nav.backToWorkspace": "Back to workspace",
+  "nav.find": "Find settings",
+  "nav.noMatch": "No settings match this search.",
+  "profile.sidebarTheme.title": "Sidebar theme",
+  "profile.sidebarTheme.help": "Choose the colour of the sidebar. This choice is saved in this browser."
 }

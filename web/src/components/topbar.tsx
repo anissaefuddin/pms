@@ -52,7 +52,7 @@ export function ProfileMenu() {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-8 shrink-0 p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" />}>
           <span className="sr-only">{t("nav.profile.label")}</span>
           <span aria-hidden="true" className="grid size-7 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
         </DropdownMenuTrigger>

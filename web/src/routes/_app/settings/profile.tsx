@@ -9,6 +9,7 @@ import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { PINNABLE_IDS, SHORTCUT_LABEL_KEY, pinPatch, sanitizePinOrder, togglePin, type ShortcutId } from "@/lib/sidebar-prefs";
+import { SIDEBAR_THEMES, setSidebarTheme, useSidebarTheme } from "@/lib/sidebar-theme";
 
 export const Route = createFileRoute("/_app/settings/profile")({ component: ProfileRoute });
 
@@ -37,9 +38,30 @@ const timezones = ["UTC", ...Intl.supportedValuesOf("timeZone")];
 // Only entries that exist in this version are offered; the other keys the API accepts stay hidden (NAV-02).
 const emailGroups = ["mention", "assigned", "shared", "task_changes", "report"] as const;
 
+/** Sidebar colour themes (Settings V2 prototype). The choice is kept in this browser. */
+function SidebarThemePicker() {
+  const { t } = useTranslation();
+  const current = useSidebarTheme();
+  return <section className="space-y-3 border-t pt-6" id="sidebar-theme">
+    <h2 className="text-sm font-semibold">{t("settings.profile.sidebarTheme.title")}</h2>
+    <p className="text-sm text-muted-foreground">{t("settings.profile.sidebarTheme.help")}</p>
+    <div role="group" aria-label={t("settings.profile.sidebarTheme.title")} className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+      {SIDEBAR_THEMES.map((theme) => <button key={theme.id} type="button" aria-pressed={theme.id === current.id}
+        onClick={() => setSidebarTheme(theme.id)}
+        className={`overflow-hidden rounded-lg border text-left ${theme.id === current.id ? "ring-2 ring-ring" : ""}`}>
+        <span className="flex h-16" aria-hidden="true">
+          <span className="w-1/3" style={{ background: theme.nav }} />
+          <span className="flex-1 bg-card" />
+        </span>
+        <span className="block px-2 py-1.5 text-xs font-medium">{theme.name}</span>
+      </button>)}
+    </div>
+  </section>;
+}
+
 function ProfileRoute() {
   const profile = useProfile();
-  return profile && <><Identity profile={profile} /><ProfileForm key={profile.id} profile={profile} /><SidebarSettings profile={profile} /><EmailSettings profile={profile} /></>;
+  return profile && <><Identity profile={profile} /><ProfileForm key={profile.id} profile={profile} /><SidebarThemePicker /><SidebarSettings profile={profile} /><EmailSettings profile={profile} /></>;
 }
 
 function Identity({ profile }: { profile: CurrentUser }) {
