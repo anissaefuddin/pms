@@ -88,7 +88,7 @@ function AppShell() {
     <div className="flex min-h-screen">
       <div className="sticky top-0 hidden self-start shrink-0 lg:block">{inSettings ? <SettingsSidebar me={me.data} /> : <Sidebar key={me.data.id} me={me.data} />}</div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />
+        <Topbar navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}

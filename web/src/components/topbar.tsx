@@ -1,6 +1,6 @@
 import { useProfile, formatNumber } from "@/lib/profile";
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Bell, Blocks, Layers, Plus, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, UserPlus } from "lucide-react";
+import { Bell, Blocks, ChevronDown, Layers, Plus, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -35,7 +35,8 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kin
 }
 
 /** Profile menu. It lives in the sidebar header (top right), not in the top bar. */
-export function ProfileMenu() {
+/** Profile control: avatar plus a dropdown indicator. Compact (collapsed sidebar) shows the avatar only. */
+export function ProfileMenu({ compact = false }: { compact?: boolean }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const navigate = useNavigate();
@@ -52,13 +53,18 @@ export function ProfileMenu() {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" className="size-8 shrink-0 p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" />}>
+        <DropdownMenuTrigger render={<Button variant="ghost" className={compact ? "size-8 shrink-0 p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" : "h-8 shrink-0 gap-1 px-1 text-nav-text hover:bg-nav-hover hover:text-nav-text"} />}>
           <span className="sr-only">{t("nav.profile.label")}</span>
           <span aria-hidden="true" className="grid size-7 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
+          {!compact && <ChevronDown aria-hidden="true" className="size-3.5 text-nav-muted" />}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-56">
-          <div className="px-2 py-2"><p className="truncate text-sm font-semibold">{fullName}</p>
-            {profile?.job_title && <p className="truncate text-xs text-muted-foreground">{profile.job_title}</p>}</div>
+          <div className="flex items-center gap-3 px-2 py-2">
+            <span aria-hidden="true" className="grid size-9 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{initials}</span>
+            <div className="min-w-0"><p className="truncate text-sm font-semibold">{fullName}</p>
+              {profile?.job_title && <p className="truncate text-xs text-muted-foreground">{profile.job_title}</p>}
+              {profile?.company && <p className="truncate text-xs text-muted-foreground">{profile.company}</p>}</div>
+          </div>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>{t("nav.settings.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile", hash: "appearance" })}>{t("nav.account.appearance")}</DropdownMenuItem>
@@ -67,7 +73,7 @@ export function ProfileMenu() {
           <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}>{t("nav.help.label")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => setFeedback(true)}>{t("nav.feedback.menu")}</DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>{t("nav.profile.logout")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive">{t("nav.profile.logout")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <FeedbackDialog open={feedback} onOpenChange={setFeedback} />
