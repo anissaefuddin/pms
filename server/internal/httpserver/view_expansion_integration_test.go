@@ -12,9 +12,12 @@ func TestViewExpansionPersistsPerUserAndView(t *testing.T) {
 	f := newFixture(t)
 	alice := f.person("regular")
 	bob := f.person("regular")
-	view := uuid.NewString()
+	space := f.space("Expansion")
+	f.share(space, "user", alice.id, "read")
+	view := f.call(alice, "GET", "/spaces/"+space+"/views", nil).items()[0]["id"].(string)
 	row := uuid.NewString()
 
+	f.want(f.call(bob, "PUT", "/me/view-expansion/"+view, map[string]any{"rows": []string{row}}), 404, "a view bob cannot see")
 	f.want(f.call(alice, "PUT", "/me/view-expansion/"+view, map[string]any{"rows": []string{row, row}, "gantt_collapsed": true}), 204, "save expansion")
 	saved := f.call(alice, "GET", "/me", nil).body["view_expansion"].(map[string]any)
 	entry := saved[view].(map[string]any)

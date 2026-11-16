@@ -11,7 +11,8 @@ func TestViewPreferencesPersistPerUserAndWorkspace(t *testing.T) {
 	f := newFixture(t)
 	alice := f.person("regular")
 	bob := f.person("regular")
-	space := uuid.NewString()
+	space := f.space("Preferences")
+	f.share(space, "user", alice.id, "read")
 	hiddenView := uuid.NewString()
 	other := uuid.NewString()
 

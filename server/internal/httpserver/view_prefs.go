@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/anissaefuddin/pms/server/internal/views"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // WA-D07: limits on the per-user store. Beyond a limit the request is refused, never silently cut.
@@ -14,8 +16,7 @@ const (
 )
 
 // saveViewPreferences stores the caller's own hidden views and tab order for one workspace. The shared view
-// configuration (position, default, visibility) is never touched. Ids the caller cannot see are harmless:
-// the value is read back only by the same user, and the client ignores ids that no longer load.
+// configuration (position, default, visibility) is never touched. The workspace must be visible to the caller (404 otherwise).
 func (s *Server) saveViewPreferences(w http.ResponseWriter, r *http.Request) {
 	scopeID := r.PathValue("scopeId")
 	if _, err := uuid.Parse(scopeID); err != nil {
@@ -48,21 +49,24 @@ func (s *Server) saveViewPreferences(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 500, "could not save view preferences")
 		return
 	}
-	// An existing workspace is always updated; a new one needs room under the limit.
-	tag, err := s.pool.Exec(r.Context(),
-		`UPDATE users SET view_prefs = jsonb_set(view_prefs, ARRAY[$2::text], $3::jsonb, true)
-		 WHERE id=$1::uuid AND status='active'
-		   AND (view_prefs ? $2::text OR (SELECT count(*) FROM jsonb_object_keys(view_prefs)) < $4)`,
-		actorOf(r).ID, scopeID, value, viewPrefsMaxScopes)
-	if err != nil {
-		writeError(w, 500, "could not save view preferences")
-		return
-	}
-	if tag.RowsAffected() != 1 {
-		writeError(w, 422, "too many workspaces remembered")
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
+	s.viewTx(w, r, http.StatusNoContent, func(tx pgx.Tx) (any, error) {
+		if err := views.WorkspaceVisible(r.Context(), tx, actorOf(r), uuid.MustParse(scopeID)); err != nil {
+			return nil, err
+		}
+		// An existing workspace is always updated; a new one needs room under the limit.
+		tag, err := tx.Exec(r.Context(),
+			`UPDATE users SET view_prefs = jsonb_set(view_prefs, ARRAY[$2::text], $3::jsonb, true)
+			 WHERE id=$1::uuid AND status='active'
+			   AND (view_prefs ? $2::text OR (SELECT count(*) FROM jsonb_object_keys(view_prefs)) < $4)`,
+			actorOf(r).ID, scopeID, value, viewPrefsMaxScopes)
+		if err != nil {
+			return nil, err
+		}
+		if tag.RowsAffected() != 1 {
+			return nil, views.Invalid("too many workspaces remembered")
+		}
+		return nil, nil
+	})
 }
 
 // uniqueUUIDs keeps the order given, drops repeats, and reports false if any entry is not a UUID.

@@ -21,16 +21,16 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     await expect(page).toHaveURL(destination);
     await expect(page.getByRole("heading", { name: "Browser collaboration" })).toBeVisible();
 
-    await page.locator("header").first().getByRole("button", { name: "New item" }).click();
+    await page.getByRole("main").getByRole("button", { name: "New item" }).click();
     const project = page.getByRole("dialog", { name: "Create item" });
     await project.getByLabel("Name").fill("Pilot launch");
-    await project.getByRole("radio", { name: "Board", exact: true }).check();
+    await project.locator("label").filter({ hasText: /^Board/ }).click(); // click the card: the sr-only radio sits under its illustration
     await project.getByRole("button", { name: "Create item" }).click();
     await expect(page.getByRole("heading", { name: "Pilot launch" })).toBeVisible();
 
     const initial = page.getByRole("region", { name: "New", exact: true });
     const done = page.getByRole("region", { name: "Completed", exact: true });
-    await initial.getByRole("button", { name: "Add item" }).click();
+    await page.getByRole("button", { name: "Add task", exact: true }).click(); // the empty board has no column to add to yet
     const task = page.getByRole("dialog", { name: "Add subitem" });
     await task.getByLabel("Name").fill("Prepare pilot checklist");
     await task.getByRole("button", { name: "Create item" }).click();

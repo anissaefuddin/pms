@@ -152,7 +152,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
         {!collapsed && <p className="min-w-0 truncate px-2 font-semibold" title={me.account_name}>{me.account_name}</p>}
         {!mobile && <Button variant="ghost" size="icon" onClick={toggle} aria-expanded={!collapsed}
           aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")} title={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
-          className="text-nav-text hover:bg-nav-hover"><PanelLeft /></Button>}
+          className="text-nav-text hover:bg-nav-hover hover:text-nav-text"><PanelLeft /></Button>}
       </div>
       <nav className="space-y-1" aria-label={t("nav.main.label")}>
         <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />
@@ -160,7 +160,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
         {pinned.map(shortcut)}
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}
-            className={`text-nav-text hover:bg-nav-hover ${collapsed ? "w-full px-0" : "w-full justify-start px-3"}`} />}>
+            className={`text-nav-text hover:bg-nav-hover hover:text-nav-text ${collapsed ? "w-full px-0" : "w-full justify-start px-3"}`} />}>
             <MoreHorizontal />{!collapsed && t("nav.more.label")}
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -228,9 +228,9 @@ function SpacesNav({ me }: { me: CurrentUser }) {
         <h2 className="text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("spaces.nav.label")}</h2>
         <div className="flex items-center">
           {me.capabilities.create_space && (
-            <Button variant="ghost" size="icon-sm" aria-label={t("spaces.new")} title={t("spaces.new")} className="text-nav-text hover:bg-nav-hover" onClick={() => setCreating(true)}><Plus /></Button>
+            <Button variant="ghost" size="icon-sm" aria-label={t("spaces.new")} title={t("spaces.new")} className="text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => setCreating(true)}><Plus /></Button>
           )}
-          <Button variant="ghost" size="icon-sm" aria-label={t("spaces.find")} aria-expanded={finding} title={t("spaces.find")} className="text-nav-text hover:bg-nav-hover"
+          <Button variant="ghost" size="icon-sm" aria-label={t("spaces.find")} aria-expanded={finding} title={t("spaces.find")} className="text-nav-text hover:bg-nav-hover hover:text-nav-text"
             onClick={() => { setFinding(!finding); setQuery(""); }}><Search /></Button>
         </div>
       </div>
@@ -271,7 +271,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
   }
   return <li>
     <div className="flex min-w-0 items-center">
-      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover" aria-expanded={open}
+      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" aria-expanded={open}
         aria-label={t(open ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={onToggle} onKeyDown={(event) => {
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
@@ -287,12 +287,12 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
         <p className="px-2 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.space.tools")}</p>
         <Link to="/dashboards" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
         <Link to="/reports" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("reports.nav.label")}</Link>
-        {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
+        {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
       </div>
       <div>
         <div className="flex items-center justify-between pr-1">
           <p className="px-2 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.space.projects")}</p>
-          <Button variant="ghost" size="icon-sm" className="text-nav-text hover:bg-nav-hover" aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
+          <Button variant="ghost" size="icon-sm" className="text-nav-text hover:bg-nav-hover hover:text-nav-text" aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
             onClick={() => window.dispatchEvent(new CustomEvent("pms:create-item", { detail: { kind: "project", spaceId: space.id } }))}><Plus /></Button>
         </div>
         <ItemTree id={space.id} space />
@@ -319,7 +319,7 @@ function Branch({ id, name, type }: { id: string; name: string; type?: string })
   const [expanded, setExpanded] = useState(false);
   return <li>
     <div className="flex min-w-0 items-center">
-      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover" aria-expanded={expanded}
+      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" aria-expanded={expanded}
         aria-label={t(expanded ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={() => setExpanded(!expanded)} onKeyDown={(event) => {
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {

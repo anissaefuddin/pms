@@ -32,10 +32,10 @@ test("E2E-PAR-01/02: an admin defines a Bug type in the UI, and a Bug made from 
   expect(types.find((t) => t.key === "bug")?.defaults).toEqual({ importance: "high" });
 
   await admin.goto(`/spaces/${e.PMS_FIXTURE_M8_WORK}`);
-  await admin.locator("header").first().getByRole("button", { name: "New item" }).click();
+  await admin.getByRole("main").getByRole("button", { name: "New item" }).click();
   const create = admin.getByRole("dialog");
   await create.getByLabel("Name").fill("Crash on save");
-  await create.getByRole("radio", { name: "Task" }).check();
+  await create.getByRole("radio", { name: /^Task/ }).check({ force: true });
   await create.locator("select").filter({ has: admin.locator('option[value="bug"]') }).selectOption("bug");
   await create.getByRole("button", { name: "Create item" }).click();
   await expect(admin.getByLabel("Importance", { exact: true })).toHaveValue("high");

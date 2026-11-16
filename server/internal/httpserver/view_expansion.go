@@ -4,7 +4,9 @@ import (
 	"encoding/json"
 	"net/http"
 
+	"github.com/anissaefuddin/pms/server/internal/views"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // WA-D05: limits on the per-user store. Rows beyond the limit are refused rather than silently dropped.
@@ -13,8 +15,8 @@ const (
 	viewExpansionMaxViews = 200
 )
 
-// saveViewExpansion stores the caller's own expanded rows and Gantt collapse flag for one view. Views the caller cannot see
-// are harmless here: the value is only ever read back by the same user, and the client ignores ids it cannot load.
+// saveViewExpansion stores the caller's own expanded rows and Gantt collapse flag for one view. The view must exist and be
+// visible to the caller (404 otherwise), so the store never keeps ids that point at nothing.
 func (s *Server) saveViewExpansion(w http.ResponseWriter, r *http.Request) {
 	viewID := r.PathValue("viewId")
 	if _, err := uuid.Parse(viewID); err != nil {
@@ -49,19 +51,22 @@ func (s *Server) saveViewExpansion(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 500, "could not save view expansion")
 		return
 	}
-	// A view already in the store is always updated; a new view needs room under the limit.
-	tag, err := s.pool.Exec(r.Context(),
-		`UPDATE users SET view_expansion = jsonb_set(view_expansion, ARRAY[$2::text], $3::jsonb, true)
-		 WHERE id=$1::uuid AND status='active'
-		   AND (view_expansion ? $2::text OR (SELECT count(*) FROM jsonb_object_keys(view_expansion)) < $4)`,
-		actorOf(r).ID, viewID, value, viewExpansionMaxViews)
-	if err != nil {
-		writeError(w, 500, "could not save view expansion")
-		return
-	}
-	if tag.RowsAffected() != 1 {
-		writeError(w, 422, "too many views remembered; expand rows in an existing view or ask an admin to reset")
-		return
-	}
-	w.WriteHeader(http.StatusNoContent)
+	s.viewTx(w, r, http.StatusNoContent, func(tx pgx.Tx) (any, error) {
+		if err := views.Visible(r.Context(), tx, actorOf(r), uuid.MustParse(viewID)); err != nil {
+			return nil, err
+		}
+		// A view already in the store is always updated; a new view needs room under the limit.
+		tag, err := tx.Exec(r.Context(),
+			`UPDATE users SET view_expansion = jsonb_set(view_expansion, ARRAY[$2::text], $3::jsonb, true)
+			 WHERE id=$1::uuid AND status='active'
+			   AND (view_expansion ? $2::text OR (SELECT count(*) FROM jsonb_object_keys(view_expansion)) < $4)`,
+			actorOf(r).ID, viewID, value, viewExpansionMaxViews)
+		if err != nil {
+			return nil, err
+		}
+		if tag.RowsAffected() != 1 {
+			return nil, views.Invalid("too many views remembered; expand rows in an existing view or ask an admin to reset")
+		}
+		return nil, nil
+	})
 }

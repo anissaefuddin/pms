@@ -22,8 +22,8 @@ test("SPC-14: an admin hides Folder from the Space's '+' menu; the dialog stops 
 
   await page.getByRole("main").getByRole("button", { name: "New item" }).click();
   const create = page.getByRole("dialog", { name: "Create item" });
-  await expect(create.getByRole("radio", { name: "Project", exact: true })).toBeVisible();
-  await expect(create.getByRole("radio", { name: "Folder", exact: true })).toHaveCount(0);
+  await expect(create.getByRole("radio", { name: /^Project/ })).toBeVisible();
+  await expect(create.getByRole("radio", { name: /^Folder/ })).toHaveCount(0);
   const made = await page.request.post("/api/v1/items", { data: { type: "folder", title: "Via API", locations: [{ space_id: e.PMS_FIXTURE_MENU_SPACE }] } });
   expect(made.status()).toBe(201);
   await context.close();

@@ -354,6 +354,8 @@
 .gantt-chart .gantt-row-cell > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .gantt-chart .gantt-bar-fill { display: flex; align-items: center; width: 100%; height: 100%; padding: 0 6px; color: #fff; font-size: 12px; border-radius: inherit; overflow: hidden; }
 .gantt-chart .gantt-today { background: rgb(220 38 38 / .18); }
+/* Plain SVAR bars (public snapshot) default to cyan; white text needs 4.5:1 (#0891b2 gives 3.8:1). allow-hex */
+.gantt-chart .wx-bar.wx-task:not(.wx-split) { background-color: #0e7490; }
 /* Items without dates get a row but no bar; SVAR draws them as a stray bar at the left edge. */
 .gantt-chart .wx-bar:not([style*="left"]) { display: none; }
 

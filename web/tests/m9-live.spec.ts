@@ -65,7 +65,7 @@ test("E2E-PAR-06: reviewer decisions use Any or All and stay in history", async 
       const card = review.getByRole("region", { name: "Approvals" }).getByRole("article").filter({ has: review.getByText(policy, { exact: true }) });
       await card.getByRole("button", { name: "Approve", exact: true }).click();
       await expect(card).toContainText(policy === "any" ? "1/2 approved" : "1/2 approved");
-      await expect(card.locator("[data-approval-status]")).toHaveText(policy === "any" ? "Approved" : "Pending", { exact: false });
+      await expect(card.locator("[data-approval-status]")).toHaveText(policy === "any" ? /^Approved/ : "Pending");
     }
     await review.getByText("Decision history", { exact: true }).click();
     await expect(review.getByRole("list", { name: "Decision history" })).toContainText("Bea Reviewer");

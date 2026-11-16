@@ -167,6 +167,23 @@ AND ($5::view_visibility='public' OR owner_id=$6::uuid)
 RETURNING `+columns, in.SpaceID, in.ItemID, in.Type, name, in.Visibility, actor.ID, in.Config))
 }
 
+// Visible reports whether the actor can read the saved view. Personal state keyed by a view id uses it to refuse ids
+// that do not exist or that the actor cannot see; it returns ErrMissing for both.
+func Visible(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID) error {
+	_, _, err := read(ctx, tx, actor, id)
+	return err
+}
+
+// WorkspaceVisible reports whether the actor can view a Space or a container item with this id. Personal state keyed
+// by a workspace uses it; ErrMissing means no such workspace is visible to the actor.
+func WorkspaceVisible(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID) error {
+	if _, err := authorize(ctx, tx, actor, Scope{SpaceID: &id}); err == nil {
+		return nil
+	}
+	_, err := authorize(ctx, tx, actor, Scope{ItemID: &id})
+	return err
+}
+
 func read(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID) (View, policy.Caps, error) {
 	v, err := scan(tx.QueryRow(ctx, "SELECT "+columns+" FROM views WHERE id=$1 AND (visibility='public' OR owner_id=$2::uuid)", id, actor.ID))
 	if errors.Is(err, pgx.ErrNoRows) {

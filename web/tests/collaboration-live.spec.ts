@@ -105,7 +105,7 @@ test("SSE reconnect resync refreshes a task in a second browser session", async 
 
     resume();
     await expect(watcher.getByRole("heading", { name: "During disconnect", exact: true })).toBeVisible({ timeout: 3000 });
-    await expect(watcher.getByText("Live", { exact: true })).toBeVisible();
+    await expect(watcher.locator('[data-live="true"]')).toBeAttached();
 
     await title.fill("After reconnect");
     await title.press("Enter");
