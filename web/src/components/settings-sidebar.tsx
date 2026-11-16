@@ -20,9 +20,11 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
     { title: t("settings.nav.personal"), items: [
       { to: "/settings/profile", label: t("settings.profile.title") },
       { to: "/settings/work-schedule", label: t("settings.workSchedule.title") },
+      { to: "/settings/language", label: t("settings.nav.language") },
+      { to: "/settings/work-preferences", label: t("settings.nav.work") },
       { to: "/settings/account", label: t("settings.account.title") },
-      { to: "/settings/profile", hash: "email", label: t("nav.account.emailPrefs") },
-      { to: "/settings/profile", hash: "appearance", label: t("nav.account.appearance") },
+      { to: "/settings/email", label: t("nav.account.emailPrefs") },
+      { to: "/settings/appearance", label: t("nav.account.appearance") },
       { to: "/settings/security", label: t("settings.security.title") },
     ] },
     { title: t("settings.nav.accountManagement"), items: [

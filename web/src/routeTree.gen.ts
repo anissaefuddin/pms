@@ -46,9 +46,12 @@ import { Route as AppRequestsFormIdRouteImport } from './routes/_app/requests.$f
 import { Route as AppRequestsMineRouteImport } from './routes/_app/requests.mine'
 import { Route as AppSettingsIndexRouteImport } from './routes/_app/settings/index'
 import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/account'
+import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
 import { Route as AppSettingsAppsRouteImport } from './routes/_app/settings/apps'
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
+import { Route as AppSettingsEmailRouteImport } from './routes/_app/settings/email'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
+import { Route as AppSettingsLanguageRouteImport } from './routes/_app/settings/language'
 import { Route as AppSettingsOwnershipRouteImport } from './routes/_app/settings/ownership'
 import { Route as AppSettingsPolicyRouteImport } from './routes/_app/settings/policy'
 import { Route as AppSettingsProfileRouteImport } from './routes/_app/settings/profile'
@@ -59,6 +62,7 @@ import { Route as AppSettingsRolesRouteImport } from './routes/_app/settings/rol
 import { Route as AppSettingsSecurityRouteImport } from './routes/_app/settings/security'
 import { Route as AppSettingsSsoRouteImport } from './routes/_app/settings/sso'
 import { Route as AppSettingsUsersRouteImport } from './routes/_app/settings/users'
+import { Route as AppSettingsWorkPreferencesRouteImport } from './routes/_app/settings/work-preferences'
 import { Route as AppSettingsWorkScheduleRouteImport } from './routes/_app/settings/work-schedule'
 import { Route as AppSettingsWorkflowsRouteImport } from './routes/_app/settings/workflows'
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces.$spaceId'
@@ -255,6 +259,11 @@ const AppSettingsAccountRoute = AppSettingsAccountRouteImport.update({
   path: '/account',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsAppearanceRoute = AppSettingsAppearanceRouteImport.update({
+  id: '/appearance',
+  path: '/appearance',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsAppsRoute = AppSettingsAppsRouteImport.update({
   id: '/apps',
   path: '/apps',
@@ -265,9 +274,19 @@ const AppSettingsAuditRoute = AppSettingsAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsEmailRoute = AppSettingsEmailRouteImport.update({
+  id: '/email',
+  path: '/email',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsItemTypesRoute = AppSettingsItemTypesRouteImport.update({
   id: '/item-types',
   path: '/item-types',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
+const AppSettingsLanguageRoute = AppSettingsLanguageRouteImport.update({
+  id: '/language',
+  path: '/language',
   getParentRoute: () => AppSettingsRoute,
 } as any)
 const AppSettingsOwnershipRoute = AppSettingsOwnershipRouteImport.update({
@@ -320,6 +339,12 @@ const AppSettingsUsersRoute = AppSettingsUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsWorkPreferencesRoute =
+  AppSettingsWorkPreferencesRouteImport.update({
+    id: '/work-preferences',
+    path: '/work-preferences',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
 const AppSettingsWorkScheduleRoute = AppSettingsWorkScheduleRouteImport.update({
   id: '/work-schedule',
   path: '/work-schedule',
@@ -406,9 +431,12 @@ export interface FileRoutesByFullPath {
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/email': typeof AppSettingsEmailRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
+  '/settings/language': typeof AppSettingsLanguageRoute
   '/settings/ownership': typeof AppSettingsOwnershipRoute
   '/settings/policy': typeof AppSettingsPolicyRoute
   '/settings/profile': typeof AppSettingsProfileRoute
@@ -419,6 +447,7 @@ export interface FileRoutesByFullPath {
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/sso': typeof AppSettingsSsoRoute
   '/settings/users': typeof AppSettingsUsersRouteWithChildren
+  '/settings/work-preferences': typeof AppSettingsWorkPreferencesRoute
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/settings/workflows': typeof AppSettingsWorkflowsRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
@@ -466,9 +495,12 @@ export interface FileRoutesByTo {
   '/requests/$formId': typeof AppRequestsFormIdRoute
   '/requests/mine': typeof AppRequestsMineRoute
   '/settings/account': typeof AppSettingsAccountRoute
+  '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/email': typeof AppSettingsEmailRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
+  '/settings/language': typeof AppSettingsLanguageRoute
   '/settings/ownership': typeof AppSettingsOwnershipRoute
   '/settings/policy': typeof AppSettingsPolicyRoute
   '/settings/profile': typeof AppSettingsProfileRoute
@@ -478,6 +510,7 @@ export interface FileRoutesByTo {
   '/settings/roles': typeof AppSettingsRolesRoute
   '/settings/security': typeof AppSettingsSecurityRoute
   '/settings/sso': typeof AppSettingsSsoRoute
+  '/settings/work-preferences': typeof AppSettingsWorkPreferencesRoute
   '/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/settings/workflows': typeof AppSettingsWorkflowsRoute
   '/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
@@ -528,9 +561,12 @@ export interface FileRoutesById {
   '/_app/requests/$formId': typeof AppRequestsFormIdRoute
   '/_app/requests/mine': typeof AppRequestsMineRoute
   '/_app/settings/account': typeof AppSettingsAccountRoute
+  '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/apps': typeof AppSettingsAppsRoute
   '/_app/settings/audit': typeof AppSettingsAuditRoute
+  '/_app/settings/email': typeof AppSettingsEmailRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
+  '/_app/settings/language': typeof AppSettingsLanguageRoute
   '/_app/settings/ownership': typeof AppSettingsOwnershipRoute
   '/_app/settings/policy': typeof AppSettingsPolicyRoute
   '/_app/settings/profile': typeof AppSettingsProfileRoute
@@ -541,6 +577,7 @@ export interface FileRoutesById {
   '/_app/settings/security': typeof AppSettingsSecurityRoute
   '/_app/settings/sso': typeof AppSettingsSsoRoute
   '/_app/settings/users': typeof AppSettingsUsersRouteWithChildren
+  '/_app/settings/work-preferences': typeof AppSettingsWorkPreferencesRoute
   '/_app/settings/work-schedule': typeof AppSettingsWorkScheduleRoute
   '/_app/settings/workflows': typeof AppSettingsWorkflowsRoute
   '/_app/spaces/$spaceId': typeof AppSpacesSpaceIdRoute
@@ -591,9 +628,12 @@ export interface FileRouteTypes {
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/account'
+    | '/settings/appearance'
     | '/settings/apps'
     | '/settings/audit'
+    | '/settings/email'
     | '/settings/item-types'
+    | '/settings/language'
     | '/settings/ownership'
     | '/settings/policy'
     | '/settings/profile'
@@ -604,6 +644,7 @@ export interface FileRouteTypes {
     | '/settings/security'
     | '/settings/sso'
     | '/settings/users'
+    | '/settings/work-preferences'
     | '/settings/work-schedule'
     | '/settings/workflows'
     | '/spaces/$spaceId'
@@ -651,9 +692,12 @@ export interface FileRouteTypes {
     | '/requests/$formId'
     | '/requests/mine'
     | '/settings/account'
+    | '/settings/appearance'
     | '/settings/apps'
     | '/settings/audit'
+    | '/settings/email'
     | '/settings/item-types'
+    | '/settings/language'
     | '/settings/ownership'
     | '/settings/policy'
     | '/settings/profile'
@@ -663,6 +707,7 @@ export interface FileRouteTypes {
     | '/settings/roles'
     | '/settings/security'
     | '/settings/sso'
+    | '/settings/work-preferences'
     | '/settings/work-schedule'
     | '/settings/workflows'
     | '/spaces/$spaceId'
@@ -712,9 +757,12 @@ export interface FileRouteTypes {
     | '/_app/requests/$formId'
     | '/_app/requests/mine'
     | '/_app/settings/account'
+    | '/_app/settings/appearance'
     | '/_app/settings/apps'
     | '/_app/settings/audit'
+    | '/_app/settings/email'
     | '/_app/settings/item-types'
+    | '/_app/settings/language'
     | '/_app/settings/ownership'
     | '/_app/settings/policy'
     | '/_app/settings/profile'
@@ -725,6 +773,7 @@ export interface FileRouteTypes {
     | '/_app/settings/security'
     | '/_app/settings/sso'
     | '/_app/settings/users'
+    | '/_app/settings/work-preferences'
     | '/_app/settings/work-schedule'
     | '/_app/settings/workflows'
     | '/_app/spaces/$spaceId'
@@ -1014,6 +1063,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAccountRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/appearance': {
+      id: '/_app/settings/appearance'
+      path: '/appearance'
+      fullPath: '/settings/appearance'
+      preLoaderRoute: typeof AppSettingsAppearanceRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/apps': {
       id: '/_app/settings/apps'
       path: '/apps'
@@ -1028,11 +1084,25 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAuditRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/email': {
+      id: '/_app/settings/email'
+      path: '/email'
+      fullPath: '/settings/email'
+      preLoaderRoute: typeof AppSettingsEmailRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/item-types': {
       id: '/_app/settings/item-types'
       path: '/item-types'
       fullPath: '/settings/item-types'
       preLoaderRoute: typeof AppSettingsItemTypesRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/language': {
+      id: '/_app/settings/language'
+      path: '/language'
+      fullPath: '/settings/language'
+      preLoaderRoute: typeof AppSettingsLanguageRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/ownership': {
@@ -1103,6 +1173,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/settings/users'
       preLoaderRoute: typeof AppSettingsUsersRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/work-preferences': {
+      id: '/_app/settings/work-preferences'
+      path: '/work-preferences'
+      fullPath: '/settings/work-preferences'
+      preLoaderRoute: typeof AppSettingsWorkPreferencesRouteImport
       parentRoute: typeof AppSettingsRoute
     }
     '/_app/settings/work-schedule': {
@@ -1193,9 +1270,12 @@ const AppSettingsUsersRouteWithChildren =
 
 interface AppSettingsRouteChildren {
   AppSettingsAccountRoute: typeof AppSettingsAccountRoute
+  AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsAppsRoute: typeof AppSettingsAppsRoute
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
+  AppSettingsEmailRoute: typeof AppSettingsEmailRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
+  AppSettingsLanguageRoute: typeof AppSettingsLanguageRoute
   AppSettingsOwnershipRoute: typeof AppSettingsOwnershipRoute
   AppSettingsPolicyRoute: typeof AppSettingsPolicyRoute
   AppSettingsProfileRoute: typeof AppSettingsProfileRoute
@@ -1206,6 +1286,7 @@ interface AppSettingsRouteChildren {
   AppSettingsSecurityRoute: typeof AppSettingsSecurityRoute
   AppSettingsSsoRoute: typeof AppSettingsSsoRoute
   AppSettingsUsersRoute: typeof AppSettingsUsersRouteWithChildren
+  AppSettingsWorkPreferencesRoute: typeof AppSettingsWorkPreferencesRoute
   AppSettingsWorkScheduleRoute: typeof AppSettingsWorkScheduleRoute
   AppSettingsWorkflowsRoute: typeof AppSettingsWorkflowsRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
@@ -1213,9 +1294,12 @@ interface AppSettingsRouteChildren {
 
 const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAccountRoute: AppSettingsAccountRoute,
+  AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsAppsRoute: AppSettingsAppsRoute,
   AppSettingsAuditRoute: AppSettingsAuditRoute,
+  AppSettingsEmailRoute: AppSettingsEmailRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
+  AppSettingsLanguageRoute: AppSettingsLanguageRoute,
   AppSettingsOwnershipRoute: AppSettingsOwnershipRoute,
   AppSettingsPolicyRoute: AppSettingsPolicyRoute,
   AppSettingsProfileRoute: AppSettingsProfileRoute,
@@ -1226,6 +1310,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsSecurityRoute: AppSettingsSecurityRoute,
   AppSettingsSsoRoute: AppSettingsSsoRoute,
   AppSettingsUsersRoute: AppSettingsUsersRouteWithChildren,
+  AppSettingsWorkPreferencesRoute: AppSettingsWorkPreferencesRoute,
   AppSettingsWorkScheduleRoute: AppSettingsWorkScheduleRoute,
   AppSettingsWorkflowsRoute: AppSettingsWorkflowsRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,

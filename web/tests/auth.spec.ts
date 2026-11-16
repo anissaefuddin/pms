@@ -147,7 +147,7 @@ test.describe("app shell", () => {
   test("security page changes the password in a dialog", async ({ page }) => {
     const calls = await mockApi(page, { "GET /me": { body: me }, "POST /auth/password/change": { status: 204 } });
     await page.goto("/settings/security");
-    await expect(page.getByRole("heading", { name: "Sign-in & security", level: 2 })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Sign-in & security", level: 1 })).toBeVisible();
     await page.getByRole("button", { name: "Change password" }).click();
     const dialog = page.getByRole("dialog", { name: "Change password" });
     await expect(dialog).toBeVisible();

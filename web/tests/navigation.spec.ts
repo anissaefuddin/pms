@@ -20,10 +20,10 @@ test("the profile checklist pins shortcuts, the sidebar shows exactly the checke
   await page.goto("/");
   const nav = page.getByRole("navigation", { name: "Main navigation" });
   await expect(nav.getByRole("button", { name: "Stream" })).toBeVisible();
-  await page.goto("/settings/profile");
-  await page.getByRole("checkbox", { name: "Reports" }).click();
-  await page.getByRole("checkbox", { name: "Stream" }).click();
-  await page.getByRole("checkbox", { name: "Workload" }).click();
+  await page.goto("/settings/appearance");
+  await page.getByRole("button", { name: "Add Reports to the sidebar" }).click();
+  await page.getByRole("button", { name: "Remove Stream from the sidebar" }).click();
+  await page.getByRole("button", { name: "Add Workload to the sidebar" }).click();
   await page.getByRole("link", { name: "Back to workspace" }).click();
   await expect(nav.getByRole("button", { name: "Reports" })).toBeVisible();
   await expect(nav.getByRole("button", { name: "Stream" })).toHaveCount(0);

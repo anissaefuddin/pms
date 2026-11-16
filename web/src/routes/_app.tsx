@@ -94,7 +94,10 @@ function AppShell() {
     <div className="flex min-h-screen">
       <div className="sticky top-0 hidden self-start shrink-0 lg:block">{inSettings ? <SettingsSidebar me={me.data} /> : <Sidebar key={me.data.id} me={me.data} />}</div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar inSettings={inSettings} navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />
+        {inSettings
+          // Settings has its own page header (breadcrumb, mobile menu) and no top bar; the palette stays mounted for Ctrl+K.
+          ? <SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />
+          : <Topbar live={live} navigation={<MobileSidebar me={me.data} />} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />}
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}

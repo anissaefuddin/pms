@@ -17,6 +17,7 @@ import {
   readOpenSpaces, readWidth, sanitizePinOrder, toggleOpen, writeOpenSpaces, writeWidth, type ShortcutId,
 } from "@/lib/sidebar-prefs";
 import { Button } from "./ui/button";
+import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
@@ -156,9 +157,13 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
         <div className={`flex shrink-0 items-center gap-1 ${collapsed ? "flex-col" : "ml-auto"}`}>
           <ProfileMenu compact={collapsed} />
           {!collapsed && !mobile && <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-nav-hover" />}
-          {!mobile && <Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed}
-            aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")} title={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
-            className="shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted">{collapsed ? <ChevronRight /> : <ChevronLeft />}</Button>}
+          {!mobile && <Tooltip>
+            <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed} aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
+              className="shrink-0 bg-transparent text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted" />}>
+              {collapsed ? <ChevronRight /> : <ChevronLeft />}
+            </TooltipTrigger>
+            <TooltipContent>{t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}</TooltipContent>
+          </Tooltip>}
         </div>
       </div>
       <nav className="space-y-1" aria-label={t("nav.main.label")}>
@@ -319,12 +324,16 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
   </li>;
 }
 
-function ItemTree({ id, space = false }: { id: string; space?: boolean }) {
+function ItemTree({ id, space = false, onEmpty }: { id: string; space?: boolean; onEmpty?: () => void }) {
   const { t } = useTranslation();
   const query = useQuery({
     queryKey: [...(space ? itemKeys.root(id) : itemKeys.children(id)), "sidebar"],
     queryFn: () => listItems(space ? `/api/v1/spaces/${id}/items` : `/api/v1/items/${id}/children`, "manual", "project,folder"),
   });
+  const hasBranches = query.data?.some((item: Item) => item.type !== "task");
+  useEffect(() => {
+    if (query.isSuccess && !hasBranches) onEmpty?.();
+  }, [query.isSuccess, hasBranches, onEmpty]);
   return <ul>
     {query.isPending && <li className="p-1 text-xs" role="status">{t("items.loading")}</li>}
     {query.isError && <li><Button variant="link" size="sm" className="text-nav-text" onClick={() => void query.refetch()}>{t("items.retry")}</Button></li>}
@@ -335,18 +344,20 @@ function ItemTree({ id, space = false }: { id: string; space?: boolean }) {
 function Branch({ id, name, type }: { id: string; name: string; type?: string }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
+  // Once expanded and found empty, the item has no children: the toggle goes away and the title keeps its indent.
+  const [leaf, setLeaf] = useState(false);
   return <li>
     <div className="flex min-w-0 items-center">
-      <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={expanded}
+      {leaf ? <span aria-hidden="true" className="size-7 shrink-0" /> : <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={expanded}
         aria-label={t(expanded ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={() => setExpanded(!expanded)} onKeyDown={(event) => {
           if (event.key === "ArrowRight" || event.key === "ArrowLeft") {
             event.preventDefault();
             setExpanded(event.key === "ArrowRight");
           }
-        }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>
+        }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>}
       <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} activeProps={activeLink}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
     </div>
-    {expanded && <div className="ml-3 border-l border-nav-hover pl-1"><ItemTree id={id} /></div>}
+    {expanded && <div className="ml-3 border-l border-nav-hover pl-1"><ItemTree id={id} onEmpty={() => { setLeaf(true); setExpanded(false); }} /></div>}
   </li>;
 }

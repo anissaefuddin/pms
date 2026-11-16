@@ -53,15 +53,20 @@ test("profile saves preferences and applies theme and density", async ({ page })
   } });
   await page.goto("/settings/profile");
   await page.getByLabel("Company").fill("Pilot Ltd");
-  await page.getByLabel(/^Theme/).selectOption("dark");
-  await page.getByRole("button", { name: /Comfortable/ }).click(); // density is a visual choice now
-  await page.getByLabel("Send comment shortcut").selectOption("enter");
-  await page.getByRole("button", { name: "Save profile" }).click();
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toMatchObject({ company: "Pilot Ltd" });
+  await page.goto("/settings/appearance");
+  await page.getByRole("button", { name: "Dark", exact: true }).click(); // theme and density are visual choices now
+  await page.getByRole("button", { name: /^Comfortable/ }).click();
+  await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");
   await expect(page.locator("html")).toHaveAttribute("data-density", "comfortable");
-  expect(calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body)
-    .toMatchObject({ company: "Pilot Ltd", theme: "dark", density: "comfortable" });
-  await page.reload();
+  await expect.poll(() => calls.filter((call) => call.method === "PATCH" && call.path === "/me").map((call) => call.body)).toContainEqual(expect.objectContaining({ theme: "dark", density: "comfortable" }));
+  await page.goto("/settings/work-preferences");
+  await page.getByLabel("Send comment shortcut").selectOption("enter");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect.poll(() => calls.filter((call) => call.method === "PATCH" && call.path === "/me").at(-1)?.body).toMatchObject({ comment_shortcut: "enter" });
+  await page.goto("/settings/profile");
   await expect(page.getByLabel("Company")).toHaveValue("Pilot Ltd");
   await page.goto(`/tasks/${item.id}`);
   const editor = page.getByRole("region", { name: "Comments" }).locator('[contenteditable="true"][aria-label="Comment"]');
@@ -121,14 +126,16 @@ test("account page lists seats and administrators; email and task defaults save"
   } });
   await page.goto("/settings/account");
   await expect(page.getByText("Pilot Co")).toBeVisible();
-  await expect(page.getByText("2 active · 1 invited · 2 available of 5 seats")).toBeVisible();
+  await expect(page.getByText("/ 5 seats used")).toBeVisible();
+  await expect(page.getByText("Available", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "admin@example.test" })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.goto("/settings/profile");
-  await page.getByRole("checkbox", { name: "Scheduled report emails" }).uncheck();
+  await page.goto("/settings/email");
+  await page.getByRole("switch", { name: "Scheduled report emails" }).click();
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toMatchObject({ email_muted: ["report"] });
+  await page.goto("/settings/work-preferences");
   await page.getByLabel("Default task duration (days)").fill("3");
-  await page.getByRole("button", { name: "Save profile" }).click();
+  await page.getByRole("button", { name: "Save changes" }).click();
   await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toMatchObject({ default_task_duration_days: 3 });
 });
 

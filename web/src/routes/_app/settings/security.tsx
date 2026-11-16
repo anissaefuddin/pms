@@ -1,36 +1,54 @@
 import { useState, type FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
+import { Mail, KeyRound, ShieldCheck, AppWindow, ChevronRight } from "lucide-react";
 import { api } from "@/lib/api";
+import { useProfile } from "@/lib/profile";
 import { FormError } from "@/components/auth/form-error";
 import { TextField } from "@/components/auth/text-field";
 import { Button } from "@/components/ui/button";
 import { SsoIdentities } from "@/components/sso-identities";
 import { TwoFactorSettings } from "@/components/two-factor-settings";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { SettingsRow, SettingsSection } from "@/components/settings/settings-ui";
 
 export const Route = createFileRoute("/_app/settings/security")({ component: Security });
 
+// Sign-in and security as rows: each item states what it is and offers the action on the right.
 function Security() {
   const { t } = useTranslation();
+  const me = useProfile();
   const [open, setOpen] = useState(false);
   return (
-    <section className="max-w-xl">
-      <h2 className="text-lg font-semibold">{t("settings.security.title")}</h2>
-      <p className="mt-1 text-sm text-muted-foreground">{t("settings.security.description")}</p>
-      <div className="mt-6">
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger render={<Button variant="outline" />}>{t("settings.security.changePassword")}</DialogTrigger>
-          <DialogContent>
-            <DialogTitle className="text-lg font-semibold">{t("settings.security.changePassword")}</DialogTitle>
-            <ChangePassword onDone={() => setOpen(false)} />
-          </DialogContent>
-        </Dialog>
+    <div className="max-w-3xl space-y-8">
+      <SettingsSection title={t("settings.security.authentication")} description={t("settings.security.description")}>
+        <div>
+          <SettingsRow icon={<Mail />} label={t("settings.security.email")} hint={t("settings.security.emailHint")}>
+            <span className="text-sm text-muted-foreground">{me?.email}</span>
+          </SettingsRow>
+          <SettingsRow icon={<KeyRound />} label={t("settings.security.password")} hint={t("settings.security.passwordHint")}>
+            <Dialog open={open} onOpenChange={setOpen}>
+              <DialogTrigger render={<Button variant="outline" />}>{t("settings.security.changePassword")}</DialogTrigger>
+              <DialogContent>
+                <DialogTitle className="text-lg font-semibold">{t("settings.security.changePassword")}</DialogTitle>
+                <ChangePassword onDone={() => setOpen(false)} />
+              </DialogContent>
+            </Dialog>
+          </SettingsRow>
+          <SettingsRow icon={<ShieldCheck />} label={t("settings.security.twoFactor")} hint={t("settings.security.twoFactorHint")}>
+            <a href="#two-factor" className="text-sm underline">{t("settings.security.manage")}</a>
+          </SettingsRow>
+          <SettingsRow icon={<AppWindow />} label={t("settings.security.connectedApps")} hint={t("settings.security.connectedAppsHint")}>
+            <Link to="/settings/apps" className="inline-flex items-center gap-1 text-sm underline">{t("settings.security.manage")}<ChevronRight className="size-4" /></Link>
+          </SettingsRow>
+        </div>
+      </SettingsSection>
+      <div id="two-factor" className="scroll-mt-4">
+        <TwoFactorSettings />
       </div>
-      <TwoFactorSettings />
       <SsoIdentities />
-    </section>
+    </div>
   );
 }
 

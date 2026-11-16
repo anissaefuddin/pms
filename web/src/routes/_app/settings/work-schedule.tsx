@@ -40,7 +40,7 @@ const weekdayFormat: Intl.DateTimeFormatOptions = { weekday: "narrow" };
 const mondayFirst = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i));
 
 /** Tailwind class strings for calendar days (kept as constants so every class is listed literally). */
-const dayTone = { exception: "bg-warning/30 text-foreground", working: "bg-card ring-1 ring-border", off: "bg-muted text-foreground" };
+const dayTone = { exception: "bg-warning/30 text-foreground", working: "text-foreground", off: "bg-muted text-foreground" };
 
 const dayKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
 
@@ -64,7 +64,7 @@ function AnnualCalendar({ year, days, holidays, disabled, onYear, onPick }: {
       <span className="min-w-16 text-center text-base font-semibold tabular-nums">{year}</span>
       <Button type="button" variant="outline" size="sm" aria-label={t("settings.workSchedule.nextYear")} onClick={() => onYear(year + 1)}>›</Button>
       <span className="ml-auto flex flex-wrap gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-card ring-1 ring-border" aria-hidden="true" />{t("settings.workSchedule.legendWorking")}</span>
+        <span className="flex items-center gap-1"><span className="size-3 rounded-sm border border-muted-foreground/40" aria-hidden="true" />{t("settings.workSchedule.legendWorking")}</span>
         <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-muted" aria-hidden="true" />{t("settings.workSchedule.legendOff")}</span>
         <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-warning/30" aria-hidden="true" />{t("settings.workSchedule.legendException")}</span>
       </span>

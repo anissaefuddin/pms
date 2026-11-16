@@ -69,7 +69,7 @@ export function ProfileMenu({ compact = false }: { compact?: boolean }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" className={compact ? "size-8 shrink-0 p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text" : "h-8 shrink-0 gap-1 px-1 text-nav-text hover:bg-nav-hover hover:text-nav-text"} />}>
+        <DropdownMenuTrigger render={<Button variant="ghost" className={compact ? "size-8 shrink-0 bg-transparent p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover" : "h-8 shrink-0 gap-1 bg-transparent px-1 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover"} />}>
           <span className="sr-only">{t("nav.profile.label")}</span>
           <span aria-hidden="true" className="grid size-7 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
           {!compact && <ChevronDown aria-hidden="true" className="size-3.5 text-nav-muted" />}
@@ -84,7 +84,7 @@ export function ProfileMenu({ compact = false }: { compact?: boolean }) {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}><Settings />{t("nav.settings.label")}</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile", hash: "appearance" })}><Palette />{t("nav.account.appearance")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings/appearance" })}><Palette />{t("nav.account.appearance")}</DropdownMenuItem>
             <div className="flex items-center gap-2 px-1.5 py-1 text-sm">
               <Languages className="size-4 shrink-0" aria-hidden="true" />
               <span className="flex-1">{t("nav.profile.language")}</span>
