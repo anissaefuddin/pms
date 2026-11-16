@@ -66,3 +66,24 @@ No frame timing, render counts or memory measurements were taken. Performance cl
 | Live: invalid schedule (due before start) | 422, no change, version unchanged. |
 | Live: personal view isolation | Admin and reader get 404 on the editor's personal view (GET and PATCH). Public view visible to all three. |
 | Live: view hide persistence | Hidden through preferences API, visible as hidden after reload, restored. |
+
+## 7. Performance at 500 items (measured, local)
+
+Fixture: project "[UXQA-PERF] 500 items" on the local `pms_qa` database. Five folders with 495 tasks (about 99 per folder), plus five folders, so 500 items. Only the 50-item and 200-item fixtures were not created in this pass; 500 is the measured size.
+
+Measured with Playwright (Chromium, 1440×900, light), requests counted from the network log. Times are to network idle on one run, not averaged.
+
+| View | Children requests before shared cache | Children requests after | Time to network idle (after) |
+|---|---|---|---|
+| Table | 11 | 11 | 947 ms |
+| Board | 22 (7+5 page-1 + page-2 across two walks) | 12 | 736 ms |
+| Calendar | 11 | 11 | 804 ms |
+| Gantt | 11 | 11 | 796 ms |
+
+Notes:
+- The before-numbers for Board include a second walk from the project header milestone KPI. Fix: one cached fetch per folder (`subtreeChildren` in `lib/items.ts`), shared by the header and the flat views.
+- "Page 2+" requests are real pagination (about 99 items per folder, 50 per page). They are not duplicates.
+- Filter response time: not measured reliably in this pass. The table filter test found 0 `tbody` rows, which points to the selector, not the filter. NOT RUN.
+- View-switch time and mutation behaviour: NOT RUN.
+- 50- and 200-item measurements: NOT RUN.
+- No timing comparison against the pre-change build was made, so no performance improvement is claimed.

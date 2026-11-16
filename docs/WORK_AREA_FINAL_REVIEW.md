@@ -111,3 +111,9 @@ Overall status: **CHANGES REQUIRED** (Wave 1 agents B, C, D (except as noted), a
 - Job `test`, step "Generated code is up to date" failed. Cause: `server/internal/dbgen/models.go` was stale. The `ApprovalEvent` struct lacked `attachment_id` and `attachment_version` from migration 00325 (commit 3867409). The other checks passed (`authorization-matrix`, `parity-e2e`).
 - Fix applied locally, not committed: regenerated with `sqlc generate` (v1.31.1). Only `models.go` changed. `gofmt`, `go vet`, and approval and file-review tests pass.
 - Lesson recorded for the next pass: run the generated-code check before pushing.
+
+### Phase 3.1 update (this pass, uncommitted)
+
+- A5 performance at 500 items: measured. Board children requests reduced from 22 to 12 by a shared cached child fetch. Filter and mutation timing NOT RUN. 50 and 200 item fixtures NOT RUN.
+- E visual audit: automated capture of 7 views at three viewports, light and dark (42 screenshots). No horizontal overflow. Three findings recorded (VIS-01 P3 open). Density, Stream, All views, ItemDetail, dialogs, and approval card NOT RUN.
+- Overall status unchanged: **CHANGES REQUIRED**.

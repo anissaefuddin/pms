@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { components } from "@/api/schema";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
-import { isProjectDetail, itemKeys, listItems, listSubtree, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
+import { isProjectDetail, itemKeys, listItems, listSubtree, subtreeChildren, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
@@ -69,7 +69,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       const query = (path: string) => listItems(path, sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined);
       const top = await query(base + (parent ? "/children" : "/items"));
       // Space-level Boards and Calendars keep their top-level cards (projects); the walk applies inside a project or folder.
-      return flat && parent ? listSubtree(top, (id) => query(`/api/v1/items/${id}/children`)) : top;
+      return flat && parent ? listSubtree(top, (id) => subtreeChildren(qc, id)) : top;
     },
   });
   const fieldQueries = useQuery({

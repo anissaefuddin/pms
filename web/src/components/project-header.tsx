@@ -1,12 +1,12 @@
 import { Link } from "@tanstack/react-router";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ChevronDown, Info, MoreHorizontal, Plus, Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 import { formatDate, useProfile } from "@/lib/profile";
 import { useSpace } from "@/lib/space-queries";
-import { itemKeys, listItems, listSubtree, type Item } from "@/lib/items";
+import { itemKeys, listSubtree, subtreeChildren, type Item } from "@/lib/items";
 import { inProgressStatusIds, projectProgressPercent, tallyCounts, upcomingMilestones } from "@/lib/workspace-metrics";
 import type { components as analyticsTypes } from "@/api/schema";
 import { useId, useState } from "react";
@@ -52,10 +52,11 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
   const progress = projectProgressPercent(item, kids);
   const today = new Date().toISOString().slice(0, 10);
   // A2: milestones anywhere in the subtree. The walk is shared with the Board and Calendar; the server has no milestone count.
+  const qc = useQueryClient();
   const subtree = useQuery({
     queryKey: [...itemKeys.all, "milestones", item.id, kids.map((kid) => kid.id).join(",")],
     enabled: kids.length > 0,
-    queryFn: () => listSubtree(kids, (id) => listItems(`/api/v1/items/${id}/children`)),
+    queryFn: () => listSubtree(kids, (id) => subtreeChildren(qc, id)),
   });
   const milestones = upcomingMilestones(subtree.data ?? [], today);
   const range = [item.start_date, item.due_date].filter(Boolean).map((d) => formatDate(d, profile)).join(" – ");

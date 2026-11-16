@@ -27,3 +27,17 @@ Status: **PARTIAL**. One resolution and one theme were checked in the built-in b
 ## 3. Not evaluated
 
 Board, Chart, item detail panel, approval card, activity and comments were not visually audited in this pass. Scores are not given for them (NOT EVALUATED).
+
+## 4. Automated capture (this pass)
+
+Method: Chromium via Playwright against the local app with the `[UXQA]` seed. Seven project views × three viewports (1280×800, 1440×900, 1920×1080) × light and dark = 42 screenshots. Stored locally under the session scratch folder, not in the repository. Compact and comfortable density were NOT RUN. Stream, the All views menu, ItemDetail, creation dialogs, and the approval card were NOT RUN.
+
+Automatic checks: no horizontal page overflow in any of the 42 captures.
+
+Findings from reviewing the captures:
+
+| ID | Severity | Page | Observation | Proposed fix | Status |
+|---|---|---|---|---|---|
+| VIS-01 | P3 | Calendar, month, 1920 light | "+N more" links sit tight under the lowest event lane in dense weeks | Reserve height for the overflow row | OPEN |
+| VIS-02 | P3 | Board, dark | Column header shows the task/milestone split and the milestone badge. Readable. | none | OK |
+| VIS-03 | P3 | Calendar, week rows | Long multi-week bars cross week boundaries with continuation markers. Readable. | none | OK |

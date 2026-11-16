@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import type { components } from "@/api/schema";
 import type { Query } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -31,6 +32,11 @@ export function isProjectDetail(query: Query) {
 }
 
 /** Flat views (Calendar) need every item under the start list, not just the first folder level. Walks folders one level at a time. */
+/** Children of one container, cached under the item children key so the header and the flat views share one fetch. */
+export function subtreeChildren(qc: QueryClient, id: string): Promise<Item[]> {
+  return qc.ensureQueryData({ queryKey: [...itemKeys.children(id), "subtree"], queryFn: () => listItems(`/api/v1/items/${id}/children`), staleTime: 30_000 });
+}
+
 export async function listSubtree(start: Item[], childrenOf: (id: string) => Promise<Item[]>): Promise<Item[]> {
   const out: Item[] = [];
   const seen = new Set<string>();
