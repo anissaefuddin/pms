@@ -196,7 +196,9 @@
     "modeWeek": "Week",
     "mode": "Calendar mode",
     "prevWeek": "Previous week",
-    "nextWeek": "Next week"
+    "nextWeek": "Next week",
+    "continuesBefore": "continues from an earlier week",
+    "continuesAfter": "continues into a later week"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",

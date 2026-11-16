@@ -80,3 +80,35 @@ Temuan F1 sampai F4 sudah diperbaiki di kode dan diuji dengan `dev-lens-findings
 | E2E-04e | Chart | Agregat chart | Sama dengan KPI | NOT RUN: tidak ada view Chart di folder atau project QA ini | NOT RUN | - | - |
 
 Status item uji tetap In Progress setelah tes. Tidak ada data operasional yang diubah.
+
+### E2E-04d dan E2E-04e setelah deploy df3c6e6 (health 200, backup 20261116T023345Z)
+
+| Test ID | Page | Scenario | Expected | Actual | Status | Evidence | Defect reference |
+|---|---|---|---|---|---|---|---|
+| E2E-04d-cal | Folder, Calendar | Warna status pada item tanpa tanggal (daftar Unscheduled) | Chip memakai warna status In Progress | Chip "QA-E2E03 Task" bg-blue-100 text-blue-900 | PASS | DOM | - |
+| E2E-04d-gantt | Folder, Gantt | Warna status pada bar | Bar memakai warna status | NOT RUN: kedua item belum punya tanggal, bar lebar 0. Diuji setelah E2E-05 memberi jadwal | NOT RUN | - | - |
+| E2E-04e | Project, Chart | Agregat chart sama dengan KPI | Total 2, In Progress 1, New 1 | Total 2; In Progress 1 (50%); New 1 (50%) | PASS | teks chart | Chart sebelumnya FAIL (menghitung folder), diperbaiki di df3c6e6 |
+
+## E2E-05 di dev-lens (jadwal item uji QA-E2E03 Task)
+
+| Test ID | Page | Scenario | Expected | Actual | Status | Evidence | Defect reference |
+|---|---|---|---|---|---|---|---|
+| E2E-05a | Task, panel | Beri jadwal 18–20 Nov 2026 lewat Dates | Tersimpan | PATCH 200 untuk start dan finish; reload menampilkan 2026-11-18 – 2026-11-20 | PASS | network log, reload | - |
+| E2E-05b | Folder, Table | Start dan Finish pada baris | 2026-11-18 dan 2026-11-20 | Sesuai | PASS | teks baris | - |
+| E2E-05c | Folder, Gantt | Bar multi-hari dan warna status | Lebar 3 hari, warna In Progress | Bar summary lebar 108 px; fill gradasi biru (In Progress) | PASS | DOM | - |
+| E2E-05d | Folder, Calendar | Rentang event | Satu bar 18–20 Nov | Satu bar "QA-E2E03 Task, 2026-11-18 to 2026-11-20", lebar 347 px, tanpa duplikat | PASS | DOM | - |
+| E2E-05e | Task, panel | Jadwal tidak valid: finish 10 Nov sebelum start 18 Nov | Ditolak, data tidak berubah | UI menampilkan "Finish date must be on or after the start date"; tidak ada PATCH; setelah reload tetap 18–20 Nov | PASS (UI dan data) | alert, log, reload | Penolakan di sisi server belum diuji langsung |
+| E2E-05f | Gantt | Drag untuk menjadwal ulang | Tanggal berubah sesuai aturan | NOT RUN: tidak dijalankan untuk menghindari perubahan tambahan pada item uji | NOT RUN | - | - |
+
+## E2E-06 di dev-lens (kalender lintas minggu dan bulan, item uji QA-E2E03 Task)
+
+| Test ID | Page | Scenario | Expected | Actual | Status | Evidence | Defect reference |
+|---|---|---|---|---|---|---|---|
+| E2E-06a | Folder, Calendar | Item lintas minggu dan bulan (27 Nov – 2 Des 2026) | Dua segmen berlanjut, satu per baris minggu | Dua bar, lebar sama, di dua baris minggu | PASS | DOM | - |
+| E2E-06b | Folder, Calendar | Tanggal segmen | Sesuai rentang item | Label "2026-11-27 to 2026-12-02" pada kedua segmen | PASS | aria-label | - |
+| E2E-06c | Folder, Calendar | Identitas item, tanpa duplikat | Satu item di Table | Satu baris di Table; dua segmen di Calendar berasal dari satu item | PASS | Table dan DOM | - |
+| E2E-06d | Folder, Calendar | Penanda lanjutan | Label aksesibel dalam kata-kata | Label menampilkan kunci mentah "views.calendar.continuesAfter" | FAIL (P2) | aria-label | Kunci i18n belum ada; diperbaiki di kode (continuesBefore/continuesAfter ditambahkan) dan belum di-deploy |
+| E2E-06e | Folder, Calendar | Pindah dengan keyboard (Alt+Right) | Rentang geser 1 hari, kedua segmen ikut | 27 Nov–2 Des menjadi 28 Nov–3 Des; Table ikut berubah | PASS | aria-label, Table | - |
+| E2E-06f | Calendar | Pindah dengan drag | Rentang berubah, tanpa item baru | NOT RUN | NOT RUN | - | - |
+| E2E-06g | Calendar | Pergantian bulan (navigasi ke Desember) | Segmen tampil di bulan berikutnya | NOT RUN | NOT RUN | - | - |
+| E2E-06h | Calendar | Overflow (+N) di dev-lens | Daftar terbuka dengan item tersembunyi | NOT RUN di dev-lens; tercakup tes mock (calendar-c2.spec) | NOT RUN | - | - |

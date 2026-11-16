@@ -40,3 +40,10 @@ test("a bar shows its details on keyboard focus, and the bar is described by tha
   await expect(card).toContainText("Assignees: Ann Lee");
   await expect(bar).toHaveAttribute("aria-describedby", /.+/);
 });
+
+test("E2E-06: calendar labels never expose a raw translation key", async ({ page }) => {
+  await page.setViewportSize({ width: 1400, height: 1200 });
+  await page.goto(path);
+  await expect(page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: /Design/ }).first()).toBeVisible();
+  await expect(page.locator("[aria-label*='views.calendar']")).toHaveCount(0);
+});
