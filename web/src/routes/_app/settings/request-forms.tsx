@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { ConfigureEmailsDialog } from "@/components/configure-emails-dialog";
 import { FormManagePanel } from "@/components/form-manage-panel";
 import { AdminPageHeader } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,19 @@ export const Route = createFileRoute("/_app/settings/request-forms")({ component
 function RequestFormsSettings() {
   const { t } = useTranslation();
   return <section className="space-y-5">
-    <AdminPageHeader description={t("forms.manage.description")} action={<NewFormButton />} />
+    <AdminPageHeader description={t("forms.manage.description")} action={<div className="flex flex-wrap gap-2"><ConfigureEmailsButton /><NewFormButton /></div>} />
     <FormManagePanel />
   </section>;
+}
+
+/** Secondary action: confirmation emails for any form, chosen in the dialog. */
+function ConfigureEmailsButton() {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  return <>
+    <Button variant="outline" onClick={() => setOpen(true)}>{t("forms.email.configure")}</Button>
+    {open && <ConfigureEmailsDialog open={open} onOpenChange={setOpen} />}
+  </>;
 }
 
 /** A form belongs to one Space, so creating one starts by choosing the Space; the builder opens on that Space. */

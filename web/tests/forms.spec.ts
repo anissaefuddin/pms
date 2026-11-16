@@ -193,6 +193,10 @@ test("preview renders the questions page by page and cannot submit", async ({ pa
   await expect(preview.getByText("Page 1 of 2")).toBeVisible();
   await expect(preview.getByRole("radio", { name: "Laptop" })).toBeVisible();
   await expect(preview.getByRole("button", { name: "Submit" })).toHaveCount(0);
+  // Next checks the required answer on this page first, so the preview fills "Your name" before moving on.
+  await preview.getByRole("button", { name: "Next" }).click();
+  await expect(preview.getByText("Your name", { exact: false }).first()).toBeVisible();
+  await preview.getByLabel(/Your name/).fill("Sam");
   await preview.getByRole("button", { name: "Next" }).click();
   await expect(preview.getByLabel("Notes")).toBeVisible();
   await expect(preview.getByRole("button", { name: "Submit" })).toBeDisabled();

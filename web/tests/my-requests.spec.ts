@@ -17,6 +17,7 @@ async function setup(page: Page, mine: any, extra: Record<string, any> = {}) {
 test("lists requests with a text status badge and a link to the item", async ({ page }) => {
   await setup(page, { body: { items: [row(1), row(2, { title: "Phone", status: status("Done", "green", "completed") })], next_cursor: null } });
   await page.goto("/requests/mine");
+  await page.getByRole("button", { name: /^All/ }).click();
   await expect(page.getByRole("heading", { name: "My requests" })).toBeVisible();
   const first = page.getByRole("listitem").filter({ hasText: "Laptop 1" });
   await expect(first.getByText("In review")).toBeVisible();
@@ -120,3 +121,16 @@ for (const colorScheme of ["light", "dark"] as const) {
     });
   });
 }
+
+test("Active is the default view; Closed shows the rest and All shows everything", async ({ page }) => {
+  await setup(page, { body: { items: [row(1), row(2, { title: "Phone", status: status("Done", "green", "completed") })], next_cursor: null } });
+  await page.goto("/requests/mine");
+  await expect(page.getByRole("link", { name: "Laptop 1" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Phone" })).toHaveCount(0);
+  await page.getByRole("button", { name: /^Closed/ }).click();
+  await expect(page.getByRole("link", { name: "Phone" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Laptop 1" })).toHaveCount(0);
+  await page.getByRole("button", { name: /^All/ }).click();
+  await expect(page.getByRole("link", { name: "Laptop 1" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /^All/ })).toHaveAttribute("aria-pressed", "true");
+});

@@ -178,9 +178,24 @@ for (const scheme of ["light", "dark"] as const) {
     await expect(page.getByText("Ask IT")).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.goto(`/requests/${fid}`);
+    // Next checks the page first: the empty required answer is reported here and the summary takes focus.
     await page.getByRole("button", { name: "Next" }).click();
-    await page.getByRole("button", { name: "Submit" }).click();
     await expect(page.getByRole("alert").filter({ hasText: "problem" })).toBeFocused();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 }
+
+test("progress lists each page; Next checks only the required answers on this page", async ({ page }) => {
+  await setup(page);
+  await page.goto(`/requests/${fid}`);
+  const progress = page.getByRole("navigation", { name: "Form progress" });
+  await expect(progress.getByText("1. Basics")).toBeVisible();
+  await expect(progress.getByText("2. Files")).toBeVisible();
+  await expect(progress.locator("[aria-current=step]")).toHaveText("1. Basics");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("alert")).toContainText("Subject");
+  await expect(progress.locator("[aria-current=step]")).toHaveText("1. Basics");
+  await page.getByLabel(/Subject/).fill("Laptop please");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(progress.locator("[aria-current=step]")).toHaveText("2. Files");
+});
