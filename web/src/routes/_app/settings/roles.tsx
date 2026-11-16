@@ -9,8 +9,11 @@ import { CAPABILITIES, roleKeys, useCustomRoles, type Capability, type CustomRol
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PermissionMatrix } from "@/components/permission-matrix";
 
 export const Route = createFileRoute("/_app/settings/roles")({ component: RolesPage });
+
+const roleViews = ["list", "matrix"] as const;
 
 function RolesPage() {
   const { t } = useTranslation();
@@ -21,6 +24,7 @@ function RolesPage() {
   const [editing, setEditing] = useState<CustomRole | "new">();
   const [deleting, setDeleting] = useState<CustomRole>();
   const [error, setError] = useState("");
+  const [view, setView] = useState<(typeof roleViews)[number]>("list");
   if (profile && !admin) return <p role="alert">{t("roles.adminOnly")}</p>;
 
   async function remove() {
@@ -42,6 +46,16 @@ function RolesPage() {
       </div>
       <Button onClick={() => setEditing("new")}>{t("roles.new")}</Button>
     </header>
+    <div role="tablist" aria-label={t("roles.title")} className="flex gap-2 border-b">
+      {roleViews.map((key) => <button key={key} type="button" role="tab" aria-selected={view === key}
+        onClick={() => setView(key)} className={`-mb-px border-b-2 px-3 py-2 text-sm ${view === key ? "border-primary font-medium" : "border-transparent text-muted-foreground"}`}>
+        {key === "list" ? t("roles.tabs.list") : t("roles.tabs.matrix")}</button>)}
+    </div>
+    {view === "matrix" && roles.data && <PermissionMatrix caption={t("roles.tabs.matrix")}
+      columns={roles.data.map((role) => ({ id: role.id, label: role.name }))}
+      rows={CAPABILITIES.map((cap) => ({ id: cap, label: t(`roles.capability.${cap}`) }))}
+      allowed={(roleId, cap) => roles.data.find((role) => role.id === roleId)?.capabilities.includes(cap as Capability) ?? false} />}
+    {view === "list" && <>
     {roles.isPending && <p role="status" className="text-sm text-muted-foreground">{t("roles.loading")}</p>}
     {roles.isError && <p role="alert">{t("roles.error")}</p>}
     {roles.data?.length === 0 && <p role="status" className="rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">{t("roles.empty")}</p>}
@@ -66,6 +80,7 @@ function RolesPage() {
     <ConfirmDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(undefined)} error={error}
       title={t("roles.deleteTitle")} description={t("roles.deleteDescription", { name: deleting?.name ?? "" })}
       confirmLabel={t("roles.deleteConfirm")} cancelLabel={t("roles.cancel")} onConfirm={() => void remove()} />
+    </>}
   </section>;
 }
 

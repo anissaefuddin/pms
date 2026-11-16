@@ -415,5 +415,18 @@
   "nav.find": "Find settings",
   "nav.noMatch": "No settings match this search.",
   "profile.sidebarTheme.title": "Sidebar theme",
-  "profile.sidebarTheme.help": "Choose the colour of the sidebar. This choice is saved in this browser."
+  "profile.sidebarTheme.help": "Choose the colour of the sidebar. This choice is saved in this browser.",
+  "workSchedule.calendar": "Annual calendar",
+  "workSchedule.prevYear": "Previous year",
+  "workSchedule.nextYear": "Next year",
+  "workSchedule.legendWorking": "Working day",
+  "workSchedule.legendOff": "Non-working day",
+  "workSchedule.legendException": "Exception",
+  "profile.density.compact": "Tighter rows show more items at once.",
+  "profile.density.comfortable": "More space between rows is easier to scan.",
+  "workflows.editor": "Status editor",
+  "workflows.pickStatus": "Select a status on the board to edit its name, colour, requirements, and transitions.",
+  "matrix.capability": "Capability",
+  "matrix.allowed": "Allowed",
+  "matrix.notAllowed": "Not allowed"
 }

@@ -45,5 +45,7 @@
   "capabilityHelp.edit": " — change fields",
   "capabilityHelp.create": " — add items",
   "capabilityHelp.delete": " — remove items",
-  "capabilityHelp.share": " — change who has access"
+  "capabilityHelp.share": " — change who has access",
+  "tabs.list": "List",
+  "tabs.matrix": "Permission matrix"
 }

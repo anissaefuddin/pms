@@ -25,7 +25,10 @@ test("admin sees seats, invites users and opens the policy matrix", async ({ pag
   await page.getByRole("button", { name: "Groups" }).click();
   await expect(page.getByRole("button", { name: "New group" })).toBeVisible();
   await page.getByRole("link", { name: "User types" }).click();
-  await expect(page.getByText("view, edit")).toBeVisible();
+  // The user types page is a capability matrix: regular users get View and Edit, and the other rows say Not allowed.
+  const matrix = page.getByRole("table", { name: "User types" });
+  await expect(matrix.getByRole("columnheader", { name: "regular" })).toBeVisible();
+  await expect(matrix.getByRole("row", { name: /Edit/ }).getByText("Allowed")).toBeVisible();
 });
 
 test("non-admin has no Users link and direct navigation is not found", async ({ page }) => {
@@ -51,7 +54,7 @@ test("profile saves preferences and applies theme and density", async ({ page })
   await page.goto("/settings/profile");
   await page.getByLabel("Company").fill("Pilot Ltd");
   await page.getByLabel(/^Theme/).selectOption("dark");
-  await page.getByLabel("Density").selectOption("comfortable");
+  await page.getByRole("button", { name: /Comfortable/ }).click(); // density is a visual choice now
   await page.getByLabel("Send comment shortcut").selectOption("enter");
   await page.getByRole("button", { name: "Save profile" }).click();
   await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");

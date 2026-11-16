@@ -129,7 +129,8 @@ function WorkflowsRoute() {
     <FormError message={error} />
     <section aria-labelledby="wf-statuses" className="space-y-3">
       <h3 id="wf-statuses" className="text-sm font-medium">{t("settings.workflows.statuses")}</h3>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
+      <div className="grid gap-4 sm:grid-cols-2">
         {statusGroups.map((group) => <div key={group} role="group" aria-label={t(`settings.workflows.group.${group}`)} className="space-y-2">
           <h4 className="text-sm font-semibold">{t(`settings.workflows.group.${group}`)}</h4>
           {workflow.statuses.filter((s) => s.group === group).map((s) => <button key={s.id} type="button" aria-pressed={selected === s.id}
@@ -147,14 +148,20 @@ function WorkflowsRoute() {
             : <Button type="button" variant="ghost" size="sm" className="text-primary" onClick={() => { setAdding(group); setNewStatus(""); }}>+ {t("settings.workflows.addStatus")}</Button>)}
         </div>)}
       </div>
-      <ol>
-        {workflow.statuses.filter((s) => s.id === selected).map((status) => {
-          const index = workflow.statuses.indexOf(status);
-          return <StatusRow key={`${status.id}:${status.name}`} status={status} siblings={workflow.statuses}
-            admin={admin} busy={busy} first={index === 0} last={index === workflow.statuses.length - 1}
-            onPatch={(patch) => saveStatus(status, patch)} onMove={(delta) => reorder(status, delta)} onRemove={() => setRemoving(status)} />;
-        })}
-      </ol>
+      <aside aria-label={t("settings.workflows.editor")} className="space-y-3 rounded-lg border bg-card p-4 lg:sticky lg:top-4 lg:self-start">
+        <h4 className="text-sm font-semibold">{t("settings.workflows.editor")}</h4>
+        {workflow.statuses.some((s) => s.id === selected)
+          ? <ol>
+              {workflow.statuses.filter((s) => s.id === selected).map((status) => {
+                const index = workflow.statuses.indexOf(status);
+                return <StatusRow key={`${status.id}:${status.name}`} status={status} siblings={workflow.statuses}
+                  admin={admin} busy={busy} first={index === 0} last={index === workflow.statuses.length - 1}
+                  onPatch={(patch) => saveStatus(status, patch)} onMove={(delta) => reorder(status, delta)} onRemove={() => setRemoving(status)} />;
+              })}
+            </ol>
+          : <p className="text-sm text-muted-foreground">{t("settings.workflows.pickStatus")}</p>}
+      </aside>
+      </div>
     </section>
 
     <ConfirmDialog open={confirmDelete} onOpenChange={setConfirmDelete} busy={busy} error={error}
