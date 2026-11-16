@@ -25,8 +25,8 @@ test("admin creates a token that is shown once, then revokes it after a confirma
   await expect(row).toContainText("pms_scim_AbCd…");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 
-  await page.getByRole("button", { name: "New token" }).click();
-  const form = page.getByRole("form", { name: "New SCIM token" });
+  await page.getByRole("button", { name: "Create token" }).click();
+  const form = page.getByRole("form", { name: "Create SCIM token" });
   await expect(form.getByLabel("User type for new people").getByRole("option", { name: "Administrator" })).toHaveCount(0);
   await form.getByLabel("Name").fill("Entra ID");
   await form.getByLabel("User type for new people").selectOption("viewer");

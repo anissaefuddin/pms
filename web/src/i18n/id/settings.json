@@ -578,5 +578,10 @@
   "resources.removeLeave": "Hapus tanggal cuti {{date}}",
   "resources.noLeave": "Belum ada tanggal cuti. Tambahkan untuk mengecualikan hari dari ketersediaan.",
   "sidebar.reorderHint": "Seret untuk mengurutkan, atau tekan Alt dengan tombol panah.",
-  "sidebar.position": "posisi {{index}} dari {{count}}"
+  "sidebar.position": "posisi {{index}} dari {{count}}",
+  "itemTypes.groupBuiltIn": "Tipe bawaan",
+  "itemTypes.groupCustom": "Tipe item kustom",
+  "itemTypes.basedOn": "Item berbasis {{base}}",
+  "itemTypes.statusActive": "Aktif",
+  "spaces.search": "Cari Space"
 }

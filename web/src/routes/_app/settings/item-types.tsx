@@ -7,6 +7,8 @@ import { api, ApiError } from "@/lib/api";
 import { LAYOUT_BLOCKS, itemTypeKeys, useItemTypes, type ItemTypeDef } from "@/lib/item-types";
 import { useProfile } from "@/lib/profile";
 import { FormError } from "@/components/auth/form-error";
+import { Layers } from "lucide-react";
+import { AdminStatus } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -24,20 +26,33 @@ function ItemTypesRoute() {
   const types = useItemTypes();
   const [editing, setEditing] = useState<ItemTypeDef | "new">();
   if (!types.data) return null;
-  return <div className="max-w-3xl space-y-4">
-    <header className="space-y-1">
-      <p className="text-sm text-muted-foreground">{admin ? t("settings.itemTypes.description") : t("settings.itemTypes.readOnly")}</p>
+  const builtIn = types.data.filter((type) => type.is_builtin);
+  const custom = types.data.filter((type) => !type.is_builtin);
+  // Each row: kind icon, name, kind and key as secondary text, and an Active/Inactive status.
+  const list = (rows: ItemTypeDef[]) => <ul className="divide-y rounded-lg border">
+    {rows.map((type) => <li key={type.id} className="flex flex-wrap items-center gap-3 p-3">
+      <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Layers className="size-4" /></span>
+      <div className="min-w-0 flex-1">
+        <p className="font-medium">{type.name}</p>
+        <p className="text-sm text-muted-foreground">{t("settings.itemTypes.basedOn", { base: t(`items.${type.base}`) })} · <span className="font-mono text-xs">{type.key}</span></p>
+      </div>
+      <AdminStatus tone={type.active ? "success" : "neutral"} label={type.active ? t("settings.itemTypes.statusActive") : t("settings.itemTypes.inactive")} />
+      {admin && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.edit")}: ${type.name}`} onClick={() => setEditing(type)}>{t("settings.itemTypes.edit")}</Button>}
+    </li>)}
+  </ul>;
+  return <div className="space-y-6">
+    <header className="flex flex-wrap items-start justify-between gap-3">
+      <p className="max-w-2xl text-sm text-muted-foreground">{admin ? t("settings.itemTypes.description") : t("settings.itemTypes.readOnly")}</p>
+      {admin && <Button onClick={() => setEditing("new")}>{t("settings.itemTypes.create")}</Button>}
     </header>
-    {admin && <Button onClick={() => setEditing("new")}>{t("settings.itemTypes.create")}</Button>}
-    <ul className="divide-y rounded border">
-      {types.data.map((type) => <li key={type.id} className="flex flex-wrap items-center gap-3 p-3">
-        <div className="min-w-0 flex-1">
-          <p className="font-medium">{type.name}{!type.active && <span className="ml-2 text-sm text-muted-foreground">({t("settings.itemTypes.inactive")})</span>}</p>
-          <p className="text-sm text-muted-foreground">{t(`items.${type.base}`)} · {type.key}{type.is_builtin ? ` · ${t("settings.itemTypes.builtin")}` : ""}</p>
-        </div>
-        {admin && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.edit")}: ${type.name}`} onClick={() => setEditing(type)}>{t("settings.itemTypes.edit")}</Button>}
-      </li>)}
-    </ul>
+    <section aria-labelledby="item-types-builtin" className="space-y-2">
+      <h2 id="item-types-builtin" className="text-sm font-medium">{t("settings.itemTypes.groupBuiltIn")}</h2>
+      {list(builtIn)}
+    </section>
+    <section aria-labelledby="item-types-custom" className="space-y-2">
+      <h2 id="item-types-custom" className="text-sm font-medium">{t("settings.itemTypes.groupCustom")}</h2>
+      {custom.length ? list(custom) : <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">{t("settings.itemTypes.create")}</p>}
+    </section>
     {editing && <TypeDialog type={editing === "new" ? undefined : editing} all={types.data} onClose={() => setEditing(undefined)} />}
   </div>;
 }

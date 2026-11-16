@@ -50,11 +50,14 @@ function PolicyForm({ policy }: { policy: Policy }) {
       setError(err instanceof ApiError && err.status === 409 ? t("policy.conflict") : (err as Error).message || t("policy.saveFailed"));
     } finally { setBusy(false); }
   }
-  return <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-lg border p-4" aria-label={t("policy.title")}>
+  // Two separate cards in one form: the IP allowlist and the emailed sign-in code are saved together but read apart.
+  return <form onSubmit={(e) => void submit(e)} className="max-w-2xl space-y-5" aria-label={t("policy.title")}>
+    <section className="space-y-4 rounded-lg border p-5">
     <h2 className="font-semibold">{t("policy.ip.title")}</h2>
     <p className="text-sm text-muted-foreground">{t("policy.ip.hint")}</p>
     {policy.override_active && <p role="status" className="text-sm text-amber-700 dark:text-amber-400">{t("policy.ip.override")}</p>}
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-6" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} />{t("policy.ip.enabled")}</label>
+    {enabled && !lines().includes(policy.your_ip) && <p role="status" className="rounded border border-warning bg-warning-subtle p-3 text-sm">{t("policy.ip.lockoutWarning", { ip: policy.your_ip })}</p>}
     <label className="block text-sm">{t("policy.ip.list")}
       <textarea rows={6} className="mt-1 block w-full max-w-lg rounded-md border border-input bg-background p-2 font-mono text-xs" value={text} onChange={(e) => setText(e.target.value)} aria-describedby="ip-list-hint" /></label>
     <p id="ip-list-hint" className="text-sm text-muted-foreground">{t("policy.ip.listHint")}</p>
@@ -63,10 +66,13 @@ function PolicyForm({ policy }: { policy: Policy }) {
       <Button type="button" size="sm" variant="outline" disabled={lines().includes(policy.your_ip)} onClick={() => setText([...lines(), policy.your_ip].join("\n"))}>{t("policy.ip.useMine")}</Button>
     </div>
     <p className="text-sm text-muted-foreground">{t("policy.ip.recovery")}</p>
-    <h2 className="pt-2 font-semibold">{t("policy.otp.title")}</h2>
+    </section>
+    <section className="space-y-4 rounded-lg border p-5">
+    <h2 className="font-semibold">{t("policy.otp.title")}</h2>
     <p className="text-sm text-muted-foreground">{t("policy.otp.hint")}</p>
     <label className="flex items-center gap-2 text-sm"><input type="checkbox" className="size-6" checked={otp} onChange={(e) => setOtp(e.target.checked)} />{t("policy.otp.enabled")}</label>
-    {error && <p role="alert" className="text-sm text-destructive">{error}</p>}
+    </section>
+    {error &&<p role="alert" className="text-sm text-destructive">{error}</p>}
     <Button type="submit" disabled={busy}>{t("policy.save")}</Button>
   </form>;
 }

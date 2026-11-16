@@ -68,12 +68,13 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
   return (
     <aside style={sidebarThemeVars(sidebarTheme)} className={`${SIDEBAR_THEME} relative flex h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
       <div className="mb-3 flex items-center gap-1">
-        <Link to="/" className="flex min-w-0 flex-1 items-center gap-2 rounded-md px-2 py-1.5 text-sm text-nav-muted hover:bg-nav-hover hover:text-nav-text">
+        {/* The label gets the room: the profile collapses to its avatar so "Back to workspace" fits on one line. */}
+        <Link to="/" className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm whitespace-nowrap text-nav-muted hover:bg-nav-hover hover:text-nav-text">
           <ArrowLeft aria-hidden="true" className="size-4 shrink-0" />
-          <span className="truncate">{t("settings.nav.backToWorkspace")}</span>
+          <span className="min-w-0 truncate">{t("settings.nav.backToWorkspace")}</span>
         </Link>
-        <div className="flex shrink-0 items-center gap-1">
-          <ProfileMenu />
+        <div className="shrink-0">
+          <ProfileMenu compact />
         </div>
       </div>
       <label className="mb-3 flex items-center gap-2 rounded-md border border-nav-hover px-2 py-1.5 text-sm text-nav-muted">

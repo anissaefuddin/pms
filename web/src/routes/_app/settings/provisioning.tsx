@@ -9,6 +9,7 @@ import { formatDateTime, useProfile } from "@/lib/profile";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminStatus } from "@/components/admin/admin-ui";
 
 type ScimToken = components["schemas"]["ScimToken"];
 type TokenList = components["schemas"]["ScimTokenList"];
@@ -43,7 +44,8 @@ function ProvisioningPage() {
     } catch (err) { setError((err as Error).message); }
   }
 
-  const list = tokens.data?.items ?? [];
+  // Active tokens first; revoked ones stay visible below as history.
+  const list = [...(tokens.data?.items ?? [])].sort((a, b) => Number(!!a.revoked_at) - Number(!!b.revoked_at));
   return <section className="space-y-5">
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div>
@@ -72,7 +74,7 @@ function ProvisioningPage() {
         <td className="py-2 pr-4">{t(`provisioning.types.${token.default_user_type}`, { defaultValue: token.default_user_type })}</td>
         <td className="py-2 pr-4 font-mono text-xs">{token.prefix}…</td>
         <td className="py-2 pr-4">{token.last_used_at ? formatDateTime(token.last_used_at, profile) : t("provisioning.never")}</td>
-        <td className="py-2 pr-4">{token.revoked_at ? t("provisioning.revoked") : t("provisioning.active")}</td>
+        <td className="py-2 pr-4"><AdminStatus tone={token.revoked_at ? "neutral" : "success"} label={token.revoked_at ? t("provisioning.revoked") : t("provisioning.active")} /></td>
         <td className="py-2 text-right">{!token.revoked_at && <Button size="sm" variant="outline" aria-label={t("provisioning.revokeNamed", { name: token.name })}
           onClick={() => { setError(""); setRevoking(token); }}>{t("provisioning.revoke")}</Button>}</td>
       </tr>)}</tbody>

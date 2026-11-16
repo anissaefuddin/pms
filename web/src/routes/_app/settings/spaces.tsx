@@ -3,7 +3,9 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { useSpaces } from "@/lib/space-queries";
 import { can, type Space } from "@/lib/spaces";
+import { Users, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { SpaceDialog } from "@/components/space-dialog";
 import { AdminEmptyState, AdminPageHeader, AdminStatus } from "@/components/admin/admin-ui";
 import { FormError } from "@/components/auth/form-error";
@@ -17,12 +19,17 @@ function SpacesManagement() {
   const { t } = useTranslation();
   const spaces = useSpaces();
   const [renaming, setRenaming] = useState<Space>();
-  const list = spaces.data ?? [];
+  const [query, setQuery] = useState("");
+  const all = spaces.data ?? [];
+  const q = query.trim().toLowerCase();
+  const list = all.filter((space) => !q || space.name.toLowerCase().includes(q));
   return <section className="min-w-0 space-y-6">
     <AdminPageHeader description={t("settings.spaces.description")} />
     <FormError message={spaces.error?.message ?? ""} />
-    {spaces.data && !list.length && <AdminEmptyState title={t("settings.spaces.emptyTitle")} description={t("settings.spaces.emptyDescription")} />}
-    {!!list.length && <div className="overflow-x-auto rounded-lg border">
+    {spaces.data && !all.length && <AdminEmptyState title={t("settings.spaces.emptyTitle")} description={t("settings.spaces.emptyDescription")} />}
+    {!!all.length && <Input type="search" value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t("settings.spaces.search")}
+      aria-label={t("settings.spaces.search")} className="max-w-sm" />}
+    {!!all.length && <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-start text-sm">
         <caption className="sr-only">{t("settings.spacesManagement")}</caption>
         <thead className="bg-muted/60 text-xs font-medium text-foreground">
@@ -35,7 +42,10 @@ function SpacesManagement() {
         </thead>
         <tbody className="divide-y">{list.map((space) => <tr key={space.id}>
           <th scope="row" className="px-3 py-2.5 text-start font-medium">
-            <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{space.name}</Link>
+            <span className="inline-flex items-center gap-2">
+              {space.kind === "personal" ? <User aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" /> : <Users aria-hidden="true" className="size-4 shrink-0 text-muted-foreground" />}
+              <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{space.name}</Link>
+            </span>
           </th>
           <td className="px-3 py-2.5">{space.kind === "personal" ? t("spaces.personal") : t("settings.spaces.shared")}</td>
           <td className="px-3 py-2.5">

@@ -19,5 +19,6 @@
   "saveFailed": "Kebijakan tidak dapat disimpan.",
   "otp.title": "Masuk dengan kode",
   "otp.hint": "Orang bisa meminta kode enam digit lewat email alih-alih mengetik kata sandi. Kode hanya berlaku sekali, kedaluwarsa dalam 10 menit, dan memberi lima kali percobaan. Verifikasi dua langkah, jika digunakan, tetap diminta.",
-  "otp.enabled": "Izinkan masuk dengan kode lewat email"
+  "otp.enabled": "Izinkan masuk dengan kode lewat email",
+  "ip.lockoutWarning": "Alamat Anda {{ip}} tidak ada di daftar ini. Menyimpan dengan daftar izin aktif bisa membuat Anda terkunci dari akses."
 }

@@ -19,5 +19,6 @@
   "saveFailed": "The policy could not be saved.",
   "otp.title": "Sign in with a code",
   "otp.hint": "People can ask for a six-digit code by email instead of typing a password. It works once, expires in 10 minutes and allows five tries. Two-factor, if a person uses it, is still asked.",
-  "otp.enabled": "Allow signing in with an emailed code"
+  "otp.enabled": "Allow signing in with an emailed code",
+  "ip.lockoutWarning": "Your address {{ip}} is not in this list. Saving with the allowlist on may lock you out."
 }

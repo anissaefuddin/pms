@@ -582,5 +582,10 @@
   "resources.removeLeave": "Remove leave date {{date}}",
   "resources.noLeave": "No leave dates. Add one to exclude a day from availability.",
   "sidebar.reorderHint": "Drag to reorder, or press Alt with the arrow keys.",
-  "sidebar.position": "position {{index}} of {{count}}"
+  "sidebar.position": "position {{index}} of {{count}}",
+  "itemTypes.groupBuiltIn": "Built-in types",
+  "itemTypes.groupCustom": "Custom item types",
+  "itemTypes.basedOn": "{{base}}-based item",
+  "itemTypes.statusActive": "Active",
+  "spaces.search": "Search Spaces"
 }

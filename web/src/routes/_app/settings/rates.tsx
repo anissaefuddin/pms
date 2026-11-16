@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import { useProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { AdminPageHeader, AdminStatus } from "@/components/admin/admin-ui";
 
@@ -43,6 +44,7 @@ function Rates() {
   const cache = useQueryClient();
   const admin = me?.user_type === "admin";
   const [subject, setSubject] = useState("");
+  const [adding, setAdding] = useState(false);
   const rates = useQuery({ queryKey: ["rates"], enabled: admin, queryFn: () => api<{ items: Rate[] }>("/api/v1/rates") });
   const directory = useQuery({ queryKey: ["resource-directory"], enabled: admin,
     queryFn: () => api<{ roles: Choice[]; users: Choice[] }>("/api/v1/resource-directory") });
@@ -54,24 +56,36 @@ function Rates() {
   if (!admin) return null;
   const statuses = rateStatuses(rates.data?.items ?? []);
   return <section className="space-y-5">
-    <AdminPageHeader description={t("time.rates.hint")} />
+    <AdminPageHeader description={t("time.rates.hint")} action={<Button onClick={() => setAdding(true)}>{t("time.rates.add")}</Button>} />
     {(add.error || rates.error) && <p role="alert">{(add.error ?? rates.error)?.message}</p>}
-    <form className="flex flex-wrap items-end gap-3" onSubmit={(event) => {
-      event.preventDefault();
-      const data = new FormData(event.currentTarget);
-      const [kind, id] = subject.split(":");
-      add.mutate({ [kind === "role" ? "role_id" : "user_id"]: id, rate_minor: Math.round(Number(data.get("rate")) * 100), effective_from: String(data.get("from")) });
-    }}>
-      <label className="block text-sm">{t("time.rates.subject")}
-        <select required value={subject} onChange={(event) => setSubject(event.target.value)} className="block rounded border bg-background p-2">
-          <option value="" />
-          <optgroup label={t("time.rates.user")}>{directory.data?.users.map((u) => <option key={u.id} value={`user:${u.id}`}>{u.name}</option>)}</optgroup>
-          <optgroup label={t("time.rates.role")}>{directory.data?.roles.map((r) => <option key={r.id} value={`role:${r.id}`}>{r.name}</option>)}</optgroup>
-        </select></label>
-      <label className="block text-sm">{t("time.rates.rate")}<Input name="rate" type="number" min="0" step="0.01" required /></label>
-      <label className="block text-sm">{t("time.rates.from")}<Input name="from" type="date" required /></label>
-      <Button type="submit" disabled={add.isPending}>{t("time.rates.add")}</Button>
-    </form>
+    {/* Adding a rate is a dialog from the header, so the list stays the main content. */}
+    <Dialog open={adding} onOpenChange={setAdding}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>{t("time.rates.add")}</DialogTitle>
+          <DialogDescription>{t("time.rates.hint")}</DialogDescription>
+        </DialogHeader>
+        <form className="space-y-4" onSubmit={(event) => {
+          event.preventDefault();
+          const data = new FormData(event.currentTarget);
+          const [kind, id] = subject.split(":");
+          add.mutate({ [kind === "role" ? "role_id" : "user_id"]: id, rate_minor: Math.round(Number(data.get("rate")) * 100), effective_from: String(data.get("from")) },
+            { onSuccess: () => { setAdding(false); setSubject(""); } });
+        }}>
+          <label className="block text-sm">{t("time.rates.subject")}
+            <select required value={subject} onChange={(event) => setSubject(event.target.value)} className="mt-1 block w-full rounded border bg-background p-2">
+              <option value="" />
+              <optgroup label={t("time.rates.user")}>{directory.data?.users.map((u) => <option key={u.id} value={`user:${u.id}`}>{u.name}</option>)}</optgroup>
+              <optgroup label={t("time.rates.role")}>{directory.data?.roles.map((r) => <option key={r.id} value={`role:${r.id}`}>{r.name}</option>)}</optgroup>
+            </select></label>
+          <label className="block text-sm">{t("time.rates.rate")}<Input name="rate" type="number" min="0" step="0.01" required className="mt-1" /></label>
+          <label className="block text-sm">{t("time.rates.from")}<Input name="from" type="date" required className="mt-1" /></label>
+          <DialogFooter>
+            <Button type="submit" disabled={add.isPending}>{t("time.rates.add")}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
     {rates.data && !rates.data.items.length && <p className="text-muted-foreground">{t("time.rates.empty")}</p>}
     {!!rates.data?.items.length && <table className="w-full text-left text-sm">
       <caption className="sr-only">{t("time.rates.title")}</caption>

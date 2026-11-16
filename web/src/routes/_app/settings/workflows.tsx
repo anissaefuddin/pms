@@ -100,7 +100,7 @@ function WorkflowsRoute() {
     } finally { setBusy(false); }
   }
 
-  return <div className="max-w-3xl space-y-6">
+  return <div className="space-y-6">
     <header>
       <p className="text-sm text-muted-foreground">{admin ? t("settings.workflows.description") : t("settings.workflows.readOnly")}</p>
     </header>
@@ -128,8 +128,9 @@ function WorkflowsRoute() {
     <FormError message={error} />
     <section aria-labelledby="wf-statuses" className="space-y-3">
       <h2 id="wf-statuses" className="text-sm font-medium">{t("settings.workflows.statuses")}</h2>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_22rem]">
-      <div className="grid gap-4 sm:grid-cols-2">
+      {/* Four status categories sit side by side on wide screens; the editor opens full width below the board. */}
+      <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statusGroups.map((group) => <div key={group} role="group" aria-label={t(`settings.workflows.group.${group}`)} className="space-y-2">
           <h3 className="text-sm font-semibold">{t(`settings.workflows.group.${group}`)}</h3>
           {workflow.statuses.filter((s) => s.group === group).map((s) => <button key={s.id} type="button" aria-pressed={selected === s.id}
@@ -147,7 +148,7 @@ function WorkflowsRoute() {
             : <Button type="button" variant="ghost" size="sm" className="text-primary" onClick={() => { setAdding(group); setNewStatus(""); }}>+ {t("settings.workflows.addStatus")}</Button>)}
         </div>)}
       </div>
-      <aside aria-label={t("settings.workflows.editor")} className="space-y-3 rounded-lg border bg-card p-4 lg:sticky lg:top-4 lg:self-start">
+      <aside aria-label={t("settings.workflows.editor")} className="space-y-3 rounded-lg border bg-card p-4">
         <h3 className="text-sm font-semibold">{t("settings.workflows.editor")}</h3>
         {workflow.statuses.some((s) => s.id === selected)
           ? <ol>
