@@ -1845,6 +1845,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/view-preferences/{scopeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07) */
+        put: operations["saveViewPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/2fa": {
         parameters: {
             query?: never;
@@ -4543,6 +4560,13 @@ export interface components {
                 [key: string]: {
                     rows: string[];
                     gantt_collapsed: boolean;
+                };
+            };
+            /** @description Preferensi view personal per workspace (WA-D07), kunci = id Space, Project, atau Folder. Hanya user ini yang membacanya */
+            view_prefs?: {
+                [key: string]: {
+                    hidden: string[];
+                    order: string[];
                 };
             };
             /** @description Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif */
@@ -9986,6 +10010,34 @@ export interface operations {
                 "application/json": {
                     rows: string[];
                     gantt_collapsed: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    saveViewPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scopeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    hidden: string[];
+                    order: string[];
                 };
             };
         };

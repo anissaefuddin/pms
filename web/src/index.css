@@ -322,6 +322,11 @@
 }
 
 /* Gantt (S2.4.2): SVAR's default bar colours fail 4.5:1 against white labels. */
+/* C-04: non-working days and holidays in the timeline, from the work schedule (tokens only). */
+.gantt-chart .gantt-off {
+  background-color: var(--muted);
+}
+
 .gantt-chart .wx-theme {
   --wx-gantt-task-color: var(--cat-5);
   --wx-gantt-task-fill-color: var(--cat-5);

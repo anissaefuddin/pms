@@ -56,7 +56,7 @@ test("view tabs are segmented: options only on the active tab, Add view is a but
   await expect(nav.getByRole("button", { name: "Board options" })).toBeVisible();
   await expect(nav.getByRole("button", { name: /options$/ })).toHaveCount(1);
   await nav.getByRole("button", { name: "Add view" }).click();
-  await expect(page.getByRole("menuitem", { name: "Gantt", exact: true })).toBeVisible();
+  await expect(page.getByRole("dialog", { name: "Choose a view type" }).getByRole("button", { name: /Gantt/ })).toBeEnabled();
   await page.keyboard.press("Escape");
   expect(await new AxeBuilder({ page }).include("nav").analyze().then((r) => r.violations)).toEqual([]);
 });

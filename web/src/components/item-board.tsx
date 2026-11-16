@@ -118,8 +118,9 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
         <TypeGlyph item={item} className="mt-1.5 size-4 text-muted-foreground" />
         <Button variant="ghost" size="sm" className="h-auto min-w-0 flex-1 justify-start whitespace-normal p-0 text-left text-sm font-medium hover:bg-transparent hover:underline" onClick={() => onOpen(item)}>{item.title}</Button>
       </div>
+      {/* Agent B: the type icon already shows the type; the name stays for screen readers and tests (sr-only). */}
       {(!!meta.length || !!item.item_type) && <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
-        {<TypeBadge item={item} />}{!!meta.length && <span>{meta.join(" · ")}</span>}</p>}
+        {item.item_type && <span className="sr-only"><TypeBadge item={item} /></span>}{!!meta.length && <span>{meta.join(" · ")}</span>}</p>}
       {((shown.includes("start_date") && item.start_date) || (shown.includes("due_date") && item.due_date) || (shown.includes("assignee") && item.assignees.length > 0)) && <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
         {shown.includes("assignee") && <AvatarStack people={item.assignees} />}
         {((shown.includes("start_date") && item.start_date) || (shown.includes("due_date") && item.due_date)) && <p className="ml-auto flex items-center gap-1"><CalendarDays className="size-3" aria-hidden />{[

@@ -94,6 +94,27 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     if (push) router.history.push(href);
     else router.history.replace(href);
   }
+  // B-02: sequential, one PATCH per item with its own version. Successful items are never sent again.
+  async function bulkPatch(targets: Item[], update: ItemUpdate) {
+    const failed: { title: string; message: string }[] = [];
+    let done = 0;
+    setPending(true);
+    try {
+      for (const item of targets) {
+        try {
+          await api<Item>(`/api/v1/items/${item.id}`, { method: "PATCH", headers: { "If-Match": `"${item.version}"` }, body: JSON.stringify(update) });
+          done += 1;
+        } catch (err) {
+          failed.push({ title: item.title, message: (err as Error).message });
+        }
+      }
+    } finally {
+      setPending(false);
+      await qc.invalidateQueries(isList);
+    }
+    return { done, failed };
+  }
+
   async function patch(item: Item, update: ItemUpdate) {
     if (locked.current) return;
     locked.current = true;
@@ -171,7 +192,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const columns = visibleColumns(active.config, (items.data ?? []).some((item) => item.type === "project"));
   const collection = {
     items: filtered, statuses: workflow?.statuses ?? [], spaceId, parentId: parent?.id, customFields, columns,
-    canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string) => setCreating({ status }), onPatch: patch,
+    canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string) => setCreating({ status }), onPatch: patch, onBulkPatch: bulkPatch,
   };
   const toolbar = {
     filter, preset, typeFilter, sort, fieldFilter, customFields, itemTypes: itemTypes.data, setSearch: (key: string, value: string) => setSearch(key, value),

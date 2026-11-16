@@ -12,6 +12,7 @@ import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
 import { itemKeys, listItems, type Item } from "@/lib/items";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
+import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { customFieldText, type CustomField } from "@/lib/custom-fields";
 import { fieldColumn } from "@/lib/view-columns";
 import { statusDotClass } from "@/lib/status-colors";
@@ -166,6 +167,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   ref.current = { byId, readonly, onPatch, t, addDependency, removeDependency };
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  // C-04: weekend and holiday columns follow the work schedule, the same rule the calendar uses.
+  const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
+  const workingDays = new Set(schedule.data?.data.working_days ?? [1, 2, 3, 4, 5]);
+  const holidayDays = new Set((schedule.data?.data.exceptions ?? []).map((entry) => entry.date));
+  const offDay = (date: Date) => !workingDays.has(date.getDay()) || holidayDays.has(fromDay(date));
   const locale = i18n.language;
   const scales = useMemo(() => {
     const label = (options: Intl.DateTimeFormatOptions) => (date: Date) => new Intl.DateTimeFormat(locale, options).format(date);
@@ -273,6 +279,13 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       </div>
       <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
       <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(".gantt-today")?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.today")}</Button>
+      {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
+      {/* C-04: brings the selected bar into view; nothing changes on screen until a bar is selected. */}
+      <Button size="sm" variant="outline" disabled={!selected} onClick={() => chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.showSelected")}</Button>
+      <Button size="sm" variant="outline" disabled={!tasks.some((task) => task.start)} onClick={() => {
+        const earliest = tasks.filter((task) => task.start).sort((a, b) => a.start!.getTime() - b.start!.getTime())[0];
+        chartRegion.current?.querySelector(`.wx-bar[data-id=":${earliest?.id}"]`)?.scrollIntoView({ inline: "start", block: "nearest" });
+      }}>{t("views.gantt.fit")}</Button>
       {!!parentId && <>
         <label className="flex items-center gap-1 text-sm">{t("views.gantt.baseline")}
           <select value={baselineId} onChange={(event) => setBaselineId(event.target.value)} className="rounded border bg-background p-1">
@@ -305,7 +318,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       className="gantt-chart h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
       <Theme>
         <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
-          highlightTime={(date, unit) => unit === "day" && date.getTime() === today.getTime() ? "gantt-today" : ""} schedule={{ auto: false }} unscheduledTasks
+          highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
           columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
             ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
             ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),

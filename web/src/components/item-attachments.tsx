@@ -8,6 +8,7 @@ import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { FileCompare } from "@/components/file-compare";
 import { FileProofing } from "@/components/file-proofing";
+import { reviewStateFor, type ApprovalLike } from "@/lib/file-review";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type Attachment = components["schemas"]["Attachment"];
@@ -98,7 +99,7 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
           }}>{t("items.removeAttachment")}</Button>}
           </span>
         </div>
-        {history === file.id && <VersionHistory attachmentId={file.id} canComment={item.my_capabilities.includes("comment")} />}
+        {history === file.id && <VersionHistory itemId={item.id} attachmentId={file.id} canComment={item.my_capabilities.includes("comment")} />}
         </li>;
       })}
     </ul>
@@ -134,12 +135,18 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
   </section>;
 }
 
-function VersionHistory({ attachmentId, canComment }: { attachmentId: string; canComment: boolean }) {
+function VersionHistory({ itemId, attachmentId, canComment }: { itemId: string; attachmentId: string; canComment: boolean }) {
   const { t } = useTranslation();
   const { data, isPending, isError } = useQuery({
     queryKey: ["attachment-versions", attachmentId],
     queryFn: () => api<{ items: Version[] }>(`${attachmentPath(attachmentId)}/versions`),
   });
+  // WA-D08: each version shows its own review status. Review is bound to attachment + version, so a new version starts "not requested".
+  const approvals = useQuery({
+    queryKey: ["item-approvals", itemId],
+    queryFn: () => api<{ items: ApprovalLike[] }>(`/api/v1/items/${itemId}/approvals`),
+  });
+  const load = approvals.isError ? "error" : approvals.data ? "ok" : "loading";
   if (isPending) return <p role="status">{t("items.loading")}</p>;
   if (isError) return <FormError message={t("items.loadError")} />;
   return <ol className="mt-1 space-y-1 pl-4 text-sm" aria-label={t("items.versionHistory")}>
@@ -148,6 +155,9 @@ function VersionHistory({ attachmentId, canComment }: { attachmentId: string; ca
         {t("items.versionLabel", { version: v.version })} {v.filename}
       </a>
       <span className="text-muted-foreground">{v.uploader.name} · {new Date(v.created_at).toLocaleString()}{v.is_current ? ` · ${t("items.currentVersion")}` : ""}</span>
+      <span className="rounded bg-muted px-1.5 text-xs" data-review-state={reviewStateFor(approvals.data?.items, attachmentId, v.version, load).state}>
+        {t(`items.reviewState.${reviewStateFor(approvals.data?.items, attachmentId, v.version, load).state}`)}
+      </span>
       <FileProofing attachmentId={attachmentId} version={v.version} filename={v.filename} canComment={canComment} />
     </li>)}
     {data.items.length > 1 && <li><FileCompare attachmentId={attachmentId} versions={data.items.map((v) => v.version)} filename={data.items[0]?.filename ?? ""} /></li>}

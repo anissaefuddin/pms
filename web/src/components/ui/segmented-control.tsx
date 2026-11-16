@@ -1,4 +1,4 @@
-import { useRef, type KeyboardEvent, type ReactNode } from "react"
+import { useRef, type HTMLAttributes, type KeyboardEvent, type ReactNode } from "react"
 
 import { cn } from "@/lib/utils"
 import { nextIndex } from "@/lib/ui-kit"
@@ -12,12 +12,15 @@ export function SegmentedControl({
   onChange,
   "aria-label": ariaLabel,
   className,
+  itemDrag,
 }: {
   items: SegmentedItem[]
   value: string
   onChange: (value: string) => void
   "aria-label"?: string
   className?: string
+  /** Optional drag handlers per item (e.g. reorder). Leave unset for a plain control. */
+  itemDrag?: (value: string) => HTMLAttributes<HTMLButtonElement>
 }) {
   const refs = useRef<(HTMLButtonElement | null)[]>([])
   const activeIndex = Math.max(0, items.findIndex((item) => item.value === value))
@@ -50,6 +53,7 @@ export function SegmentedControl({
             tabIndex={checked ? 0 : -1}
             onClick={() => onChange(item.value)}
             onKeyDown={(event) => onKeyDown(event, i)}
+            {...itemDrag?.(item.value)}
             className={cn(
               "inline-flex h-7 items-center gap-1.5 rounded-md px-2.5 text-sm font-medium outline-none transition-colors focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4",
               checked ? "bg-card text-foreground shadow-sm" : "text-foreground/75 hover:text-foreground"

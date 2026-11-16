@@ -4424,6 +4424,12 @@ type Me struct {
 		GanttCollapsed bool                 `json:"gantt_collapsed"`
 		Rows           []openapi_types.UUID `json:"rows"`
 	} `json:"view_expansion,omitempty"`
+
+	// ViewPrefs Preferensi view personal per workspace (WA-D07), kunci = id Space, Project, atau Folder. Hanya user ini yang membacanya
+	ViewPrefs *map[string]struct {
+		Hidden []openapi_types.UUID `json:"hidden"`
+		Order  []openapi_types.UUID `json:"order"`
+	} `json:"view_prefs,omitempty"`
 	WeekStart MeWeekStart `json:"week_start"`
 }
 
@@ -6051,6 +6057,12 @@ type SaveViewExpansionJSONBody struct {
 	Rows           []openapi_types.UUID `json:"rows"`
 }
 
+// SaveViewPreferencesJSONBody defines parameters for SaveViewPreferences.
+type SaveViewPreferencesJSONBody struct {
+	Hidden []openapi_types.UUID `json:"hidden"`
+	Order  []openapi_types.UUID `json:"order"`
+}
+
 // ListNotificationsParams defines parameters for ListNotifications.
 type ListNotificationsParams struct {
 	Limit      *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -6646,6 +6658,9 @@ type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
 
 // SaveViewExpansionJSONRequestBody defines body for SaveViewExpansion for application/json ContentType.
 type SaveViewExpansionJSONRequestBody SaveViewExpansionJSONBody
+
+// SaveViewPreferencesJSONRequestBody defines body for SaveViewPreferences for application/json ContentType.
+type SaveViewPreferencesJSONRequestBody SaveViewPreferencesJSONBody
 
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
@@ -7549,6 +7564,9 @@ type ServerInterface interface {
 	// SaveViewExpansion Simpan expansi hierarki untuk satu view milik user (WA-D05)
 	// (PUT /me/view-expansion/{viewId})
 	SaveViewExpansion(w http.ResponseWriter, r *http.Request, viewId openapi_types.UUID)
+	// SaveViewPreferences Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07)
+	// (PUT /me/view-preferences/{scopeId})
+	SaveViewPreferences(w http.ResponseWriter, r *http.Request, scopeId openapi_types.UUID)
 	// ListNotifications Inbox (NAV-03)
 	// (GET /notifications)
 	ListNotifications(w http.ResponseWriter, r *http.Request, params ListNotificationsParams)
@@ -12804,6 +12822,32 @@ func (siw *ServerInterfaceWrapper) SaveViewExpansion(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// SaveViewPreferences operation middleware
+func (siw *ServerInterfaceWrapper) SaveViewPreferences(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "scopeId" -------------
+	var scopeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "scopeId", r.PathValue("scopeId"), &scopeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scopeId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveViewPreferences(w, r, scopeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListNotifications operation middleware
 func (siw *ServerInterfaceWrapper) ListNotifications(w http.ResponseWriter, r *http.Request) {
 
@@ -16886,6 +16930,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}", wrapper.GetUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/users/{userId}", wrapper.UpdateUser)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/me/view-expansion/{viewId}", wrapper.SaveViewExpansion)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/me/view-preferences/{scopeId}", wrapper.SaveViewPreferences)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/2fa", wrapper.GetTwoFactor)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/setup", wrapper.SetupTwoFactor)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/enable", wrapper.EnableTwoFactor)
@@ -26062,6 +26107,39 @@ func (response SaveViewExpansion422ApplicationProblemPlusJSONResponse) VisitSave
 	return err
 }
 
+type SaveViewPreferencesRequestObject struct {
+	ScopeId openapi_types.UUID `json:"scopeId"`
+	Body    *SaveViewPreferencesJSONRequestBody
+}
+
+type SaveViewPreferencesResponseObject interface {
+	VisitSaveViewPreferencesResponse(w http.ResponseWriter) error
+}
+
+type SaveViewPreferences204Response struct {
+}
+
+func (response SaveViewPreferences204Response) VisitSaveViewPreferencesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SaveViewPreferences422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveViewPreferences422ApplicationProblemPlusJSONResponse) VisitSaveViewPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListNotificationsRequestObject struct {
 	Params ListNotificationsParams
 }
@@ -34679,6 +34757,9 @@ type StrictServerInterface interface {
 	// SaveViewExpansion Simpan expansi hierarki untuk satu view milik user (WA-D05)
 	// (PUT /me/view-expansion/{viewId})
 	SaveViewExpansion(ctx context.Context, request SaveViewExpansionRequestObject) (SaveViewExpansionResponseObject, error)
+	// SaveViewPreferences Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07)
+	// (PUT /me/view-preferences/{scopeId})
+	SaveViewPreferences(ctx context.Context, request SaveViewPreferencesRequestObject) (SaveViewPreferencesResponseObject, error)
 	// ListNotifications Inbox (NAV-03)
 	// (GET /notifications)
 	ListNotifications(ctx context.Context, request ListNotificationsRequestObject) (ListNotificationsResponseObject, error)
@@ -39720,6 +39801,39 @@ func (sh *strictHandler) SaveViewExpansion(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SaveViewExpansionResponseObject); ok {
 		if err := validResponse.VisitSaveViewExpansionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveViewPreferences operation middleware
+func (sh *strictHandler) SaveViewPreferences(w http.ResponseWriter, r *http.Request, scopeId openapi_types.UUID) {
+	var request SaveViewPreferencesRequestObject
+
+	request.ScopeId = scopeId
+
+	var body SaveViewPreferencesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveViewPreferences(ctx, request.(SaveViewPreferencesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveViewPreferences")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveViewPreferencesResponseObject); ok {
+		if err := validResponse.VisitSaveViewPreferencesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

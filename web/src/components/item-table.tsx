@@ -25,7 +25,7 @@ import type { ItemCollectionProps } from "./item-collection-types";
 type PathStep = { id: string; title: string; type: string };
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string; path?: PathStep[] };
 
-export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
+export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, onBulkPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
   showEmpty?: boolean;
   initialExpanded?: string[]; // WA-D05: rows expanded when the view opens
   onExpandedChange?: (rows: string[]) => void;
@@ -45,6 +45,10 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     onExpandedChange?.(next);
   };
   const [selected, setSelected] = useState(0);
+  // B-02: rows picked for a bulk action. Only loaded rows the user may change can be picked; the server still checks every update.
+  const [picked, setPicked] = useState<string[]>([]);
+  const [bulkResult, setBulkResult] = useState<{ done: number; failed: { title: string; message: string }[] }>();
+  const canBulk = (item: Item) => item.my_capabilities.includes("change_status") || item.my_capabilities.includes("edit");
   const [editing, setEditing] = useState<{ id: string; field: "title" | "assignees" | `field:${string}` }>();
   const dragging = useRef<string | undefined>(undefined);
   const viewport = useRef<HTMLDivElement>(null);
@@ -184,7 +188,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   ];
   const columns = allColumns.filter((column) => column.id === "name" || column.id === "actions" || shown.includes(column.id ?? ""));
   const widths: Record<string, [string, number]> = { name: ["minmax(15rem,2fr)", 15], progress: ["8.5rem", 8.5], start_date: ["8rem", 8], due_date: ["8rem", 8], actions: ["2.5rem", 2.5] };
-  const sized = columns.map((column) => widths[column.id ?? ""] ?? ["minmax(8rem,1fr)", 8]);
+  const sized = [["2.5rem", 2.5] as [string, number], ...columns.map((column) => widths[column.id ?? ""] ?? ["minmax(8rem,1fr)", 8])];
   const grid = "grid";
   const minWidth = `${sized.reduce((total, [, rem]) => total + rem, 0)}rem`;
   const gridStyle = { gridTemplateColumns: sized.map(([width]) => width).join(" "), minWidth };
@@ -219,11 +223,46 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     }
   }
 
+  const pickable = model.map((row) => row.original.item).filter(canBulk);
+  const pickedItems = pickable.filter((item) => picked.includes(item.id));
+  const allPicked = pickable.length > 0 && pickedItems.length === pickable.length;
+  const somePicked = pickedItems.length > 0 && !allPicked;
+  function togglePicked(id: string) {
+    setPicked((current) => (current.includes(id) ? current.filter((entry) => entry !== id) : [...current, id]));
+  }
+  async function applyStatus(statusId: string) {
+    if (!onBulkPatch || !pickedItems.length) return;
+    setBulkResult(await onBulkPatch(pickedItems, { status_id: statusId }));
+    setPicked([]);
+  }
+
   return <div className="space-y-2">
+    {(picked.length > 0 || bulkResult) && <div role="toolbar" aria-label={t("views.bulk.toolbar")} className="flex flex-wrap items-center gap-2 rounded border bg-muted/40 p-2 text-sm">
+      {picked.length > 0 && <>
+        <span className="font-medium">{t("views.bulk.selected", { count: pickedItems.length })}</span>
+        {onBulkPatch && <label className="flex items-center gap-1">
+          <span>{t("views.bulk.setStatus")}</span>
+          <select aria-label={t("views.bulk.setStatus")} className="rounded border bg-background p-1" value="" disabled={pending} onChange={(event) => { if (event.target.value) void applyStatus(event.target.value); }}>
+            <option value="" disabled>—</option>
+            {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
+          </select>
+        </label>}
+        <Button size="sm" variant="ghost" onClick={() => setPicked([])}>{t("views.bulk.clear")}</Button>
+      </>}
+      {bulkResult && <p role="status" className="ml-auto">
+        {t("views.bulk.result", { done: bulkResult.done, failed: bulkResult.failed.length })}
+        {bulkResult.failed.length > 0 && <span className="block text-xs text-muted-foreground">{bulkResult.failed.map((entry) => `${entry.title}: ${entry.message}`).join(" · ")}</span>}
+      </p>}
+    </div>}
     <div ref={viewport} role="table" aria-label={t("items.table")} aria-rowcount={model.length + 1} tabIndex={0}
       onKeyDown={keyboard} className="max-h-[60vh] min-h-28 overflow-auto rounded border focus-visible:outline-ring">
       <div role="rowgroup" className="sticky top-0 z-10 bg-card">
         {table.getHeaderGroups().map((header) => <div role="row" aria-rowindex={1} key={header.id} className={grid} style={gridStyle}>
+          <div role="columnheader" className="flex items-center border-b px-2 py-2">
+            <input type="checkbox" aria-label={t("views.bulk.selectAll")} disabled={!pickable.length} checked={allPicked}
+              ref={(element) => { if (element) element.indeterminate = somePicked; }}
+              onChange={() => setPicked(allPicked ? [] : pickable.map((item) => item.id))} />
+          </div>
           {header.headers.map((cell) => <div role="columnheader" key={cell.id} className="border-b px-2 py-2 font-medium">
             {flexRender(cell.column.columnDef.header, cell.getContext())}
           </div>)}
@@ -247,6 +286,9 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
               if (source && source.item.id !== item.id && inLocation(item, parent)) void onReorder(source.item, parent, item.id);
               dragging.current = undefined;
             }}>
+            <div role="cell" className="flex items-center px-2">
+              {canBulk(item) && <input type="checkbox" aria-label={t("views.bulk.selectRow", { title: item.title })} checked={picked.includes(item.id)} onChange={() => togglePicked(item.id)} onMouseDown={(event) => event.stopPropagation()} />}
+            </div>
             {row.getVisibleCells().map((cell) => <div role="cell" key={cell.id} className="flex min-w-0 items-center px-2">
               {/* called, not rendered as a component: a new component type per render would remount the cell between mousedown and mouseup and swallow the click (QA-D-lane3-010) */}
               {(cell.column.columnDef.cell as (context: ReturnType<typeof cell.getContext>) => React.ReactNode)(cell.getContext())}

@@ -121,7 +121,10 @@ test("ViewTabs duplicates, reorders, changes default, copies and deletes", async
   await nav.getByRole("radio", { name: "Board", exact: true }).click(); // options exist only on the active segment
   await nav.getByRole("button", { name: "Board options", exact: true }).click();
   await page.getByRole("menuitem", { name: "Move left" }).click();
-  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toEqual({ position: 0 });
+  // WA-D07: moving a tab changes only this user's order (a personal preference), never the shared position.
+  await expect.poll(() => calls.find((c) => c.method === "PUT" && c.path.startsWith("/me/view-preferences/"))?.body)
+    .toEqual(expect.objectContaining({ order: expect.any(Array) }));
+  expect(calls.filter((c) => c.method === "PATCH" && c.path.startsWith("/views/"))).toHaveLength(0);
   await nav.getByRole("button", { name: "Board options", exact: true }).click();
   await page.getByRole("menuitem", { name: "Set as default" }).click();
   await expect(nav.getByRole("radio", { name: "Board", exact: true })).toHaveAttribute("aria-checked", "true");
@@ -160,7 +163,7 @@ for (const { type, label, visibility } of [
     await page.goto(path);
     const nav = page.getByRole("navigation", { name: "Views" });
     await nav.getByRole("button", { name: "Add view" }).click();
-    await page.getByRole("menuitem", { name: label, exact: true }).click();
+    await page.getByRole("dialog", { name: "Choose a view type" }).getByRole("button", { name: new RegExp(`^${label}`) }).click();
     const form = page.getByRole("dialog", { name: "Add view" });
     const name = `${label} plan`;
     const input = form.getByRole("textbox", { name: "View name" });

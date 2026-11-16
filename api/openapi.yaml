@@ -2566,6 +2566,29 @@ paths:
       responses:
         '204': { description: Tersimpan }
         '422': { $ref: '#/components/responses/Problem' }
+  /me/view-preferences/{scopeId}:
+    put:
+      tags: [users]
+      operationId: saveViewPreferences
+      summary: Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07)
+      parameters:
+        - name: scopeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hidden, order]
+              properties:
+                hidden: { type: array, maxItems: 100, items: { type: string, format: uuid } }
+                order: { type: array, maxItems: 100, items: { type: string, format: uuid } }
+      responses:
+        '204': { description: Tersimpan }
+        '422': { $ref: '#/components/responses/Problem' }
   /me/2fa:
     get:
       tags: [auth]
@@ -6333,6 +6356,15 @@ components:
                 properties:
                   rows: { type: array, items: { type: string, format: uuid } }
                   gantt_collapsed: { type: boolean }
+            view_prefs:
+              type: object
+              description: Preferensi view personal per workspace (WA-D07), kunci = id Space, Project, atau Folder. Hanya user ini yang membacanya
+              additionalProperties:
+                type: object
+                required: [hidden, order]
+                properties:
+                  hidden: { type: array, items: { type: string, format: uuid } }
+                  order: { type: array, items: { type: string, format: uuid } }
             email_muted:
               type: array
               description: Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif

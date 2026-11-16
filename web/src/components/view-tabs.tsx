@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { CalendarDays, ChartColumn, ChartGantt, Clock, Folder, Kanban, MoreHorizontal, Plus, Table2 } from "lucide-react";
+import { Check, CalendarDays, ChartColumn, ChartGantt, Clock, Folder, Kanban, LayoutList, MoreHorizontal, Plus, Table2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
@@ -11,6 +11,8 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { FormError } from "@/components/auth/form-error";
+import { useViewPreferences } from "@/lib/use-view-preferences";
+import { arrangeViews, hideView, moveView, moveViewBefore, restoreView } from "@/lib/view-preferences";
 
 const viewIcons = { table: Table2, board: Kanban, gantt: ChartGantt, calendar: CalendarDays, timelog: Clock, files: Folder, chart: ChartColumn } as const;
 function ViewIcon({ type }: { type: SavedView["type"] }) {
@@ -19,6 +21,9 @@ function ViewIcon({ type }: { type: SavedView["type"] }) {
 }
 
 const viewTypes = ["table", "board", "gantt", "calendar", "timelog", "files", "chart"] as const satisfies readonly SavedView["type"][];
+const projectOnlyTypes: readonly SavedView["type"][] = ["timelog", "files", "chart"];
+/** Tab terlihat sebelum sisanya masuk menu "All views". Tetap sederhana: pengukuran lebar layar belum dipakai. shortcut: tetap 6 tab, naik ke pengukuran lebar bila perlu. */
+const VISIBLE_TABS = 6;
 
 export function ViewTabs({ views, selected, scope, canEdit, project = false, onSelect, onRefresh }: {
   views: SavedView[];
@@ -30,6 +35,7 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
   onRefresh: () => Promise<void>;
 }) {
   const { t } = useTranslation();
+  const [choosing, setChoosing] = useState(false);
   const [adding, setAdding] = useState<SavedView["type"]>();
   const [renaming, setRenaming] = useState<SavedView>();
   const [deleting, setDeleting] = useState<SavedView>();
@@ -84,14 +90,57 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
     });
   }
   const selectedIndex = views.findIndex((view) => view.id === selected.id);
-  const selectedSiblings = views.filter((candidate) => candidate.visibility === selected.visibility);
-  const i = selectedSiblings.findIndex((candidate) => candidate.id === selected.id);
-  const previous = selectedSiblings[i - 1], next = selectedSiblings[i + 1];
+  // WA-D07: order and hidden views are personal, saved per workspace; the shared view configuration is not changed.
+  const scopeId = "scope_space_id" in scope ? scope.scope_space_id : scope.scope_item_id;
+  const { prefs, save: savePrefs } = useViewPreferences(scopeId);
+  const arranged = arrangeViews(views, prefs, selected.id);
+  // A hidden active view is still shown (marked hidden) so the user can see where they are; the saved preference is not changed.
+  const visible = arranged.hidden.some((view) => view.id === selected.id)
+    ? [...arranged.visible.slice(0, VISIBLE_TABS - 1), selected] : arranged.visible;
+  const selectedHidden = arranged.hidden.some((view) => view.id === selected.id);
+  // A-02: drag a visible tab onto another to place it before that tab (personal order only).
+  const [dragging, setDragging] = useState<string>();
   const editable = selected.visibility === "personal" || canEdit;
   return <div className="space-y-2">
     <nav aria-label={t("views.views")} className="flex flex-wrap items-center gap-2 border-b pb-2">
       <SegmentedControl aria-label={t("views.views")} value={selected.id} onChange={onSelect}
-        items={views.map((view) => ({ value: view.id, label: view.name, icon: <ViewIcon type={view.type} /> }))} />
+        itemDrag={(id) => ({
+          draggable: true,
+          onDragStart: (event) => { event.dataTransfer.setData("text/plain", id); setDragging(id); },
+          onDragOver: (event) => { if (dragging && dragging !== id) event.preventDefault(); },
+          onDrop: (event) => { event.preventDefault(); if (dragging) savePrefs(moveViewBefore(prefs, views, dragging, id)); setDragging(undefined); },
+          onDragEnd: () => setDragging(undefined),
+        })}
+        items={visible.map((view) => ({ value: view.id, label: view.name, icon: <ViewIcon type={view.type} /> }))} />
+      {selectedHidden && <span className="rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground">{t("views.hiddenNow")}</span>}
+      {views.length > VISIBLE_TABS && <DropdownMenu>
+        <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={t("views.allViews")} />}><LayoutList />{t("views.allViews")}</DropdownMenuTrigger>
+        <DropdownMenuContent align="start" className="max-h-80 w-64 overflow-y-auto">
+          <DropdownMenuGroup>
+            <DropdownMenuLabel>{t("views.allViews")}</DropdownMenuLabel>
+            {arranged.visible.map((view) => <DropdownMenuItem key={view.id} aria-current={view.id === selected.id ? "true" : undefined} onClick={() => onSelect(view.id)}>
+              <ViewIcon type={view.type} />
+              <span className="min-w-0 flex-1 truncate">{view.name}</span>
+              <span className="text-xs text-muted-foreground">{[view.is_default && t("views.defaultView"), t(view.visibility === "personal" ? "views.personal" : "views.public")].filter(Boolean).join(" · ")}</span>
+              {view.id === selected.id && <Check aria-label={t("views.currentView")} />}
+            </DropdownMenuItem>)}
+          </DropdownMenuGroup>
+          {arranged.overflow.length > 0 && <DropdownMenuGroup>
+            <DropdownMenuLabel>{t("views.overflowViews")}</DropdownMenuLabel>
+            {arranged.overflow.map((view) => <DropdownMenuItem key={view.id} aria-current={view.id === selected.id ? "true" : undefined} onClick={() => onSelect(view.id)}>
+              <ViewIcon type={view.type} /><span className="min-w-0 flex-1 truncate">{view.name}</span>
+            </DropdownMenuItem>)}
+          </DropdownMenuGroup>}
+          {arranged.hidden.length > 0 && <DropdownMenuGroup>
+            <DropdownMenuLabel>{t("views.hiddenViews")}</DropdownMenuLabel>
+            {arranged.hidden.map((view) => <DropdownMenuItem key={view.id} onClick={() => onSelect(view.id)}>
+              <ViewIcon type={view.type} /><span className="min-w-0 flex-1 truncate">{view.name}</span>
+              <span role="button" tabIndex={0} className="text-xs underline" onClick={(event) => { event.stopPropagation(); savePrefs(restoreView(prefs, view.id)); }}
+                onKeyDown={(event) => { if (event.key === "Enter") { event.stopPropagation(); savePrefs(restoreView(prefs, view.id)); } }}>{t("views.restoreView")}</span>
+            </DropdownMenuItem>)}
+          </DropdownMenuGroup>}
+        </DropdownMenuContent>
+      </DropdownMenu>}
       {selectedIndex >= 0 && <DropdownMenu>
         <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={t("views.options", { name: selected.name })} />}><MoreHorizontal /></DropdownMenuTrigger>
         <DropdownMenuContent align="start">
@@ -101,24 +150,39 @@ export function ViewTabs({ views, selected, scope, canEdit, project = false, onS
           <DropdownMenuItem disabled={busy} onClick={() => void duplicate(selected, "personal")}>{t("views.duplicatePersonal")}</DropdownMenuItem>
           {canEdit && selected.visibility === "public" && !selected.is_default && <DropdownMenuItem disabled={busy}
             onClick={() => void update(selected.id, { is_default: true })}>{t("views.setDefault")}</DropdownMenuItem>}
-          {editable && previous && <DropdownMenuItem disabled={busy} onClick={() => void update(selected.id, { position: previous.position })}>{t("views.moveLeft")}</DropdownMenuItem>}
-          {editable && next && <DropdownMenuItem disabled={busy} onClick={() => void update(selected.id, { position: next.position })}>{t("views.moveRight")}</DropdownMenuItem>}
+          <DropdownMenuItem disabled={busy || selected.is_default || !(arranged.visible.some((view) => view.id === selected.id) || arranged.overflow.some((view) => view.id === selected.id))}
+            onClick={() => savePrefs(hideView(prefs, selected.id, views))}>{selected.is_default ? t("views.cannotHideDefault") : t("views.hideView")}</DropdownMenuItem>
+          <DropdownMenuItem disabled={busy || arranged.order.indexOf(selected.id) <= 0} onClick={() => savePrefs(moveView(prefs, views, selected.id, -1))}>{t("views.moveLeft")}</DropdownMenuItem>
+          <DropdownMenuItem disabled={busy || arranged.order.indexOf(selected.id) < 0 || arranged.order.indexOf(selected.id) >= arranged.order.length - 1} onClick={() => savePrefs(moveView(prefs, views, selected.id, 1))}>{t("views.moveRight")}</DropdownMenuItem>
           {editable && !selected.is_default && <DropdownMenuItem variant="destructive" disabled={busy}
             onClick={() => { setError(""); setDeleting(selected); }}>{t("views.delete")}</DropdownMenuItem>}
         </DropdownMenuContent>
       </DropdownMenu>}
-      <DropdownMenu>
-        <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" disabled={busy} aria-label={t("views.addView")} title={t("views.addView")} />}>
-          <Plus />
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
-          {viewTypes.filter((type) => (type !== "timelog" && type !== "files" && type !== "chart") || project).map((type) => <DropdownMenuItem key={type} onClick={() => { setError(""); setAdding(type); }}>
-            <ViewIcon type={type} />{t(`views.types.${type}`)}
-          </DropdownMenuItem>)}
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button size="icon-sm" variant="ghost" disabled={busy} aria-label={t("views.addView")} title={t("views.addView")} onClick={() => { setError(""); setChoosing(true); }}>
+        <Plus />
+      </Button>
     </nav>
     {!adding && !renaming && !deleting && <FormError message={error} />}
+    <Dialog open={choosing} onOpenChange={(open) => { if (!open) setChoosing(false); }}>
+      <DialogContent>
+        <DialogTitle>{t("views.chooseType")}</DialogTitle>
+        <div className="grid gap-2 sm:grid-cols-2" role="group" aria-label={t("views.chooseType")}>
+          {viewTypes.map((type) => {
+            const available = !projectOnlyTypes.includes(type) || project;
+            return <button key={type} type="button" disabled={!available} aria-disabled={!available || undefined}
+              onClick={() => { setChoosing(false); setAdding(type); }}
+              className="flex items-start gap-3 rounded-lg border bg-card p-3 text-left hover:bg-accent disabled:cursor-not-allowed disabled:opacity-60">
+              <span className="mt-0.5"><ViewIcon type={type} /></span>
+              <span className="min-w-0 space-y-0.5">
+                <span className="block font-medium">{t(`views.types.${type}`)}</span>
+                <span className="block text-xs text-muted-foreground">{t(`views.typeDescriptions.${type}`)}</span>
+                <span className="block text-xs text-muted-foreground">{available ? t("views.availableHere") : t("views.projectOnly")}</span>
+              </span>
+            </button>;
+          })}
+        </div>
+      </DialogContent>
+    </Dialog>
     <Dialog open={!!adding} onOpenChange={(open) => { if (!open) setAdding(undefined); }}>
       <DialogContent>
         <DialogTitle>{t("views.addView")}</DialogTitle>

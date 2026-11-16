@@ -285,5 +285,13 @@
   },
   "taskParent": "Choose a project in the same Space as the parent",
   "noDates": "Folders have no start or finish date.",
-  "info": "Info"
+  "info": "Info",
+  "reviewState": {
+    "loading": "Review status loading",
+    "unavailable": "Review status unavailable",
+    "notRequested": "Not requested",
+    "inReview": "In review",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  }
 }

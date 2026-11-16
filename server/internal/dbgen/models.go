@@ -1287,6 +1287,7 @@ type User struct {
 	ScimProvisioned          bool               `json:"scim_provisioned"`
 	SidebarPinned            []string           `json:"sidebar_pinned"`
 	ViewExpansion            []byte             `json:"view_expansion"`
+	ViewPrefs                []byte             `json:"view_prefs"`
 }
 
 type UserIdentity struct {
