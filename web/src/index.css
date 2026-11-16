@@ -385,3 +385,6 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* SB-02: thin scrollbar in the sidebar palette; the track stays transparent so the navy background shows through. */
+.sidebar-scroll { scrollbar-width: thin; scrollbar-color: var(--nav-muted) transparent; }

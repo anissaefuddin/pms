@@ -277,6 +277,7 @@ test("a Space gets a ready-made analytics board of five widgets", async ({ page 
   await page.goto("/");
   await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // Tools only show once a Space is open
   await page.getByRole("button", { name: "Expand Marketing" }).click();
+  await page.getByRole("navigation", { name: "Spaces" }).getByRole("button", { name: "Tools" }).click(); // SB-05: Tools starts collapsed
   await page.getByRole("button", { name: "Create analytics board" }).click();
   await expect(page).toHaveURL(`/dashboards/${d1}`);
   const posts = calls.filter((c) => c.method === "POST" && c.path === `/dashboards/${d1}/widgets`);
