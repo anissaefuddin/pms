@@ -24,7 +24,7 @@ test("Space node shows overview, Tools and Projects with type icons, walked by a
   await toggle.press("ArrowRight");
   await expect(tree.getByRole("link", { name: "Space overview" })).toBeVisible();
   await expect(tree.getByText("Tools")).toBeVisible();
-  await expect(tree.getByRole("button", { name: "Add to Marketing" })).toBeVisible();
+  await expect(tree.getByRole("button", { name: "Create in Marketing" })).toBeVisible();
   await expect(tree.getByRole("link", { name: "Roadmap" }).locator("svg")).toHaveCount(1);
   await tree.getByRole("button", { name: "Collapse Marketing" }).press("ArrowDown"); // next focusable: the Marketing link
   await expect(tree.getByRole("link", { name: "Marketing" })).toBeFocused();
@@ -37,7 +37,7 @@ test("a project page is header plus view; details live in the Info panel and /ta
   await expect(page.getByRole("heading", { name: "Roadmap", level: 1 })).toBeVisible();
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Info" }).click();
-  await expect(page.getByRole("dialog", { name: "Info" }).getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Roadmap");
+  await expect(page.getByRole("dialog").getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Roadmap");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
@@ -56,7 +56,7 @@ test("More lists Calendars and Created by me; Calendars and Created by me pages 
   await mockSpaces(page, { extra: common as never });
   await page.goto("/");
   await page.getByRole("button", { name: "More", exact: true }).click();
-  await expect(page.getByRole("menuitem", { name: "Customize menu" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Customize sidebar" })).toBeVisible();
   await page.getByRole("menuitem", { name: "Calendars" }).click();
   await expect(page.getByRole("heading", { name: "Calendars", level: 1 })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -70,4 +70,16 @@ test("the realtime status shows only while disconnected", async ({ page }) => {
   await mockSpaces(page);
   await page.goto("/");
   await expect(page.getByText("Live", { exact: true })).toHaveCount(0);
+});
+
+test("on a project page a task opens in the slide-right panel, not a new page", async ({ page }) => {
+  const taskId = "bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb";
+  const task = { ...projectItem, id: taskId, type: "task", title: "Draft brief", seq: 2 };
+  await mockSpaces(page, { extra: { ...common, "GET /spaces/x/views": { body: { items: [] } },
+    [`GET ${itemPath}/children`]: { body: { items: [task] } }, [`GET /items/${taskId}`]: { headers: { ETag: '"1"' }, body: task },
+    [`GET /items/${taskId}/children`]: { body: { items: [] } } } as never });
+  await page.goto(`/tasks/${project}`);
+  await page.getByRole("button", { name: "Draft brief", exact: true }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/tasks/${project}\\?.*task=${taskId}`));
+  await expect(page.getByRole("dialog", { name: "Item detail" })).toBeVisible();
 });

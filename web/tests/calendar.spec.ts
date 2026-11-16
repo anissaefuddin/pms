@@ -26,10 +26,12 @@ function mock(page: import("@playwright/test").Page, space = ALL) {
 }
 const cell = (page: import("@playwright/test").Page, day: number) => page.getByRole("gridcell").filter({ hasText: new Date(now.getFullYear(), now.getMonth(), day).toLocaleDateString("en-US", { dateStyle: "full" }) });
 
-test("shows items on every day they span, holidays, and Unscheduled", async ({ page }) => {
+test("shows a multi-day item once per week, holidays, and Unscheduled", async ({ page }) => {
   await mock(page);
   await page.goto(path);
-  for (const day of [10, 11, 12]) await expect(cell(page, day).getByRole("button", { name: /Launch prep/ })).toBeVisible();
+  // C2: a multi-day item is one bar in the week, drawn where it starts; it is not repeated in each day cell.
+  await expect(cell(page, 10).getByRole("button", { name: /Launch prep/ })).toBeVisible();
+  await expect(page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: /Launch prep/ })).toHaveCount(1);
   await expect(cell(page, 13).getByRole("button")).toHaveCount(0);
   await expect(cell(page, 11)).toContainText("Founders Day");
   await expect(page.getByRole("region", { name: "Unscheduled" }).getByRole("button", { name: "Someday" })).toBeVisible();
@@ -43,16 +45,16 @@ test("dragging moves the whole span, dropping an unscheduled item gives it one d
   const { calls } = await mock(page);
   await page.goto(path);
   await page.setViewportSize({ width: 1400, height: 1200 });
-  await cell(page, 11).getByRole("button", { name: /Launch prep/ }).dragTo(cell(page, 17));
+  await cell(page, 10).getByRole("button", { name: /Launch prep/ }).dragTo(cell(page, 17));
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${span.id}`)?.body)
-    .toEqual({ start_date: `${ym}-16`, due_date: `${ym}-18` });
+    .toEqual({ start_date: `${ym}-17`, due_date: `${ym}-19` });
   await page.getByRole("region", { name: "Unscheduled" }).getByRole("button", { name: "Someday" }).dragTo(cell(page, 20));
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${loose.id}`)?.body)
     .toEqual({ start_date: `${ym}-20`, due_date: `${ym}-20` });
-  await cell(page, 16).getByRole("button", { name: /Launch prep/ }).focus();
+  await cell(page, 17).getByRole("button", { name: /Launch prep/ }).focus();
   await page.keyboard.press("Alt+ArrowRight");
   await expect.poll(() => calls.filter((call) => call.method === "PATCH" && call.path === `/items/${span.id}`).at(-1)?.body)
-    .toEqual({ start_date: `${ym}-17`, due_date: `${ym}-19` });
+    .toEqual({ start_date: `${ym}-18`, due_date: `${ym}-20` });
 });
 
 test("view-only users cannot move items; axe is clean", async ({ page }) => {

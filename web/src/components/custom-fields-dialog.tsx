@@ -30,9 +30,10 @@ const fieldTypes: FieldType[] = [
 const aggregations: NonNullable<Config["aggregation"]>[] = ["sum", "average", "min", "max", "count"];
 const operators: Marker["operator"][] = ["lt", "lte", "eq", "gte", "gt"];
 const selectClass = "block h-8 w-full min-w-0 rounded-lg border border-input bg-background px-2.5";
+const defaultColor = "#2563eb"; // allow-hex: warna data yang disimpan ke API (pola hex), sama dengan --brand-primary
 
 function newOption(): Option {
-  return { id: crypto.randomUUID(), label: "", color: "#2563eb" };
+  return { id: crypto.randomUUID(), label: "", color: defaultColor };
 }
 
 export function CustomFieldsDialog({ open, onOpenChange, spaceId }: {
@@ -304,7 +305,7 @@ function CustomFields({ spaceId }: { spaceId: string }) {
           </div>)}
           <Button type="button" variant="outline" size="sm" disabled={pending || draft.config.markers.length >= 10}
             onClick={() => editConfig({
-              markers: [...draft.config.markers, { id: crypto.randomUUID(), operator: "gte", value: "", color: "#2563eb" }],
+              markers: [...draft.config.markers, { id: crypto.randomUUID(), operator: "gte", value: "", color: defaultColor }],
             })}>{t("spaces.customFields.addMarker")}</Button>
         </fieldset>
       </>}

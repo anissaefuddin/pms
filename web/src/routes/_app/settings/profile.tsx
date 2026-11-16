@@ -8,7 +8,7 @@ import { useProfile } from "@/lib/profile";
 import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { sidebarChoices, useSidebarHidden } from "@/components/customize-menu-dialog";
+import { PINNABLE_IDS, SHORTCUT_LABEL_KEY, pinPatch, sanitizePinOrder, togglePin, type ShortcutId } from "@/lib/sidebar-prefs";
 
 export const Route = createFileRoute("/_app/settings/profile")({ component: ProfileRoute });
 
@@ -53,13 +53,28 @@ function Identity({ profile }: { profile: CurrentUser }) {
 
 function SidebarSettings({ profile }: { profile: CurrentUser }) {
   const { t } = useTranslation();
-  const { hidden, toggle, error } = useSidebarHidden(profile);
+  const client = useQueryClient();
+  const [error, setError] = useState("");
+  // Same data as the sidebar: checked = pinned, so the checklist and the sidebar cannot disagree.
+  const pins = sanitizePinOrder(profile.sidebar_pinned);
+  async function toggle(id: ShortcutId) {
+    setError("");
+    const order = togglePin(pins, id);
+    const body = pinPatch(order, profile.sidebar_hidden ?? []);
+    client.setQueryData(["me"], { ...profile, ...body }); // optimistic, the sidebar follows at once
+    try {
+      client.setQueryData(["me"], await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify(body) }));
+    } catch (err) {
+      client.setQueryData(["me"], profile);
+      setError((err as Error).message);
+    }
+  }
   return <fieldset className="mt-6 max-w-3xl space-y-2">
     <legend className="mb-1 text-lg font-semibold">{t("settings.profile.sidebar.title")}</legend>
     <p className="text-sm text-muted-foreground">{t("settings.profile.sidebar.hint")}</p>
-    {sidebarChoices.map((key) => <label key={key} className="flex items-center gap-2 text-sm">
-      <input type="checkbox" checked={!hidden.includes(key)} onChange={(event) => void toggle(key, event.target.checked)} />
-      {t(`settings.profile.sidebar.${key}`)}
+    {PINNABLE_IDS.map((id) => <label key={id} className="flex items-center gap-2 text-sm">
+      <input type="checkbox" checked={pins.includes(id)} onChange={() => void toggle(id)} />
+      {t(SHORTCUT_LABEL_KEY[id])}
     </label>)}
     <FormError message={error} />
   </fieldset>;

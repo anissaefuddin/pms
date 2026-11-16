@@ -1828,6 +1828,40 @@ export interface paths {
         patch: operations["updateUser"];
         trace?: never;
     };
+    "/me/view-expansion/{viewId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Simpan expansi hierarki untuk satu view milik user (WA-D05) */
+        put: operations["saveViewExpansion"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/me/view-preferences/{scopeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        /** Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07) */
+        put: operations["saveViewPreferences"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/me/2fa": {
         parameters: {
             query?: never;
@@ -2538,7 +2572,7 @@ export interface paths {
         /**
          * Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
          * @description `locations` wajib berisi minimal satu lokasi. Untuk subtask, isi `parent_item_id` dengan task induk.
-         *     `default_view_type` hanya berlaku untuk project/folder.
+         *     `default_view_type` hanya berlaku untuk project/folder; nilainya table, board, gantt, calendar, files, atau chart.
          */
         post: operations["createItem"];
         delete?: never;
@@ -4023,6 +4057,8 @@ export interface components {
             entry_to?: string;
             /** @enum {string} */
             billing?: "billable" | "non_billable";
+            /** @description Milestone tidak dihitung sebagai task (WA-D03); hanya untuk reporting_on tasks */
+            exclude_milestones?: boolean;
         };
         AnalyticsQuery: {
             /** @enum {string} */
@@ -4042,9 +4078,9 @@ export interface components {
              */
             field_id?: string;
             /** @enum {string} */
-            group_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            group_by?: "assignee" | "status" | "status_id" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
             /** @enum {string} */
-            break_by?: "assignee" | "status" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
+            break_by?: "assignee" | "status" | "status_id" | "status_group" | "importance" | "type" | "item_type" | "space" | "field" | "due_month" | "created_month" | "user" | "item" | "category" | "billing_type" | "entry_month";
             filters?: components["schemas"]["AnalyticsFilters"];
         };
         WidgetData: {
@@ -4385,6 +4421,10 @@ export interface components {
         TimeEntryPage: {
             items: components["schemas"]["TimeEntry"][];
             next_offset: number | null;
+            /** @description Total menit seluruh hasil yang difilter (bukan halaman); hanya Timelog project */
+            total_minutes?: number;
+            billable_minutes?: number;
+            non_billable_minutes?: number;
         };
         Problem: {
             /** @example about:blank */
@@ -4514,8 +4554,27 @@ export interface components {
              * @enum {string}
              */
             comment_shortcut: "mod_enter" | "enter";
-            /** @description Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil */
+            /**
+             * @deprecated
+             * @description Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil. Dipertahankan satu rilis setelah sidebar_pinned
+             */
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
+            /** @description Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk */
+            sidebar_pinned?: components["schemas"]["SidebarKey"][];
+            /** @description Expansi hierarki per view milik user ini (WA-D05); kunci = id view. Hanya user ini yang membacanya */
+            view_expansion?: {
+                [key: string]: {
+                    rows: string[];
+                    gantt_collapsed: boolean;
+                };
+            };
+            /** @description Preferensi view personal per workspace (WA-D07), kunci = id Space, Project, atau Folder. Hanya user ini yang membacanya */
+            view_prefs?: {
+                [key: string]: {
+                    hidden: string[];
+                    order: string[];
+                };
+            };
             /** @description Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif */
             email_muted?: components["schemas"]["EmailGroup"][];
             /** @description true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati */
@@ -4560,7 +4619,10 @@ export interface components {
             accent?: "blue" | "teal" | "violet" | "green";
             /** @enum {string} */
             comment_shortcut?: "mod_enter" | "enter";
+            /** @deprecated */
             sidebar_hidden?: components["schemas"]["SidebarKey"][];
+            /** @description Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422) */
+            sidebar_pinned?: components["schemas"]["SidebarKey"][];
             email_muted?: components["schemas"]["EmailGroup"][];
             default_task_duration_days?: number | null;
             default_task_effort_minutes?: number | null;
@@ -4587,7 +4649,7 @@ export interface components {
             seats: components["schemas"]["Seats"];
         };
         /** @enum {string} */
-        SidebarKey: "created_by_me" | "workload" | "calendars" | "dashboards" | "my_todo" | "request_forms" | "timesheets" | "reports" | "stream" | "starred";
+        SidebarKey: "created_by_me" | "workload" | "calendars" | "dashboards" | "my_todo" | "request_forms" | "timesheets" | "reports" | "stream" | "starred" | "portfolio" | "reviews";
         InviteRequest: {
             /** Format: email */
             email: string;
@@ -4935,6 +4997,13 @@ export interface components {
             id: number;
             /** Format: uuid */
             approval_id: string;
+            /**
+             * Format: uuid
+             * @description WA-D08: file yang dirujuk approval; kosong untuk event lama
+             */
+            attachment_id?: string | null;
+            /** Format: int32 */
+            attachment_version?: number | null;
             /** @enum {string} */
             kind: "approver_requested" | "approver_removed" | "decided" | "withdrawn";
             actor: components["schemas"]["UserRef"] | null;
@@ -5457,7 +5526,7 @@ export interface components {
             /** Format: uuid */
             default_workflow_id?: string | null;
             /** @enum {string|null} */
-            default_view_type?: "table" | "board" | null;
+            default_view_type?: "table" | "board" | "gantt" | "calendar" | "files" | "chart" | null;
             assignees: components["schemas"]["ItemAssignee"][];
             locations: components["schemas"]["Location"][];
             child_count?: number;
@@ -5533,7 +5602,7 @@ export interface components {
              * @description Hanya project/folder
              * @enum {string}
              */
-            default_view_type?: "table" | "board";
+            default_view_type?: "table" | "board" | "gantt" | "calendar" | "files" | "chart";
             assignee_ids?: string[];
             assignee_allocations?: components["schemas"]["AssigneeAllocationUpdate"][];
             locations: components["schemas"]["Location"][];
@@ -5694,6 +5763,11 @@ export interface components {
         };
         ProjectFile: components["schemas"]["Attachment"] & {
             item_title: string;
+            /**
+             * @description WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
+             * @enum {string}
+             */
+            review_status?: "not_requested" | "in_review" | "approved" | "rejected" | "cancelled";
         };
         AttachmentPreview: {
             /** Format: uuid */
@@ -9938,6 +10012,62 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    saveViewExpansion: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                viewId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    rows: string[];
+                    gantt_collapsed: boolean;
+                };
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    saveViewPreferences: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                scopeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    hidden: string[];
+                    order: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            422: components["responses"]["Problem"];
         };
     };
     getTwoFactor: {

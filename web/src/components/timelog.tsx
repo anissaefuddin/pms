@@ -5,7 +5,7 @@ import { Filter } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { FormError } from "@/components/auth/form-error";
+import { ErrorState } from "@/components/ui/error-state";
 import { api } from "@/lib/api";
 import { formatDate, useProfile } from "@/lib/profile";
 import { formatMinutes, type TimeEntryPage } from "@/lib/time-entries";
@@ -26,6 +26,8 @@ export function Timelog({ project }: { project: string }) {
     queryKey: ["time-entries", project, params.toString()],
     queryFn: ({ signal }) => api<TimeEntryPage>(`/api/v1/items/${project}/time-entries?${params}`, { signal }),
   });
+  // Filters are active when any of them differs from its default; then "no entries" means "no match", not "none logged yet".
+  const filtersActive = !!(filter.from || filter.to || filter.category || filter.billing_type || filter.locked);
   function change(key: keyof typeof filter, value: string) {
     setOffset(0);
     setFilter({ ...filter, [key]: value });
@@ -63,9 +65,12 @@ export function Timelog({ project }: { project: string }) {
         </PopoverContent>
       </Popover>
     </div>
-    <FormError message={result.error?.message ?? ""} />
     {result.isPending && <p role="status">{t("items.loading")}</p>}
-    {result.data?.items.length === 0 && <p>{t("time.empty")}</p>}
+    {result.isError && <ErrorState message={t("time.loadFailed")} retryLabel={t("items.retry")} onRetry={() => void result.refetch()} />}
+    {result.data?.items.length === 0 && <div className="space-y-2 rounded border border-dashed p-6 text-center">
+      <p>{filtersActive ? t("time.empty") : t("time.noEntries")}</p>
+      {filtersActive && <Button variant="outline" size="sm" onClick={() => { setOffset(0); setFilter({ ...filter, from: "", to: "", category: "", billing_type: "", locked: "" }); }}>{t("time.clearFilters")}</Button>}
+    </div>}
     {!!result.data?.items.length && <div className="overflow-auto rounded border">
       <table aria-label={t("time.timelog")} className="w-full text-sm">
         <thead className="bg-muted"><tr>{[t("items.task"), ...columns.map((key) => t(`time.${key}`))].map((label) =>
@@ -82,7 +87,14 @@ export function Timelog({ project }: { project: string }) {
         </tr>)}</tbody>
       </table>
     </div>}
-    {!!result.data?.items.length && <p className="text-sm text-muted-foreground">{t("time.pageTotal", { count: result.data.items.length, time: formatMinutes(result.data.items.reduce((sum, entry) => sum + (entry.minutes ?? 0), 0)) })}</p>}
+    {!!result.data?.items.length && (result.data.total_minutes != null
+      // E-01: the server's total covers every filtered entry, not only this page.
+      ? <div className="flex flex-wrap gap-x-4 text-sm">
+        <p className="font-medium">{t("time.filteredTotal", { time: formatMinutes(result.data.total_minutes) })}</p>
+        <p className="text-muted-foreground">{t("time.billableTotal", { time: formatMinutes(result.data.billable_minutes ?? 0) })}</p>
+        <p className="text-muted-foreground">{t("time.nonBillableTotal", { time: formatMinutes(result.data.non_billable_minutes ?? 0) })}</p>
+      </div>
+      : <p className="text-sm text-muted-foreground">{t("time.pageOnlyTotal", { time: formatMinutes(result.data.items.reduce((sum, entry) => sum + (entry.minutes ?? 0), 0)) })}</p>)}
     {(offset > 0 || result.data?.next_offset != null) && <div className="flex gap-2">
       <Button variant="outline" disabled={!offset || result.isPending} onClick={() => setOffset(Math.max(0, offset - pageSize))}>{t("time.previousPage")}</Button>
       <Button variant="outline" disabled={result.data?.next_offset == null} onClick={() => setOffset(result.data?.next_offset ?? offset)}>{t("time.nextPage")}</Button>

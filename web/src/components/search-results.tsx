@@ -2,6 +2,8 @@ import { TypeBadge } from "@/components/type-badge";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SearchIllustration } from "@/components/ui/empty-illustrations";
 import type { SearchContext, SearchResults, SearchScope } from "@/lib/search";
 
 export function SearchScopes({ context, scope, onChange }: {
@@ -43,7 +45,7 @@ export function SearchResultList({ data = empty, query, pending, error, retry, c
     <p role="alert">{t("search.error")}</p><Button variant="link" onClick={retry}>{t("search.retry")}</Button>
   </div>;
   if (!data.items.length && !data.comments.length && !data.users.length) {
-    return <p role="status" className="px-3 py-2 text-muted-foreground">{t("search.empty", { query })}</p>;
+    return <EmptyState className="border-0 px-3 py-6" icon={<SearchIllustration />} title={t("search.emptyTitle")} description={t("search.empty", { query })} />;
   }
 
   return <div className="space-y-3">

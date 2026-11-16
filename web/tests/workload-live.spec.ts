@@ -6,6 +6,7 @@ test.skip(!cookie, "requires the PostgreSQL workload fixture");
 
 test("E2E-PAR-07: leave changes capacity and reassign exposes over-allocation", async ({ page, context, baseURL }) => {
   await context.addCookies([{ name: "pms_session", value: cookie!.split("=")[1], url: baseURL! }]);
+  const reviewer = page.getByRole("table", { name: "Daily workload" }).getByRole("row", { name: /Capacity Reviewer/ });
   await page.goto("/settings/resources");
   await page.getByLabel("Add leave date").fill("2026-11-17");
   await page.getByRole("button", { name: "Save capacity" }).click();
@@ -20,7 +21,7 @@ test("E2E-PAR-07: leave changes capacity and reassign exposes over-allocation", 
   await page.getByRole("button", { name: "Capacity Reviewer", exact: true }).click();
   await page.getByRole("button", { name: "Save assignment" }).click();
   await expect(page.getByRole("heading", { name: "Assigned tasks" }).locator("..")).toContainText("Review scope");
-  await expect(page.getByRole("table", { name: "Workload and capacity" }).getByRole("row", { name: /Capacity Reviewer/ })).toContainText("0 + 0 / 0");
+  await expect(reviewer).toContainText("0 + 0 / 0");
   await page.goto("/settings/resources");
   await page.getByRole("button", { name: "Remove", exact: true }).click();
   await page.getByRole("button", { name: "Save capacity" }).click();
@@ -28,6 +29,6 @@ test("E2E-PAR-07: leave changes capacity and reassign exposes over-allocation", 
   await page.goto("/workload");
   await page.getByLabel("From", { exact: true }).fill("2026-11-17");
   await page.getByLabel("To", { exact: true }).fill("2026-11-17");
-  await expect(page.getByRole("table", { name: "Workload and capacity" }).getByRole("row", { name: /Capacity Reviewer/ })).toContainText("Over capacity");
+  await expect(reviewer).toContainText("Over capacity");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });

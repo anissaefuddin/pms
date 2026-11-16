@@ -28,7 +28,7 @@
   "duration": "Duration",
   "all": "All",
   "sort": "Timelog sort",
-  "empty": "No time entries match.",
+  "empty": "No time entries match the filters.",
   "unlocked": "Unlocked",
   "previousPage": "Previous page",
   "nextPage": "Next page",
@@ -53,5 +53,12 @@
     "add": "Add rate",
     "empty": "No rates yet.",
     "name": "Name"
-  }
+  },
+  "noEntries": "No time entries yet. Logged time for this project appears here.",
+  "clearFilters": "Clear filters",
+  "loadFailed": "Time entries could not be loaded.",
+  "filteredTotal": "Total for the filtered entries: {{time}}",
+  "billableTotal": "Billable: {{time}}",
+  "nonBillableTotal": "Non-billable: {{time}}",
+  "pageOnlyTotal": "On this page only: {{time}}"
 }

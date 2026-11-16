@@ -2,7 +2,7 @@ import { cn } from "@/lib/utils";
 
 const initials = (name: string) => name.split(/\s+/).filter(Boolean).slice(0, 2).map((part) => Array.from(part)[0]).join("").toLocaleUpperCase();
 
-/** Overlapping initials circles for people; names stay available as the accessible label and title. */
+/** The one avatar stack for the work area. Overlapping initials circles; names stay available as the accessible label and title. */
 export function AvatarStack({ people, max = 3, className }: { people: { id: string; name: string }[]; max?: number; className?: string }) {
   if (!people.length) return null;
   const shown = people.slice(0, max), extra = people.length - shown.length;

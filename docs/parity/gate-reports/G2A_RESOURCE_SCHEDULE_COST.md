@@ -26,6 +26,8 @@
 5. Buat dependensi antara task dua project di dua Space, buka Portfolio.
 6. Atur tarif, catat waktu billable, ubah tarif, periksa actual cost tidak berubah untuk entry lama.
 
+Retest 14 Nov 2026 meluluskan PAR-07/08, snapshot publik, portfolio, utilization dan biaya. Workload p95 139,4 ms pada 50 orang dan 2.000 task. Tabel beban harian dan utilization kini memiliki nama aksesibel yang berbeda. [Bukti retest](../../TESTING.md#retest-teknis-gate-m8m10-14-november-2026).
+
 ## Temuan saat M10
 
 1. Gantt di dalam project tidak menampilkan baris karena induk tingkat atas menunjuk project yang bukan baris chart; diperbaiki.

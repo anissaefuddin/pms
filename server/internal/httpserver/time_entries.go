@@ -310,7 +310,7 @@ FROM time_entries e JOIN items i ON i.id=e.item_id JOIN users u ON u.id=e.user_i
 WHERE e.user_id=$1::uuid AND e.item_id=ANY(ARRAY(SELECT unnest($4::text[])::uuid))
 AND e.entry_date BETWEEN COALESCE(NULLIF($2,'')::date,DATE '0001-01-01') AND COALESCE(NULLIF($3,'')::date,DATE '9999-12-31')
 ORDER BY e.entry_date DESC,e.id LIMIT $5 OFFSET $6`, actor.ID, from, to, ids, limit+1, offset)
-	writeTimeEntryList(w, ctx, tx, rows, err, limit, offset)
+	writeTimeEntryList(w, ctx, tx, rows, err, limit, offset, nil)
 }
 
 func visibleOwnEntryTasks(ctx context.Context, tx pgx.Tx, actor policy.Actor, from, to string) ([]string, error) {
@@ -339,7 +339,12 @@ func timeEntryListError(w http.ResponseWriter, ctx context.Context, err error) {
 	}
 }
 
-func writeTimeEntryList(w http.ResponseWriter, ctx context.Context, tx pgx.Tx, rows pgx.Rows, err error, limit, offset int) {
+// E-01: totals of the whole filtered set, not of the page. Only the project Timelog sends them (see listProjectTimeEntries).
+type timeEntryTotals struct {
+	Minutes, Billable, NonBillable int64
+}
+
+func writeTimeEntryList(w http.ResponseWriter, ctx context.Context, tx pgx.Tx, rows pgx.Rows, err error, limit, offset int, totals *timeEntryTotals) {
 	if err != nil {
 		timeEntryListError(w, ctx, err)
 		return
@@ -358,5 +363,11 @@ func writeTimeEntryList(w http.ResponseWriter, ctx context.Context, tx pgx.Tx, r
 		value := offset + limit
 		next = &value
 	}
-	writeJSON(w, 200, map[string]any{"items": entries, "next_offset": next})
+	out := map[string]any{"items": entries, "next_offset": next}
+	if totals != nil {
+		out["total_minutes"] = totals.Minutes
+		out["billable_minutes"] = totals.Billable
+		out["non_billable_minutes"] = totals.NonBillable
+	}
+	writeJSON(w, 200, out)
 }

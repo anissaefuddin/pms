@@ -764,6 +764,22 @@ Hal yang paling menentukan jadwal: **S1.1.2 (policy)** dan **S1.2.2 (item servic
 - [x] Laporan temuan dan bukti perbaikan
 
 **S6.3.4 Uji performa target NFR**
+- [x] Ukur Table, Board, Gantt, dan Search pada build produksi lokal dengan 10.000 task sintetis. [Hasil benchmark](TESTING.md#nfr-dan-rehearsal-kandidat-g0-14-november-2026)
+- [ ] Verifikasi NFR pada host pilot dengan data skala klien
+- [ ] Tangani temuan performa dari verifikasi pilot jika ada. Table, Board, dan Search memenuhi ambang lokal
+
+**S6.3.5 UAT P0 + P1 dan lima flow Playwright**
+- [x] Daftar UAT dari PRD di [UAT.md](UAT.md)
+- [x] Lima flow Playwright PASS lokal (Collaboration, M2, M3, M4, M5)
+- [x] Siapkan kandidat lokal di port 18082 dan verifikasi readiness, aset frontend, login, sesi, serta daftar Space
+- [ ] Catat penerimaan pengguna untuk 93 requirement P0/P1 di [UAT.md](UAT.md)
+- [ ] Verifikasi lima flow Playwright pada run GitHub Actions revisi kandidat
+- [ ] Bukti per requirement P0 dan P1 di TESTING
+
+**S6.3.6 Perbaikan bug dan stabilisasi**
+- [x] Tangani HTTP 500 saat permintaan daftar item dibatalkan dan error lint i18n pada kandidat lokal
+- [ ] Triase temuan UAT pilot dan keamanan yang tersisa sebelum rilis
+- [ ] Bekukan skema dan kontrak; tandai rilis kandidat
 - [x] Ukur target NFR PRD §6 pada data skala klien; hasil lokal dan sisa pengujian di TESTING
 - [x] Optimalkan kueri dan indeks yang melampaui target — tidak ada yang melampaui target pada pengukuran 13–14 Nov 2026 (TESTING.md), jadi tidak ada yang dioptimalkan
 
@@ -794,6 +810,7 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 ### E7.1 Stabilisasi (dikerjakan pertama)
 
 **S7.1.1 RCA HTTP 500 intermiten (STAB-02) — 4 hari**
+- [x] [TEST] Uji `GET /me` paralel dan reproduksi saat request dibatalkan
 - [x] [TEST] Reproduksi `GET /me` di bawah request paralel
 - [x] [TEST] Reproduksi daftar view dan time entries
 - [x] [BE] Analisis log dan trace; tulis hipotesis akar masalah
@@ -809,6 +826,7 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 - [x] [TEST] Latensi status dan komentar ≤ 3 detik
 - [x] [TEST] Reconnect dan pemuatan ulang data setelah putus
 - [x] [TEST] Urutan event dan duplikasi
+- [x] [FIX] Interval retry SSE 1 detik untuk memberi waktu resync dalam anggaran 3 detik
 - [x] [FIX] Interval retry klien SSE 1 detik (sebelumnya 3 detik) agar reconnect dan reload muat dalam anggaran 3 detik
 - [x] [DOC] Hasil di TESTING
 
@@ -829,6 +847,7 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 
 ### E7.2 Katalog, PRD, dan traceability
 
+**S7.2.1 Freeze katalog fitur Wrike (PAR-CAT-01) — 4 hari · SIAP REVIEW**
 **S7.2.1 Freeze katalog fitur Wrike (PAR-CAT-01) — 4 hari** · STATUS: menunggu review owner produk
 > Status jujur 14 Nov 2026: butir rekonsiliasi WFP dan [REVIEW] tidak dicentang di sini. Draf rekonsiliasi ada di sesi lain (belum dikomit, belum diaudit); freeze dan tag menunggu owner produk.
 - [x] [DOC] Kerangka `docs/parity/WRIKE_SOURCE_CATALOG_<tanggal>.md`
@@ -836,10 +855,11 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 - [x] [DOC] Verifikasi plan Business
 - [x] [DOC] Verifikasi plan Pinnacle dan Apex
 - [x] [DOC] Verifikasi add-on
-- [ ] [DOC] Rekonsiliasi WFP-001..053 dengan flow screen
-- [ ] [DOC] Rekonsiliasi WFP-054..106 dengan flow screen
+- [x] [DOC] Rekonsiliasi WFP-001..053 dengan flow screen
+- [x] [DOC] Rekonsiliasi WFP-054..106 dengan flow screen
 - [ ] [REVIEW] Review owner produk, freeze, tag versi
 
+**S7.2.2 Finalisasi PRD v0.4 dan traceability (REV-04, REV-05) — 2 hari · SIAP REVIEW**
 **S7.2.2 Finalisasi PRD v0.4 dan traceability (REV-04, REV-05) — 2 hari** · STATUS: menunggu persetujuan user
 - [x] [DOC] Matriks WFP → ID PRD
 - [x] [DOC] Lengkapi TRACEABILITY dengan hasil katalog
@@ -855,6 +875,7 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 - [x] [TEST] Benchmark Table/Board setelah perubahan
 - [x] [DOC] ADR CIT: tipe sebagai data, layout, subitem, default, inheritance
 
+**S7.3.2 ADR kontrak registry dan relasi bertipe (REG-00) — 2 hari · SIAP REVIEW**
 **S7.3.2 ADR kontrak registry dan relasi bertipe (REG-00) — 2 hari** · STATUS: menunggu keputusan DEC-PAR-03/04 (user)
 - [x] [DOC] Model `record_type`, `master_record`, `record_version` (desain saja)
 - [x] [DOC] Relasi bertipe item↔item dan item↔record; dampak custom field
@@ -868,9 +889,12 @@ Prasyarat: kode M6 ada. S6.3.4–S6.3.6 boleh berjalan paralel dengan E7.1. STAB
 
 ### E7.4 Gate
 
+**S7.4.1 Gate G0 — 1 hari · BLOCKED**
 **S7.4.1 Gate G0 — 1 hari** · STATUS: BLOCKED, menunggu UAT pilot, CI kandidat, dan persetujuan keputusan (G0)
 - [ ] [REVIEW] Checklist STAB-01..10 tertutup atau BLOCKED dengan keputusan
-- [x] [DOC] `docs/parity/gate-reports/G0_STABILIZATION.md`
+- [x] [DOC] [Laporan Gate G0](parity/gate-reports/G0_STABILIZATION.md)
+
+Bukti operasional lokal (STAB-10): dump/restore database sintetis dan verifikasi checksum arsip file lulus. Required check (STAB-03) masih menunggu paket GitHub yang mendukung aturan repo privat atau keputusan pemilik. Restore off-host, rehearsal host klien, penerimaan pengguna, dan CI kandidat masih terbuka.
 
 ## M8 — Konfigurasi kerja (G1)
 
@@ -911,6 +935,11 @@ Memetakan: CUST-01..05, SPC-14, TASK-11B, WF-03B, WF-04, WF-05, FORM-04, FORM-07
 
 **S8.1.5 UI tipe dan menu "+" (CUST-01, SPC-14) — 3 hari**
 - [x] [FE] Dialog "Create a custom item type"
+- [ ] [FE] Toggle menu "+" per Space
+- [ ] [FE] Menu blueprint: tipe, nama, ikon
+- [x] [FE] Nama tipe kustom di kolom dan pengelompokan Table serta Card fields Board
+- [ ] [FE] Filter dan pencarian berdasarkan tipe kustom
+- [ ] [BE] Tipe di ekspor Excel, laporan, search
 - [x] [FE] Toggle menu "+" per Space (D-99; `create-menu.spec.ts`, `TestSpaceCreateMenu`, `TestBrowserCreateMenu`)
 - [x] [FE] Menu blueprint: tipe, nama, ikon (bagian "Start from blueprint" di dialog buat item; ikon = ikon tipe dasar, D-99)
 - [x] [FE] Tipe di Table, Board, filter, search (kolom Tipe, kartu Board, filter `type=` di URL, hasil pencarian; TESTING.md M8-2)
@@ -1265,6 +1294,14 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 
 ### E11.3 API dan integrasi
 
+**S11.3.1 API key dan scope (API-01, SET-08) — 2.5 hari · DONE**
+- [x] [API] Kelola API key
+- [x] [DB] Key disimpan sebagai hash
+- [x] [BE] Middleware auth key dan scope
+- [x] [FE] Halaman Apps & Integrations: bagian API keys
+- [x] [TEST] Scope, rotasi, pencabutan
+
+**S11.3.2 Webhook (API-02) — 3 hari · DONE (lokal)**
 **S11.3.1 API key dan scope (API-01, SET-08) — 2.5 hari**
 - [x] [API] Kelola API key
 - [x] [DB] Key disimpan sebagai hash
@@ -1278,6 +1315,9 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [x] [BE] Kirim lewat outbox; tanda tangan HMAC dan timestamp
 - [x] [BE] Retry dan nonaktif otomatis
 - [x] [FE] UI webhook
+- [x] [TEST] E2E-PAR-11 lokal (alur API/outbox + receiver fixture + UI)
+
+**S11.3.3 OAuth app dan Authorized apps (API-03) — 2 hari · DONE lokal**
 - [x] [TEST] E2E-PAR-11
 
 **S11.3.3 OAuth app dan Authorized apps (API-03) — 2 hari**
@@ -1286,17 +1326,26 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 - [x] [FE] Layar persetujuan dan daftar Authorized apps
 - [x] [TEST] Pencabutan efektif
 
+**S11.3.4 Framework konektor (INT-01) — 1.5 hari · DONE lokal**
 **S11.3.4 Framework konektor (INT-01) — 1.5 hari**
 - [x] [BE] Lifecycle pasang, konfigurasi, nonaktif
 - [x] [BE] Penyimpanan rahasia terenkripsi
 - [x] [TEST] Lifecycle
 
+**S11.3.5 Sinkronisasi dua arah dan konflik (INT-02) — 2 hari · DONE lokal**
 **S11.3.5 Sinkronisasi dua arah dan konflik (INT-02) — 2 hari**
 - [x] [DOC] Kebijakan konflik
 - [x] [BE] Pemetaan ID eksternal
 - [x] [BE] Deteksi dan penyelesaian konflik
 - [x] [TEST] Tidak ada penimpaan diam-diam
 
+**S11.3.6 Dua konektor pilot (INT-03) — 1.5 hari · IN_PROGRESS**
+- [x] [BE] GitHub Issues dua arah
+- [x] [BE] Google Calendar satu arah
+- [x] [TEST] Verifikasi request provider dengan fixture HTTP
+- [ ] [TEST] Uji dengan akun uji GitHub dan Google Calendar
+
+**S11.3.7 Bookmark dan feedback (NAV-08, NAV-09) — 1.5 hari · DONE**
 **S11.3.6 Dua konektor pilot (INT-03) — 1.5 hari**
 - [x] [BE] GitHub Issues dua arah
 - [x] [BE] Google Calendar satu arah
@@ -1309,10 +1358,11 @@ Memetakan: VIEW-10, TASK-08B, FIL-01..04, DASH-03B, 04, 05, 07, 08, RPT-04, SET-
 
 ### E11.4 Gate
 
-**S11.4.1 UAT gate M11 — 2 hari**
+**S11.4.1 UAT gate M11 — 2 hari · BLOCKED**
 - [ ] [TEST] UAT per requirement M11
 - [ ] [FIX] Perbaikan temuan UAT
 - [ ] [FIX] Perbaikan temuan UAT
+- [x] [DOC] [Gate report G2b](parity/gate-reports/G2B_FILES_ANALYTICS_INTEGRATIONS.md)
 - [x] [DOC] Gate report G2b ([G2B](parity/gate-reports/G2B_FILES_ANALYTICS_INTEGRATION.md)); hasil BELUM LULUS: UAT oleh orang dan uji akun sungguhan belum dijalankan
 
 ## M12 — Enterprise dan penerimaan parity (G4)
@@ -1360,12 +1410,19 @@ Memetakan: ENT-01..05, AUTH-08, SET-09, PAR-UAT. Prasyarat: M8–M11 gate PASS.
 - [x] [TEST] Akses ditolak sesuai kebijakan
   - Catatan: uji dengan IdP/jaringan sungguhan belum; allowlist tidak mencakup form publik, tautan dashboard publik, SCIM, webhook; cache kebijakan 10 detik per proses (D-95).
 
+**S12.1.7 Login OTP dan transfer kepemilikan (AUTH-08, SET-09) — 2 hari · BLOCKED**
+- [ ] [BE] Login one-time password
+- [ ] [FE] Layar OTP
+- [ ] [BE] Transfer kepemilikan akun
+- [ ] [TEST] OTP dan transfer
 **S12.1.7 Login OTP dan transfer kepemilikan (AUTH-08, SET-09) — 2 hari**
 - [x] [BE] Login one-time password
 - [x] [FE] Layar OTP
 - [x] [BE] Transfer kepemilikan akun
 - [x] [TEST] OTP dan transfer
   - Catatan: kode OTP dikirim lewat email (SMTP nyata belum diuji); OTP nonaktif sampai admin menyalakannya (D-97).
+
+Prasyarat M12 masih terbuka pada G1a, G1b, G2a, dan G2b. Checkout enterprise untuk implementasi adalah `pms-s12` (`s12-1-enterprise`). Draft titik integrasi dan acceptance ada di [HANDOVER](HANDOVER.md#preflight-s1217).
 
 ### E12.2 Penerimaan
 
@@ -1426,6 +1483,76 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 ### Batch 1 — alur harian (P1)
 
 **S-UIP.1.1 Panel detail item dengan chip edit langsung (gap C1) — 6 hari**
+- [ ] [FE] Status, assignee, tanggal, importance menjadi chip sebaris yang menyimpan saat dipilih (PATCH `If-Match`, toast saat gagal atau konflik)
+- [ ] [FE] Tombol Save hanya untuk Name dan deskripsi; effort, progress, dan custom field di bagian "More fields" yang dilipat
+- [ ] [FE] Komposer komentar menempel di dasar panel; "Go to full details" dan salin tautan
+- [ ] [TEST] Urutan `BLOCK_ORDER` dan tata letak per tipe (CUST-04) tetap berlaku; axe dan fokus keyboard pada chip
+
+**S-UIP.1.2 Toolbar view satu baris (gap B3) — 3 hari**
+- [ ] [FE] Chip Filter, Sort, Group, Columns, Cards dengan popover; keadaan tetap di parameter URL
+- [ ] [FE] Pencarian teks sebagai kotak kecil di ujung baris
+- [ ] [TEST] Tes view yang ada tetap lulus; axe popover
+
+**S-UIP.1.3 Kartu Board dan baris Table (gap B4, B5) — 4 hari**
+- [ ] [FE] Komponen `StatusChip` (warna dari workflow) dan `AvatarStack`
+- [ ] [FE] Kartu Board: header kolom berwarna, ikon tipe, avatar, rentang tanggal dengan durasi, penghitung subitem; `<select>` status dihapus dari kartu
+- [ ] [FE] Table: status berupa chip, assignee berupa avatar
+- [ ] [TEST] Ubah status lewat seret dan lewat menu kartu; axe
+
+**S-UIP.1.4 My to-do berkelompok (gap D1) — 3 hari**
+- [ ] [FE] Pengelompokan menurut urutan yang dipilih (status atau tanggal) dengan jumlah di judul grup
+- [ ] [FE] Baris tambah cepat dengan pemilih tipe (`POST /items` ke Space pribadi)
+- [ ] [FE] Menu opsi tampilan: kartu satu atau dua baris, daftar datar atau hierarki, tampilkan durasi
+- [ ] [TEST] Pengelompokan, tambah cepat, axe
+
+**S-UIP.1.5 Inbox dua panel (gap D2) — 3 hari**
+- [ ] [FE] Tab Incoming dan Archive, pengelompokan Today dan tanggal, titik belum dibaca, keadaan kosong
+- [ ] [FE] Master-detail di lebar ≥ 1024 px; layar penuh di bawahnya
+- [ ] [TEST] Tab, tandai dibaca, arsip, axe
+
+**S-UIP.1.6 Tab Sent di Inbox (gap D2) — 2 hari**
+- [ ] [API] Daftar notifikasi atau pesan yang dikirim pengguna (kebijakan dan paginasi)
+- [ ] [FE] Tab Sent
+- [ ] [TEST] Hanya milik sendiri; tidak membocorkan item tersembunyi
+
+**S-UIP.1.7 Bersihkan sisa pengembangan di UI (gap A6) — 0,5 hari**
+- [ ] [FE] Hapus tautan "Gantt spike" dari navigasi Settings produksi
+- [ ] [FE] Pesan 2FA netral untuk non-admin; nama variabel lingkungan hanya untuk admin
+- [ ] [TEST] Tes navigasi Settings
+
+**S-UIP.1.8 Sidebar per Space dan halaman project (gap A1, B1) — 6 hari** — digabung ke S-UX.A1 + S-UX.C1 (M12c)
+- [ ] [FE] Isi Space di sidebar: Space overview, Tools (Dashboard dan papan analitik), Projects and folders dengan tombol +, ikon tipe; Shared with me dan Blueprints di sidebar
+- [ ] [FE] Halaman project berbentuk header + view; detail item pindah ke panel "Info"
+- [ ] [FE] Pindahkan pembuatan papan analitik Space ke Tools (gap E4)
+- [ ] [TEST] Navigasi keyboard pohon, rute lama `/tasks/{id}` tetap bekerja, axe
+
+### Batch 2 — kematangan (P2)
+
+**S-UIP.2.1 Menu More dan status realtime (gap A2, A3) — 1,5 hari** — digabung ke S-UX.A3 (M12c)
+- [ ] [FE] Tambah Calendars, Created by me, dan layar Customize menu (memakai `sidebar_hidden`)
+- [ ] [FE] Status realtime hanya tampil saat terputus
+- [ ] [TEST] Entri tersembunyi mengikuti pengaturan profil
+
+**S-UIP.2.2 Tab view bersegmen (gap B2) — 1 hari** — digabung ke S-UX.C2 (M12c)
+- [ ] [FE] Kontrol bersegmen; tombol "..." hanya pada tab aktif; "Add view" di dropdown "All"
+- [ ] [TEST] Urutan tab stop dan axe
+
+**S-UIP.2.3 Gantt berkolom dan berwarna (gap B6) — 3 hari** — digabung ke S-UX.C3 + S-UX.C4 (M12c)
+- [ ] [FE] Kolom Status, Start, Due dapat dipilih di Gantt (sekarang hanya custom field)
+- [ ] [FE] Warna bar menurut status, label assignee, tombol zoom +/- ; bantuan keyboard dipindah ke tooltip
+- [ ] [TEST] Gantt yang ada (drag, dependensi, baseline) tetap lulus; kontras axe
+
+**S-UIP.2.4 Toolbar dashboard (gap E1) — 3 hari**
+- [ ] [FE] Judul dengan dropdown pindah dashboard; popover layout bergambar (Vertical, Horizontal); tindakan Share
+- [ ] [TEST] Pindah dashboard dan ubah layout; axe
+
+**S-UIP.2.5 Widget daftar berkelompok (gap E2) — 2 hari**
+- [ ] [FE] Widget task list dikelompokkan menurut tanggal tenggat dengan avatar dan chip status
+- [ ] [TEST] Pengelompokan dan keadaan kosong
+
+**S-UIP.2.6 Editor widget dua panel (gap E3) — 3 hari**
+- [ ] [FE] Pratinjau di kiri, tab Data, Design, Filters di kanan
+- [ ] [TEST] Pratinjau mengikuti perubahan; axe
 - [x] [FE] Status, assignee, tanggal, importance menjadi chip sebaris yang menyimpan saat dipilih (PATCH `If-Match`, toast saat gagal atau konflik)
 - [x] [FE] Tombol Save hanya untuk Name dan deskripsi; effort, progress, dan custom field di bagian "More fields" yang dilipat
 - [x] [FE] Komposer komentar menempel di dasar panel; "Go to full details" dan salin tautan
@@ -1504,6 +1631,9 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 ### Batch 3 — kosmetik (P3)
 
 **S-UIP.3.1 Rapikan pintu masuk dan duplikasi (gap A4, A5, C2, C3) — 1,5 hari**
+- [ ] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
+- [ ] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
+- [ ] [TEST] Tes yang menunjuk tombol lama diperbarui
 - [x] [FE] Satu menu akun (Settings, Recycle bin, Apps & Integrations, Help, Log out); petunjuk pintasan pencarian
 - [x] [FE] Judul item tampil sekali; lokasi sebagai chip di header panel
 - [x] [TEST] Tes yang menunjuk tombol lama diperbarui
@@ -1511,6 +1641,177 @@ Sumber: perbandingan layout aktual dengan [screens/](screens/), 14 Nov 2026. Tid
 ### Penutup
 
 **S-UIP.4.1 Verifikasi visual dan dokumen — 2 hari**
+- [ ] [TEST] Baseline visual Playwright per rute (1440 dan 390 px) dan axe penuh
+- [ ] [DOC] Perbarui [UI_AUDIT_REPORT.md](UI_AUDIT_REPORT.md) dan [UAT.md](UAT.md); ringkasan estimasi M7–M12 tidak diubah (story ini di luar rilis 1.0 sampai pemilik menyetujui)
+
+## M12c — Redesign layout UI/UX (UX, dari prototipe LENS Workspace refinement)
+
+Sumber: prototipe `LENS_UI_UX_Improvement.html` (v0.5, 15 Nov 2026). Prototipe ini hanya mock lokal dan tidak terhubung ke API, jadi setiap perilaku di bawah dicocokkan dengan kontrak yang sudah ada. Story yang butuh perubahan API ditandai [API]. Story ini di luar rilis 1.0 sampai pemilik menyetujuinya, sama seperti M12b.
+
+Story M12b yang tumpang tindih sudah digabung ke sini dan tidak dikerjakan dua kali: S-UIP.1.8 → S-UX.A1 dan S-UX.C1, S-UIP.2.1 → S-UX.A3, S-UIP.2.2 → S-UX.C2, S-UIP.2.3 → S-UX.C3 dan S-UX.C4. `StatusChip` dan `AvatarStack` dari S-UIP.1.3 dibuat di S-UX.0.2 lalu dipakai ulang.
+
+Prasyarat setiap story sama dengan M12b: tes Playwright dan axe untuk rute yang diubah, string baru masuk `i18n/en`, tidak ada warna hex di komponen (memakai token S-UX.0.1), dan mode gelap ikut dicek.
+
+### Hasil penilaian (heuristik, dari prototipe)
+
+Skornya subjektif dan tidak menyatakan siap produksi. Skor target diusulkan, belum diverifikasi.
+
+| Dimensi | Sekarang | Target |
+|---|---|---|
+| Layout dan visual hierarchy | 6 | 8,5 |
+| Sidebar dan navigasi | 5 | 9 |
+| Pengalaman create project | 4,5 | 9 |
+| Desain komponen | 5,5 | 8,5 |
+| Gantt dan workspace | 6,5 | 8,5 |
+| Interaktivitas | 5 | 8,5 |
+| Konsistensi desain | 6 | 9 |
+| Empty state | 4,5 | 8,5 |
+| **Keseluruhan** | **5,4** | **8,5** |
+
+Lima fokus: (1) redesign yang dimulai dari navigasi: sidebar dan customize menu; (2) pembuatan project yang terpandu; (3) penyatuan design system; (4) perapian workspace: Gantt, toolbar, navigasi antar-view; (5) UX kontekstual: empty state, discoverability, dan umpan balik atas tindakan user.
+
+### Backlog 18 improvement
+
+| ID | Improvement | Prioritas | Effort | Lane | Story |
+|---|---|---|---|---|---|
+| UX-01 | Perbaiki visibilitas menu sidebar | P1 | M | A | S-UX.A1 |
+| UX-02 | Redesign hierarki sidebar | P1 | M | A | S-UX.A1 |
+| UX-03 | Resize dan collapse sidebar | P2 | M | A | S-UX.A2 |
+| UX-04 | Kustomisasi menu dan persistensi | P1 | M | A | S-UX.A3 |
+| UX-05 | Menu global create | P1 | M | B | S-UX.B1 |
+| UX-06 | Modal create project | P1 | H | B | S-UX.B2 |
+| UX-07 | Pemilih default view bergambar | P1 | M | B | S-UX.B3 |
+| UX-08 | Create item kontekstual | P1 | M | B | S-UX.B4 |
+| UX-09 | Header workspace | P2 | M | C | S-UX.C1 |
+| UX-10 | Navigasi view | P1 | M | C | S-UX.C2 |
+| UX-11 | Toolbar Gantt | P2 | M | C | S-UX.C3 |
+| UX-12 | Perapian visual Gantt | P2 | H | C | S-UX.C4 |
+| UX-13 | Sistem empty state | P2 | L | C | S-UX.C5 |
+| UX-14 | Perbaikan Blueprints | P2 | M | C | S-UX.C6 |
+| UX-15 | Token desain bersama | P1 | M | 0 | S-UX.0.1 |
+| UX-16 | Audit konsistensi komponen | P1 | H | 0 | S-UX.0.2 |
+| UX-17 | Interaksi dan micro-animation | P3 | M | QA | S-UX.Q1 |
+| UX-18 | Audit responsive dan aksesibilitas | P2 | H | QA | S-UX.Q2 |
+
+Urutan: Fase 0 (fondasi) selesai lebih dulu. Lane A, B, C boleh jalan paralel karena berkasnya terpisah; B3 menunggu B2, C4 menunggu C3. Fase 2 integrasi dan regresi, Fase 3 QA visual, aksesibilitas, dan sign-off.
+
+### Fase 0 — Fondasi design system
+
+**S-UX.0.1 Token desain global (UX-15) — 3 hari**
+- [ ] [DOC] Keputusan baru di [DECISIONS.md](DECISIONS.md): sidebar navy (`#192238`) sebagai default dan sidebar terang tetap tersedia sebagai pilihan tema (D-24 sekarang memakai sidebar putih). Butuh persetujuan pemilik sebelum S-UX.A1
+- [ ] [FE] Lengkapi token di `index.css` (light dan `.dark`): `--nav`, `--nav-muted`, `--nav-text`, `--nav-hover`, `--nav-active`, `--selection`, `--surface-2`, `--shadow-overlay`; samakan `--background` ke `#F5F7FA` bila disetujui
+- [ ] [FE] Skala tipografi (12/13/14/16/19/24, berat 400/600/650), spasi kelipatan 4px, tinggi kontrol 32–40px, tinggi baris tabel 40px, radius 6–8px, durasi motion 120/160/200ms beserta `prefers-reduced-motion`
+- [ ] [FE] Lebar sidebar sebagai token: default 270px, min 220px, maks 400px, collapsed 56px
+- [ ] [DOC] Perbarui [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md): tabel token, contoh pemakaian, dan aturan "tidak ada hex di komponen"
+- [ ] [TEST] Kontras token teks dan status ≥ 4.5:1 di light dan dark (axe)
+
+**S-UX.0.2 Komponen bersama dan audit konsistensi (UX-16) — 5 hari**
+- [ ] [FE] Komponen baru di `components/ui/`: `EmptyState` (ilustrasi, judul, satu kalimat, CTA utama sesuai izin, CTA kedua opsional), `StatusChip` (warna dari workflow), `AvatarStack`, `KpiCard`, `SegmentedControl`, `Toolbar` (grup + pemisah), `Badge`
+- [ ] [FE] Audit `components/` dan `routes/`: ganti warna hex dan nilai arbitrer dengan token; tombol, input, dropdown, dan dialog memakai komponen `ui/` saja
+- [ ] [FE] Satu langkah CI (grep) yang gagal bila ada warna hex baru di `web/src/components` dan `web/src/routes`
+- [ ] [TEST] Tes render tiap komponen baru beserta state hover, focus, dan disabled; axe
+
+### Lane A — Navigasi
+
+**S-UX.A1 Hierarki dan visibilitas sidebar (UX-01, UX-02) — 4 hari**
+- [ ] [FE] Perbaiki visibilitas: entri yang tidak ada di `sidebar_hidden` selalu tampil sebagai entri tersemat (sekarang yang tampil hanya Search, Inbox, Requests, Stream, More)
+- [ ] [FE] Struktur: brand + nama akun, Search (petunjuk ⌘K), Inbox, entri tersemat, More; label bagian SPACES dengan tombol +; tiap Space bisa dibuka (Space overview, Tools: Dashboards dan Create analytics board, Projects and folders dengan +, pohon project/folder bertingkat); Shared with me, Blueprints; Preferences di bawah
+- [ ] [FE] Status aktif, hover, ikon per tipe, teks panjang terpotong dengan tooltip; bagian atas punya scroll sendiri (maks ~42vh) agar pohon Space tetap terlihat
+- [ ] [FE] Keadaan Space yang terbuka disimpan per user (localStorage)
+- [ ] [TEST] Navigasi keyboard pohon (panah, Enter), rute lama tetap bekerja, axe
+
+**S-UX.A2 Resize dan collapse sidebar (UX-03) — 2 hari**
+- [ ] [FE] Pegangan resize dengan pointer (220–400px) dan keyboard (panah kiri/kanan, `role="separator"` dengan `aria-valuenow`); lebar disimpan di localStorage
+- [ ] [FE] Mode collapsed hanya ikon (56px) dengan tooltip dan flyout untuk Spaces; pintasan `[` untuk toggle; drawer di layar < 1024px tetap seperti sekarang
+- [ ] [TEST] Lebar dan collapsed bertahan setelah reload; batas min dan maks; axe
+
+**S-UX.A3 Customize menu dengan pin, urutan, dan live preview (UX-04) — 3 hari**
+- [ ] [API] Field profil `sidebar_pinned` (array `SidebarKey` berurutan) yang menggantikan `sidebar_hidden`; migrasi mengisi nilainya dari daftar lama dikurangi yang tersembunyi; `sidebar_hidden` tetap dibaca selama satu rilis
+- [ ] [FE] Modal Customize sidebar: daftar shortcut dengan checkbox pin, tombol naik/turun (keyboard) dan drag; panel live preview sidebar di sebelahnya; Reset to default; jumlah yang tersemat; Done menyimpan, Cancel membatalkan
+- [ ] [FE] Pintu masuk dari menu More, Preferences, dan global create
+- [ ] [TEST] Pin dan urutan langsung terlihat dan bertahan setelah reload; More tetap bisa diakses; Search dan Inbox tidak bisa dilepas
+
+### Lane B — Alur pembuatan
+
+**S-UX.B1 Menu global create (UX-05) — 2 hari**
+- [ ] [FE] Tombol "+ Create" (primary) di topbar membuka dropdown dengan kotak cari: Task, Project, Folder (dengan deskripsi singkat) | Space, Request, Invite member, From blueprint | Customize sidebar
+- [ ] [FE] Entri yang tidak diizinkan untuk user disembunyikan (memakai kemampuan yang sudah ada); posisi menu tidak keluar dari viewport
+- [ ] [TEST] Navigasi keyboard menu, filter teks, entri sesuai izin, axe
+
+**S-UX.B2 Modal create project yang kaya (UX-06) — 5 hari**
+- [ ] [FE] Ganti isi `create-item-dialog` dengan modal dua bagian: General information (nama wajib, Space, parent location, workflow default) dan pemilih tipe berupa kartu (Project, Folder, Task dengan ikon dan deskripsi)
+- [ ] [FE] Settings yang mengikuti tipe: owner/assignee, start dan finish (Folder tanpa tanggal), default view (S-UX.B3, bukan untuk Task), sharing berupa chip avatar + "Add user" (memakai share yang sudah ada)
+- [ ] [FE] Footer dengan ringkasan langsung ("<nama> · <Space> · <tipe> · <view>"), Cancel, Create; Enter menyimpan; fokus terkunci di modal dan kembali ke pemicu saat ditutup
+- [ ] [FE] Validasi: nama kosong, finish < start, parent Task harus Project di Space yang sama; error tampil di field dan dibacakan
+- [ ] [TEST] Tiap tipe, tiap jalur validasi, buka dari konteks Space dan project, axe
+
+**S-UX.B3 Pemilih default view bergambar (UX-07) — 3 hari**
+- [ ] [API] `default_view_type` menerima `table, board, gantt, calendar, files, chart` (sekarang hanya `table, board`); constraint DB dan `openapi.yaml` diperbarui; regenerasi `apigen` dan `schema.d.ts`
+- [ ] [DOC] Keputusan: "Chart" = view ringkasan jumlah item per status (memakai `project-progress` atau analytics yang ada), bukan builder report
+- [ ] [FE] Enam kartu view dengan ilustrasi SVG kecil berbasis token (Table, Board, Gantt, Calendar, Files, Chart) dan satu baris deskripsi; pilihan tampil di ringkasan footer
+- [ ] [FE] Project baru dibuka langsung di view yang dipilih
+- [ ] [TEST] Tiap nilai tersimpan dan membuka view yang benar; nilai lama tetap valid; tes kontrak API
+
+**S-UX.B4 Create item kontekstual (UX-08) — 2 hari**
+- [ ] [FE] "Add task" di header project dan baris "+ Add item" di Table/Gantt membuka modal dengan Space dan parent sudah terisi
+- [ ] [FE] "New item" di Space overview dan + di Projects and folders memakai Space tersebut; "Use blueprint" mengisi tipe, nama, dan view
+- [ ] [FE] Toast sukses dengan tautan ke item baru; daftar langsung diperbarui tanpa reload
+- [ ] [TEST] Konteks terisi benar dari tiap pintu masuk
+
+### Lane C — Workspace
+
+**S-UX.C1 Header project dan ringkasan progres (UX-09) — 3 hari**
+- [ ] [FE] Breadcrumb (Space / Project), judul dengan Star dan tombol Info (panel detail project), baris meta (workflow · rentang tanggal), `AvatarStack` anggota, Share, "Add task"
+- [ ] [FE] Empat `KpiCard`: Project progress %, Work items (n selesai), In progress, Upcoming milestones; data dari `project-progress` yang ada
+- [ ] [FE] Di lebar < 768px kartu menjadi satu baris yang bisa di-scroll; tombol sekunder masuk menu "..."
+- [ ] [TEST] Angka KPI sama dengan data item; axe
+
+**S-UX.C2 Navigasi view (UX-10) — 2 hari**
+- [ ] [FE] `view-tabs` menjadi `SegmentedControl` dengan ikon (Table, Board, Gantt, Calendar, Files, Chart); "..." hanya pada tab aktif; Add view di menu
+- [ ] [FE] Toolbar view seragam: Filter, Sort, Columns, kotak cari di ujung; keadaannya tetap di URL (S-UIP.1.2)
+- [ ] [TEST] Pindah view mempertahankan filter dan pencarian; urutan tab stop; axe
+
+**S-UX.C3 Toolbar Gantt (UX-11) — 2 hari**
+- [ ] [FE] Toolbar bergrup: Filter, Sort, Columns, Expand/Collapse all | zoom Days/Weeks/Months (`SegmentedControl`) | Today, Baseline, Snapshot
+- [ ] [FE] Zoom mengubah skala SVAR; Today menggulir ke hari ini; bantuan keyboard pindah ke tooltip
+- [ ] [TEST] Tiap kontrol; drag, dependensi, dan baseline yang ada tetap lulus
+
+**S-UX.C4 Perapian visual Gantt (UX-12) — 4 hari**
+- [ ] [FE] Grid kiri: #, nama dengan ikon tipe (grup/task/milestone), `StatusChip`, Assignee opsional; tinggi baris 40px dari token
+- [ ] [FE] Bar berwarna menurut status, bar ringkasan untuk grup, milestone berbentuk wajik, garis Today yang jelas, panah dependensi yang kontras
+- [ ] [FE] Overlay baseline sebagai bar tipis di bawah bar aktual (lihat batas SVAR free di `item-gantt.tsx`; bila tidak bisa, tetap kolom dan catat di [GANTT_SPIKE.md](GANTT_SPIKE.md))
+- [ ] [FE] Klik baris membuka panel detail item; footer dengan jumlah baris terlihat
+- [ ] [TEST] Kontras bar dan teks (axe); snapshot visual 1440px
+
+**S-UX.C5 Sistem empty state (UX-13) — 2 hari**
+- [ ] [FE] Satu set ilustrasi SVG ringan berbasis token (project, files, blueprint, search, starred, generic)
+- [ ] [FE] Pakai `EmptyState` di Space overview tanpa project (New project + Browse blueprints), Files, view tanpa item atau hasil filter kosong, Starred, Blueprints, hasil pencarian, Inbox
+- [ ] [FE] CTA hanya tampil bila user punya izin; tanpa izin cukup kalimat penjelas
+- [ ] [TEST] Tiap empty state dengan dan tanpa izin; axe
+
+**S-UX.C6 Halaman Blueprints (UX-14) — 3 hari**
+- [ ] [FE] Rute `/blueprints` dan entri sidebar: pemilih Space, kartu blueprint (nama, Space, tipe) dengan "Use blueprint"; memakai `listBlueprints` yang sudah ada
+- [ ] [FE] "Create blueprint" membuka modal S-UX.B2 dalam mode blueprint; `save-blueprint-dialog` tetap untuk simpan dari item
+- [ ] [FE] "Suggested starting points": tiga preset di sisi klien (Software delivery, Client implementation, Internal initiative) yang mengisi modal; tidak ada API baru
+- [ ] [TEST] Daftar per Space, pakai blueprint, empty state, izin
+
+### Fase 3 — QA dan penutup
+
+**S-UX.Q1 Interaksi dan micro-animation (UX-17) — 2 hari**
+- [ ] [FE] Transisi 120–200ms untuk menu, modal, drawer, collapse sidebar, dan hover kartu; semua mati saat `prefers-reduced-motion`
+- [ ] [FE] Umpan balik tindakan: toast dengan ikon dan tombol tutup, state loading di tombol, skeleton di view
+- [ ] [TEST] Tidak ada animasi saat reduced-motion
+
+**S-UX.Q2 Audit responsive dan aksesibilitas (UX-18) — 3 hari**
+- [ ] [TEST] Axe penuh dan navigasi keyboard di semua rute yang diubah; focus ring 3px terlihat; Escape menutup modal, menu, dan drawer secara berurutan
+- [ ] [TEST] Baseline visual Playwright 1440, 1024, 768, dan 390px untuk sidebar, modal create, header project, Gantt, empty state, Blueprints
+- [ ] [TEST] Regresi: izin, kontrak API, data, dan suite yang ada tetap lulus
+
+**S-UX.Q3 Sign-off dan dokumen — 1 hari**
+- [ ] [TEST] Gerbang penerimaan: (1) perubahan pin langsung terlihat, More tetap ada, preferensi bertahan setelah reload; (2) form create mengikuti tipe, konteks, owner, workflow, tanggal, dan view, termasuk validasi tanggal dan nama kosong; (3) pindah view dan hierarki item konsisten; (4) empty state memberi aksi hanya bila diizinkan; (5) izin, kontrak API, data, dan regresi utuh
+- [ ] [DOC] Nilai ulang skor heuristik di atas; perbarui [UI_AUDIT_REPORT.md](UI_AUDIT_REPORT.md), [UAT.md](UAT.md), dan [DESIGN_SYSTEM.md](DESIGN_SYSTEM.md)
+
+**Estimasi M12c:** 18 story, 70 tugas, 51 hari ideal (≈ 61 hari dengan cadangan 20%, ±13 minggu untuk satu developer; bisa dipersingkat bila lane A/B/C dikerjakan paralel). Tidak masuk ringkasan M7–M12.
 - [x] [TEST] Baseline visual Playwright per rute (1440 dan 390 px) dan axe penuh — bukti tangkapan layar (bukan diff piksel, D-105) dan sapuan axe `ui-audit.spec.ts`
 - [x] [DOC] Perbarui [UI_AUDIT_REPORT.md](UI_AUDIT_REPORT.md) dan [UAT.md](UAT.md); ringkasan estimasi M7–M12 tidak diubah (story ini di luar rilis 1.0 sampai pemilik menyetujui)
 
@@ -1544,3 +1845,46 @@ Dihitung otomatis dari jumlah tugas (× 0,5 hari). Cadangan risiko +20%. Satu de
 | **Total** | **76** | **380** | **190** | **228** | **49** |
 
 Pemetaan P2 lama: AUTH-08→M12; NAV-08/09→M11; SPC-14→M8, SPC-16→M10; VIEW-05C→M10, VIEW-10→M11; TASK-08B→M11, TASK-11B→M8, TASK-14→M10; WF-03B→M8; DASH-03B/04/05/07/08→M11; FORM-04/07→M8; RPT-04→M11; CUST-01→M8; SET-06→M8, SET-08→M11, SET-09→M12.
+
+## M12d — Keputusan Work Area dan fondasi (WA-D01 s.d. WA-D06)
+
+Sumber: [DECISIONS.md](DECISIONS.md) bagian 5 dan dokumen `WORK_AREA_*.md`. Keputusan disetujui pemilik produk; status di bawah dipisah: [x] berarti sudah diimplementasikan dan ada tes yang membuktikannya.
+
+**S-WA.1 Header ruang kerja tunggal (WA-D01) — 2 hari**
+- [x] [FE] `WorkspaceHeader` untuk Space, Project, dan Folder; judul utama hanya di header
+- [x] [FE] Info pada Project dan Folder membuka panel detail kanan (`?task=`), view dan filter tetap
+- [x] [TEST] `folder-header.spec.ts`: satu judul h1, Info membuka panel, URL view tidak berubah
+- [ ] [FE] Halaman `/tasks/<id>` untuk task masih memakai ItemDetail inline (di luar lingkup ini)
+
+**S-WA.2 Arti KPI In progress (WA-D02) — 1 hari**
+- [x] [FE] In progress = status aktif yang bukan status awal workflow, dicocokkan dengan id status (bukan nama)
+- [x] [TEST] Unit: enam item New menghasilkan In progress 0 dan Active 6; tanpa data workflow In progress 0
+- [ ] [DOC] Keterbatasan: data model belum punya flag In Progress eksplisit (lihat DECISIONS.md)
+
+**S-WA.3 Hitungan rekursif item kerja (WA-D03) — DICATAT, dikerjakan setelah PR berjalan dengan CI**
+- [ ] [BE] Endpoint hitungan rekursif yang menghormati akses, mengecualikan kontainer, milestone, dan item terhapus/terarsip, dan tanpa dobel
+- [ ] [TEST] Tes integrasi Go untuk folder bersarang, project bersarang, izin, dan milestone (butuh database test di CI)
+- [ ] [FE] Angka rekursif di header project, dengan keterangan cakupan
+- Catatan: UI sekarang menulis "Direct children of this project only". Perubahan kontrak API butuh tinjauan.
+
+**S-WA.4 Hierarki fleksibel (WA-D04) — 2 hari**
+- [x] [BE] Sudah ada: `allowed_children` per tipe dan aturan "task hanya berisi task" di `server/internal/items/create.go`
+- [x] [FE] Parent tetap tidak mengunci tipe ke Task; subitem dari Task memakai task-only
+- [x] [TEST] `creation-context.spec.ts`: entry point Space dan Project membuat di parent yang benar
+- [ ] [TEST] Cycle, batas kedalaman, dan create dari Board, Gantt, serta sidebar di dalam folder belum diverifikasi
+
+**S-WA.5 Ekspansi hierarki disimpan di server (WA-D05) — 2 hari**
+- [x] [BE] Migrasi `00323_view_expansion.sql`: kolom `users.view_expansion` (jsonb, per view, hanya milik user itu)
+- [x] [BE] `PUT /api/v1/me/view-expansion/{viewId}` dan field `view_expansion` di `GET /me`; batas 500 baris per view dan 200 view
+- [x] [TEST] Tes integrasi Go `view_expansion_integration_test.go` (butuh database test; belum dijalankan lokal)
+- [x] [FE] Table dan Gantt membaca dari profil dan menyimpan dengan debounce 400 ms (satu PUT per rangkaian klik)
+- [x] [TEST] `hierarchy-persistence.spec.ts`: ekspansi bertahan setelah reload lewat penyimpanan server
+- [ ] [TEST] Gantt: tes e2e untuk flag collapse belum ada; id baris yang sudah dihapus belum dibersihkan dari penyimpanan
+
+**S-WA.6 Sign-out (WA-D06) — 1 hari**
+- [x] [FE] Sign-out menghapus Space terakhir pengguna itu (`lib/session-state.ts`); cache query dibersihkan seperti sebelumnya
+- [x] [TEST] Unit `session-state.test.ts`: hanya kunci pengguna itu yang dihapus; preferensi lain tetap
+- [ ] [TEST] E2E sign-out lalu sign-in ulang belum ada; sesi yang kedaluwarsa belum membersihkan Space terakhir
+
+**S-WA.7 Gerbang fondasi (Phase 1.1)**
+- [ ] [TEST] Gerbang READY belum tercapai: S-WA.3 diblokir, dan pengujian integrasi Go belum dijalankan di lingkungan ini

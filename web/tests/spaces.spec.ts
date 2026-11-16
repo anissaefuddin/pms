@@ -5,6 +5,15 @@ import { extra, grace, marketing, mockSpaces, ops, personal } from "./spaces-moc
 const sidebar = (page: import("@playwright/test").Page) => page.getByRole("navigation", { name: "Spaces" });
 
 test.describe("sidebar", () => {
+  test("Find filters the Spaces list by name", async ({ page }) => {
+    await mockSpaces(page, { spaces: [marketing, personal, ops] });
+    await page.goto("/");
+    await sidebar(page).getByRole("button", { name: "Find a Space" }).click();
+    await sidebar(page).getByRole("searchbox", { name: "Find a Space" }).fill("OPER");
+    await expect(sidebar(page).getByRole("link", { name: "Operations" })).toBeVisible();
+    await expect(sidebar(page).getByRole("link", { name: "Marketing" })).toHaveCount(0);
+  });
+
   test("lists Personal first and navigates to a Space", async ({ page }) => {
     await mockSpaces(page, { spaces: [marketing, personal, ops] });
     await page.goto("/");

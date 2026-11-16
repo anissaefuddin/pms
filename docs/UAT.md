@@ -2,6 +2,22 @@
 
 Gunakan instance pilot dengan versi yang dicatat. Untuk setiap requirement, catat PASS, FAIL atau SKIP beserta tanggal, pemeran, dan tautan bukti. Bukti otomatis tercatat di [TESTING.md](TESTING.md#verifikasi-kandidat-ga-13-november-2026).
 
+## Pelaksanaan UAT teknis lokal
+
+Revisi `main` pada `247ca12` dengan perubahan working tree. Playwright memakai Chrome, API Go dan PostgreSQL 16 terisolasi dengan data serta akun sintetis. Stack `pms-manual-app` berstatus berhenti dan image yang tercatat `pms:m1-views`. Hasil otomatis di bawah memberi bukti per alur. Kolom Hasil UAT pada matriks tetap untuk penerimaan per requirement oleh perwakilan pilot.
+
+| Alur | Requirement yang disentuh | Skenario yang diperiksa |
+|---|---|---|
+| Collaboration / pilot | AUTH-01, SPC-05, VIEW-02, TASK-01/04/07/08A, NAV-03 | Login, proyek dan task, drag status, mention, lampiran, konflik ETag dan SSE reconnect |
+| Penjadwalan dan view | SET-07, VIEW-03/05B/06/09, TASK-11A | Kalender hari kerja, perubahan jadwal penerus, custom field Number, swimlane dan Calendar |
+| Workflow dan form | WF-02/03A, SPC-12, FORM-01/02/03/06/08 | Guard, approval, formulir internal dan publik, akses requester, rotasi link |
+| Timesheet dan anggaran | VIEW-07, TASK-12/13 | Input durasi, Timelog proyek dan pembacaan budget |
+| Dashboard dan laporan | DASH-01/02/03A, RPT-01/02/03 | Angka widget sesuai fixture, pembuatan dan ekspor report, konfigurasi langganan |
+
+**Hasil teknis akhir 14 November 2026: lima suite lulus melalui run utama dan retest terarah, mencakup 14 skenario Playwright unik.** Run pertama mencatat satu HTTP 500 pada daftar item Space saat request dibatalkan. Handler diperbaiki dan kasusnya ditambahkan ke tes regresi PostgreSQL. Retest M2 lulus dua kali setelah pemilihan predecessor dibuat berdasarkan bar yang dituju. M5 lulus pada pengulangan setelah pemindaian axe sempat kehilangan execution context. Tidak ada 5xx di log setelah perbaikan.
+
+**Penerimaan pengguna: NOT RUN, 93 requirement.** Kandidat lokal `g0-local-247ca12` tersedia di [localhost:18082](http://127.0.0.1:18082) dengan data sintetis dan akun `g0-pilot@example.test`. Kredensial admin disimpan dalam file lokal di direktori yang ditunjuk `/private/tmp/pms-g0-candidate-current`. Smoke test pada build terbundel lulus untuk health, readiness, aset frontend, login, sesi, dan daftar Space. Kandidat hanya dapat diakses dari mesin ini. Catat hasil dan bukti penerimaan per requirement di tabel berikut.
+
 | Requirement | Prioritas | Skenario penerimaan (PRD) | Hasil UAT | Bukti |
 |---|---|---|---|---|
 | AUTH-01 | P0 | Login email + password dan tautan lupa password. **Tidak ada public signup**: user masuk hanya lewat undangan (AUTH-06, USR-01) | NOT RUN | — |

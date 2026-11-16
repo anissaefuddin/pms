@@ -32,19 +32,20 @@ test("global create opens the Item panel and submits project options", async ({ 
   }) });
   await page.clock.setFixedTime(new Date(2026, 10, 12, 12));
   await page.goto(root);
-  await page.locator("header").first().getByRole("button", { name: "New item" }).click();
+  await page.locator("header").first().getByRole("button", { name: "Create" }).click();
+  await page.getByRole("menuitem", { name: /^Project/ }).click();
   const dialog = page.getByRole("dialog", { name: "Create item" });
   await dialog.getByRole("button", { name: "Create item" }).click();
   await expect(dialog.getByRole("alert")).toContainText("Enter an item name");
   await dialog.getByLabel("Name").fill("Plan");
-  await dialog.getByRole("radio", { name: "Board" }).check();
+  await dialog.getByRole("radio", { name: /^Board/ }).check({ force: true });
   await dialog.getByRole("button", { name: "Start date" }).click();
   const startPicker = page.getByRole("dialog", { name: "Start date" });
   await expect(startPicker.getByRole("button", { name: /Saturday.*November 14/ })).toBeDisabled();
   await startPicker.getByRole("button", { name: /Thursday.*November 12/ }).click();
   await dialog.getByRole("button", { name: "Finish date" }).click();
   await page.getByRole("dialog", { name: "Finish date" }).getByRole("button", { name: /Friday.*November 13/ }).click();
-  await dialog.getByText("Sharing", { exact: true }).click();
+  await dialog.getByRole("button", { name: "Add user" }).click();
   await dialog.getByLabel("Add people or groups").fill("gra");
   await dialog.getByRole("button", { name: "Add Grace Hopper" }).click();
   await dialog.getByRole("button", { name: "Create item" }).click();
@@ -142,7 +143,9 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Updated by teammate");
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("Reviewed");
   await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
-  await expect(page.getByRole("heading", { name: "Reviewed" })).toBeVisible();
+  await page.keyboard.press("Escape"); // the detail panel is modal; the header title is visible once it closes
+  await expect(page.getByRole("heading", { name: "Reviewed", level: 1 })).toBeVisible();
+  await page.getByRole("button", { name: "Info" }).click(); // item actions live in the detail panel
   await page.getByRole("button", { name: "Item actions" }).click();
   await page.getByRole("menuitem", { name: "Copy link" }).click();
   await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toMatch(new RegExp(`/tasks/${parentId}$`));
@@ -177,7 +180,8 @@ test("conflicted draft reapplies against the current ETag", async ({ page }) => 
   await title.fill("My draft");
   await title.press("Enter");
   await page.getByRole("button", { name: "Reapply my changes" }).click();
-  await expect(page.getByRole("heading", { name: "My draft" })).toBeVisible();
+  await page.keyboard.press("Escape");
+  await expect(page.getByRole("heading", { name: "My draft", level: 1 })).toBeVisible();
   expect(calls.filter((call) => call.method === "PATCH").map((call) => [call.headers["if-match"], call.body.title]))
     .toEqual([['"1"', "My draft"], ['"2"', "My draft"]]);
 });

@@ -1,0 +1,107 @@
+﻿wfp_id,category,feature,scope,requirement_candidates,test_ids,status,actual,evidence,note
+WFP-001,Work management,Spaces / team work areas,IN_SCOPE_REVIEW,SPC-01,ITA-REQ-019,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-002,Work management,Projects / folders / nested work,IN_SCOPE_REVIEW,SPC-04,ITA-REQ-022,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-003,Work management,"Task & subtask, assignees",IN_SCOPE_REVIEW,"TASK-01,TASK-02,TASK-06","ITA-REQ-049,ITA-REQ-050,ITA-REQ-055",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-004,Work management,Multiple locations / cross-tagging,IN_SCOPE_REVIEW,SPC-10,ITA-REQ-028,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-005,Work management,Work schedules and calendar settings,IN_SCOPE_REVIEW,SET-07,ITA-REQ-098,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-006,Work management,Project progress tracking,IN_SCOPE_REVIEW,TASK-09,ITA-REQ-059,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-007,Work management,Template / Blueprint projects,IN_SCOPE_REVIEW,SPC-13,ITA-REQ-031,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-008,Work management,Space templates,IN_SCOPE_REVIEW,SPC-18,ITA-REQ-036,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-009,Work management,Custom item types,IN_SCOPE_REVIEW,CUST-01,ITA-REQ-091,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-010,Work management,Custom item layout and default fields,IN_SCOPE_REVIEW,"CUST-02,CUST-04","ITA-REQ-117,ITA-REQ-119",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-011,Work management,Custom fields (basic and advanced),IN_SCOPE_REVIEW,"TASK-10,TASK-11A","ITA-REQ-060,ITA-REQ-061",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-012,Work management,Formula custom fields,IN_SCOPE_REVIEW,TASK-11B,ITA-REQ-062,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-013,Work management,Global and scoped search,IN_SCOPE_REVIEW,"NAV-06,NAV-07","ITA-REQ-015,ITA-REQ-016",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-014,Work management,Starred and shared-with-me,IN_SCOPE_REVIEW,GAP-16,ITA-GAP-16,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-015,Work management,Guest / external collaborators,IN_SCOPE_REVIEW,SPC-11,ITA-REQ-029,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-016,Planning & views,Table view inline edit / hierarchy,IN_SCOPE_REVIEW,VIEW-01,ITA-REQ-037,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-017,Planning & views,Kanban Board / drag and drop,IN_SCOPE_REVIEW,VIEW-02,ITA-REQ-038,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-018,Planning & views,"Gantt bar, milestones",IN_SCOPE_REVIEW,VIEW-05A,ITA-REQ-041,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-019,Planning & views,Four dependency types,IN_SCOPE_REVIEW,VIEW-05B,ITA-REQ-042,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-020,Planning & views,Automatic dependency scheduling,IN_SCOPE_REVIEW,VIEW-05B,ITA-REQ-042,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-021,Planning & views,Gantt baselines / variance,IN_SCOPE_REVIEW,"VIEW-05C,GAP-02","ITA-REQ-043,ITA-GAP-02",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-022,Planning & views,Project/programme portfolio Gantt,IN_SCOPE_REVIEW,SCH-01,ITA-REQ-138,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-023,Planning & views,Cross-project dependencies,IN_SCOPE_REVIEW,SCH-01,ITA-REQ-138,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-024,Planning & views,Calendar view,IN_SCOPE_REVIEW,VIEW-06,ITA-REQ-044,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-025,Planning & views,Timelog view,IN_SCOPE_REVIEW,VIEW-07,ITA-REQ-045,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-026,Planning & views,Files view,IN_SCOPE_REVIEW,VIEW-10,ITA-REQ-048,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-027,Planning & views,Chart view,IN_SCOPE_REVIEW,VIEW-10,ITA-REQ-048,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-028,Planning & views,"Saved, custom, personal views",IN_SCOPE_REVIEW,VIEW-08,ITA-REQ-046,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-029,Planning & views,Board swimlanes / custom cards,IN_SCOPE_REVIEW,"VIEW-03,VIEW-04","ITA-REQ-039,ITA-REQ-040",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-030,Planning & views,Quick search/filter in table,IN_SCOPE_REVIEW,GAP-15,ITA-GAP-15,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-031,Workflow & intake,Custom workflow statuses,IN_SCOPE_REVIEW,"WF-01,WF-02,WF-03A","ITA-REQ-066,ITA-REQ-067,ITA-REQ-068",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-032,Workflow & intake,Allowed transitions / guards,IN_SCOPE_REVIEW,"WF-04,WF-05","ITA-REQ-121,ITA-REQ-122",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-033,Workflow & intake,Status-triggered approval,IN_SCOPE_REVIEW,WF-03B,ITA-REQ-069,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-034,Workflow & intake,Any/All approval logic,IN_SCOPE_REVIEW,APR-01,ITA-REQ-129,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-035,Workflow & intake,Approval history/reassignment,IN_SCOPE_REVIEW,"APR-02,APR-03","ITA-REQ-130,ITA-REQ-131",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-036,Workflow & intake,Request form builder,IN_SCOPE_REVIEW,"FORM-01,FORM-02","ITA-REQ-070,ITA-REQ-071",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-037,Workflow & intake,Public and internal forms,IN_SCOPE_REVIEW,"FORM-03,FORM-06","ITA-REQ-072,ITA-REQ-075",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-038,Workflow & intake,Conditional form branching,IN_SCOPE_REVIEW,FORM-07,ITA-REQ-076,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-039,Workflow & intake,Form-to-CIT / Blueprint routing,IN_SCOPE_REVIEW,FORM-09,ITA-REQ-123,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-040,Workflow & intake,Request tracking / My requests,IN_SCOPE_REVIEW,FORM-08,ITA-REQ-077,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-041,Workflow & intake,Request confirmation email customization,IN_SCOPE_REVIEW,FORM-04,ITA-REQ-073,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-042,Workflow & intake,Automation rule engine WHEN/IF/THEN,IN_SCOPE_REVIEW,"AUT-01,AUT-02,AUT-05,GAP-05","ITA-REQ-124,ITA-REQ-125,ITA-REQ-128,ITA-GAP-05",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-043,Workflow & intake,"Automation audit, quotas, retries",IN_SCOPE_REVIEW,"AUT-03,AUT-04","ITA-REQ-126,ITA-REQ-127",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-044,Workflow & intake,Solution template bundles,PARTIAL_SCOPE_REVIEW,GAP-17,ITA-GAP-17,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-045,Resources,Effort estimation and allocation,IN_SCOPE_REVIEW,TASK-05B,ITA-REQ-054,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-046,Resources,Workload charts by team/user,IN_SCOPE_REVIEW,"RSC-01,RSC-02","ITA-REQ-132,ITA-REQ-133",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-047,Resources,Resources View / project allocation,PARTIAL_SCOPE_REVIEW,"GAP-03,RSC-05","ITA-GAP-03,ITA-REQ-136",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-048,Resources,Capacity/calendar exceptions,IN_SCOPE_REVIEW,"RSC-01,SET-07","ITA-REQ-132,ITA-REQ-098",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-049,Resources,Resource reallocation / conflicts,IN_SCOPE_REVIEW,RSC-03,ITA-REQ-134,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-050,Resources,Job roles and skills,IN_SCOPE_REVIEW,RSC-04,ITA-REQ-135,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-051,Resources,Resource bookings,IN_SCOPE_REVIEW,RSC-05,ITA-REQ-136,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-052,Resources,Planned vs actual utilization,IN_SCOPE_REVIEW,"RSC-06,GAP-10","ITA-REQ-137,ITA-GAP-10",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-053,Time & finance,Time tracking / entries,PARTIAL_SCOPE_REVIEW,"TASK-13,GAP-08","ITA-REQ-064,ITA-GAP-08",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-054,Time & finance,Weekly timesheet,IN_SCOPE_REVIEW,TASK-13,ITA-REQ-064,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-055,Time & finance,Timelog lock / approvals,IN_SCOPE_REVIEW,VIEW-07,ITA-REQ-045,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-056,Time & finance,Project budget field,IN_SCOPE_REVIEW,TASK-12,ITA-REQ-063,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-057,Time & finance,Billable/non-billable,IN_SCOPE_REVIEW,TASK-14,ITA-REQ-065,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-058,Time & finance,Cost rates / bill rates,PARTIAL_SCOPE_REVIEW,"TASK-14,GAP-04","ITA-REQ-065,ITA-GAP-04",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-059,Time & finance,Actual/planned cost / forecast,PARTIAL_SCOPE_REVIEW,"TASK-14,GAP-04","ITA-REQ-065,ITA-GAP-04",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-060,Collaboration,Comments and @mentions,IN_SCOPE_REVIEW,TASK-07,ITA-REQ-056,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-061,Collaboration,Inbox / notification / activity stream,IN_SCOPE_REVIEW,"NAV-03,NAV-04","ITA-REQ-012,ITA-REQ-013",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-062,Collaboration,Attachments and download authorization,IN_SCOPE_REVIEW,"TASK-08A,SEC-01","ITA-REQ-057,ITA-REQ-109",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-063,Collaboration,File preview and Files view,IN_SCOPE_REVIEW,"VIEW-10,FIL-02","ITA-REQ-048,ITA-REQ-140",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-064,Collaboration,File versioning/history,IN_SCOPE_REVIEW,FIL-01,ITA-REQ-139,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-065,Collaboration,File proofing/annotations,PARTIAL_SCOPE_REVIEW,"FIL-02,GAP-12","ITA-REQ-140,ITA-GAP-12",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-066,Collaboration,File versions comparison,IN_SCOPE_REVIEW,FIL-03,ITA-REQ-141,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-067,Collaboration,External file reviewers / approvals,IN_SCOPE_REVIEW,FIL-04,ITA-REQ-142,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-068,Collaboration,External cloud storage,IN_SCOPE_REVIEW,TASK-08B,ITA-REQ-058,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-069,Collaboration,Collaborative docs/editor,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-070,Reporting,Dashboard and chart widgets,IN_SCOPE_REVIEW,"DASH-01,DASH-02,DASH-03A","ITA-REQ-078,ITA-REQ-079,ITA-REQ-080",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-071,Reporting,Report builder and export,IN_SCOPE_REVIEW,"RPT-01,RPT-02,RPT-03","ITA-REQ-087,ITA-REQ-088,ITA-REQ-089",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-072,Reporting,Scheduled report subscription,IN_SCOPE_REVIEW,RPT-04,ITA-REQ-090,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-073,Reporting,Area / pivot / advanced widgets,IN_SCOPE_REVIEW,DASH-03B,ITA-REQ-081,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-074,Reporting,Analytics board / drilldown,IN_SCOPE_REVIEW,DASH-08,ITA-REQ-086,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-075,Reporting,Public dashboard share with expiry,IN_SCOPE_REVIEW,DASH-07,ITA-REQ-085,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-076,Reporting,Advanced BI / external BI API,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,External BI connector excluded in PRD §3; do not count generic reporting as BI parity; verify canonical decision.
+WFP-077,Reporting,Portfolio reporting,IN_SCOPE_REVIEW,"RPT-02,GAP-18","ITA-REQ-088,ITA-GAP-18",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-078,Integration,Excel import/export,IN_SCOPE_REVIEW,SPC-15,ITA-REQ-033,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-079,Integration,Public developer API with auth scopes,IN_SCOPE_REVIEW,"API-01,API-03","ITA-REQ-143,ITA-REQ-145",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-080,Integration,Webhooks / event delivery,IN_SCOPE_REVIEW,API-02,ITA-REQ-144,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-081,Integration,"Third-party connectors (Google, M365, Slack etc.)",PARTIAL_SCOPE_REVIEW,"INT-01,INT-03","ITA-REQ-146,ITA-REQ-148",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-082,Integration,Two-way sync (Jira/GitHub etc.),PARTIAL_SCOPE_REVIEW,"INT-02,INT-03","ITA-REQ-147,ITA-REQ-148",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-083,Integration,Integration automation orchestration,PARTIAL_SCOPE_REVIEW,"AUT-02,INT-01","ITA-REQ-125,ITA-REQ-146",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-084,Integration,Datahub / linked records,EXCLUDED_PROPOSED_D55,REG-00,ITA-REQ-154,SCOPE REVIEW,,,REG-00 tests ADR only; not a runtime Datahub parity test.
+WFP-085,Integration,External data synchronization,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-086,Admin & security,"User, group, license/seat types",IN_SCOPE_REVIEW,"USR-01,USR-02,USR-03","ITA-REQ-102,ITA-REQ-103,ITA-REQ-104",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-087,Admin & security,Sharing role and item permission,IN_SCOPE_REVIEW,"SPC-11,SEC-02","ITA-REQ-029,ITA-REQ-110",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-088,Admin & security,TOTP / backup codes,IN_SCOPE_REVIEW,AUTH-05,ITA-REQ-005,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-089,Admin & security,SSO / SAML / provisioning,IN_SCOPE_REVIEW,"ENT-01,ENT-02","ITA-REQ-149,ITA-REQ-150",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-090,Admin & security,Custom access roles,IN_SCOPE_REVIEW,ENT-03,ITA-REQ-151,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-091,Admin & security,Security audit / activity reports,IN_SCOPE_REVIEW,ENT-04,ITA-REQ-152,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-092,Admin & security,Locked spaces and advanced policies,IN_SCOPE_REVIEW,ENT-05,ITA-REQ-153,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-093,Admin & security,IP/access restrictions,IN_SCOPE_REVIEW,ENT-05,ITA-REQ-153,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-094,Admin & security,Enterprise encryption/key management,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-095,Admin & security,"Backup, export, decommission",IN_SCOPE_REVIEW,"OPS-01,OPS-02,USR-04","ITA-REQ-114,ITA-REQ-115,ITA-REQ-105",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-096,AI & visualization,AI assistant / summary / generation,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-097,AI & visualization,AI agents / automated actions,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-098,AI & visualization,AI risk/proactive insights,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-099,AI & visualization,MCP / AI tool integration,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-100,AI & visualization,Whiteboard / visual collaboration,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-101,AI & visualization,Whiteboard-item task conversion,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-102,Experience,Responsive web and accessibility,PARTIAL_SCOPE_REVIEW,"NFR-A11Y,NFR-BROWSER","ITA-NFR-A11Y,ITA-NFR-BROWSER",NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-103,Experience,Dark/light theme toggle,PARTIAL_SCOPE_REVIEW,SET-06,ITA-REQ-097,NOT RUN,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-104,Experience,Localization and language settings,EXCLUDED_PROPOSED_D55,NFR-I18N,ITA-NFR-I18N,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-105,Experience,Native mobile/desktop experiences,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.
+WFP-106,Experience,Offline behaviors / push notifications,EXCLUDED_PROPOSED_D55,,,SCOPE REVIEW,,,Reconcile with canonical WFP_TO_PRD_MATRIX before acceptance; candidate only.

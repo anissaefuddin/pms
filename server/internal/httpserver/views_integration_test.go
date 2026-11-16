@@ -91,3 +91,30 @@ func TestViewLifecycle(t *testing.T) {
 		})
 	}
 }
+
+func TestDefaultViewTypesSeedChosenView(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	space := f.space("Default views")
+	for _, viewType := range []string{"gantt", "calendar", "files", "chart", "table", "board"} {
+		created := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": viewType, "default_view_type": viewType,
+			"locations": []map[string]any{{"space_id": space}}})
+		if created.status != 201 {
+			t.Fatalf("%s project: %d %v", viewType, created.status, created.body)
+		}
+		views := f.call(admin, http.MethodGet, "/items/"+created.body["id"].(string)+"/views", nil)
+		var defaults []string
+		for _, view := range views.items() {
+			if view["is_default"] == true {
+				defaults = append(defaults, view["type"].(string))
+			}
+		}
+		if len(defaults) != 1 || defaults[0] != viewType {
+			t.Fatalf("%s: default views = %v (%d %v)", viewType, defaults, views.status, views.body)
+		}
+	}
+	if rejected := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": "x", "default_view_type": "list",
+		"locations": []map[string]any{{"space_id": space}}}); rejected.status != 422 {
+		t.Fatalf("unknown view accepted: %d %v", rejected.status, rejected.body)
+	}
+}

@@ -1,0 +1,161 @@
+﻿source_row,id,parent_id,facility,study,title,raw_label,row_kind,week_ids,window_start,window_end,fill_hex,pdf_y_pt,provenance
+1,ITA-KICKOFF,ITA,,,Kick Off Meeting,Kick Off Meeting,milestone,W02,2026-10-12,2026-10-16,#00b050,71.6,PDF_PAGE_1
+2,ITA-LAL,ITA,Lalang Platform,,Lalang Platform,1 Lalang Platform,facility,,,,,75.7,PDF_PAGE_1
+3,ITA-LAL-PSI,ITA-LAL,Lalang Platform,PSI,Process Safety,Process Safety,study,,,,,79.8,PDF_PAGE_1
+4,ITA-LAL-PSI-01,ITA-LAL-PSI,Lalang Platform,PSI,Equipment Datasheet,Equipment Datasheet,activity,"W04,W05",2026-10-26,2026-11-06,#ffe699,83.8,PDF_PAGE_1
+5,ITA-LAL-PSI-02,ITA-LAL-PSI,Lalang Platform,PSI,Hazardous Area Classification,Hazardous Area Classification,activity,W04,2026-10-26,2026-10-30,#ffe699,87.9,PDF_PAGE_1
+6,ITA-LAL-PSI-03,ITA-LAL-PSI,Lalang Platform,PSI,Cause and Effect Diagram,Cause and Effect Diagram,activity,"W04,W05",2026-10-26,2026-11-06,#ffe699,92.0,PDF_PAGE_1
+7,ITA-LAL-PSI-04,ITA-LAL-PSI,Lalang Platform,PSI,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W05,2026-11-02,2026-11-06,#00b050,96.1,PDF_PAGE_1
+8,ITA-LAL-PSI-05,ITA-LAL-PSI,Lalang Platform,PSI,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W08,2026-11-23,2026-11-27,#00b050,100.2,PDF_PAGE_1
+9,ITA-LAL-PSI-06,ITA-LAL-PSI,Lalang Platform,PSI,Verified Process Safety Information (Optional),Verified Process Safety Information (Optional),activity,W03,2026-10-19,2026-10-23,#ffe699,104.2,PDF_PAGE_1
+10,ITA-LAL-HAZOP,ITA-LAL,Lalang Platform,HAZOP,HAZOP,HAZOP,study,,,,,108.3,PDF_PAGE_1
+11,ITA-LAL-HAZOP-01,ITA-LAL-HAZOP,Lalang Platform,HAZOP,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#ffe699,112.4,PDF_PAGE_1
+12,ITA-LAL-HAZOP-02,ITA-LAL-HAZOP,Lalang Platform,HAZOP,Workshop,Workshop,activity,W05,2026-11-02,2026-11-06,#ffe699,116.5,PDF_PAGE_1
+13,ITA-LAL-HAZOP-03,ITA-LAL-HAZOP,Lalang Platform,HAZOP,Report,Report,activity,W06,2026-11-09,2026-11-13,#ffe699,120.6,PDF_PAGE_1
+14,ITA-LAL-HAZOP-04,ITA-LAL-HAZOP,Lalang Platform,HAZOP,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W06,2026-11-09,2026-11-13,#00b050,124.6,PDF_PAGE_1
+15,ITA-LAL-HAZOP-05,ITA-LAL-HAZOP,Lalang Platform,HAZOP,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W10,2026-12-07,2026-12-11,#00b050,128.7,PDF_PAGE_1
+16,ITA-LAL-HAZID,ITA-LAL,Lalang Platform,HAZID,HAZID,HAZID,study,,,,,132.8,PDF_PAGE_1
+17,ITA-LAL-HAZID-01,ITA-LAL-HAZID,Lalang Platform,HAZID,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#ffe699,136.9,PDF_PAGE_1
+18,ITA-LAL-HAZID-02,ITA-LAL-HAZID,Lalang Platform,HAZID,Workshop,Workshop,activity,W05,2026-11-02,2026-11-06,#ffe699,141.0,PDF_PAGE_1
+19,ITA-LAL-HAZID-03,ITA-LAL-HAZID,Lalang Platform,HAZID,Report,Report,activity,W06,2026-11-09,2026-11-13,#ffe699,145.0,PDF_PAGE_1
+20,ITA-LAL-HAZID-04,ITA-LAL-HAZID,Lalang Platform,HAZID,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W06,2026-11-09,2026-11-13,#00b050,149.1,PDF_PAGE_1
+21,ITA-LAL-HAZID-05,ITA-LAL-HAZID,Lalang Platform,HAZID,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W10,2026-12-07,2026-12-11,#00b050,153.2,PDF_PAGE_1
+22,ITA-LAL-MAH,ITA-LAL,Lalang Platform,MAH,MAH,MAH,study,,,,,157.3,PDF_PAGE_1
+23,ITA-LAL-MAH-01,ITA-LAL-MAH,Lalang Platform,MAH,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07",2026-10-05,2026-11-20,#ffe699,161.4,PDF_PAGE_1
+24,ITA-LAL-MAH-02,ITA-LAL-MAH,Lalang Platform,MAH,Report,Report,activity,"W08,W09",2026-11-23,2026-12-04,#ffe699,165.4,PDF_PAGE_1
+25,ITA-LAL-MAH-03,ITA-LAL-MAH,Lalang Platform,MAH,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W09,2026-11-30,2026-12-04,#00b050,169.5,PDF_PAGE_1
+26,ITA-LAL-MAH-04,ITA-LAL-MAH,Lalang Platform,MAH,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,173.6,PDF_PAGE_1
+27,ITA-LAL-MAH-05,ITA-LAL-MAH,Lalang Platform,MAH,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#ffe699,177.7,PDF_PAGE_1
+28,ITA-LAL-SECE,ITA-LAL,Lalang Platform,SECE,SECE,SECE,study,,,,,181.8,PDF_PAGE_1
+29,ITA-LAL-SECE-01,ITA-LAL-SECE,Lalang Platform,SECE,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07",2026-10-05,2026-11-20,#ffe699,185.8,PDF_PAGE_1
+30,ITA-LAL-SECE-02,ITA-LAL-SECE,Lalang Platform,SECE,Report,Report,activity,"W10,W11",2026-12-07,2026-12-18,#ffe699,189.9,PDF_PAGE_1
+31,ITA-LAL-SECE-03,ITA-LAL-SECE,Lalang Platform,SECE,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W11,2026-12-14,2026-12-18,#00b050,194.0,PDF_PAGE_1
+32,ITA-LAL-SECE-04,ITA-LAL-SECE,Lalang Platform,SECE,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,198.1,PDF_PAGE_1
+33,ITA-LAL-SECE-05,ITA-LAL-SECE,Lalang Platform,SECE,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#ffe699,202.2,PDF_PAGE_1
+34,ITA-KUR,ITA,Kurau Plant,,Kurau Plant,2 Kurau Plant,facility,,,,,206.2,PDF_PAGE_1
+35,ITA-KUR-PSI,ITA-KUR,Kurau Plant,PSI,Process Safety,Process Safety,study,,,,,210.3,PDF_PAGE_1
+36,ITA-KUR-PSI-01,ITA-KUR-PSI,Kurau Plant,PSI,Equipment Datasheet,Equipment Datasheet,activity,"W05,W06",2026-11-02,2026-11-13,#c6e0b4,214.4,PDF_PAGE_1
+37,ITA-KUR-PSI-02,ITA-KUR-PSI,Kurau Plant,PSI,Hazardous Area Classification,Hazardous Area Classification,activity,W05,2026-11-02,2026-11-06,#c6e0b4,218.5,PDF_PAGE_1
+38,ITA-KUR-PSI-03,ITA-KUR-PSI,Kurau Plant,PSI,Cause and Effect Diagram,Cause and Effect Diagram,activity,"W05,W06",2026-11-02,2026-11-13,#c6e0b4,222.6,PDF_PAGE_1
+39,ITA-KUR-PSI-04,ITA-KUR-PSI,Kurau Plant,PSI,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W06,2026-11-09,2026-11-13,#00b050,226.6,PDF_PAGE_1
+40,ITA-KUR-PSI-05,ITA-KUR-PSI,Kurau Plant,PSI,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W09,2026-11-30,2026-12-04,#00b050,230.8,PDF_PAGE_1
+41,ITA-KUR-PSI-06,ITA-KUR-PSI,Kurau Plant,PSI,Verified Process Safety Information (Optional),Verified Process Safety Information (Optional),activity,W03,2026-10-19,2026-10-23,#c6e0b4,234.8,PDF_PAGE_1
+42,ITA-KUR-HAZOP,ITA-KUR,Kurau Plant,HAZOP,HAZOP,HAZOP,study,,,,,238.9,PDF_PAGE_1
+43,ITA-KUR-HAZOP-01,ITA-KUR-HAZOP,Kurau Plant,HAZOP,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#c6e0b4,243.0,PDF_PAGE_1
+44,ITA-KUR-HAZOP-02,ITA-KUR-HAZOP,Kurau Plant,HAZOP,Workshop,Workshop,activity,W05,2026-11-02,2026-11-06,#c6e0b4,247.1,PDF_PAGE_1
+45,ITA-KUR-HAZOP-03,ITA-KUR-HAZOP,Kurau Plant,HAZOP,Report,Report,activity,W07,2026-11-16,2026-11-20,#c6e0b4,251.1,PDF_PAGE_1
+46,ITA-KUR-HAZOP-04,ITA-KUR-HAZOP,Kurau Plant,HAZOP,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W07,2026-11-16,2026-11-20,#00b050,255.2,PDF_PAGE_1
+47,ITA-KUR-HAZOP-05,ITA-KUR-HAZOP,Kurau Plant,HAZOP,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W11,2026-12-14,2026-12-18,#00b050,259.3,PDF_PAGE_1
+48,ITA-KUR-HAZID,ITA-KUR,Kurau Plant,HAZID,HAZID,HAZID,study,,,,,263.4,PDF_PAGE_1
+49,ITA-KUR-HAZID-01,ITA-KUR-HAZID,Kurau Plant,HAZID,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#c6e0b4,267.5,PDF_PAGE_1
+50,ITA-KUR-HAZID-02,ITA-KUR-HAZID,Kurau Plant,HAZID,Workshop,Workshop,activity,W05,2026-11-02,2026-11-06,#c6e0b4,271.6,PDF_PAGE_1
+51,ITA-KUR-HAZID-03,ITA-KUR-HAZID,Kurau Plant,HAZID,Report,Report,activity,W07,2026-11-16,2026-11-20,#c6e0b4,275.6,PDF_PAGE_1
+52,ITA-KUR-HAZID-04,ITA-KUR-HAZID,Kurau Plant,HAZID,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W07,2026-11-16,2026-11-20,#00b050,279.7,PDF_PAGE_1
+53,ITA-KUR-HAZID-05,ITA-KUR-HAZID,Kurau Plant,HAZID,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W11,2026-12-14,2026-12-18,#00b050,283.8,PDF_PAGE_1
+54,ITA-KUR-MAH,ITA-KUR,Kurau Plant,MAH,MAH,MAH,study,,,,,287.9,PDF_PAGE_1
+55,ITA-KUR-MAH-01,ITA-KUR-MAH,Kurau Plant,MAH,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07,W08",2026-10-05,2026-11-27,#c6e0b4,292.0,PDF_PAGE_1
+56,ITA-KUR-MAH-02,ITA-KUR-MAH,Kurau Plant,MAH,Report,Report,activity,"W09,W10",2026-11-30,2026-12-11,#c6e0b4,296.0,PDF_PAGE_1
+57,ITA-KUR-MAH-03,ITA-KUR-MAH,Kurau Plant,MAH,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W10,2026-12-07,2026-12-11,#00b050,300.1,PDF_PAGE_1
+58,ITA-KUR-MAH-04,ITA-KUR-MAH,Kurau Plant,MAH,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,304.2,PDF_PAGE_1
+59,ITA-KUR-MAH-05,ITA-KUR-MAH,Kurau Plant,MAH,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#c6e0b4,308.3,PDF_PAGE_1
+60,ITA-KUR-SECE,ITA-KUR,Kurau Plant,SECE,SECE,SECE,study,,,,,312.4,PDF_PAGE_1
+61,ITA-KUR-SECE-01,ITA-KUR-SECE,Kurau Plant,SECE,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07,W08",2026-10-05,2026-11-27,#c6e0b4,316.4,PDF_PAGE_1
+62,ITA-KUR-SECE-02,ITA-KUR-SECE,Kurau Plant,SECE,Report,Report,activity,"W11,W12",2026-12-14,2026-12-25,#c6e0b4,320.5,PDF_PAGE_1
+63,ITA-KUR-SECE-03,ITA-KUR-SECE,Kurau Plant,SECE,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W12,2026-12-21,2026-12-25,#00b050,324.6,PDF_PAGE_1
+64,ITA-KUR-SECE-04,ITA-KUR-SECE,Kurau Plant,SECE,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,328.7,PDF_PAGE_1
+65,ITA-KUR-SECE-05,ITA-KUR-SECE,Kurau Plant,SECE,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#c6e0b4,332.8,PDF_PAGE_1
+66,ITA-MEL,ITA,Melibur Plant,,Melibur Plant,3 Melibur Plant,facility,,,,,336.8,PDF_PAGE_1
+67,ITA-MEL-PSI,ITA-MEL,Melibur Plant,PSI,Process Safety,Process Safety,study,,,,,340.9,PDF_PAGE_1
+68,ITA-MEL-PSI-01,ITA-MEL-PSI,Melibur Plant,PSI,Equipment Datasheet,Equipment Datasheet,activity,"W06,W07",2026-11-09,2026-11-20,#f8cbad,345.0,PDF_PAGE_1
+69,ITA-MEL-PSI-02,ITA-MEL-PSI,Melibur Plant,PSI,Hazardous Area Classification,Hazardous Area Classification,activity,W06,2026-11-09,2026-11-13,#f8cbad,349.1,PDF_PAGE_1
+70,ITA-MEL-PSI-03,ITA-MEL-PSI,Melibur Plant,PSI,Cause and Effect Diagram,Cause and Effect Diagram,activity,"W06,W07",2026-11-09,2026-11-20,#f8cbad,353.1,PDF_PAGE_1
+71,ITA-MEL-PSI-04,ITA-MEL-PSI,Melibur Plant,PSI,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W07,2026-11-16,2026-11-20,#00b050,357.2,PDF_PAGE_1
+72,ITA-MEL-PSI-05,ITA-MEL-PSI,Melibur Plant,PSI,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W10,2026-12-07,2026-12-11,#00b050,361.3,PDF_PAGE_1
+73,ITA-MEL-PSI-06,ITA-MEL-PSI,Melibur Plant,PSI,Verified Process Safety Information (Optional),Verified Process Safety Information (Optional),activity,W03,2026-10-19,2026-10-23,#f8cbad,365.4,PDF_PAGE_1
+74,ITA-MEL-HAZOP,ITA-MEL,Melibur Plant,HAZOP,HAZOP,HAZOP,study,,,,,369.5,PDF_PAGE_1
+75,ITA-MEL-HAZOP-01,ITA-MEL-HAZOP,Melibur Plant,HAZOP,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#f8cbad,373.6,PDF_PAGE_1
+76,ITA-MEL-HAZOP-02,ITA-MEL-HAZOP,Melibur Plant,HAZOP,Workshop,Workshop,activity,W06,2026-11-09,2026-11-13,#f8cbad,377.6,PDF_PAGE_1
+77,ITA-MEL-HAZOP-03,ITA-MEL-HAZOP,Melibur Plant,HAZOP,Report,Report,activity,W08,2026-11-23,2026-11-27,#f8cbad,381.7,PDF_PAGE_1
+78,ITA-MEL-HAZOP-04,ITA-MEL-HAZOP,Melibur Plant,HAZOP,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W08,2026-11-23,2026-11-27,#00b050,385.8,PDF_PAGE_1
+79,ITA-MEL-HAZOP-05,ITA-MEL-HAZOP,Melibur Plant,HAZOP,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W13,2026-12-28,2027-01-01,#00b050,389.9,PDF_PAGE_1
+80,ITA-MEL-HAZID,ITA-MEL,Melibur Plant,HAZID,HAZID,HAZID,study,,,,,394.0,PDF_PAGE_1
+81,ITA-MEL-HAZID-01,ITA-MEL-HAZID,Melibur Plant,HAZID,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#f8cbad,398.0,PDF_PAGE_1
+82,ITA-MEL-HAZID-02,ITA-MEL-HAZID,Melibur Plant,HAZID,Workshop,Workshop,activity,W06,2026-11-09,2026-11-13,#f8cbad,402.1,PDF_PAGE_1
+83,ITA-MEL-HAZID-03,ITA-MEL-HAZID,Melibur Plant,HAZID,Report,Report,activity,W08,2026-11-23,2026-11-27,#f8cbad,406.2,PDF_PAGE_1
+84,ITA-MEL-HAZID-04,ITA-MEL-HAZID,Melibur Plant,HAZID,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W08,2026-11-23,2026-11-27,#00b050,410.3,PDF_PAGE_1
+85,ITA-MEL-HAZID-05,ITA-MEL-HAZID,Melibur Plant,HAZID,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W13,2026-12-28,2027-01-01,#00b050,414.4,PDF_PAGE_1
+86,ITA-MEL-MAH,ITA-MEL,Melibur Plant,MAH,MAH,MAH,study,,,,,418.5,PDF_PAGE_1
+87,ITA-MEL-MAH-01,ITA-MEL-MAH,Melibur Plant,MAH,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07,W08,W09",2026-10-05,2026-12-04,#f8cbad,422.5,PDF_PAGE_1
+88,ITA-MEL-MAH-02,ITA-MEL-MAH,Melibur Plant,MAH,Report,Report,activity,"W10,W11",2026-12-07,2026-12-18,#f8cbad,426.6,PDF_PAGE_1
+89,ITA-MEL-MAH-03,ITA-MEL-MAH,Melibur Plant,MAH,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W11,2026-12-14,2026-12-18,#00b050,430.7,PDF_PAGE_1
+90,ITA-MEL-MAH-04,ITA-MEL-MAH,Melibur Plant,MAH,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,434.8,PDF_PAGE_1
+91,ITA-MEL-MAH-05,ITA-MEL-MAH,Melibur Plant,MAH,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#f8cbad,438.9,PDF_PAGE_1
+92,ITA-MEL-SECE,ITA-MEL,Melibur Plant,SECE,SECE,SECE,study,,,,,442.9,PDF_PAGE_1
+93,ITA-MEL-SECE-01,ITA-MEL-SECE,Melibur Plant,SECE,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07,W08,W09",2026-10-05,2026-12-04,#f8cbad,447.0,PDF_PAGE_1
+94,ITA-MEL-SECE-02,ITA-MEL-SECE,Melibur Plant,SECE,Report,Report,activity,"W12,W13",2026-12-21,2027-01-01,#f8cbad,451.1,PDF_PAGE_1
+95,ITA-MEL-SECE-03,ITA-MEL-SECE,Melibur Plant,SECE,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W13,2026-12-28,2027-01-01,#00b050,455.2,PDF_PAGE_1
+96,ITA-MEL-SECE-04,ITA-MEL-SECE,Melibur Plant,SECE,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,459.2,PDF_PAGE_1
+97,ITA-MEL-SECE-05,ITA-MEL-SECE,Melibur Plant,SECE,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#f8cbad,463.3,PDF_PAGE_1
+98,ITA-DCK,ITA,DC Kuat,,DC Kuat,4 DC Kuat,facility,,,,,467.4,PDF_PAGE_1
+99,ITA-DCK-PSI,ITA-DCK,DC Kuat,PSI,Process Safety,Process Safety,study,,,,,471.5,PDF_PAGE_1
+100,ITA-DCK-PSI-01,ITA-DCK-PSI,DC Kuat,PSI,Equipment Datasheet,Equipment Datasheet,activity,"W07,W08",2026-11-16,2026-11-27,#aeaaaa,475.6,PDF_PAGE_1
+101,ITA-DCK-PSI-02,ITA-DCK-PSI,DC Kuat,PSI,Hazardous Area Classification,Hazardous Area Classification,activity,W07,2026-11-16,2026-11-20,#aeaaaa,479.6,PDF_PAGE_1
+102,ITA-DCK-PSI-03,ITA-DCK-PSI,DC Kuat,PSI,Cause and Effect Diagram,Cause and Effect Diagram,activity,"W07,W08",2026-11-16,2026-11-27,#aeaaaa,483.7,PDF_PAGE_1
+103,ITA-DCK-PSI-04,ITA-DCK-PSI,DC Kuat,PSI,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W08,2026-11-23,2026-11-27,#00b050,487.8,PDF_PAGE_1
+104,ITA-DCK-PSI-05,ITA-DCK-PSI,DC Kuat,PSI,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W11,2026-12-14,2026-12-18,#00b050,491.9,PDF_PAGE_1
+105,ITA-DCK-PSI-06,ITA-DCK-PSI,DC Kuat,PSI,Verified Process Safety Information (Optional),Verified Process Safety Information (Optional),activity,W03,2026-10-19,2026-10-23,#aeaaaa,496.0,PDF_PAGE_1
+106,ITA-DCK-HAZOP,ITA-DCK,DC Kuat,HAZOP,HAZOP,HAZOP,study,,,,,500.1,PDF_PAGE_1
+107,ITA-DCK-HAZOP-01,ITA-DCK-HAZOP,DC Kuat,HAZOP,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#aeaaaa,504.1,PDF_PAGE_1
+108,ITA-DCK-HAZOP-02,ITA-DCK-HAZOP,DC Kuat,HAZOP,Workshop,Workshop,activity,W06,2026-11-09,2026-11-13,#aeaaaa,508.2,PDF_PAGE_1
+109,ITA-DCK-HAZOP-03,ITA-DCK-HAZOP,DC Kuat,HAZOP,Report,Report,activity,W09,2026-11-30,2026-12-04,#aeaaaa,512.3,PDF_PAGE_1
+110,ITA-DCK-HAZOP-04,ITA-DCK-HAZOP,DC Kuat,HAZOP,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W09,2026-11-30,2026-12-04,#00b050,516.4,PDF_PAGE_1
+111,ITA-DCK-HAZOP-05,ITA-DCK-HAZOP,DC Kuat,HAZOP,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W14,2027-01-04,2027-01-08,#00b050,520.5,PDF_PAGE_1
+112,ITA-DCK-HAZID,ITA-DCK,DC Kuat,HAZID,HAZID,HAZID,study,,,,,524.5,PDF_PAGE_1
+113,ITA-DCK-HAZID-01,ITA-DCK-HAZID,DC Kuat,HAZID,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#aeaaaa,528.6,PDF_PAGE_1
+114,ITA-DCK-HAZID-02,ITA-DCK-HAZID,DC Kuat,HAZID,Workshop,Workshop,activity,W06,2026-11-09,2026-11-13,#aeaaaa,532.7,PDF_PAGE_1
+115,ITA-DCK-HAZID-03,ITA-DCK-HAZID,DC Kuat,HAZID,Report,Report,activity,W09,2026-11-30,2026-12-04,#aeaaaa,536.8,PDF_PAGE_1
+116,ITA-DCK-HAZID-04,ITA-DCK-HAZID,DC Kuat,HAZID,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W09,2026-11-30,2026-12-04,#00b050,540.8,PDF_PAGE_1
+117,ITA-DCK-HAZID-05,ITA-DCK-HAZID,DC Kuat,HAZID,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W14,2027-01-04,2027-01-08,#00b050,544.9,PDF_PAGE_1
+118,ITA-DCK-MAH,ITA-DCK,DC Kuat,MAH,MAH,MAH,study,,,,,549.0,PDF_PAGE_1
+119,ITA-DCK-MAH-01,ITA-DCK-MAH,DC Kuat,MAH,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07,W08,W09,W10",2026-10-05,2026-12-11,#aeaaaa,553.1,PDF_PAGE_1
+120,ITA-DCK-MAH-02,ITA-DCK-MAH,DC Kuat,MAH,Report,Report,activity,"W11,W12",2026-12-14,2026-12-25,#aeaaaa,557.2,PDF_PAGE_1
+121,ITA-DCK-MAH-03,ITA-DCK-MAH,DC Kuat,MAH,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W12,2026-12-21,2026-12-25,#00b050,561.2,PDF_PAGE_1
+122,ITA-DCK-MAH-04,ITA-DCK-MAH,DC Kuat,MAH,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,565.3,PDF_PAGE_1
+123,ITA-DCK-MAH-05,ITA-DCK-MAH,DC Kuat,MAH,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#aeaaaa,569.4,PDF_PAGE_1
+124,ITA-DCK-SECE,ITA-DCK,DC Kuat,SECE,SECE,SECE,study,,,,,573.5,PDF_PAGE_1
+125,ITA-DCK-SECE-01,ITA-DCK-SECE,DC Kuat,SECE,Preparation,Preparation,activity,"W01,W02,W03,W04,W05,W06,W07,W08,W09,W10",2026-10-05,2026-12-11,#aeaaaa,577.6,PDF_PAGE_1
+126,ITA-DCK-SECE-02,ITA-DCK-SECE,DC Kuat,SECE,Report,Report,activity,"W13,W14",2026-12-28,2027-01-08,#aeaaaa,581.6,PDF_PAGE_1
+127,ITA-DCK-SECE-03,ITA-DCK-SECE,DC Kuat,SECE,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W14,2027-01-04,2027-01-08,#00b050,585.7,PDF_PAGE_1
+128,ITA-DCK-SECE-04,ITA-DCK-SECE,DC Kuat,SECE,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,589.8,PDF_PAGE_1
+129,ITA-DCK-SECE-05,ITA-DCK-SECE,DC Kuat,SECE,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#aeaaaa,593.9,PDF_PAGE_1
+130,ITA-AIS,ITA,AI Selatan,,AI Selatan,5 AI Selatan,facility,,,,,598.0,PDF_PAGE_1
+131,ITA-AIS-PSI,ITA-AIS,AI Selatan,PSI,Process Safety,Process Safety,study,,,,,602.1,PDF_PAGE_1
+132,ITA-AIS-PSI-01,ITA-AIS-PSI,AI Selatan,PSI,Verified Process Safety Information (Optional),Verified Process Safety Information (Optional),activity,W03,2026-10-19,2026-10-23,#d9d9d9,606.2,PDF_PAGE_1
+133,ITA-AIS-MAH,ITA-AIS,AI Selatan,MAH,MAH,MAH,study,,,,,610.2,PDF_PAGE_1
+134,ITA-AIS-MAH-01,ITA-AIS-MAH,AI Selatan,MAH,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#d9d9d9,614.3,PDF_PAGE_1
+135,ITA-AIS-MAH-02,ITA-AIS-MAH,AI Selatan,MAH,Report,Report,activity,"W05,W06",2026-11-02,2026-11-13,#d9d9d9,618.4,PDF_PAGE_1
+136,ITA-AIS-MAH-03,ITA-AIS-MAH,AI Selatan,MAH,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W06,2026-11-09,2026-11-13,#00b050,622.5,PDF_PAGE_1
+137,ITA-AIS-MAH-04,ITA-AIS-MAH,AI Selatan,MAH,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,626.6,PDF_PAGE_1
+138,ITA-AIS-MAH-05,ITA-AIS-MAH,AI Selatan,MAH,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#d9d9d9,630.6,PDF_PAGE_1
+139,ITA-AIS-SECE,ITA-AIS,AI Selatan,SECE,SECE,SECE,study,,,,,634.7,PDF_PAGE_1
+140,ITA-AIS-SECE-01,ITA-AIS-SECE,AI Selatan,SECE,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#d9d9d9,638.8,PDF_PAGE_1
+141,ITA-AIS-SECE-02,ITA-AIS-SECE,AI Selatan,SECE,Report,Report,activity,"W07,W08",2026-11-16,2026-11-27,#d9d9d9,642.9,PDF_PAGE_1
+142,ITA-AIS-SECE-03,ITA-AIS-SECE,AI Selatan,SECE,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W08,2026-11-23,2026-11-27,#00b050,647.0,PDF_PAGE_1
+143,ITA-AIS-SECE-04,ITA-AIS-SECE,AI Selatan,SECE,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,651.0,PDF_PAGE_1
+144,ITA-AIS-SECE-05,ITA-AIS-SECE,AI Selatan,SECE,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#d9d9d9,655.1,PDF_PAGE_1
+145,ITA-MST,ITA,MSTB,,MSTB,6 MSTB,facility,,,,,659.2,PDF_PAGE_1
+146,ITA-MST-PSI,ITA-MST,MSTB,PSI,Process Safety,Process Safety,study,,,,,663.3,PDF_PAGE_1
+147,ITA-MST-PSI-01,ITA-MST-PSI,MSTB,PSI,Verified Process Safety Information (Optional),Verified Process Safety Information (Optional),activity,W03,2026-10-19,2026-10-23,#bdd7ee,667.4,PDF_PAGE_1
+148,ITA-MST-MAH,ITA-MST,MSTB,MAH,MAH,MAH,study,,,,,671.4,PDF_PAGE_1
+149,ITA-MST-MAH-01,ITA-MST-MAH,MSTB,MAH,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#bdd7ee,675.5,PDF_PAGE_1
+150,ITA-MST-MAH-02,ITA-MST-MAH,MSTB,MAH,Report,Report,activity,"W05,W06",2026-11-02,2026-11-13,#bdd7ee,679.6,PDF_PAGE_1
+151,ITA-MST-MAH-03,ITA-MST-MAH,MSTB,MAH,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W06,2026-11-09,2026-11-13,#00b050,683.7,PDF_PAGE_1
+152,ITA-MST-MAH-04,ITA-MST-MAH,MSTB,MAH,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,687.8,PDF_PAGE_1
+153,ITA-MST-MAH-05,ITA-MST-MAH,MSTB,MAH,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#bdd7ee,691.8,PDF_PAGE_1
+154,ITA-MST-SECE,ITA-MST,MSTB,SECE,SECE,SECE,study,,,,,695.9,PDF_PAGE_1
+155,ITA-MST-SECE-01,ITA-MST-SECE,MSTB,SECE,Preparation,Preparation,activity,"W01,W02,W03,W04",2026-10-05,2026-10-30,#bdd7ee,700.0,PDF_PAGE_1
+156,ITA-MST-SECE-02,ITA-MST-SECE,MSTB,SECE,Report,Report,activity,"W07,W08",2026-11-16,2026-11-27,#bdd7ee,704.1,PDF_PAGE_1
+157,ITA-MST-SECE-03,ITA-MST-SECE,MSTB,SECE,Pengumpulan Report (IFR),Pengumpulan Report (IFR),milestone,W08,2026-11-23,2026-11-27,#00b050,708.2,PDF_PAGE_1
+158,ITA-MST-SECE-04,ITA-MST-SECE,MSTB,SECE,Pengumpulan Report (IFA),Pengumpulan Report (IFA),milestone,W18,2027-02-01,2027-02-05,#00b050,712.2,PDF_PAGE_1
+159,ITA-MST-SECE-05,ITA-MST-SECE,MSTB,SECE,Workshop,Workshop,activity,W15,2027-01-11,2027-01-15,#bdd7ee,716.3,PDF_PAGE_1
+160,ITA-CLOSE,ITA,,,Closing Proyek dan Serah Terima,Closing Proyek dan Serah Terima,milestone,W25,2027-03-22,2027-03-26,#00b050,720.4,PDF_PAGE_1

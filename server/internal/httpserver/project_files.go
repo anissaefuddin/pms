@@ -38,11 +38,21 @@ func (s *Server) listProjectFiles(w http.ResponseWriter, r *http.Request) {
  SELECT $1::uuid,0
  UNION SELECT l.item_id,t.depth+1 FROM t JOIN item_locations l ON l.parent_item_id=t.id AND l.deleted_root_id IS NULL
   JOIN items i ON i.id=l.item_id AND i.deleted_at IS NULL WHERE t.depth<30)
+ , outcomes(attachment_id,attachment_version,created_at,outcome) AS (
+  -- WA-D08: one outcome per approval pinned to a file version, using the same rule as the approval list.
+  SELECT a.attachment_id,a.attachment_version,a.created_at,(`+approvalOutcome+`)
+  FROM approvals a JOIN t ON t.id=a.item_id WHERE a.attachment_id IS NOT NULL)
  SELECT a.item_id::text, jsonb_build_object('id',a.id,'item_id',a.item_id,'item_title',i.title,'filename',a.filename,
  'content_type',a.content_type,'size_bytes',a.size_bytes,'created_at',a.created_at,
+ 'version',a.current_version,
+ 'review_status',CASE WHEN r.outcome IS NULL THEN
+   CASE WHEN EXISTS(SELECT 1 FROM approval_events e WHERE e.kind='withdrawn' AND e.attachment_id=a.id AND e.attachment_version=a.current_version) THEN 'cancelled' ELSE 'not_requested' END
+  WHEN r.outcome='pending' THEN 'in_review' ELSE r.outcome END,
  'uploader',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)))
  FROM attachments a JOIN (SELECT DISTINCT id FROM t) t ON t.id=a.item_id
  JOIN items i ON i.id=a.item_id AND i.deleted_at IS NULL JOIN users u ON u.id=a.uploader_id
+ LEFT JOIN LATERAL (SELECT o.outcome FROM outcomes o WHERE o.attachment_id=a.id AND o.attachment_version=a.current_version
+   ORDER BY (o.outcome='pending') DESC, o.created_at DESC LIMIT 1) r ON TRUE
  WHERE a.deleted_at IS NULL ORDER BY a.created_at DESC,a.id LIMIT 5000`, project)
 	if err != nil {
 		writeItemError(w, err)

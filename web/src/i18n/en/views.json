@@ -51,12 +51,21 @@
     "size": "Size",
     "uploader": "Uploaded by",
     "added": "Added",
-    "kb": "{{count}} KB"
+    "kb": "{{count}} KB",
+    "emptyHint": "Attach files to an item in this project to see them here.",
+    "type": "Type",
+    "version": "Version",
+    "linkOnly": "Link",
+    "open": "Open link",
+    "versionNumber": "v{{version}}",
+    "dash": "—"
   },
   "chart": {
     "title": "Items by status",
     "noStatus": "No status",
-    "bar": "{{name}}: {{count}}"
+    "bar": "{{name}}: {{count}}",
+    "total": "Total {{count}}",
+    "share": "{{percent}}% of items"
   },
   "placeholder": "This view is not available yet.",
   "actions": "Actions",
@@ -144,9 +153,15 @@
     "predecessor": "Predecessor",
     "type": "Type",
     "addDep": "Add predecessor",
+    "toolbar": "Gantt toolbar",
+    "expandAll": "Expand all",
+    "collapseAll": "Collapse all",
+    "today": "Today",
     "zoomIn": "Zoom in",
     "zoomOut": "Zoom out",
-    "keysLabel": "Keyboard help"
+    "keysLabel": "Keyboard help",
+    "fit": "Fit project",
+    "showSelected": "Show selected"
   },
   "unassigned": "Unassigned",
   "reassign": {
@@ -171,7 +186,19 @@
     "noneUnscheduled": "Everything has dates.",
     "keys": "Drag an item to another day, or press Alt with an arrow key to move it a day or a week.",
     "item": "{{title}}, {{start}} to {{end}}",
-    "day": "{{date}}, {{count}} items"
+    "day": "{{date}}, {{count}} items",
+    "cardStatus": "Status",
+    "cardAssignees": "Assignees",
+    "cardDates": "Dates",
+    "cardType": "Type",
+    "more": "+{{count}} more",
+    "modeMonth": "Month",
+    "modeWeek": "Week",
+    "mode": "Calendar mode",
+    "prevWeek": "Previous week",
+    "nextWeek": "Next week",
+    "continuesBefore": "continues from an earlier week",
+    "continuesAfter": "continues into a later week"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",
@@ -199,6 +226,29 @@
     "revokeNamed": "Revoke {{name}}"
   },
   "toolbar": "View toolbar",
+  "emptyHint": "Try another search or clear the filters.",
+  "noItems": {
+    "title": "No items in this view yet",
+    "description": "Add the first item to start this view."
+  },
+  "project": {
+    "breadcrumb": "Breadcrumb",
+    "progress": "Project progress",
+    "workItems": "Work items",
+    "done_one": "{{count}} done",
+    "done_other": "{{count}} done",
+    "inProgress": "In progress",
+    "milestones": "Upcoming milestones",
+    "noMilestones": "No upcoming milestones",
+    "info": "Info",
+    "share": "Share",
+    "addTask": "Add task",
+    "more": "More actions",
+    "percent": "{{value}}%",
+    "summary": "Summary",
+    "directScope": "Direct children of this project only",
+    "subtreeScope": "Tasks in this project and its folders and subprojects; milestones excluded"
+  },
   "searchPlaceholder": "Search",
   "chip": {
     "filter": "Filter",
@@ -208,5 +258,37 @@
   "segments": "View type",
   "allViews": "All views",
   "all": "All",
-  "addType": "Add {{type}} view"
+  "addType": "Add {{type}} view",
+  "chooseType": "Choose a view type",
+  "currentView": "Current view",
+  "defaultView": "Default",
+  "availableHere": "Available here",
+  "projectOnly": "Projects only",
+  "typeDescriptions": {
+    "table": "Rows and columns for every item, with sorting, filters and grouping.",
+    "board": "Cards grouped by workflow status or assignee.",
+    "gantt": "Schedule bars over time, with dependencies and baselines.",
+    "calendar": "Items by date. Multi-day items span their days.",
+    "timelog": "Logged time for the items in this project.",
+    "files": "Files attached to items in this project.",
+    "chart": "A chart of item metrics for this project."
+  },
+  "overflowViews": "More views",
+  "hiddenViews": "Hidden views",
+  "restoreView": "Restore",
+  "hideView": "Hide from tabs",
+  "cannotHideDefault": "Default view stays in tabs",
+  "hiddenNow": "Hidden",
+  "bulk": {
+    "selected": "{{count}} selected",
+    "clear": "Clear selection",
+    "setStatus": "Set status",
+    "result": "{{done}} updated, {{failed}} not updated",
+    "selectAll": "Select all loaded rows",
+    "selectRow": "Select {{title}}",
+    "toolbar": "Bulk actions"
+  },
+  "milestone": "Milestone",
+  "boardBreakdown": "{{tasks}} tasks · {{milestones}} milestones",
+  "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded."
 }

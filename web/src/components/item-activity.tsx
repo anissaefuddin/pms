@@ -4,7 +4,9 @@ import { useTranslation } from "react-i18next";
 import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
-import { formatDateTime, useProfile } from "@/lib/profile";
+import { formatDate, formatDateTime, useProfile } from "@/lib/profile";
+import { formatChange, groupByDay } from "@/lib/activity-format";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 
 type Activity = components["schemas"]["Activity"];
@@ -27,11 +29,19 @@ export function ItemActivity({ item }: { item: Item }) {
     <h3 id={heading} className="font-semibold">{t("items.activity.title")}</h3>
     {log.isError && <p role="alert">{t("items.activity.error")}</p>}
     {log.isSuccess && !entries.length && <p className="text-sm text-muted-foreground">{t("items.activity.empty")}</p>}
-    <ul className="space-y-1 text-sm">{entries.map((entry) => <li key={entry.id}>
-      {t(`items.activity.action.${known.includes(entry.action) ? entry.action : "other"}`, { actor: entry.actor.name })}
-      {entry.action === "update" && Object.keys(entry.changes).length > 0 && <> · {Object.keys(entry.changes).join(", ")}</>}
-      <span className="text-muted-foreground"> · {formatDateTime(entry.created_at, profile)}</span>
-    </li>)}</ul>
+    {groupByDay(entries, profile?.timezone).map((group) => <section key={group.day} aria-label={formatDate(group.day, profile)} className="space-y-1">
+      <h4 className="text-xs font-medium text-muted-foreground">{formatDate(group.day, profile)}</h4>
+      <ul className="space-y-2 text-sm">{group.items.map((entry) => <li key={entry.id} className="flex items-start gap-2">
+        <AvatarStack people={[{ id: entry.actor.id, name: entry.actor.name }]} max={1} className="mt-0.5" />
+        <div className="min-w-0 space-y-0.5">
+          <p>{t(`items.activity.action.${known.includes(entry.action) ? entry.action : "other"}`, { actor: entry.actor.name })}</p>
+          {entry.action === "update" && Object.entries(entry.changes).map(([field, change]) => <p key={field} className="text-muted-foreground">
+            <span className="font-medium text-foreground">{field}</span>: {formatChange(change as { from?: unknown; to?: unknown })}
+          </p>)}
+          <p className="text-xs text-muted-foreground">{formatDateTime(entry.created_at, profile)}</p>
+        </div>
+      </li>)}</ul>
+    </section>)}
     {log.hasNextPage && <Button variant="outline" disabled={log.isFetchingNextPage} onClick={() => void log.fetchNextPage()}>{t("items.activity.more")}</Button>}
   </section>;
 }

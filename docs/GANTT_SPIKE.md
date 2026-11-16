@@ -7,3 +7,9 @@
 - `npm run typecheck` di `web/` lulus.
 
 Cakupan bukti ini terbatas pada interaksi lokal dan penjadwalan satu relasi FS. Performa, penyimpanan perubahan, dan propagasi jadwal sepanjang rantai dependensi belum diuji.
+
+## Overlay baseline (S-UX.C4, 15 Nov 2026)
+
+- **Overlay baseline tidak tersedia di SVAR free.** Bar baseline di bawah bar task adalah fitur PRO. Free hanya merender bar dari `start` dan `end` task.
+- Yang dipakai sekarang: tanggal baseline dan variance ditampilkan sebagai kolom di grid kiri ("Baseline dates", "Variance") saat baseline dipilih di toolbar. Data dari `GET /api/v1/baselines/{id}/variance`, tanpa API baru.
+- Upgrade ke SVAR PRO bila overlay bar dibutuhkan. Titik sambung: `shownTasks` di `web/src/components/item-gantt.tsx`, yang sudah membawa `baseline` dan `variance` per task.

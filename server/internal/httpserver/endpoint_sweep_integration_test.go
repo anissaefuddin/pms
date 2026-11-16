@@ -250,6 +250,9 @@ func TestStrangersAndReadersCannotTouchAnotherSpacesResourcesThroughAnyEndpoint(
 		if op.method == "GET" || strings.HasSuffix(op.path, "/star") || strings.HasSuffix(op.path, "/duplicate") || strings.HasSuffix(op.path, "/result") || strings.Contains(op.path, "/data") {
 			continue // reading and copying are what the read role allows
 		}
+		if strings.HasPrefix(op.path, "/me/view-") {
+			continue // a reader may remember their own layout (expansion, hidden tabs); the view must still be visible, see view_prefs.go
+		}
 		got = f.call(reader, op.method, path, map[string]any{})
 		if got.status >= 500 || got.status == 200 || got.status == 201 || got.status == 204 {
 			t.Errorf("read-only %s %s answered %d", op.method, op.path, got.status)

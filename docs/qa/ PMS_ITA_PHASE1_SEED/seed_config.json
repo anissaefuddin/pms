@@ -1,0 +1,5418 @@
+{
+  "schema": "pms.qa.logical-seed/v1",
+  "purpose": "Logical manifest; not an existing PMS import schema or runnable DB script",
+  "namespace": "QA-ITA-20261115",
+  "clock": {
+    "as_of": "2026-11-15",
+    "zone": "Asia/Jakarta",
+    "note": "Freeze test clock for due/overdue assertions or use separate relative fixtures; never rewrite PDF dates"
+  },
+  "source": {
+    "file": "TIMELINE ITA INTERNAL - 201026.pdf",
+    "sha256": "75a4fbe16dd67b31ab8d4e68a286f4fbf8ecdc5dd579b7eb14c3f9610d08bcf3",
+    "page": 1,
+    "precision": "weekly; green submission markers not completion evidence",
+    "source_rows": 160,
+    "scheduled_rows": 128
+  },
+  "spaces": [
+    {
+      "id": "engineering",
+      "name": "QA | Engineering",
+      "visibility": "private"
+    },
+    {
+      "id": "restricted",
+      "name": "QA | Confidential",
+      "visibility": "private",
+      "locked_test": true
+    },
+    {
+      "id": "intake",
+      "name": "QA | Requests",
+      "visibility": "private"
+    }
+  ],
+  "project": {
+    "id": "ITA",
+    "title": "ITA — Internal Process Safety (QA seed)",
+    "space_id": "engineering",
+    "base_type": "Project",
+    "start": "2026-10-05",
+    "due": "2027-03-31",
+    "budget_idr": 120000000,
+    "owner": "u-pm",
+    "source": "PDF weekly header; budget and owner synthetic"
+  },
+  "source_weeks": [
+    {
+      "id": "W01",
+      "from": "2026-10-05",
+      "to": "2026-10-09"
+    },
+    {
+      "id": "W02",
+      "from": "2026-10-12",
+      "to": "2026-10-16"
+    },
+    {
+      "id": "W03",
+      "from": "2026-10-19",
+      "to": "2026-10-23"
+    },
+    {
+      "id": "W04",
+      "from": "2026-10-26",
+      "to": "2026-10-30"
+    },
+    {
+      "id": "W05",
+      "from": "2026-11-02",
+      "to": "2026-11-06"
+    },
+    {
+      "id": "W06",
+      "from": "2026-11-09",
+      "to": "2026-11-13"
+    },
+    {
+      "id": "W07",
+      "from": "2026-11-16",
+      "to": "2026-11-20"
+    },
+    {
+      "id": "W08",
+      "from": "2026-11-23",
+      "to": "2026-11-27"
+    },
+    {
+      "id": "W09",
+      "from": "2026-11-30",
+      "to": "2026-12-04"
+    },
+    {
+      "id": "W10",
+      "from": "2026-12-07",
+      "to": "2026-12-11"
+    },
+    {
+      "id": "W11",
+      "from": "2026-12-14",
+      "to": "2026-12-18"
+    },
+    {
+      "id": "W12",
+      "from": "2026-12-21",
+      "to": "2026-12-25"
+    },
+    {
+      "id": "W13",
+      "from": "2026-12-28",
+      "to": "2027-01-01"
+    },
+    {
+      "id": "W14",
+      "from": "2027-01-04",
+      "to": "2027-01-08"
+    },
+    {
+      "id": "W15",
+      "from": "2027-01-11",
+      "to": "2027-01-15"
+    },
+    {
+      "id": "W16",
+      "from": "2027-01-18",
+      "to": "2027-01-22"
+    },
+    {
+      "id": "W17",
+      "from": "2027-01-25",
+      "to": "2027-01-29"
+    },
+    {
+      "id": "W18",
+      "from": "2027-02-01",
+      "to": "2027-02-05"
+    },
+    {
+      "id": "W19",
+      "from": "2027-02-08",
+      "to": "2027-02-12"
+    },
+    {
+      "id": "W20",
+      "from": "2027-02-15",
+      "to": "2027-02-19"
+    },
+    {
+      "id": "W21",
+      "from": "2027-02-22",
+      "to": "2027-02-26"
+    },
+    {
+      "id": "W22",
+      "from": "2027-03-01",
+      "to": "2027-03-05"
+    },
+    {
+      "id": "W23",
+      "from": "2027-03-08",
+      "to": "2027-03-12"
+    },
+    {
+      "id": "W24",
+      "from": "2027-03-15",
+      "to": "2027-03-19"
+    },
+    {
+      "id": "W25",
+      "from": "2027-03-22",
+      "to": "2027-03-26"
+    },
+    {
+      "id": "W26",
+      "from": "2027-03-28",
+      "to": "2027-03-31"
+    }
+  ],
+  "timeline_items": [
+    {
+      "id": "ITA-KICKOFF",
+      "parent_id": "ITA",
+      "title": "Kick Off Meeting",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-10-16",
+        "due": "2026-10-16",
+        "source_window_start": "2026-10-12",
+        "source_window_end": "2026-10-16"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-pm"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": null,
+        "study_type": null,
+        "source_row": 1,
+        "optional": false,
+        "source_week": "W02",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL",
+      "parent_id": "ITA",
+      "title": "Lalang Platform",
+      "base_type": "Folder",
+      "custom_type": null,
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-LAL-PSI",
+      "parent_id": "ITA-LAL",
+      "title": "Process Safety",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-11-27",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-LAL-PSI-01",
+      "parent_id": "ITA-LAL-PSI",
+      "title": "Equipment Datasheet",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-26",
+        "due": "2026-11-06",
+        "source_window_start": "2026-10-26",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Blocked",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "High",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "PSI",
+        "source_row": 4,
+        "optional": false,
+        "source_week": "W04,W05",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-PSI-02",
+      "parent_id": "ITA-LAL-PSI",
+      "title": "Hazardous Area Classification",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-26",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-26",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "PSI",
+        "source_row": 5,
+        "optional": false,
+        "source_week": "W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-PSI-03",
+      "parent_id": "ITA-LAL-PSI",
+      "title": "Cause and Effect Diagram",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-26",
+        "due": "2026-11-06",
+        "source_window_start": "2026-10-26",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "PSI",
+        "source_row": 6,
+        "optional": false,
+        "source_week": "W04,W05",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-PSI-04",
+      "parent_id": "ITA-LAL-PSI",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-06",
+        "due": "2026-11-06",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "PSI",
+        "source_row": 7,
+        "optional": false,
+        "source_week": "W05",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-PSI-05",
+      "parent_id": "ITA-LAL-PSI",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-27",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "PSI",
+        "source_row": 8,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-PSI-06",
+      "parent_id": "ITA-LAL-PSI",
+      "title": "Verified Process Safety Information (Optional)",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "source_window_start": "2026-10-19",
+        "source_window_end": "2026-10-23"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "PSI",
+        "source_row": 9,
+        "optional": true,
+        "source_week": "W03",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZOP",
+      "parent_id": "ITA-LAL",
+      "title": "HAZOP",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-11",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-LAL-HAZOP-01",
+      "parent_id": "ITA-LAL-HAZOP",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZOP",
+        "source_row": 11,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZOP-02",
+      "parent_id": "ITA-LAL-HAZOP",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-06",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZOP",
+        "source_row": 12,
+        "optional": false,
+        "source_week": "W05",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZOP-03",
+      "parent_id": "ITA-LAL-HAZOP",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "In Review",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "High",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZOP",
+        "source_row": 13,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZOP-04",
+      "parent_id": "ITA-LAL-HAZOP",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-13",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZOP",
+        "source_row": 14,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZOP-05",
+      "parent_id": "ITA-LAL-HAZOP",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-11",
+        "due": "2026-12-11",
+        "source_window_start": "2026-12-07",
+        "source_window_end": "2026-12-11"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZOP",
+        "source_row": 15,
+        "optional": false,
+        "source_week": "W10",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZID",
+      "parent_id": "ITA-LAL",
+      "title": "HAZID",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-11",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-LAL-HAZID-01",
+      "parent_id": "ITA-LAL-HAZID",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZID",
+        "source_row": 17,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZID-02",
+      "parent_id": "ITA-LAL-HAZID",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-06",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZID",
+        "source_row": 18,
+        "optional": false,
+        "source_week": "W05",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZID-03",
+      "parent_id": "ITA-LAL-HAZID",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZID",
+        "source_row": 19,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZID-04",
+      "parent_id": "ITA-LAL-HAZID",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-13",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZID",
+        "source_row": 20,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-HAZID-05",
+      "parent_id": "ITA-LAL-HAZID",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-11",
+        "due": "2026-12-11",
+        "source_window_start": "2026-12-07",
+        "source_window_end": "2026-12-11"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "HAZID",
+        "source_row": 21,
+        "optional": false,
+        "source_week": "W10",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-MAH",
+      "parent_id": "ITA-LAL",
+      "title": "MAH",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-LAL-MAH-01",
+      "parent_id": "ITA-LAL-MAH",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-11-20",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 140,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "MAH",
+        "source_row": 23,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-MAH-02",
+      "parent_id": "ITA-LAL-MAH",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-23",
+        "due": "2026-12-04",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "MAH",
+        "source_row": 24,
+        "optional": false,
+        "source_week": "W08,W09",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-MAH-03",
+      "parent_id": "ITA-LAL-MAH",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-04",
+        "due": "2026-12-04",
+        "source_window_start": "2026-11-30",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "MAH",
+        "source_row": 25,
+        "optional": false,
+        "source_week": "W09",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-MAH-04",
+      "parent_id": "ITA-LAL-MAH",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "MAH",
+        "source_row": 26,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-MAH-05",
+      "parent_id": "ITA-LAL-MAH",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "MAH",
+        "source_row": 27,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-SECE",
+      "parent_id": "ITA-LAL",
+      "title": "SECE",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-LAL-SECE-01",
+      "parent_id": "ITA-LAL-SECE",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-11-20",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 140,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "SECE",
+        "source_row": 29,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-SECE-02",
+      "parent_id": "ITA-LAL-SECE",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-12-07",
+        "due": "2026-12-18",
+        "source_window_start": "2026-12-07",
+        "source_window_end": "2026-12-18"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "SECE",
+        "source_row": 30,
+        "optional": false,
+        "source_week": "W10,W11",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-SECE-03",
+      "parent_id": "ITA-LAL-SECE",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-18",
+        "due": "2026-12-18",
+        "source_window_start": "2026-12-14",
+        "source_window_end": "2026-12-18"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "SECE",
+        "source_row": 31,
+        "optional": false,
+        "source_week": "W11",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-SECE-04",
+      "parent_id": "ITA-LAL-SECE",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "SECE",
+        "source_row": 32,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-LAL-SECE-05",
+      "parent_id": "ITA-LAL-SECE",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Lalang Platform",
+        "study_type": "SECE",
+        "source_row": 33,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR",
+      "parent_id": "ITA",
+      "title": "Kurau Plant",
+      "base_type": "Folder",
+      "custom_type": null,
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-KUR-PSI",
+      "parent_id": "ITA-KUR",
+      "title": "Process Safety",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-12-04",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-KUR-PSI-01",
+      "parent_id": "ITA-KUR-PSI",
+      "title": "Equipment Datasheet",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "PSI",
+        "source_row": 36,
+        "optional": false,
+        "source_week": "W05,W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-PSI-02",
+      "parent_id": "ITA-KUR-PSI",
+      "title": "Hazardous Area Classification",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-06",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "PSI",
+        "source_row": 37,
+        "optional": false,
+        "source_week": "W05",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-PSI-03",
+      "parent_id": "ITA-KUR-PSI",
+      "title": "Cause and Effect Diagram",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "PSI",
+        "source_row": 38,
+        "optional": false,
+        "source_week": "W05,W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-PSI-04",
+      "parent_id": "ITA-KUR-PSI",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-13",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "PSI",
+        "source_row": 39,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-PSI-05",
+      "parent_id": "ITA-KUR-PSI",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-04",
+        "due": "2026-12-04",
+        "source_window_start": "2026-11-30",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "PSI",
+        "source_row": 40,
+        "optional": false,
+        "source_week": "W09",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-PSI-06",
+      "parent_id": "ITA-KUR-PSI",
+      "title": "Verified Process Safety Information (Optional)",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "source_window_start": "2026-10-19",
+        "source_window_end": "2026-10-23"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "PSI",
+        "source_row": 41,
+        "optional": true,
+        "source_week": "W03",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZOP",
+      "parent_id": "ITA-KUR",
+      "title": "HAZOP",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-18",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-KUR-HAZOP-01",
+      "parent_id": "ITA-KUR-HAZOP",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZOP",
+        "source_row": 43,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZOP-02",
+      "parent_id": "ITA-KUR-HAZOP",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-06",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZOP",
+        "source_row": 44,
+        "optional": false,
+        "source_week": "W05",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZOP-03",
+      "parent_id": "ITA-KUR-HAZOP",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-16",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZOP",
+        "source_row": 45,
+        "optional": false,
+        "source_week": "W07",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZOP-04",
+      "parent_id": "ITA-KUR-HAZOP",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-20",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZOP",
+        "source_row": 46,
+        "optional": false,
+        "source_week": "W07",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZOP-05",
+      "parent_id": "ITA-KUR-HAZOP",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-18",
+        "due": "2026-12-18",
+        "source_window_start": "2026-12-14",
+        "source_window_end": "2026-12-18"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZOP",
+        "source_row": 47,
+        "optional": false,
+        "source_week": "W11",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZID",
+      "parent_id": "ITA-KUR",
+      "title": "HAZID",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-18",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-KUR-HAZID-01",
+      "parent_id": "ITA-KUR-HAZID",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZID",
+        "source_row": 49,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZID-02",
+      "parent_id": "ITA-KUR-HAZID",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-06",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-06"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZID",
+        "source_row": 50,
+        "optional": false,
+        "source_week": "W05",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZID-03",
+      "parent_id": "ITA-KUR-HAZID",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-16",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZID",
+        "source_row": 51,
+        "optional": false,
+        "source_week": "W07",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZID-04",
+      "parent_id": "ITA-KUR-HAZID",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-20",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZID",
+        "source_row": 52,
+        "optional": false,
+        "source_week": "W07",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-HAZID-05",
+      "parent_id": "ITA-KUR-HAZID",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-18",
+        "due": "2026-12-18",
+        "source_window_start": "2026-12-14",
+        "source_window_end": "2026-12-18"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "HAZID",
+        "source_row": 53,
+        "optional": false,
+        "source_week": "W11",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-MAH",
+      "parent_id": "ITA-KUR",
+      "title": "MAH",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-KUR-MAH-01",
+      "parent_id": "ITA-KUR-MAH",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-11-27",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 160,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "MAH",
+        "source_row": 55,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07,W08",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-MAH-02",
+      "parent_id": "ITA-KUR-MAH",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-30",
+        "due": "2026-12-11",
+        "source_window_start": "2026-11-30",
+        "source_window_end": "2026-12-11"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "MAH",
+        "source_row": 56,
+        "optional": false,
+        "source_week": "W09,W10",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-MAH-03",
+      "parent_id": "ITA-KUR-MAH",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-11",
+        "due": "2026-12-11",
+        "source_window_start": "2026-12-07",
+        "source_window_end": "2026-12-11"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "MAH",
+        "source_row": 57,
+        "optional": false,
+        "source_week": "W10",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-MAH-04",
+      "parent_id": "ITA-KUR-MAH",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "MAH",
+        "source_row": 58,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-MAH-05",
+      "parent_id": "ITA-KUR-MAH",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "MAH",
+        "source_row": 59,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-SECE",
+      "parent_id": "ITA-KUR",
+      "title": "SECE",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-KUR-SECE-01",
+      "parent_id": "ITA-KUR-SECE",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-11-27",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 160,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "SECE",
+        "source_row": 61,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07,W08",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-SECE-02",
+      "parent_id": "ITA-KUR-SECE",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-12-14",
+        "due": "2026-12-25",
+        "source_window_start": "2026-12-14",
+        "source_window_end": "2026-12-25"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "SECE",
+        "source_row": 62,
+        "optional": false,
+        "source_week": "W11,W12",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-SECE-03",
+      "parent_id": "ITA-KUR-SECE",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-25",
+        "due": "2026-12-25",
+        "source_window_start": "2026-12-21",
+        "source_window_end": "2026-12-25"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "SECE",
+        "source_row": 63,
+        "optional": false,
+        "source_week": "W12",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-SECE-04",
+      "parent_id": "ITA-KUR-SECE",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "SECE",
+        "source_row": 64,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-KUR-SECE-05",
+      "parent_id": "ITA-KUR-SECE",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Kurau Plant",
+        "study_type": "SECE",
+        "source_row": 65,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL",
+      "parent_id": "ITA",
+      "title": "Melibur Plant",
+      "base_type": "Folder",
+      "custom_type": null,
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MEL-PSI",
+      "parent_id": "ITA-MEL",
+      "title": "Process Safety",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-12-11",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MEL-PSI-01",
+      "parent_id": "ITA-MEL-PSI",
+      "title": "Equipment Datasheet",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "PSI",
+        "source_row": 68,
+        "optional": false,
+        "source_week": "W06,W07",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-PSI-02",
+      "parent_id": "ITA-MEL-PSI",
+      "title": "Hazardous Area Classification",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "PSI",
+        "source_row": 69,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-PSI-03",
+      "parent_id": "ITA-MEL-PSI",
+      "title": "Cause and Effect Diagram",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "PSI",
+        "source_row": 70,
+        "optional": false,
+        "source_week": "W06,W07",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-PSI-04",
+      "parent_id": "ITA-MEL-PSI",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-20",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "PSI",
+        "source_row": 71,
+        "optional": false,
+        "source_week": "W07",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-PSI-05",
+      "parent_id": "ITA-MEL-PSI",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-11",
+        "due": "2026-12-11",
+        "source_window_start": "2026-12-07",
+        "source_window_end": "2026-12-11"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "PSI",
+        "source_row": 72,
+        "optional": false,
+        "source_week": "W10",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-PSI-06",
+      "parent_id": "ITA-MEL-PSI",
+      "title": "Verified Process Safety Information (Optional)",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "source_window_start": "2026-10-19",
+        "source_window_end": "2026-10-23"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "PSI",
+        "source_row": 73,
+        "optional": true,
+        "source_week": "W03",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZOP",
+      "parent_id": "ITA-MEL",
+      "title": "HAZOP",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-01-01",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MEL-HAZOP-01",
+      "parent_id": "ITA-MEL-HAZOP",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZOP",
+        "source_row": 75,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZOP-02",
+      "parent_id": "ITA-MEL-HAZOP",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZOP",
+        "source_row": 76,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZOP-03",
+      "parent_id": "ITA-MEL-HAZOP",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-23",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZOP",
+        "source_row": 77,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZOP-04",
+      "parent_id": "ITA-MEL-HAZOP",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-27",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZOP",
+        "source_row": 78,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZOP-05",
+      "parent_id": "ITA-MEL-HAZOP",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-01-01",
+        "due": "2027-01-01",
+        "source_window_start": "2026-12-28",
+        "source_window_end": "2027-01-01"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZOP",
+        "source_row": 79,
+        "optional": false,
+        "source_week": "W13",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZID",
+      "parent_id": "ITA-MEL",
+      "title": "HAZID",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-01-01",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MEL-HAZID-01",
+      "parent_id": "ITA-MEL-HAZID",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZID",
+        "source_row": 81,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZID-02",
+      "parent_id": "ITA-MEL-HAZID",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZID",
+        "source_row": 82,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZID-03",
+      "parent_id": "ITA-MEL-HAZID",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-23",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZID",
+        "source_row": 83,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZID-04",
+      "parent_id": "ITA-MEL-HAZID",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-27",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZID",
+        "source_row": 84,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-HAZID-05",
+      "parent_id": "ITA-MEL-HAZID",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-01-01",
+        "due": "2027-01-01",
+        "source_window_start": "2026-12-28",
+        "source_window_end": "2027-01-01"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "HAZID",
+        "source_row": 85,
+        "optional": false,
+        "source_week": "W13",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-MAH",
+      "parent_id": "ITA-MEL",
+      "title": "MAH",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MEL-MAH-01",
+      "parent_id": "ITA-MEL-MAH",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-04",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 180,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "MAH",
+        "source_row": 87,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07,W08,W09",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-MAH-02",
+      "parent_id": "ITA-MEL-MAH",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-12-07",
+        "due": "2026-12-18",
+        "source_window_start": "2026-12-07",
+        "source_window_end": "2026-12-18"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "MAH",
+        "source_row": 88,
+        "optional": false,
+        "source_week": "W10,W11",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-MAH-03",
+      "parent_id": "ITA-MEL-MAH",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-18",
+        "due": "2026-12-18",
+        "source_window_start": "2026-12-14",
+        "source_window_end": "2026-12-18"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "MAH",
+        "source_row": 89,
+        "optional": false,
+        "source_week": "W11",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-MAH-04",
+      "parent_id": "ITA-MEL-MAH",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "MAH",
+        "source_row": 90,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-MAH-05",
+      "parent_id": "ITA-MEL-MAH",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "MAH",
+        "source_row": 91,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-SECE",
+      "parent_id": "ITA-MEL",
+      "title": "SECE",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MEL-SECE-01",
+      "parent_id": "ITA-MEL-SECE",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-04",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 180,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "SECE",
+        "source_row": 93,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07,W08,W09",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-SECE-02",
+      "parent_id": "ITA-MEL-SECE",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-12-21",
+        "due": "2027-01-01",
+        "source_window_start": "2026-12-21",
+        "source_window_end": "2027-01-01"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "SECE",
+        "source_row": 94,
+        "optional": false,
+        "source_week": "W12,W13",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-SECE-03",
+      "parent_id": "ITA-MEL-SECE",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-01-01",
+        "due": "2027-01-01",
+        "source_window_start": "2026-12-28",
+        "source_window_end": "2027-01-01"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "SECE",
+        "source_row": 95,
+        "optional": false,
+        "source_week": "W13",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-SECE-04",
+      "parent_id": "ITA-MEL-SECE",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "SECE",
+        "source_row": 96,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MEL-SECE-05",
+      "parent_id": "ITA-MEL-SECE",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "Melibur Plant",
+        "study_type": "SECE",
+        "source_row": 97,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK",
+      "parent_id": "ITA",
+      "title": "DC Kuat",
+      "base_type": "Folder",
+      "custom_type": null,
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-DCK-PSI",
+      "parent_id": "ITA-DCK",
+      "title": "Process Safety",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-12-18",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-DCK-PSI-01",
+      "parent_id": "ITA-DCK-PSI",
+      "title": "Equipment Datasheet",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-16",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "PSI",
+        "source_row": 100,
+        "optional": false,
+        "source_week": "W07,W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-PSI-02",
+      "parent_id": "ITA-DCK-PSI",
+      "title": "Hazardous Area Classification",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-16",
+        "due": "2026-11-20",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-20"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "PSI",
+        "source_row": 101,
+        "optional": false,
+        "source_week": "W07",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-PSI-03",
+      "parent_id": "ITA-DCK-PSI",
+      "title": "Cause and Effect Diagram",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-16",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "PSI",
+        "source_row": 102,
+        "optional": false,
+        "source_week": "W07,W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-PSI-04",
+      "parent_id": "ITA-DCK-PSI",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-27",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "PSI",
+        "source_row": 103,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-PSI-05",
+      "parent_id": "ITA-DCK-PSI",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-18",
+        "due": "2026-12-18",
+        "source_window_start": "2026-12-14",
+        "source_window_end": "2026-12-18"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "PSI",
+        "source_row": 104,
+        "optional": false,
+        "source_week": "W11",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-PSI-06",
+      "parent_id": "ITA-DCK-PSI",
+      "title": "Verified Process Safety Information (Optional)",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "source_window_start": "2026-10-19",
+        "source_window_end": "2026-10-23"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "PSI",
+        "source_row": 105,
+        "optional": true,
+        "source_week": "W03",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZOP",
+      "parent_id": "ITA-DCK",
+      "title": "HAZOP",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-01-08",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-DCK-HAZOP-01",
+      "parent_id": "ITA-DCK-HAZOP",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZOP",
+        "source_row": 107,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZOP-02",
+      "parent_id": "ITA-DCK-HAZOP",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZOP",
+        "source_row": 108,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZOP-03",
+      "parent_id": "ITA-DCK-HAZOP",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-30",
+        "due": "2026-12-04",
+        "source_window_start": "2026-11-30",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZOP",
+        "source_row": 109,
+        "optional": false,
+        "source_week": "W09",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZOP-04",
+      "parent_id": "ITA-DCK-HAZOP",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-04",
+        "due": "2026-12-04",
+        "source_window_start": "2026-11-30",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZOP",
+        "source_row": 110,
+        "optional": false,
+        "source_week": "W09",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZOP-05",
+      "parent_id": "ITA-DCK-HAZOP",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-01-08",
+        "due": "2027-01-08",
+        "source_window_start": "2027-01-04",
+        "source_window_end": "2027-01-08"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazop"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZOP",
+        "source_row": 111,
+        "optional": false,
+        "source_week": "W14",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZID",
+      "parent_id": "ITA-DCK",
+      "title": "HAZID",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-01-08",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-DCK-HAZID-01",
+      "parent_id": "ITA-DCK-HAZID",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZID",
+        "source_row": 113,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZID-02",
+      "parent_id": "ITA-DCK-HAZID",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-09",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZID",
+        "source_row": 114,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZID-03",
+      "parent_id": "ITA-DCK-HAZID",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-30",
+        "due": "2026-12-04",
+        "source_window_start": "2026-11-30",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZID",
+        "source_row": 115,
+        "optional": false,
+        "source_week": "W09",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZID-04",
+      "parent_id": "ITA-DCK-HAZID",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-04",
+        "due": "2026-12-04",
+        "source_window_start": "2026-11-30",
+        "source_window_end": "2026-12-04"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZID",
+        "source_row": 116,
+        "optional": false,
+        "source_week": "W09",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-HAZID-05",
+      "parent_id": "ITA-DCK-HAZID",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-01-08",
+        "due": "2027-01-08",
+        "source_window_start": "2027-01-04",
+        "source_window_end": "2027-01-08"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "HAZID",
+        "source_row": 117,
+        "optional": false,
+        "source_week": "W14",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-MAH",
+      "parent_id": "ITA-DCK",
+      "title": "MAH",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-DCK-MAH-01",
+      "parent_id": "ITA-DCK-MAH",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-11",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-12-11"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 200,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "MAH",
+        "source_row": 119,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07,W08,W09,W10",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-MAH-02",
+      "parent_id": "ITA-DCK-MAH",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-12-14",
+        "due": "2026-12-25",
+        "source_window_start": "2026-12-14",
+        "source_window_end": "2026-12-25"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "MAH",
+        "source_row": 120,
+        "optional": false,
+        "source_week": "W11,W12",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-MAH-03",
+      "parent_id": "ITA-DCK-MAH",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-12-25",
+        "due": "2026-12-25",
+        "source_window_start": "2026-12-21",
+        "source_window_end": "2026-12-25"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "MAH",
+        "source_row": 121,
+        "optional": false,
+        "source_week": "W12",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-MAH-04",
+      "parent_id": "ITA-DCK-MAH",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "MAH",
+        "source_row": 122,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-MAH-05",
+      "parent_id": "ITA-DCK-MAH",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "MAH",
+        "source_row": 123,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-SECE",
+      "parent_id": "ITA-DCK",
+      "title": "SECE",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-DCK-SECE-01",
+      "parent_id": "ITA-DCK-SECE",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-12-11",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-12-11"
+      },
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 200,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "SECE",
+        "source_row": 125,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04,W05,W06,W07,W08,W09,W10",
+        "progress_fixture": 45
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-SECE-02",
+      "parent_id": "ITA-DCK-SECE",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-12-28",
+        "due": "2027-01-08",
+        "source_window_start": "2026-12-28",
+        "source_window_end": "2027-01-08"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "SECE",
+        "source_row": 126,
+        "optional": false,
+        "source_week": "W13,W14",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-SECE-03",
+      "parent_id": "ITA-DCK-SECE",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-01-08",
+        "due": "2027-01-08",
+        "source_window_start": "2027-01-04",
+        "source_window_end": "2027-01-08"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "SECE",
+        "source_row": 127,
+        "optional": false,
+        "source_week": "W14",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-SECE-04",
+      "parent_id": "ITA-DCK-SECE",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "SECE",
+        "source_row": 128,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-DCK-SECE-05",
+      "parent_id": "ITA-DCK-SECE",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "DC Kuat",
+        "study_type": "SECE",
+        "source_row": 129,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS",
+      "parent_id": "ITA",
+      "title": "AI Selatan",
+      "base_type": "Folder",
+      "custom_type": null,
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-AIS-PSI",
+      "parent_id": "ITA-AIS",
+      "title": "Process Safety",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-AIS-PSI-01",
+      "parent_id": "ITA-AIS-PSI",
+      "title": "Verified Process Safety Information (Optional)",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "source_window_start": "2026-10-19",
+        "source_window_end": "2026-10-23"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "PSI",
+        "source_row": 132,
+        "optional": true,
+        "source_week": "W03",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-MAH",
+      "parent_id": "ITA-AIS",
+      "title": "MAH",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-AIS-MAH-01",
+      "parent_id": "ITA-AIS-MAH",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "MAH",
+        "source_row": 134,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-MAH-02",
+      "parent_id": "ITA-AIS-MAH",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "MAH",
+        "source_row": 135,
+        "optional": false,
+        "source_week": "W05,W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-MAH-03",
+      "parent_id": "ITA-AIS-MAH",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-13",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "MAH",
+        "source_row": 136,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-MAH-04",
+      "parent_id": "ITA-AIS-MAH",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "MAH",
+        "source_row": 137,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-MAH-05",
+      "parent_id": "ITA-AIS-MAH",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "MAH",
+        "source_row": 138,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-SECE",
+      "parent_id": "ITA-AIS",
+      "title": "SECE",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-AIS-SECE-01",
+      "parent_id": "ITA-AIS-SECE",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "SECE",
+        "source_row": 140,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-SECE-02",
+      "parent_id": "ITA-AIS-SECE",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-16",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "SECE",
+        "source_row": 141,
+        "optional": false,
+        "source_week": "W07,W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-SECE-03",
+      "parent_id": "ITA-AIS-SECE",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-27",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "SECE",
+        "source_row": 142,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-SECE-04",
+      "parent_id": "ITA-AIS-SECE",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "SECE",
+        "source_row": 143,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-AIS-SECE-05",
+      "parent_id": "ITA-AIS-SECE",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "AI Selatan",
+        "study_type": "SECE",
+        "source_row": 144,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST",
+      "parent_id": "ITA",
+      "title": "MSTB",
+      "base_type": "Folder",
+      "custom_type": null,
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MST-PSI",
+      "parent_id": "ITA-MST",
+      "title": "Process Safety",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MST-PSI-01",
+      "parent_id": "ITA-MST-PSI",
+      "title": "Verified Process Safety Information (Optional)",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-19",
+        "due": "2026-10-23",
+        "source_window_start": "2026-10-19",
+        "source_window_end": "2026-10-23"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "PSI",
+        "source_row": 147,
+        "optional": true,
+        "source_week": "W03",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-MAH",
+      "parent_id": "ITA-MST",
+      "title": "MAH",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MST-MAH-01",
+      "parent_id": "ITA-MST-MAH",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "MAH",
+        "source_row": 149,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-MAH-02",
+      "parent_id": "ITA-MST-MAH",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-02",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-02",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "MAH",
+        "source_row": 150,
+        "optional": false,
+        "source_week": "W05,W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-MAH-03",
+      "parent_id": "ITA-MST-MAH",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-13",
+        "due": "2026-11-13",
+        "source_window_start": "2026-11-09",
+        "source_window_end": "2026-11-13"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "MAH",
+        "source_row": 151,
+        "optional": false,
+        "source_week": "W06",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-MAH-04",
+      "parent_id": "ITA-MST-MAH",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "MAH",
+        "source_row": 152,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-MAH-05",
+      "parent_id": "ITA-MST-MAH",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-mah"
+      ],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "MAH",
+        "source_row": 153,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-SECE",
+      "parent_id": "ITA-MST",
+      "title": "SECE",
+      "base_type": "Task",
+      "custom_type": "Study",
+      "status": null,
+      "origin": "PDF_STRUCTURE",
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2027-02-05",
+        "derived_rollup": true
+      }
+    },
+    {
+      "id": "ITA-MST-SECE-01",
+      "parent_id": "ITA-MST-SECE",
+      "title": "Preparation",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-10-05",
+        "due": "2026-10-30",
+        "source_window_start": "2026-10-05",
+        "source_window_end": "2026-10-30"
+      },
+      "status": "Completed",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 80,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "SECE",
+        "source_row": 155,
+        "optional": false,
+        "source_week": "W01,W02,W03,W04",
+        "progress_fixture": 100
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-SECE-02",
+      "parent_id": "ITA-MST-SECE",
+      "title": "Report",
+      "base_type": "Task",
+      "custom_type": "Deliverable",
+      "milestone": false,
+      "schedule": {
+        "start": "2026-11-16",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-16",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 40,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "SECE",
+        "source_row": 156,
+        "optional": false,
+        "source_week": "W07,W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-SECE-03",
+      "parent_id": "ITA-MST-SECE",
+      "title": "Pengumpulan Report (IFR)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2026-11-27",
+        "due": "2026-11-27",
+        "source_window_start": "2026-11-23",
+        "source_window_end": "2026-11-27"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "SECE",
+        "source_row": 157,
+        "optional": false,
+        "source_week": "W08",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-SECE-04",
+      "parent_id": "ITA-MST-SECE",
+      "title": "Pengumpulan Report (IFA)",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-02-05",
+        "due": "2027-02-05",
+        "source_window_start": "2027-02-01",
+        "source_window_end": "2027-02-05"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-sece"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "SECE",
+        "source_row": 158,
+        "optional": false,
+        "source_week": "W18",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-MST-SECE-05",
+      "parent_id": "ITA-MST-SECE",
+      "title": "Workshop",
+      "base_type": "Task",
+      "custom_type": "Engineering Activity",
+      "milestone": false,
+      "schedule": {
+        "start": "2027-01-11",
+        "due": "2027-01-15",
+        "source_window_start": "2027-01-11",
+        "source_window_end": "2027-01-15"
+      },
+      "status": "Backlog",
+      "assignee_ids": [],
+      "effort_hours": 20,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": "MSTB",
+        "study_type": "SECE",
+        "source_row": 159,
+        "optional": false,
+        "source_week": "W15",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    },
+    {
+      "id": "ITA-CLOSE",
+      "parent_id": "ITA",
+      "title": "Closing Proyek dan Serah Terima",
+      "base_type": "Task",
+      "custom_type": "Submission Milestone",
+      "milestone": true,
+      "schedule": {
+        "start": "2027-03-26",
+        "due": "2027-03-26",
+        "source_window_start": "2027-03-22",
+        "source_window_end": "2027-03-26"
+      },
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-pm"
+      ],
+      "effort_hours": 0,
+      "priority": "Normal",
+      "custom_fields": {
+        "facility": null,
+        "study_type": null,
+        "source_row": 160,
+        "optional": false,
+        "source_week": "W25",
+        "progress_fixture": 0
+      },
+      "origin": "PDF_SCHEDULE_PLUS_SYNTHETIC_EXECUTION",
+      "actual_dates": null
+    }
+  ],
+  "users": [
+    {
+      "id": "u-admin",
+      "display_name": "QA Admin",
+      "email": "admin@pms-ita.test",
+      "user_type": "Admin",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-pm",
+      "display_name": "Project Manager",
+      "email": "pm@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-psi",
+      "display_name": "PSI Engineer",
+      "email": "psi@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-hazop",
+      "display_name": "HAZOP Engineer",
+      "email": "hazop@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-hazid",
+      "display_name": "HAZID Engineer",
+      "email": "hazid@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-mah",
+      "display_name": "MAH Engineer",
+      "email": "mah@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-sece",
+      "display_name": "SECE Engineer",
+      "email": "sece@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-qa",
+      "display_name": "QA Lead",
+      "email": "qa@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-qa2",
+      "display_name": "QA Reviewer",
+      "email": "qa2@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-dc",
+      "display_name": "Document Controller",
+      "email": "dc@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-finance",
+      "display_name": "Finance Reviewer",
+      "email": "finance@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-requester",
+      "display_name": "Internal Requester",
+      "email": "requester@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-client",
+      "display_name": "Client Reviewer",
+      "email": "client@pms-ita.test",
+      "user_type": "External",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-collab",
+      "display_name": "Workshop Collaborator",
+      "email": "collab@pms-ita.test",
+      "user_type": "Collaborator",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-viewer",
+      "display_name": "Management Viewer",
+      "email": "viewer@pms-ita.test",
+      "user_type": "Viewer",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-outsider",
+      "display_name": "Unshared User",
+      "email": "outsider@pms-ita.test",
+      "user_type": "Regular",
+      "active": true,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    },
+    {
+      "id": "u-inactive",
+      "display_name": "Inactive User",
+      "email": "inactive@pms-ita.test",
+      "user_type": "Regular",
+      "active": false,
+      "password_env": "PMS_SEED_PASSWORD",
+      "origin": "SYNTHETIC"
+    }
+  ],
+  "groups": {
+    "engineering": [
+      "u-psi",
+      "u-hazop",
+      "u-hazid",
+      "u-mah",
+      "u-sece"
+    ],
+    "qa": [
+      "u-qa",
+      "u-qa2"
+    ],
+    "finance": [
+      "u-finance"
+    ],
+    "management": [
+      "u-viewer"
+    ]
+  },
+  "sharing": [
+    {
+      "target": "ITA",
+      "principal": "u-pm",
+      "role": "Full"
+    },
+    {
+      "target": "ITA",
+      "principal": "engineering",
+      "role": "Editor"
+    },
+    {
+      "target": "ITA",
+      "principal": "qa",
+      "role": "Editor"
+    },
+    {
+      "target": "ITA",
+      "principal": "u-viewer",
+      "role": "Read Only"
+    },
+    {
+      "target": "ITA-LAL-HAZOP",
+      "principal": "u-client",
+      "role": "Limited"
+    },
+    {
+      "target": "ITA-LAL-HAZOP",
+      "principal": "u-collab",
+      "role": "Limited"
+    },
+    {
+      "target": "LAB-G",
+      "principal": "u-finance",
+      "role": "Full"
+    },
+    {
+      "target": "ITA-PRIVATE",
+      "principal": "u-finance",
+      "role": "Full"
+    },
+    {
+      "target": "ITA-LAB",
+      "principal": "engineering",
+      "role": "Editor"
+    },
+    {
+      "target": "ITA-LAB",
+      "principal": "qa",
+      "role": "Editor"
+    },
+    {
+      "target": "LAB-C",
+      "principal": "u-client",
+      "role": "Limited"
+    },
+    {
+      "target": "ITA-LAB",
+      "principal": "u-pm",
+      "role": "Full"
+    },
+    {
+      "target": "ITA-LAB",
+      "principal": "u-finance",
+      "role": "Full"
+    },
+    {
+      "target": "ITA",
+      "principal": "u-finance",
+      "role": "Full"
+    },
+    {
+      "target": "ITA-LAB",
+      "principal": "u-viewer",
+      "role": "Read Only"
+    }
+  ],
+  "permissions_note": "Check effective inherited access, keep LAB-G in restricted space with no broader inherited share; assign external reviewer only to explicitly shared item; outsider has no shares. Map principal IDs to actual IDs.",
+  "sandbox_projects": [
+    {
+      "id": "ITA-LAB",
+      "name": "QA | ITA mutation lab",
+      "space": "engineering",
+      "owner": "u-pm",
+      "budget_idr": 10000000
+    },
+    {
+      "id": "ITA-FOLLOWUP",
+      "name": "QA | ITA follow-up synthetic",
+      "space": "engineering",
+      "owner": "u-pm"
+    },
+    {
+      "id": "ITA-CLOSED",
+      "name": "QA | Completed project synthetic",
+      "space": "engineering",
+      "status": "Completed"
+    },
+    {
+      "id": "ITA-DRAFT",
+      "name": "QA | Draft project synthetic",
+      "space": "intake",
+      "status": "Backlog"
+    },
+    {
+      "id": "ITA-PRIVATE",
+      "name": "QA | Restricted sample",
+      "space": "restricted",
+      "owner": "u-finance"
+    }
+  ],
+  "sandbox_items": [
+    {
+      "id": "LAB-A",
+      "project_id": "ITA-LAB",
+      "title": "Dependency predecessor",
+      "start": "2026-11-09",
+      "due": "2026-11-10",
+      "status": "Completed",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 8,
+      "custom_type": "Engineering Activity"
+    },
+    {
+      "id": "LAB-B",
+      "project_id": "ITA-LAB",
+      "title": "Dependency successor",
+      "start": "2026-11-11",
+      "due": "2026-11-13",
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-psi",
+        "u-hazop"
+      ],
+      "effort_hours": 16,
+      "priority": "High",
+      "custom_type": "Deliverable"
+    },
+    {
+      "id": "LAB-C",
+      "project_id": "ITA-LAB",
+      "title": "Review target",
+      "start": "2026-11-16",
+      "due": "2026-11-20",
+      "status": "In Review",
+      "assignee_ids": [
+        "u-dc"
+      ],
+      "effort_hours": 8,
+      "custom_type": "Deliverable",
+      "custom_fields": {
+        "Quantity": 3,
+        "Unit Cost": 150000,
+        "Reviewer": "u-qa",
+        "Document No": "QA-ITA-001"
+      }
+    },
+    {
+      "id": "LAB-D",
+      "project_id": "ITA-LAB",
+      "title": "Unassigned backlog",
+      "start": "2026-11-16",
+      "due": "2026-11-20",
+      "status": "Backlog",
+      "assignee_ids": [],
+      "effort_hours": 16
+    },
+    {
+      "id": "LAB-E",
+      "project_id": "ITA-LAB",
+      "title": "Overdue action",
+      "start": "2026-11-09",
+      "due": "2026-11-13",
+      "status": "Blocked",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 8
+    },
+    {
+      "id": "LAB-F",
+      "project_id": "ITA-LAB",
+      "title": "Cancelled sample",
+      "start": "2026-11-09",
+      "due": "2026-11-13",
+      "status": "Cancelled",
+      "assignee_ids": [
+        "u-hazid"
+      ],
+      "effort_hours": 4
+    },
+    {
+      "id": "LAB-G",
+      "project_id": "ITA-PRIVATE",
+      "title": "Private finance",
+      "start": "2026-11-16",
+      "due": "2026-11-20",
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-finance"
+      ],
+      "effort_hours": 4
+    },
+    {
+      "id": "LAB-H",
+      "project_id": "ITA-LAB",
+      "title": "Disposable restore target",
+      "start": "2026-11-16",
+      "due": "2026-11-20",
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-pm"
+      ],
+      "effort_hours": 2
+    },
+    {
+      "id": "LAB-I",
+      "project_id": "ITA-LAB",
+      "title": "High workload sample",
+      "start": "2026-11-16",
+      "due": "2026-11-20",
+      "status": "In Progress",
+      "assignee_ids": [
+        "u-psi"
+      ],
+      "effort_hours": 40
+    },
+    {
+      "id": "LAB-H1",
+      "parent_id": "LAB-H",
+      "project_id": "ITA-LAB",
+      "title": "Disposable child",
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-pm"
+      ]
+    },
+    {
+      "id": "NEXT-A",
+      "project_id": "ITA-FOLLOWUP",
+      "title": "Follow-up validation (synthetic)",
+      "start": "2026-11-23",
+      "due": "2026-11-27",
+      "status": "Backlog",
+      "assignee_ids": [
+        "u-qa"
+      ],
+      "effort_hours": 8
+    }
+  ],
+  "workflow": {
+    "name": "QA | Engineering delivery",
+    "statuses": [
+      {
+        "name": "Backlog",
+        "group": "Active"
+      },
+      {
+        "name": "In Progress",
+        "group": "Active"
+      },
+      {
+        "name": "In Review",
+        "group": "Active"
+      },
+      {
+        "name": "Client Review",
+        "group": "Active"
+      },
+      {
+        "name": "Blocked",
+        "group": "Deferred"
+      },
+      {
+        "name": "Rework",
+        "group": "Active"
+      },
+      {
+        "name": "On Hold",
+        "group": "Deferred"
+      },
+      {
+        "name": "Completed",
+        "group": "Completed"
+      },
+      {
+        "name": "Cancelled",
+        "group": "Cancelled"
+      }
+    ],
+    "guards": [
+      {
+        "from": "In Review",
+        "to": "Completed",
+        "requires": [
+          "Reviewer",
+          "QA decision approved",
+          "all required subitems complete"
+        ],
+        "negative": "omit reviewer or pending required child; reject atomically"
+      }
+    ],
+    "approvals": [
+      {
+        "item": "LAB-C",
+        "mode": "ALL",
+        "approvers": [
+          "u-qa",
+          "u-qa2"
+        ],
+        "initial": "Pending"
+      },
+      {
+        "item": "LAB-B",
+        "mode": "ANY",
+        "approvers": [
+          "u-qa",
+          "u-qa2"
+        ],
+        "initial": "Pending"
+      }
+    ]
+  },
+  "item_types": [
+    {
+      "name": "Study",
+      "class": "Task",
+      "allowed_children": [
+        "Engineering Activity",
+        "Deliverable",
+        "Submission Milestone"
+      ],
+      "default_workflow": "QA | Engineering delivery"
+    },
+    {
+      "name": "Engineering Activity",
+      "class": "Task",
+      "default_fields": {
+        "priority": "Normal"
+      }
+    },
+    {
+      "name": "Deliverable",
+      "class": "Task",
+      "fields": [
+        "Document No",
+        "Review Stage",
+        "Reviewer",
+        "Facility",
+        "Study Type",
+        "Risk",
+        "Optional"
+      ],
+      "layout": [
+        "General",
+        "Engineering",
+        "Review"
+      ]
+    },
+    {
+      "name": "Submission Milestone",
+      "class": "Task"
+    }
+  ],
+  "custom_fields": [
+    {
+      "name": "Facility",
+      "type": "Single select",
+      "sample": [
+        "Lalang Platform",
+        "Kurau Plant",
+        "Melibur Plant",
+        "DC Kuat",
+        "AI Selatan",
+        "MSTB"
+      ]
+    },
+    {
+      "name": "Study Type",
+      "type": "Single select",
+      "sample": [
+        "PSI",
+        "HAZOP",
+        "HAZID",
+        "MAH",
+        "SECE"
+      ]
+    },
+    {
+      "name": "Document No",
+      "type": "Text",
+      "sample": "QA-ITA-LAL-001"
+    },
+    {
+      "name": "Review Stage",
+      "type": "Single select",
+      "sample": [
+        "Draft",
+        "IFR",
+        "IFA",
+        "Final"
+      ]
+    },
+    {
+      "name": "Risk",
+      "type": "Multi select",
+      "sample": [
+        "High",
+        "Medium",
+        "Low"
+      ]
+    },
+    {
+      "name": "Reviewer",
+      "type": "People",
+      "sample": "u-qa"
+    },
+    {
+      "name": "Target Submission",
+      "type": "Date",
+      "sample": "2026-11-20"
+    },
+    {
+      "name": "Optional",
+      "type": "Checkbox",
+      "sample": true
+    },
+    {
+      "name": "Quantity",
+      "type": "Number",
+      "sample": 3
+    },
+    {
+      "name": "Unit Cost",
+      "type": "Currency",
+      "sample": 150000
+    },
+    {
+      "name": "Engineering Progress",
+      "type": "Percent",
+      "sample": 45
+    },
+    {
+      "name": "Planned Duration",
+      "type": "Duration",
+      "sample": 8
+    },
+    {
+      "name": "Estimated Cost",
+      "type": "Formula",
+      "sample": "Quantity * Unit Cost"
+    },
+    {
+      "name": "Related Deliverable",
+      "type": "Relation",
+      "sample": "LAB-C"
+    }
+  ],
+  "dependencies": [
+    {
+      "from": "LAB-A",
+      "to": "LAB-B",
+      "type": "FS",
+      "lag_workdays": 0
+    },
+    {
+      "from": "LAB-B",
+      "to": "LAB-C",
+      "type": "FS",
+      "lag_workdays": 0
+    },
+    {
+      "from": "LAB-C",
+      "to": "NEXT-A",
+      "type": "FS",
+      "lag_workdays": 0
+    }
+  ],
+  "dependency_tests": "Use isolated clones to exercise SS/FF/SF, negative lag, holiday, cycles; no dependencies inferred into PDF baseline. Capture original dates then compare engine output.",
+  "relations": [
+    {
+      "from": "LAB-B",
+      "to": "LAB-C",
+      "type": "Related Deliverable"
+    },
+    {
+      "from": "LAB-B",
+      "to": "LAB-G",
+      "type": "Related Deliverable",
+      "negative_visibility": true
+    }
+  ],
+  "multi_location": [
+    {
+      "item": "LAB-B",
+      "extra_parent": "ITA-FOLLOWUP",
+      "expect_same_id": true
+    }
+  ],
+  "calendar": {
+    "workdays": [
+      "Mon",
+      "Tue",
+      "Wed",
+      "Thu",
+      "Fri"
+    ],
+    "hours_per_day": 8,
+    "synthetic_personal_exception": {
+      "user": "u-psi",
+      "from": "2026-11-18",
+      "to": "2026-11-18",
+      "capacity_hours": 0
+    },
+    "synthetic_holiday": "2026-11-20"
+  },
+  "roles_skills": {
+    "roles": [
+      "Process Safety Engineer",
+      "QA Reviewer",
+      "Document Controller"
+    ],
+    "skills": [
+      "HAZOP",
+      "HAZID",
+      "MAH",
+      "SECE",
+      "Document Control"
+    ],
+    "assignments": {
+      "u-psi": [
+        "Process Safety Engineer",
+        "HAZOP"
+      ],
+      "u-qa": [
+        "QA Reviewer",
+        "HAZOP"
+      ],
+      "u-dc": [
+        "Document Controller",
+        "Document Control"
+      ]
+    }
+  },
+  "bookings": [
+    {
+      "project": "ITA-LAB",
+      "user": "u-psi",
+      "date": "2026-11-17",
+      "hours": 6
+    },
+    {
+      "project": "ITA-FOLLOWUP",
+      "role": "QA Reviewer",
+      "date": "2026-11-23",
+      "hours": 4
+    }
+  ],
+  "rates": [
+    {
+      "user": "u-psi",
+      "hourly_idr": 150000,
+      "effective": "2026-10-01"
+    },
+    {
+      "user": "u-psi",
+      "hourly_idr": 200000,
+      "effective": "2026-11-16"
+    }
+  ],
+  "time_entries": [
+    {
+      "id": "TE-01",
+      "item": "LAB-A",
+      "user": "u-psi",
+      "date": "2026-11-10",
+      "hours": 4,
+      "billable": true,
+      "expected_rate_snapshot": 150000
+    },
+    {
+      "id": "TE-02",
+      "item": "LAB-B",
+      "user": "u-psi",
+      "date": "2026-11-12",
+      "hours": 2,
+      "billable": false,
+      "expected_rate_snapshot": 150000
+    },
+    {
+      "id": "TE-03",
+      "item": "LAB-C",
+      "user": "u-psi",
+      "date": "2026-11-17",
+      "hours": 3,
+      "billable": true,
+      "expected_rate_snapshot": 200000
+    }
+  ],
+  "financial_oracle": {
+    "prd_task14_billable_only": 1200000,
+    "all_hours_cost_gap": 1500000,
+    "total_hours": 9,
+    "note": "PRD current calculation billable only. Report all-hours cost as parity gap, not failed PRD unless amended. Set rates chronologically using supported fixtures/service; verify snapshot after rate update."
+  },
+  "files": [
+    {
+      "item": "LAB-C",
+      "logical_file": "QA-PID-SAMPLE.pdf",
+      "revision": 1,
+      "path": "fixtures/QA-PID-SAMPLE-R1.pdf"
+    },
+    {
+      "item": "LAB-C",
+      "logical_file": "QA-PID-SAMPLE.pdf",
+      "revision": 2,
+      "path": "fixtures/QA-PID-SAMPLE-R2.pdf"
+    },
+    {
+      "item": "LAB-B",
+      "path": "fixtures/QA-IMAGE.png"
+    },
+    {
+      "item": "LAB-A",
+      "path": "fixtures/QA-comment.txt"
+    }
+  ],
+  "automation_rules": [
+    {
+      "id": "AR-1",
+      "scope": "ITA-LAB",
+      "when": "status changes to In Review",
+      "if": "type = Deliverable",
+      "then": [
+        "assign u-qa",
+        "notify u-dc"
+      ],
+      "activate_after_baseline": true
+    },
+    {
+      "id": "AR-2",
+      "scope": "ITA-LAB",
+      "when": "assignee changes",
+      "if": "priority = High",
+      "then": [
+        "add comment QA event"
+      ],
+      "activate_after_baseline": true
+    },
+    {
+      "id": "AR-3",
+      "scope": "ITA-LAB",
+      "when": "form submitted",
+      "if": "study_type = HAZOP",
+      "then": [
+        "create QA checklist"
+      ],
+      "activate_after_baseline": true
+    },
+    {
+      "id": "AR-4",
+      "scope": "ITA-LAB",
+      "when": "due date reached",
+      "if": "status != Completed",
+      "then": [
+        "send notification"
+      ],
+      "activate_after_baseline": true
+    }
+  ],
+  "forms": [
+    {
+      "name": "QA | Engineering request",
+      "access": "internal",
+      "fields": [
+        "Title",
+        "Facility",
+        "Study Type",
+        "Description",
+        "Target Submission",
+        "Attachment"
+      ],
+      "routing": {
+        "HAZOP": "Deliverable blueprint",
+        "Other": "Engineering Activity"
+      }
+    },
+    {
+      "name": "QA | Client review request",
+      "access": "public",
+      "fields": [
+        "Email",
+        "Title",
+        "Study Type",
+        "Attachment"
+      ],
+      "use_mail_sink": true
+    }
+  ],
+  "blueprints": [
+    {
+      "name": "QA | Engineering study",
+      "structure": [
+        "Preparation",
+        "Workshop",
+        "Report",
+        "IFR",
+        "IFA"
+      ]
+    },
+    {
+      "name": "QA | Deliverable blueprint",
+      "structure": [
+        "Draft",
+        "QA review",
+        "Submission"
+      ]
+    }
+  ],
+  "views": [
+    "Table",
+    "Board",
+    "Gantt",
+    "Calendar",
+    "Timelog",
+    "Files",
+    "Chart"
+  ],
+  "dashboard_presets": [
+    "Status count",
+    "Overdue",
+    "My tasks",
+    "Effort planned",
+    "Time actual",
+    "Budget vs actual (if available)",
+    "Area",
+    "Pivot",
+    "Burndown",
+    "Utilization (gap probe)"
+  ],
+  "report_presets": [
+    "Weekly project status",
+    "Unassigned",
+    "Time spent",
+    "Utilization",
+    "Cross-project status"
+  ],
+  "external_test_configuration": {
+    "mail": "local sandbox SMTP / email sink",
+    "github": "disposable private test repo + issue ID supplied via env",
+    "google_calendar": "disposable test calendar ID + OAuth provided via env",
+    "storage": "test bucket and test Pydio workspace; no prod",
+    "identity": "isolated OIDC/SAML/SCIM test IdP; fixtures and live split",
+    "webhook": "local test receiver; signature verification; never send to production",
+    "secret_policy": "do not store passwords, OAuth token, TOTP secrets or API keys in fixture or evidence"
+  },
+  "optional_load_profile": {
+    "separate_space": "QA_LOAD",
+    "items_table_board": 500,
+    "gantt_bars": 1000,
+    "search_items": 10000,
+    "dashboard_widgets": 16,
+    "origin": "SYNTHETIC",
+    "note": "isolated generated dataset, not PDF; benchmark with fixed commit/data and concurrency"
+  },
+  "reset_policy": "Target disposable test database or dedicated instance only; two passes idempotent; cleanup by tracked QA namespace, never truncate existing DB; keep source immutable; apply mutating tests on sandbox clones.",
+  "seed_stages": [
+    "base_core",
+    "source_timeline",
+    "sandbox_items",
+    "config_only_if_actual_feature_exists",
+    "mutating_cases_on_clones",
+    "external_live_opt_in_only"
+  ],
+  "fixture_creation_order_note": "Status histories, approvals, automation outcomes, version history, time entries and provider sync must be produced through actual actions. Fixture lists are test input recipes, not pre-populated PASS evidence."
+}

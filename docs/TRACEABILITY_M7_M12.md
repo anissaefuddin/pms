@@ -11,14 +11,14 @@
 | Req | Story | Kriteria penerimaan ringkas | Tes | Bukti |
 |---|---|---|---|---|
 | STAB-01 | S6.3.5 | 93 requirement P0/P1 punya hasil UAT dengan bukti | UAT.md | |
-| STAB-02 | S7.1.1 | Nol 5xx pada skenario reproduksi | Tes regresi reproduksi | |
+| STAB-02 | S7.1.1 | Nol 5xx pada skenario reproduksi | Tes regresi reproduksi | PASS lokal pada PostgreSQL 16, lihat TESTING §S7.1.1 |
 | STAB-03 | S1.1.4 | Required check aktif dan lulus di PR | Run CI | |
 | STAB-04 | S7.1.3 | Setiap endpoint punya tes 401/403/404/IDOR | Skrip inventaris + suite Go | |
-| STAB-05 | S7.1.2 | Status/komentar ≤ 3 detik, termasuk reconnect | Harness dua pengguna | |
+| STAB-05 | S7.1.2 | Status/komentar ≤ 3 detik, termasuk reconnect | Harness dua pengguna | PASS lokal HTTP + Chrome, lihat TESTING §Retest stabilitas |
 | STAB-06 | S6.3.5 | Lima flow Playwright hijau di CI | Run CI | |
 | STAB-07, 08 | S7.1.4 | Audit UI ulang tanpa P1 terbuka | Audit + axe | |
-| PAR-CAT-01 | S7.2.1 | Katalog dibekukan dan disetujui | Review | |
-| REG-00 | S7.3.2 | ADR registry dan relasi disetujui sebelum S8.1.6 dan S9.1.2 | Review | |
+| PAR-CAT-01 | S7.2.1 | Katalog dibekukan dan disetujui | Review | [Rekonsiliasi 106 WFP](parity/WFP_SCREEN_FLOW_RECONCILIATION.md), freeze menunggu review |
+| REG-00 | S7.3.2 | ADR registry dan relasi disetujui sebelum S8.1.6 dan S9.1.2 | Review | [ADR-REG siap review](parity/adr/ADR-REG-registry-and-typed-relations.md) |
 
 ## M8 — Konfigurasi kerja
 
@@ -75,6 +75,20 @@
 | FIL-01 | S11.1.2 | Versi immutable; akses per versi dicek | Tes izin versi | `TestAttachmentVersionsAreImmutableAndPolicyChecked` |
 | FIL-02 | S11.1.3 | Anotasi tetap di versinya | Integrasi | `TestProofingAnnotationsStayOnTheirVersion` |
 | FIL-03 | S11.1.4 | Dua versi tampil berdampingan | Playwright | `web/tests/file-compare.spec.ts` |
+| FIL-04 | S11.1.5 | Approval v1 tidak pindah ke v2 | E2E-PAR-09 | |
+| TASK-08B | S11.1.6 | Adapter eksternal tetap menegakkan izin dan pemindaian | Integrasi | |
+| DASH-03B | S11.2.1 | Area dan pivot cocok dengan data mentah | Tes kecocokan angka | |
+| DASH-08 | S11.2.2 | Widget pustaka benar dan dapat ditambah ke papan | Tes angka + Playwright | |
+| DASH-04, 05 | S11.2.3 | Deskripsi dan layout tersimpan | Playwright | |
+| DASH-07 | S11.2.4 | Link kedaluwarsa dan password ditegakkan; finansial tersembunyi | Tes akses | |
+| RPT-04 | S11.2.5 | Report terkirim pada hari dan jam terpilih | Integrasi waktu | |
+| API-01, SET-08 | S11.3.1 | Key terbatas scope; rotasi dan cabut efektif | Integrasi | `TestIntegrationAPIKeyLifecycle`, `TestBrowserIntegrationSettings` |
+| API-02 | S11.3.2 | Webhook bertanda tangan, idempoten, retry | E2E-PAR-11 | `TestWebhookSettings`, `TestWebhookDeliveryFromOutbox`, `TestBrowserIntegrationSettings` |
+| API-03 | S11.3.3 | Token OAuth dicabut efektif | Integrasi | `TestOAuthPKCEAndRevocation`, `TestBrowserIntegrationSettings` |
+| INT-01 | S11.3.4 | Konektor dapat dipasang, diatur, dinonaktifkan | Integrasi | `TestConnectorLifecycle` |
+| INT-02 | S11.3.5 | Konflik tidak menimpa diam-diam | Tes konflik | `TestPilotConnectorsWithProviderFixtures` |
+| INT-03 | S11.3.6 | GitHub dua arah dan Google Calendar satu arah berjalan | Uji akun uji | Fixture PASS; akun uji NOT RUN |
+| NAV-08, 09 | S11.3.7 | Bookmark dan feedback tersimpan | Playwright | `TestSpaceBookmarksAndProductFeedback`, `TestBrowserIntegrationSettings` |
 | FIL-04 | S11.1.5 | Approval v1 tidak pindah ke v2 | E2E-PAR-09 | `TestFileApprovalPinnedToVersionWithExternalReviewer` |
 | TASK-08B | S11.1.6 | Adapter eksternal tetap menegakkan izin dan pemindaian | Integrasi | `TestS3AdapterAgainstFakeServer`, `TestPydioAdapterAgainstFakeServer` |
 | DASH-03B | S11.2.1 | Area dan pivot cocok dengan data mentah | Tes kecocokan angka | `TestAnalyticsWidgetsAreaPivotBurndownCompletion` |

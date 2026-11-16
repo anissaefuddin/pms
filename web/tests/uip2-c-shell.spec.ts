@@ -4,8 +4,8 @@ import { me } from "./mock-api";
 import { mockSpaces } from "./spaces-mock";
 
 // S-UIP2 lane C: Customize menu dialog, account menu header, settings entries, recycle bin header.
-test("Customize menu hides and shows entries at once, and the sidebar follows", async ({ page }) => {
-  let profile: Record<string, unknown> = { ...me, sidebar_hidden: [] };
+test("Customize sidebar unpins a shortcut, saves the pin order, and the sidebar follows", async ({ page }) => {
+  let profile: Record<string, unknown> = { ...me, sidebar_hidden: [], sidebar_pinned: ["request_forms", "stream"] };
   const { calls } = await mockSpaces(page, { extra: {
     "GET /me": () => ({ body: profile }),
     "PATCH /me": (body) => { profile = { ...profile, ...body }; return { body: profile }; },
@@ -14,14 +14,12 @@ test("Customize menu hides and shows entries at once, and the sidebar follows", 
   const nav = page.getByRole("navigation", { name: "Main navigation" });
   await expect(nav.getByRole("button", { name: "Stream" })).toBeVisible();
   await page.getByRole("button", { name: "More", exact: true }).click();
-  await page.getByRole("menuitem", { name: "Customize menu" }).click();
-  const dialog = page.getByRole("dialog", { name: "Customize menu" });
-  await expect(dialog.getByRole("region", { name: "Shown in menu" })).toContainText("Stream");
-  await dialog.getByRole("button", { name: "Hide Stream" }).click();
-  await expect(dialog.getByRole("region", { name: "Hidden from menu" })).toContainText("Stream");
-  expect(calls.some((call) => call.method === "PATCH" && call.path === "/me")).toBe(true);
+  await page.getByRole("menuitem", { name: "Customize sidebar" }).click();
+  const dialog = page.getByRole("dialog", { name: "Customize sidebar" });
+  await dialog.getByRole("checkbox", { name: "Pin Stream" }).uncheck();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   await dialog.getByRole("button", { name: "Done" }).click();
+  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toMatchObject({ sidebar_pinned: ["request_forms"] });
   await expect(nav.getByRole("button", { name: "Stream" })).toHaveCount(0);
 });
 

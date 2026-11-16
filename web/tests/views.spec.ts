@@ -77,14 +77,14 @@ test("Table keyboard edit and reorder, and URL restores the view state", async (
   const rename = page.getByRole("dialog", { name: "Rename view" });
   await rename.getByRole("textbox", { name: "View name" }).fill("Planning");
   await rename.getByRole("button", { name: "Save" }).click();
-  await page.getByRole("navigation", { name: "Views" }).getByRole("button", { name: "Planning", exact: true }).click();
+  await page.getByRole("navigation", { name: "Views" }).getByRole("radio", { name: "Planning", exact: true }).click();
   await page.getByLabel("Filter items").fill("Road");
   await chip(page, "Sort");
   await page.getByLabel("Sort", { exact: true }).selectOption("title");
   await chip(page, "Group");
   await page.getByLabel("Group", { exact: true }).selectOption("status");
   await page.reload();
-  await expect(page.getByRole("button", { name: "Planning", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("radio", { name: "Planning", exact: true })).toHaveAttribute("aria-checked", "true");
   await expect(page.getByLabel("Filter items")).toHaveValue("Road");
   await chip(page, "Sort");
   await expect(page.getByLabel("Sort", { exact: true })).toHaveValue("title");
@@ -118,17 +118,20 @@ test("ViewTabs duplicates, reorders, changes default, copies and deletes", async
   } });
   await page.goto(path + "?filter=Plan&sort=title");
   const nav = page.getByRole("navigation", { name: "Views" });
-  await nav.getByRole("button", { name: "Board", exact: true }).click(); // options exist only on the active segment
+  await nav.getByRole("radio", { name: "Board", exact: true }).click(); // options exist only on the active segment
   await nav.getByRole("button", { name: "Board options", exact: true }).click();
   await page.getByRole("menuitem", { name: "Move left" }).click();
-  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toEqual({ position: 0 });
+  // WA-D07: moving a tab changes only this user's order (a personal preference), never the shared position.
+  await expect.poll(() => calls.find((c) => c.method === "PUT" && c.path.startsWith("/me/view-preferences/"))?.body)
+    .toEqual(expect.objectContaining({ order: expect.any(Array) }));
+  expect(calls.filter((c) => c.method === "PATCH" && c.path.startsWith("/views/"))).toHaveLength(0);
   await nav.getByRole("button", { name: "Board options", exact: true }).click();
   await page.getByRole("menuitem", { name: "Set as default" }).click();
-  await expect(nav.getByRole("button", { name: "Board", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(nav.getByRole("radio", { name: "Board", exact: true })).toHaveAttribute("aria-checked", "true");
   await nav.getByRole("button", { name: "Board options", exact: true }).click();
   await expect(page.getByRole("menuitem", { name: "Delete view" })).toHaveCount(0);
   await page.getByRole("menuitem", { name: "Duplicate as personal" }).click();
-  await expect(nav.getByRole("button", { name: "Copy of Board", exact: true })).toHaveAttribute("aria-pressed", "true");
+  await expect(nav.getByRole("radio", { name: "Copy of Board", exact: true })).toHaveAttribute("aria-checked", "true");
   await nav.getByRole("button", { name: "Copy of Board options", exact: true }).click();
   await page.getByRole("menuitem", { name: "Copy link" }).click();
   await expect(page.getByText("Link copied", { exact: true })).toBeVisible();
@@ -138,7 +141,7 @@ test("ViewTabs duplicates, reorders, changes default, copies and deletes", async
   await nav.getByRole("button", { name: "Copy of Board options", exact: true }).click();
   await page.getByRole("menuitem", { name: "Delete view" }).click();
   await page.getByRole("dialog", { name: "Delete view" }).getByRole("button", { name: "Delete view" }).click();
-  await expect(nav.getByRole("button", { name: "Copy of Board", exact: true })).toHaveCount(0);
+  await expect(nav.getByRole("radio", { name: "Copy of Board", exact: true })).toHaveCount(0);
 });
 
 for (const { type, label, visibility } of [
@@ -159,8 +162,8 @@ for (const { type, label, visibility } of [
     } });
     await page.goto(path);
     const nav = page.getByRole("navigation", { name: "Views" });
-    await nav.getByRole("button", { name: "All views" }).click();
-    await page.getByRole("menuitem", { name: `Add ${label} view`, exact: true }).click();
+    await nav.getByRole("button", { name: "Add view" }).click();
+    await page.getByRole("dialog", { name: "Choose a view type" }).getByRole("button", { name: new RegExp(`^${label}`) }).click();
     const form = page.getByRole("dialog", { name: "Add view" });
     const name = `${label} plan`;
     const input = form.getByRole("textbox", { name: "View name" });
@@ -173,18 +176,18 @@ for (const { type, label, visibility } of [
     await expect.poll(() => calls.find((call) => call.method === "POST" && call.path === "/views")?.body)
       .toEqual({ scope_space_id: marketing.id, type, name, visibility });
 
-    const tab = nav.getByRole("button", { name, exact: true });
+    const tab = nav.getByRole("radio", { name, exact: true });
     // Gantt and Calendar are real views now (S2.4.2, S2.5.2).
     const heading = type === "gantt" ? page.getByRole("application", { name: "Gantt chart" }) : page.getByRole("grid", { name: "Calendar" });
     const grid = page.getByRole("table", { name: "Table" });
-    await expect(tab).toHaveAttribute("aria-pressed", "true");
+    await expect(tab).toHaveAttribute("aria-checked", "true");
     await expect(heading).toBeVisible();
-    await nav.getByRole("button", { name: "Table", exact: true }).click();
+    await nav.getByRole("radio", { name: "Table", exact: true }).click();
     await expect(grid).toBeVisible();
     await tab.click();
     await expect(page).toHaveURL(`${path}?view=${viewId}`);
     await page.reload();
-    await expect(tab).toHaveAttribute("aria-pressed", "true");
+    await expect(tab).toHaveAttribute("aria-checked", "true");
     await expect(heading).toBeVisible();
     await expect(grid).toHaveCount(0);
     if (type === "gantt") await expect(page.getByLabel("Filter items")).toHaveCount(1); // Gantt shares the chip toolbar (pass 2 B)

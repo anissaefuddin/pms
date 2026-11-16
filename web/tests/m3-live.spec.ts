@@ -146,9 +146,11 @@ test("flow 2: a form built in the UI is shared, filled by a requester, approved,
   const approver = await as(browser, e.PMS_FIXTURE_M3_APPROVER!);
   await approver.goto(`/tasks/${requestId}`);
   const panel = approver.getByRole("region", { name: "Approvals" });
-  await expect(panel.getByText("0/1 approved · Pending")).toBeVisible();
+  await expect(panel.getByText("0/1 approved", { exact: false })).toBeVisible();
+  await expect(panel.locator("[data-approval-status]").filter({ hasText: "Pending" }).first()).toBeVisible();
   await panel.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(panel.getByText("1/1 approved · Approved")).toBeVisible();
+  await expect(panel.getByText("1/1 approved", { exact: false })).toBeVisible();
+  await expect(panel.locator("[data-approval-status]").filter({ hasText: "Approved" }).first()).toBeVisible();
   const approvals = (await (await approver.request.get(`/api/v1/items/${requestId}/approvals`)).json()).items;
   expect(approvals).toHaveLength(1);
   expect(approvals[0]).toMatchObject({ status: "approved", approved_count: 1, total: 1 });

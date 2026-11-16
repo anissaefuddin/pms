@@ -19,10 +19,14 @@ for (const where of ["space page button", "global top bar"]) {
       },
     }) });
     await page.goto(root);
-    const button = where === "global top bar" ? page.locator("header").first().getByRole("button", { name: "New item" }) : page.getByRole("main").getByRole("button", { name: "New item" });
-    await button.click();
     const dialog = page.getByRole("dialog", { name: "Create item" });
-    await dialog.getByRole("radio", { name: "Task" }).check();
+    if (where === "global top bar") {
+      await page.locator("header").first().getByRole("button", { name: "Create" }).click();
+      await page.getByRole("menuitem", { name: /^Task/ }).click();
+    } else {
+      await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+      await dialog.getByRole("radio", { name: /^Task/ }).check({ force: true });
+    }
     await dialog.getByLabel("Name").fill("Fresh task");
     await dialog.getByRole("button", { name: "Create item" }).click();
     await expect(page.getByRole("heading", { name: "Fresh task" })).toBeVisible();

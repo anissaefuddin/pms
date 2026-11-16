@@ -107,7 +107,7 @@ func (s *Server) listApprovalEvents(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var out json.RawMessage
-	err = tx.QueryRow(ctx, `SELECT COALESCE(jsonb_agg(jsonb_build_object('id',e.id,'approval_id',e.approval_id,'kind',e.kind,
+	err = tx.QueryRow(ctx, `SELECT COALESCE(jsonb_agg(jsonb_build_object('id',e.id,'approval_id',e.approval_id,'kind',e.kind,'attachment_id',e.attachment_id,'attachment_version',e.attachment_version,
  'actor',CASE WHEN a.id IS NULL THEN NULL ELSE jsonb_build_object('id',a.id,'name',concat_ws(' ',a.first_name,a.last_name)) END,
  'subject',CASE WHEN s.id IS NULL THEN NULL ELSE jsonb_build_object('id',s.id,'name',concat_ws(' ',s.first_name,s.last_name)) END,
  'decision',e.decision,'comment',e.comment,'item_version',e.item_version,'created_at',e.created_at) ORDER BY e.id DESC),'[]'::jsonb)
@@ -278,8 +278,10 @@ func recordApprovalEvent(ctx context.Context, tx pgx.Tx, approval, itemID uuid.U
 	if len(subjects) == 0 {
 		subjects = []uuid.UUID{uuid.Nil}
 	}
-	_, err := tx.Exec(ctx, `INSERT INTO approval_events(approval_id,item_id,kind,actor_id,subject_id,decision,comment,item_version)
-SELECT $1,$2,$3,$4::uuid,NULLIF(s,'00000000-0000-0000-0000-000000000000'::uuid),NULLIF($6,''),$7,(SELECT version FROM items WHERE id=$2)
+	// WA-D08: the event keeps the file version pinned by its approval; read while the approval still exists (withdrawn is recorded before the delete).
+	_, err := tx.Exec(ctx, `INSERT INTO approval_events(approval_id,item_id,kind,actor_id,subject_id,decision,comment,item_version,attachment_id,attachment_version)
+SELECT $1,$2,$3,$4::uuid,NULLIF(s,'00000000-0000-0000-0000-000000000000'::uuid),NULLIF($6,''),$7,(SELECT version FROM items WHERE id=$2),
+ (SELECT attachment_id FROM approvals WHERE id=$1),(SELECT attachment_version FROM approvals WHERE id=$1)
 FROM unnest($5::uuid[]) s`, approval, itemID, kind, actorID, subjects, decision, comment)
 	return err
 }

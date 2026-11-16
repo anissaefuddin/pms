@@ -9,7 +9,7 @@ import type { Item } from "@/lib/items";
 import { mention, MentionPicker } from "@/components/rich-text-mention";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/auth/form-error";
-import { AvatarStack } from "@/components/avatar-stack";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { useProfile } from "@/lib/profile";
 
 type Comment = components["schemas"]["Comment"];

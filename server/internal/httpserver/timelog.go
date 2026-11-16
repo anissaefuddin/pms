@@ -87,6 +87,21 @@ func (s *Server) listProjectTimeEntries(w http.ResponseWriter, r *http.Request, 
 		timeEntryListError(w, ctx, err)
 		return
 	}
+	// E-01: totals over the same WHERE as the rows, without paging. Read in the same snapshot, so they match the filtered list.
+	var totals timeEntryTotals
+	err = tx.QueryRow(ctx, projectTimeScope+`
+SELECT COALESCE(sum(e.minutes),0),
+ COALESCE(sum(CASE WHEN e.billing_type='billable' THEN e.minutes END),0),
+ COALESCE(sum(CASE WHEN e.billing_type='non_billable' THEN e.minutes END),0)
+FROM scoped_tasks t JOIN time_entries e ON e.item_id=t.item_id
+WHERE (t.can_manage OR e.user_id=$4::uuid)
+AND e.entry_date BETWEEN COALESCE(NULLIF($5,'')::date,DATE '0001-01-01') AND COALESCE(NULLIF($6,'')::date,DATE '9999-12-31')
+AND ($7='' OR e.billing_type=$7) AND ($8='' OR e.locked=NULLIF($8,'')::boolean)
+AND ($9='' OR e.user_id=NULLIF($9,'')::uuid) AND ($10='' OR lower(e.category)=lower($10))`, project, spaces, full, actor.ID, from, to, billing, locked, person, category).Scan(&totals.Minutes, &totals.Billable, &totals.NonBillable)
+	if err != nil {
+		timeEntryListError(w, ctx, err)
+		return
+	}
 	rows, err := tx.Query(ctx, projectTimeScope+"SELECT "+timeEntryColumns+`,i.title,concat_ws(' ',u.first_name,u.last_name)
 FROM scoped_tasks t JOIN time_entries e ON e.item_id=t.item_id
 JOIN items i ON i.id=e.item_id JOIN users u ON u.id=e.user_id
@@ -95,7 +110,7 @@ AND e.entry_date BETWEEN COALESCE(NULLIF($5,'')::date,DATE '0001-01-01') AND COA
 AND ($7='' OR e.billing_type=$7) AND ($8='' OR e.locked=NULLIF($8,'')::boolean)
 AND ($9='' OR e.user_id=NULLIF($9,'')::uuid) AND ($10='' OR lower(e.category)=lower($10))
 ORDER BY `+order+",e.id LIMIT $11 OFFSET $12", project, spaces, full, actor.ID, from, to, billing, locked, person, category, limit+1, offset)
-	writeTimeEntryList(w, ctx, tx, rows, err, limit, offset)
+	writeTimeEntryList(w, ctx, tx, rows, err, limit, offset, &totals)
 }
 
 func (s *Server) projectTimeSummary(w http.ResponseWriter, r *http.Request) {

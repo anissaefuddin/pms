@@ -95,13 +95,16 @@ func (s *Server) streamEvents(w http.ResponseWriter, r *http.Request) {
 	}
 	heartbeat := time.NewTicker(25 * time.Second)
 	defer heartbeat.Stop()
-	if cursor != nil && !flushEvent(w, controller, ": connected\n\n") {
+	// Leave time for the client to refresh after reconnecting within the 3 second SSE budget.
+	if cursor != nil && !flushEvent(w, controller, "retry: 1000\n\n") {
 		return
 	}
 	for {
 		events, head, resync, changed := s.events.After(cursor)
-		if cursor == nil && !send(head, "ready", nil) {
-			return
+		if cursor == nil {
+			if !send(head, "ready", nil) || !flushEvent(w, controller, "retry: 1000\n\n") {
+				return
+			}
 		}
 		if resync && !send(head, "resync", map[string]string{"type": "resync", "id": uuid.Nil.String()}) {
 			return

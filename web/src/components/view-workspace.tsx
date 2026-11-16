@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import type { components } from "@/api/schema";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
-import { isProjectDetail, itemKeys, listItems, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
+import { isProjectDetail, itemKeys, listItems, listSubtree, subtreeChildren, type Item, type ItemUpdate, type SavedView } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
@@ -18,8 +18,11 @@ import { ViewTabs } from "@/components/view-tabs";
 import { useItemTypes } from "@/lib/item-types";
 import { ColumnPicker } from "@/components/view-columns";
 import { ViewToolbar } from "@/components/view-toolbar";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import type { CustomField } from "@/lib/custom-fields";
 import { visibleColumns } from "@/lib/view-columns";
+import { useViewExpansion } from "@/lib/use-view-expansion";
 
 export { viewSorts } from "@/components/view-toolbar";
 const tableGroups = ["none", "status", "type"] as const;
@@ -51,15 +54,23 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const available = views.data?.items ?? [];
   const active = available.find((view) => view.id === search.view) ?? available.find((view) => view.is_default) ?? available[0];
 
+  // WA-D05: expansion is saved on the server per view. Each view is keyed by its id, so state never carries over between views.
+  const expansion = useViewExpansion(active?.id);
   const isBoard = active?.type === "board";
   const group = !isBoard && (search.group === "status" || search.group === "type") ? search.group : undefined;
   const swimlanes = isBoard && search.group === "assignee";
   const isGantt = active?.type === "gantt";
   const isCalendar = active?.type === "calendar";
+  const flat = isCalendar || isBoard;
   const isCollection = active?.type === "table" || active?.type === "board";
   const items = useQuery({
-    queryKey: sortedKey, enabled: !active || isCollection || isGantt || isCalendar || active?.type === "chart",
-    queryFn: () => listItems(base + (parent ? "/children" : "/items"), sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined),
+    queryKey: flat ? [...sortedKey, "subtree"] : sortedKey, enabled: !active || isCollection || isGantt || isCalendar || active?.type === "chart",
+    queryFn: async () => {
+      const query = (path: string) => listItems(path, sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined);
+      const top = await query(base + (parent ? "/children" : "/items"));
+      // Space-level Boards and Calendars keep their top-level cards (projects); the walk applies inside a project or folder.
+      return flat && parent ? listSubtree(top, (id) => subtreeChildren(qc, id)) : top;
+    },
   });
   const fieldQueries = useQuery({
     queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
@@ -89,6 +100,27 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     if (push) router.history.push(href);
     else router.history.replace(href);
   }
+  // B-02: sequential, one PATCH per item with its own version. Successful items are never sent again.
+  async function bulkPatch(targets: Item[], update: ItemUpdate) {
+    const failed: { title: string; message: string }[] = [];
+    let done = 0;
+    setPending(true);
+    try {
+      for (const item of targets) {
+        try {
+          await api<Item>(`/api/v1/items/${item.id}`, { method: "PATCH", headers: { "If-Match": `"${item.version}"` }, body: JSON.stringify(update) });
+          done += 1;
+        } catch (err) {
+          failed.push({ title: item.title, message: (err as Error).message });
+        }
+      }
+    } finally {
+      setPending(false);
+      await qc.invalidateQueries(isList);
+    }
+    return { done, failed };
+  }
+
   async function patch(item: Item, update: ItemUpdate) {
     if (locked.current) return;
     locked.current = true;
@@ -159,14 +191,14 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     ? <ul className="mt-4 divide-y rounded border">{items.data.map((item) => <li key={item.id}>
       <button type="button" className="block w-full p-3 text-left" onClick={() => onOpen(item)}>{item.title}</button>
     </li>)}</ul> : null;
-  const filtered = (items.data ?? []).filter((item) => item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
+  const filtered = (items.data ?? []).filter((item) => (!flat || item.type !== "folder") && item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
   const noMatches = items.isSuccess && filtered.length === 0 && hasFilters;
   const emptyResults = <div className="space-y-2"><p role="status">{t("views.empty")}</p>
     <Button variant="outline" onClick={clearFilters}>{t("views.clearFilters")}</Button></div>;
   const columns = visibleColumns(active.config, (items.data ?? []).some((item) => item.type === "project"));
   const collection = {
     items: filtered, statuses: workflow?.statuses ?? [], spaceId, parentId: parent?.id, customFields, columns,
-    canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string) => setCreating({ status }), onPatch: patch,
+    canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string) => setCreating({ status }), onPatch: patch, onBulkPatch: bulkPatch,
   };
   const toolbar = {
     filter, preset, typeFilter, sort, fieldFilter, customFields, itemTypes: itemTypes.data, setSearch: (key: string, value: string) => setSearch(key, value),
@@ -176,13 +208,13 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     <ViewTabs views={available} selected={active} canEdit={canEdit}
       project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
-    {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? (items.isSuccess ? <ProjectChart items={items.data} /> : <p role="status">{t("items.loading")}</p>) : isGantt ? <>
+    {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? <ProjectChart project={parent} /> : isGantt ? <>
       <ViewToolbar filterOnly {...toolbar} columns={!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
         fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />} />
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
-        <ItemGantt items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
+        <ItemGantt key={active?.id} initialOpen={!expansion.initial.gantt_collapsed} onOpenChange={(open) => expansion.save({ rows: [], gantt_collapsed: !open })} items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
           customFields={customFields} columns={visibleColumns(active.config, false)}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
@@ -206,10 +238,13 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       </div>}
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
-      {items.isSuccess && (active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} />)
-        : <ItemTable {...collection} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
+      {items.isSuccess && (!spaceEmpty && !noMatches && items.data.length === 0 ? <EmptyState icon={<ProjectIllustration />} title={t("views.noItems.title")}
+          description={t("views.noItems.description")} canCreate={canCreate}
+          primaryAction={{ label: t("items.new"), onClick: () => setCreating({}) }} />
+        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} />)
+        : <ItemTable key={active?.id} {...collection} initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      taskOnly initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
+      initialKind="task" initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
   </section>;
 }

@@ -63,22 +63,26 @@ test("an editor creates an approval with an approver", async ({ page }) => {
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path.endsWith("/approvals"))?.body)
     .toEqual({ policy: "any", description: "Launch copy", due_date: null, approver_ids: [grace.id] });
   await expect(section.getByText("Launch copy")).toBeVisible();
-  await expect(section.getByText("0/1 approved · Pending")).toBeVisible();
+  await expect(section.getByText("0/1 approved", { exact: false })).toBeVisible();
+  await expect(section.locator("[data-approval-status]").filter({ hasText: "Pending" }).first()).toBeVisible();
 });
 
 test("a named approver approves and the counter moves from 0/2 to 1/2", async ({ page }) => {
   const calls = await mock(page, ALL);
   await page.goto(`/tasks/${id}`);
   const section = panel(page);
-  await expect(section.getByText("0/2 approved · Pending")).toBeVisible();
+  await expect(section.getByText("0/2 approved", { exact: false })).toBeVisible();
+  await expect(section.locator("[data-approval-status]").filter({ hasText: "Pending" }).first()).toBeVisible();
   await section.getByLabel("Comment (optional)").fill("Looks good");
   await section.getByRole("button", { name: "Approve", exact: true }).click();
-  await expect(section.getByText("1/2 approved · Pending")).toBeVisible();
+  await expect(section.getByText("1/2 approved", { exact: false })).toBeVisible();
+  await expect(section.locator("[data-approval-status]").filter({ hasText: "Pending" }).first()).toBeVisible();
   await expect(section.getByText("Your decision: Approved")).toBeVisible();
   await expect(section.getByText("Looks good").first()).toBeVisible();
   expect(calls.find((c) => c.method === "PUT")?.body).toEqual({ decision: "approved", comment: "Looks good" });
   await section.getByRole("button", { name: "Reject", exact: true }).click(); // a decision can be changed
-  await expect(section.getByText("0/2 approved · Rejected")).toBeVisible();
+  await expect(section.getByText("0/2 approved", { exact: false })).toBeVisible();
+  await expect(section.locator("[data-approval-status]").filter({ hasText: "Rejected" }).first()).toBeVisible();
 });
 
 test("edit sends If-Match with the approval version; delete asks for confirmation", async ({ page }) => {
@@ -102,7 +106,8 @@ test("without edit capability there is no Add, Edit or Delete", async ({ page })
   await mock(page, ["view", "comment"]);
   await page.goto(`/tasks/${id}`);
   const section = panel(page);
-  await expect(section.getByText("0/2 approved · Pending")).toBeVisible();
+  await expect(section.getByText("0/2 approved", { exact: false })).toBeVisible();
+  await expect(section.locator("[data-approval-status]").filter({ hasText: "Pending" }).first()).toBeVisible();
   await expect(section.getByRole("button", { name: /Add approval|Edit approval|Delete approval/ })).toHaveCount(0);
   await expect(section.getByRole("button", { name: "Approve", exact: true })).toBeVisible(); // approver, not editor
 });
@@ -112,7 +117,8 @@ for (const scheme of ["light", "dark"] as const) {
     await page.emulateMedia({ colorScheme: scheme });
     await mock(page, ALL);
     await page.goto(`/tasks/${id}`);
-    await expect(panel(page).getByText("0/2 approved · Pending")).toBeVisible();
+    await expect(panel(page).getByText("0/2 approved", { exact: false })).toBeVisible();
+    await expect(panel(page).locator("[data-approval-status]").filter({ hasText: "Pending" }).first()).toBeVisible();
     const result = await new AxeBuilder({ page }).include('section[aria-labelledby]').analyze();
     expect(result.violations).toEqual([]);
   });

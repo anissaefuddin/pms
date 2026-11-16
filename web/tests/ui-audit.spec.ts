@@ -38,7 +38,7 @@ test("every entry in the navigation opens a real page", async ({ page }) => {
     await nav.getByRole("button", { name: "More" }).click();
     await expect(page.getByRole("menuitem").first()).toBeVisible();
     const entry = page.getByRole("menuitem").nth(i);
-    if ((await entry.innerText()).trim() === "Customize menu") { // S-UIP.2.1: opens a dialog, not a page
+    if ((await entry.innerText()).trim() === "Customize sidebar") { // S-UIP.2.1: opens a dialog, not a page
       await entry.click();
       await expect(page.getByRole("dialog")).toBeVisible();
       await page.keyboard.press("Escape");

@@ -23,7 +23,7 @@ var profileChoices = map[string][]string{
 }
 
 // sidebarKeys are the optional sidebar entries a user may hide (NAV-02); Search and Inbox are not listed because they always show.
-var sidebarKeys = []string{"created_by_me", "workload", "calendars", "dashboards", "my_todo", "request_forms", "timesheets", "reports", "stream", "starred"}
+var sidebarKeys = []string{"created_by_me", "workload", "calendars", "dashboards", "my_todo", "request_forms", "timesheets", "reports", "stream", "starred", "portfolio", "reviews"}
 
 // profileNumbers are optional whole-number defaults with their upper limit (the table has the same CHECK).
 var profileNumbers = map[string]int{"default_task_duration_days": 3650, "default_task_effort_minutes": 525600}
@@ -33,7 +33,7 @@ var profileNumbers = map[string]int{"default_task_duration_days": 3650, "default
 var emailGroups = []string{"mention", "assigned", "shared", "task_changes", "report"}
 
 // profileLists are the fields that hold a set of keys, each limited to the listed values.
-var profileLists = map[string][]string{"sidebar_hidden": sidebarKeys, "email_muted": emailGroups}
+var profileLists = map[string][]string{"sidebar_hidden": sidebarKeys, "sidebar_pinned": sidebarKeys, "email_muted": emailGroups}
 
 func validProfileValue(field, value string) bool {
 	if strings.ContainsRune(value, 0) {
@@ -86,8 +86,14 @@ func (s *Server) updateMe(w http.ResponseWriter, r *http.Request) {
 				writeError(w, 422, "invalid profile field: "+key)
 				return
 			}
-			list = append([]string{}, slices.Compact(slices.Sorted(slices.Values(list)))...) // never nil: the column is NOT NULL
-			if slices.ContainsFunc(list, func(k string) bool { return !slices.Contains(allowed, k) }) {
+			invalid := slices.ContainsFunc(list, func(k string) bool { return !slices.Contains(allowed, k) })
+			if key == "sidebar_pinned" {
+				// Pin order is the user's own, so keep it as sent and reject repeats instead of sorting them away.
+				invalid = invalid || len(slices.Compact(slices.Sorted(slices.Values(list)))) != len(list)
+			} else {
+				list = append([]string{}, slices.Compact(slices.Sorted(slices.Values(list)))...) // never nil: the column is NOT NULL
+			}
+			if invalid {
 				writeError(w, 422, "invalid profile field: "+key)
 				return
 			}

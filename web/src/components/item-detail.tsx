@@ -28,7 +28,7 @@ import { ItemActivity } from "@/components/item-activity";
 import { ItemBlocks } from "@/components/item-blocks";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ItemAttachments } from "@/components/item-attachments";
-import { AvatarStack } from "@/components/avatar-stack";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { tintOf } from "@/components/status-chip";
 import { ItemProgress } from "@/components/project-progress";
 const ItemDescription = lazy(async () => ({ default: (await import("@/components/item-description")).ItemDescription }));
@@ -313,7 +313,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
     <ItemAttachments item={item} userId={me.id} />
       </>,
     }} />
-    {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
+    {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} taskOnly={item.type === "task"} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
     {exporting && <ProjectExcelExport open={exporting} onOpenChange={setExporting} item={item} />}
     <SaveBlueprintDialog open={savingBlueprint} onOpenChange={setSavingBlueprint} itemID={item.id} title={item.title} />
     <ConfirmDialog open={deleting} onOpenChange={setDeleting} title={t("items.delete")} description={t("items.deleteDescription")}

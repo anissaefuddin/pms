@@ -17,16 +17,17 @@ test("project Files lists files across items and Chart counts items by status; p
     [`GET /spaces/${marketing.id}/views`]: { body: { items: [views[0]] } },
     [`GET /items/${projectId}`]: { body: project, headers: { ETag: '"1"' } },
     [`GET /items/${projectId}/children`]: { body: { items: [task] } },
+    "POST /analytics/query": { body: { total: 1, rows: [{ group: { key: "s1", label: "In review" }, break: null, value: 1 }] } },
     [`GET /items/${projectId}/views`]: { body: { items: views } },
     [`GET /items/${projectId}/files`]: { body: { items: [{ id: "f1", item_id: taskId, item_title: "Banner", filename: "banner.png", content_type: "image/png", size_bytes: 2048, uploader: { id: "u", name: "Ada Lovelace" }, created_at: ts }] } },
   } });
   await page.goto(`/spaces/${marketing.id}`);
   await page.getByRole("button", { name: "Campaign", exact: true }).click();
-  await page.getByRole("button", { name: "Files", exact: true }).click();
+  await page.getByRole("radio", { name: "Files", exact: true }).click();
   await expect(page.getByRole("link", { name: "banner.png" })).toHaveAttribute("href", "/api/v1/attachments/f1/download");
-  await expect(page.getByRole("row", { name: /banner\.png Banner 2 KB Ada Lovelace/ })).toBeVisible();
+  await expect(page.getByRole("row", { name: /banner\.png .*Banner 2 KB Ada Lovelace/ })).toBeVisible();
   expect((await new AxeBuilder({ page }).include("table").analyze()).violations).toEqual([]);
-  await page.getByRole("button", { name: "Chart", exact: true }).click();
+  await page.getByRole("radio", { name: "Chart", exact: true }).click();
   await expect(page.getByRole("img", { name: "In review: 1" })).toBeVisible();
   expect((await new AxeBuilder({ page }).include("figure").analyze()).violations).toEqual([]);
 });

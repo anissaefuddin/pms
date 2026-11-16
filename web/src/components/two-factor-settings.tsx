@@ -173,8 +173,8 @@ function QrCode({ value }: { value: string }) {
   // Always dark on white (also in dark mode) so phone cameras can read it.
   return (
     <svg role="img" aria-label={t("settings.twoFactor.qrLabel")} viewBox={`0 0 ${size} ${size}`} className="size-48 rounded" shapeRendering="crispEdges">
-      <rect width={size} height={size} fill="#fff" />
-      <path d={path} fill="#000" />
+      <rect width={size} height={size} fill="#fff" />{/* allow-hex: QR harus hitam di atas putih agar bisa dipindai */}
+      <path d={path} fill="#000" />{/* allow-hex: QR harus hitam di atas putih agar bisa dipindai */}
     </svg>
   );
 }

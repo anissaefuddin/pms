@@ -6,7 +6,7 @@
 
 | Req | Story | Bukti otomatis | Status |
 |---|---|---|---|
-| CUST-01 | S8.1.1, S8.1.5 | CRUD, matriks role, kompatibilitas item lama, dialog UI, E2E live PAR-01/02 | **Sebagian**: tipe belum tampil di Table, Board, filter, pencarian, Excel, report, dan menu "+" per Space belum ada |
+| CUST-01 | S8.1.1, S8.1.5 | CRUD, matriks role, kompatibilitas item lama, dialog UI, E2E live PAR-01/02 | **Sebagian**: nama tipe kustom tersedia pada kolom/pengelompokan Table dan Card fields Board. Filter, pencarian, Excel, report, dan toggle menu "+" per Space masih terbuka |
 | CUST-02 | S8.1.2 | Default dan inheritance importance lewat create API; form memakai jalur yang sama | **Sebagian**: impor Excel belum mengenal tipe kustom, default berdasar custom field belum ada, dan jalur UI dan impor belum punya tes default sendiri |
 | CUST-03 | S8.1.3 | Tabel kasus anak yang diizinkan di create dan perpindahan lokasi, multi-lokasi, workflow bawaan tipe | **Terpenuhi** (reorder tidak mengubah induk) |
 | CUST-04 | S8.1.4 | Validasi layout, panel dirender dari layout, editor admin, axe | **Terpenuhi** untuk blok panel; menempatkan satu custom field tertentu di bagian tertentu belum (semua field kustom satu blok) |

@@ -1,12 +1,12 @@
 import { formatNumber, formatDate, useProfile } from "@/lib/profile";
 import { useState } from "react";
-import { CalendarDays, ListTree, Plus } from "lucide-react";
+import { Diamond, CalendarDays, ListTree, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomFieldDisplay } from "@/components/custom-field-editor";
-import { AvatarStack } from "@/components/avatar-stack";
+import { AvatarStack } from "@/components/ui/avatar-stack";
 import { StatusChip, tintOf } from "@/components/status-chip";
 import { statusDotClass } from "@/lib/status-colors";
 import { TypeBadge, TypeGlyph } from "@/components/type-badge";
@@ -70,7 +70,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
           onDragOver={(event) => { if (dragging && !pending && (column.id || swimlanes)) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); drop(lane, column.id); }}>
           <h3 className={`flex items-center gap-2 rounded-md px-3 py-2 font-semibold ${tintOf(column.color)}`}>
-            <span aria-hidden className={`size-2 rounded-full ${statusDotClass(column.color)}`} />{column.name} <span className="font-normal">{formatNumber(column.items.length, profile)}</span></h3>
+            <span aria-hidden className={`size-2 rounded-full ${statusDotClass(column.color)}`} />{column.name} <span className="font-normal">{formatNumber(column.items.length, profile)}</span>{column.items.some((item) => item.is_milestone) && <span className="text-xs font-normal text-muted-foreground">{t("views.boardBreakdown", { tasks: column.items.filter((item) => !item.is_milestone).length, milestones: column.items.filter((item) => item.is_milestone).length })}</span>}</h3>
           <ul className="space-y-2">
             {column.items.map((item) => <Card key={item.id} item={item} lane={lane.key} now={now} fields={cardFields} shown={shown}
               statuses={statuses} pending={pending} onOpen={onOpen} onPatch={onPatch} onDrag={setDragging} />)}
@@ -108,6 +108,7 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
     shown.includes("author") && item.created_by && t("views.card.author", { name: item.created_by.name }),
     shown.includes("locations") && item.locations.map((loc) => loc.space_name).filter(Boolean).join(", "),
   ].filter(Boolean);
+  const milestone = item.is_milestone ? <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground"><Diamond aria-hidden className="size-3" />{t("views.milestone")}</span> : null;
   return <li className="rounded-lg border bg-card shadow-xs"
     draggable={draggable} onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); onDrag({ id: item.id, lane }); }}
     onDragEnd={() => onDrag(undefined)}>
@@ -118,8 +119,9 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
         <TypeGlyph item={item} className="mt-1.5 size-4 text-muted-foreground" />
         <Button variant="ghost" size="sm" className="h-auto min-w-0 flex-1 justify-start whitespace-normal p-0 text-left text-sm font-medium hover:bg-transparent hover:underline" onClick={() => onOpen(item)}>{item.title}</Button>
       </div>
-      {(!!meta.length || !!item.item_type) && <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
-        {<TypeBadge item={item} />}{!!meta.length && <span>{meta.join(" · ")}</span>}</p>}
+      {/* Agent B: the type icon already shows the type; the name stays for screen readers and tests (sr-only). */}
+      {(!!meta.length || !!item.item_type || !!item.is_milestone) && <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
+        {item.item_type && <span className="sr-only"><TypeBadge item={item} /></span>}{milestone}{!!meta.length && <span>{meta.join(" · ")}</span>}</p>}
       {((shown.includes("start_date") && item.start_date) || (shown.includes("due_date") && item.due_date) || (shown.includes("assignee") && item.assignees.length > 0)) && <div className="flex items-center justify-between gap-2 text-xs text-muted-foreground">
         {shown.includes("assignee") && <AvatarStack people={item.assignees} />}
         {((shown.includes("start_date") && item.start_date) || (shown.includes("due_date") && item.due_date)) && <p className="ml-auto flex items-center gap-1"><CalendarDays className="size-3" aria-hidden />{[

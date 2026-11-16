@@ -1,65 +1,106 @@
 import { useState } from "react";
-import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useSpace } from "@/lib/space-queries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Info } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { CurrentUser } from "@/lib/api";
+import { api, type CurrentUser } from "@/lib/api";
+import { FormError } from "@/components/auth/form-error";
 import { ItemDetail } from "@/components/item-detail";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { getItem, itemKeys } from "@/lib/items";
-import { useSpaces } from "@/lib/space-queries";
-import { FormError } from "@/components/auth/form-error";
+import { getItem, itemKeys, listItems, type Item } from "@/lib/items";
+import type { Share } from "@/lib/spaces";
 import { ViewWorkspace } from "@/components/view-workspace";
+import { ProjectHeader } from "@/components/project-header";
+import { CreateItemDialog } from "@/components/create-item-dialog";
+import { ShareDialog } from "@/components/share-dialog";
+import { WorkspaceLayout } from "@/components/workspace-layout";
+import { ErrorState } from "@/components/ui/error-state";
+import { WorkspaceHeader } from "@/components/workspace-header";
+import { TypeIcon } from "@/components/type-icon";
+import { Info } from "lucide-react";
 
 export const Route = createFileRoute("/_app/tasks/$itemId")({ component: ItemPage });
+
+// F2: a folder shows where it lives, like a project does. Space name links back to the Space.
+function FolderBreadcrumb({ spaceId, title }: { spaceId: string; title: string }) {
+  const { t } = useTranslation();
+  const space = useSpace(spaceId);
+  return <nav aria-label={t("views.project.breadcrumb")}>
+    <ol className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+      <li>{space.data && <Link to="/spaces/$spaceId" params={{ spaceId }} className="hover:text-foreground hover:underline">{space.data.name}</Link>}</li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page" className="min-w-0 truncate text-foreground">{title}</li>
+    </ol>
+  </nav>;
+}
 
 function ItemPage() {
   return <ItemWorkspace itemId={Route.useParams().itemId} />;
 }
 
-/** The single place that mounts the item detail form: the "Info" panel of a project, or the page body of a task. */
-function ProjectInfoPanel({ itemId, me }: { itemId: string; me: CurrentUser }) {
-  const navigate = useNavigate();
-  return <ItemDetail key={itemId} id={itemId} me={me}
-    onOpen={(id) => void navigate({ to: "/tasks/$itemId", params: { itemId: id } })}
-    onDeleted={() => void navigate({ to: "/" })} />;
-}
-
 export function ItemWorkspace({ itemId }: { itemId: string }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
-  const [info, setInfo] = useState(false);
-  const me = useQueryClient().getQueryData<CurrentUser>(["me"]);
-  const spaces = useSpaces();
+  const qc = useQueryClient();
+  const me = qc.getQueryData<CurrentUser>(["me"]);
   const detail = useQuery({ queryKey: itemKeys.detail(itemId), queryFn: () => getItem(itemId), staleTime: Infinity });
   const item = detail.data?.item;
   const container = item && item.type !== "task" ? item : undefined;
+  const isProject = item?.type === "project";
   const canCreate = !!container?.my_capabilities.includes("create");
   const canEdit = !!container?.my_capabilities.includes("edit");
+  const canShare = !!container?.my_capabilities.includes("share");
+  // The project header reads the same children list the Table view uses, so both share one cache entry.
+  const children = useQuery({ queryKey: itemKeys.children(itemId), enabled: isProject,
+    queryFn: () => listItems(`/api/v1/items/${itemId}/children`) });
+  // WA-D01: Info opens the contextual detail panel (?task=) instead of an inline copy of the title, so the header owns the primary title.
+  const search = useSearch({ strict: false }) as { task?: string };
+  const infoOpen = search.task === itemId;
+  function toggleInfo() {
+    void navigate({ to: ".", search: (previous) => ({ ...previous, task: infoOpen ? undefined : itemId }) });
+  }
+  const [addingTask, setAddingTask] = useState(false);
+  const [sharing, setSharing] = useState(false);
+  // Tasks open in the slide-right panel (?task=); projects and folders open as pages.
+  function openChild(child: Item) {
+    if (child.type === "task") void navigate({ to: ".", search: (previous) => ({ ...previous, task: child.id }) });
+    else void navigate({ to: "/tasks/$itemId", params: { itemId: child.id } });
+  }
   if (!me) return null;
-  if (detail.isError) return <main className="mx-auto w-full space-y-2 p-6"><FormError message={t("items.loadError")} /><Button variant="outline" onClick={() => void detail.refetch()}>{t("items.retry")}</Button></main>;
-  if (item && !container) return <main className="mx-auto w-full p-6"><ProjectInfoPanel itemId={itemId} me={me} /></main>;
-  const spaceId = container?.locations[0]?.space_id ?? "";
-  const space = spaces.data?.find((entry) => entry.id === spaceId);
-  return <main className="mx-auto w-full space-y-4 p-6">
-    {container ? <>
-      <header className="space-y-1">
-        {space && <nav aria-label={t("nav.breadcrumb")} className="text-sm text-muted-foreground">
-          <Link to="/spaces/$spaceId" params={{ spaceId }} className="hover:underline">{space.kind === "personal" ? t("spaces.personal") : space.name}</Link></nav>}
-        <div className="flex flex-wrap items-center gap-2">
-          <h1 className="workspace-title">{container.title}</h1>
-          <Button variant="outline" size="sm" onClick={() => setInfo(true)}><Info />{t("items.info")}</Button>
-        </div>
-      </header>
-      <Dialog open={info} onOpenChange={setInfo}>
-        <DialogContent className="inset-y-0 right-0 left-auto w-full max-w-xl translate-none overflow-y-auto rounded-none sm:max-w-xl">
-          <DialogTitle>{t("items.info")}</DialogTitle>
-          {info && <ProjectInfoPanel itemId={itemId} me={me} />}
-        </DialogContent>
-      </Dialog>
-      <ViewWorkspace spaceId={spaceId} parent={container} me={me}
-        canCreate={canCreate} canEdit={canEdit} onOpen={(child) => void navigate({ to: "/tasks/$itemId", params: { itemId: child.id } })} />
-    </> : <p role="status" className="text-sm text-muted-foreground">{t("items.loading")}</p>}
-  </main>;
+  if (detail.isError) return <WorkspaceLayout><ErrorState message={t("items.loadError")} retryLabel={t("items.retry")} onRetry={() => void detail.refetch()} /></WorkspaceLayout>;
+  return <WorkspaceLayout className="space-y-6">
+    {isProject && item ? <ProjectHeader item={item} children={children.data ?? []} canCreate={canCreate} infoOpen={infoOpen}
+      onToggleInfo={toggleInfo} onAddTask={() => setAddingTask(true)}
+      onShare={canShare ? () => setSharing(true) : undefined} />
+    : item && container ? <WorkspaceHeader icon={<TypeIcon name="folder" />} title={item.title} starItemId={item.id}
+      breadcrumb={<FolderBreadcrumb spaceId={item.locations[0]?.space_id ?? ""} title={item.title} />}
+      actions={<Button variant="outline" aria-pressed={infoOpen} onClick={toggleInfo}><Info />{t("views.project.info")}</Button>} />
+    : item ? <ItemDetail key={itemId} id={itemId} me={me}
+      onOpen={(id) => void navigate({ to: "/tasks/$itemId", params: { itemId: id } })}
+      onDeleted={() => void navigate({ to: "/" })} />
+    : null}
+    {container && <ViewWorkspace spaceId={container.locations[0]?.space_id ?? ""} parent={container} me={me}
+      canCreate={canCreate} canEdit={canEdit} onOpen={openChild} />}
+    {isProject && item && <CreateItemDialog open={addingTask} onOpenChange={setAddingTask} taskOnly me={me}
+      location={{ space_id: item.locations[0]?.space_id ?? "", parent_item_id: item.id }}
+      onCreated={openChild} />}
+    {isProject && item && <ShareDialog
+      open={sharing}
+      onOpenChange={setSharing}
+      title={t("share.title", { name: item.title })}
+      queryKey={itemKeys.detail(item.id)}
+      loadShares={async () => {
+        let etag = "";
+        const { items } = await api<{ items: Share[] }>(`/api/v1/items/${item.id}/shares`, undefined, (headers) => {
+          etag = headers.get("ETag") ?? "";
+        });
+        if (!etag) throw new Error("Missing share ETag");
+        return { items, etag };
+      }}
+      saveShares={(shares, etag) => api(`/api/v1/items/${item.id}/shares`, { method: "PUT", headers: { "If-Match": etag }, body: JSON.stringify({ shares }) })}
+      canShare={canShare}
+      me={me}
+      onSaved={() => qc.invalidateQueries({ queryKey: itemKeys.detail(item.id) })}
+    />}
+  </WorkspaceLayout>;
 }

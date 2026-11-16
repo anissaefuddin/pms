@@ -54,10 +54,11 @@ test("a custom type appears in the create dialog and is sent as type_key", async
     "GET /items/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa": { body: { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "task", title: "Crash", seq: 1, version: 1, assignees: [], locations: [], my_capabilities: ALL }, headers: { ETag: '"1"' } },
   } });
   await page.goto(`/spaces/${marketing.id}`);
-  await page.locator("header").first().getByRole("button", { name: "New item" }).click();
+  await page.locator("header").first().getByRole("button", { name: "Create" }).click();
+  await page.getByRole("menuitem", { name: /^Project/ }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Name").fill("Crash");
-  await dialog.getByRole("radio", { name: "Task" }).check();
+  await dialog.getByRole("radio", { name: /^Task/ }).check({ force: true });
   await dialog.locator("select").filter({ has: page.locator('option[value="bug"]') }).selectOption("bug");
   await dialog.getByRole("button", { name: "Create item" }).click();
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")?.body).toMatchObject({ type: "task", type_key: "bug", title: "Crash" });

@@ -114,6 +114,7 @@ const (
 	AnalyticsQueryBreakBySpace        AnalyticsQueryBreakBy = "space"
 	AnalyticsQueryBreakByStatus       AnalyticsQueryBreakBy = "status"
 	AnalyticsQueryBreakByStatusGroup  AnalyticsQueryBreakBy = "status_group"
+	AnalyticsQueryBreakByStatusId     AnalyticsQueryBreakBy = "status_id"
 	AnalyticsQueryBreakByType         AnalyticsQueryBreakBy = "type"
 	AnalyticsQueryBreakByUser         AnalyticsQueryBreakBy = "user"
 )
@@ -147,6 +148,8 @@ func (e AnalyticsQueryBreakBy) Valid() bool {
 		return true
 	case AnalyticsQueryBreakByStatusGroup:
 		return true
+	case AnalyticsQueryBreakByStatusId:
+		return true
 	case AnalyticsQueryBreakByType:
 		return true
 	case AnalyticsQueryBreakByUser:
@@ -171,6 +174,7 @@ const (
 	AnalyticsQueryGroupBySpace        AnalyticsQueryGroupBy = "space"
 	AnalyticsQueryGroupByStatus       AnalyticsQueryGroupBy = "status"
 	AnalyticsQueryGroupByStatusGroup  AnalyticsQueryGroupBy = "status_group"
+	AnalyticsQueryGroupByStatusId     AnalyticsQueryGroupBy = "status_id"
 	AnalyticsQueryGroupByType         AnalyticsQueryGroupBy = "type"
 	AnalyticsQueryGroupByUser         AnalyticsQueryGroupBy = "user"
 )
@@ -203,6 +207,8 @@ func (e AnalyticsQueryGroupBy) Valid() bool {
 	case AnalyticsQueryGroupByStatus:
 		return true
 	case AnalyticsQueryGroupByStatusGroup:
+		return true
+	case AnalyticsQueryGroupByStatusId:
 		return true
 	case AnalyticsQueryGroupByType:
 		return true
@@ -1148,14 +1154,26 @@ func (e FormResponseSettingsItemType) Valid() bool {
 
 // Defines values for ItemDefaultViewType.
 const (
-	ItemDefaultViewTypeBoard ItemDefaultViewType = "board"
-	ItemDefaultViewTypeTable ItemDefaultViewType = "table"
+	ItemDefaultViewTypeBoard    ItemDefaultViewType = "board"
+	ItemDefaultViewTypeCalendar ItemDefaultViewType = "calendar"
+	ItemDefaultViewTypeChart    ItemDefaultViewType = "chart"
+	ItemDefaultViewTypeFiles    ItemDefaultViewType = "files"
+	ItemDefaultViewTypeGantt    ItemDefaultViewType = "gantt"
+	ItemDefaultViewTypeTable    ItemDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the ItemDefaultViewType enum.
 func (e ItemDefaultViewType) Valid() bool {
 	switch e {
 	case ItemDefaultViewTypeBoard:
+		return true
+	case ItemDefaultViewTypeCalendar:
+		return true
+	case ItemDefaultViewTypeChart:
+		return true
+	case ItemDefaultViewTypeFiles:
+		return true
+	case ItemDefaultViewTypeGantt:
 		return true
 	case ItemDefaultViewTypeTable:
 		return true
@@ -1205,14 +1223,26 @@ func (e ItemRestoreBlockedReason) Valid() bool {
 
 // Defines values for ItemCreateDefaultViewType.
 const (
-	ItemCreateDefaultViewTypeBoard ItemCreateDefaultViewType = "board"
-	ItemCreateDefaultViewTypeTable ItemCreateDefaultViewType = "table"
+	ItemCreateDefaultViewTypeBoard    ItemCreateDefaultViewType = "board"
+	ItemCreateDefaultViewTypeCalendar ItemCreateDefaultViewType = "calendar"
+	ItemCreateDefaultViewTypeChart    ItemCreateDefaultViewType = "chart"
+	ItemCreateDefaultViewTypeFiles    ItemCreateDefaultViewType = "files"
+	ItemCreateDefaultViewTypeGantt    ItemCreateDefaultViewType = "gantt"
+	ItemCreateDefaultViewTypeTable    ItemCreateDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the ItemCreateDefaultViewType enum.
 func (e ItemCreateDefaultViewType) Valid() bool {
 	switch e {
 	case ItemCreateDefaultViewTypeBoard:
+		return true
+	case ItemCreateDefaultViewTypeCalendar:
+		return true
+	case ItemCreateDefaultViewTypeChart:
+		return true
+	case ItemCreateDefaultViewTypeFiles:
+		return true
+	case ItemCreateDefaultViewTypeGantt:
 		return true
 	case ItemCreateDefaultViewTypeTable:
 		return true
@@ -1223,14 +1253,26 @@ func (e ItemCreateDefaultViewType) Valid() bool {
 
 // Defines values for ItemPatchResultDefaultViewType.
 const (
-	ItemPatchResultDefaultViewTypeBoard ItemPatchResultDefaultViewType = "board"
-	ItemPatchResultDefaultViewTypeTable ItemPatchResultDefaultViewType = "table"
+	ItemPatchResultDefaultViewTypeBoard    ItemPatchResultDefaultViewType = "board"
+	ItemPatchResultDefaultViewTypeCalendar ItemPatchResultDefaultViewType = "calendar"
+	ItemPatchResultDefaultViewTypeChart    ItemPatchResultDefaultViewType = "chart"
+	ItemPatchResultDefaultViewTypeFiles    ItemPatchResultDefaultViewType = "files"
+	ItemPatchResultDefaultViewTypeGantt    ItemPatchResultDefaultViewType = "gantt"
+	ItemPatchResultDefaultViewTypeTable    ItemPatchResultDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the ItemPatchResultDefaultViewType enum.
 func (e ItemPatchResultDefaultViewType) Valid() bool {
 	switch e {
 	case ItemPatchResultDefaultViewTypeBoard:
+		return true
+	case ItemPatchResultDefaultViewTypeCalendar:
+		return true
+	case ItemPatchResultDefaultViewTypeChart:
+		return true
+	case ItemPatchResultDefaultViewTypeFiles:
+		return true
+	case ItemPatchResultDefaultViewTypeGantt:
 		return true
 	case ItemPatchResultDefaultViewTypeTable:
 		return true
@@ -1692,6 +1734,33 @@ func (e PrincipalType) Valid() bool {
 	}
 }
 
+// Defines values for ProjectFileReviewStatus.
+const (
+	ProjectFileReviewStatusApproved     ProjectFileReviewStatus = "approved"
+	ProjectFileReviewStatusCancelled    ProjectFileReviewStatus = "cancelled"
+	ProjectFileReviewStatusInReview     ProjectFileReviewStatus = "in_review"
+	ProjectFileReviewStatusNotRequested ProjectFileReviewStatus = "not_requested"
+	ProjectFileReviewStatusRejected     ProjectFileReviewStatus = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ProjectFileReviewStatus enum.
+func (e ProjectFileReviewStatus) Valid() bool {
+	switch e {
+	case ProjectFileReviewStatusApproved:
+		return true
+	case ProjectFileReviewStatusCancelled:
+		return true
+	case ProjectFileReviewStatusInReview:
+		return true
+	case ProjectFileReviewStatusNotRequested:
+		return true
+	case ProjectFileReviewStatusRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ProjectProgressMethod.
 const (
 	AveragePercent   ProjectProgressMethod = "average_percent"
@@ -1967,14 +2036,26 @@ func (e ScimTokenInputDefaultUserType) Valid() bool {
 
 // Defines values for SearchResultsItemsDefaultViewType.
 const (
-	SearchResultsItemsDefaultViewTypeBoard SearchResultsItemsDefaultViewType = "board"
-	SearchResultsItemsDefaultViewTypeTable SearchResultsItemsDefaultViewType = "table"
+	SearchResultsItemsDefaultViewTypeBoard    SearchResultsItemsDefaultViewType = "board"
+	SearchResultsItemsDefaultViewTypeCalendar SearchResultsItemsDefaultViewType = "calendar"
+	SearchResultsItemsDefaultViewTypeChart    SearchResultsItemsDefaultViewType = "chart"
+	SearchResultsItemsDefaultViewTypeFiles    SearchResultsItemsDefaultViewType = "files"
+	SearchResultsItemsDefaultViewTypeGantt    SearchResultsItemsDefaultViewType = "gantt"
+	SearchResultsItemsDefaultViewTypeTable    SearchResultsItemsDefaultViewType = "table"
 )
 
 // Valid indicates whether the value is a known member of the SearchResultsItemsDefaultViewType enum.
 func (e SearchResultsItemsDefaultViewType) Valid() bool {
 	switch e {
 	case SearchResultsItemsDefaultViewTypeBoard:
+		return true
+	case SearchResultsItemsDefaultViewTypeCalendar:
+		return true
+	case SearchResultsItemsDefaultViewTypeChart:
+		return true
+	case SearchResultsItemsDefaultViewTypeFiles:
+		return true
+	case SearchResultsItemsDefaultViewTypeGantt:
 		return true
 	case SearchResultsItemsDefaultViewTypeTable:
 		return true
@@ -2070,8 +2151,10 @@ const (
 	SidebarKeyCreatedByMe  SidebarKey = "created_by_me"
 	SidebarKeyDashboards   SidebarKey = "dashboards"
 	SidebarKeyMyTodo       SidebarKey = "my_todo"
+	SidebarKeyPortfolio    SidebarKey = "portfolio"
 	SidebarKeyReports      SidebarKey = "reports"
 	SidebarKeyRequestForms SidebarKey = "request_forms"
+	SidebarKeyReviews      SidebarKey = "reviews"
 	SidebarKeyStarred      SidebarKey = "starred"
 	SidebarKeyStream       SidebarKey = "stream"
 	SidebarKeyTimesheets   SidebarKey = "timesheets"
@@ -2089,9 +2172,13 @@ func (e SidebarKey) Valid() bool {
 		return true
 	case SidebarKeyMyTodo:
 		return true
+	case SidebarKeyPortfolio:
+		return true
 	case SidebarKeyReports:
 		return true
 	case SidebarKeyRequestForms:
+		return true
+	case SidebarKeyReviews:
 		return true
 	case SidebarKeyStarred:
 		return true
@@ -2968,24 +3055,27 @@ type ActivityPage struct {
 
 // AnalyticsFilters defines model for AnalyticsFilters.
 type AnalyticsFilters struct {
-	Assignees        *[]string                       `json:"assignees,omitempty"`
-	AwaitingMyReview *bool                           `json:"awaiting_my_review,omitempty"`
-	Billing          *AnalyticsFiltersBilling        `json:"billing,omitempty"`
-	DueFrom          *openapi_types.Date             `json:"due_from,omitempty"`
-	DueThisMonth     *bool                           `json:"due_this_month,omitempty"`
-	DueThisWeek      *bool                           `json:"due_this_week,omitempty"`
-	DueTo            *openapi_types.Date             `json:"due_to,omitempty"`
-	EffortMax        *int                            `json:"effort_max,omitempty"`
-	EffortMin        *int                            `json:"effort_min,omitempty"`
-	EntryFrom        *openapi_types.Date             `json:"entry_from,omitempty"`
-	EntryThisMonth   *bool                           `json:"entry_this_month,omitempty"`
-	EntryTo          *openapi_types.Date             `json:"entry_to,omitempty"`
-	Followed         *bool                           `json:"followed,omitempty"`
-	Importance       *[]AnalyticsFiltersImportance   `json:"importance,omitempty"`
-	NoDueDate        *bool                           `json:"no_due_date,omitempty"`
-	Overdue          *bool                           `json:"overdue,omitempty"`
-	Starred          *bool                           `json:"starred,omitempty"`
-	StatusGroups     *[]AnalyticsFiltersStatusGroups `json:"status_groups,omitempty"`
+	Assignees        *[]string                `json:"assignees,omitempty"`
+	AwaitingMyReview *bool                    `json:"awaiting_my_review,omitempty"`
+	Billing          *AnalyticsFiltersBilling `json:"billing,omitempty"`
+	DueFrom          *openapi_types.Date      `json:"due_from,omitempty"`
+	DueThisMonth     *bool                    `json:"due_this_month,omitempty"`
+	DueThisWeek      *bool                    `json:"due_this_week,omitempty"`
+	DueTo            *openapi_types.Date      `json:"due_to,omitempty"`
+	EffortMax        *int                     `json:"effort_max,omitempty"`
+	EffortMin        *int                     `json:"effort_min,omitempty"`
+	EntryFrom        *openapi_types.Date      `json:"entry_from,omitempty"`
+	EntryThisMonth   *bool                    `json:"entry_this_month,omitempty"`
+	EntryTo          *openapi_types.Date      `json:"entry_to,omitempty"`
+
+	// ExcludeMilestones Milestone tidak dihitung sebagai task (WA-D03); hanya untuk reporting_on tasks
+	ExcludeMilestones *bool                           `json:"exclude_milestones,omitempty"`
+	Followed          *bool                           `json:"followed,omitempty"`
+	Importance        *[]AnalyticsFiltersImportance   `json:"importance,omitempty"`
+	NoDueDate         *bool                           `json:"no_due_date,omitempty"`
+	Overdue           *bool                           `json:"overdue,omitempty"`
+	Starred           *bool                           `json:"starred,omitempty"`
+	StatusGroups      *[]AnalyticsFiltersStatusGroups `json:"status_groups,omitempty"`
 
 	// TypeKeys Hanya item bertipe ini (kunci tipe item bawaan atau kustom; S8.1.5)
 	TypeKeys   *[]string `json:"type_keys,omitempty"`
@@ -3108,12 +3198,16 @@ type ApprovalStatus string
 
 // ApprovalEvent defines model for ApprovalEvent.
 type ApprovalEvent struct {
-	Actor      *UserRef               `json:"actor"`
-	ApprovalId openapi_types.UUID     `json:"approval_id"`
-	Comment    string                 `json:"comment"`
-	CreatedAt  time.Time              `json:"created_at"`
-	Decision   *ApprovalEventDecision `json:"decision"`
-	Id         int64                  `json:"id"`
+	Actor      *UserRef           `json:"actor"`
+	ApprovalId openapi_types.UUID `json:"approval_id"`
+
+	// AttachmentId WA-D08: file yang dirujuk approval; kosong untuk event lama
+	AttachmentId      *openapi_types.UUID    `json:"attachment_id,omitempty"`
+	AttachmentVersion *int32                 `json:"attachment_version,omitempty"`
+	Comment           string                 `json:"comment"`
+	CreatedAt         time.Time              `json:"created_at"`
+	Decision          *ApprovalEventDecision `json:"decision"`
+	Id                int64                  `json:"id"`
 
 	// ItemVersion Versi item saat peristiwa terjadi
 	ItemVersion *int32            `json:"item_version"`
@@ -4351,15 +4445,31 @@ type Me struct {
 	PersonalSpaceId   openapi_types.UUID `json:"personal_space_id"`
 	Phone             *string            `json:"phone,omitempty"`
 
-	// SidebarHidden Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
+	// SidebarHidden Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil. Dipertahankan satu rilis setelah sidebar_pinned
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
 	SidebarHidden *[]SidebarKey `json:"sidebar_hidden,omitempty"`
+
+	// SidebarPinned Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk
+	SidebarPinned *[]SidebarKey `json:"sidebar_pinned,omitempty"`
 	Status        UserStatus    `json:"status"`
 	Theme         *MeTheme      `json:"theme,omitempty"`
 	TimeFormat    MeTimeFormat  `json:"time_format"`
 
 	// Timezone Example: Asia/Jakarta
-	Timezone  string      `json:"timezone"`
-	UserType  UserType    `json:"user_type"`
+	Timezone string   `json:"timezone"`
+	UserType UserType `json:"user_type"`
+
+	// ViewExpansion Expansi hierarki per view milik user ini (WA-D05); kunci = id view. Hanya user ini yang membacanya
+	ViewExpansion *map[string]struct {
+		GanttCollapsed bool                 `json:"gantt_collapsed"`
+		Rows           []openapi_types.UUID `json:"rows"`
+	} `json:"view_expansion,omitempty"`
+
+	// ViewPrefs Preferensi view personal per workspace (WA-D07), kunci = id Space, Project, atau Folder. Hanya user ini yang membacanya
+	ViewPrefs *map[string]struct {
+		Hidden []openapi_types.UUID `json:"hidden"`
+		Order  []openapi_types.UUID `json:"order"`
+	} `json:"view_prefs,omitempty"`
 	WeekStart MeWeekStart `json:"week_start"`
 }
 
@@ -4402,11 +4512,15 @@ type MeUpdate struct {
 	Locale                   *MeUpdateLocale          `json:"locale,omitempty"`
 	Location                 *string                  `json:"location,omitempty"`
 	Phone                    *string                  `json:"phone,omitempty"`
-	SidebarHidden            *[]SidebarKey            `json:"sidebar_hidden,omitempty"`
-	Theme                    *MeUpdateTheme           `json:"theme,omitempty"`
-	TimeFormat               *MeUpdateTimeFormat      `json:"time_format,omitempty"`
-	Timezone                 *string                  `json:"timezone,omitempty"`
-	WeekStart                *MeUpdateWeekStart       `json:"week_start,omitempty"`
+	// Deprecated: this property has been marked as deprecated upstream, but no `x-deprecated-reason` was set
+	SidebarHidden *[]SidebarKey `json:"sidebar_hidden,omitempty"`
+
+	// SidebarPinned Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422)
+	SidebarPinned *[]SidebarKey       `json:"sidebar_pinned,omitempty"`
+	Theme         *MeUpdateTheme      `json:"theme,omitempty"`
+	TimeFormat    *MeUpdateTimeFormat `json:"time_format,omitempty"`
+	Timezone      *string             `json:"timezone,omitempty"`
+	WeekStart     *MeUpdateWeekStart  `json:"week_start,omitempty"`
 }
 
 // MeUpdateAccent defines model for MeUpdate.Accent.
@@ -4513,13 +4627,19 @@ type ProjectFile struct {
 	ItemTitle   string             `json:"item_title"`
 
 	// LinkUrl Terisi untuk lampiran tautan (tanpa berkas)
-	LinkUrl   *string `json:"link_url,omitempty"`
-	SizeBytes int64   `json:"size_bytes"`
-	Uploader  UserRef `json:"uploader"`
+	LinkUrl *string `json:"link_url,omitempty"`
+
+	// ReviewStatus WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
+	ReviewStatus *ProjectFileReviewStatus `json:"review_status,omitempty"`
+	SizeBytes    int64                    `json:"size_bytes"`
+	Uploader     UserRef                  `json:"uploader"`
 
 	// Version Nomor versi terbaru; filename
 	Version *int `json:"version,omitempty"`
 }
+
+// ProjectFileReviewStatus WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif
+type ProjectFileReviewStatus string
 
 // ProjectProgressMethod defines model for ProjectProgressMethod.
 type ProjectProgressMethod string
@@ -5190,8 +5310,13 @@ type TimeEntryFieldsBillingType string
 
 // TimeEntryPage defines model for TimeEntryPage.
 type TimeEntryPage struct {
-	Items      []TimeEntry `json:"items"`
-	NextOffset *int        `json:"next_offset"`
+	BillableMinutes    *int        `json:"billable_minutes,omitempty"`
+	Items              []TimeEntry `json:"items"`
+	NextOffset         *int        `json:"next_offset"`
+	NonBillableMinutes *int        `json:"non_billable_minutes,omitempty"`
+
+	// TotalMinutes Total menit seluruh hasil yang difilter (bukan halaman); hanya Timelog project
+	TotalMinutes *int `json:"total_minutes,omitempty"`
 }
 
 // TwoFactorChallenge defines model for TwoFactorChallenge.
@@ -5977,6 +6102,18 @@ type ListMyTodoParamsFilter string
 // ListMyTodoParamsSort defines parameters for ListMyTodo.
 type ListMyTodoParamsSort string
 
+// SaveViewExpansionJSONBody defines parameters for SaveViewExpansion.
+type SaveViewExpansionJSONBody struct {
+	GanttCollapsed bool                 `json:"gantt_collapsed"`
+	Rows           []openapi_types.UUID `json:"rows"`
+}
+
+// SaveViewPreferencesJSONBody defines parameters for SaveViewPreferences.
+type SaveViewPreferencesJSONBody struct {
+	Hidden []openapi_types.UUID `json:"hidden"`
+	Order  []openapi_types.UUID `json:"order"`
+}
+
 // ListNotificationsParams defines parameters for ListNotifications.
 type ListNotificationsParams struct {
 	Limit      *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -6569,6 +6706,12 @@ type DisableTwoFactorJSONRequestBody = TwoFactorReauth
 
 // EnableTwoFactorJSONRequestBody defines body for EnableTwoFactor for application/json ContentType.
 type EnableTwoFactorJSONRequestBody EnableTwoFactorJSONBody
+
+// SaveViewExpansionJSONRequestBody defines body for SaveViewExpansion for application/json ContentType.
+type SaveViewExpansionJSONRequestBody SaveViewExpansionJSONBody
+
+// SaveViewPreferencesJSONRequestBody defines body for SaveViewPreferences for application/json ContentType.
+type SaveViewPreferencesJSONRequestBody SaveViewPreferencesJSONBody
 
 // UpdateNotificationJSONRequestBody defines body for UpdateNotification for application/json ContentType.
 type UpdateNotificationJSONRequestBody UpdateNotificationJSONBody
@@ -7469,6 +7612,12 @@ type ServerInterface interface {
 	// ListMyTodo My to-do (NAV-05)
 	// (GET /me/todo)
 	ListMyTodo(w http.ResponseWriter, r *http.Request, params ListMyTodoParams)
+	// SaveViewExpansion Simpan expansi hierarki untuk satu view milik user (WA-D05)
+	// (PUT /me/view-expansion/{viewId})
+	SaveViewExpansion(w http.ResponseWriter, r *http.Request, viewId openapi_types.UUID)
+	// SaveViewPreferences Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07)
+	// (PUT /me/view-preferences/{scopeId})
+	SaveViewPreferences(w http.ResponseWriter, r *http.Request, scopeId openapi_types.UUID)
 	// ListNotifications Inbox (NAV-03)
 	// (GET /notifications)
 	ListNotifications(w http.ResponseWriter, r *http.Request, params ListNotificationsParams)
@@ -12698,6 +12847,58 @@ func (siw *ServerInterfaceWrapper) ListMyTodo(w http.ResponseWriter, r *http.Req
 	handler.ServeHTTP(w, r)
 }
 
+// SaveViewExpansion operation middleware
+func (siw *ServerInterfaceWrapper) SaveViewExpansion(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "viewId" -------------
+	var viewId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "viewId", r.PathValue("viewId"), &viewId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "viewId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveViewExpansion(w, r, viewId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveViewPreferences operation middleware
+func (siw *ServerInterfaceWrapper) SaveViewPreferences(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "scopeId" -------------
+	var scopeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "scopeId", r.PathValue("scopeId"), &scopeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scopeId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveViewPreferences(w, r, scopeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListNotifications operation middleware
 func (siw *ServerInterfaceWrapper) ListNotifications(w http.ResponseWriter, r *http.Request) {
 
@@ -16779,6 +16980,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/invitations", wrapper.InviteUser)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}", wrapper.GetUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/users/{userId}", wrapper.UpdateUser)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/me/view-expansion/{viewId}", wrapper.SaveViewExpansion)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/me/view-preferences/{scopeId}", wrapper.SaveViewPreferences)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/2fa", wrapper.GetTwoFactor)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/setup", wrapper.SetupTwoFactor)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/me/2fa/enable", wrapper.EnableTwoFactor)
@@ -25922,6 +26125,72 @@ func (response ListMyTodo422ApplicationProblemPlusJSONResponse) VisitListMyTodoR
 	return err
 }
 
+type SaveViewExpansionRequestObject struct {
+	ViewId openapi_types.UUID `json:"viewId"`
+	Body   *SaveViewExpansionJSONRequestBody
+}
+
+type SaveViewExpansionResponseObject interface {
+	VisitSaveViewExpansionResponse(w http.ResponseWriter) error
+}
+
+type SaveViewExpansion204Response struct {
+}
+
+func (response SaveViewExpansion204Response) VisitSaveViewExpansionResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SaveViewExpansion422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveViewExpansion422ApplicationProblemPlusJSONResponse) VisitSaveViewExpansionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveViewPreferencesRequestObject struct {
+	ScopeId openapi_types.UUID `json:"scopeId"`
+	Body    *SaveViewPreferencesJSONRequestBody
+}
+
+type SaveViewPreferencesResponseObject interface {
+	VisitSaveViewPreferencesResponse(w http.ResponseWriter) error
+}
+
+type SaveViewPreferences204Response struct {
+}
+
+func (response SaveViewPreferences204Response) VisitSaveViewPreferencesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type SaveViewPreferences422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveViewPreferences422ApplicationProblemPlusJSONResponse) VisitSaveViewPreferencesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListNotificationsRequestObject struct {
 	Params ListNotificationsParams
 }
@@ -34536,6 +34805,12 @@ type StrictServerInterface interface {
 	// ListMyTodo My to-do (NAV-05)
 	// (GET /me/todo)
 	ListMyTodo(ctx context.Context, request ListMyTodoRequestObject) (ListMyTodoResponseObject, error)
+	// SaveViewExpansion Simpan expansi hierarki untuk satu view milik user (WA-D05)
+	// (PUT /me/view-expansion/{viewId})
+	SaveViewExpansion(ctx context.Context, request SaveViewExpansionRequestObject) (SaveViewExpansionResponseObject, error)
+	// SaveViewPreferences Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07)
+	// (PUT /me/view-preferences/{scopeId})
+	SaveViewPreferences(ctx context.Context, request SaveViewPreferencesRequestObject) (SaveViewPreferencesResponseObject, error)
 	// ListNotifications Inbox (NAV-03)
 	// (GET /notifications)
 	ListNotifications(ctx context.Context, request ListNotificationsRequestObject) (ListNotificationsResponseObject, error)
@@ -39544,6 +39819,72 @@ func (sh *strictHandler) ListMyTodo(w http.ResponseWriter, r *http.Request, para
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListMyTodoResponseObject); ok {
 		if err := validResponse.VisitListMyTodoResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveViewExpansion operation middleware
+func (sh *strictHandler) SaveViewExpansion(w http.ResponseWriter, r *http.Request, viewId openapi_types.UUID) {
+	var request SaveViewExpansionRequestObject
+
+	request.ViewId = viewId
+
+	var body SaveViewExpansionJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveViewExpansion(ctx, request.(SaveViewExpansionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveViewExpansion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveViewExpansionResponseObject); ok {
+		if err := validResponse.VisitSaveViewExpansionResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveViewPreferences operation middleware
+func (sh *strictHandler) SaveViewPreferences(w http.ResponseWriter, r *http.Request, scopeId openapi_types.UUID) {
+	var request SaveViewPreferencesRequestObject
+
+	request.ScopeId = scopeId
+
+	var body SaveViewPreferencesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveViewPreferences(ctx, request.(SaveViewPreferencesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveViewPreferences")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveViewPreferencesResponseObject); ok {
+		if err := validResponse.VisitSaveViewPreferencesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

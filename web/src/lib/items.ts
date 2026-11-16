@@ -1,3 +1,4 @@
+import type { QueryClient } from "@tanstack/react-query";
 import type { components } from "@/api/schema";
 import type { Query } from "@tanstack/react-query";
 import { api } from "@/lib/api";
@@ -28,6 +29,27 @@ export async function getItem(id: string) {
 export function isProjectDetail(query: Query) {
   return query.queryKey[0] === "items" && query.queryKey[1] === "detail"
     && (query.state.data as Awaited<ReturnType<typeof getItem>> | undefined)?.item.type === "project";
+}
+
+/** Flat views (Calendar) need every item under the start list, not just the first folder level. Walks folders one level at a time. */
+/** Children of one container, cached under the item children key so the header and the flat views share one fetch. */
+export function subtreeChildren(qc: QueryClient, id: string): Promise<Item[]> {
+  return qc.ensureQueryData({ queryKey: [...itemKeys.children(id), "subtree"], queryFn: () => listItems(`/api/v1/items/${id}/children`), staleTime: 30_000 });
+}
+
+export async function listSubtree(start: Item[], childrenOf: (id: string) => Promise<Item[]>): Promise<Item[]> {
+  const out: Item[] = [];
+  const seen = new Set<string>();
+  let level = start;
+  while (level.length) {
+    const fresh = level.filter((item) => !seen.has(item.id));
+    for (const item of fresh) seen.add(item.id);
+    out.push(...fresh);
+    // Any item with children is walked, so subitems under a task are included too.
+    const containers = fresh.filter((item) => item.type === "folder" || item.type === "project" || (item.child_count ?? 0) > 0);
+    level = (await Promise.all(containers.map((item) => childrenOf(item.id)))).flat();
+  }
+  return out;
 }
 
 export async function listItems(path: string, sort?: string, type?: string, field?: string, preset?: string): Promise<Item[]> {

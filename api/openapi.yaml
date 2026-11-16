@@ -2543,6 +2543,52 @@ paths:
               schema: { $ref: '#/components/schemas/User' }
         '403': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /me/view-expansion/{viewId}:
+    put:
+      tags: [users]
+      operationId: saveViewExpansion
+      summary: Simpan expansi hierarki untuk satu view milik user (WA-D05)
+      parameters:
+        - name: viewId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [rows, gantt_collapsed]
+              properties:
+                rows: { type: array, maxItems: 500, items: { type: string, format: uuid } }
+                gantt_collapsed: { type: boolean }
+      responses:
+        '204': { description: Tersimpan }
+        '422': { $ref: '#/components/responses/Problem' }
+  /me/view-preferences/{scopeId}:
+    put:
+      tags: [users]
+      operationId: saveViewPreferences
+      summary: Simpan view tersembunyi dan urutan tab personal per workspace (WA-D07)
+      parameters:
+        - name: scopeId
+          in: path
+          required: true
+          schema: { type: string, format: uuid }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [hidden, order]
+              properties:
+                hidden: { type: array, maxItems: 100, items: { type: string, format: uuid } }
+                order: { type: array, maxItems: 100, items: { type: string, format: uuid } }
+      responses:
+        '204': { description: Tersimpan }
+        '422': { $ref: '#/components/responses/Problem' }
   /me/2fa:
     get:
       tags: [auth]
@@ -3533,7 +3579,7 @@ paths:
       summary: Buat project, folder, atau task (SPC-05, SPC-06, TASK-01, TASK-02)
       description: |
         `locations` wajib berisi minimal satu lokasi. Untuk subtask, isi `parent_item_id` dengan task induk.
-        `default_view_type` hanya berlaku untuk project/folder.
+        `default_view_type` hanya berlaku untuk project/folder; nilainya table, board, gantt, calendar, files, atau chart.
       requestBody:
         required: true
         content:
@@ -5774,6 +5820,7 @@ components:
         entry_from: { type: string, format: date }
         entry_to: { type: string, format: date }
         billing: { type: string, enum: [billable, non_billable] }
+        exclude_milestones: { type: boolean, description: Milestone tidak dihitung sebagai task (WA-D03); hanya untuk reporting_on tasks }
     AnalyticsQuery:
       type: object
       additionalProperties: false
@@ -5784,8 +5831,8 @@ components:
         container_ids: { type: array, maxItems: 100, items: { type: string, format: uuid }, description: Project atau Folder; hanya subpohonnya }
         metric: { type: string, enum: [count, effort_minutes, sum_field, avg_field, completion_percent, minutes, billable_minutes, actual_cost_minor, utilization], description: 'tasks/projects: count, effort_minutes, sum_field (jumlah custom field Number, Currency atau Percent, butuh field_id), avg_field (rata-rata per task, tugas tanpa nilai dihitung 0), completion_percent (persen task selesai dari yang ada dalam cakupan); time_entries: minutes, billable_minutes, actual_cost_minor (biaya aktual dalam satuan minor, hanya administrator; selain itu 403), count' }
         field_id: { type: string, format: uuid, description: 'Custom field untuk metric sum_field atau dimensi field (single select); wajib hanya pada keduanya' }
-        group_by: { type: string, enum: [assignee, status, status_group, importance, type, item_type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
-        break_by: { type: string, enum: [assignee, status, status_group, importance, type, item_type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
+        group_by: { type: string, enum: [assignee, status, status_id, status_group, importance, type, item_type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
+        break_by: { type: string, enum: [assignee, status, status_id, status_group, importance, type, item_type, space, field, due_month, created_month, user, item, category, billing_type, entry_month] }
         filters: { $ref: '#/components/schemas/AnalyticsFilters' }
     WidgetData:
       type: object
@@ -6161,6 +6208,9 @@ components:
           type: array
           items: { $ref: '#/components/schemas/TimeEntry' }
         next_offset: { type: integer, nullable: true }
+        total_minutes: { type: integer, description: Total menit seluruh hasil yang difilter (bukan halaman); hanya Timelog project }
+        billable_minutes: { type: integer }
+        non_billable_minutes: { type: integer }
 
     # ── Umum ──
     Problem:
@@ -6294,8 +6344,31 @@ components:
             comment_shortcut: { type: string, enum: [mod_enter, enter], default: mod_enter }
             sidebar_hidden:
               type: array
-              description: Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil
+              deprecated: true
+              description: Entri sidebar opsional yang disembunyikan user (NAV-02); Search dan Inbox selalu tampil. Dipertahankan satu rilis setelah sidebar_pinned
               items: { $ref: '#/components/schemas/SidebarKey' }
+            sidebar_pinned:
+              type: array
+              description: Entri sidebar yang disematkan user, dalam urutan tampil (paling atas dulu). Tanpa duplikat; kosong berarti tidak ada yang disematkan. Search dan Inbox tidak termasuk
+              items: { $ref: '#/components/schemas/SidebarKey' }
+            view_expansion:
+              type: object
+              description: Expansi hierarki per view milik user ini (WA-D05); kunci = id view. Hanya user ini yang membacanya
+              additionalProperties:
+                type: object
+                required: [rows, gantt_collapsed]
+                properties:
+                  rows: { type: array, items: { type: string, format: uuid } }
+                  gantt_collapsed: { type: boolean }
+            view_prefs:
+              type: object
+              description: Preferensi view personal per workspace (WA-D07), kunci = id Space, Project, atau Folder. Hanya user ini yang membacanya
+              additionalProperties:
+                type: object
+                required: [hidden, order]
+                properties:
+                  hidden: { type: array, items: { type: string, format: uuid } }
+                  order: { type: array, items: { type: string, format: uuid } }
             email_muted:
               type: array
               description: Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif
@@ -6333,6 +6406,11 @@ components:
         comment_shortcut: { type: string, enum: [mod_enter, enter] }
         sidebar_hidden:
           type: array
+          deprecated: true
+          items: { $ref: '#/components/schemas/SidebarKey' }
+        sidebar_pinned:
+          type: array
+          description: Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422)
           items: { $ref: '#/components/schemas/SidebarKey' }
         email_muted:
           type: array
@@ -6363,7 +6441,7 @@ components:
         seats: { $ref: '#/components/schemas/Seats' }
     SidebarKey:
       type: string
-      enum: [created_by_me, workload, calendars, dashboards, my_todo, request_forms, timesheets, reports, stream, starred]
+      enum: [created_by_me, workload, calendars, dashboards, my_todo, request_forms, timesheets, reports, stream, starred, portfolio, reviews]
     InviteRequest:
       type: object
       required: [email, user_type]
@@ -6739,6 +6817,8 @@ components:
       properties:
         id: { type: integer, format: int64 }
         approval_id: { type: string, format: uuid }
+        attachment_id: { type: string, format: uuid, nullable: true, description: 'WA-D08: file yang dirujuk approval; kosong untuk event lama' }
+        attachment_version: { type: integer, format: int32, nullable: true }
         kind: { type: string, enum: [approver_requested, approver_removed, decided, withdrawn] }
         actor: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
         subject: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
@@ -7284,7 +7364,7 @@ components:
         is_milestone: { type: boolean }
         owner: { allOf: [{ $ref: '#/components/schemas/UserRef' }], nullable: true }
         default_workflow_id: { type: string, format: uuid, nullable: true }
-        default_view_type: { type: string, enum: [table, board], nullable: true }
+        default_view_type: { type: string, enum: [table, board, gantt, calendar, files, chart], nullable: true }
         assignees:
           type: array
           items: { $ref: '#/components/schemas/ItemAssignee' }
@@ -7336,7 +7416,7 @@ components:
         is_milestone: { type: boolean }
         owner_id: { type: string, format: uuid, description: Hanya project }
         default_workflow_id: { type: string, format: uuid, description: Hanya project/folder }
-        default_view_type: { type: string, enum: [table, board], description: Hanya project/folder }
+        default_view_type: { type: string, enum: [table, board, gantt, calendar, files, chart], description: Hanya project/folder }
         assignee_ids:
           type: array
           items: { type: string, format: uuid }
@@ -7516,6 +7596,10 @@ components:
           required: [item_title]
           properties:
             item_title: { type: string }
+            review_status:
+              type: string
+              enum: [not_requested, in_review, approved, rejected, cancelled]
+              description: 'WA-D08: status review untuk versi terbaru file ini. cancelled = review ditarik untuk versi ini dan tidak ada approval aktif'
     AttachmentPreview:
       type: object
       required: [attachment_id, version, status, note, pages]

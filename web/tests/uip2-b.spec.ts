@@ -18,6 +18,8 @@ const views = [
   { id: calId, type: "calendar", name: "Calendar", visibility: "public", position: 2, is_default: false },
 ];
 const mock = (page: import("@playwright/test").Page) => mockSpaces(page, { extra: {
+    // The board walks items with subitems (child_count > 0); this card has none in the mock.
+    [`GET /items/${card.id}/children`]: { body: { items: [] } },
   [`GET ${path}/views`]: { body: { items: views } },
   [`GET ${path}/items`]: { body: { items: [card] } },
   "GET /workflows": { body: { items: [{ is_default: true, statuses: [todo] }] } },
@@ -47,7 +49,7 @@ test("Table: type icon in the name cell, Add item is a full-width row; view tabs
   const add = page.getByRole("button", { name: "Add item" });
   const table = await page.getByRole("table", { name: "Table", exact: true }).boundingBox();
   expect((await add.boundingBox())!.width).toBeGreaterThan(table!.width - 4);
-  await expect(page.getByRole("navigation", { name: "Views" }).getByRole("button", { name: "Board", exact: true }).locator("svg")).toHaveCount(1);
+  await expect(page.getByRole("navigation", { name: "Views" }).getByRole("radio", { name: "Board", exact: true }).locator("svg")).toHaveCount(1);
 });
 
 test("Calendar: chips are tinted by status and keep an accessible name", async ({ page }) => {

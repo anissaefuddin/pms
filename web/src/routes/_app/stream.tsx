@@ -6,6 +6,8 @@ import { api } from "@/lib/api";
 import { formatDateTime, useProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { groupBy } from "@/lib/todo-groups";
+import { groupByDay } from "@/lib/activity-format";
+import { formatDate } from "@/lib/profile";
 
 type Entry = components["schemas"]["StreamEntry"];
 type Page = components["schemas"]["StreamPage"];
@@ -36,8 +38,11 @@ function Stream() {
     getNextPageParam: (last) => last.next_cursor ?? undefined,
   });
   const entries = query.data?.pages.flatMap((page) => page.items) ?? [];
-  // One card per item, entries newest first inside it (the reference Stream groups updates by item).
-  const cards = groupBy(entries, (entry) => entry.item.id).map((group) => group.rows);
+  // F2: entries are grouped by day (in the user's time zone), newest first; inside a day, one card per item.
+  const days = groupByDay(entries, profile?.timezone).map((day) => ({
+    day: day.day,
+    cards: groupBy(day.items, (entry) => entry.item.id).map((group) => group.rows),
+  }));
   return <main className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
     <div className="mx-auto w-full max-w-3xl space-y-4">
       <h1 className="workspace-title">{t("nav.stream.title")}</h1>
@@ -45,11 +50,14 @@ function Stream() {
       {query.isError && <div><p role="alert">{t("nav.stream.error")}</p>
         <Button variant="link" className="px-0" onClick={() => void query.refetch()}>{t("nav.stream.retry")}</Button></div>}
       {query.isSuccess && !entries.length && <p role="status" className="text-muted-foreground">{t("nav.stream.empty")}</p>}
-      {cards.map((group) => <section key={group[0]!.item.id} className="divide-y rounded-lg border bg-card px-4">
-        {group.map((entry) => <div key={`${entry.kind}:${entry.id}`} className="space-y-1 py-3 text-sm">
-          <Line entry={entry} />
-          <p className="text-xs text-muted-foreground">{profile ? formatDateTime(entry.created_at, profile) : entry.created_at}</p>
-        </div>)}
+      {days.map((day) => <section key={day.day} aria-label={profile ? formatDate(day.day, profile) : day.day} className="space-y-3">
+        <h2 className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{profile ? formatDate(day.day, profile) : day.day}</h2>
+        {day.cards.map((group) => <section key={`${day.day}:${group[0]!.item.id}`} className="divide-y rounded-lg border bg-card px-4">
+          {group.map((entry) => <div key={`${entry.kind}:${entry.id}`} className="space-y-1 py-3 text-sm">
+            <Line entry={entry} />
+            <p className="text-xs text-muted-foreground">{profile ? formatDateTime(entry.created_at, profile) : entry.created_at}</p>
+          </div>)}
+        </section>)}
       </section>)}
       {query.hasNextPage && <Button variant="outline" disabled={query.isFetchingNextPage} onClick={() => void query.fetchNextPage()}>
         {t("nav.stream.more")}

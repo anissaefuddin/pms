@@ -24,6 +24,24 @@ func TestSidebarPreferencePersistsAndValidates(t *testing.T) {
 	f.want(f.call(member, "PATCH", "/me", map[string]any{"sidebar_hidden": []string{}}), 200, "show all again")
 }
 
+func TestSidebarPinnedKeepsOrderAndValidates(t *testing.T) {
+	f := newFixture(t)
+	member := f.person("regular")
+	pinned := f.call(member, "GET", "/me", nil).body["sidebar_pinned"].([]any)
+	if len(pinned) != 2 || pinned[0] != "request_forms" || pinned[1] != "stream" {
+		t.Fatalf("default pins = %v", pinned)
+	}
+	f.want(f.call(member, "PATCH", "/me", map[string]any{"sidebar_pinned": []string{"starred", "my_todo", "stream"}}), 200, "pin in order")
+	got := f.call(member, "GET", "/me", nil).body["sidebar_pinned"].([]any)
+	if len(got) != 3 || got[0] != "starred" || got[1] != "my_todo" || got[2] != "stream" {
+		t.Fatalf("order not kept: %v", got)
+	}
+	for _, bad := range []any{[]string{"search"}, []string{"inbox"}, []string{"stream", "stream"}, "stream", nil} {
+		f.want(f.call(member, "PATCH", "/me", map[string]any{"sidebar_pinned": bad}), 422, fmt.Sprintf("%v", bad))
+	}
+	f.want(f.call(member, "PATCH", "/me", map[string]any{"sidebar_pinned": []string{}}), 200, "unpin all")
+}
+
 func TestStreamFiltersAndVisibility(t *testing.T) {
 	f := newFixture(t)
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")

@@ -8,6 +8,10 @@ import { useSpace } from "@/lib/space-queries";
 import { itemKeys, listItems } from "@/lib/items";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ViewWorkspace } from "@/components/view-workspace";
+import { WorkspaceHeader } from "@/components/workspace-header";
+import { WorkspaceLayout } from "@/components/workspace-layout";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
 import type { Item } from "@/lib/items";
 import { toast } from "sonner";
 import { can, etag, sortSpaces, spaceKeys, type Share, type Space } from "@/lib/spaces";
@@ -19,6 +23,8 @@ import { CreateMenuDialog } from "@/components/create-menu-dialog";
 import { SpaceBookmarksDialog } from "@/components/space-bookmarks-dialog";
 import { SpaceDialog } from "@/components/space-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 export const Route = createFileRoute("/_app/spaces/$spaceId")({ component: SpacePage });
@@ -106,14 +112,13 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   }
 
   return (
-    <main className="p-4 sm:p-8">
-      <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
-        <div className="min-w-0">
-          <h1 className="truncate workspace-title">{personal ? t("spaces.personal") : space.name}</h1>
+    <WorkspaceLayout>
+      <WorkspaceHeader title={personal ? t("spaces.personal") : space.name}
+        meta={<>
           {space.description && <p className="mt-1 max-w-2xl text-muted-foreground">{space.description}</p>}
           {space.locked && <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><Lock className="size-4" aria-hidden="true" />{t("spaces.lock.badge")}<span className="sr-only">. {t("spaces.lock.explain")}</span></p>}
-        </div>
-        <div className="flex flex-wrap items-center gap-2">
+        </>}
+        actions={<>
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
           {canEditForms && <Link to="/spaces/$spaceId/automation" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("automation.link")}</Link>}
@@ -132,15 +137,13 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-        </div>
-      </header>
-      {items.isPending && <p className="mt-6" role="status">{t("items.loading")}</p>}
-      {items.isError && <p className="mt-6" role="alert">{t("items.loadError")}</p>}
-      {items.data?.length === 0 && <section className="mt-8 rounded-xl border border-dashed bg-card p-12 text-center">
-        <FolderOpen className="mx-auto size-8 text-muted-foreground" />
-        <h2 className="mt-3 text-lg font-semibold">{t("spaces.empty.title")}</h2>
-        <p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">{t("spaces.empty.description")}</p>
-      </section>}
+        </>} />
+      {items.isPending && <LoadingState className="mt-6 text-sm text-muted-foreground" label={t("items.loading")} />}
+      {items.isError && <ErrorState className="mt-6 space-y-2" message={t("items.loadError")} retryLabel={t("items.retry")} onRetry={() => void items.refetch()} />}
+      {items.data?.length === 0 && <EmptyState className="mt-8 p-12" icon={<ProjectIllustration />} title={t("spaces.empty.title")}
+        description={t("spaces.empty.description")} canCreate={canCreate}
+        primaryAction={{ label: t("spaces.empty.newProject"), onClick: () => setCreating(true) }}
+        secondaryAction={{ label: t("spaces.empty.browseBlueprints"), onClick: () => void navigate({ to: "/blueprints" }) }} />}
       <div className="mt-6"><ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
 
       {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}
@@ -181,6 +184,6 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         busy={pending}
         error={deleteError}
       />
-    </main>
+    </WorkspaceLayout>
   );
 }

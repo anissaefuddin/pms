@@ -7,7 +7,10 @@ import { MobileSidebar, Sidebar } from "@/components/sidebar";
 import { SearchPalette } from "@/components/search-palette";
 import { Topbar } from "@/components/topbar";
 import { CreateItemDialog } from "@/components/create-item-dialog";
+import type { CreateKind } from "@/lib/create-item-validate";
+import type { Location } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
+import { lastSpaceKey } from "@/lib/session-state";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ProfileContext, useAppearance } from "@/lib/profile";
 import { useRealtime } from "@/lib/realtime";
@@ -39,11 +42,20 @@ function AppShell() {
   const { task } = Route.useSearch();
   const { spaceId, itemId } = useParams({ strict: false });
   const spaces = useSpaces(!!me.data);
-  const [creating, setCreating] = useState(false);
+  // Dibuka dari menu "+ Create" (kind) atau dari komponen lain lewat event pms:create-item (kind, spaceId, parentId).
+  const [creating, setCreating] = useState<{ kind?: CreateKind; location?: Location } | null>(null);
+  useEffect(() => {
+    const open = (event: Event) => {
+      const detail = (event as CustomEvent<{ kind?: CreateKind; spaceId?: string; parentId?: string }>).detail ?? {};
+      setCreating({ kind: detail.kind, location: detail.spaceId ? { space_id: detail.spaceId, parent_item_id: detail.parentId } : undefined });
+    };
+    window.addEventListener("pms:create-item", open);
+    return () => window.removeEventListener("pms:create-item", open);
+  }, []);
   const canCreate = spaces.data?.some((space) => space.my_capabilities?.includes("create"));
   useEffect(() => {
     if (me.data && spaceId && spaces.data?.some((space) => space.id === spaceId)) {
-      localStorage.setItem(`pms:last-space:${me.data.id}`, spaceId);
+      localStorage.setItem(lastSpaceKey(me.data.id), spaceId);
     }
   }, [me.data, spaceId, spaces.data]);
   function setTask(id?: string) {
@@ -74,12 +86,12 @@ function AppShell() {
     <div className="flex min-h-screen">
       <div className="sticky top-0 hidden self-start shrink-0 lg:block"><Sidebar key={me.data.id} me={me.data} /></div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? () => setCreating(true) : undefined} />
+        <Topbar navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}
-      <CreateItemDialog open={creating} onOpenChange={setCreating} me={me.data}
-        location={spaceId ? { space_id: spaceId } : undefined}
+      <CreateItemDialog open={!!creating} onOpenChange={(open) => { if (!open) setCreating(null); }} me={me.data}
+        initialKind={creating?.kind} location={creating?.location ?? (spaceId ? { space_id: spaceId } : undefined)}
         onCreated={(item) => {
           if (item.type === "task") setTask(item.id);
           else void router.navigate({ to: "/tasks/$itemId", params: { itemId: item.id } });
@@ -87,7 +99,7 @@ function AppShell() {
       <Dialog open={!!task} onOpenChange={(open) => { if (!open) setTask(); }}>
         <DialogContent className="inset-y-0 right-0 left-auto w-full max-w-xl translate-none overflow-y-auto rounded-none sm:max-w-xl">
           <DialogTitle>{t("items.detail")}</DialogTitle>
-          {task && <ItemDetail key={task} id={task} me={me.data} onOpen={setTask} onDeleted={() => setTask()}
+          {task && <ItemDetail key={task} id={task} me={me.data} onOpen={setTask} onDeleted={() => { const pageItemDeleted = task === itemId; setTask(); if (pageItemDeleted) void router.navigate({ to: "/" }); }}
             onFullDetails={() => { const id = task; setTask(); void router.navigate({ to: "/tasks/$itemId", params: { itemId: id } }); }} />}
         </DialogContent>
       </Dialog>

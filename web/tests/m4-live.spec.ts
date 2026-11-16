@@ -29,8 +29,8 @@ test("timesheet hours appear in project Timelog and alongside its budget", async
     await expect(fields.getByText("$1,250.75")).toBeVisible();
 
     await page.keyboard.press("Escape"); // close the Info panel (S-UIP.1.8)
-    await page.getByRole("button", { name: "All views" }).click();
-    await page.getByRole("menuitem", { name: "Add Timelog view" }).click();
+    await page.getByRole("button", { name: "Add view", exact: true }).click();
+    await page.getByRole("dialog", { name: "Choose a view type" }).getByRole("button", { name: /^Timelog/ }).click();
     await page.getByRole("dialog", { name: "Add view" }).getByRole("button", { name: "Save" }).click();
     const log = page.getByRole("table", { name: "Timelog" });
     await expect(log.getByText("Delivered")).toBeVisible();

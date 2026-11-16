@@ -4,7 +4,7 @@ import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { Keyboard, Minus, Plus } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Keyboard, Minus, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
 import { ApiError, api } from "@/lib/api";
@@ -12,6 +12,7 @@ import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
 import { itemKeys, listItems, type Item } from "@/lib/items";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
+import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { customFieldText, type CustomField } from "@/lib/custom-fields";
 import { fieldColumn } from "@/lib/view-columns";
 import { statusDotClass } from "@/lib/status-colors";
@@ -27,9 +28,9 @@ type Scale = "day" | "week" | "month";
 const scaleOptions: Scale[] = ["day", "week", "month"];
 /** Bar colours by workflow colour token: 700/900 shades keep white labels above 4.5:1. */
 const barColors: Record<string, [string, string]> = {
-  slate: ["#334155", "#0f172a"], blue: ["#1d4ed8", "#1e3a8a"], sky: ["#0369a1", "#0c4a6e"], teal: ["#0f766e", "#134e4a"],
-  green: ["#15803d", "#14532d"], lime: ["#4d7c0f", "#365314"], amber: ["#b45309", "#78350f"], orange: ["#c2410c", "#7c2d12"],
-  red: ["#b91c1c", "#7f1d1d"], pink: ["#be185d", "#831843"], purple: ["#7e22ce", "#581c87"], indigo: ["#4338ca", "#312e81"],
+  slate: ["#334155", "#0f172a"], blue: ["#1d4ed8", "#1e3a8a"], sky: ["#0369a1", "#0c4a6e"], teal: ["#0f766e", "#134e4a"], // allow-hex
+  green: ["#15803d", "#14532d"], lime: ["#4d7c0f", "#365314"], amber: ["#b45309", "#78350f"], orange: ["#c2410c", "#7c2d12"], // allow-hex
+  red: ["#b91c1c", "#7f1d1d"], pink: ["#be185d", "#831843"], purple: ["#7e22ce", "#581c87"], indigo: ["#4338ca", "#312e81"], // allow-hex
 };
 /** Bar content: fill coloured by status (darker part = progress) plus "name • assignees". */
 function BarLabel({ data }: { data: ITask }) {
@@ -58,7 +59,9 @@ export function ganttTask(item: Item, parent?: string): ITask {
   };
 }
 
-export function ItemGantt({ items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd }: {
+export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd }: {
+  initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
+  onOpenChange?: (open: boolean) => void;
   items: Item[];
   customFields: CustomField[];
   columns: string[];
@@ -75,6 +78,9 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const [selected, setSelected] = useState<string>();
   const [baselineId, setBaselineId] = useState("");
   const [naming, setNaming] = useState(false);
+  // WA-D05: the collapse state comes from the server profile for this view and every change is sent back.
+  const [allOpen, setAllOpenState] = useState(() => initialOpen ?? true);
+  const setAllOpen = (open: boolean) => { setAllOpenState(open); onOpenChange?.(open); };
   const [sharing, setSharing] = useState(false);
   const chart = useRef<IApi>(undefined);
   const chartRegion = useRef<HTMLDivElement>(null);
@@ -112,14 +118,15 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   const variance = useQuery({ queryKey: ["baseline-variance", baselineId], enabled: !!baselineId,
     queryFn: () => api<{ items: Variance[] }>(`/api/v1/baselines/${baselineId}/variance`) });
   const varianceById = useMemo(() => new Map((baselineId ? variance.data?.items ?? [] : []).map((v) => [v.item_id, v])), [baselineId, variance.data]);
-  const shownTasks = useMemo(() => tasks.map((task) => {
+  const shownTasks = useMemo(() => tasks.map((open) => {
+    const task = { ...open, open: allOpen };
     const v = varianceById.get(String(task.id));
     if (!v) return task;
     // shortcut: the free SVAR build has no baseline bars, so the frozen dates are shown as grid columns; upgrade with SVAR PRO.
     const range = (a?: string | null, b?: string | null) => [a ?? b, b ?? a].filter(Boolean).map((d) => formatDate(d, profile)).join(" – ");
     return { ...task, baseline: range(v.baseline_start, v.baseline_due),
       variance: v.due_variance_days == null ? "" : `${v.due_variance_days > 0 ? "+" : ""}${t("views.gantt.varianceValue", { days: v.due_variance_days })}` };
-  }), [tasks, varianceById, t, profile]);
+  }), [tasks, varianceById, t, profile, allOpen]);
   const itemIds = useMemo(() => [...byId.keys()].sort().slice(0, 1000), [byId]);
   const dependencies = useQuery({
     queryKey: ["gantt-dependencies", itemIds], enabled: itemIds.length > 1,
@@ -160,6 +167,11 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
   ref.current = { byId, readonly, onPatch, t, addDependency, removeDependency };
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  // C-04: weekend and holiday columns follow the work schedule, the same rule the calendar uses.
+  const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
+  const workingDays = new Set(schedule.data?.data.working_days ?? [1, 2, 3, 4, 5]);
+  const holidayDays = new Set((schedule.data?.data.exceptions ?? []).map((entry) => entry.date));
+  const offDay = (date: Date) => !workingDays.has(date.getDay()) || holidayDays.has(fromDay(date));
   const locale = i18n.language;
   const scales = useMemo(() => {
     const label = (options: Intl.DateTimeFormatOptions) => (date: Date) => new Intl.DateTimeFormat(locale, options).format(date);
@@ -265,6 +277,15 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
         {scaleOptions.map((value) => <Button key={value} size="sm" variant={scale === value ? "default" : "outline"}
           aria-pressed={scale === value} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</Button>)}
       </div>
+      <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
+      <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(".gantt-today")?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.today")}</Button>
+      {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
+      {/* C-04: brings the selected bar into view; nothing changes on screen until a bar is selected. */}
+      <Button size="sm" variant="outline" disabled={!selected} onClick={() => chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.showSelected")}</Button>
+      <Button size="sm" variant="outline" disabled={!tasks.some((task) => task.start)} onClick={() => {
+        const earliest = tasks.filter((task) => task.start).sort((a, b) => a.start!.getTime() - b.start!.getTime())[0];
+        chartRegion.current?.querySelector(`.wx-bar[data-id=":${earliest?.id}"]`)?.scrollIntoView({ inline: "start", block: "nearest" });
+      }}>{t("views.gantt.fit")}</Button>
       {!!parentId && <>
         <label className="flex items-center gap-1 text-sm">{t("views.gantt.baseline")}
           <select value={baselineId} onChange={(event) => setBaselineId(event.target.value)} className="rounded border bg-background p-1">
@@ -297,7 +318,7 @@ export function ItemGantt({ items, spaceId, parentId, readonly, customFields, co
       className="gantt-chart h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
       <Theme>
         <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
-          highlightTime={(date, unit) => unit === "day" && date.getTime() === today.getTime() ? "gantt-today" : ""} schedule={{ auto: false }} unscheduledTasks
+          highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
           columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
             ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
             ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),

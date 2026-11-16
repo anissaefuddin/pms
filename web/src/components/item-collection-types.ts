@@ -14,4 +14,6 @@ export type ItemCollectionProps = {
   customFields: CustomField[];
   columns: string[];
   onPatch: (item: Item, update: ItemUpdate) => Promise<void>;
+  /** B-02: applies one update to each item in turn. Reports what was updated and what was not; never repeats an update that succeeded. */
+  onBulkPatch?: (items: Item[], update: ItemUpdate) => Promise<{ done: number; failed: { title: string; message: string }[] }>;
 };
