@@ -59,3 +59,12 @@ Belum dijalankan (perlu persetujuan karena mengubah data atau membuat view): E2E
 | E2E-03g | Project | KPI scope | Keterangan cakupan terlihat | Hanya di Summary | FAIL | teks | F1 |
 
 Temuan F1 sampai F4 sudah diperbaiki di kode dan diuji dengan `dev-lens-findings.spec.ts` (Playwright). Suite penuh: 496 passed, 0 failed, 43 skipped. Verifikasi ulang di dev-lens menunggu deploy, yang belum disetujui.
+
+### Tes ulang di dev-lens setelah deploy b82e6ec (health 200, backup 20261116T020947Z)
+
+| Test ID | Scenario | Actual | Status |
+|---|---|---|---|
+| F1 | Keterangan cakupan KPI tampil di halaman project tanpa membuka Summary | Teks "Tasks in this project and its folders and subprojects; milestones excluded" terlihat | PASS (sebelumnya FAIL, DEV-05) |
+| F2 | Breadcrumb di halaman folder | "QA | Engineering / QA-E2E03 Folder", h1 tampil sekali | PASS |
+| F3 | Footer dialog Add item di folder | "Task · QA | Engineering · QA-E2E03 Folder"; teks "Space root" tidak ada | PASS |
+| F4 | Tipe di bawah task | Project dan Folder radio disabled, Task terpilih, kelas gaya terkunci aktif | PASS |
