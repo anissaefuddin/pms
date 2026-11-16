@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate, useSearch } from "@tanstack/react-router";
+import { useSpace } from "@/lib/space-queries";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api, type CurrentUser } from "@/lib/api";
@@ -19,6 +20,19 @@ import { TypeIcon } from "@/components/type-icon";
 import { Info } from "lucide-react";
 
 export const Route = createFileRoute("/_app/tasks/$itemId")({ component: ItemPage });
+
+// F2: a folder shows where it lives, like a project does. Space name links back to the Space.
+function FolderBreadcrumb({ spaceId, title }: { spaceId: string; title: string }) {
+  const { t } = useTranslation();
+  const space = useSpace(spaceId);
+  return <nav aria-label={t("views.project.breadcrumb")}>
+    <ol className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
+      <li>{space.data && <Link to="/spaces/$spaceId" params={{ spaceId }} className="hover:text-foreground hover:underline">{space.data.name}</Link>}</li>
+      <li aria-hidden="true">/</li>
+      <li aria-current="page" className="min-w-0 truncate text-foreground">{title}</li>
+    </ol>
+  </nav>;
+}
 
 function ItemPage() {
   return <ItemWorkspace itemId={Route.useParams().itemId} />;
@@ -59,6 +73,7 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
       onToggleInfo={toggleInfo} onAddTask={() => setAddingTask(true)}
       onShare={canShare ? () => setSharing(true) : undefined} />
     : item && container ? <WorkspaceHeader icon={<TypeIcon name="folder" />} title={item.title} starItemId={item.id}
+      breadcrumb={<FolderBreadcrumb spaceId={item.locations[0]?.space_id ?? ""} title={item.title} />}
       actions={<Button variant="outline" aria-pressed={infoOpen} onClick={toggleInfo}><Info />{t("views.project.info")}</Button>} />
     : item ? <ItemDetail key={itemId} id={itemId} me={me}
       onOpen={(id) => void navigate({ to: "/tasks/$itemId", params: { itemId: id } })}

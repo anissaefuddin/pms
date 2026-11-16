@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { Folder, FolderKanban, Plus, SquareCheck } from "lucide-react";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { useSpaces } from "@/lib/space-queries";
-import { itemKeys, listItems, type Item, type ItemCreate, type Location } from "@/lib/items";
+import { getItem, itemKeys, listItems, type Item, type ItemCreate, type Location } from "@/lib/items";
 import type { Group, Share } from "@/lib/spaces";
 import { Search } from "@/components/share-dialog";
 import { FormError } from "@/components/auth/form-error";
@@ -110,7 +110,9 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
 
   const blueprints = useBlueprints(spaceID, !!selected).data ?? [];
   const blueprint = blueprints.find((entry) => entry.id === blueprintID);
-  const parentLabel = parent?.title ?? directory?.title ?? t("items.root");
+  // F3: with a fixed parent the list above is not loaded, so read that parent's own title (it is the location the item will be created in).
+  const fixedParentItem = useQuery({ queryKey: itemKeys.detail(fixedParent ?? ""), enabled: !!fixedParent, queryFn: () => getItem(fixedParent!) });
+  const parentLabel = parent?.title ?? (fixedParent ? fixedParentItem.data?.item.title : undefined) ?? directory?.title ?? t("items.root");
 
   function fail(issue: CreateIssue) {
     setFieldErrors({ [issue.field]: t(`items.${issue.code}`) });
@@ -245,7 +247,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
           return <label key={type} className={cardClass}>
             <span className="flex items-center gap-2 font-medium text-foreground">
               <Icon className="size-4" aria-hidden="true" />{t(`items.${type}`)}
-              <input type="radio" name="kind" className="sr-only" checked={kind === type}
+              {/* F4: disabled on the input too, so the card's has-disabled styling applies and the locked type reads as not selectable. */}
+              <input type="radio" name="kind" className="sr-only" checked={kind === type} disabled={!!lockedKind || !!blueprint}
                 onChange={() => { setKind(type); setTypeKey(""); }} />
             </span>
             <span className="text-xs text-muted-foreground">{t(`items.typeDesc.${type}`)}</span>

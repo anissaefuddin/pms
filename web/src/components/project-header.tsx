@@ -93,6 +93,8 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
         {t("views.project.summary")}<ChevronDown className={detailsOpen ? "rotate-180" : undefined} aria-hidden="true" />
       </Button>
     </div>
+    {/* F1: the scope is visible next to the numbers, not only in the Summary details. */}
+    {counts && <p className="-mt-2 text-xs text-muted-foreground">{t("views.project.subtreeScope")}</p>}
     {detailsOpen && <div id={detailsId} className="-mx-4 flex gap-3 overflow-x-auto px-4 pb-1 md:mx-0 md:grid md:grid-cols-4 md:overflow-visible md:px-0">
       <KpiCard className="min-w-44 shrink-0 md:min-w-0" label={t("views.project.progress")} value={percent(progress)} />
       <KpiCard className="min-w-44 shrink-0 md:min-w-0" label={t("views.project.workItems")} value={counts?.total ?? "…"}
