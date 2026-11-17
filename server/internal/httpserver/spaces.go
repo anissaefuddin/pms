@@ -23,6 +23,7 @@ func (s *Server) spaceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/item-types", s.requireUser(s.listItemTypes))
 	mux.HandleFunc("POST /api/v1/item-types", s.requireUser(s.createItemType))
 	mux.HandleFunc("PATCH /api/v1/item-types/{typeId}", s.requireUser(s.updateItemType))
+	mux.HandleFunc("GET /api/v1/item-types/usage", s.requireUser(s.itemTypeUsage))
 	mux.HandleFunc("GET /api/v1/item-types/{typeId}/fields", s.requireUser(s.listTypeFields))
 	mux.HandleFunc("PUT /api/v1/item-types/{typeId}/fields/{fieldId}", s.requireUser(s.setTypeField))
 	mux.HandleFunc("DELETE /api/v1/item-types/{typeId}/fields/{fieldId}", s.requireUser(s.deleteTypeField))

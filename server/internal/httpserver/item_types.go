@@ -93,3 +93,12 @@ func (s *Server) deleteTypeField(w http.ResponseWriter, r *http.Request) {
 	}
 	w.WriteHeader(http.StatusNoContent)
 }
+
+func (s *Server) itemTypeUsage(w http.ResponseWriter, r *http.Request) {
+	usage, err := items.ItemTypeUsage(r.Context(), s.pool, actorOf(r))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": usage})
+}

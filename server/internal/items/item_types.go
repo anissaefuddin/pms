@@ -428,3 +428,26 @@ WHERE r.from_item_id=$1::uuid AND f.space_id=ANY(ARRAY(SELECT unnest($2::text[])
 	}
 	return groups, tx.Commit(ctx)
 }
+
+// ItemTypeUsage counts the live Items of every item type (administrators only; the registry shows it as a column).
+func ItemTypeUsage(ctx context.Context, db dbQuerier, actor policy.Actor) (map[string]int, error) {
+	if err := requireAdmin(actor); err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(ctx, `SELECT t.id::text, count(i.id) FROM item_type_defs t
+LEFT JOIN items i ON i.type_id=t.id AND i.deleted_at IS NULL GROUP BY t.id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var id string
+		var n int
+		if err := rows.Scan(&id, &n); err != nil {
+			return nil, err
+		}
+		out[id] = n
+	}
+	return out, rows.Err()
+}
