@@ -77,7 +77,30 @@ VALUES($1,$2::uuid,$3::uuid,$4,NULLIF($5,'')::uuid,NULLIF($6,'')::uuid,left(NULL
 	return sent, nil
 }
 
+// Notify records a notification that names no Item or Space, for a recipient who has no access to them (RF-08).
+// Only the recipient can read it back, through their own inbox.
+func (b *Batch) Notify(ctx context.Context, tx pgx.Tx, actor policy.Actor, recipient, kind, snippet string) error {
+	id, err := uuid.NewV7()
+	if err != nil {
+		return err
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO notifications(id,recipient_id,actor_id,kind,snippet) VALUES($1,$2::uuid,$3::uuid,$4,left($5,240))`,
+		id, recipient, actor.ID, kind, snippet); err != nil {
+		return err
+	}
+	if b.Queue != nil {
+		if err := b.Queue.NotifyTx(ctx, tx, id.String()); err != nil {
+			return err
+		}
+	}
+	b.Deliveries = append(b.Deliveries, Delivery{id.String(), recipient})
+	return nil
+}
+
 func CanView(ctx context.Context, db policy.DB, actor policy.Actor, target Target) (bool, error) {
+	if target.Item == "" && target.Space == "" {
+		return true, nil // a row without Item or Space belongs to its recipient (see Batch.Notify)
+	}
 	if target.Item != "" {
 		caps, err := policy.ItemCaps(ctx, db, actor, target.Item)
 		return caps.Has(policy.View), err

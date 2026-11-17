@@ -43,6 +43,9 @@ func notifyChanges(ctx context.Context, tx pgx.Tx, batch *notifications.Batch, a
 		if err := mailExternalRequester(ctx, tx, batch, id, current.Status); err != nil {
 			return err
 		}
+		if err := notifyRequester(ctx, tx, batch, actor, id, current.Status); err != nil {
+			return err
+		}
 	}
 	if bytes.Equal(old.Description, current.Description) {
 		return nil
@@ -79,6 +82,30 @@ func MentionPrincipals(mentions []Mention) []notifications.Principal {
 
 func NewMentions(mentions, previous []notifications.Principal) []notifications.Principal {
 	return slices.DeleteFunc(mentions, func(p notifications.Principal) bool { return slices.Contains(previous, p) })
+}
+
+// notifyRequester tells an internal requester who cannot open the Item that its status changed (RF-08).
+// The notification has no item or Space link; the text holds only the form name, the title and the status.
+func notifyRequester(ctx context.Context, tx pgx.Tx, batch *notifications.Batch, actor policy.Actor, itemID, statusID string) error {
+	if statusID == "" {
+		return nil
+	}
+	var requester policy.Actor
+	var form, title, status string
+	err := tx.QueryRow(ctx, `SELECT fs.requester_id::text,u.user_type::text,fs.form_name,i.title,st.name
+FROM form_submissions fs JOIN users u ON u.id=fs.requester_id AND u.status='active' JOIN items i ON i.id=fs.item_id JOIN statuses st ON st.id=$2::uuid
+WHERE fs.item_id=$1::uuid AND fs.requester_id IS NOT NULL AND fs.requester_id<>$3::uuid`, itemID, statusID, actor.ID).Scan(&requester.ID, &requester.Type, &form, &title, &status)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil
+	}
+	if err != nil {
+		return err
+	}
+	visible, err := notifications.CanView(ctx, tx, requester, notifications.Target{Item: itemID})
+	if err != nil || visible {
+		return err
+	}
+	return batch.Notify(ctx, tx, actor, requester.ID, "status_changed", "Your request \""+title+"\" ("+form+") is now: "+status+".")
 }
 
 // mailExternalRequester tells the person who filed a public form that their request changed status (FORM-08).

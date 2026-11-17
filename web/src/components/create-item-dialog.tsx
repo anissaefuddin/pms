@@ -88,9 +88,6 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const customOf = (base: CreateKind) => typeDefs.filter((def) => !def.is_builtin && def.active && def.base === base && offered(def));
   const kinds = createKinds.filter((base) => menuAllows(menu, base) || customOf(base).length > 0);
   const kind: CreateKind = lockedKind || kinds.includes(chosenKind) ? chosenKind : kinds[0] ?? chosenKind;
-  const customTypes = customOf(kind);
-  const baseHidden = !fixedParent && !taskOnly && !menuAllows(menu, kind);
-  const typeKey = customTypes.some((def) => def.key === typeKeyChoice) ? typeKeyChoice : baseHidden ? customTypes[0]?.key ?? "" : "";
   const choices = spaces.data?.filter((space) => space.my_capabilities?.includes("create")) ?? [];
   const selected = choices.find((space) => space.id === spaceID);
   const directory = trail.at(-1);
@@ -100,6 +97,11 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     queryFn: () => listItems(directory ? `/api/v1/items/${directory.id}/children` : `/api/v1/spaces/${spaceID}/items`),
   });
   const parent = parentID === directory?.id ? directory : parents.data?.find((item) => item.id === parentID);
+  // allowed_children: a parent type that lists child types accepts only those custom types below it (ITM-S8.1.3)
+  const parentChildren = typeDefs.find((def) => def.id === parent?.item_type?.id)?.allowed_children ?? [];
+  const customTypes = customOf(kind).filter((def) => !parentChildren.length || parentChildren.includes(def.id));
+  const baseHidden = !fixedParent && !taskOnly && !menuAllows(menu, kind);
+  const typeKey = customTypes.some((def) => def.key === typeKeyChoice) ? typeKeyChoice : baseHidden ? customTypes[0]?.key ?? "" : "";
   // Task hanya boleh di bawah Project; folder dan project boleh di bawah item non-task.
   const parentOptions = parents.data?.filter((item) => (kind === "task" ? item.type === "project" : item.type !== "task")
     && item.my_capabilities.includes("create")

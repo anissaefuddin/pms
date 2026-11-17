@@ -19,6 +19,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { useItemTypes } from "@/lib/item-types";
+import { menuAllows, useCreateMenu } from "@/lib/create-menu";
 
 // Each language is named in its own language, so it stays readable whichever UI language is active.
 const LANGUAGE_NAMES: Record<Language, string> = { en: "English", id: "Bahasa Indonesia" };
@@ -130,7 +131,10 @@ function CreateMenu({ onCreate, spaceId }: { onCreate?: (kind?: CreateKind, type
   const itemTypes = useItemTypes(!!onCreate).data ?? [];
   // CIT-D05: Quick Access entries are eligible custom types that are active and usable here: Workspace types, and this Space's own.
   // The item dialog checks the destination again when the Space is chosen, so a shortcut never grants a choice it could not make.
-  const eligible = itemTypes.filter((type) => !type.is_builtin && type.active && (!type.space_id || type.space_id === spaceId));
+  // In a Space, Quick Access and More follow that Space's create menu (SPC-14), so a type the Space hides is not offered here.
+  const menu = useCreateMenu(spaceId ?? "", !!spaceId && !!onCreate).data;
+  const eligible = itemTypes.filter((type) => !type.is_builtin && type.active && (!type.space_id || type.space_id === spaceId)
+    && (!spaceId || menuAllows(menu, type.key)));
   const quick = eligible.filter((type) => type.quick_access);
   const more = eligible.filter((type) => !type.quick_access);
   const [query, setQuery] = useState("");

@@ -19,6 +19,10 @@ import { TYPE_ICON_NAMES } from "@/components/type-icon";
 
 export const Route = createFileRoute("/_app/settings/item-types")({ component: ItemTypesRoute });
 
+function ItemTypesRoute() {
+  return <ItemTypesPanel />;
+}
+
 const kinds = ["task", "project", "folder"] as const;
 const levels = ["high", "normal", "low"] as const;
 const selectClass = "block w-full rounded border bg-background px-2 py-1 text-sm";
@@ -30,13 +34,18 @@ type GroupBy = "kind" | "scope" | "base";
 const columnKey = "pms.itemTypes.columns";
 const allColumns: Column[] = ["key", "base", "scope", "status", "usage"];
 
-/** The registry: a sortable table with optional grouping, visible columns (kept on this device), and bulk activation. */
-function ItemTypesRoute() {
+/** The registry: a sortable table with optional grouping, visible columns (kept on this device), and bulk activation.
+ *  Without spaceId it is the Workspace settings page (account admins). With spaceId it is that Space's Item Types:
+ *  Space editors manage the types of that Space, and the Workspace types appear read-only. */
+export function ItemTypesPanel({ spaceId }: { spaceId?: string }) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const admin = useProfile()?.user_type === "admin";
   const types = useItemTypes();
   const spaces = useSpaces();
+  const inSpace = spaces.data?.find((space) => space.id === spaceId);
+  const manage = spaceId ? !!inSpace && can(inSpace, "edit") : admin;
+  const canEdit = (type: ItemTypeDef) => spaceId ? manage && type.space_id === spaceId : admin;
   // Global counts are for account administrators only (CIT-D06); the server enforces it too.
   const usage = useQuery({ queryKey: ["item-types", "usage"], enabled: admin, retry: false,
     queryFn: () => api<{ items: Record<string, number> }>("/api/v1/item-types/usage") });
@@ -60,6 +69,7 @@ function ItemTypesRoute() {
   const baseOf = (type: ItemTypeDef) => t(`items.${type.base}`);
   const query = search.trim().toLowerCase();
   const matches = (type: ItemTypeDef) => (!query || type.name.toLowerCase().includes(query) || type.key.toLowerCase().includes(query))
+    && (!spaceId || !type.space_id || type.space_id === spaceId)
     && (scopeFilter === "all" || (scopeFilter === "workspace" ? !type.space_id : type.space_id === scopeFilter))
     && (statusFilter === "all" || (statusFilter === "active") === type.active);
   const value = (type: ItemTypeDef, key: SortKey): string | number => {
@@ -104,7 +114,7 @@ function ItemTypesRoute() {
     } finally { setBulkBusy(false); }
   }
   const row = (type: ItemTypeDef) => <tr key={type.id} className="border-t">
-    {admin && <td className="p-2"><input type="checkbox" aria-label={`${t("settings.itemTypes.select")}: ${type.name}`} disabled={type.is_builtin} checked={selected.includes(type.id)} onChange={() => toggleSelected(type.id)} /></td>}
+    {manage && <td className="p-2"><input type="checkbox" aria-label={`${t("settings.itemTypes.select")}: ${type.name}`} disabled={type.is_builtin || !canEdit(type)} checked={selected.includes(type.id)} onChange={() => toggleSelected(type.id)} /></td>}
     <td className="p-2"><div className="flex items-center gap-2"><span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Layers className="size-4" /></span><span className="font-medium">{type.name}</span></div></td>
     {shownColumns.includes("key") && <td className="p-2 font-mono text-xs">{type.key}</td>}
     {shownColumns.includes("base") && <td className="p-2">{baseOf(type)}</td>}
@@ -112,8 +122,8 @@ function ItemTypesRoute() {
     {shownColumns.includes("status") && <td className="p-2"><AdminStatus tone={type.active ? "success" : "neutral"} label={type.active ? t("settings.itemTypes.statusActive") : t("settings.itemTypes.inactive")} /></td>}
     {shownColumns.includes("usage") && <td className="p-2 tabular-nums">{usage.data?.items[type.id] ?? 0}</td>}
     <td className="p-2"><div className="flex flex-wrap gap-2">
-      {admin && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.edit")}: ${type.name}`} onClick={() => setEditing(type)}>{t("settings.itemTypes.edit")}</Button>}
-      {admin && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.duplicate")}: ${type.name}`} onClick={() => setDuplicating(type)}>{t("settings.itemTypes.duplicate")}</Button>}
+      {canEdit(type) && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.edit")}: ${type.name}`} onClick={() => setEditing(type)}>{t("settings.itemTypes.edit")}</Button>}
+      {canEdit(type) && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.duplicate")}: ${type.name}`} onClick={() => setDuplicating(type)}>{t("settings.itemTypes.duplicate")}</Button>}
     </div></td>
   </tr>;
   const nameSort: SortKey = "name";
@@ -121,19 +131,19 @@ function ItemTypesRoute() {
     aria-label={`${t("settings.itemTypes.sortBy")}: ${label}`}>{label}{sortKey === key ? (sortDesc ? " ↓" : " ↑") : ""}</button>;
   return <div className="space-y-6">
     <header className="flex flex-wrap items-start justify-between gap-3">
-      <p className="max-w-2xl text-sm text-muted-foreground">{admin ? t("settings.itemTypes.description") : t("settings.itemTypes.readOnly")}</p>
-      {admin && <div className="flex flex-wrap gap-2">
-        <Button variant="outline" onClick={() => setWorkspaceFields(true)}>{t("settings.itemTypes.manageWorkspaceFields")}</Button>
+      <p className="max-w-2xl text-sm text-muted-foreground">{manage ? t(spaceId ? "settings.itemTypes.spaceDescription" : "settings.itemTypes.description") : t("settings.itemTypes.readOnly")}</p>
+      {manage && <div className="flex flex-wrap gap-2">
+        {!spaceId && <Button variant="outline" onClick={() => setWorkspaceFields(true)}>{t("settings.itemTypes.manageWorkspaceFields")}</Button>}
         <Button onClick={() => setEditing("new")}>{t("settings.itemTypes.create")}</Button>
       </div>}
     </header>
     <div className="flex flex-wrap items-center gap-2">
       <Input type="search" aria-label={t("settings.itemTypes.search")} placeholder={t("settings.itemTypes.search")} value={search} onChange={(event) => setSearch(event.target.value)} className="max-w-xs" />
-      <select aria-label={t("settings.itemTypes.filterScope")} className={selectClass} value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value)}>
+      {!spaceId && <select aria-label={t("settings.itemTypes.filterScope")} className={selectClass} value={scopeFilter} onChange={(event) => setScopeFilter(event.target.value)}>
         <option value="all">{t("settings.itemTypes.filterAll")}</option>
         <option value="workspace">{t("settings.itemTypes.scopeWorkspace")}</option>
         {(spaces.data ?? []).map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}
-      </select>
+      </select>}
       <select aria-label={t("settings.itemTypes.filterStatus")} className={selectClass} value={statusFilter} onChange={(event) => setStatusFilter(event.target.value)}>
         <option value="all">{t("settings.itemTypes.filterAll")}</option>
         <option value="active">{t("settings.itemTypes.filterActive")}</option>
@@ -150,7 +160,7 @@ function ItemTypesRoute() {
       {allColumns.filter((c) => c !== "usage" || admin).map((column) => <label key={column} className="flex items-center gap-1">
         <input type="checkbox" checked={columns.includes(column)} onChange={() => toggleColumn(column)} />{columnLabel[column]}</label>)}
     </fieldset>
-    {admin && selected.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3 text-sm" role="region" aria-label={t("settings.itemTypes.bulk")}>
+    {manage && selected.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3 text-sm" role="region" aria-label={t("settings.itemTypes.bulk")}>
       <span>{t("settings.itemTypes.selectedCount", { count: selected.length })}</span>
       {impact > 0 && <span className="text-muted-foreground">{t("settings.itemTypes.deactivateImpact", { count: impact })}</span>}
       <Button variant="outline" size="sm" disabled={bulkBusy} onClick={() => void setActiveFor(true)}>{t("settings.itemTypes.activate")}</Button>
@@ -162,7 +172,7 @@ function ItemTypesRoute() {
       <h2 className="text-sm font-medium">{group.label}</h2>
       <div className="overflow-x-auto rounded-lg border"><table className="w-full text-left text-sm">
         <thead className="bg-muted/40"><tr>
-          {admin && <th scope="col" className="p-2"><span className="sr-only">{t("settings.itemTypes.select")}</span></th>}
+          {manage && <th scope="col" className="p-2"><span className="sr-only">{t("settings.itemTypes.select")}</span></th>}
           <th scope="col" className="p-2" aria-sort={sortKey === "name" ? (sortDesc ? "descending" : "ascending") : "none"}>{sortButton(nameSort, t("settings.itemTypes.nameColumn"))}</th>
           {shownColumns.map((column) => <th key={column} scope="col" className="p-2" aria-sort={sortKey === column ? (sortDesc ? "descending" : "ascending") : "none"}>{sortButton(column, columnLabel[column])}</th>)}
           <th scope="col" className="p-2"><span className="sr-only">{t("settings.itemTypes.actions")}</span></th>
@@ -170,16 +180,16 @@ function ItemTypesRoute() {
         <tbody>{group.rows.map(row)}</tbody>
       </table></div>
     </section>)}
-    {admin && <CustomFieldsDialog open={workspaceFields} onOpenChange={setWorkspaceFields} spaceId={null} />}
-    {editing && <TypeDialog type={editing === "new" ? undefined : editing} all={types.data} spaces={(spaces.data ?? []).filter((space) => can(space, "edit"))}
-      spaceName={spaceName} onClose={() => setEditing(undefined)} />}
-    {admin && duplicating && <TypeDialog template={duplicating} all={types.data} spaces={(spaces.data ?? []).filter((space) => can(space, "edit"))}
-      spaceName={spaceName} onClose={() => setDuplicating(undefined)} />}
+    {admin && !spaceId && <CustomFieldsDialog open={workspaceFields} onOpenChange={setWorkspaceFields} spaceId={null} />}
+    {editing && <TypeDialog type={editing === "new" ? undefined : editing} all={types.data} spaces={spaceId ? [] : (spaces.data ?? []).filter((space) => can(space, "edit"))}
+      fixedScope={spaceId} spaceName={spaceName} onClose={() => setEditing(undefined)} />}
+    {duplicating && <TypeDialog template={duplicating} all={types.data} spaces={spaceId ? [] : (spaces.data ?? []).filter((space) => can(space, "edit"))}
+      fixedScope={spaceId} spaceName={spaceName} onClose={() => setDuplicating(undefined)} />}
   </div>;
 }
 
 /** A template copies a type's definition into a new type: the key is new, and the fields are chosen after it is created. */
-function TypeDialog({ type, template, all, spaces, spaceName, onClose }: { type?: ItemTypeDef; template?: ItemTypeDef; all: ItemTypeDef[]; spaces: { id: string; name: string }[]; spaceName: (id?: string | null) => string; onClose: () => void }) {
+function TypeDialog({ type, template, all, spaces, fixedScope, spaceName, onClose }: { type?: ItemTypeDef; template?: ItemTypeDef; all: ItemTypeDef[]; spaces: { id: string; name: string }[]; fixedScope?: string; spaceName: (id?: string | null) => string; onClose: () => void }) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const [error, setError] = useState("");
@@ -190,7 +200,7 @@ function TypeDialog({ type, template, all, spaces, spaceName, onClose }: { type?
   const [active, setActive] = useState(type?.active ?? true);
   // CIT-D05: Quick Access is off for existing types and shows the type in the Create menu only.
   const [quick, setQuick] = useState(type?.quick_access ?? false);
-  const [scope, setScope] = useState(template?.space_id ?? "");
+  const [scope, setScope] = useState(fixedScope ?? template?.space_id ?? "");
   // Default workflow applies to projects and folders only: a task takes its workflow from its parent.
   const [workflowId, setWorkflowId] = useState(source?.default_workflow_id ?? "");
   const workflows = useQuery({ queryKey: ["workflows"], queryFn: () => api<{ items: { id: string; name: string }[] }>("/api/v1/workflows") });
@@ -273,10 +283,10 @@ function TypeDialog({ type, template, all, spaces, spaceName, onClose }: { type?
             <select className={selectClass} value={base} onChange={(event) => setBase(event.target.value as ItemTypeDef["base"])}>
               {kinds.map((kind) => <option key={kind} value={kind}>{t(`items.${kind}`)}</option>)}</select></label>
           {/* CIT-D01: a Workspace type works in every Space; a Space type works only in that Space. Fixed once created. */}
-          <label className="block space-y-1 text-sm"><span>{t("settings.itemTypes.scope")}</span>
+          {!fixedScope && <label className="block space-y-1 text-sm"><span>{t("settings.itemTypes.scope")}</span>
             <select className={selectClass} value={scope} onChange={(event) => setScope(event.target.value)}>
               <option value="">{t("settings.itemTypes.scopeWorkspace")}</option>
-              {spaces.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}</select></label>
+              {spaces.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}</select></label>}
         </>}
         {type && <p className="text-sm text-muted-foreground">{t("settings.itemTypes.scope")}: {spaceName(type.space_id)}</p>}
         <label className="block space-y-1 text-sm"><span>{t("settings.itemTypes.icon")}</span>

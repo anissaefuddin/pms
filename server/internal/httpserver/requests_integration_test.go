@@ -1,7 +1,9 @@
 package httpserver_test
 
 import (
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -51,12 +53,17 @@ func TestMyRequests(t *testing.T) {
 	f.want(vs, 201, "viewer submits")
 	f.want(f.call(viewer, "GET", "/items/"+vs.body["item_id"].(string), nil), 404, "viewer cannot open the created item")
 
-	// Status changes by the team are not sent as item notifications to a requester without access to the Item;
-	// the requester follows them in My requests instead.
+	// Status changes reach a requester without access as a notification with no Item link; the text holds no Space data.
 	status := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' LIMIT 1")
 	f.want(f.call(admin, "PATCH", path, map[string]any{"status_id": status}, "If-Match", `"1"`), 200, "team completes the request")
-	if n := f.queryID("SELECT count(*)::text FROM notifications WHERE item_id=$1 AND recipient_id=$2 AND kind='status_changed'", item, requester.id); n != "0" {
-		t.Fatalf("requester without item access gets no item notifications, got %s", n)
+	if n := f.queryID("SELECT count(*)::text FROM notifications WHERE item_id IS NULL AND space_id IS NULL AND recipient_id=$1 AND kind='status_changed' AND snippet LIKE 'Your request%is now: %'", requester.id); n != "1" {
+		t.Fatalf("requester gets one status notification without an Item link, got %s", n)
+	}
+	if n := f.queryID("SELECT count(*)::text FROM notifications WHERE item_id=$1 AND recipient_id=$2", item, requester.id); n != "0" {
+		t.Fatalf("requester without item access gets no item-linked notifications, got %s", n)
+	}
+	if inbox := f.call(requester, "GET", "/notifications", nil); inbox.status != 200 || !strings.Contains(fmt.Sprint(inbox.body), "is now: ") {
+		t.Fatalf("requester sees the status in the inbox: %d %v", inbox.status, inbox.body)
 	}
 
 	// My requests: own submissions only, newest first, with the live status, paged by cursor.

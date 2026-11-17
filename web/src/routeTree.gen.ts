@@ -74,6 +74,7 @@ import { Route as AppSettingsUsersIndexRouteImport } from './routes/_app/setting
 import { Route as AppSettingsUsersTypesRouteImport } from './routes/_app/settings/users/types'
 import { Route as AppSpacesSpaceIdAutomationRouteImport } from './routes/_app/spaces_.$spaceId.automation'
 import { Route as AppSpacesSpaceIdFormsRouteImport } from './routes/_app/spaces_.$spaceId.forms'
+import { Route as AppSpacesSpaceIdItemTypesRouteImport } from './routes/_app/spaces_.$spaceId.item-types'
 import { Route as AppSpacesSpaceIdFormsFormIdRouteImport } from './routes/_app/spaces_.$spaceId.forms_.$formId'
 
 const AppRoute = AppRouteImport.update({
@@ -403,6 +404,12 @@ const AppSpacesSpaceIdFormsRoute = AppSpacesSpaceIdFormsRouteImport.update({
   path: '/spaces/$spaceId/forms',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSpacesSpaceIdItemTypesRoute =
+  AppSpacesSpaceIdItemTypesRouteImport.update({
+    id: '/spaces_/$spaceId/item-types',
+    path: '/spaces/$spaceId/item-types',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppSpacesSpaceIdFormsFormIdRoute =
   AppSpacesSpaceIdFormsFormIdRouteImport.update({
     id: '/spaces_/$spaceId/forms_/$formId',
@@ -474,6 +481,7 @@ export interface FileRoutesByFullPath {
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
   '/spaces/$spaceId/automation': typeof AppSpacesSpaceIdAutomationRoute
   '/spaces/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
+  '/spaces/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
   '/settings/users/': typeof AppSettingsUsersIndexRoute
   '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
 }
@@ -539,6 +547,7 @@ export interface FileRoutesByTo {
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
   '/spaces/$spaceId/automation': typeof AppSpacesSpaceIdAutomationRoute
   '/spaces/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
+  '/spaces/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
   '/settings/users': typeof AppSettingsUsersIndexRoute
   '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
 }
@@ -608,6 +617,7 @@ export interface FileRoutesById {
   '/_app/settings/users/types': typeof AppSettingsUsersTypesRoute
   '/_app/spaces_/$spaceId/automation': typeof AppSpacesSpaceIdAutomationRoute
   '/_app/spaces_/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
+  '/_app/spaces_/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
   '/_app/settings/users/': typeof AppSettingsUsersIndexRoute
   '/_app/spaces_/$spaceId/forms_/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
 }
@@ -677,6 +687,7 @@ export interface FileRouteTypes {
     | '/settings/users/types'
     | '/spaces/$spaceId/automation'
     | '/spaces/$spaceId/forms'
+    | '/spaces/$spaceId/item-types'
     | '/settings/users/'
     | '/spaces/$spaceId/forms/$formId'
   fileRoutesByTo: FileRoutesByTo
@@ -742,6 +753,7 @@ export interface FileRouteTypes {
     | '/settings/users/types'
     | '/spaces/$spaceId/automation'
     | '/spaces/$spaceId/forms'
+    | '/spaces/$spaceId/item-types'
     | '/settings/users'
     | '/spaces/$spaceId/forms/$formId'
   id:
@@ -810,6 +822,7 @@ export interface FileRouteTypes {
     | '/_app/settings/users/types'
     | '/_app/spaces_/$spaceId/automation'
     | '/_app/spaces_/$spaceId/forms'
+    | '/_app/spaces_/$spaceId/item-types'
     | '/_app/settings/users/'
     | '/_app/spaces_/$spaceId/forms_/$formId'
   fileRoutesById: FileRoutesById
@@ -1283,6 +1296,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSpacesSpaceIdFormsRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/spaces_/$spaceId/item-types': {
+      id: '/_app/spaces_/$spaceId/item-types'
+      path: '/spaces/$spaceId/item-types'
+      fullPath: '/spaces/$spaceId/item-types'
+      preLoaderRoute: typeof AppSpacesSpaceIdItemTypesRouteImport
+      parentRoute: typeof AppRoute
+    }
     '/_app/spaces_/$spaceId/forms_/$formId': {
       id: '/_app/spaces_/$spaceId/forms_/$formId'
       path: '/spaces/$spaceId/forms/$formId'
@@ -1394,6 +1414,7 @@ interface AppRouteChildren {
   AppRequestsIndexRoute: typeof AppRequestsIndexRoute
   AppSpacesSpaceIdAutomationRoute: typeof AppSpacesSpaceIdAutomationRoute
   AppSpacesSpaceIdFormsRoute: typeof AppSpacesSpaceIdFormsRoute
+  AppSpacesSpaceIdItemTypesRoute: typeof AppSpacesSpaceIdItemTypesRoute
   AppSpacesSpaceIdFormsFormIdRoute: typeof AppSpacesSpaceIdFormsFormIdRoute
 }
 
@@ -1429,6 +1450,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppRequestsIndexRoute: AppRequestsIndexRoute,
   AppSpacesSpaceIdAutomationRoute: AppSpacesSpaceIdAutomationRoute,
   AppSpacesSpaceIdFormsRoute: AppSpacesSpaceIdFormsRoute,
+  AppSpacesSpaceIdItemTypesRoute: AppSpacesSpaceIdItemTypesRoute,
   AppSpacesSpaceIdFormsFormIdRoute: AppSpacesSpaceIdFormsFormIdRoute,
 }
 

@@ -358,3 +358,31 @@ test("the type form sets Quick Access, and bulk deactivation says how many items
   await page.getByRole("checkbox", { name: `Select: ${bugType.name}` }).check();
   await expect(page.getByRole("region", { name: "Bulk actions" })).toContainText("Deactivating affects 7 existing non-deleted items");
 });
+
+test("a Space's item types: its own types are editable there, Workspace types are read-only, and Quick Access follows the Space's create menu", async ({ page }) => {
+  const spaceBug = { ...bugType, id: "55555555-5555-4555-8555-555555555555", key: "space_bug", name: "Space bug", space_id: marketing.id, quick_access: true };
+  const menuOff: string[] = [];
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType, spaceBug] } },
+    [`GET /spaces/${marketing.id}/create-menu`]: () => ({ body: { version: 1, items: [{ key: "task", enabled: true }, { key: "project", enabled: true }, { key: "folder", enabled: true }, { key: "space_bug", enabled: !menuOff.includes("space_bug") }] } }),
+    [`POST /item-types`]: (body: Record<string, unknown>) => ({ status: 201, body: { ...bugType, ...body, id: "66666666-6666-4666-8666-666666666666", version: 1 }, headers: { ETag: '"1"' } }),
+  } });
+  await page.goto(`/spaces/${marketing.id}/item-types`);
+  await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit: Space bug" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit: Bug" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Create a custom item type" }).first().click();
+  const dialog = page.getByRole("dialog", { name: "Create a custom item type" });
+  await expect(dialog.getByLabel("Scope")).toHaveCount(0);
+  await dialog.getByLabel("Name", { exact: true }).fill("Campaign");
+  await dialog.getByLabel("Key (lowercase letters, digits, _)").fill("campaign");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  expect(calls.find((c) => c.method === "POST" && c.path === "/item-types")?.body).toMatchObject({ key: "campaign", space_id: marketing.id });
+  await page.goto(`/spaces/${marketing.id}`);
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Space bug" })).toBeVisible();
+  menuOff.push("space_bug");
+  await page.reload();
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Space bug" })).toHaveCount(0);
+});

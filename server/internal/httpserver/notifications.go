@@ -118,7 +118,7 @@ func (s *Server) listNotifications(w http.ResponseWriter, r *http.Request) {
 	var next *string
 	var last string
 	for _, n := range inbox {
-		visible := caps[n.Item].Has(policy.View)
+		visible := (n.Item == "" && n.Space == "") || caps[n.Item].Has(policy.View)
 		if n.Space != "" {
 			if _, known := spaceVisible[n.Space]; !known {
 				canView, err := notifications.CanView(ctx, tx, actor, notifications.Target{Space: n.Space})

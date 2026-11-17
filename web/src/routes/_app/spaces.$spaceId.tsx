@@ -122,6 +122,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
           {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
           {canEditForms && <Link to="/spaces/$spaceId/automation" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("automation.link")}</Link>}
+          {canEditForms && <Link to="/spaces/$spaceId/item-types" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("settings.itemTypes.spaceLink")}</Link>}
           <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
           {(canRename || canDelete || canManageFields || canCreate || canLock || canEditForms) && (

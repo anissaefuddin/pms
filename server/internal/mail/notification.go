@@ -47,15 +47,18 @@ AND NOT (CASE n.kind WHEN 'mention' THEN 'mention' WHEN 'assigned' THEN 'assigne
 	if err != nil {
 		return err
 	}
-	var caps policy.Caps
-	if itemID != "" {
-		caps, err = policy.ItemCaps(ctx, tx, actor, itemID)
-	} else {
-		space, _, lookupErr := policy.SpaceAccessFor(ctx, tx, actor, spaceID)
-		caps, err = space.Caps, lookupErr
-	}
-	if err != nil || !caps.Has(policy.View) {
-		return err
+	// A row with no Item or Space is the recipient's own request status (RF-08): the recipient owns it, so no access check.
+	if itemID != "" || spaceID != "" {
+		var caps policy.Caps
+		if itemID != "" {
+			caps, err = policy.ItemCaps(ctx, tx, actor, itemID)
+		} else {
+			space, _, lookupErr := policy.SpaceAccessFor(ctx, tx, actor, spaceID)
+			caps, err = space.Caps, lookupErr
+		}
+		if err != nil || !caps.Has(policy.View) {
+			return err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return err

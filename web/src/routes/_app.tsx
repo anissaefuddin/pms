@@ -60,7 +60,10 @@ function AppShell() {
     window.addEventListener("pms:create-item", open);
     return () => window.removeEventListener("pms:create-item", open);
   }, []);
-  const canCreate = spaces.data?.some((space) => space.my_capabilities?.includes("create"));
+  // On a Space page, Create (and Quick Access) follows that Space's own create permission; elsewhere any Space will do.
+  const canCreate = spaceId
+    ? !!spaces.data?.find((space) => space.id === spaceId)?.my_capabilities?.includes("create")
+    : spaces.data?.some((space) => space.my_capabilities?.includes("create"));
   useEffect(() => {
     if (me.data && spaceId && spaces.data?.some((space) => space.id === spaceId)) {
       localStorage.setItem(lastSpaceKey(me.data.id), spaceId);
