@@ -386,3 +386,36 @@ test("a Space's item types: its own types are editable there, Workspace types ar
   await page.getByRole("button", { name: "Create", exact: true }).click();
   await expect(page.getByRole("menuitem", { name: "Space bug" })).toHaveCount(0);
 });
+
+test("dragging a block in the layout builder reorders it within its section", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    [`PATCH /item-types/${bugType.id}`]: { body: { ...bugType, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Add a section" }).click();
+  await dialog.getByLabel("Section 1 title").fill("Details");
+  const layout = dialog.getByRole("group", { name: "Layout" });
+  await layout.getByRole("checkbox", { name: "Importance" }).check();
+  await layout.getByRole("checkbox", { name: "Status" }).check();
+  const order = dialog.getByRole("list", { name: "Order of blocks in section 1" });
+  await order.locator("li").nth(1).dragTo(order.locator("li").nth(0));
+  await expect(order.locator("li").first()).toContainText("Status");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ layout: { sections: [{ title: "Details", fields: ["status", "importance"] }] } });
+});
+
+test("the registry, the type form, and a Space's item types pass axe", async ({ page }) => {
+  await mockSpaces(page, { extra: { "GET /item-types": { body: { items: [taskType, projectType, bugType] } } } });
+  await page.goto("/settings/item-types");
+  await expect(page.getByRole("button", { name: `Edit: ${bugType.name}` })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await page.goto(`/spaces/${marketing.id}/item-types`);
+  await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});

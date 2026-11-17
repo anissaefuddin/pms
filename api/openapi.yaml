@@ -3471,6 +3471,72 @@ paths:
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
         '428': { $ref: '#/components/responses/Problem' }
+  /custom-fields:
+    get:
+      tags: [spaces]
+      operationId: listWorkspaceCustomFields
+      summary: Daftar custom field Workspace (dipakai semua Space), termasuk yang diarsipkan
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items: { $ref: '#/components/schemas/CustomField' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [spaces]
+      operationId: createWorkspaceCustomField
+      summary: Tambahkan custom field Workspace; hanya administrator akun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomFieldCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomField' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /custom-fields/{fieldId}:
+    parameters:
+      - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+    patch:
+      tags: [spaces]
+      operationId: updateWorkspaceCustomField
+      summary: Ubah custom field Workspace; hanya administrator akun
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CustomFieldUpdate' }
+      responses:
+        '200':
+          description: Diperbarui
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/CustomField' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [spaces]
+      operationId: archiveWorkspaceCustomField
+      summary: Arsipkan custom field Workspace; hanya administrator akun
+      responses:
+        '204': { description: Diarsipkan }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/custom-fields:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }

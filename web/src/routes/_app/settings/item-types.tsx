@@ -24,6 +24,7 @@ function ItemTypesRoute() {
 }
 
 const kinds = ["task", "project", "folder"] as const;
+const GRIP = "\u2807";
 const levels = ["high", "normal", "low"] as const;
 const selectClass = "block w-full rounded border bg-background px-2 py-1 text-sm";
 type Section = { title: string; fields: string[] };
@@ -263,6 +264,16 @@ function TypeDialog({ type, template, all, spaces, fixedScope, spaceName, onClos
     [fields[position], fields[target]] = [fields[target], fields[position]];
     updateSection(sectionIndex, { fields });
   };
+  // Drag a block onto another position in the same section; the arrow buttons stay for keyboard users.
+  const [dragging, setDragging] = useState<{ section: number; position: number }>();
+  const dropBlock = (sectionIndex: number, to: number) => {
+    if (!dragging || dragging.section !== sectionIndex || dragging.position === to) return;
+    const fields = [...sections[sectionIndex].fields];
+    const [moved] = fields.splice(dragging.position, 1);
+    fields.splice(to, 0, moved);
+    updateSection(sectionIndex, { fields });
+    setDragging(undefined);
+  };
   const updateSection = (index: number, patch: Partial<Section>) => setSections((rows) => rows.map((row, i) => i === index ? { ...row, ...patch } : row));
   const toggleBlock = (index: number, block: string) => updateSection(index, {
     fields: sections[index].fields.includes(block) ? sections[index].fields.filter((x) => x !== block) : [...sections[index].fields, block] });
@@ -341,7 +352,10 @@ function TypeDialog({ type, template, all, spaces, fixedScope, spaceName, onClos
               return <label key={block} className="flex items-center gap-1"><input type="checkbox" disabled={usedElsewhere} checked={section.fields.includes(block)} onChange={() => toggleBlock(index, block)} />{blockLabel(block)}</label>;
             })}</div>
             {section.fields.length > 0 && <ol aria-label={t("settings.itemTypes.blockOrder", { number: index + 1 })} className="space-y-1">
-              {section.fields.map((block, position) => <li key={block} className="flex items-center gap-2">
+              {section.fields.map((block, position) => <li key={block} draggable className="flex items-center gap-2 rounded"
+                onDragStart={() => setDragging({ section: index, position })} onDragEnd={() => setDragging(undefined)}
+                onDragOver={(event) => { if (dragging?.section === index) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); dropBlock(index, position); }}>
+                <span aria-hidden="true" className="cursor-grab text-muted-foreground">{GRIP}</span>
                 <span className="flex-1">{blockLabel(block)}</span>
                 <Button type="button" variant="outline" size="sm" disabled={position === 0} aria-label={t("settings.itemTypes.moveBlockUp", { name: blockLabel(block) })} onClick={() => moveBlock(index, position, -1)}>↑</Button>
                 <Button type="button" variant="outline" size="sm" disabled={position === section.fields.length - 1} aria-label={t("settings.itemTypes.moveBlockDown", { name: blockLabel(block) })} onClick={() => moveBlock(index, position, 1)}>↓</Button>
