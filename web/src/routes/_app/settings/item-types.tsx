@@ -37,6 +37,7 @@ function ItemTypesRoute() {
   const admin = useProfile()?.user_type === "admin";
   const types = useItemTypes();
   const spaces = useSpaces();
+  // Global counts are for account administrators only (CIT-D06); the server enforces it too.
   const usage = useQuery({ queryKey: ["item-types", "usage"], enabled: admin, retry: false,
     queryFn: () => api<{ items: Record<string, number> }>("/api/v1/item-types/usage") });
   const [editing, setEditing] = useState<ItemTypeDef | "new">();
@@ -88,6 +89,8 @@ function ItemTypesRoute() {
   const sortBy = (key: SortKey) => { if (sortKey === key) setSortDesc(!sortDesc); else { setSortKey(key); setSortDesc(false); } };
   const shownColumns = (["key", "base", "scope", "status", "usage"] as Column[]).filter((c) => columns.includes(c) && (c !== "usage" || admin));
   const columnLabel: Record<Column, string> = { key: t("settings.itemTypes.keyColumn"), base: t("settings.itemTypes.basedOnLabel"), scope: t("settings.itemTypes.scopeLabel"), status: t("settings.itemTypes.statusLabel"), usage: t("settings.itemTypes.usage") };
+  // Deactivating keeps every existing item; the impact is the live items of the selected custom types, shown before the change.
+  const impact = (types.data ?? []).filter((x) => selected.includes(x.id) && !x.is_builtin && x.active).reduce((sum, x) => sum + (usage.data?.items[x.id] ?? 0), 0);
   const toggleSelected = (id: string) => setSelected((rows) => rows.includes(id) ? rows.filter((x) => x !== id) : [...rows, id]);
   // Bulk activation applies to custom types only; each change needs the type's current version.
   async function setActiveFor(active: boolean) {
@@ -149,6 +152,7 @@ function ItemTypesRoute() {
     </fieldset>
     {admin && selected.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3 text-sm" role="region" aria-label={t("settings.itemTypes.bulk")}>
       <span>{t("settings.itemTypes.selectedCount", { count: selected.length })}</span>
+      {impact > 0 && <span className="text-muted-foreground">{t("settings.itemTypes.deactivateImpact", { count: impact })}</span>}
       <Button variant="outline" size="sm" disabled={bulkBusy} onClick={() => void setActiveFor(true)}>{t("settings.itemTypes.activate")}</Button>
       <Button variant="outline" size="sm" disabled={bulkBusy} onClick={() => void setActiveFor(false)}>{t("settings.itemTypes.deactivate")}</Button>
       <Button variant="ghost" size="sm" onClick={() => setSelected([])}>{t("settings.itemTypes.clearSelection")}</Button>
@@ -184,6 +188,8 @@ function TypeDialog({ type, template, all, spaces, spaceName, onClose }: { type?
   const [base, setBase] = useState<ItemTypeDef["base"]>(source?.base ?? "task");
   const [children, setChildren] = useState<string[]>(source?.allowed_children ?? []);
   const [active, setActive] = useState(type?.active ?? true);
+  // CIT-D05: Quick Access is off for existing types and shows the type in the Create menu only.
+  const [quick, setQuick] = useState(type?.quick_access ?? false);
   const [scope, setScope] = useState(template?.space_id ?? "");
   // Default workflow applies to projects and folders only: a task takes its workflow from its parent.
   const [workflowId, setWorkflowId] = useState(source?.default_workflow_id ?? "");
@@ -215,6 +221,7 @@ function TypeDialog({ type, template, all, spaces, spaceName, onClose }: { type?
       layout: sections.length ? { sections: sections.filter((section) => section.title.trim()).map((section) => ({ ...section, fields: section.fields.filter((block) => blockOptions.includes(block)) })) } : {} };
     if (!type) Object.assign(body, { key: text("key"), base, space_id: scope || null });
     else body.active = active;
+    if (type && !type.is_builtin) body.quick_access = active && quick;
     setBusy(true); setError("");
     try {
       const saved = await api<ItemTypeDef>(type ? `/api/v1/item-types/${type.id}` : "/api/v1/item-types", { method: type ? "PATCH" : "POST", headers: type ? { "If-Match": `"${type.version}"` } : undefined, body: JSON.stringify(body) });
@@ -279,6 +286,9 @@ function TypeDialog({ type, template, all, spaces, spaceName, onClose }: { type?
           </select></label>
         {type && !type.is_builtin && <label className="flex items-center gap-2 text-sm">
           <input type="checkbox" checked={active} onChange={(event) => setActive(event.target.checked)} />{t("settings.itemTypes.active")}</label>}
+        {type && !type.is_builtin && <label className="flex items-center gap-2 text-sm">
+          <input type="checkbox" checked={quick && active} disabled={!active} onChange={(event) => setQuick(event.target.checked)} />{t("settings.itemTypes.quickAccess")}</label>}
+        {type && !type.is_builtin && <p className="text-xs text-muted-foreground">{t("settings.itemTypes.quickAccessHint")}</p>}
         <fieldset className="space-y-1 text-sm"><legend className="font-medium">{t("settings.itemTypes.children")}</legend>
           <p className="text-muted-foreground">{t("settings.itemTypes.childrenHint")}</p>
           {eligible.map((other) => <label key={other.id} className="flex items-center gap-2">

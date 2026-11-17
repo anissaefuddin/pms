@@ -33,6 +33,8 @@ type Props = {
   initialStatus?: string;
   /** Tipe awal saat dibuka dari menu global create; diabaikan bila taskOnly atau ada parent. */
   initialKind?: CreateKind;
+  /** A Quick Access or "More item types" choice; the dialog still checks it against the chosen destination. */
+  initialTypeKey?: string;
   onCreated: (item: Item) => void;
 };
 const kinds: CreateKind[] = ["project", "folder", "task"];
@@ -58,7 +60,7 @@ export function CreateItemDialog(props: Props) {
 
 type FieldKey = "title" | "location" | "parent" | "due_date";
 
-function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind }: Props) {
+function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const spaces = useSpaces();
@@ -77,7 +79,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [busy, setBusy] = useState(false);
   const [blueprintID, setBlueprintID] = useState("");
-  const [typeKeyChoice, setTypeKey] = useState("");
+  const [typeKeyChoice, setTypeKey] = useState(initialTypeKey ?? "");
   // CIT-D01: Workspace types, and the types of this Space only (a Space type never appears in another Space)
   const typeDefs = (useItemTypes().data ?? []).filter((def) => !def.space_id || def.space_id === spaceID);
   // SPC-14: the Space's "+" menu narrows what is offered; a fixed parent or the board's task-only add is not a menu.

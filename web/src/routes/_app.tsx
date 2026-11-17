@@ -51,7 +51,7 @@ function AppShell() {
   const { spaceId, itemId } = useParams({ strict: false });
   const spaces = useSpaces(!!me.data);
   // Dibuka dari menu "+ Create" (kind) atau dari komponen lain lewat event pms:create-item (kind, spaceId, parentId).
-  const [creating, setCreating] = useState<{ kind?: CreateKind; location?: Location } | null>(null);
+  const [creating, setCreating] = useState<{ kind?: CreateKind; typeKey?: string; location?: Location } | null>(null);
   useEffect(() => {
     const open = (event: Event) => {
       const detail = (event as CustomEvent<{ kind?: CreateKind; spaceId?: string; parentId?: string }>).detail ?? {};
@@ -97,12 +97,12 @@ function AppShell() {
         {inSettings
           // Settings has its own page header (breadcrumb, mobile menu) and no top bar; the palette stays mounted for Ctrl+K.
           ? <SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />
-          : <Topbar live={live} navigation={<MobileSidebar me={me.data} />} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />}
+          : <Topbar live={live} navigation={<MobileSidebar me={me.data} />} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind, typeKey) => setCreating({ kind, typeKey }) : undefined} spaceId={spaceId} />}
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}
       <CreateItemDialog open={!!creating} onOpenChange={(open) => { if (!open) setCreating(null); }} me={me.data}
-        initialKind={creating?.kind} location={creating?.location ?? (spaceId ? { space_id: spaceId } : undefined)}
+        initialKind={creating?.kind} initialTypeKey={creating?.typeKey} location={creating?.location ?? (spaceId ? { space_id: spaceId } : undefined)}
         onCreated={(item) => {
           if (item.type === "task") setTask(item.id);
           else void router.navigate({ to: "/tasks/$itemId", params: { itemId: item.id } });

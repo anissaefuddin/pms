@@ -120,6 +120,9 @@
   "create": {
     "button": "Buat",
     "search": "Cari opsi pembuatan",
+    "moreTypes": "Tipe item lainnya",
+    "moreTypesHint": "Tipe custom lain yang bisa Anda buat",
+    "moreTypesDesc": "{{count}} tipe custom lainnya",
     "noMatch": "Tidak ada opsi yang cocok",
     "space": "Ruang",
     "spaceDesc": "Area baru untuk sebuah tim atau klien",

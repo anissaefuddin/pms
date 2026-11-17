@@ -16,13 +16,15 @@ import (
 )
 
 type ItemType struct {
-	ID                string         `json:"id"`
-	Key               string         `json:"key"`
-	Name              string         `json:"name"`
-	Icon              string         `json:"icon"`
-	Base              string         `json:"base"`
-	Builtin           bool           `json:"is_builtin"`
-	Active            bool           `json:"active"`
+	ID      string `json:"id"`
+	Key     string `json:"key"`
+	Name    string `json:"name"`
+	Icon    string `json:"icon"`
+	Base    string `json:"base"`
+	Builtin bool   `json:"is_builtin"`
+	Active  bool   `json:"active"`
+	// QuickAccess puts an active custom type in the Create menu. It configures visibility only, never permission.
+	QuickAccess       bool           `json:"quick_access"`
 	AllowedChildren   []string       `json:"allowed_children"`
 	DefaultWorkflowID *string        `json:"default_workflow_id"`
 	Defaults          map[string]any `json:"defaults"`
@@ -33,11 +35,11 @@ type ItemType struct {
 }
 
 const itemTypeColumns = `id::text,key,name,icon,base::text,is_builtin,active,
- ARRAY(SELECT unnest(allowed_children)::text),default_workflow_id::text,defaults,layout,version,space_id::text`
+ ARRAY(SELECT unnest(allowed_children)::text),default_workflow_id::text,defaults,layout,version,space_id::text,quick_access`
 
 func scanItemType(row pgx.Row) (ItemType, error) {
 	var t ItemType
-	err := row.Scan(&t.ID, &t.Key, &t.Name, &t.Icon, &t.Base, &t.Builtin, &t.Active, &t.AllowedChildren, &t.DefaultWorkflowID, &t.Defaults, &t.Layout, &t.Version, &t.SpaceID)
+	err := row.Scan(&t.ID, &t.Key, &t.Name, &t.Icon, &t.Base, &t.Builtin, &t.Active, &t.AllowedChildren, &t.DefaultWorkflowID, &t.Defaults, &t.Layout, &t.Version, &t.SpaceID, &t.QuickAccess)
 	return t, err
 }
 
@@ -89,6 +91,7 @@ type ItemTypeInput struct {
 	Icon              *string         `json:"icon"`
 	Base              *string         `json:"base"`
 	Active            *bool           `json:"active"`
+	QuickAccess       *bool           `json:"quick_access"`
 	AllowedChildren   *[]string       `json:"allowed_children"`
 	DefaultWorkflowID json.RawMessage `json:"default_workflow_id"`
 	Defaults          map[string]any  `json:"defaults"`
@@ -326,10 +329,18 @@ func UpdateItemType(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 		return ItemType{}, err
 	}
 	setWorkflow := in.DefaultWorkflowID != nil
+	if in.QuickAccess != nil && *in.QuickAccess {
+		if current.Builtin {
+			return ItemType{}, InvalidField{"quick_access", "built-in types have no Quick Access setting"}
+		}
+		if active := in.Active == nil && current.Active || in.Active != nil && *in.Active; !active {
+			return ItemType{}, InvalidField{"quick_access", "an inactive type cannot be in Quick Access"}
+		}
+	}
 	updated, err := scanItemType(tx.QueryRow(ctx, `UPDATE item_type_defs SET name=COALESCE(btrim($2),name), icon=COALESCE($3,icon), active=COALESCE($4,active),
  allowed_children=COALESCE($5::uuid[],allowed_children), default_workflow_id=CASE WHEN $6 THEN $7 ELSE default_workflow_id END,
- defaults=COALESCE($8,defaults), layout=COALESCE($9,layout), version=version+1 WHERE id=$1 RETURNING `+itemTypeColumns,
-		parsed, in.Name, in.Icon, in.Active, in.AllowedChildren, setWorkflow, workflow, in.Defaults, in.Layout))
+ defaults=COALESCE($8,defaults), layout=COALESCE($9,layout), quick_access=COALESCE($10,quick_access), version=version+1 WHERE id=$1 RETURNING `+itemTypeColumns,
+		parsed, in.Name, in.Icon, in.Active, in.AllowedChildren, setWorkflow, workflow, in.Defaults, in.Layout, in.QuickAccess))
 	if pgCode(err) == "23505" {
 		return ItemType{}, InvalidField{"name", "an item type with that name already exists"}
 	}

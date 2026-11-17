@@ -4335,6 +4335,9 @@ type ItemTypeDef struct {
 	Layout ItemTypeLayout `json:"layout"`
 	Name   string         `json:"name"`
 
+	// QuickAccess CIT-D05: tampil sebagai pintasan di menu Create. Hanya tipe custom aktif; tidak memberi atau mencabut izin
+	QuickAccess *bool `json:"quick_access,omitempty"`
+
 	// SpaceId Space pemilik type; kosong berarti Workspace type
 	SpaceId *openapi_types.UUID `json:"space_id,omitempty"`
 	Version int                 `json:"version"`
@@ -4374,8 +4377,9 @@ type ItemTypeUpdate struct {
 	Icon              *string                 `json:"icon,omitempty"`
 
 	// Layout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
-	Layout *ItemTypeLayout `json:"layout,omitempty"`
-	Name   *string         `json:"name,omitempty"`
+	Layout      *ItemTypeLayout `json:"layout,omitempty"`
+	Name        *string         `json:"name,omitempty"`
+	QuickAccess *bool           `json:"quick_access,omitempty"`
 }
 
 // ItemUpdate defines model for ItemUpdate.

@@ -326,3 +326,35 @@ test("the type form picks an icon, orders blocks, places a custom field, and pre
   await dialog.getByRole("button", { name: "Save", exact: true }).click();
   await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ icon: "bug", layout: { sections: [{ title: "Details", fields: ["importance", costCenter.id, "status"] }] } });
 });
+
+test("Quick Access puts a custom type in the Create menu and opens the item dialog with it chosen", async ({ page }) => {
+  const quickBug = { ...bugType, quick_access: true };
+  const legacy = { ...bugType, id: "99999999-9999-4999-8999-999999999998", key: "legacy_more", name: "Legacy more", quick_access: false };
+  await mockSpaces(page, { extra: { "GET /item-types": { body: { items: [taskType, projectType, quickBug, legacy] } } } });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Bug" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Legacy more" })).toHaveCount(0);
+  await page.getByRole("menuitem", { name: "More item types" }).click();
+  await page.getByRole("dialog", { name: "More item types" }).getByRole("button", { name: "Legacy more" }).click();
+  await expect(page.getByRole("dialog").getByRole("combobox", { name: "Type" })).toHaveValue("legacy_more");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Bug" }).click();
+  await expect(page.getByRole("dialog").getByRole("combobox", { name: "Type" })).toHaveValue(bugType.key);
+});
+
+test("the type form sets Quick Access, and bulk deactivation says how many items it affects", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /item-types/usage": { body: { items: { [bugType.id]: 7 } } },
+    [`PATCH /item-types/${bugType.id}`]: { body: { ...bugType, quick_access: true, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  await page.getByRole("dialog").getByRole("checkbox", { name: "Show in Create menu (Quick Access)" }).check();
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body?.quick_access).toBe(true);
+  await page.getByRole("checkbox", { name: `Select: ${bugType.name}` }).check();
+  await expect(page.getByRole("region", { name: "Bulk actions" })).toContainText("Deactivating affects 7 existing non-deleted items");
+});

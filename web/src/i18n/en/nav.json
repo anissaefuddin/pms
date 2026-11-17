@@ -120,6 +120,9 @@
   "create": {
     "button": "Create",
     "search": "Search create options",
+    "moreTypes": "More item types",
+    "moreTypesHint": "Other custom types you can create",
+    "moreTypesDesc": "{{count}} more custom types",
     "noMatch": "No matching options",
     "space": "Space",
     "spaceDesc": "A new area for a team or client",

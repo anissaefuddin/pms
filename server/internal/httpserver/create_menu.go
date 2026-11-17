@@ -15,11 +15,12 @@ func (s *Server) createMenuRoutes(mux *http.ServeMux) {
 }
 
 type createMenuEntry struct {
-	Key     string `json:"key"`
-	Name    string `json:"name"`
-	Icon    string `json:"icon"`
-	Base    string `json:"base"`
-	Enabled bool   `json:"enabled"`
+	Key         string `json:"key"`
+	Name        string `json:"name"`
+	Icon        string `json:"icon"`
+	Base        string `json:"base"`
+	Enabled     bool   `json:"enabled"`
+	QuickAccess bool   `json:"quick_access"` // custom types only; visibility in the menu, not permission
 }
 
 // createMenu lists the active item types in default order with the Space's toggles applied (SPC-14).
@@ -37,7 +38,8 @@ func createMenu(r *http.Request, db pgx.Tx, spaceID string) ([]createMenuEntry, 
 	for _, t := range types {
 		// a Space's menu offers the Workspace types and its own; other Spaces' types are not offered here
 		if t.Active && (t.SpaceID == nil || *t.SpaceID == spaceID) {
-			out = append(out, createMenuEntry{t.Key, t.Name, t.Icon, t.Base, !slices.Contains(hidden, t.Key)})
+			out = append(out, createMenuEntry{Key: t.Key, Name: t.Name, Icon: t.Icon, Base: t.Base, Enabled: !slices.Contains(hidden, t.Key),
+				QuickAccess: t.QuickAccess && !t.Builtin})
 		}
 	}
 	return out, version, nil

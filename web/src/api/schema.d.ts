@@ -4883,6 +4883,8 @@ export interface components {
             base: components["schemas"]["ItemType"];
             is_builtin: boolean;
             active: boolean;
+            /** @description CIT-D05: tampil sebagai pintasan di menu Create. Hanya tipe custom aktif; tidak memberi atau mencabut izin */
+            quick_access?: boolean;
             /** @description Kosong berarti mengikuti aturan kelas; terisi berarti hanya tipe ini yang boleh menjadi anak */
             allowed_children: string[];
             /** Format: uuid */
@@ -4927,6 +4929,7 @@ export interface components {
             name?: string;
             icon?: string;
             active?: boolean;
+            quick_access?: boolean;
             allowed_children?: string[];
             /** Format: uuid */
             default_workflow_id?: string | null;

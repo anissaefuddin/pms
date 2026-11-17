@@ -6707,6 +6707,7 @@ components:
         base: { $ref: '#/components/schemas/ItemType' }
         is_builtin: { type: boolean }
         active: { type: boolean }
+        quick_access: { type: boolean, description: 'CIT-D05: tampil sebagai pintasan di menu Create. Hanya tipe custom aktif; tidak memberi atau mencabut izin' }
         allowed_children:
           type: array
           description: Kosong berarti mengikuti aturan kelas; terisi berarti hanya tipe ini yang boleh menjadi anak
@@ -6747,6 +6748,7 @@ components:
         name: { type: string, minLength: 1, maxLength: 80 }
         icon: { type: string }
         active: { type: boolean }
+        quick_access: { type: boolean }
         allowed_children: { type: array, items: { type: string, format: uuid } }
         default_workflow_id: { type: string, format: uuid, nullable: true }
         defaults: { type: object, additionalProperties: true }

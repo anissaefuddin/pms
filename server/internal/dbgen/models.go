@@ -957,6 +957,7 @@ type ItemTypeDef struct {
 	Version           int32              `json:"version"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
 	SpaceID           pgtype.UUID        `json:"space_id"`
+	QuickAccess       bool               `json:"quick_access"`
 }
 
 type ItemTypeField struct {
