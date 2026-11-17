@@ -30,4 +30,15 @@ func TestItemTypeUsageCountsLiveItems(t *testing.T) {
 		t.Fatalf("two live items of the type: %v", usage.body)
 	}
 	f.want(f.call(editor, http.MethodGet, "/item-types/usage", nil), http.StatusForbidden, "non-admins do not see usage")
+
+	// A Space's own usage: anyone who can edit the Space sees its live items per type; a reader and an outsider do not.
+	spaceUsage := f.call(editor, http.MethodGet, "/spaces/"+space+"/item-types/usage", nil)
+	f.want(spaceUsage, http.StatusOK, "editor reads Space usage")
+	if n, _ := spaceUsage.body["items"].(map[string]any)[typeID].(float64); n != 2 {
+		t.Fatalf("two live items of the type in the Space: %v", spaceUsage.body)
+	}
+	reader, outsider := f.person("regular"), f.person("regular")
+	f.share(space, "user", reader.id, "read")
+	f.want(f.call(reader, http.MethodGet, "/spaces/"+space+"/item-types/usage", nil), http.StatusForbidden, "a reader does not see Space usage")
+	f.want(f.call(outsider, http.MethodGet, "/spaces/"+space+"/item-types/usage", nil), http.StatusNotFound, "an outsider does not see the Space")
 }

@@ -58,7 +58,7 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 1. **Flaky tests.** `TestBrowserCollaboration` (mention delivery) and `ownership.spec.ts:51` fail sometimes. Neither root cause is confirmed.
 2. **Email for requester status** has no automated test and has not been checked on dev-lens.
 3. **Layout builder:** drag works only within one section; no drag between sections.
-4. **Formulas on Workspace fields** are refused. Not decided.
+4. **Formulas on Workspace fields** stay refused. Decided 17 Nov 2026: a Workspace field cannot use a formula, because a formula could read Space fields that a Workspace type does not own.
 5. **Space usage counts** are not shown to Space admins (planned as a later enhancement).
 
 ## 6. Release readiness
@@ -69,4 +69,3 @@ Before a wider release:
 - Run the live checks on dev-lens (email, Space item types, request status in the inbox).
 - Fix or explain the two flaky tests.
 - Decide on `scope_test` (see `docs/RELEASE_CLEANUP.md`).
-- Decide whether Workspace fields may use formulas.

@@ -419,3 +419,42 @@ test("the registry, the type form, and a Space's item types pass axe", async ({ 
   await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
+
+test("a Space's manager sees usage for that Space only, and a dragged block can move to another section", async ({ page }) => {
+  const spaceBug = { ...bugType, id: "77777777-7777-4777-8777-777777777777", key: "space_usage", name: "Space usage", space_id: marketing.id };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, spaceBug] } },
+    [`GET /spaces/${marketing.id}/item-types/usage`]: { body: { items: { [spaceBug.id]: 4 } } },
+    [`PATCH /item-types/${spaceBug.id}`]: { body: { ...spaceBug, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto(`/spaces/${marketing.id}/item-types`);
+  const row = page.getByRole("row").filter({ hasText: "Space usage" });
+  await expect(row.getByRole("cell").nth(-2)).toHaveText("4");
+  await page.getByRole("button", { name: "Edit: Space usage" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Add a section" }).click();
+  await dialog.getByLabel("Section 1 title").fill("Top");
+  await dialog.getByRole("button", { name: "Add a section" }).click();
+  await dialog.getByLabel("Section 2 title").fill("Bottom");
+  const layout = dialog.getByRole("group", { name: "Layout" });
+  // Every section lists every block, so the checkbox is picked per section: section 1 first, then section 2.
+  await layout.getByRole("checkbox", { name: "Importance" }).first().check();
+  await layout.getByRole("checkbox", { name: "Status" }).first().check();
+  await layout.getByRole("checkbox", { name: "Effort" }).nth(1).check();
+  const top = dialog.getByRole("list", { name: "Order of blocks in section 1" });
+  const bottom = dialog.getByRole("list", { name: "Order of blocks in section 2" });
+  // Playwright's dragTo cannot reach a target below the fold, so move the pointer by hand after scrolling it into view.
+  await bottom.locator("li").first().scrollIntoViewIfNeeded();
+  const src = await top.locator("li").nth(1).boundingBox();
+  const dst = await bottom.locator("li").first().boundingBox();
+  if (!src || !dst) throw new Error("block not visible");
+  await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(src.x + src.width / 2 + 5, src.y + src.height / 2 + 5, { steps: 3 });
+  await page.mouse.move(dst.x + dst.width / 2, dst.y + dst.height / 2, { steps: 10 });
+  await page.mouse.up();
+  await expect(top.locator("li")).toHaveCount(1);
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ layout: { sections: [
+    { title: "Top", fields: ["importance"] }, { title: "Bottom", fields: ["status", "effort"] }] } });
+});

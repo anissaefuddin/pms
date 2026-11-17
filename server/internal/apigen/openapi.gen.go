@@ -6629,6 +6629,12 @@ type GithubConnectorWebhookJSONRequestBody GithubConnectorWebhookJSONBody
 // LinkConnectorItemJSONRequestBody defines body for LinkConnectorItem for application/json ContentType.
 type LinkConnectorItemJSONRequestBody LinkConnectorItemJSONBody
 
+// CreateWorkspaceCustomFieldJSONRequestBody defines body for CreateWorkspaceCustomField for application/json ContentType.
+type CreateWorkspaceCustomFieldJSONRequestBody = CustomFieldCreate
+
+// UpdateWorkspaceCustomFieldJSONRequestBody defines body for UpdateWorkspaceCustomField for application/json ContentType.
+type UpdateWorkspaceCustomFieldJSONRequestBody = CustomFieldUpdate
+
 // CreateCustomRoleJSONRequestBody defines body for CreateCustomRole for application/json ContentType.
 type CreateCustomRoleJSONRequestBody = CustomRoleInput
 
@@ -7369,6 +7375,18 @@ type ServerInterface interface {
 	// SyncConnector Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
 	// (POST /connectors/{connectorId}/sync)
 	SyncConnector(w http.ResponseWriter, r *http.Request, connectorId openapi_types.UUID)
+	// ListWorkspaceCustomFields Daftar custom field Workspace (dipakai semua Space), termasuk yang diarsipkan
+	// (GET /custom-fields)
+	ListWorkspaceCustomFields(w http.ResponseWriter, r *http.Request)
+	// CreateWorkspaceCustomField Tambahkan custom field Workspace; hanya administrator akun
+	// (POST /custom-fields)
+	CreateWorkspaceCustomField(w http.ResponseWriter, r *http.Request)
+	// ArchiveWorkspaceCustomField Arsipkan custom field Workspace; hanya administrator akun
+	// (DELETE /custom-fields/{fieldId})
+	ArchiveWorkspaceCustomField(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID)
+	// UpdateWorkspaceCustomField Ubah custom field Workspace; hanya administrator akun
+	// (PATCH /custom-fields/{fieldId})
+	UpdateWorkspaceCustomField(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID)
 	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
 	// (GET /custom-roles)
 	ListCustomRoles(w http.ResponseWriter, r *http.Request)
@@ -9982,6 +10000,86 @@ func (siw *ServerInterfaceWrapper) SyncConnector(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SyncConnector(w, r, connectorId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWorkspaceCustomFields operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkspaceCustomFields(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkspaceCustomFields(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWorkspaceCustomField operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkspaceCustomField(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkspaceCustomField(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveWorkspaceCustomField operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveWorkspaceCustomField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveWorkspaceCustomField(w, r, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateWorkspaceCustomField operation middleware
+func (siw *ServerInterfaceWrapper) UpdateWorkspaceCustomField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateWorkspaceCustomField(w, r, fieldId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17127,6 +17225,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.UpdateSpace)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/shares", wrapper.ListSpaceShares)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/shares", wrapper.ReplaceSpaceShares)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-fields", wrapper.ListWorkspaceCustomFields)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-fields", wrapper.CreateWorkspaceCustomField)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/custom-fields/{fieldId}", wrapper.ArchiveWorkspaceCustomField)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/custom-fields/{fieldId}", wrapper.UpdateWorkspaceCustomField)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields", wrapper.ListCustomFields)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields", wrapper.CreateCustomField)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}", wrapper.ArchiveCustomField)
@@ -20991,6 +21093,238 @@ func (response SyncConnector502ApplicationProblemPlusJSONResponse) VisitSyncConn
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWorkspaceCustomFieldsRequestObject struct {
+}
+
+type ListWorkspaceCustomFieldsResponseObject interface {
+	VisitListWorkspaceCustomFieldsResponse(w http.ResponseWriter) error
+}
+
+type ListWorkspaceCustomFields200JSONResponse struct {
+	Items []CustomField `json:"items"`
+}
+
+func (response ListWorkspaceCustomFields200JSONResponse) VisitListWorkspaceCustomFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWorkspaceCustomFields404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListWorkspaceCustomFields404ApplicationProblemPlusJSONResponse) VisitListWorkspaceCustomFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkspaceCustomFieldRequestObject struct {
+	Body *CreateWorkspaceCustomFieldJSONRequestBody
+}
+
+type CreateWorkspaceCustomFieldResponseObject interface {
+	VisitCreateWorkspaceCustomFieldResponse(w http.ResponseWriter) error
+}
+
+type CreateWorkspaceCustomField201JSONResponse CustomField
+
+func (response CreateWorkspaceCustomField201JSONResponse) VisitCreateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkspaceCustomField403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWorkspaceCustomField403ApplicationProblemPlusJSONResponse) VisitCreateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkspaceCustomField409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateWorkspaceCustomField409ApplicationProblemPlusJSONResponse) VisitCreateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkspaceCustomField422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateWorkspaceCustomField422ApplicationProblemPlusJSONResponse) VisitCreateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveWorkspaceCustomFieldRequestObject struct {
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type ArchiveWorkspaceCustomFieldResponseObject interface {
+	VisitArchiveWorkspaceCustomFieldResponse(w http.ResponseWriter) error
+}
+
+type ArchiveWorkspaceCustomField204Response struct {
+}
+
+func (response ArchiveWorkspaceCustomField204Response) VisitArchiveWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type ArchiveWorkspaceCustomField403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ArchiveWorkspaceCustomField403ApplicationProblemPlusJSONResponse) VisitArchiveWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveWorkspaceCustomField404ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveWorkspaceCustomField404ApplicationProblemPlusJSONResponse) VisitArchiveWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWorkspaceCustomFieldRequestObject struct {
+	FieldId openapi_types.UUID `json:"fieldId"`
+	Body    *UpdateWorkspaceCustomFieldJSONRequestBody
+}
+
+type UpdateWorkspaceCustomFieldResponseObject interface {
+	VisitUpdateWorkspaceCustomFieldResponse(w http.ResponseWriter) error
+}
+
+type UpdateWorkspaceCustomField200JSONResponse CustomField
+
+func (response UpdateWorkspaceCustomField200JSONResponse) VisitUpdateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWorkspaceCustomField403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateWorkspaceCustomField403ApplicationProblemPlusJSONResponse) VisitUpdateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWorkspaceCustomField404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateWorkspaceCustomField404ApplicationProblemPlusJSONResponse) VisitUpdateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWorkspaceCustomField409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateWorkspaceCustomField409ApplicationProblemPlusJSONResponse) VisitUpdateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateWorkspaceCustomField422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateWorkspaceCustomField422ApplicationProblemPlusJSONResponse) VisitUpdateWorkspaceCustomFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -34760,6 +35094,18 @@ type StrictServerInterface interface {
 	// SyncConnector Admin. Sinkronkan dua arah (idempoten); konflik dicatat, tidak ditimpa
 	// (POST /connectors/{connectorId}/sync)
 	SyncConnector(ctx context.Context, request SyncConnectorRequestObject) (SyncConnectorResponseObject, error)
+	// ListWorkspaceCustomFields Daftar custom field Workspace (dipakai semua Space), termasuk yang diarsipkan
+	// (GET /custom-fields)
+	ListWorkspaceCustomFields(ctx context.Context, request ListWorkspaceCustomFieldsRequestObject) (ListWorkspaceCustomFieldsResponseObject, error)
+	// CreateWorkspaceCustomField Tambahkan custom field Workspace; hanya administrator akun
+	// (POST /custom-fields)
+	CreateWorkspaceCustomField(ctx context.Context, request CreateWorkspaceCustomFieldRequestObject) (CreateWorkspaceCustomFieldResponseObject, error)
+	// ArchiveWorkspaceCustomField Arsipkan custom field Workspace; hanya administrator akun
+	// (DELETE /custom-fields/{fieldId})
+	ArchiveWorkspaceCustomField(ctx context.Context, request ArchiveWorkspaceCustomFieldRequestObject) (ArchiveWorkspaceCustomFieldResponseObject, error)
+	// UpdateWorkspaceCustomField Ubah custom field Workspace; hanya administrator akun
+	// (PATCH /custom-fields/{fieldId})
+	UpdateWorkspaceCustomField(ctx context.Context, request UpdateWorkspaceCustomFieldRequestObject) (UpdateWorkspaceCustomFieldResponseObject, error)
 	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
 	// (GET /custom-roles)
 	ListCustomRoles(ctx context.Context, request ListCustomRolesRequestObject) (ListCustomRolesResponseObject, error)
@@ -37367,6 +37713,120 @@ func (sh *strictHandler) SyncConnector(w http.ResponseWriter, r *http.Request, c
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SyncConnectorResponseObject); ok {
 		if err := validResponse.VisitSyncConnectorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListWorkspaceCustomFields operation middleware
+func (sh *strictHandler) ListWorkspaceCustomFields(w http.ResponseWriter, r *http.Request) {
+	var request ListWorkspaceCustomFieldsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWorkspaceCustomFields(ctx, request.(ListWorkspaceCustomFieldsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWorkspaceCustomFields")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWorkspaceCustomFieldsResponseObject); ok {
+		if err := validResponse.VisitListWorkspaceCustomFieldsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateWorkspaceCustomField operation middleware
+func (sh *strictHandler) CreateWorkspaceCustomField(w http.ResponseWriter, r *http.Request) {
+	var request CreateWorkspaceCustomFieldRequestObject
+
+	var body CreateWorkspaceCustomFieldJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateWorkspaceCustomField(ctx, request.(CreateWorkspaceCustomFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateWorkspaceCustomField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateWorkspaceCustomFieldResponseObject); ok {
+		if err := validResponse.VisitCreateWorkspaceCustomFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ArchiveWorkspaceCustomField operation middleware
+func (sh *strictHandler) ArchiveWorkspaceCustomField(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID) {
+	var request ArchiveWorkspaceCustomFieldRequestObject
+
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveWorkspaceCustomField(ctx, request.(ArchiveWorkspaceCustomFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveWorkspaceCustomField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ArchiveWorkspaceCustomFieldResponseObject); ok {
+		if err := validResponse.VisitArchiveWorkspaceCustomFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateWorkspaceCustomField operation middleware
+func (sh *strictHandler) UpdateWorkspaceCustomField(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID) {
+	var request UpdateWorkspaceCustomFieldRequestObject
+
+	request.FieldId = fieldId
+
+	var body UpdateWorkspaceCustomFieldJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateWorkspaceCustomField(ctx, request.(UpdateWorkspaceCustomFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateWorkspaceCustomField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateWorkspaceCustomFieldResponseObject); ok {
+		if err := validResponse.VisitUpdateWorkspaceCustomFieldResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

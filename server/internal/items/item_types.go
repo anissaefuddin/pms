@@ -462,3 +462,26 @@ LEFT JOIN items i ON i.type_id=t.id AND i.deleted_at IS NULL GROUP BY t.id`)
 	}
 	return out, rows.Err()
 }
+
+// SpaceItemTypeUsage counts the live items in one Space, per item type. Anyone who can edit the Space sees it (the Space's own admin view).
+func SpaceItemTypeUsage(ctx context.Context, db dbQuerier, actor policy.Actor, spaceID string) (map[string]int, error) {
+	if err := authorizeTypeScope(ctx, db, actor, &spaceID); err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(ctx, `SELECT i.type_id::text, count(DISTINCT i.id) FROM items i
+JOIN item_locations l ON l.item_id=i.id WHERE l.space_id=$1::uuid AND i.deleted_at IS NULL GROUP BY i.type_id`, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var id string
+		var n int
+		if err := rows.Scan(&id, &n); err != nil {
+			return nil, err
+		}
+		out[id] = n
+	}
+	return out, rows.Err()
+}

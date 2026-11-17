@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import { createFileRoute } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -48,8 +48,13 @@ export function ItemTypesPanel({ spaceId }: { spaceId?: string }) {
   const manage = spaceId ? !!inSpace && can(inSpace, "edit") : admin;
   const canEdit = (type: ItemTypeDef) => spaceId ? manage && type.space_id === spaceId : admin;
   // Global counts are for account administrators only (CIT-D06); the server enforces it too.
-  const usage = useQuery({ queryKey: ["item-types", "usage"], enabled: admin, retry: false,
+  // Usage: account administrators see Workspace-wide counts; a Space's managers see that Space's counts (its own view).
+  const usage = useQuery({ queryKey: ["item-types", "usage"], enabled: admin && !spaceId, retry: false,
     queryFn: () => api<{ items: Record<string, number> }>("/api/v1/item-types/usage") });
+  const spaceUsage = useQuery({ queryKey: ["item-types", "usage", spaceId], enabled: !!spaceId && manage, retry: false,
+    queryFn: () => api<{ items: Record<string, number> }>(`/api/v1/spaces/${spaceId}/item-types/usage`) });
+  const counts = (spaceId ? spaceUsage.data : usage.data)?.items;
+  const canSeeUsage = spaceId ? manage : admin;
   const [editing, setEditing] = useState<ItemTypeDef | "new">();
   const [duplicating, setDuplicating] = useState<ItemTypeDef>();
   const [workspaceFields, setWorkspaceFields] = useState(false);
@@ -79,7 +84,7 @@ export function ItemTypesPanel({ spaceId }: { spaceId?: string }) {
       case "base": return baseOf(type);
       case "scope": return scopeOf(type);
       case "status": return type.active ? 0 : 1;
-      case "usage": return usage.data?.items[type.id] ?? 0;
+      case "usage": return counts?.[type.id] ?? 0;
       default: return type.name;
     }
   };
@@ -98,10 +103,10 @@ export function ItemTypesPanel({ spaceId }: { spaceId?: string }) {
     try { window.localStorage.setItem(columnKey, JSON.stringify(next)); } catch { /* the setting is optional */ }
   };
   const sortBy = (key: SortKey) => { if (sortKey === key) setSortDesc(!sortDesc); else { setSortKey(key); setSortDesc(false); } };
-  const shownColumns = (["key", "base", "scope", "status", "usage"] as Column[]).filter((c) => columns.includes(c) && (c !== "usage" || admin));
+  const shownColumns = (["key", "base", "scope", "status", "usage"] as Column[]).filter((c) => columns.includes(c) && (c !== "usage" || canSeeUsage));
   const columnLabel: Record<Column, string> = { key: t("settings.itemTypes.keyColumn"), base: t("settings.itemTypes.basedOnLabel"), scope: t("settings.itemTypes.scopeLabel"), status: t("settings.itemTypes.statusLabel"), usage: t("settings.itemTypes.usage") };
   // Deactivating keeps every existing item; the impact is the live items of the selected custom types, shown before the change.
-  const impact = (types.data ?? []).filter((x) => selected.includes(x.id) && !x.is_builtin && x.active).reduce((sum, x) => sum + (usage.data?.items[x.id] ?? 0), 0);
+  const impact = (types.data ?? []).filter((x) => selected.includes(x.id) && !x.is_builtin && x.active).reduce((sum, x) => sum + (counts?.[x.id] ?? 0), 0);
   const toggleSelected = (id: string) => setSelected((rows) => rows.includes(id) ? rows.filter((x) => x !== id) : [...rows, id]);
   // Bulk activation applies to custom types only; each change needs the type's current version.
   async function setActiveFor(active: boolean) {
@@ -121,7 +126,7 @@ export function ItemTypesPanel({ spaceId }: { spaceId?: string }) {
     {shownColumns.includes("base") && <td className="p-2">{baseOf(type)}</td>}
     {shownColumns.includes("scope") && <td className="p-2">{scopeOf(type)}</td>}
     {shownColumns.includes("status") && <td className="p-2"><AdminStatus tone={type.active ? "success" : "neutral"} label={type.active ? t("settings.itemTypes.statusActive") : t("settings.itemTypes.inactive")} /></td>}
-    {shownColumns.includes("usage") && <td className="p-2 tabular-nums">{usage.data?.items[type.id] ?? 0}</td>}
+    {shownColumns.includes("usage") && <td className="p-2 tabular-nums">{counts?.[type.id] ?? 0}</td>}
     <td className="p-2"><div className="flex flex-wrap gap-2">
       {canEdit(type) && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.edit")}: ${type.name}`} onClick={() => setEditing(type)}>{t("settings.itemTypes.edit")}</Button>}
       {canEdit(type) && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.duplicate")}: ${type.name}`} onClick={() => setDuplicating(type)}>{t("settings.itemTypes.duplicate")}</Button>}
@@ -158,7 +163,7 @@ export function ItemTypesPanel({ spaceId }: { spaceId?: string }) {
     </div>
     <fieldset className="flex flex-wrap items-center gap-3 text-sm"><legend className="sr-only">{t("settings.itemTypes.columns")}</legend>
       <span className="text-muted-foreground">{t("settings.itemTypes.columns")}:</span>
-      {allColumns.filter((c) => c !== "usage" || admin).map((column) => <label key={column} className="flex items-center gap-1">
+      {allColumns.filter((c) => c !== "usage" || canSeeUsage).map((column) => <label key={column} className="flex items-center gap-1">
         <input type="checkbox" checked={columns.includes(column)} onChange={() => toggleColumn(column)} />{columnLabel[column]}</label>)}
     </fieldset>
     {manage && selected.length > 0 && <div className="flex flex-wrap items-center gap-2 rounded-lg border bg-muted/40 p-3 text-sm" role="region" aria-label={t("settings.itemTypes.bulk")}>
@@ -264,15 +269,17 @@ function TypeDialog({ type, template, all, spaces, fixedScope, spaceName, onClos
     [fields[position], fields[target]] = [fields[target], fields[position]];
     updateSection(sectionIndex, { fields });
   };
-  // Drag a block onto another position in the same section; the arrow buttons stay for keyboard users.
-  const [dragging, setDragging] = useState<{ section: number; position: number }>();
-  const dropBlock = (sectionIndex: number, to: number) => {
-    if (!dragging || dragging.section !== sectionIndex || dragging.position === to) return;
-    const fields = [...sections[sectionIndex].fields];
-    const [moved] = fields.splice(dragging.position, 1);
-    fields.splice(to, 0, moved);
-    updateSection(sectionIndex, { fields });
-    setDragging(undefined);
+  // Drag a block to any position, in the same or another section; the arrow buttons stay for keyboard users.
+  // A ref, not state: the drop must see the source at once, before React re-renders after dragstart.
+  const dragging = useRef<{ section: number; position: number } | undefined>(undefined);
+  const dropBlock = (toSection: number, toPosition: number) => {
+    const from = dragging.current;
+    dragging.current = undefined;
+    if (!from || (from.section === toSection && from.position === toPosition)) return;
+    const next = sections.map((section) => ({ ...section, fields: [...section.fields] }));
+    const [moved] = next[from.section].fields.splice(from.position, 1);
+    next[toSection].fields.splice(toPosition, 0, moved);
+    setSections(next);
   };
   const updateSection = (index: number, patch: Partial<Section>) => setSections((rows) => rows.map((row, i) => i === index ? { ...row, ...patch } : row));
   const toggleBlock = (index: number, block: string) => updateSection(index, {
@@ -338,7 +345,8 @@ function TypeDialog({ type, template, all, spaces, fixedScope, spaceName, onClos
         </fieldset>
         <fieldset className="space-y-2 text-sm"><legend className="font-medium">{t("settings.itemTypes.layout")}</legend>
           <p className="text-muted-foreground">{t("settings.itemTypes.layoutHint")}</p>
-          {sections.map((section, index) => <div key={index} className="space-y-2 rounded border p-2">
+          {sections.map((section, index) => <div key={index} className="space-y-2 rounded border p-2"
+            onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); dropBlock(index, section.fields.length); }}>
             <div className="flex flex-wrap items-end gap-2">
               <label className="min-w-0 flex-1 space-y-1"><span>{t("settings.itemTypes.sectionTitle", { number: index + 1 })}</span>
                 <Input value={section.title} maxLength={60} onChange={(event) => updateSection(index, { title: event.target.value })} /></label>
@@ -353,8 +361,8 @@ function TypeDialog({ type, template, all, spaces, fixedScope, spaceName, onClos
             })}</div>
             {section.fields.length > 0 && <ol aria-label={t("settings.itemTypes.blockOrder", { number: index + 1 })} className="space-y-1">
               {section.fields.map((block, position) => <li key={block} draggable className="flex items-center gap-2 rounded"
-                onDragStart={() => setDragging({ section: index, position })} onDragEnd={() => setDragging(undefined)}
-                onDragOver={(event) => { if (dragging?.section === index) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); dropBlock(index, position); }}>
+                onDragStart={() => { dragging.current = { section: index, position }; }} onDragEnd={() => { dragging.current = undefined; }}
+                onDragOver={(event) => event.preventDefault()} onDrop={(event) => { event.preventDefault(); event.stopPropagation(); dropBlock(index, position); }}>
                 <span aria-hidden="true" className="cursor-grab text-muted-foreground">{GRIP}</span>
                 <span className="flex-1">{blockLabel(block)}</span>
                 <Button type="button" variant="outline" size="sm" disabled={position === 0} aria-label={t("settings.itemTypes.moveBlockUp", { name: blockLabel(block) })} onClick={() => moveBlock(index, position, -1)}>↑</Button>

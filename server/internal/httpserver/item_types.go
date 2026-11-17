@@ -102,3 +102,12 @@ func (s *Server) itemTypeUsage(w http.ResponseWriter, r *http.Request) {
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": usage})
 }
+
+func (s *Server) spaceItemTypeUsage(w http.ResponseWriter, r *http.Request) {
+	usage, err := items.SpaceItemTypeUsage(r.Context(), s.pool, actorOf(r), r.PathValue("spaceId"))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": usage})
+}
