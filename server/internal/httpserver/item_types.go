@@ -9,7 +9,7 @@ import (
 )
 
 func (s *Server) listItemTypes(w http.ResponseWriter, r *http.Request) {
-	list, err := items.ListItemTypes(r.Context(), s.pool)
+	list, err := items.ListItemTypes(r.Context(), s.pool, actorOf(r))
 	if err != nil {
 		writeItemError(w, err)
 		return

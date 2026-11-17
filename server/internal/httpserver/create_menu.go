@@ -29,13 +29,14 @@ func createMenu(r *http.Request, db pgx.Tx, spaceID string) ([]createMenuEntry, 
 	if err := db.QueryRow(r.Context(), "SELECT create_menu_hidden, version FROM spaces WHERE id=$1 AND deleted_at IS NULL", spaceID).Scan(&hidden, &version); err != nil {
 		return nil, 0, err
 	}
-	types, err := items.ListItemTypes(r.Context(), db)
+	types, err := items.ListItemTypes(r.Context(), db, actorOf(r))
 	if err != nil {
 		return nil, 0, err
 	}
 	out := []createMenuEntry{}
 	for _, t := range types {
-		if t.Active {
+		// a Space's menu offers the Workspace types and its own; other Spaces' types are not offered here
+		if t.Active && (t.SpaceID == nil || *t.SpaceID == spaceID) {
 			out = append(out, createMenuEntry{t.Key, t.Name, t.Icon, t.Base, !slices.Contains(hidden, t.Key)})
 		}
 	}

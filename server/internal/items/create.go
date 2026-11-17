@@ -196,6 +196,9 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 		if !caps.Has(policy.Create) {
 			return Detail{}, ErrForbidden
 		}
+		if itemType.SpaceID != nil && loc.SpaceID.String() != *itemType.SpaceID {
+			return Detail{}, InvalidField{"type_key", "this item type belongs to another Space"}
+		}
 		if len(shares) != 0 {
 			var shared bool
 			if err := tx.QueryRow(ctx, "SELECT kind='shared' FROM spaces WHERE id=$1", loc.SpaceID).Scan(&shared); err != nil {

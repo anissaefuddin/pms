@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { api, ApiError } from "@/lib/api";
 import { LAYOUT_BLOCKS, itemTypeKeys, useItemTypes, type ItemTypeDef } from "@/lib/item-types";
 import { useProfile } from "@/lib/profile";
+import { useSpaces } from "@/lib/space-queries";
+import { can } from "@/lib/spaces";
 import { FormError } from "@/components/auth/form-error";
 import { Layers } from "lucide-react";
 import { AdminStatus } from "@/components/admin/admin-ui";
@@ -24,8 +26,10 @@ function ItemTypesRoute() {
   const { t } = useTranslation();
   const admin = useProfile()?.user_type === "admin";
   const types = useItemTypes();
+  const spaces = useSpaces();
   const [editing, setEditing] = useState<ItemTypeDef | "new">();
   if (!types.data) return null;
+  const spaceName = (id?: string | null) => (id ? spaces.data?.find((space) => space.id === id)?.name : undefined) ?? t("settings.itemTypes.scopeWorkspace");
   const builtIn = types.data.filter((type) => type.is_builtin);
   const custom = types.data.filter((type) => !type.is_builtin);
   // Each row: kind icon, name, kind and key as secondary text, and an Active/Inactive status.
@@ -34,7 +38,7 @@ function ItemTypesRoute() {
       <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-muted text-muted-foreground"><Layers className="size-4" /></span>
       <div className="min-w-0 flex-1">
         <p className="font-medium">{type.name}</p>
-        <p className="text-sm text-muted-foreground">{t("settings.itemTypes.basedOn", { base: t(`items.${type.base}`) })} · <span className="font-mono text-xs">{type.key}</span></p>
+        <p className="text-sm text-muted-foreground">{t("settings.itemTypes.basedOn", { base: t(`items.${type.base}`) })} · <span className="font-mono text-xs">{type.key}</span> · {spaceName(type.space_id)}</p>
       </div>
       <AdminStatus tone={type.active ? "success" : "neutral"} label={type.active ? t("settings.itemTypes.statusActive") : t("settings.itemTypes.inactive")} />
       {admin && <Button variant="outline" size="sm" aria-label={`${t("settings.itemTypes.edit")}: ${type.name}`} onClick={() => setEditing(type)}>{t("settings.itemTypes.edit")}</Button>}
@@ -53,11 +57,12 @@ function ItemTypesRoute() {
       <h2 id="item-types-custom" className="text-sm font-medium">{t("settings.itemTypes.groupCustom")}</h2>
       {custom.length ? list(custom) : <p className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">{t("settings.itemTypes.create")}</p>}
     </section>
-    {editing && <TypeDialog type={editing === "new" ? undefined : editing} all={types.data} onClose={() => setEditing(undefined)} />}
+    {editing && <TypeDialog type={editing === "new" ? undefined : editing} all={types.data} spaces={(spaces.data ?? []).filter((space) => can(space, "edit"))}
+      spaceName={spaceName} onClose={() => setEditing(undefined)} />}
   </div>;
 }
 
-function TypeDialog({ type, all, onClose }: { type?: ItemTypeDef; all: ItemTypeDef[]; onClose: () => void }) {
+function TypeDialog({ type, all, spaces, spaceName, onClose }: { type?: ItemTypeDef; all: ItemTypeDef[]; spaces: { id: string; name: string }[]; spaceName: (id?: string | null) => string; onClose: () => void }) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const [error, setError] = useState("");
@@ -65,6 +70,7 @@ function TypeDialog({ type, all, onClose }: { type?: ItemTypeDef; all: ItemTypeD
   const [base, setBase] = useState<ItemTypeDef["base"]>(type?.base ?? "task");
   const [children, setChildren] = useState<string[]>(type?.allowed_children ?? []);
   const [active, setActive] = useState(type?.active ?? true);
+  const [scope, setScope] = useState("");
   const [inherit, setInherit] = useState(Array.isArray(type?.defaults?.inherit) && (type?.defaults?.inherit as string[]).includes("importance"));
   const [sections, setSections] = useState<Section[]>(((type?.layout as { sections?: Section[] } | undefined)?.sections) ?? []);
   const eligible = all.filter((other) => other.id !== type?.id && other.active && (base !== "task" || other.base === "task"));
@@ -79,7 +85,7 @@ function TypeDialog({ type, all, onClose }: { type?: ItemTypeDef; all: ItemTypeD
     if (inherit) defaults.inherit = ["importance"];
     const body: Record<string, unknown> = { name: text("name"), icon: text("icon") || undefined, allowed_children: children, defaults,
       layout: sections.length ? { sections: sections.filter((section) => section.title.trim()) } : {} };
-    if (!type) Object.assign(body, { key: text("key"), base });
+    if (!type) Object.assign(body, { key: text("key"), base, space_id: scope || null });
     else body.active = active;
     setBusy(true); setError("");
     try {
@@ -108,7 +114,13 @@ function TypeDialog({ type, all, onClose }: { type?: ItemTypeDef; all: ItemTypeD
           <label className="block space-y-1 text-sm"><span>{t("settings.itemTypes.base")}</span>
             <select className={selectClass} value={base} onChange={(event) => setBase(event.target.value as ItemTypeDef["base"])}>
               {kinds.map((kind) => <option key={kind} value={kind}>{t(`items.${kind}`)}</option>)}</select></label>
+          {/* CIT-D01: a Workspace type works in every Space; a Space type works only in that Space. Fixed once created. */}
+          <label className="block space-y-1 text-sm"><span>{t("settings.itemTypes.scope")}</span>
+            <select className={selectClass} value={scope} onChange={(event) => setScope(event.target.value)}>
+              <option value="">{t("settings.itemTypes.scopeWorkspace")}</option>
+              {spaces.map((space) => <option key={space.id} value={space.id}>{space.name}</option>)}</select></label>
         </>}
+        {type && <p className="text-sm text-muted-foreground">{t("settings.itemTypes.scope")}: {spaceName(type.space_id)}</p>}
         <label className="block space-y-1 text-sm"><span>{t("settings.itemTypes.icon")}</span>
           <Input name="icon" defaultValue={type?.icon ?? ""} maxLength={40} pattern="[a-z0-9-]*" /></label>
         {type && !type.is_builtin && <label className="flex items-center gap-2 text-sm">

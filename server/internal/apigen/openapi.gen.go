@@ -4310,6 +4310,9 @@ type ItemTypeCreate struct {
 	// Layout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
 	Layout *ItemTypeLayout `json:"layout,omitempty"`
 	Name   string          `json:"name"`
+
+	// SpaceId Kosong untuk Workspace type (admin); isi Space untuk Space type (pengelola Space)
+	SpaceId *openapi_types.UUID `json:"space_id,omitempty"`
 }
 
 // ItemTypeDef defines model for ItemTypeDef.
@@ -4329,9 +4332,12 @@ type ItemTypeDef struct {
 	Key       string                 `json:"key"`
 
 	// Layout Bagian panel detail: {sections: [{title, fields: [blok bawaan atau id custom field]}]}; kosong = tata letak standar
-	Layout  ItemTypeLayout `json:"layout"`
-	Name    string         `json:"name"`
-	Version int            `json:"version"`
+	Layout ItemTypeLayout `json:"layout"`
+	Name   string         `json:"name"`
+
+	// SpaceId Space pemilik type; kosong berarti Workspace type
+	SpaceId *openapi_types.UUID `json:"space_id,omitempty"`
+	Version int                 `json:"version"`
 }
 
 // ItemTypeField defines model for ItemTypeField.

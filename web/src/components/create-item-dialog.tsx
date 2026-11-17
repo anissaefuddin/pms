@@ -78,7 +78,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [busy, setBusy] = useState(false);
   const [blueprintID, setBlueprintID] = useState("");
   const [typeKeyChoice, setTypeKey] = useState("");
-  const typeDefs = useItemTypes().data ?? [];
+  // CIT-D01: Workspace types, and the types of this Space only (a Space type never appears in another Space)
+  const typeDefs = (useItemTypes().data ?? []).filter((def) => !def.space_id || def.space_id === spaceID);
   // SPC-14: the Space's "+" menu narrows what is offered; a fixed parent or the board's task-only add is not a menu.
   const menu = useCreateMenu(spaceID, !fixedParent && !taskOnly).data;
   const offered = (def: ItemTypeDef) => fixedParent || taskOnly || menuAllows(menu, def.key);

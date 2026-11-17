@@ -18,7 +18,7 @@ type Props = { draft: FormDraft; pages: FormPage[]; errors: Record<string, strin
 /** FORM-09: which item type a submission creates (by answer) and which custom fields the answers fill. */
 export function FormRoutingSettings({ draft, pages, errors, onChange }: Props) {
   const { t } = useTranslation();
-  const types = (useItemTypes().data ?? []).filter((def) => !def.is_builtin && def.active && def.base === draft.item_type);
+  const types = (useItemTypes().data ?? []).filter((def) => !def.is_builtin && def.active && def.base === draft.item_type && (!def.space_id || def.space_id === draft.space_id));
   const fields = useQuery({ queryKey: ["custom-fields", draft.space_id], enabled: !!draft.space_id, retry: false,
     queryFn: async () => (await api<{ items: Field[] }>(`/api/v1/spaces/${draft.space_id}/custom-fields`)).items });
   const blueprints = useBlueprints(draft.space_id, !!draft.space_id).data ?? [];

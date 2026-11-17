@@ -581,6 +581,8 @@
   "sidebar.position": "posisi {{index}} dari {{count}}",
   "itemTypes.groupBuiltIn": "Tipe bawaan",
   "itemTypes.groupCustom": "Tipe item kustom",
+  "itemTypes.scope": "Cakupan",
+  "itemTypes.scopeWorkspace": "Workspace (semua Ruang)",
   "itemTypes.basedOn": "Item berbasis {{base}}",
   "itemTypes.statusActive": "Aktif",
   "spaces.search": "Cari Space"

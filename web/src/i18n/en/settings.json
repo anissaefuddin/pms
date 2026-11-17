@@ -585,6 +585,8 @@
   "sidebar.position": "position {{index}} of {{count}}",
   "itemTypes.groupBuiltIn": "Built-in types",
   "itemTypes.groupCustom": "Custom item types",
+  "itemTypes.scope": "Scope",
+  "itemTypes.scopeWorkspace": "Workspace (every Space)",
   "itemTypes.basedOn": "{{base}}-based item",
   "itemTypes.statusActive": "Active",
   "spaces.search": "Search Spaces"

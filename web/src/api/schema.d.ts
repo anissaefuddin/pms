@@ -4872,6 +4872,11 @@ export interface components {
         ItemTypeDef: {
             /** Format: uuid */
             id: string;
+            /**
+             * Format: uuid
+             * @description Space pemilik type; kosong berarti Workspace type
+             */
+            space_id?: string | null;
             key: string;
             name: string;
             icon: string;
@@ -4902,6 +4907,11 @@ export interface components {
         };
         ItemTypeCreate: {
             key: string;
+            /**
+             * Format: uuid
+             * @description Kosong untuk Workspace type (admin); isi Space untuk Space type (pengelola Space)
+             */
+            space_id?: string | null;
             name: string;
             icon?: string;
             base: components["schemas"]["ItemType"];

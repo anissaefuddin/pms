@@ -187,3 +187,26 @@ test("a relation field with only visible targets can be edited by searching", as
   await section.getByRole("button", { name: "Save" }).click();
   await expect.poll(() => calls.calls.find((c) => c.method === "PATCH")?.body).toEqual({ fields: { [relField.id]: ["cccccccc-cccc-4ccc-8ccc-cccccccccccc"] } });
 });
+
+test("an item type is a Workspace type by default, or belongs to one Space when a Space is picked", async ({ page }) => {
+  let types = [taskType, projectType, bugType];
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": () => ({ body: { items: types } }),
+    "POST /item-types": (body: Record<string, unknown>) => { const created = { ...bugType, ...body, id: `5555555${types.length}-5555-4555-8555-555555555555`, is_builtin: false, active: true, version: 1 }; types = [...types, created]; return { status: 201, body: created, headers: { ETag: '"1"' } }; },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: "Create a custom item type" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name", { exact: true }).fill("Campaign brief");
+  await dialog.getByLabel(/Key/).fill("campaign_brief");
+  await dialog.getByLabel("Scope").selectOption({ label: marketing.name });
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "POST")?.body?.space_id).toBe(marketing.id);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Create a custom item type" }).click();
+  await page.getByRole("dialog").getByLabel("Name", { exact: true }).fill("Risk");
+  await page.getByRole("dialog").getByLabel(/Key/).fill("risk_item");
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.filter((c) => c.method === "POST").at(-1)?.body?.space_id).toBeNull();
+});
