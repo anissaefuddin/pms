@@ -134,7 +134,7 @@ test("flow 2: a form built in the UI is shared, filled by a requester, approved,
 
   // Submitting gives the requester no access to the created Item: the API refuses it, and a comment is refused too.
   expect((await requester.request.get(`/api/v1/items/${requestId}`)).status()).toBe(404);
-  expect((await requester.request.post(`/api/v1/items/${requestId}/comments`, { data: { body: { type: "doc", content: [] } } })).status()).toBe(404);
+  expect((await requester.request.post(`/api/v1/items/${requestId}/comments`, { data: { body: { type: "doc", content: [{ type: "paragraph", content: [{ type: "text", text: "Any update?" }] }] } } })).status()).toBe(404);
 
   const approver = await as(browser, e.PMS_FIXTURE_M3_APPROVER!);
   await approver.goto(`/tasks/${requestId}`);
@@ -166,13 +166,13 @@ test("flow 3: the requester reaches nothing around the request, and private form
   for (const path of [`/api/v1/spaces/${e.PMS_FIXTURE_M3_WORK}`, `/api/v1/items/${e.PMS_FIXTURE_M3_PROJECT}`, `/api/v1/items/${e.PMS_FIXTURE_M3_SIBLING}`]) {
     expect((await requester.request.get(path)).status(), path).toBe(404);
   }
-  expect((await requester.request.get(`/api/v1/items/${requestId}`)).status()).toBe(200);
+  // RF-08: submitting gives no access to the created request either; the requester follows it in My requests.
+  expect((await requester.request.get(`/api/v1/items/${requestId}`)).status()).toBe(404);
   await requester.goto(`/tasks/${e.PMS_FIXTURE_M3_SIBLING}`);
   await expect(requester.getByRole("alert")).toBeVisible();
   await expect(requester.getByText("Sibling secret")).toHaveCount(0);
   await requester.goto(`/tasks/${requestId}`);
-  await expect(requester.getByRole("heading", { name: subject })).toBeVisible();
-  await expect(requester.getByText("Sibling secret")).toHaveCount(0);
+  await expect(requester.getByRole("heading", { name: subject })).toHaveCount(0);
   await expect(requester.getByText("M3 Platform")).toHaveCount(0);
 
   await requester.goto("/requests");

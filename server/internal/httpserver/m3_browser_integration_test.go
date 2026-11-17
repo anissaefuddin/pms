@@ -38,6 +38,7 @@ func TestBrowserM3Flows(t *testing.T) {
 
 	public := f.call(admin, http.MethodPost, "/spaces/"+intake+"/forms", formBody(work, func(b map[string]any) { b["name"] = "Public M3 form" }))
 	f.want(public, http.StatusCreated, "public form")
+	f.publishForm(admin, public.body["id"].(string)) // a draft form has no public page (RF-06)
 	link := f.call(admin, http.MethodPost, "/forms/"+public.body["id"].(string)+"/public-link", nil)
 	f.want(link, http.StatusOK, "public link")
 
