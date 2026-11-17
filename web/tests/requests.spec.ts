@@ -16,6 +16,7 @@ const definition = { pages: [
     { key: "owner", kind: "assignee", label: "Owner" }] },
   { title: "Files", elements: [{ key: "doc", kind: "attachment", label: "Document", max_files: 2 }] }] };
 const noFiles = { pages: [definition.pages[0]] };
+const catalogEntry = { id: fid, name: "IT request", description: "Ask IT" };
 const fill = (def: any = definition) => ({ id: fid, name: "IT request", description: "Ask IT", definition: def });
 
 async function setup(page: Page, opts: { def?: any; available?: any[]; submit?: any } = {}) {
@@ -44,6 +45,20 @@ test("list shows available forms with Start, and the empty state", async ({ page
   await page.getByRole("link", { name: "Start IT request" }).click();
   await expect(page).toHaveURL(`/requests/${fid}`);
   await expect(page.getByRole("heading", { name: "IT request" })).toBeVisible();
+});
+
+// RF-08: the Space name appears only when the API sends it, which it does only for Spaces the requester can view.
+test("catalog shows the Space name only when the requester can view that Space", async ({ page }) => {
+  await setup(page, { available: [{ ...catalogEntry, space_name: "Intake" }] });
+  await page.goto("/requests");
+  await expect(page.getByText("Intake", { exact: true })).toBeVisible();
+});
+
+test("catalog hides the Space name from a requester without Space access", async ({ page }) => {
+  await setup(page, { available: [catalogEntry] });
+  await page.goto("/requests");
+  await expect(page.getByRole("link", { name: "Start IT request" })).toBeVisible();
+  await expect(page.getByText("Intake")).toHaveCount(0);
 });
 
 test("empty list shows the empty state", async ({ page }) => {

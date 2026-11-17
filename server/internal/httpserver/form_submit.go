@@ -67,18 +67,52 @@ FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL W
 	return row, json.Unmarshal(response, &row.Response)
 }
 
+// listAvailableForms offers the published internal forms. The owning Space's name is sent only when the requester can view
+// that Space; the Space id is never sent, so a requester without Space access learns nothing about where the form belongs.
 func (s *Server) listAvailableForms(w http.ResponseWriter, r *http.Request) {
-	var out json.RawMessage
-	err := s.pool.QueryRow(r.Context(), `
-SELECT COALESCE(jsonb_agg(x ORDER BY lower(x->>'name'),x->>'id'),'[]'::jsonb) FROM (
-  SELECT jsonb_build_object('id',f.id,'name',f.name,'description',f.description,'space_name',s.name) AS x
-  FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL
-  WHERE f.access='internal' AND f.published_at IS NOT NULL ORDER BY lower(f.name),f.id LIMIT 200) t`).Scan(&out)
+	ctx := r.Context()
+	spaces, err := policy.VisibleSpaces(ctx, s.pool, actorOf(r), "")
 	if err != nil {
 		writeItemError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]json.RawMessage{"items": out})
+	viewable := map[string]bool{}
+	for _, sp := range spaces {
+		viewable[sp.ID] = sp.Caps.Has(policy.View)
+	}
+	rows, err := s.pool.Query(ctx, `
+SELECT jsonb_build_object('id',f.id,'name',f.name,'description',f.description,'space_id',f.space_id,'space_name',s.name)
+FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL
+WHERE f.access='internal' AND f.published_at IS NOT NULL ORDER BY lower(f.name),f.id LIMIT 200`)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	defer rows.Close()
+	out := []map[string]any{}
+	for rows.Next() {
+		var raw []byte
+		if err := rows.Scan(&raw); err != nil {
+			writeItemError(w, err)
+			return
+		}
+		var form map[string]any
+		if err := json.Unmarshal(raw, &form); err != nil {
+			writeItemError(w, err)
+			return
+		}
+		spaceID, _ := form["space_id"].(string)
+		delete(form, "space_id")
+		if !viewable[spaceID] {
+			delete(form, "space_name")
+		}
+		out = append(out, form)
+	}
+	if err := rows.Err(); err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }
 
 func (s *Server) getFormDefinition(w http.ResponseWriter, r *http.Request) {

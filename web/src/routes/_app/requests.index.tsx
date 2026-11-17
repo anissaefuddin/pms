@@ -9,7 +9,8 @@ import { RequestTabs } from "@/components/request-tabs";
 
 export const Route = createFileRoute("/_app/requests/")({ component: Requests });
 
-type Available = { id: string; name: string; description: string; space_name: string };
+// space_name is sent only when the requester can view the owning Space (RF-08).
+type Available = { id: string; name: string; description: string; space_name?: string };
 
 function Requests() {
   const { t } = useTranslation();
@@ -34,7 +35,7 @@ function Requests() {
           <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-lg bg-muted text-muted-foreground"><ClipboardList className="size-5" /></span>
           <div className="min-w-0 space-y-1">
             <p className="font-medium">{form.name}</p>
-            <p className="text-xs text-muted-foreground">{form.space_name}</p>
+            {form.space_name && <p className="text-xs text-muted-foreground">{form.space_name}</p>}
             {form.description && <p className="line-clamp-3 text-sm text-muted-foreground">{form.description}</p>}
           </div>
         </div>
