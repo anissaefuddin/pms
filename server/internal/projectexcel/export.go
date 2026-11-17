@@ -124,12 +124,23 @@ func exportRows(ctx context.Context, tx pgx.Tx, actor policy.Actor, project, spa
 	if err != nil {
 		return nil, nil, err
 	}
+	// Restricted fields the requester cannot read are left out of the export, including formulas that read them.
+	hidden, err := policy.HiddenCustomFieldIDs(ctx, tx, actor, policy.FieldGrantView)
+	if err != nil {
+		return nil, nil, err
+	}
+	if hidden == nil {
+		hidden = []string{}
+	}
 	rows, err := tx.Query(ctx, tree+`
 SELECT i.id,i.type::text,i.title,COALESCE(to_char(i.start_date,'YYYY-MM-DD'),''),
 COALESCE(to_char(i.due_date,'YYYY-MM-DD'),''),COALESCE(i.duration_days::text,''),i.is_milestone::text,ty.key,
 COALESCE((SELECT jsonb_object_agg(f.id,i.fields->f.id::text) FROM custom_fields f
- WHERE $3 AND (f.space_id=$2 OR f.space_id IS NULL) AND i.fields ? f.id::text),'{}')
-FROM tree t JOIN items i ON i.id=t.id JOIN item_type_defs ty ON ty.id=i.type_id LIMIT $4`, project, space, spaceAccess.Caps.Has(policy.View), MaxRows)
+ WHERE $3 AND (f.space_id=$2 OR f.space_id IS NULL) AND i.fields ? f.id::text
+ AND custom_field_applies(i.id, f.id, $2) AND NOT (f.id::text = ANY($5::text[]))
+ AND NOT (f.type='formula' AND EXISTS(SELECT 1 FROM custom_fields h WHERE h.id::text = ANY($5::text[])
+   AND h.space_id IS NOT DISTINCT FROM f.space_id AND position(lower(h.name) IN lower(f.config->>'expression'))>0))),'{}')
+FROM tree t JOIN items i ON i.id=t.id JOIN item_type_defs ty ON ty.id=i.type_id LIMIT $4`, project, space, spaceAccess.Caps.Has(policy.View), MaxRows, hidden)
 	if err != nil {
 		return nil, nil, err
 	}

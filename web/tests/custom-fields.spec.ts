@@ -31,9 +31,15 @@ test("Space owner can create, edit, reorder and archive colored custom fields", 
       }
       return { body: field };
     },
+    [`GET ${path}/${addedId}/impact`]: () => ({ body: { items: 2, item_types: 1, status_guards: 0, views: 0, request_forms: 0, automations: 0, blueprints: 0, widgets: 0, relations: 0, formulas: [] } }),
     [`DELETE ${path}/${addedId}`]: () => {
       items.find((entry) => entry.id === addedId)!.archived_at = "2026-11-13T00:00:00Z";
       return { status: 204 };
+    },
+    [`POST ${path}/${addedId}/restore`]: () => {
+      const field = items.find((entry) => entry.id === addedId)!;
+      delete field.archived_at;
+      return { body: field };
     },
   };
   const { calls } = await mockSpaces(page, { extra });
@@ -70,8 +76,15 @@ test("Space owner can create, edit, reorder and archive colored custom fields", 
   await row.getByRole("button", { name: "Move Business impact up" }).click();
   await expect(dialog.getByRole("listitem").first()).toContainText("Business impact");
   await row.getByRole("button", { name: "Archive", exact: true }).click();
+  const confirm = page.getByRole("alertdialog", { name: /Archive "Business impact"/ });
+  await expect(confirm).toContainText("Values on items: 2");
+  await expect(confirm).toContainText("Item types: 1");
+  await confirm.getByRole("button", { name: "Archive field", exact: true }).click();
   await expect(row.getByText("Archived", { exact: true })).toBeVisible();
   await expect(row.getByRole("button", { name: "Edit", exact: true })).toHaveCount(0);
+  await row.getByRole("button", { name: "Restore", exact: true }).click();
+  await expect(row.getByText("Archived", { exact: true })).toHaveCount(0);
+  await expect(row.getByRole("button", { name: "Edit", exact: true })).toBeVisible();
 });
 
 test("Space editor does not get custom field management controls", async ({ page }) => {

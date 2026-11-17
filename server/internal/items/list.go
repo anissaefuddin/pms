@@ -68,7 +68,7 @@ func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, container
 	if err != nil {
 		return Page{}, err
 	}
-	fieldKey, fieldTerms, fieldArgs, err := resolveFields(ctx, tx, spaceIDs, filter)
+	fieldKey, fieldTerms, fieldArgs, err := resolveFields(ctx, tx, actor, spaceIDs, filter)
 	if err != nil {
 		return Page{}, err
 	}

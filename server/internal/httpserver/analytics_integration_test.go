@@ -145,8 +145,9 @@ func TestAnalyticsEngineMatchesRawDataAndPolicy(t *testing.T) {
 	if r := query(member, with(map[string]any{"metric": "sum_field", "field_id": budget})); r.body["total"] != 14.5 {
 		t.Fatalf("member budget = %v, want 14.5 (decimals kept, secret Space hidden)", r.body["total"])
 	}
-	if r := query(admin, with(map[string]any{"metric": "sum_field", "field_id": budget})); r.body["total"] != 1014.5 {
-		t.Fatalf("admin budget = %v, want 1014.5", r.body["total"])
+	// Budget is a field of the shared Space, so the value on the secret Space's item does not apply and is not counted (CF Space isolation).
+	if r := query(admin, with(map[string]any{"metric": "sum_field", "field_id": budget})); r.body["total"] != 14.5 {
+		t.Fatalf("admin budget = %v, want 14.5 (a Space field counts only where it applies)", r.body["total"])
 	}
 	labels := query(admin, with(map[string]any{"group_by": "field", "field_id": impact}))
 	f.want(labels, 200, "group by single select")
@@ -155,7 +156,8 @@ func TestAnalyticsEngineMatchesRawDataAndPolicy(t *testing.T) {
 		row := raw.(map[string]any)
 		byLabel[row["group"].(map[string]any)["label"].(string)] = row["value"].(float64)
 	}
-	if byLabel["High impact"] != 1 || byLabel["Low impact"] != 1 || byLabel[""] != 2 {
+	// The secret Space's item does not carry the shared Space's field, so only the unlabelled item of shared counts as "".
+	if byLabel["High impact"] != 1 || byLabel["Low impact"] != 1 || byLabel[""] != 1 {
 		t.Fatalf("by impact = %v", byLabel)
 	}
 	for name, q := range map[string]map[string]any{

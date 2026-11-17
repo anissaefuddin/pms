@@ -36,6 +36,10 @@ func newTypeDefaultsEnv(t *testing.T) *typeDefaultsEnv {
 	f.want(note, 201, "note field")
 	f.want(sev, 201, "sev field")
 	d.note, d.sev = note.body["id"].(string), sev.body["id"].(string)
+	// Workspace fields apply in a Space only once the Space is assigned to them (DR-08).
+	for _, fid := range []string{d.note, d.sev} {
+		f.want(f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields/"+fid+"/assignments", map[string]any{"scope_kind": "space", "scope_id": e.space}), 201, "assign Workspace field to the Space")
+	}
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.note, map[string]any{"default": "n/a"}), 200, "note default")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.sev, map[string]any{"default": d.sevOption}), 200, "sev default")
 	return d

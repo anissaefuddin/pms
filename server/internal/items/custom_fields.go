@@ -390,10 +390,19 @@ func updateCustomFieldValues(ctx context.Context, tx pgx.Tx, actor policy.Actor,
 			visibleSpaces = append(visibleSpaces, space)
 		}
 	}
+	// A restricted field the actor cannot edit is reported like an unknown one, so its existence is not confirmed.
+	hidden, err := HiddenFieldIDs(ctx, tx, actor, GrantEdit)
+	if err != nil {
+		return nil, err
+	}
+	for _, id := range ids {
+		if fieldHidden(hidden, id) {
+			return nil, InvalidField{"fields", "unknown or unavailable custom field"}
+		}
+	}
 	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+` FROM custom_fields f
 WHERE f.id=ANY(ARRAY(SELECT unnest($2::text[])::uuid))
-AND (f.space_id IS NULL OR f.space_id=ANY(ARRAY(SELECT unnest($3::text[])::uuid)))
-AND (f.space_id IS NULL AND cardinality($3::text[])>0 OR EXISTS(SELECT 1 FROM item_locations l WHERE l.item_id=$1::uuid AND l.space_id=f.space_id AND l.deleted_root_id IS NULL))
+AND EXISTS(SELECT 1 FROM unnest($3::text[]) AS vs(space) WHERE custom_field_applies($1::uuid, f.id, vs.space::uuid))
 ORDER BY f.id FOR SHARE OF f`, itemID, ids, visibleSpaces)
 	if err != nil {
 		return nil, err

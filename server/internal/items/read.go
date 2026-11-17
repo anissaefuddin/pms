@@ -125,6 +125,10 @@ ORDER BY space_id, parent_item_id NULLS FIRST`, visibleIDs, spaceIDs)
 		}
 	}
 
+	hidden, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
+	if err != nil {
+		return nil, err
+	}
 	rows, err = tx.Query(ctx, `
 SELECT i.version, jsonb_strip_nulls(jsonb_build_object(
   'id', i.id, 'seq', i.seq, 'type', i.type, 'title', i.title,
@@ -173,9 +177,12 @@ LEFT JOIN statuses st ON st.id = i.status_id
 LEFT JOIN LATERAL (
   WITH visible AS (
     SELECT f.id, f.type, i.fields -> f.id::text AS value FROM custom_fields f
-    WHERE i.fields <> '{}'::jsonb AND i.fields ? f.id::text AND EXISTS (
+    WHERE i.fields <> '{}'::jsonb AND i.fields ? f.id::text AND NOT (f.id::text = ANY($4::text[]))
+      AND NOT (f.type='formula' AND EXISTS(SELECT 1 FROM custom_fields h WHERE h.id::text = ANY($4::text[])
+        AND h.space_id IS NOT DISTINCT FROM f.space_id AND position(lower(h.name) IN lower(f.config->>'expression'))>0))
+      AND EXISTS (
       SELECT 1 FROM jsonb_array_elements($3::jsonb -> i.id::text) loc
-      WHERE f.space_id IS NULL OR loc->>'space_id' = f.space_id::text
+      WHERE custom_field_applies(i.id, f.id, (loc->>'space_id')::uuid)
     )
   )
   SELECT (SELECT jsonb_object_agg(id, value) FROM visible) AS fields,
@@ -188,7 +195,7 @@ LEFT JOIN LATERAL (
        ) ref
      )) AS people
 ) custom ON i.fields <> '{}'::jsonb
-WHERE i.deleted_at IS NULL ORDER BY page.position`, visibleIDs, caps, visible)
+WHERE i.deleted_at IS NULL ORDER BY page.position`, visibleIDs, caps, visible, nonNilStrings(hidden))
 	if err != nil {
 		return nil, err
 	}

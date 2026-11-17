@@ -139,6 +139,10 @@ func financialQuery(ctx context.Context, tx pgx.Tx, q analytics.Query) (bool, er
 	if q.FieldID == "" {
 		return false, nil
 	}
+	// A restricted field has no public value: its widget is masked like a money widget, whatever its type.
+	if restricted, err := items.IsRestrictedField(ctx, tx, q.FieldID); err != nil || restricted {
+		return restricted, err
+	}
 	var kind string
 	err := tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1::uuid", q.FieldID).Scan(&kind)
 	if errors.Is(err, pgx.ErrNoRows) {

@@ -34,6 +34,7 @@ func TestWorkspaceCustomFields(t *testing.T) {
 	wsType := f.call(admin, http.MethodPost, "/item-types", map[string]any{"key": "ws_req", "name": "Workspace request", "base": "task"})
 	f.want(wsType, 201, "Workspace type")
 	wsID := wsType.body["id"].(string)
+	f.want(f.call(owner, http.MethodPost, "/spaces/"+spaceA+"/custom-fields/"+fid+"/assignments", map[string]any{"scope_kind": "space", "scope_id": spaceA}), 201, "Full role assigns the Workspace field to its Space")
 	f.want(f.call(admin, http.MethodPut, "/item-types/"+wsID+"/fields/"+fid, map[string]any{}), 200, "Workspace type takes a Workspace field")
 	f.want(f.call(admin, http.MethodPut, "/item-types/"+wsID+"/fields/"+sid, map[string]any{}), 422, "Workspace type refuses a Space field")
 

@@ -42,6 +42,7 @@ const (
 	auditOAuthAppCreated   = "oauth.app_created"
 	auditOAuthAppRemoved   = "oauth.app_removed"
 	auditOAuthGrantRevoked = "oauth.grant_revoked"
+	auditCustomFieldGrants = "custom_field.grants_changed"
 )
 
 type auditEvent struct {

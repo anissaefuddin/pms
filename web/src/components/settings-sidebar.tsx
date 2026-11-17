@@ -14,7 +14,7 @@ type SettingsGroup = { title: string; items: SettingsItem[] };
 export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => string): SettingsGroup[] {
   const isAdmin = me?.user_type === "admin";
   // The settings shell has no current Space, so Space-scoped pages open the user's personal Space.
-  const inPersonalSpace = (to: "/spaces/$spaceId" | "/spaces/$spaceId/automation", label: string): SettingsItem[] =>
+  const inPersonalSpace = (to: "/spaces/$spaceId/automation", label: string): SettingsItem[] =>
     me?.personal_space_id ? [{ to, params: { spaceId: me.personal_space_id }, label }] : [];
   return [
     { title: t("settings.nav.personal"), items: [
@@ -37,7 +37,7 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
     { title: t("settings.nav.workConfiguration"), items: [
       { to: "/settings/item-types", label: t("settings.itemTypes.title") },
       { to: "/settings/workflows", label: t("settings.workflows.title") },
-      ...inPersonalSpace("/spaces/$spaceId", t("items.customFields.title")),
+      { to: "/settings/custom-fields", label: t("settings.customFields.title") },
       ...inPersonalSpace("/spaces/$spaceId/automation", t("automation.title")),
       { to: "/settings/request-forms", label: t("forms.manage.title") },
       { to: "/blueprints", label: t("blueprints.nav") },

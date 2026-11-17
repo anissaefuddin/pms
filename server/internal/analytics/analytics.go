@@ -363,7 +363,7 @@ func runPlain(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Que
 	if _, err := tx.Exec(ctx, fmt.Sprintf("SET LOCAL statement_timeout = %d", Timeout.Milliseconds())); err != nil {
 		return Result{}, err
 	}
-	if err := checkField(ctx, tx, q); err != nil {
+	if err := checkField(ctx, tx, actor, q); err != nil {
 		return Result{}, mapErr(err)
 	}
 	hits, err := candidates(ctx, tx, actor, q)
@@ -594,6 +594,10 @@ func build(q Query, actor policy.Actor, list *listSpec) (string, []any) {
 			where = append(where, "i.effort_minutes <= "+add(*f.EffortMax, "int"))
 		}
 	}
+	if q.FieldID != "" {
+		// A field counts only on items where it applies in a Space the caller sees (custom_field_applies, migration 00332).
+		where = append(where, "EXISTS(SELECT 1 FROM scope sc WHERE sc.item_id=i.id AND custom_field_applies(i.id, "+fieldRef+"::uuid, sc.space_id))")
+	}
 	container, spaces := add(nonNil(q.ContainerIDs), "uuid[]"), add(nonNil(q.SpaceIDs), "uuid[]")
 	sql := fmt.Sprintf(`
 WITH RECURSIVE subtree(item_id, space_id) AS (
@@ -716,12 +720,20 @@ var ListPresets = map[string]Preset{
 
 // checkField makes sure the custom field exists and has a type the choice can use. The error never says more than "unknown",
 // so ids of fields in Spaces the caller cannot see are not confirmed.
-func checkField(ctx context.Context, tx pgx.Tx, q Query) error {
+func checkField(ctx context.Context, tx pgx.Tx, actor policy.Actor, q Query) error {
 	if q.FieldID == "" {
 		return nil
 	}
+	// A restricted field the caller cannot read is "unknown", the same answer as a missing field.
+	hidden, err := policy.HiddenCustomFieldIDs(ctx, tx, actor, policy.FieldGrantView)
+	if err != nil {
+		return err
+	}
+	if slices.Contains(hidden, q.FieldID) {
+		return items.Invalid("unknown custom field")
+	}
 	var kind string
-	err := tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1::uuid AND archived_at IS NULL", q.FieldID).Scan(&kind)
+	err = tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1::uuid AND archived_at IS NULL", q.FieldID).Scan(&kind)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return items.Invalid("unknown custom field")
 	}
