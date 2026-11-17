@@ -52,7 +52,10 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     await comments.getByRole("textbox", { name: "Find a user or group to mention" }).fill("Pilot Recipient");
     await comments.getByRole("button", { name: "Pilot Recipient" }).click();
     await editor.press("Control+Enter");
-    await expect(recipient.getByRole("button", { name: /mentioned you in Prepare pilot checklist/ })).toBeVisible({ timeout: 15000 }); // the mention is delivered live, so allow for a slow runner
+    // Delivery first (the API lists the mention for the recipient), then the inbox row that shows it.
+    await expect.poll(async () => JSON.stringify((await (await recipient.request.get("/api/v1/notifications")).json()).items ?? []), { timeout: 15000 })
+      .toContain("Prepare pilot checklist");
+    await expect(recipient.getByRole("button", { name: /mentioned you in Prepare pilot checklist/ })).toBeVisible({ timeout: 15000 });
   } finally {
     await context.close();
   }
