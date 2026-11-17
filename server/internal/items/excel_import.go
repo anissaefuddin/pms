@@ -154,7 +154,7 @@ func planExcel(ctx context.Context, tx pgx.Tx, actor policy.Actor, space uuid.UU
 		}
 		p.Sample = append(p.Sample, sample)
 	}
-	fields, err := tx.Query(ctx, "SELECT "+customFieldColumns+" FROM custom_fields WHERE space_id=$1 AND archived_at IS NULL", space)
+	fields, err := tx.Query(ctx, "SELECT "+customFieldColumns+" FROM custom_fields WHERE (space_id=$1 OR space_id IS NULL) AND archived_at IS NULL", space)
 	if err != nil {
 		return p, nil, err
 	}

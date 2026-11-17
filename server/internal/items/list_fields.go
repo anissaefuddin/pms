@@ -82,7 +82,7 @@ func resolveFields(ctx context.Context, tx pgx.Tx, spaceIDs []string, filter Lis
 	for id := range ids {
 		list = append(list, id)
 	}
-	rows, err := tx.Query(ctx, "SELECT id::text,type FROM custom_fields WHERE id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid))", list, spaceIDs)
+	rows, err := tx.Query(ctx, "SELECT id::text,type FROM custom_fields WHERE id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND (space_id IS NULL OR space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)))", list, spaceIDs)
 	if err != nil {
 		return "", "", nil, err
 	}

@@ -56,11 +56,7 @@ func TestFormSpaceMetadataFollowsSpaceAccess(t *testing.T) {
 	f.want(sent, 201, "outsider submits")
 	assertNoSpaceMetadata(t, "submission reply", sent.body, intake)
 	itemID, _ := sent.body["item_id"].(string)
-	// Current behavior: the requester has the "requester" role on the item it created (policy/item.go). That view shows no
-	// Space location and no Space metadata. Whether the requester keeps even that view is an open decision (see report).
-	requesterItem := f.call(outsider, "GET", "/items/"+itemID, nil)
-	f.want(requesterItem, 200, "requester role on own submission")
-	assertNoSpaceMetadata(t, "requester item view", requesterItem.body, intake)
+	f.want(f.call(outsider, "GET", "/items/"+itemID, nil), 404, "requester cannot read the created item")
 	f.want(f.call(editor, "GET", "/items/"+itemID, nil), 200, "a Space editor reads the created item")
 }
 

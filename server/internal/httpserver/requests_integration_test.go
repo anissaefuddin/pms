@@ -2,7 +2,6 @@ package httpserver_test
 
 import (
 	"net/http"
-	"slices"
 	"testing"
 )
 
@@ -27,16 +26,10 @@ func TestMyRequests(t *testing.T) {
 	item := sent.body["item_id"].(string)
 	path := "/items/" + item
 
-	// The requester reaches exactly this Item and nothing around it.
-	got := f.call(requester, "GET", path, nil)
-	caps := got.caps()
-	slices.Sort(caps)
-	if got.status != 200 || !slices.Equal(caps, []string{"attach", "comment", "view"}) {
-		t.Fatalf("requester sees the item with limited rights: %d %v", got.status, got.body)
-	}
-	f.want(f.call(requester, "PATCH", path, map[string]any{"title": "Mine now"}, "If-Match", `"1"`), 403, "no edits")
-	f.want(f.call(requester, "PATCH", path, map[string]any{"status_id": f.queryID("SELECT id::text FROM statuses WHERE grp='completed' LIMIT 1")}, "If-Match", `"1"`), 403, "no status changes")
-	f.want(f.call(requester, "DELETE", path, nil), 403, "no delete")
+	// Submitting gives no access to the Item it created (RF-08): the requester sees the submission in My requests only.
+	f.want(f.call(requester, "GET", path, nil), 404, "requester cannot open the created item")
+	f.want(f.call(requester, "PATCH", path, map[string]any{"title": "Mine now"}, "If-Match", `"1"`), 404, "no edits")
+	f.want(f.call(requester, "DELETE", path, nil), 404, "no delete")
 	for name, p := range map[string]string{
 		"the project":          "/items/" + project.body["id"].(string),
 		"a sibling task":       "/items/" + sibling.body["id"].(string),
@@ -50,23 +43,20 @@ func TestMyRequests(t *testing.T) {
 	}
 	f.want(f.call(other, "GET", path, nil), 404, "another user")
 	comment := map[string]any{"body": map[string]any{"type": "doc", "content": []any{map[string]any{"type": "paragraph", "content": []any{map[string]any{"type": "text", "text": "Any update?"}}}}}}
-	f.want(f.call(requester, "POST", path+"/comments", comment), 201, "requester can comment")
-	f.want(f.call(requester, "GET", path+"/attachments", nil), 200, "requester sees attachments")
+	f.want(f.call(requester, "POST", path+"/comments", comment), 404, "requester cannot comment on the created item")
+	f.want(f.call(requester, "GET", path+"/attachments", nil), 404, "requester cannot see its attachments")
 
-	// A viewer-type user is capped by the user type even on their own request.
+	// A viewer submits too: the same rule applies, so the user type ceiling is not reachable through submissions.
 	vs := f.submit(viewer, formID, map[string]any{"subject": "Viewer's"})
 	f.want(vs, 201, "viewer submits")
-	vcaps := f.call(viewer, "GET", "/items/"+vs.body["item_id"].(string), nil).caps()
-	slices.Sort(vcaps)
-	if !slices.Equal(vcaps, []string{"comment", "view"}) {
-		t.Fatalf("user type ceiling applies: %v", vcaps)
-	}
+	f.want(f.call(viewer, "GET", "/items/"+vs.body["item_id"].(string), nil), 404, "viewer cannot open the created item")
 
-	// Status changes by the team reach the requester, who follows the item.
+	// Status changes by the team are not sent as item notifications to a requester without access to the Item;
+	// the requester follows them in My requests instead.
 	status := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' LIMIT 1")
 	f.want(f.call(admin, "PATCH", path, map[string]any{"status_id": status}, "If-Match", `"1"`), 200, "team completes the request")
-	if n := f.queryID("SELECT count(*)::text FROM notifications WHERE item_id=$1 AND recipient_id=$2 AND kind='status_changed'", item, requester.id); n != "1" {
-		t.Fatalf("requester must be told about status changes, got %s", n)
+	if n := f.queryID("SELECT count(*)::text FROM notifications WHERE item_id=$1 AND recipient_id=$2 AND kind='status_changed'", item, requester.id); n != "0" {
+		t.Fatalf("requester without item access gets no item notifications, got %s", n)
 	}
 
 	// My requests: own submissions only, newest first, with the live status, paged by cursor.

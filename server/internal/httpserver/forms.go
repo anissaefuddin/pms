@@ -514,7 +514,7 @@ func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
 	}
 	for _, id := range resp.FieldMap {
 		var kind string
-		err := tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1 AND space_id=$2 AND archived_at IS NULL", id, resp.Location.SpaceID).Scan(&kind)
+		err := tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1 AND (space_id=$2 OR space_id IS NULL) AND archived_at IS NULL", id, resp.Location.SpaceID).Scan(&kind)
 		if errors.Is(err, pgx.ErrNoRows) || (err == nil && !slices.Contains(mappableFieldTypes, kind)) {
 			return forms.Error{Field: "response.field_map", Message: "map answers to text, number, date or select fields of the destination Space"}
 		}

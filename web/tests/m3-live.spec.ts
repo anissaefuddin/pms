@@ -122,27 +122,19 @@ test("flow 2: a form built in the UI is shared, filled by a requester, approved,
   await expect(mine.getByText("New", { exact: true })).toBeVisible();
   await expect(mine.getByText("Form: Facilities request")).toBeVisible();
   await axe(requester);
-  const link = mine.getByRole("link", { name: subject });
-  requestId = (await link.getAttribute("href"))!.split("/").pop()!;
+  // RF-08: the submission is tracked here, but the requester gets no link to the created Item.
+  await expect(mine.getByRole("link", { name: subject })).toHaveCount(0);
+  requestId = ((await (await requester.request.get("/api/v1/me/requests")).json()).items as { title: string; item_id: string }[])
+    .find((row) => row.title === subject)!.item_id;
   const created = await item(admin, requestId);
   expect(created.importance).toBe("high");
   expect(created.locations[0]).toMatchObject({ space_id: e.PMS_FIXTURE_M3_WORK, parent_item_id: e.PMS_FIXTURE_M3_PROJECT });
   const files = await (await admin.request.get(`/api/v1/items/${requestId}/attachments`)).json();
   expect(files.items.map((f: { filename: string }) => f.filename)).toEqual(["jam.txt"]);
 
-  await link.click();
-  await expect(requester.getByRole("heading", { name: subject })).toBeVisible();
-  await expect(requester.getByLabel("Status", { exact: true })).toHaveCount(0); // limited view: no edit controls
-  await expect(requester.getByRole("button", { name: /^(Save|Add subitem|Add approval|Edit approval|Delete approval)/ })).toHaveCount(0);
-  await requester.getByRole("button", { name: "Actions" }).click();
-  await expect(requester.getByRole("menuitem", { name: "Copy link" })).toBeVisible();
-  await expect(requester.getByRole("menuitem", { name: "Delete" })).toHaveCount(0);
-  await requester.keyboard.press("Escape");
-  await expect(requester.getByRole("menuitem")).toHaveCount(0);
-  await axe(requester);
-  await requester.getByRole("textbox", { name: "Comment" }).fill("Any update on the printer?");
-  await requester.getByRole("button", { name: "Post comment" }).click();
-  await expect(requester.getByRole("region", { name: "Comments" }).getByText("Any update on the printer?")).toBeVisible();
+  // Submitting gives the requester no access to the created Item: the API refuses it, and a comment is refused too.
+  expect((await requester.request.get(`/api/v1/items/${requestId}`)).status()).toBe(404);
+  expect((await requester.request.post(`/api/v1/items/${requestId}/comments`, { data: { body: { type: "doc", content: [] } } })).status()).toBe(404);
 
   const approver = await as(browser, e.PMS_FIXTURE_M3_APPROVER!);
   await approver.goto(`/tasks/${requestId}`);
@@ -160,12 +152,11 @@ test("flow 2: a form built in the UI is shared, filled by a requester, approved,
   await admin.getByLabel("Status", { exact: true }).selectOption({ label: "In Progress" });
   await expect.poll(async () => (await item(admin, requestId)).status.name).toBe("In Progress");
 
+  // The requester follows the status in My requests; no item notification reaches a person without access to the Item.
   await requester.goto("/requests/mine");
   await expect(requester.getByRole("listitem").filter({ hasText: subject }).getByText("In Progress", { exact: true })).toBeVisible();
   await expect.poll(async () => ((await (await requester.request.get("/api/v1/notifications")).json()).items as any[])
-    .filter((n) => n.kind === "status_changed" && n.item_id === requestId).length).toBe(1);
-  await requester.goto("/inbox");
-  await expect(requester.getByRole("button", { name: new RegExp(`changed the status of ${subject}`) })).toBeVisible();
+    .filter((n) => n.kind === "status_changed" && n.item_id === requestId).length).toBe(0);
   for (const page of [admin, requester, approver]) await page.context().close();
 });
 

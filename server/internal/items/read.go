@@ -175,7 +175,7 @@ LEFT JOIN LATERAL (
     SELECT f.id, f.type, i.fields -> f.id::text AS value FROM custom_fields f
     WHERE i.fields <> '{}'::jsonb AND i.fields ? f.id::text AND EXISTS (
       SELECT 1 FROM jsonb_array_elements($3::jsonb -> i.id::text) loc
-      WHERE loc->>'space_id' = f.space_id::text
+      WHERE f.space_id IS NULL OR loc->>'space_id' = f.space_id::text
     )
   )
   SELECT (SELECT jsonb_object_agg(id, value) FROM visible) AS fields,

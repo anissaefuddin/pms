@@ -48,7 +48,8 @@ type CustomFieldUpdate struct {
 	Config   *CustomFieldConfig   `json:"config"`
 }
 
-const customFieldColumns = "id::text, space_id::text, name, type, options, position, archived_at, config"
+// space_id is "" for a Workspace field (space_id NULL).
+const customFieldColumns = "id::text, COALESCE(space_id::text,''), name, type, options, position, archived_at, config"
 
 var optionColor = regexp.MustCompile(`^#[0-9a-fA-F]{6}$`)
 
@@ -86,6 +87,9 @@ func validateOptions(input []CustomFieldOption) ([]CustomFieldOption, error) {
 }
 
 func fieldSpace(ctx context.Context, tx pgx.Tx, actor policy.Actor, spaceID string, manage bool) (string, error) {
+	if spaceID == "" { // the Workspace
+		return "", requireAdmin(actor)
+	}
 	id, err := uuid.Parse(spaceID)
 	if err != nil {
 		return "", ErrNotFound
@@ -118,7 +122,7 @@ func ListCustomFields(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 	if err != nil {
 		return nil, err
 	}
-	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+" FROM custom_fields WHERE space_id=$1::uuid ORDER BY position", id)
+	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+" FROM custom_fields WHERE space_id IS NOT DISTINCT FROM NULLIF($1,'')::uuid ORDER BY position", id)
 	if err != nil {
 		return nil, err
 	}
@@ -151,6 +155,9 @@ func CreateCustomFieldTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, spa
 	if err != nil {
 		return CustomField{}, writeError(err)
 	}
+	if id == "" && input.Type == "formula" {
+		return CustomField{}, Invalid("a formula belongs to a Space; a Workspace field cannot be a formula")
+	}
 	name, err := fieldName(input.Name)
 	if err != nil {
 		return CustomField{}, err
@@ -163,7 +170,7 @@ func CreateCustomFieldTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, spa
 		return CustomField{}, err
 	}
 	field, err := scanCustomField(tx.QueryRow(ctx, `INSERT INTO custom_fields(space_id,name,type,options,position,config)
-SELECT $1::uuid,$2,$3,$4,COALESCE(max(position)+1,0),$5 FROM custom_fields WHERE space_id=$1::uuid
+SELECT NULLIF($1,'')::uuid,$2,$3,$4,COALESCE(max(position)+1,0),$5 FROM custom_fields WHERE space_id IS NOT DISTINCT FROM NULLIF($1,'')::uuid
 RETURNING `+customFieldColumns, id, name, input.Type, options, input.Config))
 	if err != nil {
 		return field, writeError(err)
@@ -194,7 +201,7 @@ func UpdateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Act
 		return CustomField{}, writeError(err)
 	}
 	field, err := scanCustomField(tx.QueryRow(ctx, "SELECT "+customFieldColumns+
-		" FROM custom_fields WHERE id=$1 AND space_id=$2::uuid FOR UPDATE", parsed, space))
+		" FROM custom_fields WHERE id=$1 AND space_id IS NOT DISTINCT FROM NULLIF($2,'')::uuid FOR UPDATE", parsed, space))
 	if errors.Is(err, pgx.ErrNoRows) {
 		return CustomField{}, ErrNotFound
 	}
@@ -213,7 +220,7 @@ func UpdateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Act
 		if err != nil {
 			return CustomField{}, err
 		}
-		if !strings.EqualFold(previous.Name, field.Name) { // references are by name, so a renamed input would break its formulas
+		if !strings.EqualFold(previous.Name, field.Name) && space != "" { // references are by name, so a renamed input would break its formulas
 			if err := guardFormulaReferences(ctx, tx, space, previous); err != nil {
 				return CustomField{}, err
 			}
@@ -273,12 +280,12 @@ func ArchiveCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Ac
 	if err != nil {
 		return writeError(err)
 	}
-	if current, err := scanCustomField(tx.QueryRow(ctx, "SELECT "+customFieldColumns+" FROM custom_fields WHERE id=$1 AND space_id=$2::uuid", parsed, space)); err == nil {
+	if current, err := scanCustomField(tx.QueryRow(ctx, "SELECT "+customFieldColumns+" FROM custom_fields WHERE id=$1 AND space_id IS NOT DISTINCT FROM NULLIF($2,'')::uuid", parsed, space)); err == nil && space != "" {
 		if err := guardFormulaReferences(ctx, tx, space, current); err != nil {
 			return err
 		}
 	}
-	tag, err := tx.Exec(ctx, "UPDATE custom_fields SET archived_at=COALESCE(archived_at,now()) WHERE id=$1 AND space_id=$2::uuid", parsed, space)
+	tag, err := tx.Exec(ctx, "UPDATE custom_fields SET archived_at=COALESCE(archived_at,now()) WHERE id=$1 AND space_id IS NOT DISTINCT FROM NULLIF($2,'')::uuid", parsed, space)
 	if err != nil {
 		return writeError(err)
 	}
@@ -304,7 +311,7 @@ func commitCustomFields(ctx context.Context, tx pgx.Tx) error {
 
 func moveCustomField(ctx context.Context, tx pgx.Tx, field CustomField, target int) error {
 	var count int
-	if err := tx.QueryRow(ctx, "SELECT count(*) FROM custom_fields WHERE space_id=$1::uuid", field.SpaceID).Scan(&count); err != nil {
+	if err := tx.QueryRow(ctx, "SELECT count(*) FROM custom_fields WHERE space_id IS NOT DISTINCT FROM NULLIF($1,'')::uuid", field.SpaceID).Scan(&count); err != nil {
 		return err
 	}
 	if target < 0 || target >= count {
@@ -312,7 +319,7 @@ func moveCustomField(ctx context.Context, tx pgx.Tx, field CustomField, target i
 	}
 	_, err := tx.Exec(ctx, `UPDATE custom_fields
 SET position=position+CASE WHEN $2::integer<$3::integer THEN -1 ELSE 1 END
-WHERE space_id=$1::uuid AND position BETWEEN least($2::integer,$3::integer)
+WHERE space_id IS NOT DISTINCT FROM NULLIF($1,'')::uuid AND position BETWEEN least($2::integer,$3::integer)
   AND greatest($2::integer,$3::integer) AND position<>$2::integer`,
 		field.SpaceID, field.Position, target)
 	return err
@@ -385,8 +392,8 @@ func updateCustomFieldValues(ctx context.Context, tx pgx.Tx, actor policy.Actor,
 	}
 	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+` FROM custom_fields f
 WHERE f.id=ANY(ARRAY(SELECT unnest($2::text[])::uuid))
-AND f.space_id=ANY(ARRAY(SELECT unnest($3::text[])::uuid))
-AND EXISTS(SELECT 1 FROM item_locations l WHERE l.item_id=$1::uuid AND l.space_id=f.space_id AND l.deleted_root_id IS NULL)
+AND (f.space_id IS NULL OR f.space_id=ANY(ARRAY(SELECT unnest($3::text[])::uuid)))
+AND (f.space_id IS NULL AND cardinality($3::text[])>0 OR EXISTS(SELECT 1 FROM item_locations l WHERE l.item_id=$1::uuid AND l.space_id=f.space_id AND l.deleted_root_id IS NULL))
 ORDER BY f.id FOR SHARE OF f`, itemID, ids, visibleSpaces)
 	if err != nil {
 		return nil, err

@@ -210,3 +210,37 @@ test("an item type is a Workspace type by default, or belongs to one Space when 
   await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
   await expect.poll(() => calls.filter((c) => c.method === "POST").at(-1)?.body?.space_id).toBeNull();
 });
+
+test("a project type can pick a default workflow; a task type sends none", async ({ page }) => {
+  const release = { id: "77777777-7777-4777-8777-777777777777", name: "Release flow", is_default: false, statuses: [] };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /workflows": { body: { items: [release] } },
+    [`PATCH /item-types/${projectType.id}`]: { body: { ...projectType, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${projectType.name}` }).click();
+  await page.getByRole("dialog").getByLabel("Default workflow").selectOption({ label: "Release flow" });
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body?.default_workflow_id).toBe(release.id);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.getByRole("button", { name: `Edit: ${taskType.name}` }).click();
+  await expect(page.getByRole("dialog").getByLabel("Default workflow")).toHaveCount(0);
+});
+
+test("a Workspace item type takes Workspace custom fields; saving sends the assignment", async ({ page }) => {
+  const costCenter = { id: "88888888-8888-4888-8888-888888888888", name: "Cost center", type: "number", space_id: "", options: [], position: 0, config: {}, archived_at: null };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /custom-fields": { body: { items: [costCenter] } },
+    [`GET /item-types/${bugType.id}/fields`]: { body: { items: [] } },
+    [`PATCH /item-types/${bugType.id}`]: { body: { ...bugType, version: 2 }, headers: { ETag: '"2"' } },
+    [`PUT /item-types/${bugType.id}/fields/${costCenter.id}`]: { body: { field_id: costCenter.id }, status: 200 },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  await page.getByRole("dialog").getByRole("checkbox", { name: "Cost center" }).check();
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PUT")?.path).toBe(`/item-types/${bugType.id}/fields/${costCenter.id}`);
+});

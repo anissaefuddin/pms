@@ -30,8 +30,8 @@ func newTypeDefaultsEnv(t *testing.T) *typeDefaultsEnv {
 	f.want(bug, 201, "bug type")
 	f.want(idea, 201, "idea type")
 	d.bug, d.idea = bug.body["id"].(string), idea.body["id"].(string)
-	note := f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields", map[string]any{"name": "Note", "type": "text"})
-	sev := f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields", map[string]any{"name": "Sev", "type": "single_select",
+	note := f.call(e.admin, "POST", "/custom-fields", map[string]any{"name": "Note", "type": "text"})
+	sev := f.call(e.admin, "POST", "/custom-fields", map[string]any{"name": "Sev", "type": "single_select",
 		"options": []map[string]any{{"id": d.sevOption, "label": "High", "color": "#DC2626"}}})
 	f.want(note, 201, "note field")
 	f.want(sev, 201, "sev field")
@@ -132,7 +132,7 @@ func TestItemTypeFieldDefaultsAdminAPIAndOrphans(t *testing.T) {
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.sev, map[string]any{"default": uuid.NewString()}), 422, "default must be an option")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.note, map[string]any{"default": 12}), 422, "default must be text")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+uuid.NewString(), map[string]any{"default": "x"}), 404, "unknown field")
-	people := f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields", map[string]any{"name": "Who", "type": "people"})
+	people := f.call(e.admin, "POST", "/custom-fields", map[string]any{"name": "Who", "type": "people"})
 	f.want(people, 201, "people field")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+people.body["id"].(string), map[string]any{"default": []string{}}), 422, "no defaults for people")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+people.body["id"].(string), map[string]any{}), 200, "applies without default")
@@ -144,7 +144,7 @@ func TestItemTypeFieldDefaultsAdminAPIAndOrphans(t *testing.T) {
 
 	// An option removed behind the default, and an archived field: creation still works and the orphan is ignored.
 	f.exec("UPDATE custom_fields SET options=jsonb_build_array(jsonb_build_object('id',gen_random_uuid()::text,'label','Other','color','#000000')) WHERE id=$1", d.sev)
-	f.want(f.call(e.admin, "DELETE", "/spaces/"+e.space+"/custom-fields/"+d.note, nil), 204, "archive note")
+	f.want(f.call(e.admin, "DELETE", "/custom-fields/"+d.note, nil), 204, "archive note")
 	got := create("orphans")
 	f.want(got, 201, "create with orphaned defaults")
 	if fields, _ := got.body["fields"].(map[string]any); fields[d.note] != nil || fields[d.sev] != nil {

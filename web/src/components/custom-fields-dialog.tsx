@@ -36,29 +36,30 @@ function newOption(): Option {
   return { id: crypto.randomUUID(), label: "", color: defaultColor };
 }
 
+/** spaceId null manages the Workspace's custom fields (administrators only). */
 export function CustomFieldsDialog({ open, onOpenChange, spaceId }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  spaceId: string;
+  spaceId: string | null;
 }) {
   const { t } = useTranslation();
 
   return <Dialog open={open} onOpenChange={onOpenChange}>
     <DialogContent className="max-h-[85dvh] overflow-y-auto sm:max-w-2xl">
       <div className="space-y-1.5 pr-8">
-        <DialogTitle>{t("spaces.customFields.title")}</DialogTitle>
-        <DialogDescription>{t("spaces.customFields.description")}</DialogDescription>
+        <DialogTitle>{spaceId ? t("spaces.customFields.title") : t("settings.itemTypes.workspaceFields")}</DialogTitle>
+        <DialogDescription>{spaceId ? t("spaces.customFields.description") : t("settings.itemTypes.workspaceFieldsHint")}</DialogDescription>
       </div>
-      {open && <CustomFields key={spaceId} spaceId={spaceId} />}
+      {open && <CustomFields key={spaceId ?? "workspace"} spaceId={spaceId} />}
     </DialogContent>
   </Dialog>;
 }
 
-function CustomFields({ spaceId }: { spaceId: string }) {
+function CustomFields({ spaceId }: { spaceId: string | null }) {
   const { t } = useTranslation();
   const client = useQueryClient();
-  const path = `/api/v1/spaces/${spaceId}/custom-fields`;
-  const key = ["custom-fields", spaceId];
+  const path = spaceId ? `/api/v1/spaces/${spaceId}/custom-fields` : "/api/v1/custom-fields";
+  const key = ["custom-fields", spaceId ?? "workspace"];
   const fields = useQuery({ queryKey: key, queryFn: () => api<{ items: Field[] }>(path) });
   const [draft, setDraft] = useState<FieldDraft | null>(null);
   const [pending, setPending] = useState(false);

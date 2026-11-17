@@ -11,6 +11,11 @@ func (s *Server) customFieldRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/custom-fields", s.requireUser(s.createCustomField))
 	mux.HandleFunc("PATCH /api/v1/spaces/{spaceId}/custom-fields/{fieldId}", s.requireUser(s.updateCustomField))
 	mux.HandleFunc("DELETE /api/v1/spaces/{spaceId}/custom-fields/{fieldId}", s.requireUser(s.archiveCustomField))
+	// Workspace custom fields: the same handlers with no Space, which the items package reads as the Workspace (admins only).
+	mux.HandleFunc("GET /api/v1/custom-fields", s.requireUser(s.listCustomFields))
+	mux.HandleFunc("POST /api/v1/custom-fields", s.requireUser(s.createCustomField))
+	mux.HandleFunc("PATCH /api/v1/custom-fields/{fieldId}", s.requireUser(s.updateCustomField))
+	mux.HandleFunc("DELETE /api/v1/custom-fields/{fieldId}", s.requireUser(s.archiveCustomField))
 }
 
 func (s *Server) listCustomFields(w http.ResponseWriter, r *http.Request) {

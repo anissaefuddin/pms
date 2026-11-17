@@ -32,8 +32,8 @@ func ListTypeFields(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 	if _, err := getItemType(ctx, pool, "id=$1", id); err != nil {
 		return nil, err
 	}
-	rows, err := pool.Query(ctx, `SELECT f.id::text,f.space_id::text,f.name,f.type,f.archived_at IS NOT NULL,COALESCE(tf.default_value,'null'::jsonb)
-FROM item_type_fields tf JOIN custom_fields f ON f.id=tf.field_id WHERE tf.type_id=$1 ORDER BY f.space_id,f.position`, id)
+	rows, err := pool.Query(ctx, `SELECT f.id::text,COALESCE(f.space_id::text,''),f.name,f.type,f.archived_at IS NOT NULL,COALESCE(tf.default_value,'null'::jsonb)
+FROM item_type_fields tf JOIN custom_fields f ON f.id=tf.field_id WHERE tf.type_id=$1 ORDER BY f.space_id NULLS FIRST,f.position`, id)
 	if err != nil {
 		return nil, err
 	}
@@ -71,6 +71,10 @@ func SetTypeField(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, t
 	}
 	if field.ArchivedAt != nil {
 		return TypeField{}, InvalidField{"field_id", "archived custom fields cannot be attached to a type"}
+	}
+	// Workspace types use Workspace fields only (decision: Workspace only).
+	if t.SpaceID == nil && field.SpaceID != "" {
+		return TypeField{}, InvalidField{"field_id", "a Workspace item type can use only Workspace custom fields"}
 	}
 	var stored json.RawMessage
 	if len(def) > 0 && string(def) != "null" {
@@ -120,7 +124,7 @@ func defaultable(field CustomField, base string) bool {
 // longer validates (an option was removed, say) is skipped rather than failing the create; archived fields are skipped too.
 func typeFieldDefaults(ctx context.Context, tx pgx.Tx, t ItemType, spaces []uuid.UUID) (map[string]json.RawMessage, error) {
 	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+", tf.default_value FROM item_type_fields tf JOIN custom_fields f ON f.id=tf.field_id "+
-		"WHERE tf.type_id=$1 AND tf.default_value IS NOT NULL AND f.archived_at IS NULL AND f.space_id=ANY($2)", t.ID, spaces)
+		"WHERE tf.type_id=$1 AND tf.default_value IS NOT NULL AND f.archived_at IS NULL AND (f.space_id IS NULL OR f.space_id=ANY($2))", t.ID, spaces)
 	if err != nil {
 		return nil, err
 	}

@@ -50,7 +50,8 @@ function MyRequests() {
     {shown.length > 0 && <ul aria-label={t("forms.mine.list")} className="divide-y">
       {shown.map((row) => <li key={row.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
         <div className="min-w-0">
-          <Link to="/tasks/$itemId" params={{ itemId: row.item_id }} className="font-medium underline-offset-2 hover:underline">{row.title}</Link>
+          {/* RF-08: a requester has no access to the created Item, so the title is not a link. */}
+          <p className="font-medium">{row.title}</p>
           <p className="text-sm text-muted-foreground">{t("forms.mine.form", { name: row.form_name })}</p>
           <p className="text-xs text-muted-foreground">{t("forms.mine.submitted", { date: formatDate(row.created_at, me) })} · {t("forms.mine.updated", { date: formatDate(row.updated_at, me) })}</p>
         </div>

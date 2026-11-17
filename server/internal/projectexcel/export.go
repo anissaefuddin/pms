@@ -128,7 +128,7 @@ func exportRows(ctx context.Context, tx pgx.Tx, actor policy.Actor, project, spa
 SELECT i.id,i.type::text,i.title,COALESCE(to_char(i.start_date,'YYYY-MM-DD'),''),
 COALESCE(to_char(i.due_date,'YYYY-MM-DD'),''),COALESCE(i.duration_days::text,''),i.is_milestone::text,ty.key,
 COALESCE((SELECT jsonb_object_agg(f.id,i.fields->f.id::text) FROM custom_fields f
- WHERE $3 AND f.space_id=$2 AND i.fields ? f.id::text),'{}')
+ WHERE $3 AND (f.space_id=$2 OR f.space_id IS NULL) AND i.fields ? f.id::text),'{}')
 FROM tree t JOIN items i ON i.id=t.id JOIN item_type_defs ty ON ty.id=i.type_id LIMIT $4`, project, space, spaceAccess.Caps.Has(policy.View), MaxRows)
 	if err != nil {
 		return nil, nil, err
