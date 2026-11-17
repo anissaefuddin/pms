@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strings"
 	"time"
 
@@ -186,6 +187,10 @@ func (g *Engine) run(ctx context.Context, e events.Event, c candidate) error {
 	actor := policy.Actor{ID: c.OwnerID.String(), Type: policy.UserType(ownerType)}
 	facts, _, _, err := g.load(ctx, e.ItemID)
 	if err != nil {
+		return err
+	}
+	// A condition reads only the values the rule owner may read where the field applies; any other field is not there (fail closed).
+	if facts, err = g.visibleFields(ctx, actor, e.ItemID, facts); err != nil {
 		return err
 	}
 	if !c.Definition.AllHold(facts, g.Now().UTC().Format(time.DateOnly)) {
@@ -454,4 +459,42 @@ func (g *Engine) Option() mail.Option {
 			river.NewPeriodicJob(river.PeriodicInterval(10*time.Second), func() (river.JobArgs, *river.InsertOpts) { return DispatchArgs{}, nil }, nil),
 			river.NewPeriodicJob(river.PeriodicInterval(time.Hour), func() (river.JobArgs, *river.InsertOpts) { return DueArgs{}, nil }, &river.PeriodicJobOpts{RunOnStart: true}))
 	}
+}
+
+// visibleFields keeps the custom field values the actor may read (CF-D03) and where the field applies to the item (DR-07).
+func (g *Engine) visibleFields(ctx context.Context, actor policy.Actor, itemID string, f Facts) (Facts, error) {
+	if len(f.Fields) == 0 {
+		return f, nil
+	}
+	tx, err := g.Pool.BeginTx(ctx, pgx.TxOptions{AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return f, err
+	}
+	defer tx.Rollback(ctx)
+	hidden, err := policy.HiddenCustomFieldIDs(ctx, tx, actor, policy.FieldGrantView)
+	if err != nil {
+		return f, err
+	}
+	keys := make([]string, 0, len(f.Fields))
+	for id := range f.Fields {
+		keys = append(keys, id)
+	}
+	rows, err := tx.Query(ctx, `SELECT DISTINCT f.id::text FROM custom_fields f
+JOIN item_locations l ON l.item_id=$1::uuid AND l.deleted_root_id IS NULL
+WHERE f.id::text = ANY($2::text[]) AND custom_field_applies($1::uuid, f.id, l.space_id)`, itemID, keys)
+	if err != nil {
+		return f, err
+	}
+	applies, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return f, err
+	}
+	out := map[string]json.RawMessage{}
+	for _, id := range applies {
+		if !slices.Contains(hidden, id) {
+			out[id] = f.Fields[id]
+		}
+	}
+	f.Fields = out
+	return f, nil
 }

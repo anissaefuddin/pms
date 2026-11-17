@@ -402,11 +402,18 @@ func ItemRelations(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 			spaceIDs = append(spaceIDs, space.ID)
 		}
 	}
+	hiddenRel, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
+	if err != nil {
+		return nil, err
+	}
 	type row struct{ field, name, id, title, typ, key string }
 	rows, err := tx.Query(ctx, `SELECT f.id::text,f.name,t.id::text,t.title,t.type::text,ty.key
 FROM item_relations r JOIN custom_fields f ON f.id=r.field_id AND f.archived_at IS NULL
 JOIN items t ON t.id=r.to_item_id AND t.deleted_at IS NULL JOIN item_type_defs ty ON ty.id=t.type_id
-WHERE r.from_item_id=$1::uuid AND f.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)) ORDER BY f.position,t.seq`, itemID, spaceIDs)
+WHERE r.from_item_id=$1::uuid AND f.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)) AND NOT (f.id::text = ANY($3::text[]))
+  AND EXISTS(SELECT 1 FROM item_locations l WHERE l.item_id=r.from_item_id AND l.deleted_root_id IS NULL
+    AND l.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)) AND custom_field_applies(r.from_item_id, f.id, l.space_id))
+ORDER BY f.position,t.seq`, itemID, spaceIDs, nonNilStrings(hiddenRel))
 	if err != nil {
 		return nil, err
 	}

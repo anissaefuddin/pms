@@ -78,3 +78,28 @@ test("an administrator assigns a Workspace field to a Space from the drawer; the
   await expect(box).toBeChecked();
   expect(calls.find((c) => c.method === "POST" && c.path.endsWith("/assignments"))?.body).toMatchObject({ scope_kind: "space", scope_id: marketing.id });
 });
+
+test("a Space manager sets which fields apply to a project from the item menu", async ({ page }) => {
+  const project = "88888888-8888-4888-8888-888888888888";
+  const phase = { id: "12121212-3434-4545-8686-787878787878", space_id: marketing.id, name: "Phase", type: "text", position: 0, archived_at: null, options: [], config: {} };
+  let assigned = false;
+  const { calls } = await mockSpaces(page, { extra: {
+    [`GET /items/${project}`]: { body: { id: project, type: "project", title: "Delivery",
+      locations: [{ space_id: marketing.id }], my_capabilities: ["view", "edit"], assignees: [] }, headers: { ETag: '"1"' } },
+    [`GET /items/${project}/children`]: { body: { items: [] } },
+    [`GET /spaces/${marketing.id}/custom-fields`]: () => ({ body: { items: [phase] } }),
+    [`GET /spaces/${marketing.id}/field-choices`]: () => ({ body: { items: [] } }),
+    [`GET /spaces/${marketing.id}/custom-fields/${phase.id}/assignments`]: () => ({ body: { items: assigned ? [{ field_id: phase.id, space_id: marketing.id, scope_kind: "project", scope_id: project, scope_name: "Delivery" }] : [] } }),
+    [`POST /spaces/${marketing.id}/custom-fields/${phase.id}/assignments`]: () => { assigned = true; return { status: 201, body: {} }; },
+  } });
+  await page.goto(`/tasks/${project}`);
+  await page.getByRole("button", { name: "Info" }).click();
+  await page.getByRole("button", { name: "Item actions" }).click();
+  await page.getByRole("menuitem", { name: "Custom fields…" }).click();
+  const dialog = page.getByRole("dialog", { name: "Custom fields for Delivery" });
+  const box = dialog.getByRole("checkbox", { name: "Phase" });
+  await expect(box).not.toBeChecked();
+  await box.click();
+  await expect(box).toBeChecked();
+  expect(calls.find((c) => c.method === "POST" && c.path.endsWith("/assignments"))?.body).toEqual({ scope_kind: "project", scope_id: project });
+});

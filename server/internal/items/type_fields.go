@@ -124,7 +124,12 @@ func defaultable(field CustomField, base string) bool {
 // longer validates (an option was removed, say) is skipped rather than failing the create; archived fields are skipped too.
 func typeFieldDefaults(ctx context.Context, tx pgx.Tx, t ItemType, spaces []uuid.UUID) (map[string]json.RawMessage, error) {
 	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+", tf.default_value FROM item_type_fields tf JOIN custom_fields f ON f.id=tf.field_id "+
-		"WHERE tf.type_id=$1 AND tf.default_value IS NOT NULL AND f.archived_at IS NULL AND (f.space_id IS NULL OR f.space_id=ANY($2))", t.ID, spaces)
+		"WHERE tf.type_id=$1 AND tf.default_value IS NOT NULL AND f.archived_at IS NULL AND (f.space_id IS NULL OR f.space_id=ANY($2))"+
+		// The item's container is not known yet, so a field with project or folder assignments gets no default (fail safe).
+		" AND (f.space_id IS NOT NULL OR EXISTS(SELECT 1 FROM custom_field_assignments a WHERE a.field_id=f.id AND a.scope_kind='space' AND a.space_id=ANY($2)))"+
+		" AND NOT EXISTS(SELECT 1 FROM custom_field_assignments a WHERE a.field_id=f.id AND a.scope_kind IN ('project','folder'))"+
+		// A restricted field gets no default either: the creator may not have its grant, and defaults are not a write they chose.
+		" AND NOT EXISTS(SELECT 1 FROM custom_field_grants g WHERE g.field_id=f.id)", t.ID, spaces)
 	if err != nil {
 		return nil, err
 	}
