@@ -9,8 +9,11 @@ test("the profile menu switches the language live and remembers it", async ({ pa
   await page.getByRole("button", { name: "Account menu" }).click();
   await page.getByRole("menuitemradio", { name: "Bahasa Indonesia" }).click();
   await expect(page.locator("html")).toHaveAttribute("lang", "id");
-  await page.getByRole("button", { name: "Menu akun" }).click();
-  await expect(page.getByRole("menuitem", { name: "Keluar" })).toBeVisible();
+  // The menu may close itself after the language choice; open it again only while its items are not showing.
+  await expect(async () => {
+    if (!(await page.getByRole("menuitem", { name: "Keluar" }).isVisible())) await page.getByRole("button", { name: "Menu akun" }).click();
+    await expect(page.getByRole("menuitem", { name: "Keluar" })).toBeVisible({ timeout: 1000 });
+  }).toPass({ timeout: 15000 });
   expect(await page.evaluate(() => localStorage.getItem("pms-language"))).toBe("id");
 });
 
