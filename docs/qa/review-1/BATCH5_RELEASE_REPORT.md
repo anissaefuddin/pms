@@ -1,6 +1,6 @@
 # Batch 5 release report: Custom item types, requests, and Space settings
 
-Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665875`..`2648c70`. Deployed to dev-lens: `pms:2648c70`.
+Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665875`..`df48d7b`. Deployed to dev-lens: `pms:df48d7b` (previous: `pms:2648c70`).
 
 ## 1. Matrix
 
@@ -11,9 +11,10 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 | Quick Access (CIT-D05) | Menu, More dialog, Settings toggle, Space menu gating | PASS (Go + Playwright) | `TestItemTypeQuickAccessValidationAndMenu`, m8 tests |
 | Usage (CIT-D06) | Global counts admin-only; non-admin gets 403 | PASS (Go) | `item_type_usage_integration_test.go` |
 | Space item types | Space editors manage their Space's types; Workspace types read-only; create sends `space_id` | PASS (Playwright) | m8 "a Space's item types" |
+| Space usage | Space managers see live item counts for their Space; readers and outsiders do not | PASS (Go) | `TestItemTypeUsageCountsLiveItems` |
 | Space item types | Same on dev-lens with real data | NOT RUN | Needs a test login on dev-lens |
-| Layout builder | Up/down buttons and drag within a section | PASS (Playwright) | m8 "dragging a block" |
-| Layout builder | Drag between sections; keyboard-only drag | NOT RUN | Not built (drag is within one section only) |
+| Layout builder | Up/down buttons, drag within a section, drag to another section | PASS (Playwright) | m8 "dragging a block", "a Space's manager sees usage..." |
+| Layout builder | Keyboard-only drag | NOT BUILT | Arrow buttons are the keyboard path |
 | Workspace custom fields | Admin-only create/edit; Space editors cannot | PASS (Go) | `workspace_custom_fields_integration_test.go` |
 | OpenAPI | `/custom-fields` documented | PASS (spec and generated TS updated) | `api/openapi.yaml` |
 | Accessibility | Registry, type form, Space item types | PASS (axe, 0 violations) | m8 "pass axe" |
@@ -21,12 +22,14 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 | Visual | Registry and Space item types at 1280/1440/1920, light and dark | CAPTURED, not compared | `docs/qa/review-1/batch5/` (12 PNG) |
 | Visual | Pixel comparison against a baseline | NOT RUN | No baseline exists |
 | Performance | Load or timing tests | NOT RUN | No performance harness in the repo |
-| Browser collaboration | `TestBrowserCollaboration` | FLAKY | Passed 10 of 11 local runs; failure output not captured; CI passed on the last 3 heads |
-| Full Playwright | `npx playwright test` | 538 passed, 43 skipped, 1 failed | The one failure, `ownership.spec.ts:51`, passed 3 of 3 alone |
+| Browser collaboration | `TestBrowserCollaboration` | FLAKY, mitigated | Failed in CI at `5258d9e` (mention comment not saved); fixed in `df48d7b` (wait for the popover to close, assert comment POST 201). CI green at `df48d7b`. Root cause not confirmed |
+| Full Playwright | `npx playwright test` | 539 passed, 43 skipped, 1 failed | The one failure, `reports.spec.ts:169`, passed 9 of 9 alone; `ownership.spec.ts:51` failed once earlier and passed 3 of 3 alone |
 | Full Go | `go test ./...` | PASS | All packages ok |
 | Lint and types | eslint, tsc, token check, gofmt, go vet | PASS | |
-| CI | PR #18 head `2648c70` | `test`, `authorization-matrix`, `parity-e2e` PASS | run 44047559481 |
+| CI | PR #18 head `df48d7b` | `test`, `authorization-matrix`, `parity-e2e` PASS | run 44065257853 |
+| CI | PR #18 head `5258d9e` | `test` FAIL (pilot mention), fixed in `df48d7b` | run 44062757256 |
 | Deploy | dev-lens on `pms:2648c70` | PASS (health 200, migrations 00328–00330 applied, no ERROR logs) | Backup `20261117T094440Z` |
+| Deploy | dev-lens on `pms:df48d7b` | PASS (readyz 200, healthz 200, no ERROR logs, no new migrations) | Backup `20261117T110451Z` |
 | Live checks on dev-lens | Email, Space item types, request status in inbox | NOT RUN | |
 
 ## 2. Files changed in this batch
@@ -34,6 +37,8 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 - Server: `items/item_types.go`, `items/custom_fields.go`, `items/type_fields.go`, `items/notifications.go`, `notifications/record.go`, `httpserver/notifications.go`, `httpserver/requests_integration_test.go`, `mail/notification.go`, `httpserver/create_menu.go`, `httpserver/form_submit.go`, `policy/item.go`.
 - Migrations: `00327` (Space item types), `00328` (Workspace custom fields), `00329` (Quick Access), `00330` (notifications with no target).
 - API: `api/openapi.yaml`, regenerated `apigen` and `web/src/api/schema.d.ts`.
+- Server (later): `httpserver/item_types.go`, `httpserver/spaces.go` (Space usage route), `items/item_types.go` (`SpaceItemTypeUsage`).
+- Web (later): `routes/_app/settings/item-types.tsx` (drag across sections, Space usage), `tests/pilot-live.spec.ts`.
 - Web: `routes/_app.tsx`, `routes/_app/settings/item-types.tsx`, `routes/_app/spaces_.$spaceId.item-types.tsx` (new), `routes/_app/spaces.$spaceId.tsx`, `components/topbar.tsx`, `components/create-item-dialog.tsx`, `i18n/{en,id}/settings.json`, `routeTree.gen.ts`.
 - Tests: `tests/m8.spec.ts`, `tests/custom-fields.spec.ts`, `tests/batch5-visual.spec.ts` (new).
 - Docs: `docs/RELEASE_CLEANUP.md` (new), this report.
@@ -55,11 +60,11 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 
 ## 5. Outstanding defects
 
-1. **Flaky tests.** `TestBrowserCollaboration` (mention delivery) and `ownership.spec.ts:51` fail sometimes. Neither root cause is confirmed.
+1. **Flaky tests.** `TestBrowserCollaboration` (mention delivery) was fixed in `df48d7b`, but its root cause is not confirmed. `ownership.spec.ts:51` and `reports.spec.ts:169` each failed once in a full run and passed alone. All three are tracked in `docs/RELEASE_CLEANUP.md`.
 2. **Email for requester status** has no automated test and has not been checked on dev-lens.
-3. **Layout builder:** drag works only within one section; no drag between sections.
+3. **Keyboard-only drag** is not built. The up/down buttons are the keyboard path.
 4. **Formulas on Workspace fields** stay refused. Decided 17 Nov 2026: a Workspace field cannot use a formula, because a formula could read Space fields that a Workspace type does not own.
-5. **Space usage counts** are not shown to Space admins (planned as a later enhancement).
+5. **`scope_test`** is inactive on dev-lens and not deleted. Decision pending (see `docs/RELEASE_CLEANUP.md`).
 
 ## 6. Release readiness
 
