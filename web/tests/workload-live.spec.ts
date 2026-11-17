@@ -11,6 +11,8 @@ test("E2E-PAR-07: leave changes capacity and reassign exposes over-allocation", 
   await page.getByLabel("Add leave date").fill("2026-11-17");
   await page.getByRole("button", { name: "Save capacity" }).click();
   await expect.poll(async () => (await (await page.request.get("/api/v1/workload?from=2026-11-17&to=2026-11-17")).json()).people.find((p: { name: string }) => p.name === "Capacity Reviewer").capacity).toEqual([0]);
+  // The Settings shell has its own sidebar and no top-level "More" menu, so go back to the workspace first.
+  await page.goto("/");
   await page.getByRole("button", { name: "More", exact: true }).click();
   await page.getByRole("menuitem", { name: "Workload" }).click();
   await page.getByLabel("From", { exact: true }).fill("2026-11-17");
@@ -23,7 +25,7 @@ test("E2E-PAR-07: leave changes capacity and reassign exposes over-allocation", 
   await expect(page.getByRole("heading", { name: "Assigned tasks" }).locator("..")).toContainText("Review scope");
   await expect(reviewer).toContainText("0 + 0 / 0");
   await page.goto("/settings/resources");
-  await page.getByRole("button", { name: "Remove", exact: true }).click();
+  await page.getByRole("button", { name: "Remove leave date 2026-11-17", exact: true }).click();
   await page.getByRole("button", { name: "Save capacity" }).click();
   await expect.poll(async () => (await (await page.request.get("/api/v1/workload?from=2026-11-17&to=2026-11-17")).json()).people.find((p: { name: string }) => p.name === "Capacity Reviewer").capacity).toEqual([480]);
   await page.goto("/workload");
