@@ -122,9 +122,12 @@ test("Space owner can save and replace a currency field's numeric settings", asy
   await dialog.getByRole("spinbutton", { name: "Marker 2 value" }).fill("2000000");
   await dialog.getByLabel("Marker 2 color").fill("#cc3333");
   await dialog.getByRole("button", { name: "Move marker 2 up" }).click();
+  // Wait for the reordered markers to render before saving, so the save is not sent mid-update (CI flake).
+  await expect(dialog.getByRole("spinbutton", { name: "Marker 1 value" })).toHaveValue("2000000");
   await save.click();
 
   const row = dialog.getByRole("listitem").filter({ hasText: "Budget" });
+  await expect.poll(() => calls.some((entry) => entry.method === "POST" && entry.path === path)).toBe(true);
   await expect(row.getByText("Currency", { exact: true })).toBeVisible();
   expect(calls.find((entry) => entry.method === "POST" && entry.path === path)?.body).toEqual({
     name: "Budget",
