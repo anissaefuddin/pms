@@ -225,3 +225,36 @@ func requireFull(ctx context.Context, tx pgx.Tx, actor policy.Actor, space strin
 	}
 	return nil
 }
+
+// ListSpaceFields returns the custom fields that apply in a Space for anyone who can view it: the Space's own fields and the
+// Workspace fields assigned to it. A field the caller cannot read is left out, so the list does not reveal it.
+func ListSpaceFields(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID string) ([]CustomField, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	space, err := fieldSpace(ctx, tx, actor, spaceID, false)
+	if err != nil {
+		return nil, err
+	}
+	hidden, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+` FROM custom_fields f
+WHERE f.archived_at IS NULL AND (f.space_id=$1::uuid OR (f.space_id IS NULL AND EXISTS(SELECT 1 FROM custom_field_assignments a
+  WHERE a.field_id=f.id AND a.space_id=$1::uuid AND a.scope_kind='space' AND a.scope_id=$1::uuid)))
+AND NOT (f.id::text = ANY($2::text[])) ORDER BY f.position`, space, nonNilStrings(hidden))
+	if err != nil {
+		return nil, err
+	}
+	fields, err := pgx.CollectRows(rows, pgx.RowToStructByPos[CustomField])
+	if err != nil {
+		return nil, err
+	}
+	if fields == nil {
+		fields = []CustomField{}
+	}
+	return fields, tx.Commit(ctx)
+}

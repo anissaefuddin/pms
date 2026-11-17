@@ -47,6 +47,17 @@ func TestCustomFieldAssignments(t *testing.T) {
 	if values, _ := after.body["fields"].(map[string]any); values[wsID] != "north" {
 		t.Fatalf("an assigned Workspace field shows its value: %v", after.body["fields"])
 	}
+	// The Space's field list (what views render) includes the assigned Workspace field for any viewer.
+	ids := func(list []map[string]any) map[string]bool {
+		out := map[string]bool{}
+		for _, field := range list {
+			out[field["id"].(string)] = true
+		}
+		return out
+	}
+	if got := ids(f.call(editor, http.MethodGet, "/spaces/"+space+"/fields", nil).items()); !got[wsID] || !got[localID] {
+		t.Fatalf("the Space field list has its own and assigned fields: %v", got)
+	}
 	choices := f.call(owner, http.MethodGet, "/spaces/"+space+"/field-choices", nil)
 	if got := choices.items(); len(got) != 1 || got[0]["assigned"] != true {
 		t.Fatalf("the picker shows the assignment: %v", choices.body)
@@ -94,6 +105,9 @@ func TestCustomFieldAssignments(t *testing.T) {
 
 	// Removing the Space assignment of the Workspace field hides its values in that Space.
 	f.want(f.call(owner, http.MethodDelete, "/spaces/"+space+"/custom-fields/"+wsID+"/assignments/space/"+space, nil), 204, "remove Space assignment")
+	if got := ids(f.call(editor, http.MethodGet, "/spaces/"+space+"/fields", nil).items()); got[wsID] {
+		t.Fatalf("an unassigned Workspace field is not in the Space's field list: %v", got)
+	}
 	hidden := f.call(editor, http.MethodGet, "/items/"+outside, nil)
 	if values, _ := hidden.body["fields"].(map[string]any); values[wsID] != nil {
 		t.Fatalf("a removed Space assignment hides the Workspace field: %v", hidden.body["fields"])

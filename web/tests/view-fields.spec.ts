@@ -27,6 +27,7 @@ function mock(page: import("@playwright/test").Page, capabilities = ALL, spaceCa
     [`GET ${path}/views`]: () => ({ body: { items: views } }),
     [`GET ${path}/items`]: () => ({ body: { items: [item] } }),
     [`GET /spaces/${marketing.id}/custom-fields`]: { body: { items: [cost, level, tags] } },
+    [`GET /spaces/${marketing.id}/fields`]: { body: { items: [cost, level, tags] } },
     "GET /workflows": { body: { items: [] } },
     [`PATCH /views/${tableId}`]: (body) => {
       views = views.map((view) => view.id === tableId ? { ...view, ...body } : view);

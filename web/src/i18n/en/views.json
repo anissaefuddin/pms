@@ -111,7 +111,13 @@
     "author": "Author",
     "days_in_status": "Days in status",
     "cardTitle": "Choose card fields",
-    "cardOpen": "Card fields"
+    "cardOpen": "Card fields",
+    "manageFields": "Fields in this Space",
+    "manageNote": "A Workspace field shows its values only in Spaces it is added to.",
+    "manageForbidden": "You can see only the fields in this Space.",
+    "addToSpace": "Add to Space",
+    "removeFromSpace": "Remove from Space",
+    "createField": "Create field…"
   },
   "fieldFilter": {
     "field": "Filter by field",

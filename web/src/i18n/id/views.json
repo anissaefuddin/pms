@@ -109,7 +109,13 @@
     "author": "Penulis",
     "days_in_status": "Hari dalam status",
     "cardTitle": "Pilih field kartu",
-    "cardOpen": "Field kartu"
+    "cardOpen": "Field kartu",
+    "manageFields": "Field di Space ini",
+    "manageNote": "Field Workspace hanya menampilkan nilainya di Space tempat field itu ditambahkan.",
+    "manageForbidden": "Anda hanya bisa melihat field di Space ini.",
+    "addToSpace": "Tambah ke Space",
+    "removeFromSpace": "Hapus dari Space",
+    "createField": "Buat field…"
   },
   "fieldFilter": {
     "field": "Filter menurut field",

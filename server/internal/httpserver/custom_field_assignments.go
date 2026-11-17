@@ -11,6 +11,7 @@ func (s *Server) customFieldAssignmentRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/custom-fields/{fieldId}/assignments", s.requireUser(s.listFieldAssignments))
 	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/custom-fields/{fieldId}/assignments", s.requireUser(s.assignField))
 	mux.HandleFunc("DELETE /api/v1/spaces/{spaceId}/custom-fields/{fieldId}/assignments/{scopeKind}/{scopeId}", s.requireUser(s.unassignField))
+	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/fields", s.requireUser(s.listSpaceFields))
 	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/field-choices", s.requireUser(s.listSpaceFieldChoices))
 }
 
@@ -55,4 +56,14 @@ func (s *Server) listSpaceFieldChoices(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": list})
+}
+
+// listSpaceFields is the field set a Space's views render: its own fields and the Workspace fields assigned to it.
+func (s *Server) listSpaceFields(w http.ResponseWriter, r *http.Request) {
+	fields, err := items.ListSpaceFields(r.Context(), s.pool, actorOf(r), r.PathValue("spaceId"))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": fields})
 }

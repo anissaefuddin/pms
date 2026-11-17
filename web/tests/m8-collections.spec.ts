@@ -26,6 +26,7 @@ function mock(page: import("@playwright/test").Page, columns: string[]) {
     [`GET ${path}/views`]: { body: { items: views } },
     [`GET ${path}/items`]: (_body, req) => ({ body: { items: [crash, plain].filter((i) => !req.query.get("type") || i.item_type.key === req.query.get("type")) } }),
     [`GET /spaces/${marketing.id}/custom-fields`]: { body: { items: [total] } },
+    [`GET /spaces/${marketing.id}/fields`]: { body: { items: [total] } },
     "GET /item-types": { body: { items: [taskType, bugType] } },
     "GET /workflows": { body: { items: [{ id: "wf", name: "Default", is_default: true, statuses: [todo, done] }] } },
     [`PATCH /items/${crash.id}`]: () => ({ status: 422, body: { type: "about:blank", title: "Unprocessable Entity", status: 422, code: "transition_blocked",

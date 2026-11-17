@@ -21,6 +21,7 @@ export function mockGantt(page: import("@playwright/test").Page, opts: { root?: 
     [`GET /items/${project.id}/children`]: () => ({ body: { items: opts.children ?? [...kids.map((k) => store.get(k.id)), store.get(milestone.id)] } }),
     "GET /workflows": { body: { items: [] } },
     [`GET /spaces/${marketing.id}/custom-fields`]: { body: { items: opts.fields ?? [] } },
+    [`GET /spaces/${marketing.id}/fields`]: { body: { items: opts.fields ?? [] } },
     "POST /dependencies/query": () => ({ body: { items: deps } }),
     ...Object.fromEntries([...store.keys()].map((id) => [`POST /items/${id}/dependencies`, (body: any) => {
       if (body.predecessor_id === milestone.id) return problem(422, "This link would create a cycle", "validation_failed");

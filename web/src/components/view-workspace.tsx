@@ -17,6 +17,8 @@ import { ProjectChart, ProjectFiles } from "@/components/project-files";
 import { ViewTabs } from "@/components/view-tabs";
 import { useItemTypes } from "@/lib/item-types";
 import { ColumnPicker } from "@/components/view-columns";
+import { useSpaces } from "@/lib/space-queries";
+import { can } from "@/lib/spaces";
 import { ViewToolbar } from "@/components/view-toolbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProjectIllustration } from "@/components/ui/empty-illustrations";
@@ -72,10 +74,14 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       return flat && parent ? listSubtree(top, (id) => subtreeChildren(qc, id)) : top;
     },
   });
+  // The Space's applicable fields: its own and the Workspace fields assigned to it (DR-08), without those the viewer cannot read.
   const fieldQueries = useQuery({
     queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
-    queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/custom-fields`),
+    queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/fields`),
   });
+  const spaceList = useSpaces(!!spaceId);
+  const spaceInfo = spaceList.data?.find((space) => space.id === spaceId);
+  const canManageFields = !!spaceInfo && can(spaceInfo, "share");
   const customFields = (fieldQueries.data?.items ?? []).filter((field) => !field.archived_at);
   const [savingColumns, setSavingColumns] = useState(false);
   const workflows = useQuery({
@@ -210,7 +216,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
     {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? <ProjectChart project={parent} /> : isGantt ? <>
       <ViewToolbar filterOnly {...toolbar} columns={!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
-        fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />} />
+        fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
+          spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />} />
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
@@ -230,7 +237,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       <p className="text-sm text-muted-foreground">{t("views.placeholder")}</p>
     </div> : <>
       <ViewToolbar {...toolbar} groups={isBoard ? boardGroups : tableGroups}
-        columns={!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} />} />
+        columns={!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
+          spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />} />
       {blocked && <div role="alert" className="space-y-1 rounded border border-destructive p-3 text-sm">
         <p className="font-medium">{t("views.blocked.title", { title: blocked.title })}</p>
         <ul className="list-disc pl-5">{blocked.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul>

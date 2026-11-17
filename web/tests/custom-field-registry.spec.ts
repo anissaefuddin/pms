@@ -103,3 +103,24 @@ test("a Space manager sets which fields apply to a project from the item menu", 
   await expect(box).toBeChecked();
   expect(calls.find((c) => c.method === "POST" && c.path.endsWith("/assignments"))?.body).toEqual({ scope_kind: "project", scope_id: project });
 });
+
+test("a Space manager adds a Workspace field to the Space from the table's Columns menu", async ({ page }) => {
+  const { path, project } = await import("./gantt-mock");
+  const table = { id: "44444444-4444-4444-8444-444444444441", type: "table", name: "Table", visibility: "public", position: 0, is_default: true, config: {} };
+  const region = { id: "13131313-1414-4515-8616-171717171717", space_id: "", name: "Region", type: "text", position: 0, archived_at: null, options: [], config: {} };
+  let assigned = false;
+  const { calls } = await mockSpaces(page, { extra: {
+    [`GET ${path}/views`]: () => ({ body: { items: [table] } }),
+    [`GET ${path}/items`]: () => ({ body: { items: [project] } }),
+    [`GET /spaces/${marketing.id}/fields`]: () => ({ body: { items: assigned ? [region] : [] } }),
+    [`GET /spaces/${marketing.id}/field-choices`]: () => ({ body: { items: [{ id: region.id, name: "Region", type: "text", assigned }] } }),
+    [`POST /spaces/${marketing.id}/custom-fields/${region.id}/assignments`]: () => { assigned = true; return { status: 201, body: {} }; },
+  } });
+  await page.goto(path);
+  await page.getByRole("button", { name: "Columns", exact: true }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("Fields in this Space")).toBeVisible();
+  await dialog.getByRole("listitem").filter({ hasText: "Region" }).getByRole("button", { name: "Add to Space" }).click();
+  await expect(dialog.getByRole("listitem").filter({ hasText: "Region" }).getByRole("button", { name: "Remove from Space" })).toBeVisible();
+  expect(calls.find((c) => c.method === "POST" && c.path.endsWith("/assignments"))?.body).toEqual({ scope_kind: "space", scope_id: marketing.id });
+});

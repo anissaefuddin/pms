@@ -118,3 +118,15 @@ DR-08 and DR-07 change behaviour for existing data. They need a reviewed migrati
 - **UI:** the registry drawer lists the Spaces a Workspace field applies in, with a checkbox per Space.
 - **Tests:** `TestCustomFieldAssignments` PASS. Existing tests updated for DR-08 (assignment before use) and for Space isolation in analytics. Full Go suite PASS. Full Playwright mock suite 543 PASS, 43 skipped.
 - **Not built:** project and folder assignment UI (menus, item picker), Custom Item Type builder entry, Table and Board field menus, defaults gating in `typeFieldDefaults`, automation conditions, search, relations, and the guard message. Project and folder assignments exist in the API only.
+
+## 9. Gaps closed after Batch 4, and Batch 5 entry points
+
+- **Type defaults:** written only for fields that apply at Space level, have no project or folder assignment, and have no grants (fail safe, since the item's container is unknown at create).
+- **Guards:** a refusal names a required field only to people who can read it.
+- **Automation:** conditions read only values the rule owner may read where the field applies. Other fields count as absent (condition not met). Actions write through the normal patch path.
+- **Relations:** an item's relation lists a field only when the caller can read it and it applies to the item.
+- **Search:** field values are not indexed, so nothing to gate.
+- **Project and folder menu:** "Custom fields…" in item detail (Full role in the item's first Space) sets which fields apply to that container.
+- **Batch 5 entry points (Table and Board):** the Space's view field list (`GET /api/v1/spaces/{id}/fields`) includes its own fields and assigned Workspace fields, without fields the viewer cannot read. The Columns (table) and Card fields (board) menu has, for Full members, "Add to Space" / "Remove from Space" per Workspace field and "Create field…" (drawer).
+- **Tests:** Go: guard disclosure, assignment list. Playwright mock: project menu, registry drawer, Workspace assignment in drawer, table Columns menu. Full Go suite PASS; full Playwright mock suite PASS (see report).
+- **Still open:** the board menu entry is the same component as the table menu but has no dedicated test; relations and automation have no dedicated test; live check on losaka-app not done.
