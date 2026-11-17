@@ -55,4 +55,11 @@ func TestItemTypeScope(t *testing.T) {
 	f.want(item(editorA, spaceA, "alphadeliv"), 201, "an item in its own Space uses the Space type")
 	f.want(item(admin, spaceB, "alphadeliv"), 422, "an item in another Space cannot use the Space type")
 	f.want(item(admin, spaceB, "wsrisk"), 201, "any Space can use a Workspace type")
+
+	// Forms: routing to a Space type is checked when the form is saved, not at the first submission.
+	routeTo := func(key string) func(map[string]any) {
+		return func(b map[string]any) { b["response"].(map[string]any)["type_key"] = key }
+	}
+	f.want(f.call(editorA, "POST", "/spaces/"+spaceA+"/forms", formBody(spaceA, routeTo("alphadeliv"))), 201, "a form in the Space routes to its type")
+	f.want(f.call(admin, "POST", "/spaces/"+spaceB+"/forms", formBody(spaceB, routeTo("alphadeliv"))), 422, "a form in another Space cannot route to the Space type")
 }

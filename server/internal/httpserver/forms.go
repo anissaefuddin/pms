@@ -487,9 +487,14 @@ func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
 	for _, key := range keys {
 		var base string
 		var active bool
-		err := tx.QueryRow(ctx, "SELECT base::text, active FROM item_type_defs WHERE key=$1", key).Scan(&base, &active)
+		var typeSpace *string
+		err := tx.QueryRow(ctx, "SELECT base::text, active, space_id::text FROM item_type_defs WHERE key=$1", key).Scan(&base, &active, &typeSpace)
 		if errors.Is(err, pgx.ErrNoRows) || (err == nil && (!active || base != resp.ItemType)) {
 			return forms.Error{Field: "response.type_key", Message: "item type " + key + " must be active and of the class " + resp.ItemType}
+		}
+		// A Space type belongs to one Space: a form whose items land elsewhere would fail on every submission.
+		if err == nil && typeSpace != nil && *typeSpace != resp.Location.SpaceID.String() {
+			return forms.Error{Field: "response.type_key", Message: "item type " + key + " belongs to another Space"}
 		}
 		if err != nil {
 			return err

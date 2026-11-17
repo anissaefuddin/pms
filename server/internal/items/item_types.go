@@ -15,9 +15,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// ErrTypeInactive is returned when a new item asks for a type an admin has switched off.
-var ErrTypeInactive = errors.New("item type is inactive")
-
 type ItemType struct {
 	ID                string         `json:"id"`
 	Key               string         `json:"key"`

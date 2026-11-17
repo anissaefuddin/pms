@@ -17,7 +17,8 @@ type FormRow = { id: string; name: string };
 /** WHEN / IF / THEN editor (AUT-05). It only ever builds shapes the server's closed schema accepts. */
 export function AutomationEditor({ spaceId, value, onChange, error }: { spaceId: string; value: Definition; onChange: (next: Definition) => void; error?: string }) {
   const { t } = useTranslation();
-  const types = useItemTypes().data ?? [];
+  // A Space's automations offer the Workspace types and that Space's own types only.
+  const types = (useItemTypes().data ?? []).filter((def) => !def.space_id || def.space_id === spaceId);
   const workflows = useQuery({ queryKey: ["workflows"], queryFn: () => api<{ items: Workflow[] }>("/api/v1/workflows") });
   const statuses = (workflows.data?.items.find((w) => w.is_default) ?? workflows.data?.items[0])?.statuses ?? [];
   const forms = useQuery({ queryKey: ["forms", spaceId], retry: false, queryFn: async () => (await api<{ items: FormRow[] }>(`/api/v1/spaces/${spaceId}/forms`)).items });

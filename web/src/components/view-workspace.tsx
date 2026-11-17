@@ -201,7 +201,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     canCreate: !!spaceId && canCreate, pending, onOpen, onAdd: (status?: string) => setCreating({ status }), onPatch: patch, onBulkPatch: bulkPatch,
   };
   const toolbar = {
-    filter, preset, typeFilter, sort, fieldFilter, customFields, itemTypes: itemTypes.data, setSearch: (key: string, value: string) => setSearch(key, value),
+    filter, preset, typeFilter, sort, fieldFilter, customFields, itemTypes: itemTypes.data?.filter((def) => !def.space_id || def.space_id === spaceId), setSearch: (key: string, value: string) => setSearch(key, value),
     group: group ?? (swimlanes ? "assignee" : "none"),
   };
   return <section className="min-w-0 space-y-3">
