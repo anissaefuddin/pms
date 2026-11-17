@@ -956,6 +956,7 @@ type ItemTypeDef struct {
 	Layout            []byte             `json:"layout"`
 	Version           int32              `json:"version"`
 	CreatedAt         pgtype.Timestamptz `json:"created_at"`
+	SpaceID           pgtype.UUID        `json:"space_id"`
 }
 
 type ItemTypeField struct {
