@@ -148,8 +148,8 @@ function Builder({ spaceId, form, onReload }: { spaceId: string; form?: Form; on
       <span>{t("forms.builder.conflict")}</span>
       <Button type="button" size="sm" variant="outline" onClick={() => void onReload()}>{t("forms.builder.reload")}</Button></div>}
     {/* Full-page editor: section list on the left, the four sections in the middle, the live preview on the right. */}
-    <div className="grid gap-6 lg:grid-cols-[11rem_minmax(0,1fr)_minmax(0,22rem)]">
-      <nav aria-label={t("forms.builder.sectionsLabel")} className="space-y-1 text-sm lg:sticky lg:top-4 lg:self-start">
+    <div className="grid gap-6 xl:grid-cols-[11rem_minmax(0,1fr)_minmax(0,22rem)]">
+      <nav aria-label={t("forms.builder.sectionsLabel")} className="flex flex-wrap gap-1 text-sm xl:sticky xl:top-4 xl:block xl:space-y-1 xl:self-start">
         {sections.map((section) => <a key={section.id} href={`#${section.id}`} className="block rounded-md px-2 py-1.5 text-muted-foreground hover:bg-muted hover:text-foreground">{section.label}</a>)}
       </nav>
       <div className="min-w-0 space-y-8">
@@ -180,7 +180,7 @@ function Builder({ spaceId, form, onReload }: { spaceId: string; form?: Form; on
           <FormEmailSettings draft={draft} errors={errors.byControl} onChange={patch} />
         </div>
       </div>
-      <section aria-labelledby="fp-title" className="min-w-0 space-y-3 self-start rounded-xl border p-4 lg:sticky lg:top-4">
+      <section aria-labelledby="fp-title" className="min-w-0 space-y-3 self-start rounded-xl border p-4 xl:sticky xl:top-4">
         <h2 id="fp-title" className="text-lg font-semibold">{t("forms.preview.title")}</h2>
         {draft.name && <h3 className="text-base font-semibold">{draft.name}</h3>}
         {draft.description && <p className="text-sm text-muted-foreground">{draft.description}</p>}
