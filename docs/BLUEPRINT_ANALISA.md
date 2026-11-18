@@ -894,3 +894,8 @@ Tanggal: 18 Nov 2026.
 **Belum:**
 - Verifikasi live dan deploy blueprint akun (dijalankan setelah commit).
 - Peran Account Admin sebagai peran terpisah tidak dibuat. Admin instance (`user_type = admin`) yang berlaku.
+
+**Deploy dan verifikasi live (blueprint akun):**
+- Commit `09fca4f`, image `pms:09fca4f` di dev-lens, backup `20261118T084623Z`. Migrasi 335 tercatat, container healthy, health check publik 200. Dua blueprint Space yang ada tetap ada (`scope = space`).
+- Tes live (akun uji, pemilik Personal Space): blueprint akun dibuat dari Personal Space, muncul di `/account-blueprints`, tampil di registry pada grup Account dengan kolom "Personal Space (account)", dan pemilik bisa mengubah namanya. PASS.
+- Data uji dari tiga run tes live (blueprint akun `Account kit <timestamp>` dan item sumber) masih ada di dev-lens, sesuai instruksi untuk tidak menghapus data uji.
