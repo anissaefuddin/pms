@@ -66,7 +66,7 @@ test("Space owner manages custom fields while the server preserves an option in 
   await expect(impact.getByText("Archived", { exact: true })).toBeVisible();
   await page.reload();
   const reloaded = await openFields();
-  await expect(reloaded.getByRole("listitem").first().getByText("Archived", { exact: true })).toBeVisible();
+  await expect(reloaded.getByRole("listitem").filter({ hasText: "Impact" }).getByText("Archived", { exact: true })).toBeVisible();
   const persisted = await page.request.get(itemURL);
   await expect(persisted).toBeOK();
   expect((await persisted.json()).fields).toEqual({ [field.id]: option.id });
