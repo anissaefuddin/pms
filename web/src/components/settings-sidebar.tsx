@@ -39,6 +39,7 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/workflows", label: t("settings.workflows.title") },
       { to: "/settings/custom-fields", label: t("settings.customFields.title") },
       ...inPersonalSpace("/spaces/$spaceId/automation", t("automation.title")),
+      ...(isAdmin ? [{ to: "/settings/automation", label: t("automation.workspaceTitle") }] : []),
       { to: "/settings/request-forms", label: t("forms.manage.title") },
       { to: "/settings/blueprints", label: t("blueprints.nav") },
     ] },

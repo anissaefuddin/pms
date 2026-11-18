@@ -98,6 +98,9 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
   const admin = useProfile()?.user_type === "admin";
   const [days, setDays] = useState(new Set(schedule.working_days));
   const [hours, setHours] = useState(String(schedule.daily_hours));
+  const [zone, setZone] = useState(schedule.timezone || "UTC");
+  // The browser lists the zones it knows; UTC is always there so the page never has an empty choice.
+  const zones = Array.from(new Set(["UTC", zone, ...(typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [])]));
   const [holidays, setHolidays] = useState(schedule.exceptions);
   const [draft, setDraft] = useState({ date: "", name: "" });
   const [year, setYear] = useState(new Date().getFullYear());
@@ -122,7 +125,7 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
     try {
       await api<WorkSchedule>(path, {
         method: "PUT", headers: { "If-Match": etag },
-        body: JSON.stringify({ working_days: [...days].sort(), daily_hours: Number(hours), exceptions: holidays }),
+        body: JSON.stringify({ working_days: [...days].sort(), daily_hours: Number(hours), exceptions: holidays, timezone: zone }),
       });
       toast.success(t("settings.workSchedule.saved"));
       await reload(false);
@@ -148,6 +151,14 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
         </label>)}
       </div>
     </fieldset>
+    <label className="block max-w-xs space-y-1 text-sm">
+      <span>{t("settings.workSchedule.timezone")}</span>
+      <select className="block w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm" value={zone} disabled={!admin || busy}
+        onChange={(event) => setZone(event.target.value)}>
+        {zones.map((name) => <option key={name} value={name}>{name}</option>)}
+      </select>
+      <span className="block text-xs text-muted-foreground">{t("settings.workSchedule.timezoneHint")}</span>
+    </label>
     <label className="block max-w-xs space-y-1 text-sm">
       <span>{t("settings.workSchedule.dailyHours")}</span>
       <Input type="number" min={1} max={24} step={1} value={hours} required disabled={!admin || busy}

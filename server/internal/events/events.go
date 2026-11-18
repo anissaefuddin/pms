@@ -23,6 +23,7 @@ const (
 	ItemAssigned      = "item.assigned"
 	ItemDueChanged    = "item.due_changed"
 	ItemDueReached    = "item.due_reached"
+	ItemInactive      = "item.inactive"
 	FormSubmitted     = "form.submitted"
 	ApprovalDecided   = "approval.decided"
 	CommentCreated    = "comment.created"
@@ -36,7 +37,10 @@ type Event struct {
 	Type    string
 	ItemID  string
 	ActorID string
-	Payload map[string]any
+	// OriginSpaceID is the Space the change happened in, when known. Empty for events without it (older events, and emitters not yet
+	// migrated). Automation prefers it when it is one of an item's target Spaces.
+	OriginSpaceID string
+	Payload       map[string]any
 	// Set by the dispatcher when it reads the row.
 	Seq        int64
 	CausedBy   *uuid.UUID
@@ -60,6 +64,13 @@ func WithCause(ctx context.Context, c Cause) context.Context {
 	return context.WithValue(ctx, causeKey{}, c)
 }
 
+type originKey struct{}
+
+// WithOrigin marks the Space a block of work runs in: events emitted under ctx carry it as their origin unless they set their own.
+func WithOrigin(ctx context.Context, spaceID string) context.Context {
+	return context.WithValue(ctx, originKey{}, spaceID)
+}
+
 // Emit records an event in tx. Call it from the code that changes the data, so both commit or roll back together.
 func Emit(ctx context.Context, tx pgx.Tx, e Event) error {
 	if e.Type == "" {
@@ -80,12 +91,18 @@ func Emit(ctx context.Context, tx pgx.Tx, e Event) error {
 	if err != nil {
 		return err
 	}
-	var item, actor *string
+	var item, actor, origin *string
 	if e.ItemID != "" {
 		item = &e.ItemID
 	}
 	if e.ActorID != "" {
 		actor = &e.ActorID
+	}
+	if e.OriginSpaceID == "" {
+		e.OriginSpaceID, _ = ctx.Value(originKey{}).(string)
+	}
+	if e.OriginSpaceID != "" {
+		origin = &e.OriginSpaceID
 	}
 	var cause *uuid.UUID
 	depth, chain := 0, []uuid.UUID{}
@@ -93,8 +110,8 @@ func Emit(ctx context.Context, tx pgx.Tx, e Event) error {
 		cause, depth = &c.Run, c.Depth+1
 		chain = append(append(chain, c.Chain...), c.Rule)
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO domain_events(event_id,type,item_id,actor_id,payload,caused_by_run,depth,chain)
-VALUES ($1,$2,$3::uuid,$4::uuid,$5,$6,$7,$8) ON CONFLICT (event_id) DO NOTHING`, e.ID, e.Type, item, actor, raw, cause, depth, chain)
+	_, err = tx.Exec(ctx, `INSERT INTO domain_events(event_id,type,item_id,actor_id,payload,caused_by_run,depth,chain,origin_space_id)
+VALUES ($1,$2,$3::uuid,$4::uuid,$5,$6,$7,$8,$9::uuid) ON CONFLICT (event_id) DO NOTHING`, e.ID, e.Type, item, actor, raw, cause, depth, chain, origin)
 	return err
 }
 
@@ -112,7 +129,7 @@ func Dispatch(ctx context.Context, pool *pgxpool.Pool, handle Handler, limit int
 		return 0, err
 	}
 	defer tx.Rollback(ctx)
-	rows, err := tx.Query(ctx, `SELECT id,event_id,type,COALESCE(item_id::text,''),COALESCE(actor_id::text,''),payload,caused_by_run,depth,chain,created_at,attempts
+	rows, err := tx.Query(ctx, `SELECT id,event_id,type,COALESCE(item_id::text,''),COALESCE(actor_id::text,''),payload,caused_by_run,depth,chain,created_at,attempts,COALESCE(origin_space_id::text,'')
 FROM domain_events WHERE dispatched_at IS NULL ORDER BY id LIMIT $1 FOR UPDATE SKIP LOCKED`, limit)
 	if err != nil {
 		return 0, err
@@ -125,7 +142,7 @@ FROM domain_events WHERE dispatched_at IS NULL ORDER BY id LIMIT $1 FOR UPDATE S
 	for rows.Next() {
 		var c claimed
 		var payload []byte
-		if err := rows.Scan(&c.Seq, &c.ID, &c.Type, &c.ItemID, &c.ActorID, &payload, &c.CausedBy, &c.Depth, &c.Chain, &c.CreatedAt, &c.attempts); err != nil {
+		if err := rows.Scan(&c.Seq, &c.ID, &c.Type, &c.ItemID, &c.ActorID, &payload, &c.CausedBy, &c.Depth, &c.Chain, &c.CreatedAt, &c.attempts, &c.OriginSpaceID); err != nil {
 			rows.Close()
 			return 0, err
 		}

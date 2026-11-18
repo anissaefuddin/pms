@@ -4,19 +4,19 @@ export type AutomationRun = components["schemas"]["AutomationRun"];
 export type AutomationVersion = components["schemas"]["AutomationVersion"];
 export type AutomationRule = components["schemas"]["AutomationRule"];
 
-export type Trigger = { type: string; to_status_id?: string; user_id?: string; item_type?: string; days_before?: number; form_id?: string };
+export type Trigger = { type: string; to_status_id?: string; user_id?: string; item_type?: string; days_before?: number; form_id?: string; decision?: string; days?: number; calendar?: string };
 export type Condition = { field: string; op: string; value?: string };
-export type Action = { type: string; field?: string; value?: unknown; user_ids?: string[]; assignees?: boolean; text?: string; message?: string; title?: string; type_key?: string; kind?: string };
+export type Action = { type: string; field?: string; value?: unknown; user_ids?: string[]; assignees?: boolean; text?: string; message?: string; title?: string; type_key?: string; kind?: string; under?: string; container_id?: string; followers?: boolean; group_ids?: string[] };
 export type Definition = { when: Trigger; if: Condition[]; then: Action[] };
 
-export const triggerTypes = ["item.status_changed", "item.assigned", "item.created", "item.due_reached", "form.submitted"] as const;
+export const triggerTypes = ["item.status_changed", "item.assigned", "item.created", "item.due_reached", "item.inactive", "form.submitted", "approval.decided", "comment.created"] as const;
 export const conditionFields = ["importance", "status_group", "item_type", "assignee", "due_date", "start_date"] as const;
 export const conditionOps: Record<string, readonly string[]> = {
-  importance: ["eq", "neq"], status_group: ["eq", "neq"], item_type: ["eq", "neq"],
+  importance: ["eq", "neq", "in"], status_group: ["eq", "neq", "in"], item_type: ["eq", "neq", "in"],
   assignee: ["has", "has_not", "empty", "not_empty"], due_date: ["set", "unset", "before", "after"], start_date: ["set", "unset", "before", "after"],
 };
-export const actionTypes = ["set_field", "assign", "comment", "notify", "create_item"] as const;
-export const setFields = ["importance", "due_date", "start_date", "effort_minutes", "duration_days", "status_id"] as const;
+export const actionTypes = ["set_field", "assign", "comment", "mention", "notify", "create_item", "move"] as const;
+export const setFields = ["importance", "due_date", "start_date", "effort_minutes", "duration_days", "status_id", "status_group"] as const;
 export const statusGroups = ["active", "completed", "deferred", "cancelled"] as const;
 export const importanceLevels = ["high", "normal", "low"] as const;
 
@@ -30,15 +30,25 @@ export function cleanDefinition(d: Definition): Definition {
   if (w.type === "item.assigned" && w.user_id) when.user_id = w.user_id;
   if (w.type === "item.created" && w.item_type) when.item_type = w.item_type;
   if (w.type === "item.due_reached") when.days_before = Number(w.days_before ?? 0);
+  if (w.type === "item.due_reached" && w.calendar) when.calendar = w.calendar;
+  if (w.type === "item.inactive") when.days = Number(w.days ?? 7);
   if (w.type === "form.submitted" && w.form_id) when.form_id = w.form_id;
-  const conds = d.if.map((c): Condition => (["set", "unset", "empty", "not_empty"].includes(c.op) ? { field: c.field, op: c.op } : { field: c.field, op: c.op, value: c.value }));
+  if (w.type === "approval.decided" && w.decision) when.decision = w.decision;
+  // "in" takes a list: the editor keeps the typed text, and it becomes a list of values here (OR-style, decision AUT-T07).
+  const conds = d.if.map((c): Condition => {
+    if (["set", "unset", "empty", "not_empty"].includes(c.op)) return { field: c.field, op: c.op };
+    if (c.op === "in") return { field: c.field, op: c.op, value: (String(c.value ?? "").split(",").map((v) => v.trim()).filter(Boolean)) as unknown as string };
+    return { field: c.field, op: c.op, value: c.value };
+  });
   const then = d.then.map((a): Action => {
     switch (a.type) {
       case "set_field": return { type: a.type, field: a.field, value: a.value };
       case "assign": return { type: a.type, user_ids: a.user_ids ?? [] };
       case "comment": return { type: a.type, text: a.text ?? "" };
+      case "mention": return { type: a.type, text: a.text ?? "", user_ids: a.user_ids ?? [], ...(a.followers ? { followers: true } : {}), ...(a.group_ids?.length ? { group_ids: a.group_ids } : {}) };
+      case "move": return { type: a.type, container_id: a.container_id ?? "" };
       case "notify": return { type: a.type, ...(a.user_ids?.length ? { user_ids: a.user_ids } : {}), ...(a.assignees ? { assignees: true } : {}), message: a.message ?? "" };
-      default: return { type: a.type, title: a.title ?? "", ...(a.type_key ? { type_key: a.type_key } : { kind: a.kind || "task" }) };
+      default: return { type: a.type, title: a.title ?? "", ...(a.type_key ? { type_key: a.type_key } : { kind: a.kind || "task" }), ...(a.under ? { under: a.under } : {}) };
     }
   });
   return { when, if: conds, then };
