@@ -744,4 +744,53 @@ Teks asli BP-T13 dan BP-T14 tidak tersedia di repo maupun di konteks. Karena itu
 - Then: setiap item di pratinjau punya tanggal mulai dan selesai yang sama dengan item yang dibuat, dan jumlah item tidak berubah setelah pratinjau.
 - Bukti: `TestBlueprintPreviewMatchesUseAndWritesNothing` (Go, PASS); `E2E` di dev-lens (bagian 18) mencatat hasil yang sama untuk Plan dan Ship.
 
-Mohon konfirmasi: apakah dua draf ini sesuai dengan maksud BP-T13 dan BP-T14, atau kirim teks aslinya untuk menggantikannya.
+**Status: draf disetujui oleh user (18 Nov 2026).** Teks resmi dari repo belum tersedia; jika ada teks asli, gantikan draf ini.
+
+---
+
+## 21. Deploy perbaikan editor dan tes live ulang
+
+Tanggal: 18 Nov 2026.
+
+- **Commit:** `d949653` (perbaikan draf editor), lalu `57f4a9f` (dokumen). Keduanya di branch lokal `feat/blueprint-b5-scope-edit`, tidak di-push.
+- **Build:** `pms:57f4a9f` di `losaka-app`, tanpa error TypeScript.
+- **Backup pra-deploy:** `20261118T061354Z`. Salinan `.env` lama: `.env.bak-57f4a9f-pre`.
+- **Verifikasi server:** container `pms-app-1` healthy. Migrasi tercatat sampai 334. `items` 1673 (1667 + 6 item uji e2e). `blueprints` 1 (blueprint uji). `healthz` publik 200.
+- **Tes live editor (browser):** PASS.
+  - A menyimpan nama baru (versi naik).
+  - B, yang memegang versi lama, mendapat pesan konflik saat menyimpan.
+  - Pratinjau dengan tanggal selesai menampilkan 3 item.
+- Kegagalan sebelumnya (run kedua) disebabkan nama tes yang sama dengan nama yang sudah tersimpan, sehingga tombol simpan nonaktif. Bukan bug aplikasi. Nama tes sekarang unik per run.
+
+Catatan data: blueprint uji sekarang bernama `E2E kit 20261118052039 (A <timestamp>)`. Item uji e2e dari bagian 18 masih ada dan belum dihapus.
+
+Draf BP-T13 dan BP-T14 ada di bagian 20 dan perlu konfirmasi Anda.
+
+---
+
+## 22. Editor: status, assignee, field kustom, dan dependency
+
+Tanggal: 18 Nov 2026.
+
+**Yang ditambahkan di UI** (`web/src/routes/_app/blueprints_.$blueprintId.tsx`):
+- Tiap item punya panel "Detail item ini" dengan:
+  - **Status:** daftar status dari workflow default.
+  - **Assignee:** pemilih user (`ItemUserPicker`, banyak pilihan).
+  - **Field kustom:** tipe teks, angka, tanggal, centang, dan pilihan tunggal bisa diubah. Tipe lain (orang, pilihan ganda, mata uang, persen, durasi, relasi, rumus) ditampilkan hanya-baca dan nilainya dipertahankan.
+- **Dependency:** daftar dependensi dengan sebelumnya, sesudahnya, tipe (FS, SS, FF, SF), dan jeda. Dependensi yang mengarah ke diri sendiri langsung ditandai dan tombol simpan nonaktif.
+
+**Validasi backend** (`server/internal/items/blueprints.go`, saat edit):
+- Dependensi yang sama dua kali ditolak (422).
+- Lingkaran dependensi ditolak (422).
+- Status yang tidak ada di database ditolak (422).
+- Semua ditolak sebelum ada yang ditulis.
+
+**Bukti:**
+- Go: `TestBlueprintEditKeepsEditorFieldsAndRefusesBadGraphs` (PASS). Memeriksa lingkaran, duplikat, status tidak dikenal, dan bahwa status, assignee, field, serta dependensi yang valid tersimpan utuh.
+- Playwright mock: 4 tes editor PASS, termasuk tes baru untuk status, field, dependensi, dan penolakan dependensi pada diri sendiri.
+- `tsc -b` dan ESLint untuk file editor: lulus.
+
+**Batasan yang masih ada:**
+- Status ditampilkan dari workflow default. Saat dipakai, status hanya diterapkan jika workflow item tujuan memiliki status tersebut. Jika tidak, status dilewati, seperti sebelumnya.
+- Field kustom yang tidak ada di Space tujuan atau yang dibatasi (restricted) dilewati saat dipakai.
+- Tes live di browser untuk fitur ini belum dijalankan. Perlu deploy ulang untuk itu.

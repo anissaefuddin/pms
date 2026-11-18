@@ -73,3 +73,48 @@ test("add a subitem, remove it again, and preview the dates without saving", asy
   expect(calls.some((c) => c.method === "PATCH")).toBe(false);
   expect(calls.find((c) => c.method === "POST" && c.path.endsWith("/preview"))?.body).toEqual({ start_date: "2026-06-01" });
 });
+
+const fieldId = "f0000000-0000-4000-8000-0000000000ff";
+const statusId = "a0000000-0000-4000-8000-0000000000aa";
+const twoNodes = {
+  id: bp, space_id: marketing.id, name: "Fields kit", item_type: "project", item_count: 2, created_at: "2026-11-13T10:00:00Z",
+  scope: "space", version: 1, updated_at: "2026-11-13T10:00:00Z",
+  tree: {
+    nodes: [
+      { parent: -1, type: "project", title: "Launch", importance: "high", assignee_ids: [], is_milestone: false },
+      { parent: 0, type: "task", title: "Plan", importance: "normal", assignee_ids: [], is_milestone: false },
+    ],
+    dependencies: [],
+  },
+};
+
+test("status, a custom field value, and a dependency are edited and saved; a self dependency is blocked", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: {
+    [`GET /blueprints/${bp}`]: () => ({ body: twoNodes }),
+    [`GET /workflows`]: () => ({ body: { items: [{ id: "w1", name: "Default", is_default: true, statuses: [{ id: statusId, name: "In Progress" }] }] } }),
+    [`GET /spaces/${marketing.id}/custom-fields`]: () => ({ body: { items: [{ id: fieldId, space_id: marketing.id, name: "Budget", type: "number", position: 0, options: [], config: {}, archived_at: null }] } }),
+    [`PATCH /blueprints/${bp}`]: (body) => ({ body: { ...twoNodes, version: 2, tree: body.tree } }),
+  } });
+  await page.goto(`/blueprints/${bp}`);
+  const plan = page.locator("details").nth(1);
+  await plan.getByText("Details of this item").click();
+  await plan.getByLabel("Status").selectOption(statusId);
+  await plan.getByLabel("Budget").fill("42");
+
+  await page.getByRole("button", { name: "Add dependency" }).click();
+  const dep = page.getByLabel("Before (predecessor)");
+  await expect(dep).toHaveValue("0");
+  await page.getByLabel("After (successor)").selectOption("1");
+  await expect(page.getByRole("alert")).toHaveCount(0);
+
+  await page.getByLabel("After (successor)").selectOption("0");
+  await expect(page.getByRole("alert")).toContainText("cannot depend on itself");
+  await expect(page.getByRole("button", { name: "Save changes" })).toBeDisabled();
+  await page.getByLabel("After (successor)").selectOption("1");
+
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body?.tree).toMatchObject({
+    nodes: [{ title: "Launch" }, { title: "Plan", status_id: statusId, fields: { [fieldId]: 42 } }],
+    dependencies: [{ predecessor: 0, successor: 1, type: "FS", lag: 0 }],
+  });
+});

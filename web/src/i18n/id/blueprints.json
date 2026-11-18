@@ -73,6 +73,19 @@
     "startDate": "Mulai",
     "dueDate": "Selesai",
     "open": "Ubah",
-    "version": "v{{version}}"
+    "version": "v{{version}}",
+    "detailsOf": "Detail item ini",
+    "status": "Status",
+    "noStatus": "Tanpa status",
+    "assignees": "Assignee",
+    "readOnlyField": "hanya ditampilkan; ubah di item",
+    "dependencies": "Dependensi",
+    "noDependencies": "Belum ada dependensi.",
+    "predecessor": "Sebelumnya (predecessor)",
+    "successor": "Sesudahnya (successor)",
+    "dependencyType": "Tipe",
+    "lag": "Jeda (hari)",
+    "addDependency": "Tambah dependensi",
+    "selfDependency": "Item tidak boleh bergantung pada dirinya sendiri."
   }
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -657,6 +658,21 @@ func editBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.U
 		if err := validateEditedNodes(parsed); err != nil {
 			return nil, err
 		}
+		if err := validateEditedGraph(parsed); err != nil {
+			return nil, err
+		}
+		for i, n := range parsed.Nodes {
+			if n.StatusID == nil {
+				continue
+			}
+			var known bool
+			if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM statuses WHERE id=$1)", *n.StatusID).Scan(&known); err != nil {
+				return nil, err
+			}
+			if !known {
+				return nil, InvalidField{"tree", fmt.Sprintf("item %d has an unknown status", i+1)}
+			}
+		}
 		restricted, err := restrictedFieldIDs(ctx, tx)
 		if err != nil {
 			return nil, err
@@ -819,4 +835,41 @@ FROM blueprints WHERE id=$1`, id).Scan(&spaceID, &tree, &out)
 	}
 	doc["tree"] = treeJSON
 	return json.Marshal(doc)
+}
+
+// validateEditedGraph refuses a dependency twice and any loop of dependencies: the schedule cannot follow a cycle.
+func validateEditedGraph(tree blueprintTree) error {
+	seen := map[[2]int]bool{}
+	adj := make([][]int, len(tree.Nodes))
+	indeg := make([]int, len(tree.Nodes))
+	for _, d := range tree.Dependencies {
+		key := [2]int{d.Predecessor, d.Successor}
+		if seen[key] {
+			return Invalid("the same dependency appears twice")
+		}
+		seen[key] = true
+		adj[d.Predecessor] = append(adj[d.Predecessor], d.Successor)
+		indeg[d.Successor]++
+	}
+	queue := []int{}
+	for i, n := range indeg {
+		if n == 0 {
+			queue = append(queue, i)
+		}
+	}
+	placed := 0
+	for len(queue) > 0 {
+		v := queue[0]
+		queue = queue[1:]
+		placed++
+		for _, w := range adj[v] {
+			if indeg[w]--; indeg[w] == 0 {
+				queue = append(queue, w)
+			}
+		}
+	}
+	if placed != len(tree.Nodes) {
+		return Invalid("dependencies would form a loop")
+	}
+	return nil
 }

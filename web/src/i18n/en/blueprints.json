@@ -74,6 +74,19 @@
     "startDate": "Start",
     "dueDate": "Finish",
     "open": "Edit",
-    "version": "v{{version}}"
+    "version": "v{{version}}",
+    "detailsOf": "Details of this item",
+    "status": "Status",
+    "noStatus": "No status",
+    "assignees": "Assignees",
+    "readOnlyField": "shown only; change it on the item",
+    "dependencies": "Dependencies",
+    "noDependencies": "No dependencies yet.",
+    "predecessor": "Before (predecessor)",
+    "successor": "After (successor)",
+    "dependencyType": "Type",
+    "lag": "Lag (days)",
+    "addDependency": "Add dependency",
+    "selfDependency": "An item cannot depend on itself."
   }
 }
