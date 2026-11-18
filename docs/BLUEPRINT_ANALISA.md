@@ -854,3 +854,19 @@ Tanggal: 18 Nov 2026. Tanpa commit, push, atau PR.
 - Tidak ada hard delete. Tidak ada perubahan skema atau kontrak API.
 - Tidak ada data mock yang ditampilkan sebagai data server.
 - Fungsi editor baru tidak diaktifkan. Keputusan R1 (elevated actor) tetap seperti di bagian 12 dan 13.
+
+---
+
+## 24. Penutupan registry Settings → Blueprints
+
+Tanggal: 18 Nov 2026.
+
+- **Commit:** `d82d464` di `feat/blueprint-b5-scope-edit`, sudah di-push. PR #19 ikut terbarui.
+- **Deploy:** `pms:d82d464` berjalan di dev-lens. Backup pra-deploy `20261118T082405Z`. Container healthy, migrasi 334, `items` 1673.
+- **Verifikasi live (browser, akun uji):** PASS. Sidebar mengarah ke `/settings/blueprints`. Daftar memuat data server. Reload tetap di halaman. Pencarian memfilter baris. Duplikasi dan Arsip nonaktif. Screenshot live tersimpan di scratchpad.
+- **Playwright penuh (mock):** 555 PASS, 43 dilewati, 0 gagal.
+- **Unit:** `npm test` 92 PASS.
+
+**Temuan saat verifikasi:** ada blueprint baru `Software delivery` di dev-lens, dibuat 08:06 UTC oleh `anissaefuddin@gmail.com` (`blueprint.save` di audit). Tidak ada yang dihapus. Perlu konfirmasi dari pemilik akun apakah ini dibuat secara sengaja.
+
+**Account Admin (belum diimplementasi):** model hak belum punya peran Account Admin. Mengimplementasikannya mengubah model hak dan perlu keputusan: apakah peran ini global (instance) atau per Personal Space, dan apa saja yang boleh dilakukannya di Blueprint akun pengguna lain.
