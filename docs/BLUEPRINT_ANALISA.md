@@ -656,3 +656,72 @@ Catatan: halaman editor belum diuji terhadap backend yang berjalan (live). Tes i
 ### 16.4 GO/NO-GO
 
 Prasyarat teknis editor sudah lengkap: baca, ubah dengan versi, pratinjau, dan UI dasar. Yang masih menunggu keputusan Anda: teks BP-T13 dan BP-T14 untuk pemetaan acceptance, serta penyebaran perubahan ke server.
+
+---
+
+## 17. Deploy ke dev-lens (losaka-app)
+
+Tanggal: 18 Nov 2026.
+
+- **Commit:** `9b3abee` di branch lokal `feat/blueprint-b5-scope-edit`, dibuat dari HEAD `39964dc` dengan hanya file Blueprint. Tidak di-push.
+- **Build:** image `pms:9b3abee` dibangun di `losaka-app` dari `~/build-9b3abee` (source hasil `git archive`).
+- **Backup pra-deploy:** stamp `20261118T032227Z` (`backup.sh`).
+- **Switch:** `PMS_IMAGE=pms:9b3abee` di `/home/lsuser/pms/.env` (salinan lama: `.env.bak-9b3abee-pre`), lalu `docker compose up -d app`.
+- **Verifikasi:**
+  - Migrasi `00333` dan `00334` tercatat di `schema_migrations` (versi terakhir 334).
+  - Kolom `blueprints.scope`, `version`, dan `updated_at` ada.
+  - Batas `custom_roles.caps_mask` sudah 2047.
+  - `blueprints` 0 baris. `items` 1667, tidak berubah.
+  - `healthz` dan `readyz` OK. Container `pms-app-1` healthy. Tidak ada error atau panic di log.
+- **Rollback jika diperlukan:** `./restore.sh 20261118T032227Z --force` dari `/home/lsuser/pms`, yang mengembalikan image lama dan data cadangan.
+
+Catatan: kedua perbaikan tipe di web (`version` wajib pada skema `Blueprint`) ditemukan saat build Docker, bukan saat pengecekan lokal. Pengecekan `tsc -b` sekarang sudah termasuk di alur verifikasi.
+
+Belum dilakukan: tes e2e terhadap server live (login dan pembuatan data), dan pembuatan data e2e yang diminta di akhir sesi.
+
+---
+
+## 18. E2E di dev-lens: membuat data baru
+
+Tanggal: 18 Nov 2026. Dijalankan lewat API publik `https://dev-lens.losakaenergi.app/api/v1` dengan akun admin uji dari `docs/qa/usertest.md` (login sukses, sesi ditutup setelahnya; file cookie sementara dihapus).
+
+Data baru yang dibuat (diberi label "E2E" dan tanggal):
+- Space uji: `E2E Blueprint 20261118052039` (id `5d02fe5e-9dd5-4544-b901-2a7a03c6b7f7`).
+- Project sumber `E2E Launch 20261118052039`, dengan task `Plan` dan `Ship` serta dependency FS.
+- Blueprint `E2E kit 20261118052039 (edited)` (id `b2deb260-0a7a-4fdc-90a3-920012b6b7c5`).
+- Item hasil pakai `E2E from blueprint 20261118052039` (id `01a1ed19-9feb-71ba-b786-66f9ced012d4`), dengan anak `Plan (edited in e2e)` 22–24 Juni dan `Ship` 29–30 Juni 2026.
+
+Hasil langkah (semua sesuai harapan):
+- Simpan dari project: 201, `scope=space`, `version=1`, `item_count=3`.
+- Baca blueprint dengan tree: 200, 3 node dan 1 dependency.
+- Ubah nama dengan versi terbaru: 200. Versi basi: 409.
+- Ubah judul node lewat tree: 200.
+- Pratinjau dengan tanggal selesai 30 Juni 2026: 200. Tanggal pratinjau sama dengan tanggal item yang benar-benar dibuat.
+- Pakai blueprint dengan tanggal selesai: 201.
+
+Catatan:
+- Data uji ini belum dihapus. Hapus Space uji dan item-itemnya jika tidak diperlukan.
+- `docs/qa/usertest.md` berisi password dalam teks biasa di repositori. Sebaiknya dipindahkan ke tempat yang aman dan dirotasi.
+- Belum dilakukan: tes UI editor di browser terhadap server live.
+
+---
+
+## 19. Tes editor live di dev-lens (browser)
+
+Tanggal: 18 Nov 2026. Tes Playwright dijalankan dari luar repo (`scratchpad/live`) terhadap `https://dev-lens.losakaenergi.app`, login dengan akun uji dari `docs/qa/usertest.md`, dan hanya menyentuh blueprint `E2E kit 20261118052039` milik e2e sebelumnya.
+
+Hasil:
+- Login, membuka editor dari katalog: berhasil.
+- Simpan dari A (ubah nama): berhasil, versi naik.
+- **Temuan (bug):** halaman B yang belum menyimpan apa pun ikut berubah ke data A (nama "(live A)", v4) tanpa peringatan. Penyebabnya: editor dibuat ulang setiap kali data detail dimuat ulang (termasuk refetch saat jendela fokus), sehingga draft B yang belum disimpan bisa hilang diam-diam. Ini juga membuat tombol simpan dan baseline tidak sesuai.
+- Akibatnya langkah konflik (B menyimpan dan harus mendapat 409) tidak tercapai pada build yang sedang berjalan. Tes berhenti di sana.
+
+Perbaikan (ada di web, belum di-deploy):
+- Editor dibuat ulang hanya saat pengguna menekan Muat ulang setelah konflik.
+- Setelah simpan, editor memakai hasil simpan sebagai baseline.
+- Query detail tidak refetch saat jendela fokus.
+- Verifikasi lokal: `tsc -b` lulus, tes Playwright mock editor 4/4 lulus.
+
+Belum terverifikasi terhadap server live: perbaikan di atas. Perlu deploy ulang untuk memverifikasinya.
+
+Catatan data: nama blueprint uji sekarang `E2E kit 20261118052039 (live A)`, dan node `Plan` berjudul "Plan (edited in e2e)". Tidak ada data lain yang diubah.

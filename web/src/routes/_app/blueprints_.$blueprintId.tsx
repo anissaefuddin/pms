@@ -34,6 +34,9 @@ function BlueprintEditorPage() {
   const { blueprintId } = Route.useParams();
   const qc = useQueryClient();
   const detail = useBlueprintDetail(blueprintId);
+  // A new key remounts the editor with fresh data. It changes only on an explicit reload, never on a background refetch,
+  // so unsaved edits are not dropped silently.
+  const [generation, setGeneration] = useState(0);
   const spaces = useSpaces();
   const space = (spaces.data ?? []).find((s) => s.id === detail.data?.space_id);
   const canManage = !!space && can(space, "manage_blueprint");
@@ -41,19 +44,21 @@ function BlueprintEditorPage() {
 
   if (detail.isPending) return <main className="p-8"><p role="status">{t("items.loading")}</p></main>;
   if (detail.isError || !detail.data) return <main className="p-8"><p role="alert">{t("blueprints.editor.notFound")}</p></main>;
-  return <Editor key={`${detail.data.id}-${detail.data.version}`} blueprint={detail.data} canManage={canManage} canUse={canUse}
-    onChanged={() => void qc.invalidateQueries({ queryKey: blueprintDetailKey(blueprintId) })} />;
+  return <Editor key={`${detail.data.id}-${generation}`} blueprint={detail.data} canManage={canManage} canUse={canUse}
+    onReload={async () => { await detail.refetch(); setGeneration((g) => g + 1); }} />;
 }
 
-function Editor({ blueprint, canManage, canUse, onChanged }: {
+function Editor({ blueprint, canManage, canUse, onReload }: {
   blueprint: NonNullable<ReturnType<typeof useBlueprintDetail>["data"]>;
-  canManage: boolean; canUse: boolean; onChanged: () => void;
+  canManage: boolean; canUse: boolean; onReload: () => Promise<void>;
 }) {
   const { t } = useTranslation();
   const qc = useQueryClient();
-  const original = blueprint.tree;
+  // `saved` is what the server holds as of our last read or save; "dirty" means the draft differs from it.
+  const [saved, setSaved] = useState(() => ({ name: blueprint.name, tree: structuredClone(blueprint.tree) }));
+  const original = saved.tree;
   const [name, setName] = useState(blueprint.name);
-  const [tree, setTree] = useState<BlueprintTree>(() => structuredClone(original));
+  const [tree, setTree] = useState<BlueprintTree>(() => structuredClone(blueprint.tree));
   const [version, setVersion] = useState(blueprint.version);
   const [error, setError] = useState("");
   const [conflict, setConflict] = useState(false);
@@ -62,7 +67,7 @@ function Editor({ blueprint, canManage, canUse, onChanged }: {
   const [date, setDate] = useState("");
   const [preview, setPreview] = useState<BlueprintPreviewItem[] | null>(null);
 
-  const dirty = name !== blueprint.name || JSON.stringify(tree) !== JSON.stringify(original);
+  const dirty = name !== saved.name || JSON.stringify(tree) !== JSON.stringify(original);
   const childCount = useMemo(() => tree.nodes.map((_, i) => tree.nodes.filter((n) => n.parent === i).length), [tree]);
 
   function patchNode(index: number, change: Partial<BlueprintNode>) {
@@ -79,10 +84,12 @@ function Editor({ blueprint, canManage, canUse, onChanged }: {
   async function save() {
     setBusy(true); setError(""); setConflict(false);
     try {
-      const saved = await saveBlueprint(blueprint.id, { version, name: name.trim(), tree });
-      setVersion(saved.version);
+      const result = await saveBlueprint(blueprint.id, { version, name: name.trim(), tree });
+      setVersion(result.version);
+      setSaved({ name: name.trim(), tree: structuredClone(tree) });
+      setName(name.trim());
       await qc.invalidateQueries({ queryKey: blueprintKey(blueprint.space_id) });
-      onChanged();
+      await qc.invalidateQueries({ queryKey: blueprintDetailKey(blueprint.id) });
       toast.success(t("blueprints.editor.saved"));
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) setConflict(true);
@@ -151,7 +158,7 @@ function Editor({ blueprint, canManage, canUse, onChanged }: {
       </ol>
       {canManage && <div className="flex flex-wrap items-center gap-3">
         <Button disabled={busy || !dirty || !name.trim()} onClick={() => void save()}>{t("blueprints.editor.save")}</Button>
-        {conflict && <Button variant="outline" onClick={onChanged}>{t("blueprints.editor.reload")}</Button>}
+        {conflict && <Button variant="outline" onClick={() => void onReload()}>{t("blueprints.editor.reload")}</Button>}
       </div>}
       <FormError message={error} />
       {conflict && <p role="status">{t("blueprints.editor.conflict")}</p>}

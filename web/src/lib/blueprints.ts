@@ -19,7 +19,7 @@ export const useBlueprints = (spaceID: string, enabled = true) =>
 
 export const useBlueprintDetail = (id: string) =>
   useQuery({
-    queryKey: blueprintDetailKey(id), enabled: !!id,
+    queryKey: blueprintDetailKey(id), enabled: !!id, refetchOnWindowFocus: false,
     queryFn: () => api<BlueprintDetail>(`/api/v1/blueprints/${id}`),
   });
 
