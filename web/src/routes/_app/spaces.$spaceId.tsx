@@ -18,6 +18,7 @@ import { can, etag, sortSpaces, spaceKeys, type Share, type Space } from "@/lib/
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { ShareDialog } from "@/components/share-dialog";
 import { SpaceExcelImport } from "@/components/space-excel-import";
+import { SpaceExcelExport } from "@/components/project-excel-export";
 import { CustomFieldsDialog } from "@/components/custom-fields-dialog";
 import { CreateMenuDialog } from "@/components/create-menu-dialog";
 import { SpaceBookmarksDialog } from "@/components/space-bookmarks-dialog";
@@ -61,6 +62,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState(false);
   const [importingExcel, setImportingExcel] = useState(false);
+  const [exportingSpace, setExportingSpace] = useState(false);
   const [managingFields, setManagingFields] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [bookmarks, setBookmarks] = useState(false);
@@ -130,6 +132,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
+                <DropdownMenuItem onClick={() => setExportingSpace(true)}>{t("excel.exportSpaceTitle")}</DropdownMenuItem>
                 {canEditForms && <DropdownMenuItem onClick={() => setMenuConfig(true)}>{t("spaces.createMenu.link")}</DropdownMenuItem>}
                 {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
                 {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
@@ -150,6 +153,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
       {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}
         onCreated={openItem} />}
       {importingExcel && <SpaceExcelImport open={importingExcel} onOpenChange={setImportingExcel} spaceId={space.id} />}
+      {exportingSpace && <SpaceExcelExport open={exportingSpace} onOpenChange={setExportingSpace} spaceId={space.id} spaceName={space.name} />}
       {canManageFields && <CustomFieldsDialog open={managingFields} onOpenChange={setManagingFields} spaceId={space.id} />}
       {canEditForms && <CreateMenuDialog spaceId={space.id} open={menuConfig} onOpenChange={setMenuConfig} />}
       <SpaceBookmarksDialog spaceId={space.id} canEdit={canEditForms} open={bookmarks} onOpenChange={setBookmarks} />

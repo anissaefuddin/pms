@@ -1456,6 +1456,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/excel-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Ekspor seluruh Space: setiap root yang bisa dilihat pemanggil beserta hierarkinya (EXP-03). */
+        post: operations["startSpaceExcelExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/excel-exports/{exportId}": {
         parameters: {
             query?: never;
@@ -1484,6 +1503,25 @@ export interface paths {
             cookie?: never;
         };
         get: operations["downloadProjectExcelExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/excel-imports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Laporan impor milik pemanggil. Akses mengikuti Space laporan, bukan URL. */
+        get: operations["getExcelImportReport"];
         put?: never;
         post?: never;
         delete?: never;
@@ -4721,7 +4759,13 @@ export interface components {
             id: string;
             /** @enum {string} */
             status: "pending" | "ready" | "failed";
+            /** @enum {string} */
+            scope?: "project" | "space";
             error?: string;
+            /** @description Items the export holds, counted from the tree when the worker starts. */
+            total_items?: number;
+            /** @description Items written so far. This is a count of real items, not an estimate. */
+            processed_items?: number;
         };
         ExcelPreview: {
             columns: string[];
@@ -6312,7 +6356,7 @@ export interface components {
             items: components["schemas"]["StreamEntry"][];
         };
         /** @enum {string} */
-        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided" | "automation" | "approval_reminder" | "approval_escalated";
+        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided" | "automation" | "approval_reminder" | "approval_escalated" | "import_summary";
         Notification: {
             /** Format: uuid */
             id: string;
@@ -6326,6 +6370,13 @@ export interface components {
             space_id?: string | null;
             space_title?: string | null;
             snippet?: string | null;
+            /** @description The record this notification is about, when there is one (for example an import report). */
+            reference?: {
+                /** @enum {string} */
+                kind: "excel_import_report";
+                /** Format: uuid */
+                id: string;
+            } | null;
             /** Format: date-time */
             read_at?: string | null;
             /** Format: date-time */
@@ -9730,6 +9781,39 @@ export interface operations {
             429: components["responses"]["Problem"];
         };
     };
+    startSpaceExcelExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    filter?: {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Export dijadwalkan */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExcelExport"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
     getProjectExcelExport: {
         parameters: {
             query?: never;
@@ -9775,6 +9859,37 @@ export interface operations {
             };
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    getExcelImportReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Laporan impor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created?: number;
+                        dependencies?: number;
+                        destination?: string;
+                        sheet?: string;
+                        rescheduled?: {
+                            [key: string]: unknown;
+                        }[];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
         };
     };
     importProjectExcel: {

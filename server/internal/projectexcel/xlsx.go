@@ -10,6 +10,7 @@ import (
 	"io/fs"
 	"path"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 	"unicode/utf16"
@@ -33,6 +34,7 @@ const (
 var (
 	errWorkbookLimit = errors.New("workbook exceeds the size, row, column, or cell limit")
 	errWorkbookXML   = errors.New("invalid Excel workbook structure")
+	errFormula       = errors.New("formulas are not supported")
 	xstringPrefix    = regexp.MustCompile(`_x[0-9a-fA-F]{4}`)
 	xstringEscape    = regexp.MustCompile(xstringPrefix.String() + `_`)
 )
@@ -176,10 +178,110 @@ func decodeXString(value string) string {
 	}
 }
 
-// Read returns the first worksheet as text. Shared and inline rich text is
-// flattened, scalar values are returned as stored, and formulas are rejected.
-// Number formats, styles, and additional worksheets are outside the import.
+// Sheet is one worksheet as text. Err is a formula problem on this sheet; its rows are still complete so the
+// caller can recognise which sheet holds LENS data before it reports the problem.
+type Sheet struct {
+	Name string
+	Rows [][]string
+	Err  *Error
+}
+
+// Error is a workbook problem a user can act on: where it is, why it was refused, and how to fix it.
+type Error struct {
+	Sheet  string `json:"sheet,omitempty"`
+	Row    int    `json:"row,omitempty"`
+	Column string `json:"column,omitempty"`
+	Reason string `json:"reason"`
+	Fix    string `json:"suggested_fix"`
+
+	message string
+}
+
+func (e *Error) Error() string { return e.message }
+
+const maxSheets = 64
+
+// Canonical maps a workbook header to its LENS column. The public names (External Key, Parent Key, Finish Date) and the
+// older names (id, parent_id, due_date) both work; anything else is returned in lower case, unchanged.
+func Canonical(header string) string {
+	key := strings.ToLower(strings.TrimSpace(header))
+	if target, ok := headerAliases[key]; ok {
+		return target
+	}
+	return key
+}
+
+var headerAliases = map[string]string{"external key": "id", "parent key": "parent_id", "finish date": "due_date",
+	"assignee email": "assignee_email", "depends on": "depends_on"}
+
+// ImportHeaders are the columns the importer reads but the exporter does not write yet.
+var ImportHeaders = []string{"status", "workflow", "assignee_email", "depends_on"}
+
+// Known reports whether a canonical target is a LENS column the importer understands.
+func Known(target string) bool {
+	return slices.Contains(Headers, target) || slices.Contains(ImportHeaders, target)
+}
+
+func isLENSHeader(header string) bool {
+	return Known(Canonical(header))
+}
+
+// rowLimitError is the structured form of the 500-item limit; the message keeps the word "limit" for callers that match it.
+func rowLimitError(sheet string, row int) *Error {
+	return &Error{Sheet: sheet, Row: row, Reason: "limit", Fix: "Split the workbook so that each file has at most 500 items.",
+		message: fmt.Sprintf("sheet %q row %d exceeds the row limit: at most %d items per import", sheet, row, MaxRows-1)}
+}
+
+// Read returns the first worksheet as text. Formulas on that sheet are rejected; other sheets are not inspected.
 func Read(data []byte) ([][]string, error) {
+	sheets, err := ReadSheets(data)
+	if err != nil {
+		return nil, err
+	}
+	if sheets[0].Err != nil {
+		return nil, sheets[0].Err
+	}
+	return sheets[0].Rows, nil
+}
+
+// ReadLENS returns the single worksheet that holds LENS data. It refuses a workbook when no sheet has LENS headers
+// (format not recognised), when several do (ambiguous), or when that sheet contains formulas.
+func ReadLENS(data []byte) (Sheet, error) {
+	sheets, err := ReadSheets(data)
+	if err != nil {
+		return Sheet{}, err
+	}
+	var found []Sheet
+	for _, sheet := range sheets {
+		if len(sheet.Rows) > 0 && slices.ContainsFunc(sheet.Rows[0], isLENSHeader) {
+			found = append(found, sheet)
+		}
+	}
+	switch {
+	case len(found) == 0:
+		return Sheet{}, &Error{Reason: "format", Fix: "Download a LENS template (Basic, Hierarchy, or Advanced) and keep its header row: Title, External Key, Parent Key, and so on.",
+			message: "workbook format is not recognized: no worksheet has LENS column headers such as Title"}
+	case len(found) > 1:
+		var names []string
+		for _, sheet := range found {
+			names = append(names, sheet.Name)
+		}
+		if named := slices.IndexFunc(found, func(s Sheet) bool { return s.Name == "Project" }); named >= 0 {
+			found = found[named : named+1]
+			break
+		}
+		return Sheet{}, &Error{Reason: "sheet", Fix: "Keep one LENS worksheet, or name it Project.",
+			message: fmt.Sprintf("several worksheets look like LENS data: %s", strings.Join(names, ", "))}
+	}
+	if found[0].Err != nil {
+		return Sheet{}, found[0].Err
+	}
+	return found[0], nil
+}
+
+// ReadSheets reads every worksheet in workbook order. Only structural and resource problems fail the whole read; a formula
+// is recorded on its sheet.
+func ReadSheets(data []byte) ([]Sheet, error) {
 	if len(data) > MaxFileBytes {
 		return nil, errWorkbookLimit
 	}
@@ -211,19 +313,22 @@ func Read(data []byte) ([][]string, error) {
 	if workbook == "" {
 		return nil, errWorkbookXML
 	}
-	sheetID := ""
-	first := true
+	type entry struct{ name, id string }
+	var entries []entry
 	err = readXML(parts[workbook], "workbook", func(decoder *xml.Decoder) error {
 		return readChildren(decoder, "sheets", func(start xml.StartElement) error {
 			return readChildren(decoder, "sheet", func(start xml.StartElement) error {
-				if first {
-					first = false
-					for _, attr := range start.Attr {
-						if attr.Name.Local == "id" && (attr.Name.Space == documentRel || attr.Name.Space == strictRel) {
-							sheetID = attr.Value
-						}
+				if len(entries) >= maxSheets {
+					return errWorkbookLimit
+				}
+				var e entry
+				e.name = attrValue(start, "name")
+				for _, attr := range start.Attr {
+					if attr.Name.Local == "id" && (attr.Name.Space == documentRel || attr.Name.Space == strictRel) {
+						e.id = attr.Value
 					}
 				}
+				entries = append(entries, e)
 				return decoder.Skip()
 			})
 		})
@@ -231,16 +336,17 @@ func Read(data []byte) ([][]string, error) {
 	if err != nil {
 		return nil, err
 	}
-	if sheetID == "" {
+	if len(entries) == 0 || entries[0].id == "" {
 		return nil, errWorkbookXML
 	}
 
-	var sheet, sharedPart string
+	sheetParts := map[string]string{}
+	var sharedPart string
 	directory, name := path.Split(workbook)
 	err = readRelationships(parts, path.Join(directory, "_rels", name+".rels"), func(id, kind, target string) {
 		switch {
-		case id == sheetID && relationshipIs(kind, "worksheet"):
-			sheet = partPath(directory, target)
+		case relationshipIs(kind, "worksheet"):
+			sheetParts[id] = partPath(directory, target)
 		case relationshipIs(kind, "sharedStrings"):
 			sharedPart = partPath(directory, target)
 		}
@@ -267,7 +373,23 @@ func Read(data []byte) ([][]string, error) {
 			return nil, err
 		}
 	}
-	return readWorksheet(parts[sheet], shared)
+	sheets := make([]Sheet, 0, len(entries))
+	for _, e := range entries {
+		part := sheetParts[e.id]
+		if part == "" {
+			return nil, errWorkbookXML
+		}
+		rows, formula, err := readWorksheet(parts[part], shared, e.name)
+		var limit *Error
+		if errors.As(err, &limit) {
+			return nil, limit
+		}
+		if err != nil {
+			return nil, err
+		}
+		sheets = append(sheets, Sheet{Name: e.name, Rows: rows, Err: formula})
+	}
+	return sheets, nil
 }
 
 func relationshipIs(kind, name string) bool {
@@ -396,9 +518,10 @@ func (text cellText) value() string {
 	return value.String()
 }
 
-func readWorksheet(part *zip.File, shared []string) ([][]string, error) {
+func readWorksheet(part *zip.File, shared []string, sheetName string) ([][]string, *Error, error) {
 	var rows [][]string
 	var textBytes int
+	var formula *Error
 	found := false
 	err := readXML(part, "worksheet", func(decoder *xml.Decoder) error {
 		return readChildren(decoder, "sheetData", func(start xml.StartElement) error {
@@ -416,7 +539,7 @@ func readWorksheet(part *zip.File, shared []string) ([][]string, error) {
 					}
 				}
 				if row > MaxRows {
-					return errWorkbookLimit
+					return rowLimitError(sheetName, row)
 				}
 				rows = append(rows, make([][]string, row-len(rows))...)
 				return readChildren(decoder, "c", func(start xml.StartElement) error {
@@ -435,8 +558,17 @@ func readWorksheet(part *zip.File, shared []string) ([][]string, error) {
 						return errWorkbookLimit
 					}
 					value, err := readCell(decoder, start, shared)
+					if errors.Is(err, errFormula) {
+						if formula == nil {
+							ref := columnName(column-1) + strconv.Itoa(row)
+							formula = &Error{Sheet: sheetName, Row: row, Column: columnName(column - 1), Reason: "formula",
+								Fix:     "Replace the formula with its calculated value (copy the cell, then Paste Special > Values).",
+								message: fmt.Sprintf("sheet %q cell %s: formulas are not supported", sheetName, ref)}
+						}
+						value, err = "", nil
+					}
 					if err != nil {
-						return fmt.Errorf("cell %s%d: %w", columnName(column-1), row, err)
+						return fmt.Errorf("sheet %q cell %s%d: %w", sheetName, columnName(column-1), row, err)
 					}
 					textBytes += len(value)
 					if textBytes > maxExpandedBytes || !fitsCell(value) {
@@ -450,12 +582,12 @@ func readWorksheet(part *zip.File, shared []string) ([][]string, error) {
 		})
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	if !found {
-		return nil, errWorkbookXML
+		return nil, nil, errWorkbookXML
 	}
-	return rows, nil
+	return rows, formula, nil
 }
 
 func readCellRef(ref string, row int) (int, error) {
@@ -489,7 +621,7 @@ func readCell(decoder *xml.Decoder, start xml.StartElement, shared []string) (st
 		return "", err
 	}
 	if cell.Formula != nil {
-		return "", errors.New("formulas are not supported")
+		return "", errFormula
 	}
 	switch cell.Kind {
 	case "inlineStr":

@@ -2035,6 +2035,29 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '429': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/excel-exports:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      operationId: startSpaceExcelExport
+      description: 'Ekspor seluruh Space: setiap root yang bisa dilihat pemanggil beserta hierarkinya (EXP-03).'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filter: { type: object, additionalProperties: true }
+      responses:
+        '202':
+          description: Export dijadwalkan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExcelExport' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
   /excel-exports/{exportId}:
     parameters:
       - { name: exportId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2060,6 +2083,26 @@ paths:
               schema: { type: string, format: binary }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /excel-imports/{reportId}:
+    parameters:
+      - { name: reportId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getExcelImportReport
+      description: 'Laporan impor milik pemanggil. Akses mengikuti Space laporan, bukan URL.'
+      responses:
+        '200':
+          description: Laporan impor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created: { type: integer }
+                  dependencies: { type: integer }
+                  destination: { type: string }
+                  sheet: { type: string }
+                  rescheduled: { type: array, items: { type: object, additionalProperties: true } }
+        '404': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/excel-imports:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -6636,7 +6679,14 @@ components:
       properties:
         id: { type: string, format: uuid }
         status: { type: string, enum: [pending, ready, failed] }
+        scope: { type: string, enum: [project, space] }
         error: { type: string }
+        total_items:
+          type: integer
+          description: Items the export holds, counted from the tree when the worker starts.
+        processed_items:
+          type: integer
+          description: Items written so far. This is a count of real items, not an estimate.
     ExcelPreview:
       type: object
       required: [columns, rows, errors, sample, digest]
@@ -8263,7 +8313,7 @@ components:
     # ── Inbox & search ──
     NotificationKind:
       type: string
-      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated]
+      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated, import_summary]
     Notification:
       type: object
       required: [id, kind, created_at]
@@ -8277,6 +8327,14 @@ components:
         space_id: { type: string, format: uuid, nullable: true }
         space_title: { type: string, nullable: true }
         snippet: { type: string, nullable: true }
+        reference:
+          description: The record this notification is about, when there is one (for example an import report).
+          nullable: true
+          type: object
+          required: [kind, id]
+          properties:
+            kind: { type: string, enum: [excel_import_report] }
+            id: { type: string, format: uuid }
         read_at: { type: string, format: date-time, nullable: true }
         archived_at: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }

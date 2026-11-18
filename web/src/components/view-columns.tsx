@@ -9,7 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import type { CustomField } from "@/lib/custom-fields";
-import { cardFieldGroups, ganttColumnGroups, columnGroups, fieldColumn, fieldFilterRef } from "@/lib/view-columns";
+import { cardFieldGroups, ganttColumnGroups, columnGroups, fieldColumn, fieldFilterRef, fieldFilterable } from "@/lib/view-columns";
 
 type Choice = { id: string; name: string; type: string; assigned: boolean };
 
@@ -101,14 +101,16 @@ export function ColumnPicker({ board, fieldsOnly, selected, fields, canSave, sav
 export function FieldFilter({ fields, value, onChange }: { fields: CustomField[]; value?: string; onChange: (value: string) => void }) {
   const { t } = useTranslation();
   const { id, value: text } = fieldFilterRef(value);
-  const field = fields.find((entry) => entry.id === id);
+  const field = fields.find((entry) => entry.id === id && fieldFilterable(entry.type));
   const commit = (next: string) => onChange(id && next !== "" ? `${id}:${next}` : "");
   return <div className="flex items-end gap-2">
     <label className="space-y-1"><span>{t("views.fieldFilter.field")}</span>
       <select value={id} onChange={(event) => onChange(event.target.value ? `${event.target.value}:` : "")}
         className="block rounded border bg-background p-2">
         <option value="">{t("views.fieldFilter.none")}</option>
-        {fields.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+        {fields.map((entry) => <option key={entry.id} value={entry.id} disabled={!fieldFilterable(entry.type)}
+          title={fieldFilterable(entry.type) ? undefined : t("views.fieldFilter.unsupported")}>
+          {fieldFilterable(entry.type) ? entry.name : `${entry.name} (${t("views.fieldFilter.unsupported")})`}</option>)}
       </select></label>
     {field && <label className="space-y-1"><span>{t("views.fieldFilter.value")}</span>
       {field.type === "single_select" || field.type === "multi_select" || field.type === "checkbox"

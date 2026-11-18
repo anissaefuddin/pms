@@ -852,6 +852,14 @@ type DomainEvent struct {
 	OriginSpaceID pgtype.UUID        `json:"origin_space_id"`
 }
 
+type ExcelImportReport struct {
+	ID        pgtype.UUID        `json:"id"`
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Report    []byte             `json:"report"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type Feedback struct {
 	ID        pgtype.UUID        `json:"id"`
 	UserID    pgtype.UUID        `json:"user_id"`
@@ -1019,16 +1027,18 @@ type LoginCode struct {
 }
 
 type Notification struct {
-	ID          pgtype.UUID        `json:"id"`
-	RecipientID pgtype.UUID        `json:"recipient_id"`
-	ActorID     pgtype.UUID        `json:"actor_id"`
-	Kind        string             `json:"kind"`
-	ItemID      pgtype.UUID        `json:"item_id"`
-	SpaceID     pgtype.UUID        `json:"space_id"`
-	Snippet     pgtype.Text        `json:"snippet"`
-	ReadAt      pgtype.Timestamptz `json:"read_at"`
-	ArchivedAt  pgtype.Timestamptz `json:"archived_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ID            pgtype.UUID        `json:"id"`
+	RecipientID   pgtype.UUID        `json:"recipient_id"`
+	ActorID       pgtype.UUID        `json:"actor_id"`
+	Kind          string             `json:"kind"`
+	ItemID        pgtype.UUID        `json:"item_id"`
+	SpaceID       pgtype.UUID        `json:"space_id"`
+	Snippet       pgtype.Text        `json:"snippet"`
+	ReadAt        pgtype.Timestamptz `json:"read_at"`
+	ArchivedAt    pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	ReferenceKind pgtype.Text        `json:"reference_kind"`
+	ReferenceID   pgtype.UUID        `json:"reference_id"`
 }
 
 type OauthClient struct {
@@ -1078,6 +1088,9 @@ type ProjectExcelExport struct {
 	Workbook       []byte             `json:"workbook"`
 	ItemIds        []pgtype.UUID      `json:"item_ids"`
 	IncludesFields bool               `json:"includes_fields"`
+	Scope          string             `json:"scope"`
+	TotalItems     int32              `json:"total_items"`
+	ProcessedItems int32              `json:"processed_items"`
 }
 
 type ProjectExcelImport struct {

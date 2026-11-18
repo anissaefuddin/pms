@@ -206,5 +206,10 @@
   "recycle.spaceFilter": "Filter by Space",
   "recycle.allSpaces": "All Spaces",
   "recycle.noMatch": "No deleted items match these filters.",
-  "space.settingsFor": "Settings for {{name}}"
+  "space.settingsFor": "Settings for {{name}}",
+  "inbox.event.import_summary": "Excel import finished",
+  "inbox.reportUnavailable": "The import report is not available.",
+  "inbox.report.created": "Items created",
+  "inbox.report.dependencies": "Dependencies",
+  "inbox.report.rescheduled": "Rows rescheduled"
 }

@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/anissaefuddin/pms/server/internal/events"
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
@@ -236,6 +237,9 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 			if len(allowed) > 0 && !slices.Contains(allowed, uuid.MustParse(itemType.ID)) { // S8.1.3
 				return Detail{}, Invalid("a " + itemType.Name + " cannot be placed inside a " + parentTypeName)
 			}
+		} else if itemType.DefaultWorkflowID != nil {
+			// A root item takes its Item Type's default workflow, so a status from it can be set (IE-D18).
+			resolved = uuid.MustParse(*itemType.DefaultWorkflowID)
 		} else if err := tx.QueryRow(ctx, "SELECT id FROM workflows WHERE is_default").Scan(&resolved); err != nil {
 			return Detail{}, err
 		}
@@ -350,15 +354,18 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 	if err := recordChange(ctx, tx, id.String(), actor.ID, "create", json.RawMessage("{}"), after); err != nil {
 		return Detail{}, err
 	}
-	if err := notifyChanges(ctx, tx, batch, actor, id.String(), json.RawMessage("{}"), after, true); err != nil {
-		return Detail{}, err
-	}
-	var principals []notifications.Principal
-	for _, share := range shares {
-		principals = append(principals, notifications.Principal{Kind: share.PrincipalType, ID: share.PrincipalID.String()})
-	}
-	if _, err := batch.Record(ctx, tx, actor, "shared", notifications.Target{Item: id.String()}, "", principals, nil); err != nil {
-		return Detail{}, err
+	// A bulk import sends one summary instead of a notification per row (see the import report), so per-item notices stop here.
+	if !events.IsBulkImport(ctx) {
+		if err := notifyChanges(ctx, tx, batch, actor, id.String(), json.RawMessage("{}"), after, true); err != nil {
+			return Detail{}, err
+		}
+		var principals []notifications.Principal
+		for _, share := range shares {
+			principals = append(principals, notifications.Principal{Kind: share.PrincipalType, ID: share.PrincipalID.String()})
+		}
+		if _, err := batch.Record(ctx, tx, actor, "shared", notifications.Target{Item: id.String()}, "", principals, nil); err != nil {
+			return Detail{}, err
+		}
 	}
 	return readDetail(ctx, tx, actor, id.String())
 }

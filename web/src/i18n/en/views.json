@@ -125,7 +125,8 @@
     "value": "Field value",
     "apply": "Apply",
     "yes": "Checked",
-    "no": "Unchecked"
+    "no": "Unchecked",
+    "unsupported": "Not filterable: this field type has no filter operator"
   },
   "fieldSort": "Field: {{name}}",
   "gantt": {

@@ -1185,6 +1185,24 @@ func (e EmailGroup) Valid() bool {
 	}
 }
 
+// Defines values for ExcelExportScope.
+const (
+	ExcelExportScopeProject ExcelExportScope = "project"
+	ExcelExportScopeSpace   ExcelExportScope = "space"
+)
+
+// Valid indicates whether the value is a known member of the ExcelExportScope enum.
+func (e ExcelExportScope) Valid() bool {
+	switch e {
+	case ExcelExportScopeProject:
+		return true
+	case ExcelExportScopeSpace:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ExcelExportStatus.
 const (
 	ExcelExportStatusFailed  ExcelExportStatus = "failed"
@@ -1872,6 +1890,21 @@ func (e MeUpdateWeekStart) Valid() bool {
 	}
 }
 
+// Defines values for NotificationReferenceKind.
+const (
+	ExcelImportReport NotificationReferenceKind = "excel_import_report"
+)
+
+// Valid indicates whether the value is a known member of the NotificationReferenceKind enum.
+func (e NotificationReferenceKind) Valid() bool {
+	switch e {
+	case ExcelImportReport:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for NotificationKind.
 const (
 	NotificationKindApprovalDecided   NotificationKind = "approval_decided"
@@ -1881,6 +1914,7 @@ const (
 	NotificationKindAssigned          NotificationKind = "assigned"
 	NotificationKindAutomation        NotificationKind = "automation"
 	NotificationKindComment           NotificationKind = "comment"
+	NotificationKindImportSummary     NotificationKind = "import_summary"
 	NotificationKindMention           NotificationKind = "mention"
 	NotificationKindShared            NotificationKind = "shared"
 	NotificationKindStatusChanged     NotificationKind = "status_changed"
@@ -1902,6 +1936,8 @@ func (e NotificationKind) Valid() bool {
 	case NotificationKindAutomation:
 		return true
 	case NotificationKindComment:
+		return true
+	case NotificationKindImportSummary:
 		return true
 	case NotificationKindMention:
 		return true
@@ -4215,10 +4251,20 @@ type EmailGroup string
 
 // ExcelExport defines model for ExcelExport.
 type ExcelExport struct {
-	Error  *string            `json:"error,omitempty"`
-	Id     openapi_types.UUID `json:"id"`
-	Status ExcelExportStatus  `json:"status"`
+	Error *string            `json:"error,omitempty"`
+	Id    openapi_types.UUID `json:"id"`
+
+	// ProcessedItems Items written so far. This is a count of real items, not an estimate.
+	ProcessedItems *int              `json:"processed_items,omitempty"`
+	Scope          *ExcelExportScope `json:"scope,omitempty"`
+	Status         ExcelExportStatus `json:"status"`
+
+	// TotalItems Items the export holds, counted from the tree when the worker starts.
+	TotalItems *int `json:"total_items,omitempty"`
 }
+
+// ExcelExportScope defines model for ExcelExport.Scope.
+type ExcelExportScope string
 
 // ExcelExportStatus defines model for ExcelExport.Status.
 type ExcelExportStatus string
@@ -5023,10 +5069,19 @@ type Notification struct {
 	Kind       NotificationKind    `json:"kind"`
 	ReadAt     *time.Time          `json:"read_at,omitempty"`
 	Recipient  *UserRef            `json:"recipient,omitempty"`
+
+	// Reference The record this notification is about, when there is one (for example an import report).
+	Reference *struct {
+		Id   openapi_types.UUID        `json:"id"`
+		Kind NotificationReferenceKind `json:"kind"`
+	} `json:"reference,omitempty"`
 	Snippet    *string             `json:"snippet,omitempty"`
 	SpaceId    *openapi_types.UUID `json:"space_id,omitempty"`
 	SpaceTitle *string             `json:"space_title,omitempty"`
 }
+
+// NotificationReferenceKind defines model for Notification.Reference.Kind.
+type NotificationReferenceKind string
 
 // NotificationKind defines model for NotificationKind.
 type NotificationKind string
@@ -6861,6 +6916,11 @@ type SetSpaceCreateMenuParams struct {
 	IfMatch string `json:"If-Match"`
 }
 
+// StartSpaceExcelExportJSONBody defines parameters for StartSpaceExcelExport.
+type StartSpaceExcelExportJSONBody struct {
+	Filter *map[string]interface{} `json:"filter,omitempty"`
+}
+
 // ImportProjectExcelMultipartBody defines parameters for ImportProjectExcel.
 type ImportProjectExcelMultipartBody struct {
 	Commit *bool   `json:"commit,omitempty"`
@@ -7365,6 +7425,9 @@ type CreateCustomFieldJSONRequestBody = CustomFieldCreate
 
 // UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
 type UpdateCustomFieldJSONRequestBody = CustomFieldUpdate
+
+// StartSpaceExcelExportJSONRequestBody defines body for StartSpaceExcelExport for application/json ContentType.
+type StartSpaceExcelExportJSONRequestBody StartSpaceExcelExportJSONBody
 
 // ImportProjectExcelMultipartRequestBody defines body for ImportProjectExcel for multipart/form-data ContentType.
 type ImportProjectExcelMultipartRequestBody ImportProjectExcelMultipartBody
@@ -8016,6 +8079,9 @@ type ServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID)
+
+	// (GET /excel-imports/{reportId})
+	GetExcelImportReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
 	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
 	// (GET /feedback)
 	ListFeedback(w http.ResponseWriter, r *http.Request)
@@ -8493,6 +8559,9 @@ type ServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(w http.ResponseWriter, r *http.Request, spaceId SpaceId, fieldId openapi_types.UUID)
+
+	// (POST /spaces/{spaceId}/excel-exports)
+	StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 
 	// (POST /spaces/{spaceId}/excel-imports)
 	ImportProjectExcel(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -11856,6 +11925,32 @@ func (siw *ServerInterfaceWrapper) DownloadProjectExcelExport(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadProjectExcelExport(w, r, exportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExcelImportReport operation middleware
+func (siw *ServerInterfaceWrapper) GetExcelImportReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExcelImportReport(w, r, reportId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -16310,6 +16405,32 @@ func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// StartSpaceExcelExport operation middleware
+func (siw *ServerInterfaceWrapper) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartSpaceExcelExport(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImportProjectExcel operation middleware
 func (siw *ServerInterfaceWrapper) ImportProjectExcel(w http.ResponseWriter, r *http.Request) {
 
@@ -18127,8 +18248,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.DeleteDashboardWidget)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.ReplaceDashboardWidget)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/excel-exports", wrapper.StartProjectExcelExport)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/excel-exports", wrapper.StartSpaceExcelExport)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-exports/{exportId}", wrapper.GetProjectExcelExport)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-exports/{exportId}/file", wrapper.DownloadProjectExcelExport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-imports/{reportId}", wrapper.GetExcelImportReport)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/excel-imports", wrapper.ImportProjectExcel)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-summary", wrapper.GetProjectTimeSummary)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-entries", wrapper.ListProjectTimeEntries)
@@ -24942,6 +25065,50 @@ func (response DownloadProjectExcelExport409ApplicationProblemPlusJSONResponse) 
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetExcelImportReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+}
+
+type GetExcelImportReportResponseObject interface {
+	VisitGetExcelImportReportResponse(w http.ResponseWriter) error
+}
+
+type GetExcelImportReport200JSONResponse struct {
+	Created      *int                      `json:"created,omitempty"`
+	Dependencies *int                      `json:"dependencies,omitempty"`
+	Destination  *string                   `json:"destination,omitempty"`
+	Rescheduled  *[]map[string]interface{} `json:"rescheduled,omitempty"`
+	Sheet        *string                   `json:"sheet,omitempty"`
+}
+
+func (response GetExcelImportReport200JSONResponse) VisitGetExcelImportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetExcelImportReport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetExcelImportReport404ApplicationProblemPlusJSONResponse) VisitGetExcelImportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -34087,6 +34254,73 @@ func (response UpdateCustomField422ApplicationProblemPlusJSONResponse) VisitUpda
 	return err
 }
 
+type StartSpaceExcelExportRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *StartSpaceExcelExportJSONRequestBody
+}
+
+type StartSpaceExcelExportResponseObject interface {
+	VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error
+}
+
+type StartSpaceExcelExport202JSONResponse ExcelExport
+
+func (response StartSpaceExcelExport202JSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSpaceExcelExport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response StartSpaceExcelExport404ApplicationProblemPlusJSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSpaceExcelExport422ApplicationProblemPlusJSONResponse Problem
+
+func (response StartSpaceExcelExport422ApplicationProblemPlusJSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSpaceExcelExport429ApplicationProblemPlusJSONResponse Problem
+
+func (response StartSpaceExcelExport429ApplicationProblemPlusJSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ImportProjectExcelRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 	Body    *multipart.Reader
@@ -37215,6 +37449,9 @@ type StrictServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(ctx context.Context, request DownloadProjectExcelExportRequestObject) (DownloadProjectExcelExportResponseObject, error)
+
+	// (GET /excel-imports/{reportId})
+	GetExcelImportReport(ctx context.Context, request GetExcelImportReportRequestObject) (GetExcelImportReportResponseObject, error)
 	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
 	// (GET /feedback)
 	ListFeedback(ctx context.Context, request ListFeedbackRequestObject) (ListFeedbackResponseObject, error)
@@ -37692,6 +37929,9 @@ type StrictServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(ctx context.Context, request UpdateCustomFieldRequestObject) (UpdateCustomFieldResponseObject, error)
+
+	// (POST /spaces/{spaceId}/excel-exports)
+	StartSpaceExcelExport(ctx context.Context, request StartSpaceExcelExportRequestObject) (StartSpaceExcelExportResponseObject, error)
 
 	// (POST /spaces/{spaceId}/excel-imports)
 	ImportProjectExcel(ctx context.Context, request ImportProjectExcelRequestObject) (ImportProjectExcelResponseObject, error)
@@ -41023,6 +41263,32 @@ func (sh *strictHandler) DownloadProjectExcelExport(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadProjectExcelExportResponseObject); ok {
 		if err := validResponse.VisitDownloadProjectExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetExcelImportReport operation middleware
+func (sh *strictHandler) GetExcelImportReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID) {
+	var request GetExcelImportReportRequestObject
+
+	request.ReportId = reportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetExcelImportReport(ctx, request.(GetExcelImportReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetExcelImportReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetExcelImportReportResponseObject); ok {
+		if err := validResponse.VisitGetExcelImportReportResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -45531,6 +45797,42 @@ func (sh *strictHandler) UpdateCustomField(w http.ResponseWriter, r *http.Reques
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateCustomFieldResponseObject); ok {
 		if err := validResponse.VisitUpdateCustomFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StartSpaceExcelExport operation middleware
+func (sh *strictHandler) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request StartSpaceExcelExportRequestObject
+
+	request.SpaceId = spaceId
+
+	var body StartSpaceExcelExportJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StartSpaceExcelExport(ctx, request.(StartSpaceExcelExportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartSpaceExcelExport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StartSpaceExcelExportResponseObject); ok {
+		if err := validResponse.VisitStartSpaceExcelExportResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

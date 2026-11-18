@@ -43,15 +43,17 @@ test("maps an unknown column and imports only the last validated preview", async
   await dialog.getByLabel("Excel workbook").setInputFiles({
     name: "items.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: Buffer.from("fixture"),
   });
-  await dialog.getByRole("button", { name: "Preview import" }).click();
-  await expect(dialog.getByText(/Unknown column/)).toBeVisible();
-  const confirm = dialog.getByRole("button", { name: "Import items" });
-  await expect(confirm).toBeDisabled();
+  // Step 1 reads the columns from the server; the unknown column is shown in the validation step, not before.
+  await dialog.getByRole("button", { name: "Next" }).click();
+  await expect(dialog.getByText(/^Step 2 of 4/)).toBeVisible();
+  await expect(dialog.getByText(/Unknown column/)).toHaveCount(0);
   await dialog.getByRole("combobox", { name: "Map column Name" }).selectOption("title");
-  await expect(confirm).toBeDisabled();
-  await dialog.getByRole("button", { name: "Preview import" }).click();
+  await dialog.getByRole("button", { name: "Next" }).click();
+  await expect(dialog.getByText(/^Step 3 of 4/)).toBeVisible();
   await expect(dialog.getByRole("table", { name: "Workbook preview" }).getByText("Delivery")).toBeVisible();
-  await confirm.click();
+  await dialog.getByRole("button", { name: "Next" }).click();
+  await expect(dialog.getByText(/^Step 4 of 4/)).toBeVisible();
+  await dialog.getByRole("button", { name: "Import items" }).click();
   await expect(dialog).toBeHidden();
   expect(requests).toHaveLength(3);
   expect(requests[2]).toContain('name="digest"');

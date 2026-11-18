@@ -30,5 +30,59 @@
     "due_date": "Tanggal tenggat",
     "duration_days": "Durasi dalam hari",
     "is_milestone": "Milestone"
-  }
+  },
+  "templates": "Unduh templat:",
+  "template": {
+    "basic": "Dasar",
+    "hierarchy": "Hierarki",
+    "advanced": "Lanjutan"
+  },
+  "destination": "Tujuan",
+  "spaceRoot": "Akar Space",
+  "scope": "Cakupan",
+  "scopeAll": "Semua tugas",
+  "scopeActive": "Hanya tugas aktif",
+  "scopeCompleted": "Hanya tugas selesai",
+  "exportTable": "Ekspor tabel ini ke Excel",
+  "destinationSearch": "Cari tujuan",
+  "expand": "Buka",
+  "collapse": "Tutup",
+  "noCreate": "Tidak bisa dipilih: Anda tidak bisa membuat item di bawah item ini",
+  "wizard": {
+    "upload": "Unggah",
+    "map": "Petakan kolom",
+    "validate": "Validasi",
+    "import": "Impor",
+    "stepOf": "Langkah {{step}} dari {{total}} · {{name}}",
+    "back": "Kembali",
+    "next": "Lanjut"
+  },
+  "validSummary": "{{valid}} baris valid, {{errors}} galat.",
+  "review": {
+    "rows": "Baris",
+    "mode": "Mode impor",
+    "createOnly": "Buat item baru",
+    "destination": "Tujuan",
+    "chosen": "Tujuan yang dipilih"
+  },
+  "columns": "Kolom",
+  "preset": "Preset",
+  "presetNone": "Tanpa preset",
+  "presetName": "Nama preset",
+  "savePreset": "Simpan preset",
+  "exportColumn": {
+    "status": "Status",
+    "workflow": "Workflow",
+    "start_date": "Tanggal mulai",
+    "due_date": "Tanggal selesai",
+    "duration_days": "Durasi",
+    "is_milestone": "Milestone",
+    "type_key": "Tipe item",
+    "depends_on": "Dependensi"
+  },
+  "exportProgress": "Kemajuan ekspor",
+  "exportCount": "{{done}} dari {{total}} item ditulis",
+  "exportSpaceTitle": "Ekspor Space ke Excel",
+  "exportSpaceDescription": "Mengekspor setiap item di {{name}} yang bisa Anda lihat, beserta hierarkinya.",
+  "deletePreset": "Hapus preset"
 }

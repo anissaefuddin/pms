@@ -61,11 +61,14 @@ type candidate struct {
 
 // Dispatch hands pending domain events to the engine.
 func (g *Engine) Dispatch(ctx context.Context) (int, error) {
-	handle := g.Handle
-	if g.Hook != nil {
-		handle = func(ctx context.Context, e events.Event) error {
-			return errors.Join(g.Handle(ctx, e), g.Hook(ctx, e))
+	handle := func(ctx context.Context, e events.Event) error {
+		if events.BulkImportEvent(e) { // default off: a bulk import runs no rules and sends no webhooks
+			return nil
 		}
+		if g.Hook == nil {
+			return g.Handle(ctx, e)
+		}
+		return errors.Join(g.Handle(ctx, e), g.Hook(ctx, e))
 	}
 	n, err := events.Dispatch(ctx, g.Pool, handle, 100)
 	if err == nil && g.Tick != nil {
@@ -76,6 +79,9 @@ func (g *Engine) Dispatch(ctx context.Context) (int, error) {
 
 // Handle is the events.Handler: it finds the rules that watch the event and runs them.
 func (g *Engine) Handle(ctx context.Context, e events.Event) error {
+	if events.BulkImportEvent(e) {
+		return nil
+	}
 	facts, spaces, ancestors, err := g.load(ctx, e.ItemID)
 	if err != nil || len(spaces) == 0 {
 		return err // an item that is gone has no rules to run
