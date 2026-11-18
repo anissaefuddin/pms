@@ -23,6 +23,8 @@ type workSchedule struct {
 	DailyHours  int                 `json:"daily_hours"`
 	Exceptions  []scheduleException `json:"exceptions"`
 	Version     int                 `json:"version"`
+	// Timezone is the workspace's IANA zone: deadlines in automation are evaluated on its local day (UTC when unset or unknown).
+	Timezone string `json:"timezone"`
 }
 
 func (s *Server) workScheduleRoutes(mux *http.ServeMux) {
@@ -39,7 +41,7 @@ func loadWorkSchedule(ctx context.Context, db queryer) (workSchedule, error) {
 	out := workSchedule{Exceptions: []scheduleException{}}
 	var days []int16
 	var hours int16
-	if err := db.QueryRow(ctx, "SELECT working_days, daily_hours, version FROM work_schedules WHERE id=1").Scan(&days, &hours, &out.Version); err != nil {
+	if err := db.QueryRow(ctx, "SELECT working_days, daily_hours, version, timezone FROM work_schedules WHERE id=1").Scan(&days, &hours, &out.Version, &out.Timezone); err != nil {
 		return out, err
 	}
 	out.DailyHours = int(hours)
@@ -120,14 +122,22 @@ func (s *Server) putWorkSchedule(w http.ResponseWriter, r *http.Request) {
 		WorkingDays []int               `json:"working_days"`
 		DailyHours  int                 `json:"daily_hours"`
 		Exceptions  []scheduleException `json:"exceptions"`
+		Timezone    string              `json:"timezone"`
 	}
 	if !decode(w, r, &raw) {
 		return
 	}
-	in = workSchedule{WorkingDays: raw.WorkingDays, DailyHours: raw.DailyHours, Exceptions: raw.Exceptions}
+	in = workSchedule{WorkingDays: raw.WorkingDays, DailyHours: raw.DailyHours, Exceptions: raw.Exceptions, Timezone: raw.Timezone}
 	if problem := validWorkSchedule(&in); problem != "" {
 		writeProblem(w, 422, "validation_failed", problem)
 		return
+	}
+	// An omitted zone keeps the current one; a given zone must be a name the server knows.
+	if in.Timezone != "" {
+		if _, err := time.LoadLocation(in.Timezone); err != nil {
+			writeProblem(w, 422, "validation_failed", "timezone must be an IANA time zone name, such as Asia/Jakarta")
+			return
+		}
 	}
 	ctx := r.Context()
 	tx, err := s.pool.Begin(ctx)
@@ -140,7 +150,7 @@ func (s *Server) putWorkSchedule(w http.ResponseWriter, r *http.Request) {
 	for i, d := range in.WorkingDays {
 		days[i] = int16(d)
 	}
-	tag, err := tx.Exec(ctx, "UPDATE work_schedules SET working_days=$1, daily_hours=$2, version=version+1, updated_at=now() WHERE id=1 AND version=$3", days, in.DailyHours, version)
+	tag, err := tx.Exec(ctx, "UPDATE work_schedules SET working_days=$1, daily_hours=$2, timezone=COALESCE(NULLIF($4,''),timezone), version=version+1, updated_at=now() WHERE id=1 AND version=$3", days, in.DailyHours, version, in.Timezone)
 	if err != nil {
 		writeError(w, 500, "could not save the work schedule")
 		return

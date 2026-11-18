@@ -103,6 +103,8 @@
   "users.status.deactivated": "Deactivated",
   "workSchedule.title": "Work schedule",
   "workSchedule.description": "Working days, daily hours, and holidays used to calculate task durations and dates.",
+  "workSchedule.timezone": "Time zone",
+  "workSchedule.timezoneHint": "Used for deadlines in automation: a date counts until the end of its local day here. UTC when not set.",
   "workSchedule.workingDays": "Working days",
   "workSchedule.dailyHours": "Hours per working day",
   "workSchedule.holidays": "Holidays",

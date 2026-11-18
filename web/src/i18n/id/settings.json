@@ -103,6 +103,8 @@
   "users.status.deactivated": "Dinonaktifkan",
   "workSchedule.title": "Jadwal kerja",
   "workSchedule.description": "Hari kerja, jam harian, dan hari libur yang dipakai untuk menghitung durasi dan tanggal tugas.",
+  "workSchedule.timezone": "Zona waktu",
+  "workSchedule.timezoneHint": "Dipakai untuk deadline di automation: tanggal berlaku sampai akhir hari lokal di sini. UTC bila belum diatur.",
   "workSchedule.workingDays": "Hari kerja",
   "workSchedule.dailyHours": "Jam per hari kerja",
   "workSchedule.holidays": "Hari libur",

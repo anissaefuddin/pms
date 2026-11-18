@@ -514,6 +514,8 @@ type Activity struct {
 	Changes   []byte             `json:"changes"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 	Auto      bool               `json:"auto"`
+	Via       string             `json:"via"`
+	RuleID    pgtype.UUID        `json:"rule_id"`
 }
 
 type ApiKey struct {
@@ -631,6 +633,15 @@ type AuditEvent struct {
 	Details    []byte             `json:"details"`
 }
 
+type AutomationLimit struct {
+	ID               int16              `json:"id"`
+	RulePerHour      int32              `json:"rule_per_hour"`
+	WorkspacePerHour int32              `json:"workspace_per_hour"`
+	SpacePerHour     int32              `json:"space_per_hour"`
+	UpdatedBy        pgtype.UUID        `json:"updated_by"`
+	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+}
+
 type AutomationRule struct {
 	ID               pgtype.UUID        `json:"id"`
 	SpaceID          pgtype.UUID        `json:"space_id"`
@@ -641,6 +652,11 @@ type AutomationRule struct {
 	CurrentVersionID pgtype.UUID        `json:"current_version_id"`
 	CreatedAt        pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt        pgtype.Timestamptz `json:"updated_at"`
+	Health           string             `json:"health"`
+	HealthReason     string             `json:"health_reason"`
+	ArchivedAt       pgtype.Timestamptz `json:"archived_at"`
+	Scope            string             `json:"scope"`
+	TargetSpaceIds   []pgtype.UUID      `json:"target_space_ids"`
 }
 
 type AutomationRuleVersion struct {
@@ -655,16 +671,19 @@ type AutomationRuleVersion struct {
 }
 
 type AutomationRun struct {
-	ID            pgtype.UUID        `json:"id"`
-	RuleID        pgtype.UUID        `json:"rule_id"`
-	RuleVersionID pgtype.UUID        `json:"rule_version_id"`
-	EventID       pgtype.UUID        `json:"event_id"`
-	ActionIndex   int32              `json:"action_index"`
-	ItemID        pgtype.UUID        `json:"item_id"`
-	ActorID       pgtype.UUID        `json:"actor_id"`
-	Status        string             `json:"status"`
-	Detail        string             `json:"detail"`
-	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	ID              pgtype.UUID        `json:"id"`
+	RuleID          pgtype.UUID        `json:"rule_id"`
+	RuleVersionID   pgtype.UUID        `json:"rule_version_id"`
+	EventID         pgtype.UUID        `json:"event_id"`
+	ActionIndex     int32              `json:"action_index"`
+	ItemID          pgtype.UUID        `json:"item_id"`
+	ActorID         pgtype.UUID        `json:"actor_id"`
+	Status          string             `json:"status"`
+	Detail          string             `json:"detail"`
+	CreatedAt       pgtype.Timestamptz `json:"created_at"`
+	Reason          string             `json:"reason"`
+	SpaceID         pgtype.UUID        `json:"space_id"`
+	MatchedSpaceIds []pgtype.UUID      `json:"matched_space_ids"`
 }
 
 type Baseline struct {
@@ -689,6 +708,10 @@ type Blueprint struct {
 	Tree      []byte             `json:"tree"`
 	CreatedBy pgtype.UUID        `json:"created_by"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	Scope     string             `json:"scope"`
+	Version   int32              `json:"version"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+	OwnerID   pgtype.UUID        `json:"owner_id"`
 }
 
 type Comment struct {
@@ -702,6 +725,8 @@ type Comment struct {
 	EditedAt  pgtype.Timestamptz `json:"edited_at"`
 	DeletedAt pgtype.Timestamptz `json:"deleted_at"`
 	Search    interface{}        `json:"search"`
+	Via       string             `json:"via"`
+	RuleID    pgtype.UUID        `json:"rule_id"`
 }
 
 type CommentMention struct {
@@ -766,6 +791,22 @@ type CustomField struct {
 	Config     []byte             `json:"config"`
 }
 
+type CustomFieldAssignment struct {
+	FieldID   pgtype.UUID        `json:"field_id"`
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	ScopeKind string             `json:"scope_kind"`
+	ScopeID   pgtype.UUID        `json:"scope_id"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type CustomFieldGrant struct {
+	FieldID     pgtype.UUID `json:"field_id"`
+	SubjectKind string      `json:"subject_kind"`
+	SubjectID   pgtype.UUID `json:"subject_id"`
+	Level       string      `json:"level"`
+}
+
 type CustomRole struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
@@ -795,19 +836,20 @@ type DashboardPublicLink struct {
 }
 
 type DomainEvent struct {
-	ID           int64              `json:"id"`
-	EventID      pgtype.UUID        `json:"event_id"`
-	Type         string             `json:"type"`
-	ItemID       pgtype.UUID        `json:"item_id"`
-	ActorID      pgtype.UUID        `json:"actor_id"`
-	Payload      []byte             `json:"payload"`
-	CausedByRun  pgtype.UUID        `json:"caused_by_run"`
-	Depth        int32              `json:"depth"`
-	Chain        []pgtype.UUID      `json:"chain"`
-	CreatedAt    pgtype.Timestamptz `json:"created_at"`
-	DispatchedAt pgtype.Timestamptz `json:"dispatched_at"`
-	Attempts     int32              `json:"attempts"`
-	LastError    pgtype.Text        `json:"last_error"`
+	ID            int64              `json:"id"`
+	EventID       pgtype.UUID        `json:"event_id"`
+	Type          string             `json:"type"`
+	ItemID        pgtype.UUID        `json:"item_id"`
+	ActorID       pgtype.UUID        `json:"actor_id"`
+	Payload       []byte             `json:"payload"`
+	CausedByRun   pgtype.UUID        `json:"caused_by_run"`
+	Depth         int32              `json:"depth"`
+	Chain         []pgtype.UUID      `json:"chain"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	DispatchedAt  pgtype.Timestamptz `json:"dispatched_at"`
+	Attempts      int32              `json:"attempts"`
+	LastError     pgtype.Text        `json:"last_error"`
+	OriginSpaceID pgtype.UUID        `json:"origin_space_id"`
 }
 
 type Feedback struct {
@@ -1385,6 +1427,7 @@ type WorkSchedule struct {
 	DailyHours  int16              `json:"daily_hours"`
 	Version     int32              `json:"version"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+	Timezone    string             `json:"timezone"`
 }
 
 type WorkScheduleException struct {
