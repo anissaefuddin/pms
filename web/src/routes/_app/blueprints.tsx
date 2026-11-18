@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -29,7 +29,9 @@ function BlueprintsPage() {
   const [picked, setPicked] = useState(ALL);
   const [creating, setCreating] = useState<{ name: string; type: SuggestedBlueprint["itemType"] } | null>(null);
   const [using, setUsing] = useState<string>();
-  const writable = (spaces.data ?? []).filter((space) => can(space, "edit"));
+  const writable = (spaces.data ?? []).filter((space) => can(space, "create_blueprint"));
+  const manageable = new Set((spaces.data ?? []).filter((space) => can(space, "manage_blueprint")).map((space) => space.id));
+  const usable = new Set((spaces.data ?? []).filter((space) => can(space, "use_blueprint")).map((space) => space.id));
   const shown = (spaces.data ?? []).filter((space) => picked === ALL || space.id === picked);
   // One query per Space with the same key as the create dialog, so both screens share the cache.
   const lists = useQueries({
@@ -90,7 +92,8 @@ function BlueprintsPage() {
             <h3 className="truncate font-semibold">{blueprint.name}</h3>
             <p className="text-sm text-muted-foreground">{t(`blueprints.type.${blueprint.item_type}`)} · {t("blueprints.count", { count: blueprint.item_count })}</p>
           </div>
-          <Button variant="outline" className="self-start" onClick={() => setUsing(group.spaceId)}>{t("blueprints.use")}</Button>
+          {usable.has(group.spaceId) && <Button variant="outline" className="self-start" onClick={() => setUsing(group.spaceId)}>{t("blueprints.use")}</Button>}
+          {manageable.has(group.spaceId) && <Link to="/blueprints/$blueprintId" params={{ blueprintId: blueprint.id }} className="text-sm underline">{t("blueprints.editor.open")}</Link>}
         </li>)}
       </ul>
     </section>)}

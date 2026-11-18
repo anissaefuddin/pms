@@ -42,3 +42,23 @@ func nonNilIDs(s []string) []string {
 	}
 	return s
 }
+
+// actorRow is the (id, user_type) pair read from users. It is separate from Actor so Actor can grow fields
+// (such as a form grant) without breaking positional scans.
+type actorRow struct {
+	ID   string
+	Type UserType
+}
+
+// CollectActors reads (id, user_type) rows into Actors. Query must select exactly those two columns.
+func CollectActors(rows pgx.Rows) ([]Actor, error) {
+	list, err := pgx.CollectRows(rows, pgx.RowToStructByPos[actorRow])
+	if err != nil {
+		return nil, err
+	}
+	out := make([]Actor, len(list))
+	for i, r := range list {
+		out[i] = Actor{ID: r.ID, Type: r.Type}
+	}
+	return out, nil
+}

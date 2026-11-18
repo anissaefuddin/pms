@@ -35,6 +35,7 @@ import { Route as DTokenRouteImport } from './routes/d.$token'
 import { Route as FTokenRouteImport } from './routes/f.$token'
 import { Route as GTokenRouteImport } from './routes/g.$token'
 import { Route as InvitationsTokenRouteImport } from './routes/invitations.$token'
+import { Route as AppBlueprintsBlueprintIdRouteImport } from './routes/_app/blueprints_.$blueprintId'
 import { Route as AppDashboardsIndexRouteImport } from './routes/_app/dashboards.index'
 import { Route as AppDashboardsDashboardIdRouteImport } from './routes/_app/dashboards.$dashboardId'
 import { Route as AppItemsItemIdRouteImport } from './routes/_app/items.$itemId'
@@ -207,6 +208,12 @@ const InvitationsTokenRoute = InvitationsTokenRouteImport.update({
   path: '/invitations/$token',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AppBlueprintsBlueprintIdRoute =
+  AppBlueprintsBlueprintIdRouteImport.update({
+    id: '/blueprints_/$blueprintId',
+    path: '/blueprints/$blueprintId',
+    getParentRoute: () => AppRoute,
+  } as any)
 const AppDashboardsIndexRoute = AppDashboardsIndexRouteImport.update({
   id: '/dashboards/',
   path: '/dashboards/',
@@ -449,6 +456,7 @@ export interface FileRoutesByFullPath {
   '/f/$token': typeof FTokenRoute
   '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
+  '/blueprints/$blueprintId': typeof AppBlueprintsBlueprintIdRoute
   '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
   '/oauth/authorize': typeof AppOauthAuthorizeRoute
@@ -517,6 +525,7 @@ export interface FileRoutesByTo {
   '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/': typeof AppIndexRoute
+  '/blueprints/$blueprintId': typeof AppBlueprintsBlueprintIdRoute
   '/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/items/$itemId': typeof AppItemsItemIdRoute
   '/oauth/authorize': typeof AppOauthAuthorizeRoute
@@ -587,6 +596,7 @@ export interface FileRoutesById {
   '/g/$token': typeof GTokenRoute
   '/invitations/$token': typeof InvitationsTokenRoute
   '/_app/': typeof AppIndexRoute
+  '/_app/blueprints_/$blueprintId': typeof AppBlueprintsBlueprintIdRoute
   '/_app/dashboards/$dashboardId': typeof AppDashboardsDashboardIdRoute
   '/_app/items/$itemId': typeof AppItemsItemIdRoute
   '/_app/oauth/authorize': typeof AppOauthAuthorizeRoute
@@ -658,6 +668,7 @@ export interface FileRouteTypes {
     | '/f/$token'
     | '/g/$token'
     | '/invitations/$token'
+    | '/blueprints/$blueprintId'
     | '/dashboards/$dashboardId'
     | '/items/$itemId'
     | '/oauth/authorize'
@@ -726,6 +737,7 @@ export interface FileRouteTypes {
     | '/g/$token'
     | '/invitations/$token'
     | '/'
+    | '/blueprints/$blueprintId'
     | '/dashboards/$dashboardId'
     | '/items/$itemId'
     | '/oauth/authorize'
@@ -795,6 +807,7 @@ export interface FileRouteTypes {
     | '/g/$token'
     | '/invitations/$token'
     | '/_app/'
+    | '/_app/blueprints_/$blueprintId'
     | '/_app/dashboards/$dashboardId'
     | '/_app/items/$itemId'
     | '/_app/oauth/authorize'
@@ -1034,6 +1047,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/invitations/$token'
       preLoaderRoute: typeof InvitationsTokenRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/_app/blueprints_/$blueprintId': {
+      id: '/_app/blueprints_/$blueprintId'
+      path: '/blueprints/$blueprintId'
+      fullPath: '/blueprints/$blueprintId'
+      preLoaderRoute: typeof AppBlueprintsBlueprintIdRouteImport
+      parentRoute: typeof AppRoute
     }
     '/_app/dashboards/': {
       id: '/_app/dashboards/'
@@ -1421,6 +1441,7 @@ interface AppRouteChildren {
   AppTimesheetsRoute: typeof AppTimesheetsRoute
   AppWorkloadRoute: typeof AppWorkloadRoute
   AppIndexRoute: typeof AppIndexRoute
+  AppBlueprintsBlueprintIdRoute: typeof AppBlueprintsBlueprintIdRoute
   AppDashboardsDashboardIdRoute: typeof AppDashboardsDashboardIdRoute
   AppItemsItemIdRoute: typeof AppItemsItemIdRoute
   AppOauthAuthorizeRoute: typeof AppOauthAuthorizeRoute
@@ -1457,6 +1478,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppTimesheetsRoute: AppTimesheetsRoute,
   AppWorkloadRoute: AppWorkloadRoute,
   AppIndexRoute: AppIndexRoute,
+  AppBlueprintsBlueprintIdRoute: AppBlueprintsBlueprintIdRoute,
   AppDashboardsDashboardIdRoute: AppDashboardsDashboardIdRoute,
   AppItemsItemIdRoute: AppItemsItemIdRoute,
   AppOauthAuthorizeRoute: AppOauthAuthorizeRoute,

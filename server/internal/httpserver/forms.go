@@ -413,7 +413,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			return forms.Error{Field: "response.status_id", Message: "the status must belong to the workflow of the destination"}
 		}
 	}
-	if err := checkRouting(ctx, tx, resp); err != nil {
+	if err := checkRouting(ctx, tx, actor, resp); err != nil {
 		return err
 	}
 	people := append([]uuid.UUID{}, resp.AssigneeIDs...)
@@ -436,7 +436,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 	if err != nil {
 		return err
 	}
-	approvers, err := pgx.CollectRows(rows, pgx.RowToStructByPos[policy.Actor])
+	approvers, err := policy.CollectActors(rows)
 	if err != nil {
 		return err
 	}
@@ -476,7 +476,7 @@ func uniqueIDs(ids []uuid.UUID) []uuid.UUID {
 
 // checkRouting (FORM-09): every item type a form can create is active and of the class the form creates, and every
 // mapped custom field lives in the destination Space and can take that kind of answer.
-func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
+func checkRouting(ctx context.Context, tx pgx.Tx, actor policy.Actor, resp forms.Response) error {
 	keys := []string{}
 	if resp.TypeKey != nil {
 		keys = append(keys, *resp.TypeKey)
@@ -510,6 +510,12 @@ func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
 		}
 		if !ok {
 			return forms.Error{Field: fmt.Sprintf("response.routes[%d].blueprint_id", i), Message: "choose a blueprint of the destination Space"}
+		}
+		// The author must be allowed to use blueprints there: the submission will apply it with the author's vouching.
+		if decision, _, err := policy.CanOnSpace(ctx, tx, actor, policy.UseBlueprint, resp.Location.SpaceID.String()); err != nil {
+			return err
+		} else if decision != policy.Allowed {
+			return forms.Error{Field: fmt.Sprintf("response.routes[%d].blueprint_id", i), Message: "you need the use-blueprint right in the destination Space"}
 		}
 	}
 	for _, id := range resp.FieldMap {

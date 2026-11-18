@@ -467,7 +467,8 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 			}
 		}
 	}
-	elevated := policy.Actor{ID: actor.ID, Type: policy.Admin}
+	// The submission works only inside the form's own Space, with the requester's identity (see policy.FormActor).
+	elevated := policy.FormActor(actor, row.ID.String(), row.Response.Location.SpaceID.String())
 	var item items.Detail
 	blueprint := row.Response.ResolveBlueprint(answers)
 	if blueprint != nil {
@@ -541,6 +542,15 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 	}
 	if _, err := tx.Exec(ctx, "INSERT INTO form_submissions(id,form_id,form_name,item_id,requester_id,answers,requester_name,requester_email) VALUES($1,$2,$3,$4,$5::uuid,$6,$7,$8)",
 		submission, row.ID, row.Name, head.ID, actor.ID, marshal(answers), requesterName, requesterEmail); err != nil {
+		return createdItem{}, err
+	}
+	// Audit: the requester's identity (or the anonymous placeholder with the visitor's email) and the destination, never the answers.
+	via := "member"
+	if external != nil {
+		via = "public"
+	}
+	if err := items.Audit(ctx, tx, actor, "form.submit", "item", head.ID.String(), map[string]any{"form_id": row.ID.String(), "via": via,
+		"destination_space_id": row.Response.Location.SpaceID.String(), "submission_id": submission.String(), "visitor_email": emailOf(requesterEmail)}); err != nil {
 		return createdItem{}, err
 	}
 	if external != nil && batch.Queue != nil {
@@ -690,4 +700,11 @@ func mappedFieldValues(ctx context.Context, tx pgx.Tx, row formRow, answers map[
 		}
 	}
 	return out, nil
+}
+
+func emailOf(e *string) string {
+	if e == nil {
+		return ""
+	}
+	return *e
 }

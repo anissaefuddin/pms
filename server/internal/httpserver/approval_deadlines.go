@@ -79,7 +79,7 @@ JOIN approval_approvers x ON x.user_id=u.id WHERE x.approval_id=$1 AND x.decisio
 		if err != nil {
 			return err
 		}
-		recipients, err := pgx.CollectRows(rows, pgx.RowToStructByPos[policy.Actor])
+		recipients, err := policy.CollectActors(rows)
 		if err != nil {
 			return err
 		}

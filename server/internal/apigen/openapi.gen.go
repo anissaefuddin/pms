@@ -564,16 +564,124 @@ func (e BlueprintItemType) Valid() bool {
 	}
 }
 
+// Defines values for BlueprintScope.
+const (
+	BlueprintScopeAccount BlueprintScope = "account"
+	BlueprintScopeSpace   BlueprintScope = "space"
+)
+
+// Valid indicates whether the value is a known member of the BlueprintScope enum.
+func (e BlueprintScope) Valid() bool {
+	switch e {
+	case BlueprintScopeAccount:
+		return true
+	case BlueprintScopeSpace:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BlueprintPreviewItemType.
+const (
+	BlueprintPreviewItemTypeFolder  BlueprintPreviewItemType = "folder"
+	BlueprintPreviewItemTypeProject BlueprintPreviewItemType = "project"
+	BlueprintPreviewItemTypeTask    BlueprintPreviewItemType = "task"
+)
+
+// Valid indicates whether the value is a known member of the BlueprintPreviewItemType enum.
+func (e BlueprintPreviewItemType) Valid() bool {
+	switch e {
+	case BlueprintPreviewItemTypeFolder:
+		return true
+	case BlueprintPreviewItemTypeProject:
+		return true
+	case BlueprintPreviewItemTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BlueprintTreeDependenciesType.
+const (
+	BlueprintTreeDependenciesTypeFF BlueprintTreeDependenciesType = "FF"
+	BlueprintTreeDependenciesTypeFS BlueprintTreeDependenciesType = "FS"
+	BlueprintTreeDependenciesTypeSF BlueprintTreeDependenciesType = "SF"
+	BlueprintTreeDependenciesTypeSS BlueprintTreeDependenciesType = "SS"
+)
+
+// Valid indicates whether the value is a known member of the BlueprintTreeDependenciesType enum.
+func (e BlueprintTreeDependenciesType) Valid() bool {
+	switch e {
+	case BlueprintTreeDependenciesTypeFF:
+		return true
+	case BlueprintTreeDependenciesTypeFS:
+		return true
+	case BlueprintTreeDependenciesTypeSF:
+		return true
+	case BlueprintTreeDependenciesTypeSS:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BlueprintTreeNodesImportance.
+const (
+	BlueprintTreeNodesImportanceHigh   BlueprintTreeNodesImportance = "high"
+	BlueprintTreeNodesImportanceLow    BlueprintTreeNodesImportance = "low"
+	BlueprintTreeNodesImportanceNormal BlueprintTreeNodesImportance = "normal"
+)
+
+// Valid indicates whether the value is a known member of the BlueprintTreeNodesImportance enum.
+func (e BlueprintTreeNodesImportance) Valid() bool {
+	switch e {
+	case BlueprintTreeNodesImportanceHigh:
+		return true
+	case BlueprintTreeNodesImportanceLow:
+		return true
+	case BlueprintTreeNodesImportanceNormal:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for BlueprintTreeNodesType.
+const (
+	BlueprintTreeNodesTypeFolder  BlueprintTreeNodesType = "folder"
+	BlueprintTreeNodesTypeProject BlueprintTreeNodesType = "project"
+	BlueprintTreeNodesTypeTask    BlueprintTreeNodesType = "task"
+)
+
+// Valid indicates whether the value is a known member of the BlueprintTreeNodesType enum.
+func (e BlueprintTreeNodesType) Valid() bool {
+	switch e {
+	case BlueprintTreeNodesTypeFolder:
+		return true
+	case BlueprintTreeNodesTypeProject:
+		return true
+	case BlueprintTreeNodesTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for Capability.
 const (
-	CapabilityAttach       Capability = "attach"
-	CapabilityChangeStatus Capability = "change_status"
-	CapabilityComment      Capability = "comment"
-	CapabilityCreate       Capability = "create"
-	CapabilityDelete       Capability = "delete"
-	CapabilityEdit         Capability = "edit"
-	CapabilityShare        Capability = "share"
-	CapabilityView         Capability = "view"
+	CapabilityAttach          Capability = "attach"
+	CapabilityChangeStatus    Capability = "change_status"
+	CapabilityComment         Capability = "comment"
+	CapabilityCreate          Capability = "create"
+	CapabilityCreateBlueprint Capability = "create_blueprint"
+	CapabilityDelete          Capability = "delete"
+	CapabilityEdit            Capability = "edit"
+	CapabilityManageBlueprint Capability = "manage_blueprint"
+	CapabilityShare           Capability = "share"
+	CapabilityUseBlueprint    Capability = "use_blueprint"
+	CapabilityView            Capability = "view"
 )
 
 // Valid indicates whether the value is a known member of the Capability enum.
@@ -587,11 +695,17 @@ func (e Capability) Valid() bool {
 		return true
 	case CapabilityCreate:
 		return true
+	case CapabilityCreateBlueprint:
+		return true
 	case CapabilityDelete:
 		return true
 	case CapabilityEdit:
 		return true
+	case CapabilityManageBlueprint:
+		return true
 	case CapabilityShare:
+		return true
+	case CapabilityUseBlueprint:
 		return true
 	case CapabilityView:
 		return true
@@ -959,22 +1073,22 @@ func (e DashboardWidgetInputType) Valid() bool {
 
 // Defines values for DependencyType.
 const (
-	FF DependencyType = "FF"
-	FS DependencyType = "FS"
-	SF DependencyType = "SF"
-	SS DependencyType = "SS"
+	DependencyTypeFF DependencyType = "FF"
+	DependencyTypeFS DependencyType = "FS"
+	DependencyTypeSF DependencyType = "SF"
+	DependencyTypeSS DependencyType = "SS"
 )
 
 // Valid indicates whether the value is a known member of the DependencyType enum.
 func (e DependencyType) Valid() bool {
 	switch e {
-	case FF:
+	case DependencyTypeFF:
 		return true
-	case FS:
+	case DependencyTypeFS:
 		return true
-	case SF:
+	case DependencyTypeSF:
 		return true
-	case SS:
+	case DependencyTypeSS:
 		return true
 	default:
 		return false
@@ -2583,6 +2697,45 @@ func (e ListAutomationRunsParamsStatus) Valid() bool {
 	}
 }
 
+// Defines values for GetBlueprint200JSONResponseBodyItemType.
+const (
+	GetBlueprint200JSONResponseBodyItemTypeFolder  GetBlueprint200JSONResponseBodyItemType = "folder"
+	GetBlueprint200JSONResponseBodyItemTypeProject GetBlueprint200JSONResponseBodyItemType = "project"
+	GetBlueprint200JSONResponseBodyItemTypeTask    GetBlueprint200JSONResponseBodyItemType = "task"
+)
+
+// Valid indicates whether the value is a known member of the GetBlueprint200JSONResponseBodyItemType enum.
+func (e GetBlueprint200JSONResponseBodyItemType) Valid() bool {
+	switch e {
+	case GetBlueprint200JSONResponseBodyItemTypeFolder:
+		return true
+	case GetBlueprint200JSONResponseBodyItemTypeProject:
+		return true
+	case GetBlueprint200JSONResponseBodyItemTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetBlueprint200JSONResponseBodyScope.
+const (
+	GetBlueprint200JSONResponseBodyScopeAccount GetBlueprint200JSONResponseBodyScope = "account"
+	GetBlueprint200JSONResponseBodyScopeSpace   GetBlueprint200JSONResponseBodyScope = "space"
+)
+
+// Valid indicates whether the value is a known member of the GetBlueprint200JSONResponseBodyScope enum.
+func (e GetBlueprint200JSONResponseBodyScope) Valid() bool {
+	switch e {
+	case GetBlueprint200JSONResponseBodyScopeAccount:
+		return true
+	case GetBlueprint200JSONResponseBodyScopeSpace:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResolveConnectorConflictJSONBodyResolution.
 const (
 	ResolveConnectorConflictJSONBodyResolutionItem   ResolveConnectorConflictJSONBodyResolution = "item"
@@ -3454,11 +3607,71 @@ type Blueprint struct {
 	ItemCount int                `json:"item_count"`
 	ItemType  BlueprintItemType  `json:"item_type"`
 	Name      string             `json:"name"`
+
+	// Scope space: shared Space; account: the owner's Personal Space only
+	Scope     BlueprintScope     `json:"scope"`
 	SpaceId   openapi_types.UUID `json:"space_id"`
+	UpdatedAt time.Time          `json:"updated_at"`
+
+	// Version Naik setiap kali blueprint diubah
+	Version int `json:"version"`
 }
 
 // BlueprintItemType defines model for Blueprint.ItemType.
 type BlueprintItemType string
+
+// BlueprintScope space: shared Space; account: the owner's Personal Space only
+type BlueprintScope string
+
+// BlueprintPreviewItem defines model for BlueprintPreviewItem.
+type BlueprintPreviewItem struct {
+	DueDate *openapi_types.Date `json:"due_date,omitempty"`
+
+	// Parent Indeks induk dalam daftar (-1 untuk akar)
+	Parent    int                      `json:"parent"`
+	StartDate *openapi_types.Date      `json:"start_date,omitempty"`
+	Title     string                   `json:"title"`
+	Type      BlueprintPreviewItemType `json:"type"`
+}
+
+// BlueprintPreviewItemType defines model for BlueprintPreviewItem.Type.
+type BlueprintPreviewItemType string
+
+// BlueprintTree defines model for BlueprintTree.
+type BlueprintTree struct {
+	Dependencies []struct {
+		Lag         int                           `json:"lag"`
+		Predecessor int                           `json:"predecessor"`
+		Successor   int                           `json:"successor"`
+		Type        BlueprintTreeDependenciesType `json:"type"`
+	} `json:"dependencies"`
+	Nodes []struct {
+		AssigneeIds   *[]openapi_types.UUID        `json:"assignee_ids,omitempty"`
+		Description   interface{}                  `json:"description,omitempty"`
+		DueOffset     *int                         `json:"due_offset,omitempty"`
+		DurationDays  *int                         `json:"duration_days,omitempty"`
+		EffortMinutes *int                         `json:"effort_minutes,omitempty"`
+		Fields        *map[string]interface{}      `json:"fields,omitempty"`
+		Importance    BlueprintTreeNodesImportance `json:"importance"`
+		IsMilestone   *bool                        `json:"is_milestone,omitempty"`
+
+		// Parent Indeks induk yang sudah muncul sebelumnya (-1 untuk akar)
+		Parent      int                    `json:"parent"`
+		StartOffset *int                   `json:"start_offset,omitempty"`
+		StatusId    *openapi_types.UUID    `json:"status_id,omitempty"`
+		Title       string                 `json:"title"`
+		Type        BlueprintTreeNodesType `json:"type"`
+	} `json:"nodes"`
+}
+
+// BlueprintTreeDependenciesType defines model for BlueprintTree.Dependencies.Type.
+type BlueprintTreeDependenciesType string
+
+// BlueprintTreeNodesImportance defines model for BlueprintTree.Nodes.Importance.
+type BlueprintTreeNodesImportance string
+
+// BlueprintTreeNodesType defines model for BlueprintTree.Nodes.Type.
+type BlueprintTreeNodesType string
 
 // Capability defines model for Capability.
 type Capability string
@@ -5790,10 +6003,36 @@ type ListAutomationRunsParams struct {
 // ListAutomationRunsParamsStatus defines parameters for ListAutomationRuns.
 type ListAutomationRunsParamsStatus string
 
+// GetBlueprint200JSONResponseBodyItemType defines parameters for GetBlueprint.
+type GetBlueprint200JSONResponseBodyItemType string
+
+// GetBlueprint200JSONResponseBodyScope defines parameters for GetBlueprint.
+type GetBlueprint200JSONResponseBodyScope string
+
+// EditBlueprintJSONBody defines parameters for EditBlueprint.
+type EditBlueprintJSONBody struct {
+	Name    *string        `json:"name,omitempty"`
+	Tree    *BlueprintTree `json:"tree,omitempty"`
+	Version int            `json:"version"`
+}
+
 // CreateItemsFromBlueprintJSONBody defines parameters for CreateItemsFromBlueprint.
 type CreateItemsFromBlueprintJSONBody struct {
-	Locations []Location          `json:"locations"`
+	// FinishDate Tanggal selesai yang menjadi jangkar item terakhir dalam blueprint (tanggal paling akhir selesai pada tanggal ini). Tidak boleh bersama start_date.
+	FinishDate *openapi_types.Date `json:"finish_date,omitempty"`
+	Locations  []Location          `json:"locations"`
+
+	// StartDate Tanggal mulai yang menjadi jangkar tanggal turunan. Tidak boleh bersama finish_date.
 	StartDate *openapi_types.Date `json:"start_date,omitempty"`
+
+	// Title Mengganti judul item akar
+	Title *string `json:"title,omitempty"`
+}
+
+// PreviewBlueprintJSONBody defines parameters for PreviewBlueprint.
+type PreviewBlueprintJSONBody struct {
+	FinishDate *openapi_types.Date `json:"finish_date,omitempty"`
+	StartDate  *openapi_types.Date `json:"start_date,omitempty"`
 
 	// Title Mengganti judul item akar
 	Title *string `json:"title,omitempty"`
@@ -6608,8 +6847,14 @@ type UpdateAutomationRuleJSONRequestBody UpdateAutomationRuleJSONBody
 // SaveAutomationDraftJSONRequestBody defines body for SaveAutomationDraft for application/json ContentType.
 type SaveAutomationDraftJSONRequestBody SaveAutomationDraftJSONBody
 
+// EditBlueprintJSONRequestBody defines body for EditBlueprint for application/json ContentType.
+type EditBlueprintJSONRequestBody EditBlueprintJSONBody
+
 // CreateItemsFromBlueprintJSONRequestBody defines body for CreateItemsFromBlueprint for application/json ContentType.
 type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
+
+// PreviewBlueprintJSONRequestBody defines body for PreviewBlueprint for application/json ContentType.
+type PreviewBlueprintJSONRequestBody PreviewBlueprintJSONBody
 
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
@@ -7333,12 +7578,21 @@ type ServerInterface interface {
 	// GetBaselineVariance Selisih tanggal item terhadap baseline, dalam hari (positif = lebih lambat dari rencana)
 	// (GET /baselines/{baselineId}/variance)
 	GetBaselineVariance(w http.ResponseWriter, r *http.Request, baselineId openapi_types.UUID)
-	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
+	// DeleteBlueprint Hapus blueprint (butuh manage_blueprint pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
+	// GetBlueprint Baca satu blueprint beserta strukturnya (butuh view pada Space). Field restricted tidak ditampilkan.
+	// (GET /blueprints/{blueprintId})
+	GetBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
+	// EditBlueprint Ubah nama dan/atau struktur blueprint (butuh manage_blueprint pada Space). Item yang sudah dibuat tidak berubah.
+	// (PATCH /blueprints/{blueprintId})
+	EditBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
 	// CreateItemsFromBlueprint Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
 	// (POST /blueprints/{blueprintId}/items)
 	CreateItemsFromBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
+	// PreviewBlueprint Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
+	// (POST /blueprints/{blueprintId}/preview)
+	PreviewBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID)
@@ -9651,6 +9905,58 @@ func (siw *ServerInterfaceWrapper) DeleteBlueprint(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetBlueprint operation middleware
+func (siw *ServerInterfaceWrapper) GetBlueprint(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "blueprintId" -------------
+	var blueprintId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "blueprintId", r.PathValue("blueprintId"), &blueprintId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "blueprintId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetBlueprint(w, r, blueprintId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// EditBlueprint operation middleware
+func (siw *ServerInterfaceWrapper) EditBlueprint(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "blueprintId" -------------
+	var blueprintId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "blueprintId", r.PathValue("blueprintId"), &blueprintId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "blueprintId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.EditBlueprint(w, r, blueprintId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateItemsFromBlueprint operation middleware
 func (siw *ServerInterfaceWrapper) CreateItemsFromBlueprint(w http.ResponseWriter, r *http.Request) {
 
@@ -9668,6 +9974,32 @@ func (siw *ServerInterfaceWrapper) CreateItemsFromBlueprint(w http.ResponseWrite
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateItemsFromBlueprint(w, r, blueprintId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// PreviewBlueprint operation middleware
+func (siw *ServerInterfaceWrapper) PreviewBlueprint(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "blueprintId" -------------
+	var blueprintId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "blueprintId", r.PathValue("blueprintId"), &blueprintId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "blueprintId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.PreviewBlueprint(w, r, blueprintId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17308,6 +17640,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/blueprints", wrapper.ListBlueprints)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/blueprints", wrapper.CreateBlueprint)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/blueprints/{blueprintId}", wrapper.DeleteBlueprint)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/blueprints/{blueprintId}", wrapper.GetBlueprint)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/blueprints/{blueprintId}", wrapper.EditBlueprint)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/blueprints/{blueprintId}/preview", wrapper.PreviewBlueprint)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/blueprints/{blueprintId}/items", wrapper.CreateItemsFromBlueprint)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/forms/{formId}", wrapper.DeleteForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}", wrapper.GetForm)
@@ -20384,6 +20719,140 @@ func (response DeleteBlueprint404ApplicationProblemPlusJSONResponse) VisitDelete
 	return err
 }
 
+type GetBlueprintRequestObject struct {
+	BlueprintId openapi_types.UUID `json:"blueprintId"`
+}
+
+type GetBlueprintResponseObject interface {
+	VisitGetBlueprintResponse(w http.ResponseWriter) error
+}
+
+type GetBlueprint200JSONResponse struct {
+	CreatedAt time.Time                               `json:"created_at"`
+	Id        openapi_types.UUID                      `json:"id"`
+	ItemCount int                                     `json:"item_count"`
+	ItemType  GetBlueprint200JSONResponseBodyItemType `json:"item_type"`
+	Name      string                                  `json:"name"`
+
+	// Scope space: shared Space; account: the owner's Personal Space only
+	Scope     GetBlueprint200JSONResponseBodyScope `json:"scope"`
+	SpaceId   openapi_types.UUID                   `json:"space_id"`
+	Tree      BlueprintTree                        `json:"tree"`
+	UpdatedAt time.Time                            `json:"updated_at"`
+
+	// Version Naik setiap kali blueprint diubah
+	Version int `json:"version"`
+}
+
+func (response GetBlueprint200JSONResponse) VisitGetBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetBlueprint404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetBlueprint404ApplicationProblemPlusJSONResponse) VisitGetBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EditBlueprintRequestObject struct {
+	BlueprintId openapi_types.UUID `json:"blueprintId"`
+	Body        *EditBlueprintJSONRequestBody
+}
+
+type EditBlueprintResponseObject interface {
+	VisitEditBlueprintResponse(w http.ResponseWriter) error
+}
+
+type EditBlueprint200JSONResponse Blueprint
+
+func (response EditBlueprint200JSONResponse) VisitEditBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EditBlueprint403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response EditBlueprint403ApplicationProblemPlusJSONResponse) VisitEditBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EditBlueprint404ApplicationProblemPlusJSONResponse Problem
+
+func (response EditBlueprint404ApplicationProblemPlusJSONResponse) VisitEditBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EditBlueprint409ApplicationProblemPlusJSONResponse Problem
+
+func (response EditBlueprint409ApplicationProblemPlusJSONResponse) VisitEditBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type EditBlueprint422ApplicationProblemPlusJSONResponse Problem
+
+func (response EditBlueprint422ApplicationProblemPlusJSONResponse) VisitEditBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateItemsFromBlueprintRequestObject struct {
 	BlueprintId openapi_types.UUID `json:"blueprintId"`
 	Body        *CreateItemsFromBlueprintJSONRequestBody
@@ -20450,6 +20919,75 @@ func (response CreateItemsFromBlueprint404ApplicationProblemPlusJSONResponse) Vi
 type CreateItemsFromBlueprint422ApplicationProblemPlusJSONResponse Problem
 
 func (response CreateItemsFromBlueprint422ApplicationProblemPlusJSONResponse) VisitCreateItemsFromBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewBlueprintRequestObject struct {
+	BlueprintId openapi_types.UUID `json:"blueprintId"`
+	Body        *PreviewBlueprintJSONRequestBody
+}
+
+type PreviewBlueprintResponseObject interface {
+	VisitPreviewBlueprintResponse(w http.ResponseWriter) error
+}
+
+type PreviewBlueprint200JSONResponse struct {
+	Items []BlueprintPreviewItem `json:"items"`
+}
+
+func (response PreviewBlueprint200JSONResponse) VisitPreviewBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewBlueprint403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response PreviewBlueprint403ApplicationProblemPlusJSONResponse) VisitPreviewBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewBlueprint404ApplicationProblemPlusJSONResponse Problem
+
+func (response PreviewBlueprint404ApplicationProblemPlusJSONResponse) VisitPreviewBlueprintResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type PreviewBlueprint422ApplicationProblemPlusJSONResponse Problem
+
+func (response PreviewBlueprint422ApplicationProblemPlusJSONResponse) VisitPreviewBlueprintResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -35052,12 +35590,21 @@ type StrictServerInterface interface {
 	// GetBaselineVariance Selisih tanggal item terhadap baseline, dalam hari (positif = lebih lambat dari rencana)
 	// (GET /baselines/{baselineId}/variance)
 	GetBaselineVariance(ctx context.Context, request GetBaselineVarianceRequestObject) (GetBaselineVarianceResponseObject, error)
-	// DeleteBlueprint Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
+	// DeleteBlueprint Hapus blueprint (butuh manage_blueprint pada Space); item yang sudah dibuat darinya tidak berubah
 	// (DELETE /blueprints/{blueprintId})
 	DeleteBlueprint(ctx context.Context, request DeleteBlueprintRequestObject) (DeleteBlueprintResponseObject, error)
+	// GetBlueprint Baca satu blueprint beserta strukturnya (butuh view pada Space). Field restricted tidak ditampilkan.
+	// (GET /blueprints/{blueprintId})
+	GetBlueprint(ctx context.Context, request GetBlueprintRequestObject) (GetBlueprintResponseObject, error)
+	// EditBlueprint Ubah nama dan/atau struktur blueprint (butuh manage_blueprint pada Space). Item yang sudah dibuat tidak berubah.
+	// (PATCH /blueprints/{blueprintId})
+	EditBlueprint(ctx context.Context, request EditBlueprintRequestObject) (EditBlueprintResponseObject, error)
 	// CreateItemsFromBlueprint Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
 	// (POST /blueprints/{blueprintId}/items)
 	CreateItemsFromBlueprint(ctx context.Context, request CreateItemsFromBlueprintRequestObject) (CreateItemsFromBlueprintResponseObject, error)
+	// PreviewBlueprint Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
+	// (POST /blueprints/{blueprintId}/preview)
+	PreviewBlueprint(ctx context.Context, request PreviewBlueprintRequestObject) (PreviewBlueprintResponseObject, error)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(ctx context.Context, request DeleteCommentRequestObject) (DeleteCommentResponseObject, error)
@@ -37335,6 +37882,65 @@ func (sh *strictHandler) DeleteBlueprint(w http.ResponseWriter, r *http.Request,
 	}
 }
 
+// GetBlueprint operation middleware
+func (sh *strictHandler) GetBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID) {
+	var request GetBlueprintRequestObject
+
+	request.BlueprintId = blueprintId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetBlueprint(ctx, request.(GetBlueprintRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetBlueprint")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetBlueprintResponseObject); ok {
+		if err := validResponse.VisitGetBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// EditBlueprint operation middleware
+func (sh *strictHandler) EditBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID) {
+	var request EditBlueprintRequestObject
+
+	request.BlueprintId = blueprintId
+
+	var body EditBlueprintJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.EditBlueprint(ctx, request.(EditBlueprintRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "EditBlueprint")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(EditBlueprintResponseObject); ok {
+		if err := validResponse.VisitEditBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreateItemsFromBlueprint operation middleware
 func (sh *strictHandler) CreateItemsFromBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID) {
 	var request CreateItemsFromBlueprintRequestObject
@@ -37361,6 +37967,42 @@ func (sh *strictHandler) CreateItemsFromBlueprint(w http.ResponseWriter, r *http
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateItemsFromBlueprintResponseObject); ok {
 		if err := validResponse.VisitCreateItemsFromBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// PreviewBlueprint operation middleware
+func (sh *strictHandler) PreviewBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID) {
+	var request PreviewBlueprintRequestObject
+
+	request.BlueprintId = blueprintId
+
+	var body PreviewBlueprintJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.PreviewBlueprint(ctx, request.(PreviewBlueprintRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "PreviewBlueprint")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(PreviewBlueprintResponseObject); ok {
+		if err := validResponse.VisitPreviewBlueprintResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

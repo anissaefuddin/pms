@@ -29,8 +29,8 @@ var (
 	docRoleCaps = map[string][]string{
 		"read":    {"view"},
 		"limited": {"view", "comment", "change_status", "attach"},
-		"editor":  {"view", "comment", "change_status", "attach", "edit", "create"},
-		"full":    {"view", "comment", "change_status", "attach", "edit", "create", "delete", "share"},
+		"editor":  {"view", "comment", "change_status", "attach", "edit", "create", "use_blueprint", "create_blueprint", "manage_blueprint"},
+		"full":    {"view", "comment", "change_status", "attach", "edit", "create", "delete", "share", "use_blueprint", "create_blueprint", "manage_blueprint"},
 	}
 	docCeilings = map[string][]string{
 		"admin":        docRoleCaps["full"],

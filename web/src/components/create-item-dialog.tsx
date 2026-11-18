@@ -149,11 +149,15 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       if (me.default_task_effort_minutes != null) input.effort_minutes = me.default_task_effort_minutes;
     }
     if (canShare && shares.length) input.shares = shares.map(({ principal_type, principal_id, role }) => ({ principal_type, principal_id, role }));
+    if (blueprint && start && due) { // one anchor only: the server refuses start_date together with finish_date
+      setError(t("blueprints.anchorOne"));
+      return;
+    }
     setBusy(true);
     try {
       const item = blueprint
         ? await api<Item>(`/api/v1/blueprints/${blueprint.id}/items`, {
-          method: "POST", body: JSON.stringify({ locations: input.locations, title, ...(start && { start_date: start }) }),
+          method: "POST", body: JSON.stringify({ locations: input.locations, title, ...(start ? { start_date: start } : due ? { finish_date: due } : {}) }),
         })
         : await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
       await queryClient.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });

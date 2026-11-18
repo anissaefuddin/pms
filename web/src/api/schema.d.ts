@@ -3582,11 +3582,38 @@ export interface paths {
             };
             cookie?: never;
         };
-        get?: never;
+        /** Baca satu blueprint beserta strukturnya (butuh view pada Space). Field restricted tidak ditampilkan. */
+        get: operations["getBlueprint"];
         put?: never;
         post?: never;
-        /** Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah */
+        /** Hapus blueprint (butuh manage_blueprint pada Space); item yang sudah dibuat darinya tidak berubah */
         delete: operations["deleteBlueprint"];
+        options?: never;
+        head?: never;
+        /**
+         * Ubah nama dan/atau struktur blueprint (butuh manage_blueprint pada Space). Item yang sudah dibuat tidak berubah.
+         * @description `version` harus sama dengan versi yang dibaca; jika tidak, 409. `tree` mengganti seluruh struktur dan diperiksa seperti saat menyimpan. Field kustom yang dibatasi (restricted) dibuang dari tree.
+         */
+        patch: operations["editBlueprint"];
+        trace?: never;
+    };
+    "/blueprints/{blueprintId}/preview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
+         * @description Memakai aturan tanggal yang sama dengan pembuatan item, sehingga hasilnya sama dengan `createItemsFromBlueprint`.
+         */
+        post: operations["previewBlueprint"];
+        delete?: never;
         options?: never;
         head?: never;
         patch?: never;
@@ -3605,7 +3632,7 @@ export interface paths {
         put?: never;
         /**
          * Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
-         * @description `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date`; tanpa `start_date` item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak lagi cocok dengan Space tujuan dilewati.
+         * @description `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date` atau `finish_date`; tanpa keduanya item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak lagi cocok dengan Space tujuan dilewati.
          */
         post: operations["createItemsFromBlueprint"];
         delete?: never;
@@ -4795,7 +4822,7 @@ export interface components {
             locked?: boolean;
         };
         /** @enum {string} */
-        Capability: "view" | "comment" | "change_status" | "attach" | "edit" | "create" | "delete" | "share";
+        Capability: "view" | "comment" | "change_status" | "attach" | "edit" | "create" | "delete" | "share" | "use_blueprint" | "create_blueprint" | "manage_blueprint";
         /** @enum {string} */
         ShareRole: "read" | "limited" | "editor" | "full";
         /** @enum {string} */
@@ -5284,6 +5311,56 @@ export interface components {
             item_count: number;
             /** Format: date-time */
             created_at: string;
+            /**
+             * @description space: shared Space; account: the owner's Personal Space only
+             * @enum {string}
+             */
+            scope: "space" | "account";
+            /** @description Naik setiap kali blueprint diubah */
+            version: number;
+            /** Format: date-time */
+            updated_at: string;
+        };
+        BlueprintPreviewItem: {
+            title: string;
+            /** @enum {string} */
+            type: "project" | "folder" | "task";
+            /** @description Indeks induk dalam daftar (-1 untuk akar) */
+            parent: number;
+            /** Format: date */
+            start_date?: string | null;
+            /** Format: date */
+            due_date?: string | null;
+        };
+        BlueprintTree: {
+            nodes: {
+                /** @description Indeks induk yang sudah muncul sebelumnya (-1 untuk akar) */
+                parent: number;
+                /** @enum {string} */
+                type: "project" | "folder" | "task";
+                title: string;
+                /** @enum {string} */
+                importance: "high" | "normal" | "low";
+                description?: unknown;
+                /** Format: uuid */
+                status_id?: string | null;
+                assignee_ids?: string[];
+                start_offset?: number | null;
+                due_offset?: number | null;
+                duration_days?: number | null;
+                is_milestone?: boolean;
+                effort_minutes?: number | null;
+                fields?: {
+                    [key: string]: unknown;
+                };
+            }[];
+            dependencies: {
+                predecessor: number;
+                successor: number;
+                /** @enum {string} */
+                type: "FS" | "SS" | "FF" | "SF";
+                lag: number;
+            }[];
         };
         FormSummary: {
             /** Format: uuid */
@@ -13679,6 +13756,31 @@ export interface operations {
             422: components["responses"]["Problem"];
         };
     };
+    getBlueprint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Blueprint dan tree-nya */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Blueprint"] & {
+                        tree: components["schemas"]["BlueprintTree"];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
     deleteBlueprint: {
         parameters: {
             query?: never;
@@ -13701,6 +13803,78 @@ export interface operations {
             404: components["responses"]["Problem"];
         };
     };
+    editBlueprint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    version: number;
+                    name?: string;
+                    tree?: components["schemas"]["BlueprintTree"];
+                };
+            };
+        };
+        responses: {
+            /** @description Blueprint setelah perubahan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Blueprint"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    previewBlueprint: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                blueprintId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    /** @description Mengganti judul item akar */
+                    title?: string;
+                    /** Format: date */
+                    start_date?: string;
+                    /** Format: date */
+                    finish_date?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Daftar item dalam urutan blueprint */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["BlueprintPreviewItem"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
     createItemsFromBlueprint: {
         parameters: {
             query?: never;
@@ -13716,8 +13890,16 @@ export interface operations {
                     locations: components["schemas"]["Location"][];
                     /** @description Mengganti judul item akar */
                     title?: string;
-                    /** Format: date */
+                    /**
+                     * Format: date
+                     * @description Tanggal mulai yang menjadi jangkar tanggal turunan. Tidak boleh bersama finish_date.
+                     */
                     start_date?: string;
+                    /**
+                     * Format: date
+                     * @description Tanggal selesai yang menjadi jangkar item terakhir dalam blueprint (tanggal paling akhir selesai pada tanggal ini). Tidak boleh bersama start_date.
+                     */
+                    finish_date?: string;
                 };
             };
         };

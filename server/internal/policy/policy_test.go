@@ -10,14 +10,14 @@ import (
 var expectedRoleCaps = map[Role][]Capability{
 	Read:    {View},
 	Limited: {View, Comment, ChangeStatus, Attach},
-	Editor:  {View, Comment, ChangeStatus, Attach, Edit, Create},
-	Full:    {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
+	Editor:  {View, Comment, ChangeStatus, Attach, Edit, Create, UseBlueprint, CreateBlueprint, ManageBlueprint},
+	Full:    {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
 }
 
 var expectedCeilings = map[UserType][]Capability{
-	Admin:        {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
-	Regular:      {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
-	External:     {View, Comment, ChangeStatus, Attach, Edit, Create},
+	Admin:        {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
+	Regular:      {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
+	External:     {View, Comment, ChangeStatus, Attach, Edit, Create, UseBlueprint, CreateBlueprint, ManageBlueprint},
 	Collaborator: {View, Comment, ChangeStatus, Attach},
 	Viewer:       {View, Comment},
 }

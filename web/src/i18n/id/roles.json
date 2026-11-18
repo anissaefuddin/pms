@@ -38,6 +38,9 @@
   "capability.create": "Buat",
   "capability.delete": "Hapus",
   "capability.share": "Bagikan",
+  "capability.use_blueprint": "Pakai blueprint",
+  "capability.create_blueprint": "Simpan blueprint",
+  "capability.manage_blueprint": "Kelola blueprint",
   "capabilityHelp.view": " — melihat item",
   "capabilityHelp.comment": " — menulis komentar",
   "capabilityHelp.change_status": " — bergerak dalam alur kerja",
@@ -46,6 +49,9 @@
   "capabilityHelp.create": " — menambah item",
   "capabilityHelp.delete": " — menghapus item",
   "capabilityHelp.share": " — mengubah siapa yang punya akses",
+  "capabilityHelp.use_blueprint": " — membuat item dari blueprint",
+  "capabilityHelp.create_blueprint": " — menyimpan item sebagai blueprint",
+  "capabilityHelp.manage_blueprint": " — menghapus blueprint",
   "tabs.list": "Daftar",
   "tabs.matrix": "Matriks izin"
 }

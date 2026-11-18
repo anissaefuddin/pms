@@ -112,13 +112,13 @@ platform/* tidak mengimpor modul bisnis.
 
 - **User type** (global per user): `admin`, `regular`, `external`, `collaborator`, `viewer`. Menentukan **plafon** kemampuan.
 - **Share role** (per Space atau item): `full`, `editor`, `limited`, `read`. Diberikan ke user atau grup.
-- **Kemampuan (capability):** `view`, `comment`, `change_status`, `attach`, `edit`, `create`, `delete`, `share`.
+- **Kemampuan (capability):** `view`, `comment`, `change_status`, `attach`, `edit`, `create`, `delete`, `share`, `use_blueprint`, `create_blueprint`, `manage_blueprint`. Tiga kemampuan blueprint ditambahkan di akhir (urutan bit disimpan di `custom_roles.caps_mask`).
 
 | Share role | Kemampuan |
 |---|---|
 | `read` | view |
 | `limited` | view, comment, change_status, attach |
-| `editor` | limited + edit, create |
+| `editor` | limited + edit, create, use_blueprint, create_blueprint, manage_blueprint |
 | `full` | editor + delete, share |
 
 | User type | Plafon |

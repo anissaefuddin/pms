@@ -48,6 +48,9 @@ func RecycleItemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string,
 }
 
 func itemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string, spaceID *string, deleted, includeDeletedSpaces bool) (map[string]Caps, error) {
+	if actor.Form != nil {
+		return formItemsCaps(ctx, db, actor, itemIDs, spaceID, deleted)
+	}
 	rows, err := db.Query(ctx, `
 WITH RECURSIVE ancestry(root_id, space_id, item_id, parent_id) AS (
   SELECT l.item_id, l.space_id, l.item_id, l.parent_item_id
@@ -93,4 +96,26 @@ WHERE (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
 		caps[id] |= Effective(actor.Type, Role(role))
 	}
 	return caps, rows.Err()
+}
+
+// formItemsCaps gives a form submission formCaps on items placed in the form's Space, and nothing elsewhere or in the bin.
+func formItemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string, spaceID *string, deleted bool) (map[string]Caps, error) {
+	out := make(map[string]Caps, len(itemIDs))
+	if deleted || (spaceID != nil && *spaceID != actor.Form.SpaceID) {
+		return out, nil
+	}
+	rows, err := db.Query(ctx, `SELECT DISTINCT l.item_id::text FROM item_locations l JOIN items i ON i.id=l.item_id AND i.deleted_at IS NULL
+WHERE l.space_id=$1::uuid AND l.deleted_root_id IS NULL AND l.item_id=ANY($2::uuid[])`, actor.Form.SpaceID, itemIDs)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	for rows.Next() {
+		var id string
+		if err := rows.Scan(&id); err != nil {
+			return nil, err
+		}
+		out[id] = formCaps
+	}
+	return out, rows.Err()
 }

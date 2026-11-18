@@ -16,6 +16,25 @@ type DB interface {
 type Actor struct {
 	ID   string
 	Type UserType
+	// Form, when set, limits this actor to creating items in one published form's Space (see FormActor).
+	Form *FormGrant
+}
+
+// FormGrant is the whole authority of a form submission: the form's own Space, nothing else.
+type FormGrant struct {
+	FormID  string
+	SpaceID string
+}
+
+// formCaps is what a submission may do inside the form's Space: create the item and what it needs (its approval,
+// its mapped values, its attachments). It never grants Share, Delete, or any Space-wide right, and no Admin type.
+var formCaps = setOf(View, Comment, Attach, Create, Edit, UseBlueprint)
+
+// FormActor returns the actor for a submission to a published form. The requester keeps their own identity and type;
+// only the destination Space is opened, and only with formCaps.
+func FormActor(actor Actor, formID, spaceID string) Actor {
+	actor.Form = &FormGrant{FormID: formID, SpaceID: spaceID}
+	return actor
 }
 
 // SpaceAccess is one Space as seen by one actor.
@@ -69,6 +88,14 @@ func visibleSpaces(ctx context.Context, db DB, actor Actor, spaceID string, incl
 		var roles []string
 		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Kind, &owner, &a.Version, &a.Locked, &roles); err != nil {
 			return nil, err
+		}
+		if actor.Form != nil { // a form submission sees only its own destination, whatever the requester's rights
+			if a.ID != actor.Form.SpaceID {
+				continue
+			}
+			a.Caps = formCaps
+			out = append(out, a)
+			continue
 		}
 		a.Caps = spaceCaps(actor, a.Kind, owner, roles)
 		if !a.Caps.Empty() {

@@ -5051,14 +5051,90 @@ paths:
   /blueprints/{blueprintId}:
     parameters:
       - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [blueprints]
+      operationId: getBlueprint
+      summary: Baca satu blueprint beserta strukturnya (butuh view pada Space). Field restricted tidak ditampilkan.
+      responses:
+        '200':
+          description: Blueprint dan tree-nya
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Blueprint' }
+                  - type: object
+                    required: [tree]
+                    properties:
+                      tree: { $ref: '#/components/schemas/BlueprintTree' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [blueprints]
+      operationId: editBlueprint
+      summary: Ubah nama dan/atau struktur blueprint (butuh manage_blueprint pada Space). Item yang sudah dibuat tidak berubah.
+      description: >
+        `version` harus sama dengan versi yang dibaca; jika tidak, 409. `tree` mengganti seluruh struktur dan diperiksa
+        seperti saat menyimpan. Field kustom yang dibatasi (restricted) dibuang dari tree.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: { type: integer, minimum: 1 }
+                name: { type: string, minLength: 1, maxLength: 120 }
+                tree: { $ref: '#/components/schemas/BlueprintTree' }
+      responses:
+        '200':
+          description: Blueprint setelah perubahan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Blueprint' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
     delete:
       tags: [blueprints]
       operationId: deleteBlueprint
-      summary: Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
+      summary: Hapus blueprint (butuh manage_blueprint pada Space); item yang sudah dibuat darinya tidak berubah
       responses:
         '204': { description: Dihapus }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /blueprints/{blueprintId}/preview:
+    parameters:
+      - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [blueprints]
+      operationId: previewBlueprint
+      summary: Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
+      description: Memakai aturan tanggal yang sama dengan pembuatan item, sehingga hasilnya sama dengan `createItemsFromBlueprint`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, description: Mengganti judul item akar }
+                start_date: { type: string, format: date }
+                finish_date: { type: string, format: date }
+      responses:
+        '200':
+          description: Daftar item dalam urutan blueprint
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/BlueprintPreviewItem' } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /blueprints/{blueprintId}/items:
     parameters:
       - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -5067,8 +5143,8 @@ paths:
       operationId: createItemsFromBlueprint
       summary: Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
       description: >
-        `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date`; tanpa
-        `start_date` item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak
+        `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date` atau `finish_date`; tanpa
+        keduanya item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak
         lagi cocok dengan Space tujuan dilewati.
       requestBody:
         required: true
@@ -5083,7 +5159,8 @@ paths:
                   minItems: 1
                   items: { $ref: '#/components/schemas/Location' }
                 title: { type: string, description: Mengganti judul item akar }
-                start_date: { type: string, format: date }
+                start_date: { type: string, format: date, description: Tanggal mulai yang menjadi jangkar tanggal turunan. Tidak boleh bersama finish_date. }
+                finish_date: { type: string, format: date, description: Tanggal selesai yang menjadi jangkar item terakhir dalam blueprint (tanggal paling akhir selesai pada tanggal ini). Tidak boleh bersama start_date. }
       responses:
         '201':
           description: Item akar yang dibuat
@@ -6053,7 +6130,7 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 60 }
         description: { type: string, maxLength: 300 }
-        capabilities: { type: array, minItems: 1, maxItems: 8, uniqueItems: true, items: { $ref: '#/components/schemas/Capability' }, description: Wajib memuat view }
+        capabilities: { type: array, minItems: 1, maxItems: 11, uniqueItems: true, items: { $ref: '#/components/schemas/Capability' }, description: Wajib memuat view }
     CustomRole:
       allOf:
         - { $ref: '#/components/schemas/CustomRoleInput' }
@@ -6632,7 +6709,7 @@ components:
         locked: { type: boolean, description: Hanya administrator }
     Capability:
       type: string
-      enum: [view, comment, change_status, attach, edit, create, delete, share]
+      enum: [view, comment, change_status, attach, edit, create, delete, share, use_blueprint, create_blueprint, manage_blueprint]
     ShareRole:
       type: string
       enum: [read, limited, editor, full]
@@ -7117,7 +7194,7 @@ components:
               enabled: { type: boolean }
     Blueprint:
       type: object
-      required: [id, space_id, name, item_type, item_count, created_at]
+      required: [id, space_id, name, item_type, item_count, created_at, scope, version, updated_at]
       properties:
         id: { type: string, format: uuid }
         space_id: { type: string, format: uuid }
@@ -7125,6 +7202,53 @@ components:
         item_type: { type: string, enum: [project, folder, task] }
         item_count: { type: integer }
         created_at: { type: string, format: date-time }
+        scope: { type: string, enum: [space, account], description: "space: shared Space; account: the owner's Personal Space only" }
+        version: { type: integer, minimum: 1, description: Naik setiap kali blueprint diubah }
+        updated_at: { type: string, format: date-time }
+    BlueprintPreviewItem:
+      type: object
+      required: [title, type, parent]
+      properties:
+        title: { type: string }
+        type: { type: string, enum: [project, folder, task] }
+        parent: { type: integer, description: Indeks induk dalam daftar (-1 untuk akar) }
+        start_date: { type: string, format: date, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+    BlueprintTree:
+      type: object
+      required: [nodes, dependencies]
+      properties:
+        nodes:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            type: object
+            required: [parent, type, title, importance]
+            properties:
+              parent: { type: integer, description: Indeks induk yang sudah muncul sebelumnya (-1 untuk akar) }
+              type: { type: string, enum: [project, folder, task] }
+              title: { type: string, minLength: 1, maxLength: 500 }
+              importance: { type: string, enum: [high, normal, low] }
+              description: {}
+              status_id: { type: string, format: uuid, nullable: true }
+              assignee_ids: { type: array, items: { type: string, format: uuid } }
+              start_offset: { type: integer, nullable: true }
+              due_offset: { type: integer, nullable: true }
+              duration_days: { type: integer, minimum: 0, nullable: true }
+              is_milestone: { type: boolean }
+              effort_minutes: { type: integer, minimum: 0, nullable: true }
+              fields: { type: object, additionalProperties: true }
+        dependencies:
+          type: array
+          items:
+            type: object
+            required: [predecessor, successor, type, lag]
+            properties:
+              predecessor: { type: integer }
+              successor: { type: integer }
+              type: { type: string, enum: [FS, SS, FF, SF] }
+              lag: { type: integer }
     FormSummary:
       type: object
       required: [id, space_id, space_name, name, description, access, status, question_count, updated_by, updated_at]
