@@ -870,3 +870,27 @@ Tanggal: 18 Nov 2026.
 **Temuan saat verifikasi:** ada blueprint baru `Software delivery` di dev-lens, dibuat 08:06 UTC oleh `anissaefuddin@gmail.com` (`blueprint.save` di audit). Tidak ada yang dihapus. Perlu konfirmasi dari pemilik akun apakah ini dibuat secara sengaja.
 
 **Account Admin (belum diimplementasi):** model hak belum punya peran Account Admin. Mengimplementasikannya mengubah model hak dan perlu keputusan: apakah peran ini global (instance) atau per Personal Space, dan apa saja yang boleh dilakukannya di Blueprint akun pengguna lain.
+
+---
+
+## 25. Blueprint akun: cakupan instance (opsi A)
+
+Tanggal: 18 Nov 2026.
+
+**Keputusan:** blueprint akun tidak lagi disimpan di Personal Space. Hanya pemilik dan admin instance yang bisa melihat, memakai, mengubah, dan menghapusnya. Pengguna lain mendapat 404. Personal Space tetap tertutup untuk admin.
+
+**Yang berubah:**
+- Migrasi `00335_blueprint_account_owner.sql`: `space_id` boleh kosong, kolom `owner_id` ditambahkan, constraint `scope`/`space_id`/`owner_id`, dan indeks nama unik per pemilik. Baris akun yang ada (jika ada) dipindah ke pemiliknya dan lepas dari Space. Tidak ada data yang dihapus.
+- `items/blueprints.go`: `blueprintAccess` menerapkan aturan visibilitas. Simpan dari Personal Space menghasilkan blueprint akun. `ListBlueprints` untuk Personal Space menampilkan blueprint akun pemilik. `ListAccountBlueprints` baru.
+- Endpoint baru `GET /api/v1/account-blueprints` (milik sendiri, atau semua untuk admin instance).
+- OpenAPI: `space_id` nullable, `owner_id` ditambahkan, path `/account-blueprints` didaftarkan. Go dan TypeScript diregenerasi.
+- Web: katalog memakai `space_id` dari daftar Personal Space. Registry mengambil blueprint Space dari Space bersama, dan blueprint akun dari endpoint akun. Editor menghitung hak kelola dari pemilik atau admin untuk blueprint akun.
+
+**Bukti:**
+- Go: `TestAccountBlueprintIsOwnerAndAdminOnly` (pemilik, pengguna lain 404 di semua aksi, admin bisa ubah dan hapus, admin tetap tidak bisa membuka Personal Space) dan `TestAccountBlueprintNamesAreUniquePerOwner`. Semua tes blueprint dan otorisasi lama tetap PASS.
+- Playwright mock: `settings-blueprints`, `blueprints`, `blueprint-editor` PASS (11 tes).
+- `npm test`: 92 PASS.
+
+**Belum:**
+- Verifikasi live dan deploy blueprint akun (dijalankan setelah commit).
+- Peran Account Admin sebagai peran terpisah tidak dibuat. Admin instance (`user_type = admin`) yang berlaku.

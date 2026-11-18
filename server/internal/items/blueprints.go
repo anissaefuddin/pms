@@ -223,12 +223,25 @@ WHERE predecessor_id=ANY($1::uuid[]) AND successor_id=ANY($1::uuid[]) ORDER BY i
 	if tree.Dependencies == nil {
 		tree.Dependencies = []blueprintDependency{}
 	}
+	var kind string
+	if err := tx.QueryRow(ctx, "SELECT kind::text FROM spaces WHERE id=$1", spaceID).Scan(&kind); err != nil {
+		return nil, err
+	}
 	var out json.RawMessage
-	err = tx.QueryRow(ctx, `
-WITH b AS (INSERT INTO blueprints(space_id,name,tree,created_by,scope) VALUES($1,btrim($2),$3,$4::uuid,
-  (SELECT CASE WHEN kind='personal' THEN 'account' ELSE 'space' END FROM spaces WHERE id=$1)) RETURNING *)
+	var target *uuid.UUID
+	if kind == "personal" {
+		// An account blueprint: it belongs to the owner, not to the Personal Space it was saved from.
+		err = tx.QueryRow(ctx, `
+WITH b AS (INSERT INTO blueprints(space_id,name,tree,created_by,scope,owner_id) VALUES(NULL,btrim($1),$2,$3::uuid,'account',$3::uuid) RETURNING *)
 SELECT jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
-  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'version',version,'updated_at',updated_at) FROM b`, spaceID, name, tree, actor.ID).Scan(&out)
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at) FROM b`, name, tree, actor.ID).Scan(&out)
+	} else {
+		target = &spaceID
+		err = tx.QueryRow(ctx, `
+WITH b AS (INSERT INTO blueprints(space_id,name,tree,created_by,scope) VALUES($1,btrim($2),$3,$4::uuid,'space') RETURNING *)
+SELECT jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at) FROM b`, spaceID, name, tree, actor.ID).Scan(&out)
+	}
 	if pgCode(err) == "23505" {
 		return nil, InvalidField{"name", "a blueprint with that name already exists in this Space"}
 	}
@@ -239,7 +252,7 @@ SELECT jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tr
 	if err := json.Unmarshal(out, &head); err != nil {
 		return nil, err
 	}
-	return out, auditBlueprint(ctx, tx, actor, "blueprint.save", head.ID, map[string]any{"space_id": spaceID.String(), "item_count": len(tree.Nodes)})
+	return out, auditBlueprint(ctx, tx, actor, "blueprint.save", head.ID, map[string]any{"space_id": spaceIDValue(target), "item_count": len(tree.Nodes)})
 }
 
 // auditBlueprint writes the trail inside the caller's transaction, so a change and its event succeed or fail together.
@@ -291,7 +304,42 @@ func requireSpace(ctx context.Context, tx pgx.Tx, actor policy.Actor, need polic
 	return nil
 }
 
-// ListBlueprints returns the blueprints of a Space that the actor may view.
+// blueprintAccess checks what the actor may do with one blueprint and returns its Space (nil for an account blueprint).
+// An account blueprint belongs to its owner: the owner and instance admins may act, anyone else gets 404 so its existence stays
+// hidden. A Space blueprint follows the Space rules.
+func blueprintAccess(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, need policy.Capability) (*uuid.UUID, error) {
+	var spaceID *uuid.UUID
+	var scope string
+	var owner *string
+	err := tx.QueryRow(ctx, "SELECT space_id, scope, owner_id::text FROM blueprints WHERE id=$1", id).Scan(&spaceID, &scope, &owner)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if scope == "account" {
+		if actor.Type == policy.Admin || (owner != nil && *owner == actor.ID) {
+			return nil, nil
+		}
+		return nil, ErrNotFound
+	}
+	if err := requireSpace(ctx, tx, actor, need, *spaceID); err != nil {
+		return nil, err
+	}
+	return spaceID, nil
+}
+
+// spaceIDValue is the Space id for audit details and responses; nil for an account blueprint.
+func spaceIDValue(id *uuid.UUID) any {
+	if id == nil {
+		return nil
+	}
+	return id.String()
+}
+
+// ListBlueprints returns the blueprints of a Space that the actor may view. A Personal Space lists the owner's account blueprints.
+
 func ListBlueprints(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID uuid.UUID) (json.RawMessage, error) {
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
@@ -301,11 +349,38 @@ func ListBlueprints(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 	if err := requireSpace(ctx, tx, actor, policy.View, spaceID); err != nil {
 		return nil, err
 	}
+	var kind string
+	if err := tx.QueryRow(ctx, "SELECT kind::text FROM spaces WHERE id=$1", spaceID).Scan(&kind); err != nil {
+		return nil, err
+	}
+	var out json.RawMessage
+	if kind == "personal" {
+		err = tx.QueryRow(ctx, `
+SELECT COALESCE(jsonb_agg(`+blueprintSummary+` ORDER BY lower(name),id),'[]'::jsonb)
+FROM blueprints WHERE scope='account' AND owner_id=$1::uuid`, actor.ID).Scan(&out)
+		return out, err
+	}
+	err = tx.QueryRow(ctx, `
+SELECT COALESCE(jsonb_agg(`+blueprintSummary+` ORDER BY lower(name),id),'[]'::jsonb)
+FROM blueprints WHERE space_id=$1`, spaceID).Scan(&out)
+	return out, err
+}
+
+// blueprintSummary is the list and detail shape of one blueprint (without its tree).
+const blueprintSummary = `jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at)`
+
+// ListAccountBlueprints returns the account blueprints the actor may see: their own, or all of them for an instance admin.
+func ListAccountBlueprints(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor) (json.RawMessage, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
 	var out json.RawMessage
 	err = tx.QueryRow(ctx, `
-SELECT COALESCE(jsonb_agg(jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
-  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'version',version,'updated_at',updated_at) ORDER BY lower(name),id),'[]'::jsonb)
-FROM blueprints WHERE space_id=$1`, spaceID).Scan(&out)
+SELECT COALESCE(jsonb_agg(`+blueprintSummary+` ORDER BY lower(name),id),'[]'::jsonb)
+FROM blueprints WHERE scope='account' AND ($1::boolean OR owner_id=$2::uuid)`, actor.Type == policy.Admin, actor.ID).Scan(&out)
 	return out, err
 }
 
@@ -315,19 +390,12 @@ func DeleteBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor
 		return err
 	}
 	defer tx.Rollback(ctx)
-	var spaceID uuid.UUID
-	err = tx.QueryRow(ctx, "SELECT space_id FROM blueprints WHERE id=$1", id).Scan(&spaceID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		err = ErrNotFound
-	}
-	if err == nil {
-		err = requireSpace(ctx, tx, actor, policy.ManageBlueprint, spaceID)
-	}
+	spaceID, err := blueprintAccess(ctx, tx, actor, id, policy.ManageBlueprint)
 	if err == nil {
 		_, err = tx.Exec(ctx, "DELETE FROM blueprints WHERE id=$1", id)
 	}
 	if err == nil {
-		err = auditBlueprint(ctx, tx, actor, "blueprint.delete", id.String(), map[string]any{"space_id": spaceID.String()})
+		err = auditBlueprint(ctx, tx, actor, "blueprint.delete", id.String(), map[string]any{"space_id": spaceIDValue(spaceID)})
 	}
 	if err == nil {
 		err = tx.Commit(ctx)
@@ -367,16 +435,12 @@ func UseBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, i
 }
 
 func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, use BlueprintUse, batch *notifications.Batch) (Detail, error) {
-	var spaceID uuid.UUID
 	var tree blueprintTree
-	err := tx.QueryRow(ctx, "SELECT space_id, tree FROM blueprints WHERE id=$1", id).Scan(&spaceID, &tree)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Detail{}, ErrNotFound
-	}
+	spaceID, err := blueprintAccess(ctx, tx, actor, id, policy.UseBlueprint)
 	if err != nil {
 		return Detail{}, err
 	}
-	if err := requireSpace(ctx, tx, actor, policy.UseBlueprint, spaceID); err != nil {
+	if err := tx.QueryRow(ctx, "SELECT tree FROM blueprints WHERE id=$1", id).Scan(&tree); err != nil {
 		return Detail{}, err
 	}
 	if len(use.Locations) == 0 {
@@ -476,7 +540,7 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 			return Detail{}, err
 		}
 	}
-	if err := auditBlueprint(ctx, tx, actor, "blueprint.use", id.String(), map[string]any{"space_id": spaceID.String(), "item_count": len(created)}); err != nil {
+	if err := auditBlueprint(ctx, tx, actor, "blueprint.use", id.String(), map[string]any{"space_id": spaceIDValue(spaceID), "item_count": len(created)}); err != nil {
 		return Detail{}, err
 	}
 	return readDetail(ctx, tx, actor, created[0])
@@ -617,16 +681,12 @@ func EditBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 }
 
 func editBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, in BlueprintEdit) (json.RawMessage, error) {
-	var spaceID uuid.UUID
-	var version int
-	err := tx.QueryRow(ctx, "SELECT space_id, version FROM blueprints WHERE id=$1 FOR UPDATE", id).Scan(&spaceID, &version)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
-	}
+	spaceID, err := blueprintAccess(ctx, tx, actor, id, policy.ManageBlueprint)
 	if err != nil {
 		return nil, err
 	}
-	if err := requireSpace(ctx, tx, actor, policy.ManageBlueprint, spaceID); err != nil {
+	var version int
+	if err := tx.QueryRow(ctx, "SELECT version FROM blueprints WHERE id=$1 FOR UPDATE", id).Scan(&version); err != nil {
 		return nil, err
 	}
 	if in.Version == nil {
@@ -696,7 +756,7 @@ func editBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.U
 	err = tx.QueryRow(ctx, `
 UPDATE blueprints SET name=COALESCE($2,name), tree=COALESCE($3::jsonb,tree), version=version+1, updated_at=now() WHERE id=$1
 RETURNING jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
-  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'version',version,'updated_at',updated_at)`,
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at)`,
 		id, name, raw).Scan(&out)
 	if pgCode(err) == "23505" {
 		return nil, InvalidField{"name", "a blueprint with that name already exists in this Space"}
@@ -711,7 +771,7 @@ RETURNING jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type'
 	if tree != nil {
 		changed = append(changed, "tree")
 	}
-	if err := Audit(ctx, tx, actor, "blueprint.edit", "blueprint", id.String(), map[string]any{"space_id": spaceID.String(), "changed": changed}); err != nil {
+	if err := Audit(ctx, tx, actor, "blueprint.edit", "blueprint", id.String(), map[string]any{"space_id": spaceIDValue(spaceID), "changed": changed}); err != nil {
 		return nil, err
 	}
 	return out, nil
@@ -760,16 +820,11 @@ func PreviewBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
-	var spaceID uuid.UUID
 	var tree blueprintTree
-	err = tx.QueryRow(ctx, "SELECT space_id, tree FROM blueprints WHERE id=$1", id).Scan(&spaceID, &tree)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
-	}
-	if err != nil {
+	if _, err := blueprintAccess(ctx, tx, actor, id, policy.UseBlueprint); err != nil {
 		return nil, writeError(err)
 	}
-	if err := requireSpace(ctx, tx, actor, policy.UseBlueprint, spaceID); err != nil {
+	if err := tx.QueryRow(ctx, "SELECT tree FROM blueprints WHERE id=$1", id).Scan(&tree); err != nil {
 		return nil, writeError(err)
 	}
 	if err := validateBlueprintTree(tree); err != nil {
@@ -799,19 +854,13 @@ func GetBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, i
 		return nil, err
 	}
 	defer tx.Rollback(ctx)
-	var spaceID uuid.UUID
-	var tree blueprintTree
-	var out json.RawMessage
-	err = tx.QueryRow(ctx, `SELECT space_id, tree, jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
-  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'version',version,'updated_at',updated_at)
-FROM blueprints WHERE id=$1`, id).Scan(&spaceID, &tree, &out)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return nil, ErrNotFound
-	}
-	if err != nil {
+	if _, err := blueprintAccess(ctx, tx, actor, id, policy.View); err != nil {
 		return nil, writeError(err)
 	}
-	if err := requireSpace(ctx, tx, actor, policy.View, spaceID); err != nil {
+	var tree blueprintTree
+	var out json.RawMessage
+	err = tx.QueryRow(ctx, `SELECT tree, `+blueprintSummary+` FROM blueprints WHERE id=$1`, id).Scan(&tree, &out)
+	if err != nil {
 		return nil, writeError(err)
 	}
 	restricted, err := restrictedFieldIDs(ctx, tx)

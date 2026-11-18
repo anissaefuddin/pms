@@ -3619,6 +3619,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/account-blueprints": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance) */
+        get: operations["listAccountBlueprints"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/blueprints/{blueprintId}/items": {
         parameters: {
             query?: never;
@@ -5303,8 +5320,16 @@ export interface components {
         Blueprint: {
             /** Format: uuid */
             id: string;
-            /** Format: uuid */
-            space_id: string;
+            /**
+             * Format: uuid
+             * @description Space of a Space blueprint; null for an account blueprint
+             */
+            space_id: string | null;
+            /**
+             * Format: uuid
+             * @description Owner of an account blueprint; null for a Space blueprint
+             */
+            owner_id?: string | null;
             name: string;
             /** @enum {string} */
             item_type: "project" | "folder" | "task";
@@ -13873,6 +13898,28 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    listAccountBlueprints: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar blueprint akun */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Blueprint"][];
+                    };
+                };
+            };
         };
     };
     createItemsFromBlueprint: {

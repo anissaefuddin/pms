@@ -136,6 +136,7 @@
     "emptyTitle": "No blueprints yet",
     "emptyDescription": "Save a project, folder, or task as a blueprint from its item menu, or create one here.",
     "noMatches": "No blueprints match these filters.",
-    "partialError": "Some Spaces could not be loaded. The list may be incomplete."
+    "partialError": "Some Spaces could not be loaded. The list may be incomplete.",
+    "accountOwner": "Personal Space (account)"
   }
 }

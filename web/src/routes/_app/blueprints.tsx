@@ -33,7 +33,8 @@ function BlueprintsPage() {
   const lists = useQueries({
     queries: (spaces.data ?? []).map((space) => ({
       queryKey: blueprintKey(space.id),
-      queryFn: async () => (await api<{ items: Blueprint[] }>(`/api/v1/spaces/${space.id}/blueprints`)).items,
+      queryFn: async () => (await api<{ items: Blueprint[] }>(`/api/v1/spaces/${space.id}/blueprints`)).items
+        .map((bp) => ({ ...bp, space_id: bp.space_id ?? space.id })),
     })),
     combine: (results) => results.flatMap((result) => result.data ?? []),
   });

@@ -3608,10 +3608,15 @@ type Blueprint struct {
 	ItemType  BlueprintItemType  `json:"item_type"`
 	Name      string             `json:"name"`
 
+	// OwnerId Owner of an account blueprint; null for a Space blueprint
+	OwnerId *openapi_types.UUID `json:"owner_id,omitempty"`
+
 	// Scope space: shared Space; account: the owner's Personal Space only
-	Scope     BlueprintScope     `json:"scope"`
-	SpaceId   openapi_types.UUID `json:"space_id"`
-	UpdatedAt time.Time          `json:"updated_at"`
+	Scope BlueprintScope `json:"scope"`
+
+	// SpaceId Space of a Space blueprint; null for an account blueprint
+	SpaceId   *openapi_types.UUID `json:"space_id"`
+	UpdatedAt time.Time           `json:"updated_at"`
 
 	// Version Naik setiap kali blueprint diubah
 	Version int `json:"version"`
@@ -7434,6 +7439,9 @@ type ServerInterface interface {
 	// RenameAccount Ubah nama workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(w http.ResponseWriter, r *http.Request)
+	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
+	// (GET /account-blueprints)
+	ListAccountBlueprints(w http.ResponseWriter, r *http.Request)
 	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
 	// (GET /account/ownership)
 	GetAccountOwnership(w http.ResponseWriter, r *http.Request)
@@ -8417,6 +8425,20 @@ func (siw *ServerInterfaceWrapper) RenameAccount(w http.ResponseWriter, r *http.
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RenameAccount(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAccountBlueprints operation middleware
+func (siw *ServerInterfaceWrapper) ListAccountBlueprints(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAccountBlueprints(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17643,6 +17665,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/blueprints/{blueprintId}", wrapper.GetBlueprint)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/blueprints/{blueprintId}", wrapper.EditBlueprint)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/blueprints/{blueprintId}/preview", wrapper.PreviewBlueprint)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account-blueprints", wrapper.ListAccountBlueprints)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/blueprints/{blueprintId}/items", wrapper.CreateItemsFromBlueprint)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/forms/{formId}", wrapper.DeleteForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}", wrapper.GetForm)
@@ -17960,6 +17983,29 @@ func (response RenameAccount422ApplicationProblemPlusJSONResponse) VisitRenameAc
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAccountBlueprintsRequestObject struct {
+}
+
+type ListAccountBlueprintsResponseObject interface {
+	VisitListAccountBlueprintsResponse(w http.ResponseWriter) error
+}
+
+type ListAccountBlueprints200JSONResponse struct {
+	Items []Blueprint `json:"items"`
+}
+
+func (response ListAccountBlueprints200JSONResponse) VisitListAccountBlueprintsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -20734,11 +20780,16 @@ type GetBlueprint200JSONResponse struct {
 	ItemType  GetBlueprint200JSONResponseBodyItemType `json:"item_type"`
 	Name      string                                  `json:"name"`
 
+	// OwnerId Owner of an account blueprint; null for a Space blueprint
+	OwnerId *openapi_types.UUID `json:"owner_id,omitempty"`
+
 	// Scope space: shared Space; account: the owner's Personal Space only
-	Scope     GetBlueprint200JSONResponseBodyScope `json:"scope"`
-	SpaceId   openapi_types.UUID                   `json:"space_id"`
-	Tree      BlueprintTree                        `json:"tree"`
-	UpdatedAt time.Time                            `json:"updated_at"`
+	Scope GetBlueprint200JSONResponseBodyScope `json:"scope"`
+
+	// SpaceId Space of a Space blueprint; null for an account blueprint
+	SpaceId   *openapi_types.UUID `json:"space_id"`
+	Tree      BlueprintTree       `json:"tree"`
+	UpdatedAt time.Time           `json:"updated_at"`
 
 	// Version Naik setiap kali blueprint diubah
 	Version int `json:"version"`
@@ -35446,6 +35497,9 @@ type StrictServerInterface interface {
 	// RenameAccount Ubah nama workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(ctx context.Context, request RenameAccountRequestObject) (RenameAccountResponseObject, error)
+	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
+	// (GET /account-blueprints)
+	ListAccountBlueprints(ctx context.Context, request ListAccountBlueprintsRequestObject) (ListAccountBlueprintsResponseObject, error)
 	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
 	// (GET /account/ownership)
 	GetAccountOwnership(ctx context.Context, request GetAccountOwnershipRequestObject) (GetAccountOwnershipResponseObject, error)
@@ -36486,6 +36540,30 @@ func (sh *strictHandler) RenameAccount(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RenameAccountResponseObject); ok {
 		if err := validResponse.VisitRenameAccountResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAccountBlueprints operation middleware
+func (sh *strictHandler) ListAccountBlueprints(w http.ResponseWriter, r *http.Request) {
+	var request ListAccountBlueprintsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAccountBlueprints(ctx, request.(ListAccountBlueprintsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAccountBlueprints")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAccountBlueprintsResponseObject); ok {
+		if err := validResponse.VisitListAccountBlueprintsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

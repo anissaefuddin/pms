@@ -5135,6 +5135,21 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /account-blueprints:
+    get:
+      tags: [blueprints]
+      operationId: listAccountBlueprints
+      summary: Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
+      responses:
+        '200':
+          description: Daftar blueprint akun
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Blueprint' } }
   /blueprints/{blueprintId}/items:
     parameters:
       - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -7197,7 +7212,8 @@ components:
       required: [id, space_id, name, item_type, item_count, created_at, scope, version, updated_at]
       properties:
         id: { type: string, format: uuid }
-        space_id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid, nullable: true, description: "Space of a Space blueprint; null for an account blueprint" }
+        owner_id: { type: string, format: uuid, nullable: true, description: "Owner of an account blueprint; null for a Space blueprint" }
         name: { type: string }
         item_type: { type: string, enum: [project, folder, task] }
         item_count: { type: integer }

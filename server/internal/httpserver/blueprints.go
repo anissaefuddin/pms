@@ -13,6 +13,7 @@ func (s *Server) blueprintRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/blueprints", s.requireUser(s.saveBlueprint))
 	mux.HandleFunc("DELETE /api/v1/blueprints/{blueprintId}", s.requireUser(s.deleteBlueprint))
 	mux.HandleFunc("POST /api/v1/blueprints/{blueprintId}/items", s.requireUser(s.useBlueprint))
+	mux.HandleFunc("GET /api/v1/account-blueprints", s.requireUser(s.listAccountBlueprints))
 	mux.HandleFunc("GET /api/v1/blueprints/{blueprintId}", s.requireUser(s.getBlueprint))
 	mux.HandleFunc("PATCH /api/v1/blueprints/{blueprintId}", s.requireUser(s.editBlueprint))
 	mux.HandleFunc("POST /api/v1/blueprints/{blueprintId}/preview", s.requireUser(s.previewBlueprint))
@@ -141,4 +142,14 @@ func (s *Server) getBlueprint(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, out)
+}
+
+// listAccountBlueprints lists the account blueprints the caller may see: their own, or all for an instance admin.
+func (s *Server) listAccountBlueprints(w http.ResponseWriter, r *http.Request) {
+	out, err := items.ListAccountBlueprints(r.Context(), s.pool, actorOf(r))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]json.RawMessage{"items": out})
 }

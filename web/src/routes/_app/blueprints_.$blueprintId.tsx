@@ -8,6 +8,7 @@ import { blueprintDetailKey, blueprintKey, previewBlueprint, saveBlueprint, useB
 import type { CustomField } from "@/lib/custom-fields";
 import type { User } from "@/lib/spaces";
 import { can } from "@/lib/spaces";
+import { useProfile } from "@/lib/profile";
 import { useSpaces } from "@/lib/space-queries";
 import { FormError } from "@/components/auth/form-error";
 import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
@@ -42,9 +43,12 @@ function BlueprintEditorPage() {
   const { blueprintId } = Route.useParams();
   const detail = useBlueprintDetail(blueprintId);
   const spaces = useSpaces();
+  const me = useProfile();
   const space = (spaces.data ?? []).find((s) => s.id === detail.data?.space_id);
-  const canManage = !!space && can(space, "manage_blueprint");
-  const canUse = !!space && can(space, "use_blueprint");
+  // Account blueprints have no Space: their owner and instance admins act on them.
+  const accountRights = !!detail.data?.owner_id && (detail.data.owner_id === me?.id || me?.user_type === "admin");
+  const canManage = detail.data?.scope === "account" ? accountRights : !!space && can(space, "manage_blueprint");
+  const canUse = detail.data?.scope === "account" ? accountRights : !!space && can(space, "use_blueprint");
   // A new key remounts the editor with fresh data. It changes only on an explicit reload, never on a background refetch,
   // so unsaved edits are not dropped silently.
   const [generation, setGeneration] = useState(0);
@@ -81,7 +85,7 @@ function Editor({ blueprint, canManage, canUse, onReload }: {
     return (list.find((w) => w.is_default) ?? list[0])?.statuses ?? [];
   }, [workflows.data]);
   const fields = useQuery({
-    queryKey: ["space-custom-fields", blueprint.space_id], enabled: canManage,
+    queryKey: ["space-custom-fields", blueprint.space_id], enabled: canManage && !!blueprint.space_id,
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${blueprint.space_id}/custom-fields`),
   });
   const assigneeIds = useMemo(() => [...new Set(tree.nodes.flatMap((n) => n.assignee_ids ?? []))], [tree]);
@@ -143,7 +147,8 @@ function Editor({ blueprint, canManage, canUse, onReload }: {
       setVersion(result.version);
       setSaved({ name: name.trim(), tree: structuredClone(tree) });
       setName(name.trim());
-      await qc.invalidateQueries({ queryKey: blueprintKey(blueprint.space_id) });
+      await qc.invalidateQueries({ queryKey: blueprintKey(blueprint.space_id ?? "") });
+      await qc.invalidateQueries({ queryKey: ["account-blueprints"] });
       await qc.invalidateQueries({ queryKey: blueprintDetailKey(blueprint.id) });
       toast.success(t("blueprints.editor.saved"));
     } catch (err) {

@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { useQueries } from "@tanstack/react-query";
+import { useQueries, useQuery } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
@@ -24,21 +24,35 @@ function BlueprintRegistryPage() {
   const profile = useProfile();
   const spaces = useSpaces();
   const readable = spaces.data ?? [];
-  // One list per Space the user can see; the API enforces what each list returns.
+  // Space blueprints come from each shared Space's list. Account blueprints come from the account list, which returns
+  // only the caller's own (or all, for an instance admin): a Personal Space list would leave out the rest.
+  const shared = readable.filter((space) => space.kind !== "personal");
   const lists = useQueries({
-    queries: readable.map((space) => ({
+    queries: shared.map((space) => ({
       queryKey: blueprintKey(space.id),
       queryFn: async () => (await api<{ items: Blueprint[] }>(`/api/v1/spaces/${space.id}/blueprints`)).items,
     })),
   });
-  const failed = lists.some((result) => result.isError);
-  const loading = spaces.isPending || lists.some((result) => result.isPending);
+  const accounts = useQuery({
+    queryKey: ["account-blueprints"],
+    queryFn: async () => (await api<{ items: Blueprint[] }>("/api/v1/account-blueprints")).items,
+  });
+  const failed = lists.some((result) => result.isError) || accounts.isError;
+  const loading = spaces.isPending || lists.some((result) => result.isPending) || accounts.isPending;
 
-  const rows: RegistryRow[] = useMemo(() => readable.flatMap((space, i) =>
-    (lists[i]?.data ?? []).map((bp) => ({
-      id: bp.id, name: bp.name, item_type: bp.item_type, scope: bp.scope, space_id: bp.space_id, spaceName: space.name,
-      item_count: bp.item_count, updated_at: bp.updated_at, canManage: can(space, "manage_blueprint"),
-    }))), [readable, lists]);
+  const rows: RegistryRow[] = useMemo(() => {
+    const fromSpaces = shared.flatMap((space, i) =>
+      (lists[i]?.data ?? []).map((bp) => ({
+        id: bp.id, name: bp.name, item_type: bp.item_type, scope: bp.scope, space_id: space.id, spaceName: space.name,
+        item_count: bp.item_count, updated_at: bp.updated_at, canManage: can(space, "manage_blueprint"),
+      })));
+    const fromAccounts = (accounts.data ?? []).map((bp) => ({
+      id: bp.id, name: bp.name, item_type: bp.item_type, scope: "account", space_id: "account", spaceName: t("blueprints.registry.accountOwner"),
+      item_count: bp.item_count, updated_at: bp.updated_at,
+      canManage: !!bp.owner_id && (bp.owner_id === profile?.id || profile?.user_type === "admin"),
+    }));
+    return [...fromSpaces, ...fromAccounts];
+  }, [shared, lists, accounts.data, profile, t]);
   const spaceById = useMemo(() => new Map(readable.map((s) => [s.id, s])), [readable]);
 
   const [query, setQuery] = useState("");
@@ -55,7 +69,7 @@ function BlueprintRegistryPage() {
   function groupLabel(key: string) {
     if (group === "scope") return t(`blueprints.registry.scope.${key}`);
     if (group === "type") return t(`blueprints.type.${key}`);
-    return spaceById.get(key)?.name ?? key;
+    return key === "account" ? t("blueprints.registry.accountOwner") : (spaceById.get(key)?.name ?? key);
   }
 
   return <section className="space-y-6" aria-labelledby="registry-title">

@@ -135,6 +135,7 @@
     "emptyTitle": "Belum ada blueprint",
     "emptyDescription": "Simpan project, folder, atau task sebagai blueprint dari menu itemnya, atau buat di sini.",
     "noMatches": "Tidak ada blueprint yang cocok dengan filter ini.",
-    "partialError": "Sebagian Space tidak bisa dimuat. Daftar mungkin belum lengkap."
+    "partialError": "Sebagian Space tidak bisa dimuat. Daftar mungkin belum lengkap.",
+    "accountOwner": "Personal Space (akun)"
   }
 }

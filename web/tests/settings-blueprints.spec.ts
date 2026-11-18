@@ -12,7 +12,8 @@ const summary = (id: string, space_id: string, name: string, item_type: string, 
 const lists = {
   [`GET /spaces/${marketing.id}/blueprints`]: { body: { items: [summary(launch, marketing.id, "Launch kit", "project", "space", 3, "2026-11-10T10:00:00Z")] } },
   [`GET /spaces/${ops.id}/blueprints`]: { body: { items: [summary(audit, ops.id, "Audit checklist", "folder", "space", 2, "2026-11-01T10:00:00Z")] } },
-  [`GET /spaces/${personal.id}/blueprints`]: { body: { items: [summary(onboarding, personal.id, "My onboarding", "task", "account", 1, "2026-11-12T10:00:00Z")] } },
+  [`GET /spaces/${personal.id}/blueprints`]: { body: { items: [] } },
+  [`GET /account-blueprints`]: { body: { items: [{ ...summary(onboarding, "", "My onboarding", "task", "account", 1, "2026-11-12T10:00:00Z"), space_id: null, owner_id: me.id }] } },
 };
 
 test("Settings → Blueprints opens the registry inside Settings, and reload and back work", async ({ page }) => {
