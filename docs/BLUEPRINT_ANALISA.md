@@ -725,3 +725,23 @@ Perbaikan (ada di web, belum di-deploy):
 Belum terverifikasi terhadap server live: perbaikan di atas. Perlu deploy ulang untuk memverifikasinya.
 
 Catatan data: nama blueprint uji sekarang `E2E kit 20261118052039 (live A)`, dan node `Plan` berjudul "Plan (edited in e2e)". Tidak ada data lain yang diubah.
+
+---
+
+## 20. Draf teks BP-T13 dan BP-T14 (dibuat oleh asisten, perlu konfirmasi)
+
+Teks asli BP-T13 dan BP-T14 tidak tersedia di repo maupun di konteks. Karena itu dua acceptance di bawah adalah **draf** yang saya susun dari risiko yang sudah dibahas di bagian 11 sampai 15. Anda bisa menggantinya dengan teks resmi kapan saja.
+
+**BP-T13 (draf): perubahan blueprint memakai versi, dan perubahan basi ditolak tanpa mengubah data.**
+- Given: blueprint berversi N dibaca dua editor.
+- When: editor pertama menyimpan (menjadi N+1), lalu editor kedua menyimpan dengan versi N.
+- Then: penyimpanan kedua dijawab 409, tidak ada perubahan yang tersimpan, dan tree yang tidak valid juga ditolak sebelum ada yang ditulis.
+- Bukti: `TestBlueprintEditNeedsManageAndTheCurrentVersion`, `TestBlueprintEditRefusesInvalidTrees` (Go); tes live di browser (bagian 19) menguji langkah konflik, tetapi belum lulus pada build yang berjalan karena bug draf hilang. Perbaikannya ada di commit `d949653`.
+
+**BP-T14 (draf): pratinjau dan pemakaian blueprint menghasilkan tanggal yang sama, dan pratinjau tidak menulis apa pun.**
+- Given: blueprint dengan item dan dependency.
+- When: pratinjau dengan tanggal selesai, lalu pemakaian dengan tanggal yang sama.
+- Then: setiap item di pratinjau punya tanggal mulai dan selesai yang sama dengan item yang dibuat, dan jumlah item tidak berubah setelah pratinjau.
+- Bukti: `TestBlueprintPreviewMatchesUseAndWritesNothing` (Go, PASS); `E2E` di dev-lens (bagian 18) mencatat hasil yang sama untuk Plan dan Ship.
+
+Mohon konfirmasi: apakah dua draf ini sesuai dengan maksud BP-T13 dan BP-T14, atau kirim teks aslinya untuk menggantikannya.
