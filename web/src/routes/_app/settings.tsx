@@ -8,7 +8,7 @@ export const Route = createFileRoute("/_app/settings")({ component: SettingsLayo
 
 // Three content widths from the design standard: form 720–800px, standard 960–1120px, full-width = available width.
 const FORM_PAGES = ["/settings/profile", "/settings/language", "/settings/work-preferences", "/settings/security", "/settings/email", "/settings/ownership"];
-const FULL_PAGES = ["/settings/users", "/settings/spaces", "/settings/workflows", "/settings/work-schedule", "/settings/audit"];
+const FULL_PAGES = ["/settings/users", "/settings/spaces", "/settings/workflows", "/settings/work-schedule", "/settings/audit", "/settings/blueprints"];
 function contentWidth(pathname: string) {
   if (FULL_PAGES.some((page) => pathname.startsWith(page))) return "";
   if (FORM_PAGES.some((page) => pathname.startsWith(page))) return "max-w-3xl";

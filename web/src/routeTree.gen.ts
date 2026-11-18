@@ -50,6 +50,7 @@ import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/a
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
 import { Route as AppSettingsAppsRouteImport } from './routes/_app/settings/apps'
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
+import { Route as AppSettingsBlueprintsRouteImport } from './routes/_app/settings/blueprints'
 import { Route as AppSettingsCustomFieldsRouteImport } from './routes/_app/settings/custom-fields'
 import { Route as AppSettingsEmailRouteImport } from './routes/_app/settings/email'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
@@ -285,6 +286,11 @@ const AppSettingsAuditRoute = AppSettingsAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsBlueprintsRoute = AppSettingsBlueprintsRouteImport.update({
+  id: '/blueprints',
+  path: '/blueprints',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsCustomFieldsRoute = AppSettingsCustomFieldsRouteImport.update({
   id: '/custom-fields',
   path: '/custom-fields',
@@ -467,6 +473,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
   '/settings/email': typeof AppSettingsEmailRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
@@ -536,6 +543,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
   '/settings/email': typeof AppSettingsEmailRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
@@ -607,6 +615,7 @@ export interface FileRoutesById {
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/apps': typeof AppSettingsAppsRoute
   '/_app/settings/audit': typeof AppSettingsAuditRoute
+  '/_app/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/_app/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
   '/_app/settings/email': typeof AppSettingsEmailRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
@@ -679,6 +688,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/apps'
     | '/settings/audit'
+    | '/settings/blueprints'
     | '/settings/custom-fields'
     | '/settings/email'
     | '/settings/item-types'
@@ -748,6 +758,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/apps'
     | '/settings/audit'
+    | '/settings/blueprints'
     | '/settings/custom-fields'
     | '/settings/email'
     | '/settings/item-types'
@@ -818,6 +829,7 @@ export interface FileRouteTypes {
     | '/_app/settings/appearance'
     | '/_app/settings/apps'
     | '/_app/settings/audit'
+    | '/_app/settings/blueprints'
     | '/_app/settings/custom-fields'
     | '/_app/settings/email'
     | '/_app/settings/item-types'
@@ -1153,6 +1165,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAuditRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/blueprints': {
+      id: '/_app/settings/blueprints'
+      path: '/blueprints'
+      fullPath: '/settings/blueprints'
+      preLoaderRoute: typeof AppSettingsBlueprintsRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/custom-fields': {
       id: '/_app/settings/custom-fields'
       path: '/custom-fields'
@@ -1370,6 +1389,7 @@ interface AppSettingsRouteChildren {
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsAppsRoute: typeof AppSettingsAppsRoute
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
+  AppSettingsBlueprintsRoute: typeof AppSettingsBlueprintsRoute
   AppSettingsCustomFieldsRoute: typeof AppSettingsCustomFieldsRoute
   AppSettingsEmailRoute: typeof AppSettingsEmailRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
@@ -1397,6 +1417,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsAppsRoute: AppSettingsAppsRoute,
   AppSettingsAuditRoute: AppSettingsAuditRoute,
+  AppSettingsBlueprintsRoute: AppSettingsBlueprintsRoute,
   AppSettingsCustomFieldsRoute: AppSettingsCustomFieldsRoute,
   AppSettingsEmailRoute: AppSettingsEmailRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,

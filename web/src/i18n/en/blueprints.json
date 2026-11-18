@@ -88,5 +88,54 @@
     "lag": "Lag (days)",
     "addDependency": "Add dependency",
     "selfDependency": "An item cannot depend on itself."
+  },
+  "registry": {
+    "title": "Blueprint registry",
+    "description": "Blueprints in every Space you can see. Account blueprints live in your Personal Space and only you see them.",
+    "notice": "Status (draft, published, archived), author, and usage counts are not provided by the server yet, so they are not shown here.",
+    "create": "Create blueprint",
+    "search": "Search by name or Space",
+    "filterType": "Type",
+    "filterScope": "Scope",
+    "allTypes": "All types",
+    "allScopes": "All scopes",
+    "sort": "Sort",
+    "sortUpdatedDesc": "Recently updated",
+    "sortUpdatedAsc": "Least recently updated",
+    "sortName": "Name",
+    "groupBy": "Group by",
+    "groupNone": "No grouping",
+    "groupScope": "Scope",
+    "groupSpace": "Space",
+    "groupType": "Type",
+    "scope": {
+      "space": "Space",
+      "account": "Account"
+    },
+    "columns": {
+      "name": "Name",
+      "type": "Base type",
+      "scope": "Scope",
+      "space": "Belongs to",
+      "items": "Items",
+      "updated": "Last updated",
+      "actions": "Actions"
+    },
+    "rowActions": "Actions for {{name}}",
+    "actions": {
+      "edit": "Edit",
+      "duplicate": "Duplicate",
+      "archive": "Archive"
+    },
+    "disabled": {
+      "manage": "Needs the manage right in this Space",
+      "duplicate": "Not available yet: the server has no duplicate action for blueprints",
+      "archive": "Not available yet: the server has no archive for blueprints. Nothing is deleted from here."
+    },
+    "unavailable": "Not available",
+    "emptyTitle": "No blueprints yet",
+    "emptyDescription": "Save a project, folder, or task as a blueprint from its item menu, or create one here.",
+    "noMatches": "No blueprints match these filters.",
+    "partialError": "Some Spaces could not be loaded. The list may be incomplete."
   }
 }

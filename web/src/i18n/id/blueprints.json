@@ -87,5 +87,54 @@
     "lag": "Jeda (hari)",
     "addDependency": "Tambah dependensi",
     "selfDependency": "Item tidak boleh bergantung pada dirinya sendiri."
+  },
+  "registry": {
+    "title": "Registry blueprint",
+    "description": "Blueprint di setiap Space yang bisa Anda lihat. Blueprint akun ada di Personal Space Anda dan hanya Anda yang melihatnya.",
+    "notice": "Status (draf, terbit, diarsipkan), pembuat, dan jumlah pemakaian belum disediakan server, sehingga tidak ditampilkan di sini.",
+    "create": "Buat blueprint",
+    "search": "Cari nama atau Space",
+    "filterType": "Tipe",
+    "filterScope": "Cakupan",
+    "allTypes": "Semua tipe",
+    "allScopes": "Semua cakupan",
+    "sort": "Urutkan",
+    "sortUpdatedDesc": "Terbaru diubah",
+    "sortUpdatedAsc": "Paling lama diubah",
+    "sortName": "Nama",
+    "groupBy": "Kelompokkan",
+    "groupNone": "Tanpa pengelompokan",
+    "groupScope": "Cakupan",
+    "groupSpace": "Space",
+    "groupType": "Tipe",
+    "scope": {
+      "space": "Space",
+      "account": "Akun"
+    },
+    "columns": {
+      "name": "Nama",
+      "type": "Tipe dasar",
+      "scope": "Cakupan",
+      "space": "Milik",
+      "items": "Item",
+      "updated": "Terakhir diubah",
+      "actions": "Aksi"
+    },
+    "rowActions": "Aksi untuk {{name}}",
+    "actions": {
+      "edit": "Ubah",
+      "duplicate": "Duplikasi",
+      "archive": "Arsipkan"
+    },
+    "disabled": {
+      "manage": "Perlu hak kelola di Space ini",
+      "duplicate": "Belum tersedia: server belum punya aksi duplikasi blueprint",
+      "archive": "Belum tersedia: server belum punya arsip blueprint. Tidak ada yang dihapus dari sini."
+    },
+    "unavailable": "Belum tersedia",
+    "emptyTitle": "Belum ada blueprint",
+    "emptyDescription": "Simpan project, folder, atau task sebagai blueprint dari menu itemnya, atau buat di sini.",
+    "noMatches": "Tidak ada blueprint yang cocok dengan filter ini.",
+    "partialError": "Sebagian Space tidak bisa dimuat. Daftar mungkin belum lengkap."
   }
 }

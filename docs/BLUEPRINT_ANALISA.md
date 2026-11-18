@@ -794,3 +794,63 @@ Tanggal: 18 Nov 2026.
 - Status ditampilkan dari workflow default. Saat dipakai, status hanya diterapkan jika workflow item tujuan memiliki status tersebut. Jika tidak, status dilewati, seperti sebelumnya.
 - Field kustom yang tidak ada di Space tujuan atau yang dibatasi (restricted) dilewati saat dipakai.
 - Tes live di browser untuk fitur ini belum dijalankan. Perlu deploy ulang untuk itu.
+
+---
+
+## 23. Settings → Blueprints: registry terpisah dari katalog Workspace
+
+Tanggal: 18 Nov 2026. Tanpa commit, push, atau PR.
+
+### 23.1 Audit routing (sebelum)
+- Item "Blueprints" di grup **Work configuration** Settings (`web/src/components/settings-sidebar.tsx`) mengarah ke **`/blueprints`**, yaitu katalog Workspace. Jadi menu Settings membuka halaman yang salah.
+- Route `/settings/blueprints` belum ada. Halaman management Blueprint pada Settings belum diimplementasikan.
+- Komponen dan API yang bisa dipakai ulang: `GET /spaces/{id}/blueprints` (sudah memuat `scope`, `version`, `updated_at`), `useSpaces`, `can()`, dialog Create blueprint, `DropdownMenu`, `EmptyState`, dan `formatDate`.
+
+### 23.2 Routing (sesudah)
+- Settings → Blueprints mengarah ke **`/settings/blueprints`**, di dalam layout Settings (breadcrumb "Settings / Work configuration", lebar penuh).
+- Workspace → Blueprints tetap **`/blueprints`** (katalog, tidak diubah).
+- Deep link dan reload berfungsi. Back navigation berfungsi.
+
+### 23.3 Perubahan file
+- `web/src/routes/_app/settings/blueprints.tsx` (baru): halaman registry.
+- `web/src/lib/blueprint-registry.ts` (baru): filter, urutan, dan pengelompokan (fungsi murni).
+- `web/src/lib/blueprint-registry.test.ts` (baru): 3 tes unit.
+- `web/src/components/blueprint-create-dialog.tsx` (baru): dialog Create blueprint, dipindah dari `routes/_app/blueprints.tsx` tanpa perubahan perilaku.
+- `web/src/routes/_app/blueprints.tsx`: memakai komponen dialog di atas. Perilaku katalog tidak berubah.
+- `web/src/components/settings-sidebar.tsx`: item Blueprints menunjuk ke `/settings/blueprints`.
+- `web/src/routes/_app/settings.tsx`: `/settings/blueprints` masuk daftar halaman lebar.
+- `web/src/i18n/{en,id}/blueprints.json`: kunci `registry.*`.
+- `web/src/routeTree.gen.ts`: diregenerasi.
+- `web/tests/settings-blueprints.spec.ts` (baru): 6 tes Playwright mock.
+
+### 23.4 Isi registry
+- **Tampil:** Nama, Tipe dasar (Task, Project, Folder), Cakupan (Space atau Account), Milik (nama Space; Personal Space untuk Account), Jumlah item, Terakhir diubah.
+- **Cari, filter (tipe dan cakupan), urut (terbaru, terlama, nama), kelompokkan (cakupan, Space, tipe).**
+- **Aksi per baris:** Ubah (aktif hanya dengan hak kelola; membuka editor yang sudah ada), Duplikasi dan Arsipkan (nonaktif dengan penjelasan).
+- **Create blueprint:** membuka dialog yang sama dengan katalog (simpan dari item yang sudah ada). Hanya tampil jika ada Space yang memberi hak `create_blueprint`.
+- **Empty state:** "Belum ada blueprint" dengan petunjuk.
+
+### 23.5 Yang belum tersedia (ditampilkan sebagai catatan, tidak dimock)
+- **Status (Draft/Published/Archived), Author, dan Usage count:** API belum menyediakan. Kolom ini tidak ditampilkan, dan catatan di halaman menjelaskannya.
+- **Duplikasi dan arsip:** belum ada endpoint. Menu nonaktif dengan penjelasan. Tidak ada hapus permanen dari halaman ini.
+- **Create dari nol:** belum ada. Dialog hanya menyimpan dari item yang sudah ada.
+- **Account Admin:** model hak belum punya peran Account Admin. Blueprint akun hanya dikelola oleh pemilik Personal Space-nya.
+
+### 23.6 Permission
+- Daftar per Space diambil dari API yang sudah membatasi `view`. Tombol Ubah dan Create dinilai dari hak `manage_blueprint` dan `create_blueprint` di Space tersebut, dan tetap dipaksa di backend (tes Go `TestBlueprintRightsAreSeparate`, PASS).
+- Pengguna yang hanya bisa melihat: tidak ada tombol Create, dan Ubah nonaktif (tes Playwright).
+- Editor belum diperluas. Fungsi editor yang sudah ada (sudah di-deploy sebagai `pms:7e82090`) hanya dibuka lewat tombol Ubah yang memerlukan hak kelola. Tidak ada kapabilitas editor baru yang diaktifkan.
+
+### 23.7 Hasil tes
+- `npm test` (unit): 92 PASS, 0 gagal (termasuk 3 tes registry baru).
+- Playwright:
+  - `settings-blueprints.spec.ts`: 6 PASS (routing dan reload, back, filter/urut/kelompok, aksi dan editor, permission, empty state, katalog tetap).
+  - Set regresi (blueprints, blueprint-editor, create-menu, spaces, forms, settings, sidebar, dr02): 75 PASS.
+  - Navigasi dan form-blueprint-live (mock): 19 PASS, 1 dilewati.
+- `tsc -b` dan ESLint untuk file baru: lulus.
+- Screenshot halaman: `scratchpad/settings_blueprints_registry.png`.
+
+### 23.8 Keamanan dan data
+- Tidak ada hard delete. Tidak ada perubahan skema atau kontrak API.
+- Tidak ada data mock yang ditampilkan sebagai data server.
+- Fungsi editor baru tidak diaktifkan. Keputusan R1 (elevated actor) tetap seperti di bagian 12 dan 13.

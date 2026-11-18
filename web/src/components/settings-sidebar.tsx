@@ -40,7 +40,7 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/custom-fields", label: t("settings.customFields.title") },
       ...inPersonalSpace("/spaces/$spaceId/automation", t("automation.title")),
       { to: "/settings/request-forms", label: t("forms.manage.title") },
-      { to: "/blueprints", label: t("blueprints.nav") },
+      { to: "/settings/blueprints", label: t("blueprints.nav") },
     ] },
     { title: t("settings.nav.security"), items: isAdmin ? [
       { to: "/settings/sso", label: t("sso.admin.title") },
