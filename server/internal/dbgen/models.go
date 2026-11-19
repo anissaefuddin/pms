@@ -766,6 +766,22 @@ type CustomField struct {
 	Config     []byte             `json:"config"`
 }
 
+type CustomFieldAssignment struct {
+	FieldID   pgtype.UUID        `json:"field_id"`
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	ScopeKind string             `json:"scope_kind"`
+	ScopeID   pgtype.UUID        `json:"scope_id"`
+	CreatedBy pgtype.UUID        `json:"created_by"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type CustomFieldGrant struct {
+	FieldID     pgtype.UUID `json:"field_id"`
+	SubjectKind string      `json:"subject_kind"`
+	SubjectID   pgtype.UUID `json:"subject_id"`
+	Level       string      `json:"level"`
+}
+
 type CustomRole struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
