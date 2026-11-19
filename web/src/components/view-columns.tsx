@@ -38,7 +38,7 @@ export function ColumnPicker({ board, fieldsOnly, selected, fields, canSave, sav
       const base = `/api/v1/spaces/${spaceId}/custom-fields/${fieldId}/assignments`;
       if (assigned) await api(`${base}/space/${spaceId}`, { method: "DELETE" });
       else await api(base, { method: "POST", body: JSON.stringify({ scope_kind: "space", scope_id: spaceId }) });
-      await Promise.all([client.invalidateQueries({ queryKey: ["field-choices", spaceId] }), client.invalidateQueries({ queryKey: ["custom-fields", spaceId] })]);
+      await Promise.all([client.invalidateQueries({ queryKey: ["field-choices", spaceId] }), client.invalidateQueries({ queryKey: ["custom-fields", spaceId] }), client.invalidateQueries({ queryKey: ["space-applicable-fields", spaceId] })]);
     } catch (err) {
       setFieldError((err as Error).message);
     } finally {
@@ -93,7 +93,7 @@ export function ColumnPicker({ board, fieldsOnly, selected, fields, canSave, sav
     </Dialog>}
     {creating && spaceId && <CustomFieldDrawer key="new-field" open scope={{ spaceId, ownerName: spaceName ?? "" }}
       onOpenChange={(next) => { if (!next) setCreating(false); }}
-      onSaved={() => { void client.invalidateQueries({ queryKey: ["custom-fields", spaceId] }); void client.invalidateQueries({ queryKey: ["field-choices", spaceId] }); }} />}
+      onSaved={() => { void client.invalidateQueries({ queryKey: ["custom-fields", spaceId] }); void client.invalidateQueries({ queryKey: ["space-applicable-fields", spaceId] }); void client.invalidateQueries({ queryKey: ["field-choices", spaceId] }); }} />}
   </>;
 }
 
