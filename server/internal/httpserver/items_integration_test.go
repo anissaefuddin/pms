@@ -193,11 +193,7 @@ func TestItemAuthorizationMatrix(t *testing.T) {
 						f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, second)
 						f.share(second, "user", actor.id, role)
 					}
-					effectiveRole := role
-					if userType == "admin" {
-						effectiveRole = "full"
-					}
-					want := expectedCaps(userType, effectiveRole)
+					want := expectedCaps(userType, role) // A1: the actor's own share is the only grant, admins included
 					can := map[string]bool{}
 					for _, cap := range want {
 						can[cap] = true
