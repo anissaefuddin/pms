@@ -467,7 +467,8 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 			}
 		}
 	}
-	elevated := policy.Actor{ID: actor.ID, Type: policy.Admin}
+	// The submission works only inside the form's own Space, with the requester's identity (see policy.FormActor).
+	elevated := policy.FormActor(actor, row.ID.String(), row.Response.Location.SpaceID.String())
 	var item items.Detail
 	blueprint := row.Response.ResolveBlueprint(answers)
 	if blueprint != nil {
