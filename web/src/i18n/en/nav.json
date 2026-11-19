@@ -102,7 +102,6 @@
   "blueprints": "Blueprints",
   "blueprintsUnavailable": "Blueprints are not available yet",
   "resize": "Resize sidebar",
-  "space.overview": "Space overview",
   "space.tools": "Tools",
   "space.projects": "Projects and folders",
   "space.createIn": "Create in {{name}}",

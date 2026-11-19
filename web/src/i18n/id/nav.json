@@ -102,7 +102,6 @@
   "blueprints": "Blueprint",
   "blueprintsUnavailable": "Blueprint belum tersedia",
   "resize": "Ubah ukuran sidebar",
-  "space.overview": "Ikhtisar Ruang",
   "space.tools": "Alat",
   "space.projects": "Proyek dan folder",
   "space.createIn": "Buat di {{name}}",

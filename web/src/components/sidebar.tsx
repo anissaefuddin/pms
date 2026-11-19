@@ -358,13 +358,13 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
             if (open !== (event.key === "ArrowRight")) onToggle();
           }
         }}>{open ? <ChevronDown /> : <ChevronRight />}</Button>
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeProps={{ "aria-current": undefined }}>{name}</Link>
+      {/* The Space name is the overview: it is the active row only on the Space's own page, not on its tools or items. */}
+      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeOptions={{ exact: true }} activeProps={activeLink}>{name}</Link>
       {can(space as SpaceType, EDIT_CAPABILITY) && <Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
         aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })} onClick={() => setEditing(true)}><Settings /></Button>}
       <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
     {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} text-sm`} activeOptions={{ exact: true }} activeProps={activeLink}>{t("nav.space.overview")}</Link>
       <div>
         <button type="button" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}
           className="flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider text-nav-muted hover:text-nav-text focus-visible:outline-2 focus-visible:outline-ring">

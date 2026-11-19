@@ -22,7 +22,7 @@ test("Space node shows overview, Tools and Projects with type icons, walked by a
   const toggle = tree.getByRole("button", { name: "Expand Marketing" });
   await toggle.focus();
   await toggle.press("ArrowRight");
-  await expect(tree.getByRole("link", { name: "Space overview" })).toBeVisible();
+  await expect(tree.getByRole("link", { name: "Space overview" })).toHaveCount(0);
   await expect(tree.getByText("Tools")).toBeVisible();
   await expect(tree.getByRole("button", { name: "Create in Marketing" })).toBeVisible();
   await expect(tree.getByRole("link", { name: "Roadmap" }).locator("svg")).toHaveCount(1);
