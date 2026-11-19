@@ -24,11 +24,11 @@ func (c Condition) Holds(f Facts, today string) bool {
 	str := func() string { s, _ := jsonString(c.Value); return s }
 	switch c.Field {
 	case "importance":
-		return (f.Importance == str()) == (c.Op == "eq") && (c.Op == "eq" || c.Op == "neq")
+		return oneOfHolds(c, f.Importance)
 	case "status_group":
-		return (f.StatusGroup == str()) == (c.Op == "eq") && (c.Op == "eq" || c.Op == "neq")
+		return oneOfHolds(c, f.StatusGroup)
 	case "item_type":
-		return (f.ItemType == str()) == (c.Op == "eq") && (c.Op == "eq" || c.Op == "neq")
+		return oneOfHolds(c, f.ItemType)
 	case "assignee":
 		switch c.Op {
 		case "has":
@@ -84,6 +84,16 @@ func (c Condition) Holds(f Facts, today string) bool {
 	return false
 }
 
+// oneOfHolds is eq, neq, or in (any of a list, OR-style) for a single-valued field.
+func oneOfHolds(c Condition, actual string) bool {
+	if c.Op == "in" {
+		var list []string
+		return json.Unmarshal(c.Value, &list) == nil && slices.Contains(list, actual)
+	}
+	s, _ := jsonString(c.Value)
+	return (actual == s) == (c.Op == "eq") && (c.Op == "eq" || c.Op == "neq")
+}
+
 func sameValue(a, b json.RawMessage) bool {
 	var x, y any
 	if json.Unmarshal(a, &x) != nil || json.Unmarshal(b, &y) != nil {
@@ -128,10 +138,19 @@ func (t Trigger) Matches(e events.Event, f Facts) bool {
 		return t.ItemType == "" || t.ItemType == f.ItemType
 	case events.ItemDueReached:
 		days, _ := e.Payload["days_before"].(float64)
-		return t.DaysBefore != nil && float64(*t.DaysBefore) == days
+		calendar, _ := e.Payload["calendar"].(string)
+		return t.DaysBefore != nil && float64(*t.DaysBefore) == days && calendar == t.Calendar
+	case events.ItemInactive:
+		days, _ := e.Payload["days"].(float64)
+		return t.Days != nil && float64(*t.Days) == days
 	case events.FormSubmitted:
 		form, _ := e.Payload["form_id"].(string)
 		return t.FormID == "" || t.FormID == form
+	case events.ApprovalDecided:
+		decision, _ := e.Payload["decision"].(string)
+		return t.Decision == "" || t.Decision == decision
+	case events.CommentCreated:
+		return true
 	}
 	return false
 }

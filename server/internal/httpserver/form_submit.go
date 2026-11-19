@@ -30,7 +30,9 @@ const (
 )
 
 type formRow struct {
-	ID         uuid.UUID
+	ID uuid.UUID
+	// SpaceID is the Space the form belongs to: the origin of the submission event.
+	SpaceID    uuid.UUID
 	Name       string
 	Desc       string
 	Definition forms.Definition
@@ -48,6 +50,7 @@ func loadSubmittableForm(ctx context.Context, tx pgx.Tx, actor policy.Actor, id 
 	var definition, response []byte
 	err := tx.QueryRow(ctx, `SELECT f.id,f.space_id,f.name,f.description,f.access,f.definition,f.response,f.published_at IS NOT NULL
 FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL WHERE f.id=$1`, id).Scan(&row.ID, &spaceID, &row.Name, &row.Desc, &access, &definition, &response, &row.Published)
+	row.SpaceID = spaceID
 	if errors.Is(err, pgx.ErrNoRows) {
 		return row, items.ErrNotFound
 	}
@@ -557,7 +560,7 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 			return createdItem{}, err
 		}
 	}
-	if err := events.Emit(ctx, tx, events.Event{Type: events.FormSubmitted, ItemID: head.ID.String(), ActorID: actor.ID,
+	if err := events.Emit(ctx, tx, events.Event{Type: events.FormSubmitted, ItemID: head.ID.String(), ActorID: actor.ID, OriginSpaceID: originOf(row.SpaceID),
 		Payload: map[string]any{"form_id": row.ID.String(), "submission_id": submission.String(), "external": external != nil}}); err != nil {
 		return createdItem{}, err
 	}
@@ -690,4 +693,12 @@ func mappedFieldValues(ctx context.Context, tx pgx.Tx, row formRow, answers map[
 		}
 	}
 	return out, nil
+}
+
+// originOf is the origin Space for an event: empty when the Space is not known, so the event is stored without one.
+func originOf(space uuid.UUID) string {
+	if space == uuid.Nil {
+		return ""
+	}
+	return space.String()
 }
