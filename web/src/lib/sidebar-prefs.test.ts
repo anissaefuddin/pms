@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
-  DEFAULT_PINNED, PINNABLE_IDS, clampWidth, pinPatch, isShortcutVisible, movePin, readWidth, sanitizePinOrder, togglePin, toggleOpen,
+  DEFAULT_PINNED, PINNABLE_IDS, RECENT_MAX, clampWidth, pinPatch, isShortcutVisible, movePin, pushRecent, readWidth, sanitizePinOrder, togglePin, toggleOpen,
   type ShortcutId,
 } from "./sidebar-prefs.ts";
 
@@ -59,4 +59,15 @@ test("width is clamped to 220–400 and rounded", () => {
 test("toggleOpen flips a Space id without touching the rest", () => {
   assert.deepEqual(toggleOpen(["a", "b"], "a"), ["b"]);
   assert.deepEqual(toggleOpen(["a"], "c"), ["a", "c"]);
+});
+
+test("pushRecent puts the newest first, drops the older copy, and keeps five", () => {
+  const a = { id: "a", title: "A", type: "project" };
+  const b = { id: "b", title: "B", type: "folder" };
+  assert.deepEqual(pushRecent([a, b], b), [b, a]);
+  const six = ["1", "2", "3", "4", "5"].map((id) => ({ id, title: id, type: "task" }));
+  const next = pushRecent(six, { id: "6", title: "6", type: "task" });
+  assert.equal(next.length, RECENT_MAX);
+  assert.equal(next[0].id, "6");
+  assert.equal(next.some((e) => e.id === "5"), false);
 });

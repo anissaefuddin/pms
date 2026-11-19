@@ -3,10 +3,11 @@ import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronLeft, Chevr
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
 import { ProfileMenu } from "@/components/topbar";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { listNotifications, notificationKey } from "@/lib/notifications";
+import { starKeys, useStars } from "@/components/star-button";
 import { createAnalyticsBoard } from "@/lib/analytics-board";
 import { api, type CurrentUser } from "@/lib/api";
 import { itemKeys, listItems, type Item } from "@/lib/items";
@@ -14,14 +15,15 @@ import { useSpaces } from "@/lib/space-queries";
 import type { Space } from "@/lib/spaces";
 import {
   pinPatch, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
-  readOpenSpaces, readWidth, sanitizePinOrder, toggleOpen, writeOpenSpaces, writeWidth, type ShortcutId,
+  pushRecent, readOpenSpaces, readRecent, readWidth, sanitizePinOrder, toggleOpen, writeOpenSpaces, writeRecent, writeWidth,
+  type RecentEntry, type ShortcutId,
 } from "@/lib/sidebar-prefs";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import { can, type Space as SpaceType } from "@/lib/spaces";
 
 const EDIT_CAPABILITY = "edit" as const;
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "./ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
 import { CustomizeSidebarDialog, openCustomizeSidebar } from "./customize-sidebar-dialog";
@@ -30,6 +32,24 @@ const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-sm 
 const navRow = "flex w-full items-center gap-3 rounded-md px-3 py-2 text-sm hover:bg-nav-hover";
 const activeNav = { className: `${navRow} bg-nav-active font-medium`, "aria-current": "page" as const };
 const activeLink = { className: `${linkClass} bg-nav-active font-medium`, "aria-current": "page" as const };
+
+/** Hover atau fokus di baris (atau sentuhan) memunculkan aksi baris; tombol tetap bisa dijangkau lewat Tab. */
+const revealOnHover = "opacity-0 transition-opacity group-hover/row:opacity-100 group-focus-within/row:opacity-100 data-[popup-open]:opacity-100 [@media(hover:none)]:opacity-100";
+
+const recentQuery = (userId: string) => ["sidebar", "recent", userId] as const;
+
+/** Catat item yang dibuka: cache dan localStorage selalu sama, jadi More langsung ikut berubah. */
+function rememberItem(client: QueryClient, userId: string, entry: RecentEntry) {
+  const list = pushRecent(client.getQueryData<RecentEntry[]>(recentQuery(userId)) ?? readRecent(userId), entry);
+  client.setQueryData(recentQuery(userId), list);
+  writeRecent(userId, list);
+}
+
+function itemIcon(type?: string) {
+  return type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" />
+    : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" />
+    : <ListChecks aria-hidden="true" className="size-4 shrink-0" />;
+}
 
 const SHORTCUT_ROUTE = {
   request_forms: "/requests", stream: "/stream", portfolio: "/portfolio", workload: "/workload",
@@ -84,6 +104,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
   const [customizing, setCustomizing] = useState(false);
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
   const drag = useRef<{ x: number; width: number } | null>(null);
+  const recent = useQuery({ queryKey: recentQuery(me.id), queryFn: () => readRecent(me.id), staleTime: Infinity }).data ?? [];
 
   function toggle() {
     localStorage.setItem(storageKey, collapsed ? "expanded" : "collapsed");
@@ -158,8 +179,6 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
       <div className={`mb-4 flex items-center gap-1 ${collapsed ? "flex-col" : ""}`}>
         {!collapsed && <p className="min-w-0 flex-1 truncate px-2 font-semibold" title={me.account_name}>{me.account_name}</p>}
         <div className={`flex shrink-0 items-center gap-1 ${collapsed ? "flex-col" : "ml-auto"}`}>
-          <ProfileMenu compact={collapsed} />
-          {!collapsed && !mobile && <span aria-hidden="true" className="mx-0.5 h-5 w-px shrink-0 bg-nav-hover" />}
           {!mobile && <Tooltip>
             <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed} aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
               className="shrink-0 bg-transparent text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted" />}>
@@ -169,6 +188,8 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
           </Tooltip>}
         </div>
       </div>
+      {/* Hanya area ini yang bisa di-scroll; header dan footer (akun, pengaturan) tetap terlihat. */}
+      <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
       <nav className="space-y-1" aria-label={t("nav.main.label")}>
         <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />
         <Nav icon={<Inbox />} label={t("nav.inbox.label")} collapsed={collapsed} badge={unread} current={isCurrent("/inbox")} onClick={() => go("/inbox")} />
@@ -180,12 +201,29 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
           </DropdownMenuTrigger>
           <DropdownMenuContent>
             {more.map((id) => <DropdownMenuItem key={id} onClick={() => go(SHORTCUT_ROUTE[id])}>{t(SHORTCUT_LABEL_KEY[id])}</DropdownMenuItem>)}
+            {recent.length > 0 && <>
+              <DropdownMenuSeparator />
+              <DropdownMenuGroup>
+                <DropdownMenuLabel>{t("nav.recent.label")}</DropdownMenuLabel>
+                {recent.map((item) => <DropdownMenuItem key={item.id} onClick={() => {
+                  rememberItem(client, me.id, item);
+                  onNavigate?.();
+                  void navigate({ to: "/items/$itemId", params: { itemId: item.id } });
+                }}>{item.title}</DropdownMenuItem>)}
+              </DropdownMenuGroup>
+              <DropdownMenuSeparator />
+            </>}
             <DropdownMenuItem onClick={() => openCustomizeSidebar()}>{t("nav.customize.open")}</DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </nav>
+      {!collapsed && <Favorites userId={me.id} />}
       {!collapsed && <SpacesNav me={me} />}
-      {!collapsed && <p className="mt-auto px-3 pt-3 text-xs text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
+      </div>
+      <div className={`mt-2 flex shrink-0 items-center gap-2 border-t border-border pt-2 ${collapsed ? "flex-col" : ""}`}>
+        <ProfileMenu compact={collapsed} />
+        {!collapsed && <p className="min-w-0 flex-1 truncate text-xs text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
+      </div>
       {!mobile && !collapsed && <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
         onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
         className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none hover:bg-nav-hover focus-visible:bg-nav-active focus-visible:outline-none" />}
@@ -238,7 +276,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   }
 
   return (
-    <nav className="sidebar-scroll mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
+    <nav className="sidebar-scroll mt-5 flex flex-col" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
       <div className="flex items-center justify-between px-3 pb-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("spaces.nav.label")}</h2>
         <div className="flex items-center">
@@ -270,6 +308,25 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   );
 }
 
+/** Item berbintang milik pengguna, tampil di atas daftar Space. Kosong berarti seksi tidak ditampilkan. */
+function Favorites({ userId }: { userId: string }) {
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const stars = useStars();
+  if (!stars.data?.length) return null;
+  return <section className="mt-5" aria-labelledby="sidebar-favorites">
+    <h2 id="sidebar-favorites" className="px-3 pb-1 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.favorites.label")}</h2>
+    <ul>
+      {stars.data.map((item) => <li key={item.id}>
+        <Link to="/items/$itemId" params={{ itemId: item.id }} className={navRow} activeProps={activeNav} title={item.title}
+          onClick={() => rememberItem(client, userId, item)}>
+          {itemIcon(item.type)}<span className="truncate">{item.title}</span>
+        </Link>
+      </li>)}
+    </ul>
+  </section>;
+}
+
 /** SB-01: sidebar disclosure buttons keep nav colours when expanded (the ghost variant otherwise paints aria-expanded light). */
 const treeToggle = "shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-text";
 
@@ -292,7 +349,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
   const onTool = pathname.startsWith("/dashboards") || pathname.startsWith("/reports");
   const [toolsOpen, setToolsOpen] = useState(onTool);
   return <li>
-    <div className="flex min-w-0 items-center">
+    <div className="group/row flex min-w-0 items-center">
       <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={open}
         aria-label={t(open ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={onToggle} onKeyDown={(event) => {
@@ -302,7 +359,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
           }
         }}>{open ? <ChevronDown /> : <ChevronRight />}</Button>
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeProps={{ "aria-current": undefined }}>{name}</Link>
-      {can(space as SpaceType, EDIT_CAPABILITY) && <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text"
+      {can(space as SpaceType, EDIT_CAPABILITY) && <Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
         aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })} onClick={() => setEditing(true)}><Settings /></Button>}
       <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
@@ -350,11 +407,24 @@ function ItemTree({ id, space = false, onEmpty }: { id: string; space?: boolean;
 
 function Branch({ id, name, type }: { id: string; name: string; type?: string }) {
   const { t } = useTranslation();
+  const client = useQueryClient();
+  const stars = useStars();
+  const starred = !!stars.data?.some((item) => item.id === id);
   const [expanded, setExpanded] = useState(false);
   // Once expanded and found empty, the item has no children: the toggle goes away and the title keeps its indent.
   const [leaf, setLeaf] = useState(false);
+  function openItem() {
+    const userId = client.getQueryData<CurrentUser>(["me"])?.id;
+    if (userId) rememberItem(client, userId, { id, title: name, type: type ?? "" });
+  }
+  async function toggleStar() {
+    try {
+      await api(`/api/v1/items/${id}/star`, { method: starred ? "DELETE" : "PUT" });
+      await client.invalidateQueries({ queryKey: starKeys.all });
+    } catch { toast.error(t("starred.failed")); }
+  }
   return <li>
-    <div className="flex min-w-0 items-center">
+    <div className="group/row flex min-w-0 items-center">
       {leaf ? <span aria-hidden="true" className="size-7 shrink-0" /> : <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={expanded}
         aria-label={t(expanded ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={() => setExpanded(!expanded)} onKeyDown={(event) => {
@@ -363,7 +433,14 @@ function Branch({ id, name, type }: { id: string; name: string; type?: string })
             setExpanded(event.key === "ArrowRight");
           }
         }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>}
-      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} activeProps={activeLink}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
+      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} activeProps={activeLink} onClick={openItem}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`${treeToggle} ${revealOnHover}`}
+          aria-label={t("nav.item.actions", { name })} title={t("nav.item.actions", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
+        <DropdownMenuContent>
+          <DropdownMenuItem onClick={() => void toggleStar()}>{t(starred ? "starred.remove" : "starred.add")}</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
     </div>
     {expanded && <div className="ml-3 border-l border-nav-hover pl-1"><ItemTree id={id} onEmpty={() => { setLeaf(true); setExpanded(false); }} /></div>}
   </li>;
