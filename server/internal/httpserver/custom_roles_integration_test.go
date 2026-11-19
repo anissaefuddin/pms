@@ -45,7 +45,7 @@ func TestCustomRolesLeastPrivilegeAndLifecycle(t *testing.T) {
 	f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", task, space, project)
 	shareSpace := func(who *person, role string, others ...map[string]any) reply {
 		cur := f.call(admin, "GET", "/spaces/"+space+"/shares", nil)
-		list := append([]map[string]any{{"principal_type": "user", "principal_id": who.id, "role": role}}, others...)
+		list := append([]map[string]any{{"principal_type": "user", "principal_id": who.id, "role": role}, {"principal_type": "user", "principal_id": admin.id, "role": "full"}}, others...)
 		return f.call(admin, "PUT", "/spaces/"+space+"/shares", map[string]any{"shares": list}, "If-Match", cur.header.Get("ETag"))
 	}
 
@@ -79,7 +79,13 @@ func TestCustomRolesLeastPrivilegeAndLifecycle(t *testing.T) {
 		t.Fatalf("item caps = %v", got)
 	}
 	shares := f.call(admin, "GET", "/spaces/"+space+"/shares", nil)
-	if row := shares.items()[0]; row["role"] != "custom:"+commenter || row["role_name"] != "Commenter" {
+	var row map[string]any
+	for _, r := range shares.items() { // the admin's own full row is listed too
+		if r["principal_id"] == alice.id {
+			row = r
+		}
+	}
+	if row["role"] != "custom:"+commenter || row["role_name"] != "Commenter" {
 		t.Fatalf("share row = %v", row)
 	}
 	f.want(f.call(alice, "PATCH", "/items/"+task, map[string]any{"title": "Nope"}, "If-Match", `"1"`), 403, "no edit")
@@ -138,7 +144,8 @@ func TestCustomRolesLeastPrivilegeAndLifecycle(t *testing.T) {
 		cur := f.call(bob, "GET", "/spaces/"+space+"/shares", nil)
 		return f.call(bob, "PUT", "/spaces/"+space+"/shares", map[string]any{"shares": []map[string]any{
 			{"principal_type": "user", "principal_id": bob.id, "role": "custom:" + sharer},
-			{"principal_type": "user", "principal_id": alice.id, "role": role}}}, "If-Match", cur.header.Get("ETag"))
+			{"principal_type": "user", "principal_id": alice.id, "role": role},
+			{"principal_type": "user", "principal_id": admin.id, "role": "full"}}}, "If-Match", cur.header.Get("ETag")) // the admin's row is unchanged
 	}
 	f.want(grant("custom:"+everything), 403, "cannot grant above own capabilities")
 	f.want(grant("full"), 403, "built-in full is also above")
@@ -159,7 +166,8 @@ func TestCustomRolesLeastPrivilegeAndLifecycle(t *testing.T) {
 	cur = f.call(admin, "GET", "/spaces/"+space+"/shares", nil)
 	f.want(f.call(admin, "PUT", "/spaces/"+space+"/shares", map[string]any{"shares": []map[string]any{
 		{"principal_type": "group", "principal_id": team, "role": "custom:" + commenter},
-		{"principal_type": "user", "principal_id": alice.id, "role": "limited"}}}, "If-Match", cur.header.Get("ETag")), 200, "group and user shares")
+		{"principal_type": "user", "principal_id": alice.id, "role": "limited"},
+		{"principal_type": "user", "principal_id": admin.id, "role": "full"}}}, "If-Match", cur.header.Get("ETag")), 200, "group and user shares")
 	if got := spaceCaps(f, alice, space); !slices.Equal(got, []string{"view", "comment", "change_status", "attach"}) {
 		t.Fatalf("union caps = %v", got)
 	}

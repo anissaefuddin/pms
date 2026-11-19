@@ -19,6 +19,8 @@ func TestLockedSpaceIsAdminOnlyAndAudited(t *testing.T) {
 	admin, owner := f.person("admin"), f.person("regular")
 	space := f.space("Finance")
 	f.share(space, "user", owner.id, "full")
+	// A1: leaving a locked Space needs an explicit Space Admin, not the Workspace admin role.
+	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", space, admin.id)
 
 	v := f.call(owner, "GET", "/spaces/"+space, nil)
 	if v.body["locked"] != false {
@@ -74,6 +76,7 @@ func TestLockedSpaceKeepsItemsAmongThePeopleWhoHaveTheSpace(t *testing.T) {
 	inGroup, outGroup := f.group("Finance team", groupie), f.group("Everyone else", outsider)
 	space, elsewhere := f.space("Finance"), f.space("Public")
 	f.share(space, "user", owner.id, "full")
+	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", space, admin.id) // A1: leaving a locked Space needs an explicit Space Admin
 	f.share(space, "user", member.id, "read")
 	f.share(space, "group", inGroup, "read")
 	f.share(elsewhere, "user", owner.id, "full")
