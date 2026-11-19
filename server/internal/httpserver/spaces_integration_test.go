@@ -80,8 +80,6 @@ type fixture struct {
 	// files is the directory attachments are stored in.
 	files string
 	queue *mailqueue.Queue
-	// admins are the Workspace admins made so far; a Space they create gets an explicit full share (A1: no implicit content access).
-	admins []string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -147,33 +145,12 @@ func (f *fixture) person(userType string) *person {
 	email := fmt.Sprintf("%s%d@example.com", userType, f.n)
 	id := f.queryID("INSERT INTO users(email,first_name,last_name,password_hash,user_type,status) VALUES ($1,'T','User','x',$2::user_type,'active') RETURNING id::text", email, userType)
 	f.exec("INSERT INTO spaces(name,kind,owner_id) VALUES ('Personal','personal',$1)", id)
-	if userType == "admin" {
-		f.admins = append(f.admins, id)
-	}
 	token, hash, _ := security.Token()
 	f.exec("INSERT INTO sessions(token_hash,user_id,expires_at,absolute_expires_at) VALUES ($1,$2,now()+interval '1 day',now()+interval '2 days')", hash, id)
 	return &person{id: id, userType: userType, cookie: &http.Cookie{Name: "pms_session", Value: token}}
 }
 
 func (f *fixture) space(name string) string {
-	f.t.Helper()
-	id := f.spaceWithoutAdmins(name)
-	for _, admin := range f.admins {
-		f.share(id, "user", admin, "full")
-	}
-	return id
-}
-
-// unlinkedAdmin is a Workspace admin who is not given Spaces created later (A1.3: no implicit content access).
-func (f *fixture) unlinkedAdmin() *person {
-	f.t.Helper()
-	p := f.person("admin")
-	f.admins = f.admins[:len(f.admins)-1]
-	return p
-}
-
-// spaceWithoutAdmins creates a shared Space with no automatic admin share, for tests that assert a Workspace admin is denied.
-func (f *fixture) spaceWithoutAdmins(name string) string {
 	f.t.Helper()
 	return f.queryID("INSERT INTO spaces(name,kind) VALUES ($1,'shared') RETURNING id::text", name)
 }
@@ -189,8 +166,7 @@ func (f *fixture) group(name string, members ...*person) string {
 
 func (f *fixture) share(spaceID, principalType, principalID, role string) {
 	f.t.Helper()
-	// Upserts: a Space's automatic admin share (see space) may be set again to another role by a test.
-	f.exec("INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('space',$1,$2::principal_type,$3,$4::share_role) ON CONFLICT (target_type,target_id,principal_type,principal_id) DO UPDATE SET role=EXCLUDED.role, custom_role_id=NULL", spaceID, principalType, principalID, role)
+	f.exec("INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('space',$1,$2::principal_type,$3,$4::share_role)", spaceID, principalType, principalID, role)
 }
 
 type reply struct {
@@ -274,7 +250,7 @@ func TestAuthorizationMatrix(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					f.t = t
 					p := f.person(ut)
-					space := f.spaceWithoutAdmins(name) // A1: only the share below grants access
+					space := f.space(name)
 					if path == "direct" {
 						f.share(space, "user", p.id, role)
 					} else {

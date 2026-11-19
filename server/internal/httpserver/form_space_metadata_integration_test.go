@@ -11,7 +11,7 @@ import (
 // submitting does not give the requester access to the destination Item.
 func TestFormSpaceMetadataFollowsSpaceAccess(t *testing.T) {
 	f := newFixture(t)
-	admin, editor, owner, reader, outsider := f.unlinkedAdmin(), f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
+	admin, editor, owner, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
 	intake := f.space("Intake")
 	f.share(intake, "user", editor.id, "editor")
 	f.share(intake, "user", owner.id, "full")

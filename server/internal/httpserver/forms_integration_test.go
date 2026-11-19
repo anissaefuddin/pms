@@ -28,6 +28,7 @@ func TestFormsDefinitionAndSettings(t *testing.T) {
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", reader.id, "read")
 	f.share(readOnly, "user", editor.id, "read")
+	f.share(space, "user", admin.id, "full") // A1.2: the approver must see the destination Space; the form manager is an explicit member
 	path := "/spaces/" + space + "/forms"
 
 	f.want(f.call(reader, "POST", path, formBody(space, nil)), 403, "read-only member cannot build forms")
@@ -119,6 +120,7 @@ func TestFormAccessAndManageList(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, owner, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
 	intake, other := f.space("Intake"), f.space("Other")
+	f.share(other, "user", admin.id, "full") // A1.2: admin acts in this Space as an explicit member
 	f.share(intake, "user", editor.id, "editor")
 	f.share(intake, "user", owner.id, "full")
 	f.share(intake, "user", reader.id, "read")
@@ -155,9 +157,15 @@ func TestFormAccessAndManageList(t *testing.T) {
 	if mine.status != 200 || len(mine.items()) != 1 || mine.items()[0]["space_name"] != "Intake" || mine.items()[0]["access"] != "private" {
 		t.Fatalf("editor manages one form: %v", mine.body)
 	}
-	if all := f.call(admin, "GET", "/forms", nil); len(all.items()) != 2 || all.items()[0]["space_name"] != "Intake" {
-		t.Fatalf("admin manages every form, ordered by Space then name: %v", all.body)
+	// D-17 A1: a Workspace admin manages only the forms of Spaces where the admin holds a grant (here: Other, granted above).
+	if only := f.call(admin, "GET", "/forms", nil); len(only.items()) != 1 || only.items()[0]["space_name"] != "Other" {
+		t.Fatalf("an admin manages the form of the Space they hold a grant on: %v", only.body)
 	}
+	f.share(intake, "user", admin.id, "full")
+	if all := f.call(admin, "GET", "/forms", nil); len(all.items()) != 2 || all.items()[0]["space_name"] != "Intake" {
+		t.Fatalf("with a grant on Intake the admin manages both, ordered by Space: %v", all.body)
+	}
+	f.exec("DELETE FROM shares WHERE target_type='space' AND target_id=$1 AND principal_id=$2", intake, admin.id)
 	for name, p := range map[string]*person{"reader": reader, "outsider": outsider} {
 		if got := f.call(p, "GET", "/forms", nil); got.status != 200 || len(got.items()) != 0 {
 			t.Fatalf("%s manages nothing: %v", name, got.body)

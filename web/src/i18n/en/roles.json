@@ -38,6 +38,9 @@
   "capability.create": "Create",
   "capability.delete": "Delete",
   "capability.share": "Share",
+  "capability.use_blueprint": "Use blueprints",
+  "capability.create_blueprint": "Save blueprints",
+  "capability.manage_blueprint": "Manage blueprints",
   "capabilityHelp.view": " — see the item",
   "capabilityHelp.comment": " — write comments",
   "capabilityHelp.change_status": " — move through the workflow",
@@ -46,6 +49,9 @@
   "capabilityHelp.create": " — add items",
   "capabilityHelp.delete": " — remove items",
   "capabilityHelp.share": " — change who has access",
+  "capabilityHelp.use_blueprint": " — create items from a blueprint",
+  "capabilityHelp.create_blueprint": " — save items as blueprints",
+  "capabilityHelp.manage_blueprint": " — delete blueprints",
   "tabs.list": "List",
   "tabs.matrix": "Permission matrix"
 }

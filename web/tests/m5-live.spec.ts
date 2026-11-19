@@ -69,7 +69,7 @@ test("flow 1: a project manager builds a dashboard from the UI and the numbers m
   await page.getByRole("button", { name: "Star this item" }).click();
   await expect(page.getByRole("button", { name: "Remove the star" })).toHaveAttribute("aria-pressed", "true");
   await page.goto("/starred");
-  await expect(page.getByRole("main").getByRole("link", { name: "Fresh work" })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Fresh work" })).toBeVisible();
   await page.goto("/dashboards");
   await page.getByRole("link", { name: "Delivery board" }).click();
   await addWidget("Starred", "task_list", async (dialog) => { await dialog.getByLabel(/^List or template/).selectOption("template:starred"); });

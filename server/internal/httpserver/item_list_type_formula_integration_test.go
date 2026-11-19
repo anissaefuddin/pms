@@ -13,6 +13,7 @@ func TestListFiltersByTypeKeyAndFormulaField(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Type list")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.want(f.call(admin, http.MethodPost, "/item-types", map[string]any{"key": "bug", "name": "Bug", "base": "task"}), http.StatusCreated, "type")
 	loc := []map[string]any{{"space_id": space}}
 	mk := func(title, key string, fields map[string]any) {

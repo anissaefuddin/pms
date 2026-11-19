@@ -9,6 +9,7 @@ func TestWorkflowEditor(t *testing.T) {
 	f := newFixture(t)
 	admin, member := f.person("admin"), f.person("regular")
 	space := f.space("Work")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	status := func(name string) string {
 		return f.queryID("SELECT id::text FROM statuses WHERE name=$1 AND workflow_id=(SELECT id FROM workflows WHERE is_default)", name)
 	}

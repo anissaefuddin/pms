@@ -15,6 +15,8 @@ func TestSearchPrefixAndScopesRespectVisibility(t *testing.T) {
 	f.share(first, "user", member.id, "read")
 	f.share(second, "user", member.id, "read")
 	f.share(first, "user", external.id, "read")
+	f.share(hidden, "user", owner.id, "full") // A1.2: the owner created the hidden placements and is an explicit member of that Space
+	f.share(first, "user", owner.id, "read")  // A1.2: the owner must be able to view the first Space for its user to appear in its search scope
 	f.exec("UPDATE users SET first_name='Roadmap',last_name='Owner' WHERE id=$1", owner.id)
 
 	item := func(kind, title, space string, parent *string) string {
@@ -50,7 +52,13 @@ func TestSearchPrefixAndScopesRespectVisibility(t *testing.T) {
 		slices.Sort(ids)
 		slices.Sort(expectedItems)
 		if !slices.Equal(ids, expectedItems) || len(reply.body["comments"].([]any)) != comments || len(reply.body["users"].([]any)) != users {
-			t.Fatalf("%s: items %v expected %v, body %+v", path, ids, expectedItems, reply.body)
+			var titles []string
+			for _, value := range reply.body["items"].([]any) {
+				row := value.(map[string]any)
+				titles = append(titles, fmt.Sprintf("%v=%v", row["id"], row["title"]))
+			}
+			t.Fatalf("%s: items %v expected %v; returned %v; comments %d want %d; users %d want %d", path, ids, expectedItems, titles,
+				len(reply.body["comments"].([]any)), comments, len(reply.body["users"].([]any)), users)
 		}
 		if comments > 0 {
 			comment := reply.body["comments"].([]any)[0].(map[string]any)

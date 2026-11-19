@@ -13,6 +13,7 @@ func TestNotificationWorkflow(t *testing.T) {
 	f := newFixture(t)
 	admin, mentioned, follower, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Inbox")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", mentioned.id, "read")
 	f.share(space, "user", follower.id, "read")
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Design review',$1) RETURNING id::text", admin.id)

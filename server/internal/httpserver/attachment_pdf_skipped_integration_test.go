@@ -18,6 +18,7 @@ func TestPDFPreviewWithoutRendererIsSkippedAndPageIs404(t *testing.T) {
 	f := newFixture(t)
 	owner := f.person("admin")
 	space := f.space("Docs")
+	f.share(space, "user", owner.id, "full") // A1.2: the owner creates the item and its attachments as an explicit member
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Doc',$1) RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 	var body bytes.Buffer

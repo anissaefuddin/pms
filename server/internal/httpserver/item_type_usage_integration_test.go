@@ -10,6 +10,7 @@ func TestItemTypeUsageCountsLiveItems(t *testing.T) {
 	f := newFixture(t)
 	admin, editor := f.person("admin"), f.person("regular")
 	space := f.space("Usage")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", editor.id, "editor")
 	typed := f.call(admin, http.MethodPost, "/item-types", map[string]any{"key": "usage_req", "name": "Usage request", "base": "task"})
 	f.want(typed, http.StatusCreated, "type")

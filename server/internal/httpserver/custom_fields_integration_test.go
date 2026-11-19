@@ -63,6 +63,7 @@ func TestCustomFieldConcurrentOptionRemoval(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Concurrent field changes")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	selected, remaining := customFieldOption("Selected"), customFieldOption("Remaining")
 	definitions := customFieldsPath(space)
 	created := f.call(admin, "POST", definitions, map[string]any{
@@ -111,9 +112,11 @@ func TestCustomFieldLifecycleAndItemValues(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, reader, owner := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	primary, other := f.space("Primary fields"), f.space("Other fields")
+	f.share(other, "user", admin.id, "full") // A1.2: the admin also defines fields in the other Space
 	f.share(primary, "user", editor.id, "editor")
 	f.share(primary, "user", reader.id, "read")
 	f.share(primary, "user", owner.id, "full")
+	f.share(primary, "user", admin.id, "full") // A1.2: the admin defines this Space's fields as an explicit member
 	low, high, future := customFieldOption("Low"), customFieldOption("High"), customFieldOption("Future")
 	body := map[string]any{"name": "Impact", "type": "single_select", "options": []any{low, high}}
 	path := customFieldsPath(primary)
@@ -225,6 +228,7 @@ func TestCustomFieldOptionsPreservedForDeletedItems(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Restorable options")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	keep, unused := customFieldOption("Keep"), customFieldOption("Unused")
 	root := customFieldsPath(space)
 	created := f.call(admin, "POST", root, map[string]any{"name": "Labels", "type": "multi_select", "options": []any{keep, unused}})

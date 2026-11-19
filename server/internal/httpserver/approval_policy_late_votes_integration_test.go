@@ -7,6 +7,7 @@ func TestApprovalAnyAllLateVotesAndFinality(t *testing.T) {
 	f := newFixture(t)
 	admin, a, b, c := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Approval policies")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	for _, p := range []*person{a, b, c} {
 		f.share(space, "user", p.id, "read")
 	}

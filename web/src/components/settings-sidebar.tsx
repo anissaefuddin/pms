@@ -13,9 +13,6 @@ type SettingsGroup = { title: string; items: SettingsItem[] };
 /** Settings shell sidebar (prototype): its own groups, a "Find settings" filter, and a link back to the workspace. */
 export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => string): SettingsGroup[] {
   const isAdmin = me?.user_type === "admin";
-  // The settings shell has no current Space, so Space-scoped pages open the user's personal Space.
-  const inPersonalSpace = (to: "/spaces/$spaceId/automation", label: string): SettingsItem[] =>
-    me?.personal_space_id ? [{ to, params: { spaceId: me.personal_space_id }, label }] : [];
   return [
     { title: t("settings.nav.personal"), items: [
       { to: "/settings/profile", label: t("settings.profile.title") },
@@ -38,9 +35,9 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/item-types", label: t("settings.itemTypes.title") },
       { to: "/settings/workflows", label: t("settings.workflows.title") },
       { to: "/settings/custom-fields", label: t("settings.customFields.title") },
-      ...inPersonalSpace("/spaces/$spaceId/automation", t("automation.title")),
+      { to: "/settings/automation", label: t("automation.title") },
       { to: "/settings/request-forms", label: t("forms.manage.title") },
-      { to: "/blueprints", label: t("blueprints.nav") },
+      { to: "/settings/blueprints", label: t("blueprints.nav") },
     ] },
     { title: t("settings.nav.security"), items: isAdmin ? [
       { to: "/settings/sso", label: t("sso.admin.title") },

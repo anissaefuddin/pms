@@ -110,6 +110,7 @@ func TestSSETwoUsersLatencyOrderReconnectAndResync(t *testing.T) {
 	editor, watcher := f.person("admin"), f.person("regular")
 	space := f.space("Live")
 	f.share(space, "user", watcher.id, "read")
+	f.share(space, "user", editor.id, "full") // A1.2: the editing admin is an explicit member of the live Space
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Live item',$1) RETURNING id::text", editor.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space)
 	statuses := []string{}

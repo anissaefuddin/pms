@@ -32,5 +32,59 @@
     "due_date": "Due date",
     "duration_days": "Duration in days",
     "is_milestone": "Milestone"
-  }
+  },
+  "templates": "Download a template:",
+  "template": {
+    "basic": "Basic",
+    "hierarchy": "Hierarchy",
+    "advanced": "Advanced"
+  },
+  "destination": "Destination",
+  "spaceRoot": "Space root",
+  "scope": "Scope",
+  "scopeAll": "All tasks",
+  "scopeActive": "Active tasks only",
+  "scopeCompleted": "Completed tasks only",
+  "exportTable": "Export this table to Excel",
+  "destinationSearch": "Search destinations",
+  "expand": "Expand",
+  "collapse": "Collapse",
+  "noCreate": "Not shown as enabled: you cannot create items under this item",
+  "wizard": {
+    "upload": "Upload",
+    "map": "Map columns",
+    "validate": "Validate",
+    "import": "Import",
+    "stepOf": "Step {{step}} of {{total}} · {{name}}",
+    "back": "Back",
+    "next": "Next"
+  },
+  "validSummary": "{{valid}} rows valid, {{errors}} errors.",
+  "review": {
+    "rows": "Rows",
+    "mode": "Import mode",
+    "createOnly": "Create new items",
+    "destination": "Destination",
+    "chosen": "Selected destination"
+  },
+  "columns": "Columns",
+  "preset": "Preset",
+  "presetNone": "No preset",
+  "presetName": "Preset name",
+  "savePreset": "Save preset",
+  "exportColumn": {
+    "status": "Status",
+    "workflow": "Workflow",
+    "start_date": "Start date",
+    "due_date": "Finish date",
+    "duration_days": "Duration",
+    "is_milestone": "Milestone",
+    "type_key": "Item type",
+    "depends_on": "Dependencies"
+  },
+  "exportProgress": "Export progress",
+  "exportCount": "{{done}} of {{total}} items written",
+  "exportSpaceTitle": "Export Space to Excel",
+  "exportSpaceDescription": "Exports every item in {{name}} that you can see, with its hierarchy.",
+  "deletePreset": "Delete preset"
 }

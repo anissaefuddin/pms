@@ -663,3 +663,29 @@ Belum (9), menunggu desain operational reporting (14.4): `TestAnalyticsEngineMat
 - Tangkapan layar: `/private/tmp/claude-501/shots/` (space-*, settings-general-*, registry-*, project-dark-tablet.png).
 - Spec sementara `web/tests/zz-theme-tablet.spec.ts` sudah dihapus. Belum: pemeriksaan visual manual di lebar phone dan tema gelap pada Calendar.
 - Tidak ada commit, push, atau deploy. Status rilis tetap NO-GO.
+
+### 19.12 Verifikasi lengkap pada commit yang di-push (037c60e)
+- Pengukuran pada worktree bersih di commit `037c60e` (tip `feat/m12c-ui-clean` setelah push), dan pada working tree.
+- Go test (`go test -count=1 ./server/...`, DB terisolasi port 55470):
+  - Commit `037c60e`: GAGAL. 137 tes gagal di 4 paket: `connectors`, `database`, `httpserver`, `mail`. Penyebab utama: perubahan kebijakan A1 ikut ter-commit, tetapi pembaruan tes dan fixture yang menyertainya belum (mis. `TestApprovals`, `TestCommentLifecycle` mendapat 404 saat membuat item).
+  - Working tree: 22 paket OK, 4 tes gagal di `httpserver` (`TestEventReplayRespectsCurrentAccess`, `TestListFilterAndSortByCustomField`, `TestNotificationReplayChecksCurrentAccess`, `TestMyTodoOnlyReturnsVisibleAssignedTasks`), belum ditelusuri.
+- Web typecheck (`tsc -b`):
+  - Commit `037c60e`: GAGAL, 9 error TS (`space-automation.tsx` 5, `blueprints.tsx` 1, `spaces.$spaceId.tsx` 1 (`SpaceExcelExport` tidak diekspor), `tasks.$itemId.tsx` 2).
+  - Working tree: lulus (0 error).
+- Lint (`eslint src`): lulus di kedua kondisi (exit 0).
+- Playwright (`space-settings`, `space-keyboard-focus`, `project-kpi`, `spaces`):
+  - Commit `037c60e`: 0 dari 35 lulus.
+  - Working tree: 35 dari 35 lulus.
+- Status rilis: NO-GO. Commit yang di-push belum konsisten dan tidak lulus tes maupun typecheck. Perlu commit susulan yang melengkapi kode dan tes, atau keputusan untuk menarik commit itu dari remote.
+
+### 19.13 Verifikasi pada tip remote terbaru (c28da4d)
+- Worktree bersih di `origin/feat/m12c-ui-clean` = `c28da4d`. Tidak ada commit atau push.
+- Build dan `go vet ./...`: LULUS.
+- Go test penuh: 3 tes gagal dari 23 paket.
+  - `database/TestItemLocationRejectsCycle`: admin tidak mendapat akses lewat Space bersama. Versi working tree dari `items_integration_test.go` (pembaruan A1 yang belum di-commit) membuatnya LULUS.
+  - `mail/TestNotificationWorkerHonoursEmailPreferences`: 0 email, harusnya 5. Versi working tree dari `notification_integration_test.go` membuatnya LULUS.
+  - `httpserver/TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds`: 404 untuk `/automation-rules/{id}/duplicate`, `/spaces/{id}/excel-exports`, `/spaces/{id}/workspace-automation`. Rute ini berasal dari commit automation (`6eee477`) dan excel yang belum ada di remote.
+- Typecheck (`tsc -b`): GAGAL, 9 error. `space-automation.tsx` mengimpor `automation-rule-list` dan `workspace-automation` (tidak ter-track), dan `EditorStep` dari `automation-editor`.
+- Lint: LULUS.
+- Playwright (`space-settings`, `space-keyboard-focus`, `project-kpi`, `spaces`): 0 dari 35 lulus. Halaman Space gagal dimuat karena `SpaceExcelExport` tidak diekspor oleh `project-excel-export.tsx`, dan karena modul automation di atas.
+- Status rilis: NO-GO. Commit Space di remote belum lengkap: butuh pembaruan tes A1 dan modul web dari sesi automation dan excel.

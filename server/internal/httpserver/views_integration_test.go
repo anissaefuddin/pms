@@ -10,6 +10,7 @@ func TestViewLifecycle(t *testing.T) {
 	admin := f.person("admin")
 	viewer := f.person("viewer")
 	space := f.space("View scope")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", viewer.id, "read")
 	list := "/spaces/" + space + "/views"
 	root := f.call(admin, http.MethodGet, list, nil)
@@ -96,6 +97,7 @@ func TestDefaultViewTypesSeedChosenView(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Default views")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	for _, viewType := range []string{"gantt", "calendar", "files", "chart", "table", "board"} {
 		created := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": viewType, "default_view_type": viewType,
 			"locations": []map[string]any{{"space_id": space}}})

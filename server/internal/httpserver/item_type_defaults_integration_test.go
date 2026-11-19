@@ -242,6 +242,17 @@ func TestItemTypeInExportSearchAndReports(t *testing.T) {
 	if got := strings.Join(keys, ","); !strings.Contains(got, "bug") || !strings.Contains(got, "idea") || !strings.Contains(got, "task") {
 		t.Fatalf("exported type keys: %s", got)
 	}
+	// A Status is importable only under a destination whose workflow holds it, and this round trip imports at the Space root.
+	// So the statuses are cleared here; the type round trip is what this test covers.
+	for i := range rows {
+		if i > 0 {
+			rows[i][9], rows[i][10] = "", ""
+		}
+	}
+	data, err = projectexcel.Write(rows)
+	if err != nil {
+		t.Fatal(err)
+	}
 	up := f.uploadExcel(e.admin, e.space, data, nil)
 	f.want(up, 200, "preview the export")
 	f.want(f.uploadExcel(e.admin, e.space, data, map[string]string{"commit": "true", "digest": up.body["digest"].(string)}), 201, "re-import")

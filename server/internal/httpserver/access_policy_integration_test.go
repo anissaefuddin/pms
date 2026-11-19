@@ -19,7 +19,7 @@ func TestLockedSpaceIsAdminOnlyAndAudited(t *testing.T) {
 	admin, owner := f.person("admin"), f.person("regular")
 	space := f.space("Finance")
 	f.share(space, "user", owner.id, "full")
-	// A1: leaving a locked Space needs an explicit Space Admin, not the Workspace admin role.
+	// D-17 A1: a Workspace admin locks a Space through an explicit Space Admin role, not through the user type alone.
 	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", space, admin.id)
 
 	v := f.call(owner, "GET", "/spaces/"+space, nil)
@@ -76,10 +76,11 @@ func TestLockedSpaceKeepsItemsAmongThePeopleWhoHaveTheSpace(t *testing.T) {
 	inGroup, outGroup := f.group("Finance team", groupie), f.group("Everyone else", outsider)
 	space, elsewhere := f.space("Finance"), f.space("Public")
 	f.share(space, "user", owner.id, "full")
-	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", space, admin.id) // A1: leaving a locked Space needs an explicit Space Admin
+	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", space, admin.id) // D-17 A1: explicit access for the admin
 	f.share(space, "user", member.id, "read")
 	f.share(space, "group", inGroup, "read")
 	f.share(elsewhere, "user", owner.id, "full")
+	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", elsewhere, admin.id) // D-17 A1: the admin moves items only where they have access
 	item := customFieldItem(f, admin, space, "Payroll")
 	f.lock(admin, space, true)
 	path := "/items/" + item + "/shares"

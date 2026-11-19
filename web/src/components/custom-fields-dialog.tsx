@@ -47,7 +47,6 @@ function CustomFields({ spaceId }: { spaceId: string | null }) {
       await api(resource, { method, body: value === undefined ? undefined : JSON.stringify(value) });
       setDraft(null);
       await client.invalidateQueries({ queryKey: key });
-      if (spaceId) await client.invalidateQueries({ queryKey: ["space-applicable-fields", spaceId] });
     } catch (err) {
       setError((err as Error).message);
     } finally {

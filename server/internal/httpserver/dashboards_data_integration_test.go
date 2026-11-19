@@ -10,6 +10,7 @@ func TestWidgetDataPresetsAndCustomQueries(t *testing.T) {
 	f := newFixture(t)
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	shared, secret := f.space("Widgets shared"), f.space("Widgets secret")
+	f.share(shared, "user", admin.id, "full") // A1.2: admin creates this Space's content as an explicit member
 	f.share(shared, "user", member.id, "read")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")
@@ -116,8 +117,9 @@ VALUES ('task',$1,$2,$3::uuid,NULLIF($4,'')::date, CASE WHEN $3::text=$5::text T
 	pWidget := f.queryID("SELECT id::text FROM widgets WHERE dashboard_id=$1", personal.body["id"])
 	r := f.call(admin, "GET", pBase+"/widgets/"+pWidget+"/data", nil)
 	f.want(r, 200, "admin overdue everywhere")
-	if n := len(r.body["items"].([]any)); n != 2 { // Late and Secret late; Finished is completed
-		t.Fatalf("admin overdue = %v, want 2 tasks", r.body["items"])
+	// D-17 A1: the admin sees only the Late task; the Secret task in a Space the admin has no grant on is not counted.
+	if n := len(r.body["items"].([]any)); n != 1 {
+		t.Fatalf("admin overdue = %v, want the 1 visible task", r.body["items"])
 	}
 	f.want(f.call(member, "GET", pBase+"/widgets/"+pWidget+"/data", nil), 404, "someone else's personal dashboard")
 
@@ -133,8 +135,9 @@ VALUES ('task',$1,$2,$3::uuid,NULLIF($4,'')::date, CASE WHEN $3::text=$5::text T
 		}
 		return r.body["result"].(map[string]any)
 	}
-	if got := data(admin)["total"]; got != 7.0 {
-		t.Fatalf("admin total = %v, want 7", got)
+	// D-17 A1: without a grant on the secret Space, the admin's widget total is the same as the member's shared total.
+	if got := data(admin)["total"]; got != 6.0 {
+		t.Fatalf("admin total = %v, want 6 (only the shared Space)", got)
 	}
 	if got := data(member)["total"]; got != 6.0 {
 		t.Fatalf("member total = %v, want 6 (the secret Space is hidden)", got)
@@ -178,7 +181,11 @@ func TestStarsAndStarredWidget(t *testing.T) {
 	f.want(f.call(member, "PUT", "/items/"+open+"/star", nil), 204, "star")
 	f.want(f.call(member, "PUT", "/items/"+open+"/star", nil), 204, "starring twice is idempotent")
 	f.want(f.call(member, "PUT", "/items/"+closed+"/star", nil), 204, "star a completed task")
-	f.want(f.call(admin, "PUT", "/items/"+hidden+"/star", nil), 204, "admin stars the secret task")
+	// D-17 A1: a Workspace admin without a grant on the secret Space cannot star its task; with an explicit grant it can.
+	f.want(f.call(admin, "PUT", "/items/"+hidden+"/star", nil), 404, "admin without a grant cannot star the secret task")
+	f.share(secret, "user", admin.id, "read")
+	f.want(f.call(admin, "PUT", "/items/"+hidden+"/star", nil), 204, "admin with an explicit grant stars the secret task")
+	f.exec("DELETE FROM shares WHERE target_type='space' AND target_id=$1 AND principal_id=$2", secret, admin.id)
 	if n := f.queryID("SELECT count(*)::text FROM item_stars WHERE user_id=$1", member.id); n != "2" {
 		t.Fatalf("member stars = %s, want 2", n)
 	}
@@ -196,8 +203,9 @@ func TestStarsAndStarredWidget(t *testing.T) {
 	if got := fmt.Sprint(titles(member)); got != "[Done and starred Open and starred]" { // newest star first
 		t.Fatalf("member stars = %s", got)
 	}
-	if got := fmt.Sprint(titles(admin)); got != "[Secret]" {
-		t.Fatalf("stars are personal: admin = %s", got)
+	// The admin's star on Secret was made with a temporary grant; with the grant gone, a starred item the admin cannot view is not shown.
+	if got := fmt.Sprint(titles(admin)); got != "[]" {
+		t.Fatalf("stars are personal and visible-only: admin = %s", got)
 	}
 	if len(titles(outsider)) != 0 {
 		t.Fatal("outsider has no stars")

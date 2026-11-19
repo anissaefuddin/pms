@@ -11,6 +11,7 @@ func TestCustomFieldArchiveRestoreImpact(t *testing.T) {
 	f := newFixture(t)
 	admin, owner, editor, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	spaceA := f.space("Alpha")
+	f.share(spaceA, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(spaceA, "user", owner.id, "full")
 	f.share(spaceA, "user", editor.id, "editor")
 

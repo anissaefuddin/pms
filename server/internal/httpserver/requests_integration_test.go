@@ -11,6 +11,7 @@ func TestMyRequests(t *testing.T) {
 	f := newFixture(t)
 	admin, requester, other, viewer := f.person("admin"), f.person("regular"), f.person("regular"), f.person("viewer")
 	work := f.space("Work")
+	f.share(work, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	project := f.call(admin, "POST", "/items", map[string]any{"type": "project", "title": "Platform", "locations": []map[string]any{{"space_id": work}}})
 	f.want(project, 201, "project")
 	sibling := f.call(admin, "POST", "/items", map[string]any{"type": "task", "title": "Secret", "locations": []map[string]any{{"space_id": work, "parent_item_id": project.body["id"]}}})

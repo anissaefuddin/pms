@@ -46,14 +46,18 @@ test("builds a WHEN/IF/THEN rule in the editor, tries it on an item, and publish
   await page.getByRole("button", { name: "New rule" }).click();
   const dialog = page.getByRole("dialog", { name: "New automation rule" });
   await dialog.getByLabel("Rule name").fill("Escalate");
+  await dialog.getByRole("button", { name: "When", exact: true }).click();
   await dialog.getByLabel("Moved to status").selectOption({ label: "Done" });
+  await dialog.getByRole("button", { name: "If", exact: true }).click();
   await dialog.getByRole("button", { name: "Add a condition" }).click();
   await dialog.getByLabel("Condition 1 value").selectOption("high");
+  await dialog.getByRole("button", { name: "Then", exact: true }).click();
   await dialog.getByLabel("Action 1 comment").fill("Escalated {item.title}");
   await dialog.getByRole("button", { name: "Add an action" }).click();
   await dialog.getByRole("combobox", { name: "Action 2", exact: true }).selectOption("set_field");
   await dialog.getByLabel("Action 2 field").selectOption("importance");
   await dialog.getByLabel("Action 2 value").selectOption("low");
+  await dialog.getByRole("button", { name: "Try it", exact: true }).click();
   await dialog.getByLabel("Search an item to test on").fill("cra");
   await dialog.getByRole("button", { name: "Test on Crash on save" }).click();
   const result = dialog.getByRole("region", { name: "Test result" });
@@ -75,6 +79,7 @@ test("editing saves a draft with only the settings the chosen trigger allows", a
   await page.getByRole("button", { name: "Edit Celebrate" }).click();
   const dialog = page.getByRole("dialog", { name: "Edit automation rule" });
   await expect(dialog.getByLabel("Rule name")).toHaveValue("Celebrate");
+  await dialog.getByRole("button", { name: "When", exact: true }).click();
   await dialog.getByLabel("Trigger").selectOption("item.due_reached");
   await dialog.getByLabel("Days before the due date").fill("2");
   await dialog.getByRole("button", { name: "Save draft" }).click();

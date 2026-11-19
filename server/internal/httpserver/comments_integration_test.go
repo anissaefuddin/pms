@@ -8,6 +8,7 @@ func TestCommentLifecycle(t *testing.T) {
 	member := f.person("regular")
 	moderator := f.person("regular")
 	space := f.space("Comments")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", moderator.id, "full")
 	group := f.group("Reviewers", member)
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Review',$1) RETURNING id::text", admin.id)

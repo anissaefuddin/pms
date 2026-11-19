@@ -39,12 +39,14 @@ func TestCustomRolesLeastPrivilegeAndLifecycle(t *testing.T) {
 	f := newFixture(t)
 	admin, alice, bob, ext, viewer := f.person("admin"), f.person("regular"), f.person("regular"), f.person("external"), f.person("viewer")
 	space := f.space("Custom role space")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Roles project',$1) RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", project, space)
 	task := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Roles task',$1) RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", task, space, project)
 	shareSpace := func(who *person, role string, others ...map[string]any) reply {
 		cur := f.call(admin, "GET", "/spaces/"+space+"/shares", nil)
+		// The admin stays the full holder: a Space list with no full holder is refused (last-holder rule).
 		list := append([]map[string]any{{"principal_type": "user", "principal_id": who.id, "role": role}, {"principal_type": "user", "principal_id": admin.id, "role": "full"}}, others...)
 		return f.call(admin, "PUT", "/spaces/"+space+"/shares", map[string]any{"shares": list}, "If-Match", cur.header.Get("ETag"))
 	}
@@ -80,12 +82,12 @@ func TestCustomRolesLeastPrivilegeAndLifecycle(t *testing.T) {
 	}
 	shares := f.call(admin, "GET", "/spaces/"+space+"/shares", nil)
 	var row map[string]any
-	for _, r := range shares.items() { // the admin's own full row is listed too
+	for _, r := range shares.items() { // the admin's own full row is listed too; find alice's
 		if r["principal_id"] == alice.id {
 			row = r
 		}
 	}
-	if row["role"] != "custom:"+commenter || row["role_name"] != "Commenter" {
+	if row == nil || row["role"] != "custom:"+commenter || row["role_name"] != "Commenter" {
 		t.Fatalf("share row = %v", row)
 	}
 	f.want(f.call(alice, "PATCH", "/items/"+task, map[string]any{"title": "Nope"}, "If-Match", `"1"`), 403, "no edit")
@@ -145,7 +147,7 @@ func TestCustomRolesLeastPrivilegeAndLifecycle(t *testing.T) {
 		return f.call(bob, "PUT", "/spaces/"+space+"/shares", map[string]any{"shares": []map[string]any{
 			{"principal_type": "user", "principal_id": bob.id, "role": "custom:" + sharer},
 			{"principal_type": "user", "principal_id": alice.id, "role": role},
-			{"principal_type": "user", "principal_id": admin.id, "role": "full"}}}, "If-Match", cur.header.Get("ETag")) // the admin's row is unchanged
+			{"principal_type": "user", "principal_id": admin.id, "role": "full"}}}, "If-Match", cur.header.Get("ETag"))
 	}
 	f.want(grant("custom:"+everything), 403, "cannot grant above own capabilities")
 	f.want(grant("full"), 403, "built-in full is also above")

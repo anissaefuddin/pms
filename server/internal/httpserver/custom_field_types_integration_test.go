@@ -12,6 +12,7 @@ func TestCustomFieldTypesAndConfig(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Typed custom fields")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	definitions := customFieldsPath(space)
 	item := customFieldItem(f, admin, space, "Item with every type")
 	path := "/items/" + item
@@ -111,6 +112,8 @@ func TestCustomFieldPeopleDirectoryAndLocation(t *testing.T) {
 	hiddenPerson, active := f.person("regular"), f.person("regular")
 	space, hiddenSpace := f.space("Visible"), f.space("Private fields")
 	f.share(space, "user", external.id, "editor")
+	f.share(space, "user", admin.id, "full")       // A1.2: the admin defines fields in both Spaces as an explicit member
+	f.share(hiddenSpace, "user", admin.id, "full") // A1.2: the hidden Space is the admin's own; the others must still not see it
 	id := customFieldItem(f, admin, space, "Multi-location")
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, hiddenSpace)
 	peopleField := func(spaceID string) string {

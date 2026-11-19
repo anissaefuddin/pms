@@ -10,6 +10,7 @@ func TestImportanceAndPredecessorSort(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Priority")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	mk := func(title, importance, due string) string {
 		id := customFieldItem(f, admin, space, title)
 		body := map[string]any{"importance": importance}

@@ -13,6 +13,8 @@ func TestFormulaFieldsAreValidatedRecalculatedAndProtected(t *testing.T) {
 	admin, editor := f.person("admin"), f.person("regular")
 	space, elsewhere := f.space("Calc"), f.space("Elsewhere")
 	f.share(space, "user", editor.id, "full")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin defines the formula fields in both Spaces
+	f.share(elsewhere, "user", admin.id, "full")
 	mk := func(sp, name, kind string, config map[string]any) string {
 		body := map[string]any{"name": name, "type": kind}
 		if config != nil {
@@ -103,6 +105,7 @@ func TestFormulaRecalculationOver500Items(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Perf")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	price := f.call(admin, "POST", "/spaces/"+space+"/custom-fields", map[string]any{"name": "Price", "type": "number"})
 	qty := f.call(admin, "POST", "/spaces/"+space+"/custom-fields", map[string]any{"name": "Qty", "type": "number"})
 	f.want(price, 201, "price")

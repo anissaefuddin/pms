@@ -54,7 +54,7 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     // The mention popover must close before the send shortcut, or Ctrl+Enter can land in the popover and drop the comment.
     await expect(comments.getByRole("button", { name: "Pilot Recipient" })).toHaveCount(0);
     const posted = page.waitForResponse((response) => response.request().method() === "POST" && /\/comments$/.test(new URL(response.url()).pathname));
-    await comments.getByRole("button", { name: "Post comment", exact: true }).click();
+    await editor.press("Control+Enter");
     expect((await posted).status()).toBe(201);
     // Delivery first (the API lists the mention for the recipient), then the inbox row that shows it.
     await expect.poll(async () => JSON.stringify((await (await recipient.request.get("/api/v1/notifications")).json()).items ?? []), { timeout: 15000 })

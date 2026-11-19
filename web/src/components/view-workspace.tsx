@@ -17,6 +17,7 @@ import { ProjectChart, ProjectFiles } from "@/components/project-files";
 import { ViewTabs } from "@/components/view-tabs";
 import { useItemTypes } from "@/lib/item-types";
 import { ColumnPicker } from "@/components/view-columns";
+import { ProjectExcelExport } from "@/components/project-excel-export";
 import { useSpaces } from "@/lib/space-queries";
 import { can } from "@/lib/spaces";
 import { ViewToolbar } from "@/components/view-toolbar";
@@ -76,7 +77,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   });
   // The Space's applicable fields: its own and the Workspace fields assigned to it (DR-08), without those the viewer cannot read.
   const fieldQueries = useQuery({
-    queryKey: ["space-applicable-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
+    queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/fields`),
   });
   const spaceList = useSpaces(!!spaceId);
@@ -84,6 +85,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const canManageFields = !!spaceInfo && can(spaceInfo, "share");
   const customFields = (fieldQueries.data?.items ?? []).filter((field) => !field.archived_at);
   const [savingColumns, setSavingColumns] = useState(false);
+  const [exportingTable, setExportingTable] = useState(false);
   const workflows = useQuery({
     queryKey: ["workflows"], enabled: isCollection,
     queryFn: () => api<{ items: components["schemas"]["Workflow"][] }>("/api/v1/workflows"),
@@ -214,6 +216,11 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     <ViewTabs views={available} selected={active} canEdit={canEdit}
       project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
       onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
+    {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && <>
+      <button type="button" className="mt-2 text-sm underline" onClick={() => setExportingTable(true)}>{t("excel.exportTable")}</button>
+      {exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
+        table={{ search: filter, preset, sort, columns: visibleColumns(active.config, false), typeFilter, fieldFilter, viewId: active.id }} />}
+    </>}
     {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? <ProjectChart project={parent} /> : isGantt ? <>
       <ViewToolbar filterOnly {...toolbar} columns={!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
         fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}

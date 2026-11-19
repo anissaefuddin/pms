@@ -40,7 +40,7 @@ func checkVariedFixture(t *testing.T, seed int64) {
 	rng := rand.New(rand.NewSource(seed))
 	people := []*person{f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")}
 	admin, member := people[0], people[1]
-	spaces := []string{f.space("Varied one"), f.spaceWithoutAdmins("Varied two"), f.spaceWithoutAdmins("Varied three")}
+	spaces := []string{f.space("Varied one"), f.space("Varied two"), f.space("Varied three")}
 	f.share(spaces[0], "user", member.id, "read")
 	f.share(spaces[1], "user", member.id, "editor")
 	statuses := map[string]string{}

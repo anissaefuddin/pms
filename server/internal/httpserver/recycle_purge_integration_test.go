@@ -15,6 +15,8 @@ func TestEmptyRecycleBinPurgesOnlyWhatActorMayDelete(t *testing.T) {
 	admin, reader := f.person("admin"), f.person("regular")
 	a, b := f.space("Primary"), f.space("Alternate")
 	f.share(a, "user", reader.id, "read")
+	f.share(a, "user", admin.id, "full") // A1.2: the admin deletes items in both Spaces as their explicit manager
+	f.share(b, "user", admin.id, "full")
 	mk := func(kind, title string) string {
 		return f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1,$2,$3) RETURNING id::text", kind, title, admin.id)
 	}

@@ -418,12 +418,13 @@ func recordChange(ctx context.Context, tx pgx.Tx, id, actor, action string, befo
 	if err := emitChange(ctx, tx, id, actor, action, before, after); err != nil {
 		return err
 	}
+	via, ruleID := AttributionFrom(ctx)
 	_, err := tx.Exec(ctx, `
-INSERT INTO activity(item_id,actor_id,action,changes)
+INSERT INTO activity(item_id,actor_id,action,changes,via,rule_id)
 SELECT $1::uuid,$2::uuid,$3,COALESCE(jsonb_object_agg(COALESCE(a.key,b.key),
-  jsonb_build_object('from',a.value,'to',b.value)), '{}')
+  jsonb_build_object('from',a.value,'to',b.value)), '{}'),$6,$7::uuid
 FROM jsonb_each($4::jsonb) a FULL JOIN jsonb_each($5::jsonb) b USING (key)
-WHERE a.value IS DISTINCT FROM b.value`, id, actor, action, before, after)
+WHERE a.value IS DISTINCT FROM b.value`, id, actor, action, before, after, via, ruleID)
 	return err
 }
 

@@ -49,8 +49,8 @@ func publicDefinition(def forms.Definition) forms.Definition {
 func loadPublicForm(ctx context.Context, tx pgx.Tx, token string) (formRow, error) {
 	var row formRow
 	var definition, response []byte
-	err := tx.QueryRow(ctx, `SELECT f.id,f.name,f.description,f.definition,f.response
-FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL WHERE f.public_token=$1 AND f.published_at IS NOT NULL`, token).Scan(&row.ID, &row.Name, &row.Desc, &definition, &response)
+	err := tx.QueryRow(ctx, `SELECT f.id,f.space_id,f.name,f.description,f.definition,f.response
+FROM request_forms f JOIN spaces s ON s.id=f.space_id AND s.deleted_at IS NULL WHERE f.public_token=$1 AND f.published_at IS NOT NULL`, token).Scan(&row.ID, &row.SpaceID, &row.Name, &row.Desc, &definition, &response)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return row, items.ErrNotFound
 	}

@@ -10,6 +10,7 @@ func TestEnteringAStatusStartsAnApprovalWhoseResultMovesTheItem(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, approver, noAccess := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Auto approval")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", editor.id, "full")
 	f.share(space, "user", approver.id, "read")
 	stat := func(group string) string {
