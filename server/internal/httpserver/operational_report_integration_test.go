@@ -13,8 +13,8 @@ func TestOperationalReportIsAggregateOnlyAndAudited(t *testing.T) {
 	admin := f.person("admin")
 	owner := f.person("regular")
 	regular := f.person("regular")
-	secret := f.space("Private finance")
-	tiny := f.space("Tiny private")
+	secret := f.spaceWithoutAdmins("Private finance")
+	tiny := f.spaceWithoutAdmins("Tiny private")
 	f.share(secret, "user", owner.id, "full")
 	f.share(tiny, "user", owner.id, "full")
 	for i := 0; i < 6; i++ {

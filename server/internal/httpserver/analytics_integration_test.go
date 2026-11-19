@@ -24,8 +24,8 @@ func rowsOf(r reply) map[string]float64 {
 func TestAnalyticsEngineMatchesRawDataAndPolicy(t *testing.T) {
 	f := newFixture(t)
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
-	unlinked := f.person("admin") // A1.3: a Workspace admin with no grant on these Spaces
-	shared, secret := f.space("Analytics shared"), f.space("Analytics secret")
+	unlinked := f.unlinkedAdmin() // A1.3: a Workspace admin with no grant on these Spaces
+	shared, secret := f.space("Analytics shared"), f.spaceWithoutAdmins("Analytics secret")
 	f.share(shared, "user", member.id, "read")
 	// A1.3: the admin is an explicit member of both Spaces; the positive expectations below are the explicit grant's.
 	f.share(shared, "user", admin.id, "full")

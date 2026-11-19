@@ -135,7 +135,7 @@ func TestProjectProgressFollowsAuthorizedLiveLocations(t *testing.T) {
 	f := newFixture(t)
 	admin, reader := f.person("admin"), f.person("regular")
 	direct, personalOwner := f.person("regular"), f.person("regular")
-	visible, hidden := f.space("Visible placements"), f.space("Hidden placements")
+	visible, hidden := f.space("Visible placements"), f.spaceWithoutAdmins("Hidden placements")
 	personal := f.queryID("SELECT id::text FROM spaces WHERE kind='personal' AND owner_id=$1", personalOwner.id)
 	f.share(visible, "user", reader.id, "read")
 	f.share(visible, "user", admin.id, "full") // A1.2: the admin places and removes the project's folders as an explicit member

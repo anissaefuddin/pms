@@ -18,7 +18,7 @@ func TestReportSubscriptionsAreDeliveredOncePerSlotWithTheSubscribersRights(t *t
 		t.Fatalf("queue with the digest job: %v", err)
 	}
 	admin, reader, stranger := f.person("admin"), f.person("regular"), f.person("regular")
-	shared, secret := f.space("Digest shared"), f.space("Digest secret")
+	shared, secret := f.space("Digest shared"), f.spaceWithoutAdmins("Digest secret")
 	f.share(shared, "user", admin.id, "full") // A1.2: admin creates this Space's content as an explicit member
 	f.share(shared, "user", reader.id, "read")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")

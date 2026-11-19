@@ -24,7 +24,7 @@ func formBody(space string, mod func(map[string]any)) map[string]any {
 func TestFormsDefinitionAndSettings(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
-	space, readOnly := f.space("Intake"), f.space("Archive")
+	space, readOnly := f.space("Intake"), f.spaceWithoutAdmins("Archive")
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", reader.id, "read")
 	f.share(readOnly, "user", editor.id, "read")
@@ -119,7 +119,7 @@ func TestFormsDefinitionAndSettings(t *testing.T) {
 func TestFormAccessAndManageList(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, owner, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
-	intake, other := f.space("Intake"), f.space("Other")
+	intake, other := f.spaceWithoutAdmins("Intake"), f.space("Other") // A1: the admin gets Intake only through the explicit share below
 	f.share(other, "user", admin.id, "full") // A1.2: admin acts in this Space as an explicit member
 	f.share(intake, "user", editor.id, "editor")
 	f.share(intake, "user", owner.id, "full")

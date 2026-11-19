@@ -87,7 +87,8 @@ func TestAuditTrailRecordsSecurityChangesForAdminsOnly(t *testing.T) {
 	// Shares: add, change role, remove, on a Space and on an Item.
 	// The Space keeps its admin as the full holder: a list without any full holder is refused (last-holder rule).
 	shares := func(list []map[string]any, version string) reply {
-		list = append(list, map[string]any{"principal_type": "user", "principal_id": admin.id, "role": "full"})
+		// The admin's own full share is kept in every list, so the Space always has someone with full access.
+		list = append([]map[string]any{{"principal_type": "user", "principal_id": admin.id, "role": "full"}}, list...)
 		return f.call(admin, "PUT", "/spaces/"+space+"/shares", map[string]any{"shares": list}, "If-Match", version)
 	}
 	current := f.call(admin, "GET", "/spaces/"+space+"/shares", nil)

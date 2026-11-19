@@ -9,7 +9,7 @@ import (
 func TestWidgetDataPresetsAndCustomQueries(t *testing.T) {
 	f := newFixture(t)
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
-	shared, secret := f.space("Widgets shared"), f.space("Widgets secret")
+	shared, secret := f.space("Widgets shared"), f.spaceWithoutAdmins("Widgets secret")
 	f.share(shared, "user", admin.id, "full") // A1.2: admin creates this Space's content as an explicit member
 	f.share(shared, "user", member.id, "read")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
@@ -159,7 +159,7 @@ VALUES ('task',$1,$2,$3::uuid,NULLIF($4,'')::date, CASE WHEN $3::text=$5::text T
 func TestStarsAndStarredWidget(t *testing.T) {
 	f := newFixture(t)
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
-	shared, secret := f.space("Stars shared"), f.space("Stars secret")
+	shared, secret := f.space("Stars shared"), f.spaceWithoutAdmins("Stars secret")
 	f.share(shared, "user", member.id, "read")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")
