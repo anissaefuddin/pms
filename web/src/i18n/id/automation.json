@@ -279,6 +279,19 @@
     "warning": "hampir penuh (80%)",
     "exhausted": "batas tercapai: eksekusi menunggu jam berikutnya",
     "workspaceLabel": "Semua aturan workspace, satu jam terakhir",
-    "spaceLabel": "Eksekusi otomasi di Space ini, satu jam terakhir"
-  }
+    "spaceLabel": "Eksekusi otomasi di Space ini, satu jam terakhir",
+    "spaceHint": "Eksekusi yang dibuat Space ini dalam satu jam terakhir, dihitung terhadap batasnya."
+  },
+  "settingsDescription": "Aturan yang bertindak saat sesuatu terjadi. Kelola aturan workspace dan aturan tiap Space di sini.",
+  "noMatch": "Tidak ada aturan yang cocok dengan pencarian atau filter Anda.",
+  "search": "Cari aturan",
+  "tab": {
+    "workspace": "Workspace",
+    "space": "Space"
+  },
+  "noSpaces": "Anda belum bisa mengelola otomasi di Space mana pun.",
+  "spaceLabel": "Space",
+  "usageAndLimits": "Penggunaan & batas",
+  "openSpace": "Buka Space",
+  "tabsLabel": "Cakupan otomasi"
 }

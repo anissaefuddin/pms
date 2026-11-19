@@ -27,7 +27,8 @@ async function setup(page: Page, over: Record<string, unknown> = {}) {
 test("the workspace automation page lists rules and saves the execution limits", async ({ page }) => {
   const calls = await setup(page);
   await page.goto("/settings/automation");
-  await expect(page.getByRole("heading", { name: "Workspace automation" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Workspace", exact: true })).toBeVisible();
+  await page.getByText("Usage & limits").click();
   await expect(page.getByRole("cell", { name: "Close everywhere", exact: true })).toBeVisible();
   await expect(page.getByLabel("Per workspace rule")).toHaveValue("50");
   await page.getByLabel("Per workspace rule").fill("80");

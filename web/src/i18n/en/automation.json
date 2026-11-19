@@ -279,6 +279,19 @@
     "warning": "almost at the limit (80%)",
     "exhausted": "limit reached: runs wait until the hour rolls over",
     "workspaceLabel": "All workspace rules, last hour",
-    "spaceLabel": "Automation runs in this Space, last hour"
-  }
+    "spaceLabel": "Automation runs in this Space, last hour",
+    "spaceHint": "Runs this Space made in the last hour, counted against its cap."
+  },
+  "settingsDescription": "Rules that act when something happens. Manage workspace rules and each Space's rules here.",
+  "noMatch": "No rules match your search or filter.",
+  "search": "Search rules",
+  "tab": {
+    "workspace": "Workspace",
+    "space": "Space"
+  },
+  "noSpaces": "You cannot manage automation in any Space yet.",
+  "spaceLabel": "Space",
+  "usageAndLimits": "Usage & limits",
+  "openSpace": "Open Space",
+  "tabsLabel": "Automation scope"
 }
