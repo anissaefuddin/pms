@@ -3,6 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 
+const CHEVRON_OPEN = "\u25BE";
+const CHEVRON_CLOSED = "\u25B8";
+
 type Node = { id: string; title: string; type: string; can_create: boolean };
 type Path = { id: string; title: string }[];
 
@@ -62,7 +65,7 @@ function Branch({ spaceId, node, path, value, onPick, disabled, filter }: {
   return <li role="treeitem" aria-expanded={open} aria-selected={value === node.id} className="px-2">
     <div className="flex items-center gap-1 py-1">
       <button type="button" aria-label={open ? t("excel.collapse") : t("excel.expand")} className="w-5 text-sm"
-        onClick={() => setOpen(!open)}>{open ? "▾" : "▸"}</button>
+        onClick={() => setOpen(!open)}>{open ? CHEVRON_OPEN : CHEVRON_CLOSED}</button>
       <button type="button" disabled={disabled || !node.can_create} aria-disabled={!node.can_create}
         className={`flex-1 text-left ${value === node.id ? "font-medium underline" : ""} ${node.can_create ? "" : "text-muted-foreground"}`}
         onClick={() => onPick(node, path)} title={node.can_create ? chain.map((step) => step.title).join(" › ") : t("excel.noCreate")}>{node.title}</button>

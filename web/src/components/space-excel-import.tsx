@@ -11,6 +11,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } f
 import { FormError } from "@/components/auth/form-error";
 import { DestinationTree } from "@/components/excel-destination-tree";
 
+const templateKinds = ["basic", "hierarchy", "advanced"] as const;
+
 type Preview = {
   columns: string[];
   rows: number;
@@ -129,7 +131,7 @@ function ImportForm({ spaceId, busy, setBusy, onClose }: {
     {step === 0 && <div className="space-y-4">
       <div className="flex flex-wrap gap-2 text-sm">
         <span>{t("excel.templates")}</span>
-        {(["basic", "hierarchy", "advanced"] as const).map((kind) => <a key={kind} className="underline" download
+        {templateKinds.map((kind) => <a key={kind} className="underline" download
           href={`/api/v1/spaces/${spaceId}/excel-templates/${kind}`}>{t(`excel.template.${kind}`)}</a>)}
       </div>
       <label className="block space-y-1">
