@@ -167,7 +167,7 @@ func checkApprovers(ctx context.Context, tx pgx.Tx, ids []uuid.UUID, itemID uuid
 	if err != nil {
 		return nil, err
 	}
-	found, err := pgx.CollectRows(rows, pgx.RowToStructByPos[policy.Actor])
+	found, err := policy.CollectActors(rows)
 	if err != nil {
 		return nil, err
 	}

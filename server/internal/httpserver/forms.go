@@ -436,7 +436,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 	if err != nil {
 		return err
 	}
-	approvers, err := pgx.CollectRows(rows, pgx.RowToStructByPos[policy.Actor])
+	approvers, err := policy.CollectActors(rows)
 	if err != nil {
 		return err
 	}

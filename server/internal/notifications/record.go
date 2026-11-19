@@ -44,7 +44,7 @@ ORDER BY id`, actor.ID, users, groups, followers, excluded, target.Item)
 	if err != nil {
 		return nil, err
 	}
-	candidates, err := pgx.CollectRows(rows, pgx.RowToStructByPos[policy.Actor])
+	candidates, err := policy.CollectActors(rows)
 	if err != nil {
 		return nil, err
 	}
