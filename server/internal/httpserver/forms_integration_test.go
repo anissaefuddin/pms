@@ -120,7 +120,7 @@ func TestFormAccessAndManageList(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, owner, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
 	intake, other := f.spaceWithoutAdmins("Intake"), f.space("Other") // A1: the admin gets Intake only through the explicit share below
-	f.share(other, "user", admin.id, "full") // A1.2: admin acts in this Space as an explicit member
+	f.share(other, "user", admin.id, "full")                          // A1.2: admin acts in this Space as an explicit member
 	f.share(intake, "user", editor.id, "editor")
 	f.share(intake, "user", owner.id, "full")
 	f.share(intake, "user", reader.id, "read")
