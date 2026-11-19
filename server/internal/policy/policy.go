@@ -22,10 +22,15 @@ const (
 	Create       Capability = "create"
 	Delete       Capability = "delete"
 	Share        Capability = "share"
+	// Blueprint rights, appended (the bit order is stored in custom roles): use creates items from a blueprint,
+	// create saves a new blueprint, manage deletes one (and will edit it).
+	UseBlueprint    Capability = "use_blueprint"
+	CreateBlueprint Capability = "create_blueprint"
+	ManageBlueprint Capability = "manage_blueprint"
 )
 
 // AllCapabilities is the display and API order.
-var AllCapabilities = []Capability{View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share}
+var AllCapabilities = []Capability{View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint}
 
 // Caps is a set of capabilities, one bit per entry of AllCapabilities.
 type Caps uint16
@@ -93,8 +98,9 @@ var UserTypes = []UserType{Admin, Regular, External, Collaborator, Viewer}
 var roleCaps = map[Role]Caps{
 	Read:    setOf(View),
 	Limited: setOf(View, Comment, ChangeStatus, Attach),
-	Editor:  setOf(View, Comment, ChangeStatus, Attach, Edit, Create),
-	Full:    setOf(AllCapabilities...),
+	// Editor keeps what it could do before blueprints had their own rights: save and delete used Edit, use used Create.
+	Editor: setOf(View, Comment, ChangeStatus, Attach, Edit, Create, UseBlueprint, CreateBlueprint, ManageBlueprint),
+	Full:   setOf(AllCapabilities...),
 }
 
 var ceilings = map[UserType]Caps{
