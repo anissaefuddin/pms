@@ -166,7 +166,7 @@ func TestItemAuthorizationMatrix(t *testing.T) {
 		for _, role := range []string{"read", "limited", "editor", "full"} {
 			for _, source := range []string{"direct", "group", "ancestor", "second_location"} {
 				t.Run(userType+"/"+role+"/"+source, func(t *testing.T) {
-					space := f.space(t.Name())
+					space := f.spaceWithoutAdmins(t.Name()) // A1: the actor's own share decides
 					insert := func(kind string, parent *string) string {
 						t.Helper()
 						id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1::item_type,'Matrix',$2) RETURNING id::text", kind, creator.id)
@@ -188,7 +188,7 @@ func TestItemAuthorizationMatrix(t *testing.T) {
 					case "ancestor":
 						f.exec("INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('item',$1,'user',$2,$3::share_role)", *parent, actor.id, role)
 					case "second_location":
-						second := f.space(t.Name() + " second")
+						second := f.spaceWithoutAdmins(t.Name() + " second")
 						createSpace = second
 						f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, second)
 						f.share(second, "user", actor.id, role)
