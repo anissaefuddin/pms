@@ -60,6 +60,29 @@ func WithCause(ctx context.Context, c Cause) context.Context {
 	return context.WithValue(ctx, causeKey{}, c)
 }
 
+// OriginBulkImport marks events produced by a bulk import. Their internal audit (activity) is still written, but automation,
+// webhooks and per-item notifications do not act on them unless a later policy opts in.
+const OriginBulkImport = "bulk_import"
+
+type bulkKey struct{}
+
+// WithBulkImport marks ctx as a bulk import; Emit stamps the payload with origin=bulk_import.
+func WithBulkImport(ctx context.Context) context.Context {
+	return context.WithValue(ctx, bulkKey{}, true)
+}
+
+// IsBulkImport reports whether a dispatched event came from a bulk import.
+func IsBulkImport(ctx context.Context) bool {
+	v, _ := ctx.Value(bulkKey{}).(bool)
+	return v
+}
+
+// BulkImportEvent reports whether an event was produced by a bulk import.
+func BulkImportEvent(e Event) bool {
+	origin, _ := e.Payload["origin"].(string)
+	return origin == OriginBulkImport
+}
+
 // Emit records an event in tx. Call it from the code that changes the data, so both commit or roll back together.
 func Emit(ctx context.Context, tx pgx.Tx, e Event) error {
 	if e.Type == "" {
@@ -75,6 +98,9 @@ func Emit(ctx context.Context, tx pgx.Tx, e Event) error {
 	payload := e.Payload
 	if payload == nil {
 		payload = map[string]any{}
+	}
+	if IsBulkImport(ctx) {
+		payload["origin"] = OriginBulkImport
 	}
 	raw, err := json.Marshal(payload)
 	if err != nil {
