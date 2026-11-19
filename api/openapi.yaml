@@ -2035,6 +2035,29 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '429': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/excel-exports:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      operationId: startSpaceExcelExport
+      description: 'Ekspor seluruh Space: setiap root yang bisa dilihat pemanggil beserta hierarkinya (EXP-03).'
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                filter: { type: object, additionalProperties: true }
+      responses:
+        '202':
+          description: Export dijadwalkan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ExcelExport' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '429': { $ref: '#/components/responses/Problem' }
   /excel-exports/{exportId}:
     parameters:
       - { name: exportId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2060,6 +2083,26 @@ paths:
               schema: { type: string, format: binary }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /excel-imports/{reportId}:
+    parameters:
+      - { name: reportId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getExcelImportReport
+      description: 'Laporan impor milik pemanggil. Akses mengikuti Space laporan, bukan URL.'
+      responses:
+        '200':
+          description: Laporan impor
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  created: { type: integer }
+                  dependencies: { type: integer }
+                  destination: { type: string }
+                  sheet: { type: string }
+                  rescheduled: { type: array, items: { type: object, additionalProperties: true } }
+        '404': { $ref: '#/components/responses/Problem' }
   /spaces/{spaceId}/excel-imports:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -3047,9 +3090,9 @@ paths:
     delete:
       tags: [automation]
       operationId: deleteAutomationRule
-      summary: Hapus aturan beserta versi dan lognya
+      summary: Arsipkan aturan (tidak menghapus versi, log, atau riwayat; aturan berhenti berjalan)
       responses:
-        '204': { description: Dihapus }
+        '204': { description: Diarsipkan }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
   /automation-rules/{ruleId}/draft:
@@ -3093,6 +3136,293 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/archive:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: archiveAutomationRule
+      summary: Arsipkan aturan dan matikan; riwayat tetap ada. Pemilik atau admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/restore:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: restoreAutomationRule
+      summary: Pulihkan aturan yang diarsipkan sebagai aturan nonaktif; aktifkan lagi untuk memvalidasi ulang
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/owner:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: transferAutomationRule
+      summary: Pindahkan kepemilikan aturan. Hanya admin workspace; pemilik baru harus bisa menjalankan aturan di Space ini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [owner_id]
+              properties:
+                owner_id: { type: string, format: uuid }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/duplicate:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: duplicateAutomationRule
+      summary: Salin definisi terbaru menjadi aturan baru yang nonaktif dan belum terbit, milik yang menyalin
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/export:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [automation]
+      operationId: exportAutomationRule
+      summary: Definisi terbaru sebagai berkas (tanpa id, pemilik, atau riwayat)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [format, name, definition]
+                properties:
+                  format: { type: string, enum: [pms.automation.v1] }
+                  name: { type: string }
+                  definition: { $ref: '#/components/schemas/AutomationDefinition' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/automation-rules/import:
+    parameters:
+      - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: importAutomationRule
+      summary: Buat draf nonaktif dari berkas ekspor; definisi divalidasi dan referensinya harus ada di Space ini
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [format, definition]
+              properties:
+                format: { type: string, enum: [pms.automation.v1] }
+                name: { type: string, maxLength: 120 }
+                definition: { $ref: '#/components/schemas/AutomationDefinition' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /automation/workspace-rules:
+    get:
+      tags: [automation]
+      operationId: listWorkspaceRules
+      summary: 'Aturan Workspace untuk admin workspace (metadata saja: tanpa judul item atau isi)'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/AutomationRule' } }
+        '403': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [automation]
+      operationId: createWorkspaceRule
+      summary: 'Buat aturan Workspace (draf tanpa target). Hanya admin workspace'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name, definition]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 120 }
+                definition: { $ref: '#/components/schemas/AutomationDefinition' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /automation-rules/{ruleId}/targets:
+    parameters:
+      - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [automation]
+      operationId: setAutomationTargets
+      summary: 'Ganti daftar Space target aturan Workspace (snapshot, bukan wildcard). Hanya admin workspace'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [space_ids]
+              properties:
+                space_ids: { type: array, items: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationRule' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/workspace-automation:
+    parameters:
+      - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [automation]
+      operationId: listSpaceWorkspaceRules
+      summary: 'Aturan Workspace yang bekerja di Space ini: nama dan status saja (tanpa pemilik atau isi)'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, name, enabled, health]
+                      properties:
+                        id: { type: string, format: uuid }
+                        name: { type: string }
+                        enabled: { type: boolean }
+                        health: { type: string, enum: [ok, paused, invalid] }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /automation/usage:
+    get:
+      tags: [automation]
+      operationId: getAutomationUsage
+      summary: 'Pemakaian dalam satu jam bergulir terhadap batas: aturan, Workspace, dan Space. Pemakaian yang sama dipakai untuk membatasi eksekusi'
+      parameters:
+        - { name: rule_id, in: query, required: false, schema: { type: string, format: uuid } }
+        - { name: space_id, in: query, required: false, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [window, throttled_by]
+                properties:
+                  window: { type: string, enum: [1h] }
+                  rule: { $ref: '#/components/schemas/AutomationCounter' }
+                  workspace: { $ref: '#/components/schemas/AutomationCounter' }
+                  space: { $ref: '#/components/schemas/AutomationCounter' }
+                  throttled_by: { type: string, description: 'rule_quota, workspace_quota, space_quota, atau kosong' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /automation/limits:
+    get:
+      tags: [automation]
+      operationId: getAutomationLimits
+      summary: 'Batas eksekusi per jam (rule, workspace, Space). Hanya admin workspace'
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationLimits' }
+        '403': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [automation]
+      operationId: setAutomationLimits
+      summary: 'Ubah batas eksekusi. Setiap perubahan dicatat di audit'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AutomationLimits' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AutomationLimits' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /automation/templates:
+    get:
+      tags: [automation]
+      operationId: listAutomationTemplates
+      summary: Templat bawaan (data tetap, tanpa id)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, name, description, definition]
+                      properties:
+                        id: { type: string }
+                        name: { type: string }
+                        description: { type: string }
+                        definition: { $ref: '#/components/schemas/AutomationDefinition' }
+        '403': { $ref: '#/components/responses/Problem' }
   /automation-rules/{ruleId}/runs:
     parameters:
       - { name: ruleId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -3289,6 +3619,7 @@ paths:
               type: object
               required: [definition, item_id]
               properties:
+                rule_id: { type: string, format: uuid, description: 'Aturan yang sudah ada: dijalankan sebagai pemiliknya. Kosong untuk aturan baru: pembuatnya yang dipakai.' }
                 definition: { $ref: '#/components/schemas/AutomationDefinition' }
                 item_id: { type: string, format: uuid }
       responses:
@@ -3311,6 +3642,7 @@ paths:
                   would_run: { type: boolean }
                   actions: { type: array, items: { type: string } }
                   item_title: { type: string }
+                  trace: { type: array, items: { type: string }, description: 'Langkah berurutan: pemicu, tiap kondisi (holds/fails), lalu berhenti atau jalan' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
@@ -3443,6 +3775,172 @@ paths:
         '204': { description: Dihapus }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/members:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: listSpaceMembers
+      summary: Anggota efektif Space beserta alasan aksesnya (D-06)
+      responses:
+        '200':
+          description: Daftar anggota
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/SpaceMember' } }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/archive:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      tags: [spaces]
+      operationId: archiveSpace
+      summary: Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '200': { description: Space terarsip, content: { application/json: { schema: { $ref: '#/components/schemas/Space' } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/restore:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      tags: [spaces]
+      operationId: restoreSpace
+      summary: Pulihkan Space terarsip; mengembalikan peringatan yang harus diperiksa (D-03)
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      responses:
+        '200':
+          description: Space dipulihkan
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  space: { $ref: '#/components/schemas/Space' }
+                  warnings: { type: array, items: { type: string, enum: [no_space_admin, no_full_access_holder] } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/admins:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: listSpaceAdmins
+      responses:
+        '200': { description: Daftar Space Admin, content: { application/json: { schema: { type: object, properties: { items: { type: array, items: { type: object, properties: { user_id: { type: string }, name: { type: string }, granted_at: { type: string } } } } } } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [spaces]
+      operationId: grantSpaceAdmin
+      summary: Jadikan anggota sebagai Space Admin (D-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [user_id], properties: { user_id: { type: string, format: uuid } } }
+      responses:
+        '204': { description: Admin ditambahkan }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/admins/{userId}:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [spaces]
+      operationId: revokeSpaceAdmin
+      summary: Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+      responses:
+        '204': { description: Admin dicabut }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/transfer-ownership:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      tags: [spaces]
+      operationId: transferSpaceOwnership
+      summary: Serah-terima kepemilikan secara eksplisit (D-05)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { type: object, required: [user_id], properties: { user_id: { type: string, format: uuid } } }
+      responses:
+        '204': { description: Kepemilikan dipindahkan }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/discover:
+    get:
+      tags: [spaces]
+      operationId: discoverSpaces
+      summary: Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul
+      parameters:
+        - { name: q, in: query, required: false, schema: { type: string, maxLength: 120 } }
+      responses:
+        '200': { description: Daftar Space Public }
+        '403': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/join:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    post:
+      tags: [spaces]
+      operationId: joinSpace
+      summary: Ikuti Space Public; memberi akses Read saja (D-01)
+      responses:
+        '200': { description: Space, content: { application/json: { schema: { $ref: '#/components/schemas/Space' } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/default-workflows:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: getSpaceDefaultWorkflows
+      summary: Workflow default Space untuk root Task dan Project (B)
+      responses:
+        '200': { description: Default workflow, content: { application/json: { schema: { $ref: '#/components/schemas/SpaceDefaultWorkflows' } } } }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [spaces]
+      operationId: setSpaceDefaultWorkflows
+      summary: Ganti default workflow Task dan Project. Item yang sudah ada tidak berubah (B)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SpaceDefaultWorkflows' }
+      responses:
+        '200': { description: Default tersimpan, content: { application/json: { schema: { $ref: '#/components/schemas/SpaceDefaultWorkflows' } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/delete-impact:
+    parameters:
+      - { $ref: '#/components/parameters/SpaceId' }
+    get:
+      tags: [spaces]
+      operationId: getSpaceDeleteImpact
+      summary: Pratinjau dampak hapus Space (D). Hanya membaca
+      responses:
+        '200': { description: Jumlah yang terdampak, content: { application/json: { schema: { type: object } } } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /space-icons:
+    get:
+      tags: [spaces]
+      operationId: listSpaceIcons
+      summary: Katalog kunci ikon Space (D-04)
+      responses:
+        '200': { description: Katalog }
   /spaces/{spaceId}/shares:
     parameters:
       - { $ref: '#/components/parameters/SpaceId' }
@@ -5051,14 +5549,105 @@ paths:
   /blueprints/{blueprintId}:
     parameters:
       - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [blueprints]
+      operationId: getBlueprint
+      summary: Baca satu blueprint beserta strukturnya (butuh view pada Space). Field restricted tidak ditampilkan.
+      responses:
+        '200':
+          description: Blueprint dan tree-nya
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - { $ref: '#/components/schemas/Blueprint' }
+                  - type: object
+                    required: [tree]
+                    properties:
+                      tree: { $ref: '#/components/schemas/BlueprintTree' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [blueprints]
+      operationId: editBlueprint
+      summary: Ubah nama dan/atau struktur blueprint (butuh manage_blueprint pada Space). Item yang sudah dibuat tidak berubah.
+      description: >
+        `version` harus sama dengan versi yang dibaca; jika tidak, 409. `tree` mengganti seluruh struktur dan diperiksa
+        seperti saat menyimpan. Field kustom yang dibatasi (restricted) dibuang dari tree.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [version]
+              properties:
+                version: { type: integer, minimum: 1 }
+                name: { type: string, minLength: 1, maxLength: 120 }
+                tree: { $ref: '#/components/schemas/BlueprintTree' }
+      responses:
+        '200':
+          description: Blueprint setelah perubahan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Blueprint' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
     delete:
       tags: [blueprints]
       operationId: deleteBlueprint
-      summary: Hapus blueprint (butuh edit pada Space); item yang sudah dibuat darinya tidak berubah
+      summary: Hapus blueprint (butuh manage_blueprint pada Space); item yang sudah dibuat darinya tidak berubah
       responses:
         '204': { description: Dihapus }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
+  /blueprints/{blueprintId}/preview:
+    parameters:
+      - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [blueprints]
+      operationId: previewBlueprint
+      summary: Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
+      description: Memakai aturan tanggal yang sama dengan pembuatan item, sehingga hasilnya sama dengan `createItemsFromBlueprint`.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title: { type: string, description: Mengganti judul item akar }
+                start_date: { type: string, format: date }
+                finish_date: { type: string, format: date }
+      responses:
+        '200':
+          description: Daftar item dalam urutan blueprint
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/BlueprintPreviewItem' } }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /account-blueprints:
+    get:
+      tags: [blueprints]
+      operationId: listAccountBlueprints
+      summary: Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
+      responses:
+        '200':
+          description: Daftar blueprint akun
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Blueprint' } }
   /blueprints/{blueprintId}/items:
     parameters:
       - { name: blueprintId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -5067,8 +5656,8 @@ paths:
       operationId: createItemsFromBlueprint
       summary: Buat item (dan seluruh turunannya) dari blueprint dalam satu transaksi
       description: >
-        `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date`; tanpa
-        `start_date` item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak
+        `locations` berlaku untuk item akar; turunan dibuat di bawahnya. Tanggal dihitung dari `start_date` atau `finish_date`; tanpa
+        keduanya item baru tidak punya tanggal. Assignee yang sudah nonaktif dan nilai field kustom yang tidak
         lagi cocok dengan Space tujuan dilewati.
       requestBody:
         required: true
@@ -5083,7 +5672,8 @@ paths:
                   minItems: 1
                   items: { $ref: '#/components/schemas/Location' }
                 title: { type: string, description: Mengganti judul item akar }
-                start_date: { type: string, format: date }
+                start_date: { type: string, format: date, description: Tanggal mulai yang menjadi jangkar tanggal turunan. Tidak boleh bersama finish_date. }
+                finish_date: { type: string, format: date, description: Tanggal selesai yang menjadi jangkar item terakhir dalam blueprint (tanggal paling akhir selesai pada tanggal ini). Tidak boleh bersama start_date. }
       responses:
         '201':
           description: Item akar yang dibuat
@@ -6053,7 +6643,7 @@ components:
       properties:
         name: { type: string, minLength: 1, maxLength: 60 }
         description: { type: string, maxLength: 300 }
-        capabilities: { type: array, minItems: 1, maxItems: 8, uniqueItems: true, items: { $ref: '#/components/schemas/Capability' }, description: Wajib memuat view }
+        capabilities: { type: array, minItems: 1, maxItems: 11, uniqueItems: true, items: { $ref: '#/components/schemas/Capability' }, description: Wajib memuat view }
     CustomRole:
       allOf:
         - { $ref: '#/components/schemas/CustomRoleInput' }
@@ -6255,7 +6845,14 @@ components:
       properties:
         id: { type: string, format: uuid }
         status: { type: string, enum: [pending, ready, failed] }
+        scope: { type: string, enum: [project, space] }
         error: { type: string }
+        total_items:
+          type: integer
+          description: Items the export holds, counted from the tree when the worker starts.
+        processed_items:
+          type: integer
+          description: Items written so far. This is a count of real items, not an estimate.
     ExcelPreview:
       type: object
       required: [columns, rows, errors, sample, digest]
@@ -6611,9 +7208,40 @@ components:
         kind: { $ref: '#/components/schemas/SpaceKind' }
         version: { type: integer }
         locked: { type: boolean, description: 'Dikunci administrator: isi hanya dibagikan ke orang yang sudah punya akses ke space, dan hanya admin yang mengubah sharing space atau memindahkan item keluar (D-95)' }
+        visibility: { type: string, enum: [public, private], description: 'Public: ditemukan dan bisa diikuti (Read) oleh pengguna internal yang memenuhi syarat. Private: hanya yang diberi akses (D-01)' }
+        archived: { type: boolean, description: 'Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)' }
+        icon_key: { type: string, nullable: true, description: 'Kunci ikon dari katalog GET /space-icons (D-04)' }
+        is_space_admin: { type: boolean, description: 'Explicit Space Admin; tidak diberikan oleh share Full saja (D-05)' }
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }
+    SpaceMember:
+      type: object
+      required: [user_id, name, role, capped_by_user_type, sources]
+      properties:
+        user_id: { type: string, format: uuid }
+        name: { type: string }
+        user_type: { type: string }
+        role: { type: string, description: 'read, limited, editor, full, atau custom' }
+        capabilities: { type: array, items: { $ref: '#/components/schemas/Capability' } }
+        capped_by_user_type: { type: boolean, description: 'Gabungan grant melebihi batas jenis user (D-06)' }
+        sources:
+          type: array
+          description: 'Setiap grant yang memberi akses: langsung (direct) atau lewat group'
+          items:
+            type: object
+            required: [kind, role]
+            properties:
+              kind: { type: string, enum: [direct, group] }
+              name: { type: string }
+              group_id: { type: string, format: uuid }
+              role: { type: string }
+              role_name: { type: string }
+    SpaceDefaultWorkflows:
+      type: object
+      properties:
+        task: { type: string, format: uuid, nullable: true, description: 'Workflow untuk root Task yang tidak menyebut workflow lain (B)' }
+        project: { type: string, format: uuid, nullable: true, description: 'Workflow untuk root Project yang tidak menyebut workflow lain (B)' }
     SpaceCreate:
       type: object
       required: [name]
@@ -6632,7 +7260,7 @@ components:
         locked: { type: boolean, description: Hanya administrator }
     Capability:
       type: string
-      enum: [view, comment, change_status, attach, edit, create, delete, share]
+      enum: [view, comment, change_status, attach, edit, create, delete, share, use_blueprint, create_blueprint, manage_blueprint]
     ShareRole:
       type: string
       enum: [read, limited, editor, full]
@@ -6666,6 +7294,7 @@ components:
       type: object
       required: [working_days, daily_hours, exceptions]
       properties:
+        timezone: { type: string, maxLength: 64, description: 'Zona waktu Workspace (IANA, mis. Asia/Jakarta). Kosong mempertahankan yang sekarang; UTC bila belum diatur' }
         working_days:
           type: array
           minItems: 1
@@ -6707,7 +7336,7 @@ components:
       additionalProperties: true
     AutomationDefinition:
       type: object
-      description: 'Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak'
+      description: 'Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).'
       required: [when, then]
       properties:
         when: { type: object, additionalProperties: true }
@@ -6726,7 +7355,11 @@ components:
         item_id: { type: string, format: uuid, nullable: true }
         item_title: { type: string, nullable: true }
         actor_id: { type: string, format: uuid, nullable: true }
-        status: { type: string, enum: [done, denied, skipped, loop_blocked, quota_blocked, failed] }
+        action_type: { type: string, nullable: true, description: 'set_field, assign, comment, notify, create_item; null untuk hasil tingkat aturan' }
+        status: { type: string, enum: [done, denied, skipped, loop_blocked, quota_blocked, failed, stopped] }
+        reason: { type: string, description: 'Kode alasan yang stabil, mis. forbidden, not_found, field_invalid, guard, owner_no_access, field_missing, status_missing, rule_quota, workspace_quota, space_quota, origin_outside_targets, ambiguous_context, not_in_target' }
+        execution_space_id: { type: string, format: uuid, nullable: true, description: 'Space tempat run dieksekusi; kosong untuk run yang di-skip' }
+        matched_space_ids: { type: array, items: { type: string, format: uuid }, description: 'Semua target yang dicocokkan item' }
         detail: { type: string }
         created_at: { type: string }
     AutomationVersion:
@@ -6739,6 +7372,20 @@ components:
         definition: { $ref: '#/components/schemas/AutomationDefinition' }
         created_at: { type: string }
         published_at: { type: string, nullable: true }
+    AutomationCounter:
+      type: object
+      required: [used, limit, state]
+      properties:
+        used: { type: integer }
+        limit: { type: integer }
+        state: { type: string, enum: [ok, warning, exhausted], description: 'warning dari 80%, exhausted dari 100%' }
+    AutomationLimits:
+      type: object
+      required: [rule_per_hour, workspace_per_hour, space_per_hour]
+      properties:
+        rule_per_hour: { type: integer, minimum: 1, maximum: 100000, description: 'Per aturan Workspace (awal 50)' }
+        workspace_per_hour: { type: integer, minimum: 1, maximum: 100000, description: 'Semua aturan Workspace (awal 500)' }
+        space_per_hour: { type: integer, minimum: 1, maximum: 100000, description: 'Per Space, termasuk aturan Workspace yang bekerja di Space itu (awal 500)' }
     AutomationRule:
       type: object
       required: [id, space_id, name, owner_id, enabled]
@@ -6750,6 +7397,19 @@ components:
         owner_id: { type: string, format: uuid }
         enabled: { type: boolean }
         current_version_id: { type: string, format: uuid, nullable: true }
+        owner_name: { type: string }
+        container_title: { type: string, nullable: true }
+        trigger: { type: string }
+        action_count: { type: integer }
+        has_draft: { type: boolean }
+        last_run_at: { type: string, nullable: true }
+        last_run_status: { type: string, nullable: true }
+        error_count: { type: integer, description: 'Jumlah run gagal, ditolak, atau berhenti dalam 7 hari terakhir' }
+        health: { type: string, enum: [ok, paused, invalid], description: 'paused: pemiliknya tidak bisa menjalankan aturan; invalid: ada yang dirujuk sudah tidak ada' }
+        health_reason: { type: string, description: 'Kode alasan, mis. owner_inactive, owner_no_access, status_missing, item_type_missing, user_inactive, field_missing, container_missing' }
+        archived_at: { type: string, nullable: true }
+        scope: { type: string, enum: [space, workspace], description: 'workspace: aturan Workspace; space_id kosong, target_space_ids menyebut Space tempat aturan boleh jalan' }
+        target_space_ids: { type: array, items: { type: string, format: uuid } }
         versions: { type: array, items: { $ref: '#/components/schemas/AutomationVersion' } }
     ItemTypeRef:
       type: object
@@ -7117,14 +7777,62 @@ components:
               enabled: { type: boolean }
     Blueprint:
       type: object
-      required: [id, space_id, name, item_type, item_count, created_at]
+      required: [id, space_id, name, item_type, item_count, created_at, scope, version, updated_at]
       properties:
         id: { type: string, format: uuid }
-        space_id: { type: string, format: uuid }
+        space_id: { type: string, format: uuid, nullable: true, description: "Space of a Space blueprint; null for an account blueprint" }
+        owner_id: { type: string, format: uuid, nullable: true, description: "Owner of an account blueprint; null for a Space blueprint" }
         name: { type: string }
         item_type: { type: string, enum: [project, folder, task] }
         item_count: { type: integer }
         created_at: { type: string, format: date-time }
+        scope: { type: string, enum: [space, account], description: "space: shared Space; account: the owner's Personal Space only" }
+        version: { type: integer, minimum: 1, description: Naik setiap kali blueprint diubah }
+        updated_at: { type: string, format: date-time }
+    BlueprintPreviewItem:
+      type: object
+      required: [title, type, parent]
+      properties:
+        title: { type: string }
+        type: { type: string, enum: [project, folder, task] }
+        parent: { type: integer, description: Indeks induk dalam daftar (-1 untuk akar) }
+        start_date: { type: string, format: date, nullable: true }
+        due_date: { type: string, format: date, nullable: true }
+    BlueprintTree:
+      type: object
+      required: [nodes, dependencies]
+      properties:
+        nodes:
+          type: array
+          minItems: 1
+          maxItems: 200
+          items:
+            type: object
+            required: [parent, type, title, importance]
+            properties:
+              parent: { type: integer, description: Indeks induk yang sudah muncul sebelumnya (-1 untuk akar) }
+              type: { type: string, enum: [project, folder, task] }
+              title: { type: string, minLength: 1, maxLength: 500 }
+              importance: { type: string, enum: [high, normal, low] }
+              description: {}
+              status_id: { type: string, format: uuid, nullable: true }
+              assignee_ids: { type: array, items: { type: string, format: uuid } }
+              start_offset: { type: integer, nullable: true }
+              due_offset: { type: integer, nullable: true }
+              duration_days: { type: integer, minimum: 0, nullable: true }
+              is_milestone: { type: boolean }
+              effort_minutes: { type: integer, minimum: 0, nullable: true }
+              fields: { type: object, additionalProperties: true }
+        dependencies:
+          type: array
+          items:
+            type: object
+            required: [predecessor, successor, type, lag]
+            properties:
+              predecessor: { type: integer }
+              successor: { type: integer }
+              type: { type: string, enum: [FS, SS, FF, SF] }
+              lag: { type: integer }
     FormSummary:
       type: object
       required: [id, space_id, space_name, name, description, access, status, question_count, updated_by, updated_at]
@@ -7527,6 +8235,7 @@ components:
         is_milestone: { type: boolean }
         owner_id: { type: string, format: uuid, description: Hanya project }
         default_workflow_id: { type: string, format: uuid, description: Hanya project/folder }
+        workflow_id: { type: string, format: uuid, description: 'Workflow untuk item root (tanpa parent). Prioritas: workflow_id, default Item Type, default Space untuk task atau project, lalu default Workspace. Anak item tidak boleh menyebut workflow_id (B)' }
         default_view_type: { type: string, enum: [table, board, gantt, calendar, files, chart], description: Hanya project/folder }
         assignee_ids:
           type: array
@@ -7802,7 +8511,7 @@ components:
     # ── Inbox & search ──
     NotificationKind:
       type: string
-      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated]
+      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated, import_summary]
     Notification:
       type: object
       required: [id, kind, created_at]
@@ -7816,6 +8525,14 @@ components:
         space_id: { type: string, format: uuid, nullable: true }
         space_title: { type: string, nullable: true }
         snippet: { type: string, nullable: true }
+        reference:
+          description: The record this notification is about, when there is one (for example an import report).
+          nullable: true
+          type: object
+          required: [kind, id]
+          properties:
+            kind: { type: string, enum: [excel_import_report] }
+            id: { type: string, format: uuid }
         read_at: { type: string, format: date-time, nullable: true }
         archived_at: { type: string, format: date-time, nullable: true }
         created_at: { type: string, format: date-time }

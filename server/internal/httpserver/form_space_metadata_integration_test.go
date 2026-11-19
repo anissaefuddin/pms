@@ -23,13 +23,17 @@ func TestFormSpaceMetadataFollowsSpaceAccess(t *testing.T) {
 	f.want(f.call(owner, "PUT", "/forms/"+id+"/access", map[string]any{"access": "internal"}), 200, "publish internal")
 
 	// Positive: people who can view Intake see its name in the catalog.
-	for name, p := range map[string]*person{"editor": editor, "reader": reader, "admin": admin} {
+	for name, p := range map[string]*person{"editor": editor, "reader": reader} {
 		got := f.call(p, "GET", "/forms/available", nil)
 		f.want(got, 200, "catalog for "+name)
 		if len(got.items()) != 1 || got.items()[0]["space_name"] != "Intake" {
 			t.Fatalf("%s should see the Space name: %v", name, got.body)
 		}
 	}
+	// D-17 A1 (metadata leakage): a Workspace admin without access to Intake is offered the form but not its Space.
+	adminCatalog := f.call(admin, "GET", "/forms/available", nil)
+	f.want(adminCatalog, 200, "catalog for admin")
+	assertNoSpaceMetadata(t, "admin catalog without Space access", adminCatalog.body, intake)
 
 	// Negative: the requester has no Space access. The form is offered, but no Space name or id appears anywhere.
 	catalog := f.call(outsider, "GET", "/forms/available", nil)
@@ -43,7 +47,8 @@ func TestFormSpaceMetadataFollowsSpaceAccess(t *testing.T) {
 	assertNoSpaceMetadata(t, "outsider definition", definition.body, intake)
 
 	// Public link: anonymous visitors get the form without any internal Space metadata.
-	link := f.call(admin, "POST", "/forms/"+id+"/public-link", nil)
+	// D-17 A1: creating a public link needs access to the form's Space; the admin has none here, so the owner makes it.
+	link := f.call(owner, "POST", "/forms/"+id+"/public-link", nil)
 	f.want(link, 200, "create public link")
 	token, _ := link.body["public_token"].(string)
 	public := f.call(nil, "GET", "/public/forms/"+token, nil)

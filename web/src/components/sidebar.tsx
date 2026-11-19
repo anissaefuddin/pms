@@ -26,6 +26,7 @@ const EDIT_CAPABILITY = "edit" as const;
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
+import { SpaceIcon } from "./space-icon";
 import { CustomizeSidebarDialog, openCustomizeSidebar } from "./customize-sidebar-dialog";
 
 const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-sm hover:bg-nav-hover";
@@ -359,9 +360,21 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
           }
         }}>{open ? <ChevronDown /> : <ChevronRight />}</Button>
       {/* The Space name is the overview: it is the active row only on the Space's own page, not on its tools or items. */}
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeOptions={{ exact: true }} activeProps={activeLink}>{name}</Link>
-      {can(space as SpaceType, EDIT_CAPABILITY) && <Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
-        aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })} onClick={() => setEditing(true)}><Settings /></Button>}
+      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeOptions={{ exact: true }} activeProps={activeLink}>
+        <SpaceIcon iconKey={(space as SpaceType).icon_key} className="me-2 inline-block align-[-2px]" />{name}{(space as SpaceType).archived && <span className="ms-1 text-xs text-nav-muted">{t("nav.space.archived")}</span>}
+      </Link>
+      {can(space as SpaceType, EDIT_CAPABILITY) && <>
+        <Button variant="ghost" size="icon-sm" nativeButton={false} className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
+          aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })}
+          render={<Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} />}><Settings /></Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
+            aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
+          <DropdownMenuContent align="start">
+            <DropdownMenuItem onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </>}
       <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
     {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">

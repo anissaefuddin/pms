@@ -213,5 +213,7 @@
   "inbox.reportUnavailable": "Laporan impor tidak tersedia.",
   "inbox.report.created": "Item dibuat",
   "inbox.report.dependencies": "Dependensi",
-  "inbox.report.rescheduled": "Baris dijadwal ulang"
+  "inbox.report.rescheduled": "Baris dijadwal ulang",
+  "space.actionsFor": "Aksi untuk {{name}}",
+  "space.archived": "Diarsipkan"
 }

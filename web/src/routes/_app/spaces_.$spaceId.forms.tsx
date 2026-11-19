@@ -11,11 +11,16 @@ import { can } from "@/lib/spaces";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button, buttonVariants } from "@/components/ui/button";
 
-export const Route = createFileRoute("/_app/spaces_/$spaceId/forms")({ component: FormsList });
+export const Route = createFileRoute("/_app/spaces_/$spaceId/forms")({ component: FormsRoute });
 
-function FormsList() {
-  const { t } = useTranslation();
+function FormsRoute() {
   const { spaceId } = Route.useParams();
+  return <FormsList spaceId={spaceId} />;
+}
+
+/** Request forms of one Space. `embedded` drops the page header when the Settings tab shows the list. */
+export function FormsList({ spaceId, embedded = false }: { spaceId: string; embedded?: boolean }) {
+  const { t } = useTranslation();
   const qc = useQueryClient();
   const profile = useProfile();
   const space = useSpace(spaceId);
@@ -41,8 +46,9 @@ function FormsList() {
     finally { setBusy(false); }
   }
 
-  return <main className="space-y-5 p-8">
-    <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
+  const Root = embedded ? "div" : "main";
+  return <Root className={embedded ? "space-y-5" : "space-y-5 p-8"}>
+    {!embedded && <header className="flex flex-wrap items-start justify-between gap-4 border-b pb-5">
       <div>
         <Link to="/spaces/$spaceId" params={{ spaceId }} className="text-sm text-muted-foreground underline">{t("forms.list.back", { name: space.data?.kind === "personal" ? t("spaces.personal") : space.data?.name ?? "" })}</Link>
         <h1 className="mt-1 workspace-title">{t("forms.list.title")}</h1>
@@ -52,7 +58,8 @@ function FormsList() {
         <Link to="/forms" className={buttonVariants({ variant: "outline" })}>{t("forms.list.manageLink")}</Link>
         <Link to="/spaces/$spaceId/forms/$formId" params={{ spaceId, formId: "new" }} className={buttonVariants()}>{t("forms.list.new")}</Link>
       </div>}
-    </header>
+    </header>}
+    {embedded && !forbidden && <div className="flex justify-end"><Link to="/spaces/$spaceId/forms/$formId" params={{ spaceId, formId: "new" }} className={buttonVariants()}>{t("forms.list.new")}</Link></div>}
     {forbidden && <p role="alert">{t("forms.list.forbidden")}</p>}
     {!forbidden && list.isPending && <p role="status" className="text-sm text-muted-foreground">{t("forms.list.loading")}</p>}
     {!forbidden && list.isError && <div><p role="alert">{t("forms.list.error")}</p><Button variant="outline" className="mt-3" onClick={() => list.refetch()}>{t("forms.list.retry")}</Button></div>}
@@ -82,5 +89,5 @@ function FormsList() {
     <ConfirmDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(undefined)} busy={busy} error={error}
       title={t("forms.list.deleteTitle")} description={t("forms.list.deleteDescription", { name: deleting?.name ?? "" })}
       confirmLabel={t("forms.list.deleteConfirm")} cancelLabel={t("forms.list.cancel")} onConfirm={() => void remove()} />
-  </main>;
+  </Root>;
 }

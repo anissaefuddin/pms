@@ -213,5 +213,7 @@
   "inbox.reportUnavailable": "The import report is not available.",
   "inbox.report.created": "Items created",
   "inbox.report.dependencies": "Dependencies",
-  "inbox.report.rescheduled": "Rows rescheduled"
+  "inbox.report.rescheduled": "Rows rescheduled",
+  "space.actionsFor": "Actions for {{name}}",
+  "space.archived": "Archived"
 }

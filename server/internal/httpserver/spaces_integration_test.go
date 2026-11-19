@@ -29,8 +29,8 @@ var (
 	docRoleCaps = map[string][]string{
 		"read":    {"view"},
 		"limited": {"view", "comment", "change_status", "attach"},
-		"editor":  {"view", "comment", "change_status", "attach", "edit", "create"},
-		"full":    {"view", "comment", "change_status", "attach", "edit", "create", "delete", "share"},
+		"editor":  {"view", "comment", "change_status", "attach", "edit", "create", "use_blueprint", "create_blueprint", "manage_blueprint"},
+		"full":    {"view", "comment", "change_status", "attach", "edit", "create", "delete", "share", "use_blueprint", "create_blueprint", "manage_blueprint"},
 	}
 	docCeilings = map[string][]string{
 		"admin":        docRoleCaps["full"],
@@ -256,10 +256,8 @@ func TestAuthorizationMatrix(t *testing.T) {
 					} else {
 						f.share(space, "group", f.group(name, p), role)
 					}
+					// D-17 A1: the share is the only grant; a Workspace admin is not full in every shared space.
 					want := expectedCaps(ut, role)
-					if ut == "admin" {
-						want = docRoleCaps["full"] // D-17: admin is full in every shared space
-					}
 					got := f.call(p, "GET", "/spaces/"+space, nil)
 					f.want(got, 200, "GET space")
 					if !reflect.DeepEqual(got.caps(), want) {
@@ -338,8 +336,11 @@ func TestSpaceAccessRules(t *testing.T) {
 	f.want(f.call(other, "GET", "/spaces/not-a-uuid", nil), 404, "malformed id")
 	f.want(f.call(nil, "GET", "/spaces", nil), 401, "no session")
 
-	// admin: full access to the shared space without any share
-	f.want(f.call(admin, "GET", "/spaces/"+space, nil), 200, "admin reads a shared space")
+	// D-17 A1: a Workspace admin has no implicit access to a private shared space; an explicit share is what gives it.
+	f.want(f.call(admin, "GET", "/spaces/"+space, nil), 404, "admin without a share cannot read a private shared space")
+	f.share(space, "user", admin.id, "read")
+	f.want(f.call(admin, "GET", "/spaces/"+space, nil), 200, "admin reads it with an explicit share")
+	f.exec("DELETE FROM shares WHERE target_type='space' AND target_id=$1 AND principal_id=$2", space, admin.id)
 
 	// personal space: private even from admins; cannot be changed, deleted or shared
 	var ownerPersonal string

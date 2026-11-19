@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { me, mockApi, problem, type Handler } from "./mock-api";
 
-export const ALL = ["view", "comment", "change_status", "attach", "edit", "create", "delete", "share"];
+export const ALL = ["view", "comment", "change_status", "attach", "edit", "create", "delete", "share", "use_blueprint", "create_blueprint", "manage_blueprint"];
 export const personal = { id: me.personal_space_id, name: "Ada Lovelace", description: null, kind: "personal", version: 1, my_capabilities: ALL };
 export const marketing = { id: "33333333-3333-4333-8333-333333333333", name: "Marketing", description: "Campaigns and launches", kind: "shared", version: 4, my_capabilities: ALL };
 export const ops = { id: "44444444-4444-4444-8444-444444444444", name: "Operations", description: null, kind: "shared", version: 2, my_capabilities: ALL };
