@@ -76,7 +76,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   });
   // The Space's applicable fields: its own and the Workspace fields assigned to it (DR-08), without those the viewer cannot read.
   const fieldQueries = useQuery({
-    queryKey: ["custom-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
+    queryKey: ["space-applicable-fields", spaceId], enabled: (isCollection || isCalendar || isGantt) && !!spaceId,
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/fields`),
   });
   const spaceList = useSpaces(!!spaceId);
