@@ -238,3 +238,18 @@ Tes:
 | E2E: halaman folder → New item → POST dengan parent folder | PASS |
 | E2E regresi (remediation, board, create-menu, dr03, items, b3a, table-bulk) | PASS 24 |
 | Typecheck | PASS |
+
+## 13. R3: Workspace Quick Create (live)
+
+Alur yang diverifikasi di browser sungguhan, terhadap backend Go dan PostgreSQL test terisolasi: tombol Create global → menuitem Task → isi nama saja → Enter.
+
+Hasil yang diverifikasi di spec `web/tests/create-workspace-live.spec.ts`:
+- Dialog membuka Task dengan input nama yang sudah fokus.
+- Enter membuat item tanpa mengisi field opsional.
+- Item tersimpan sebagai Task dengan judul yang diketik.
+- Lokasi default adalah Personal Space pengguna (`space_id` sama dengan `personal_space_id` dari `/api/v1/me`).
+- Tidak ada parent.
+
+Tes: `TestBrowserWorkspaceQuickCreate` (Go, `PMS_TEST_BROWSER=1`), **PASS**.
+
+Belum diverifikasi di tes ini: "advanced options" di dialog dan lokasi custom dari Workspace. Keduanya tetap NOT RUN.
