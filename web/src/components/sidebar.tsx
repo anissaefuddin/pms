@@ -190,7 +190,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
         </Tooltip>}
       </div>
       {/* Hanya area ini yang bisa di-scroll; header dan footer (akun, pengaturan) tetap terlihat. */}
-      <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="sidebar-scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto">
       <nav className="space-y-1" aria-label={t("nav.main.label")}>
         <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />
         <Nav icon={<Inbox />} label={t("nav.inbox.label")} collapsed={collapsed} badge={unread} current={isCurrent("/inbox")} onClick={() => go("/inbox")} />
@@ -274,7 +274,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   }
 
   return (
-    <nav className="sidebar-scroll mt-5 flex flex-col" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
+    <nav className="mt-5 flex flex-col" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
       <div className="flex items-center justify-between px-3 pb-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("spaces.nav.label")}</h2>
         <div className="flex items-center">

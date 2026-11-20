@@ -386,6 +386,20 @@
   }
 }
 
-/* SB-02: sidebars scroll by wheel, trackpad and touch, with no visible scrollbar and no space reserved for one. */
-.sidebar-scroll, .navscroll { scrollbar-width: none; }
-.sidebar-scroll::-webkit-scrollbar, .navscroll::-webkit-scrollbar { display: none; }
+/* SB-02: sidebar scroll areas show a thin scrollbar only while the pointer is over the sidebar, like the sidebar toggle.
+   The bar sits in the padding that the negative margin adds, so it takes no room from the content. */
+.sidebar-scroll-area, .navscroll {
+  margin-right: -12px;
+  padding-right: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+  transition: scrollbar-color 200ms;
+}
+.sidebar-scroll-area:hover, .navscroll:hover { scrollbar-color: var(--nav-muted) transparent; }
+.sidebar-scroll-area::-webkit-scrollbar, .navscroll::-webkit-scrollbar { width: 12px; }
+.sidebar-scroll-area::-webkit-scrollbar-track, .navscroll::-webkit-scrollbar-track { background: transparent; }
+.sidebar-scroll-area::-webkit-scrollbar-thumb, .navscroll::-webkit-scrollbar-thumb {
+  background-color: transparent; background-clip: padding-box; border: 4px solid transparent; border-radius: 6px;
+  transition: background-color 200ms;
+}
+.sidebar-scroll-area:hover::-webkit-scrollbar-thumb, .navscroll:hover::-webkit-scrollbar-thumb { background-color: var(--nav-muted); }
