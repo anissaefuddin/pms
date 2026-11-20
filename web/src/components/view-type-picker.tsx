@@ -25,25 +25,27 @@ function ViewIllustration({ view }: { view: ViewChoice }) {
 }
 
 /** Enam kartu view default. Chart adalah ringkasan jumlah item per status (ProjectChart), bukan builder report. */
-export function ViewTypePicker({ value, onChange, disabled }: { value: SupportedDefaultView; onChange: (view: SupportedDefaultView) => void; disabled?: boolean }) {
+export function ViewTypePicker({ value, onChange, disabled, compact = false }: { value: SupportedDefaultView; onChange: (view: SupportedDefaultView) => void; disabled?: boolean; compact?: boolean }) {
   const { t } = useTranslation();
-  return <div role="radiogroup" aria-label={t("items.view")} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+  // Compact: a row of small cards with the name only (the dialog's default); the full picker keeps the descriptions.
+  return <div role="radiogroup" aria-label={t("items.view")} className={cn("grid gap-2", compact ? "grid-cols-3 sm:grid-cols-6" : "grid-cols-2 sm:grid-cols-3")}>
     {SUPPORTED_DEFAULT_VIEWS.map((view) => {
       return <label key={view} className={cn(
-        "flex cursor-pointer flex-col gap-2 rounded-lg border bg-card p-2.5 text-left text-sm transition-colors hover:border-foreground/30",
+        "flex cursor-pointer flex-col text-left text-sm transition-colors hover:border-foreground/30",
+        compact ? "items-center gap-1 rounded-md border bg-card p-1.5" : "gap-2 rounded-lg border bg-card p-2.5",
         // Only the chosen card gets the ring; keyboard focus uses an outline so the two states never look like two selections.
         "has-checked:border-primary has-checked:ring-3 has-checked:ring-ring/30",
         "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring",
         "has-disabled:cursor-not-allowed has-disabled:opacity-60 has-disabled:hover:border-border"
       )}>
         <span className="flex items-center justify-between gap-2">
-          <ViewIllustration view={view} />
+          {!compact && <ViewIllustration view={view} />}
           <input type="radio" name="default_view_type" value={view} className="sr-only"
             checked={value === view} disabled={disabled}
             onChange={() => onChange(view)} />
         </span>
-        <span className="font-medium text-foreground">{t(`views.types.${view}`)}</span>
-        <span className="text-xs text-muted-foreground">{t(`items.viewDesc.${view}`)}</span>
+        <span className={cn("font-medium text-foreground", compact && "text-xs")}>{t(`views.types.${view}`)}</span>
+        {!compact && <span className="text-xs text-muted-foreground">{t(`items.viewDesc.${view}`)}</span>}
       </label>;
     })}
   </div>;

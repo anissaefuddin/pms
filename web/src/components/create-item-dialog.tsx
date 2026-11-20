@@ -72,6 +72,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [parentID, setParentID] = useState(fixedParent ?? "");
   const [trail, setTrail] = useState<Item[]>([]);
   const [owner, setOwner] = useState<PersonOption[]>([{ id: me.id, name: `${me.first_name} ${me.last_name}`.trim() }]);
+  // A task takes assignees; a project takes one owner; a folder takes neither (the API accepts assignee_ids for tasks only in this form).
+  const [assignees, setAssignees] = useState<PersonOption[]>([]);
   const [shares, setShares] = useState<Share[]>([]);
   const [sharingOpen, setSharingOpen] = useState(false);
   const [view, setView] = useState<SupportedDefaultView>("table");
@@ -146,6 +148,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     if (typeKey && customTypes.some((def) => def.key === typeKey)) input.type_key = typeKey; // CUST-01: a custom type of this kind
     if (kind !== "task") input.default_view_type = view;
     if (kind === "project" && owner[0]) input.owner_id = owner[0].id;
+    if (kind === "task" && assignees.length) input.assignee_ids = assignees.map((person) => person.id);
     if (kind === "task") { // SET-03: the user's defaults for a new task
       if (me.default_task_duration_days != null) input.duration_days = me.default_task_duration_days;
       if (me.default_task_effort_minutes != null) input.effort_minutes = me.default_task_effort_minutes;
@@ -284,6 +287,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       <h3 id="create-settings" className="text-sm font-semibold">{t("items.settings")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}
+        {kind === "task" && !blueprint && <ItemUserPicker label={t("items.assignees")} selected={assignees} onChange={setAssignees} multiple />}
         {kind !== "folder" && <div className="space-y-1 sm:col-span-2">
           <ItemDates invalid={!!fieldErrors.due_date} />
           {fieldErrors.due_date && <p id="create-due-error" role="alert" className="text-sm text-destructive">{fieldErrors.due_date}</p>}
@@ -292,7 +296,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       </div>
       {kind !== "task" && <div className="space-y-2">
         <p className="text-sm font-medium">{t("items.view")}</p>
-        <ViewTypePicker value={view} onChange={setView} />
+        <ViewTypePicker value={view} onChange={setView} compact />
       </div>}
       {canShare && <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
