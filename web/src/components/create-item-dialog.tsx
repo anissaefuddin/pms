@@ -318,7 +318,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     </details>
 
     <FormError message={error} />
-    <DialogFooter className="items-center sm:justify-between">
+    {/* Sticky: Create and Cancel stay in reach while the form scrolls inside the dialog. */}
+    <DialogFooter className="sticky bottom-0 z-10 items-center border-t bg-card pt-3 sm:justify-between">
       <p className="min-w-0 truncate text-sm text-muted-foreground" title={summary} aria-live="polite">{summary}</p>
       <div className="flex shrink-0 gap-2">
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>{t("items.cancel")}</Button>

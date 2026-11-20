@@ -10,9 +10,15 @@ const riskColors = { green: "bg-success", yellow: "bg-warning", red: "bg-danger"
 export function ProjectProgress({ item }: { item: Item }) {
   const { t } = useTranslation();
   if (item.type !== "project" || item.progress_percent == null || !item.progress_risk) return null;
+  // Three separate reads: a bar, the percentage, and the risk as its own badge (not one run-on label).
+  const value = Math.max(0, Math.min(100, item.progress_percent));
   return <span className="inline-flex items-center gap-2 tabular-nums">
-    <span>{t("items.progress.percent", { value: item.progress_percent })}</span>
-    <span className="inline-flex items-center gap-1 whitespace-nowrap">
+    <span role="meter" aria-label={t("items.progress.percent", { value })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}
+      className="relative block h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-muted">
+      <span aria-hidden="true" className="absolute inset-y-0 start-0 rounded-full bg-primary" style={{ width: `${value}%` }} />
+    </span>
+    <span className="w-9 text-end">{t("items.progress.percent", { value })}</span>
+    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs">
       <span aria-hidden="true" className={`size-2 rounded-full ${riskColors[item.progress_risk]}`} />
       {t(`items.progress.risk.${item.progress_risk}`)}
     </span>
