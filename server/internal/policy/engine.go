@@ -48,7 +48,7 @@ type SpaceAccess struct {
 	Visibility  string
 	Archived    bool
 	IconKey     string
-	IsAdmin     bool // an explicit Space Admin (space_admins row), not implied by a Full share (D-05)
+	IsAdmin     bool // an explicit Space Admin (space_admins row), not implied by a Full share (D-SA1)
 	Caps        Caps // effective capabilities of the actor on this Space; never empty for a returned Space
 }
 
@@ -57,7 +57,7 @@ type SpaceAccess struct {
 const spaceRows = `
 SELECT s.id::text, s.name, s.description, s.kind::text, COALESCE(s.owner_id::text, ''), s.version, s.locked,
        s.visibility, s.archived_at IS NOT NULL, COALESCE(s.icon_key, ''),
-       EXISTS (SELECT 1 FROM space_admins sa WHERE sa.space_id = s.id AND sa.user_id = $1::uuid),
+       EXISTS (SELECT 1 FROM space_admins sa JOIN users au ON au.id = sa.user_id WHERE sa.space_id = s.id AND sa.user_id = $1::uuid AND au.user_type IN ('admin','regular')),
        COALESCE(array_agg(DISTINCT CASE WHEN cr.id IS NOT NULL THEN 'mask:' || cr.caps_mask ELSE sh.role::text END) FILTER (WHERE sh.id IS NOT NULL), '{}')
 FROM spaces s
 LEFT JOIN shares sh ON sh.target_type = 'space' AND sh.target_id = s.id AND (

@@ -134,7 +134,7 @@ platform/* tidak mengimpor modul bisnis.
 2. Role efektif = gabungan (union) kemampuan semua share tersebut, baik yang langsung maupun lewat grup.
 3. Kemampuan akhir = role efektif ∩ plafon user type.
 4. Pemilik Personal space mendapat role `full` dengan kapabilitas yang tetap dibatasi tipe user. Hanya pemiliknya yang dapat melihat Personal space.
-5. Admin otomatis `full` di semua Space bertipe `shared` (asumsi; perlu dikonfirmasi, lihat §14).
+5. Workspace Admin tidak otomatis memperoleh `full` atau akses ke Shared Space (D-17.1, Explicit Access Only). Akses konten datang dari share, grup, atau Space Admin eksplisit (D-SA1), dibatasi User Type Ceiling.
 6. Target yang `deleted_at IS NOT NULL` hanya bisa diakses lewat Recycle bin (`view` dan `restore`).
 7. Jawaban "tidak ada akses" selalu **404**, bukan 403, agar keberadaan item tidak bocor. 403 dipakai hanya jika item terlihat tapi aksinya tidak diizinkan.
 
@@ -259,7 +259,7 @@ web/src/
 
 ## 14. Keputusan yang sebelumnya terbuka (ditutup 12 Nov 2026)
 
-1. Admin otomatis `full` di semua Space `shared`: **ya** (D-17). Personal space tetap privat; flag Space "restricted" bisa ditambahkan nanti.
+1. Admin otomatis `full` di semua Space `shared` (D-17, 12 Nov): **superseded oleh D-17.1 Explicit Access Only (20 Nov 2026).** Workspace Admin mengelola fungsi administratif lewat capability, bukan akses konten Space. Personal space tetap privat.
 2. Penghapusan permanen otomatis dari Recycle bin: **tidak di M1**, hanya manual (D-18); opsi `BIN_RETENTION_DAYS` di M6.
 3. Bahasa isi email undangan: **`PMS_DEFAULT_LOCALE`**, default `en` (D-19).
 
