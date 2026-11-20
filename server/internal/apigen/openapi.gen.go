@@ -5635,7 +5635,7 @@ type Space struct {
 	IconKey *string            `json:"icon_key,omitempty"`
 	Id      openapi_types.UUID `json:"id"`
 
-	// IsSpaceAdmin Explicit Space Admin; tidak diberikan oleh share Full saja (D-05)
+	// IsSpaceAdmin Explicit Space Admin; tidak diberikan oleh share Full saja (D-SA1)
 	IsSpaceAdmin *bool     `json:"is_space_admin,omitempty"`
 	Kind         SpaceKind `json:"kind"`
 
@@ -8665,10 +8665,10 @@ type ServerInterface interface {
 
 	// (GET /spaces/{spaceId}/admins)
 	ListSpaceAdmins(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
-	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-05)
+	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-SA1)
 	// (POST /spaces/{spaceId}/admins)
 	GrantSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
-	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-SA1)
 	// (DELETE /spaces/{spaceId}/admins/{userId})
 	RevokeSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId, userId openapi_types.UUID)
 	// ArchiveSpace Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace
@@ -8761,7 +8761,7 @@ type ServerInterface interface {
 	// ReplaceSpaceShares Ganti seluruh daftar share Space (SPC-11)
 	// (PUT /spaces/{spaceId}/shares)
 	ReplaceSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ReplaceSpaceSharesParams)
-	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-05)
+	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-SA1)
 	// (POST /spaces/{spaceId}/transfer-ownership)
 	TransferSpaceOwnership(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 
@@ -39089,10 +39089,10 @@ type StrictServerInterface interface {
 
 	// (GET /spaces/{spaceId}/admins)
 	ListSpaceAdmins(ctx context.Context, request ListSpaceAdminsRequestObject) (ListSpaceAdminsResponseObject, error)
-	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-05)
+	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-SA1)
 	// (POST /spaces/{spaceId}/admins)
 	GrantSpaceAdmin(ctx context.Context, request GrantSpaceAdminRequestObject) (GrantSpaceAdminResponseObject, error)
-	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-SA1)
 	// (DELETE /spaces/{spaceId}/admins/{userId})
 	RevokeSpaceAdmin(ctx context.Context, request RevokeSpaceAdminRequestObject) (RevokeSpaceAdminResponseObject, error)
 	// ArchiveSpace Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace
@@ -39185,7 +39185,7 @@ type StrictServerInterface interface {
 	// ReplaceSpaceShares Ganti seluruh daftar share Space (SPC-11)
 	// (PUT /spaces/{spaceId}/shares)
 	ReplaceSpaceShares(ctx context.Context, request ReplaceSpaceSharesRequestObject) (ReplaceSpaceSharesResponseObject, error)
-	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-05)
+	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-SA1)
 	// (POST /spaces/{spaceId}/transfer-ownership)
 	TransferSpaceOwnership(ctx context.Context, request TransferSpaceOwnershipRequestObject) (TransferSpaceOwnershipResponseObject, error)
 

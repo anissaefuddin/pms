@@ -2791,7 +2791,7 @@ export interface paths {
         };
         get: operations["listSpaceAdmins"];
         put?: never;
-        /** Jadikan anggota sebagai Space Admin (D-05) */
+        /** Jadikan anggota sebagai Space Admin (D-SA1) */
         post: operations["grantSpaceAdmin"];
         delete?: never;
         options?: never;
@@ -2812,7 +2812,7 @@ export interface paths {
         get?: never;
         put?: never;
         post?: never;
-        /** Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05) */
+        /** Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-SA1) */
         delete: operations["revokeSpaceAdmin"];
         options?: never;
         head?: never;
@@ -2830,7 +2830,7 @@ export interface paths {
         };
         get?: never;
         put?: never;
-        /** Serah-terima kepemilikan secara eksplisit (D-05) */
+        /** Serah-terima kepemilikan secara eksplisit (D-SA1) */
         post: operations["transferSpaceOwnership"];
         delete?: never;
         options?: never;
@@ -5307,7 +5307,7 @@ export interface components {
             archived?: boolean;
             /** @description Kunci ikon dari katalog GET /space-icons (D-04) */
             icon_key?: string | null;
-            /** @description Explicit Space Admin; tidak diberikan oleh share Full saja (D-05) */
+            /** @description Explicit Space Admin; tidak diberikan oleh share Full saja (D-SA1) */
             is_space_admin?: boolean;
             my_capabilities?: components["schemas"]["Capability"][];
         };

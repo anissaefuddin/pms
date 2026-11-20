@@ -6,7 +6,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/spaces"
 )
 
-// Space governance routes: archive/restore (D-03), explicit admins and ownership transfer (D-05), Public discovery and
+// Space governance routes: archive/restore (D-03), explicit admins and ownership transfer (D-SA1), Public discovery and
 // join (D-01), and the icon catalogue (D-04). Every decision is made in package spaces, which uses package policy.
 func (s *Server) spaceGovernanceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/archive", s.requireUser(s.archiveSpace))
