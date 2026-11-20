@@ -32,7 +32,9 @@ export function Topbar({ onCreate, live, search, navigation, inSettings = false,
   return (
     <header className="flex h-12 shrink-0 items-center justify-end border-b px-2 sm:px-4">
       {navigation}
-      <span role="status" data-live={live ? "true" : "false"} className="mr-auto text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
+      {/* Page breadcrumbs are portaled here (see WorkspaceHeader), so the top bar holds the path instead of a separate row. */}
+      <div id="topbar-breadcrumb" className="flex min-w-0 flex-1 items-center text-sm" />
+      <span role="status" data-live={live ? "true" : "false"} className="shrink-0 text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
       {search}
       {!inSettings && <CreateMenu onCreate={onCreate} spaceId={spaceId} />}
       {!inSettings && <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
@@ -48,7 +50,7 @@ export function SidebarFooter({ collapsed = false }: { collapsed?: boolean }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
-  return <div className={`mt-2 flex shrink-0 items-center gap-1 border-t border-border pt-2 ${collapsed ? "flex-col" : ""}`}>
+  return <div className={`mt-2 flex shrink-0 items-center gap-1 border-t border-nav-hover pt-2 ${collapsed ? "flex-col" : ""}`}>
     <ProfileMenu compact={collapsed} footer={!collapsed} />
     {!collapsed && <Link to="/inbox" className="relative shrink-0 rounded-md p-2 text-nav-muted hover:bg-nav-hover hover:text-nav-text"
       aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>

@@ -15,6 +15,7 @@ import { AvatarStack } from "@/components/ui/avatar-stack";
 import { KpiCard } from "@/components/ui/kpi-card";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { WorkspaceHeader } from "@/components/workspace-header";
+import { ItemPathBreadcrumb, useItemAncestors } from "@/components/item-path";
 import { TypeIcon } from "@/components/type-icon";
 
 /** Header project: breadcrumb, judul dengan Star, meta, anggota, aksi, dan empat KPI. */
@@ -69,13 +70,8 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
     ? `${milestones[0].title} · ${formatDate(milestones[0].due_date, profile)}`
     : t("views.project.noMilestones");
 
-  const breadcrumb = <nav aria-label={t("views.project.breadcrumb")}>
-    <ol className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-      <li>{space.data && <Link to="/spaces/$spaceId" params={{ spaceId }} className="hover:text-foreground hover:underline">{space.data.name}</Link>}</li>
-      <li aria-hidden="true">/</li>
-      <li aria-current="page" className="min-w-0 truncate text-foreground">{item.title}</li>
-    </ol>
-  </nav>;
+  const ancestors = useItemAncestors(item);
+  const breadcrumb = <ItemPathBreadcrumb item={item} ancestors={ancestors.data ?? []} />;
   const actions = <>
     <AvatarStack people={item.assignees} max={4} />
     <Button variant="outline" aria-pressed={infoOpen} onClick={onToggleInfo} className="max-md:hidden">
