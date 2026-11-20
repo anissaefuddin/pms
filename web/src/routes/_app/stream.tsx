@@ -6,7 +6,7 @@ import { api } from "@/lib/api";
 import { formatDateTime, useProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { groupBy } from "@/lib/todo-groups";
-import { groupByDay } from "@/lib/activity-format";
+import { changedFieldLabels, groupByDay } from "@/lib/activity-format";
 import { formatDate } from "@/lib/profile";
 
 type Entry = components["schemas"]["StreamEntry"];
@@ -85,7 +85,7 @@ function Line({ entry }: { entry: Entry }) {
   const link = <Link className="font-medium underline-offset-2 hover:underline" to={entry.item.type === "task" ? "/tasks/$itemId" : "/items/$itemId"}
     params={{ itemId: entry.item.id }}></Link>;
   const key = entry.kind === "comment" ? "commented" : `action.${["update", "delete", "restore", "detach", "create"].includes(entry.action) ? entry.action : "other"}`;
-  const fields = Object.keys(entry.changes);
+  const fields = changedFieldLabels(Object.keys(entry.changes), (key) => String(t(key)));
   return <>
     <p><Trans i18nKey={`nav.stream.${key}`} values={{ actor: entry.actor.name, title: entry.item.title }} components={{ item: link }} /></p>
     {entry.snippet && <p className="text-muted-foreground">{entry.snippet}</p>}

@@ -48,7 +48,7 @@ test("Stream filters, hides auto updates, pages with a cursor and has no axe vio
   await expect(page.getByRole("heading", { name: "Stream" })).toBeVisible();
   await expect(page.getByRole("link", { name: "Prepare brief" }).first()).toHaveAttribute("href", `/tasks/${taskId}`);
   await expect(page.getByText("Grace Hopper updated").first()).toBeVisible();
-  await expect(page.getByText("Changed: title")).toBeVisible();
+  await expect(page.getByText("Changed: Name")).toBeVisible();
   await page.getByRole("button", { name: "Load more" }).click();
   await expect(page.getByText("Looks good")).toBeVisible();
   expect(calls.some((call) => call.path === "/stream" && call.query.get("cursor") === "page-2")).toBe(true);

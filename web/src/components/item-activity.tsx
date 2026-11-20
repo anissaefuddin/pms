@@ -5,7 +5,7 @@ import type { components } from "@/api/schema";
 import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
 import { formatDate, formatDateTime, useProfile } from "@/lib/profile";
-import { formatChange, groupByDay } from "@/lib/activity-format";
+import { fieldLabel, formatChange, groupByDay } from "@/lib/activity-format";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Button } from "@/components/ui/button";
 
@@ -13,8 +13,13 @@ type Activity = components["schemas"]["Activity"];
 type Page = { items: Activity[]; next_cursor?: string | null };
 const known = ["update", "delete", "restore", "detach", "create"];
 
+/** Kolom yang nilainya ID tanpa nama di sini: tampil "diubah", bukan UUID mentah. */
+const idFields = new Set(["assignee_ids", "owner_id", "type_id", "default_workflow_id", "fields"]);
+/** Tanggal ditampilkan dengan format pengguna, bukan string ISO mentah. */
+const dateFields = new Set(["start_date", "due_date"]);
+
 /** The item's change history (SPC-07 activity log), newest first. */
-export function ItemActivity({ item }: { item: Item }) {
+export function ItemActivity({ item, statuses }: { item: Item; statuses: { id: string; name: string }[] }) {
   const { t } = useTranslation();
   const heading = useId();
   const profile = useProfile();
@@ -35,9 +40,24 @@ export function ItemActivity({ item }: { item: Item }) {
         <AvatarStack people={[{ id: entry.actor.id, name: entry.actor.name }]} max={1} className="mt-0.5" />
         <div className="min-w-0 space-y-0.5">
           <p>{t(`items.activity.action.${known.includes(entry.action) ? entry.action : "other"}`, { actor: entry.actor.name })}</p>
-          {entry.action === "update" && Object.entries(entry.changes).map(([field, change]) => <p key={field} className="text-muted-foreground">
-            <span className="font-medium text-foreground">{field}</span>: {formatChange(change as { from?: unknown; to?: unknown })}
-          </p>)}
+          {entry.action === "update" && Object.entries(entry.changes).flatMap(([field, change]) => {
+            const label = fieldLabel(field, (key) => String(t(key)));
+            if (!label) return [];
+            if (idFields.has(field)) return [<p key={field} className="text-muted-foreground">
+              <span className="font-medium text-foreground">{label}</span>: {t("items.activity.field.changed")}
+            </p>];
+            const { from, to } = change as { from?: unknown; to?: unknown };
+            const name = (value: unknown) => {
+              if (field === "status_id") return statuses.find((status) => status.id === value)?.name ?? "—";
+              if (typeof value !== "string" || !value) return value;
+              if (dateFields.has(field)) return formatDate(value.slice(0, 10), profile);
+              if (field === "completed_at") return formatDateTime(value, profile);
+              return value;
+            };
+            return [<p key={field} className="text-muted-foreground">
+              <span className="font-medium text-foreground">{label}</span>: {formatChange({ from: name(from), to: name(to) })}
+            </p>];
+          })}
           <p className="text-xs text-muted-foreground">{formatDateTime(entry.created_at, profile)}</p>
         </div>
       </li>)}</ul>
