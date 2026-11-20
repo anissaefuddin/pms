@@ -252,7 +252,7 @@
   "spaceSettings.members.empty": "Nobody has access yet except through admins.",
   "spaceSettings.members.colName": "Member",
   "spaceSettings.members.colRole": "Effective role",
-  "spaceSettings.members.colWhy": "Why they have access",
+  "spaceSettings.members.colWhy": "Access source",
   "spaceSettings.members.direct": "Direct share",
   "spaceSettings.members.viaGroup": "Via group {{name}}",
   "spaceSettings.members.capped": "Limited by user type",
@@ -400,5 +400,16 @@
   "spaceSettings.delete.forms": "{{count}} request forms belong to this Space.",
   "spaceSettings.delete.blueprints": "{{count}} blueprints belong to this Space.",
   "spaceSettings.delete.tools": "{{count}} tools are removed with it.",
-  "spaceSettings.delete.impactError": "The impact could not be checked. Try again before deleting."
+  "spaceSettings.delete.impactError": "The impact could not be checked. Try again before deleting.",
+  "spaceSettings.group.access": "Access",
+  "spaceSettings.group.configuration": "Configuration",
+  "spaceSettings.group.toolsAutomation": "Tools & automation",
+  "spaceSettings.admins.lastAdmin": "Cannot remove the only Space Admin. Assign another admin first.",
+  "spaceSettings.admins.selfTitle": "Remove your own admin access?",
+  "spaceSettings.admins.selfDescription": "After this you cannot manage this Space's admins or settings unless another admin gives you admin access back.",
+  "spaceSettings.admins.selfConfirm": "Remove my admin access",
+  "spaceSettings.direct.savedKeepsGroup": "Role saved. The effective role may stay the same, because a group also gives {{groups}} access.",
+  "spaceSettings.crumbSpaces": "Spaces",
+  "spaceSettings.crumbSettings": "Settings",
+  "spaceSettings.breadcrumb": "Breadcrumb"
 }

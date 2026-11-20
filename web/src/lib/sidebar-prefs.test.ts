@@ -49,11 +49,11 @@ test("visibility follows sidebar_hidden and ignores shortcuts without a key", ()
   assert.equal(isShortcutVisible("recycle", ["stream", "workload"]), true);
 });
 
-test("width is clamped to 220–400 and rounded", () => {
-  assert.equal(clampWidth(100), 220);
+test("width is clamped to 256–400 and rounded", () => {
+  assert.equal(clampWidth(100), 256);
   assert.equal(clampWidth(999), 400);
   assert.equal(clampWidth(301.4), 301);
-  assert.equal(readWidth(), 270);
+  assert.equal(readWidth(), 296);
 });
 
 test("toggleOpen flips a Space id without touching the rest", () => {

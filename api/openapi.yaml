@@ -7025,7 +7025,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/User'
         - type: object
-          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, account_name, capabilities, onboarding_pending]
+          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, account_name, capabilities, onboarding_pending, avatar_version]
           properties:
             company: { type: string, nullable: true }
             country: { type: string, nullable: true }
@@ -7072,6 +7072,7 @@ components:
               description: Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif
               items: { $ref: '#/components/schemas/EmailGroup' }
             onboarding_pending: { type: boolean, description: true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati }
+            avatar_version: { type: integer, format: int64, description: 'Foto profil: epoch ms saat terakhir diunggah, 0 berarti tidak ada foto. Dipakai sebagai penanda cache pada GET /api/v1/me/avatar' }
             default_task_duration_days: { type: integer, nullable: true, minimum: 0, maximum: 3650, description: Durasi awal task baru (SET-03) }
             default_task_effort_minutes: { type: integer, nullable: true, minimum: 0, maximum: 525600, description: Effort awal task baru (SET-03) }
             account_name: { type: string, description: Nama workspace }

@@ -325,5 +325,6 @@
       "project": "Field yang dicentang di sini berlaku untuk project ini dan item di dalamnya. Field tanpa penetapan project atau folder berlaku untuk seluruh Space.",
       "folder": "Field yang dicentang di sini berlaku untuk folder ini dan item di dalamnya. Field tanpa penetapan project atau folder berlaku untuk seluruh Space."
     }
-  }
+  },
+  "advancedOptions": "Opsi lanjutan"
 }

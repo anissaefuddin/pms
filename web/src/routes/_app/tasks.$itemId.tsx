@@ -16,23 +16,11 @@ import { ShareDialog } from "@/components/share-dialog";
 import { WorkspaceLayout } from "@/components/workspace-layout";
 import { ErrorState } from "@/components/ui/error-state";
 import { WorkspaceHeader } from "@/components/workspace-header";
+import { ItemPathBreadcrumb, useItemAncestors } from "@/components/item-path";
 import { TypeIcon } from "@/components/type-icon";
 import { Info, Plus, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/tasks/$itemId")({ component: ItemPage });
-
-// F2: a folder shows where it lives, like a project does. Space name links back to the Space.
-function FolderBreadcrumb({ spaceId, title }: { spaceId: string; title: string }) {
-  const { t } = useTranslation();
-  const space = useSpace(spaceId);
-  return <nav aria-label={t("views.project.breadcrumb")}>
-    <ol className="flex flex-wrap items-center gap-1 text-sm text-muted-foreground">
-      <li>{space.data && <Link to="/spaces/$spaceId" params={{ spaceId }} className="hover:text-foreground hover:underline">{space.data.name}</Link>}</li>
-      <li aria-hidden="true">/</li>
-      <li aria-current="page" className="min-w-0 truncate text-foreground">{title}</li>
-    </ol>
-  </nav>;
-}
 
 function ItemPage() {
   return <ItemWorkspace itemId={Route.useParams().itemId} />;
@@ -66,6 +54,7 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
     if (child.type === "task") void navigate({ to: ".", search: (previous) => ({ ...previous, task: child.id }) });
     else void navigate({ to: "/tasks/$itemId", params: { itemId: child.id } });
   }
+  const folderAncestors = useItemAncestors(item);
   if (!me) return null;
   if (detail.isError) return <WorkspaceLayout><ErrorState message={t("items.loadError")} retryLabel={t("items.retry")} onRetry={() => void detail.refetch()} /></WorkspaceLayout>;
   return <WorkspaceLayout className="space-y-6">
@@ -73,7 +62,7 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
       onToggleInfo={toggleInfo} onAddTask={() => setAddingTask(true)}
       onShare={canShare ? () => setSharing(true) : undefined} />
     : item && container ? <WorkspaceHeader icon={<TypeIcon name="folder" />} title={item.title} starItemId={item.id}
-      breadcrumb={<FolderBreadcrumb spaceId={item.locations[0]?.space_id ?? ""} title={item.title} />}
+      breadcrumb={<ItemPathBreadcrumb item={item} ancestors={folderAncestors.data ?? []} />}
       actions={<>
         <Button variant="outline" aria-pressed={infoOpen} onClick={toggleInfo}><Info />{t("views.project.info")}</Button>
         {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("views.project.share")}</Button>}

@@ -5172,6 +5172,11 @@ export interface components {
             email_muted?: components["schemas"]["EmailGroup"][];
             /** @description true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati */
             onboarding_pending: boolean;
+            /**
+             * Format: int64
+             * @description Foto profil: epoch ms saat terakhir diunggah, 0 berarti tidak ada foto. Dipakai sebagai penanda cache pada GET /api/v1/me/avatar
+             */
+            avatar_version: number;
             /** @description Durasi awal task baru (SET-03) */
             default_task_duration_days?: number | null;
             /** @description Effort awal task baru (SET-03) */

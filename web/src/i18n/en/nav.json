@@ -215,5 +215,9 @@
   "inbox.report.dependencies": "Dependencies",
   "inbox.report.rescheduled": "Rows rescheduled",
   "space.actionsFor": "Actions for {{name}}",
-  "space.archived": "Archived"
+  "space.archived": "Archived",
+  "space.toolsIn": "Tools in {{name}}",
+  "space.filterProjects": "Filter projects and folders in {{name}}",
+  "space.filterProjectsPlaceholder": "Filter projects",
+  "space.noProjectMatch": "No project or folder matches"
 }

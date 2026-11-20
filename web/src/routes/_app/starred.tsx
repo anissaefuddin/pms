@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { useStars } from "@/components/star-button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { StarredIllustration } from "@/components/ui/empty-illustrations";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/starred")({ component: Starred });
 
@@ -11,8 +12,8 @@ function Starred() {
   const { t } = useTranslation();
   const stars = useStars();
   return <main className="space-y-5 p-8">
+    <TopbarTitle>{t("starred.title")}</TopbarTitle>
     <header className="border-b pb-5">
-      <h1 className="workspace-title">{t("starred.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("starred.description")}</p>
     </header>
     {stars.isPending && <p role="status" className="text-sm text-muted-foreground">{t("starred.loading")}</p>}

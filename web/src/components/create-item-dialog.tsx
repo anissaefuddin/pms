@@ -72,6 +72,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [parentID, setParentID] = useState(fixedParent ?? "");
   const [trail, setTrail] = useState<Item[]>([]);
   const [owner, setOwner] = useState<PersonOption[]>([{ id: me.id, name: `${me.first_name} ${me.last_name}`.trim() }]);
+  // A task takes assignees; a project takes one owner; a folder takes neither (the API accepts assignee_ids for tasks only in this form).
+  const [assignees, setAssignees] = useState<PersonOption[]>([]);
   const [shares, setShares] = useState<Share[]>([]);
   const [sharingOpen, setSharingOpen] = useState(false);
   const [view, setView] = useState<SupportedDefaultView>("table");
@@ -79,6 +81,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [busy, setBusy] = useState(false);
   const [blueprintID, setBlueprintID] = useState("");
+  const [blueprintQuery, setBlueprintQuery] = useState("");
   const [typeKeyChoice, setTypeKey] = useState(initialTypeKey ?? "");
   // CIT-D01: Workspace types, and the types of this Space only (a Space type never appears in another Space)
   const typeDefs = (useItemTypes().data ?? []).filter((def) => !def.space_id || def.space_id === spaceID);
@@ -115,6 +118,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
 
   const blueprints = useBlueprints(spaceID, !!selected).data ?? [];
   const blueprint = blueprints.find((entry) => entry.id === blueprintID);
+  const ofKind = blueprints.filter((entry) => entry.item_type === kind);
   // F3: with a fixed parent the list above is not loaded, so read that parent's own title (it is the location the item will be created in).
   const fixedParentItem = useQuery({ queryKey: itemKeys.detail(fixedParent ?? ""), enabled: !!fixedParent, queryFn: () => getItem(fixedParent!) });
   const parentLabel = parent?.title ?? (fixedParent ? fixedParentItem.data?.item.title : undefined) ?? directory?.title ?? t("items.root");
@@ -144,6 +148,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     if (typeKey && customTypes.some((def) => def.key === typeKey)) input.type_key = typeKey; // CUST-01: a custom type of this kind
     if (kind !== "task") input.default_view_type = view;
     if (kind === "project" && owner[0]) input.owner_id = owner[0].id;
+    if (kind === "task" && assignees.length) input.assignee_ids = assignees.map((person) => person.id);
     if (kind === "task") { // SET-03: the user's defaults for a new task
       if (me.default_task_duration_days != null) input.duration_days = me.default_task_duration_days;
       if (me.default_task_effort_minutes != null) input.effort_minutes = me.default_task_effort_minutes;
@@ -231,19 +236,6 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
             </select></label>}
           {kind !== "task" && <p className="self-end text-sm text-muted-foreground">{t("items.workflow")}: {t("items.defaultWorkflow")}</p>}
         </>}
-        {blueprints.length > 0 && <fieldset className="space-y-1 sm:col-span-2">
-          <legend>{t("blueprints.from")}</legend>
-          <label className="flex items-center gap-2"><input type="radio" name="blueprint" checked={!blueprint} onChange={() => setBlueprintID("")} />{t("blueprints.none")}</label>
-          {blueprints.map((entry) => {
-            const def = typeDefs.find((d) => d.key === entry.item_type);
-            return <label key={entry.id} className="flex items-center gap-2">
-              <input type="radio" name="blueprint" checked={entry.id === blueprintID} onChange={() => setBlueprintID(entry.id)} />
-              <TypeIcon name={def?.icon} />{entry.name}
-              <small className="text-muted-foreground">{t("blueprints.typeLine", { type: def?.name ?? entry.item_type, count: entry.item_count })}</small>
-            </label>;
-          })}
-          {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
-        </fieldset>}
       </div>
     </section>
 
@@ -266,10 +258,36 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       </fieldset>
     </section>
 
+    {/* Everything beyond name, location and type is optional: it sits in a closed group, opened automatically when it has an error. */}
+    <details className="group rounded-lg border p-3" open={!!(fieldErrors.due_date || fieldErrors.parent || fieldErrors.location || error)}>
+      <summary className="cursor-pointer text-sm font-semibold">{t("items.advancedOptions")}</summary>
+      <div className="mt-4 space-y-6">
+    {/* Blueprints come after the item type and list only blueprints of that type (the type decides what can be copied). */}
+    {blueprints.some((entry) => entry.item_type === kind) && <section className="space-y-3" aria-labelledby="create-blueprint">
+      <h3 id="create-blueprint" className="text-sm font-semibold">{t("blueprints.from")}</h3>
+      {blueprint && <p className="text-sm font-medium">{t("blueprints.createFrom")}</p>}
+      <fieldset className="space-y-1">
+        <legend className="sr-only">{t("blueprints.from")}</legend>
+        <label className="flex items-center gap-2"><input type="radio" name="blueprint" checked={!blueprint} onChange={() => setBlueprintID("")} />{t("blueprints.none")}</label>
+        {ofKind.length > 5 && <input type="search" value={blueprintQuery} onChange={(event) => setBlueprintQuery(event.target.value)}
+          aria-label={t("blueprints.searchInCreate")} placeholder={t("blueprints.searchInCreate")} className={`${selectClass} h-8`} />}
+        {ofKind.filter((entry) => entry.name.toLowerCase().includes(blueprintQuery.trim().toLowerCase())).map((entry) => {
+          const def = typeDefs.find((d) => d.key === entry.item_type);
+          return <label key={entry.id} className="flex items-center gap-2">
+            <input type="radio" name="blueprint" checked={entry.id === blueprintID} onChange={() => setBlueprintID(entry.id)} />
+            <TypeIcon name={def?.icon} />{entry.name}
+            <small className="text-muted-foreground">{t("blueprints.typeLine", { type: def?.name ?? entry.item_type, count: entry.item_count })}</small>
+          </label>;
+        })}
+        {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
+      </fieldset>
+    </section>}
+
     <section className="space-y-4" aria-labelledby="create-settings">
       <h3 id="create-settings" className="text-sm font-semibold">{t("items.settings")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}
+        {kind === "task" && !blueprint && <ItemUserPicker label={t("items.assignees")} selected={assignees} onChange={setAssignees} multiple />}
         {kind !== "folder" && <div className="space-y-1 sm:col-span-2">
           <ItemDates invalid={!!fieldErrors.due_date} />
           {fieldErrors.due_date && <p id="create-due-error" role="alert" className="text-sm text-destructive">{fieldErrors.due_date}</p>}
@@ -278,7 +296,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       </div>
       {kind !== "task" && <div className="space-y-2">
         <p className="text-sm font-medium">{t("items.view")}</p>
-        <ViewTypePicker value={view} onChange={setView} />
+        <ViewTypePicker value={view} onChange={setView} compact />
       </div>}
       {canShare && <div className="space-y-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
@@ -300,9 +318,12 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         </div>
       </div>}
     </section>
+      </div>
+    </details>
 
     <FormError message={error} />
-    <DialogFooter className="items-center sm:justify-between">
+    {/* Sticky: Create and Cancel stay in reach while the form scrolls inside the dialog. */}
+    <DialogFooter className="sticky bottom-0 z-10 items-center border-t bg-card pt-3 sm:justify-between">
       <p className="min-w-0 truncate text-sm text-muted-foreground" title={summary} aria-live="polite">{summary}</p>
       <div className="flex shrink-0 gap-2">
         <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={busy}>{t("items.cancel")}</Button>

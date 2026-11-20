@@ -16,7 +16,8 @@ test.describe("Space settings", () => {
     const table = page.getByRole("table");
     await expect(table.getByRole("row", { name: /Grace Hopper/ })).toContainText("Via group Design team");
     await expect(table.getByRole("row", { name: /Ada Lovelace/ })).toContainText("Limited by user type");
-    await expect(page.getByRole("button", { name: "Manage members and access" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Direct access" })).toBeVisible(); // one place to add and change direct access
+    await expect(page.getByRole("button", { name: "Manage members and access" })).toHaveCount(0);
   });
 
   test("an unknown tab goes back to General", async ({ page }) => {

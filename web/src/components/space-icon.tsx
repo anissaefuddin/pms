@@ -11,9 +11,9 @@ const ICONS: Record<string, ComponentType<SVGProps<SVGSVGElement>>> = {
 
 export const SPACE_ICON_KEYS = Object.keys(ICONS);
 
-/** A Space's icon; a Space without a key shows the default folder. Decorative: the name next to it carries the meaning. */
+/** A Space's icon; a Space without a key shows Layers. Decorative: the name next to it carries the meaning. */
 export function SpaceIcon({ iconKey, className }: { iconKey?: string | null; className?: string }) {
-  const Icon = (iconKey && ICONS[iconKey]) || Folder;
+  const Icon = (iconKey && ICONS[iconKey]) || Layers;
   return <Icon aria-hidden="true" className={cn("size-4 shrink-0", className)} />;
 }
 
@@ -25,9 +25,9 @@ export function SpaceIconPicker({ value, onChange, disabled }: { value: string |
       <legend className="text-sm font-medium">{t("spaces.spaceSettings.general.icon")}</legend>
       <div role="group" aria-label={t("spaces.spaceSettings.general.icon")} className="grid grid-cols-8 gap-1.5">
         {SPACE_ICON_KEYS.map((key) => {
-          const selected = (value ?? "folder") === key;
+          const selected = (value ?? "layers") === key;
           return <button key={key} type="button" aria-pressed={selected} title={t(`spaces.spaceSettings.icons.${key}`)}
-            aria-label={t(`spaces.spaceSettings.icons.${key}`)} onClick={() => onChange(key === "folder" ? null : key)}
+            aria-label={t(`spaces.spaceSettings.icons.${key}`)} onClick={() => onChange(key === "layers" ? null : key)}
             className={cn("grid size-9 place-items-center rounded-lg border text-foreground hover:bg-accent focus-visible:outline-2 focus-visible:outline-ring disabled:opacity-50",
               selected && "border-primary ring-2 ring-ring")}>
             <SpaceIcon iconKey={key} />

@@ -8,6 +8,7 @@ import { formatDate } from "@/lib/profile";
 import { statusDotClass } from "@/lib/status-colors";
 import { Button } from "@/components/ui/button";
 import { RequestTabs } from "@/components/request-tabs";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/requests/mine")({ component: MyRequests });
 
@@ -32,8 +33,8 @@ function MyRequests() {
   const counts = { all: rows.length, active: rows.filter(isActive).length, closed: rows.filter((row) => !isActive(row)).length };
   return <main className="space-y-5 p-8">
     <RequestTabs />
+    <TopbarTitle>{t("forms.mine.title")}</TopbarTitle>
     <header className="border-b pb-5">
-      <h1 className="workspace-title">{t("forms.mine.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("forms.mine.description")}</p>
     </header>
     {list.isPending && <p role="status">{t("forms.mine.loading")}</p>}

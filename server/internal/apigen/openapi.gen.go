@@ -4961,6 +4961,9 @@ type Me struct {
 	// AccountName Nama workspace
 	AccountName string `json:"account_name"`
 
+	// AvatarVersion Foto profil: epoch ms saat terakhir diunggah, 0 berarti tidak ada foto. Dipakai sebagai penanda cache pada GET /api/v1/me/avatar
+	AvatarVersion int64 `json:"avatar_version"`
+
 	// Capabilities Kemampuan global; kemampuan per item dihitung server
 	Capabilities struct {
 		CreateSpace *bool `json:"create_space,omitempty"`

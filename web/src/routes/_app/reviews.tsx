@@ -7,6 +7,7 @@ import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/reviews")({ component: FileReviews });
 
@@ -26,7 +27,7 @@ function FileReviews() {
     } catch (err) { setError((err as Error).message); }
   }
   return <main className="mx-auto max-w-3xl space-y-4 p-6">
-    <h1 className="text-xl font-semibold">{t("items.fileReview.title")}</h1>
+    <TopbarTitle>{t("items.fileReview.title")}</TopbarTitle>
     {isError && <FormError message={t("items.loadError")} />}
     <FormError message={error} />
     {data?.items.length === 0 && <p className="text-muted-foreground">{t("items.fileReview.empty")}</p>}
