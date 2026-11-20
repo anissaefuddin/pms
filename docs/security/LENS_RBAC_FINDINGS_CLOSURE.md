@@ -133,3 +133,73 @@ Alasan:
 - Tetapi job CI `authorization-matrix` tidak menjalankan tes baru (lihat bagian 7, butir 1), dan move parent/child belum diuji (butir 2).
 
 Gate akan menjadi **PASS** setelah dua hal itu ditutup. Tidak perlu perubahan kode produksi untuk itu.
+
+## 10. Pembaruan: isolasi commit, dua prasyarat, dan residual risk (20 Nov 2026, lanjutan)
+
+### 10.1 Isolasi commit
+
+- Commit `30ee14f` (dokumen D-17.1 dan tes regresi) sudah ter-push dan tidak diubah. Memisahkannya berarti menulis ulang history publik, yang tidak dilakukan.
+- Perubahan baru dipisah menjadi commit lokal berikut, masing-masing dengan scope sendiri. Tidak ada push.
+
+| Commit | Scope |
+|---|---|
+| (1) | `fix(items)`: pemeriksaan Space terkunci dibaca sebelum lokasi lama dihapus (`items/location.go`), dan tes `authorization_locked_space_integration_test.go` |
+| (2) | `fix(policy)`: hak Space Admin hanya berlaku untuk tipe `admin`/`regular` saat dipakai (`policy/engine.go`, `policy/locked.go`, `policy/item.go`), dan tes `authorization_space_admin_downgrade_integration_test.go` |
+| (3) | `test(items)`: regresi move parent/child (`move_parent_child_regression_integration_test.go`) |
+| (4) | `ci`: pola `authorization-matrix` dengan penjaga hasil (`.github/workflows/ci.yml`) |
+| (5) | `docs(security)`: bagian ini dan roadmap |
+
+Sesi lain: tidak ada file dari sesi lain yang di-stage. `docs/qa/usertest.md` dan berkas `avatar`/`server.go` tetap di working tree.
+
+### 10.2 Temuan baru: bypass Space terkunci (P1, FIXED)
+
+**Root cause.** `replaceLocations` (`items/location.go`) menghapus lokasi lama di dalam loop, lalu memanggil `policy.LockedSpacesOf` dan memeriksa Space Admin. Karena lokasi di Space terkunci sudah dihapus, `LockedSpacesOf` mengembalikan kosong, sehingga aturan D-95 tidak berlaku.
+
+**Dampak.** Member Full yang bukan Space Admin bisa memindahkan item keluar dari Space terkunci. Ini terjadi sebelum batch ini, bukan karena penurunan tipe user.
+
+**Bukti sebelum fix.** `TestAuthorizationLockedSpaceBlocksNonAdminMoveOut`: `a Full non-admin cannot move an item out of a locked Space: status 200, want 403`.
+
+**Perbaikan.** Pemeriksaan dan `restricted` dipindah ke sebelum loop penghapusan. Tes lulus setelah perbaikan.
+
+### 10.3 Residual risk 1: penurunan tipe user (FIXED, data tidak diubah)
+
+**Temuan.** Setelah tipe user Space Admin diturunkan ke external, flag `is_space_admin` tetap `true` dan pemeriksaan Space terkunci masih meloloskannya. Bukti: `TestAuthorizationSpaceAdminDowngradeLosesSpaceAuthority` gagal dengan `is_space_admin:true` sebelum fix.
+
+**Perbaikan.** Hak Space Admin hanya dihitung jika tipe user saat ini `admin` atau `regular`. Diterapkan di empat tempat: `SpaceAccessFor` (flag), `IsSpaceAdmin`, query Space locked, dan query visibilitas item. Penegakan langsung berlaku tanpa mengubah data.
+
+**Catatan.** Penurunan tipe juga mencabut sesi user (401), jadi jalur ini hanya relevan untuk sesi baru.
+
+**Opsi remediation yang tidak diambil:**
+- (a) Mencabut baris `space_admins` saat tipe user turun. Perubahan perilaku pada alur `ChangeType`. Tidak diambil karena belum ada permintaan.
+- (b) Migrasi data untuk baris yang sudah tidak memenuhi syarat. Audit dev-lens: 0 baris. Tidak perlu migrasi saat ini.
+
+**Yang tetap berlaku:** baris `space_admins` lama tetap ada di database. Itu tidak memberi hak, tetapi terlihat di daftar admin. Admin Space bisa mencabutnya lewat UI.
+
+### 10.4 Residual risk 2: audit move (DIEVALUASI, tidak ditambah)
+
+**Yang sudah tercatat.** Setiap move yang mengubah lokasi menulis satu baris `activity` dengan `actor_id`, `item_id`, `from`/`to` (Space dan parent), dan `created_at`, dalam transaksi yang sama. Gagal = rollback.
+
+**Yang tercatat di `audit_events`.** Perubahan share (`auditShares`), 2FA, dan operasi admin lain. Move tidak ditulis ke sana.
+
+**Penilaian.** `activity` memenuhi kebutuhan riwayat item: siapa, kapan, dari mana, ke mana. Move mengubah visibilitas hanya lewat lokasi, dan perubahan hak itu sendiri (share) sudah diaudit di `audit_events`. Jadi tidak ada celah audit yang terbukti.
+
+**Rekomendasi.** Tambahkan `audit_events` hanya untuk move lintas Space jika produk membutuhkan log admin untuk itu. Tidak untuk setiap move, untuk menghindari duplikasi. Tidak diimplementasikan karena belum ada kebutuhan yang dinyatakan.
+
+### 10.5 Dua prasyarat Security Gate
+
+1. **Pola CI `authorization-matrix` (ditutup).** Pola sekarang: `Authorization|AccessRules|Matrix|Capabilit|SpaceAdmin|ItemShare|Move|ConcurrentMoves|ReplaceItemLocations`, ditambah `./server/internal/policy` penuh. Langkah gagal jika jumlah `--- PASS` kurang dari 23, ada `--- SKIP`, atau ada `--- FAIL`. Script langkah dijalankan lokal: `passed=33 skipped=0 failed=0`, exit 0.
+2. **Regresi move parent/child (ditutup).** `TestMoveParentChildInheritanceValidationCycleAndRollback`, enam subtest: inheritance setelah move (dan berakhir saat share dicabut), validasi source, validasi destination, cycle, rollback, dan lintas Space. Semua lulus.
+
+### 10.6 Hasil pengujian
+
+- `go test ./... -count=1 -timeout 15m` pada PostgreSQL 16.15 terisolasi: exit 0, tanpa FAIL. `httpserver` 495,9 detik, `policy` lulus.
+- Pola CI dijalankan dengan script langkah yang sama: passed=33, skipped=0, failed=0.
+- E2E dan web tidak dijalankan ulang untuk perubahan Go di batch ini. E2E authorization dan navigasi (44/44) dan Space settings (10/10) lulus sebelumnya.
+
+## 11. Security Gate (diperbarui)
+
+**PASS untuk cakupan kode batch ini**, dengan catatan:
+- Kedua prasyarat sudah terpenuhi, dan residual risk 1 sudah diperbaiki, residual risk 2 sudah dievaluasi.
+- Belum di-deploy. Dev-lens masih menjalankan build sebelum batch ini.
+- E2E tidak dijalankan ulang setelah perubahan Go.
+- Commit belum di-push; pola CI baru belum berjalan di GitHub.
