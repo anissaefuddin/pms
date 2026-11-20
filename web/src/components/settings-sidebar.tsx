@@ -109,7 +109,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
     items: group.items.filter((item) => !q || item.label.toLowerCase().includes(q)),
   })).filter((group) => group.items.length > 0);
   return (
-    <aside style={{ width: `${width}px`, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex h-dvh shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
+    <aside style={{ width: `${width}px`, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex h-dvh shrink-0 flex-col border-r border-nav-hover bg-nav p-3 text-nav-text`}>
       <div className="mb-3 flex items-center gap-1">
         {/* The label gets the room: the profile collapses to its avatar so "Back to workspace" fits on one line. */}
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm whitespace-nowrap text-nav-muted hover:bg-nav-hover hover:text-nav-text">
@@ -131,7 +131,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
         </section>)}
         {groups.length === 0 && <p role="status" className="px-2 text-sm text-nav-muted">{t("settings.nav.noMatch")}</p>}
         {/* Installation: the running version, in the same scroll area as the sections above. */}
-        <div className="border-t border-border px-2 pt-3">
+        <div className="border-t border-nav-hover px-2 pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{t("settings.nav.installation")}</p>
           <p className="mt-1 text-sm text-nav-text">{`v${__APP_VERSION__}`}</p>
         </div>

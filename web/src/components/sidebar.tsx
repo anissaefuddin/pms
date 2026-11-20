@@ -176,7 +176,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
 
   const style = mobile ? undefined : { width: collapsed ? "var(--sidebar-width-collapsed)" : `${width}px` };
   return <>
-    <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} group/sidebar relative flex min-h-0 flex-col border-r border-border bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
+    <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} group/sidebar relative flex min-h-0 flex-col border-r border-nav-hover bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
       <div className={`mb-4 flex items-center gap-2 ${collapsed ? "flex-col" : ""}`}>
         <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{(me.account_name || "W").trim().charAt(0).toUpperCase()}</span>
         {!collapsed && <p className="min-w-0 flex-1 truncate font-semibold" title={me.account_name}>{me.account_name}</p>}
@@ -297,7 +297,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
             open={openSpaces.includes(s.id)} onToggle={() => toggleSpace(s.id)} />
         ))}
       </ul>
-      <ul className="border-t border-border pt-1">
+      <ul className="border-t border-nav-hover pt-1">
         <li><Link to="/shared-with-me" className={navRow} activeProps={activeNav}><Share2 className="size-4" aria-hidden />{t("nav.shared.label")}</Link></li>
         <li><Link to="/blueprints" className={navRow} activeProps={activeNav}><LayoutTemplate className="size-4" aria-hidden />{t("blueprints.nav")}</Link></li>
       </ul>
@@ -363,7 +363,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeOptions={{ exact: true }} activeProps={activeLink}>
         <SpaceIcon iconKey={(space as SpaceType).icon_key} className="me-2 inline-block align-[-2px]" />{name}{(space as SpaceType).archived && <span className="ms-1 text-xs text-nav-muted">{t("nav.space.archived")}</span>}
       </Link>
-      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text"
+      <Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
         aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
         onClick={() => window.dispatchEvent(new CustomEvent("pms:create-item", { detail: { kind: "project", spaceId: space.id } }))}><Plus /></Button>
       {/* Settings and Rename live in this one menu, so the row has a single control for Space actions. */}
@@ -386,9 +386,9 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
         </button>
         {toolsOpen && <>
           {/* Creating an analytics board is an action, so it sits as a + beside Dashboards rather than as another destination. */}
-          <div className="flex items-center gap-1">
+          <div className="group/dash flex items-center gap-1">
             <Link to="/dashboards" className={`${linkClass} min-w-0 flex-1 text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
-            {space.my_capabilities?.includes("create") && <Button variant="ghost" size="icon-sm" disabled={busy} className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text"
+            {space.my_capabilities?.includes("create") && <Button variant="ghost" size="icon-sm" disabled={busy} className={`shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text ${revealOnHover.replace(/row/g, "dash")}`}
               aria-label={t("dashboards.analytics.create")} title={t("dashboards.analytics.create")} onClick={() => void analytics()}><Plus /></Button>}
           </div>
           <Link to="/reports" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("reports.nav.label")}</Link>
