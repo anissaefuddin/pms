@@ -54,3 +54,17 @@ test("Workload: a day that would go over capacity warns but still creates the Ta
   await form.getByRole("button", { name: "Create task" }).click();
   await expect.poll(() => posted.length).toBe(1);
 });
+
+test("Workload: the keyboard path creates the same Task (Enter, arrows, Enter)", async ({ page }) => {
+  const posted = await setup(page);
+  await page.goto("/workload");
+  const row = page.getByRole("table", { name: "Daily workload" }).getByRole("row", { name: /Ana Lane/ });
+  await row.locator("td").nth(0).focus();
+  await page.keyboard.press("Enter");
+  for (let i = 0; i < 3; i++) await page.keyboard.press("ArrowRight");
+  await page.keyboard.press("Enter");
+  const form = page.getByRole("form", { name: /New task for Ana Lane/ });
+  await form.getByLabel("Task name").fill("Keyboard task");
+  await form.getByRole("button", { name: "Create task" }).click();
+  await expect.poll(() => posted[0]).toMatchObject({ title: "Keyboard task", start_date: iso(dayAt(0)), due_date: iso(dayAt(3)) });
+});

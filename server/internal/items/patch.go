@@ -93,6 +93,9 @@ func patch(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, versio
 		}
 	}
 
+	if err := authorizeNewAssignees(ctx, tx, actor, id, fields); err != nil {
+		return Detail{}, err
+	}
 	var current int
 	var kind string
 	if err := tx.QueryRow(ctx, "SELECT version, type::text FROM items WHERE id=$1::uuid AND deleted_at IS NULL FOR UPDATE", id).Scan(&current, &kind); err != nil {
@@ -432,4 +435,63 @@ WHERE a.value IS DISTINCT FROM b.value`, id, actor, action, before, after, via, 
 func PatchTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, version int, fields map[string]json.RawMessage, batch *notifications.Batch) (Detail, error) {
 	item, err := patch(ctx, tx, actor, id, version, fields, batch)
 	return item, writeError(err)
+}
+
+// W3 for reassignment: adding an assignee who is not yet on the item (other than the actor) needs Space Admin in each of its locations.
+// Keeping existing assignees while editing other fields is not affected.
+func authorizeNewAssignees(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, fields map[string]json.RawMessage) error {
+	if actor.Type == policy.Admin {
+		return nil
+	}
+	requested := assigneesOtherThan(fields, actor.ID)
+	if len(requested) == 0 {
+		return nil
+	}
+	current := map[string]bool{}
+	rows, err := tx.Query(ctx, "SELECT user_id::text FROM item_assignees WHERE item_id=$1::uuid", id)
+	if err != nil {
+		return err
+	}
+	for rows.Next() {
+		var uid string
+		if err := rows.Scan(&uid); err != nil {
+			rows.Close()
+			return err
+		}
+		current[uid] = true
+	}
+	rows.Close()
+	newcomer := false
+	for _, uid := range requested {
+		if !current[uid] {
+			newcomer = true
+		}
+	}
+	if !newcomer {
+		return nil
+	}
+	spaces, err := tx.Query(ctx, "SELECT space_id::text FROM item_locations WHERE item_id=$1::uuid", id)
+	if err != nil {
+		return err
+	}
+	var spaceIDs []string
+	for spaces.Next() {
+		var sid string
+		if err := spaces.Scan(&sid); err != nil {
+			spaces.Close()
+			return err
+		}
+		spaceIDs = append(spaceIDs, sid)
+	}
+	spaces.Close()
+	for _, sid := range spaceIDs {
+		isAdmin, err := policy.IsSpaceAdmin(ctx, tx, actor.ID, sid)
+		if err != nil {
+			return err
+		}
+		if !isAdmin {
+			return ErrForbidden
+		}
+	}
+	return nil
 }

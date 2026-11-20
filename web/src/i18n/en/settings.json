@@ -383,7 +383,7 @@
     "cancel": "Cancel",
     "roleOption": "{{name}} (role)",
     "bookingSummary": "{{name}} · {{start}}–{{end}} · {{minutes}} min/day",
-    "laneHint": "Drag across working days on a person's row to create a task for them.",
+    "laneHint": "Drag across working days on a person's row to create a task for them. Or focus a working day, press Enter, move with the arrow keys, and press Enter again. Escape cancels.",
     "laneTitle": "New task for {{name}}, {{start}} to {{end}}",
     "laneName": "Task name",
     "laneSpace": "Space",

@@ -1,6 +1,7 @@
 package httpserver_test
 
 import (
+	"fmt"
 	"net/http"
 	"testing"
 )
@@ -48,4 +49,20 @@ func TestDirectCreateAssignmentRulesAndAllocations(t *testing.T) {
 	if n := f.queryID("SELECT count(*)::text FROM resource_bookings WHERE project_id=$1", id); n != "0" {
 		t.Fatalf("resource bookings created = %s, want 0", n)
 	}
+}
+
+// W3 for reassignment: a member cannot add someone else through PATCH, but can still edit a Task whose assignees stay the same.
+func TestPatchAssignmentRequiresSpaceAdminForNewAssignees(t *testing.T) {
+	f := newFixture(t)
+	member, other := f.person("regular"), f.person("regular")
+	space := f.space("Reassign")
+	f.share(space, "user", member.id, "editor")
+	made := f.call(member, http.MethodPost, "/items", map[string]any{"type": "task", "title": "Mine", "locations": []map[string]string{{"space_id": space}}, "assignee_ids": []string{member.id}})
+	f.want(made, http.StatusCreated, "member creates own task")
+	path := "/items/" + made.body["id"].(string)
+	version := `"` + fmt.Sprint(made.body["version"]) + `"`
+
+	f.want(f.call(member, http.MethodPatch, path, map[string]any{"assignee_ids": []string{member.id, other.id}}, "If-Match", version), http.StatusForbidden, "member cannot add someone else")
+	f.want(f.call(member, http.MethodPatch, path, map[string]any{"title": "Mine renamed"}, "If-Match", version), http.StatusOK, "member can edit title with unchanged assignees")
+	f.want(f.call(member, http.MethodPatch, path, map[string]any{"assignee_ids": []string{member.id}}, "If-Match", `"2"`), http.StatusOK, "member keeps only self")
 }

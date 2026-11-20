@@ -382,7 +382,7 @@
     "cancel": "Batal",
     "roleOption": "{{name}} (peran)",
     "bookingSummary": "{{name}} · {{start}}–{{end}} · {{minutes}} menit/hari",
-    "laneHint": "Seret di atas hari kerja pada baris seseorang untuk membuat tugas untuknya.",
+    "laneHint": "Seret di atas hari kerja pada baris seseorang untuk membuat tugas untuknya. Atau fokus pada hari kerja, tekan Enter, geser dengan tombol panah, lalu tekan Enter lagi. Escape membatalkan.",
     "laneTitle": "Tugas baru untuk {{name}}, {{start}} sampai {{end}}",
     "laneName": "Nama tugas",
     "laneSpace": "Space",

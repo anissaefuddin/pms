@@ -12,6 +12,13 @@ import { useSpaces } from "@/lib/space-queries";
 import { laneCreateBody, laneOverCapacity, laneWorkingDays } from "@/lib/workload-lane";
 
 export const Route = createFileRoute("/_app/workload")({ component: Workload });
+type Drag = { person: Person; anchor: number; cursor: number };
+/** The lane a finished drag asks for: its working days, or nothing when the range has none. */
+function laneFrom(drag?: Drag) {
+  if (!drag) return undefined;
+  const days = laneWorkingDays(drag.person.capacity, drag.anchor, drag.cursor);
+  return days.length ? { person: drag.person, days } : undefined;
+}
 type Choice = { id: string; name: string };
 type Person = Choice & { capacity: number[]; planned: number[]; booked: number[] };
 type Task = { id: string; title: string; version: number; effort: number; assignee_ids: string[]; assignee_names: string[]; editable: boolean };
@@ -33,14 +40,14 @@ function Workload() {
   const [role, setRole] = useState("");
   const [skill, setSkill] = useState("");
   // Batch 4 (W4): drag across a person's working days in daily view, then name the Task.
-  const [drag, setDrag] = useState<{ person: Person; anchor: number; cursor: number }>();
+  const [drag, setDrag] = useState<Drag>();
   const [lane, setLane] = useState<{ person: Person; days: number[] }>();
   useEffect(() => {
     if (!drag) return;
     const end = () => {
       setDrag(undefined);
-      const days = laneWorkingDays(drag.person.capacity, drag.anchor, drag.cursor);
-      if (days.length) setLane({ person: drag.person, days });
+      const next = laneFrom(drag);
+      if (next) setLane(next);
     };
     window.addEventListener("pointerup", end, { once: true });
     return () => window.removeEventListener("pointerup", end);
@@ -85,6 +92,26 @@ function Workload() {
               return <td key={i} aria-selected={inLane || undefined}
                 onPointerDown={selectable ? (event) => { if (event.button === 0) setDrag({ person: p, anchor: i, cursor: i }); } : undefined}
                 onPointerEnter={selectable && drag?.person.id === p.id ? () => setDrag({ ...drag, cursor: i }) : undefined}
+                tabIndex={isPerson && !weekly ? (selectable ? 0 : -1) : undefined}
+                data-lane={`${p.id}-${i}`}
+                onKeyDown={isPerson && !weekly ? (event) => {
+                  // Keyboard path: Enter starts, arrows extend, Enter creates, Escape cancels.
+                  if (event.key === "Escape") { setDrag(undefined); return; }
+                  if (event.key === "Enter" || event.key === " ") {
+                    if (!selectable) return;
+                    event.preventDefault();
+                    if (drag?.person.id === p.id) { const next = laneFrom(drag); setDrag(undefined); if (next) setLane(next); }
+                    else setDrag({ person: p, anchor: i, cursor: i });
+                    return;
+                  }
+                  if (drag?.person.id === p.id && (event.key === "ArrowRight" || event.key === "ArrowLeft")) {
+                    const next = drag.cursor + (event.key === "ArrowRight" ? 1 : -1);
+                    if (next < 0 || next >= days) return;
+                    event.preventDefault();
+                    setDrag({ ...drag, cursor: next });
+                    document.querySelector<HTMLElement>(`[data-lane="${p.id}-${next}"]`)?.focus();
+                  }
+                } : undefined}
                 className={`select-none p-2 ${over ? "bg-destructive/10 font-medium text-foreground" : ""} ${inLane ? "bg-primary/20" : ""}`}>
                 {sum(p.planned)} + {sum(p.booked)} / {sum(p.capacity)}{over && <span className="block">{t("settings.workload.overCapacity")}</span>}
               </td>;
