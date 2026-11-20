@@ -28,3 +28,10 @@ Estimasi dalam hari kerja engineering (HK).
 - B bergantung pada keputusan default kapabilitas per user type.
 - E bergantung pada C (sumber hak harus bisa dijelaskan sebelum riwayatnya dicatat).
 - Tidak ada migrasi untuk A atau C. B dan E kemungkinan membutuhkan migrasi.
+
+## Pembaruan 20 Nov 2026 (lanjutan)
+
+- **Option C**: prasyarat teknis sudah terpenuhi. Pola CI `authorization-matrix` sudah diperluas (lihat closure bagian 10.5). Tersisa: persetujuan UX oleh pemilik produk. Status tetap **READY FOR IMPLEMENTATION**. Implementasi belum dimulai.
+- **Option A**: ditutup dengan verifikasi, termasuk dua temuan tambahan (bypass Space terkunci, penurunan tipe Space Admin).
+- **Option B**: tetap **DEFERRED**.
+- **Option D**: tetap **FUTURE**. **Option E**: tetap **FUTURE**.

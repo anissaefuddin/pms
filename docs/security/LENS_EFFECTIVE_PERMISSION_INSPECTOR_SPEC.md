@@ -135,10 +135,10 @@ INS-10 dan INS-11 sebaiknya bagian dari matriks otorisasi di CI, dengan nama yan
 | D-17.1 APPROVED | Selesai (20 Nov 2026) |
 | S-1, S-4, S-5 ditutup dengan tes | Selesai (lihat `LENS_RBAC_FINDINGS_CLOSURE.md`) |
 | Tes regresi authorization final | Selesai, 6 subtest lulus |
-| Pola CI `authorization-matrix` mencakup tes baru | **Belum.** Pola saat ini hanya mencocokkan 8 tes, dan `policy` tidak mencocokkan satu tes pun. Tes S-1, S-4, dan S-5 tidak terhitung. Perlu perubahan `.github/workflows/ci.yml` |
+| Pola CI `authorization-matrix` mencakup tes baru | **Selesai** (20 Nov 2026): pola diperluas dan langkah gagal jika tes tidak benar-benar berjalan |
 | Persetujuan UX oleh pemilik produk | Belum |
 
-**Kesimpulan kesiapan:** siap diimplementasikan setelah dua prasyarat terakhir dipenuhi. Prasyarat teknis lain sudah terpenuhi.
+**Kesimpulan kesiapan:** prasyarat teknis sudah terpenuhi. Tersisa persetujuan UX oleh pemilik produk.
 
 ## 9. Di luar cakupan
 
