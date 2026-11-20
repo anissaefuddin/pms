@@ -25,6 +25,7 @@ test("admin toggles item types of the '+' menu; the dialog passes axe; the creat
   await expect(create.getByRole("radio", { name: /^Project/ })).toBeVisible();
   await expect(create.getByRole("radio", { name: /^Task/ })).toBeVisible();
   await expect(create.getByRole("radio", { name: /^Folder/ })).toHaveCount(0);
+  await create.getByText("Advanced options").click(); // blueprints and view sit in the advanced group
   await expect(create.getByRole("radio", { name: /Release plan/ })).toBeVisible();
   await expect(create.getByText("Project · 3 items")).toBeVisible();
   await create.getByRole("button", { name: "Cancel" }).click();

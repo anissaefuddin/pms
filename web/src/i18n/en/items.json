@@ -318,5 +318,6 @@
       "project": "Fields checked here apply to this project and the items inside it. A field with no project or folder assignment applies to the whole Space.",
       "folder": "Fields checked here apply to this folder and the items inside it. A field with no project or folder assignment applies to the whole Space."
     }
-  }
+  },
+  "advancedOptions": "Advanced options"
 }

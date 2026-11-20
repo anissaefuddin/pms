@@ -253,6 +253,10 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       </fieldset>
     </section>
 
+    {/* Everything beyond name, location and type is optional: it sits in a closed group, opened automatically when it has an error. */}
+    <details className="group rounded-lg border p-3" open={!!(fieldErrors.due_date || fieldErrors.parent || fieldErrors.location || error)}>
+      <summary className="cursor-pointer text-sm font-semibold">{t("items.advancedOptions")}</summary>
+      <div className="mt-4 space-y-6">
     {/* Blueprints come after the item type and list only blueprints of that type (the type decides what can be copied). */}
     {blueprints.some((entry) => entry.item_type === kind) && <section className="space-y-3" aria-labelledby="create-blueprint">
       <h3 id="create-blueprint" className="text-sm font-semibold">{t("blueprints.from")}</h3>
@@ -306,6 +310,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         </div>
       </div>}
     </section>
+      </div>
+    </details>
 
     <FormError message={error} />
     <DialogFooter className="items-center sm:justify-between">

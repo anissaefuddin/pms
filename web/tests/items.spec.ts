@@ -38,6 +38,7 @@ test("global create opens the Item panel and submits project options", async ({ 
   await dialog.getByRole("button", { name: "Create item" }).click();
   await expect(dialog.getByRole("alert")).toContainText("Enter an item name");
   await dialog.getByLabel("Name").fill("Plan");
+  await dialog.getByText("Advanced options").click();
   await dialog.getByRole("radio", { name: /^Board/ }).check({ force: true });
   await dialog.getByRole("button", { name: "Start date" }).click();
   const startPicker = page.getByRole("dialog", { name: "Start date" });
