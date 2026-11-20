@@ -97,7 +97,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const itemTypes = useItemTypes(isCollection);
   const [blocked, setBlocked] = useState<{ title: string; problems: string[] }>();
   const [pending, setPending] = useState(false);
-  const [creating, setCreating] = useState<{ status?: string; parent?: Item }>();
+  const [creating, setCreating] = useState<{ status?: string; parent?: Item; day?: string }>();
   // B2.2: a Board column creates its Task through the shared service. B2.4: if an active filter hides the new item,
   // say so instead of implying the create failed. The filter is left as the user set it.
   async function quickCreate(columnId: string, title: string, id: string) {
@@ -257,7 +257,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {noMatches && !spaceEmpty ? emptyResults : items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
-        <ItemCalendar items={filtered} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} />
+        <ItemCalendar items={filtered} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} onCreateOn={collection.canCreate ? (day) => setCreating({ day }) : undefined} />
       </Suspense>}
     </> : !isCollection ? <div className="space-y-1 rounded border p-4">
       <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>
@@ -280,6 +280,6 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
         : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: creating.parent?.id ?? parent?.id }} me={me} onCreated={(item) => { noticeIfHidden(item); onOpen(item); }} />}
+      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialDate={creating.day} location={{ space_id: spaceId, parent_item_id: creating.parent?.id ?? parent?.id }} me={me} onCreated={(item) => { noticeIfHidden(item); onOpen(item); }} />}
   </section>;
 }

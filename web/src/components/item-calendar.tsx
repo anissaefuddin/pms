@@ -21,8 +21,10 @@ const fullFormat: Intl.DateTimeFormatOptions = { dateStyle: "full" };
 const startOf = (value: Item) => toDay(value.start_date) ?? toDay(value.due_date);
 const endOf = (value: Item) => toDay(value.due_date) ?? toDay(value.start_date);
 
-export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
+export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   items: Item[]; readonly: boolean; onOpen: (item: Item) => void; onPatch: (item: Item, update: Update) => Promise<void>;
+  /** Create a Task on a working day (YYYY-MM-DD). Absent when the user cannot create here. */
+  onCreateOn?: (day: string) => void;
 }) {
   const { t, i18n } = useTranslation();
   const [overflowOpen, setOverflowOpen] = useState<string>();
@@ -130,6 +132,8 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch }: {
               const openKey = `${week}-${col}`;
               return <div role="gridcell" key={key} onDragOver={(event) => { if (drag) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); dropOn(day); }}
                 className={`relative h-28 min-w-0 border p-1 ${day.getMonth() !== month.getMonth() ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "ring-2 ring-primary" : ""}`}>
+                {onCreateOn && !readonly && !off && <button type="button" className="absolute right-1 top-1 z-20 rounded px-1 text-xs text-primary hover:bg-accent"
+                  aria-label={t("views.calendar.newOn", { date: fmt(fullFormat).format(day) })} onClick={() => onCreateOn(key)}>+</button>}
                 <p className="text-xs text-muted-foreground"><span aria-hidden>{day.getDate()}</span>
                   <span className="sr-only">{t("views.calendar.day", { date: fmt(fullFormat).format(day), count: more + layout.bars.filter((bar) => bar.startCol <= col && col <= bar.endCol).length })}</span>{holiday ? ` · ${holiday}` : ""}</p>
                 {barsAt(col).map((bar) => {

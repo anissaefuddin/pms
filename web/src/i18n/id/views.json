@@ -206,7 +206,8 @@
     "prevWeek": "Minggu sebelumnya",
     "nextWeek": "Minggu berikutnya",
     "continuesBefore": "berlanjut dari minggu sebelumnya",
-    "continuesAfter": "berlanjut ke minggu berikutnya"
+    "continuesAfter": "berlanjut ke minggu berikutnya",
+    "newOn": "Task baru pada {{date}}"
   },
   "priority": "Prioritas",
   "predecessors": "Pendahulu",

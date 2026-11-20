@@ -377,3 +377,25 @@ Diimplementasikan sesuai pilihan Opsi B di bagian 16.
 - Retry UI setelah timeout yang benar-benar terjadi di jaringan (bukan simulasi respons 504) belum diuji lintas proses.
 - Opsi B hanya berlaku untuk create item. POST lain tidak terlindungi.
 - Item dengan id yang sudah ada tetapi judul berbeda (user mengubah nama lalu retry) menghasilkan 409 yang ditampilkan. Perilaku ini disengaja.
+
+## 18. Batch 3A: Calendar Create (Calendar View project)
+
+Perubahan:
+- `web/src/components/item-calendar.tsx`: tombol "+" pada hari kerja yang bukan libur (hari akhir pekan dan libur tidak punya tombol). Callback `onCreateOn(day)`.
+- `web/src/components/view-workspace.tsx`: Calendar View project meneruskan callback itu. Dialog dibuka dengan tanggal tersebut sebagai start dan finish, dan parent adalah container.
+- `web/src/components/create-item-dialog.tsx`: prop `initialDate` untuk mengisi start dan finish.
+- i18n `views.calendar.newOn` (en dan id).
+
+Default yang dipakai karena C1 sampai C3 belum disetujui:
+- Create hanya di Calendar View project. Calendars lintas item tetap read-only (C1).
+- Klik "+" membuka dialog dengan tanggal terisi, bukan membuat Task langsung (C2).
+- Durasi default satu hari, sesuai W4 dan skala Week dan Month yang ada (C3 belum diputuskan untuk filter).
+
+Tes:
+- E2E baru `calendar-create.spec.ts`: "+" pada hari kerja membuat Task dengan start dan due = hari itu. Akhir pekan dan hari libur tidak punya kontrol. Lulus.
+- `calendar.spec.ts` disesuaikan: asersi "tidak ada tombol di sel" sekarang hanya menghitung bar item. Lulus.
+- Regresi kalender dan create (38 E2E) lulus. Typecheck dan unit lulus.
+
+Belum diuji:
+- Tes live dengan backend untuk Calendar create.
+- Tampilan Calendar pada timezone user yang berbeda dengan server.

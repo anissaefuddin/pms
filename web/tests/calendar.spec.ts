@@ -32,7 +32,8 @@ test("shows a multi-day item once per week, holidays, and Unscheduled", async ({
   // C2: a multi-day item is one bar in the week, drawn where it starts; it is not repeated in each day cell.
   await expect(cell(page, 10).getByRole("button", { name: /Launch prep/ })).toBeVisible();
   await expect(page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: /Launch prep/ })).toHaveCount(1);
-  await expect(cell(page, 13).getByRole("button")).toHaveCount(0);
+  // Only item bars count here: the "New task on" control of a working day is not an item.
+  await expect(cell(page, 13).getByRole("button", { name: /^(?!New task on)/ })).toHaveCount(0);
   await expect(cell(page, 11)).toContainText("Founders Day");
   await expect(page.getByRole("region", { name: "Unscheduled" }).getByRole("button", { name: "Someday" })).toBeVisible();
   await page.getByRole("button", { name: "Next month" }).click();

@@ -210,7 +210,8 @@
     "prevWeek": "Previous week",
     "nextWeek": "Next week",
     "continuesBefore": "continues from an earlier week",
-    "continuesAfter": "continues into a later week"
+    "continuesAfter": "continues into a later week",
+    "newOn": "New task on {{date}}"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",
