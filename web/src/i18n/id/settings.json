@@ -676,5 +676,6 @@
   "nav.scopeOnlyYou": "Hanya Anda",
   "nav.scopeWorkspace": "Seluruh workspace",
   "nav.scopeSpaces": "Per Space dan default workspace",
-  "nav.installation": "Instalasi"
+  "nav.installation": "Instalasi",
+  "nav.version": "Versi {{version}}"
 }

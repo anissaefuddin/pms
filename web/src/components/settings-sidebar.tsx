@@ -127,13 +127,13 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
         {groups.map((group) => <section key={group.title}>
           <h2 className="px-2 text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{group.title}</h2>
           {group.items.map((item) => <Link key={item.to + (item.hash ?? "")} to={item.to} params={item.params} hash={item.hash} activeOptions={{ includeHash: true }}
-            className={linkClass} activeProps={activeLink} >{(() => { const Icon = SETTINGS_ICON[`/settings/${item.to.split("/").pop()}`]; return <span className="flex items-center gap-2.5">{Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-nav-muted" />}{item.label}</span>; })()}</Link>)}
+            className={linkClass} activeProps={activeLink} >{(() => { const Icon = SETTINGS_ICON[item.to]; return <span className="flex items-center gap-2.5">{Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-nav-muted" />}{item.label}</span>; })()}</Link>)}
         </section>)}
         {groups.length === 0 && <p role="status" className="px-2 text-sm text-nav-muted">{t("settings.nav.noMatch")}</p>}
         {/* Installation: the running version, in the same scroll area as the sections above. */}
         <div className="border-t border-nav-hover px-2 pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{t("settings.nav.installation")}</p>
-          <p className="mt-1 text-sm text-nav-text">{`v${__APP_VERSION__}`}</p>
+          <p className="mt-1 text-sm text-nav-text">{t("settings.nav.version", { version: __APP_VERSION__ })}</p>
         </div>
       </nav>
       <SidebarFooter />

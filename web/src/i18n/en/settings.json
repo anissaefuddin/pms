@@ -680,5 +680,6 @@
   "nav.scopeOnlyYou": "Only you",
   "nav.scopeWorkspace": "Whole workspace",
   "nav.scopeSpaces": "Per Space and workspace defaults",
-  "nav.installation": "Installation"
+  "nav.installation": "Installation",
+  "nav.version": "Version {{version}}"
 }
