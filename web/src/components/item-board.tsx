@@ -14,6 +14,7 @@ import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import { peopleOf } from "@/components/item-table";
 import type { Item, ItemUpdate } from "@/lib/items";
+import { newItemId } from "@/lib/create-item-validate";
 import type { ItemCollectionProps } from "./item-collection-types";
 
 type Lane = { key: string; name?: string; items: Item[] };
@@ -33,7 +34,7 @@ function lanesOf(items: Item[], swimlanes: boolean, unassigned: string): Lane[] 
   return [...lanes, ...(rest.length || !lanes.length ? [{ key: "", name: unassigned, items: rest }] : [])];
 }
 
-export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, canCreate, pending, onOpen, onAdd, onPatch, onQuickCreate }: ItemCollectionProps & { swimlanes: boolean; onQuickCreate?: (columnId: string, title: string) => Promise<void> }) {
+export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, canCreate, pending, onOpen, onAdd, onPatch, onQuickCreate }: ItemCollectionProps & { swimlanes: boolean; onQuickCreate?: (columnId: string, title: string, id: string) => Promise<void> }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const [dragging, setDragging] = useState<{ id: string; lane: string }>();
@@ -41,7 +42,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
   const [quick, setQuick] = useState<string>();
   const addButton = (columnId: string) => onQuickCreate
     ? (quick === columnId
-      ? <QuickCreate onSubmit={(title) => onQuickCreate(columnId, title)} onCancel={() => setQuick(undefined)} onDetail={() => { setQuick(undefined); onAdd(columnId); }} />
+      ? <QuickCreate onSubmit={(title, id) => onQuickCreate(columnId, title, id)} onCancel={() => setQuick(undefined)} onDetail={() => { setQuick(undefined); onAdd(columnId); }} />
       : <Button size="sm" variant="outline" onClick={() => setQuick(columnId)}><Plus />{t("views.add")}</Button>)
     : <Button size="sm" variant="outline" onClick={() => onAdd(columnId)}><Plus />{t("views.add")}</Button>;
   const [move, setMove] = useState<Move>();
@@ -161,22 +162,25 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
 }
 
 /** B2.2: a Task name typed inside a column. Enter or leaving the field creates it, Escape cancels, and a failed request keeps the name. */
-function QuickCreate({ onSubmit, onCancel, onDetail }: { onSubmit: (title: string) => Promise<void>; onCancel: () => void; onDetail: () => void }) {
+function QuickCreate({ onSubmit, onCancel, onDetail }: { onSubmit: (title: string, id: string) => Promise<void>; onCancel: () => void; onDetail: () => void }) {
   const { t } = useTranslation();
   const [title, setTitle] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   // One request at a time: Enter followed by blur must not create the item twice.
   const inFlight = useRef(false);
+  // The id is chosen once per name: a retry after a lost response reuses it, so the server cannot store a second item.
+  const attempt = useRef<{ name: string; id: string } | undefined>(undefined);
   async function submit() {
     if (inFlight.current) return;
     const name = title.trim();
     if (!name) { onCancel(); return; }
+    if (attempt.current?.name !== name) attempt.current = { name, id: newItemId() };
     inFlight.current = true;
     setBusy(true);
     setError("");
     try {
-      await onSubmit(name);
+      await onSubmit(name, attempt.current.id);
     } catch (err) {
       setError(err instanceof Error && err.message ? err.message : t("views.createFailed"));
       inFlight.current = false;

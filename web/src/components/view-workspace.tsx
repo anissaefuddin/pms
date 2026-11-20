@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
 import { ItemBoard } from "@/components/item-board";
-import { createQuickTask, quickTaskInput } from "@/lib/create-item-service";
+import { createItemOnce, quickTaskInput } from "@/lib/create-item-service";
 const ItemCalendar = lazy(() => import("@/components/item-calendar").then((module) => ({ default: module.ItemCalendar })));
 const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
 import { Timelog } from "@/components/timelog";
@@ -100,9 +100,9 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const [creating, setCreating] = useState<{ status?: string; parent?: Item }>();
   // B2.2: a Board column creates its Task through the shared service. B2.4: if an active filter hides the new item,
   // say so instead of implying the create failed. The filter is left as the user set it.
-  async function quickCreate(columnId: string, title: string) {
+  async function quickCreate(columnId: string, title: string, id: string) {
     if (!me || !spaceId) throw new Error(t("views.createFailed"));
-    const item = await createQuickTask(qc, quickTaskInput(me, spaceId, parent?.id, title, columnId));
+    const item = await createItemOnce(qc, { ...quickTaskInput(me, spaceId, parent?.id, title, columnId), id }, me);
     if (!noticeIfHidden(item)) toast.success(t("items.created", { name: item.title }));
   }
   // B2.4 / R4: a create that the active filter hides must say so, for every entry point (Board, Table "+ Add", the dialog).

@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { problem } from "./mock-api";
+import { me, problem, type Reply } from "./mock-api";
 import { ALL, marketing, mockSpaces } from "./spaces-mock";
 
 // B2.2 (Board inline create), B2.3 (Table Add subitem), B2.4 (filter-aware feedback). Mocked API, no backend needed.
@@ -13,7 +13,7 @@ const existing = {
 
 const project = { ...existing, id: "b0000000-0000-4000-8000-000000000002", type: "project", title: "Parent project" };
 
-function setup(page: Page, opts: { view?: "board" | "table"; items?: any[]; createReply?: (body: any) => { status: number; body: unknown } } = {}) {
+function setup(page: Page, opts: { view?: "board" | "table"; items?: any[]; createReply?: (body: any) => Reply } = {}) {
   const view = opts.view ?? "board";
   let items: any[] = opts.items ?? [existing];
   const views = [{ id: "66666666-6666-4666-8666-666666666666", type: view, name: view === "board" ? "Board" : "Table", visibility: "public", position: 0, is_default: true, config: {} }];
@@ -194,4 +194,66 @@ test("Table: with no filter that hides the Task, no hidden notice is shown", asy
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")).toBeDefined();
   await expect(page.getByText("Visible in table").first()).toBeVisible();
   await expect(page.getByText(hiddenNotice)).toHaveCount(0);
+});
+
+// R6 / Option B: a retry after a lost response reuses the client id, so the item is stored once and the form succeeds.
+// The first POST stores the item but answers 504 (the response is lost); the retry sends the same id and gets 409, then
+// the client reads the item back, sees it is this user's with the same title, and treats it as created.
+function retrySetup(page: Page, view: "board" | "table") {
+  const stored: any[] = [];
+  const ids: string[] = [];
+  const views = [{ id: "66666666-6666-4666-8666-666666666666", type: view, name: view === "board" ? "Board" : "Table", visibility: "public", position: 0, is_default: true, config: {} }];
+  const mocked = mockSpaces(page, {
+    extra: {
+      [`GET ${path}/views`]: () => ({ body: { items: views } }),
+      [`GET ${path}/items`]: () => ({ body: { items: [existing, ...stored] } }),
+      "GET /workflows": { body: { items: [{ is_default: true, statuses: [nw, done] }] } },
+      "POST /items": (body: any) => {
+        ids.push(body.id);
+        if (stored.some((item) => item.id === body.id)) return problem(409, "item already exists", "conflict");
+        stored.push({ ...existing, id: body.id, title: body.title, status: nw, created_by: { id: me.id, name: "Ada" },
+          locations: body.locations.map((l: any) => ({ space_id: l.space_id, space_name: "Marketing" })) });
+        return problem(504, "gateway timeout", "timeout");
+      },
+    },
+  });
+  // Route registered after mockSpaces is matched first: serves the stored item for GET /items/{id}, otherwise falls through.
+  page.route(/\/api\/v1\/items\/[0-9a-f-]{36}$/, async (route) => {
+    const id = route.request().url().split("/").pop()!;
+    const item = stored.find((entry) => entry.id === id);
+    if (route.request().method() === "GET" && item) return route.fulfill({ status: 200, contentType: "application/json", body: JSON.stringify(item) });
+    return route.fallback();
+  });
+  return { ids, stored, mocked };
+}
+
+test("Retry after a lost response (dialog): the same client id is sent again, the item is stored once, the form succeeds", async ({ page }) => {
+  const { ids, stored } = retrySetup(page, "table");
+  await page.goto(path);
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  await page.locator('input[name="title"]').fill("Retry dialog");
+  await page.getByRole("dialog").getByRole("button", { name: "Create item" }).click();
+  await expect.poll(() => ids.length).toBe(1);
+  await page.getByRole("dialog").getByRole("button", { name: "Create item" }).click();
+  await expect.poll(() => ids.length).toBe(2);
+  expect(ids[1]).toBe(ids[0]);
+  expect(stored).toHaveLength(1);
+  await expect(page.locator('input[name="title"]')).toHaveCount(0);
+});
+
+test("Retry after a lost response (Board quick create): the same client id is sent again, the item is stored once", async ({ page }) => {
+  const { ids, stored } = retrySetup(page, "board");
+  await page.goto(path);
+  await newColumn(page).getByRole("button", { name: "Add item" }).click();
+  const name = page.getByPlaceholder("Task name");
+  await name.fill("Retry board");
+  await name.press("Enter");
+  await expect.poll(() => ids.length).toBe(1);
+  // The failed request finishes first: the user retries after the error shows (a second Enter during the request is ignored).
+  await expect(page.getByRole("alert")).toBeVisible();
+  await expect(name).toHaveValue("Retry board");
+  await name.press("Enter");
+  await expect.poll(() => ids.length).toBe(2);
+  expect(ids[1]).toBe(ids[0]);
+  expect(stored).toHaveLength(1);
 });

@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { SUPPORTED_DEFAULT_VIEWS, canAddSubitem, isWorkday, payloadDates, validateCreate, type CreateDraft } from "./create-item-validate.ts";
+import { SUPPORTED_DEFAULT_VIEWS, canAddSubitem, isWorkday, newItemId, payloadDates, validateCreate, type CreateDraft } from "./create-item-validate.ts";
 
 const base: CreateDraft = { kind: "project", title: "Rilis", start: "", due: "", spaceId: "s1" };
 
@@ -58,4 +58,11 @@ test("Add subitem: satu aturan untuk Table dan Item Detail (folder, project, tas
   assert.equal(canAddSubitem(["view", "create"]), true, "pengguna yang boleh create di item");
   assert.equal(canAddSubitem(["view", "comment"]), false, "tanpa create: tidak ada Add subitem");
   assert.equal(canAddSubitem([]), false);
+});
+
+test("newItemId: UUIDv7 (version 7, RFC variant), unik, dan diurutkan menurut waktu", () => {
+  const a = newItemId();
+  const b = newItemId();
+  assert.match(a, /^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
+  assert.notEqual(a, b);
 });

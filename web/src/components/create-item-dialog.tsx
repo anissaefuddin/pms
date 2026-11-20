@@ -22,6 +22,8 @@ import { menuAllows, useCreateMenu } from "@/lib/create-menu";
 import { TypeIcon } from "@/components/type-icon";
 import { ItemDates } from "@/components/item-dates";
 import { payloadDates, validateCreate, type CreateKind, type CreateIssue, type SupportedDefaultView } from "@/lib/create-item-validate";
+import { newItemId } from "@/lib/create-item-validate";
+import { createItemOnce } from "@/lib/create-item-service";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -69,6 +71,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const lockedKind: CreateKind | undefined = taskOnly ? "task" : undefined;
   const [chosenKind, setKind] = useState<CreateKind>(lockedKind ?? initialKind ?? "project");
   const [spaceID, setSpaceID] = useState(location?.space_id ?? me.personal_space_id);
+  // One client id per open form: a retry of this form reuses it (see createItemOnce).
+  const [itemId] = useState(newItemId);
   const [parentID, setParentID] = useState(fixedParent ?? "");
   const [trail, setTrail] = useState<Item[]>([]);
   const [owner, setOwner] = useState<PersonOption[]>([{ id: me.id, name: `${me.first_name} ${me.last_name}`.trim() }]);
@@ -159,7 +163,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         ? await api<Item>(`/api/v1/blueprints/${blueprint.id}/items`, {
           method: "POST", body: JSON.stringify({ locations: input.locations, title, ...(start ? { start_date: start } : due ? { finish_date: due } : {}) }),
         })
-        : await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
+        : await createItemOnce(queryClient, { ...input, id: itemId }, me);
       await queryClient.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
       toast.success(<span>{t("items.created", { name: item.title })}{" "}
         <Link to="/tasks/$itemId" params={{ itemId: item.id }} className="underline">{t("items.openCreated")}</Link></span>);

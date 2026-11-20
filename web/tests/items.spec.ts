@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ALL, extra, grace, marketing, mockSpaces } from "./spaces-mock";
+import { ALL, extra, grace, marketing, mockSpaces, serveCreatedItem } from "./spaces-mock";
 import { me, problem, type Handler } from "./mock-api";
 
 const parentId = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa";
@@ -31,6 +31,7 @@ test("global create opens the Item panel and submits project options", async ({ 
     },
   }) });
   await page.clock.setFixedTime(new Date(2026, 10, 12, 12));
+  await serveCreatedItem(page, () => item);
   await page.goto(root);
   await page.locator("header").first().getByRole("button", { name: "Create" }).click();
   await page.getByRole("menuitem", { name: /^Project/ }).click();
@@ -52,9 +53,11 @@ test("global create opens the Item panel and submits project options", async ({ 
   await expect(dialog.getByRole("alert")).toContainText("Choose another name");
   await expect(dialog.getByLabel("Name")).toHaveAttribute("aria-invalid", "true");
   await dialog.getByRole("button", { name: "Create item" }).click();
-  await expect(page).toHaveURL(`/tasks/${parentId}`);
+  // The client chooses the id, so the panel opens the created item by its UUID.
+  await expect(page).toHaveURL(/\/tasks\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("heading", { name: "Plan" })).toBeVisible();
   expect(calls.find((call) => call.method === "POST" && call.path === "/items")?.body).toEqual({
+    id: expect.stringMatching(/^[0-9a-f-]{36}$/), // the client's UUIDv7 for this create
     type: "project", title: "Plan", locations: [location], owner_id: me.id,
     start_date: "2026-11-12", due_date: "2026-11-13", default_view_type: "board",
     shares: [{ principal_type: "user", principal_id: grace.id, role: "read" }],

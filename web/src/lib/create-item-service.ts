@@ -1,5 +1,5 @@
 import type { QueryClient } from "@tanstack/react-query";
-import { api, type CurrentUser } from "@/lib/api";
+import { api, ApiError, type CurrentUser } from "@/lib/api";
 import { itemKeys, type Item, type ItemCreate } from "@/lib/items";
 
 /**
@@ -14,9 +14,25 @@ export function quickTaskInput(me: CurrentUser, spaceId: string, parentId: strin
   return input;
 }
 
-/** Posts the item and refreshes every item list, so the caller can check whether the new item is in the current list. */
-export async function createQuickTask(qc: QueryClient, input: ItemCreate): Promise<Item> {
-  const item = await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
-  await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
-  return item;
+/**
+ * Creates an item with a client id, so a retry after a lost response cannot store a second item. On 409 for that id the
+ * item may already exist from the first attempt: it is accepted only when it is this user's item with the same title.
+ * Otherwise the 409 is shown. Every item list is refreshed either way.
+ */
+export async function createItemOnce(qc: QueryClient, input: ItemCreate & { id: string }, me: CurrentUser): Promise<Item> {
+  const refresh = () => qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+  try {
+    const item = await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
+    await refresh();
+    return item;
+  } catch (err) {
+    if (err instanceof ApiError && err.status === 409) {
+      const existing = await api<Item>(`/api/v1/items/${input.id}`).catch(() => undefined);
+      if (existing && existing.title === input.title && existing.created_by?.id === me.id) {
+        await refresh();
+        return existing;
+      }
+    }
+    throw err;
+  }
 }

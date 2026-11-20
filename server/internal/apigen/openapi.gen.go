@@ -4681,8 +4681,11 @@ type ItemCreate struct {
 	DueDate       *openapi_types.Date `json:"due_date,omitempty"`
 	DurationDays  *int                `json:"duration_days,omitempty"`
 	EffortMinutes *int32              `json:"effort_minutes,omitempty"`
-	IsMilestone   *bool               `json:"is_milestone,omitempty"`
-	Locations     []Location          `json:"locations"`
+
+	// Id ID item dari klien (UUIDv7) untuk create yang idempoten. Retry dengan id yang sama setelah respons hilang tidak membuat item kedua: server membalas 409 dan klien memeriksa item itu.
+	Id          *openapi_types.UUID `json:"id,omitempty"`
+	IsMilestone *bool               `json:"is_milestone,omitempty"`
+	Locations   []Location          `json:"locations"`
 
 	// OwnerId Hanya project
 	OwnerId        *openapi_types.UUID    `json:"owner_id,omitempty"`

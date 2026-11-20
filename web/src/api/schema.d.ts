@@ -6334,6 +6334,11 @@ export interface components {
         };
         /** @description Kirim type (kelas bawaan) atau type_key (tipe kustom; kelasnya menjadi type) */
         ItemCreate: {
+            /**
+             * Format: uuid
+             * @description ID item dari klien (UUIDv7) untuk create yang idempoten. Retry dengan id yang sama setelah respons hilang tidak membuat item kedua: server membalas 409 dan klien memeriksa item itu.
+             */
+            id?: string;
             type?: components["schemas"]["ItemType"];
             /** @description Kunci tipe item aktif */
             type_key?: string;

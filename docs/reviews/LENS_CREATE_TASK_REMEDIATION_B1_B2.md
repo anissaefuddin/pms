@@ -280,3 +280,100 @@ Tes (E2E mock):
 | Unit (102) dan typecheck | PASS |
 
 Belum diuji: subitem saat filter aktif, dan filter server (preset atau tipe) untuk create lewat dialog. Keduanya NOT RUN.
+
+## 15. R5: Konsistensi lintas view (live)
+
+Alur: Task dibuat dari kolom "In Progress" di Board (quick create) di bawah Project. Lalu:
+1. Server: status = "In Progress", parent = Project. Cocok.
+2. Tanggal diset lewat PATCH dengan ETag saat ini: `start_date` 2026-12-01 dan `due_date` 2026-12-03. Setelah PATCH, data children yang dibaca Table, Gantt, dan Calendar menampilkan status, parent, dan tanggal yang sama.
+3. Table, setelah reload: baris "Cross view task" ada, dan status combobox-nya = "In Progress".
+
+Spec: `web/tests/cross-view-live.spec.ts`. Fixture: `TestBrowserCrossView` (`PMS_TEST_BROWSER=1`). Hasil: **PASS**.
+
+Temuan dari pengujian ini:
+- **Board kosong tidak menampilkan kolom.** Saat belum ada item, Board menampilkan empty state "No items in this view yet" dengan tombol "New item", bukan kolom. Quick create per kolom (R1/B2.2) baru bisa dipakai setelah ada minimal satu item. Ini gap UX: Board kosong seharusnya tetap menampilkan kolom status.
+- Tanggal Task memakai `start_date` dan `due_date`. Tidak ada `finish_date` di payload item.
+
+Batasan:
+- Gantt dan Calendar tidak dibuka di UI. Yang diverifikasi adalah data server yang dipakai keduanya (children). Verifikasi UI-nya NOT RUN.
+- Tanggal diset lewat API, bukan lewat date picker di dialog. Jalur dialog dengan tanggal belum diuji live.
+
+## 16. R6: Reliability (double request, retry, idempotency, custom location)
+
+### Hasil yang diukur (integrasi, database terisolasi)
+
+| Tes | Hasil | Arti |
+|---|---|---|
+| `TestCreateDuplicatesWithoutIdempotencyKey`: dua request identik paralel | Keduanya 201, **dua item tersimpan** | Double request yang sampai ke server membuat duplikat |
+| Sama, retry berikutnya setelah respons hilang | 201, **item ketiga tersimpan** | Retry setelah timeout juga membuat duplikat |
+| `TestCreateInSeveralCustomLocations`: satu item di dua lokasi (Space A, dan Space B di bawah parent) | 201, kedua lokasi dikembalikan dan terbaca ulang, item terlihat di kedua Space | Create ke lokasi custom berfungsi |
+
+Di sisi klien, double submit dari satu form sudah dicegah (`busy`, dan Enter lalu blur di Board tidak membuat dua item). Yang tidak dicegah: request yang sudah sampai ke server tetapi respons-nya hilang, lalu user menekan Create lagi.
+
+### Opsi untuk Idempotency
+
+**Opsi A: header `Idempotency-Key` dengan tabel penyimpanan respons.**
+- Tabel baru (migrasi forward-only): `(user_id, key)` unik, hash body, status dan body respons, `expires_at` 24 jam. Pembersihan lewat housekeeping yang sudah ada.
+- Perilaku: key sama dan body sama → kembalikan respons tersimpan (tanpa item baru). Key sama dan body berbeda → 422. Request dengan key yang masih berjalan → 409.
+- Biaya: migrasi, tabel, pembersihan, kontrak OpenAPI (header dan respons 409 dan 422). Sedang.
+- Keuntungan: standar, berlaku untuk semua POST, bukan hanya create item.
+
+**Opsi B: ID item dari klien (UUIDv7) sebagai ID yang idempoten.**
+- `ItemCreate` menerima `id` opsional. Server memakai ID itu sebagai primary key. Retry dengan ID yang sama menghasilkan konflik PK.
+- Klien membuat satu ID per percobaan form dan menggunakannya ulang untuk retry. Jika server membalas 409 untuk ID yang sama, klien mengambil item itu dan menganggapnya sukses.
+- Biaya: perubahan kecil. Tidak ada tabel baru. Perlu validasi: ID harus UUIDv7, dan 409 tidak boleh membocorkan keberadaan item milik user lain. Kontrak berubah karena ada field baru.
+- Keuntungan: paling ringan, sejalan dengan ID yang sudah dibuat server (UUIDv7).
+- Keterbatasan: hanya untuk create item, tidak untuk POST lain.
+
+**Opsi C: tidak ada perubahan.** Duplikat dicegah di klien saja. Tidak ada biaya, tetapi retry setelah timeout tetap bisa membuat duplikat.
+
+### Rekomendasi
+
+Pilih **Opsi B** untuk create item sekarang. Biayanya kecil dan retry di UI bisa aman tanpa tabel baru. Jika ada kebutuhan idempotency untuk POST lain, ambil **Opsi A** sebagai langkah berikutnya.
+
+Keputusan yang dibutuhkan dari pemilik API: menerima perubahan kontrak (`ItemCreate.id` atau header `Idempotency-Key`), dan apakah 409 untuk ID yang sama dianggap sukses oleh klien.
+
+Belum diimplementasikan. Ini perubahan kontrak API, dan Anda meminta evaluasi.
+
+### Yang belum diuji
+- Retry UI setelah request timeout di dialog: alur ini butuh E2E dengan respons yang dibuat gagal. NOT RUN.
+- Custom location lewat dialog (bukan API): NOT RUN.
+
+## 17. R6 lanjutan: implementasi Opsi B (ID item dari klien)
+
+Diimplementasikan sesuai pilihan Opsi B di bagian 16.
+
+**Kontrak (`api/openapi.yaml`, `ItemCreate`):** field `id` opsional, format UUID. Nilainya harus UUIDv7.
+
+**Server (`server/internal/items/create.go`):**
+- `id` diparse dan divalidasi (UUIDv7). Yang tidak valid ditolak dengan 422.
+- `id` dipakai sebagai primary key item. Kalau tidak dikirim, server membuat UUIDv7 seperti sebelumnya.
+- `id` tidak ikut `applyFields`.
+- Konflik primary key (retry dengan id yang sama) dipetakan ke `ErrConflict` dan menjadi 409. Tidak ada item kedua.
+- Keputusan desain: 409 berlaku untuk pembuat yang sama dan orang lain. Server tidak mengembalikan item lama (replay). Klien yang menentukan apakah 409 itu sukses.
+
+**Klien:**
+- `web/src/lib/create-item-validate.ts`: `newItemId()` membuat UUIDv7 (diuji unit).
+- `web/src/lib/create-item-service.ts`: `createItemOnce` mengirim `POST /items` dengan id. Jika 409 untuk id itu dan `GET /items/{id}` mengembalikan item dengan judul yang sama milik user yang sama, klien menganggap create sukses. Selain itu 409 ditampilkan.
+- Board quick create: satu id per nama. Retry setelah gagal memakai id yang sama. Nama yang diubah mendapat id baru.
+- Dialog Create: satu id per form yang dibuka. Setiap submit dari form itu memakai id yang sama.
+
+**Tes:**
+
+| Tes | Hasil |
+|---|---|
+| Integrasi: create dengan id, retry 409, id milik orang lain 409, id bukan v7 dan id tidak valid 422, create tanpa id | PASS |
+| Integrasi create lainnya (termasuk dua tes karakterisasi di bagian 16) | PASS |
+| Integrasi live (nested, workspace, cross-view) dengan id dari klien | PASS |
+| Unit: `newItemId` UUIDv7 | PASS (11 tes validasi) |
+| E2E: retry dialog (respons hilang, id sama, 409, item tersimpan sekali) | PASS |
+| E2E: retry Board quick create | PASS |
+| E2E regresi (28 tes terkait, termasuk tiga tes yang disesuaikan karena id klien) | PASS |
+| Suite server penuh | Lihat catatan hasil di bawah |
+
+**Catatan penyesuaian tes:** tiga tes lama (`dr03-create-closes`, `items.spec` global create, dan asersi POST body-nya) mengasumsikan server yang membuat id. Ketiganya disesuaikan: panel item sekarang dibuka dengan id klien, dan POST body mengharapkan `id` UUID. Helper `serveCreatedItem` di `spaces-mock.ts` melayani `GET /items/{id}` untuk id yang dikirim klien.
+
+**Batasan:**
+- Retry UI setelah timeout yang benar-benar terjadi di jaringan (bukan simulasi respons 504) belum diuji lintas proses.
+- Opsi B hanya berlaku untuk create item. POST lain tidak terlindungi.
+- Item dengan id yang sudah ada tetapi judul berbeda (user mengubah nama lalu retry) menghasilkan 409 yang ditampilkan. Perilaku ini disengaja.
