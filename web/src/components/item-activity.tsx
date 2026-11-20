@@ -14,7 +14,9 @@ type Page = { items: Activity[]; next_cursor?: string | null };
 const known = ["update", "delete", "restore", "detach", "create"];
 
 /** Kolom yang nilainya ID tanpa nama di sini: tampil "diubah", bukan UUID mentah. */
-const idFields = new Set(["assignee_ids", "owner_id", "type_id", "default_workflow_id"]);
+const idFields = new Set(["assignee_ids", "owner_id", "type_id", "default_workflow_id", "fields"]);
+/** Tanggal ditampilkan dengan format pengguna, bukan string ISO mentah. */
+const dateFields = new Set(["start_date", "due_date"]);
 
 /** The item's change history (SPC-07 activity log), newest first. */
 export function ItemActivity({ item, statuses }: { item: Item; statuses: { id: string; name: string }[] }) {
@@ -45,7 +47,13 @@ export function ItemActivity({ item, statuses }: { item: Item; statuses: { id: s
               <span className="font-medium text-foreground">{label}</span>: {t("items.activity.field.changed")}
             </p>];
             const { from, to } = change as { from?: unknown; to?: unknown };
-            const name = (value: unknown) => field === "status_id" ? (statuses.find((status) => status.id === value)?.name ?? "—") : value;
+            const name = (value: unknown) => {
+              if (field === "status_id") return statuses.find((status) => status.id === value)?.name ?? "—";
+              if (typeof value !== "string" || !value) return value;
+              if (dateFields.has(field)) return formatDate(value.slice(0, 10), profile);
+              if (field === "completed_at") return formatDateTime(value, profile);
+              return value;
+            };
             return [<p key={field} className="text-muted-foreground">
               <span className="font-medium text-foreground">{label}</span>: {formatChange({ from: name(from), to: name(to) })}
             </p>];
