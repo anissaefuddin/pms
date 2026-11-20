@@ -673,5 +673,6 @@
   "workSchedule.timezoneHint": "Used for deadlines in automation: a date counts until the end of its local day here. UTC when not set.",
   "nav.scopeOnlyYou": "Only you",
   "nav.scopeWorkspace": "Whole workspace",
-  "nav.scopeSpaces": "Per Space and workspace defaults"
+  "nav.scopeSpaces": "Per Space and workspace defaults",
+  "nav.installation": "Installation"
 }

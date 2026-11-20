@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Search } from "lucide-react";
 import type { CurrentUser } from "@/lib/api";
-import { ProfileMenu } from "@/components/topbar";
+import { SidebarFooter } from "@/components/topbar";
 import { SIDEBAR_THEME } from "@/lib/sidebar-prefs";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
 
@@ -70,9 +70,6 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
           <ArrowLeft aria-hidden="true" className="size-4 shrink-0" />
           <span className="min-w-0 truncate">{t("settings.nav.backToWorkspace")}</span>
         </Link>
-        <div className="shrink-0">
-          <ProfileMenu compact />
-        </div>
       </div>
       <label className="mb-3 flex items-center gap-2 rounded-md border border-nav-hover px-2 py-1.5 text-sm text-nav-muted">
         <Search aria-hidden="true" className="size-4 shrink-0" />
@@ -89,6 +86,12 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
         </section>)}
         {groups.length === 0 && <p role="status" className="px-2 text-sm text-nav-muted">{t("settings.nav.noMatch")}</p>}
       </nav>
+      {/* Installation: the running version, shown here in Settings only. */}
+      <div className="mt-2 border-t border-border px-2 pt-3">
+        <p className="text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{t("settings.nav.installation")}</p>
+        <p className="mt-1 text-sm text-nav-text">{`v${__APP_VERSION__}`}</p>
+      </div>
+      <SidebarFooter />
     </aside>
   );
 }

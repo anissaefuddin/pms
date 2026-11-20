@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, typ
 import { Activity, Briefcase, Folder, ChevronDown, ChevronLeft, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
-import { ProfileMenu } from "@/components/topbar";
+import { SidebarFooter } from "@/components/topbar";
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -176,18 +176,18 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
 
   const style = mobile ? undefined : { width: collapsed ? "var(--sidebar-width-collapsed)" : `${width}px` };
   return <>
-    <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex min-h-0 flex-col border-r border-border bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
-      <div className={`mb-4 flex items-center gap-1 ${collapsed ? "flex-col" : ""}`}>
-        {!collapsed && <p className="min-w-0 flex-1 truncate px-2 font-semibold" title={me.account_name}>{me.account_name}</p>}
-        <div className={`flex shrink-0 items-center gap-1 ${collapsed ? "flex-col" : "ml-auto"}`}>
-          {!mobile && <Tooltip>
-            <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed} aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
-              className="shrink-0 bg-transparent text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted" />}>
-              {collapsed ? <ChevronRight /> : <ChevronLeft />}
-            </TooltipTrigger>
-            <TooltipContent>{t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}</TooltipContent>
-          </Tooltip>}
-        </div>
+    <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} group/sidebar relative flex min-h-0 flex-col border-r border-border bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
+      <div className={`mb-4 flex items-center gap-2 ${collapsed ? "flex-col" : ""}`}>
+        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{(me.account_name || "W").trim().charAt(0).toUpperCase()}</span>
+        {!collapsed && <p className="min-w-0 flex-1 truncate font-semibold" title={me.account_name}>{me.account_name}</p>}
+        {/* The toggle shows when the pointer is over the sidebar (or it has keyboard focus); collapsed, it always shows so the sidebar can be opened again. */}
+        {!mobile && <Tooltip>
+          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed} aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
+            className={`shrink-0 bg-transparent text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted ${collapsed ? "" : "opacity-0 transition-opacity group-hover/sidebar:opacity-100 focus-visible:opacity-100"}`} />}>
+            <PanelLeft />
+          </TooltipTrigger>
+          <TooltipContent>{t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}</TooltipContent>
+        </Tooltip>}
       </div>
       {/* Hanya area ini yang bisa di-scroll; header dan footer (akun, pengaturan) tetap terlihat. */}
       <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
@@ -221,10 +221,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
       {!collapsed && <Favorites userId={me.id} />}
       {!collapsed && <SpacesNav me={me} />}
       </div>
-      <div className={`mt-2 flex shrink-0 items-center gap-2 border-t border-border pt-2 ${collapsed ? "flex-col" : ""}`}>
-        <ProfileMenu compact={collapsed} />
-        {!collapsed && <p className="min-w-0 flex-1 truncate text-[11px] text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
-      </div>
+      <SidebarFooter collapsed={collapsed} />
       {!mobile && !collapsed && <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
         onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
         className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none hover:bg-nav-hover focus-visible:bg-nav-active focus-visible:outline-none" />}

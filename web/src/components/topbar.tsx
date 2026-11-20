@@ -1,6 +1,6 @@
 import { useProfile, formatNumber } from "@/lib/profile";
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Shapes, Bell, Blocks, ChevronDown, CircleHelp, Languages, Layers, LogOut, MessageSquare, Palette, Plus, Settings, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, Trash2, UserPlus } from "lucide-react";
+import { MoreHorizontal, Shapes, Bell, Blocks, ChevronDown, CircleHelp, Languages, Layers, LogOut, MessageSquare, Palette, Plus, Settings, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, Trash2, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -43,9 +43,24 @@ export function Topbar({ onCreate, live, search, navigation, inSettings = false,
   );
 }
 
-/** Profile menu. It lives in the sidebar header (top right), not in the top bar. */
+/** Sidebar footer: profile (name and menu) and the inbox bell. Collapsed, it is the avatar only. Shared by the Workspace and Settings sidebars. */
+export function SidebarFooter({ collapsed = false }: { collapsed?: boolean }) {
+  const { t } = useTranslation();
+  const profile = useProfile();
+  const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
+  return <div className={`mt-2 flex shrink-0 items-center gap-1 border-t border-border pt-2 ${collapsed ? "flex-col" : ""}`}>
+    <ProfileMenu compact={collapsed} footer={!collapsed} />
+    {!collapsed && <Link to="/inbox" className="relative shrink-0 rounded-md p-2 text-nav-muted hover:bg-nav-hover hover:text-nav-text"
+      aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
+      <Bell className="size-4" aria-hidden="true" />
+      {!!unread && <span className="absolute -top-0.5 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}
+    </Link>}
+  </div>;
+}
+
+/** Profile menu. It lives in the sidebar footer, not in the top bar. */
 /** Profile control: avatar plus a dropdown indicator. Compact (collapsed sidebar) shows the avatar only. */
-export function ProfileMenu({ compact = false }: { compact?: boolean }) {
+export function ProfileMenu({ compact = false, footer = false }: { compact?: boolean; footer?: boolean }) {
   const { t, i18n } = useTranslation();
   const profile = useProfile();
   const navigate = useNavigate();
@@ -72,10 +87,11 @@ export function ProfileMenu({ compact = false }: { compact?: boolean }) {
   return (
     <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" className={compact ? "size-8 shrink-0 bg-transparent p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover" : "h-8 shrink-0 gap-1 bg-transparent px-1 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover"} />}>
+        <DropdownMenuTrigger render={<Button variant="ghost" className={footer ? "h-auto min-w-0 flex-1 justify-start gap-2 bg-transparent px-2 py-1.5 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover" : compact ? "size-8 shrink-0 bg-transparent p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover" : "h-8 shrink-0 gap-1 bg-transparent px-1 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover"} />}>
           <span className="sr-only">{t("nav.profile.label")}</span>
-          <span aria-hidden="true" className="grid size-7 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
-          {!compact && <ChevronDown aria-hidden="true" className="size-3.5 text-nav-muted" />}
+          <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
+          {footer && <span className="min-w-0 flex-1 truncate text-start text-sm text-nav-text">{fullName}</span>}
+          {footer ? <MoreHorizontal aria-hidden="true" className="size-4 shrink-0 text-nav-muted" /> : !compact && <ChevronDown aria-hidden="true" className="size-3.5 text-nav-muted" />}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <div className="flex items-center gap-3 px-2 py-2">
@@ -114,6 +130,7 @@ export function ProfileMenu({ compact = false }: { compact?: boolean }) {
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive"><LogOut />{t("nav.profile.logout")}</DropdownMenuItem>
+          <p className="px-2 pt-2 text-[11px] text-muted-foreground">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>
         </DropdownMenuContent>
       </DropdownMenu>
       <FeedbackDialog open={feedback} onOpenChange={setFeedback} />
