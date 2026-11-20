@@ -121,7 +121,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
 
   return (
     <WorkspaceLayout>
-      <WorkspaceHeader icon={<SpaceIcon iconKey={space.icon_key} className="size-5" />} title={personal ? t("spaces.personal") : space.name}
+      <WorkspaceHeader titleInTopbar icon={<SpaceIcon iconKey={space.icon_key} className="size-5" />} title={personal ? t("spaces.personal") : space.name}
         meta={<>
           {space.description && <p className="mt-1 max-w-2xl text-muted-foreground">{space.description}</p>}
           {space.locked && <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><Lock className="size-4" aria-hidden="true" />{t("spaces.lock.badge")}<span className="sr-only">. {t("spaces.lock.explain")}</span></p>}

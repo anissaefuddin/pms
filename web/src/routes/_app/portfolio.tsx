@@ -7,6 +7,7 @@ import type { Item } from "@/lib/items";
 import { Button } from "@/components/ui/button";
 import { useSearchResults } from "@/lib/search";
 import { Input } from "@/components/ui/input";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/portfolio")({ component: Portfolio });
 
@@ -45,7 +46,8 @@ function Portfolio() {
   const itemByID = new Map(timeline.data?.items.map(x => [x.item.id, x.item.title]));
 
   return <main className="min-w-0 space-y-5 p-4 sm:p-8">
-    <header><h1 className="workspace-title">{t("settings.portfolio.portfolioGantt")}</h1><p className="text-sm text-muted-foreground">{t("settings.portfolio.compareVisibleProjectSchedulesAndTheirCrossProjectDependencies")}</p></header>
+    <TopbarTitle>{t("settings.portfolio.portfolioGantt")}</TopbarTitle>
+    <header><p className="text-sm text-muted-foreground">{t("settings.portfolio.compareVisibleProjectSchedulesAndTheirCrossProjectDependencies")}</p></header>
     <form className="max-w-3xl space-y-3" onSubmit={event => {
       event.preventDefault();
       const ids = selected.map(project => project.id);

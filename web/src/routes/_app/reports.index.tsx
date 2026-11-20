@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/reports/")({ component: Reports });
 
@@ -67,8 +68,8 @@ function Reports() {
   }
 
   return <main className="space-y-5 p-8">
+    <TopbarTitle>{t("reports.title")}</TopbarTitle>
     <header className="border-b pb-5">
-      <h1 className="workspace-title">{t("reports.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("reports.description")}</p>
     </header>
     <div><Button onClick={() => { setError(""); setCreating(true); }}>{t("reports.create.title")}</Button></div>

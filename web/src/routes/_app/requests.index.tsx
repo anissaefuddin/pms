@@ -6,6 +6,7 @@ import { api } from "@/lib/api";
 import { buttonVariants } from "@/components/ui/button";
 import { Button } from "@/components/ui/button";
 import { RequestTabs } from "@/components/request-tabs";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/requests/")({ component: Requests });
 
@@ -18,8 +19,8 @@ function Requests() {
     queryFn: async () => (await api<{ items: Available[] }>("/api/v1/forms/available")).items });
   return <main className="space-y-5 p-8">
     <RequestTabs />
+    <TopbarTitle>{t("forms.requests.title")}</TopbarTitle>
     <header className="border-b pb-5">
-      <h1 className="workspace-title">{t("forms.requests.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("forms.requests.description")}</p>
     </header>
     {list.isPending && <p role="status">{t("forms.requests.loading")}</p>}
