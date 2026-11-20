@@ -81,7 +81,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
 
   const shared = space.kind === "shared";
   const canShare = shared && can(space, "share");
-  const canRename = shared && can(space, "edit");
+  const canRename = shared && !space.archived && can(space, "edit"); // same rule as the Space General tab
   const canDelete = shared && can(space, "delete");
   const canCreate = can(space, "create");
   const canLock = shared && me?.user_type === "admin" && can(space, "share");

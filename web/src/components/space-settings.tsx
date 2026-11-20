@@ -37,6 +37,14 @@ const TAB_LABEL = {
   blueprints: "spaces.spaceSettings.tab.blueprints",
 } as const satisfies Record<SpaceSettingsTab, string>;
 
+// Navigation groups for the Space settings sidebar. Every tab belongs to exactly one group.
+const SPACE_SETTINGS_GROUPS: { id: string; label?: string; tabs: SpaceSettingsTab[] }[] = [
+  { id: "general", tabs: ["general"] },
+  { id: "access", label: "spaces.spaceSettings.group.access", tabs: ["members"] },
+  { id: "configuration", label: "spaces.spaceSettings.group.configuration", tabs: ["item-types", "custom-fields", "workflows"] },
+  { id: "tools", label: "spaces.spaceSettings.group.toolsAutomation", tabs: ["tools", "automation", "forms", "blueprints"] },
+];
+
 export function isSpaceSettingsTab(value: string): value is SpaceSettingsTab {
   return (SPACE_SETTINGS_TABS as readonly string[]).includes(value);
 }
@@ -56,17 +64,24 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
           <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link>
         </p>}
       />
-      <nav aria-label={t("spaces.spaceSettings.navLabel")} className="mt-4 flex gap-1 overflow-x-auto border-b">
-        {SPACE_SETTINGS_TABS.map((key) => (
-          <Link key={key} to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: key }}
-            aria-current={key === tab ? "page" : undefined}
-            className={cn("-mb-px shrink-0 border-b-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground",
-              key === tab ? "border-primary font-medium text-foreground" : "border-transparent")}>
-            {t(TAB_LABEL[key])}
-          </Link>
-        ))}
-      </nav>
-      <div className="mt-6 max-w-3xl">
+      {/* Grouped: a row of tabs on small screens (scrolls), a side list with group headings from lg up. */}
+      <div className="mt-4 grid gap-6 lg:grid-cols-[12rem_minmax(0,1fr)]">
+        <nav aria-label={t("spaces.spaceSettings.navLabel")} className="flex gap-1 overflow-x-auto border-b lg:flex-col lg:gap-4 lg:overflow-visible lg:border-b-0 lg:border-r lg:pe-4">
+          {SPACE_SETTINGS_GROUPS.map((group) => (
+            <div key={group.id} className="flex gap-1 lg:flex-col lg:gap-0.5">
+              {group.label && <p className="hidden px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:block">{t(group.label)}</p>}
+              {group.tabs.map((key) => (
+                <Link key={key} to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: key }}
+                  aria-current={key === tab ? "page" : undefined}
+                  className={cn("shrink-0 border-b-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground lg:border-b-0 lg:border-s-2 lg:rounded-e-md",
+                    key === tab ? "border-primary font-medium text-foreground lg:bg-muted" : "border-transparent")}>
+                  {t(TAB_LABEL[key])}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="min-w-0 max-w-3xl">
         {tab === "general" && <GeneralTab space={space} me={me} onDirtyChange={setDirty} />}
         {tab === "members" && <MembersTab space={space} me={me} />}
         {tab === "tools" && <LinkTab title={t("spaces.spaceSettings.tools.title")} description={t("spaces.spaceSettings.tools.description")}>
@@ -81,6 +96,7 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
           <FormsList spaceId={space.id} embedded />
         </LinkTab>}
         {tab === "blueprints" && <BlueprintsTab space={space} />}
+        </div>
       </div>
       <ConfirmDialog
         open={blocker.status === "blocked"}

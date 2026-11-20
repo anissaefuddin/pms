@@ -400,5 +400,8 @@
   "spaceSettings.delete.forms": "{{count}} form permintaan milik Space ini.",
   "spaceSettings.delete.blueprints": "{{count}} blueprint milik Space ini.",
   "spaceSettings.delete.tools": "{{count}} tool ikut dihapus.",
-  "spaceSettings.delete.impactError": "Dampak tidak bisa dicek. Coba lagi sebelum menghapus."
+  "spaceSettings.delete.impactError": "Dampak tidak bisa dicek. Coba lagi sebelum menghapus.",
+  "spaceSettings.group.access": "Akses",
+  "spaceSettings.group.configuration": "Konfigurasi",
+  "spaceSettings.group.toolsAutomation": "Alat & otomasi"
 }

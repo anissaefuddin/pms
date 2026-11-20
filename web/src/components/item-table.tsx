@@ -118,7 +118,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
             <Input name="title" aria-label={t("items.name")} defaultValue={item.title} maxLength={500} required autoFocus
               onKeyDown={(event) => { if (event.key === "Escape") setEditing(undefined); }} />
           </form>
-          : <Button variant="ghost" size="sm" className="min-w-0 justify-start"
+          : <Button variant="ghost" size="sm" className="min-w-0 justify-start" title={item.title}
               onClick={() => onOpen(item)}><span className="truncate">{item.title}</span></Button>}
         {canEditTitle && <Button size="icon-sm" variant="ghost" aria-label={t("views.editTitle", { name: item.title })}
           onClick={() => setEditing({ id: item.id, field: "title" })}><Pencil /></Button>}
@@ -146,7 +146,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       return canEdit ? <Button variant="ghost" size="sm" className="max-w-full truncate"
         onClick={() => setEditing({ id: item.id, field: "assignees" })}>
         <span className="sr-only">{`${t("items.assignees")}: ${item.title}`}</span>
-        {item.assignees.length ? <AvatarStack people={item.assignees} /> : t("items.assignees")}
+        {item.assignees.length ? <AvatarStack people={item.assignees} /> : t("views.unassigned")}
       </Button> : <AvatarStack people={item.assignees} />;
     } },
     ...(["start_date", "due_date"] as const).map((field): ColumnDef<TableRow> => ({

@@ -231,19 +231,6 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
             </select></label>}
           {kind !== "task" && <p className="self-end text-sm text-muted-foreground">{t("items.workflow")}: {t("items.defaultWorkflow")}</p>}
         </>}
-        {blueprints.length > 0 && <fieldset className="space-y-1 sm:col-span-2">
-          <legend>{t("blueprints.from")}</legend>
-          <label className="flex items-center gap-2"><input type="radio" name="blueprint" checked={!blueprint} onChange={() => setBlueprintID("")} />{t("blueprints.none")}</label>
-          {blueprints.map((entry) => {
-            const def = typeDefs.find((d) => d.key === entry.item_type);
-            return <label key={entry.id} className="flex items-center gap-2">
-              <input type="radio" name="blueprint" checked={entry.id === blueprintID} onChange={() => setBlueprintID(entry.id)} />
-              <TypeIcon name={def?.icon} />{entry.name}
-              <small className="text-muted-foreground">{t("blueprints.typeLine", { type: def?.name ?? entry.item_type, count: entry.item_count })}</small>
-            </label>;
-          })}
-          {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
-        </fieldset>}
       </div>
     </section>
 
@@ -265,6 +252,25 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         })}
       </fieldset>
     </section>
+
+    {/* Blueprints come after the item type and list only blueprints of that type (the type decides what can be copied). */}
+    {blueprints.some((entry) => entry.item_type === kind) && <section className="space-y-3" aria-labelledby="create-blueprint">
+      <h3 id="create-blueprint" className="text-sm font-semibold">{t("blueprints.from")}</h3>
+      {blueprint && <p className="text-sm font-medium">{t("blueprints.createFrom")}</p>}
+      <fieldset className="space-y-1">
+        <legend className="sr-only">{t("blueprints.from")}</legend>
+        <label className="flex items-center gap-2"><input type="radio" name="blueprint" checked={!blueprint} onChange={() => setBlueprintID("")} />{t("blueprints.none")}</label>
+        {blueprints.filter((entry) => entry.item_type === kind).map((entry) => {
+          const def = typeDefs.find((d) => d.key === entry.item_type);
+          return <label key={entry.id} className="flex items-center gap-2">
+            <input type="radio" name="blueprint" checked={entry.id === blueprintID} onChange={() => setBlueprintID(entry.id)} />
+            <TypeIcon name={def?.icon} />{entry.name}
+            <small className="text-muted-foreground">{t("blueprints.typeLine", { type: def?.name ?? entry.item_type, count: entry.item_count })}</small>
+          </label>;
+        })}
+        {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
+      </fieldset>
+    </section>}
 
     <section className="space-y-4" aria-labelledby="create-settings">
       <h3 id="create-settings" className="text-sm font-semibold">{t("items.settings")}</h3>

@@ -363,19 +363,19 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeOptions={{ exact: true }} activeProps={activeLink}>
         <SpaceIcon iconKey={(space as SpaceType).icon_key} className="me-2 inline-block align-[-2px]" />{name}{(space as SpaceType).archived && <span className="ms-1 text-xs text-nav-muted">{t("nav.space.archived")}</span>}
       </Link>
-      {can(space as SpaceType, EDIT_CAPABILITY) && <>
-        <Button variant="ghost" size="icon-sm" nativeButton={false} className={`me-1 shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
-          aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })}
-          render={<Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} />}><Settings /></Button>
-        {/* Rename follows the same rule as the Space General tab: not for a personal or archived Space. The menu is hidden when nothing is allowed. */}
-        {(space as SpaceType).kind !== "personal" && !(space as SpaceType).archived && <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
-            aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>}
-      </>}
+      <Button variant="ghost" size="icon-sm" className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text"
+        aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
+        onClick={() => window.dispatchEvent(new CustomEvent("pms:create-item", { detail: { kind: "project", spaceId: space.id } }))}><Plus /></Button>
+      {/* Settings and Rename live in this one menu, so the row has a single control for Space actions. */}
+      {can(space as SpaceType, EDIT_CAPABILITY) && <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
+          aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          {/* Rename follows the same rule as the Space General tab: not for a personal or archived Space. */}
+          {(space as SpaceType).kind !== "personal" && !(space as SpaceType).archived && <DropdownMenuItem onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
+          <DropdownMenuItem onClick={() => void navigate({ to: "/spaces/$spaceId/settings/$tab", params: { spaceId: space.id, tab: "general" } })}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>}
       <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
     {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
@@ -390,14 +390,8 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
           {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
         </>}
       </div>
-      <div>
-        <div className="flex items-center justify-between pr-1">
-          <p className="px-2 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.space.projects")}</p>
-          <Button variant="ghost" size="icon-sm" className="text-nav-text hover:bg-nav-hover hover:text-nav-text" aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
-            onClick={() => window.dispatchEvent(new CustomEvent("pms:create-item", { detail: { kind: "project", spaceId: space.id } }))}><Plus /></Button>
-        </div>
-        <ItemTree id={space.id} space />
-      </div>
+      {/* The Space's projects and folders sit directly under the Space; the create action is on the Space row. */}
+      <ItemTree id={space.id} space />
     </div>}
   </li>;
 }

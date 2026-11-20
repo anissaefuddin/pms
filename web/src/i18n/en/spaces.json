@@ -400,5 +400,8 @@
   "spaceSettings.delete.forms": "{{count}} request forms belong to this Space.",
   "spaceSettings.delete.blueprints": "{{count}} blueprints belong to this Space.",
   "spaceSettings.delete.tools": "{{count}} tools are removed with it.",
-  "spaceSettings.delete.impactError": "The impact could not be checked. Try again before deleting."
+  "spaceSettings.delete.impactError": "The impact could not be checked. Try again before deleting.",
+  "spaceSettings.group.access": "Access",
+  "spaceSettings.group.configuration": "Configuration",
+  "spaceSettings.group.toolsAutomation": "Tools & automation"
 }
