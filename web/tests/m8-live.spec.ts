@@ -27,7 +27,7 @@ test("E2E-PAR-01/02: an admin defines a Bug type in the UI, and a Bug made from 
   await dialog.locator('select[name="importance"]').selectOption("high");
   await axe(admin);
   await dialog.getByRole("button", { name: "Save" }).click();
-  await expect(admin.getByText("Bug", { exact: true })).toBeVisible();
+  await expect(admin.getByLabel("Custom item types").getByText("Bug", { exact: true })).toBeVisible();
   const types = (await (await admin.request.get("/api/v1/item-types")).json()).items as { key: string; defaults: Record<string, unknown> }[];
   expect(types.find((t) => t.key === "bug")?.defaults).toEqual({ importance: "high" });
 
