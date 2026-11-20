@@ -97,6 +97,10 @@ func replaceLocations(ctx context.Context, tx pgx.Tx, actor policy.Actor, id str
 FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.deleted_at IS NULL`, itemID).Scan(&kind, &workflow); err != nil {
 		return Detail{}, ErrNotFound
 	}
+	var before []byte // S-5: history keeps where the item was; written in the same transaction as the move
+	if err := tx.QueryRow(ctx, locationsSnapshot, itemID).Scan(&before); err != nil {
+		return Detail{}, err
+	}
 	rows, err := tx.Query(ctx, "SELECT space_id, parent_item_id FROM item_locations WHERE item_id=$1 AND deleted_root_id IS NULL", itemID)
 	if err != nil {
 		return Detail{}, err
@@ -215,8 +219,21 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 	if _, err = tx.Exec(ctx, "UPDATE items SET updated_at=now() WHERE id=$1", itemID); err != nil {
 		return Detail{}, err
 	}
+	var after []byte
+	if err := tx.QueryRow(ctx, locationsSnapshot, itemID).Scan(&after); err != nil {
+		return Detail{}, err
+	}
+	if _, err := tx.Exec(ctx, `INSERT INTO activity(item_id,actor_id,action,changes)
+SELECT $1, $2::uuid, 'update', jsonb_build_object('locations', jsonb_build_object('from', $3::jsonb, 'to', $4::jsonb))
+WHERE $3::jsonb IS DISTINCT FROM $4::jsonb`, itemID, actor.ID, before, after); err != nil {
+		return Detail{}, err
+	}
 	return readDetail(ctx, tx, actor, id)
 }
+
+// locationsSnapshot lists an item's live locations as JSON, the form the history stores for a move.
+const locationsSnapshot = `SELECT COALESCE(jsonb_agg(jsonb_build_object('space_id', space_id, 'parent_item_id', parent_item_id)
+ORDER BY space_id, parent_item_id NULLS FIRST), '[]'::jsonb) FROM item_locations WHERE item_id=$1 AND deleted_root_id IS NULL`
 
 func countExisting(want []Location, existing map[[2]uuid.UUID]bool, key func(Location) [2]uuid.UUID) int {
 	n := 0
