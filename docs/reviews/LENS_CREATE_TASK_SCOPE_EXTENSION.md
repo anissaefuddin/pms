@@ -155,10 +155,18 @@ Setiap langkah mengikuti pola remediasi: tes integrasi untuk aturan server, unit
 | G2 | Drag satu hari | Gantt |
 | G3 | Shortcut keyboard | Gantt |
 | G4 | Zoom dan scroll saat drag | Gantt |
-| C1 | Calendars lintas item ikut create | Calendar |
-| C2 | Create langsung dari klik tanggal | Calendar |
-| C3 | Create saat filter aktif | Calendar |
+| C1 | **APPROVED:** create hanya di Calendar View project. Calendars lintas item tetap read-only | Calendar |
+| C2 | **APPROVED:** klik "+" pada hari kerja membuka dialog dengan tanggal terisi, bukan membuat langsung | Calendar |
+| C3 | **APPROVED:** filter tidak diubah. Jika Task baru tersembunyi filter, berlaku feedback R4 | Calendar |
 | W1 | **APPROVED:** `assignee_allocations` sebagai sumber kebenaran alokasi Task | Workload |
 | W2 | **APPROVED:** konflik kapasitas menjadi warning (soft constraint), bukan blok keras | Workload |
 | W3 | **APPROVED:** membuat Task untuk lane orang lain: Space Admin, Project Manager, atau pengguna dengan Create dan Assign | Workload |
 | W4 | **APPROVED:** rentang mengikuti drag, alokasi default 1 jam per hari kerja terpilih | Workload |
+
+## 6. Keputusan Calendar (disetujui)
+
+- **C1 (APPROVED):** create hanya di Calendar View project. Calendars lintas item tetap read-only.
+- **C2 (APPROVED):** klik "+" pada hari kerja membuka dialog dengan tanggal terisi (start dan finish), bukan membuat Task langsung.
+- **C3 (APPROVED):** filter tidak diubah. Jika Task baru tidak tampil karena filter aktif, berlaku feedback R4 (notice dengan tombol "Buka").
+
+Implementasi di Batch 3A sudah sesuai dengan ketiga keputusan ini.
