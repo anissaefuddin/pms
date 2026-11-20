@@ -8,13 +8,13 @@ import { SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, readWidth, writeWidth } from 
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
 
 type SettingsItem = { to: string; hash?: string; params?: { spaceId: string }; label: string };
-type SettingsGroup = { title: string; scope?: string; items: SettingsItem[] };
+type SettingsGroup = { title: string; items: SettingsItem[] };
 
 /** Settings shell sidebar (prototype): its own groups, a "Find settings" filter, and a link back to the workspace. */
 export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => string): SettingsGroup[] {
   const isAdmin = me?.user_type === "admin";
   return [
-    { title: t("settings.nav.personal"), scope: t("settings.nav.scopeOnlyYou"), items: [
+    { title: t("settings.nav.personal"), items: [
       { to: "/settings/profile", label: t("settings.profile.title") },
       { to: "/settings/work-schedule", label: t("settings.workSchedule.title") },
       { to: "/settings/language", label: t("settings.nav.language") },
@@ -24,14 +24,14 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/appearance", label: t("nav.account.appearance") },
       { to: "/settings/security", label: t("settings.security.title") },
     ] },
-    { title: t("settings.nav.accountManagement"), scope: t("settings.nav.scopeWorkspace"), items: [
+    { title: t("settings.nav.accountManagement"), items: [
       ...(me?.capabilities.manage_users ? [{ to: "/settings/users", label: t("settings.users.title") }] : []),
       { to: "/settings/resources", label: t("settings.resources") },
       { to: "/settings/apps", label: t("apps.title") },
       ...(isAdmin ? [{ to: "/settings/rates", label: t("settings.rates") }] : []),
       { to: "/settings/spaces", label: t("settings.spacesManagement") },
     ] },
-    { title: t("settings.nav.workConfiguration"), scope: t("settings.nav.scopeSpaces"), items: [
+    { title: t("settings.nav.workConfiguration"), items: [
       { to: "/settings/item-types", label: t("settings.itemTypes.title") },
       { to: "/settings/workflows", label: t("settings.workflows.title") },
       { to: "/settings/custom-fields", label: t("settings.customFields.title") },
@@ -39,7 +39,7 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/request-forms", label: t("forms.manage.title") },
       { to: "/settings/blueprints", label: t("blueprints.nav") },
     ] },
-    { title: t("settings.nav.security"), scope: t("settings.nav.scopeWorkspace"), items: isAdmin ? [
+    { title: t("settings.nav.security"), items: isAdmin ? [
       { to: "/settings/sso", label: t("sso.admin.title") },
       { to: "/settings/provisioning", label: t("provisioning.title") },
       { to: "/settings/ownership", label: t("ownership.title") },
@@ -96,7 +96,6 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
       <nav aria-label={t("settings.nav.label")} className="navscroll min-h-0 flex-1 space-y-4 overflow-y-auto">
         {groups.map((group) => <section key={group.title}>
           <h2 className="px-2 text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{group.title}</h2>
-          {group.scope && <p className="mb-1 px-2 text-[11px] text-nav-muted/80">{group.scope}</p>}
           {group.items.map((item) => <Link key={item.to + (item.hash ?? "")} to={item.to} params={item.params} hash={item.hash} activeOptions={{ includeHash: true }}
             className={linkClass} activeProps={activeLink} >{item.label}</Link>)}
         </section>)}
