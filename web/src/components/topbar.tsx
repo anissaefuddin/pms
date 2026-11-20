@@ -10,6 +10,7 @@ import { LANGUAGES, isLanguage, setLanguage, type Language } from "@/i18n";
 
 import { clearSessionState } from "@/lib/session-state";
 import { nextIndex } from "@/lib/ui-kit";
+import { UserAvatar } from "@/components/user-avatar";
 import type { CreateKind } from "@/lib/create-item-validate";
 import { toast } from "sonner";
 import { FeedbackDialog } from "@/components/feedback-dialog";
@@ -79,7 +80,6 @@ export function ProfileMenu({ compact = false, footer = false }: { compact?: boo
     }
   }
   const fullName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : "";
-  const initials = `${profile?.first_name?.[0] ?? ""}${profile?.last_name?.[0] ?? ""}`.toUpperCase();
   async function logout() {
     await api("/api/v1/auth/logout", { method: "POST" }).catch(() => undefined);
     if (profile) clearSessionState(globalThis.localStorage, profile.id);
@@ -91,13 +91,13 @@ export function ProfileMenu({ compact = false, footer = false }: { compact?: boo
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" className={footer ? "h-auto min-w-0 flex-1 justify-start gap-2 bg-transparent px-2 py-1.5 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover" : compact ? "size-8 shrink-0 bg-transparent p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover" : "h-8 shrink-0 gap-1 bg-transparent px-1 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover"} />}>
           <span className="sr-only">{t("nav.profile.label")}</span>
-          <span aria-hidden="true" className="grid size-7 shrink-0 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
+          <UserAvatar profile={profile} className="size-7 rounded-md text-xs" />
           {footer && <span className="min-w-0 flex-1 truncate text-start text-sm text-nav-text">{fullName}</span>}
           {footer ? <MoreHorizontal aria-hidden="true" className="size-4 shrink-0 text-nav-muted" /> : !compact && <ChevronDown aria-hidden="true" className="size-3.5 text-nav-muted" />}
         </DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="w-64">
           <div className="flex items-center gap-3 px-2 py-2">
-            <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{initials}</span>
+            <UserAvatar profile={profile} className="size-10 rounded-md text-sm" />
             <div className="min-w-0"><p className="truncate text-sm font-semibold">{fullName}</p>
               {profile?.job_title && <p className="truncate text-xs text-muted-foreground">{profile.job_title}</p>}
               {profile?.company && <p className="truncate text-xs text-muted-foreground">{profile.company}</p>}</div>

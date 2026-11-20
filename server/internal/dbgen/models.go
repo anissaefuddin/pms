@@ -1377,6 +1377,13 @@ type User struct {
 	ViewPrefs                []byte             `json:"view_prefs"`
 }
 
+type UserAvatar struct {
+	UserID      pgtype.UUID        `json:"user_id"`
+	ContentType string             `json:"content_type"`
+	Data        []byte             `json:"data"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
 type UserIdentity struct {
 	ProviderID  pgtype.UUID        `json:"provider_id"`
 	Subject     string             `json:"subject"`

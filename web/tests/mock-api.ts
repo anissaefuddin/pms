@@ -2,6 +2,7 @@ import type { Page, Route } from "@playwright/test";
 
 export const me = {
   account_name: "Acme Workspace",
+  avatar_version: 0,
   id: "11111111-1111-4111-8111-111111111111",
   email: "ada@example.test",
   first_name: "Ada",

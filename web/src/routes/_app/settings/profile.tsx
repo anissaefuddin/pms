@@ -1,8 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useQueryClient } from "@tanstack/react-query";
+import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { CurrentUser } from "@/lib/api";
+import { toast } from "sonner";
+import { api, type CurrentUser } from "@/lib/api";
 import { useProfile } from "@/lib/profile";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
+import { UserAvatar } from "@/components/user-avatar";
 import { ProfileSettingsForm, SettingsSection } from "@/components/settings/settings-ui";
 
 export const Route = createFileRoute("/_app/settings/profile")({ component: ProfileRoute });
@@ -28,12 +33,41 @@ function ProfileRoute() {
   </>;
 }
 
+const PHOTO_TYPES = ["image/png", "image/jpeg", "image/webp"];
+const PHOTO_MAX_BYTES = 2 << 20;
+
 function Identity({ profile }: { profile: CurrentUser }) {
-  const initials = `${profile.first_name[0] ?? ""}${profile.last_name[0] ?? ""}`.toUpperCase();
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const input = useRef<HTMLInputElement>(null);
+  const [busy, setBusy] = useState(false);
   const role = [profile.job_title, profile.company].filter(Boolean).join(" · ");
+  async function save(request: Promise<CurrentUser>) {
+    setBusy(true);
+    try {
+      queryClient.setQueryData(["me"], await request);
+    } catch (err) {
+      toast.error((err as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  function choose(file: File | undefined) {
+    if (!file) return;
+    if (!PHOTO_TYPES.includes(file.type)) return void toast.error(t("settings.profile.photo.type"));
+    if (file.size > PHOTO_MAX_BYTES) return void toast.error(t("settings.profile.photo.size"));
+    void save(api<CurrentUser>("/api/v1/me/avatar", { method: "PUT", headers: { "Content-Type": file.type }, body: file }));
+  }
   return <div className="mb-6 flex items-center gap-4">
-    <span aria-hidden="true" className="grid size-16 place-items-center rounded-xl bg-primary text-xl font-semibold text-primary-foreground">{initials}</span>
-    <div><p className="text-lg font-semibold">{profile.first_name} {profile.last_name}</p>{role && <p className="text-sm text-muted-foreground">{role}</p>}</div>
+    <UserAvatar profile={profile} className="size-16 rounded-xl text-xl" />
+    <div className="min-w-0 flex-1"><p className="text-lg font-semibold">{profile.first_name} {profile.last_name}</p>{role && <p className="text-sm text-muted-foreground">{role}</p>}</div>
+    <div className="flex shrink-0 flex-col items-end gap-1">
+      <input ref={input} type="file" accept={PHOTO_TYPES.join(",")} className="sr-only" aria-label={t("settings.profile.photo.label")}
+        onChange={(event) => { choose(event.target.files?.[0]); event.target.value = ""; }} />
+      <Button variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}>{t("settings.profile.photo.change")}</Button>
+      {profile.avatar_version > 0 && <Button variant="ghost" size="sm" disabled={busy} onClick={() => void save(api<CurrentUser>("/api/v1/me/avatar", { method: "DELETE" }))}>{t("settings.profile.photo.remove")}</Button>}
+      <p className="text-xs text-muted-foreground">{t("settings.profile.photo.hint")}</p>
+    </div>
   </div>;
 }
 
