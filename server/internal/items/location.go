@@ -123,6 +123,22 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 		}
 		wanted[key(loc)] = true
 	}
+	// An item in a locked Space stays in it: only an administrator can place it in another Space (D-95).
+	// D-17.1: leaving a locked Space needs an explicit Space Admin of every locked Space the item is in, not the Workspace admin role. Read before this request removes any location, so the rule sees the item's real placement.
+	lockedHere, err := policy.LockedSpacesOf(ctx, tx, id)
+	if err != nil {
+		return Detail{}, err
+	}
+	restricted := false
+	for sid := range lockedHere {
+		ok, err := policy.IsSpaceAdmin(ctx, tx, actor.ID, sid)
+		if err != nil {
+			return Detail{}, err
+		}
+		if !ok {
+			restricted = true
+		}
+	}
 	existing := map[[2]uuid.UUID]bool{}
 	var remove, kept int
 	for _, loc := range current {
@@ -143,22 +159,6 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 				return Detail{}, err
 			}
 			remove++
-		}
-	}
-	// An item in a locked Space stays in it: only an administrator can place it in another Space (D-95).
-	// D-17 A1: leaving a locked Space needs an explicit Space Admin of every locked Space the item is in, not the Workspace admin role.
-	lockedHere, err := policy.LockedSpacesOf(ctx, tx, id)
-	if err != nil {
-		return Detail{}, err
-	}
-	restricted := false
-	for sid := range lockedHere {
-		ok, err := policy.IsSpaceAdmin(ctx, tx, actor.ID, sid)
-		if err != nil {
-			return Detail{}, err
-		}
-		if !ok {
-			restricted = true
 		}
 	}
 	for _, loc := range want {
