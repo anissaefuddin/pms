@@ -188,6 +188,19 @@ func isMember(ctx context.Context, tx pgx.Tx, id, userID string) (bool, error) {
 	return ok, err
 }
 
+// requireAdminEligible enforces S-1: only an admin or regular user may hold the explicit Space Admin role. External,
+// collaborator and viewer users stay below the admin ceiling, so the role would only promise rights they cannot have.
+func requireAdminEligible(ctx context.Context, tx pgx.Tx, userID string) error {
+	var userType string
+	if err := tx.QueryRow(ctx, "SELECT user_type::text FROM users WHERE id=$1::uuid", userID).Scan(&userType); err != nil {
+		return err
+	}
+	if userType != string(policy.Admin) && userType != string(policy.Regular) {
+		return ValidationError{"only an admin or regular user can be a Space Admin"}
+	}
+	return nil
+}
+
 // GrantAdmin makes an existing member an explicit Space Admin.
 func (s *Service) GrantAdmin(ctx context.Context, actor policy.Actor, id, userID string) error {
 	if !IsID(id) || !IsID(userID) {
@@ -210,6 +223,9 @@ func (s *Service) GrantAdmin(ctx context.Context, actor policy.Actor, id, userID
 	}
 	if !ok {
 		return ValidationError{"only an active member of this Space can become a Space Admin; share the Space with them first"}
+	}
+	if err := requireAdminEligible(ctx, tx, userID); err != nil {
+		return err
 	}
 	if _, err := tx.Exec(ctx, "INSERT INTO space_admins(space_id,user_id,granted_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", id, userID, actor.ID); err != nil {
 		return err
@@ -275,6 +291,9 @@ func (s *Service) TransferOwnership(ctx context.Context, actor policy.Actor, id,
 	}
 	if !ok {
 		return ValidationError{"the new owner must be an active member of this Space"}
+	}
+	if err := requireAdminEligible(ctx, tx, toUserID); err != nil {
+		return err
 	}
 	if _, err := tx.Exec(ctx, "INSERT INTO space_admins(space_id,user_id,granted_by) VALUES ($1,$2,$3) ON CONFLICT DO NOTHING", id, toUserID, actor.ID); err != nil {
 		return err

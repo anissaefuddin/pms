@@ -30,7 +30,7 @@ test("activity shows changes as from → to, grouped by day", async ({ page }) =
   } });
   await page.goto(`/tasks/${projectId}?view=${view}&task=${projectId}`);
   const panel = page.getByRole("dialog");
-  await expect(panel.getByText("title: Old name → New name")).toBeVisible();
+  await expect(panel.getByText("Name: Old name → New name")).toBeVisible();
   await expect(panel.locator("h4")).toHaveCount(2); // two days: 15 and 14 Nov
 });
 

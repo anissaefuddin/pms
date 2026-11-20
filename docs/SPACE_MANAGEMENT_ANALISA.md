@@ -354,6 +354,8 @@ Sampai keputusan, perilaku lama dipertahankan. Tes integrasi yang ada, terutama 
 
 ### 12.1 D-17 opsi A: dicoba, dibatalkan, perlu keputusan
 
+> **Keputusan 20 Nov 2026 (D-17.1, APPROVED): Explicit Access Only.** Opsi A diterima sebagai keputusan produk. A1 dan A2 tidak dipilih. Bagian di bawah tetap sebagai riwayat.
+
 Opsi A (Workspace Admin tanpa akses implisit ke konten Space shared) diterapkan sebagai percobaan pada policy: `spaceCaps`, `CanAdministerSpace`, query kapabilitas item, dan pengecualian locked. Hasilnya:
 - 194 tes gagal di paket policy, spaces, httpserver, automation, forms, connectors, dan bootstrap. Sebagian besar fixture memperlakukan admin Workspace sebagai anggota implisit semua Space.
 - Dampak produk: analitik, approval, dashboard, form, impor/ekspor, dan Excel untuk admin ikut berubah. Ini bukan hanya perubahan tes.

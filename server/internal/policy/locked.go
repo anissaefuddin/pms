@@ -17,7 +17,7 @@ SELECT EXISTS (
   SELECT 1 FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.locked AND s.deleted_at IS NULL
   WHERE l.item_id=$1::uuid AND l.deleted_root_id IS NULL AND NOT (
     ($2='user' AND (
-       EXISTS (SELECT 1 FROM space_admins sa WHERE sa.space_id=s.id AND sa.user_id=$3::uuid)
+       EXISTS (SELECT 1 FROM space_admins sa JOIN users au ON au.id=sa.user_id WHERE sa.space_id=s.id AND sa.user_id=$3::uuid AND au.user_type IN ('admin','regular'))
        OR EXISTS (SELECT 1 FROM shares sh WHERE sh.target_type='space' AND sh.target_id=s.id AND (
             (sh.principal_type='user' AND sh.principal_id=$3::uuid)
          OR (sh.principal_type='group' AND sh.principal_id IN (SELECT group_id FROM group_members WHERE user_id=$3::uuid))))))
@@ -55,9 +55,9 @@ WHERE l.item_id=$1::uuid AND l.deleted_root_id IS NULL`, itemID)
 	return out, rows.Err()
 }
 
-// IsSpaceAdmin reports whether the actor is an explicit Space Admin of the Space (D-05). A Workspace admin is not one unless named.
+// IsSpaceAdmin reports whether the actor is an explicit Space Admin of the Space (D-SA1). A Workspace admin is not one unless named.
 func IsSpaceAdmin(ctx context.Context, db DB, actorID, spaceID string) (bool, error) {
-	rows, err := db.Query(ctx, "SELECT 1 FROM space_admins WHERE space_id=$1::uuid AND user_id=$2::uuid", spaceID, actorID)
+	rows, err := db.Query(ctx, "SELECT 1 FROM space_admins sa JOIN users au ON au.id=sa.user_id WHERE sa.space_id=$1::uuid AND sa.user_id=$2::uuid AND au.user_type IN ('admin','regular')", spaceID, actorID)
 	if err != nil {
 		return false, err
 	}

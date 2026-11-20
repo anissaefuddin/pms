@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// D-01 visibility and join, D-03 archive, D-04 icon, D-05 explicit admins (see docs/SPACE_MANAGEMENT_ANALISA.md).
+// D-01 visibility and join, D-03 archive, D-04 icon, D-SA1 explicit admins (see docs/SPACE_MANAGEMENT_ANALISA.md).
 func TestSpaceGovernance(t *testing.T) {
 	f := newFixture(t)
 	owner := f.person("regular")
@@ -14,7 +14,7 @@ func TestSpaceGovernance(t *testing.T) {
 	external := f.person("external")
 	space := f.space("Ops")
 	f.share(space, "user", owner.id, "full")
-	f.share(space, "user", member.id, "full") // a Full member is not an admin (D-05)
+	f.share(space, "user", member.id, "full") // a Full member is not an admin (D-SA1)
 	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", space, owner.id)
 
 	// D-01: new Spaces are private; only eligible internal users can find a public one, and Join gives Read only.
@@ -42,7 +42,7 @@ func TestSpaceGovernance(t *testing.T) {
 	f.want(f.call(owner, "PATCH", "/spaces/"+space, map[string]any{"icon_key": "rocket"}, "If-Match", fmt.Sprintf(`"%d"`, versionOf(f, space))), 200, "catalogue icon")
 	f.want(f.call(owner, "PATCH", "/spaces/"+space, map[string]any{"icon_key": "not-an-icon"}, "If-Match", fmt.Sprintf(`"%d"`, versionOf(f, space))), 422, "icon outside the catalogue")
 
-	// D-05: admins are explicit. Only admins manage admins; the member must already have access; the last admin stays.
+	// D-SA1: admins are explicit. Only admins manage admins; the member must already have access; the last admin stays.
 	f.want(f.call(member, "POST", "/spaces/"+space+"/admins", map[string]any{"user_id": member.id}), 403, "a Full member cannot grant admin")
 	stranger := f.person("regular")
 	f.want(f.call(owner, "POST", "/spaces/"+space+"/admins", map[string]any{"user_id": stranger.id}), 422, "admin must be a member")

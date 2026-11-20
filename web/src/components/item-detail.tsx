@@ -316,7 +316,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
     <ItemApprovals item={item} userId={me.id} />
       </>,
       activity: <>
-    <ItemActivity item={item} />
+    <ItemActivity item={item} statuses={statuses} />
       </>,
       attachments: <>
     <ItemAttachments item={item} userId={me.id} />

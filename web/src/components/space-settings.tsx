@@ -286,7 +286,7 @@ function LifecycleSection({ space, me }: { space: Space; me?: CurrentUser }) {
   );
 }
 
-type SpaceMember = { user_id: string; name: string; role: string; capped_by_user_type: boolean; sources: { kind: "direct" | "group"; name?: string; role: string; role_name?: string }[] };
+type SpaceMember = { user_id: string; name: string; user_type: string; role: string; capped_by_user_type: boolean; sources: { kind: "direct" | "group"; name?: string; role: string; role_name?: string }[] };
 
 type WorkflowDefaults = { task: string | null; project: string | null };
 const WORKFLOW_BASES: (keyof WorkflowDefaults)[] = ["task", "project"];
@@ -351,7 +351,7 @@ function BlueprintsTab({ space }: { space: Space }) {
 
 type SpaceAdmin = { user_id: string; name: string; granted_at: string };
 
-/** Explicit Space Admins (D-05). Admins are granted only to members; the last admin cannot be removed; transfer is explicit. */
+/** Explicit Space Admins (D-SA1). Admins are granted only to members; the last admin cannot be removed; transfer is explicit. */
 function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser; members: SpaceMember[] }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
@@ -366,7 +366,8 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
   });
   const canAdminister = me?.user_type === "admin" || !!space.is_space_admin;
   const adminIds = new Set((admins.data ?? []).map((a) => a.user_id));
-  const candidates = members.filter((m) => !adminIds.has(m.user_id));
+  // S-1: only an admin or regular user can be offered the role; the backend refuses the others with 422.
+  const candidates = members.filter((m) => !adminIds.has(m.user_id) && (m.user_type === "admin" || m.user_type === "regular"));
   const removeAdmin = (userID: string) => api(`/api/v1/spaces/${space.id}/admins/${userID}`, { method: "DELETE" });
   async function run(action: () => Promise<unknown>) {
     setBusy(true); setError("");

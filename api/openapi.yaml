@@ -3841,7 +3841,7 @@ paths:
     post:
       tags: [spaces]
       operationId: grantSpaceAdmin
-      summary: Jadikan anggota sebagai Space Admin (D-05)
+      summary: Jadikan anggota sebagai Space Admin (D-SA1)
       requestBody:
         required: true
         content:
@@ -3858,7 +3858,7 @@ paths:
     delete:
       tags: [spaces]
       operationId: revokeSpaceAdmin
-      summary: Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+      summary: Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-SA1)
       responses:
         '204': { description: Admin dicabut }
         '403': { $ref: '#/components/responses/Problem' }
@@ -3869,7 +3869,7 @@ paths:
     post:
       tags: [spaces]
       operationId: transferSpaceOwnership
-      summary: Serah-terima kepemilikan secara eksplisit (D-05)
+      summary: Serah-terima kepemilikan secara eksplisit (D-SA1)
       requestBody:
         required: true
         content:
@@ -7212,7 +7212,7 @@ components:
         visibility: { type: string, enum: [public, private], description: 'Public: ditemukan dan bisa diikuti (Read) oleh pengguna internal yang memenuhi syarat. Private: hanya yang diberi akses (D-01)' }
         archived: { type: boolean, description: 'Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)' }
         icon_key: { type: string, nullable: true, description: 'Kunci ikon dari katalog GET /space-icons (D-04)' }
-        is_space_admin: { type: boolean, description: 'Explicit Space Admin; tidak diberikan oleh share Full saja (D-05)' }
+        is_space_admin: { type: boolean, description: 'Explicit Space Admin; tidak diberikan oleh share Full saja (D-SA1)' }
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }

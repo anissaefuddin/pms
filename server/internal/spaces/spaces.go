@@ -522,6 +522,20 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		if err := guardSpaceShareChange(ctx, tx, existing, desired, grantable); err != nil {
 			return err
 		}
+	} else {
+		// Same rule as guardSpaceShareChange: a removed or lowered share must lie within the actor's own capabilities.
+		for key, old := range existing {
+			if desired[key] == old {
+				continue
+			}
+			caps, err := roleCapsOf(ctx, tx, old)
+			if err != nil {
+				return err
+			}
+			if !grantable.Contains(caps) {
+				return forbidden("you cannot remove or lower access above your own capabilities")
+			}
+		}
 	}
 	for key := range existing {
 		if _, keep := desired[key]; !keep {
