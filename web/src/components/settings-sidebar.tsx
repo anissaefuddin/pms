@@ -1,10 +1,10 @@
-import { useState } from "react";
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Search } from "lucide-react";
 import type { CurrentUser } from "@/lib/api";
 import { SidebarFooter } from "@/components/topbar";
-import { SIDEBAR_THEME } from "@/lib/sidebar-prefs";
+import { SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, readWidth, writeWidth } from "@/lib/sidebar-prefs";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
 
 type SettingsItem = { to: string; hash?: string; params?: { spaceId: string }; label: string };
@@ -57,13 +57,29 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
   const { t } = useTranslation();
   const sidebarTheme = useSidebarTheme();
   const [query, setQuery] = useState("");
+  // Same width as the Workspace sidebar: one stored value, dragged or set with the arrow keys on the edge.
+  const [width, setWidth] = useState(readWidth);
+  const drag = useRef<{ x: number; width: number } | null>(null);
+  useEffect(() => { writeWidth(width); }, [width]);
+  function onHandleKey(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key !== "ArrowLeft" && event.key !== "ArrowRight") return;
+    event.preventDefault();
+    setWidth((w) => clampWidth(w + (event.key === "ArrowRight" ? SIDEBAR_WIDTH.step : -SIDEBAR_WIDTH.step)));
+  }
+  function onHandleDown(event: PointerEvent<HTMLDivElement>) {
+    drag.current = { x: event.clientX, width };
+    event.currentTarget.setPointerCapture(event.pointerId);
+  }
+  function onHandleMove(event: PointerEvent<HTMLDivElement>) {
+    if (drag.current) setWidth(clampWidth(drag.current.width + event.clientX - drag.current.x));
+  }
   const q = query.trim().toLowerCase();
   const groups = settingsGroups(me, t).map((group) => ({
     ...group,
     items: group.items.filter((item) => !q || item.label.toLowerCase().includes(q)),
   })).filter((group) => group.items.length > 0);
   return (
-    <aside style={sidebarThemeVars(sidebarTheme)} className={`${SIDEBAR_THEME} relative flex h-dvh w-[216px] shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
+    <aside style={{ width: `${width}px`, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex h-dvh shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
       <div className="mb-3 flex items-center gap-1">
         {/* The label gets the room: the profile collapses to its avatar so "Back to workspace" fits on one line. */}
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm whitespace-nowrap text-nav-muted hover:bg-nav-hover hover:text-nav-text">
@@ -92,6 +108,9 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
         <p className="mt-1 text-sm text-nav-text">{`v${__APP_VERSION__}`}</p>
       </div>
       <SidebarFooter />
+      <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
+        onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
+        className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none hover:bg-nav-hover focus-visible:bg-nav-active focus-visible:outline-none" />
     </aside>
   );
 }
