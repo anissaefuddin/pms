@@ -27,7 +27,8 @@ export const DEFAULT_PINNED: readonly ShortcutId[] = ["request_forms", "stream"]
 export const PINNABLE_IDS = SHORTCUT_IDS.filter((id) => SHORTCUT_HIDE_KEY[id] !== undefined);
 
 export const WIDTH_KEY = "pms:sidebar-width";
-export const SIDEBAR_WIDTH = { min: 220, max: 400, step: 8 } as const;
+// Default 296px, minimum 256px, maximum 400px: room for tables without giving up navigation. Kept per browser (localStorage).
+export const SIDEBAR_WIDTH = { min: 256, max: 400, step: 8 } as const;
 
 function store(): Storage | null {
   try {
@@ -93,7 +94,7 @@ export function clampWidth(width: number): number {
   return Math.min(SIDEBAR_WIDTH.max, Math.max(SIDEBAR_WIDTH.min, Math.round(width)));
 }
 
-export function readWidth(fallback = 270): number {
+export function readWidth(fallback = 296): number {
   const raw = Number(read(WIDTH_KEY));
   return raw ? clampWidth(raw) : clampWidth(fallback);
 }

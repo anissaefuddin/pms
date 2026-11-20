@@ -384,7 +384,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
     {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
       <div>
         <button type="button" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}
-          className="flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider text-nav-muted hover:text-nav-text focus-visible:outline-2 focus-visible:outline-ring">
+          className={`flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider hover:text-nav-text focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${toolsOpen ? "text-nav-text" : "text-nav-muted"}`}>
           {toolsOpen ? <ChevronDown aria-hidden="true" className="size-3" /> : <ChevronRight aria-hidden="true" className="size-3" />}{t("nav.space.tools")}
         </button>
         {toolsOpen && <>
@@ -421,15 +421,13 @@ function ItemTree({ id, space = false, onEmpty, filter = "" }: { id: string; spa
     {query.isPending && <li className="p-1 text-xs" role="status">{t("items.loading")}</li>}
     {query.isError && <li><Button variant="link" size="sm" className="text-nav-text" onClick={() => void query.refetch()}>{t("items.retry")}</Button></li>}
     {query.data?.filter((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase()))
-      .map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} seq={item.seq} />)}
+      .map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} />)}
     {filter.trim() && query.isSuccess && !query.data?.some((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase())) &&
       <li className="p-1 text-xs text-nav-muted">{t("nav.space.noProjectMatch")}</li>}
   </ul>;
 }
 
-function Branch({ id, name, type, seq }: { id: string; name: string; type?: string; seq?: number }) {
-  // Long titles that share a prefix are shortened and keep their number, so rows stay tellable apart; the full name is in title.
-  const shown = seq !== undefined && name.length > 24 ? `${name.slice(0, 20).trimEnd()}… · #${seq}` : name;
+function Branch({ id, name, type }: { id: string; name: string; type?: string }) {
   const { t } = useTranslation();
   const client = useQueryClient();
   const stars = useStars();
@@ -457,7 +455,7 @@ function Branch({ id, name, type, seq }: { id: string; name: string; type?: stri
             setExpanded(event.key === "ArrowRight");
           }
         }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>}
-      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} aria-label={name} activeProps={activeLink} onClick={openItem}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{shown}</span></span></Link>
+      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} aria-label={name} activeProps={activeLink} onClick={openItem}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`${treeToggle} ${revealOnHover}`}
           aria-label={t("nav.item.actions", { name })} title={t("nav.item.actions", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>

@@ -145,8 +145,8 @@
      surface/background.subtle/border.subtle/brand, same as the Portal
      Akademika test screen's sidebar (white bg, subtle border, brand active
      state), so it stays consistent with what you already reviewed there. */
-  --sidebar-width: 270px;
-  --sidebar-width-min: 220px;
+  --sidebar-width: 296px;
+  --sidebar-width-min: 256px;
   --sidebar-width-max: 400px;
   --sidebar-width-collapsed: 56px;
   --sidebar: #FFFFFF;
