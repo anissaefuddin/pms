@@ -100,12 +100,12 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
             className={linkClass} activeProps={activeLink} >{item.label}</Link>)}
         </section>)}
         {groups.length === 0 && <p role="status" className="px-2 text-sm text-nav-muted">{t("settings.nav.noMatch")}</p>}
+        {/* Installation: the running version, in the same scroll area as the sections above. */}
+        <div className="border-t border-border px-2 pt-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{t("settings.nav.installation")}</p>
+          <p className="mt-1 text-sm text-nav-text">{`v${__APP_VERSION__}`}</p>
+        </div>
       </nav>
-      {/* Installation: the running version, shown here in Settings only. */}
-      <div className="mt-2 border-t border-border px-2 pt-3">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{t("settings.nav.installation")}</p>
-        <p className="mt-1 text-sm text-nav-text">{`v${__APP_VERSION__}`}</p>
-      </div>
       <SidebarFooter />
       <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
         onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
