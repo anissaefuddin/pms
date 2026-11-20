@@ -48,7 +48,7 @@ type SpaceAccess struct {
 	Visibility  string
 	Archived    bool
 	IconKey     string
-	IsAdmin     bool // an explicit Space Admin (space_admins row), not implied by a Full share (D-05)
+	IsAdmin     bool // an explicit Space Admin (space_admins row), not implied by a Full share (D-SA1)
 	Caps        Caps // effective capabilities of the actor on this Space; never empty for a returned Space
 }
 
