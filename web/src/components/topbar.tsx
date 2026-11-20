@@ -47,13 +47,13 @@ export function Topbar({ onCreate, live, search, navigation, inSettings = false,
 }
 
 /** Sidebar footer: profile (name and menu) and the inbox bell. Collapsed, it is the avatar only. Shared by the Workspace and Settings sidebars. */
-export function SidebarFooter({ collapsed = false }: { collapsed?: boolean }) {
+export function SidebarFooter({ collapsed = false, inbox = true }: { collapsed?: boolean; inbox?: boolean }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
   return <div className={`mt-2 flex shrink-0 items-center gap-1 border-t border-nav-hover pt-2 ${collapsed ? "flex-col" : ""}`}>
     <ProfileMenu compact={collapsed} footer={!collapsed} />
-    {!collapsed && <Link to="/inbox" className="relative shrink-0 rounded-md p-2 text-nav-muted hover:bg-nav-hover hover:text-nav-text"
+    {!collapsed && inbox && <Link to="/inbox" className="relative shrink-0 rounded-md p-2 text-nav-muted hover:bg-nav-hover hover:text-nav-text"
       aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
       <Bell className="size-4" aria-hidden="true" />
       {!!unread && <span className="absolute -top-0.5 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}

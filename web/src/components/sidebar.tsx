@@ -221,7 +221,8 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
       {!collapsed && <Favorites userId={me.id} />}
       {!collapsed && <SpacesNav me={me} />}
       </div>
-      <SidebarFooter collapsed={collapsed} />
+      {/* The top bar already shows the inbox bell; the footer bell would be a second link with the same name. */}
+      <SidebarFooter collapsed={collapsed} inbox={false} />
       {!mobile && !collapsed && <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
         onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
         className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none hover:bg-nav-hover focus-visible:bg-nav-active focus-visible:outline-none" />}
