@@ -103,11 +103,19 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   async function quickCreate(columnId: string, title: string) {
     if (!me || !spaceId) throw new Error(t("views.createFailed"));
     const item = await createQuickTask(qc, quickTaskInput(me, spaceId, parent?.id, title, columnId));
+    if (!noticeIfHidden(item)) toast.success(t("items.created", { name: item.title }));
+  }
+  // B2.4 / R4: a create that the active filter hides must say so, for every entry point (Board, Table "+ Add", the dialog).
+  // Only root items are judged here: a subitem sits under a row that may be collapsed, so the list cannot show it yet.
+  // Returns true when it reported that the item is hidden. Filters are never changed.
+  function noticeIfHidden(item: Item): boolean {
+    if (item.locations.some((loc) => loc.parent_item_id)) return false;
     const listKey = flat ? [...sortedKey, "subtree"] : sortedKey;
     const listed = (qc.getQueryData<Item[]>(listKey) ?? []).some((entry) => entry.id === item.id);
     const matchesTitle = item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase());
-    if (listed && matchesTitle) toast.success(t("items.created", { name: item.title }));
-    else toast.info(t("views.createdHidden"), { action: { label: t("views.openCreated"), onClick: () => onOpen(item) } });
+    if (listed && matchesTitle) return false;
+    toast.info(t("views.createdHidden"), { action: { label: t("views.openCreated"), onClick: () => onOpen(item) } });
+    return true;
   }
   const locked = useRef(false);
   const isList = { queryKey: itemKeys.all, predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => queryKey[1] !== "detail" };
@@ -272,6 +280,6 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
         : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: creating.parent?.id ?? parent?.id }} me={me} onCreated={onOpen} />}
+      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: creating.parent?.id ?? parent?.id }} me={me} onCreated={(item) => { noticeIfHidden(item); onOpen(item); }} />}
   </section>;
 }

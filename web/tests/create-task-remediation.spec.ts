@@ -168,3 +168,30 @@ test("Folder page (Item Detail equivalent): New item creates under the folder, l
     title: "Folder detail child", locations: [{ space_id: marketing.id, parent_item_id: folder.id }],
   });
 });
+
+// R4: Table "+ Add" (the dialog) reports a create the active filter hides, and stays quiet when nothing is hidden.
+const hiddenNotice = "Task saved, but the active filter hides it.";
+
+test("Table: creating from + Add with an active filter that hides the Task says it was saved and hidden", async ({ page }) => {
+  const { calls } = await setup(page, { view: "table" });
+  await page.goto(path);
+  await page.getByRole("textbox", { name: "Filter items" }).fill("Existing");
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  await page.locator('input[name="title"]').fill("Hidden in table");
+  await page.getByRole("dialog").getByRole("button", { name: "Create item" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")).toBeDefined();
+  await expect(page.getByText(hiddenNotice)).toBeVisible();
+  // The item panel covers the table, so the filter is read with includeHidden: it must still hold the user's text.
+  await expect(page.getByRole("textbox", { name: "Filter items", includeHidden: true })).toHaveValue("Existing");
+});
+
+test("Table: with no filter that hides the Task, no hidden notice is shown", async ({ page }) => {
+  const { calls } = await setup(page, { view: "table" });
+  await page.goto(path);
+  await page.getByRole("button", { name: "Add item", exact: true }).click();
+  await page.locator('input[name="title"]').fill("Visible in table");
+  await page.getByRole("dialog").getByRole("button", { name: "Create item" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")).toBeDefined();
+  await expect(page.getByText("Visible in table").first()).toBeVisible();
+  await expect(page.getByText(hiddenNotice)).toHaveCount(0);
+});

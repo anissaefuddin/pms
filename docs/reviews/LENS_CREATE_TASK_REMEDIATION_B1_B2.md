@@ -253,3 +253,30 @@ Hasil yang diverifikasi di spec `web/tests/create-workspace-live.spec.ts`:
 Tes: `TestBrowserWorkspaceQuickCreate` (Go, `PMS_TEST_BROWSER=1`), **PASS**.
 
 Belum diverifikasi di tes ini: "advanced options" di dialog dan lokasi custom dari Workspace. Keduanya tetap NOT RUN.
+
+## 14. R4: Filter-aware feedback untuk Table dan dialog
+
+Sebelumnya feedback filter hanya ada di Board. Sekarang satu helper `noticeIfHidden` di `view-workspace.tsx` dipakai oleh semua jalur create yang membuka dialog maupun quick create:
+- Board: quick create di kolom.
+- Table: "+ Add" di bawah tabel (dialog).
+- Workspace view: "New item" (dialog).
+
+Perilaku:
+- Jika item baru tidak masuk list yang sedang tampil, karena filter judul atau filter server (preset, tipe, field, status), toast info menjelaskan bahwa Task tersimpan tetapi disembunyikan filter. Toast punya tombol "Buka".
+- Filter tidak diubah otomatis.
+- Jika item terlihat, tidak ada toast tambahan.
+
+Batasan yang disengaja:
+- Subitem tidak dinilai. Subitem berada di bawah baris yang mungkin belum dibuka, sehingga list belum bisa menampilkannya. Pengecekan hanya dilakukan untuk item root.
+
+Tes (E2E mock):
+
+| Tes | Hasil |
+|---|---|
+| Table: "+ Add" dengan filter yang menyembunyikan Task → toast hidden, filter tetap | PASS |
+| Table: tanpa filter yang menyembunyikan → tidak ada toast hidden | PASS |
+| Board quick create dengan filter (tes sebelumnya) | PASS |
+| Regresi E2E terkait (26 tes) | PASS |
+| Unit (102) dan typecheck | PASS |
+
+Belum diuji: subitem saat filter aktif, dan filter server (preset atau tipe) untuk create lewat dialog. Keduanya NOT RUN.
