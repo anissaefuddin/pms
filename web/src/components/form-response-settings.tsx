@@ -8,7 +8,7 @@ import type { Workflow } from "@/lib/status-colors";
 import { FormError } from "@/components/auth/form-error";
 import { ItemUserPicker } from "@/components/item-user-picker";
 import { Input } from "@/components/ui/input";
-import { FormEmailSettings, FormRoutingSettings } from "@/components/form-routing-settings";
+import { FormRoutingSettings } from "@/components/form-routing-settings";
 
 const select = "block w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm";
 
@@ -84,7 +84,31 @@ export function FormResponseSettings({ draft, pages, errors, onChange }: Props) 
         <FormError message={err("response.approval.description")} />
       </div>}
     </div>
+    <SubmissionSummary draft={draft} spaceName={choices.find((c) => c.id === draft.space_id)?.name ?? spaces.data?.find((c) => c.id === draft.space_id)?.name ?? ""}
+      parentName={parentItems.find((i) => i.id === draft.parent_item_id)?.title ?? ""} statusName={statuses.find((st) => st.id === draft.status_id)?.name ?? ""} />
     <FormRoutingSettings draft={draft} pages={pages} errors={errors} onChange={onChange} />
-    <FormEmailSettings draft={draft} errors={errors} onChange={onChange} />
   </section>;
+}
+
+/** RF-05: what one submission will do, in one place, so an admin can check the mapping before publishing. */
+function SubmissionSummary({ draft, spaceName, parentName, statusName }: { draft: FormDraft; spaceName: string; parentName: string; statusName: string }) {
+  const { t } = useTranslation();
+  const routes = draft.routes.filter((r) => r.question && r.value).length;
+  const fields = Object.values(draft.field_map).filter(Boolean).length;
+  const rows: [string, string][] = [
+    [t("forms.response.summary.creates"), t(draft.item_type === "project" ? "forms.response.project" : "forms.response.task")],
+    [t("forms.response.summary.in"), spaceName || "—"],
+    [t("forms.response.summary.under"), parentName || t("forms.response.parentNone")],
+    [t("forms.response.summary.status"), statusName || t("forms.response.statusDefault")],
+    [t("forms.response.summary.people"), t("forms.response.summary.peopleCount", { count: draft.assignees.length })],
+    [t("forms.response.summary.approval"), t(draft.approval ? "forms.response.summary.yes" : "forms.response.summary.no")],
+    [t("forms.response.summary.routes"), t("forms.response.summary.routesCount", { count: routes })],
+    [t("forms.response.summary.fields"), t("forms.response.summary.fieldsCount", { count: fields })],
+  ];
+  return <div className="space-y-2">
+    <h3 className="font-medium">{t("forms.response.summary.title")}</h3>
+    <dl className="grid gap-2 rounded-lg bg-muted/50 p-3 text-sm sm:grid-cols-2">
+      {rows.map(([label, value]) => <div key={label} className="min-w-0"><dt className="text-muted-foreground">{label}</dt><dd className="break-words">{value}</dd></div>)}
+    </dl>
+  </div>;
 }

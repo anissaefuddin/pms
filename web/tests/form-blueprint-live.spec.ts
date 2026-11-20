@@ -42,6 +42,8 @@ test("E2E-PAR-05: a form branches to Blueprints; an outside visitor fills it and
   await admin.getByRole("button", { name: "Save form" }).click();
   await expect(admin).toHaveURL(/\/forms\/[0-9a-f-]{36}$/);
   const formID = admin.url().split("/").pop()!;
+  // A new form is a draft (RF-06): publish it before the public link can be used.
+  expect((await admin.request.post(`/api/v1/forms/${formID}/publish`, { headers: { Origin: baseURL } })).ok()).toBeTruthy();
   const link = await admin.request.post(`/api/v1/forms/${formID}/public-link`, { headers: { Origin: baseURL } });
   expect(link.ok()).toBeTruthy();
   const token = (await link.json()).public_token as string;

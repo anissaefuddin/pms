@@ -23,6 +23,8 @@ func (s *Server) spaceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/item-types", s.requireUser(s.listItemTypes))
 	mux.HandleFunc("POST /api/v1/item-types", s.requireUser(s.createItemType))
 	mux.HandleFunc("PATCH /api/v1/item-types/{typeId}", s.requireUser(s.updateItemType))
+	mux.HandleFunc("GET /api/v1/item-types/usage", s.requireUser(s.itemTypeUsage))
+	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/item-types/usage", s.requireUser(s.spaceItemTypeUsage))
 	mux.HandleFunc("GET /api/v1/item-types/{typeId}/fields", s.requireUser(s.listTypeFields))
 	mux.HandleFunc("PUT /api/v1/item-types/{typeId}/fields/{fieldId}", s.requireUser(s.setTypeField))
 	mux.HandleFunc("DELETE /api/v1/item-types/{typeId}/fields/{fieldId}", s.requireUser(s.deleteTypeField))
@@ -35,6 +37,9 @@ func (s *Server) spaceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("DELETE /api/v1/spaces/{spaceId}", s.requireUser(s.deleteSpace))
 	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/shares", s.requireUser(s.listSpaceShares))
 	mux.HandleFunc("PUT /api/v1/spaces/{spaceId}/shares", s.requireUser(s.replaceSpaceShares))
+	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/members", s.requireUser(s.listSpaceMembers))
+	mux.HandleFunc("GET /api/v1/spaces/registry", s.requireUser(s.listSpaceRegistry))
+	s.spaceGovernanceRoutes(mux)
 	mux.HandleFunc("GET /api/v1/users", s.requireUser(s.listUsers))
 	mux.HandleFunc("GET /api/v1/groups", s.requireUser(s.listGroups))
 }
@@ -157,6 +162,21 @@ func (s *Server) updateSpace(w http.ResponseWriter, r *http.Request) {
 					return
 				}
 			}
+		case "visibility":
+			var visibility string
+			if err := json.Unmarshal(raw, &visibility); err != nil {
+				writeError(w, http.StatusUnprocessableEntity, "visibility must be public or private")
+				return
+			}
+			patch.Visibility = &visibility
+		case "icon_key":
+			patch.IconKeySet = true
+			if string(raw) != "null" {
+				if err := json.Unmarshal(raw, &patch.IconKey); err != nil {
+					writeError(w, http.StatusUnprocessableEntity, "icon_key must be a string or null")
+					return
+				}
+			}
 		case "locked":
 			var locked bool
 			if err := json.Unmarshal(raw, &locked); err != nil {
@@ -173,6 +193,10 @@ func (s *Server) updateSpace(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		writeSpaceError(w, err)
 		return
+	}
+	if patch.Visibility != nil {
+		s.audit(r, actorOf(r).ID, "", auditEvent{Action: auditSpaceVisibility, TargetType: "space", TargetID: space.ID,
+			Details: map[string]any{"to": space.Visibility}})
 	}
 	if patch.Locked != nil {
 		action := auditSpaceUnlocked
@@ -200,6 +224,26 @@ func (s *Server) listSpaceShares(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	setETag(w, version) // send it back as If-Match when replacing the list
+	writeJSON(w, 200, map[string]any{"items": list})
+}
+
+// listSpaceRegistry lists the shared Spaces the caller can see, for the Workspace registry (Batch 3).
+func (s *Server) listSpaceRegistry(w http.ResponseWriter, r *http.Request) {
+	list, err := s.spaces.Registry(r.Context(), actorOf(r))
+	if err != nil {
+		writeSpaceError(w, err)
+		return
+	}
+	writeJSON(w, 200, map[string]any{"items": list})
+}
+
+// listSpaceMembers answers who has access to a Space and why (direct share or group). Read-only; changes go through shares.
+func (s *Server) listSpaceMembers(w http.ResponseWriter, r *http.Request) {
+	list, err := s.spaces.Members(r.Context(), actorOf(r), r.PathValue("spaceId"))
+	if err != nil {
+		writeSpaceError(w, err)
+		return
+	}
 	writeJSON(w, 200, map[string]any{"items": list})
 }
 

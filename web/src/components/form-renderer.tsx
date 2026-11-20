@@ -61,11 +61,29 @@ export function FormRenderer({ definition, answers, onAnswersChange, preview = f
   }
   const problems = elements.filter((e) => e.key in errors);
 
+  // RF-09: Next checks only the questions on this page, so a requester fixes each page before moving on.
+  function next() {
+    const onThisPage = new Set(page.elements.map((e) => e.key));
+    const found = validateAnswers(definition, answers, files);
+    const here = Object.fromEntries(Object.entries(found).filter(([key]) => onThisPage.has(key))
+      .map(([key, p]) => [key, t(`forms.render.error.${p.code}`, { limit: p.limit })]));
+    if (Object.keys(here).length) return show(here);
+    setErrors({});
+    setIndex(at + 1);
+  }
+
   return <form className="space-y-5" noValidate onSubmit={(event) => { event.preventDefault(); submit(); }}>
     {problems.length > 0 && <div ref={summary} tabIndex={-1} role="alert" className="rounded-lg border border-destructive p-3 text-sm">
       <p className="font-medium">{t("forms.render.errors", { count: problems.length })}</p>
       <ul className="list-disc pl-5">{problems.map((e) => <li key={e.key}>{e.label}: {errors[e.key]}</li>)}</ul>
     </div>}
+    {pages.length > 1 && <nav aria-label={t("forms.render.progress")}>
+      <ol className="flex flex-wrap gap-2 text-sm">
+        {pages.map((p, i) => <li key={i} aria-current={i === at ? "step" : undefined}
+          className={`rounded-full border px-3 py-1 ${i === at ? "border-primary bg-primary text-primary-foreground" : i < at ? "text-foreground" : "text-muted-foreground"}`}>
+          {i + 1}. {p.title || t("forms.render.pageUntitled", { n: i + 1 })}</li>)}
+      </ol>
+    </nav>}
     {pages.length > 1 && <p className="text-sm text-muted-foreground" aria-live="polite">{t("forms.render.page", { current: at + 1, total: pages.length })}</p>}
     {page.title && <Heading level={headingLevel}>{page.title}</Heading>}
     {page.elements.filter((element) => shown.has(element.key)).map((element) => <Question key={element.key} element={element} value={answers[element.key]}
@@ -75,7 +93,7 @@ export function FormRenderer({ definition, answers, onAnswersChange, preview = f
     <div className="flex items-center gap-2 border-t pt-4">
       {at > 0 && <Button type="button" variant="outline" onClick={() => setIndex(at - 1)}>{t("forms.render.back")}</Button>}
       {at < pages.length - 1
-        ? <Button key="next" type="button" onClick={() => setIndex(at + 1)}>{t("forms.render.next")}</Button>
+        ? <Button key="next" type="button" onClick={() => next()}>{t("forms.render.next")}</Button>
         : <Button key="submit" type="submit" disabled={preview || submitting}>{t("forms.render.submit")}</Button>}
       {preview && <span className="text-sm text-muted-foreground">{t("forms.render.previewNote")}</span>}
     </div>

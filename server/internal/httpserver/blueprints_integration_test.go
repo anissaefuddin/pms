@@ -6,6 +6,7 @@ func TestBlueprintSaveAndUse(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	space, other := f.space("Launches"), f.space("Other")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates the blueprint's source Launch in this Space
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", reader.id, "read")
 	f.share(other, "user", editor.id, "editor")

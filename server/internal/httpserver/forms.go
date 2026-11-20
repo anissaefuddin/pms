@@ -18,6 +18,7 @@ import (
 
 const formSelect = `SELECT f.version, jsonb_build_object('id',f.id,'space_id',f.space_id,'name',f.name,'description',f.description,
  'definition',f.definition,'response',f.response,'access',f.access,'public_token',f.public_token,'version',f.version,
+ 'status',CASE WHEN f.published_at IS NULL THEN 'draft' ELSE 'published' END,
  'created_by',jsonb_build_object('id',c.id,'name',concat_ws(' ',c.first_name,c.last_name)),
  'updated_by',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),
  'created_at',f.created_at,'updated_at',f.updated_at)
@@ -26,6 +27,8 @@ FROM request_forms f JOIN users c ON c.id=f.created_by JOIN users u ON u.id=f.up
 func (s *Server) formRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/forms", s.requireUser(s.listAllForms))
 	mux.HandleFunc("PUT /api/v1/forms/{formId}/access", s.requireUser(s.setFormAccess))
+	mux.HandleFunc("POST /api/v1/forms/{formId}/publish", s.requireUser(s.publishForm))
+	mux.HandleFunc("POST /api/v1/forms/{formId}/unpublish", s.requireUser(s.unpublishForm))
 	mux.HandleFunc("GET /api/v1/spaces/{spaceId}/forms", s.requireUser(s.listForms))
 	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/forms", s.requireUser(s.writeForm))
 	mux.HandleFunc("GET /api/v1/forms/{formId}", s.requireUser(s.writeForm))
@@ -97,7 +100,7 @@ func formSummaries(ctx context.Context, tx pgx.Tx, where string, arg any) (json.
 	var out json.RawMessage
 	err := tx.QueryRow(ctx, `
 SELECT COALESCE(jsonb_agg(jsonb_build_object('id',f.id,'space_id',f.space_id,'space_name',sp.name,'name',f.name,'description',f.description,
- 'access',f.access,'public_token',f.public_token,
+ 'access',f.access,'public_token',f.public_token,'status',CASE WHEN f.published_at IS NULL THEN 'draft' ELSE 'published' END,
  'question_count',(SELECT count(*) FROM jsonb_array_elements(f.definition->'pages') p, jsonb_array_elements(p->'elements') e WHERE e->>'kind'<>'section'),
  'updated_by',jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)),'updated_at',f.updated_at)
  ORDER BY lower(sp.name),lower(f.name),f.id),'[]'::jsonb)
@@ -184,6 +187,69 @@ func (s *Server) setFormAccess(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeItem(w, http.StatusOK, out, nil)
+}
+
+func (s *Server) publishForm(w http.ResponseWriter, r *http.Request) { s.setFormPublished(w, r, true) }
+func (s *Server) unpublishForm(w http.ResponseWriter, r *http.Request) {
+	s.setFormPublished(w, r, false)
+}
+
+// setFormPublished moves a form between draft and published. Publishing needs at least one question, so a requester
+// never lands on an empty form. The version goes up, so an open builder sees the change as a new version.
+func (s *Server) setFormPublished(w http.ResponseWriter, r *http.Request, publish bool) {
+	id, err := uuid.Parse(r.PathValue("formId"))
+	if err != nil {
+		writeItemError(w, items.ErrNotFound)
+		return
+	}
+	ctx := r.Context()
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	defer tx.Rollback(ctx)
+	var spaceID uuid.UUID
+	var definition []byte
+	if err = tx.QueryRow(ctx, "SELECT space_id,definition FROM request_forms WHERE id=$1", id).Scan(&spaceID, &definition); errors.Is(err, pgx.ErrNoRows) {
+		err = items.ErrNotFound
+	}
+	if err == nil {
+		_, err = formSpace(ctx, tx, actorOf(r), spaceID)
+	}
+	if err == nil && publish {
+		var def forms.Definition
+		if err = json.Unmarshal(definition, &def); err == nil && !hasQuestion(def) {
+			err = items.InvalidField{Field: "definition", Message: "add at least one question before publishing"}
+		}
+	}
+	if err == nil {
+		_, err = tx.Exec(ctx, `UPDATE request_forms SET published_at=CASE WHEN $2 THEN COALESCE(published_at, now()) ELSE NULL END,
+version=version+1,updated_by=$3::uuid WHERE id=$1`, id, publish, actorOf(r).ID)
+	}
+	var out items.Detail
+	if err == nil {
+		err = tx.QueryRow(ctx, formSelect+"WHERE f.id=$1", id).Scan(&out.Version, &out.Body)
+	}
+	if err == nil {
+		err = tx.Commit(ctx)
+	}
+	if err != nil {
+		writeFormError(w, err)
+		return
+	}
+	writeItem(w, http.StatusOK, out, nil)
+}
+
+func hasQuestion(def forms.Definition) bool {
+	for _, page := range def.Pages {
+		for _, el := range page.Elements {
+			if el.Kind != forms.Section {
+				return true
+			}
+		}
+	}
+	return false
 }
 
 func (s *Server) writeForm(w http.ResponseWriter, r *http.Request) {
@@ -347,7 +413,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			return forms.Error{Field: "response.status_id", Message: "the status must belong to the workflow of the destination"}
 		}
 	}
-	if err := checkRouting(ctx, tx, resp); err != nil {
+	if err := checkRouting(ctx, tx, actor, resp); err != nil {
 		return err
 	}
 	people := append([]uuid.UUID{}, resp.AssigneeIDs...)
@@ -370,7 +436,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 	if err != nil {
 		return err
 	}
-	approvers, err := pgx.CollectRows(rows, pgx.RowToStructByPos[policy.Actor])
+	approvers, err := policy.CollectActors(rows)
 	if err != nil {
 		return err
 	}
@@ -410,7 +476,7 @@ func uniqueIDs(ids []uuid.UUID) []uuid.UUID {
 
 // checkRouting (FORM-09): every item type a form can create is active and of the class the form creates, and every
 // mapped custom field lives in the destination Space and can take that kind of answer.
-func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
+func checkRouting(ctx context.Context, tx pgx.Tx, actor policy.Actor, resp forms.Response) error {
 	keys := []string{}
 	if resp.TypeKey != nil {
 		keys = append(keys, *resp.TypeKey)
@@ -421,9 +487,14 @@ func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
 	for _, key := range keys {
 		var base string
 		var active bool
-		err := tx.QueryRow(ctx, "SELECT base::text, active FROM item_type_defs WHERE key=$1", key).Scan(&base, &active)
+		var typeSpace *string
+		err := tx.QueryRow(ctx, "SELECT base::text, active, space_id::text FROM item_type_defs WHERE key=$1", key).Scan(&base, &active, &typeSpace)
 		if errors.Is(err, pgx.ErrNoRows) || (err == nil && (!active || base != resp.ItemType)) {
 			return forms.Error{Field: "response.type_key", Message: "item type " + key + " must be active and of the class " + resp.ItemType}
+		}
+		// A Space type belongs to one Space: a form whose items land elsewhere would fail on every submission.
+		if err == nil && typeSpace != nil && *typeSpace != resp.Location.SpaceID.String() {
+			return forms.Error{Field: "response.type_key", Message: "item type " + key + " belongs to another Space"}
 		}
 		if err != nil {
 			return err
@@ -440,10 +511,16 @@ func checkRouting(ctx context.Context, tx pgx.Tx, resp forms.Response) error {
 		if !ok {
 			return forms.Error{Field: fmt.Sprintf("response.routes[%d].blueprint_id", i), Message: "choose a blueprint of the destination Space"}
 		}
+		// The author must be allowed to use blueprints there: the submission will apply it with the author's vouching.
+		if decision, _, err := policy.CanOnSpace(ctx, tx, actor, policy.UseBlueprint, resp.Location.SpaceID.String()); err != nil {
+			return err
+		} else if decision != policy.Allowed {
+			return forms.Error{Field: fmt.Sprintf("response.routes[%d].blueprint_id", i), Message: "you need the use-blueprint right in the destination Space"}
+		}
 	}
 	for _, id := range resp.FieldMap {
 		var kind string
-		err := tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1 AND space_id=$2 AND archived_at IS NULL", id, resp.Location.SpaceID).Scan(&kind)
+		err := tx.QueryRow(ctx, "SELECT type FROM custom_fields WHERE id=$1 AND (space_id=$2 OR space_id IS NULL) AND archived_at IS NULL", id, resp.Location.SpaceID).Scan(&kind)
 		if errors.Is(err, pgx.ErrNoRows) || (err == nil && !slices.Contains(mappableFieldTypes, kind)) {
 			return forms.Error{Field: "response.field_map", Message: "map answers to text, number, date or select fields of the destination Space"}
 		}

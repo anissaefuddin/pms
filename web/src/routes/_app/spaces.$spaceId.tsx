@@ -16,8 +16,10 @@ import type { Item } from "@/lib/items";
 import { toast } from "sonner";
 import { can, etag, sortSpaces, spaceKeys, type Share, type Space } from "@/lib/spaces";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { ShareDialog } from "@/components/share-dialog";
+import { SpaceShareDialog } from "@/components/space-share-dialog";
+import { SpaceIcon } from "@/components/space-icon";
 import { SpaceExcelImport } from "@/components/space-excel-import";
+import { SpaceExcelExport } from "@/components/project-excel-export";
 import { CustomFieldsDialog } from "@/components/custom-fields-dialog";
 import { CreateMenuDialog } from "@/components/create-menu-dialog";
 import { SpaceBookmarksDialog } from "@/components/space-bookmarks-dialog";
@@ -61,6 +63,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const queryClient = useQueryClient();
   const [renaming, setRenaming] = useState(false);
   const [importingExcel, setImportingExcel] = useState(false);
+  const [exportingSpace, setExportingSpace] = useState(false);
   const [managingFields, setManagingFields] = useState(false);
   const [sharing, setSharing] = useState(false);
   const [bookmarks, setBookmarks] = useState(false);
@@ -70,6 +73,11 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const [pending, setPending] = useState(false);
   const [creating, setCreating] = useState(false);
   const items = useQuery({ queryKey: itemKeys.root(space.id), queryFn: () => listItems(`/api/v1/spaces/${space.id}/items`) });
+  const impact = useQuery({
+    queryKey: ["space-delete-impact", space.id], enabled: deleting,
+    queryFn: () => api<{ projects_and_folders: number; items_only_here: number; items_elsewhere: number; members: number; groups: number;
+      automation_rules: number; request_forms: number; blueprints: number; tools: number }>(`/api/v1/spaces/${space.id}/delete-impact`),
+  });
 
   const shared = space.kind === "shared";
   const canShare = shared && can(space, "share");
@@ -113,22 +121,23 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
 
   return (
     <WorkspaceLayout>
-      <WorkspaceHeader title={personal ? t("spaces.personal") : space.name}
+      <WorkspaceHeader icon={<SpaceIcon iconKey={space.icon_key} className="size-5" />} title={personal ? t("spaces.personal") : space.name}
         meta={<>
           {space.description && <p className="mt-1 max-w-2xl text-muted-foreground">{space.description}</p>}
           {space.locked && <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><Lock className="size-4" aria-hidden="true" />{t("spaces.lock.badge")}<span className="sr-only">. {t("spaces.lock.explain")}</span></p>}
         </>}
         actions={<>
-          {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
-          {canEditForms && <Link to="/spaces/$spaceId/forms" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("forms.link")}</Link>}
-          {canEditForms && <Link to="/spaces/$spaceId/automation" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("automation.link")}</Link>}
-          <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
+          {/* Same order as a Project or Folder: shared and configuration actions first, the primary create action last. */}
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
+          <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
+          {canEditForms && <Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.open")}</Link>}
+          {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
           {(canRename || canDelete || canManageFields || canCreate || canLock || canEditForms) && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-40">
                 {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
+                <DropdownMenuItem onClick={() => setExportingSpace(true)}>{t("excel.exportSpaceTitle")}</DropdownMenuItem>
                 {canEditForms && <DropdownMenuItem onClick={() => setMenuConfig(true)}>{t("spaces.createMenu.link")}</DropdownMenuItem>}
                 {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
                 {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
@@ -149,35 +158,30 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
       {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}
         onCreated={openItem} />}
       {importingExcel && <SpaceExcelImport open={importingExcel} onOpenChange={setImportingExcel} spaceId={space.id} />}
+      {exportingSpace && <SpaceExcelExport open={exportingSpace} onOpenChange={setExportingSpace} spaceId={space.id} spaceName={space.name} />}
       {canManageFields && <CustomFieldsDialog open={managingFields} onOpenChange={setManagingFields} spaceId={space.id} />}
       {canEditForms && <CreateMenuDialog spaceId={space.id} open={menuConfig} onOpenChange={setMenuConfig} />}
       <SpaceBookmarksDialog spaceId={space.id} canEdit={canEditForms} open={bookmarks} onOpenChange={setBookmarks} />
       <SpaceDialog open={renaming} onOpenChange={setRenaming} space={space} />
-      {me && (
-        <ShareDialog
-          open={sharing}
-          onOpenChange={setSharing}
-          title={t("share.title", { name: space.name })}
-          queryKey={spaceKeys.one(space.id)}
-          loadShares={async () => {
-            let etag = "";
-            const { items } = await api<{ items: Share[] }>(`/api/v1/spaces/${space.id}/shares`, undefined, (headers) => {
-              etag = headers.get("ETag") ?? "";
-            });
-            if (!etag) throw new Error("Missing share ETag");
-            return { items, etag };
-          }}
-          saveShares={(shares, etag) => api(`/api/v1/spaces/${space.id}/shares`, { method: "PUT", headers: { "If-Match": etag }, body: JSON.stringify({ shares }) })}
-          canShare={canShare}
-          me={me}
-          onSaved={() => queryClient.invalidateQueries({ queryKey: spaceKeys.all })}
-        />
-      )}
+      {me && <SpaceShareDialog open={sharing} onOpenChange={setSharing} space={space} me={me} canShare={canShare} />}
       <ConfirmDialog
         open={deleting}
         onOpenChange={setDeleting}
         title={t("spaces.delete.title")}
-        description={t("spaces.delete.description", { name: space.name })}
+        description={<>
+          <span>{t("spaces.delete.description", { name: space.name })}</span>
+          {impact.data && <ul className="mt-3 list-disc space-y-1 ps-5 text-sm">
+            <li>{t("spaces.spaceSettings.delete.projects", { count: impact.data.projects_and_folders })}</li>
+            <li>{t("spaces.spaceSettings.delete.onlyHere", { count: impact.data.items_only_here })}</li>
+            <li>{t("spaces.spaceSettings.delete.elsewhere", { count: impact.data.items_elsewhere })}</li>
+            <li>{t("spaces.spaceSettings.delete.people", { members: impact.data.members, groups: impact.data.groups })}</li>
+            <li>{t("spaces.spaceSettings.delete.automation", { count: impact.data.automation_rules })}</li>
+            <li>{t("spaces.spaceSettings.delete.forms", { count: impact.data.request_forms })}</li>
+            <li>{t("spaces.spaceSettings.delete.blueprints", { count: impact.data.blueprints })}</li>
+            <li>{t("spaces.spaceSettings.delete.tools", { count: impact.data.tools })}</li>
+          </ul>}
+          {impact.isError && <p role="status" className="mt-2 text-sm text-muted-foreground">{t("spaces.spaceSettings.delete.impactError")}</p>}
+        </>}
         confirmLabel={t("spaces.delete.confirm")}
         cancelLabel={t("spaces.form.cancel")}
         onConfirm={remove}

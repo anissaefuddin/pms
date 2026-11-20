@@ -34,8 +34,9 @@ test("the Starred page lists items with their type, shows the empty state, and h
   await mockSpaces(page, { extra: extra({ "GET /stars": () => ({ body: { items } }) }) });
   await page.goto("/starred");
   await expect(page.getByRole("heading", { name: "Starred", level: 1 })).toBeVisible();
-  await expect(page.getByRole("link", { name: "Write the plan" })).toHaveAttribute("href", `/items/${itemId}`);
-  await expect(page.getByRole("listitem").filter({ hasText: "Website launch" })).toContainText("Project");
+  // The sidebar's Favorites list repeats these names, so the assertions stay inside the page.
+  await expect(page.getByRole("main").getByRole("link", { name: "Write the plan" })).toHaveAttribute("href", `/items/${itemId}`);
+  await expect(page.getByRole("main").getByRole("listitem").filter({ hasText: "Website launch" })).toContainText("Project");
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   items = [];
   await page.reload();

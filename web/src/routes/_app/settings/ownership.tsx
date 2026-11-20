@@ -51,7 +51,6 @@ function OwnershipPage() {
 
   return <section className="space-y-5">
     <header>
-      <h2 className="text-lg font-semibold">{t("ownership.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("ownership.description")}</p>
     </header>
     {query.isPending && <p role="status" className="text-sm text-muted-foreground">{t("ownership.loading")}</p>}

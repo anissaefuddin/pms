@@ -304,5 +304,19 @@
     "failed": "Upload failed: {{message}}",
     "retry": "Try again"
   },
-  "reviewLabel": "Review"
+  "reviewLabel": "Review",
+  "fieldAssignments": {
+    "menu": "Custom fields…",
+    "title": "Custom fields for {{name}}",
+    "loading": "Loading fields…",
+    "forbidden": "You cannot change field assignments in this Space.",
+    "empty": "No fields apply in this Space yet.",
+    "here": "Applies here",
+    "elsewhere": "Limited to other projects or folders",
+    "wholeSpace": "Whole Space",
+    "help": {
+      "project": "Fields checked here apply to this project and the items inside it. A field with no project or folder assignment applies to the whole Space.",
+      "folder": "Fields checked here apply to this folder and the items inside it. A field with no project or folder assignment applies to the whole Space."
+    }
+  }
 }

@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -52,7 +53,7 @@ func parseFieldRef(raw string) (string, string, bool) {
 
 // resolveFields validates the field sort and filters against definitions in the visible Spaces.
 // It returns the sort key (or "" to keep the standard one), extra WHERE terms and their arguments.
-func resolveFields(ctx context.Context, tx pgx.Tx, spaceIDs []string, filter ListFilter) (key string, terms string, args []any, err error) {
+func resolveFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, spaceIDs []string, filter ListFilter) (key string, terms string, args []any, err error) {
 	ids := map[string]bool{}
 	sortID, sorting := strings.CutPrefix(filter.Sort, "field:")
 	if sorting {
@@ -82,7 +83,7 @@ func resolveFields(ctx context.Context, tx pgx.Tx, spaceIDs []string, filter Lis
 	for id := range ids {
 		list = append(list, id)
 	}
-	rows, err := tx.Query(ctx, "SELECT id::text,type FROM custom_fields WHERE id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid))", list, spaceIDs)
+	rows, err := tx.Query(ctx, "SELECT id::text,type FROM custom_fields WHERE id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND (space_id IS NULL OR space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)))", list, spaceIDs)
 	if err != nil {
 		return "", "", nil, err
 	}
@@ -97,11 +98,22 @@ func resolveFields(ctx context.Context, tx pgx.Tx, spaceIDs []string, filter Lis
 	if err = rows.Err(); err != nil {
 		return "", "", nil, err
 	}
+	// A restricted field the actor cannot read is treated as unknown, so a sort or filter cannot reveal its order or values.
+	hidden, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
+	if err != nil {
+		return "", "", nil, err
+	}
+	for _, id := range hidden {
+		delete(kinds, id)
+	}
+	// $9 is the visible Spaces; every field use also requires the field to apply to the item (custom_field_applies).
+	args = []any{spaceIDs}
 	if sorting {
-		var ok bool
-		if key, ok = fieldKey(kinds[sortID]); !ok {
+		k, ok := fieldKey(kinds[sortID])
+		if !ok {
 			return "", "", nil, Invalid("this field cannot be used for sorting")
 		}
+		key = "CASE WHEN " + applicableTerm(10) + " THEN (" + strings.ReplaceAll(k, "$9", "$10") + ") END"
 		args = append(args, sortID)
 	}
 	for _, ref := range refs {
@@ -119,8 +131,14 @@ func resolveFields(ctx context.Context, tx pgx.Tx, spaceIDs []string, filter Lis
 				return "", "", nil, Invalid("numeric field filters need a number")
 			}
 		}
-		terms += " AND (" + cond + ")"
+		terms += " AND (" + cond + ") AND " + applicableTerm(a)
 		args = append(args, ref[0], ref[1])
 	}
 	return key, terms, args, nil
+}
+
+// applicableTerm is true when the item sits in a visible Space where the field applies to it. $9 holds the visible Spaces.
+func applicableTerm(fieldParam int) string {
+	return "EXISTS(SELECT 1 FROM item_locations al WHERE al.item_id=i.id AND al.deleted_root_id IS NULL" +
+		" AND al.space_id=ANY(ARRAY(SELECT unnest($9::text[])::uuid)) AND custom_field_applies(i.id, $" + strconv.Itoa(fieldParam) + "::uuid, al.space_id))"
 }

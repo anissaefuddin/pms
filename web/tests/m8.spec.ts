@@ -187,3 +187,274 @@ test("a relation field with only visible targets can be edited by searching", as
   await section.getByRole("button", { name: "Save" }).click();
   await expect.poll(() => calls.calls.find((c) => c.method === "PATCH")?.body).toEqual({ fields: { [relField.id]: ["cccccccc-cccc-4ccc-8ccc-cccccccccccc"] } });
 });
+
+test("an item type is a Workspace type by default, or belongs to one Space when a Space is picked", async ({ page }) => {
+  let types = [taskType, projectType, bugType];
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": () => ({ body: { items: types } }),
+    "POST /item-types": (body: Record<string, unknown>) => { const created = { ...bugType, ...body, id: `5555555${types.length}-5555-4555-8555-555555555555`, is_builtin: false, active: true, version: 1 }; types = [...types, created]; return { status: 201, body: created, headers: { ETag: '"1"' } }; },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: "Create a custom item type" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Name", { exact: true }).fill("Campaign brief");
+  await dialog.getByLabel(/Key/).fill("campaign_brief");
+  await dialog.getByLabel("Scope").selectOption({ label: marketing.name });
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "POST")?.body?.space_id).toBe(marketing.id);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.getByRole("button", { name: "Create a custom item type" }).click();
+  await page.getByRole("dialog").getByLabel("Name", { exact: true }).fill("Risk");
+  await page.getByRole("dialog").getByLabel(/Key/).fill("risk_item");
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.filter((c) => c.method === "POST").at(-1)?.body?.space_id).toBeNull();
+});
+
+test("a project type can pick a default workflow; a task type sends none", async ({ page }) => {
+  const release = { id: "77777777-7777-4777-8777-777777777777", name: "Release flow", is_default: false, statuses: [] };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /workflows": { body: { items: [release] } },
+    [`PATCH /item-types/${projectType.id}`]: { body: { ...projectType, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${projectType.name}` }).click();
+  await page.getByRole("dialog").getByLabel("Default workflow").selectOption({ label: "Release flow" });
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body?.default_workflow_id).toBe(release.id);
+  await expect(page.getByRole("dialog")).toHaveCount(0);
+
+  await page.getByRole("button", { name: `Edit: ${taskType.name}` }).click();
+  await expect(page.getByRole("dialog").getByLabel("Default workflow")).toHaveCount(0);
+});
+
+test("a Workspace item type takes Workspace custom fields; saving sends the assignment", async ({ page }) => {
+  const costCenter = { id: "88888888-8888-4888-8888-888888888888", name: "Cost center", type: "number", space_id: "", options: [], position: 0, config: {}, archived_at: null };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /custom-fields": { body: { items: [costCenter] } },
+    [`GET /item-types/${bugType.id}/fields`]: { body: { items: [] } },
+    [`PATCH /item-types/${bugType.id}`]: { body: { ...bugType, version: 2 }, headers: { ETag: '"2"' } },
+    [`PUT /item-types/${bugType.id}/fields/${costCenter.id}`]: { body: { field_id: costCenter.id }, status: 200 },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  await page.getByRole("dialog").getByRole("checkbox", { name: "Cost center" }).check();
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PUT")?.path).toBe(`/item-types/${bugType.id}/fields/${costCenter.id}`);
+});
+
+test("the item type list filters by search, scope, and status", async ({ page }) => {
+  const inactive = { ...bugType, id: "99999999-9999-4999-8999-999999999999", key: "legacy_req", name: "Legacy request", active: false };
+  await mockSpaces(page, { extra: { "GET /item-types": { body: { items: [taskType, projectType, bugType, inactive] } } } });
+  await page.goto("/settings/item-types");
+  await expect(page.getByText("Legacy request")).toBeVisible();
+  await page.getByRole("searchbox", { name: "Search by name or key" }).fill("bug");
+  await expect(page.getByText("Legacy request")).toHaveCount(0);
+  await expect(page.getByText(bugType.name, { exact: true })).toBeVisible();
+  await page.getByRole("searchbox", { name: "Search by name or key" }).fill("");
+  await page.getByRole("combobox", { name: "Status", exact: true }).selectOption({ label: "Inactive" });
+  await expect(page.getByText("Legacy request")).toBeVisible();
+  await expect(page.getByText(bugType.name, { exact: true })).toHaveCount(0);
+  await page.getByRole("combobox", { name: "Status", exact: true }).selectOption({ label: "All" });
+  await expect(page.getByText("Legacy request")).toBeVisible();
+});
+
+test("duplicate copies the definition and the chosen fields into a new type", async ({ page }) => {
+  const costCenter = { id: "88888888-8888-4888-8888-888888888888", name: "Cost center", type: "number", space_id: "", options: [], position: 0, config: {}, archived_at: null };
+  const copy = { ...bugType, id: "66666666-6666-4666-8666-666666666666", key: "bug_copy", name: "Copy of Bug" };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /custom-fields": { body: { items: [costCenter] } },
+    [`GET /item-types/${bugType.id}/fields`]: { body: { items: [] } },
+    "POST /item-types": { body: copy, status: 201, headers: { ETag: '"1"' } },
+    [`PUT /item-types/${copy.id}/fields/${costCenter.id}`]: { body: { field_id: costCenter.id }, status: 200 },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Duplicate: ${bugType.name}` }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Name", { exact: true })).toHaveValue(`Copy of ${bugType.name}`);
+  await dialog.getByLabel(/Key/).fill("bug_copy");
+  await dialog.getByRole("checkbox", { name: "Cost center" }).check();
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/item-types")?.body?.key).toBe("bug_copy");
+  await expect.poll(() => calls.find((c) => c.method === "PUT")?.path).toBe(`/item-types/${copy.id}/fields/${costCenter.id}`);
+});
+
+test("the registry sorts, hides a column the user turned off, shows usage, and deactivates selected types", async ({ page }) => {
+  const legacy = { ...bugType, id: "99999999-9999-4999-8999-999999999999", key: "legacy_req", name: "Legacy request", active: true, version: 3 };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType, legacy] } },
+    "GET /item-types/usage": { body: { items: { [bugType.id]: 7, [legacy.id]: 0 } } },
+    [`PATCH /item-types/${legacy.id}`]: { body: { ...legacy, active: false, version: 4 }, headers: { ETag: '"4"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await expect(page.getByRole("columnheader", { name: "Sort by: Based on" }).first()).toBeVisible();
+  const bugRow = page.getByRole("row").filter({ hasText: "Bug" });
+  await expect(bugRow.getByRole("cell", { name: "7", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Sort by: Name" }).first().click();
+  await expect(page.getByRole("columnheader", { name: /Sort by: Name/ }).first()).toHaveAttribute("aria-sort", "descending");
+  await page.getByRole("group", { name: "Columns" }).getByRole("checkbox", { name: "Based on" }).uncheck();
+  await expect(page.getByRole("columnheader", { name: "Sort by: Based on" })).toHaveCount(0);
+  await page.getByRole("checkbox", { name: "Select: Legacy request" }).check();
+  await page.getByRole("region", { name: "Bulk actions" }).getByRole("button", { name: "Deactivate" }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH" && c.path === `/item-types/${legacy.id}`)?.body).toEqual({ active: false });
+});
+
+test("the type form picks an icon, orders blocks, places a custom field, and previews the layout", async ({ page }) => {
+  const costCenter = { id: "88888888-8888-4888-8888-888888888888", name: "Cost center", type: "number", space_id: "", options: [], position: 0, config: {}, archived_at: null };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /custom-fields": { body: { items: [costCenter] } },
+    [`GET /item-types/${bugType.id}/fields`]: { body: { items: [{ field_id: costCenter.id }] } },
+    [`PATCH /item-types/${bugType.id}`]: { body: { ...bugType, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("combobox", { name: "Icon name" }).selectOption("bug");
+  await dialog.getByRole("button", { name: "Add a section" }).click();
+  await dialog.getByLabel("Section 1 title").fill("Details");
+  const layout = dialog.getByRole("group", { name: "Layout" });
+  await layout.getByRole("checkbox", { name: "Importance" }).check();
+  await layout.getByRole("checkbox", { name: "Status" }).check();
+  await layout.getByRole("checkbox", { name: "Cost center" }).check();
+  await dialog.getByRole("button", { name: "Move Status down" }).click();
+  await expect(dialog.getByRole("list", { name: "Order of blocks in section 1" }).locator("li").first()).toContainText("Importance");
+  await expect(dialog.getByRole("region", { name: "Preview" }).getByRole("listitem").first()).toHaveText("Importance");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ icon: "bug", layout: { sections: [{ title: "Details", fields: ["importance", costCenter.id, "status"] }] } });
+});
+
+test("Quick Access puts a custom type in the Create menu and opens the item dialog with it chosen", async ({ page }) => {
+  const quickBug = { ...bugType, quick_access: true };
+  const legacy = { ...bugType, id: "99999999-9999-4999-8999-999999999998", key: "legacy_more", name: "Legacy more", quick_access: false };
+  await mockSpaces(page, { extra: { "GET /item-types": { body: { items: [taskType, projectType, quickBug, legacy] } } } });
+  await page.goto("/");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Bug" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Legacy more" })).toHaveCount(0);
+  await page.getByRole("menuitem", { name: "More item types" }).click();
+  await page.getByRole("dialog", { name: "More item types" }).getByRole("button", { name: "Legacy more" }).click();
+  await expect(page.getByRole("dialog").getByRole("combobox", { name: "Type" })).toHaveValue("legacy_more");
+  await page.keyboard.press("Escape");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await page.getByRole("menuitem", { name: "Bug" }).click();
+  await expect(page.getByRole("dialog").getByRole("combobox", { name: "Type" })).toHaveValue(bugType.key);
+});
+
+test("the type form sets Quick Access, and bulk deactivation says how many items it affects", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    "GET /item-types/usage": { body: { items: { [bugType.id]: 7 } } },
+    [`PATCH /item-types/${bugType.id}`]: { body: { ...bugType, quick_access: true, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  await page.getByRole("dialog").getByRole("checkbox", { name: "Show in Create menu (Quick Access)" }).check();
+  await page.getByRole("dialog").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body?.quick_access).toBe(true);
+  await page.getByRole("checkbox", { name: `Select: ${bugType.name}` }).check();
+  await expect(page.getByRole("region", { name: "Bulk actions" })).toContainText("Deactivating affects 7 existing non-deleted items");
+});
+
+test("a Space's item types: its own types are editable there, Workspace types are read-only, and Quick Access follows the Space's create menu", async ({ page }) => {
+  const spaceBug = { ...bugType, id: "55555555-5555-4555-8555-555555555555", key: "space_bug", name: "Space bug", space_id: marketing.id, quick_access: true };
+  const menuOff: string[] = [];
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType, spaceBug] } },
+    [`GET /spaces/${marketing.id}/create-menu`]: () => ({ body: { version: 1, items: [{ key: "task", enabled: true }, { key: "project", enabled: true }, { key: "folder", enabled: true }, { key: "space_bug", enabled: !menuOff.includes("space_bug") }] } }),
+    [`POST /item-types`]: (body: Record<string, unknown>) => ({ status: 201, body: { ...bugType, ...body, id: "66666666-6666-4666-8666-666666666666", version: 1 }, headers: { ETag: '"1"' } }),
+  } });
+  await page.goto(`/spaces/${marketing.id}/item-types`);
+  await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit: Space bug" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit: Bug" })).toHaveCount(0);
+  await page.getByRole("button", { name: "Create a custom item type" }).first().click();
+  const dialog = page.getByRole("dialog", { name: "Create a custom item type" });
+  await expect(dialog.getByLabel("Scope")).toHaveCount(0);
+  await dialog.getByLabel("Name", { exact: true }).fill("Campaign");
+  await dialog.getByLabel("Key (lowercase letters, digits, _)").fill("campaign");
+  await dialog.getByRole("button", { name: "Save" }).click();
+  expect(calls.find((c) => c.method === "POST" && c.path === "/item-types")?.body).toMatchObject({ key: "campaign", space_id: marketing.id });
+  await page.goto(`/spaces/${marketing.id}`);
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Space bug" })).toBeVisible();
+  menuOff.push("space_bug");
+  await page.reload();
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByRole("menuitem", { name: "Space bug" })).toHaveCount(0);
+});
+
+test("dragging a block in the layout builder reorders it within its section", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, bugType] } },
+    [`PATCH /item-types/${bugType.id}`]: { body: { ...bugType, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto("/settings/item-types");
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Add a section" }).click();
+  await dialog.getByLabel("Section 1 title").fill("Details");
+  const layout = dialog.getByRole("group", { name: "Layout" });
+  await layout.getByRole("checkbox", { name: "Importance" }).check();
+  await layout.getByRole("checkbox", { name: "Status" }).check();
+  const order = dialog.getByRole("list", { name: "Order of blocks in section 1" });
+  await order.locator("li").nth(1).dragTo(order.locator("li").nth(0));
+  await expect(order.locator("li").first()).toContainText("Status");
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ layout: { sections: [{ title: "Details", fields: ["status", "importance"] }] } });
+});
+
+test("the registry, the type form, and a Space's item types pass axe", async ({ page }) => {
+  await mockSpaces(page, { extra: { "GET /item-types": { body: { items: [taskType, projectType, bugType] } } } });
+  await page.goto("/settings/item-types");
+  await expect(page.getByRole("button", { name: `Edit: ${bugType.name}` })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  await page.getByRole("button", { name: `Edit: ${bugType.name}` }).click();
+  expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);
+  await page.keyboard.press("Escape");
+  await page.goto(`/spaces/${marketing.id}/item-types`);
+  await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
+  expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+});
+
+test("a Space's manager sees usage for that Space only, and a dragged block can move to another section", async ({ page }) => {
+  const spaceBug = { ...bugType, id: "77777777-7777-4777-8777-777777777777", key: "space_usage", name: "Space usage", space_id: marketing.id };
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /item-types": { body: { items: [taskType, projectType, spaceBug] } },
+    [`GET /spaces/${marketing.id}/item-types/usage`]: { body: { items: { [spaceBug.id]: 4 } } },
+    [`PATCH /item-types/${spaceBug.id}`]: { body: { ...spaceBug, version: 2 }, headers: { ETag: '"2"' } },
+  } });
+  await page.goto(`/spaces/${marketing.id}/item-types`);
+  const row = page.getByRole("row").filter({ hasText: "Space usage" });
+  await expect(row.getByRole("cell").nth(-2)).toHaveText("4");
+  await page.getByRole("button", { name: "Edit: Space usage" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByRole("button", { name: "Add a section" }).click();
+  await dialog.getByLabel("Section 1 title").fill("Top");
+  await dialog.getByRole("button", { name: "Add a section" }).click();
+  await dialog.getByLabel("Section 2 title").fill("Bottom");
+  const layout = dialog.getByRole("group", { name: "Layout" });
+  // Every section lists every block, so the checkbox is picked per section: section 1 first, then section 2.
+  await layout.getByRole("checkbox", { name: "Importance" }).first().check();
+  await layout.getByRole("checkbox", { name: "Status" }).first().check();
+  await layout.getByRole("checkbox", { name: "Effort" }).nth(1).check();
+  const top = dialog.getByRole("list", { name: "Order of blocks in section 1" });
+  const bottom = dialog.getByRole("list", { name: "Order of blocks in section 2" });
+  // Playwright's dragTo cannot reach a target below the fold, so move the pointer by hand after scrolling it into view.
+  await bottom.locator("li").first().scrollIntoViewIfNeeded();
+  const src = await top.locator("li").nth(1).boundingBox();
+  const dst = await bottom.locator("li").first().boundingBox();
+  if (!src || !dst) throw new Error("block not visible");
+  await page.mouse.move(src.x + src.width / 2, src.y + src.height / 2);
+  await page.mouse.down();
+  await page.mouse.move(src.x + src.width / 2 + 5, src.y + src.height / 2 + 5, { steps: 3 });
+  await page.mouse.move(dst.x + dst.width / 2, dst.y + dst.height / 2, { steps: 10 });
+  await page.mouse.up();
+  await expect(top.locator("li")).toHaveCount(1);
+  await dialog.getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ layout: { sections: [
+    { title: "Top", fields: ["importance"] }, { title: "Bottom", fields: ["status", "effort"] }] } });
+});

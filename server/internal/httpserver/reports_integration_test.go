@@ -24,6 +24,7 @@ func TestReportsLifecycleAndAccess(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, reader, stranger := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Reports Space")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", reader.id, "read")
 	task := customFieldItem(f, admin, space, "Task that reports never touch")
@@ -175,6 +176,7 @@ func TestReportResultAndExport(t *testing.T) {
 	f := newFixture(t)
 	admin, reader, stranger := f.person("admin"), f.person("regular"), f.person("regular")
 	shared, secret := f.space("Run shared"), f.space("Run secret")
+	f.share(shared, "user", admin.id, "full") // A1.2: admin creates this Space's content as an explicit member
 	f.share(shared, "user", reader.id, "read")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	task := func(space, title string) string {
@@ -191,6 +193,8 @@ func TestReportResultAndExport(t *testing.T) {
 		return map[string]any{"layout": "column", "query": query}
 	}
 	both := []string{shared, secret}
+	// A1.3: the admin owns the report and reads both Spaces as an explicit member; a Workspace admin alone reads neither.
+	f.share(secret, "user", admin.id, "read")
 	counts := f.call(admin, "POST", "/reports", map[string]any{"name": "Counts", "space_id": shared, "sharing": "space",
 		"definition": def(map[string]any{"reporting_on": "tasks", "metric": "count", "group_by": "status_group", "space_ids": both})})
 	f.want(counts, 201, "counts report")

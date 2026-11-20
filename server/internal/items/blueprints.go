@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
+	"slices"
+	"strings"
 	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
@@ -13,7 +16,11 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-const maxBlueprintNodes = 200
+const (
+	maxBlueprintNodes = 200
+	// maxBlueprintDepth counts levels below the root. Deeper items make the save fail; they are never cut off silently.
+	maxBlueprintDepth = 30
+)
 
 // blueprintNode is one stored item. Parent is the index of an earlier node (-1 for the root).
 // Offsets are calendar days from the tree's earliest date. Comments, attachments, approvals and
@@ -61,7 +68,7 @@ func SaveBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 }
 
 func saveBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, spaceID uuid.UUID, name string, sourceID uuid.UUID) (json.RawMessage, error) {
-	if err := requireSpace(ctx, tx, actor, policy.Edit, spaceID); err != nil {
+	if err := requireSpace(ctx, tx, actor, policy.CreateBlueprint, spaceID); err != nil {
 		return nil, err
 	}
 	if n := len([]rune(name)); n < 1 || n > 120 {
@@ -74,18 +81,21 @@ WITH RECURSIVE t(id, parent, path) AS (
   SELECT l.item_id, t.id, t.path || ((l.rank COLLATE "C") || l.item_id::text)
   FROM t JOIN item_locations l ON l.parent_item_id=t.id AND l.deleted_root_id IS NULL
   JOIN items c ON c.id=l.item_id AND c.deleted_at IS NULL
-  WHERE cardinality(t.path) < 30
+  WHERE cardinality(t.path) <= 30
 )
-SELECT t.id, t.parent FROM t JOIN items i ON i.id=t.id AND i.deleted_at IS NULL ORDER BY t.path`, sourceID)
+SELECT t.id, t.parent, cardinality(t.path) FROM t JOIN items i ON i.id=t.id AND i.deleted_at IS NULL ORDER BY t.path`, sourceID)
 	if err != nil {
 		return nil, err
 	}
-	type edge struct{ id, parent uuid.UUID }
+	type edge struct {
+		id, parent uuid.UUID
+		depth      int
+	}
 	var edges []edge
 	for rows.Next() {
 		var e edge
 		var parent *uuid.UUID
-		if err := rows.Scan(&e.id, &parent); err != nil {
+		if err := rows.Scan(&e.id, &parent, &e.depth); err != nil {
 			return nil, err
 		}
 		if parent != nil {
@@ -116,6 +126,10 @@ SELECT t.id, t.parent FROM t JOIN items i ON i.id=t.id AND i.deleted_at IS NULL 
 	var base *time.Time
 	type dates struct{ start, due *time.Time }
 	var spans []dates
+	restricted, err := restrictedFieldIDs(ctx, tx)
+	if err != nil {
+		return nil, err
+	}
 	for _, e := range edges {
 		parent, ok := index[e.parent]
 		if _, seen := index[e.id]; seen || !caps[e.id.String()].Has(policy.View) || (len(tree.Nodes) > 0 && !ok) {
@@ -123,6 +137,9 @@ SELECT t.id, t.parent FROM t JOIN items i ON i.id=t.id AND i.deleted_at IS NULL 
 		}
 		if len(tree.Nodes) == maxBlueprintNodes {
 			return nil, Invalid("a blueprint can hold at most 200 items")
+		}
+		if e.depth > maxBlueprintDepth {
+			return nil, Invalid("a blueprint can hold at most 30 levels below its root item")
 		}
 		if len(tree.Nodes) == 0 {
 			parent = -1
@@ -136,6 +153,11 @@ SELECT type::text, title, description, importance, status_id, start_date::timest
 FROM items i WHERE id=$1`, e.id).Scan(&n.Type, &n.Title, &description, &n.Importance, &n.StatusID, &d.start, &d.due,
 			&n.DurationDays, &n.IsMilestone, &n.EffortMinutes, &n.Fields, &n.AssigneeIDs); err != nil {
 			return nil, err
+		}
+		for key := range n.Fields { // restricted values never enter a blueprint, so no reader can restore them
+			if restricted[key] {
+				delete(n.Fields, key)
+			}
 		}
 		if description != nil && string(description) != "null" {
 			n.Description = description
@@ -163,6 +185,23 @@ FROM items i WHERE id=$1`, e.id).Scan(&n.Type, &n.Title, &description, &n.Import
 	for id := range index {
 		kept = append(kept, id.String())
 	}
+	// A blueprint lives in one Space: its content may only come from items that Space already holds.
+	var inSpace int
+	if err := tx.QueryRow(ctx, `SELECT count(DISTINCT item_id) FROM item_locations
+WHERE space_id=$1 AND deleted_root_id IS NULL AND item_id=ANY($2::uuid[])`, spaceID, kept).Scan(&inSpace); err != nil {
+		return nil, err
+	}
+	if inSpace != len(kept) {
+		return nil, Invalid("every item of a blueprint must belong to the Space it is saved in")
+	}
+	// An item shared on its own may reach people who cannot see the Space, so its content must not be copied.
+	var shared int
+	if err := tx.QueryRow(ctx, `SELECT count(DISTINCT target_id) FROM shares WHERE target_type='item' AND target_id=ANY($1::uuid[])`, kept).Scan(&shared); err != nil {
+		return nil, err
+	}
+	if shared > 0 {
+		return nil, Invalid("items with their own shares cannot be saved as a blueprint; remove those shares first")
+	}
 	deps, err := tx.Query(ctx, `
 SELECT predecessor_id, successor_id, type, lag FROM item_dependencies
 WHERE predecessor_id=ANY($1::uuid[]) AND successor_id=ANY($1::uuid[]) ORDER BY id`, kept)
@@ -184,15 +223,71 @@ WHERE predecessor_id=ANY($1::uuid[]) AND successor_id=ANY($1::uuid[]) ORDER BY i
 	if tree.Dependencies == nil {
 		tree.Dependencies = []blueprintDependency{}
 	}
+	var kind string
+	if err := tx.QueryRow(ctx, "SELECT kind::text FROM spaces WHERE id=$1", spaceID).Scan(&kind); err != nil {
+		return nil, err
+	}
 	var out json.RawMessage
-	err = tx.QueryRow(ctx, `
-WITH b AS (INSERT INTO blueprints(space_id,name,tree,created_by) VALUES($1,btrim($2),$3,$4::uuid) RETURNING *)
+	var target *uuid.UUID
+	if kind == "personal" {
+		// An account blueprint: it belongs to the owner, not to the Personal Space it was saved from.
+		err = tx.QueryRow(ctx, `
+WITH b AS (INSERT INTO blueprints(space_id,name,tree,created_by,scope,owner_id) VALUES(NULL,btrim($1),$2,$3::uuid,'account',$3::uuid) RETURNING *)
 SELECT jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
-  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at) FROM b`, spaceID, name, tree, actor.ID).Scan(&out)
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at) FROM b`, name, tree, actor.ID).Scan(&out)
+	} else {
+		target = &spaceID
+		err = tx.QueryRow(ctx, `
+WITH b AS (INSERT INTO blueprints(space_id,name,tree,created_by,scope) VALUES($1,btrim($2),$3,$4::uuid,'space') RETURNING *)
+SELECT jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at) FROM b`, spaceID, name, tree, actor.ID).Scan(&out)
+	}
 	if pgCode(err) == "23505" {
 		return nil, InvalidField{"name", "a blueprint with that name already exists in this Space"}
 	}
-	return out, err
+	if err != nil {
+		return nil, err
+	}
+	var head struct{ ID string }
+	if err := json.Unmarshal(out, &head); err != nil {
+		return nil, err
+	}
+	return out, auditBlueprint(ctx, tx, actor, "blueprint.save", head.ID, map[string]any{"space_id": spaceIDValue(target), "item_count": len(tree.Nodes)})
+}
+
+// auditBlueprint writes the trail inside the caller's transaction, so a change and its event succeed or fail together.
+// The details carry counts and ids only, never item content.
+func auditBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, action, blueprintID string, details map[string]any) error {
+	return Audit(ctx, tx, actor, action, "blueprint", blueprintID, details)
+}
+
+// Audit writes one event in the caller's transaction. Details must hold ids and counts, never answers or item content.
+func Audit(ctx context.Context, tx pgx.Tx, actor policy.Actor, action, targetType, targetID string, details map[string]any) error {
+	raw, err := json.Marshal(details)
+	if err != nil {
+		return err
+	}
+	_, err = tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details)
+VALUES(NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NULLIF($1,'')::uuid),''), $2, $3, $4, $5)`,
+		actor.ID, action, targetType, targetID, raw)
+	return err
+}
+
+// restrictedFieldIDs lists the custom fields that carry grants. Their values are never copied into or restored from a blueprint.
+func restrictedFieldIDs(ctx context.Context, tx pgx.Tx) (map[string]bool, error) {
+	rows, err := tx.Query(ctx, "SELECT DISTINCT field_id::text FROM custom_field_grants")
+	if err != nil {
+		return nil, err
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, err
+	}
+	out := make(map[string]bool, len(ids))
+	for _, id := range ids {
+		out[id] = true
+	}
+	return out, nil
 }
 
 // requireSpace: no access is 404, access without the capability is 403.
@@ -209,7 +304,42 @@ func requireSpace(ctx context.Context, tx pgx.Tx, actor policy.Actor, need polic
 	return nil
 }
 
-// ListBlueprints returns the blueprints of a Space that the actor may view.
+// blueprintAccess checks what the actor may do with one blueprint and returns its Space (nil for an account blueprint).
+// An account blueprint belongs to its owner: the owner and instance admins may act, anyone else gets 404 so its existence stays
+// hidden. A Space blueprint follows the Space rules.
+func blueprintAccess(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, need policy.Capability) (*uuid.UUID, error) {
+	var spaceID *uuid.UUID
+	var scope string
+	var owner *string
+	err := tx.QueryRow(ctx, "SELECT space_id, scope, owner_id::text FROM blueprints WHERE id=$1", id).Scan(&spaceID, &scope, &owner)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ErrNotFound
+	}
+	if err != nil {
+		return nil, err
+	}
+	if scope == "account" {
+		if actor.Type == policy.Admin || (owner != nil && *owner == actor.ID) {
+			return nil, nil
+		}
+		return nil, ErrNotFound
+	}
+	if err := requireSpace(ctx, tx, actor, need, *spaceID); err != nil {
+		return nil, err
+	}
+	return spaceID, nil
+}
+
+// spaceIDValue is the Space id for audit details and responses; nil for an account blueprint.
+func spaceIDValue(id *uuid.UUID) any {
+	if id == nil {
+		return nil
+	}
+	return id.String()
+}
+
+// ListBlueprints returns the blueprints of a Space that the actor may view. A Personal Space lists the owner's account blueprints.
+
 func ListBlueprints(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID uuid.UUID) (json.RawMessage, error) {
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
 	if err != nil {
@@ -219,11 +349,38 @@ func ListBlueprints(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 	if err := requireSpace(ctx, tx, actor, policy.View, spaceID); err != nil {
 		return nil, err
 	}
+	var kind string
+	if err := tx.QueryRow(ctx, "SELECT kind::text FROM spaces WHERE id=$1", spaceID).Scan(&kind); err != nil {
+		return nil, err
+	}
+	var out json.RawMessage
+	if kind == "personal" {
+		err = tx.QueryRow(ctx, `
+SELECT COALESCE(jsonb_agg(`+blueprintSummary+` ORDER BY lower(name),id),'[]'::jsonb)
+FROM blueprints WHERE scope='account' AND owner_id=$1::uuid`, actor.ID).Scan(&out)
+		return out, err
+	}
+	err = tx.QueryRow(ctx, `
+SELECT COALESCE(jsonb_agg(`+blueprintSummary+` ORDER BY lower(name),id),'[]'::jsonb)
+FROM blueprints WHERE space_id=$1`, spaceID).Scan(&out)
+	return out, err
+}
+
+// blueprintSummary is the list and detail shape of one blueprint (without its tree).
+const blueprintSummary = `jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at,'uses',(SELECT count(*) FROM blueprint_uses u WHERE u.blueprint_id=blueprints.id))`
+
+// ListAccountBlueprints returns the account blueprints the actor may see: their own, or all of them for an instance admin.
+func ListAccountBlueprints(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor) (json.RawMessage, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
 	var out json.RawMessage
 	err = tx.QueryRow(ctx, `
-SELECT COALESCE(jsonb_agg(jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
-  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at) ORDER BY lower(name),id),'[]'::jsonb)
-FROM blueprints WHERE space_id=$1`, spaceID).Scan(&out)
+SELECT COALESCE(jsonb_agg(`+blueprintSummary+` ORDER BY lower(name),id),'[]'::jsonb)
+FROM blueprints WHERE scope='account' AND ($1::boolean OR owner_id=$2::uuid)`, actor.Type == policy.Admin, actor.ID).Scan(&out)
 	return out, err
 }
 
@@ -233,16 +390,12 @@ func DeleteBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor
 		return err
 	}
 	defer tx.Rollback(ctx)
-	var spaceID uuid.UUID
-	err = tx.QueryRow(ctx, "SELECT space_id FROM blueprints WHERE id=$1", id).Scan(&spaceID)
-	if errors.Is(err, pgx.ErrNoRows) {
-		err = ErrNotFound
-	}
-	if err == nil {
-		err = requireSpace(ctx, tx, actor, policy.Edit, spaceID)
-	}
+	spaceID, err := blueprintAccess(ctx, tx, actor, id, policy.ManageBlueprint)
 	if err == nil {
 		_, err = tx.Exec(ctx, "DELETE FROM blueprints WHERE id=$1", id)
+	}
+	if err == nil {
+		err = auditBlueprint(ctx, tx, actor, "blueprint.delete", id.String(), map[string]any{"space_id": spaceIDValue(spaceID)})
 	}
 	if err == nil {
 		err = tx.Commit(ctx)
@@ -255,6 +408,8 @@ type BlueprintUse struct {
 	Locations []Location `json:"locations"`
 	Title     *string    `json:"title"`
 	StartDate *string    `json:"start_date"` // anchors the relative dates; without it the new items have no dates
+	// FinishDate anchors the latest date of the tree instead (the last item finishes on it). Give one of the two, not both.
+	FinishDate *string `json:"finish_date"`
 	// Overrides replace the blueprint's defaults on the root item (a form's answers win over the blueprint).
 	Overrides map[string]json.RawMessage `json:"-"`
 }
@@ -280,26 +435,27 @@ func UseBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, i
 }
 
 func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, use BlueprintUse, batch *notifications.Batch) (Detail, error) {
-	var spaceID uuid.UUID
 	var tree blueprintTree
-	err := tx.QueryRow(ctx, "SELECT space_id, tree FROM blueprints WHERE id=$1", id).Scan(&spaceID, &tree)
-	if errors.Is(err, pgx.ErrNoRows) {
-		return Detail{}, ErrNotFound
-	}
+	spaceID, err := blueprintAccess(ctx, tx, actor, id, policy.UseBlueprint)
 	if err != nil {
 		return Detail{}, err
 	}
-	if err := requireSpace(ctx, tx, actor, policy.View, spaceID); err != nil {
+	if err := tx.QueryRow(ctx, "SELECT tree FROM blueprints WHERE id=$1", id).Scan(&tree); err != nil {
 		return Detail{}, err
 	}
 	if len(use.Locations) == 0 {
 		return Detail{}, InvalidField{"locations", "at least one location is required"}
 	}
-	var anchor *time.Time
-	if use.StartDate != nil {
-		if anchor, err = dateField(marshalJSON(use.StartDate), "start_date"); err != nil {
-			return Detail{}, err
-		}
+	if err := validateBlueprintTree(tree); err != nil { // refused before anything is written
+		return Detail{}, err
+	}
+	anchor, err := blueprintAnchor(tree, use.StartDate, use.FinishDate)
+	if err != nil {
+		return Detail{}, err
+	}
+	restricted, err := restrictedFieldIDs(ctx, tx)
+	if err != nil {
+		return Detail{}, err
 	}
 	// Assignees who were deactivated since the blueprint was saved are skipped.
 	active := map[uuid.UUID]bool{}
@@ -350,12 +506,12 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 		if n.EffortMinutes != nil {
 			fields["effort_minutes"] = marshalJSON(n.EffortMinutes)
 		}
-		if anchor != nil {
-			for key, offset := range map[string]*int{"start_date": n.StartOffset, "due_date": n.DueOffset} {
-				if offset != nil {
-					fields[key] = marshalJSON(anchor.AddDate(0, 0, *offset).Format(time.DateOnly))
-				}
-			}
+		start, due := scheduled(n, anchor)
+		if start != nil {
+			fields["start_date"] = marshalJSON(*start)
+		}
+		if due != nil {
+			fields["due_date"] = marshalJSON(*due)
 		}
 		if i == 0 {
 			for k, v := range use.Overrides {
@@ -374,7 +530,7 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 			return Detail{}, err
 		}
 		created[i] = head.ID
-		if err := restoreStatusAndFields(ctx, tx, actor, head.ID, n); err != nil {
+		if err := restoreStatusAndFields(ctx, tx, actor, head.ID, n, restricted); err != nil {
 			return Detail{}, err
 		}
 	}
@@ -384,12 +540,45 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 			return Detail{}, err
 		}
 	}
+	if _, err := tx.Exec(ctx, "INSERT INTO blueprint_uses(blueprint_id,used_by,root_item_id) VALUES ($1,$2::uuid,$3::uuid)", id, actor.ID, created[0]); err != nil {
+		return Detail{}, err
+	}
+	if err := auditBlueprint(ctx, tx, actor, "blueprint.use", id.String(), map[string]any{"space_id": spaceIDValue(spaceID), "item_count": len(created)}); err != nil {
+		return Detail{}, err
+	}
 	return readDetail(ctx, tx, actor, created[0])
+}
+
+// validateBlueprintTree refuses a stored tree that could not have been saved: bad parent order, bad dependency
+// indexes, too many items, or too many levels. Checked before any item is created.
+func validateBlueprintTree(tree blueprintTree) error {
+	n := len(tree.Nodes)
+	if n == 0 || n > maxBlueprintNodes {
+		return Invalid("a blueprint must hold 1 to 200 items")
+	}
+	depth := make([]int, n)
+	for i, node := range tree.Nodes {
+		if (i == 0 && node.Parent != -1) || (i > 0 && (node.Parent < 0 || node.Parent >= i)) {
+			return Invalid("the blueprint hierarchy is invalid")
+		}
+		if i > 0 {
+			depth[i] = depth[node.Parent] + 1
+		}
+		if depth[i] > maxBlueprintDepth {
+			return Invalid("a blueprint can hold at most 30 levels below its root item")
+		}
+	}
+	for _, d := range tree.Dependencies {
+		if d.Predecessor < 0 || d.Predecessor >= n || d.Successor < 0 || d.Successor >= n || d.Predecessor == d.Successor {
+			return Invalid("the blueprint dependencies are invalid")
+		}
+	}
+	return nil
 }
 
 // restoreStatusAndFields applies what create() does not accept: the saved status (only if the new item's
 // workflow has it) and custom-field values (only those the target Space still accepts).
-func restoreStatusAndFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, n blueprintNode) error {
+func restoreStatusAndFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, n blueprintNode, restricted map[string]bool) error {
 	if n.StatusID != nil {
 		var ok bool
 		if err := tx.QueryRow(ctx, `
@@ -404,6 +593,9 @@ SELECT EXISTS(SELECT 1 FROM statuses s, items i JOIN statuses cur ON cur.id=i.st
 		}
 	}
 	for key, value := range n.Fields {
+		if restricted[key] { // trees saved before this rule may still hold a restricted value
+			continue
+		}
 		updated, err := updateCustomFieldValues(ctx, tx, actor, id, marshalJSON(map[string]json.RawMessage{key: value}))
 		if errors.As(err, new(InvalidField)) {
 			continue
@@ -421,4 +613,315 @@ SELECT EXISTS(SELECT 1 FROM statuses s, items i JOIN statuses cur ON cur.id=i.st
 func marshalJSON(v any) json.RawMessage {
 	b, _ := json.Marshal(v)
 	return b
+}
+
+// blueprintAnchor turns the caller's start_date or finish_date into the day the tree's earliest offset falls on.
+// Nil means undated. Shared by use and preview, so a preview shows exactly what use will create.
+func blueprintAnchor(tree blueprintTree, startDate, finishDate *string) (*time.Time, error) {
+	if startDate != nil && finishDate != nil {
+		return nil, Invalid("give start_date or finish_date, not both")
+	}
+	if startDate != nil {
+		return dateField(marshalJSON(startDate), "start_date")
+	}
+	if finishDate == nil {
+		return nil, nil
+	}
+	finish, err := dateField(marshalJSON(finishDate), "finish_date")
+	if err != nil || finish == nil {
+		return nil, err
+	}
+	var last *int // the latest offset in the tree, measured from its earliest date
+	for _, n := range tree.Nodes {
+		for _, o := range []*int{n.StartOffset, n.DueOffset} {
+			if o != nil && (last == nil || *o > *last) {
+				last = o
+			}
+		}
+	}
+	if last == nil {
+		return nil, nil
+	}
+	start := finish.AddDate(0, 0, -*last)
+	return &start, nil
+}
+
+// scheduled returns the start and due day of a node under an anchor (nil when the node or the anchor has no date).
+func scheduled(n blueprintNode, anchor *time.Time) (start, due *string) {
+	if anchor == nil {
+		return nil, nil
+	}
+	format := func(offset *int) *string {
+		if offset == nil {
+			return nil
+		}
+		day := anchor.AddDate(0, 0, *offset).Format(time.DateOnly)
+		return &day
+	}
+	return format(n.StartOffset), format(n.DueOffset)
+}
+
+// BlueprintEdit changes a blueprint's name and/or tree. Version is the version the caller read; a different one is a conflict.
+type BlueprintEdit struct {
+	Name    *string         `json:"name"`
+	Tree    json.RawMessage `json:"tree"`
+	Version *int            `json:"version"`
+}
+
+// EditBlueprint applies an edit in one transaction. The caller needs manage_blueprint in the blueprint's Space.
+// The tree is validated like a saved one, and restricted fields are dropped, so an edit cannot store what a save could not.
+func EditBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id uuid.UUID, in BlueprintEdit) (json.RawMessage, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	out, err := editBlueprint(ctx, tx, actor, id, in)
+	if err == nil {
+		err = tx.Commit(ctx)
+	}
+	return out, writeError(err)
+}
+
+func editBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID, in BlueprintEdit) (json.RawMessage, error) {
+	spaceID, err := blueprintAccess(ctx, tx, actor, id, policy.ManageBlueprint)
+	if err != nil {
+		return nil, err
+	}
+	var version int
+	if err := tx.QueryRow(ctx, "SELECT version FROM blueprints WHERE id=$1 FOR UPDATE", id).Scan(&version); err != nil {
+		return nil, err
+	}
+	if in.Version == nil {
+		return nil, InvalidField{"version", "send the version you read"}
+	}
+	if *in.Version != version {
+		return nil, ErrConflict
+	}
+	if in.Name == nil && in.Tree == nil {
+		return nil, Invalid("send a name or a tree to change")
+	}
+	var name *string
+	if in.Name != nil {
+		trimmed := strings.TrimSpace(*in.Name)
+		if n := len([]rune(trimmed)); n < 1 || n > 120 {
+			return nil, InvalidField{"name", "name must be 1 to 120 characters"}
+		}
+		name = &trimmed
+	}
+	var tree *blueprintTree
+	if in.Tree != nil {
+		var parsed blueprintTree
+		if err := json.Unmarshal(in.Tree, &parsed); err != nil {
+			return nil, Invalid("tree must be an object with nodes and dependencies")
+		}
+		if err := validateBlueprintTree(parsed); err != nil {
+			return nil, err
+		}
+		if err := validateEditedNodes(parsed); err != nil {
+			return nil, err
+		}
+		if err := validateEditedGraph(parsed); err != nil {
+			return nil, err
+		}
+		for i, n := range parsed.Nodes {
+			if n.StatusID == nil {
+				continue
+			}
+			var known bool
+			if err := tx.QueryRow(ctx, "SELECT EXISTS(SELECT 1 FROM statuses WHERE id=$1)", *n.StatusID).Scan(&known); err != nil {
+				return nil, err
+			}
+			if !known {
+				return nil, InvalidField{"tree", fmt.Sprintf("item %d has an unknown status", i+1)}
+			}
+		}
+		restricted, err := restrictedFieldIDs(ctx, tx)
+		if err != nil {
+			return nil, err
+		}
+		for i := range parsed.Nodes {
+			for key := range parsed.Nodes[i].Fields {
+				if restricted[key] {
+					delete(parsed.Nodes[i].Fields, key)
+				}
+			}
+		}
+		tree = &parsed
+	}
+	var raw json.RawMessage
+	if tree != nil {
+		if raw, err = json.Marshal(tree); err != nil {
+			return nil, err
+		}
+	}
+	var out json.RawMessage
+	err = tx.QueryRow(ctx, `
+UPDATE blueprints SET name=COALESCE($2,name), tree=COALESCE($3::jsonb,tree), version=version+1, updated_at=now() WHERE id=$1
+RETURNING jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at)`,
+		id, name, raw).Scan(&out)
+	if pgCode(err) == "23505" {
+		return nil, InvalidField{"name", "a blueprint with that name already exists in this Space"}
+	}
+	if err != nil {
+		return nil, err
+	}
+	changed := []string{}
+	if name != nil {
+		changed = append(changed, "name")
+	}
+	if tree != nil {
+		changed = append(changed, "tree")
+	}
+	if err := Audit(ctx, tx, actor, "blueprint.edit", "blueprint", id.String(), map[string]any{"space_id": spaceIDValue(spaceID), "changed": changed}); err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+// validateEditedNodes checks what a saved tree already satisfies by construction: known types, importance, dates, and dependency kinds.
+func validateEditedNodes(tree blueprintTree) error {
+	for _, n := range tree.Nodes {
+		if !slices.Contains([]string{"task", "project", "folder"}, n.Type) {
+			return Invalid("a blueprint item must be a task, project, or folder")
+		}
+		if title := strings.TrimSpace(n.Title); title == "" || len([]rune(title)) > 500 {
+			return InvalidField{"title", "every blueprint item needs a title of 1 to 500 characters"}
+		}
+		if !slices.Contains([]string{"high", "normal", "low"}, n.Importance) {
+			return Invalid("importance must be high, normal, or low")
+		}
+		if n.StartOffset != nil && n.DueOffset != nil && *n.DueOffset < *n.StartOffset {
+			return Invalid("an item cannot finish before it starts")
+		}
+		if (n.DurationDays != nil && *n.DurationDays < 0) || (n.EffortMinutes != nil && *n.EffortMinutes < 0) {
+			return Invalid("duration and effort cannot be negative")
+		}
+	}
+	for _, d := range tree.Dependencies {
+		if !validDependencyType(d.Type) {
+			return Invalid("a dependency type must be FS, SS, FF, or SF")
+		}
+	}
+	return nil
+}
+
+// PreviewNode is one item of a preview: what use would create, with its dates, and nothing is written.
+type PreviewNode struct {
+	Title     string  `json:"title"`
+	Type      string  `json:"type"`
+	Parent    int     `json:"parent"`
+	StartDate *string `json:"start_date"`
+	DueDate   *string `json:"due_date"`
+}
+
+// PreviewBlueprint computes what UseBlueprint would create, with the same anchor and date rules. It needs use_blueprint.
+func PreviewBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id uuid.UUID, use BlueprintUse) ([]PreviewNode, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	var tree blueprintTree
+	if _, err := blueprintAccess(ctx, tx, actor, id, policy.UseBlueprint); err != nil {
+		return nil, writeError(err)
+	}
+	if err := tx.QueryRow(ctx, "SELECT tree FROM blueprints WHERE id=$1", id).Scan(&tree); err != nil {
+		return nil, writeError(err)
+	}
+	if err := validateBlueprintTree(tree); err != nil {
+		return nil, writeError(err)
+	}
+	anchor, err := blueprintAnchor(tree, use.StartDate, use.FinishDate)
+	if err != nil {
+		return nil, writeError(err)
+	}
+	out := make([]PreviewNode, len(tree.Nodes))
+	for i, n := range tree.Nodes {
+		title := n.Title
+		if i == 0 && use.Title != nil {
+			title = *use.Title
+		}
+		start, due := scheduled(n, anchor)
+		out[i] = PreviewNode{Title: title, Type: n.Type, Parent: n.Parent, StartDate: start, DueDate: due}
+	}
+	return out, nil
+}
+
+// GetBlueprint returns one blueprint with its tree. It needs view on the blueprint's Space. Restricted fields are removed
+// on the way out too, so a tree saved before the rule existed does not expose them.
+func GetBlueprint(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id uuid.UUID) (json.RawMessage, error) {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		return nil, err
+	}
+	defer tx.Rollback(ctx)
+	if _, err := blueprintAccess(ctx, tx, actor, id, policy.View); err != nil {
+		return nil, writeError(err)
+	}
+	var tree blueprintTree
+	var out json.RawMessage
+	err = tx.QueryRow(ctx, `SELECT tree, `+blueprintSummary+` FROM blueprints WHERE id=$1`, id).Scan(&tree, &out)
+	if err != nil {
+		return nil, writeError(err)
+	}
+	restricted, err := restrictedFieldIDs(ctx, tx)
+	if err != nil {
+		return nil, writeError(err)
+	}
+	for i := range tree.Nodes {
+		for key := range tree.Nodes[i].Fields {
+			if restricted[key] {
+				delete(tree.Nodes[i].Fields, key)
+			}
+		}
+	}
+	treeJSON, err := json.Marshal(tree)
+	if err != nil {
+		return nil, err
+	}
+	var doc map[string]json.RawMessage
+	if err := json.Unmarshal(out, &doc); err != nil {
+		return nil, err
+	}
+	doc["tree"] = treeJSON
+	return json.Marshal(doc)
+}
+
+// validateEditedGraph refuses a dependency twice and any loop of dependencies: the schedule cannot follow a cycle.
+func validateEditedGraph(tree blueprintTree) error {
+	seen := map[[2]int]bool{}
+	adj := make([][]int, len(tree.Nodes))
+	indeg := make([]int, len(tree.Nodes))
+	for _, d := range tree.Dependencies {
+		key := [2]int{d.Predecessor, d.Successor}
+		if seen[key] {
+			return Invalid("the same dependency appears twice")
+		}
+		seen[key] = true
+		adj[d.Predecessor] = append(adj[d.Predecessor], d.Successor)
+		indeg[d.Successor]++
+	}
+	queue := []int{}
+	for i, n := range indeg {
+		if n == 0 {
+			queue = append(queue, i)
+		}
+	}
+	placed := 0
+	for len(queue) > 0 {
+		v := queue[0]
+		queue = queue[1:]
+		placed++
+		for _, w := range adj[v] {
+			if indeg[w]--; indeg[w] == 0 {
+				queue = append(queue, w)
+			}
+		}
+	}
+	if placed != len(tree.Nodes) {
+		return Invalid("dependencies would form a loop")
+	}
+	return nil
 }

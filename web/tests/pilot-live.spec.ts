@@ -51,8 +51,15 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     await editor.fill("Please review");
     await comments.getByRole("textbox", { name: "Find a user or group to mention" }).fill("Pilot Recipient");
     await comments.getByRole("button", { name: "Pilot Recipient" }).click();
-    await editor.press("Control+Enter");
-    await expect(recipient.getByRole("button", { name: /mentioned you in Prepare pilot checklist/ })).toBeVisible({ timeout: 3000 });
+    // The mention popover must close before the send shortcut, or Ctrl+Enter can land in the popover and drop the comment.
+    await expect(comments.getByRole("button", { name: "Pilot Recipient" })).toHaveCount(0);
+    const posted = page.waitForResponse((response) => response.request().method() === "POST" && /\/comments$/.test(new URL(response.url()).pathname));
+    await comments.getByRole("button", { name: "Post comment", exact: true }).click();
+    expect((await posted).status()).toBe(201);
+    // Delivery first (the API lists the mention for the recipient), then the inbox row that shows it.
+    await expect.poll(async () => JSON.stringify((await (await recipient.request.get("/api/v1/notifications")).json()).items ?? []), { timeout: 15000 })
+      .toContain("Prepare pilot checklist");
+    await expect(recipient.getByRole("button", { name: /mentioned you in Prepare pilot checklist/ })).toBeVisible({ timeout: 15000 });
   } finally {
     await context.close();
   }

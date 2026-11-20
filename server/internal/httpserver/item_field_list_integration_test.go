@@ -77,6 +77,7 @@ func TestListByCustomFieldAt500Items(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Field list perf")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	ids := make([]string, 10)
 	for i := range ids {
 		res := f.call(admin, http.MethodPost, customFieldsPath(space), map[string]any{"name": "Num" + string(rune('A'+i)), "type": "number"})

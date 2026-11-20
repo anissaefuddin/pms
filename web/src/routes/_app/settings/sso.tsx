@@ -23,7 +23,7 @@ function SsoPage() {
   const profile = useProfile();
   const admin = profile?.user_type === "admin";
   if (profile && !admin) return <p role="alert">{t("sso.admin.adminOnly")}</p>;
-  return <div className="space-y-12">
+  return <div className="space-y-6">
     <Provider kind="oidc" />
     <Provider kind="saml" />
   </div>;
@@ -76,9 +76,8 @@ function OidcForm({ config }: { config: Config }) {
     } catch { setError(t("sso.admin.saveFailed")); setRemoving(false); }
   }
 
-  return <section className="max-w-2xl space-y-5">
+  return <section className="space-y-5 rounded-lg border p-5">
     <header>
-      <h2 className="text-lg font-semibold">{t("sso.admin.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("sso.admin.description")}</p>
     </header>
     {!config.key_configured && <p role="alert" className="rounded border border-warning bg-warning-subtle p-3 text-sm">{t("sso.admin.noKey")}</p>}
@@ -88,7 +87,7 @@ function OidcForm({ config }: { config: Config }) {
       <p className="text-muted-foreground">{t("sso.admin.redirectHint")}</p>
     </div>
     <form className="space-y-4" onSubmit={(e) => void save(e)} aria-label={t("sso.admin.formLabel")}>
-      <label className="block text-sm">{t("sso.admin.name")}<Input required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 max-w-sm" /></label>
+      <label className="block text-sm">{t("sso.admin.name")}<Input required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 max-w-md" /></label>
       <label className="block text-sm">{t("sso.admin.issuer")}<Input required type="url" value={issuer} onChange={(e) => setIssuer(e.target.value)} className="mt-1" placeholder={t("sso.admin.issuerExample")} /></label>
       <label className="block text-sm">{t("sso.admin.clientId")}<Input required maxLength={255} value={clientId} onChange={(e) => setClientId(e.target.value)} className="mt-1 max-w-md" /></label>
       <label className="block text-sm">{t("sso.admin.secret")}
@@ -146,7 +145,7 @@ function SamlForm({ config }: { config: SamlConfig }) {
     } catch { setError(t("sso.admin.saveFailed")); setRemoving(false); }
   }
 
-  return <section className="max-w-2xl space-y-5" aria-labelledby="saml-title">
+  return <section className="space-y-5 rounded-lg border p-5" aria-labelledby="saml-title">
     <header>
       <h2 id="saml-title" className="text-lg font-semibold">{t("sso.saml.title")}</h2>
       <p className="text-sm text-muted-foreground">{t("sso.saml.description")}</p>
@@ -159,7 +158,7 @@ function SamlForm({ config }: { config: SamlConfig }) {
     <p className="text-sm text-muted-foreground">{t("sso.saml.hint")}</p>
     {config.configured && <p className="text-sm">{config.has_metadata ? t("sso.saml.current", { entity: config.idp_entity_id }) : t("sso.saml.noMetadata")}</p>}
     <form className="space-y-4" onSubmit={(e) => void save(e)} aria-label={t("sso.saml.formLabel")}>
-      <label className="block text-sm">{t("sso.admin.name")}<Input required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 max-w-sm" /></label>
+      <label className="block text-sm">{t("sso.admin.name")}<Input required maxLength={60} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 max-w-md" /></label>
       <label className="block text-sm">{t("sso.saml.metadata")}
         <textarea required={!config.has_metadata} rows={6} maxLength={262144} value={metadata} onChange={(e) => setMetadata(e.target.value)} spellCheck={false}
           className="mt-1 block w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 font-mono text-xs" />

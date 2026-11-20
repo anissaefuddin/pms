@@ -53,6 +53,10 @@ func checkStatusGuard(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID
 		return err
 	}
 	have := map[string]bool{"due_date": due, "start_date": start, "description": desc, "effort_minutes": effort, "assignees": assignee}
+	hidden, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
+	if err != nil {
+		return err
+	}
 	var problems []InvalidField
 	for _, key := range required {
 		ok := have[key]
@@ -61,7 +65,9 @@ func checkStatusGuard(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID
 			v, present := fields[key]
 			ok = present && string(v) != "null" && string(v) != `""` && string(v) != "[]"
 			label = "the required field"
-			_ = tx.QueryRow(ctx, "SELECT 'the field \"'||name||'\"' FROM custom_fields WHERE id=$1::uuid", key).Scan(&label)
+			if !hiddenFor(hidden, key) { // a field the mover cannot read is not named, so its name is not disclosed
+				_ = tx.QueryRow(ctx, "SELECT 'the field \"'||name||'\"' FROM custom_fields WHERE id=$1::uuid", key).Scan(&label)
+			}
 		}
 		if !ok {
 			field := key
@@ -104,3 +110,5 @@ JOIN statuses cs ON cs.id=c.status_id WHERE l.parent_item_id=$1::uuid AND l.dele
 // OnStatusEntered is called inside the PATCH transaction after the guard passed and the item really changed status.
 // The HTTP layer registers the automatic approval here (WF-03B); the items package cannot import it.
 var OnStatusEntered func(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID, statusID string, batch *notifications.Batch) error
+
+func hiddenFor(hidden []string, id string) bool { return fieldHidden(hidden, id) }

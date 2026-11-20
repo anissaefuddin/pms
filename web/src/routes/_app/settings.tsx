@@ -1,58 +1,42 @@
-import { Link, Outlet, createFileRoute } from "@tanstack/react-router";
-import { useProfile } from "@/lib/profile";
+import { Outlet, createFileRoute, useLocation } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
+import { MobileSidebar } from "@/components/sidebar";
+import { settingsGroups } from "@/components/settings-sidebar";
+import { useProfile } from "@/lib/profile";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsLayout });
 
-const linkClass = "block rounded px-3 py-2 text-sm";
+// Three content widths from the design standard: form 720–800px, standard 960–1120px, full-width = available width.
+const FORM_PAGES = ["/settings/profile", "/settings/language", "/settings/work-preferences", "/settings/security", "/settings/email", "/settings/ownership"];
+const FULL_PAGES = ["/settings/users", "/settings/spaces", "/settings/workflows", "/settings/work-schedule", "/settings/audit", "/settings/blueprints", "/settings/automation"];
+function contentWidth(pathname: string) {
+  if (FULL_PAGES.some((page) => pathname.startsWith(page))) return "";
+  if (FORM_PAGES.some((page) => pathname.startsWith(page))) return "max-w-3xl";
+  return "max-w-5xl";
+}
 
+// Page header for settings: breadcrumb (Settings / group) and the current page title. Replaces the empty top bar.
 function SettingsLayout() {
   const { t } = useTranslation();
-  const me = useProfile();
+  const profile = useProfile();
+  const pathname = useLocation({ select: (location) => location.pathname });
+  const groups = settingsGroups(profile, t);
+  const matches = groups.flatMap((group) => group.items.map((item) => ({ group, item })))
+    .filter(({ item }) => pathname === item.to || pathname.startsWith(`${item.to}/`))
+    .sort((a, b) => b.item.to.length - a.item.to.length);
+  const current = matches[0];
   return (
     <main>
-      <header className="border-b px-4 py-5 sm:px-8"><h1 className="workspace-title">{t("nav.settings.label")}</h1></header>
-      <div className="grid grid-cols-1 gap-5 p-4 sm:p-8 lg:grid-cols-[15rem_minmax(0,1fr)] lg:gap-8">
-        <nav className="grid grid-cols-2 gap-3 lg:block lg:space-y-6" aria-label={t("settings.nav.label")}>
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("settings.nav.personal")}</h2>
-            <Link to="/settings/profile" activeOptions={{ includeHash: true }} className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.profile.title")}</Link>
-            <Link to="/settings/work-schedule" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.workSchedule.title")}</Link>
-            <Link to="/settings/account" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.account.title")}</Link>
-            <Link to="/settings/profile" hash="email" activeOptions={{ includeHash: true }} className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("nav.account.emailPrefs")}</Link>
-            <Link to="/settings/profile" hash="appearance" activeOptions={{ includeHash: true }} className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("nav.account.appearance")}</Link>
-            <Link to="/settings/security" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.security.title")}</Link>
-          </section>
-          <section>
-            <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">{t("settings.nav.accountManagement")}</h2>
-            {me?.capabilities.manage_users && <Link to="/settings/users" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.users.title")}</Link>}
-            <Link to="/settings/resources" className={linkClass} activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.resources")}</Link>
-            <Link to="/settings/apps" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("apps.title")}</Link>
-            {me?.user_type === "admin" && <Link to="/settings/rates" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.rates")}</Link>}
-            <Link to="/settings/item-types" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.itemTypes.title")}</Link>
-            <Link to="/settings/workflows" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("settings.workflows.title")}</Link>
-            {me?.user_type === "admin" && <Link to="/settings/sso" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("sso.admin.title")}</Link>}
-            {me?.user_type === "admin" && <Link to="/settings/provisioning" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("provisioning.title")}</Link>}
-            {me?.user_type === "admin" && <Link to="/settings/ownership" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("ownership.title")}</Link>}
-            {me?.user_type === "admin" && <Link to="/settings/policy" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("policy.title")}</Link>}
-            {me?.user_type === "admin" && <Link to="/settings/roles" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("roles.title")}</Link>}
-            {me?.user_type === "admin" && <Link to="/settings/audit" className={linkClass}
-              activeProps={{ className: `${linkClass} bg-muted font-medium text-foreground`, "aria-current": "page" }}>{t("audit.title")}</Link>}
-          </section>
-        </nav>
-        <div className="min-w-0"><Outlet /></div>
-      </div>
+      <header className="flex items-start gap-3 border-b px-4 py-4 sm:px-8">
+        {profile && <MobileSidebar me={profile} />}
+        <div className="min-w-0 flex-1 space-y-1">
+          <nav aria-label={t("nav.breadcrumb")} className="truncate text-xs text-muted-foreground">
+            {t("nav.settings.label")}{current && <> / {current.group.title}</>}
+          </nav>
+          <h1 className="workspace-title">{current?.item.label ?? t("nav.settings.label")}</h1>
+        </div>
+      </header>
+      <div className={`p-4 sm:p-8 ${contentWidth(pathname)}`}><Outlet /></div>
     </main>
   );
 }

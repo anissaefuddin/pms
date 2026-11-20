@@ -11,6 +11,7 @@ func TestTimeEntryAuthorization(t *testing.T) {
 	f := newFixture(t)
 	admin, owner, viewer, stranger := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Time entry")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", owner.id, "limited")
 	f.share(space, "user", viewer.id, "read")
 	task := customFieldItem(f, admin, space, "Track time")
@@ -56,6 +57,7 @@ func TestProjectTimelog(t *testing.T) {
 	f := newFixture(t)
 	admin, owner, viewer := f.person("admin"), f.person("regular"), f.person("regular")
 	space, other := f.space("Project Timelog"), f.space("Other placement")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates the project and its views as an explicit member
 	f.share(space, "user", owner.id, "limited")
 	f.share(space, "user", viewer.id, "read")
 	f.share(other, "user", viewer.id, "full")
@@ -94,6 +96,7 @@ func TestProjectBudget(t *testing.T) {
 	f := newFixture(t)
 	admin, reader := f.person("admin"), f.person("regular")
 	space := f.space("Budget")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", reader.id, "read")
 	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Project',$1) RETURNING id::text", admin.id)
 	task := customFieldItem(f, admin, space, "Task")
@@ -143,6 +146,7 @@ func TestRatesSnapshotKeepHistoryAndCostIsAdminOnly(t *testing.T) {
 	f := newFixture(t)
 	admin, member := f.person("admin"), f.person("regular")
 	space := f.space("Cost")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", member.id, "editor")
 	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", project, space)

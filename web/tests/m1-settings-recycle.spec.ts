@@ -16,16 +16,19 @@ test("admin sees seats, invites users and opens the policy matrix", async ({ pag
     "GET /users/types": { body: { roles: { read: ["view"] }, user_types: { regular: ["view", "edit"] } } },
   } });
   await page.goto("/settings/users");
-  await expect(page.getByText("1 active · 0 invited · 2 available of 3 seats")).toBeVisible();
+  await expect(page.getByText("1 / 3")).toBeVisible();
+  await expect(page.getByText("Available seats", { exact: true })).toBeVisible();
   await page.getByRole("button", { name: "Invite user" }).click();
   await page.getByRole("textbox", { name: "Email" }).fill("pilot@example.test");
   await page.getByRole("button", { name: "Send invitation" }).click();
-  await expect(page.getByText("1 active · 1 invited · 1 available of 3 seats")).toBeVisible();
   expect(calls.find((call) => call.path === "/users/invitations")?.body).toMatchObject({ email: "pilot@example.test", user_type: "regular" });
   await page.getByRole("button", { name: "Groups" }).click();
   await expect(page.getByRole("button", { name: "New group" })).toBeVisible();
   await page.getByRole("link", { name: "User types" }).click();
-  await expect(page.getByText("view, edit")).toBeVisible();
+  // The user types page is a capability matrix: regular users get View and Edit, and the other rows say Not allowed.
+  const matrix = page.getByRole("table", { name: "User types" });
+  await expect(matrix.getByRole("columnheader", { name: "regular" })).toBeVisible();
+  await expect(matrix.getByRole("row", { name: /Edit/ }).getByText("Allowed")).toBeVisible();
 });
 
 test("non-admin has no Users link and direct navigation is not found", async ({ page }) => {
@@ -50,15 +53,20 @@ test("profile saves preferences and applies theme and density", async ({ page })
   } });
   await page.goto("/settings/profile");
   await page.getByLabel("Company").fill("Pilot Ltd");
-  await page.getByLabel(/^Theme/).selectOption("dark");
-  await page.getByLabel("Density").selectOption("comfortable");
-  await page.getByLabel("Send comment shortcut").selectOption("enter");
-  await page.getByRole("button", { name: "Save profile" }).click();
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toMatchObject({ company: "Pilot Ltd" });
+  await page.goto("/settings/appearance");
+  await page.getByRole("button", { name: "Dark", exact: true }).click(); // theme and density are visual choices now
+  await page.getByRole("button", { name: /^Comfortable/ }).click();
+  await page.getByRole("button", { name: "Save changes" }).click();
   await expect(page.locator("html")).toHaveCSS("color-scheme", "dark");
   await expect(page.locator("html")).toHaveAttribute("data-density", "comfortable");
-  expect(calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body)
-    .toMatchObject({ company: "Pilot Ltd", theme: "dark", density: "comfortable" });
-  await page.reload();
+  await expect.poll(() => calls.filter((call) => call.method === "PATCH" && call.path === "/me").map((call) => call.body)).toContainEqual(expect.objectContaining({ theme: "dark", density: "comfortable" }));
+  await page.goto("/settings/work-preferences");
+  await page.getByLabel("Send comment shortcut").selectOption("enter");
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect.poll(() => calls.filter((call) => call.method === "PATCH" && call.path === "/me").at(-1)?.body).toMatchObject({ comment_shortcut: "enter" });
+  await page.goto("/settings/profile");
   await expect(page.getByLabel("Company")).toHaveValue("Pilot Ltd");
   await page.goto(`/tasks/${item.id}`);
   const editor = page.getByRole("region", { name: "Comments" }).locator('[contenteditable="true"][aria-label="Comment"]');
@@ -118,14 +126,16 @@ test("account page lists seats and administrators; email and task defaults save"
   } });
   await page.goto("/settings/account");
   await expect(page.getByText("Pilot Co")).toBeVisible();
-  await expect(page.getByText("2 active · 1 invited · 2 available of 5 seats")).toBeVisible();
+  await expect(page.getByText("/ 5 seats used")).toBeVisible();
+  await expect(page.getByText("Available", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "admin@example.test" })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
-  await page.goto("/settings/profile");
-  await page.getByRole("checkbox", { name: "Scheduled report emails" }).uncheck();
+  await page.goto("/settings/email");
+  await page.getByRole("switch", { name: "Scheduled report emails" }).click();
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === "/me")?.body).toMatchObject({ email_muted: ["report"] });
+  await page.goto("/settings/work-preferences");
   await page.getByLabel("Default task duration (days)").fill("3");
-  await page.getByRole("button", { name: "Save profile" }).click();
+  await page.getByRole("button", { name: "Save changes" }).click();
   await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toMatchObject({ default_task_duration_days: 3 });
 });
 

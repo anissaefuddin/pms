@@ -26,7 +26,7 @@ function SaveForm({ itemID, title, onOpenChange }: Omit<Props, "open">) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   // Only shared Spaces where the user can edit may hold blueprints.
-  const spaces = (useSpaces().data ?? []).filter((space) => space.kind === "shared" && space.my_capabilities?.includes("edit"));
+  const spaces = (useSpaces().data ?? []).filter((space) => space.kind === "shared" && space.my_capabilities?.includes("create_blueprint"));
   const [spaceID, setSpaceID] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);

@@ -62,10 +62,11 @@ test("Space owner manages custom fields while the server preserves an option in 
   await dialog.getByRole("button", { name: "Cancel", exact: true }).click();
 
   await impact.getByRole("button", { name: "Archive", exact: true }).click();
+  await dialog.getByRole("alertdialog").getByRole("button", { name: "Archive field", exact: true }).click();
   await expect(impact.getByText("Archived", { exact: true })).toBeVisible();
   await page.reload();
   const reloaded = await openFields();
-  await expect(reloaded.getByRole("listitem").first().getByText("Archived", { exact: true })).toBeVisible();
+  await expect(reloaded.getByRole("listitem").filter({ hasText: "Impact" }).getByText("Archived", { exact: true })).toBeVisible();
   const persisted = await page.request.get(itemURL);
   await expect(persisted).toBeOK();
   expect((await persisted.json()).fields).toEqual({ [field.id]: option.id });

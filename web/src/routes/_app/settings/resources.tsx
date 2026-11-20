@@ -6,20 +6,21 @@ import { api } from "@/lib/api";
 import { useProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminEmptyState, AdminPageHeader, InitialsAvatar } from "@/components/admin/admin-ui";
 
 export const Route = createFileRoute("/_app/settings/resources")({ component: Resources });
-const kinds = ["role","skill"] as const;
 type Choice = { id: string; name: string };
 type Directory = { roles: Choice[]; skills: Choice[]; users: (Choice & { roles: string[]; skills: string[] })[] };
 type Capacity = { working_days: number[] | null; daily_hours: number | null; leave_dates: string[] };
+type Tab = "capacity" | "roles" | "skills";
 
-const resourceKinds = ["role", "skill"] as const;
-
+// Resource configuration center. Each tab answers one question, so the scope of every setting is visible:
+// Capacity = when a person can work, Job roles = what kind of professional they are, Skills = what they can do.
 function Resources() {
   const { t } = useTranslation();
   const me = useProfile();
+  const [tab, setTab] = useState<Tab>("capacity");
   const [user, setUser] = useState("");
-  const [editing, setEditing] = useState<Choice>();
   const cache = useQueryClient();
   const admin = me?.user_type === "admin";
   const id = user || me?.id;
@@ -28,62 +29,123 @@ function Resources() {
   const save = useMutation({ mutationFn: ({ path, method, body }: { path: string; method: string; body?: object }) =>
     api(path, { method, body: body && JSON.stringify(body) }),
     onSuccess: async () => {
-      setEditing(undefined);
-      await Promise.all(["resource-directory", "capacity", "workload"].map(key => cache.invalidateQueries({queryKey:[key]})));
+      await Promise.all(["resource-directory", "capacity", "workload"].map((key) => cache.invalidateQueries({ queryKey: [key] })));
     } });
   const directory = query.data;
-  return <section className="space-y-5">
-    <h2 className="text-lg font-semibold">{t("settings.resourceSettings.resourceSettings")}</h2>
-    {(save.error || query.error || capacity.error) && <p role="alert">{(save.error ?? query.error ?? capacity.error)?.message}</p>}
-    {admin && <label>{t("settings.resourceSettings.person")}<select value={user} onChange={e => setUser(e.target.value)} className="block rounded border bg-background p-2">
-      <option value="">{t("settings.resourceSettings.mySchedule")}</option>{directory?.users.filter(x => x.id !== me.id).map(x => <option key={x.id} value={x.id}>{x.name}</option>)}
-    </select></label>}
-    {capacity.data && <CapacityForm key={JSON.stringify([id, capacity.data])} value={capacity.data} busy={save.isPending} onSave={body =>
-      save.mutate({path:`/api/v1/users/${id}/capacity`,method:"PUT",body})} />}
-    {admin && directory && resourceKinds.map(kind => {
-      const entries = kind === "role" ? directory.roles : directory.skills;
-      const selected = directory.users.find(x => x.id === id);
-      const assigned = kind === "role" ? selected?.roles : selected?.skills;
-      const current = entries.find(x => x.id === editing?.id);
-      return <section key={kind} className="space-y-2">
-        <h3 className="font-semibold">{kind === "role" ? t("settings.resourceSettings.jobRoles") : t("settings.resourceSettings.skills")}</h3>
-        <form key={current?.id ?? "new"} className="flex flex-wrap items-end gap-2" onSubmit={event => {
-          event.preventDefault();
-          const form = event.currentTarget;
-          save.mutate({path:"/api/v1/resource-directory",method:current ? "PUT" : "POST",
-            body:{kind,name:new FormData(form).get("name"),...(current ? {id:current.id} : {})}}, { onSuccess: () => form.reset() });
-        }}>
-          <label>{kind === "role" ? t("settings.resourceSettings.jobRoleName") : t("settings.resourceSettings.skillName")}<Input name="name" required maxLength={120} defaultValue={current?.name}/></label>
-          <Button type="submit" disabled={save.isPending}>{current ? t("settings.resourceSettings.saveName") : t("settings.resourceSettings.add")}</Button>
-        </form>
-        <ul>{entries.map(x => <li key={x.id} className="flex flex-wrap items-center gap-2 py-1">
-          <label className="flex gap-2"><input type="checkbox" disabled={!selected || save.isPending} checked={assigned?.includes(x.id) ?? false} onChange={event =>
-            save.mutate({path:"/api/v1/resource-directory",method:"PUT",body:{kind,id:x.id,user_id:id,assigned:event.target.checked}})}/>{x.name}</label>
-          <Button size="sm" variant="ghost" onClick={() => setEditing(x)}>{t("settings.resourceSettings.rename")}</Button>
-          <Button size="sm" variant="outline" disabled={save.isPending} onClick={() => save.mutate({path:`/api/v1/resource-directory?kind=${kind}&id=${x.id}`,method:"DELETE"})}>{t("settings.resourceSettings.remove")}</Button>
-        </li>)}</ul>
-      </section>;
-    })}
+  const tabs: { id: Tab; label: string; adminOnly: boolean }[] = [
+    { id: "capacity", label: t("settings.resources.tabs.capacity"), adminOnly: false },
+    { id: "roles", label: t("settings.resourceSettings.jobRoles"), adminOnly: true },
+    { id: "skills", label: t("settings.resourceSettings.skills"), adminOnly: true },
+  ];
+  const visibleTabs = tabs.filter((item) => admin || !item.adminOnly);
+  const selected = directory?.users.find((entry) => entry.id === id);
+  return <section className="min-w-0 space-y-6">
+    <AdminPageHeader description={t("settings.resources.description")} />
+    {(save.error || query.error || capacity.error) && <p role="alert" className="text-sm text-destructive">{(save.error ?? query.error ?? capacity.error)?.message}</p>}
+
+    <nav aria-label={t("settings.resources.sections")} className="flex gap-4 border-b text-sm">
+      {visibleTabs.map((item) => <button key={item.id} type="button" aria-current={tab === item.id ? "page" : undefined} onClick={() => setTab(item.id)}
+        className={`-mb-px border-b-2 px-1 pb-2 ${tab === item.id ? "border-primary font-medium" : "border-transparent text-muted-foreground hover:text-foreground"}`}>{item.label}</button>)}
+    </nav>
+
+    {tab === "capacity" && <section className="space-y-6">
+      {admin && <label className="block max-w-sm space-y-1 text-sm">{t("settings.resourceSettings.person")}
+        <select value={user} onChange={(event) => setUser(event.target.value)} className="block h-9 w-full rounded-md border border-input bg-background px-2">
+          <option value="">{t("settings.resourceSettings.mySchedule")}</option>
+          {directory?.users.filter((entry) => entry.id !== me?.id).map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+        </select>
+      </label>}
+      <p className="text-sm text-muted-foreground">{t("settings.resources.capacityScope")}</p>
+      {capacity.data && <CapacityForm key={JSON.stringify([id, capacity.data])} value={capacity.data} busy={save.isPending} onSave={(body) =>
+        save.mutate({ path: `/api/v1/users/${id}/capacity`, method: "PUT", body })} />}
+    </section>}
+
+    {tab === "roles" && admin && directory && <AssignmentList kind="role" entries={directory.roles} assigned={selected?.roles ?? []} person={selected} busy={save.isPending}
+      onSave={(body) => save.mutate({ path: "/api/v1/resource-directory", method: body.method, body: body.body })} onPerson={setUser} people={directory.users} selectedId={id} />}
+    {tab === "skills" && admin && directory && <AssignmentList kind="skill" entries={directory.skills} assigned={selected?.skills ?? []} person={selected} busy={save.isPending}
+      onSave={(body) => save.mutate({ path: "/api/v1/resource-directory", method: body.method, body: body.body })} onPerson={setUser} people={directory.users} selectedId={id} />}
   </section>;
 }
 
-function CapacityForm({value,busy,onSave}: {value:Capacity;busy:boolean;onSave:(value:Capacity)=>void}) {
+/** Job roles or skills: a short list with the person's assignments and the rename/remove actions. */
+function AssignmentList({ kind, entries, assigned, person, busy, onSave, onPerson, people, selectedId }: {
+  kind: "role" | "skill"; entries: Choice[]; assigned: string[]; person?: Choice; busy: boolean;
+  onSave: (value: { method: string; body: object }) => void; onPerson: (id: string) => void; people: Choice[]; selectedId?: string;
+}) {
   const { t } = useTranslation();
-  const [inherit,setInherit] = useState(value.daily_hours == null);
-  const [leave,setLeave] = useState(value.leave_dates);
-  return <form className="space-y-3" onSubmit={event => {
+  const [editing, setEditing] = useState<Choice>();
+  const title = kind === "role" ? t("settings.resourceSettings.jobRoles") : t("settings.resourceSettings.skills");
+  const description = kind === "role" ? t("settings.resources.rolesScope") : t("settings.resources.skillsScope");
+  return <section className="space-y-5">
+    <p className="text-sm text-muted-foreground">{description}</p>
+    <form key={editing?.id ?? "new"} className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
+      event.preventDefault();
+      const form = event.currentTarget;
+      const name = String(new FormData(form).get("name") ?? "").trim();
+      onSave({ method: editing ? "PUT" : "POST", body: { kind, name, ...(editing ? { id: editing.id } : {}) } });
+      setEditing(undefined);
+      form.reset();
+    }}>
+      <label className="block space-y-1 text-sm">{kind === "role" ? t("settings.resourceSettings.jobRoleName") : t("settings.resourceSettings.skillName")}
+        <Input name="name" required maxLength={120} defaultValue={editing?.name} className="w-64" />
+      </label>
+      <Button type="submit" disabled={busy}>{editing ? t("settings.resourceSettings.saveName") : t("settings.resourceSettings.add")}</Button>
+    </form>
+
+    <label className="block max-w-sm space-y-1 text-sm">{t("settings.resourceSettings.person")}
+      <select value={selectedId ?? ""} onChange={(event) => onPerson(event.target.value)} className="block h-9 w-full rounded-md border border-input bg-background px-2">
+        {people.map((entry) => <option key={entry.id} value={entry.id}>{entry.name}</option>)}
+      </select>
+    </label>
+
+    {entries.length ? <ul className="divide-y rounded-lg border">
+      {entries.map((entry) => <li key={entry.id} className="flex flex-wrap items-center gap-3 px-3 py-2.5">
+        <label className="flex min-w-0 flex-1 items-center gap-2 text-sm">
+          <input type="checkbox" disabled={!person || busy} checked={assigned.includes(entry.id)}
+            aria-label={t("settings.resources.assignTo", { item: entry.name, name: person?.name ?? "" })}
+            onChange={(event) => onSave({ method: "PUT", body: { kind, id: entry.id, user_id: person?.id, assigned: event.target.checked } })} />
+          <span className="truncate">{entry.name}</span>
+        </label>
+        <Button size="sm" variant="ghost" onClick={() => setEditing(entry)}>{t("settings.resourceSettings.rename")}</Button>
+        <Button size="sm" variant="outline" disabled={busy} onClick={() => onSave({ method: "DELETE", body: { kind, id: entry.id } })}>{t("settings.resourceSettings.remove")}</Button>
+      </li>)}
+    </ul> : <AdminEmptyState title={t("settings.resources.emptyTitle", { title: title.toLowerCase() })} description={description} />}
+  </section>;
+}
+
+function CapacityForm({ value, busy, onSave }: { value: Capacity; busy: boolean; onSave: (value: Capacity) => void }) {
+  const { t } = useTranslation();
+  const [inherit, setInherit] = useState(value.daily_hours == null);
+  const [leave, setLeave] = useState(value.leave_dates);
+  return <form className="space-y-6" onSubmit={(event) => {
     event.preventDefault();
-    const fields=new FormData(event.currentTarget);
-    onSave({working_days:inherit ? null : fields.getAll("day").map(Number),daily_hours:inherit ? null : Number(fields.get("hours")),leave_dates:leave});
+    const fields = new FormData(event.currentTarget);
+    onSave({ working_days: inherit ? null : fields.getAll("day").map(Number), daily_hours: inherit ? null : Number(fields.get("hours")), leave_dates: leave });
   }}>
-    <label className="flex gap-2"><input type="checkbox" checked={inherit} onChange={event => setInherit(event.target.checked)}/>{t("settings.resourceSettings.useWorkspaceWorkingHours")}</label>
-    {!inherit && <fieldset className="flex flex-wrap gap-3"><legend>{t("settings.resourceSettings.workingDays")}</legend>
-      {[t("settings.resourceSettings.weekday0"), t("settings.resourceSettings.weekday1"), t("settings.resourceSettings.weekday2"), t("settings.resourceSettings.weekday3"), t("settings.resourceSettings.weekday4"), t("settings.resourceSettings.weekday5"), t("settings.resourceSettings.weekday6")].map((day,i) => <label key={day}><input type="checkbox" name="day" value={i} defaultChecked={value.working_days?.includes(i) ?? (i > 0 && i < 6)} /> {day}</label>)}
-      <label>{t("settings.resourceSettings.dailyHours")}<Input name="hours" type="number" min={1} max={24} required defaultValue={value.daily_hours ?? 8}/></label>
+    <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={inherit} onChange={(event) => setInherit(event.target.checked)} />{t("settings.resourceSettings.useWorkspaceWorkingHours")}</label>
+    {!inherit && <fieldset className="space-y-3">
+      <legend className="mb-2 text-sm font-medium">{t("settings.resourceSettings.workingDays")}</legend>
+      <div className="flex flex-wrap gap-2">
+        {[0, 1, 2, 3, 4, 5, 6].map((i) => <label key={i} className="inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm has-[:checked]:border-primary has-[:checked]:bg-accent">
+          <input type="checkbox" name="day" value={i} defaultChecked={value.working_days?.includes(i) ?? (i > 0 && i < 6)} />
+          {t(`settings.resourceSettings.weekday${i}`)}
+        </label>)}
+      </div>
+      <label className="block max-w-xs space-y-1 text-sm">{t("settings.resourceSettings.dailyHours")}
+        <Input name="hours" type="number" min={1} max={24} required defaultValue={value.daily_hours ?? 8} className="w-28" />
+      </label>
     </fieldset>}
-    <fieldset className="space-y-2"><legend>{t("settings.resourceSettings.leaveDates")}</legend>
-      {leave.map(date => <div key={date} className="flex items-center gap-2">{date}<Button type="button" variant="ghost" onClick={() => setLeave(leave.filter(x => x !== date))}>{t("settings.resourceSettings.remove")}</Button></div>)}
-      <label>{t("settings.resourceSettings.addLeaveDate")}<Input type="date" value="" onChange={event => { if (event.target.value && !leave.includes(event.target.value)) setLeave([...leave,event.target.value].sort()); }} /></label>
+    <fieldset className="space-y-2">
+      <legend className="mb-2 text-sm font-medium">{t("settings.resourceSettings.leaveDates")}</legend>
+      {leave.length ? <ul className="divide-y rounded-md border">
+        {leave.map((date) => <li key={date} className="flex items-center justify-between px-3 py-2 text-sm">
+          <span>{date}</span>
+          <Button type="button" variant="ghost" size="sm" aria-label={t("settings.resources.removeLeave", { date })} onClick={() => setLeave(leave.filter((entry) => entry !== date))}>{t("settings.resourceSettings.remove")}</Button>
+        </li>)}
+      </ul> : <p className="text-sm text-muted-foreground">{t("settings.resources.noLeave")}</p>}
+      <label className="block max-w-xs space-y-1 text-sm">{t("settings.resourceSettings.addLeaveDate")}
+        <Input type="date" value="" className="w-48" onChange={(event) => { if (event.target.value && !leave.includes(event.target.value)) setLeave([...leave, event.target.value].sort()); }} />
+      </label>
     </fieldset>
     <Button type="submit" disabled={busy}>{t("settings.resourceSettings.saveCapacity")}</Button>
   </form>;

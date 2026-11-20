@@ -29,8 +29,8 @@ var (
 	docRoleCaps = map[string][]string{
 		"read":    {"view"},
 		"limited": {"view", "comment", "change_status", "attach"},
-		"editor":  {"view", "comment", "change_status", "attach", "edit", "create"},
-		"full":    {"view", "comment", "change_status", "attach", "edit", "create", "delete", "share"},
+		"editor":  {"view", "comment", "change_status", "attach", "edit", "create", "use_blueprint", "create_blueprint", "manage_blueprint"},
+		"full":    {"view", "comment", "change_status", "attach", "edit", "create", "delete", "share", "use_blueprint", "create_blueprint", "manage_blueprint"},
 	}
 	docCeilings = map[string][]string{
 		"admin":        docRoleCaps["full"],
@@ -80,6 +80,8 @@ type fixture struct {
 	// files is the directory attachments are stored in.
 	files string
 	queue *mailqueue.Queue
+	// admins are the Workspace admins made so far; a Space they create gets an explicit full share (A1: no implicit content access).
+	admins []string
 }
 
 func newFixture(t *testing.T) *fixture {
@@ -145,12 +147,33 @@ func (f *fixture) person(userType string) *person {
 	email := fmt.Sprintf("%s%d@example.com", userType, f.n)
 	id := f.queryID("INSERT INTO users(email,first_name,last_name,password_hash,user_type,status) VALUES ($1,'T','User','x',$2::user_type,'active') RETURNING id::text", email, userType)
 	f.exec("INSERT INTO spaces(name,kind,owner_id) VALUES ('Personal','personal',$1)", id)
+	if userType == "admin" {
+		f.admins = append(f.admins, id)
+	}
 	token, hash, _ := security.Token()
 	f.exec("INSERT INTO sessions(token_hash,user_id,expires_at,absolute_expires_at) VALUES ($1,$2,now()+interval '1 day',now()+interval '2 days')", hash, id)
 	return &person{id: id, userType: userType, cookie: &http.Cookie{Name: "pms_session", Value: token}}
 }
 
 func (f *fixture) space(name string) string {
+	f.t.Helper()
+	id := f.spaceWithoutAdmins(name)
+	for _, admin := range f.admins {
+		f.share(id, "user", admin, "full")
+	}
+	return id
+}
+
+// unlinkedAdmin is a Workspace admin who is not given Spaces created later (A1.3: no implicit content access).
+func (f *fixture) unlinkedAdmin() *person {
+	f.t.Helper()
+	p := f.person("admin")
+	f.admins = f.admins[:len(f.admins)-1]
+	return p
+}
+
+// spaceWithoutAdmins creates a shared Space with no automatic admin share, for tests that assert a Workspace admin is denied.
+func (f *fixture) spaceWithoutAdmins(name string) string {
 	f.t.Helper()
 	return f.queryID("INSERT INTO spaces(name,kind) VALUES ($1,'shared') RETURNING id::text", name)
 }
@@ -166,7 +189,8 @@ func (f *fixture) group(name string, members ...*person) string {
 
 func (f *fixture) share(spaceID, principalType, principalID, role string) {
 	f.t.Helper()
-	f.exec("INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('space',$1,$2::principal_type,$3,$4::share_role)", spaceID, principalType, principalID, role)
+	// Upserts: a Space's automatic admin share (see space) may be set again to another role by a test.
+	f.exec("INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('space',$1,$2::principal_type,$3,$4::share_role) ON CONFLICT (target_type,target_id,principal_type,principal_id) DO UPDATE SET role=EXCLUDED.role, custom_role_id=NULL", spaceID, principalType, principalID, role)
 }
 
 type reply struct {
@@ -250,16 +274,14 @@ func TestAuthorizationMatrix(t *testing.T) {
 				t.Run(name, func(t *testing.T) {
 					f.t = t
 					p := f.person(ut)
-					space := f.space(name)
+					space := f.spaceWithoutAdmins(name) // A1: only the share below grants access
 					if path == "direct" {
 						f.share(space, "user", p.id, role)
 					} else {
 						f.share(space, "group", f.group(name, p), role)
 					}
+					// D-17 A1: the share is the only grant; a Workspace admin is not full in every shared space.
 					want := expectedCaps(ut, role)
-					if ut == "admin" {
-						want = docRoleCaps["full"] // D-17: admin is full in every shared space
-					}
 					got := f.call(p, "GET", "/spaces/"+space, nil)
 					f.want(got, 200, "GET space")
 					if !reflect.DeepEqual(got.caps(), want) {
@@ -338,8 +360,11 @@ func TestSpaceAccessRules(t *testing.T) {
 	f.want(f.call(other, "GET", "/spaces/not-a-uuid", nil), 404, "malformed id")
 	f.want(f.call(nil, "GET", "/spaces", nil), 401, "no session")
 
-	// admin: full access to the shared space without any share
-	f.want(f.call(admin, "GET", "/spaces/"+space, nil), 200, "admin reads a shared space")
+	// D-17 A1: a Workspace admin has no implicit access to a private shared space; an explicit share is what gives it.
+	f.want(f.call(admin, "GET", "/spaces/"+space, nil), 404, "admin without a share cannot read a private shared space")
+	f.share(space, "user", admin.id, "read")
+	f.want(f.call(admin, "GET", "/spaces/"+space, nil), 200, "admin reads it with an explicit share")
+	f.exec("DELETE FROM shares WHERE target_type='space' AND target_id=$1 AND principal_id=$2", space, admin.id)
 
 	// personal space: private even from admins; cannot be changed, deleted or shared
 	var ownerPersonal string

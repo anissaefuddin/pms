@@ -69,6 +69,7 @@ const maxDashboardWidgets = 100
 
 func (s *Server) dashboardRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/analytics/query", s.requireUser(s.runAnalytics))
+	mux.HandleFunc("POST /api/v1/analytics/operational", s.requireUser(s.runOperationalAnalytics))
 	mux.HandleFunc("GET /api/v1/dashboards", s.requireUser(s.listDashboards))
 	mux.HandleFunc("POST /api/v1/dashboards", s.requireUser(s.createDashboard))
 	mux.HandleFunc("GET /api/v1/dashboards/{dashboardId}", s.requireUser(s.getDashboard))

@@ -33,6 +33,8 @@ type Props = {
   initialStatus?: string;
   /** Tipe awal saat dibuka dari menu global create; diabaikan bila taskOnly atau ada parent. */
   initialKind?: CreateKind;
+  /** A Quick Access or "More item types" choice; the dialog still checks it against the chosen destination. */
+  initialTypeKey?: string;
   onCreated: (item: Item) => void;
 };
 const kinds: CreateKind[] = ["project", "folder", "task"];
@@ -58,7 +60,7 @@ export function CreateItemDialog(props: Props) {
 
 type FieldKey = "title" | "location" | "parent" | "due_date";
 
-function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind }: Props) {
+function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const spaces = useSpaces();
@@ -77,17 +79,15 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [busy, setBusy] = useState(false);
   const [blueprintID, setBlueprintID] = useState("");
-  const [typeKeyChoice, setTypeKey] = useState("");
-  const typeDefs = useItemTypes().data ?? [];
+  const [typeKeyChoice, setTypeKey] = useState(initialTypeKey ?? "");
+  // CIT-D01: Workspace types, and the types of this Space only (a Space type never appears in another Space)
+  const typeDefs = (useItemTypes().data ?? []).filter((def) => !def.space_id || def.space_id === spaceID);
   // SPC-14: the Space's "+" menu narrows what is offered; a fixed parent or the board's task-only add is not a menu.
   const menu = useCreateMenu(spaceID, !fixedParent && !taskOnly).data;
   const offered = (def: ItemTypeDef) => fixedParent || taskOnly || menuAllows(menu, def.key);
   const customOf = (base: CreateKind) => typeDefs.filter((def) => !def.is_builtin && def.active && def.base === base && offered(def));
   const kinds = createKinds.filter((base) => menuAllows(menu, base) || customOf(base).length > 0);
   const kind: CreateKind = lockedKind || kinds.includes(chosenKind) ? chosenKind : kinds[0] ?? chosenKind;
-  const customTypes = customOf(kind);
-  const baseHidden = !fixedParent && !taskOnly && !menuAllows(menu, kind);
-  const typeKey = customTypes.some((def) => def.key === typeKeyChoice) ? typeKeyChoice : baseHidden ? customTypes[0]?.key ?? "" : "";
   const choices = spaces.data?.filter((space) => space.my_capabilities?.includes("create")) ?? [];
   const selected = choices.find((space) => space.id === spaceID);
   const directory = trail.at(-1);
@@ -97,6 +97,11 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
     queryFn: () => listItems(directory ? `/api/v1/items/${directory.id}/children` : `/api/v1/spaces/${spaceID}/items`),
   });
   const parent = parentID === directory?.id ? directory : parents.data?.find((item) => item.id === parentID);
+  // allowed_children: a parent type that lists child types accepts only those custom types below it (ITM-S8.1.3)
+  const parentChildren = typeDefs.find((def) => def.id === parent?.item_type?.id)?.allowed_children ?? [];
+  const customTypes = customOf(kind).filter((def) => !parentChildren.length || parentChildren.includes(def.id));
+  const baseHidden = !fixedParent && !taskOnly && !menuAllows(menu, kind);
+  const typeKey = customTypes.some((def) => def.key === typeKeyChoice) ? typeKeyChoice : baseHidden ? customTypes[0]?.key ?? "" : "";
   // Task hanya boleh di bawah Project; folder dan project boleh di bawah item non-task.
   const parentOptions = parents.data?.filter((item) => (kind === "task" ? item.type === "project" : item.type !== "task")
     && item.my_capabilities.includes("create")
@@ -144,11 +149,15 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       if (me.default_task_effort_minutes != null) input.effort_minutes = me.default_task_effort_minutes;
     }
     if (canShare && shares.length) input.shares = shares.map(({ principal_type, principal_id, role }) => ({ principal_type, principal_id, role }));
+    if (blueprint && start && due) { // one anchor only: the server refuses start_date together with finish_date
+      setError(t("blueprints.anchorOne"));
+      return;
+    }
     setBusy(true);
     try {
       const item = blueprint
         ? await api<Item>(`/api/v1/blueprints/${blueprint.id}/items`, {
-          method: "POST", body: JSON.stringify({ locations: input.locations, title, ...(start && { start_date: start }) }),
+          method: "POST", body: JSON.stringify({ locations: input.locations, title, ...(start ? { start_date: start } : due ? { finish_date: due } : {}) }),
         })
         : await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
       await queryClient.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });

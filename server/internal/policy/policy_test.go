@@ -10,14 +10,14 @@ import (
 var expectedRoleCaps = map[Role][]Capability{
 	Read:    {View},
 	Limited: {View, Comment, ChangeStatus, Attach},
-	Editor:  {View, Comment, ChangeStatus, Attach, Edit, Create},
-	Full:    {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
+	Editor:  {View, Comment, ChangeStatus, Attach, Edit, Create, UseBlueprint, CreateBlueprint, ManageBlueprint},
+	Full:    {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
 }
 
 var expectedCeilings = map[UserType][]Capability{
-	Admin:        {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
-	Regular:      {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
-	External:     {View, Comment, ChangeStatus, Attach, Edit, Create},
+	Admin:        {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
+	Regular:      {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
+	External:     {View, Comment, ChangeStatus, Attach, Edit, Create, UseBlueprint, CreateBlueprint, ManageBlueprint},
 	Collaborator: {View, Comment, ChangeStatus, Attach},
 	Viewer:       {View, Comment},
 }
@@ -82,19 +82,23 @@ func TestDecide(t *testing.T) {
 
 func TestSpaceCapsRules(t *testing.T) {
 	owner := Actor{ID: "owner", Type: Regular}
-	if got := spaceCaps(owner, "personal", "owner", nil); got != Ceiling(Regular) {
+	if got := spaceCaps(owner, "personal", "owner", false, false, nil); got != Ceiling(Regular) {
 		t.Errorf("owner of a personal space: %v", got.List())
 	}
-	if !spaceCaps(Actor{ID: "x", Type: Admin}, "personal", "owner", nil).Empty() {
+	if !spaceCaps(Actor{ID: "x", Type: Admin}, "personal", "owner", false, false, nil).Empty() {
 		t.Error("an admin must not see someone else's personal space")
 	}
-	if got := spaceCaps(Actor{ID: "x", Type: Admin}, "shared", "", nil); got != Ceiling(Admin) {
-		t.Error("an admin has every capability in a shared space without any share")
+	// D-17 A1: a Workspace admin has no implicit capability in a shared space; an explicit Full share is what grants it.
+	if !spaceCaps(Actor{ID: "x", Type: Admin}, "shared", "", false, false, nil).Empty() {
+		t.Error("a workspace admin without a share must not see a shared space's content")
 	}
-	if !spaceCaps(Actor{ID: "x", Type: Regular}, "shared", "", nil).Empty() {
+	if got := spaceCaps(Actor{ID: "x", Type: Admin}, "shared", "", false, false, []string{"full"}); got != Effective(Admin, Full) {
+		t.Error("an admin with an explicit full share gets the full role, cut to the admin ceiling")
+	}
+	if !spaceCaps(Actor{ID: "x", Type: Regular}, "shared", "", false, false, nil).Empty() {
 		t.Error("a regular user without a share must not see a shared space")
 	}
-	if got := spaceCaps(Actor{ID: "e", Type: External}, "personal", "e", nil); got != Ceiling(External) {
+	if got := spaceCaps(Actor{ID: "e", Type: External}, "personal", "e", false, false, nil); got != Ceiling(External) {
 		t.Errorf("an external owner of a personal space is still cut by the ceiling: %v", got.List())
 	}
 }

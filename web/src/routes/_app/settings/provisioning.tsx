@@ -9,6 +9,7 @@ import { formatDateTime, useProfile } from "@/lib/profile";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { AdminStatus } from "@/components/admin/admin-ui";
 
 type ScimToken = components["schemas"]["ScimToken"];
 type TokenList = components["schemas"]["ScimTokenList"];
@@ -43,18 +44,18 @@ function ProvisioningPage() {
     } catch (err) { setError((err as Error).message); }
   }
 
-  const list = tokens.data?.items ?? [];
+  // Active tokens first; revoked ones stay visible below as history.
+  const list = [...(tokens.data?.items ?? [])].sort((a, b) => Number(!!a.revoked_at) - Number(!!b.revoked_at));
   return <section className="space-y-5">
     <header className="flex flex-wrap items-start justify-between gap-3">
       <div>
-        <h2 className="text-lg font-semibold">{t("provisioning.title")}</h2>
         <p className="text-sm text-muted-foreground">{t("provisioning.description")}</p>
       </div>
       <Button onClick={() => { setFresh(undefined); setCreating(true); }}>{t("provisioning.new")}</Button>
     </header>
     {tokens.data && <Copyable label={t("provisioning.baseUrl")} hint={t("provisioning.baseUrlHint")} value={tokens.data.base_url} />}
     {fresh?.token && <div role="alert" className="space-y-3 rounded-lg border border-amber-500 p-4">
-      <h3 className="font-semibold">{t("provisioning.tokenTitle")}</h3>
+      <h2 className="font-semibold">{t("provisioning.tokenTitle")}</h2>
       <p className="text-sm">{t("provisioning.tokenWarning")}</p>
       <Copyable label={t("provisioning.tokenLabel", { name: fresh.name })} value={fresh.token} />
       <Button variant="outline" onClick={() => setFresh(undefined)}>{t("provisioning.done")}</Button>
@@ -73,7 +74,7 @@ function ProvisioningPage() {
         <td className="py-2 pr-4">{t(`provisioning.types.${token.default_user_type}`, { defaultValue: token.default_user_type })}</td>
         <td className="py-2 pr-4 font-mono text-xs">{token.prefix}…</td>
         <td className="py-2 pr-4">{token.last_used_at ? formatDateTime(token.last_used_at, profile) : t("provisioning.never")}</td>
-        <td className="py-2 pr-4">{token.revoked_at ? t("provisioning.revoked") : t("provisioning.active")}</td>
+        <td className="py-2 pr-4"><AdminStatus tone={token.revoked_at ? "neutral" : "success"} label={token.revoked_at ? t("provisioning.revoked") : t("provisioning.active")} /></td>
         <td className="py-2 text-right">{!token.revoked_at && <Button size="sm" variant="outline" aria-label={t("provisioning.revokeNamed", { name: token.name })}
           onClick={() => { setError(""); setRevoking(token); }}>{t("provisioning.revoke")}</Button>}</td>
       </tr>)}</tbody>
@@ -111,7 +112,7 @@ function TokenForm({ onClose, onCreated }: { onClose: () => void; onCreated: (to
     } catch (err) { setError((err as Error).message || t("provisioning.createFailed")); } finally { setBusy(false); }
   }
   return <form onSubmit={(e) => void submit(e)} className="space-y-4 rounded-lg border p-4" aria-label={t("provisioning.newTitle")}>
-    <h3 className="font-semibold">{t("provisioning.newTitle")}</h3>
+    <h2 className="font-semibold">{t("provisioning.newTitle")}</h2>
     <label className="block text-sm">{t("provisioning.name")}<Input required maxLength={80} placeholder={t("provisioning.nameHint")} value={name} onChange={(e) => setName(e.target.value)} className="mt-1 max-w-sm" /></label>
     <label className="block text-sm">{t("provisioning.defaultType")}
       <select className={select} value={type} onChange={(e) => setType(e.target.value as (typeof TYPES)[number])}>

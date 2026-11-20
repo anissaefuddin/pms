@@ -1,0 +1,16 @@
+{
+  "nav": "Berbintang",
+  "title": "Berbintang",
+  "description": "Item yang Anda beri bintang. Hanya Anda yang melihat daftar ini.",
+  "loading": "Memuat item berbintang…",
+  "error": "Item berbintang tidak dapat dimuat.",
+  "retry": "Coba lagi",
+  "empty": "Anda belum memberi bintang apa pun. Gunakan bintang pada item untuk menemukannya di sini.",
+  "add": "Beri bintang item ini",
+  "remove": "Hapus bintang",
+  "failed": "Bintang tidak dapat diubah.",
+  "type.project": "Proyek",
+  "type.folder": "Folder",
+  "type.task": "Tugas",
+  "emptyTitle": "Belum ada yang diberi bintang"
+}

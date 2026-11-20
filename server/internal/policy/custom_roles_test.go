@@ -12,8 +12,8 @@ func TestBuiltInRolesAndCeilingsAreUnchanged(t *testing.T) {
 	roles := map[Role][]Capability{
 		Read:    {View},
 		Limited: {View, Comment, ChangeStatus, Attach},
-		Editor:  {View, Comment, ChangeStatus, Attach, Edit, Create},
-		Full:    {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
+		Editor:  {View, Comment, ChangeStatus, Attach, Edit, Create, UseBlueprint, CreateBlueprint, ManageBlueprint},
+		Full:    {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
 	}
 	for role, want := range roles {
 		if got := RoleCaps(role).List(); !slices.Equal(got, want) {
@@ -21,9 +21,9 @@ func TestBuiltInRolesAndCeilingsAreUnchanged(t *testing.T) {
 		}
 	}
 	ceilings := map[UserType][]Capability{
-		Admin:        {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
-		Regular:      {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share},
-		External:     {View, Comment, ChangeStatus, Attach, Edit, Create},
+		Admin:        {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
+		Regular:      {View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint},
+		External:     {View, Comment, ChangeStatus, Attach, Edit, Create, UseBlueprint, CreateBlueprint, ManageBlueprint},
 		Collaborator: {View, Comment, ChangeStatus, Attach},
 		Viewer:       {View, Comment},
 	}
@@ -32,7 +32,7 @@ func TestBuiltInRolesAndCeilingsAreUnchanged(t *testing.T) {
 			t.Errorf("%s ceiling = %v, want %v", kind, got, want)
 		}
 	}
-	if want := []Capability{View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share}; !slices.Equal(AllCapabilities, want) {
+	if want := []Capability{View, Comment, ChangeStatus, Attach, Edit, Create, Delete, Share, UseBlueprint, CreateBlueprint, ManageBlueprint}; !slices.Equal(AllCapabilities, want) {
 		t.Fatalf("capability order is part of the stored mask and must only be appended to: %v", AllCapabilities)
 	}
 	if ValidRole("mask:1") || ValidRole("custom:x") {
@@ -64,7 +64,7 @@ func TestCustomRoleMasksNeverExceedTheCeiling(t *testing.T) {
 }
 
 func TestMalformedCustomMasksGrantNothing(t *testing.T) {
-	for _, raw := range []string{"mask:", "mask:x", "mask:-1", "mask:256", "mask:1000000", "mask:1.5", "mask: 1", "MASK:1", "custom:1"} {
+	for _, raw := range []string{"mask:", "mask:x", "mask:-1", "mask:2048", "mask:1000000", "mask:1.5", "mask: 1", "MASK:1", "custom:1"} {
 		if got := RoleCaps(Role(raw)); got != 0 {
 			t.Errorf("%q granted %v", raw, got.List())
 		}

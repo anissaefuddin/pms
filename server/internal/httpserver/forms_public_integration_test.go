@@ -44,6 +44,8 @@ func TestPublicFormLink(t *testing.T) {
 	f.share(intake, "user", editor.id, "editor")
 	f.share(intake, "user", reader.id, "read")
 	f.share(work, "user", editor.id, "editor")
+	f.share(intake, "user", admin.id, "full") // A1.2: the admin builds and links the form in its Space, with items placed in Work
+	f.share(work, "user", admin.id, "full")
 	progress := f.queryID("SELECT id::text FROM statuses WHERE name='In Progress' AND workflow_id=(SELECT id FROM workflows WHERE is_default)")
 	body := map[string]any{"name": "Public help", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
@@ -52,6 +54,7 @@ func TestPublicFormLink(t *testing.T) {
 	}}}}, "response": map[string]any{"item_type": "task", "status_id": progress, "location": map[string]any{"space_id": work}, "title_question": "subject"}}
 	created := f.call(editor, "POST", "/spaces/"+intake+"/forms", body)
 	f.want(created, 201, "build form")
+	f.publishForm(editor, created.body["id"].(string))
 	id := created.body["id"].(string)
 	who := map[string]string{"name": "Pat Visitor", "email": "Pat@Example.com"}
 	submit := func(token string, answers map[string]any, extra ...func(map[string]any)) reply {
@@ -213,11 +216,14 @@ func TestConcurrentPublicFormSubmissionsAllSucceedOnce(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	intake, work := f.space("Intake"), f.space("Work")
+	f.share(work, "user", admin.id, "full")   // A1.2: admin creates this Space's content as an explicit member
+	f.share(intake, "user", admin.id, "full") // A1.2: the admin builds the form in the intake Space
 	body := map[string]any{"name": "Concurrent", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
 	}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": work}, "title_question": "subject"}}
 	created := f.call(admin, "POST", "/spaces/"+intake+"/forms", body)
 	f.want(created, 201, "build form")
+	f.publishForm(admin, created.body["id"].(string))
 	token := f.call(admin, "POST", "/forms/"+created.body["id"].(string)+"/public-link", nil).body["public_token"].(string)
 
 	const n = 30
@@ -255,12 +261,15 @@ func TestPublicConfirmationUsesTheFormsWording(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	intake, work := f.space("Intake"), f.space("Work")
+	f.share(work, "user", admin.id, "full")   // A1.2: admin creates this Space's content as an explicit member
+	f.share(intake, "user", admin.id, "full") // A1.2: the admin builds the form in the intake Space
 	body := map[string]any{"name": "Brand form", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
 	}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": work}, "title_question": "subject",
 		"email": map[string]any{"sender_name": "Acme Desk", "greeting": "Hi {name}", "message": "We got {title} via {form}.", "closing": "<b>Bye</b>"}}}
 	created := f.call(admin, "POST", "/spaces/"+intake+"/forms", body)
 	f.want(created, 201, "build form")
+	f.publishForm(admin, created.body["id"].(string))
 	link := f.call(admin, "POST", "/forms/"+created.body["id"].(string)+"/public-link", nil)
 	token := link.body["public_token"].(string)
 	got := f.call(nil, "POST", "/public/forms/"+token+"/submissions", map[string]any{"answers": map[string]any{"subject": "Broken login"}, "requester": map[string]string{"name": "Pat", "email": "pat@example.com"}})

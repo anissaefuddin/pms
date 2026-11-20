@@ -1,11 +1,13 @@
 import { useProfile, formatNumber } from "@/lib/profile";
 import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { Bell, Blocks, Layers, Plus, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, UserPlus } from "lucide-react";
+import { Shapes, Bell, Blocks, ChevronDown, CircleHelp, Languages, Layers, LogOut, MessageSquare, Palette, Plus, Settings, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, Trash2, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { listNotifications, notificationKey } from "@/lib/notifications";
-import { api } from "@/lib/api";
+import { api, type CurrentUser } from "@/lib/api";
+import { LANGUAGES, isLanguage, setLanguage, type Language } from "@/i18n";
+
 import { clearSessionState } from "@/lib/session-state";
 import { nextIndex } from "@/lib/ui-kit";
 import type { CreateKind } from "@/lib/create-item-validate";
@@ -13,16 +15,52 @@ import { toast } from "sonner";
 import { FeedbackDialog } from "@/components/feedback-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuRadioGroup, DropdownMenuRadioItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
+import { useItemTypes } from "@/lib/item-types";
+import { menuAllows, useCreateMenu } from "@/lib/create-menu";
 
-export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kind?: CreateKind) => void; live: boolean; search?: ReactNode; navigation?: ReactNode }) {
+// Each language is named in its own language, so it stays readable whichever UI language is active.
+const LANGUAGE_NAMES: Record<Language, string> = { en: "English", id: "Bahasa Indonesia" };
+const LANGUAGE_SHORT: Record<Language, string> = { en: "EN", id: "ID" };
+
+export function Topbar({ onCreate, live, search, navigation, inSettings = false, spaceId }: { onCreate?: (kind?: CreateKind, typeKey?: string) => void; live: boolean; search?: ReactNode; navigation?: ReactNode; inSettings?: boolean; spaceId?: string }) {
   const { t } = useTranslation();
+  const profile = useProfile();
+  const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
+  return (
+    <header className="flex h-12 shrink-0 items-center justify-end border-b px-2 sm:px-4">
+      {navigation}
+      <span role="status" data-live={live ? "true" : "false"} className="mr-auto text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
+      {search}
+      {!inSettings && <CreateMenu onCreate={onCreate} spaceId={spaceId} />}
+      {!inSettings && <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
+        <Bell className="size-5" />
+        {!!unread && <span className="absolute -top-1 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}
+      </Link>}
+    </header>
+  );
+}
+
+/** Profile menu. It lives in the sidebar header (top right), not in the top bar. */
+/** Profile control: avatar plus a dropdown indicator. Compact (collapsed sidebar) shows the avatar only. */
+export function ProfileMenu({ compact = false }: { compact?: boolean }) {
+  const { t, i18n } = useTranslation();
   const profile = useProfile();
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [feedback, setFeedback] = useState(false);
-  const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
+  async function changeLanguage(language: Language) {
+    if (language === i18n.resolvedLanguage) return;
+    await setLanguage(language);
+    try {
+      const updated = await api<CurrentUser>("/api/v1/me", { method: "PATCH", body: JSON.stringify({ locale: language }) });
+      queryClient.setQueryData(["me"], updated);
+    } catch (err) {
+      toast.error((err as Error).message);
+    }
+  }
   const fullName = profile ? `${profile.first_name} ${profile.last_name}`.trim() : "";
   const initials = `${profile?.first_name?.[0] ?? ""}${profile?.last_name?.[0] ?? ""}`.toUpperCase();
   async function logout() {
@@ -32,47 +70,73 @@ export function Topbar({ onCreate, live, search, navigation }: { onCreate?: (kin
     location.assign("/login");
   }
   return (
-    <header className="flex h-12 shrink-0 items-center justify-end border-b px-2 sm:px-4">
-      {navigation}
-      <span role="status" data-live={live ? "true" : "false"} className="mr-auto text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
-      {search}
-      <CreateMenu onCreate={onCreate} />
-      <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
-        <Bell className="size-5" />
-        {!!unread && <span className="absolute -top-1 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}
-      </Link>
+    <>
       <DropdownMenu>
-        <DropdownMenuTrigger render={<Button variant="ghost" size="icon" />}>
+        <DropdownMenuTrigger render={<Button variant="ghost" className={compact ? "size-8 shrink-0 bg-transparent p-0 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover" : "h-8 shrink-0 gap-1 bg-transparent px-1 text-nav-text hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-nav-hover"} />}>
           <span className="sr-only">{t("nav.profile.label")}</span>
           <span aria-hidden="true" className="grid size-7 place-items-center rounded-md bg-primary text-xs font-semibold text-primary-foreground">{initials}</span>
+          {!compact && <ChevronDown aria-hidden="true" className="size-3.5 text-nav-muted" />}
         </DropdownMenuTrigger>
-        <DropdownMenuContent align="end" className="w-56">
-          <div className="px-2 py-2"><p className="truncate text-sm font-semibold">{fullName}</p>
-            {profile?.job_title && <p className="truncate text-xs text-muted-foreground">{profile.job_title}</p>}</div>
+        <DropdownMenuContent align="end" className="w-64">
+          <div className="flex items-center gap-3 px-2 py-2">
+            <span aria-hidden="true" className="grid size-10 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{initials}</span>
+            <div className="min-w-0"><p className="truncate text-sm font-semibold">{fullName}</p>
+              {profile?.job_title && <p className="truncate text-xs text-muted-foreground">{profile.job_title}</p>}
+              {profile?.company && <p className="truncate text-xs text-muted-foreground">{profile.company}</p>}</div>
+          </div>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}>{t("nav.settings.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings/profile", hash: "appearance" })}>{t("nav.account.appearance")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/recycle-bin" })}>{t("nav.recycle.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}>{t("nav.apps.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}>{t("nav.help.label")}</DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setFeedback(true)}>{t("nav.feedback.menu")}</DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}><Settings />{t("nav.settings.label")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings/appearance" })}><Palette />{t("nav.account.appearance")}</DropdownMenuItem>
+            <div className="flex items-center gap-2 px-1.5 py-1 text-sm">
+              <Languages className="size-4 shrink-0" aria-hidden="true" />
+              <span className="flex-1">{t("nav.profile.language")}</span>
+              <DropdownMenuRadioGroup value={i18n.resolvedLanguage} onValueChange={(value) => { if (isLanguage(value)) void changeLanguage(value); }}
+                className="flex gap-0.5 rounded-md border p-0.5">
+                {LANGUAGES.map((language) => <DropdownMenuRadioItem key={language} value={language} aria-label={LANGUAGE_NAMES[language]}
+                  className="justify-center rounded px-2 py-0.5 text-xs font-medium pr-2 data-checked:bg-primary data-checked:text-primary-foreground [&>[data-slot=dropdown-menu-radio-item-indicator]]:hidden">
+                  {LANGUAGE_SHORT[language]}
+                </DropdownMenuRadioItem>)}
+              </DropdownMenuRadioGroup>
+            </div>
+          </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>{t("nav.profile.logout")}</DropdownMenuItem>
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => navigate({ to: "/recycle-bin" })}><Trash2 />{t("nav.recycle.label")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}><Blocks />{t("nav.apps.label")}</DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuGroup>
+            <DropdownMenuItem onClick={() => toast.info(t("nav.help.shortcutsText"))}><CircleHelp />{t("nav.help.section")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => setFeedback(true)}><MessageSquare />{t("nav.feedback.menu")}</DropdownMenuItem>
+          </DropdownMenuGroup>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive"><LogOut />{t("nav.profile.logout")}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
       <FeedbackDialog open={feedback} onOpenChange={setFeedback} />
-    </header>
+    </>
   );
 }
 
 type CreateEntry = { id: string; label: string; description?: string; icon: ReactNode; run: () => void };
 
 /** Menu "+ Create": kotak cari, entri sesuai izin, navigasi panah. Entri yang tidak diizinkan tidak dirender. */
-function CreateMenu({ onCreate }: { onCreate?: (kind?: CreateKind) => void }) {
+function CreateMenu({ onCreate, spaceId }: { onCreate?: (kind?: CreateKind, typeKey?: string) => void; spaceId?: string }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
+  const itemTypes = useItemTypes(!!onCreate).data ?? [];
+  // CIT-D05: Quick Access entries are eligible custom types that are active and usable here: Workspace types, and this Space's own.
+  // The item dialog checks the destination again when the Space is chosen, so a shortcut never grants a choice it could not make.
+  // In a Space, Quick Access and More follow that Space's create menu (SPC-14), so a type the Space hides is not offered here.
+  const menu = useCreateMenu(spaceId ?? "", !!spaceId && !!onCreate).data;
+  const eligible = itemTypes.filter((type) => !type.is_builtin && type.active && (!type.space_id || type.space_id === spaceId)
+    && (!spaceId || menuAllows(menu, type.key)));
+  const quick = eligible.filter((type) => type.quick_access);
+  const more = eligible.filter((type) => !type.quick_access);
   const [query, setQuery] = useState("");
   const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
   const hidden = profile?.sidebar_hidden ?? [];
@@ -85,6 +149,10 @@ function CreateMenu({ onCreate }: { onCreate?: (kind?: CreateKind) => void }) {
       { id: "project", label: t("items.project"), description: t("items.typeDesc.project"), icon: <FolderKanban />, run: close(() => onCreate("project")) },
       { id: "folder", label: t("items.folder"), description: t("items.typeDesc.folder"), icon: <Folder />, run: close(() => onCreate("folder")) },
     ] : [],
+    onCreate ? quick.map((type) => ({ id: `type-${type.key}`, label: type.name, description: t("items.typeDesc.custom", { base: t(`items.${type.base}`) }), icon: <Shapes />,
+      run: close(() => onCreate(type.base as CreateKind, type.key)) })) : [],
+    onCreate && more.length > 0 ? [{ id: "more-types", label: t("nav.create.moreTypes"), description: t("nav.create.moreTypesDesc", { count: more.length }), icon: <Shapes />,
+      run: close(() => setMoreOpen(true)) }] : [],
     [
       capabilities?.create_space && { id: "space", label: t("nav.create.space"), description: t("nav.create.spaceDesc"), icon: <Layers />, run: close(() => window.dispatchEvent(new Event("pms:open-space-create"))) },
       !hidden.includes("request_forms") && { id: "request", label: t("nav.create.request"), description: t("nav.create.requestDesc"), icon: <ClipboardList />, run: close(() => navigate({ to: "/requests" })) },
@@ -108,6 +176,15 @@ function CreateMenu({ onCreate }: { onCreate?: (kind?: CreateKind) => void }) {
 
   let index = -1;
   return (
+    <>
+    <Dialog open={moreOpen} onOpenChange={setMoreOpen}>
+      <DialogContent>
+        <DialogTitle>{t("nav.create.moreTypes")}</DialogTitle>
+        <DialogDescription>{t("nav.create.moreTypesHint")}</DialogDescription>
+        <div className="space-y-1">{more.map((type) => <button key={type.key} type="button" className="block w-full rounded-md px-2 py-1.5 text-left text-sm hover:bg-accent"
+          onClick={() => { setMoreOpen(false); setOpen(false); onCreate?.(type.base as CreateKind, type.key); }}>{type.name}</button>)}</div>
+      </DialogContent>
+    </Dialog>
     <Popover open={open} onOpenChange={(next) => { setOpen(next); if (!next) setQuery(""); }}>
       <PopoverTrigger render={<Button size="sm" className="mr-1" aria-haspopup="true" />}>
         <Plus />{t("nav.create.button")}
@@ -140,5 +217,6 @@ function CreateMenu({ onCreate }: { onCreate?: (kind?: CreateKind) => void }) {
         </div>
       </PopoverContent>
     </Popover>
+    </>
   );
 }

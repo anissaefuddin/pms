@@ -27,7 +27,7 @@ test("admin edits the work schedule with If-Match and sees a conflict reload", a
   await page.getByRole("button", { name: "Save work schedule" }).click();
   await expect(page.getByText("Work schedule saved")).toBeVisible();
   expect(calls.find((call) => call.method === "PUT")?.body).toEqual({
-    working_days: [1, 2, 3, 4, 6], daily_hours: 6, exceptions: [{ date: "2026-12-25", name: "Christmas" }] });
+    working_days: [1, 2, 3, 4, 6], daily_hours: 6, exceptions: [{ date: "2026-12-25", name: "Christmas" }], timezone: "UTC" });
 
   conflict = true;
   await page.getByLabel("Hours per working day").fill("7");

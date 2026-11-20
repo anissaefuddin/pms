@@ -11,6 +11,7 @@ func TestConcurrentCreatesUnderOneParentAllSucceed(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Work")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	parent := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "folder", "title": "Parent", "locations": []map[string]any{{"space_id": space}}})
 	f.want(parent, 201, "parent")
 	pid := parent.body["id"].(string)

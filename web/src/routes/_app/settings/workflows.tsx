@@ -100,9 +100,8 @@ function WorkflowsRoute() {
     } finally { setBusy(false); }
   }
 
-  return <div className="max-w-3xl space-y-6">
+  return <div className="space-y-6">
     <header>
-      <h2 className="text-lg font-semibold">{t("settings.workflows.title")}</h2>
       <p className="text-sm text-muted-foreground">{admin ? t("settings.workflows.description") : t("settings.workflows.readOnly")}</p>
     </header>
     <div className="flex flex-wrap items-end gap-3">
@@ -128,10 +127,12 @@ function WorkflowsRoute() {
     </form>}
     <FormError message={error} />
     <section aria-labelledby="wf-statuses" className="space-y-3">
-      <h3 id="wf-statuses" className="text-sm font-medium">{t("settings.workflows.statuses")}</h3>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <h2 id="wf-statuses" className="text-sm font-medium">{t("settings.workflows.statuses")}</h2>
+      {/* Four status categories sit side by side on wide screens; the editor opens full width below the board. */}
+      <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {statusGroups.map((group) => <div key={group} role="group" aria-label={t(`settings.workflows.group.${group}`)} className="space-y-2">
-          <h4 className="text-sm font-semibold">{t(`settings.workflows.group.${group}`)}</h4>
+          <h3 className="text-sm font-semibold">{t(`settings.workflows.group.${group}`)}</h3>
           {workflow.statuses.filter((s) => s.group === group).map((s) => <button key={s.id} type="button" aria-pressed={selected === s.id}
             onClick={() => setSelected(selected === s.id ? "" : s.id)}
             className="flex w-full items-center gap-2 rounded-lg border bg-card px-3 py-2 text-left text-sm hover:bg-muted aria-pressed:border-primary aria-pressed:ring-1 aria-pressed:ring-primary focus-visible:outline-2 focus-visible:outline-ring">
@@ -147,14 +148,20 @@ function WorkflowsRoute() {
             : <Button type="button" variant="ghost" size="sm" className="text-primary" onClick={() => { setAdding(group); setNewStatus(""); }}>+ {t("settings.workflows.addStatus")}</Button>)}
         </div>)}
       </div>
-      <ol>
-        {workflow.statuses.filter((s) => s.id === selected).map((status) => {
-          const index = workflow.statuses.indexOf(status);
-          return <StatusRow key={`${status.id}:${status.name}`} status={status} siblings={workflow.statuses}
-            admin={admin} busy={busy} first={index === 0} last={index === workflow.statuses.length - 1}
-            onPatch={(patch) => saveStatus(status, patch)} onMove={(delta) => reorder(status, delta)} onRemove={() => setRemoving(status)} />;
-        })}
-      </ol>
+      <aside aria-label={t("settings.workflows.editor")} className="space-y-3 rounded-lg border bg-card p-4">
+        <h3 className="text-sm font-semibold">{t("settings.workflows.editor")}</h3>
+        {workflow.statuses.some((s) => s.id === selected)
+          ? <ol>
+              {workflow.statuses.filter((s) => s.id === selected).map((status) => {
+                const index = workflow.statuses.indexOf(status);
+                return <StatusRow key={`${status.id}:${status.name}`} status={status} siblings={workflow.statuses}
+                  admin={admin} busy={busy} first={index === 0} last={index === workflow.statuses.length - 1}
+                  onPatch={(patch) => saveStatus(status, patch)} onMove={(delta) => reorder(status, delta)} onRemove={() => setRemoving(status)} />;
+              })}
+            </ol>
+          : <p className="text-sm text-muted-foreground">{t("settings.workflows.pickStatus")}</p>}
+      </aside>
+      </div>
     </section>
 
     <ConfirmDialog open={confirmDelete} onOpenChange={setConfirmDelete} busy={busy} error={error}

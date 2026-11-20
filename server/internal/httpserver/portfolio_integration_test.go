@@ -14,6 +14,8 @@ func TestPortfolioTimelineCrossProjectDependencyAndPolicy(t *testing.T) {
 	f := newFixture(t)
 	admin, reader := f.person("admin"), f.person("regular")
 	firstSpace, secondSpace := f.space("Portfolio A"), f.space("Portfolio B")
+	f.share(firstSpace, "user", admin.id, "full") // A1.2: the portfolio planner owns both projects
+	f.share(secondSpace, "user", admin.id, "full")
 	first, a := portfolioProject(f, admin, firstSpace, "Alpha")
 	second, b := portfolioProject(f, admin, secondSpace, "Beta")
 	if got := f.call(admin, "POST", dependencyPath(b), dependencyInput(a, "FS")); got.status != 201 {

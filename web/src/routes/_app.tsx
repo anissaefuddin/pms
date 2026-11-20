@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
-import { Outlet, createFileRoute, useParams, useRouter } from "@tanstack/react-router";
+import { Outlet, createFileRoute, useParams, useRouter, useRouterState } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
+import i18n, { isLanguage, setLanguage } from "@/i18n";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { MobileSidebar, Sidebar } from "@/components/sidebar";
+import { SettingsSidebar } from "@/components/settings-sidebar";
 import { SearchPalette } from "@/components/search-palette";
 import { Topbar } from "@/components/topbar";
 import { CreateItemDialog } from "@/components/create-item-dialog";
@@ -32,18 +34,24 @@ export const Route = createFileRoute("/_app")({
 });
 
 function AppShell() {
+  const inSettings = useRouterState({ select: (state) => state.location.pathname.startsWith("/settings") });
   const { t } = useTranslation();
   const me = useQuery({ queryKey: ["me"], queryFn: () => api<CurrentUser>("/api/v1/me"),
     retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
   });
   useAppearance(me.data);
+  // The saved profile language wins over the browser choice once signed in.
+  const locale = me.data?.locale;
+  useEffect(() => {
+    if (isLanguage(locale) && locale !== i18n.resolvedLanguage) void setLanguage(locale);
+  }, [locale]);
   const live = useRealtime(!!me.data && !me.isError);
   const router = useRouter();
   const { task } = Route.useSearch();
   const { spaceId, itemId } = useParams({ strict: false });
   const spaces = useSpaces(!!me.data);
   // Dibuka dari menu "+ Create" (kind) atau dari komponen lain lewat event pms:create-item (kind, spaceId, parentId).
-  const [creating, setCreating] = useState<{ kind?: CreateKind; location?: Location } | null>(null);
+  const [creating, setCreating] = useState<{ kind?: CreateKind; typeKey?: string; location?: Location } | null>(null);
   useEffect(() => {
     const open = (event: Event) => {
       const detail = (event as CustomEvent<{ kind?: CreateKind; spaceId?: string; parentId?: string }>).detail ?? {};
@@ -52,7 +60,10 @@ function AppShell() {
     window.addEventListener("pms:create-item", open);
     return () => window.removeEventListener("pms:create-item", open);
   }, []);
-  const canCreate = spaces.data?.some((space) => space.my_capabilities?.includes("create"));
+  // On a Space page, Create (and Quick Access) follows that Space's own create permission; elsewhere any Space will do.
+  const canCreate = spaceId
+    ? !!spaces.data?.find((space) => space.id === spaceId)?.my_capabilities?.includes("create")
+    : spaces.data?.some((space) => space.my_capabilities?.includes("create"));
   useEffect(() => {
     if (me.data && spaceId && spaces.data?.some((space) => space.id === spaceId)) {
       localStorage.setItem(lastSpaceKey(me.data.id), spaceId);
@@ -84,14 +95,17 @@ function AppShell() {
   return (
     <ProfileContext.Provider value={me.data}>
     <div className="flex min-h-screen">
-      <div className="sticky top-0 hidden self-start shrink-0 lg:block"><Sidebar key={me.data.id} me={me.data} /></div>
+      <div className="sticky top-0 hidden self-start shrink-0 lg:block">{inSettings ? <SettingsSidebar me={me.data} /> : <Sidebar key={me.data.id} me={me.data} />}</div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar navigation={<MobileSidebar me={me.data} />} live={live} search={<SearchPalette spaceId={spaceId} containerId={itemId} />} onCreate={canCreate ? (kind) => setCreating({ kind }) : undefined} />
+        {inSettings
+          // Settings has its own page header (breadcrumb, mobile menu) and no top bar; the palette stays mounted for Ctrl+K.
+          ? <SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />
+          : <Topbar live={live} navigation={<MobileSidebar me={me.data} />} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind, typeKey) => setCreating({ kind, typeKey }) : undefined} spaceId={spaceId} />}
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}
       <CreateItemDialog open={!!creating} onOpenChange={(open) => { if (!open) setCreating(null); }} me={me.data}
-        initialKind={creating?.kind} location={creating?.location ?? (spaceId ? { space_id: spaceId } : undefined)}
+        initialKind={creating?.kind} initialTypeKey={creating?.typeKey} location={creating?.location ?? (spaceId ? { space_id: spaceId } : undefined)}
         onCreated={(item) => {
           if (item.type === "task") setTask(item.id);
           else void router.navigate({ to: "/tasks/$itemId", params: { itemId: item.id } });

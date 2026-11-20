@@ -56,7 +56,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     test("security page has no violations, also with the dialog and profile menu open", async ({ page }) => {
       await mockApi(page, { "GET /me": { body: me } });
       await page.goto("/settings/security");
-      await expect(page.getByRole("heading", { name: "Sign-in & security", level: 2 })).toBeVisible();
+      await expect(page.getByRole("heading", { name: "Sign-in & security", level: 1 })).toBeVisible();
       await expectNoViolations(page);
 
       await page.getByRole("button", { name: "Change password" }).click();

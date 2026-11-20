@@ -193,6 +193,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.blueprintRoutes(mux)
 	s.dependencyRoutes(mux)
 	s.customFieldRoutes(mux)
+	s.customFieldAssignmentRoutes(mux)
 	s.attachmentRoutes(mux)
 	s.ProjectFileRoutes(mux)
 	s.timeEntryRoutes(mux)

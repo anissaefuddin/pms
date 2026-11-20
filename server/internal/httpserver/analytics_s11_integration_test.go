@@ -10,6 +10,7 @@ func TestAnalyticsWidgetsAreaPivotBurndownCompletion(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Analytics")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")
 	field := f.queryID(`INSERT INTO custom_fields(space_id,name,type,options,position) VALUES ($1,'Points','number','[]',0) RETURNING id::text`, space)
@@ -116,6 +117,7 @@ func TestPublicDashboardLinkExpiryPasswordAndFinancialMasking(t *testing.T) {
 	f := newFixture(t)
 	admin, reader := f.person("admin"), f.person("regular")
 	space := f.space("Public board")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", reader.id, "read")
 	money := f.queryID(`INSERT INTO custom_fields(space_id,name,type,options,position) VALUES ($1,'Budget','currency','[]',0) RETURNING id::text`, space)
 	f.exec("INSERT INTO items(type,title,created_by,fields) VALUES ('project','P',$1,jsonb_build_object($2::text,1000))", admin.id, money)

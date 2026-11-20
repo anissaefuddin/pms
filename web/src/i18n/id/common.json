@@ -1,0 +1,13 @@
+{
+  "app.name": "PMS",
+  "health.title": "Halo",
+  "health.checking": "Memeriksa server…",
+  "health.unavailable": "Server tidak tersedia",
+  "health.running": "Server berjalan",
+  "feedback.loading": "Memuat…",
+  "datePicker.placeholder": "Pilih tanggal",
+  "notFound.title": "Halaman tidak ditemukan",
+  "notFound.description": "Periksa alamatnya atau kembali ke ruang kerja Anda.",
+  "notFound.home": "Kembali ke ruang kerja",
+  "dialog.close": "Tutup"
+}

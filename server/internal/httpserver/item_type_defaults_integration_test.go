@@ -30,12 +30,16 @@ func newTypeDefaultsEnv(t *testing.T) *typeDefaultsEnv {
 	f.want(bug, 201, "bug type")
 	f.want(idea, 201, "idea type")
 	d.bug, d.idea = bug.body["id"].(string), idea.body["id"].(string)
-	note := f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields", map[string]any{"name": "Note", "type": "text"})
-	sev := f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields", map[string]any{"name": "Sev", "type": "single_select",
+	note := f.call(e.admin, "POST", "/custom-fields", map[string]any{"name": "Note", "type": "text"})
+	sev := f.call(e.admin, "POST", "/custom-fields", map[string]any{"name": "Sev", "type": "single_select",
 		"options": []map[string]any{{"id": d.sevOption, "label": "High", "color": "#DC2626"}}})
 	f.want(note, 201, "note field")
 	f.want(sev, 201, "sev field")
 	d.note, d.sev = note.body["id"].(string), sev.body["id"].(string)
+	// Workspace fields apply in a Space only once the Space is assigned to them (DR-08).
+	for _, fid := range []string{d.note, d.sev} {
+		f.want(f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields/"+fid+"/assignments", map[string]any{"scope_kind": "space", "scope_id": e.space}), 201, "assign Workspace field to the Space")
+	}
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.note, map[string]any{"default": "n/a"}), 200, "note default")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.sev, map[string]any{"default": d.sevOption}), 200, "sev default")
 	return d
@@ -70,6 +74,7 @@ func TestItemTypeDefaultsApplyOnEveryCreatePath(t *testing.T) {
 		"response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": e.space}, "title_question": "t", "type_key": "bug"}})
 	f.want(form, 201, "form")
 	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", form.body["id"])
+	f.publishForm(e.editor, form.body["id"].(string))
 	f.want(f.submit(requester, form.body["id"].(string), map[string]any{"t": "via form"}), 201, "form submit")
 	d.wantDefaults(t, "via form", "form")
 
@@ -131,7 +136,7 @@ func TestItemTypeFieldDefaultsAdminAPIAndOrphans(t *testing.T) {
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.sev, map[string]any{"default": uuid.NewString()}), 422, "default must be an option")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+d.note, map[string]any{"default": 12}), 422, "default must be text")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+uuid.NewString(), map[string]any{"default": "x"}), 404, "unknown field")
-	people := f.call(e.admin, "POST", "/spaces/"+e.space+"/custom-fields", map[string]any{"name": "Who", "type": "people"})
+	people := f.call(e.admin, "POST", "/custom-fields", map[string]any{"name": "Who", "type": "people"})
 	f.want(people, 201, "people field")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+people.body["id"].(string), map[string]any{"default": []string{}}), 422, "no defaults for people")
 	f.want(f.call(e.admin, "PUT", "/item-types/"+d.bug+"/fields/"+people.body["id"].(string), map[string]any{}), 200, "applies without default")
@@ -143,7 +148,7 @@ func TestItemTypeFieldDefaultsAdminAPIAndOrphans(t *testing.T) {
 
 	// An option removed behind the default, and an archived field: creation still works and the orphan is ignored.
 	f.exec("UPDATE custom_fields SET options=jsonb_build_array(jsonb_build_object('id',gen_random_uuid()::text,'label','Other','color','#000000')) WHERE id=$1", d.sev)
-	f.want(f.call(e.admin, "DELETE", "/spaces/"+e.space+"/custom-fields/"+d.note, nil), 204, "archive note")
+	f.want(f.call(e.admin, "DELETE", "/custom-fields/"+d.note, nil), 204, "archive note")
 	got := create("orphans")
 	f.want(got, 201, "create with orphaned defaults")
 	if fields, _ := got.body["fields"].(map[string]any); fields[d.note] != nil || fields[d.sev] != nil {
@@ -236,6 +241,17 @@ func TestItemTypeInExportSearchAndReports(t *testing.T) {
 	}
 	if got := strings.Join(keys, ","); !strings.Contains(got, "bug") || !strings.Contains(got, "idea") || !strings.Contains(got, "task") {
 		t.Fatalf("exported type keys: %s", got)
+	}
+	// A Status is importable only under a destination whose workflow holds it, and this round trip imports at the Space root.
+	// So the statuses are cleared here; the type round trip is what this test covers.
+	for i := range rows {
+		if i > 0 {
+			rows[i][9], rows[i][10] = "", ""
+		}
+	}
+	data, err = projectexcel.Write(rows)
+	if err != nil {
+		t.Fatal(err)
 	}
 	up := f.uploadExcel(e.admin, e.space, data, nil)
 	f.want(up, 200, "preview the export")

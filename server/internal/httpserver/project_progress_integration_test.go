@@ -51,6 +51,7 @@ func TestProjectProgressMethodsAndRisk(t *testing.T) {
 	f := newFixture(t)
 	admin, reader := f.person("admin"), f.person("regular")
 	space := f.space("Project progress")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", reader.id, "read")
 	now := time.Now().UTC()
 	due := func(days int) string { return now.AddDate(0, 0, days).Format(time.DateOnly) }
@@ -134,9 +135,10 @@ func TestProjectProgressFollowsAuthorizedLiveLocations(t *testing.T) {
 	f := newFixture(t)
 	admin, reader := f.person("admin"), f.person("regular")
 	direct, personalOwner := f.person("regular"), f.person("regular")
-	visible, hidden := f.space("Visible placements"), f.space("Hidden placements")
+	visible, hidden := f.space("Visible placements"), f.spaceWithoutAdmins("Hidden placements")
 	personal := f.queryID("SELECT id::text FROM spaces WHERE kind='personal' AND owner_id=$1", personalOwner.id)
 	f.share(visible, "user", reader.id, "read")
+	f.share(visible, "user", admin.id, "full") // A1.2: the admin places and removes the project's folders as an explicit member
 	completed := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' LIMIT 1")
 	overdue := time.Now().UTC().AddDate(0, 0, -1).Format(time.DateOnly)
 	place := func(id, space, parent string) {
@@ -166,7 +168,8 @@ func TestProjectProgressFollowsAuthorizedLiveLocations(t *testing.T) {
 	f.want(f.call(admin, http.MethodDelete, "/items/"+folder, nil), http.StatusNoContent, "remove an intermediate project placement")
 	f.want(f.call(reader, http.MethodGet, "/items/"+survivor, nil), http.StatusOK, "task remains live outside project")
 	expectProjectProgress(t, f.call(reader, http.MethodGet, path, nil), "task_count", 100, "green")
-	expectProjectProgress(t, f.call(admin, http.MethodGet, path, nil), "task_count", 50, "red")
+	// D-17 A1: the admin's progress counts only the placements the admin can see, the same as the reader's view.
+	expectProjectProgress(t, f.call(admin, http.MethodGet, path, nil), "task_count", 100, "green")
 	directProject := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Direct share',$1) RETURNING id::text", admin.id)
 	place(directProject, hidden, "")
 	place(done, hidden, directProject)

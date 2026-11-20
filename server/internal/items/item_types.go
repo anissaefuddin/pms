@@ -15,30 +15,31 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-// ErrTypeInactive is returned when a new item asks for a type an admin has switched off.
-var ErrTypeInactive = errors.New("item type is inactive")
-
 type ItemType struct {
-	ID                string         `json:"id"`
-	Key               string         `json:"key"`
-	Name              string         `json:"name"`
-	Icon              string         `json:"icon"`
-	Base              string         `json:"base"`
-	Builtin           bool           `json:"is_builtin"`
-	Active            bool           `json:"active"`
+	ID      string `json:"id"`
+	Key     string `json:"key"`
+	Name    string `json:"name"`
+	Icon    string `json:"icon"`
+	Base    string `json:"base"`
+	Builtin bool   `json:"is_builtin"`
+	Active  bool   `json:"active"`
+	// QuickAccess puts an active custom type in the Create menu. It configures visibility only, never permission.
+	QuickAccess       bool           `json:"quick_access"`
 	AllowedChildren   []string       `json:"allowed_children"`
 	DefaultWorkflowID *string        `json:"default_workflow_id"`
 	Defaults          map[string]any `json:"defaults"`
 	Layout            map[string]any `json:"layout"`
 	Version           int            `json:"version"`
+	// SpaceID is nil for Workspace types (usable in every Space) and the Space the type belongs to otherwise.
+	SpaceID *string `json:"space_id"`
 }
 
 const itemTypeColumns = `id::text,key,name,icon,base::text,is_builtin,active,
- ARRAY(SELECT unnest(allowed_children)::text),default_workflow_id::text,defaults,layout,version`
+ ARRAY(SELECT unnest(allowed_children)::text),default_workflow_id::text,defaults,layout,version,space_id::text,quick_access`
 
 func scanItemType(row pgx.Row) (ItemType, error) {
 	var t ItemType
-	err := row.Scan(&t.ID, &t.Key, &t.Name, &t.Icon, &t.Base, &t.Builtin, &t.Active, &t.AllowedChildren, &t.DefaultWorkflowID, &t.Defaults, &t.Layout, &t.Version)
+	err := row.Scan(&t.ID, &t.Key, &t.Name, &t.Icon, &t.Base, &t.Builtin, &t.Active, &t.AllowedChildren, &t.DefaultWorkflowID, &t.Defaults, &t.Layout, &t.Version, &t.SpaceID, &t.QuickAccess)
 	return t, err
 }
 
@@ -47,8 +48,21 @@ type dbQuerier interface {
 	QueryRow(context.Context, string, ...any) pgx.Row
 }
 
-func ListItemTypes(ctx context.Context, db dbQuerier) ([]ItemType, error) {
-	rows, err := db.Query(ctx, "SELECT "+itemTypeColumns+" FROM item_type_defs ORDER BY is_builtin DESC, lower(name)")
+// ListItemTypes lists the types the actor may see: Workspace types, and Space types of Spaces the actor can view.
+// A system administrator sees every type, because the settings page manages them all.
+func ListItemTypes(ctx context.Context, db dbQuerier, actor policy.Actor) ([]ItemType, error) {
+	visible, err := policy.VisibleSpaces(ctx, db, actor, "")
+	if err != nil {
+		return nil, err
+	}
+	ids := []string{}
+	for _, space := range visible {
+		if space.Caps.Has(policy.View) {
+			ids = append(ids, space.ID)
+		}
+	}
+	rows, err := db.Query(ctx, "SELECT "+itemTypeColumns+" FROM item_type_defs WHERE space_id IS NULL OR $1 OR space_id::text = ANY($2::text[]) ORDER BY is_builtin DESC, lower(name)",
+		actor.Type == policy.Admin, ids)
 	if err != nil {
 		return nil, err
 	}
@@ -70,11 +84,14 @@ var (
 
 // ItemTypeInput carries the writable fields; nil means "leave as is" on update.
 type ItemTypeInput struct {
+	// SpaceID is read on create only: nil makes a Workspace type. The scope cannot change later.
+	SpaceID           *string         `json:"space_id"`
 	Key               *string         `json:"key"`
 	Name              *string         `json:"name"`
 	Icon              *string         `json:"icon"`
 	Base              *string         `json:"base"`
 	Active            *bool           `json:"active"`
+	QuickAccess       *bool           `json:"quick_access"`
 	AllowedChildren   *[]string       `json:"allowed_children"`
 	DefaultWorkflowID json.RawMessage `json:"default_workflow_id"`
 	Defaults          map[string]any  `json:"defaults"`
@@ -83,6 +100,24 @@ type ItemTypeInput struct {
 
 func requireAdmin(actor policy.Actor) error {
 	if actor.Type != policy.Admin {
+		return ErrForbidden
+	}
+	return nil
+}
+
+// authorizeTypeScope: a Workspace type is managed by the system administrator; a Space type by whoever can edit that Space.
+func authorizeTypeScope(ctx context.Context, db dbQuerier, actor policy.Actor, spaceID *string) error {
+	if spaceID == nil {
+		return requireAdmin(actor)
+	}
+	decision, _, err := policy.CanOnSpace(ctx, db, actor, policy.Edit, *spaceID)
+	if err != nil {
+		return err
+	}
+	switch decision {
+	case policy.NotFound:
+		return ErrNotFound
+	case policy.Forbidden:
 		return ErrForbidden
 	}
 	return nil
@@ -206,14 +241,16 @@ func checkTypeWorkflow(ctx context.Context, db dbQuerier, base string, raw json.
 }
 
 func CreateItemType(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, in ItemTypeInput) (ItemType, error) {
-	if err := requireAdmin(actor); err != nil {
-		return ItemType{}, err
-	}
 	if in.Key == nil || in.Name == nil || in.Base == nil {
 		return ItemType{}, Invalid("key, name and base are required")
 	}
 	if err := validateTypeFields(in); err != nil {
 		return ItemType{}, err
+	}
+	if in.SpaceID != nil {
+		if _, err := uuid.Parse(*in.SpaceID); err != nil {
+			return ItemType{}, InvalidField{"space_id", "space_id must be a Space id or null"}
+		}
 	}
 	icon := "circle"
 	if in.Icon != nil {
@@ -227,6 +264,9 @@ func CreateItemType(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 		return ItemType{}, err
 	}
 	defer tx.Rollback(ctx)
+	if err := authorizeTypeScope(ctx, tx, actor, in.SpaceID); err != nil {
+		return ItemType{}, err
+	}
 	if err := checkChildren(ctx, tx, *in.Base, *in.AllowedChildren); err != nil {
 		return ItemType{}, err
 	}
@@ -237,9 +277,9 @@ func CreateItemType(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 	if in.Defaults == nil {
 		in.Defaults = map[string]any{}
 	}
-	t, err := scanItemType(tx.QueryRow(ctx, `INSERT INTO item_type_defs(key,name,icon,base,allowed_children,default_workflow_id,defaults,layout)
-VALUES ($1,btrim($2),$3,$4::item_type,$5::uuid[],$6,$7,COALESCE($8::jsonb,'{}'::jsonb)) RETURNING `+itemTypeColumns,
-		*in.Key, *in.Name, icon, *in.Base, *in.AllowedChildren, workflow, in.Defaults, in.Layout))
+	t, err := scanItemType(tx.QueryRow(ctx, `INSERT INTO item_type_defs(key,name,icon,base,allowed_children,default_workflow_id,defaults,layout,space_id)
+VALUES ($1,btrim($2),$3,$4::item_type,$5::uuid[],$6,$7,COALESCE($8::jsonb,'{}'::jsonb),$9::uuid) RETURNING `+itemTypeColumns,
+		*in.Key, *in.Name, icon, *in.Base, *in.AllowedChildren, workflow, in.Defaults, in.Layout, in.SpaceID))
 	if pgCode(err) == "23505" {
 		return ItemType{}, InvalidField{"name", "an item type with that key or name already exists"}
 	}
@@ -251,11 +291,8 @@ VALUES ($1,btrim($2),$3,$4::item_type,$5::uuid[],$6,$7,COALESCE($8::jsonb,'{}'::
 
 // UpdateItemType changes a type. Built-in types may be renamed and re-iconed but never deactivated or re-classed.
 func UpdateItemType(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id string, version int, in ItemTypeInput) (ItemType, error) {
-	if err := requireAdmin(actor); err != nil {
-		return ItemType{}, err
-	}
-	if in.Key != nil || in.Base != nil {
-		return ItemType{}, Invalid("key and base cannot be changed")
+	if in.Key != nil || in.Base != nil || in.SpaceID != nil {
+		return ItemType{}, Invalid("key, base and Space cannot be changed")
 	}
 	if err := validateTypeFields(in); err != nil {
 		return ItemType{}, err
@@ -271,6 +308,9 @@ func UpdateItemType(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 	defer tx.Rollback(ctx)
 	current, err := getItemType(ctx, tx, "id=$1 FOR UPDATE", parsed)
 	if err != nil {
+		return ItemType{}, err
+	}
+	if err := authorizeTypeScope(ctx, tx, actor, current.SpaceID); err != nil {
 		return ItemType{}, err
 	}
 	if current.Version != version {
@@ -289,10 +329,18 @@ func UpdateItemType(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor,
 		return ItemType{}, err
 	}
 	setWorkflow := in.DefaultWorkflowID != nil
+	if in.QuickAccess != nil && *in.QuickAccess {
+		if current.Builtin {
+			return ItemType{}, InvalidField{"quick_access", "built-in types have no Quick Access setting"}
+		}
+		if active := in.Active == nil && current.Active || in.Active != nil && *in.Active; !active {
+			return ItemType{}, InvalidField{"quick_access", "an inactive type cannot be in Quick Access"}
+		}
+	}
 	updated, err := scanItemType(tx.QueryRow(ctx, `UPDATE item_type_defs SET name=COALESCE(btrim($2),name), icon=COALESCE($3,icon), active=COALESCE($4,active),
  allowed_children=COALESCE($5::uuid[],allowed_children), default_workflow_id=CASE WHEN $6 THEN $7 ELSE default_workflow_id END,
- defaults=COALESCE($8,defaults), layout=COALESCE($9,layout), version=version+1 WHERE id=$1 RETURNING `+itemTypeColumns,
-		parsed, in.Name, in.Icon, in.Active, in.AllowedChildren, setWorkflow, workflow, in.Defaults, in.Layout))
+ defaults=COALESCE($8,defaults), layout=COALESCE($9,layout), quick_access=COALESCE($10,quick_access), version=version+1 WHERE id=$1 RETURNING `+itemTypeColumns,
+		parsed, in.Name, in.Icon, in.Active, in.AllowedChildren, setWorkflow, workflow, in.Defaults, in.Layout, in.QuickAccess))
 	if pgCode(err) == "23505" {
 		return ItemType{}, InvalidField{"name", "an item type with that name already exists"}
 	}
@@ -354,11 +402,18 @@ func ItemRelations(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 			spaceIDs = append(spaceIDs, space.ID)
 		}
 	}
+	hiddenRel, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
+	if err != nil {
+		return nil, err
+	}
 	type row struct{ field, name, id, title, typ, key string }
 	rows, err := tx.Query(ctx, `SELECT f.id::text,f.name,t.id::text,t.title,t.type::text,ty.key
 FROM item_relations r JOIN custom_fields f ON f.id=r.field_id AND f.archived_at IS NULL
 JOIN items t ON t.id=r.to_item_id AND t.deleted_at IS NULL JOIN item_type_defs ty ON ty.id=t.type_id
-WHERE r.from_item_id=$1::uuid AND f.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)) ORDER BY f.position,t.seq`, itemID, spaceIDs)
+WHERE r.from_item_id=$1::uuid AND f.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)) AND NOT (f.id::text = ANY($3::text[]))
+  AND EXISTS(SELECT 1 FROM item_locations l WHERE l.item_id=r.from_item_id AND l.deleted_root_id IS NULL
+    AND l.space_id=ANY(ARRAY(SELECT unnest($2::text[])::uuid)) AND custom_field_applies(r.from_item_id, f.id, l.space_id))
+ORDER BY f.position,t.seq`, itemID, spaceIDs, nonNilStrings(hiddenRel))
 	if err != nil {
 		return nil, err
 	}
@@ -390,4 +445,50 @@ WHERE r.from_item_id=$1::uuid AND f.space_id=ANY(ARRAY(SELECT unnest($2::text[])
 		}
 	}
 	return groups, tx.Commit(ctx)
+}
+
+// ItemTypeUsage counts the live Items of every item type (administrators only; the registry shows it as a column).
+func ItemTypeUsage(ctx context.Context, db dbQuerier, actor policy.Actor) (map[string]int, error) {
+	if err := requireAdmin(actor); err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(ctx, `SELECT t.id::text, count(i.id) FROM item_type_defs t
+LEFT JOIN items i ON i.type_id=t.id AND i.deleted_at IS NULL GROUP BY t.id`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var id string
+		var n int
+		if err := rows.Scan(&id, &n); err != nil {
+			return nil, err
+		}
+		out[id] = n
+	}
+	return out, rows.Err()
+}
+
+// SpaceItemTypeUsage counts the live items in one Space, per item type. Anyone who can edit the Space sees it (the Space's own admin view).
+func SpaceItemTypeUsage(ctx context.Context, db dbQuerier, actor policy.Actor, spaceID string) (map[string]int, error) {
+	if err := authorizeTypeScope(ctx, db, actor, &spaceID); err != nil {
+		return nil, err
+	}
+	rows, err := db.Query(ctx, `SELECT i.type_id::text, count(DISTINCT i.id) FROM items i
+JOIN item_locations l ON l.item_id=i.id WHERE l.space_id=$1::uuid AND i.deleted_at IS NULL GROUP BY i.type_id`, spaceID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	out := map[string]int{}
+	for rows.Next() {
+		var id string
+		var n int
+		if err := rows.Scan(&id, &n); err != nil {
+			return nil, err
+		}
+		out[id] = n
+	}
+	return out, rows.Err()
 }

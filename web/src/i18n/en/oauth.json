@@ -11,9 +11,16 @@
     "scopes": "Access",
     "since": "Authorized",
     "revoke": "Revoke",
-    "revokeConfirm": "Revoke {{name}}?"
+    "revokeConfirm": "Revoke {{name}}?",
+    "emptyTitle": "No authorized apps",
+    "personalNote": "Only you can see and revoke these apps. Connectors belong to a workspace or Space and are managed in Apps & Integrations.",
+    "revokeBody": "The app loses access to your account at once. You can authorize it again later.",
+    "revokeTitle": "Revoke access for {{name}}?"
   },
-  "scope": { "read": "Read your work", "write": "Read and change your work" },
+  "scope": {
+    "read": "Read your work",
+    "write": "Read and change your work"
+  },
   "clients": {
     "hint": "Register an app that signs users in with OAuth 2.0 (authorization code + PKCE).",
     "name": "App name",
@@ -23,7 +30,20 @@
     "clientId": "Client ID",
     "remove": "Remove",
     "secretTitle": "Client secret",
-    "secretHint": "Copy it now. It is shown only once and cannot be recovered."
+    "secretHint": "Copy it now. It is shown only once and cannot be recovered.",
+    "addRedirect": "Add redirect URI",
+    "authCodePkce": "Authorization code + PKCE",
+    "copyNamed": "Copy client ID for {{name}}",
+    "emptyTitle": "No OAuth apps yet",
+    "redirectNumber": "Redirect URI {{number}}",
+    "redirectPlaceholder": "https://example.com/callback",
+    "redirectUris": "Redirect URIs",
+    "registerDescription": "Name the app and list every redirect URI it may use. The secret is shown once.",
+    "registerTitle": "Register app",
+    "removeBody": "Apps using this client can no longer sign users in.",
+    "removeNamed": "Remove {{name}}",
+    "removeRedirect": "Remove redirect URI {{number}}",
+    "removeTitle": "Remove {{name}}?"
   },
   "consent": {
     "title": "Authorize {{name}}",

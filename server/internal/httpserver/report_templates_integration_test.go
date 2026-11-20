@@ -14,6 +14,7 @@ func TestReportTemplatesProduceTheRightNumbers(t *testing.T) {
 	f := newFixture(t)
 	admin, member := f.person("admin"), f.person("regular")
 	shared := f.space("Template data")
+	f.share(shared, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(shared, "user", member.id, "read")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")

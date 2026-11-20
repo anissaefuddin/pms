@@ -63,7 +63,7 @@ for (const colorScheme of ["light", "dark"] as const) {
       await expect(page.getByRole("link", { name: item.title })).toBeVisible();
       await check(page);
       await page.goto("/settings/profile");
-      await expect(page.getByRole("button", { name: "Save profile" })).toBeVisible();
+      await expect(page.getByRole("button", { name: "Save changes" })).toBeVisible();
       await check(page);
       await page.goto("/settings/users");
       await expect(page.getByRole("button", { name: "Invite user" })).toBeVisible();

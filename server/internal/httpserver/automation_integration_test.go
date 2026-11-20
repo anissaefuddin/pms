@@ -32,6 +32,7 @@ func newAutoEnv(t *testing.T) *autoEnv {
 	f := newFixture(t)
 	e := &autoEnv{f: f, engine: automation.New(f.pool), admin: f.person("admin"), editor: f.person("regular"), space: f.space("Auto")}
 	f.share(e.space, "user", e.editor.id, "full")
+	f.share(e.space, "user", e.admin.id, "full") // A1.2: the admin configures this Space's statuses and items in the automation scenario
 	return e
 }
 
@@ -280,8 +281,12 @@ func TestRuleLifecycleVersionsAndValidation(t *testing.T) {
 	f.want(f.call(e.admin, "PATCH", "/automation-rules/"+id, map[string]any{"enabled": false}), 200, "an admin may switch it off")
 	f.want(f.call(reader, "GET", "/automation-rules/"+id, nil), 403, "reader")
 	f.want(f.call(outsider, "GET", "/automation-rules/"+id, nil), 404, "outsider")
-	f.want(f.call(e.editor, "DELETE", "/automation-rules/"+id, nil), 204, "owner deletes")
-	f.want(f.call(e.editor, "GET", "/automation-rules/"+id, nil), 404, "gone")
+	f.want(f.call(e.editor, "DELETE", "/automation-rules/"+id, nil), 204, "owner deletes: the rule is archived, not erased (A1)")
+	archived := f.call(e.editor, "GET", "/automation-rules/"+id, nil)
+	f.want(archived, 200, "archived rules stay readable")
+	if archived.body["archived_at"] == nil || archived.body["enabled"] != false {
+		t.Fatalf("a deleted rule is archived and disabled: %+v", archived.body)
+	}
 }
 
 // Every trigger and every action does what it says, and conditions decide whether a rule acts.
@@ -321,7 +326,6 @@ func TestTriggersConditionsAndActions(t *testing.T) {
 
 	// assigned trigger + assign action; created trigger limited to a type + create_item
 	r2 := e.rule(t, e.editor, "Pair up", `{"when":{"type":"item.assigned","user_id":"`+watcher.id+`"},"then":[{"type":"assign","user_ids":["`+e.admin.id+`"]}]}`)
-	f.share(e.space, "user", e.admin.id, "full")
 	pair := e.item(t, e.editor, "Pair", nil)
 	f.want(f.call(e.editor, "PATCH", "/items/"+pair["id"].(string), map[string]any{"assignee_ids": []string{watcher.id}}, "If-Match", `"1"`), 200, "assign the watcher")
 	e.drain(t)
@@ -351,7 +355,8 @@ func TestTriggersConditionsAndActions(t *testing.T) {
 	}
 	n2, _ := e.engine.EmitDue(f.ctx)
 	e.drain(t)
-	if n1 != 1 || n2 != 1 || f.queryID("SELECT count(*)::text FROM domain_events WHERE type='item.due_reached'") != "1" {
+	// The second scan finds the same event already written: it is not counted again (emitNew).
+	if n1 != 1 || n2 != 0 || f.queryID("SELECT count(*)::text FROM domain_events WHERE type='item.due_reached'") != "1" {
 		t.Fatalf("due events: %d then %d", n1, n2)
 	}
 	if importanceOf(e, soon["id"].(string)) != "high" || importanceOf(e, later["id"].(string)) != "normal" {
@@ -363,6 +368,7 @@ func TestTriggersConditionsAndActions(t *testing.T) {
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true}}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": e.space}, "title_question": "subject"}})
 	f.want(form, 201, "form")
 	formID := form.body["id"].(string)
+	f.publishForm(e.editor, formID)
 	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", formID)
 	e.rule(t, e.editor, "Form intake", `{"when":{"type":"form.submitted","form_id":"`+formID+`"},"then":[{"type":"comment","text":"Received"}]}`)
 	f.want(f.submit(watcher, formID, map[string]any{"subject": "Need a laptop"}), 201, "submit")
@@ -444,16 +450,17 @@ func TestRulesRunWithTheirOwnersRightsAndCurrentStatus(t *testing.T) {
 	if importanceOf(e, second["id"].(string)) != "normal" || e.runs(rule)["denied"] != 1 {
 		t.Fatalf("a rule must not act beyond its owner's rights: importance %s, runs %v", importanceOf(e, second["id"].(string)), e.runs(rule))
 	}
-	// A deactivated owner stops all of their rules.
+	// The rule is paused once, with its reason. Later events are skipped and say why; nothing runs until the owner resumes it (A1).
 	f.share(e.space, "user", e.editor.id, "full")
 	f.exec("UPDATE users SET status='deactivated' WHERE id=$1", e.editor.id)
 	third := e.item(t, e.admin, "Deactivated", nil)
 	e.drain(t)
-	if importanceOf(e, third["id"].(string)) != "normal" || e.runs(rule)["denied"] != 2 {
-		t.Fatalf("deactivated owner: runs %v", e.runs(rule))
+	if importanceOf(e, third["id"].(string)) != "normal" || e.runs(rule)["denied"] != 1 || e.runs(rule)["skipped"] != 1 {
+		t.Fatalf("a paused rule does not act: runs %v", e.runs(rule))
 	}
 	// A guard stays in force: an automation cannot move an item into a guarded status it does not satisfy.
 	f.exec("UPDATE users SET status='active' WHERE id=$1", e.editor.id)
+	f.want(f.call(e.editor, "PATCH", "/automation-rules/"+rule, map[string]any{"enabled": true}), 200, "resume after revalidation")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' LIMIT 1")
 	f.exec("UPDATE statuses SET required_fields='{due_date}' WHERE id=$1", done)
 	guarded := e.rule(t, e.editor, "Auto complete", `{"when":{"type":"item.assigned"},"then":[{"type":"set_field","field":"status_id","value":"`+done+`"}]}`)
@@ -565,6 +572,7 @@ func TestRunLogDeadEventsAndReplay(t *testing.T) {
 		t.Fatal("the deactivated owner's rule must not act")
 	}
 	f.exec("UPDATE users SET status='active' WHERE id=$1", e.editor.id)
+	f.want(f.call(e.editor, "PATCH", "/automation-rules/"+rule, map[string]any{"enabled": true}), 200, "resume after revalidation")
 	ev := pendingEvent(t, e, item["id"].(string), events.ItemCreated)
 	f.exec("UPDATE domain_events SET last_error='boom', attempts=8 WHERE event_id=$1", ev.ID)
 	dead := f.call(e.admin, "GET", "/automation/dead-events", nil)

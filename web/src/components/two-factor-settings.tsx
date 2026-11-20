@@ -121,7 +121,7 @@ export function TwoFactorSettings() {
 
   return (
     <section className="mt-10" aria-labelledby="two-factor-title">
-      <h3 id="two-factor-title" className="text-base font-semibold">{t("settings.twoFactor.title")}</h3>
+      <h2 id="two-factor-title" className="text-base font-semibold">{t("settings.twoFactor.title")}</h2>
       <p className="mt-1 mb-4 text-sm text-muted-foreground">{t("settings.twoFactor.description")}</p>
       {body}
     </section>

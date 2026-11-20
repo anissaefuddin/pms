@@ -63,14 +63,11 @@ test("SB-T15 / SB-14: a long project name is truncated and its full name is avai
   await expect(link).toHaveCSS("text-overflow", "ellipsis");
 });
 
-test("only Space overview is highlighted on a Space page; the Space name row is not active too", async ({ page }) => {
+test("the Space name row is the highlighted row on its own page, and tools are not", async ({ page }) => {
   await mockSpaces(page, { extra: common as never });
   await page.goto(`/spaces/${marketing.id}`);
   const tree = page.getByRole("navigation", { name: "Spaces" });
   await tree.getByRole("button", { name: "Expand Marketing" }).click();
-  await expect(tree.getByRole("link", { name: "Space overview" })).toHaveAttribute("aria-current", "page");
-  // Visual highlight only on the overview; the Space name row keeps its normal background.
-  const nameBg = await tree.getByRole("link", { name: "Marketing", exact: true }).evaluate((el) => getComputedStyle(el).backgroundColor);
-  const overviewBg = await tree.getByRole("link", { name: "Space overview" }).evaluate((el) => getComputedStyle(el).backgroundColor);
-  expect(nameBg).not.toBe(overviewBg);
+  await expect(tree.getByRole("link", { name: "Space overview" })).toHaveCount(0);
+  await expect(tree.getByRole("link", { name: "Marketing", exact: true })).toHaveAttribute("aria-current", "page");
 });

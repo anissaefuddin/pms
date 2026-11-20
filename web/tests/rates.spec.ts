@@ -13,10 +13,12 @@ test("an admin adds an hourly rate for a person; the page passes axe", async ({ 
   await page.goto("/settings/rates");
   await expect(page.getByRole("heading", { name: "Hourly rates" })).toBeVisible();
   await expect(page.getByRole("row", { name: /Design 40\.00 2026-01-01/ })).toBeVisible();
-  await page.getByLabel("Person or job role").selectOption({ label: "Grace Hopper" });
-  await page.getByLabel("Rate per hour").fill("55.5");
-  await page.getByLabel("Effective from").fill("2026-03-01");
   await page.getByRole("button", { name: "Add rate" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Person or job role").selectOption({ label: "Grace Hopper" });
+  await dialog.getByLabel("Rate per hour").fill("55.5");
+  await dialog.getByLabel("Effective from").fill("2026-03-01");
+  await dialog.getByRole("button", { name: "Add rate" }).click();
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/rates")?.body).toEqual({ user_id: grace.id, rate_minor: 5550, effective_from: "2026-03-01" });
   await expect(page.getByRole("row", { name: /Grace Hopper 55\.50 2026-03-01/ })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

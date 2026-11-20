@@ -16,6 +16,7 @@ const definition = { pages: [
     { key: "owner", kind: "assignee", label: "Owner" }] },
   { title: "Files", elements: [{ key: "doc", kind: "attachment", label: "Document", max_files: 2 }] }] };
 const noFiles = { pages: [definition.pages[0]] };
+const catalogEntry = { id: fid, name: "IT request", description: "Ask IT" };
 const fill = (def: any = definition) => ({ id: fid, name: "IT request", description: "Ask IT", definition: def });
 
 async function setup(page: Page, opts: { def?: any; available?: any[]; submit?: any } = {}) {
@@ -44,6 +45,20 @@ test("list shows available forms with Start, and the empty state", async ({ page
   await page.getByRole("link", { name: "Start IT request" }).click();
   await expect(page).toHaveURL(`/requests/${fid}`);
   await expect(page.getByRole("heading", { name: "IT request" })).toBeVisible();
+});
+
+// RF-08: the Space name appears only when the API sends it, which it does only for Spaces the requester can view.
+test("catalog shows the Space name only when the requester can view that Space", async ({ page }) => {
+  await setup(page, { available: [{ ...catalogEntry, space_name: "Intake" }] });
+  await page.goto("/requests");
+  await expect(page.getByText("Intake", { exact: true })).toBeVisible();
+});
+
+test("catalog hides the Space name from a requester without Space access", async ({ page }) => {
+  await setup(page, { available: [catalogEntry] });
+  await page.goto("/requests");
+  await expect(page.getByRole("link", { name: "Start IT request" })).toBeVisible();
+  await expect(page.getByText("Intake")).toHaveCount(0);
 });
 
 test("empty list shows the empty state", async ({ page }) => {
@@ -178,9 +193,24 @@ for (const scheme of ["light", "dark"] as const) {
     await expect(page.getByText("Ask IT")).toBeVisible();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
     await page.goto(`/requests/${fid}`);
+    // Next checks the page first: the empty required answer is reported here and the summary takes focus.
     await page.getByRole("button", { name: "Next" }).click();
-    await page.getByRole("button", { name: "Submit" }).click();
     await expect(page.getByRole("alert").filter({ hasText: "problem" })).toBeFocused();
     expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
   });
 }
+
+test("progress lists each page; Next checks only the required answers on this page", async ({ page }) => {
+  await setup(page);
+  await page.goto(`/requests/${fid}`);
+  const progress = page.getByRole("navigation", { name: "Form progress" });
+  await expect(progress.getByText("1. Basics")).toBeVisible();
+  await expect(progress.getByText("2. Files")).toBeVisible();
+  await expect(progress.locator("[aria-current=step]")).toHaveText("1. Basics");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(page.getByRole("alert")).toContainText("Subject");
+  await expect(progress.locator("[aria-current=step]")).toHaveText("1. Basics");
+  await page.getByLabel(/Subject/).fill("Laptop please");
+  await page.getByRole("button", { name: "Next" }).click();
+  await expect(progress.locator("[aria-current=step]")).toHaveText("2. Files");
+});

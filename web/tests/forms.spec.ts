@@ -10,8 +10,8 @@ const wf = { id: sid(100), name: "Default flow", is_default: true, statuses: [
   { id: sid(1), name: "New", color: "slate", group: "active", auto_assign: false, lock_transitions: false, allowed_next: [] },
   { id: sid(2), name: "In Progress", color: "blue", group: "active", auto_assign: false, lock_transitions: false, allowed_next: [] }] };
 
-const stored = (version = 3) => ({
-  id: fid, space_id: marketing.id, name: "IT request", description: "Ask IT", version, created_by: ada, updated_by: ada,
+const stored = (version = 3, status = "draft") => ({
+  id: fid, space_id: marketing.id, name: "IT request", description: "Ask IT", version, status, created_by: ada, updated_by: ada,
   created_at: "2026-11-01T10:00:00Z", updated_at: "2026-11-02T10:00:00Z",
   definition: { pages: [{ title: "Details", elements: [
     { key: "your_name", kind: "single_line", label: "Your name", required: true },
@@ -37,6 +37,8 @@ async function mock(page: Page, opts: { spaces?: any[]; extra?: Record<string, a
       return { body: current, headers: { ETag: `"${current.version}"` } };
     },
     [`DELETE /forms/${fid}`]: () => ({ status: 204 }),
+    [`POST /forms/${fid}/publish`]: () => { current = { ...current, status: "published", version: current.version + 1 }; return { body: current, headers: { ETag: `"${current.version}"` } }; },
+    [`POST /forms/${fid}/unpublish`]: () => { current = { ...current, status: "draft", version: current.version + 1 }; return { body: current, headers: { ETag: `"${current.version}"` } }; },
     ...opts.extra,
   } });
   return calls;
@@ -50,8 +52,10 @@ const addQuestion = async (page: Page, kind: string) => {
 test("list shows forms and the Space page links to it for editors", async ({ page }) => {
   await mock(page);
   await page.goto(`/spaces/${marketing.id}`);
-  await page.getByRole("link", { name: "Forms" }).click();
-  await expect(page).toHaveURL(`/spaces/${marketing.id}/forms`);
+  // Forms live in Space Settings (one entry point in the header), not as a separate header link.
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await page.getByRole("link", { name: "Request forms" }).click();
+  await expect(page).toHaveURL(`/spaces/${marketing.id}/settings/forms`);
   const row = page.getByRole("row", { name: /IT request/ });
   await expect(row).toContainText("Ask IT");
   await expect(row.getByRole("cell").first()).toHaveText("3");
@@ -191,6 +195,10 @@ test("preview renders the questions page by page and cannot submit", async ({ pa
   await expect(preview.getByText("Page 1 of 2")).toBeVisible();
   await expect(preview.getByRole("radio", { name: "Laptop" })).toBeVisible();
   await expect(preview.getByRole("button", { name: "Submit" })).toHaveCount(0);
+  // Next checks the required answer on this page first, so the preview fills "Your name" before moving on.
+  await preview.getByRole("button", { name: "Next" }).click();
+  await expect(preview.getByText("Your name", { exact: false }).first()).toBeVisible();
+  await preview.getByLabel(/Your name/).fill("Sam");
   await preview.getByRole("button", { name: "Next" }).click();
   await expect(preview.getByLabel("Notes")).toBeVisible();
   await expect(preview.getByRole("button", { name: "Submit" })).toBeDisabled();
@@ -253,4 +261,52 @@ test("a route picks a Blueprint of the destination Space, shows it in its summar
   await expect.poll(() => calls.find((c) => c.method === "PUT")?.body).toBeTruthy();
   expect(calls.find((c) => c.method === "PUT")!.body.response.routes).toEqual([
     { when: { key: "kind", op: "equals", value: "Laptop" }, type_key: "bug", blueprint_id: bp }]);
+});
+
+test("a draft is published from the builder and can be moved back to draft", async ({ page }) => {
+  const calls = await mock(page);
+  await page.goto(`/spaces/${marketing.id}/forms/${fid}`);
+  await expect(page.getByText("Draft", { exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Publish" }).click();
+  await expect(page.getByText("Published", { exact: true })).toBeVisible();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${fid}/publish`)).toBe(true);
+  await page.getByRole("button", { name: "Move to draft" }).click();
+  await expect(page.getByText("Draft", { exact: true })).toBeVisible();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${fid}/unpublish`)).toBe(true);
+});
+
+test("the builder has four sections; access is chosen in Access & sharing and saved on its own", async ({ page }) => {
+  const calls = await mock(page, { extra: {
+    [`PUT /forms/${fid}/access`]: (body: any) => ({ body: { ...stored(4), access: body.access }, headers: { ETag: '"4"' } }),
+  } });
+  await page.goto(`/spaces/${marketing.id}/forms/${fid}`);
+  const nav = page.getByRole("navigation", { name: "Form sections" });
+  for (const label of ["Questions", "Submission settings", "Access & sharing", "Confirmation"]) {
+    await expect(nav.getByRole("link", { name: label })).toBeVisible();
+  }
+  await nav.getByRole("link", { name: "Access & sharing" }).click();
+  await expect(page.getByRole("radio", { name: /Everyone in the workspace/ })).not.toBeChecked();
+  await page.getByRole("radio", { name: /Everyone in the workspace/ }).check();
+  await page.locator("#sec-access").getByRole("button", { name: "Save", exact: true }).click();
+  await expect.poll(() => calls.find((c) => c.method === "PUT" && c.path === `/forms/${fid}/access`)?.body).toEqual({ access: "internal" });
+});
+
+test("a new form asks for a save before access can be set", async ({ page }) => {
+  await mock(page);
+  await page.goto(`/spaces/${marketing.id}/forms/new`);
+  await expect(page.getByText("Save the form first. Then you can choose who can fill it and create a public link.")).toBeVisible();
+  await expect(page.locator("#sec-access").getByRole("button", { name: "Save", exact: true })).toHaveCount(0);
+});
+
+test("a new form is saved as a draft and published from the builder in one step", async ({ page }) => {
+  const calls = await mock(page, { extra: {
+    [`POST /spaces/${marketing.id}/forms`]: (body: any) => ({ status: 201, body: { ...stored(1, "draft"), ...body, id: fid, status: "draft" }, headers: { ETag: '"1"' } }),
+  } });
+  await page.goto(`/spaces/${marketing.id}/forms/new`);
+  await page.getByLabel("Form name").fill("Facilities request");
+  await page.getByRole("button", { name: "Add question to page 1" }).click();
+  await page.getByRole("menuitem", { name: "Single line text", exact: true }).click();
+  await page.getByRole("button", { name: "Publish", exact: true }).click();
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/spaces/${marketing.id}/forms`)).toBe(true);
+  await expect.poll(() => calls.some((c) => c.method === "POST" && c.path === `/forms/${fid}/publish`)).toBe(true);
 });

@@ -14,6 +14,7 @@ func TestApprovals(t *testing.T) {
 	admin := f.person("admin")
 	editor, viewer, approver, outsider := f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Work")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", viewer.id, "read")
 	f.share(space, "user", approver.id, "read") // viewing is enough to decide
@@ -101,6 +102,7 @@ func TestApprovalHistoryIsAppendOnlyAndPinnedToItemVersion(t *testing.T) {
 	f := newFixture(t)
 	admin, approver, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Work")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", approver.id, "read")
 	item := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": "Ship", "locations": []map[string]any{{"space_id": space}}})
 	f.want(item, 201, "create item")
@@ -137,6 +139,7 @@ func TestApprovalPoliciesReassignAndDeadlines(t *testing.T) {
 	f := newFixture(t)
 	admin, first, second, replacement := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Approval deadlines")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	for _, reviewer := range []*person{first, second, replacement} {
 		f.share(space, "user", reviewer.id, "read")
 	}

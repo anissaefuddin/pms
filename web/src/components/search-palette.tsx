@@ -11,7 +11,7 @@ import { getItem, itemKeys } from "@/lib/items";
 import { effectiveScope, useSearchResults, type SearchContext, type SearchScope } from "@/lib/search";
 import { useDebounced } from "@/lib/space-queries";
 
-export function SearchPalette({ spaceId, containerId }: SearchContext) {
+export function SearchPalette({ spaceId, containerId, hideTrigger = false }: SearchContext & { hideTrigger?: boolean }) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
@@ -71,10 +71,10 @@ export function SearchPalette({ spaceId, containerId }: SearchContext) {
 
   const pending = query.trim() !== debounced || search.isPending;
   return <Dialog open={open} onOpenChange={changeOpen}>
-    <DialogTrigger render={<Button type="button" variant="ghost" size="sm" aria-label={t("search.title")}
+    {!hideTrigger && <DialogTrigger render={<Button type="button" variant="ghost" size="sm" aria-label={t("search.title")}
       aria-keyshortcuts="Control+K Meta+K" />}>
       <Search className="size-4" />{t("search.title")}
-    </DialogTrigger>
+    </DialogTrigger>}
     <DialogContent initialFocus={input} onKeyDown={moveFocus} className="sm:max-w-xl">
       <DialogTitle>{t("search.title")}</DialogTitle>
       <Input ref={input} type="search" value={query} maxLength={200} onChange={(event) => setQuery(event.target.value)}

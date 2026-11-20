@@ -11,6 +11,7 @@ test("authorized apps tab lists and revokes", async ({ page }) => {
   await page.getByRole("tab", { name: "Authorized apps" }).click(); // API keys is the first tab
   await expect(page.getByText("Sync Bot")).toBeVisible();
   await page.getByRole("button", { name: "Revoke Sync Bot?" }).click();
+  await page.getByRole("dialog", { name: "Revoke access for Sync Bot?" }).getByRole("button", { name: "Revoke", exact: true }).click();
   await expect(page.getByText("No app has access to your account.")).toBeVisible();
   expect(calls.some((c) => c.method === "DELETE" && c.path === "/oauth/grants/g1")).toBe(true);
 });

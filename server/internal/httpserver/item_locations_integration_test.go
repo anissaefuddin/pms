@@ -9,6 +9,8 @@ func TestReplaceItemLocations(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	a, b := f.space("Space A"), f.space("Space B")
+	f.share(a, "user", admin.id, "full") // A1.2: the admin places items in both spaces as an explicit member
+	f.share(b, "user", admin.id, "full")
 	item := customFieldItem(f, admin, a, "Shared item")
 	path := "/items/" + item + "/locations"
 	loc := func(space string, parent any) map[string]any {

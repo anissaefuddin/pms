@@ -183,7 +183,7 @@ test.describe("Space page", () => {
     await expect(page.getByRole("heading", { name: "Personal", level: 1 })).toBeVisible();
     await expect(page.getByRole("button", { name: "Share" })).toHaveCount(0);
     await page.getByRole("button", { name: "Space actions" }).click();
-    await expect(page.getByRole("menuitem")).toHaveText(["Import from Excel", "“+” menu", "Custom fields"]);
+    await expect(page.getByRole("menuitem")).toHaveText(["Import from Excel", "Export Space to Excel", "“+” menu", "Custom fields"]);
   });
 
   test("actions follow my_capabilities", async ({ page }) => {
@@ -191,7 +191,7 @@ test.describe("Space page", () => {
     await page.goto(`/spaces/${marketing.id}`);
     await expect(page.getByRole("button", { name: "Share" })).toHaveCount(0);
     await page.getByRole("button", { name: "Space actions" }).click();
-    await expect(page.getByRole("menuitem")).toHaveText(["“+” menu", "Rename"]);
+    await expect(page.getByRole("menuitem")).toHaveText(["Export Space to Excel", "“+” menu", "Rename"]);
   });
 
   test("a viewer gets no actions at all", async ({ page }) => {

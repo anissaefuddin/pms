@@ -27,6 +27,9 @@ import { ItemApprovals } from "@/components/item-approvals";
 import { ItemActivity } from "@/components/item-activity";
 import { ItemBlocks } from "@/components/item-blocks";
 import { ItemCustomFields } from "@/components/item-custom-fields";
+import { ContainerFieldAssignments } from "@/components/container-field-assignments";
+import { useSpaces } from "@/lib/space-queries";
+import { can } from "@/lib/spaces";
 import { ItemAttachments } from "@/components/item-attachments";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { tintOf } from "@/components/ui/status-chip";
@@ -81,6 +84,11 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
   const [busy, setBusy] = useState(false);
   const [exporting, setExporting] = useState(false);
   const [savingBlueprint, setSavingBlueprint] = useState(false);
+  const [assigningFields, setAssigningFields] = useState(false);
+  // Field assignments are for Space managers (Full role), and they name the Space of the item's first location.
+  const spaces = useSpaces();
+  const fieldSpaceId = item.locations[0]?.space_id ?? "";
+  const canManageFields = !!spaces.data?.some((space) => space.id === fieldSpaceId && can(space, "share"));
   const saving = useRef(false);
   const [error, setError] = useState("");
   const [conflictDraft, setConflictDraft] = useState<ItemUpdate>();
@@ -202,7 +210,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
             onClick={() => void save({ is_milestone: true })}>{t("items.milestone")}</DropdownMenuItem>}
           {canEdit && item.type !== "task" && item.locations.length > 0 && <DropdownMenuItem
             onClick={() => void navigate({ to: "/spaces/$spaceId/automation", params: { spaceId: item.locations[0].space_id }, search: { container: item.id } })}>{t("automation.link")}</DropdownMenuItem>}
-          {item.type === "project" && item.locations.length > 0 && <DropdownMenuItem onClick={() => setExporting(true)}>{t("excel.exportTitle")}</DropdownMenuItem>}
+          {(item.type === "project" || item.type === "folder") && item.locations.length > 0 && <DropdownMenuItem onClick={() => setExporting(true)}>{t("excel.exportTitle")}</DropdownMenuItem>}
+          {(item.type === "project" || item.type === "folder") && fieldSpaceId && canManageFields && <DropdownMenuItem onClick={() => setAssigningFields(true)}>{t("items.fieldAssignments.menu")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => setSavingBlueprint(true)}>{t("blueprints.menu")}</DropdownMenuItem>
           {canDelete && <DropdownMenuItem disabled={busy} variant="destructive"
             onClick={() => { setError(""); setDeleting(true); }}>{t("items.delete")}</DropdownMenuItem>}
@@ -316,6 +325,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
     {childLocation && <CreateItemDialog open={adding} onOpenChange={setAdding} me={me} taskOnly={item.type === "task"} location={childLocation} onCreated={(child) => onOpen(child.id)} />}
     {exporting && <ProjectExcelExport open={exporting} onOpenChange={setExporting} item={item} />}
     <SaveBlueprintDialog open={savingBlueprint} onOpenChange={setSavingBlueprint} itemID={item.id} title={item.title} />
+    {(item.type === "project" || item.type === "folder") && fieldSpaceId && assigningFields && <ContainerFieldAssignments open={assigningFields}
+      onOpenChange={setAssigningFields} spaceId={fieldSpaceId} item={{ id: item.id, title: item.title, type: item.type }} />}
     <ConfirmDialog open={deleting} onOpenChange={setDeleting} title={t("items.delete")} description={t("items.deleteDescription")}
       confirmLabel={t("items.delete")} cancelLabel={t("items.cancel")} onConfirm={remove} busy={busy} error={error} />
   </article>;

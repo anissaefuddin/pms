@@ -21,6 +21,9 @@ export function visibleColumns(config: Record<string, unknown> | null | undefine
   return savedColumns(config) ?? [...defaultColumns, ...(hasProjects ? ["progress"] : [])];
 }
 
+// The item engine filters by these types (see items/list_fields.go). A relation has no filter operator, so it is shown disabled.
+export const fieldFilterable = (type: string) => type !== "relation";
+
 export const fieldFilterRef = (field?: string) => {
   const [id, ...value] = (field ?? "").split(":");
   return { id: id ?? "", value: value.join(":") };

@@ -29,11 +29,11 @@ test("the account menu shows who is signed in and links to appearance and email 
   await page.getByRole("button", { name: "Account menu" }).click();
   await expect(page.getByRole("menuitem", { name: "Workspace appearance" })).toBeVisible();
   await page.getByRole("menuitem", { name: "Workspace appearance" }).click();
-  await expect(page).toHaveURL(/\/settings\/profile#appearance$/);
+  await expect(page).toHaveURL(/\/settings\/appearance$/);
   const settings = page.getByRole("navigation", { name: "Settings" });
   for (const name of ["Profile", "Work schedule", "Account", "Email preferences", "Workspace appearance"]) await expect(settings.getByRole("link", { name, exact: true })).toHaveCount(1);
   await settings.getByRole("link", { name: "Email preferences" }).click();
-  await expect(page).toHaveURL(/#email$/);
+  await expect(page).toHaveURL(/\/settings\/email$/);
 });
 
 test("Recycle bin shows Empty bin beside the title", async ({ page }) => {

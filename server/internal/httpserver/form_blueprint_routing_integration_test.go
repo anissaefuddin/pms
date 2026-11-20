@@ -8,6 +8,9 @@ func TestFormBranchingBlueprintItem(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, requester := f.person("admin"), f.person("regular"), f.person("regular")
 	intake, work, other := f.space("Intake"), f.space("Work"), f.space("Other")
+	for _, sp := range []string{intake, work, other} {
+		f.share(sp, "user", admin.id, "full") // A1.2: the admin builds the routed items across the scenario's Spaces
+	}
 	f.share(intake, "user", editor.id, "editor")
 	f.share(work, "user", editor.id, "editor")
 	f.want(f.call(admin, "POST", "/item-types", map[string]any{"key": "bug", "name": "Bug", "base": "task"}), 201, "bug type")
@@ -47,6 +50,7 @@ func TestFormBranchingBlueprintItem(t *testing.T) {
 	form := f.call(editor, "POST", "/spaces/"+intake+"/forms", response(route("Bug", "bug", bpBug), route("Idea", "idea", bpIdea)))
 	f.want(form, 201, "form")
 	id := form.body["id"].(string)
+	f.publishForm(editor, id)
 	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", id)
 
 	children := func(item string) string {

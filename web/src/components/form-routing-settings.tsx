@@ -18,7 +18,7 @@ type Props = { draft: FormDraft; pages: FormPage[]; errors: Record<string, strin
 /** FORM-09: which item type a submission creates (by answer) and which custom fields the answers fill. */
 export function FormRoutingSettings({ draft, pages, errors, onChange }: Props) {
   const { t } = useTranslation();
-  const types = (useItemTypes().data ?? []).filter((def) => !def.is_builtin && def.active && def.base === draft.item_type);
+  const types = (useItemTypes().data ?? []).filter((def) => !def.is_builtin && def.active && def.base === draft.item_type && (!def.space_id || def.space_id === draft.space_id));
   const fields = useQuery({ queryKey: ["custom-fields", draft.space_id], enabled: !!draft.space_id, retry: false,
     queryFn: async () => (await api<{ items: Field[] }>(`/api/v1/spaces/${draft.space_id}/custom-fields`)).items });
   const blueprints = useBlueprints(draft.space_id, !!draft.space_id).data ?? [];
@@ -77,26 +77,41 @@ export function FormRoutingSettings({ draft, pages, errors, onChange }: Props) {
 /** FORM-04: the wording of the confirmation email for public requesters, with a preview. React escapes every value shown. */
 export function FormEmailSettings({ draft, errors, onChange }: Omit<Props, "pages">) {
   const { t } = useTranslation();
+  return <section aria-labelledby="fr-email" className="space-y-3">
+    <h3 id="fr-email" className="font-medium">{t("forms.email.title")}</h3>
+    <EmailFields draft={draft} errors={errors} onChange={onChange} />
+    <EmailPreview draft={draft} />
+  </section>;
+}
+
+/** The wording inputs of the confirmation email. Shared by the builder's Confirmation section and the Configure emails dialog. */
+export function EmailFields({ draft, errors, onChange }: Omit<Props, "pages">) {
+  const { t } = useTranslation();
   const email = draft.email;
   const set = (patch: Partial<typeof emptyEmail>) => onChange({ email: { ...email, ...patch } });
-  const sample = (text: string) => text.replaceAll("{name}", "Sam Visitor").replaceAll("{title}", "Broken login").replaceAll("{form}", draft.name || t("forms.email.formName"));
   const input = (key: keyof typeof emptyEmail, max: number) => <label className="block space-y-1 text-sm"><span>{t(`forms.email.${key}`)}</span>
     <Input value={email[key]} maxLength={max} aria-invalid={!!errors[`response.email.${key}`]} onChange={(e) => set({ [key]: e.target.value })} />
     <FormError message={errors[`response.email.${key}`] ?? ""} /></label>;
-  return <section aria-labelledby="fr-email" className="space-y-3">
-    <h3 id="fr-email" className="font-medium">{t("forms.email.title")}</h3>
+  return <div className="space-y-3">
     <p className="text-sm text-muted-foreground">{t("forms.email.hint")}</p>
     <div className="grid gap-3 sm:grid-cols-2">{emailInputs.map(([key, max]) => <div key={key}>{input(key, max)}</div>)}</div>
     <label className="block space-y-1 text-sm"><span>{t("forms.email.message")}</span>
       <textarea className="block w-full rounded-lg border border-input bg-transparent px-2.5 py-1.5 text-sm" rows={3} maxLength={2000} value={email.message}
         aria-invalid={!!errors["response.email.message"]} onChange={(e) => set({ message: e.target.value })} /></label>
     <FormError message={errors["response.email.message"] ?? ""} />
-    <div role="region" aria-label={t("forms.email.preview")} className="space-y-2 rounded-lg border bg-card p-3 text-sm">
-      <p className="text-xs text-muted-foreground">{t("forms.email.from", { name: email.sender_name || t("forms.email.defaultSender") })}</p>
-      {/^https:\/\//.test(email.logo_url) && <img src={email.logo_url} alt="" className="max-h-12" />}
-      {email.greeting && <p>{sample(email.greeting)}</p>}
-      <p className="whitespace-pre-line">{email.message ? sample(email.message) : t("forms.email.defaultMessage")}</p>
-      {email.closing && <p className="whitespace-pre-line">{sample(email.closing)}</p>}
-    </div>
-  </section>;
+  </div>;
+}
+
+/** What a requester gets in the confirmation email, with sample values. Text only: nothing typed here becomes markup. */
+export function EmailPreview({ draft }: { draft: FormDraft }) {
+  const { t } = useTranslation();
+  const email = draft.email;
+  const sample = (text: string) => text.replaceAll("{name}", "Sam Visitor").replaceAll("{title}", "Broken login").replaceAll("{form}", draft.name || t("forms.email.formName"));
+  return <div role="region" aria-label={t("forms.email.preview")} className="space-y-2 rounded-lg border bg-card p-3 text-sm">
+    <p className="text-xs text-muted-foreground">{t("forms.email.from", { name: email.sender_name || t("forms.email.defaultSender") })}</p>
+    {/^https:\/\//.test(email.logo_url) && <img src={email.logo_url} alt="" className="max-h-12" />}
+    {email.greeting && <p>{sample(email.greeting)}</p>}
+    <p className="whitespace-pre-line">{email.message ? sample(email.message) : t("forms.email.defaultMessage")}</p>
+    {email.closing && <p className="whitespace-pre-line">{sample(email.closing)}</p>}
+  </div>;
 }

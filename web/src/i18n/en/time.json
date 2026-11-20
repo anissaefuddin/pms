@@ -52,7 +52,12 @@
     "from": "Effective from",
     "add": "Add rate",
     "empty": "No rates yet.",
-    "name": "Name"
+    "name": "Name",
+    "status": {
+      "current": "Current",
+      "scheduled": "Scheduled",
+      "historical": "Historical"
+    }
   },
   "noEntries": "No time entries yet. Logged time for this project appears here.",
   "clearFilters": "Clear filters",

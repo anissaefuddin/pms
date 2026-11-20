@@ -24,8 +24,12 @@ func rowsOf(r reply) map[string]float64 {
 func TestAnalyticsEngineMatchesRawDataAndPolicy(t *testing.T) {
 	f := newFixture(t)
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
-	shared, secret := f.space("Analytics shared"), f.space("Analytics secret")
+	unlinked := f.unlinkedAdmin() // A1.3: a Workspace admin with no grant on these Spaces
+	shared, secret := f.space("Analytics shared"), f.spaceWithoutAdmins("Analytics secret")
 	f.share(shared, "user", member.id, "read")
+	// A1.3: the admin is an explicit member of both Spaces; the positive expectations below are the explicit grant's.
+	f.share(shared, "user", admin.id, "full")
+	f.share(secret, "user", admin.id, "full")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")
 	task := func(space, title, status, importance string, effort int, due string) string {
@@ -63,6 +67,19 @@ func TestAnalyticsEngineMatchesRawDataAndPolicy(t *testing.T) {
 	}
 	if r := query(admin, count); r.body["total"] != 4.0 {
 		t.Fatalf("admin total = %v, want 4", r.body["total"])
+	}
+	// A1.3 contract: a Workspace admin without a grant has no implicit content access, so the regular report is empty.
+	if r := query(unlinked, count); r.body["total"] != 0.0 {
+		t.Fatalf("an admin without a grant: total = %v, want 0", r.body["total"])
+	}
+	if rows := rowsOf(query(unlinked, with(map[string]any{"group_by": "space"}))); len(rows) != 0 {
+		t.Fatalf("an admin without a grant sees no Space groups: %v", rows)
+	}
+	// The operational aggregate hides a group below MinGroupItems, so four items in one group come back suppressed.
+	op := f.call(unlinked, "POST", "/analytics/operational", map[string]any{"reporting_on": "tasks", "metric": "count", "space_ids": []string{shared, secret}})
+	f.want(op, 200, "operational aggregate")
+	if op.body["suppressed"] != 1.0 || op.body["total"] != 0.0 {
+		t.Fatalf("a group of four is below the privacy threshold: %v", op.body)
 	}
 	if r := query(outsider, count); r.body["total"] != 0.0 {
 		t.Fatalf("outsider total = %v, want 0", r.body["total"])
@@ -145,8 +162,9 @@ func TestAnalyticsEngineMatchesRawDataAndPolicy(t *testing.T) {
 	if r := query(member, with(map[string]any{"metric": "sum_field", "field_id": budget})); r.body["total"] != 14.5 {
 		t.Fatalf("member budget = %v, want 14.5 (decimals kept, secret Space hidden)", r.body["total"])
 	}
-	if r := query(admin, with(map[string]any{"metric": "sum_field", "field_id": budget})); r.body["total"] != 1014.5 {
-		t.Fatalf("admin budget = %v, want 1014.5", r.body["total"])
+	// Budget is a field of the shared Space, so the value on the secret Space's item does not apply and is not counted (CF Space isolation).
+	if r := query(admin, with(map[string]any{"metric": "sum_field", "field_id": budget})); r.body["total"] != 14.5 {
+		t.Fatalf("admin budget = %v, want 14.5 (a Space field counts only where it applies)", r.body["total"])
 	}
 	labels := query(admin, with(map[string]any{"group_by": "field", "field_id": impact}))
 	f.want(labels, 200, "group by single select")
@@ -155,7 +173,8 @@ func TestAnalyticsEngineMatchesRawDataAndPolicy(t *testing.T) {
 		row := raw.(map[string]any)
 		byLabel[row["group"].(map[string]any)["label"].(string)] = row["value"].(float64)
 	}
-	if byLabel["High impact"] != 1 || byLabel["Low impact"] != 1 || byLabel[""] != 2 {
+	// The secret Space's item does not carry the shared Space's field, so only the unlabelled item of shared counts as "".
+	if byLabel["High impact"] != 1 || byLabel["Low impact"] != 1 || byLabel[""] != 1 {
 		t.Fatalf("by impact = %v", byLabel)
 	}
 	for name, q := range map[string]map[string]any{

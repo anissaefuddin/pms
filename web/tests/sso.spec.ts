@@ -41,7 +41,7 @@ test("admin configures the provider: redirect URI shown, secret kept when left e
     "GET /sso/saml": { body: samlConfig() },
   } });
   await page.goto("/settings/sso");
-  await expect(page.getByRole("heading", { name: "Single sign-on", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Single sign-on", level: 1 })).toBeVisible();
   await expect(page.getByText("https://pms.example.test/api/v1/auth/sso/oidc/callback")).toBeVisible();
   await expect(page.getByLabel("Client secret")).toHaveAttribute("placeholder", /leave empty to keep it/);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

@@ -7,6 +7,8 @@ func TestProjectFiles(t *testing.T) {
 	admin, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	open, hidden := f.space("Open"), f.space("Hidden")
 	f.share(open, "user", reader.id, "read")
+	f.share(open, "user", admin.id, "full") // A1.2: the admin manages the project's files in both Spaces as an explicit member
+	f.share(hidden, "user", admin.id, "full")
 	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Project',$1) RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", project, open)
 	visible := customFieldItem(f, admin, open, "Visible")

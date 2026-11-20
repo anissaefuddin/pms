@@ -11,6 +11,8 @@ func TestResourceWorkload(t *testing.T) {
 	f := newFixture(t)
 	admin, first, second := f.person("admin"), f.person("regular"), f.person("regular")
 	space, extra := f.space("Workload"), f.space("Second placement")
+	f.share(space, "user", admin.id, "full") // A1.2: the planner reads this workload with its tasks
+	f.share(extra, "user", admin.id, "full")
 	f.share(space, "user", first.id, "editor")
 	f.share(space, "user", second.id, "editor")
 	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Project',$1) RETURNING id::text", admin.id)
@@ -144,6 +146,7 @@ func TestUtilizationPlannedVersusActualMatchesRawData(t *testing.T) {
 	f := newFixture(t)
 	admin, one, two := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Util")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", one.id, "editor")
 	task := f.queryID(`INSERT INTO items(type,title,created_by,status_id,effort_minutes,start_date,due_date)
  VALUES('task','Task',$1,(SELECT id FROM statuses WHERE grp='active' LIMIT 1),300,'2026-11-16','2026-11-20') RETURNING id::text`, admin.id)
@@ -175,6 +178,7 @@ func TestBaselinesFreezeDatesAndCannotBeChanged(t *testing.T) {
 	f := newFixture(t)
 	admin, viewer, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Baselines")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", viewer.id, "read")
 	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", project, space)
@@ -213,6 +217,8 @@ func TestCrossProjectDependenciesRespectPermissions(t *testing.T) {
 	f := newFixture(t)
 	admin, member := f.person("admin"), f.person("regular")
 	one, two, hidden := f.space("Alpha"), f.space("Beta"), f.space("Hidden")
+	f.share(hidden, "user", admin.id, "full") // A1.2: the admin is the planner who links the hidden project
+	f.share(two, "user", admin.id, "full")    // A1.2: the successor lives in Beta
 	f.share(one, "user", member.id, "editor")
 	f.share(two, "user", member.id, "editor")
 	mk := func(kind, title, space, parent string) string {

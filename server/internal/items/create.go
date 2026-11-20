@@ -10,6 +10,7 @@ import (
 	"sort"
 	"time"
 
+	"github.com/anissaefuddin/pms/server/internal/events"
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
@@ -176,6 +177,13 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 		parsed := uuid.MustParse(*itemType.DefaultWorkflowID)
 		workflowID = &parsed
 	}
+	// B: an explicit workflow for a root item wins over the Item Type and Space defaults (see the root branch below).
+	var explicitWorkflow *uuid.UUID
+	if raw, ok := fields["workflow_id"]; ok {
+		if json.Unmarshal(raw, &explicitWorkflow) != nil || explicitWorkflow == nil {
+			return Detail{}, Invalid("workflow_id must be a workflow UUID")
+		}
+	}
 	var view *string
 	if raw, ok := fields["default_view_type"]; ok {
 		if json.Unmarshal(raw, &view) != nil || view == nil || !slices.Contains(DefaultViewTypes, *view) || kind == "task" {
@@ -196,6 +204,9 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 		if !caps.Has(policy.Create) {
 			return Detail{}, ErrForbidden
 		}
+		if itemType.SpaceID != nil && loc.SpaceID.String() != *itemType.SpaceID {
+			return Detail{}, InvalidField{"type_key", "this item type belongs to another Space"}
+		}
 		if len(shares) != 0 {
 			var shared bool
 			if err := tx.QueryRow(ctx, "SELECT kind='shared' FROM spaces WHERE id=$1", loc.SpaceID).Scan(&shared); err != nil {
@@ -212,6 +223,9 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 		}
 		key := [2]uuid.UUID{loc.SpaceID, uuid.Nil}
 		var resolved uuid.UUID
+		if loc.ParentID != nil && explicitWorkflow != nil {
+			return Detail{}, Invalid("workflow_id applies to a root item; a child takes its parent's workflow")
+		}
 		if loc.ParentID != nil {
 			key[1] = *loc.ParentID
 			var parentKind, parentTypeName, parentImportance string
@@ -233,6 +247,17 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 			if len(allowed) > 0 && !slices.Contains(allowed, uuid.MustParse(itemType.ID)) { // S8.1.3
 				return Detail{}, Invalid("a " + itemType.Name + " cannot be placed inside a " + parentTypeName)
 			}
+		} else if explicitWorkflow != nil {
+			// B precedence 1: the workflow named in the request. It must exist and have a status (checked below).
+			resolved = *explicitWorkflow
+		} else if itemType.DefaultWorkflowID != nil {
+			// A root item takes its Item Type's default workflow, so a status from it can be set (IE-D18).
+			resolved = uuid.MustParse(*itemType.DefaultWorkflowID)
+		} else if spaceDefault, err := spaceDefaultWorkflow(ctx, tx, loc.SpaceID, kind); err != nil {
+			return Detail{}, err
+		} else if spaceDefault != uuid.Nil {
+			// B precedence 3: the Space's default for this base type (Task or Project).
+			resolved = spaceDefault
 		} else if err := tx.QueryRow(ctx, "SELECT id FROM workflows WHERE is_default").Scan(&resolved); err != nil {
 			return Detail{}, err
 		}
@@ -300,7 +325,7 @@ VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::bool
 	keys := make([]string, 0, len(fields))
 	for key := range fields {
 		switch key {
-		case "type", "type_key", "locations", "shares", "default_workflow_id", "default_view_type":
+		case "type", "type_key", "locations", "shares", "default_workflow_id", "default_view_type", "workflow_id":
 		default:
 			keys = append(keys, key)
 		}
@@ -347,15 +372,18 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 	if err := recordChange(ctx, tx, id.String(), actor.ID, "create", json.RawMessage("{}"), after); err != nil {
 		return Detail{}, err
 	}
-	if err := notifyChanges(ctx, tx, batch, actor, id.String(), json.RawMessage("{}"), after, true); err != nil {
-		return Detail{}, err
-	}
-	var principals []notifications.Principal
-	for _, share := range shares {
-		principals = append(principals, notifications.Principal{Kind: share.PrincipalType, ID: share.PrincipalID.String()})
-	}
-	if _, err := batch.Record(ctx, tx, actor, "shared", notifications.Target{Item: id.String()}, "", principals, nil); err != nil {
-		return Detail{}, err
+	// A bulk import sends one summary instead of a notification per row (see the import report), so per-item notices stop here.
+	if !events.IsBulkImport(ctx) {
+		if err := notifyChanges(ctx, tx, batch, actor, id.String(), json.RawMessage("{}"), after, true); err != nil {
+			return Detail{}, err
+		}
+		var principals []notifications.Principal
+		for _, share := range shares {
+			principals = append(principals, notifications.Principal{Kind: share.PrincipalType, ID: share.PrincipalID.String()})
+		}
+		if _, err := batch.Record(ctx, tx, actor, "shared", notifications.Target{Item: id.String()}, "", principals, nil); err != nil {
+			return Detail{}, err
+		}
 	}
 	return readDetail(ctx, tx, actor, id.String())
 }
@@ -420,4 +448,17 @@ func resolveCreateType(ctx context.Context, tx pgx.Tx, fields map[string]json.Ra
 		return ItemType{}, Invalid("type must be project, folder or task")
 	}
 	return getItemType(ctx, tx, "is_builtin AND key=$1", *kind)
+}
+
+// spaceDefaultWorkflow returns the Space's default workflow for a Task or Project root item, or uuid.Nil when none is set.
+func spaceDefaultWorkflow(ctx context.Context, tx pgx.Tx, spaceID uuid.UUID, kind string) (uuid.UUID, error) {
+	if kind != "task" && kind != "project" {
+		return uuid.Nil, nil
+	}
+	var wf uuid.UUID
+	err := tx.QueryRow(ctx, "SELECT workflow_id FROM space_default_workflows WHERE space_id=$1 AND base_type=$2", spaceID, kind).Scan(&wf)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return uuid.Nil, nil
+	}
+	return wf, err
 }

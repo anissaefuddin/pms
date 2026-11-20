@@ -1,0 +1,14 @@
+{
+  "title": "Gantt portofolio",
+  "description": "Bandingkan jadwal proyek yang terlihat dan ketergantungan antarproyek.",
+  "ids": "ID proyek, dipisah koma",
+  "placeholder": "UUID, UUID",
+  "show": "Tampilkan linimasa",
+  "loading": "Memuat portofolio…",
+  "timeline": "Linimasa portofolio",
+  "bar": "{{title}}: {{start}} sampai {{due}}",
+  "unscheduled": "belum dijadwalkan",
+  "deps": "Ketergantungan antarproyek",
+  "noDeps": "Tidak ada ketergantungan yang menghubungkan proyek yang dipilih.",
+  "lag": ", {{lag}} hari"
+}

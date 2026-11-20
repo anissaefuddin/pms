@@ -15,6 +15,7 @@ func TestSSELatencyUnderClientLoad(t *testing.T) {
 	f := newFixture(t)
 	editor := f.person("admin")
 	space := f.space("Busy")
+	f.share(space, "user", editor.id, "full") // A1.2: the editing admin is an explicit member of the busy Space
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Hot item',$1) RETURNING id::text", editor.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space)
 	// Client scale: 10,000 items in the same space.

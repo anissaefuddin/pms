@@ -4,7 +4,7 @@ import { api } from "@/lib/api";
 
 export type CustomRole = components["schemas"]["CustomRole"];
 export type Capability = components["schemas"]["Capability"];
-export const CAPABILITIES: Capability[] = ["view", "comment", "change_status", "attach", "edit", "create", "delete", "share"];
+export const CAPABILITIES: Capability[] = ["view", "comment", "change_status", "attach", "edit", "create", "delete", "share", "use_blueprint", "create_blueprint", "manage_blueprint"];
 
 export const roleKeys = { all: ["custom-roles"] as const };
 export const useCustomRoles = (enabled = true) => useQuery({

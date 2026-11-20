@@ -15,6 +15,7 @@ test("an admin installs the GitHub and Google connectors and sees the last sync 
   } });
   await page.goto("/settings/apps");
   await page.getByRole("tab", { name: "Connectors" }).click();
+  await page.getByRole("button", { name: "Add connector" }).click();
   const form = page.getByRole("form", { name: "Add a connector" });
   await expect(form).toBeVisible();
   await form.getByLabel("Name").fill("Backlog");
@@ -27,7 +28,9 @@ test("an admin installs the GitHub and Google connectors and sees the last sync 
   const post = calls.find((c) => c.method === "POST" && c.path === "/connectors")?.body as any;
   expect(post).toMatchObject({ kind: "github", name: "Backlog", config: { repo: "acme/backlog", space_id: marketing.id, import: true, push_new: true }, secrets: { token: "ghp_test" } });
 
-  await form.getByLabel("Type").selectOption("google_calendar");
+  await page.getByRole("button", { name: "Add connector" }).click();
+  const second = page.getByRole("form", { name: "Add a connector" });
+  await second.getByLabel("Type").selectOption("google_calendar");
   await expect(form.getByLabel("Calendar ID")).toBeVisible();
   await form.getByLabel("Name").fill("Team calendar");
   await form.getByLabel("Calendar ID").fill("team@group.calendar.google.com");
@@ -49,6 +52,7 @@ test("the Google form needs a complete refresh set, sends it, and disables brows
   } });
   await page.goto("/settings/apps");
   await page.getByRole("tab", { name: "Connectors" }).click();
+  await page.getByRole("button", { name: "Add connector" }).click();
   const form = page.getByRole("form", { name: "Add a connector" });
   await expect(form.getByLabel("Repository")).toHaveAttribute("autocomplete", "off");
   await expect(form.getByLabel("Access token")).toHaveAttribute("autocomplete", "new-password");

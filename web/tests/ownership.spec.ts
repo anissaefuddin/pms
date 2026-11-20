@@ -13,7 +13,7 @@ test("the owner hands ownership over after a confirmation, with the password; ax
     "POST /account/ownership": (body: any) => { owner = grace; return { body: { owner, is_owner: false, candidates: [] } }; },
   } });
   await page.goto("/settings/ownership");
-  await expect(page.getByRole("heading", { name: "Account ownership", level: 2 })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Account ownership", level: 1 })).toBeVisible();
   await expect(page.getByText("Ada Lovelace (ada@example.test)")).toBeVisible();
   await expect(page.getByText("You are the owner.")).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);

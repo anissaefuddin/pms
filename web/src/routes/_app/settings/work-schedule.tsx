@@ -33,13 +33,77 @@ function WorkScheduleRoute() {
   </>;
 }
 
+
+/** 1 Jan 2024 was a Monday: these seven dates give Monday-first weekday labels without literal strings. */
+const locale = "en";
+const weekdayFormat: Intl.DateTimeFormatOptions = { weekday: "narrow" };
+const mondayFirst = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i));
+
+/** Tailwind class strings for calendar days (kept as constants so every class is listed literally). */
+const dayTone = { exception: "bg-warning/30 text-foreground", working: "text-foreground", off: "bg-muted text-foreground" };
+
+const dayKey = (date: Date) => `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
+
+/** 12-month view: working days, non-working days, and exceptions. Clicking a day prepares it as a new exception (or removes it). */
+function AnnualCalendar({ year, days, holidays, disabled, onYear, onPick }: {
+  year: number; days: Set<number>; holidays: { date: string; name: string }[]; disabled: boolean;
+  onYear: (year: number) => void; onPick: (key: string, exception?: string) => void;
+}) {
+  const { t } = useTranslation();
+  const exceptions = new Map(holidays.map((h) => [h.date, h.name]));
+  const months = Array.from({ length: 12 }, (_, month) => {
+    const first = new Date(year, month, 1);
+    const offset = (first.getDay() + 6) % 7; // Monday first
+    const count = new Date(year, month + 1, 0).getDate();
+    const cells: (Date | null)[] = [...Array(offset).fill(null), ...Array.from({ length: count }, (_, i) => new Date(year, month, i + 1))];
+    return { label: first.toLocaleString("en", { month: "long" }), cells };
+  });
+  return <div className="space-y-3">
+    <div className="flex items-center gap-2">
+      <Button type="button" variant="outline" size="sm" aria-label={t("settings.workSchedule.prevYear")} onClick={() => onYear(year - 1)}>‹</Button>
+      <span className="min-w-16 text-center text-base font-semibold tabular-nums">{year}</span>
+      <Button type="button" variant="outline" size="sm" aria-label={t("settings.workSchedule.nextYear")} onClick={() => onYear(year + 1)}>›</Button>
+      <span className="ml-auto flex flex-wrap gap-3 text-xs text-muted-foreground">
+        <span className="flex items-center gap-1"><span className="size-3 rounded-sm border border-muted-foreground/40" aria-hidden="true" />{t("settings.workSchedule.legendWorking")}</span>
+        <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-muted" aria-hidden="true" />{t("settings.workSchedule.legendOff")}</span>
+        <span className="flex items-center gap-1"><span className="size-3 rounded-sm bg-warning/30" aria-hidden="true" />{t("settings.workSchedule.legendException")}</span>
+      </span>
+    </div>
+    <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-4">
+      {months.map((month) => <section key={month.label} className="space-y-1">
+        <h2 className="text-sm font-medium">{month.label}</h2>
+        <div className="grid grid-cols-7 gap-0.5 text-center text-[11px]">
+          {mondayFirst.map((d) => <span key={d.toISOString()} className="pb-0.5 text-muted-foreground" aria-hidden="true">{d.toLocaleString(locale, weekdayFormat)}</span>)}
+          {month.cells.map((date, index) => {
+            if (!date) return <span key={`blank-${index}`} aria-hidden="true" />;
+            const key = dayKey(date);
+            const exception = exceptions.get(key);
+            const working = days.has(date.getDay()) && !exception;
+            const tone = exception ? dayTone.exception : working ? dayTone.working : dayTone.off;
+            const label = exception ? `${key}: ${exception}` : `${key}: ${working ? t("settings.workSchedule.legendWorking") : t("settings.workSchedule.legendOff")}`;
+            const name = `${date.getDate()} · ${label}`; // the visible day number must stay part of the accessible name
+            return <button key={key} type="button" disabled={disabled} aria-label={name} title={label}
+              onClick={() => onPick(key, exception)} className={`rounded-sm py-1 tabular-nums hover:outline hover:outline-1 hover:outline-ring ${tone}`}>
+              {date.getDate()}
+            </button>;
+          })}
+        </div>
+      </section>)}
+    </div>
+  </div>;
+}
+
 function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag: string; reload: (conflict: boolean) => Promise<unknown> }) {
   const { t } = useTranslation();
   const admin = useProfile()?.user_type === "admin";
   const [days, setDays] = useState(new Set(schedule.working_days));
   const [hours, setHours] = useState(String(schedule.daily_hours));
+  const [zone, setZone] = useState(schedule.timezone || "UTC");
+  // The browser lists the zones it knows; UTC is always there so the page never has an empty choice.
+  const zones = Array.from(new Set(["UTC", zone, ...(typeof Intl.supportedValuesOf === "function" ? Intl.supportedValuesOf("timeZone") : [])]));
   const [holidays, setHolidays] = useState(schedule.exceptions);
   const [draft, setDraft] = useState({ date: "", name: "" });
+  const [year, setYear] = useState(new Date().getFullYear());
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
@@ -61,7 +125,7 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
     try {
       await api<WorkSchedule>(path, {
         method: "PUT", headers: { "If-Match": etag },
-        body: JSON.stringify({ working_days: [...days].sort(), daily_hours: Number(hours), exceptions: holidays }),
+        body: JSON.stringify({ working_days: [...days].sort(), daily_hours: Number(hours), exceptions: holidays, timezone: zone }),
       });
       toast.success(t("settings.workSchedule.saved"));
       await reload(false);
@@ -71,11 +135,13 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
     } finally { setBusy(false); }
   }
 
-  return <form className="max-w-2xl space-y-6" onSubmit={save}>
+  // Wide layout: rules on the left, the annual calendar uses the remaining width instead of leaving it empty.
+  return <form className="space-y-6" onSubmit={save}>
     <header>
-      <h2 className="text-lg font-semibold">{t("settings.workSchedule.title")}</h2>
       <p className="text-sm text-muted-foreground">{admin ? t("settings.workSchedule.description") : t("settings.workSchedule.readOnly")}</p>
     </header>
+    <div className="grid gap-8 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
+    <div className="space-y-6">
     <fieldset className="space-y-2" disabled={!admin || busy}>
       <legend className="mb-2 text-sm font-medium">{t("settings.workSchedule.workingDays")}</legend>
       <div className="flex flex-wrap gap-4">
@@ -85,6 +151,14 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
         </label>)}
       </div>
     </fieldset>
+    <label className="block max-w-xs space-y-1 text-sm">
+      <span>{t("settings.workSchedule.timezone")}</span>
+      <select className="block w-full rounded-lg border border-input bg-background px-2 py-1.5 text-sm" value={zone} disabled={!admin || busy}
+        onChange={(event) => setZone(event.target.value)}>
+        {zones.map((name) => <option key={name} value={name}>{name}</option>)}
+      </select>
+      <span className="block text-xs text-muted-foreground">{t("settings.workSchedule.timezoneHint")}</span>
+    </label>
     <label className="block max-w-xs space-y-1 text-sm">
       <span>{t("settings.workSchedule.dailyHours")}</span>
       <Input type="number" min={1} max={24} step={1} value={hours} required disabled={!admin || busy}
@@ -110,6 +184,18 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
         <Button type="button" variant="outline" onClick={addHoliday}>{t("settings.workSchedule.addHoliday")}</Button>
       </div>
     </fieldset>
+    </div>
+    <div className="min-w-0">
+    <fieldset className="space-y-3" disabled={!admin || busy}>
+      <legend className="mb-2 text-sm font-medium">{t("settings.workSchedule.calendar")}</legend>
+      <AnnualCalendar year={year} days={days} holidays={holidays} disabled={!admin || busy} onYear={setYear}
+        onPick={(key, exception) => {
+          if (exception) { setHolidays(holidays.filter((h) => h.date !== key)); return; }
+          setDraft({ date: key, name: draft.name });
+        }} />
+    </fieldset>
+    </div>
+    </div>
     <FormError message={error} />
     {admin && <Button type="submit" disabled={busy || days.size === 0}>{t("settings.workSchedule.save")}</Button>}
   </form>;

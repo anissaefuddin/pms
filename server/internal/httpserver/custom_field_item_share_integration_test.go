@@ -11,6 +11,7 @@ func TestItemLevelEditorCanSetSpaceCustomFieldValues(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, reader := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Work")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	field := f.call(admin, http.MethodPost, "/spaces/"+space+"/custom-fields", map[string]any{"name": "Budget", "type": "number"})
 	f.want(field, 201, "field")
 	fid := field.body["id"].(string)
@@ -35,6 +36,8 @@ func TestRelationFieldRejectsHiddenTarget(t *testing.T) {
 	f := newFixture(t)
 	admin, editor := f.person("admin"), f.person("regular")
 	space, hidden := f.space("Work"), f.space("Confidential")
+	f.share(space, "user", admin.id, "full")  // A1.2: admin acts in this Space as an explicit member
+	f.share(hidden, "user", admin.id, "full") // A1.2: admin creates the confidential items; the editor must still not see them
 	field := f.call(admin, http.MethodPost, "/spaces/"+space+"/custom-fields", map[string]any{"name": "Related", "type": "relation", "config": map[string]any{}})
 	f.want(field, 201, "relation field")
 	fid := field.body["id"].(string)

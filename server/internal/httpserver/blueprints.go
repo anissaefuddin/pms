@@ -13,6 +13,10 @@ func (s *Server) blueprintRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/spaces/{spaceId}/blueprints", s.requireUser(s.saveBlueprint))
 	mux.HandleFunc("DELETE /api/v1/blueprints/{blueprintId}", s.requireUser(s.deleteBlueprint))
 	mux.HandleFunc("POST /api/v1/blueprints/{blueprintId}/items", s.requireUser(s.useBlueprint))
+	mux.HandleFunc("GET /api/v1/account-blueprints", s.requireUser(s.listAccountBlueprints))
+	mux.HandleFunc("GET /api/v1/blueprints/{blueprintId}", s.requireUser(s.getBlueprint))
+	mux.HandleFunc("PATCH /api/v1/blueprints/{blueprintId}", s.requireUser(s.editBlueprint))
+	mux.HandleFunc("POST /api/v1/blueprints/{blueprintId}/preview", s.requireUser(s.previewBlueprint))
 }
 
 func pathUUID(w http.ResponseWriter, r *http.Request, name string) (uuid.UUID, bool) {
@@ -90,4 +94,62 @@ func (s *Server) useBlueprint(w http.ResponseWriter, r *http.Request) {
 		s.publishItem(r, "item.created", created.ID, created.ID, item.Version)
 	}
 	writeItem(w, http.StatusCreated, item, err)
+}
+
+func (s *Server) editBlueprint(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathUUID(w, r, "blueprintId")
+	if !ok {
+		return
+	}
+	var in items.BlueprintEdit
+	if !decode(w, r, &in) {
+		return
+	}
+	out, err := items.EditBlueprint(r.Context(), s.pool, actorOf(r), id, in)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// previewBlueprint shows what a use with these dates would create. Nothing is written.
+func (s *Server) previewBlueprint(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathUUID(w, r, "blueprintId")
+	if !ok {
+		return
+	}
+	var in items.BlueprintUse
+	if !decode(w, r, &in) {
+		return
+	}
+	out, err := items.PreviewBlueprint(r.Context(), s.pool, actorOf(r), id, in)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
+}
+
+func (s *Server) getBlueprint(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathUUID(w, r, "blueprintId")
+	if !ok {
+		return
+	}
+	out, err := items.GetBlueprint(r.Context(), s.pool, actorOf(r), id)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, out)
+}
+
+// listAccountBlueprints lists the account blueprints the caller may see: their own, or all for an instance admin.
+func (s *Server) listAccountBlueprints(w http.ResponseWriter, r *http.Request) {
+	out, err := items.ListAccountBlueprints(r.Context(), s.pool, actorOf(r))
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]json.RawMessage{"items": out})
 }

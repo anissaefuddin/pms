@@ -7,7 +7,7 @@ const ada = { id: me.id, name: "Ada Lovelace" };
 const f1 = "f0000000-0000-4000-8000-000000000001";
 const f2 = "f0000000-0000-4000-8000-000000000002";
 const row = (id: string, space: typeof marketing, name: string, access: string) => ({
-  id, space_id: space.id, space_name: space.name, name, description: "", access, question_count: 2, updated_by: ada, updated_at: "2026-11-02T10:00:00Z" });
+  id, space_id: space.id, space_name: space.name, name, description: "", access, status: "published", question_count: 2, updated_by: ada, updated_at: "2026-11-02T10:00:00Z" });
 
 async function mock(page: Page, opts: { items?: any[]; access?: any } = {}) {
   const items = opts.items ?? [row(f1, marketing, "IT request", "private"), row(f2, ops, "Leave request", "internal")];
@@ -22,7 +22,7 @@ async function mock(page: Page, opts: { items?: any[]; access?: any } = {}) {
 test("table shows columns, link only for internal forms, and filters by name", async ({ page }) => {
   await mock(page);
   await page.goto("/forms");
-  await expect(page.getByRole("columnheader")).toHaveText(["Name", "Belongs to", "Access", "Link", "Last modified by", "Actions"]);
+  await expect(page.getByRole("columnheader")).toHaveText(["Name", "Belongs to", "Access", "Status", "Link", "Last modified by", "Actions"]);
   const it = page.getByRole("row", { name: /IT request/ });
   await expect(it.getByRole("link", { name: "IT request" })).toHaveAttribute("href", `/spaces/${marketing.id}/forms/${f1}`);
   await expect(it.getByRole("link", { name: "Marketing" })).toBeVisible();

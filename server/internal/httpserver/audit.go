@@ -27,6 +27,15 @@ const (
 	auditUserType          = "user.type_changed"
 	auditSpaceLocked       = "policy.space_locked"
 	auditSpaceUnlocked     = "policy.space_unlocked"
+	auditSpaceVisibility   = "space.visibility_changed"
+	auditSpaceArchived     = "space.archived"
+	auditSpaceRestored     = "space.restored"
+	auditSpaceAdminGranted = "space.admin_granted"
+	auditSpaceAdminRemoved = "space.admin_removed"
+	auditSpaceOwnership    = "space.ownership_transferred"
+	auditSpaceJoined       = "space.joined"
+	auditOperationalRead   = "report.operational_read"
+	auditOperationalDenied = "report.operational_denied"
 	auditCreateMenu        = "space.create_menu_changed"
 	auditUserDeactivated   = "user.deactivated"
 	auditUserReactivated   = "user.reactivated"
@@ -42,6 +51,7 @@ const (
 	auditOAuthAppCreated   = "oauth.app_created"
 	auditOAuthAppRemoved   = "oauth.app_removed"
 	auditOAuthGrantRevoked = "oauth.grant_revoked"
+	auditCustomFieldGrants = "custom_field.grants_changed"
 )
 
 type auditEvent struct {

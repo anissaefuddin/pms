@@ -25,7 +25,8 @@ const notificationJSON = `jsonb_build_object('id',n.id,'kind',n.kind,'created_at
 'read_at',n.read_at,'archived_at',n.archived_at,'snippet',n.snippet,'item_id',n.item_id,
 'item_title',i.title,'space_id',n.space_id,'space_title',s.name,
 'actor',CASE WHEN u.id IS NOT NULL THEN jsonb_build_object('id',u.id,'name',concat_ws(' ',u.first_name,u.last_name)) END,
-'recipient',CASE WHEN ru.id IS NOT NULL THEN jsonb_build_object('id',ru.id,'name',concat_ws(' ',ru.first_name,ru.last_name)) END)`
+'recipient',CASE WHEN ru.id IS NOT NULL THEN jsonb_build_object('id',ru.id,'name',concat_ws(' ',ru.first_name,ru.last_name)) END,
+'reference',CASE WHEN n.reference_kind IS NOT NULL THEN jsonb_build_object('kind',n.reference_kind,'id',n.reference_id) END)`
 
 const notificationJoins = ` FROM notifications n LEFT JOIN items i ON i.id=n.item_id
 LEFT JOIN spaces s ON s.id=n.space_id LEFT JOIN users u ON u.id=n.actor_id LEFT JOIN users ru ON ru.id=n.recipient_id`
@@ -118,7 +119,7 @@ func (s *Server) listNotifications(w http.ResponseWriter, r *http.Request) {
 	var next *string
 	var last string
 	for _, n := range inbox {
-		visible := caps[n.Item].Has(policy.View)
+		visible := (n.Item == "" && n.Space == "") || caps[n.Item].Has(policy.View)
 		if n.Space != "" {
 			if _, known := spaceVisible[n.Space]; !known {
 				canView, err := notifications.CanView(ctx, tx, actor, notifications.Target{Space: n.Space})

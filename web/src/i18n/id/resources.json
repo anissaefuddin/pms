@@ -1,0 +1,28 @@
+{
+  "title": "Pengaturan sumber daya",
+  "person": "Orang",
+  "mine": "Jadwal saya",
+  "roles": "Peran pekerjaan",
+  "skills": "Keterampilan",
+  "roleName": "Nama peran pekerjaan",
+  "skillName": "Nama keterampilan",
+  "saveName": "Simpan nama",
+  "add": "Tambah",
+  "rename": "Ganti nama",
+  "remove": "Hapus",
+  "inherit": "Gunakan jam kerja ruang kerja",
+  "days": "Hari kerja",
+  "dayNames": [
+    "Min",
+    "Sen",
+    "Sel",
+    "Rab",
+    "Kam",
+    "Jum",
+    "Sab"
+  ],
+  "hours": "Jam harian",
+  "leave": "Tanggal cuti",
+  "addLeave": "Tambah tanggal cuti",
+  "saveCapacity": "Simpan kapasitas"
+}
