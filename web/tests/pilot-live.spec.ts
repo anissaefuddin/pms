@@ -24,6 +24,7 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     await page.getByRole("main").getByRole("button", { name: "New item" }).click();
     const project = page.getByRole("dialog", { name: "Create item" });
     await project.getByLabel("Name").fill("Pilot launch");
+    await project.getByText("Advanced options", { exact: true }).click(); // the default view choice sits under Advanced options
     await project.locator("label").filter({ hasText: /^Board/ }).click(); // click the card: the sr-only radio sits under its illustration
     await project.getByRole("button", { name: "Create item" }).click();
     await expect(page.getByRole("heading", { name: "Pilot launch" })).toBeVisible();
