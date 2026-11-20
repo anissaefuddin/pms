@@ -220,7 +220,7 @@ flowchart LR
   - `Can(user, capability, target)` dan filter SQL untuk daftar, sesuai ARCHITECTURE §6 (union share lewat semua lokasi dan leluhur, ∩ plafon user type, Personal space privat, admin `full` di Space `shared`).
   - Jawaban tanpa akses selalu 404; aksi tidak diizinkan pada item terlihat → 403.
   - Definisi matriks (share role, user type) berada di satu tempat dan dipakai juga oleh endpoint matriks UI (USR-02).
-  - **Catatan keputusan 12 Nov:** admin otomatis `full` di semua Space `shared`, bukan Personal space (D-17); sertakan dalam matriks tes S1.1.4.
+  - **Catatan keputusan 12 Nov (superseded oleh D-17.1, 20 Nov 2026: Explicit Access Only):** admin otomatis `full` di semua Space `shared`, bukan Personal space (D-17); sertakan dalam matriks tes S1.1.4.
 
 ### S1.1.3 — API sharing dan ShareDialog
 - **Sebagai** pemilik, **saya ingin** membagikan Space/project/folder ke user atau grup dengan role, **agar** kolaborator mendapat akses yang tepat.
