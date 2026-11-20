@@ -1,8 +1,38 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Search } from "lucide-react";
+import { ArrowLeft, Search, BadgeDollarSign, Blocks, Boxes, CalendarClock, ClipboardList, Crown, History, IdCard, KeyRound, Languages, Layers, LayoutTemplate, ListChecks, Mail, Palette, ScrollText, Shapes, ShieldCheck, SlidersHorizontal, UserCog, UserPlus, UserRound, Users, Workflow, Zap } from "lucide-react";
+
+// One icon per Settings page, so each item reads at a glance.
+const SETTINGS_ICON: Record<string, LucideIcon> = {
+  "/settings/profile": UserRound,
+  "/settings/work-schedule": CalendarClock,
+  "/settings/language": Languages,
+  "/settings/work-preferences": SlidersHorizontal,
+  "/settings/account": IdCard,
+  "/settings/email": Mail,
+  "/settings/appearance": Palette,
+  "/settings/security": ShieldCheck,
+  "/settings/users": Users,
+  "/settings/resources": Boxes,
+  "/settings/apps": Blocks,
+  "/settings/rates": BadgeDollarSign,
+  "/settings/spaces": Layers,
+  "/settings/item-types": Shapes,
+  "/settings/workflows": Workflow,
+  "/settings/custom-fields": ListChecks,
+  "/settings/automation": Zap,
+  "/settings/request-forms": ClipboardList,
+  "/settings/blueprints": LayoutTemplate,
+  "/settings/sso": KeyRound,
+  "/settings/provisioning": UserPlus,
+  "/settings/ownership": Crown,
+  "/settings/policy": ScrollText,
+  "/settings/roles": UserCog,
+  "/settings/audit": History,
+};
 import type { CurrentUser } from "@/lib/api";
+import type { LucideIcon } from "lucide-react";
 import { SidebarFooter } from "@/components/topbar";
 import { SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, readWidth, writeWidth } from "@/lib/sidebar-prefs";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
@@ -97,7 +127,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
         {groups.map((group) => <section key={group.title}>
           <h2 className="px-2 text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{group.title}</h2>
           {group.items.map((item) => <Link key={item.to + (item.hash ?? "")} to={item.to} params={item.params} hash={item.hash} activeOptions={{ includeHash: true }}
-            className={linkClass} activeProps={activeLink} >{item.label}</Link>)}
+            className={linkClass} activeProps={activeLink} >{(() => { const Icon = SETTINGS_ICON[`/settings/${item.to.split("/").pop()}`]; return <span className="flex items-center gap-2.5">{Icon && <Icon aria-hidden="true" className="size-4 shrink-0 text-nav-muted" />}{item.label}</span>; })()}</Link>)}
         </section>)}
         {groups.length === 0 && <p role="status" className="px-2 text-sm text-nav-muted">{t("settings.nav.noMatch")}</p>}
         {/* Installation: the running version, in the same scroll area as the sections above. */}
