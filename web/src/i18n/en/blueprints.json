@@ -139,5 +139,6 @@
     "partialError": "Some Spaces could not be loaded. The list may be incomplete.",
     "accountOwner": "Personal Space (account)"
   },
-  "createFrom": "Create from blueprint"
+  "createFrom": "Create from blueprint",
+  "searchInCreate": "Search blueprints"
 }

@@ -670,5 +670,8 @@
   "customFields.emptyHint": "Create a field to use it in items, views, and forms.",
   "customFields.noMatch": "No field matches the search or status.",
   "workSchedule.timezone": "Time zone",
-  "workSchedule.timezoneHint": "Used for deadlines in automation: a date counts until the end of its local day here. UTC when not set."
+  "workSchedule.timezoneHint": "Used for deadlines in automation: a date counts until the end of its local day here. UTC when not set.",
+  "nav.scopeOnlyYou": "Only you",
+  "nav.scopeWorkspace": "Whole workspace",
+  "nav.scopeSpaces": "Per Space and workspace defaults"
 }

@@ -79,6 +79,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<FieldKey, string>>>({});
   const [busy, setBusy] = useState(false);
   const [blueprintID, setBlueprintID] = useState("");
+  const [blueprintQuery, setBlueprintQuery] = useState("");
   const [typeKeyChoice, setTypeKey] = useState(initialTypeKey ?? "");
   // CIT-D01: Workspace types, and the types of this Space only (a Space type never appears in another Space)
   const typeDefs = (useItemTypes().data ?? []).filter((def) => !def.space_id || def.space_id === spaceID);
@@ -115,6 +116,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
 
   const blueprints = useBlueprints(spaceID, !!selected).data ?? [];
   const blueprint = blueprints.find((entry) => entry.id === blueprintID);
+  const ofKind = blueprints.filter((entry) => entry.item_type === kind);
   // F3: with a fixed parent the list above is not loaded, so read that parent's own title (it is the location the item will be created in).
   const fixedParentItem = useQuery({ queryKey: itemKeys.detail(fixedParent ?? ""), enabled: !!fixedParent, queryFn: () => getItem(fixedParent!) });
   const parentLabel = parent?.title ?? (fixedParent ? fixedParentItem.data?.item.title : undefined) ?? directory?.title ?? t("items.root");
@@ -264,7 +266,9 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       <fieldset className="space-y-1">
         <legend className="sr-only">{t("blueprints.from")}</legend>
         <label className="flex items-center gap-2"><input type="radio" name="blueprint" checked={!blueprint} onChange={() => setBlueprintID("")} />{t("blueprints.none")}</label>
-        {blueprints.filter((entry) => entry.item_type === kind).map((entry) => {
+        {ofKind.length > 5 && <input type="search" value={blueprintQuery} onChange={(event) => setBlueprintQuery(event.target.value)}
+          aria-label={t("blueprints.searchInCreate")} placeholder={t("blueprints.searchInCreate")} className={`${selectClass} h-8`} />}
+        {ofKind.filter((entry) => entry.name.toLowerCase().includes(blueprintQuery.trim().toLowerCase())).map((entry) => {
           const def = typeDefs.find((d) => d.key === entry.item_type);
           return <label key={entry.id} className="flex items-center gap-2">
             <input type="radio" name="blueprint" checked={entry.id === blueprintID} onChange={() => setBlueprintID(entry.id)} />

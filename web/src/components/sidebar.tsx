@@ -349,6 +349,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
   const pathname = useLocation({ select: (location) => location.pathname });
   const onTool = pathname.startsWith("/dashboards") || pathname.startsWith("/reports");
   const [toolsOpen, setToolsOpen] = useState(onTool);
+  const [projectFilter, setProjectFilter] = useState("");
   return <li>
     <div className="group/row flex min-w-0 items-center">
       <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={open}
@@ -382,7 +383,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
       <div>
         <button type="button" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}
           className="flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider text-nav-muted hover:text-nav-text focus-visible:outline-2 focus-visible:outline-ring">
-          {toolsOpen ? <ChevronDown aria-hidden="true" className="size-3" /> : <ChevronRight aria-hidden="true" className="size-3" />}{t("nav.space.tools")}
+          {toolsOpen ? <ChevronDown aria-hidden="true" className="size-3" /> : <ChevronRight aria-hidden="true" className="size-3" />}{t("nav.space.toolsIn", { name })}
         </button>
         {toolsOpen && <>
           <Link to="/dashboards" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
@@ -390,13 +391,16 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
           {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
         </>}
       </div>
-      {/* The Space's projects and folders sit directly under the Space; the create action is on the Space row. */}
-      <ItemTree id={space.id} space />
+      {/* The Space's projects and folders sit directly under the Space; the create action is on the Space row. Filter narrows the top level only. */}
+      <input type="search" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}
+        aria-label={t("nav.space.filterProjects", { name })} placeholder={t("nav.space.filterProjectsPlaceholder")}
+        className="mx-2 w-[calc(100%-1rem)] rounded border border-nav-hover bg-transparent px-2 py-1 text-xs text-nav-text placeholder:text-nav-muted" />
+      <ItemTree id={space.id} space filter={projectFilter} />
     </div>}
   </li>;
 }
 
-function ItemTree({ id, space = false, onEmpty }: { id: string; space?: boolean; onEmpty?: () => void }) {
+function ItemTree({ id, space = false, onEmpty, filter = "" }: { id: string; space?: boolean; onEmpty?: () => void; filter?: string }) {
   const { t } = useTranslation();
   const query = useQuery({
     queryKey: [...(space ? itemKeys.root(id) : itemKeys.children(id)), "sidebar"],
@@ -409,7 +413,10 @@ function ItemTree({ id, space = false, onEmpty }: { id: string; space?: boolean;
   return <ul>
     {query.isPending && <li className="p-1 text-xs" role="status">{t("items.loading")}</li>}
     {query.isError && <li><Button variant="link" size="sm" className="text-nav-text" onClick={() => void query.refetch()}>{t("items.retry")}</Button></li>}
-    {query.data?.filter((item: Item) => item.type !== "task").map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} />)}
+    {query.data?.filter((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase()))
+      .map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} />)}
+    {filter.trim() && query.isSuccess && !query.data?.some((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase())) &&
+      <li className="p-1 text-xs text-nav-muted">{t("nav.space.noProjectMatch")}</li>}
   </ul>;
 }
 

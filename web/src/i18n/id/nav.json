@@ -215,5 +215,9 @@
   "inbox.report.dependencies": "Dependensi",
   "inbox.report.rescheduled": "Baris dijadwal ulang",
   "space.actionsFor": "Aksi untuk {{name}}",
-  "space.archived": "Diarsipkan"
+  "space.archived": "Diarsipkan",
+  "space.toolsIn": "Alat di {{name}}",
+  "space.filterProjects": "Saring project dan folder di {{name}}",
+  "space.filterProjectsPlaceholder": "Saring project",
+  "space.noProjectMatch": "Tidak ada project atau folder yang cocok"
 }

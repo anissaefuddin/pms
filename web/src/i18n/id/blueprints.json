@@ -138,5 +138,6 @@
     "partialError": "Sebagian Space tidak bisa dimuat. Daftar mungkin belum lengkap.",
     "accountOwner": "Personal Space (akun)"
   },
-  "createFrom": "Buat dari blueprint"
+  "createFrom": "Buat dari blueprint",
+  "searchInCreate": "Cari blueprint"
 }

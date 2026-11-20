@@ -666,5 +666,8 @@
   "customFields.emptyHint": "Buat field untuk dipakai di item, tampilan, dan formulir.",
   "customFields.noMatch": "Tidak ada field yang cocok dengan pencarian atau status.",
   "workSchedule.timezone": "Zona waktu",
-  "workSchedule.timezoneHint": "Dipakai untuk deadline di automation: tanggal berlaku sampai akhir hari lokal di sini. UTC bila belum diatur."
+  "workSchedule.timezoneHint": "Dipakai untuk deadline di automation: tanggal berlaku sampai akhir hari lokal di sini. UTC bila belum diatur.",
+  "nav.scopeOnlyYou": "Hanya Anda",
+  "nav.scopeWorkspace": "Seluruh workspace",
+  "nav.scopeSpaces": "Per Space dan default workspace"
 }
