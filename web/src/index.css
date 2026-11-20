@@ -386,5 +386,6 @@
   }
 }
 
-/* SB-02: thin scrollbar in the sidebar palette; the track stays transparent so the navy background shows through. */
-.sidebar-scroll { scrollbar-width: thin; scrollbar-color: var(--nav-muted) transparent; }
+/* SB-02: sidebars scroll by wheel, trackpad and touch, with no visible scrollbar and no space reserved for one. */
+.sidebar-scroll, .navscroll { scrollbar-width: none; }
+.sidebar-scroll::-webkit-scrollbar, .navscroll::-webkit-scrollbar { display: none; }
