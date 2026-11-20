@@ -10,7 +10,6 @@ import { cn } from "@/lib/utils";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { WorkspaceLayout } from "@/components/workspace-layout";
 import { SettingsRow, SettingsSaveBar, SettingsSection } from "@/components/settings/settings-ui";
-import { SpaceShareDialog } from "@/components/space-share-dialog";
 import { ItemTypesPanel } from "@/routes/_app/settings/item-types";
 import { SpaceAutomationPanel } from "@/components/space-automation";
 import { FormsList } from "@/routes/_app/spaces_.$spaceId.forms";
@@ -58,6 +57,15 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
   const personal = space.kind === "personal";
   return (
     <WorkspaceLayout>
+      {/* Breadcrumb: shows that this is one Space's settings, not the Workspace's. */}
+      <nav aria-label={t("spaces.spaceSettings.breadcrumb")} className="mb-2 text-sm text-muted-foreground">
+        <ol className="flex flex-wrap items-center gap-1">
+          <li><Link to="/settings/spaces" className="underline-offset-2 hover:underline">{t("spaces.spaceSettings.crumbSpaces")}</Link> <span aria-hidden="true">/</span></li>
+          <li><Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
+          <li>{t("spaces.spaceSettings.crumbSettings")} <span aria-hidden="true">/</span></li>
+          <li aria-current="page" className="text-foreground">{t(TAB_LABEL[tab])}</li>
+        </ol>
+      </nav>
       <WorkspaceHeader
         title={t("spaces.spaceSettings.title")}
         meta={<p className="mt-1 text-sm text-muted-foreground">
@@ -348,6 +356,8 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [picked, setPicked] = useState("");
+  // Removing your own admin role is allowed only when another admin remains; it is confirmed first because you lose control of the Space.
+  const [selfRemove, setSelfRemove] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const admins = useQuery({
@@ -357,6 +367,7 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
   const canAdminister = me?.user_type === "admin" || !!space.is_space_admin;
   const adminIds = new Set((admins.data ?? []).map((a) => a.user_id));
   const candidates = members.filter((m) => !adminIds.has(m.user_id));
+  const removeAdmin = (userID: string) => api(`/api/v1/spaces/${space.id}/admins/${userID}`, { method: "DELETE" });
   async function run(action: () => Promise<unknown>) {
     setBusy(true); setError("");
     try {
@@ -372,9 +383,12 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
       {admins.data && <ul className="divide-y rounded-lg border text-sm">
         {admins.data.map((admin) => <li key={admin.user_id} className="flex items-center justify-between gap-2 px-3 py-2">
           <span>{admin.name}</span>
-          {canAdminister && <Button variant="ghost" size="sm" disabled={busy || admins.data.length <= 1} onClick={() => void run(() => api(`/api/v1/spaces/${space.id}/admins/${admin.user_id}`, { method: "DELETE" }))}>
-            {t("spaces.spaceSettings.admins.remove", { name: admin.name })}
-          </Button>}
+          {canAdminister && <span title={admins.data.length <= 1 ? t("spaces.spaceSettings.admins.lastAdmin") : undefined} className="inline-flex">
+            <Button variant="ghost" size="sm" disabled={busy || admins.data.length <= 1} aria-describedby={admins.data.length <= 1 ? "last-admin-hint" : undefined}
+              onClick={() => (admin.user_id === me?.id ? setSelfRemove(true) : void run(() => removeAdmin(admin.user_id)))}>
+              {t("spaces.spaceSettings.admins.remove", { name: admin.name })}
+            </Button>
+          </span>}
         </li>)}
         {!admins.data.length && <li className="px-3 py-2 text-muted-foreground">{t("spaces.spaceSettings.admins.none")}</li>}
       </ul>}
@@ -393,7 +407,17 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
           {t("spaces.spaceSettings.admins.transfer")}
         </Button>
       </div>}
+      {admins.data && admins.data.length <= 1 && <p id="last-admin-hint" className="text-xs text-muted-foreground">{t("spaces.spaceSettings.admins.lastAdmin")}</p>}
       <p role="alert" className="text-sm text-destructive">{error}</p>
+      <ConfirmDialog
+        open={selfRemove}
+        onOpenChange={(open) => { if (!open) setSelfRemove(false); }}
+        title={t("spaces.spaceSettings.admins.selfTitle")}
+        description={t("spaces.spaceSettings.admins.selfDescription")}
+        confirmLabel={t("spaces.spaceSettings.admins.selfConfirm")}
+        cancelLabel={t("spaces.spaceSettings.general.stay")}
+        onConfirm={() => { setSelfRemove(false); void run(() => removeAdmin(me?.id ?? "")); }}
+      />
     </SettingsSection>
   );
 }
@@ -451,7 +475,12 @@ function DirectAccessEditor({ space, me, members }: { space: Space; me: CurrentU
           <span className="flex items-center gap-2">
             <select aria-label={t("spaces.spaceSettings.direct.roleFor", { name: row.principal_name })} disabled={busy || row.role.startsWith("custom:")}
               value={row.role} className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-              onChange={(e) => void save(rows.map((r) => r === row ? { ...r, role: e.target.value } : r), t("spaces.spaceSettings.direct.saved"))}>
+              onChange={(e) => {
+                // Direct role and effective role can differ: say so when a group still gives this person access.
+                const groupNames = row.principal_type === "user" ? viaGroups(row.principal_name) : [];
+                void save(rows.map((r) => r === row ? { ...r, role: e.target.value } : r),
+                  groupNames.length ? t("spaces.spaceSettings.direct.savedKeepsGroup", { groups: groupNames.join(", ") }) : t("spaces.spaceSettings.direct.saved"));
+              }}>
               {row.role.startsWith("custom:") && <option value={row.role}>{row.role_name || t("share.role.custom")}</option>}
               {SHARE_ROLES.map((r) => <option key={r} value={r}>{t(`share.role.${r}`)}</option>)}
             </select>
@@ -532,7 +561,6 @@ function SpaceToolsPanel({ space }: { space: Space }) {
 function MembersTab({ space, me }: { space: Space; me?: CurrentUser }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const shared = space.kind === "shared";
   const canShare = shared && can(space, "share");
   const members = useQuery({
@@ -546,11 +574,7 @@ function MembersTab({ space, me }: { space: Space; me?: CurrentUser }) {
       <SettingsSection title={t("spaces.spaceSettings.members.title")} description={t("spaces.spaceSettings.members.description")}>
         {!shared && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.personal")}</p>}
         {shared && !canShare && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.noPermission")}</p>}
-        {canShare && me && <>
-          <Button variant="outline" onClick={() => setOpen(true)} className="w-fit">{t("spaces.spaceSettings.members.open")}</Button>
-          <SpaceShareDialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) void queryClient.invalidateQueries({ queryKey: ["space-members", space.id] }); }}
-            space={space} me={me} canShare={canShare} />
-        </>}
+        {/* Read-only summary: who has access and why. Changes happen in "Direct access" below, the one place to add or edit. */}
         {members.isPending && shared && <p role="status" className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.loading")}</p>}
         {members.isError && <FormError message={t("spaces.spaceSettings.members.loadError")} />}
         {members.data && !members.data.length && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.empty")}</p>}

@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
-import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronLeft, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
+import { Activity, Briefcase, Folder, ChevronDown, ChevronLeft, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
 import { ProfileMenu } from "@/components/topbar";
@@ -350,8 +350,10 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
   const onTool = pathname.startsWith("/dashboards") || pathname.startsWith("/reports");
   const [toolsOpen, setToolsOpen] = useState(onTool);
   const [projectFilter, setProjectFilter] = useState("");
+  // The Space whose page (or Settings, or its tools) is open gets a soft highlight, so the active context is visible in the sidebar.
+  const inSpace = pathname === `/spaces/${space.id}` || pathname.startsWith(`/spaces/${space.id}/`);
   return <li>
-    <div className="group/row flex min-w-0 items-center">
+    <div className={`group/row flex min-w-0 items-center rounded-md ${inSpace ? "bg-nav-hover/50" : ""}`}>
       <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={open}
         aria-label={t(open ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={onToggle} onKeyDown={(event) => {
@@ -383,12 +385,16 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
       <div>
         <button type="button" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}
           className="flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider text-nav-muted hover:text-nav-text focus-visible:outline-2 focus-visible:outline-ring">
-          {toolsOpen ? <ChevronDown aria-hidden="true" className="size-3" /> : <ChevronRight aria-hidden="true" className="size-3" />}{t("nav.space.toolsIn", { name })}
+          {toolsOpen ? <ChevronDown aria-hidden="true" className="size-3" /> : <ChevronRight aria-hidden="true" className="size-3" />}{t("nav.space.tools")}
         </button>
         {toolsOpen && <>
-          <Link to="/dashboards" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
+          {/* Creating an analytics board is an action, so it sits as a + beside Dashboards rather than as another destination. */}
+          <div className="flex items-center gap-1">
+            <Link to="/dashboards" className={`${linkClass} min-w-0 flex-1 text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
+            {space.my_capabilities?.includes("create") && <Button variant="ghost" size="icon-sm" disabled={busy} className="shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text"
+              aria-label={t("dashboards.analytics.create")} title={t("dashboards.analytics.create")} onClick={() => void analytics()}><Plus /></Button>}
+          </div>
           <Link to="/reports" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("reports.nav.label")}</Link>
-          {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
         </>}
       </div>
       {/* The Space's projects and folders sit directly under the Space; the create action is on the Space row. Filter narrows the top level only. */}

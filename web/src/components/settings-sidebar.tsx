@@ -63,7 +63,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
     items: group.items.filter((item) => !q || item.label.toLowerCase().includes(q)),
   })).filter((group) => group.items.length > 0);
   return (
-    <aside style={sidebarThemeVars(sidebarTheme)} className={`${SIDEBAR_THEME} relative flex h-dvh w-[248px] shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
+    <aside style={sidebarThemeVars(sidebarTheme)} className={`${SIDEBAR_THEME} relative flex h-dvh w-[216px] shrink-0 flex-col border-r border-border bg-nav p-3 text-nav-text`}>
       <div className="mb-3 flex items-center gap-1">
         {/* The label gets the room: the profile collapses to its avatar so "Back to workspace" fits on one line. */}
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm whitespace-nowrap text-nav-muted hover:bg-nav-hover hover:text-nav-text">
