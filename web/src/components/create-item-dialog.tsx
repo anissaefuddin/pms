@@ -39,6 +39,8 @@ type Props = {
   initialTypeKey?: string;
   /** YYYY-MM-DD: prefills start and finish (a one-day Task from a Calendar date). */
   initialDate?: string;
+  /** YYYY-MM-DD: the finish day when it differs from initialDate (a drag range on the Gantt). */
+  initialFinish?: string;
   onCreated: (item: Item) => void;
 };
 const kinds: CreateKind[] = ["project", "folder", "task"];
@@ -64,7 +66,7 @@ export function CreateItemDialog(props: Props) {
 
 type FieldKey = "title" | "location" | "parent" | "due_date";
 
-function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey, initialDate }: Props) {
+function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey, initialDate, initialFinish }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const spaces = useSpaces();
@@ -277,7 +279,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       <div className="grid gap-4 sm:grid-cols-2">
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}
         {kind !== "folder" && <div className="space-y-1 sm:col-span-2">
-          <ItemDates initialStart={initialDate} initialDue={initialDate} invalid={!!fieldErrors.due_date} />
+          <ItemDates initialStart={initialDate} initialDue={initialFinish ?? initialDate} invalid={!!fieldErrors.due_date} />
           {fieldErrors.due_date && <p id="create-due-error" role="alert" className="text-sm text-destructive">{fieldErrors.due_date}</p>}
         </div>}
         {kind === "folder" && <p className="text-sm text-muted-foreground sm:col-span-2">{t("items.noDates")}</p>}

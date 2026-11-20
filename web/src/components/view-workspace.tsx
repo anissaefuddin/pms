@@ -97,7 +97,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const itemTypes = useItemTypes(isCollection);
   const [blocked, setBlocked] = useState<{ title: string; problems: string[] }>();
   const [pending, setPending] = useState(false);
-  const [creating, setCreating] = useState<{ status?: string; parent?: Item; day?: string; locationParent?: string | null; placement?: { parentId: string | null; after: string | null } }>();
+  const [creating, setCreating] = useState<{ status?: string; parent?: Item; day?: string; finishDay?: string; locationParent?: string | null; placement?: { parentId: string | null; after: string | null } }>();
   // Batch 3B: a Task created above or below a Gantt row is placed next to that row with the reorder endpoint.
   async function placeNextTo(item: Item, placement: { parentId: string | null; after: string | null }) {
     if (!spaceId) return;
@@ -254,7 +254,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
-        <ItemGantt key={active?.id} onRowAdd={(kind, item, previousId) => {
+        <ItemGantt key={active?.id} onTimelineCreate={collection.canCreate ? (start, finish) => setCreating({ day: start, finishDay: finish }) : undefined} onRowAdd={(kind, item, previousId) => {
           if (kind === "child") { setCreating({ parent: item }); return; }
           const parentId = item.locations.find((loc) => loc.space_id === spaceId)?.parent_item_id ?? null;
           const parentItem = parentId ? (items.data ?? []).find((entry) => entry.id === parentId) : undefined;
@@ -291,6 +291,6 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
         : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialDate={creating.day} location={{ space_id: spaceId, parent_item_id: creating.locationParent !== undefined ? (creating.locationParent ?? undefined) : (creating.parent?.id ?? parent?.id) }} me={me} onCreated={(item) => { noticeIfHidden(item); if (creating?.placement) void placeNextTo(item, creating.placement); onOpen(item); }} />}
+      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialDate={creating.day} initialFinish={creating.finishDay} location={{ space_id: spaceId, parent_item_id: creating.locationParent !== undefined ? (creating.locationParent ?? undefined) : (creating.parent?.id ?? parent?.id) }} me={me} onCreated={(item) => { noticeIfHidden(item); if (creating?.placement) void placeNextTo(item, creating.placement); onOpen(item); }} />}
   </section>;
 }

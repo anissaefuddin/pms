@@ -433,3 +433,48 @@ Batasan:
 - Drag-create pada timeline tidak masuk batch ini (G1 sampai G4 belum disetujui).
 - Tes permission untuk baris tanpa hak create belum ditulis di Gantt. Logikanya sama dengan Table dan sudah diuji di sana.
 - Tes live dengan backend belum dijalankan untuk alur Gantt ini.
+
+## 20. Batch 3C: Gantt timeline create (G1 sampai G4, disetujui)
+
+Implementasi:
+- Double-click pada sel timeline kosong membuka Quick Create dengan start = finish = hari itu (G2).
+- Drag pada sel kosong membuat rentang start sampai finish, inklusif, termasuk akhir pekan dan libur (G1). Tidak ada alokasi otomatis dari Gantt.
+- Double-click dan drag hanya berlaku di area timeline. Tidak aktif pada bar, link, milestone, resize handle, atau grid kiri (G2).
+- Drag mulai dengan ambang gerak 4px. Di bawah itu dianggap klik (G4).
+- Preview rentang tampil selama drag. Drag yang keluar dari area timeline dibatalkan, dan tidak ada auto-scroll (G4). Escape juga membatalkan (G3).
+- Single-click tetap untuk seleksi (G2).
+- Hak create dicek dari Space. Tanpa hak create, timeline tidak membuat apa pun.
+- Dialog mendapat `initialFinish` untuk rentang. Validasi hari kerja dialog tetap berlaku pada start dan finish.
+
+Keputusan implementasi yang perlu dikonfirmasi:
+- **Create timeline hanya pada skala Day.** Pada skala Week dan Month, satu sel mewakili lebih dari satu hari, sehingga pemetaan drag tidak tepat ke hari. Approved decision tidak menyebut skala. Jika ingin Week dan Month juga, perlu keputusan pembulatan.
+- Tombol keyboard tidak ditambahkan (G3). Akses keyboard tetap lewat menu baris dan tombol + Add.
+
+Pure helper (`web/src/lib/gantt-timeline.ts`): pemetaan x ke hari, ambang drag, dan rentang inklusif. Unit: 3 tes PASS.
+
+E2E (`web/tests/gantt-timeline-create.spec.ts`), 7 tes PASS:
+- Double-click pada hari kosong membuka dialog dengan tanggal itu.
+- Drag Senin sampai Jumat menghasilkan rentang Senin sampai Jumat.
+- Drag Jumat sampai Senin menghasilkan rentang yang mencakup akhir pekan, tanpa `assignee_allocations`.
+- Klik tanpa gerak tidak membuat apa-apa. Drag yang keluar dari area dibatalkan.
+- Double-click pada bar tidak membuat apa-apa.
+- Skala Week tidak membuat apa-apa.
+- Tanpa hak create, timeline tidak membuat apa-apa.
+
+Regresi: Gantt (gantt, gantt-c4, gantt-fit, gantt-create, termasuk axe), calendar, create, board, items, table: 54 E2E PASS. Typecheck PASS. Unit 106 PASS. Lint tanpa error.
+
+Belum diuji: tes live dengan backend untuk drag create. Tampilan preview pada zoom dan posisi scroll yang berbeda dari mock.
+
+### Keputusan skala (APPROVED)
+
+Create dari timeline Gantt hanya pada skala Day untuk MVP. Week dan Month: double-click dan drag tidak aktif (DEFERRED).
+
+Aturan UX yang diterapkan:
+1. Pada Week dan Month, area chart menampilkan tooltip "Switch to Day view to create a task on the timeline." Double-click pada sel kosong juga menampilkan toast dengan kalimat yang sama.
+2. Tombol + Add, Add above/below, dan Add subitem tetap berfungsi pada semua skala (diuji: menu baris masih ada pada Week).
+3. Tidak ada zoom otomatis. Skala tetap seperti yang dipilih user.
+4. Pada Week dan Month tidak ada preview drag. Navigasi dan edit Task tetap berfungsi.
+5. Pada Day, G1 sampai G4 tetap berlaku.
+6. Tanggal dihitung dari `range.start` dengan zona lokal yang sama, sehingga pergantian skala tidak menggeser tanggal.
+
+Tes tambahan: "Week and Month" memeriksa tooltip, toast saat double-click, tidak ada dialog dan tidak ada POST, skala tetap Week, dan menu baris tetap ada. PASS (bersama 6 tes lain di `gantt-timeline-create.spec.ts`). Gantt dan create regresi: 21 PASS.
