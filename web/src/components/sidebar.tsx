@@ -197,7 +197,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
         {pinned.map(shortcut)}
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}
-            className={`text-nav-text hover:bg-nav-hover hover:text-nav-text ${collapsed ? "w-full px-0" : "w-full justify-start px-3"}`} />}>
+            className={`flex-row items-center gap-3 whitespace-nowrap text-nav-text hover:bg-nav-hover hover:text-nav-text ${collapsed ? "w-full px-0" : "w-full justify-start px-3"}`} />}>
             <MoreHorizontal />{!collapsed && t("nav.more.label")}
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -237,7 +237,7 @@ function Nav({ icon, label, onClick, collapsed = false, current = false, hint, b
   const state = current ? "bg-nav-active font-medium" : "hover:bg-nav-hover";
   return <button type="button" onClick={onClick} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined}
     aria-current={current ? "page" : undefined}
-    className={`flex w-full items-center gap-3 rounded-md py-2 text-sm ${collapsed ? "justify-center px-0" : "px-3"} ${state}`}>
+    className={`flex w-full flex-row items-center gap-3 whitespace-nowrap rounded-md py-2 text-sm ${collapsed ? "justify-center px-0" : "px-3"} ${state}`}>
     <span className="[&>svg]:size-4">{icon}</span>{!collapsed && label}
     {!collapsed && !!badge && <span className="ml-auto rounded-full bg-destructive px-1.5 text-[10px] font-medium text-destructive-foreground" aria-hidden="true">{badge}</span>}
     {!collapsed && hint && <kbd aria-hidden="true" className="ml-auto text-xs text-nav-muted">{hint}</kbd>}
