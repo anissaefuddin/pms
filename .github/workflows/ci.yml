@@ -82,7 +82,17 @@ jobs:
           persist-credentials: false
       - uses: actions/setup-go@v5
         with: { go-version-file: go.mod, cache: true }
-      - run: go test -count=1 ./server/internal/httpserver ./server/internal/policy -run 'Authorization|AccessRules|Matrix|Capabilit'
+      # The step fails unless the named tests actually ran and passed: exit code 0 alone can hide a pattern that matches nothing.
+      - name: Authorization matrix (named tests must run and pass)
+        run: |
+          set -o pipefail
+          go test -count=1 -v ./server/internal/httpserver -run 'Authorization|AccessRules|Matrix|Capabilit|SpaceAdmin|ItemShare|Move|ConcurrentMoves|ReplaceItemLocations' | tee authz.log
+          go test -count=1 -v ./server/internal/policy | tee -a authz.log
+          passed=$(grep -c -- '^--- PASS' authz.log || true)
+          skipped=$(grep -c -- '^--- SKIP' authz.log || true)
+          failed=$(grep -c -- '^--- FAIL' authz.log || true)
+          echo "authorization tests: passed=$passed skipped=$skipped failed=$failed"
+          test "$passed" -ge 23 && test "$skipped" -eq 0 && test "$failed" -eq 0
         env: { PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable" }
 
   # S12.2.1: the twelve parity scenarios (docs/PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md, E2E-PAR-01..12) in three visible groups.
