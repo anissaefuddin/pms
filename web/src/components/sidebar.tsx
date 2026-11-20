@@ -223,7 +223,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
       </div>
       <div className={`mt-2 flex shrink-0 items-center gap-2 border-t border-border pt-2 ${collapsed ? "flex-col" : ""}`}>
         <ProfileMenu compact={collapsed} />
-        {!collapsed && <p className="min-w-0 flex-1 truncate text-xs text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
+        {!collapsed && <p className="min-w-0 flex-1 truncate text-[11px] text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
       </div>
       {!mobile && !collapsed && <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
         onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
@@ -364,16 +364,17 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
         <SpaceIcon iconKey={(space as SpaceType).icon_key} className="me-2 inline-block align-[-2px]" />{name}{(space as SpaceType).archived && <span className="ms-1 text-xs text-nav-muted">{t("nav.space.archived")}</span>}
       </Link>
       {can(space as SpaceType, EDIT_CAPABILITY) && <>
-        <Button variant="ghost" size="icon-sm" nativeButton={false} className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
+        <Button variant="ghost" size="icon-sm" nativeButton={false} className={`me-1 shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
           aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })}
           render={<Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} />}><Settings /></Button>
-        <DropdownMenu>
+        {/* Rename follows the same rule as the Space General tab: not for a personal or archived Space. The menu is hidden when nothing is allowed. */}
+        {(space as SpaceType).kind !== "personal" && !(space as SpaceType).archived && <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
             aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
           <DropdownMenuContent align="start">
             <DropdownMenuItem onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>
           </DropdownMenuContent>
-        </DropdownMenu>
+        </DropdownMenu>}
       </>}
       <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
