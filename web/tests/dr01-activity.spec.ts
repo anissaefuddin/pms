@@ -20,5 +20,5 @@ test("create entry shows a plain sentence, update entry still lists changed fiel
   const log = page.getByRole("region", { name: "Activity" });
   await expect(log.getByText("created this item")).toBeVisible();
   await expect(log).not.toContainText("assignee_ids");
-  await expect(log).toContainText("title");
+  await expect(log).toContainText("Name: A → B");
 });
