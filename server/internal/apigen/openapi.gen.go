@@ -2427,6 +2427,24 @@ func (e SidebarKey) Valid() bool {
 	}
 }
 
+// Defines values for SpaceVisibility.
+const (
+	SpaceVisibilityPrivate SpaceVisibility = "private"
+	SpaceVisibilityPublic  SpaceVisibility = "public"
+)
+
+// Valid indicates whether the value is a known member of the SpaceVisibility enum.
+func (e SpaceVisibility) Valid() bool {
+	switch e {
+	case SpaceVisibilityPrivate:
+		return true
+	case SpaceVisibilityPublic:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SpaceKind.
 const (
 	SpaceKindPersonal SpaceKind = "personal"
@@ -2439,6 +2457,24 @@ func (e SpaceKind) Valid() bool {
 	case SpaceKindPersonal:
 		return true
 	case SpaceKindShared:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SpaceMemberSourcesKind.
+const (
+	SpaceMemberSourcesKindDirect SpaceMemberSourcesKind = "direct"
+	SpaceMemberSourcesKindGroup  SpaceMemberSourcesKind = "group"
+)
+
+// Valid indicates whether the value is a known member of the SpaceMemberSourcesKind enum.
+func (e SpaceMemberSourcesKind) Valid() bool {
+	switch e {
+	case SpaceMemberSourcesKindDirect:
+		return true
+	case SpaceMemberSourcesKindGroup:
 		return true
 	default:
 		return false
@@ -3174,6 +3210,24 @@ const (
 func (e ImportAutomationRuleJSONBodyFormat) Valid() bool {
 	switch e {
 	case ImportAutomationRuleJSONBodyFormatPmsAutomationV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RestoreSpace200JSONResponseBodyWarnings.
+const (
+	NoFullAccessHolder RestoreSpace200JSONResponseBodyWarnings = "no_full_access_holder"
+	NoSpaceAdmin       RestoreSpace200JSONResponseBodyWarnings = "no_space_admin"
+)
+
+// Valid indicates whether the value is a known member of the RestoreSpace200JSONResponseBodyWarnings enum.
+func (e RestoreSpace200JSONResponseBodyWarnings) Valid() bool {
+	switch e {
+	case NoFullAccessHolder:
+		return true
+	case NoSpaceAdmin:
 		return true
 	default:
 		return false
@@ -4648,6 +4702,9 @@ type ItemCreate struct {
 
 	// TypeKey Kunci tipe item aktif
 	TypeKey *string `json:"type_key,omitempty"`
+
+	// WorkflowId Workflow untuk item root (tanpa parent). Prioritas: workflow_id, default Item Type, default Space untuk task atau project, lalu default Workspace. Anak item tidak boleh menyebut workflow_id (B)
+	WorkflowId *openapi_types.UUID `json:"workflow_id,omitempty"`
 }
 
 // ItemCreateDefaultViewType Hanya project/folder
@@ -5570,16 +5627,30 @@ type SidebarKey string
 
 // Space defines model for Space.
 type Space struct {
-	Description *string            `json:"description,omitempty"`
-	Id          openapi_types.UUID `json:"id"`
-	Kind        SpaceKind          `json:"kind"`
+	// Archived Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)
+	Archived    *bool   `json:"archived,omitempty"`
+	Description *string `json:"description,omitempty"`
+
+	// IconKey Kunci ikon dari katalog GET /space-icons (D-04)
+	IconKey *string            `json:"icon_key,omitempty"`
+	Id      openapi_types.UUID `json:"id"`
+
+	// IsSpaceAdmin Explicit Space Admin; tidak diberikan oleh share Full saja (D-05)
+	IsSpaceAdmin *bool     `json:"is_space_admin,omitempty"`
+	Kind         SpaceKind `json:"kind"`
 
 	// Locked Dikunci administrator: isi hanya dibagikan ke orang yang sudah punya akses ke space, dan hanya admin yang mengubah sharing space atau memindahkan item keluar (D-95)
 	Locked         *bool         `json:"locked,omitempty"`
 	MyCapabilities *[]Capability `json:"my_capabilities,omitempty"`
 	Name           string        `json:"name"`
 	Version        int           `json:"version"`
+
+	// Visibility Public: ditemukan dan bisa diikuti (Read) oleh pengguna internal yang memenuhi syarat. Private: hanya yang diberi akses (D-01)
+	Visibility *SpaceVisibility `json:"visibility,omitempty"`
 }
+
+// SpaceVisibility Public: ditemukan dan bisa diikuti (Read) oleh pengguna internal yang memenuhi syarat. Private: hanya yang diberi akses (D-01)
+type SpaceVisibility string
 
 // SpaceBookmark defines model for SpaceBookmark.
 type SpaceBookmark struct {
@@ -5604,8 +5675,43 @@ type SpaceCreate struct {
 	Shares      *[]ShareInput `json:"shares,omitempty"`
 }
 
+// SpaceDefaultWorkflows defines model for SpaceDefaultWorkflows.
+type SpaceDefaultWorkflows struct {
+	// Project Workflow untuk root Project yang tidak menyebut workflow lain (B)
+	Project *openapi_types.UUID `json:"project,omitempty"`
+
+	// Task Workflow untuk root Task yang tidak menyebut workflow lain (B)
+	Task *openapi_types.UUID `json:"task,omitempty"`
+}
+
 // SpaceKind defines model for SpaceKind.
 type SpaceKind string
+
+// SpaceMember defines model for SpaceMember.
+type SpaceMember struct {
+	Capabilities *[]Capability `json:"capabilities,omitempty"`
+
+	// CappedByUserType Gabungan grant melebihi batas jenis user (D-06)
+	CappedByUserType bool   `json:"capped_by_user_type"`
+	Name             string `json:"name"`
+
+	// Role read, limited, editor, full, atau custom
+	Role string `json:"role"`
+
+	// Sources Setiap grant yang memberi akses: langsung (direct) atau lewat group
+	Sources []struct {
+		GroupId  *openapi_types.UUID    `json:"group_id,omitempty"`
+		Kind     SpaceMemberSourcesKind `json:"kind"`
+		Name     *string                `json:"name,omitempty"`
+		Role     string                 `json:"role"`
+		RoleName *string                `json:"role_name,omitempty"`
+	} `json:"sources"`
+	UserId   openapi_types.UUID `json:"user_id"`
+	UserType *string            `json:"user_type,omitempty"`
+}
+
+// SpaceMemberSourcesKind defines model for SpaceMember.Sources.Kind.
+type SpaceMemberSourcesKind string
 
 // SpaceTemplate defines model for SpaceTemplate.
 type SpaceTemplate struct {
@@ -6854,8 +6960,24 @@ type CreateSpaceFromTemplateJSONBody struct {
 	RequestId openapi_types.UUID `json:"request_id"`
 }
 
+// DiscoverSpacesParams defines parameters for DiscoverSpaces.
+type DiscoverSpacesParams struct {
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+}
+
 // UpdateSpaceParams defines parameters for UpdateSpace.
 type UpdateSpaceParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// GrantSpaceAdminJSONBody defines parameters for GrantSpaceAdmin.
+type GrantSpaceAdminJSONBody struct {
+	UserId openapi_types.UUID `json:"user_id"`
+}
+
+// ArchiveSpaceParams defines parameters for ArchiveSpace.
+type ArchiveSpaceParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
 }
@@ -6952,10 +7074,24 @@ type ListSpaceRootItemsParams struct {
 	Field *ItemFilterField `form:"field,omitempty" json:"field,omitempty"`
 }
 
+// RestoreSpaceParams defines parameters for RestoreSpace.
+type RestoreSpaceParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// RestoreSpace200JSONResponseBodyWarnings defines parameters for RestoreSpace.
+type RestoreSpace200JSONResponseBodyWarnings string
+
 // ReplaceSpaceSharesParams defines parameters for ReplaceSpaceShares.
 type ReplaceSpaceSharesParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
+}
+
+// TransferSpaceOwnershipJSONBody defines parameters for TransferSpaceOwnership.
+type TransferSpaceOwnershipJSONBody struct {
+	UserId openapi_types.UUID `json:"user_id"`
 }
 
 // ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth defines parameters for ListSpaceWorkspaceRules.
@@ -7399,6 +7535,9 @@ type CreateSpaceJSONRequestBody = SpaceCreate
 // UpdateSpaceJSONRequestBody defines body for UpdateSpace for application/json ContentType.
 type UpdateSpaceJSONRequestBody = SpaceUpdate
 
+// GrantSpaceAdminJSONRequestBody defines body for GrantSpaceAdmin for application/json ContentType.
+type GrantSpaceAdminJSONRequestBody GrantSpaceAdminJSONBody
+
 // CreateAutomationRuleJSONRequestBody defines body for CreateAutomationRule for application/json ContentType.
 type CreateAutomationRuleJSONRequestBody CreateAutomationRuleJSONBody
 
@@ -7426,6 +7565,9 @@ type CreateCustomFieldJSONRequestBody = CustomFieldCreate
 // UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
 type UpdateCustomFieldJSONRequestBody = CustomFieldUpdate
 
+// SetSpaceDefaultWorkflowsJSONRequestBody defines body for SetSpaceDefaultWorkflows for application/json ContentType.
+type SetSpaceDefaultWorkflowsJSONRequestBody = SpaceDefaultWorkflows
+
 // StartSpaceExcelExportJSONRequestBody defines body for StartSpaceExcelExport for application/json ContentType.
 type StartSpaceExcelExportJSONRequestBody StartSpaceExcelExportJSONBody
 
@@ -7437,6 +7579,9 @@ type CreateFormJSONRequestBody = FormInput
 
 // ReplaceSpaceSharesJSONRequestBody defines body for ReplaceSpaceShares for application/json ContentType.
 type ReplaceSpaceSharesJSONRequestBody = ShareReplace
+
+// TransferSpaceOwnershipJSONRequestBody defines body for TransferSpaceOwnership for application/json ContentType.
+type TransferSpaceOwnershipJSONRequestBody TransferSpaceOwnershipJSONBody
 
 // PutSsoConfigJSONRequestBody defines body for PutSsoConfig for application/json ContentType.
 type PutSsoConfigJSONRequestBody = SsoConfigInput
@@ -8490,6 +8635,9 @@ type ServerInterface interface {
 	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
 	// (PUT /settings/work-schedule)
 	ReplaceWorkSchedule(w http.ResponseWriter, r *http.Request, params ReplaceWorkScheduleParams)
+	// ListSpaceIcons Katalog kunci ikon Space (D-04)
+	// (GET /space-icons)
+	ListSpaceIcons(w http.ResponseWriter, r *http.Request)
 	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
 	// (GET /space-templates)
 	ListSpaceTemplates(w http.ResponseWriter, r *http.Request)
@@ -8502,6 +8650,9 @@ type ServerInterface interface {
 	// CreateSpace Buat Space (SPC-01)
 	// (POST /spaces)
 	CreateSpace(w http.ResponseWriter, r *http.Request)
+	// DiscoverSpaces Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul
+	// (GET /spaces/discover)
+	DiscoverSpaces(w http.ResponseWriter, r *http.Request, params DiscoverSpacesParams)
 	// DeleteSpace Hapus Space beserta isinya ke Recycle bin; Personal space tidak bisa dihapus
 	// (DELETE /spaces/{spaceId})
 	DeleteSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -8511,6 +8662,18 @@ type ServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params UpdateSpaceParams)
+
+	// (GET /spaces/{spaceId}/admins)
+	ListSpaceAdmins(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-05)
+	// (POST /spaces/{spaceId}/admins)
+	GrantSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+	// (DELETE /spaces/{spaceId}/admins/{userId})
+	RevokeSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId, userId openapi_types.UUID)
+	// ArchiveSpace Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace
+	// (POST /spaces/{spaceId}/archive)
+	ArchiveSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ArchiveSpaceParams)
 	// ListAutomationRules Aturan otomasi sebuah Space (AUT-02); butuh hak Edit
 	// (GET /spaces/{spaceId}/automation-rules)
 	ListAutomationRules(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -8559,6 +8722,15 @@ type ServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(w http.ResponseWriter, r *http.Request, spaceId SpaceId, fieldId openapi_types.UUID)
+	// GetSpaceDefaultWorkflows Workflow default Space untuk root Task dan Project (B)
+	// (GET /spaces/{spaceId}/default-workflows)
+	GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// SetSpaceDefaultWorkflows Ganti default workflow Task dan Project. Item yang sudah ada tidak berubah (B)
+	// (PUT /spaces/{spaceId}/default-workflows)
+	SetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// GetSpaceDeleteImpact Pratinjau dampak hapus Space (D). Hanya membaca
+	// (GET /spaces/{spaceId}/delete-impact)
+	GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 
 	// (POST /spaces/{spaceId}/excel-exports)
 	StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -8574,12 +8746,24 @@ type ServerInterface interface {
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ListSpaceRootItemsParams)
+	// JoinSpace Ikuti Space Public; memberi akses Read saja (D-01)
+	// (POST /spaces/{spaceId}/join)
+	JoinSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ListSpaceMembers Anggota efektif Space beserta alasan aksesnya (D-06)
+	// (GET /spaces/{spaceId}/members)
+	ListSpaceMembers(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// RestoreSpace Pulihkan Space terarsip; mengembalikan peringatan yang harus diperiksa (D-03)
+	// (POST /spaces/{spaceId}/restore)
+	RestoreSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params RestoreSpaceParams)
 
 	// (GET /spaces/{spaceId}/shares)
 	ListSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ReplaceSpaceShares Ganti seluruh daftar share Space (SPC-11)
 	// (PUT /spaces/{spaceId}/shares)
 	ReplaceSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ReplaceSpaceSharesParams)
+	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-05)
+	// (POST /spaces/{spaceId}/transfer-ownership)
+	TransferSpaceOwnership(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -15751,6 +15935,20 @@ func (siw *ServerInterfaceWrapper) ReplaceWorkSchedule(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ListSpaceIcons operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceIcons(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceIcons(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceTemplates operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceTemplates(w http.ResponseWriter, r *http.Request) {
 
@@ -15810,6 +16008,39 @@ func (siw *ServerInterfaceWrapper) CreateSpace(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateSpace(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DiscoverSpaces operation middleware
+func (siw *ServerInterfaceWrapper) DiscoverSpaces(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DiscoverSpacesParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DiscoverSpaces(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -15916,6 +16147,147 @@ func (siw *ServerInterfaceWrapper) UpdateSpace(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateSpace(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceAdmins operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceAdmins(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceAdmins(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GrantSpaceAdmin operation middleware
+func (siw *ServerInterfaceWrapper) GrantSpaceAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GrantSpaceAdmin(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeSpaceAdmin operation middleware
+func (siw *ServerInterfaceWrapper) RevokeSpaceAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeSpaceAdmin(w, r, spaceId, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveSpace operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveSpace(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ArchiveSpaceParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveSpace(w, r, spaceId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -16405,6 +16777,84 @@ func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// GetSpaceDefaultWorkflows operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceDefaultWorkflows(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetSpaceDefaultWorkflows operation middleware
+func (siw *ServerInterfaceWrapper) SetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetSpaceDefaultWorkflows(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpaceDeleteImpact operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceDeleteImpact(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // StartSpaceExcelExport operation middleware
 func (siw *ServerInterfaceWrapper) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request) {
 
@@ -16629,6 +17079,112 @@ func (siw *ServerInterfaceWrapper) ListSpaceRootItems(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// JoinSpace operation middleware
+func (siw *ServerInterfaceWrapper) JoinSpace(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.JoinSpace(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceMembers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceMembers(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RestoreSpace operation middleware
+func (siw *ServerInterfaceWrapper) RestoreSpace(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RestoreSpaceParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreSpace(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceShares operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceShares(w http.ResponseWriter, r *http.Request) {
 
@@ -16700,6 +17256,32 @@ func (siw *ServerInterfaceWrapper) ReplaceSpaceShares(w http.ResponseWriter, r *
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReplaceSpaceShares(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TransferSpaceOwnership operation middleware
+func (siw *ServerInterfaceWrapper) TransferSpaceOwnership(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TransferSpaceOwnership(w, r, spaceId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -18339,6 +18921,19 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.DeleteSpace)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.GetSpace)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.UpdateSpace)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/members", wrapper.ListSpaceMembers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/archive", wrapper.ArchiveSpace)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/restore", wrapper.RestoreSpace)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/admins", wrapper.ListSpaceAdmins)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/admins", wrapper.GrantSpaceAdmin)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/admins/{userId}", wrapper.RevokeSpaceAdmin)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/transfer-ownership", wrapper.TransferSpaceOwnership)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/discover", wrapper.DiscoverSpaces)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/join", wrapper.JoinSpace)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/default-workflows", wrapper.GetSpaceDefaultWorkflows)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/default-workflows", wrapper.SetSpaceDefaultWorkflows)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/delete-impact", wrapper.GetSpaceDeleteImpact)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-icons", wrapper.ListSpaceIcons)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/shares", wrapper.ListSpaceShares)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/shares", wrapper.ReplaceSpaceShares)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-fields", wrapper.ListWorkspaceCustomFields)
@@ -32862,6 +33457,21 @@ func (response ReplaceWorkSchedule428ApplicationProblemPlusJSONResponse) VisitRe
 	return err
 }
 
+type ListSpaceIconsRequestObject struct {
+}
+
+type ListSpaceIconsResponseObject interface {
+	VisitListSpaceIconsResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceIcons200Response struct {
+}
+
+func (response ListSpaceIcons200Response) VisitListSpaceIconsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
 type ListSpaceTemplatesRequestObject struct {
 }
 
@@ -33057,6 +33667,38 @@ func (response CreateSpace422ApplicationProblemPlusJSONResponse) VisitCreateSpac
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DiscoverSpacesRequestObject struct {
+	Params DiscoverSpacesParams
+}
+
+type DiscoverSpacesResponseObject interface {
+	VisitDiscoverSpacesResponse(w http.ResponseWriter) error
+}
+
+type DiscoverSpaces200Response struct {
+}
+
+func (response DiscoverSpaces200Response) VisitDiscoverSpacesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type DiscoverSpaces403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DiscoverSpaces403ApplicationProblemPlusJSONResponse) VisitDiscoverSpacesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -33271,6 +33913,211 @@ func (response UpdateSpace428ApplicationProblemPlusJSONResponse) VisitUpdateSpac
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceAdminsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListSpaceAdminsResponseObject interface {
+	VisitListSpaceAdminsResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceAdmins200JSONResponse struct {
+	Items *[]struct {
+		GrantedAt *string `json:"granted_at,omitempty"`
+		Name      *string `json:"name,omitempty"`
+		UserId    *string `json:"user_id,omitempty"`
+	} `json:"items,omitempty"`
+}
+
+func (response ListSpaceAdmins200JSONResponse) VisitListSpaceAdminsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceAdmins404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceAdmins404ApplicationProblemPlusJSONResponse) VisitListSpaceAdminsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantSpaceAdminRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *GrantSpaceAdminJSONRequestBody
+}
+
+type GrantSpaceAdminResponseObject interface {
+	VisitGrantSpaceAdminResponse(w http.ResponseWriter) error
+}
+
+type GrantSpaceAdmin204Response struct {
+}
+
+func (response GrantSpaceAdmin204Response) VisitGrantSpaceAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type GrantSpaceAdmin403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GrantSpaceAdmin403ApplicationProblemPlusJSONResponse) VisitGrantSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantSpaceAdmin422ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantSpaceAdmin422ApplicationProblemPlusJSONResponse) VisitGrantSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeSpaceAdminRequestObject struct {
+	SpaceId SpaceId            `json:"spaceId"`
+	UserId  openapi_types.UUID `json:"userId"`
+}
+
+type RevokeSpaceAdminResponseObject interface {
+	VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error
+}
+
+type RevokeSpaceAdmin204Response struct {
+}
+
+func (response RevokeSpaceAdmin204Response) VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeSpaceAdmin403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeSpaceAdmin403ApplicationProblemPlusJSONResponse) VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeSpaceAdmin422ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeSpaceAdmin422ApplicationProblemPlusJSONResponse) VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpaceRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Params  ArchiveSpaceParams
+}
+
+type ArchiveSpaceResponseObject interface {
+	VisitArchiveSpaceResponse(w http.ResponseWriter) error
+}
+
+type ArchiveSpace200JSONResponse Space
+
+func (response ArchiveSpace200JSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpace403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ArchiveSpace403ApplicationProblemPlusJSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpace409ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveSpace409ApplicationProblemPlusJSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpace422ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveSpace422ApplicationProblemPlusJSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -34254,6 +35101,149 @@ func (response UpdateCustomField422ApplicationProblemPlusJSONResponse) VisitUpda
 	return err
 }
 
+type GetSpaceDefaultWorkflowsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type GetSpaceDefaultWorkflowsResponseObject interface {
+	VisitGetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceDefaultWorkflows200JSONResponse SpaceDefaultWorkflows
+
+func (response GetSpaceDefaultWorkflows200JSONResponse) VisitGetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDefaultWorkflows404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceDefaultWorkflows404ApplicationProblemPlusJSONResponse) VisitGetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceDefaultWorkflowsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *SetSpaceDefaultWorkflowsJSONRequestBody
+}
+
+type SetSpaceDefaultWorkflowsResponseObject interface {
+	VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error
+}
+
+type SetSpaceDefaultWorkflows200JSONResponse SpaceDefaultWorkflows
+
+func (response SetSpaceDefaultWorkflows200JSONResponse) VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceDefaultWorkflows403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetSpaceDefaultWorkflows403ApplicationProblemPlusJSONResponse) VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceDefaultWorkflows422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceDefaultWorkflows422ApplicationProblemPlusJSONResponse) VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDeleteImpactRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type GetSpaceDeleteImpactResponseObject interface {
+	VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceDeleteImpact200JSONResponse map[string]interface{}
+
+func (response GetSpaceDeleteImpact200JSONResponse) VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDeleteImpact403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceDeleteImpact403ApplicationProblemPlusJSONResponse) VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDeleteImpact404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSpaceDeleteImpact404ApplicationProblemPlusJSONResponse) VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type StartSpaceExcelExportRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 	Body    *StartSpaceExcelExportJSONRequestBody
@@ -34616,6 +35606,168 @@ func (response ListSpaceRootItems422ApplicationProblemPlusJSONResponse) VisitLis
 	return err
 }
 
+type JoinSpaceRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type JoinSpaceResponseObject interface {
+	VisitJoinSpaceResponse(w http.ResponseWriter) error
+}
+
+type JoinSpace200JSONResponse Space
+
+func (response JoinSpace200JSONResponse) VisitJoinSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type JoinSpace403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response JoinSpace403ApplicationProblemPlusJSONResponse) VisitJoinSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type JoinSpace404ApplicationProblemPlusJSONResponse Problem
+
+func (response JoinSpace404ApplicationProblemPlusJSONResponse) VisitJoinSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceMembersRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListSpaceMembersResponseObject interface {
+	VisitListSpaceMembersResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceMembers200JSONResponse struct {
+	Items []SpaceMember `json:"items"`
+}
+
+func (response ListSpaceMembers200JSONResponse) VisitListSpaceMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceMembers404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceMembers404ApplicationProblemPlusJSONResponse) VisitListSpaceMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Params  RestoreSpaceParams
+}
+
+type RestoreSpaceResponseObject interface {
+	VisitRestoreSpaceResponse(w http.ResponseWriter) error
+}
+
+type RestoreSpace200JSONResponse struct {
+	Space    *Space                                     `json:"space,omitempty"`
+	Warnings *[]RestoreSpace200JSONResponseBodyWarnings `json:"warnings,omitempty"`
+}
+
+func (response RestoreSpace200JSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpace403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RestoreSpace403ApplicationProblemPlusJSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpace409ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpace409ApplicationProblemPlusJSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpace422ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpace422ApplicationProblemPlusJSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceSharesRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -34766,6 +35918,53 @@ func (response ReplaceSpaceShares428ApplicationProblemPlusJSONResponse) VisitRep
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferSpaceOwnershipRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *TransferSpaceOwnershipJSONRequestBody
+}
+
+type TransferSpaceOwnershipResponseObject interface {
+	VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error
+}
+
+type TransferSpaceOwnership204Response struct {
+}
+
+func (response TransferSpaceOwnership204Response) VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type TransferSpaceOwnership403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response TransferSpaceOwnership403ApplicationProblemPlusJSONResponse) VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferSpaceOwnership422ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferSpaceOwnership422ApplicationProblemPlusJSONResponse) VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -37860,6 +39059,9 @@ type StrictServerInterface interface {
 	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
 	// (PUT /settings/work-schedule)
 	ReplaceWorkSchedule(ctx context.Context, request ReplaceWorkScheduleRequestObject) (ReplaceWorkScheduleResponseObject, error)
+	// ListSpaceIcons Katalog kunci ikon Space (D-04)
+	// (GET /space-icons)
+	ListSpaceIcons(ctx context.Context, request ListSpaceIconsRequestObject) (ListSpaceIconsResponseObject, error)
 	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
 	// (GET /space-templates)
 	ListSpaceTemplates(ctx context.Context, request ListSpaceTemplatesRequestObject) (ListSpaceTemplatesResponseObject, error)
@@ -37872,6 +39074,9 @@ type StrictServerInterface interface {
 	// CreateSpace Buat Space (SPC-01)
 	// (POST /spaces)
 	CreateSpace(ctx context.Context, request CreateSpaceRequestObject) (CreateSpaceResponseObject, error)
+	// DiscoverSpaces Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul
+	// (GET /spaces/discover)
+	DiscoverSpaces(ctx context.Context, request DiscoverSpacesRequestObject) (DiscoverSpacesResponseObject, error)
 	// DeleteSpace Hapus Space beserta isinya ke Recycle bin; Personal space tidak bisa dihapus
 	// (DELETE /spaces/{spaceId})
 	DeleteSpace(ctx context.Context, request DeleteSpaceRequestObject) (DeleteSpaceResponseObject, error)
@@ -37881,6 +39086,18 @@ type StrictServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(ctx context.Context, request UpdateSpaceRequestObject) (UpdateSpaceResponseObject, error)
+
+	// (GET /spaces/{spaceId}/admins)
+	ListSpaceAdmins(ctx context.Context, request ListSpaceAdminsRequestObject) (ListSpaceAdminsResponseObject, error)
+	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-05)
+	// (POST /spaces/{spaceId}/admins)
+	GrantSpaceAdmin(ctx context.Context, request GrantSpaceAdminRequestObject) (GrantSpaceAdminResponseObject, error)
+	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+	// (DELETE /spaces/{spaceId}/admins/{userId})
+	RevokeSpaceAdmin(ctx context.Context, request RevokeSpaceAdminRequestObject) (RevokeSpaceAdminResponseObject, error)
+	// ArchiveSpace Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace
+	// (POST /spaces/{spaceId}/archive)
+	ArchiveSpace(ctx context.Context, request ArchiveSpaceRequestObject) (ArchiveSpaceResponseObject, error)
 	// ListAutomationRules Aturan otomasi sebuah Space (AUT-02); butuh hak Edit
 	// (GET /spaces/{spaceId}/automation-rules)
 	ListAutomationRules(ctx context.Context, request ListAutomationRulesRequestObject) (ListAutomationRulesResponseObject, error)
@@ -37929,6 +39146,15 @@ type StrictServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(ctx context.Context, request UpdateCustomFieldRequestObject) (UpdateCustomFieldResponseObject, error)
+	// GetSpaceDefaultWorkflows Workflow default Space untuk root Task dan Project (B)
+	// (GET /spaces/{spaceId}/default-workflows)
+	GetSpaceDefaultWorkflows(ctx context.Context, request GetSpaceDefaultWorkflowsRequestObject) (GetSpaceDefaultWorkflowsResponseObject, error)
+	// SetSpaceDefaultWorkflows Ganti default workflow Task dan Project. Item yang sudah ada tidak berubah (B)
+	// (PUT /spaces/{spaceId}/default-workflows)
+	SetSpaceDefaultWorkflows(ctx context.Context, request SetSpaceDefaultWorkflowsRequestObject) (SetSpaceDefaultWorkflowsResponseObject, error)
+	// GetSpaceDeleteImpact Pratinjau dampak hapus Space (D). Hanya membaca
+	// (GET /spaces/{spaceId}/delete-impact)
+	GetSpaceDeleteImpact(ctx context.Context, request GetSpaceDeleteImpactRequestObject) (GetSpaceDeleteImpactResponseObject, error)
 
 	// (POST /spaces/{spaceId}/excel-exports)
 	StartSpaceExcelExport(ctx context.Context, request StartSpaceExcelExportRequestObject) (StartSpaceExcelExportResponseObject, error)
@@ -37944,12 +39170,24 @@ type StrictServerInterface interface {
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(ctx context.Context, request ListSpaceRootItemsRequestObject) (ListSpaceRootItemsResponseObject, error)
+	// JoinSpace Ikuti Space Public; memberi akses Read saja (D-01)
+	// (POST /spaces/{spaceId}/join)
+	JoinSpace(ctx context.Context, request JoinSpaceRequestObject) (JoinSpaceResponseObject, error)
+	// ListSpaceMembers Anggota efektif Space beserta alasan aksesnya (D-06)
+	// (GET /spaces/{spaceId}/members)
+	ListSpaceMembers(ctx context.Context, request ListSpaceMembersRequestObject) (ListSpaceMembersResponseObject, error)
+	// RestoreSpace Pulihkan Space terarsip; mengembalikan peringatan yang harus diperiksa (D-03)
+	// (POST /spaces/{spaceId}/restore)
+	RestoreSpace(ctx context.Context, request RestoreSpaceRequestObject) (RestoreSpaceResponseObject, error)
 
 	// (GET /spaces/{spaceId}/shares)
 	ListSpaceShares(ctx context.Context, request ListSpaceSharesRequestObject) (ListSpaceSharesResponseObject, error)
 	// ReplaceSpaceShares Ganti seluruh daftar share Space (SPC-11)
 	// (PUT /spaces/{spaceId}/shares)
 	ReplaceSpaceShares(ctx context.Context, request ReplaceSpaceSharesRequestObject) (ReplaceSpaceSharesResponseObject, error)
+	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-05)
+	// (POST /spaces/{spaceId}/transfer-ownership)
+	TransferSpaceOwnership(ctx context.Context, request TransferSpaceOwnershipRequestObject) (TransferSpaceOwnershipResponseObject, error)
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(ctx context.Context, request ListSpaceViewsRequestObject) (ListSpaceViewsResponseObject, error)
@@ -45122,6 +46360,30 @@ func (sh *strictHandler) ReplaceWorkSchedule(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// ListSpaceIcons operation middleware
+func (sh *strictHandler) ListSpaceIcons(w http.ResponseWriter, r *http.Request) {
+	var request ListSpaceIconsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceIcons(ctx, request.(ListSpaceIconsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceIcons")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceIconsResponseObject); ok {
+		if err := validResponse.VisitListSpaceIconsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceTemplates operation middleware
 func (sh *strictHandler) ListSpaceTemplates(w http.ResponseWriter, r *http.Request) {
 	var request ListSpaceTemplatesRequestObject
@@ -45234,6 +46496,32 @@ func (sh *strictHandler) CreateSpace(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DiscoverSpaces operation middleware
+func (sh *strictHandler) DiscoverSpaces(w http.ResponseWriter, r *http.Request, params DiscoverSpacesParams) {
+	var request DiscoverSpacesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DiscoverSpaces(ctx, request.(DiscoverSpacesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DiscoverSpaces")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DiscoverSpacesResponseObject); ok {
+		if err := validResponse.VisitDiscoverSpacesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteSpace operation middleware
 func (sh *strictHandler) DeleteSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request DeleteSpaceRequestObject
@@ -45313,6 +46601,119 @@ func (sh *strictHandler) UpdateSpace(w http.ResponseWriter, r *http.Request, spa
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateSpaceResponseObject); ok {
 		if err := validResponse.VisitUpdateSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceAdmins operation middleware
+func (sh *strictHandler) ListSpaceAdmins(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListSpaceAdminsRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceAdmins(ctx, request.(ListSpaceAdminsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceAdmins")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceAdminsResponseObject); ok {
+		if err := validResponse.VisitListSpaceAdminsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GrantSpaceAdmin operation middleware
+func (sh *strictHandler) GrantSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GrantSpaceAdminRequestObject
+
+	request.SpaceId = spaceId
+
+	var body GrantSpaceAdminJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GrantSpaceAdmin(ctx, request.(GrantSpaceAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GrantSpaceAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GrantSpaceAdminResponseObject); ok {
+		if err := validResponse.VisitGrantSpaceAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeSpaceAdmin operation middleware
+func (sh *strictHandler) RevokeSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId, userId openapi_types.UUID) {
+	var request RevokeSpaceAdminRequestObject
+
+	request.SpaceId = spaceId
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeSpaceAdmin(ctx, request.(RevokeSpaceAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeSpaceAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeSpaceAdminResponseObject); ok {
+		if err := validResponse.VisitRevokeSpaceAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ArchiveSpace operation middleware
+func (sh *strictHandler) ArchiveSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ArchiveSpaceParams) {
+	var request ArchiveSpaceRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveSpace(ctx, request.(ArchiveSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveSpace")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ArchiveSpaceResponseObject); ok {
+		if err := validResponse.VisitArchiveSpaceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -45804,6 +47205,91 @@ func (sh *strictHandler) UpdateCustomField(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// GetSpaceDefaultWorkflows operation middleware
+func (sh *strictHandler) GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GetSpaceDefaultWorkflowsRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceDefaultWorkflows(ctx, request.(GetSpaceDefaultWorkflowsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceDefaultWorkflows")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceDefaultWorkflowsResponseObject); ok {
+		if err := validResponse.VisitGetSpaceDefaultWorkflowsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetSpaceDefaultWorkflows operation middleware
+func (sh *strictHandler) SetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request SetSpaceDefaultWorkflowsRequestObject
+
+	request.SpaceId = spaceId
+
+	var body SetSpaceDefaultWorkflowsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetSpaceDefaultWorkflows(ctx, request.(SetSpaceDefaultWorkflowsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetSpaceDefaultWorkflows")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetSpaceDefaultWorkflowsResponseObject); ok {
+		if err := validResponse.VisitSetSpaceDefaultWorkflowsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpaceDeleteImpact operation middleware
+func (sh *strictHandler) GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GetSpaceDeleteImpactRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceDeleteImpact(ctx, request.(GetSpaceDeleteImpactRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceDeleteImpact")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceDeleteImpactResponseObject); ok {
+		if err := validResponse.VisitGetSpaceDeleteImpactResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // StartSpaceExcelExport operation middleware
 func (sh *strictHandler) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request StartSpaceExcelExportRequestObject
@@ -45959,6 +47445,85 @@ func (sh *strictHandler) ListSpaceRootItems(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// JoinSpace operation middleware
+func (sh *strictHandler) JoinSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request JoinSpaceRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.JoinSpace(ctx, request.(JoinSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "JoinSpace")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(JoinSpaceResponseObject); ok {
+		if err := validResponse.VisitJoinSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceMembers operation middleware
+func (sh *strictHandler) ListSpaceMembers(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListSpaceMembersRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceMembers(ctx, request.(ListSpaceMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceMembers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceMembersResponseObject); ok {
+		if err := validResponse.VisitListSpaceMembersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreSpace operation middleware
+func (sh *strictHandler) RestoreSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params RestoreSpaceParams) {
+	var request RestoreSpaceRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreSpace(ctx, request.(RestoreSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreSpace")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RestoreSpaceResponseObject); ok {
+		if err := validResponse.VisitRestoreSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceShares operation middleware
 func (sh *strictHandler) ListSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ListSpaceSharesRequestObject
@@ -46012,6 +47577,39 @@ func (sh *strictHandler) ReplaceSpaceShares(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReplaceSpaceSharesResponseObject); ok {
 		if err := validResponse.VisitReplaceSpaceSharesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TransferSpaceOwnership operation middleware
+func (sh *strictHandler) TransferSpaceOwnership(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request TransferSpaceOwnershipRequestObject
+
+	request.SpaceId = spaceId
+
+	var body TransferSpaceOwnershipJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TransferSpaceOwnership(ctx, request.(TransferSpaceOwnershipRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TransferSpaceOwnership")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TransferSpaceOwnershipResponseObject); ok {
+		if err := validResponse.VisitTransferSpaceOwnershipResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
