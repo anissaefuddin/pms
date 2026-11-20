@@ -30,9 +30,10 @@ export function ViewTypePicker({ value, onChange, disabled }: { value: Supported
   return <div role="radiogroup" aria-label={t("items.view")} className="grid grid-cols-2 gap-2 sm:grid-cols-3">
     {SUPPORTED_DEFAULT_VIEWS.map((view) => {
       return <label key={view} className={cn(
-        "flex cursor-pointer flex-col gap-2 rounded-lg border bg-card p-2.5 text-left text-sm transition-colors hover:border-ring/60",
+        "flex cursor-pointer flex-col gap-2 rounded-lg border bg-card p-2.5 text-left text-sm transition-colors hover:border-foreground/30",
+        // Only the chosen card gets the ring; keyboard focus uses an outline so the two states never look like two selections.
         "has-checked:border-primary has-checked:ring-3 has-checked:ring-ring/30",
-        "has-focus-visible:ring-3 has-focus-visible:ring-ring/50",
+        "has-focus-visible:outline-2 has-focus-visible:outline-offset-2 has-focus-visible:outline-ring",
         "has-disabled:cursor-not-allowed has-disabled:opacity-60 has-disabled:hover:border-border"
       )}>
         <span className="flex items-center justify-between gap-2">

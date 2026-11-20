@@ -88,6 +88,8 @@ export function ProfileMenu({ compact = false }: { compact?: boolean }) {
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => navigate({ to: "/settings" })}><Settings />{t("nav.settings.label")}</DropdownMenuItem>
             <DropdownMenuItem onClick={() => navigate({ to: "/settings/appearance" })}><Palette />{t("nav.account.appearance")}</DropdownMenuItem>
+            {/* The quick switch below and the full page use the same setting: this link goes to the page that shows it all. */}
+            <DropdownMenuItem onClick={() => navigate({ to: "/settings/language" })}><Languages />{t("settings.nav.language")}</DropdownMenuItem>
             <div className="flex items-center gap-2 px-1.5 py-1 text-sm">
               <Languages className="size-4 shrink-0" aria-hidden="true" />
               <span className="flex-1">{t("nav.profile.language")}</span>
