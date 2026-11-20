@@ -97,7 +97,13 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const itemTypes = useItemTypes(isCollection);
   const [blocked, setBlocked] = useState<{ title: string; problems: string[] }>();
   const [pending, setPending] = useState(false);
-  const [creating, setCreating] = useState<{ status?: string; parent?: Item; day?: string }>();
+  const [creating, setCreating] = useState<{ status?: string; parent?: Item; day?: string; locationParent?: string | null; placement?: { parentId: string | null; after: string | null } }>();
+  // Batch 3B: a Task created above or below a Gantt row is placed next to that row with the reorder endpoint.
+  async function placeNextTo(item: Item, placement: { parentId: string | null; after: string | null }) {
+    if (!spaceId) return;
+    await api(`/api/v1/items/${item.id}/reorder`, { method: "POST", body: JSON.stringify({ space_id: spaceId, parent_item_id: placement.parentId, after_item_id: placement.after }) });
+    await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+  }
   // B2.2: a Board column creates its Task through the shared service. B2.4: if an active filter hides the new item,
   // say so instead of implying the create failed. The filter is left as the user set it.
   async function quickCreate(columnId: string, title: string, id: string) {
@@ -248,7 +254,12 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
-        <ItemGantt key={active?.id} initialOpen={!expansion.initial.gantt_collapsed} onOpenChange={(open) => expansion.save({ rows: [], gantt_collapsed: !open })} items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
+        <ItemGantt key={active?.id} onRowAdd={(kind, item, previousId) => {
+          if (kind === "child") { setCreating({ parent: item }); return; }
+          const parentId = item.locations.find((loc) => loc.space_id === spaceId)?.parent_item_id ?? null;
+          const parentItem = parentId ? (items.data ?? []).find((entry) => entry.id === parentId) : undefined;
+          setCreating({ parent: parentItem, day: item.start_date ?? item.due_date ?? undefined, locationParent: parentId, placement: { parentId, after: kind === "below" ? item.id : previousId } });
+        }} initialOpen={!expansion.initial.gantt_collapsed} onOpenChange={(open) => expansion.save({ rows: [], gantt_collapsed: !open })} items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
           customFields={customFields} columns={visibleColumns(active.config, false)}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
@@ -280,6 +291,6 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
         : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialDate={creating.day} location={{ space_id: spaceId, parent_item_id: creating.parent?.id ?? parent?.id }} me={me} onCreated={(item) => { noticeIfHidden(item); onOpen(item); }} />}
+      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialDate={creating.day} location={{ space_id: spaceId, parent_item_id: creating.locationParent !== undefined ? (creating.locationParent ?? undefined) : (creating.parent?.id ?? parent?.id) }} me={me} onCreated={(item) => { noticeIfHidden(item); if (creating?.placement) void placeNextTo(item, creating.placement); onOpen(item); }} />}
   </section>;
 }

@@ -1,11 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react-gantt";
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { ChevronsDownUp, ChevronsUpDown, Keyboard, Minus, Plus } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Keyboard, Minus, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { canAddSubitem } from "@/lib/create-item-validate";
 import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
 import { ApiError, api } from "@/lib/api";
 import type { components } from "@/api/schema";
@@ -59,7 +61,44 @@ export function ganttTask(item: Item, parent?: string): ITask {
   };
 }
 
-export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd }: {
+export type GanttRowAdd = "child" | "above" | "below";
+
+/**
+ * Batch 3B: the row menu. "Add subitem" uses the same rule as the Table and the Item Detail panel. "Add above" and
+ * "Add below" need a date on the row (the new Task takes that day) and create permission on the row.
+ */
+function GanttRowMenu({ item, previousId, spaceId, onAdd }: { item: Item; previousId: string | null; spaceId: string; onAdd: (kind: GanttRowAdd, item: Item, previousId: string | null) => void }) {
+  const { t } = useTranslation();
+  const dated = !!(item.start_date || item.due_date);
+  const allowed = item.my_capabilities.includes("create");
+  if (!canAddSubitem(item.my_capabilities) && !(allowed && dated)) return null;
+  void spaceId;
+  return <DropdownMenu>
+    <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.rowActions", { name: item.title })} />}><MoreHorizontal /></DropdownMenuTrigger>
+    <DropdownMenuContent align="end">
+      {canAddSubitem(item.my_capabilities) && <DropdownMenuItem onClick={() => onAdd("child", item, null)}>{t("items.addChild")}</DropdownMenuItem>}
+      {allowed && dated && <DropdownMenuItem onClick={() => onAdd("above", item, previousId)}>{t("views.gantt.addAbove")}</DropdownMenuItem>}
+      {allowed && dated && <DropdownMenuItem onClick={() => onAdd("below", item, previousId)}>{t("views.gantt.addBelow")}</DropdownMenuItem>}
+    </DropdownMenuContent>
+  </DropdownMenu>;
+}
+
+type RowActionsContextValue = { tasks: ITask[]; spaceId: string; byId: Map<string, Item>; onRowAdd: (kind: GanttRowAdd, item: Item, previousId: string | null) => void };
+const RowActionsContext = createContext<RowActionsContextValue | null>(null);
+
+/** Stable module-level cell: SVAR keeps its menu state only while this component identity is unchanged. */
+function RowActionsCell({ row }: { row: ITask }) {
+  const ctx = useContext(RowActionsContext);
+  const item = ctx?.byId.get(String(row.id));
+  if (!ctx || !item) return null;
+  // Siblings come from the tree the chart shows (same parent in display order), so "above" follows what the user sees.
+  const siblings = ctx.tasks.filter((task) => String(task.parent ?? 0) === String(row.parent ?? 0));
+  const index = siblings.findIndex((task) => String(task.id) === String(row.id));
+  const previousId = index > 0 ? String(siblings[index - 1].id) : null;
+  return <GanttRowMenu item={item} previousId={previousId} spaceId={ctx.spaceId} onAdd={ctx.onRowAdd} />;
+}
+
+export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd }: {
   initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
   onOpenChange?: (open: boolean) => void;
   items: Item[];
@@ -70,6 +109,8 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   readonly: boolean;
   onOpen: (item: Item) => void;
   onAdd?: () => void;
+  /** Batch 3B: add a subitem, or a Task above/below a row (previousId is the row above it among its siblings, or null). */
+  onRowAdd?: (kind: GanttRowAdd, item: Item, previousId: string | null) => void;
   onPatch: (item: Item, update: { start_date: string | null; due_date: string | null }) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation();
@@ -316,6 +357,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
     <p id="gantt-keys" className="sr-only">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</p>
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0} onKeyDown={keyboard}
       className="gantt-chart h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
+      <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
       <Theme>
         <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
           highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
@@ -323,8 +365,10 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
             ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
             ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),
             ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
-            ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 }))]} />
+            ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 })),
+            ...(onRowAdd && !readonly ? [{ id: "row_actions", header: t("views.actions"), width: 44, cell: RowActionsCell }] : [])]} />
       </Theme>
+      </RowActionsContext.Provider>
     </div>
     {onAdd && <Button variant="ghost" size="sm" className="text-primary" onClick={onAdd}><Plus />{t("views.add")}</Button>}
     {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">

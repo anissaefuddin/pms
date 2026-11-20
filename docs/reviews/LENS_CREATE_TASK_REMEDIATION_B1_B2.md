@@ -399,3 +399,37 @@ Tes:
 Belum diuji:
 - Tes live dengan backend untuk Calendar create.
 - Tampilan Calendar pada timezone user yang berbeda dengan server.
+
+## 19. Batch 3B: Gantt, Add subitem, Add above, Add below
+
+Perubahan:
+- `web/src/components/item-gantt.tsx`: kolom aksi di setiap baris, dengan menu:
+  - Add subitem (memakai aturan `canAddSubitem`, sama dengan Table dan Item Detail).
+  - Add task above dan Add task below (butuh hak Create dan tanggal di baris acuan).
+- Sel aksi memakai komponen modul yang stabil, dengan data dari context. Sel yang dibuat ulang setiap render membuat menu hilang saat SVAR me-render ulang grid.
+- Sibling diambil dari daftar task yang ditampilkan Gantt, sehingga "above" mengikuti urutan yang dilihat user.
+- `web/src/components/view-workspace.tsx`: Task baru mengambil tanggal baris acuan (start, atau due jika start kosong), berada di parent yang sama, lalu diurutkan dengan `POST /items/{id}/reorder`.
+- `web/tests/gantt-mock.ts`: opsi `extra` untuk handler tambahan.
+
+Aturan yang dipakai (sesuai scope 1 dan prinsip yang sudah ada):
+- Task baru satu hari, start dan finish sama dengan tanggal acuan.
+- Above: `after_item_id` = sibling sebelum acuan, atau null jika acuan adalah yang pertama.
+- Below: `after_item_id` = acuan.
+- Subitem: parent = baris acuan. Jika acuan Task, kind dikunci ke Task.
+
+Tes:
+
+| Tes | Hasil |
+|---|---|
+| E2E: Add task below (tanggal sama dengan acuan, parent project, reorder setelah acuan) | PASS |
+| E2E: Add subitem pada baris | PASS |
+| E2E: Add task above pada baris kedua (reorder setelah sibling sebelumnya) | PASS |
+| Integrasi: Task baru di-reorder setelah Design, urutan children Design, Between, Build; start dan due tetap | PASS |
+| Regresi Gantt (gantt, gantt-c4, gantt-fit, gantt-create) dan axe | PASS |
+| Regresi calendar, create, board, items, table | PASS |
+| Typecheck dan unit | PASS |
+
+Batasan:
+- Drag-create pada timeline tidak masuk batch ini (G1 sampai G4 belum disetujui).
+- Tes permission untuk baris tanpa hak create belum ditulis di Gantt. Logikanya sama dengan Table dan sudah diuji di sana.
+- Tes live dengan backend belum dijalankan untuk alur Gantt ini.

@@ -173,7 +173,10 @@
     "zoomOut": "Zoom out",
     "keysLabel": "Keyboard help",
     "fit": "Fit project",
-    "showSelected": "Show selected"
+    "showSelected": "Show selected",
+    "rowActions": "Actions for {{name}}",
+    "addAbove": "Add task above",
+    "addBelow": "Add task below"
   },
   "unassigned": "Unassigned",
   "reassign": {

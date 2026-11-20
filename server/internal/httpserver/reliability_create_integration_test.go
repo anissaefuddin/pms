@@ -160,3 +160,40 @@ func TestCreateWithClientIDIsIdempotent(t *testing.T) {
 		t.Fatalf("create without id: %d %v", r.status, r.body)
 	}
 }
+
+// Batch 3B: a Task created above or below a Gantt row is placed with the reorder endpoint, and the children list reads back in that order.
+func TestGanttCreatedTaskIsPlacedAfterItsSibling(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	space := f.space("Gantt order")
+	f.share(space, "user", admin.id, "full")
+	project := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "project", "title": "P", "locations": []map[string]any{{"space_id": space}}})
+	pid := project.body["id"].(string)
+	loc := func() []map[string]any { return []map[string]any{{"space_id": space, "parent_item_id": pid}} }
+	first := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": "Design", "locations": loc()})
+	second := f.call(admin, http.MethodPost, "/items", map[string]any{"type": "task", "title": "Build", "locations": loc()})
+	firstID, secondID := first.body["id"].(string), second.body["id"].(string)
+
+	added := f.call(admin, http.MethodPost, "/items", map[string]any{
+		"id": "018f4d3c-9a6b-7c10-8000-00000000c0de", "type": "task", "title": "Between", "start_date": "2026-12-01", "due_date": "2026-12-01", "locations": loc(),
+	})
+	if added.status != 201 {
+		t.Fatalf("create: %d %v", added.status, added.body)
+	}
+	addedID := added.body["id"].(string)
+	placed := f.call(admin, http.MethodPost, "/items/"+addedID+"/reorder", map[string]any{"space_id": space, "parent_item_id": pid, "after_item_id": firstID})
+	if placed.status != 204 && placed.status != 200 {
+		t.Fatalf("reorder after Design: %d %v", placed.status, placed.body)
+	}
+	children := f.call(admin, http.MethodGet, "/items/"+pid+"/children", nil).items()
+	var order []string
+	for _, c := range children {
+		order = append(order, c["title"].(string))
+	}
+	if len(order) != 3 || order[0] != "Design" || order[1] != "Between" || order[2] != "Build" {
+		t.Fatalf("expected Design, Between, Build; got %v (ids %s %s %s)", order, firstID, addedID, secondID)
+	}
+	if added.body["start_date"] != "2026-12-01" || added.body["due_date"] != "2026-12-01" {
+		t.Fatalf("a one-day Task keeps the day: %v %v", added.body["start_date"], added.body["due_date"])
+	}
+}
