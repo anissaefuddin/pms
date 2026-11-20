@@ -129,7 +129,7 @@ test.describe("Space settings", () => {
     } });
     await page.goto(`/spaces/${marketing.id}/settings/workflows`);
     await page.getByRole("combobox", { name: "Root task workflow" }).selectOption({ label: "Alpha flow" });
-    const put = calls.find((c) => c.method === "PUT" && c.path.endsWith("/default-workflows"));
-    expect(put?.body).toEqual({ task: "a1111111-1111-4111-8111-111111111111", project: null });
+    // The save is asynchronous: wait for the PUT to reach the mock instead of reading the list once.
+    await expect.poll(() => calls.find((c) => c.method === "PUT" && c.path.endsWith("/default-workflows"))?.body).toEqual({ task: "a1111111-1111-4111-8111-111111111111", project: null });
   });
 });
