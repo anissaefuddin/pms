@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
 import { ItemBoard } from "@/components/item-board";
+import { createQuickTask, quickTaskInput } from "@/lib/create-item-service";
 const ItemCalendar = lazy(() => import("@/components/item-calendar").then((module) => ({ default: module.ItemCalendar })));
 const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
 import { Timelog } from "@/components/timelog";
@@ -96,7 +97,18 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const itemTypes = useItemTypes(isCollection);
   const [blocked, setBlocked] = useState<{ title: string; problems: string[] }>();
   const [pending, setPending] = useState(false);
-  const [creating, setCreating] = useState<{ status?: string }>();
+  const [creating, setCreating] = useState<{ status?: string; parent?: Item }>();
+  // B2.2: a Board column creates its Task through the shared service. B2.4: if an active filter hides the new item,
+  // say so instead of implying the create failed. The filter is left as the user set it.
+  async function quickCreate(columnId: string, title: string) {
+    if (!me || !spaceId) throw new Error(t("views.createFailed"));
+    const item = await createQuickTask(qc, quickTaskInput(me, spaceId, parent?.id, title, columnId));
+    const listKey = flat ? [...sortedKey, "subtree"] : sortedKey;
+    const listed = (qc.getQueryData<Item[]>(listKey) ?? []).some((entry) => entry.id === item.id);
+    const matchesTitle = item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase());
+    if (listed && matchesTitle) toast.success(t("items.created", { name: item.title }));
+    else toast.info(t("views.createdHidden"), { action: { label: t("views.openCreated"), onClick: () => onOpen(item) } });
+  }
   const locked = useRef(false);
   const isList = { queryKey: itemKeys.all, predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => queryKey[1] !== "detail" };
 
@@ -256,10 +268,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isSuccess && (!spaceEmpty && !noMatches && items.data.length === 0 ? <EmptyState icon={<ProjectIllustration />} title={t("views.noItems.title")}
           description={t("views.noItems.description")} canCreate={canCreate}
           primaryAction={{ label: t("items.new"), onClick: () => setCreating({}) }} />
-        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} />)
-        : <ItemTable key={active?.id} {...collection} initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
+        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} onQuickCreate={quickCreate} />)
+        : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      initialKind="task" initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
+      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: creating.parent?.id ?? parent?.id }} me={me} onCreated={onOpen} />}
   </section>;
 }

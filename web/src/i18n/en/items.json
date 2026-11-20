@@ -298,7 +298,7 @@
     "files": "Browse the files attached to items in this project.",
     "chart": "See how many items are in each status."
   },
-  "taskParent": "Choose a project in the same Space as the parent",
+  "taskParent": "Choose a parent in the same Space",
   "noDates": "Folders have no start or finish date.",
   "info": "Info",
   "reviewState": {
@@ -331,5 +331,6 @@
       "project": "Fields checked here apply to this project and the items inside it. A field with no project or folder assignment applies to the whole Space.",
       "folder": "Fields checked here apply to this folder and the items inside it. A field with no project or folder assignment applies to the whole Space."
     }
-  }
+  },
+  "taskChildOnly": "A Task can only contain Tasks. Choose a Task, Project, or Folder parent for other types."
 }

@@ -334,6 +334,14 @@ VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::bool
 	if err := applyFields(ctx, tx, actor, id.String(), kind, fields, keys, false); err != nil {
 		return Detail{}, err
 	}
+	// The status the item lands in (its first status, or the one the request named) gets the same required-field guard as a PATCH.
+	var landed string
+	if err := tx.QueryRow(ctx, "SELECT status_id::text FROM items WHERE id=$1", id.String()).Scan(&landed); err != nil {
+		return Detail{}, err
+	}
+	if err := checkStatusGuard(ctx, tx, actor, id.String(), landed); err != nil {
+		return Detail{}, err
+	}
 	for _, loc := range locations {
 		var last string
 		if err := tx.QueryRow(ctx, `

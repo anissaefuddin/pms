@@ -1,5 +1,6 @@
 import { useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useQueries } from "@tanstack/react-query";
+import { canAddSubitem } from "@/lib/create-item-validate";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Plus } from "lucide-react";
@@ -25,8 +26,10 @@ import type { ItemCollectionProps } from "./item-collection-types";
 type PathStep = { id: string; title: string; type: string };
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string; path?: PathStep[] };
 
-export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onPatch, onBulkPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
+export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onAddChild, onPatch, onBulkPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
   showEmpty?: boolean;
+  /** B2.3: row menu → Add subitem. The caller opens the create dialog with this row as parent. */
+  onAddChild?: (item: Item) => void;
   initialExpanded?: string[]; // WA-D05: rows expanded when the view opens
   onExpandedChange?: (rows: string[]) => void;
   filter?: string; // RT-37: title filter applied to the whole tree, so loaded nested rows match too
@@ -173,13 +176,18 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     })),
     { id: "actions", header: t("views.actions"), cell: ({ row }) => {
       const { item, parent } = row.original;
-      if (!manual || !item.my_capabilities.includes("edit") || !inLocation(item, parent)) return null;
-      const siblings = rows.filter((entry) => entry.parent === parent && entry.item.id !== item.id && inLocation(entry.item, parent));
+      // B2.3: "Add subitem" needs create permission on this row; ordering needs manual sort and edit permission.
+      const movable = manual && item.my_capabilities.includes("edit") && inLocation(item, parent);
+      // Same rule as the Item Detail panel (canAddSubitem); the dialog then offers only the child types the parent allows.
+      const addable = !!onAddChild && canCreate && canAddSubitem(item.my_capabilities);
+      if (!movable && !addable) return null;
+      const siblings = movable ? rows.filter((entry) => entry.parent === parent && entry.item.id !== item.id && inLocation(entry.item, parent)) : [];
       return <DropdownMenu>
-        <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={t("views.move", { name: item.title })} />}><MoreHorizontal /></DropdownMenuTrigger>
+        <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" aria-label={movable ? t("views.move", { name: item.title }) : t("views.actions")} />}><MoreHorizontal /></DropdownMenuTrigger>
         <DropdownMenuContent align="end" className="max-h-64 overflow-y-auto">
-          <DropdownMenuItem disabled={pending} onClick={() => void onReorder(item, parent, null)}>{t("views.moveTop")}</DropdownMenuItem>
-          {siblings.map((sibling) => <DropdownMenuItem disabled={pending} key={sibling.item.id} onClick={() => void onReorder(item, parent, sibling.item.id)}>
+          {addable && <DropdownMenuItem onClick={() => onAddChild?.(item)}>{t("items.addChild")}</DropdownMenuItem>}
+          {movable && <DropdownMenuItem disabled={pending} onClick={() => void onReorder(item, parent, null)}>{t("views.moveTop")}</DropdownMenuItem>}
+          {movable && siblings.map((sibling) => <DropdownMenuItem disabled={pending} key={sibling.item.id} onClick={() => void onReorder(item, parent, sibling.item.id)}>
             {t("views.moveAfter", { name: sibling.item.title })}
           </DropdownMenuItem>)}
         </DropdownMenuContent>

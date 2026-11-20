@@ -1,8 +1,9 @@
 import { formatNumber, formatDate, useProfile } from "@/lib/profile";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Diamond, CalendarDays, ListTree, Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomFieldDisplay } from "@/components/custom-field-editor";
@@ -32,10 +33,17 @@ function lanesOf(items: Item[], swimlanes: boolean, unassigned: string): Lane[] 
   return [...lanes, ...(rest.length || !lanes.length ? [{ key: "", name: unassigned, items: rest }] : [])];
 }
 
-export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, canCreate, pending, onOpen, onAdd, onPatch }: ItemCollectionProps & { swimlanes: boolean }) {
+export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, canCreate, pending, onOpen, onAdd, onPatch, onQuickCreate }: ItemCollectionProps & { swimlanes: boolean; onQuickCreate?: (columnId: string, title: string) => Promise<void> }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const [dragging, setDragging] = useState<{ id: string; lane: string }>();
+  // B2.2: the column whose inline name field is open.
+  const [quick, setQuick] = useState<string>();
+  const addButton = (columnId: string) => onQuickCreate
+    ? (quick === columnId
+      ? <QuickCreate onSubmit={(title) => onQuickCreate(columnId, title)} onCancel={() => setQuick(undefined)} onDetail={() => { setQuick(undefined); onAdd(columnId); }} />
+      : <Button size="sm" variant="outline" onClick={() => setQuick(columnId)}><Plus />{t("views.add")}</Button>)
+    : <Button size="sm" variant="outline" onClick={() => onAdd(columnId)}><Plus />{t("views.add")}</Button>;
   const [move, setMove] = useState<Move>();
   const [now] = useState(() => Date.now());
   const cardFields = customFields.filter((field) => shown.includes(fieldColumn(field.id)));
@@ -75,7 +83,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
             {column.items.map((item) => <Card key={item.id} item={item} lane={lane.key} now={now} fields={cardFields} shown={shown}
               statuses={statuses} pending={pending} onOpen={onOpen} onPatch={onPatch} onDrag={setDragging} />)}
           </ul>
-          {canCreate && column.id && <Button size="sm" variant="outline" onClick={() => onAdd(column.id)}><Plus />{t("views.add")}</Button>}
+          {canCreate && column.id && addButton(column.id)}
         </section>)}
       </div>;
       return swimlanes
@@ -150,4 +158,39 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
       </DropdownMenuContent>
     </DropdownMenu></div>}
   </li>;
+}
+
+/** B2.2: a Task name typed inside a column. Enter or leaving the field creates it, Escape cancels, and a failed request keeps the name. */
+function QuickCreate({ onSubmit, onCancel, onDetail }: { onSubmit: (title: string) => Promise<void>; onCancel: () => void; onDetail: () => void }) {
+  const { t } = useTranslation();
+  const [title, setTitle] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  // One request at a time: Enter followed by blur must not create the item twice.
+  const inFlight = useRef(false);
+  async function submit() {
+    if (inFlight.current) return;
+    const name = title.trim();
+    if (!name) { onCancel(); return; }
+    inFlight.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await onSubmit(name);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t("views.createFailed"));
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
+  return <div className="space-y-1 rounded-md border bg-card p-2">
+    <Input autoFocus aria-label={t("views.quickCreateName")} placeholder={t("views.quickCreateName")} value={title} disabled={busy} maxLength={500}
+      onChange={(event) => setTitle(event.target.value)} onBlur={() => void submit()}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") { event.preventDefault(); void submit(); }
+        if (event.key === "Escape") { event.preventDefault(); onCancel(); }
+      }} />
+    {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+    <button type="button" className="text-xs text-primary underline" onMouseDown={(event) => event.preventDefault()} onClick={onDetail}>{t("views.quickCreateDetail")}</button>
+  </div>;
 }

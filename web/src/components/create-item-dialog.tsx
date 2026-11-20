@@ -102,8 +102,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const customTypes = customOf(kind).filter((def) => !parentChildren.length || parentChildren.includes(def.id));
   const baseHidden = !fixedParent && !taskOnly && !menuAllows(menu, kind);
   const typeKey = customTypes.some((def) => def.key === typeKeyChoice) ? typeKeyChoice : baseHidden ? customTypes[0]?.key ?? "" : "";
-  // Task hanya boleh di bawah Project; folder dan project boleh di bawah item non-task.
-  const parentOptions = parents.data?.filter((item) => (kind === "task" ? item.type === "project" : item.type !== "task")
+  // Task boleh di bawah Project atau Task; folder dan project boleh di bawah item non-task (validateCreate dan server menegakkan sisanya).
+  const parentOptions = parents.data?.filter((item) => (kind === "task" ? item.type === "project" || item.type === "task" : item.type !== "task")
     && item.my_capabilities.includes("create")
     && item.locations.some((loc) => loc.space_id === spaceID && (loc.parent_item_id ?? "") === (directory?.id ?? "")));
   const canBrowse = !!parent && parent.id !== directory?.id;

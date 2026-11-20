@@ -1,4 +1,5 @@
 import { formatDate } from "@/lib/profile";
+import { canAddSubitem } from "@/lib/create-item-validate";
 import { lazy, Suspense, useEffect, useId, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { MoreHorizontal } from "lucide-react";
@@ -296,7 +297,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
     <section className="space-y-2 border-t pt-4">
       <div className="flex items-center justify-between gap-2">
         <h3 className="font-medium">{t("items.children")}{children.data ? ` · ${children.data.length}` : ""}</h3>
-        {canCreate && childLocation && <Button variant="outline" size="sm" onClick={() => setAdding(true)}>{t("items.addChild")}</Button>}
+        {canAddSubitem(item.my_capabilities) && childLocation && <Button variant="outline" size="sm" onClick={() => setAdding(true)}>{t("items.addChild")}</Button>}
       </div>
       {children.isPending && <p role="status">{t("items.loading")}</p>}
       {children.isError && <FormError message={t("items.loadError")} />}

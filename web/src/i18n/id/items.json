@@ -292,7 +292,7 @@
     "files": "Telusuri file yang dilampirkan ke item di proyek ini.",
     "chart": "Lihat berapa banyak item di setiap status."
   },
-  "taskParent": "Pilih proyek di Ruang yang sama dengan induknya",
+  "taskParent": "Pilih induk di Ruang yang sama",
   "noDates": "Folder tidak memiliki tanggal mulai atau selesai.",
   "info": "Info",
   "reviewState": {
@@ -325,5 +325,6 @@
       "project": "Field yang dicentang di sini berlaku untuk project ini dan item di dalamnya. Field tanpa penetapan project atau folder berlaku untuk seluruh Space.",
       "folder": "Field yang dicentang di sini berlaku untuk folder ini dan item di dalamnya. Field tanpa penetapan project atau folder berlaku untuk seluruh Space."
     }
-  }
+  },
+  "taskChildOnly": "Task hanya boleh berisi Task. Pilih induk Task untuk tipe lain."
 }
