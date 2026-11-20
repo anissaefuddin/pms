@@ -1,24 +1,30 @@
-# LENS — Roadmap Peningkatan RBAC (Phase 6–7)
+# LENS — Roadmap Peningkatan RBAC (diperbarui 20 Nov 2026)
 
-Estimasi effort dalam hari kerja engineering (HK). S-4 sudah dibuktikan dan diperbaiki. Ketidakpastian tersisa ada pada S-1.
+Keputusan produk: **D-17.1 Explicit Access Only: APPROVED.** Workspace Admin tidak otomatis mendapat `full` atau akses ke konten Shared Space. Lihat `docs/DECISIONS.md`.
 
-| Opsi | Manfaat | Risiko | Dependency | Estimasi | Prioritas |
-|---|---|---|---|---|---|
-| **A. RBAC Hardening** | Merapikan S-1 dan S-2 (S-4 sudah ditutup), melengkapi matriks runtime | Rendah sampai sedang: menyentuh pencabutan share | Keputusan S-1 | 3–5 HK | **1 (sekarang)** |
-| **B. Granular Capabilities** (`project.manage`, `item.move`, `item.share`, dan lain-lain) | Kontrol halus per tindakan | Tinggi: mengubah pemetaan custom role dan migrasi | A selesai, keputusan produk | 10–15 HK | 3 |
-| **C. Effective Permission Inspector** | Transparan: pengguna melihat sumber hak (direct, inherited, plafon) | Rendah: hanya baca | Logika A dan endpoint permission | 5–8 HK (backend 2–3, UI 3–5) | 2 |
-| **D. Permission Boundaries** (stop-inheritance, restricted subtree) | Kebutuhan isolasi yang lebih kuat | Tinggi: bertentangan dengan model union dan pewarisan | Keputusan semantik, tidak boleh diimplementasikan tanpa approval | 15+ HK, belum dinilai | 4 atau ditolak |
-| **E. Advanced Governance** (riwayat perubahan permission, kedaluwarsa share, access review, simulasi) | Kepatuhan dan audit | Sedang | C, dan audit move (S-5) | MVP 3–5 HK, Business 10 HK, Enterprise 20+ HK | 5 |
+Estimasi dalam hari kerja engineering (HK).
+
+## Status per opsi
+
+| Opsi | Status | Yang sudah ada | Yang tersisa | Estimasi tersisa |
+|---|---|---|---|---|
+| **A. RBAC Hardening** | **CLOSED dengan verifikasi** | S-1, S-4, S-5 diperbaiki dengan tes; S-2 dan D-17 didokumentasikan; regresi authorization final lulus; E2E authorization 44 lulus; E2E Space settings 10 lulus | Pola CI `authorization-matrix` belum mencakup tes baru (lihat `LENS_RBAC_FINDINGS_CLOSURE.md`); audit data untuk tipe user yang diturunkan | 0.5–1 HK |
+| **C. Effective Permission Inspector** | **READY FOR IMPLEMENTATION** setelah dua prasyarat | Spesifikasi (`LENS_EFFECTIVE_PERMISSION_INSPECTOR_SPEC.md`), kontrak API, skenario INS-01..12 | (1) persetujuan UX oleh pemilik produk; (2) pola CI `authorization-matrix` diperluas agar INS-10 dan INS-11 ikut berjalan | Backend 2–3 HK, UI 3–5 HK |
+| **B. Granular Capabilities** | **DEFERRED** sampai mapping custom role stabil | — | Mapping custom role ke kapabilitas baru; keputusan default per user type; migrasi | 10–15 HK (perkiraan awal) |
+| **D. Permission Boundaries** | **FUTURE** | — | Kebutuhan isolasi (stop-inheritance, restricted subtree) belum ada; bertentangan dengan model union dan pewarisan | belum dinilai |
+| **E. Governance & Break-glass Access** | **FUTURE** | — | Riwayat perubahan permission; kedaluwarsa share; access review; akses darurat (break-glass) dengan audit wajib. Ini memperluas Option E sebelumnya | MVP 3–5 HK, Business 10 HK, Enterprise 20+ HK |
 
 ## Urutan yang direkomendasikan
 
-1. **A**: keputusan S-1, sinkronkan dokumen S-2, jalankan matriks penuh. Berdampak keamanan tertinggi dengan risiko regresi rendah.
-2. **C**: inspector membantu menjawab pertanyaan S-1 dan S-4 dari sisi pengguna.
-3. **B**: hanya jika C menunjukkan kebutuhan nyata.
-4. **E** setelah audit move (S-5) selesai.
-5. **D** tidak direkomendasikan sebelum ada kebutuhan bisnis yang jelas.
+1. **Tutup prasyarat C**: persetujuan UX, dan perluasan pola CI `authorization-matrix`.
+2. **Implementasi C** (backend dulu, lalu UI). Inspector tidak mengubah permission engine.
+3. **E** setelah C stabil. Break-glass hanya setelah audit move dan audit admin lengkap.
+4. **B** hanya setelah mapping custom role stabil dan ada kebutuhan nyata dari C.
+5. **D** tidak dikerjakan tanpa kebutuhan bisnis yang jelas.
 
 ## Dependensi
 
-- Semua opsi A–E bergantung pada keputusan produk untuk S-1 dan semantik D.
-- Migrasi hanya dibutuhkan untuk B. Tidak ada migrasi untuk A atau C.
+- C bergantung pada D-17.1 (sudah APPROVED) dan pada kontrak `policy` yang sekarang.
+- B bergantung pada keputusan default kapabilitas per user type.
+- E bergantung pada C (sumber hak harus bisa dijelaskan sebelum riwayatnya dicatat).
+- Tidak ada migrasi untuk A atau C. B dan E kemungkinan membutuhkan migrasi.

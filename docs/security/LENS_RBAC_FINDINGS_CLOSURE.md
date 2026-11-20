@@ -1,159 +1,135 @@
-# LENS RBAC — Penutupan Temuan (S-1, S-2, S-4, S-5)
+# LENS RBAC — Penutupan Temuan dan Verifikasi Akhir
 
-Baseline: `docs/security/` (tujuh dokumen audit). Branch `feat/m12c-ui-clean`. Tidak ada commit, push, merge, atau deploy dalam batch ini kecuali yang disebut di bagian "Perubahan" (S-4 sudah di-commit sebelumnya sebagai `240da43`). Tidak ada perubahan pada database production.
+Diperbarui 20 Nov 2026. Baseline: `docs/security/` (tujuh dokumen audit). Branch `feat/m12c-ui-clean`.
 
-## Ringkasan status
+Commit yang sudah ada dari batch ini (tidak ada commit baru di sesi ini):
+`240da43` (S-4 fix), `ac87a0a` (tes S-4), `3a72f25` (S-1), `4a512ee` (S-5), `fbb0952` (S-2), `2576f74` (dokumen).
 
-| ID | Status | Ringkasan |
-|---|---|---|
-| S-1 | **FIXED** (backend, UI) + **DECISION** untuk audit data | Space Admin hanya untuk user type `admin`/`regular`. Data dev-lens sudah bersih (0 tidak memenuhi syarat). |
-| S-2 | **DECISION** (konflik D-17) | ARCHITECTURE disesuaikan dengan kode. D-SA1 menggantikan D-05 untuk Space Admin. Keputusan produk D-17 belum ada. |
-| S-4 | **FIXED** (commit `240da43`) | Revoke, downgrade, dan upgrade share item dibatasi hak pemberi. |
-| S-5 | **FIXED** | Move menulis satu event riwayat per perubahan nyata, dalam transaksi yang sama. Gagal = rollback termasuk event. |
+Tidak ada push, merge, deploy, atau perubahan database production.
 
-## S-1 — Space Admin
+## 1. Keputusan D-17 dan keselarasan dokumen
 
-**Root cause.** `GrantAdmin` dan `TransferOwnership` menulis `space_admins` tanpa memeriksa user type. Kapabilitas Space Admin hanya dipotong plafon, sehingga External dapat menjadi admin tanpa hak yang dijanjikan.
+**D-17.1 Explicit Access Only: APPROVED** (20 Nov 2026).
 
-**Bukti sebelum fix.** `TestSpaceAdminRequiresAdminOrRegularUserType` gagal: `a external user cannot become Space Admin: status 204, want 422`.
+Workspace Admin tidak otomatis mendapat `full` atau akses ke konten Shared Space. Akses konten mengikuti share, grup, Space Admin eksplisit (D-SA1), User Type Ceiling, dan inheritance. Workspace Admin tetap mengelola fungsi administratif lewat capability (`manage_users`, `create_space`, dan endpoint admin lain).
 
-**Perubahan.**
-- `server/internal/spaces/governance.go`: fungsi `requireAdminEligible` (baru), dipanggil di `GrantAdmin` dan `TransferOwnership` setelah pemeriksaan keanggotaan. Menolak dengan 422 untuk tipe selain `admin` dan `regular`.
-- `web/src/components/space-settings.tsx`: tipe `SpaceMember` menerima `user_type`. Kandidat Space Admin difilter ke `admin` dan `regular`. API members sudah mengirim `user_type`, jadi tidak ada perubahan API.
+**Kode tidak diubah.** `policy/engine.go` (`spaceCaps`) sudah sesuai keputusan ini sejak `f8b772b`.
 
-**Yang tidak berubah.** Share editor, limited, read, dan full untuk semua tipe. Tes `TestSpaceGovernance` tetap lulus.
+**Dokumen yang dikoreksi (riwayat tetap ada):**
 
-**Audit data (read-only, dev-lens, `losaka-app`).**
-```
-SELECT count(*) FROM space_admins sa JOIN users u ON u.id=sa.user_id
-WHERE u.user_type NOT IN ('admin','regular');   -- hasil: 0
-```
-Tidak ada data yang perlu dimigrasi saat ini.
-
-**Risiko tersisa.** Jika tipe user sebuah admin diturunkan setelah ditetapkan, baris `space_admins` tetap ada. Tidak ada mekanisme otomatis yang mencabutnya. Usulan: mencabut Space Admin saat tipe user berubah (perubahan terpisah, memengaruhi alur `ChangeType`). Tidak diimplementasikan di batch ini.
-
-## S-2 — Dokumentasi
-
-**Temuan baru yang mengubah S-2.** Ada dua sumber yang bertentangan, dan keduanya perlu keputusan:
-- `docs/DECISIONS.md` D-17 dan `ARCHITECTURE.md` §14 menyatakan admin otomatis `full` di semua Space shared.
-- Kode sejak commit `f8b772b` menerapkan opsi A: admin tanpa hak implisit (`policy/engine.go`, `spaceCaps`).
-- `docs/SPACE_MANAGEMENT_ANALISA.md` §12.1 mencatat opsi A pernah dicoba lalu dibatalkan, dan butuh keputusan produk (A1 atau A2).
-
-Jadi kode dan dokumen keputusan memang berbeda, dan keputusan ulang diperlukan. Batch ini tidak mengubah perilaku kode.
-
-**Perubahan.**
-- `docs/ARCHITECTURE.md` §6.2 poin 5 dan §14 poin 1: menyatakan kondisi kode sekarang, dan menandai keputusan produk sebagai terbuka.
-- `docs/DECISIONS.md`: baris D-17 diberi status konflik. Baris baru **D-SA1** untuk Space Admin eksplisit.
-- Referensi D-05 untuk Space Admin diganti D-SA1 di: `policy/locked.go`, `policy/engine.go`, `httpserver/spaces_governance.go`, `httpserver/space_governance_integration_test.go`, `web/src/components/space-settings.tsx`, `api/openapi.yaml`, dan kode yang digenerasi ulang (`server/internal/apigen/openapi.gen.go`, `web/src/api/schema.d.ts`).
-- D-05 tetap berarti keputusan stack (`DECISIONS.md` baris 17) dan D-05 progres unggah (baris 233, `web/src/lib/upload.ts`).
-- Tidak diubah: `server/migrations/00346_space_governance.sql`, `docs/SPACE_MANAGEMENT_ANALISA.md`, dan log `docs/qa/`. Itu catatan historis.
-
-## S-4 — Pencabutan share
-
-**Root cause.** `writeTargetShares` (`spaces/spaces.go`) membatasi grant role baru, tetapi menghapus atau menurunkan share item tanpa membandingkan dengan hak pemberi. Untuk Space, pemeriksaan ini sudah ada (`guardSpaceShareChange`).
-
-**Bukti sebelum fix.** `TestItemShareRevokeAboveOwnCapabilitiesIsRefused`: `sharer revoking a Full holder: status 200`.
-
-**Perubahan (commit `240da43`).** Blok `else` di `writeTargetShares`: untuk target selain Space, share yang dihapus atau diubah harus berada dalam kapabilitas pemberi. Jika tidak, 403.
-
-**Matriks uji (`share_delegation_integration_test.go`, `item_share_revoke_audit_integration_test.go`).**
-
-| Kasus | Expected | Hasil |
-|---|---|---|
-| Revoke share Full (pemberi: view+share, tanpa delete) | 403 | 403 (sebelum fix: 200) |
-| Downgrade Full → Limited | 403, nilai tidak berubah | 403, tetap Full |
-| Upgrade Read → Limited | 403, nilai tidak berubah | 403, tetap Read |
-| Pemberi menjaga share Read yang tidak berubah | 200 | 200 |
-| Pemberi menghapus share Read (dalam hak) | 200, baris hilang | 200 |
-| Admin (Full dengan delete) menurunkan Full → Read | 200 | 200 |
-
-**Yang tidak berubah.** Grant role baru di atas hak pemberi tetap 403 (`spaces.go`, blok pertama). Plafon user type tetap berlaku.
-
-## S-5 — Audit move
-
-**Root cause.** `replaceLocations` (`items/location.go`) menulis lokasi tanpa event apa pun. Di `activity` hanya ada event untuk `delete` (`detach`) dan perubahan lain, tidak untuk move. `audit_events` juga tidak mencatat move.
-
-**Bukti sebelum fix.** `TestMoveWritesHistoryOnlyWhenItSucceeds`: `a successful move must write one history event, got 0`.
-
-**Perubahan.**
-- `items/location.go`: snapshot lokasi sebelum dan sesudah (`locationsSnapshot`), lalu satu baris `activity` (`action='update'`, `changes.locations.from/to`, `actor_id`) di transaksi yang sama. Tidak ditulis bila tidak ada perubahan (`IS DISTINCT FROM`).
-- Timestamp berasal dari `activity.created_at`. Item, actor, source, destination, dan Space tercatat dalam `from`/`to` (`space_id`, `parent_item_id`).
-
-**Matriks uji (`move_audit_integration_test.go`, `move_race_integration_test.go`).**
-
-| Kasus | Expected | Hasil |
-|---|---|---|
-| Move sukses A → B | tepat 1 event | 1 (sebelum fix: 0) |
-| Move gagal setelah lokasi pertama ditulis | 404, tanpa event, lokasi pertama di-rollback | 404, 1 event tetap, 0 lokasi |
-| 8 move paralel ke 4 Space | tanpa event palsu; setiap event adalah perubahan nyata; rantai mulai dari Space awal | lulus 3 kali berturut-turut |
-
-**Catatan.** Move ke lokasi yang sudah ada mengembalikan 200 tanpa event. Itu disengaja (`same list again changes nothing`). Event hanya menggambarkan perubahan nyata.
-
-**Risiko.** Tabel `activity` bertambah satu baris per move sukses. Tampilan Activity dan Stream sudah memakai label kolom (`locations` belum punya label; perlu ditambahkan jika ingin ditampilkan dengan rapi). Itu belum dikerjakan.
-
-## Hasil pengujian
-
-Perintah yang dijalankan terhadap PostgreSQL 16.15 terisolasi (container lokal, dihapus setelah selesai):
-
-```
-export PMS_TEST_DATABASE_URL="postgres://pms:audit@localhost:<port>/postgres?sslmode=disable"
-cd server
-go test ./internal/policy/...                                                  # ok
-go test ./internal/httpserver/ -run 'Inherit|Ancestor|Locat|Access|Custom|Recycle'  # ok
-go test ./internal/httpserver/ -run 'Governance|SpaceAdmin|Admin|Ownership|Transfer' # ok
-go test ./internal/httpserver/ -run 'Move|Location|Share|Revoke|Downgrade|Concurrent' # ok
-go test ./internal/spaces/... ./internal/items/...                             # ok
-go test ./... -count=1 -timeout 15m                                            # lihat di bawah
-```
-
-Hasil akhir suite penuh (`go test ./... -count=1`): semua 24 paket lulus, tanpa FAIL. Paket `httpserver` (415 detik) memuat seluruh tes integrasi termasuk tes baru di atas. Web: `npm test` 109 dari 109 lulus.
-
-Web:
-```
-cd web && npx tsc --noEmit -p . && npx eslint src/components/space-settings.tsx   # lulus
-```
-
-Tidak dijalankan: E2E Playwright dan matriks `authorization-matrix` di CI.
-
-## Perubahan (file)
-
-| File | Status |
+| Dokumen | Perubahan |
 |---|---|
-| `server/internal/spaces/governance.go` | diubah (S-1) |
-| `server/internal/items/location.go` | diubah (S-5) |
-| `web/src/components/space-settings.tsx` | diubah (S-1, komentar D-SA1) |
-| `server/internal/policy/locked.go`, `policy/engine.go`, `httpserver/spaces_governance.go` | komentar D-SA1 |
-| `api/openapi.yaml` | komentar D-SA1 |
-| `server/internal/apigen/openapi.gen.go`, `web/src/api/schema.d.ts` | digenerasi ulang |
-| `docs/ARCHITECTURE.md`, `docs/DECISIONS.md` | diubah (S-2) |
-| `server/internal/httpserver/space_admin_eligibility_integration_test.go` | baru (S-1) |
-| `server/internal/httpserver/share_delegation_integration_test.go` | baru (S-4) |
-| `server/internal/httpserver/move_audit_integration_test.go`, `move_race_integration_test.go` | baru (S-5) |
-| `server/internal/httpserver/space_governance_integration_test.go` | komentar D-SA1 |
-| `docs/security/LENS_RBAC_FINDINGS_CLOSURE.md` | baru (dokumen ini) |
+| `docs/DECISIONS.md` | D-17 ditandai SUPERSEDED untuk bagian admin otomatis `full`. Baris baru D-17.1 (APPROVED). D-SA1 tetap. D-05 tetap berarti stack dan progres unggah. |
+| `docs/ARCHITECTURE.md` §6.2 poin 5 | Aturan admin workspace disesuaikan dengan D-17.1. |
+| `docs/ARCHITECTURE.md` §14 poin 1 | Ditandai superseded oleh D-17.1. |
+| `docs/SPACE_MANAGEMENT_ANALISA.md` §12.1 | Ditambahkan catatan keputusan 20 Nov. Isi historis tidak diubah. |
+| `docs/BACKLOG.md` (catatan 12 Nov) | Ditandai superseded oleh D-17.1. |
 
-**Perhatian sebelum commit.** Dua file generated (`openapi.gen.go`, `schema.d.ts`) juga memuat tiga baris `AvatarVersion` yang sudah ada sebelumnya di working tree dan berasal dari sesi lain. Jika di-commit, perubahan itu ikut masuk. Pisahkan atau minta sesi pemilik perubahan itu menyelesaikannya dulu.
+**Pemisahan D-05 dan D-SA1:** selesai di commit `fbb0952`. Referensi Space Admin di kode, OpenAPI, dan UI memakai D-SA1. D-05 untuk stack (`DECISIONS.md`) dan D-05 untuk progres unggah (`web/src/lib/upload.ts`) tidak berubah.
 
-## Risiko regresi
+## 2. Ringkasan status temuan
 
-- S-1: mengubah siapa yang bisa menjadi Space Admin. Admin/regular tidak terpengaruh.
-- S-4: pencabutan share item oleh pemegang custom role yang tidak punya seluruh hak pemberi sekarang ditolak. Admin dan Full tidak terpengaruh.
-- S-5: satu baris `activity` per move sukses. Tidak ada perubahan skema.
+| ID | Status | Bukti |
+|---|---|---|
+| S-1 Space Admin hanya admin/regular | **FIXED** (`3a72f25`) | `TestSpaceAdminRequiresAdminOrRegularUserType`: gagal (204) tanpa fix, lulus dengan fix |
+| S-2 Dokumentasi dan D-17 | **DECISION → APPROVED** (D-17.1), dokumen selaras | Lihat bagian 1 |
+| S-4 Revoke, downgrade, upgrade share item | **FIXED** (`240da43`, tes `ac87a0a`) | `TestItemShareRevokeAboveOwnCapabilitiesIsRefused`: 200 tanpa fix, 403 dengan fix. `TestItemShareDowngradeAndUpgradeAgainstOwnRights` lulus |
+| S-5 Audit event move | **FIXED** (`4a512ee`) | `TestMoveWritesHistoryOnlyWhenItSucceeds`: 0 event tanpa fix, 1 dengan fix. `TestConcurrentMovesRecordExactlyTheSuccessfulOnes` lulus |
 
-## Risiko keamanan tersisa
+## 3. Regresi authorization final (Task B)
 
-1. **Keputusan D-17 belum ada** (P1 untuk produk, bukan eksploitasi): admin workspace tanpa akses ke Space shared. Laporan dan approval workspace terpengaruh.
-2. **Space Admin yang tipe user-nya diturunkan** tetap menjadi admin (lihat S-1).
-3. **S-1 UI/E2E** belum diuji di browser.
-4. **Audit move di `audit_events`** (log admin) tidak dibuat. Hanya riwayat item.
-5. **Kebijakan dan gate** untuk perubahan role custom yang memuat `share` tanpa `delete` sekarang lebih ketat. Dokumentasi custom role perlu diperbarui.
+Tes baru: `server/internal/httpserver/authorization_final_regression_integration_test.go`, `TestAuthorizationFinalRegressionExplicitAccessOnly`. Nama tes cocok dengan pola CI `authorization-matrix`.
 
-## Rekomendasi Option C dan Option B
+| Persyaratan Task B | Subtest | Hasil |
+|---|---|---|
+| Workspace Admin tanpa share tidak bisa membaca Shared Space | `workspace admin without a share cannot read a shared Space or its items` | Lulus (404) |
+| Workspace Admin dengan share sah mendapat hak efektif | `workspace admin with an explicit read share gets exactly the effective rights` | Lulus (hanya `view`; PATCH 403) |
+| Admin tidak bisa membuka Personal Space orang lain karena user type | `workspace admin cannot open another user's personal space…` | Lulus (404 untuk space dan item) |
+| Space Admin tunduk pada User Type Ceiling | Tidak ada subtest baru. Dicakup oleh `TestSpaceAdminRequiresAdminOrRegularUserType`: external, collaborator, viewer ditolak sebagai Space Admin | Lulus (lewat S-1) |
+| Membership dan revoke langsung memengaruhi hak efektif | `membership revoke takes effect on the next request` | Lulus (200 lalu 404) |
+| Move dan share aman lintas Space | `move and share stay bounded across spaces and parent and child` | Lulus untuk lintas Space (403). **Parent/child belum diuji langsung** |
+| Direct API tidak bisa melewati permission check | `direct API calls cannot bypass the permission check` | Lulus (PATCH, DELETE, PUT shares 403; anonim 401; admin tanpa share 404) |
 
-**Option C (Effective Permission Inspector): layak dilanjutkan**, setelah D-17 diputuskan. Inspector perlu menampilkan asal hak admin workspace. Tanpa keputusan itu, tampilannya akan menyajikan aturan yang belum final.
+**Catatan cakupan.** Subtest move hanya menguji lintas Space. Move item sebagai anak dari parent yang tidak boleh ditulis belum punya tes khusus. Itu tercatat sebagai risiko tersisa.
 
-**Option B (Granular Capabilities): belum layak sekarang.** S-1 dan D-17 masih terbuka, dan Option B mengubah pemetaan custom role dan migrasi. Tunggu sampai model hak untuk admin workspace dan Space Admin sudah final.
+## 4. Hasil pengujian
 
-## Security Gate
+Database: PostgreSQL 16.15 terisolasi (container lokal, dihapus setelah selesai). `PMS_TEST_DATABASE_URL` diset ke database itu.
 
-**CONDITIONAL.** Tidak ada P0 terbuka. Empat temuan sudah ditutup atau diputuskan (S-1 dan S-4 diperbaiki, S-5 diperbaiki, S-2 dicatat sebagai keputusan). Gate tidak PASS karena: D-17 belum diputuskan, UI S-1 dan E2E belum dijalankan di browser, dan matriks `authorization-matrix` belum dijalankan lokal.
+**Go**
+
+```
+cd server
+go test ./internal/policy/...                                                      # ok
+go test ./internal/httpserver/ -run 'TestAuthorizationFinalRegressionExplicitAccessOnly'  # PASS, 6 subtest
+go test ./internal/httpserver/ -run 'TestSpaceAdminRequiresAdminOrRegularUserType|TestSpaceGovernance' # ok
+go test ./internal/httpserver/ -run 'TestItemShare|TestMove|TestConcurrentMoves|TestReplaceItemLocations' # ok
+go test ./... -count=1 -timeout 15m                                                # semua paket ok, tanpa FAIL
+```
+
+**Perintah yang sama dengan job CI `authorization-matrix`:**
+```
+go test -count=1 ./server/internal/httpserver ./server/internal/policy -run 'Authorization|AccessRules|Matrix|Capabilit'
+```
+Hasil: exit 0. **Tetapi cakupannya sempit:** hanya 8 tes di `httpserver` yang cocok, dan `policy` tidak cocok satu tes pun. Tes S-1, S-4, dan S-5 tidak termasuk. Ini tidak sesuai dengan klaim ARCHITECTURE §6.3 (matriks lengkap).
+
+**E2E Playwright (Chromium, `PLAYWRIGHT_CHANNEL=chrome`):**
+```
+npx playwright test tests/auth.spec.ts tests/roles.spec.ts tests/share.spec.ts tests/navigation.spec.ts tests/view-navigation.spec.ts
+# 44 passed
+npx playwright test tests/space-settings.spec.ts
+# 10 passed
+```
+
+**Web unit dan typecheck:** `npm test` 109 dari 109 lulus. `tsc` dan `eslint` bersih untuk file yang diubah.
+
+**Tidak dijalankan:**
+- Job CI lain (`test`, `parity-e2e`) untuk commit ini. Hanya tes yang disebut di atas.
+- E2E Playwright penuh di seluruh repo.
+- Verifikasi UI di dev-lens setelah perubahan ini (belum di-deploy).
+
+## 5. Perubahan dalam batch ini
+
+Kode produksi tidak diubah di sesi ini. Perubahan sudah di-commit di batch S-1, S-2, S-4, dan S-5 (lihat daftar commit di atas). Sesi ini hanya menambahkan tes dan dokumen:
+
+- `server/internal/httpserver/authorization_final_regression_integration_test.go` (baru)
+- `docs/security/LENS_EFFECTIVE_PERMISSION_INSPECTOR_SPEC.md` (baru)
+- `docs/security/LENS_RBAC_ENHANCEMENT_ROADMAP.md` (diperbarui)
+- `docs/security/LENS_RBAC_FINDINGS_CLOSURE.md` (diperbarui)
+- `docs/DECISIONS.md`, `docs/ARCHITECTURE.md`, `docs/SPACE_MANAGEMENT_ANALISA.md`, `docs/BACKLOG.md` (koreksi, D-17.1)
+
+## 6. Regression risks
+
+- **S-1:** siapa pun yang sudah menjadi Space Admin sebagai external, collaborator, atau viewer tetap admin. Dev-lens saat ini tidak punya kasus seperti itu, tetapi database lain bisa punya. Tidak ada migrasi otomatis.
+- **S-4:** pemegang custom role `share` tanpa `delete` tidak lagi bisa mengubah share di atas haknya. Itu perubahan yang disengaja.
+- **S-5:** setiap move sukses menambah satu baris `activity`. Tampilan Activity belum punya label untuk kunci `locations`.
+- **D-17.1:** tidak ada perubahan kode. Dokumen sekarang menyatakan Explicit Access Only sebagai keputusan final.
+
+## 7. Remaining security risks
+
+1. **Pola CI `authorization-matrix` tidak mencakup tes baru** (S-1, S-4, S-5). Regresi di area itu tidak akan terdeteksi di job tersebut. Usulan: perluas pola atau ubah nama tes (perubahan `ci.yml`, belum dilakukan).
+2. **Move parent/child belum punya tes khusus.** Skenario: pengguna memindahkan task ke bawah parent yang tidak boleh ia tulis.
+3. **Penurunan tipe user** tidak mencabut Space Admin yang sudah ada (lihat S-1).
+4. **Audit move di `audit_events` (log admin) belum dibuat.** Hanya riwayat item di `activity`.
+5. **Tidak ada inspector** untuk melihat hak efektif. Pengguna dan admin harus menebak sumber hak dari UI. Ini tertutup oleh Option C.
+
+## 8. Kesiapan Option C dan Option B
+
+**Option C (Effective Permission Inspector): READY FOR IMPLEMENTATION** dengan dua prasyarat terbuka:
+1. Persetujuan UX oleh pemilik produk (spesifikasi ada di `LENS_EFFECTIVE_PERMISSION_INSPECTOR_SPEC.md`).
+2. Pola CI `authorization-matrix` diperluas agar INS-10 dan INS-11 ikut berjalan.
+
+Prasyarat teknis lain sudah terpenuhi: D-17.1 APPROVED, S-1, S-4, S-5 ditutup dengan tes, regresi authorization final lulus.
+
+**Option B (Granular Capabilities): DEFERRED.** Mapping custom role masih berubah (S-4 baru saja mengubah aturan delegasi), dan model kapabilitas belum stabil. Pertimbangkan lagi setelah Option C memberi data tentang kebutuhan nyata.
+
+## 9. Security Gate
+
+**CONDITIONAL.**
+
+Alasan:
+- Tidak ada P0 terbuka. Empat temuan (S-1, S-2, S-4, S-5) sudah ditutup.
+- Semua tes regresi yang diminta lulus, termasuk E2E authorization dan navigasi.
+- Tetapi job CI `authorization-matrix` tidak menjalankan tes baru (lihat bagian 7, butir 1), dan move parent/child belum diuji (butir 2).
+
+Gate akan menjadi **PASS** setelah dua hal itu ditutup. Tidak perlu perubahan kode produksi untuk itu.
