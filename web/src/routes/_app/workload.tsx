@@ -1,13 +1,15 @@
 import { useTranslation } from "react-i18next";
 import { createFileRoute } from "@tanstack/react-router";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { api } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { ItemUserPicker } from "@/components/item-user-picker";
 import { useSearchResults } from "@/lib/search";
 import { useProfile } from "@/lib/profile";
+import { useSpaces } from "@/lib/space-queries";
+import { laneCreateBody, laneOverCapacity, laneWorkingDays } from "@/lib/workload-lane";
 
 export const Route = createFileRoute("/_app/workload")({ component: Workload });
 type Choice = { id: string; name: string };
@@ -30,6 +32,19 @@ function Workload() {
   const [weekly, setWeekly] = useState(false);
   const [role, setRole] = useState("");
   const [skill, setSkill] = useState("");
+  // Batch 4 (W4): drag across a person's working days in daily view, then name the Task.
+  const [drag, setDrag] = useState<{ person: Person; anchor: number; cursor: number }>();
+  const [lane, setLane] = useState<{ person: Person; days: number[] }>();
+  useEffect(() => {
+    if (!drag) return;
+    const end = () => {
+      setDrag(undefined);
+      const days = laneWorkingDays(drag.person.capacity, drag.anchor, drag.cursor);
+      if (days.length) setLane({ person: drag.person, days });
+    };
+    window.addEventListener("pointerup", end, { once: true });
+    return () => window.removeEventListener("pointerup", end);
+  }, [drag]);
   const params = new URLSearchParams({ from, to, role, skill });
   const data = useQuery({ queryKey: ["workload", from, to, role, skill], enabled: !!from && !!to,
     queryFn: () => api<{ people: Person[]; tasks: Task[]; bookings: Booking[]; role_demand: Person[] }>(`/api/v1/workload?${params}`) });
@@ -64,13 +79,22 @@ function Workload() {
               const range = (values: number[]) => values.slice(i, i + (weekly ? 7 : 1));
               const sum = (values: number[]) => range(values).reduce((total, n) => total + n, 0);
               const over = range(p.capacity).some((cap, k) => p.planned[i+k] + p.booked[i+k] > cap);
-              return <td key={i} className={over ? "bg-destructive/10 p-2 font-medium text-foreground" : "p-2"}>
+              const isPerson = data.data.people.some(x => x.id === p.id);
+              const selectable = !weekly && isPerson && p.capacity[i] > 0;
+              const inLane = drag?.person.id === p.id && laneWorkingDays(p.capacity, drag.anchor, drag.cursor).includes(i);
+              return <td key={i} aria-selected={inLane || undefined}
+                onPointerDown={selectable ? (event) => { if (event.button === 0) setDrag({ person: p, anchor: i, cursor: i }); } : undefined}
+                onPointerEnter={selectable && drag?.person.id === p.id ? () => setDrag({ ...drag, cursor: i }) : undefined}
+                className={`select-none p-2 ${over ? "bg-destructive/10 font-medium text-foreground" : ""} ${inLane ? "bg-primary/20" : ""}`}>
                 {sum(p.planned)} + {sum(p.booked)} / {sum(p.capacity)}{over && <span className="block">{t("settings.workload.overCapacity")}</span>}
               </td>;
             })}
           </tr>)}</tbody>
         </table>
       </div>
+      {!weekly && <p className="text-sm text-muted-foreground">{t("settings.workload.laneHint")}</p>}
+      {lane && <LaneCreate key={lane.person.id + lane.days.join(",")} person={lane.person} startDay={iso(dayAt(from, lane.days[0]))} dueDay={iso(dayAt(from, lane.days[lane.days.length - 1]))}
+        overDays={laneOverCapacity(lane.person, lane.days).map(i => iso(dayAt(from, i)))} onClose={() => setLane(undefined)} />}
       {util.data && <section className="space-y-2"><h2 id="workload-utilization" className="font-semibold">{t("settings.workload.utilizationPlannedVsActual")}</h2>
         <div role="region" aria-labelledby="workload-utilization" tabIndex={0} className="overflow-x-auto rounded focus-visible:outline-2 focus-visible:outline-ring"><table aria-labelledby="workload-utilization" className="w-full text-left text-sm">
           <caption className="sr-only">{t("settings.workload.plannedAndLoggedMinutesAgainstCapacity")}</caption>
@@ -106,6 +130,31 @@ function Workload() {
       </section>}
     </>}
   </main>;
+}
+
+// W1/W2: one request creates the Task with its assignee and allocation. Over-capacity days warn but do not block.
+function LaneCreate({ person, startDay, dueDay, overDays, onClose }: { person: Person; startDay: string; dueDay: string; overDays: string[]; onClose: () => void }) {
+  const { t } = useTranslation();
+  const cache = useQueryClient();
+  const spaces = useSpaces();
+  const [title, setTitle] = useState("");
+  const [picked, setPicked] = useState("");
+  const spaceId = picked || spaces.data?.[0]?.id || "";
+  const create = useMutation({
+    mutationFn: () => api("/api/v1/items", { method: "POST", body: JSON.stringify(laneCreateBody({ title, spaceId, personId: person.id, startDay, dueDay })) }),
+    onSuccess: () => { cache.invalidateQueries({ queryKey: ["workload"] }); cache.invalidateQueries({ queryKey: ["utilization"] }); onClose(); },
+  });
+  const heading = t("settings.workload.laneTitle", { name: person.name, start: startDay, end: dueDay });
+  return <form aria-label={heading} className="space-y-3 rounded border p-4" onSubmit={event => { event.preventDefault(); create.mutate(); }}>
+    <h2 className="font-semibold">{heading}</h2>
+    <label>{t("settings.workload.laneName")}<Input required value={title} onChange={e => setTitle(e.target.value)} /></label>
+    <label className="min-w-0 max-w-full">{t("settings.workload.laneSpace")}<select required value={spaceId} onChange={e => setPicked(e.target.value)} className="block max-w-full rounded border bg-background p-2">
+      {spaces.data?.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}</select></label>
+    {overDays.length > 0 && <p role="status" className="text-sm text-destructive">{t("settings.workload.laneOver", { dates: overDays.join(", ") })}</p>}
+    {create.error && <p role="alert">{create.error.message}</p>}
+    <div className="flex gap-2"><Button type="submit" disabled={create.isPending || !title.trim() || !spaceId}>{t("settings.workload.laneCreate")}</Button>
+      <Button type="button" variant="ghost" onClick={onClose}>{t("settings.workload.cancel")}</Button></div>
+  </form>;
 }
 
 function TaskList({ title, tasks, onSave, busy }: { title: string; tasks: Task[]; onSave: (task: Task, ids: string[]) => void; busy: boolean }) {

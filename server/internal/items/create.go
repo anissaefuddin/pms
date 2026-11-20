@@ -489,3 +489,58 @@ func spaceDefaultWorkflow(ctx context.Context, tx pgx.Tx, spaceID uuid.UUID, kin
 	}
 	return wf, err
 }
+
+// AuthorizeAssignments is W3 for a direct create (POST /items): assigning someone else needs Space Admin in each location.
+// Workspace admins are not checked here (an interpretation to confirm). Forms, blueprints, and automation do not call it,
+// so an intake form can still assign its team.
+func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage) error {
+	if actor.Type == policy.Admin {
+		return nil
+	}
+	others := assigneesOtherThan(fields, actor.ID)
+	if len(others) == 0 {
+		return nil
+	}
+	var locations []struct {
+		SpaceID string `json:"space_id"`
+	}
+	if raw, ok := fields["locations"]; ok {
+		_ = json.Unmarshal(raw, &locations)
+	}
+	for _, loc := range locations {
+		isAdmin, err := policy.IsSpaceAdmin(ctx, pool, actor.ID, loc.SpaceID)
+		if err != nil {
+			return err
+		}
+		if !isAdmin {
+			return ErrForbidden
+		}
+	}
+	return nil
+}
+
+// assigneesOtherThan lists the assignees of a create (assignee_ids and assignee_allocations) that are not the actor.
+func assigneesOtherThan(fields map[string]json.RawMessage, actorID string) []string {
+	var ids []string
+	var direct []string
+	if raw, ok := fields["assignee_ids"]; ok {
+		_ = json.Unmarshal(raw, &direct)
+	}
+	ids = append(ids, direct...)
+	if raw, ok := fields["assignee_allocations"]; ok {
+		var allocations []struct {
+			AssigneeID string `json:"assignee_id"`
+		}
+		_ = json.Unmarshal(raw, &allocations)
+		for _, a := range allocations {
+			ids = append(ids, a.AssigneeID)
+		}
+	}
+	var others []string
+	for _, id := range ids {
+		if id != "" && id != actorID {
+			others = append(others, id)
+		}
+	}
+	return others
+}

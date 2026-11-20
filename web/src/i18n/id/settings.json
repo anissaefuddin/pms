@@ -381,7 +381,13 @@
     "saveAssignment": "Simpan penugasan",
     "cancel": "Batal",
     "roleOption": "{{name}} (peran)",
-    "bookingSummary": "{{name}} · {{start}}–{{end}} · {{minutes}} menit/hari"
+    "bookingSummary": "{{name}} · {{start}}–{{end}} · {{minutes}} menit/hari",
+    "laneHint": "Seret di atas hari kerja pada baris seseorang untuk membuat tugas untuknya.",
+    "laneTitle": "Tugas baru untuk {{name}}, {{start}} sampai {{end}}",
+    "laneName": "Nama tugas",
+    "laneSpace": "Space",
+    "laneOver": "Melebihi kapasitas pada {{dates}}. Tugas tetap bisa dibuat.",
+    "laneCreate": "Buat tugas"
   },
   "resourceSettings": {
     "resourceSettings": "Pengaturan sumber daya",
