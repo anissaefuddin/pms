@@ -14,6 +14,7 @@ func TestFileApprovalPinnedToVersionWithExternalReviewer(t *testing.T) {
 	f := newFixture(t)
 	owner, reviewer, regularOutsider := f.person("admin"), f.person("external"), f.person("regular")
 	space := f.space("Review")
+	f.share(space, "user", owner.id, "full") // A1.2: the owner creates and uploads files as an explicit member
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Design',$1) RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 	upload := func(p *person, path, name, data string) map[string]any {

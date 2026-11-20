@@ -22,7 +22,10 @@ test("exports and re-imports a Project workbook with dates and multi-parent hier
   await page.getByRole("menuitem", { name: "Import from Excel" }).click();
   const dialog = page.getByRole("dialog", { name: "Import from Excel" });
   await dialog.getByLabel("Excel workbook").setInputFiles({ name: workbook.suggestedFilename(), mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer });
-  await dialog.getByRole("button", { name: "Preview import" }).click();
+  // Wizard: upload -> map columns -> validate -> import.
+  await dialog.getByRole("button", { name: "Next" }).click();
+  await dialog.getByRole("button", { name: "Next" }).click();
+  await dialog.getByRole("button", { name: "Next" }).click();
   const result = page.waitForResponse((response) => response.url().endsWith("/excel-imports") && response.status() === 201);
   await dialog.getByRole("button", { name: "Import items" }).click();
   const { item_ids: ids } = await (await result).json();

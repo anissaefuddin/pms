@@ -49,6 +49,8 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
   const counts = tally.data
     ? tallyCounts(tally.data.rows.map((row) => ({ key: row.group.key, value: row.value })), groups, inProgressStatusIds(workflows.data?.items ?? []))
     : undefined;
+  // "…" while loading; "—" when the count failed, so a failure is not mistaken for a slow load.
+  const placeholder = tally.isError ? "—" : "…";
   const progress = projectProgressPercent(item, kids);
   const today = new Date().toISOString().slice(0, 10);
   // A2: milestones anywhere in the subtree. The walk is shared with the Board and Calendar; the server has no milestone count.
@@ -93,8 +95,8 @@ export function ProjectHeader({ item, children, canCreate, infoOpen, onToggleInf
     meta={meta ? <p className="mt-1 text-sm text-muted-foreground">{meta}</p> : undefined} actions={actions}>
     <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
       <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.progress")} </span><strong className="font-semibold">{percent(progress)}</strong></span>
-      <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.workItems")} </span><strong className="font-semibold">{counts?.total ?? "…"}</strong></span>
-      <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.inProgress")} </span><strong className="font-semibold">{counts?.inProgress ?? "…"}</strong></span>
+      <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.workItems")} </span><strong className="font-semibold">{counts?.total ?? placeholder}</strong></span>
+      <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.inProgress")} </span><strong className="font-semibold">{counts?.inProgress ?? placeholder}</strong></span>
       <span className="tabular-nums"><span className="text-muted-foreground">{t("views.project.milestones")} </span><strong className="font-semibold">{milestones.length}</strong></span>
       <Button variant="ghost" size="sm" aria-expanded={detailsOpen} aria-controls={detailsId} onClick={() => setDetailsOpen((open) => !open)}>
         {t("views.project.summary")}<ChevronDown className={detailsOpen ? "rotate-180" : undefined} aria-hidden="true" />

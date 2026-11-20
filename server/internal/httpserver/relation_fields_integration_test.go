@@ -11,6 +11,7 @@ func TestRelationFieldsValidateTargetsAndDoNotLeakNames(t *testing.T) {
 	f := newFixture(t)
 	admin, editor := f.person("admin"), f.person("regular")
 	open, secret := f.space("Open"), f.space("Secret")
+	f.share(open, "user", admin.id, "full") // A1.2: admin acts in this Space as an explicit member
 	f.share(open, "user", editor.id, "full")
 	mk := func(space, title string) string {
 		id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task',$1,$2) RETURNING id::text", title, admin.id)
@@ -47,7 +48,10 @@ func TestRelationFieldsValidateTargetsAndDoNotLeakNames(t *testing.T) {
 	f.want(set(editor, a, []string{b, b}, "2"), 422, "duplicates")
 	f.want(set(editor, a, "x", "2"), 422, "not a list")
 	// A target removed from the actor's view later stays stored but is only counted, never named.
+	// D-17 A1: the admin can relate to the secret item only while holding a grant on its Space; the grant is removed after.
+	f.share(secret, "user", admin.id, "full")
 	f.want(set(admin, a, []string{b, hidden}, "2"), 200, "admin relates to the secret item")
+	f.exec("DELETE FROM shares WHERE target_type='space' AND target_id=$1 AND principal_id=$2", secret, admin.id)
 	got := f.call(editor, "GET", "/items/"+a+"/relations", nil)
 	g := got.items()[0]
 	if g["hidden"] != float64(1) || len(g["items"].([]any)) != 1 || strings.Contains(string(mustJSON(got.body)), "Top secret") {

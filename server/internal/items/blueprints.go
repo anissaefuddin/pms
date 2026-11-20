@@ -368,7 +368,7 @@ FROM blueprints WHERE space_id=$1`, spaceID).Scan(&out)
 
 // blueprintSummary is the list and detail shape of one blueprint (without its tree).
 const blueprintSummary = `jsonb_build_object('id',id,'space_id',space_id,'name',name,'item_type',tree->'nodes'->0->>'type',
-  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at)`
+  'item_count',jsonb_array_length(tree->'nodes'),'created_at',created_at,'scope',scope,'owner_id',owner_id,'version',version,'updated_at',updated_at,'uses',(SELECT count(*) FROM blueprint_uses u WHERE u.blueprint_id=blueprints.id))`
 
 // ListAccountBlueprints returns the account blueprints the actor may see: their own, or all of them for an instance admin.
 func ListAccountBlueprints(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor) (json.RawMessage, error) {
@@ -539,6 +539,9 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 			created[d.Predecessor], created[d.Successor], d.Type, d.Lag); err != nil {
 			return Detail{}, err
 		}
+	}
+	if _, err := tx.Exec(ctx, "INSERT INTO blueprint_uses(blueprint_id,used_by,root_item_id) VALUES ($1,$2::uuid,$3::uuid)", id, actor.ID, created[0]); err != nil {
+		return Detail{}, err
 	}
 	if err := auditBlueprint(ctx, tx, actor, "blueprint.use", id.String(), map[string]any{"space_id": spaceIDValue(spaceID), "item_count": len(created)}); err != nil {
 		return Detail{}, err

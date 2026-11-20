@@ -56,12 +56,12 @@ WITH RECURSIVE ancestry(root_id, space_id, item_id, parent_id) AS (
   SELECT l.item_id, l.space_id, l.item_id, l.parent_item_id
   FROM item_locations l
   JOIN items i ON i.id = l.item_id
-  JOIN spaces s ON s.id = l.space_id AND (s.deleted_at IS NULL OR $6::boolean)
+  JOIN spaces s ON s.id = l.space_id AND (s.deleted_at IS NULL OR $5::boolean)
   WHERE i.id = ANY(ARRAY(SELECT unnest($2::text[])::uuid))
     AND (s.kind = 'shared' OR s.owner_id = $1::uuid)
-    AND (CASE WHEN $5::boolean THEN l.deleted_root_id=i.id AND i.deleted_at IS NOT NULL
+    AND (CASE WHEN $4::boolean THEN l.deleted_root_id=i.id AND i.deleted_at IS NOT NULL
          ELSE l.deleted_root_id IS NULL AND i.deleted_at IS NULL END)
-    AND ($4::uuid IS NULL OR l.space_id = $4::uuid)
+    AND ($3::uuid IS NULL OR l.space_id = $3::uuid)
   UNION
   SELECT a.root_id, l.space_id, l.item_id, l.parent_item_id
   FROM ancestry a
@@ -74,7 +74,7 @@ WITH RECURSIVE ancestry(root_id, space_id, item_id, parent_id) AS (
   SELECT root_id, 'item'::share_target, item_id FROM ancestry
 )
 SELECT a.root_id::text, 'full' FROM ancestry a JOIN spaces s ON s.id=a.space_id
-WHERE s.kind = 'personal' OR ($3::boolean AND s.kind = 'shared')
+WHERE s.kind = 'personal' OR EXISTS (SELECT 1 FROM space_admins sa WHERE sa.space_id = a.space_id AND sa.user_id = $1::uuid)
 UNION
 SELECT t.root_id::text, CASE WHEN cr.id IS NOT NULL THEN 'mask:' || cr.caps_mask ELSE sh.role::text END FROM shares sh
 JOIN targets t ON t.target_type = sh.target_type AND t.target_id = sh.target_id
@@ -82,7 +82,7 @@ LEFT JOIN custom_roles cr ON cr.id = sh.custom_role_id
 WHERE (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
    OR (sh.principal_type = 'group' AND sh.principal_id IN
        (SELECT group_id FROM group_members WHERE user_id = $1::uuid))
-`, actor.ID, itemIDs, actor.Type == Admin, spaceID, deleted, includeDeletedSpaces)
+`, actor.ID, itemIDs, spaceID, deleted, includeDeletedSpaces)
 	if err != nil {
 		return nil, err
 	}

@@ -50,6 +50,7 @@ import { Route as AppSettingsAccountRouteImport } from './routes/_app/settings/a
 import { Route as AppSettingsAppearanceRouteImport } from './routes/_app/settings/appearance'
 import { Route as AppSettingsAppsRouteImport } from './routes/_app/settings/apps'
 import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/audit'
+import { Route as AppSettingsAutomationRouteImport } from './routes/_app/settings/automation'
 import { Route as AppSettingsBlueprintsRouteImport } from './routes/_app/settings/blueprints'
 import { Route as AppSettingsCustomFieldsRouteImport } from './routes/_app/settings/custom-fields'
 import { Route as AppSettingsEmailRouteImport } from './routes/_app/settings/email'
@@ -79,6 +80,7 @@ import { Route as AppSpacesSpaceIdAutomationRouteImport } from './routes/_app/sp
 import { Route as AppSpacesSpaceIdFormsRouteImport } from './routes/_app/spaces_.$spaceId.forms'
 import { Route as AppSpacesSpaceIdItemTypesRouteImport } from './routes/_app/spaces_.$spaceId.item-types'
 import { Route as AppSpacesSpaceIdFormsFormIdRouteImport } from './routes/_app/spaces_.$spaceId.forms_.$formId'
+import { Route as AppSpacesSpaceIdSettingsTabRouteImport } from './routes/_app/spaces_.$spaceId.settings.$tab'
 
 const AppRoute = AppRouteImport.update({
   id: '/_app',
@@ -286,6 +288,11 @@ const AppSettingsAuditRoute = AppSettingsAuditRouteImport.update({
   path: '/audit',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsAutomationRoute = AppSettingsAutomationRouteImport.update({
+  id: '/automation',
+  path: '/automation',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsBlueprintsRoute = AppSettingsBlueprintsRouteImport.update({
   id: '/blueprints',
   path: '/blueprints',
@@ -435,6 +442,12 @@ const AppSpacesSpaceIdFormsFormIdRoute =
     path: '/spaces/$spaceId/forms/$formId',
     getParentRoute: () => AppRoute,
   } as any)
+const AppSpacesSpaceIdSettingsTabRoute =
+  AppSpacesSpaceIdSettingsTabRouteImport.update({
+    id: '/spaces_/$spaceId/settings/$tab',
+    path: '/spaces/$spaceId/settings/$tab',
+    getParentRoute: () => AppRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof AppIndexRoute
@@ -473,6 +486,7 @@ export interface FileRoutesByFullPath {
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/automation': typeof AppSettingsAutomationRoute
   '/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
   '/settings/email': typeof AppSettingsEmailRoute
@@ -506,6 +520,7 @@ export interface FileRoutesByFullPath {
   '/spaces/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
   '/settings/users/': typeof AppSettingsUsersIndexRoute
   '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
+  '/spaces/$spaceId/settings/$tab': typeof AppSpacesSpaceIdSettingsTabRoute
 }
 export interface FileRoutesByTo {
   '/forgot-password': typeof ForgotPasswordRoute
@@ -543,6 +558,7 @@ export interface FileRoutesByTo {
   '/settings/appearance': typeof AppSettingsAppearanceRoute
   '/settings/apps': typeof AppSettingsAppsRoute
   '/settings/audit': typeof AppSettingsAuditRoute
+  '/settings/automation': typeof AppSettingsAutomationRoute
   '/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
   '/settings/email': typeof AppSettingsEmailRoute
@@ -575,6 +591,7 @@ export interface FileRoutesByTo {
   '/spaces/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
   '/settings/users': typeof AppSettingsUsersIndexRoute
   '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
+  '/spaces/$spaceId/settings/$tab': typeof AppSpacesSpaceIdSettingsTabRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -615,6 +632,7 @@ export interface FileRoutesById {
   '/_app/settings/appearance': typeof AppSettingsAppearanceRoute
   '/_app/settings/apps': typeof AppSettingsAppsRoute
   '/_app/settings/audit': typeof AppSettingsAuditRoute
+  '/_app/settings/automation': typeof AppSettingsAutomationRoute
   '/_app/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/_app/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
   '/_app/settings/email': typeof AppSettingsEmailRoute
@@ -648,6 +666,7 @@ export interface FileRoutesById {
   '/_app/spaces_/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
   '/_app/settings/users/': typeof AppSettingsUsersIndexRoute
   '/_app/spaces_/$spaceId/forms_/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
+  '/_app/spaces_/$spaceId/settings/$tab': typeof AppSpacesSpaceIdSettingsTabRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -688,6 +707,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/apps'
     | '/settings/audit'
+    | '/settings/automation'
     | '/settings/blueprints'
     | '/settings/custom-fields'
     | '/settings/email'
@@ -721,6 +741,7 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId/item-types'
     | '/settings/users/'
     | '/spaces/$spaceId/forms/$formId'
+    | '/spaces/$spaceId/settings/$tab'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/forgot-password'
@@ -758,6 +779,7 @@ export interface FileRouteTypes {
     | '/settings/appearance'
     | '/settings/apps'
     | '/settings/audit'
+    | '/settings/automation'
     | '/settings/blueprints'
     | '/settings/custom-fields'
     | '/settings/email'
@@ -790,6 +812,7 @@ export interface FileRouteTypes {
     | '/spaces/$spaceId/item-types'
     | '/settings/users'
     | '/spaces/$spaceId/forms/$formId'
+    | '/spaces/$spaceId/settings/$tab'
   id:
     | '__root__'
     | '/_app'
@@ -829,6 +852,7 @@ export interface FileRouteTypes {
     | '/_app/settings/appearance'
     | '/_app/settings/apps'
     | '/_app/settings/audit'
+    | '/_app/settings/automation'
     | '/_app/settings/blueprints'
     | '/_app/settings/custom-fields'
     | '/_app/settings/email'
@@ -862,6 +886,7 @@ export interface FileRouteTypes {
     | '/_app/spaces_/$spaceId/item-types'
     | '/_app/settings/users/'
     | '/_app/spaces_/$spaceId/forms_/$formId'
+    | '/_app/spaces_/$spaceId/settings/$tab'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -1165,6 +1190,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsAuditRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/automation': {
+      id: '/_app/settings/automation'
+      path: '/automation'
+      fullPath: '/settings/automation'
+      preLoaderRoute: typeof AppSettingsAutomationRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/blueprints': {
       id: '/_app/settings/blueprints'
       path: '/blueprints'
@@ -1368,6 +1400,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSpacesSpaceIdFormsFormIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/spaces_/$spaceId/settings/$tab': {
+      id: '/_app/spaces_/$spaceId/settings/$tab'
+      path: '/spaces/$spaceId/settings/$tab'
+      fullPath: '/spaces/$spaceId/settings/$tab'
+      preLoaderRoute: typeof AppSpacesSpaceIdSettingsTabRouteImport
+      parentRoute: typeof AppRoute
+    }
   }
 }
 
@@ -1389,6 +1428,7 @@ interface AppSettingsRouteChildren {
   AppSettingsAppearanceRoute: typeof AppSettingsAppearanceRoute
   AppSettingsAppsRoute: typeof AppSettingsAppsRoute
   AppSettingsAuditRoute: typeof AppSettingsAuditRoute
+  AppSettingsAutomationRoute: typeof AppSettingsAutomationRoute
   AppSettingsBlueprintsRoute: typeof AppSettingsBlueprintsRoute
   AppSettingsCustomFieldsRoute: typeof AppSettingsCustomFieldsRoute
   AppSettingsEmailRoute: typeof AppSettingsEmailRoute
@@ -1417,6 +1457,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAppearanceRoute: AppSettingsAppearanceRoute,
   AppSettingsAppsRoute: AppSettingsAppsRoute,
   AppSettingsAuditRoute: AppSettingsAuditRoute,
+  AppSettingsAutomationRoute: AppSettingsAutomationRoute,
   AppSettingsBlueprintsRoute: AppSettingsBlueprintsRoute,
   AppSettingsCustomFieldsRoute: AppSettingsCustomFieldsRoute,
   AppSettingsEmailRoute: AppSettingsEmailRoute,
@@ -1479,6 +1520,7 @@ interface AppRouteChildren {
   AppSpacesSpaceIdFormsRoute: typeof AppSpacesSpaceIdFormsRoute
   AppSpacesSpaceIdItemTypesRoute: typeof AppSpacesSpaceIdItemTypesRoute
   AppSpacesSpaceIdFormsFormIdRoute: typeof AppSpacesSpaceIdFormsFormIdRoute
+  AppSpacesSpaceIdSettingsTabRoute: typeof AppSpacesSpaceIdSettingsTabRoute
 }
 
 const AppRouteChildren: AppRouteChildren = {
@@ -1516,6 +1558,7 @@ const AppRouteChildren: AppRouteChildren = {
   AppSpacesSpaceIdFormsRoute: AppSpacesSpaceIdFormsRoute,
   AppSpacesSpaceIdItemTypesRoute: AppSpacesSpaceIdItemTypesRoute,
   AppSpacesSpaceIdFormsFormIdRoute: AppSpacesSpaceIdFormsFormIdRoute,
+  AppSpacesSpaceIdSettingsTabRoute: AppSpacesSpaceIdSettingsTabRoute,
 }
 
 const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)

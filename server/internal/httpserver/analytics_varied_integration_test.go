@@ -40,7 +40,7 @@ func checkVariedFixture(t *testing.T, seed int64) {
 	rng := rand.New(rand.NewSource(seed))
 	people := []*person{f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")}
 	admin, member := people[0], people[1]
-	spaces := []string{f.space("Varied one"), f.space("Varied two"), f.space("Varied three")}
+	spaces := []string{f.space("Varied one"), f.spaceWithoutAdmins("Varied two"), f.spaceWithoutAdmins("Varied three")}
 	f.share(spaces[0], "user", member.id, "read")
 	f.share(spaces[1], "user", member.id, "editor")
 	statuses := map[string]string{}
@@ -119,7 +119,14 @@ func checkVariedFixture(t *testing.T, seed int64) {
 		entries = append(entries, e)
 	}
 
-	seesSpace := func(viewer int, space int) bool { return viewer == 0 || space < 2 } // the member (index 1) sees Spaces 0 and 1
+	// A1.3: the admin (viewer 0) sees only the Space it holds an explicit grant on (Space 0); the member sees Spaces 0 and 1.
+	f.share(spaces[0], "user", people[0].id, "full")
+	seesSpace := func(viewer int, space int) bool {
+		if viewer == 0 {
+			return space == 0
+		}
+		return space < 2
+	}
 	userKey := func(i int) string { return people[i].id }
 	type expectation map[string]float64
 	// taskSums groups the visible tasks the way the engine documents it: one row per assignee, "" when there is none.

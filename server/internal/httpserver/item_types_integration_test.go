@@ -10,6 +10,7 @@ func TestItemTypesCRUDDefaultsAndChildRules(t *testing.T) {
 	f := newFixture(t)
 	admin, regular, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Types")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", regular.id, "full")
 
 	list := f.call(regular, "GET", "/item-types", nil)

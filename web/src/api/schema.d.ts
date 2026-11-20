@@ -1456,6 +1456,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/spaces/{spaceId}/excel-exports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** @description Ekspor seluruh Space: setiap root yang bisa dilihat pemanggil beserta hierarkinya (EXP-03). */
+        post: operations["startSpaceExcelExport"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/excel-exports/{exportId}": {
         parameters: {
             query?: never;
@@ -1484,6 +1503,25 @@ export interface paths {
             cookie?: never;
         };
         get: operations["downloadProjectExcelExport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/excel-imports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        /** @description Laporan impor milik pemanggil. Akses mengikuti Space laporan, bukan URL. */
+        get: operations["getExcelImportReport"];
         put?: never;
         post?: never;
         delete?: never;
@@ -2208,7 +2246,7 @@ export interface paths {
         get: operations["getAutomationRule"];
         put?: never;
         post?: never;
-        /** Hapus aturan beserta versi dan lognya */
+        /** Arsipkan aturan (tidak menghapus versi, log, atau riwayat; aturan berhenti berjalan) */
         delete: operations["deleteAutomationRule"];
         options?: never;
         head?: never;
@@ -2248,6 +2286,228 @@ export interface paths {
         put?: never;
         /** Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi */
         post: operations["publishAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arsipkan aturan dan matikan; riwayat tetap ada. Pemilik atau admin */
+        post: operations["archiveAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pulihkan aturan yang diarsipkan sebagai aturan nonaktif; aktifkan lagi untuk memvalidasi ulang */
+        post: operations["restoreAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/owner": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pindahkan kepemilikan aturan. Hanya admin workspace; pemilik baru harus bisa menjalankan aturan di Space ini */
+        post: operations["transferAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/duplicate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Salin definisi terbaru menjadi aturan baru yang nonaktif dan belum terbit, milik yang menyalin */
+        post: operations["duplicateAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        /** Definisi terbaru sebagai berkas (tanpa id, pemilik, atau riwayat) */
+        get: operations["exportAutomationRule"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/automation-rules/import": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Buat draf nonaktif dari berkas ekspor; definisi divalidasi dan referensinya harus ada di Space ini */
+        post: operations["importAutomationRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation/workspace-rules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Aturan Workspace untuk admin workspace (metadata saja: tanpa judul item atau isi) */
+        get: operations["listWorkspaceRules"];
+        put?: never;
+        /** Buat aturan Workspace (draf tanpa target). Hanya admin workspace */
+        post: operations["createWorkspaceRule"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation-rules/{ruleId}/targets": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ganti daftar Space target aturan Workspace (snapshot, bukan wildcard). Hanya admin workspace */
+        post: operations["setAutomationTargets"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/workspace-automation": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        /** Aturan Workspace yang bekerja di Space ini: nama dan status saja (tanpa pemilik atau isi) */
+        get: operations["listSpaceWorkspaceRules"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pemakaian dalam satu jam bergulir terhadap batas: aturan, Workspace, dan Space. Pemakaian yang sama dipakai untuk membatasi eksekusi */
+        get: operations["getAutomationUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation/limits": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Batas eksekusi per jam (rule, workspace, Space). Hanya admin workspace */
+        get: operations["getAutomationLimits"];
+        /** Ubah batas eksekusi. Setiap perubahan dicatat di audit */
+        put: operations["setAutomationLimits"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/automation/templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Templat bawaan (data tetap, tanpa id) */
+        get: operations["listAutomationTemplates"];
+        put?: never;
+        post?: never;
         delete?: never;
         options?: never;
         head?: never;
@@ -2461,6 +2721,213 @@ export interface paths {
         options?: never;
         head?: never;
         patch: operations["updateSpace"];
+        trace?: never;
+    };
+    "/spaces/{spaceId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Anggota efektif Space beserta alasan aksesnya (D-06) */
+        get: operations["listSpaceMembers"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace */
+        post: operations["archiveSpace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pulihkan Space terarsip; mengembalikan peringatan yang harus diperiksa (D-03) */
+        post: operations["restoreSpace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/admins": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get: operations["listSpaceAdmins"];
+        put?: never;
+        /** Jadikan anggota sebagai Space Admin (D-05) */
+        post: operations["grantSpaceAdmin"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/admins/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05) */
+        delete: operations["revokeSpaceAdmin"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/transfer-ownership": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Serah-terima kepemilikan secara eksplisit (D-05) */
+        post: operations["transferSpaceOwnership"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/discover": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul */
+        get: operations["discoverSpaces"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/join": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ikuti Space Public; memberi akses Read saja (D-01) */
+        post: operations["joinSpace"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/default-workflows": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Workflow default Space untuk root Task dan Project (B) */
+        get: operations["getSpaceDefaultWorkflows"];
+        /** Ganti default workflow Task dan Project. Item yang sudah ada tidak berubah (B) */
+        put: operations["setSpaceDefaultWorkflows"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/delete-impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        /** Pratinjau dampak hapus Space (D). Hanya membaca */
+        get: operations["getSpaceDeleteImpact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/space-icons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Katalog kunci ikon Space (D-04) */
+        get: operations["listSpaceIcons"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/spaces/{spaceId}/shares": {
@@ -4499,7 +4966,13 @@ export interface components {
             id: string;
             /** @enum {string} */
             status: "pending" | "ready" | "failed";
+            /** @enum {string} */
+            scope?: "project" | "space";
             error?: string;
+            /** @description Items the export holds, counted from the tree when the worker starts. */
+            total_items?: number;
+            /** @description Items written so far. This is a count of real items, not an estimate. */
+            processed_items?: number;
         };
         ExcelPreview: {
             columns: string[];
@@ -4825,7 +5298,51 @@ export interface components {
             version: number;
             /** @description Dikunci administrator: isi hanya dibagikan ke orang yang sudah punya akses ke space, dan hanya admin yang mengubah sharing space atau memindahkan item keluar (D-95) */
             locked?: boolean;
+            /**
+             * @description Public: ditemukan dan bisa diikuti (Read) oleh pengguna internal yang memenuhi syarat. Private: hanya yang diberi akses (D-01)
+             * @enum {string}
+             */
+            visibility?: "public" | "private";
+            /** @description Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03) */
+            archived?: boolean;
+            /** @description Kunci ikon dari katalog GET /space-icons (D-04) */
+            icon_key?: string | null;
+            /** @description Explicit Space Admin; tidak diberikan oleh share Full saja (D-05) */
+            is_space_admin?: boolean;
             my_capabilities?: components["schemas"]["Capability"][];
+        };
+        SpaceMember: {
+            /** Format: uuid */
+            user_id: string;
+            name: string;
+            user_type?: string;
+            /** @description read, limited, editor, full, atau custom */
+            role: string;
+            capabilities?: components["schemas"]["Capability"][];
+            /** @description Gabungan grant melebihi batas jenis user (D-06) */
+            capped_by_user_type: boolean;
+            /** @description Setiap grant yang memberi akses: langsung (direct) atau lewat group */
+            sources: {
+                /** @enum {string} */
+                kind: "direct" | "group";
+                name?: string;
+                /** Format: uuid */
+                group_id?: string;
+                role: string;
+                role_name?: string;
+            }[];
+        };
+        SpaceDefaultWorkflows: {
+            /**
+             * Format: uuid
+             * @description Workflow untuk root Task yang tidak menyebut workflow lain (B)
+             */
+            task?: string | null;
+            /**
+             * Format: uuid
+             * @description Workflow untuk root Project yang tidak menyebut workflow lain (B)
+             */
+            project?: string | null;
         };
         SpaceCreate: {
             name: string;
@@ -4864,6 +5381,8 @@ export interface components {
             inherited_from?: string | null;
         };
         WorkScheduleInput: {
+            /** @description Zona waktu Workspace (IANA, mis. Asia/Jakarta). Kosong mempertahankan yang sekarang; UTC bila belum diatur */
+            timezone?: string;
             /** @description Hari kerja, 0 = Minggu sampai 6 = Sabtu */
             working_days: number[];
             daily_hours: number;
@@ -4884,7 +5403,7 @@ export interface components {
         ItemTypeLayout: {
             [key: string]: unknown;
         };
-        /** @description Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak */
+        /** @description Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini). */
         AutomationDefinition: {
             when: {
                 [key: string]: unknown;
@@ -4912,8 +5431,19 @@ export interface components {
             item_title?: string | null;
             /** Format: uuid */
             actor_id?: string | null;
+            /** @description set_field, assign, comment, notify, create_item; null untuk hasil tingkat aturan */
+            action_type?: string | null;
             /** @enum {string} */
-            status: "done" | "denied" | "skipped" | "loop_blocked" | "quota_blocked" | "failed";
+            status: "done" | "denied" | "skipped" | "loop_blocked" | "quota_blocked" | "failed" | "stopped";
+            /** @description Kode alasan yang stabil, mis. forbidden, not_found, field_invalid, guard, owner_no_access, field_missing, status_missing, rule_quota, workspace_quota, space_quota, origin_outside_targets, ambiguous_context, not_in_target */
+            reason?: string;
+            /**
+             * Format: uuid
+             * @description Space tempat run dieksekusi; kosong untuk run yang di-skip
+             */
+            execution_space_id?: string | null;
+            /** @description Semua target yang dicocokkan item */
+            matched_space_ids?: string[];
             detail: string;
             created_at: string;
         };
@@ -4926,6 +5456,23 @@ export interface components {
             definition: components["schemas"]["AutomationDefinition"];
             created_at: string;
             published_at?: string | null;
+        };
+        AutomationCounter: {
+            used: number;
+            limit: number;
+            /**
+             * @description warning dari 80%, exhausted dari 100%
+             * @enum {string}
+             */
+            state: "ok" | "warning" | "exhausted";
+        };
+        AutomationLimits: {
+            /** @description Per aturan Workspace (awal 50) */
+            rule_per_hour: number;
+            /** @description Semua aturan Workspace (awal 500) */
+            workspace_per_hour: number;
+            /** @description Per Space, termasuk aturan Workspace yang bekerja di Space itu (awal 500) */
+            space_per_hour: number;
         };
         AutomationRule: {
             /** Format: uuid */
@@ -4940,6 +5487,29 @@ export interface components {
             enabled: boolean;
             /** Format: uuid */
             current_version_id?: string | null;
+            owner_name?: string;
+            container_title?: string | null;
+            trigger?: string;
+            action_count?: number;
+            has_draft?: boolean;
+            last_run_at?: string | null;
+            last_run_status?: string | null;
+            /** @description Jumlah run gagal, ditolak, atau berhenti dalam 7 hari terakhir */
+            error_count?: number;
+            /**
+             * @description paused: pemiliknya tidak bisa menjalankan aturan; invalid: ada yang dirujuk sudah tidak ada
+             * @enum {string}
+             */
+            health?: "ok" | "paused" | "invalid";
+            /** @description Kode alasan, mis. owner_inactive, owner_no_access, status_missing, item_type_missing, user_inactive, field_missing, container_missing */
+            health_reason?: string;
+            archived_at?: string | null;
+            /**
+             * @description workspace: aturan Workspace; space_id kosong, target_space_ids menyebut Space tempat aturan boleh jalan
+             * @enum {string}
+             */
+            scope?: "space" | "workspace";
+            target_space_ids?: string[];
             versions?: components["schemas"]["AutomationVersion"][];
         };
         /** @description Tipe item (bawaan atau kustom); type tetap kelas perilakunya */
@@ -5796,6 +6366,11 @@ export interface components {
              */
             default_workflow_id?: string;
             /**
+             * Format: uuid
+             * @description Workflow untuk item root (tanpa parent). Prioritas: workflow_id, default Item Type, default Space untuk task atau project, lalu default Workspace. Anak item tidak boleh menyebut workflow_id (B)
+             */
+            workflow_id?: string;
+            /**
              * @description Hanya project/folder
              * @enum {string}
              */
@@ -6037,7 +6612,7 @@ export interface components {
             items: components["schemas"]["StreamEntry"][];
         };
         /** @enum {string} */
-        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided" | "automation" | "approval_reminder" | "approval_escalated";
+        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided" | "automation" | "approval_reminder" | "approval_escalated" | "import_summary";
         Notification: {
             /** Format: uuid */
             id: string;
@@ -6051,6 +6626,13 @@ export interface components {
             space_id?: string | null;
             space_title?: string | null;
             snippet?: string | null;
+            /** @description The record this notification is about, when there is one (for example an import report). */
+            reference?: {
+                /** @enum {string} */
+                kind: "excel_import_report";
+                /** Format: uuid */
+                id: string;
+            } | null;
             /** Format: date-time */
             read_at?: string | null;
             /** Format: date-time */
@@ -9455,6 +10037,39 @@ export interface operations {
             429: components["responses"]["Problem"];
         };
     };
+    startSpaceExcelExport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: {
+            content: {
+                "application/json": {
+                    filter?: {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+        };
+        responses: {
+            /** @description Export dijadwalkan */
+            202: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ExcelExport"];
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            429: components["responses"]["Problem"];
+        };
+    };
     getProjectExcelExport: {
         parameters: {
             query?: never;
@@ -9500,6 +10115,37 @@ export interface operations {
             };
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    getExcelImportReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Laporan impor */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        created?: number;
+                        dependencies?: number;
+                        destination?: string;
+                        sheet?: string;
+                        rescheduled?: {
+                            [key: string]: unknown;
+                        }[];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
         };
     };
     importProjectExcel: {
@@ -10931,7 +11577,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Dihapus */
+            /** @description Diarsipkan */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -11028,6 +11674,397 @@ export interface operations {
             403: components["responses"]["Problem"];
             404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    archiveAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    restoreAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    transferAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    owner_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    duplicateAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    exportAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        format: "pms.automation.v1";
+                        name: string;
+                        definition: components["schemas"]["AutomationDefinition"];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    importAutomationRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    format: "pms.automation.v1";
+                    name?: string;
+                    definition: components["schemas"]["AutomationDefinition"];
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listWorkspaceRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["AutomationRule"][];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    createWorkspaceRule: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    name: string;
+                    definition: components["schemas"]["AutomationDefinition"];
+                };
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    setAutomationTargets: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                ruleId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    space_ids: string[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationRule"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listSpaceWorkspaceRules: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            enabled: boolean;
+                            /** @enum {string} */
+                            health: "ok" | "paused" | "invalid";
+                        }[];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getAutomationUsage: {
+        parameters: {
+            query?: {
+                rule_id?: string;
+                space_id?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        window: "1h";
+                        rule?: components["schemas"]["AutomationCounter"];
+                        workspace?: components["schemas"]["AutomationCounter"];
+                        space?: components["schemas"]["AutomationCounter"];
+                        /** @description rule_quota, workspace_quota, space_quota, atau kosong */
+                        throttled_by: string;
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getAutomationLimits: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationLimits"];
+                };
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    setAutomationLimits: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AutomationLimits"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AutomationLimits"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listAutomationTemplates: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            id: string;
+                            name: string;
+                            description: string;
+                            definition: components["schemas"]["AutomationDefinition"];
+                        }[];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
         };
     };
     listAutomationRuns: {
@@ -11281,6 +12318,11 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
+                    /**
+                     * Format: uuid
+                     * @description Aturan yang sudah ada: dijalankan sebagai pemiliknya. Kosong untuk aturan baru: pembuatnya yang dipakai.
+                     */
+                    rule_id?: string;
                     definition: components["schemas"]["AutomationDefinition"];
                     /** Format: uuid */
                     item_id: string;
@@ -11302,6 +12344,8 @@ export interface operations {
                         would_run: boolean;
                         actions: string[];
                         item_title: string;
+                        /** @description Langkah berurutan: pemicu, tiap kondisi (holds/fails), lalu berhenti atau jalan */
+                        trace?: string[];
                     };
                 };
             };
@@ -11508,6 +12552,338 @@ export interface operations {
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
             428: components["responses"]["Problem"];
+        };
+    };
+    listSpaceMembers: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar anggota */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["SpaceMember"][];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    archiveSpace: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Space terarsip */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Space"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    restoreSpace: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Space dipulihkan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        space?: components["schemas"]["Space"];
+                        warnings?: ("no_space_admin" | "no_full_access_holder")[];
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listSpaceAdmins: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar Space Admin */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items?: {
+                            user_id?: string;
+                            name?: string;
+                            granted_at?: string;
+                        }[];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    grantSpaceAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    user_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Admin ditambahkan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    revokeSpaceAdmin: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Admin dicabut */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    transferSpaceOwnership: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    user_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Kepemilikan dipindahkan */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    discoverSpaces: {
+        parameters: {
+            query?: {
+                q?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar Space Public */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            403: components["responses"]["Problem"];
+        };
+    };
+    joinSpace: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Space */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Space"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getSpaceDefaultWorkflows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Default workflow */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceDefaultWorkflows"];
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    setSpaceDefaultWorkflows: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SpaceDefaultWorkflows"];
+            };
+        };
+        responses: {
+            /** @description Default tersimpan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceDefaultWorkflows"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getSpaceDeleteImpact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: components["parameters"]["SpaceId"];
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Jumlah yang terdampak */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listSpaceIcons: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Katalog */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
         };
     };
     listSpaceShares: {

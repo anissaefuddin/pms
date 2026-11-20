@@ -9,6 +9,7 @@ func TestAccountBlueprintIsOwnerAndAdminOnly(t *testing.T) {
 	admin, owner, other := f.person("admin"), f.person("regular"), f.person("regular")
 	personal := f.queryID("SELECT id::text FROM spaces WHERE kind='personal' AND owner_id=$1", owner.id)
 	shared := f.space("Account test shared")
+	f.share(shared, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(shared, "user", other.id, "editor")
 
 	root := f.call(owner, "POST", "/items", map[string]any{"type": "project", "title": "Owner project", "locations": []map[string]any{{"space_id": personal}}})

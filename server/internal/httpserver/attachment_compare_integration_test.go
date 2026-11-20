@@ -18,6 +18,7 @@ func TestCompareTwoVersionsOfOneFile(t *testing.T) {
 	f := newFixture(t)
 	owner, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Compare")
+	f.share(space, "user", owner.id, "full") // A1.2: the owner creates the item and its attachments as an explicit member
 	f.share(space, "user", reader.id, "read")
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Logo',$1) RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
@@ -78,7 +79,9 @@ func TestCompareTwoVersionsOfOneFile(t *testing.T) {
 	}
 	// A file the caller cannot see must not leak as 422 either.
 	hidden := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Hidden',$1) RETURNING id::text", owner.id)
-	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", hidden, f.space("Private"))
+	private := f.space("Private")
+	f.share(private, "user", owner.id, "full") // A1.2: the owner places the hidden item in its own private Space
+	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", hidden, private)
 	c := upload("/items/"+hidden+"/attachments", "c.png", pngBytes(5, 5))
 	if s := f.call(reader, "GET", q(a, 1, c, 1), nil).status; s != 404 {
 		t.Fatalf("hidden file: %d", s)

@@ -45,6 +45,10 @@ type SpaceAccess struct {
 	Kind        string // "shared" or "personal"
 	Version     int
 	Locked      bool // an administrator locked it: see D-95
+	Visibility  string
+	Archived    bool
+	IconKey     string
+	IsAdmin     bool // an explicit Space Admin (space_admins row), not implied by a Full share (D-05)
 	Caps        Caps // effective capabilities of the actor on this Space; never empty for a returned Space
 }
 
@@ -52,6 +56,8 @@ type SpaceAccess struct {
 // This is the one SQL statement that links shares to actors; every Space decision and list is built on it.
 const spaceRows = `
 SELECT s.id::text, s.name, s.description, s.kind::text, COALESCE(s.owner_id::text, ''), s.version, s.locked,
+       s.visibility, s.archived_at IS NOT NULL, COALESCE(s.icon_key, ''),
+       EXISTS (SELECT 1 FROM space_admins sa WHERE sa.space_id = s.id AND sa.user_id = $1::uuid),
        COALESCE(array_agg(DISTINCT CASE WHEN cr.id IS NOT NULL THEN 'mask:' || cr.caps_mask ELSE sh.role::text END) FILTER (WHERE sh.id IS NOT NULL), '{}')
 FROM spaces s
 LEFT JOIN shares sh ON sh.target_type = 'space' AND sh.target_id = s.id AND (
@@ -86,7 +92,8 @@ func visibleSpaces(ctx context.Context, db DB, actor Actor, spaceID string, incl
 		var a SpaceAccess
 		var owner string
 		var roles []string
-		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Kind, &owner, &a.Version, &a.Locked, &roles); err != nil {
+		if err := rows.Scan(&a.ID, &a.Name, &a.Description, &a.Kind, &owner, &a.Version, &a.Locked,
+			&a.Visibility, &a.Archived, &a.IconKey, &a.IsAdmin, &roles); err != nil {
 			return nil, err
 		}
 		if actor.Form != nil { // a form submission sees only its own destination, whatever the requester's rights
@@ -94,10 +101,13 @@ func visibleSpaces(ctx context.Context, db DB, actor Actor, spaceID string, incl
 				continue
 			}
 			a.Caps = formCaps
+			if a.Archived { // D-03: an archived Space accepts no form submissions
+				a.Caps &= setOf(View)
+			}
 			out = append(out, a)
 			continue
 		}
-		a.Caps = spaceCaps(actor, a.Kind, owner, roles)
+		a.Caps = spaceCaps(actor, a.Kind, owner, a.IsAdmin, a.Archived, roles)
 		if !a.Caps.Empty() {
 			out = append(out, a)
 		}
@@ -107,23 +117,36 @@ func visibleSpaces(ctx context.Context, db DB, actor Actor, spaceID string, incl
 
 // spaceCaps applies the rules of ARCHITECTURE §6.2 to one Space:
 //   - a Personal space belongs to its owner alone; nobody else sees it, not even an admin
-//   - an admin has every capability in every shared Space (decision D-17)
-//   - otherwise the union of the matching share roles, cut down to the ceiling of the user type
-func spaceCaps(actor Actor, kind, owner string, roles []string) Caps {
+//   - a Workspace admin has NO implicit capability in a shared Space (D-17, option A): content of a Private Space is
+//     reached only through an explicit share, a group, or an explicit Space Admin role
+//   - the union of the matching share roles, cut down to the ceiling of the user type
+//   - an explicit Space Admin gets the Full role's capabilities, cut by the user type ceiling; a Full share alone does not
+//   - an archived Space is read-only for everyone: only View remains (restore is a separate, admin-only action)
+func spaceCaps(actor Actor, kind, owner string, isAdmin, archived bool, roles []string) Caps {
 	if kind == "personal" {
 		if owner != actor.ID {
 			return none
 		}
 		return Effective(actor.Type, Full)
 	}
-	if actor.Type == Admin {
-		return Ceiling(Admin)
-	}
-	parsed := make([]Role, 0, len(roles))
+	parsed := make([]Role, 0, len(roles)+1)
 	for _, r := range roles {
 		parsed = append(parsed, Role(r))
 	}
-	return Effective(actor.Type, parsed...)
+	if isAdmin {
+		parsed = append(parsed, Full)
+	}
+	caps := Effective(actor.Type, parsed...)
+	if archived {
+		caps &= setOf(View)
+	}
+	return caps
+}
+
+// CanAdministerSpace reports whether the actor may manage a Space's admins, visibility, archive state and icon: a
+// Workspace admin, or an explicit Space Admin of this Space. Full members are not included.
+func CanAdministerSpace(actor Actor, access SpaceAccess) bool {
+	return access.IsAdmin
 }
 
 // SpaceAccessFor returns the actor's access to one Space; found is false when the actor cannot see it (answer 404).

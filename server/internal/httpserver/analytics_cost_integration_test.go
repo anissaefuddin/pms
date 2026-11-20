@@ -8,6 +8,7 @@ func TestReportActualCostIsAdminOnly(t *testing.T) {
 	f := newFixture(t)
 	admin, reader := f.person("admin"), f.person("regular")
 	space := f.space("Cost report")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", reader.id, "read")
 	task := f.queryID(`INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id::text`, admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", task, space)

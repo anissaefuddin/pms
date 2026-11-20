@@ -9,6 +9,8 @@ func TestDashboardLifecycle(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, reader, stranger := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
 	source, target := f.space("Dashboard source"), f.space("Dashboard destination")
+	f.share(target, "user", admin.id, "full") // A1.2: admin creates this Space's content as an explicit member
+	f.share(source, "user", admin.id, "full") // A1.2: the admin moves a dashboard out of the source Space
 	f.share(source, "user", editor.id, "editor")
 	f.share(source, "user", reader.id, "read")
 	f.share(target, "user", reader.id, "read")
@@ -114,6 +116,7 @@ func TestDashboardSpaceLifecycle(t *testing.T) {
 	f := newFixture(t)
 	admin, outsider := f.person("admin"), f.person("viewer")
 	space := f.space("Dashboard archive")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	created := f.call(admin, "POST", "/dashboards", map[string]any{"space_id": space, "name": "Retained"})
 	f.want(created, 201, "create")
 	path := "/dashboards/" + created.body["id"].(string)

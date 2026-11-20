@@ -11,6 +11,7 @@ func TestItemEffortAndAllocation(t *testing.T) {
 	first, second := f.person("regular"), f.person("regular")
 	space := f.space("Effort")
 	f.share(space, "user", reader.id, "read")
+	f.share(space, "user", admin.id, "full") // A1.2: the planner owns this schedule
 	f.want(f.call(admin, http.MethodPut, "/settings/work-schedule", map[string]any{
 		"working_days": []int{1, 2, 3, 4, 5}, "daily_hours": 6,
 		"exceptions": []map[string]string{{"date": "2026-01-12", "name": "Office closed"}},
@@ -116,6 +117,7 @@ func TestEffortDurationWithoutDates(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Undated effort")
+	f.share(space, "user", admin.id, "full") // A1.2: the planner owns this schedule
 	item := f.call(admin, http.MethodPost, "/items", map[string]any{
 		"type": "task", "title": "Undated task", "effort_minutes": 481,
 		"locations": []map[string]string{{"space_id": space}},

@@ -10,6 +10,7 @@ func TestItemCardFields(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Card fields")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	item := customFieldItem(f, admin, space, "Card")
 	first := f.call(admin, http.MethodGet, "/items/"+item, nil)
 	f.want(first, http.StatusOK, "read")

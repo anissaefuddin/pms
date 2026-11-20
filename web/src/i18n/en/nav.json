@@ -29,6 +29,9 @@
   "search.label": "Search",
   "inbox.label": "Inbox",
   "more.label": "More",
+  "favorites.label": "Favorites",
+  "recent.label": "Recently opened",
+  "item.actions": "More actions for {{name}}",
   "inbox.unreadOnly": "Unread only",
   "inbox.unread": "Unread",
   "inbox.readAll": "Mark all as read",
@@ -99,7 +102,6 @@
   "blueprints": "Blueprints",
   "blueprintsUnavailable": "Blueprints are not available yet",
   "resize": "Resize sidebar",
-  "space.overview": "Space overview",
   "space.tools": "Tools",
   "space.projects": "Projects and folders",
   "space.createIn": "Create in {{name}}",
@@ -206,5 +208,12 @@
   "recycle.spaceFilter": "Filter by Space",
   "recycle.allSpaces": "All Spaces",
   "recycle.noMatch": "No deleted items match these filters.",
-  "space.settingsFor": "Settings for {{name}}"
+  "space.settingsFor": "Settings for {{name}}",
+  "inbox.event.import_summary": "Excel import finished",
+  "inbox.reportUnavailable": "The import report is not available.",
+  "inbox.report.created": "Items created",
+  "inbox.report.dependencies": "Dependencies",
+  "inbox.report.rescheduled": "Rows rescheduled",
+  "space.actionsFor": "Actions for {{name}}",
+  "space.archived": "Archived"
 }

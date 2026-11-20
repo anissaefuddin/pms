@@ -12,6 +12,8 @@ func TestCustomFieldAccessRegression(t *testing.T) {
 	admin := f.person("admin")
 	editor, reader, ext, outsider := f.person("regular"), f.person("regular"), f.person("external"), f.person("regular")
 	spaceA, spaceB := f.space("CF A"), f.space("CF B")
+	f.share(spaceA, "user", admin.id, "full") // A1.2: admin acts in this Space as an explicit member
+	f.share(spaceB, "user", admin.id, "full") // A1.2: admin defines the field of the other Space; the other actors still must not see it
 	fieldA := f.call(admin, http.MethodPost, "/spaces/"+spaceA+"/custom-fields", map[string]any{"name": "Budget A", "type": "number"})
 	f.want(fieldA, 201, "field A")
 	fieldB := f.call(admin, http.MethodPost, "/spaces/"+spaceB+"/custom-fields", map[string]any{"name": "Secret B", "type": "number"})

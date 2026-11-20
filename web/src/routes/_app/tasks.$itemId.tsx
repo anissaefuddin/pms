@@ -17,7 +17,7 @@ import { WorkspaceLayout } from "@/components/workspace-layout";
 import { ErrorState } from "@/components/ui/error-state";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { TypeIcon } from "@/components/type-icon";
-import { Info } from "lucide-react";
+import { Info, Plus, Share2 } from "lucide-react";
 
 export const Route = createFileRoute("/_app/tasks/$itemId")({ component: ItemPage });
 
@@ -74,17 +74,21 @@ export function ItemWorkspace({ itemId }: { itemId: string }) {
       onShare={canShare ? () => setSharing(true) : undefined} />
     : item && container ? <WorkspaceHeader icon={<TypeIcon name="folder" />} title={item.title} starItemId={item.id}
       breadcrumb={<FolderBreadcrumb spaceId={item.locations[0]?.space_id ?? ""} title={item.title} />}
-      actions={<Button variant="outline" aria-pressed={infoOpen} onClick={toggleInfo}><Info />{t("views.project.info")}</Button>} />
+      actions={<>
+        <Button variant="outline" aria-pressed={infoOpen} onClick={toggleInfo}><Info />{t("views.project.info")}</Button>
+        {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("views.project.share")}</Button>}
+        {canCreate && <Button onClick={() => setAddingTask(true)}><Plus />{t("items.new")}</Button>}
+      </>} />
     : item ? <ItemDetail key={itemId} id={itemId} me={me}
       onOpen={(id) => void navigate({ to: "/tasks/$itemId", params: { itemId: id } })}
       onDeleted={() => void navigate({ to: "/" })} />
     : null}
     {container && <ViewWorkspace spaceId={container.locations[0]?.space_id ?? ""} parent={container} me={me}
       canCreate={canCreate} canEdit={canEdit} onOpen={openChild} />}
-    {isProject && item && <CreateItemDialog open={addingTask} onOpenChange={setAddingTask} taskOnly me={me}
+    {item && container && <CreateItemDialog open={addingTask} onOpenChange={setAddingTask} taskOnly={isProject} me={me}
       location={{ space_id: item.locations[0]?.space_id ?? "", parent_item_id: item.id }}
       onCreated={openChild} />}
-    {isProject && item && <ShareDialog
+    {item && container && <ShareDialog
       open={sharing}
       onOpenChange={setSharing}
       title={t("share.title", { name: item.title })}

@@ -7,6 +7,7 @@ func TestProjectTimelogTotalsCoverAllPages(t *testing.T) {
 	f := newFixture(t)
 	admin, owner := f.person("admin"), f.person("regular")
 	space := f.space("Timelog totals")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", owner.id, "limited")
 	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Project',$1) RETURNING id::text", admin.id)
 	task := customFieldItem(f, admin, space, "Entries task")

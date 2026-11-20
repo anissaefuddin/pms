@@ -47,11 +47,20 @@ type Space struct {
 	Kind           string              `json:"kind"`
 	Version        int                 `json:"version"`
 	Locked         bool                `json:"locked"`
+	Visibility     string              `json:"visibility"`
+	Archived       bool                `json:"archived"`
+	IconKey        *string             `json:"icon_key"`
+	IsSpaceAdmin   bool                `json:"is_space_admin"`
 	MyCapabilities []policy.Capability `json:"my_capabilities"`
 }
 
 func toSpace(a policy.SpaceAccess) Space {
-	s := Space{ID: a.ID, Name: a.Name, Kind: a.Kind, Version: a.Version, Locked: a.Locked, MyCapabilities: a.Caps.List()}
+	s := Space{ID: a.ID, Name: a.Name, Kind: a.Kind, Version: a.Version, Locked: a.Locked, Visibility: a.Visibility,
+		Archived: a.Archived, IsSpaceAdmin: a.IsAdmin, MyCapabilities: a.Caps.List()}
+	if a.IconKey != "" {
+		k := a.IconKey
+		s.IconKey = &k
+	}
 	if a.Description != "" {
 		d := a.Description
 		s.Description = &d
@@ -183,8 +192,11 @@ func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput
 type Patch struct {
 	Name           *string
 	DescriptionSet bool
-	Locked         *bool  // administrators only
-	Description    string // meaningful when DescriptionSet; "" clears it
+	Locked         *bool   // administrators only
+	Description    string  // meaningful when DescriptionSet; "" clears it
+	Visibility     *string // Space Admins and Workspace admins only (D-01)
+	IconKeySet     bool
+	IconKey        string // meaningful when IconKeySet; "" clears it; must be in IconKeys (D-04)
 }
 
 // Update renames or re-describes a shared Space. ifMatch is the version the caller edited.
@@ -197,11 +209,14 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 		return Space{}, err
 	}
 	defer tx.Rollback(ctx)
-	if p.Name == nil && !p.DescriptionSet && p.Locked == nil {
-		return Space{}, ValidationError{"nothing to change: send name, description or locked"}
+	if p.Name == nil && !p.DescriptionSet && p.Locked == nil && p.Visibility == nil && !p.IconKeySet {
+		return Space{}, ValidationError{"nothing to change: send name, description, locked, visibility or icon_key"}
+	}
+	if p.IconKeySet && p.IconKey != "" && !ValidIconKey(p.IconKey) {
+		return Space{}, ValidationError{"icon_key is not in the icon catalogue"}
 	}
 	if p.Locked != nil && actor.Type != policy.Admin {
-		return Space{}, forbidden("only an administrator can lock or unlock a space")
+		return Space{}, forbidden("only a Workspace administrator can lock or unlock a space")
 	}
 	decision, access, err := policy.CanOnSpace(ctx, tx, actor, policy.Edit, id)
 	if err != nil {
@@ -215,6 +230,20 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 	}
 	if decision != policy.Allowed {
 		return Space{}, forbidden("you cannot edit this Space")
+	}
+	if p.Visibility != nil && !policy.CanAdministerSpace(actor, access) {
+		return Space{}, forbidden("only a Space Admin can change visibility")
+	}
+	if p.Visibility != nil && *p.Visibility != "public" && *p.Visibility != "private" {
+		return Space{}, ValidationError{"visibility must be public or private"}
+	}
+	visibility := access.Visibility
+	if p.Visibility != nil {
+		visibility = *p.Visibility
+	}
+	iconKey := access.IconKey
+	if p.IconKeySet {
+		iconKey = p.IconKey
 	}
 	name, description := access.Name, access.Description
 	if p.Name != nil {
@@ -231,7 +260,7 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 		locked = *p.Locked
 	}
 	var version int
-	err = tx.QueryRow(ctx, "UPDATE spaces SET name=$3, description=$4, locked=$5, version=version+1 WHERE id=$1 AND version=$2 AND deleted_at IS NULL RETURNING version", id, ifMatch, strings.TrimSpace(name), description, locked).Scan(&version)
+	err = tx.QueryRow(ctx, "UPDATE spaces SET name=$3, description=$4, locked=$5, visibility=$6, icon_key=NULLIF($7,''), version=version+1 WHERE id=$1 AND version=$2 AND deleted_at IS NULL RETURNING version", id, ifMatch, strings.TrimSpace(name), description, locked, visibility, iconKey).Scan(&version)
 	if errors.Is(err, pgx.ErrNoRows) {
 		// Either the version moved on, or the Space was deleted after the access check.
 		var live bool
@@ -244,6 +273,7 @@ func (s *Service) Update(ctx context.Context, actor policy.Actor, id string, ifM
 		return Space{}, err
 	}
 	access.Name, access.Description, access.Version, access.Locked = strings.TrimSpace(name), description, version, locked
+	access.Visibility, access.IconKey = visibility, iconKey
 	if err := tx.Commit(ctx); err != nil {
 		return Space{}, err
 	}
@@ -272,6 +302,9 @@ func (s *Service) Delete(ctx context.Context, actor policy.Actor, id string) err
 	}
 	if decision != policy.Allowed {
 		return forbidden("you cannot delete this Space")
+	}
+	if access.Locked { // D: a protected Space is not deleted while locked; unlock it first, so the lock is never bypassed
+		return ValidationError{"unlock this Space before deleting it"}
 	}
 	if _, err := tx.Exec(ctx, "UPDATE spaces SET deleted_at=now(), deleted_by=$2 WHERE id=$1 AND deleted_at IS NULL", id, actor.ID); err != nil {
 		return err
@@ -483,6 +516,11 @@ func writeTargetShares(ctx context.Context, tx pgx.Tx, spaceID, target string, a
 		}
 		if !grantable.Contains(caps) {
 			return forbidden("you cannot grant a role above your own capabilities")
+		}
+	}
+	if target == "space" {
+		if err := guardSpaceShareChange(ctx, tx, existing, desired, grantable); err != nil {
+			return err
 		}
 	}
 	for key := range existing {

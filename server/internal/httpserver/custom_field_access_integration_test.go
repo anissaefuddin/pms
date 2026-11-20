@@ -11,6 +11,7 @@ func TestCustomFieldAccessGrants(t *testing.T) {
 	f := newFixture(t)
 	admin, owner, editor, viewer, outsider := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Payroll space")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", owner.id, "full")
 	f.share(space, "user", editor.id, "editor")
 	f.share(space, "user", viewer.id, "editor") // item edit allowed, so a refusal can only come from the field grant

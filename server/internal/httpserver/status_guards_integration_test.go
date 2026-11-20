@@ -11,6 +11,7 @@ func TestStatusGuardsRequireFieldsAndActorAndWriteNothingOnRefusal(t *testing.T)
 	f := newFixture(t)
 	admin, editor, other := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Guards")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", editor.id, "full")
 	f.share(space, "user", other.id, "full")
 	wf := f.call(admin, "GET", "/workflows", nil).items()[0]

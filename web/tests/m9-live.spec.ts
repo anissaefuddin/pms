@@ -13,7 +13,9 @@ test("E2E-PAR-04: a rule built in the UI acts on a new item and shows in the log
   await page.getByRole("button", { name: "New rule" }).click();
   const dialog = page.getByRole("dialog", { name: "New automation rule" });
   await dialog.getByLabel("Rule name").fill("Welcome");
+  await dialog.getByRole("button", { name: "When" }).click();
   await dialog.getByLabel("Trigger").selectOption("item.created");
+  await dialog.getByRole("button", { name: "Then" }).click();
   await dialog.getByLabel("Action 1 comment").fill("Welcome {item.title}");
   await expect(dialog).toHaveCSS("opacity", "1");
   expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);

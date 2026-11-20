@@ -492,6 +492,66 @@ func (e AttachmentPreviewStatus) Valid() bool {
 	}
 }
 
+// Defines values for AutomationCounterState.
+const (
+	AutomationCounterStateExhausted AutomationCounterState = "exhausted"
+	AutomationCounterStateOk        AutomationCounterState = "ok"
+	AutomationCounterStateWarning   AutomationCounterState = "warning"
+)
+
+// Valid indicates whether the value is a known member of the AutomationCounterState enum.
+func (e AutomationCounterState) Valid() bool {
+	switch e {
+	case AutomationCounterStateExhausted:
+		return true
+	case AutomationCounterStateOk:
+		return true
+	case AutomationCounterStateWarning:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AutomationRuleHealth.
+const (
+	AutomationRuleHealthInvalid AutomationRuleHealth = "invalid"
+	AutomationRuleHealthOk      AutomationRuleHealth = "ok"
+	AutomationRuleHealthPaused  AutomationRuleHealth = "paused"
+)
+
+// Valid indicates whether the value is a known member of the AutomationRuleHealth enum.
+func (e AutomationRuleHealth) Valid() bool {
+	switch e {
+	case AutomationRuleHealthInvalid:
+		return true
+	case AutomationRuleHealthOk:
+		return true
+	case AutomationRuleHealthPaused:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AutomationRuleScope.
+const (
+	AutomationRuleScopeSpace     AutomationRuleScope = "space"
+	AutomationRuleScopeWorkspace AutomationRuleScope = "workspace"
+)
+
+// Valid indicates whether the value is a known member of the AutomationRuleScope enum.
+func (e AutomationRuleScope) Valid() bool {
+	switch e {
+	case AutomationRuleScopeSpace:
+		return true
+	case AutomationRuleScopeWorkspace:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for AutomationRunStatus.
 const (
 	AutomationRunStatusDenied       AutomationRunStatus = "denied"
@@ -500,6 +560,7 @@ const (
 	AutomationRunStatusLoopBlocked  AutomationRunStatus = "loop_blocked"
 	AutomationRunStatusQuotaBlocked AutomationRunStatus = "quota_blocked"
 	AutomationRunStatusSkipped      AutomationRunStatus = "skipped"
+	AutomationRunStatusStopped      AutomationRunStatus = "stopped"
 )
 
 // Valid indicates whether the value is a known member of the AutomationRunStatus enum.
@@ -516,6 +577,8 @@ func (e AutomationRunStatus) Valid() bool {
 	case AutomationRunStatusQuotaBlocked:
 		return true
 	case AutomationRunStatusSkipped:
+		return true
+	case AutomationRunStatusStopped:
 		return true
 	default:
 		return false
@@ -1116,6 +1179,24 @@ func (e EmailGroup) Valid() bool {
 	case EmailGroupShared:
 		return true
 	case EmailGroupTaskChanges:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ExcelExportScope.
+const (
+	ExcelExportScopeProject ExcelExportScope = "project"
+	ExcelExportScopeSpace   ExcelExportScope = "space"
+)
+
+// Valid indicates whether the value is a known member of the ExcelExportScope enum.
+func (e ExcelExportScope) Valid() bool {
+	switch e {
+	case ExcelExportScopeProject:
+		return true
+	case ExcelExportScopeSpace:
 		return true
 	default:
 		return false
@@ -1809,6 +1890,21 @@ func (e MeUpdateWeekStart) Valid() bool {
 	}
 }
 
+// Defines values for NotificationReferenceKind.
+const (
+	ExcelImportReport NotificationReferenceKind = "excel_import_report"
+)
+
+// Valid indicates whether the value is a known member of the NotificationReferenceKind enum.
+func (e NotificationReferenceKind) Valid() bool {
+	switch e {
+	case ExcelImportReport:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for NotificationKind.
 const (
 	NotificationKindApprovalDecided   NotificationKind = "approval_decided"
@@ -1818,6 +1914,7 @@ const (
 	NotificationKindAssigned          NotificationKind = "assigned"
 	NotificationKindAutomation        NotificationKind = "automation"
 	NotificationKindComment           NotificationKind = "comment"
+	NotificationKindImportSummary     NotificationKind = "import_summary"
 	NotificationKindMention           NotificationKind = "mention"
 	NotificationKindShared            NotificationKind = "shared"
 	NotificationKindStatusChanged     NotificationKind = "status_changed"
@@ -1839,6 +1936,8 @@ func (e NotificationKind) Valid() bool {
 	case NotificationKindAutomation:
 		return true
 	case NotificationKindComment:
+		return true
+	case NotificationKindImportSummary:
 		return true
 	case NotificationKindMention:
 		return true
@@ -2328,6 +2427,24 @@ func (e SidebarKey) Valid() bool {
 	}
 }
 
+// Defines values for SpaceVisibility.
+const (
+	SpaceVisibilityPrivate SpaceVisibility = "private"
+	SpaceVisibilityPublic  SpaceVisibility = "public"
+)
+
+// Valid indicates whether the value is a known member of the SpaceVisibility enum.
+func (e SpaceVisibility) Valid() bool {
+	switch e {
+	case SpaceVisibilityPrivate:
+		return true
+	case SpaceVisibilityPublic:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for SpaceKind.
 const (
 	SpaceKindPersonal SpaceKind = "personal"
@@ -2340,6 +2457,24 @@ func (e SpaceKind) Valid() bool {
 	case SpaceKindPersonal:
 		return true
 	case SpaceKindShared:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SpaceMemberSourcesKind.
+const (
+	SpaceMemberSourcesKindDirect SpaceMemberSourcesKind = "direct"
+	SpaceMemberSourcesKindGroup  SpaceMemberSourcesKind = "group"
+)
+
+// Valid indicates whether the value is a known member of the SpaceMemberSourcesKind enum.
+func (e SpaceMemberSourcesKind) Valid() bool {
+	switch e {
+	case SpaceMemberSourcesKindDirect:
+		return true
+	case SpaceMemberSourcesKindGroup:
 		return true
 	default:
 		return false
@@ -2667,6 +2802,21 @@ func (e StartSsoParamsLink) Valid() bool {
 	}
 }
 
+// Defines values for ExportAutomationRule200JSONResponseBodyFormat.
+const (
+	ExportAutomationRule200JSONResponseBodyFormatPmsAutomationV1 ExportAutomationRule200JSONResponseBodyFormat = "pms.automation.v1"
+)
+
+// Valid indicates whether the value is a known member of the ExportAutomationRule200JSONResponseBodyFormat enum.
+func (e ExportAutomationRule200JSONResponseBodyFormat) Valid() bool {
+	switch e {
+	case ExportAutomationRule200JSONResponseBodyFormatPmsAutomationV1:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListAutomationRunsParamsStatus.
 const (
 	ListAutomationRunsParamsStatusDenied       ListAutomationRunsParamsStatus = "denied"
@@ -2691,6 +2841,21 @@ func (e ListAutomationRunsParamsStatus) Valid() bool {
 	case ListAutomationRunsParamsStatusQuotaBlocked:
 		return true
 	case ListAutomationRunsParamsStatusSkipped:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetAutomationUsage200JSONResponseBodyWindow.
+const (
+	N1h GetAutomationUsage200JSONResponseBodyWindow = "1h"
+)
+
+// Valid indicates whether the value is a known member of the GetAutomationUsage200JSONResponseBodyWindow enum.
+func (e GetAutomationUsage200JSONResponseBodyWindow) Valid() bool {
+	switch e {
+	case N1h:
 		return true
 	default:
 		return false
@@ -3030,6 +3195,60 @@ func (e SearchParamsSort) Valid() bool {
 	case SearchParamsSortDateModified:
 		return true
 	case SearchParamsSortRelevance:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ImportAutomationRuleJSONBodyFormat.
+const (
+	ImportAutomationRuleJSONBodyFormatPmsAutomationV1 ImportAutomationRuleJSONBodyFormat = "pms.automation.v1"
+)
+
+// Valid indicates whether the value is a known member of the ImportAutomationRuleJSONBodyFormat enum.
+func (e ImportAutomationRuleJSONBodyFormat) Valid() bool {
+	switch e {
+	case ImportAutomationRuleJSONBodyFormatPmsAutomationV1:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for RestoreSpace200JSONResponseBodyWarnings.
+const (
+	NoFullAccessHolder RestoreSpace200JSONResponseBodyWarnings = "no_full_access_holder"
+	NoSpaceAdmin       RestoreSpace200JSONResponseBodyWarnings = "no_space_admin"
+)
+
+// Valid indicates whether the value is a known member of the RestoreSpace200JSONResponseBodyWarnings enum.
+func (e RestoreSpace200JSONResponseBodyWarnings) Valid() bool {
+	switch e {
+	case NoFullAccessHolder:
+		return true
+	case NoSpaceAdmin:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth.
+const (
+	ListSpaceWorkspaceRules200JSONResponseBodyItemsHealthInvalid ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth = "invalid"
+	ListSpaceWorkspaceRules200JSONResponseBodyItemsHealthOk      ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth = "ok"
+	ListSpaceWorkspaceRules200JSONResponseBodyItemsHealthPaused  ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth = "paused"
+)
+
+// Valid indicates whether the value is a known member of the ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth enum.
+func (e ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth) Valid() bool {
+	switch e {
+	case ListSpaceWorkspaceRules200JSONResponseBodyItemsHealthInvalid:
+		return true
+	case ListSpaceWorkspaceRules200JSONResponseBodyItemsHealthOk:
+		return true
+	case ListSpaceWorkspaceRules200JSONResponseBodyItemsHealthPaused:
 		return true
 	default:
 		return false
@@ -3523,40 +3742,103 @@ type AuditPage struct {
 	NextCursor *string      `json:"next_cursor"`
 }
 
-// AutomationDefinition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+// AutomationCounter defines model for AutomationCounter.
+type AutomationCounter struct {
+	Limit int `json:"limit"`
+
+	// State warning dari 80%, exhausted dari 100%
+	State AutomationCounterState `json:"state"`
+	Used  int                    `json:"used"`
+}
+
+// AutomationCounterState warning dari 80%, exhausted dari 100%
+type AutomationCounterState string
+
+// AutomationDefinition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
 type AutomationDefinition struct {
 	If   *[]map[string]interface{} `json:"if,omitempty"`
 	Then []map[string]interface{}  `json:"then"`
 	When map[string]interface{}    `json:"when"`
 }
 
+// AutomationLimits defines model for AutomationLimits.
+type AutomationLimits struct {
+	// RulePerHour Per aturan Workspace (awal 50)
+	RulePerHour int `json:"rule_per_hour"`
+
+	// SpacePerHour Per Space, termasuk aturan Workspace yang bekerja di Space itu (awal 500)
+	SpacePerHour int `json:"space_per_hour"`
+
+	// WorkspacePerHour Semua aturan Workspace (awal 500)
+	WorkspacePerHour int `json:"workspace_per_hour"`
+}
+
 // AutomationRule defines model for AutomationRule.
 type AutomationRule struct {
-	ContainerId      *openapi_types.UUID  `json:"container_id,omitempty"`
-	CurrentVersionId *openapi_types.UUID  `json:"current_version_id,omitempty"`
-	Enabled          bool                 `json:"enabled"`
-	Id               openapi_types.UUID   `json:"id"`
-	Name             string               `json:"name"`
-	OwnerId          openapi_types.UUID   `json:"owner_id"`
-	SpaceId          openapi_types.UUID   `json:"space_id"`
-	Versions         *[]AutomationVersion `json:"versions,omitempty"`
+	ActionCount      *int                `json:"action_count,omitempty"`
+	ArchivedAt       *string             `json:"archived_at,omitempty"`
+	ContainerId      *openapi_types.UUID `json:"container_id,omitempty"`
+	ContainerTitle   *string             `json:"container_title,omitempty"`
+	CurrentVersionId *openapi_types.UUID `json:"current_version_id,omitempty"`
+	Enabled          bool                `json:"enabled"`
+
+	// ErrorCount Jumlah run gagal, ditolak, atau berhenti dalam 7 hari terakhir
+	ErrorCount *int  `json:"error_count,omitempty"`
+	HasDraft   *bool `json:"has_draft,omitempty"`
+
+	// Health paused: pemiliknya tidak bisa menjalankan aturan; invalid: ada yang dirujuk sudah tidak ada
+	Health *AutomationRuleHealth `json:"health,omitempty"`
+
+	// HealthReason Kode alasan, mis. owner_inactive, owner_no_access, status_missing, item_type_missing, user_inactive, field_missing, container_missing
+	HealthReason  *string            `json:"health_reason,omitempty"`
+	Id            openapi_types.UUID `json:"id"`
+	LastRunAt     *string            `json:"last_run_at,omitempty"`
+	LastRunStatus *string            `json:"last_run_status,omitempty"`
+	Name          string             `json:"name"`
+	OwnerId       openapi_types.UUID `json:"owner_id"`
+	OwnerName     *string            `json:"owner_name,omitempty"`
+
+	// Scope workspace: aturan Workspace; space_id kosong, target_space_ids menyebut Space tempat aturan boleh jalan
+	Scope          *AutomationRuleScope  `json:"scope,omitempty"`
+	SpaceId        openapi_types.UUID    `json:"space_id"`
+	TargetSpaceIds *[]openapi_types.UUID `json:"target_space_ids,omitempty"`
+	Trigger        *string               `json:"trigger,omitempty"`
+	Versions       *[]AutomationVersion  `json:"versions,omitempty"`
 }
+
+// AutomationRuleHealth paused: pemiliknya tidak bisa menjalankan aturan; invalid: ada yang dirujuk sudah tidak ada
+type AutomationRuleHealth string
+
+// AutomationRuleScope workspace: aturan Workspace; space_id kosong, target_space_ids menyebut Space tempat aturan boleh jalan
+type AutomationRuleScope string
 
 // AutomationRun defines model for AutomationRun.
 type AutomationRun struct {
 	// ActionIndex -1 untuk hasil tingkat aturan
-	ActionIndex int                 `json:"action_index"`
-	ActorId     *openapi_types.UUID `json:"actor_id,omitempty"`
-	CreatedAt   string              `json:"created_at"`
-	Detail      string              `json:"detail"`
-	EventId     openapi_types.UUID  `json:"event_id"`
-	EventType   string              `json:"event_type"`
-	Id          openapi_types.UUID  `json:"id"`
-	ItemId      *openapi_types.UUID `json:"item_id,omitempty"`
-	ItemTitle   *string             `json:"item_title,omitempty"`
-	RuleId      openapi_types.UUID  `json:"rule_id"`
-	Status      AutomationRunStatus `json:"status"`
-	Version     int                 `json:"version"`
+	ActionIndex int `json:"action_index"`
+
+	// ActionType set_field, assign, comment, notify, create_item; null untuk hasil tingkat aturan
+	ActionType *string             `json:"action_type,omitempty"`
+	ActorId    *openapi_types.UUID `json:"actor_id,omitempty"`
+	CreatedAt  string              `json:"created_at"`
+	Detail     string              `json:"detail"`
+	EventId    openapi_types.UUID  `json:"event_id"`
+	EventType  string              `json:"event_type"`
+
+	// ExecutionSpaceId Space tempat run dieksekusi; kosong untuk run yang di-skip
+	ExecutionSpaceId *openapi_types.UUID `json:"execution_space_id,omitempty"`
+	Id               openapi_types.UUID  `json:"id"`
+	ItemId           *openapi_types.UUID `json:"item_id,omitempty"`
+	ItemTitle        *string             `json:"item_title,omitempty"`
+
+	// MatchedSpaceIds Semua target yang dicocokkan item
+	MatchedSpaceIds *[]openapi_types.UUID `json:"matched_space_ids,omitempty"`
+
+	// Reason Kode alasan yang stabil, mis. forbidden, not_found, field_invalid, guard, owner_no_access, field_missing, status_missing, rule_quota, workspace_quota, space_quota, origin_outside_targets, ambiguous_context, not_in_target
+	Reason  *string             `json:"reason,omitempty"`
+	RuleId  openapi_types.UUID  `json:"rule_id"`
+	Status  AutomationRunStatus `json:"status"`
+	Version int                 `json:"version"`
 }
 
 // AutomationRunStatus defines model for AutomationRun.Status.
@@ -3566,7 +3848,7 @@ type AutomationRunStatus string
 type AutomationVersion struct {
 	CreatedAt string `json:"created_at"`
 
-	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
 	Definition  AutomationDefinition    `json:"definition"`
 	Id          openapi_types.UUID      `json:"id"`
 	PublishedAt *string                 `json:"published_at,omitempty"`
@@ -4023,10 +4305,20 @@ type EmailGroup string
 
 // ExcelExport defines model for ExcelExport.
 type ExcelExport struct {
-	Error  *string            `json:"error,omitempty"`
-	Id     openapi_types.UUID `json:"id"`
-	Status ExcelExportStatus  `json:"status"`
+	Error *string            `json:"error,omitempty"`
+	Id    openapi_types.UUID `json:"id"`
+
+	// ProcessedItems Items written so far. This is a count of real items, not an estimate.
+	ProcessedItems *int              `json:"processed_items,omitempty"`
+	Scope          *ExcelExportScope `json:"scope,omitempty"`
+	Status         ExcelExportStatus `json:"status"`
+
+	// TotalItems Items the export holds, counted from the tree when the worker starts.
+	TotalItems *int `json:"total_items,omitempty"`
 }
+
+// ExcelExportScope defines model for ExcelExport.Scope.
+type ExcelExportScope string
 
 // ExcelExportStatus defines model for ExcelExport.Status.
 type ExcelExportStatus string
@@ -4410,6 +4702,9 @@ type ItemCreate struct {
 
 	// TypeKey Kunci tipe item aktif
 	TypeKey *string `json:"type_key,omitempty"`
+
+	// WorkflowId Workflow untuk item root (tanpa parent). Prioritas: workflow_id, default Item Type, default Space untuk task atau project, lalu default Workspace. Anak item tidak boleh menyebut workflow_id (B)
+	WorkflowId *openapi_types.UUID `json:"workflow_id,omitempty"`
 }
 
 // ItemCreateDefaultViewType Hanya project/folder
@@ -4831,10 +5126,19 @@ type Notification struct {
 	Kind       NotificationKind    `json:"kind"`
 	ReadAt     *time.Time          `json:"read_at,omitempty"`
 	Recipient  *UserRef            `json:"recipient,omitempty"`
+
+	// Reference The record this notification is about, when there is one (for example an import report).
+	Reference *struct {
+		Id   openapi_types.UUID        `json:"id"`
+		Kind NotificationReferenceKind `json:"kind"`
+	} `json:"reference,omitempty"`
 	Snippet    *string             `json:"snippet,omitempty"`
 	SpaceId    *openapi_types.UUID `json:"space_id,omitempty"`
 	SpaceTitle *string             `json:"space_title,omitempty"`
 }
+
+// NotificationReferenceKind defines model for Notification.Reference.Kind.
+type NotificationReferenceKind string
 
 // NotificationKind defines model for NotificationKind.
 type NotificationKind string
@@ -5323,16 +5627,30 @@ type SidebarKey string
 
 // Space defines model for Space.
 type Space struct {
-	Description *string            `json:"description,omitempty"`
-	Id          openapi_types.UUID `json:"id"`
-	Kind        SpaceKind          `json:"kind"`
+	// Archived Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)
+	Archived    *bool   `json:"archived,omitempty"`
+	Description *string `json:"description,omitempty"`
+
+	// IconKey Kunci ikon dari katalog GET /space-icons (D-04)
+	IconKey *string            `json:"icon_key,omitempty"`
+	Id      openapi_types.UUID `json:"id"`
+
+	// IsSpaceAdmin Explicit Space Admin; tidak diberikan oleh share Full saja (D-05)
+	IsSpaceAdmin *bool     `json:"is_space_admin,omitempty"`
+	Kind         SpaceKind `json:"kind"`
 
 	// Locked Dikunci administrator: isi hanya dibagikan ke orang yang sudah punya akses ke space, dan hanya admin yang mengubah sharing space atau memindahkan item keluar (D-95)
 	Locked         *bool         `json:"locked,omitempty"`
 	MyCapabilities *[]Capability `json:"my_capabilities,omitempty"`
 	Name           string        `json:"name"`
 	Version        int           `json:"version"`
+
+	// Visibility Public: ditemukan dan bisa diikuti (Read) oleh pengguna internal yang memenuhi syarat. Private: hanya yang diberi akses (D-01)
+	Visibility *SpaceVisibility `json:"visibility,omitempty"`
 }
+
+// SpaceVisibility Public: ditemukan dan bisa diikuti (Read) oleh pengguna internal yang memenuhi syarat. Private: hanya yang diberi akses (D-01)
+type SpaceVisibility string
 
 // SpaceBookmark defines model for SpaceBookmark.
 type SpaceBookmark struct {
@@ -5357,8 +5675,43 @@ type SpaceCreate struct {
 	Shares      *[]ShareInput `json:"shares,omitempty"`
 }
 
+// SpaceDefaultWorkflows defines model for SpaceDefaultWorkflows.
+type SpaceDefaultWorkflows struct {
+	// Project Workflow untuk root Project yang tidak menyebut workflow lain (B)
+	Project *openapi_types.UUID `json:"project,omitempty"`
+
+	// Task Workflow untuk root Task yang tidak menyebut workflow lain (B)
+	Task *openapi_types.UUID `json:"task,omitempty"`
+}
+
 // SpaceKind defines model for SpaceKind.
 type SpaceKind string
+
+// SpaceMember defines model for SpaceMember.
+type SpaceMember struct {
+	Capabilities *[]Capability `json:"capabilities,omitempty"`
+
+	// CappedByUserType Gabungan grant melebihi batas jenis user (D-06)
+	CappedByUserType bool   `json:"capped_by_user_type"`
+	Name             string `json:"name"`
+
+	// Role read, limited, editor, full, atau custom
+	Role string `json:"role"`
+
+	// Sources Setiap grant yang memberi akses: langsung (direct) atau lewat group
+	Sources []struct {
+		GroupId  *openapi_types.UUID    `json:"group_id,omitempty"`
+		Kind     SpaceMemberSourcesKind `json:"kind"`
+		Name     *string                `json:"name,omitempty"`
+		Role     string                 `json:"role"`
+		RoleName *string                `json:"role_name,omitempty"`
+	} `json:"sources"`
+	UserId   openapi_types.UUID `json:"user_id"`
+	UserType *string            `json:"user_type,omitempty"`
+}
+
+// SpaceMemberSourcesKind defines model for SpaceMember.Sources.Kind.
+type SpaceMemberSourcesKind string
 
 // SpaceTemplate defines model for SpaceTemplate.
 type SpaceTemplate struct {
@@ -5725,7 +6078,10 @@ type WorkSchedule struct {
 		Date openapi_types.Date `json:"date"`
 		Name string             `json:"name"`
 	} `json:"exceptions"`
-	Version int `json:"version"`
+
+	// Timezone Zona waktu Workspace (IANA, mis. Asia/Jakarta). Kosong mempertahankan yang sekarang; UTC bila belum diatur
+	Timezone *string `json:"timezone,omitempty"`
+	Version  int     `json:"version"`
 
 	// WorkingDays Hari kerja, 0 = Minggu sampai 6 = Sabtu
 	WorkingDays []int `json:"working_days"`
@@ -5740,6 +6096,9 @@ type WorkScheduleInput struct {
 		Date openapi_types.Date `json:"date"`
 		Name string             `json:"name"`
 	} `json:"exceptions"`
+
+	// Timezone Zona waktu Workspace (IANA, mis. Asia/Jakarta). Kosong mempertahankan yang sekarang; UTC bila belum diatur
+	Timezone *string `json:"timezone,omitempty"`
 
 	// WorkingDays Hari kerja, 0 = Minggu sampai 6 = Sabtu
 	WorkingDays []int `json:"working_days"`
@@ -5994,8 +6353,16 @@ type UpdateAutomationRuleJSONBody struct {
 
 // SaveAutomationDraftJSONBody defines parameters for SaveAutomationDraft.
 type SaveAutomationDraftJSONBody struct {
-	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
 	Definition AutomationDefinition `json:"definition"`
+}
+
+// ExportAutomationRule200JSONResponseBodyFormat defines parameters for ExportAutomationRule.
+type ExportAutomationRule200JSONResponseBodyFormat string
+
+// TransferAutomationRuleJSONBody defines parameters for TransferAutomationRule.
+type TransferAutomationRuleJSONBody struct {
+	OwnerId openapi_types.UUID `json:"owner_id"`
 }
 
 // ListAutomationRunsParams defines parameters for ListAutomationRuns.
@@ -6007,6 +6374,27 @@ type ListAutomationRunsParams struct {
 
 // ListAutomationRunsParamsStatus defines parameters for ListAutomationRuns.
 type ListAutomationRunsParamsStatus string
+
+// SetAutomationTargetsJSONBody defines parameters for SetAutomationTargets.
+type SetAutomationTargetsJSONBody struct {
+	SpaceIds []openapi_types.UUID `json:"space_ids"`
+}
+
+// GetAutomationUsageParams defines parameters for GetAutomationUsage.
+type GetAutomationUsageParams struct {
+	RuleId  *openapi_types.UUID `form:"rule_id,omitempty" json:"rule_id,omitempty"`
+	SpaceId *openapi_types.UUID `form:"space_id,omitempty" json:"space_id,omitempty"`
+}
+
+// GetAutomationUsage200JSONResponseBodyWindow defines parameters for GetAutomationUsage.
+type GetAutomationUsage200JSONResponseBodyWindow string
+
+// CreateWorkspaceRuleJSONBody defines parameters for CreateWorkspaceRule.
+type CreateWorkspaceRuleJSONBody struct {
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
+	Definition AutomationDefinition `json:"definition"`
+	Name       string               `json:"name"`
+}
 
 // GetBlueprint200JSONResponseBodyItemType defines parameters for GetBlueprint.
 type GetBlueprint200JSONResponseBodyItemType string
@@ -6572,8 +6960,24 @@ type CreateSpaceFromTemplateJSONBody struct {
 	RequestId openapi_types.UUID `json:"request_id"`
 }
 
+// DiscoverSpacesParams defines parameters for DiscoverSpaces.
+type DiscoverSpacesParams struct {
+	Q *string `form:"q,omitempty" json:"q,omitempty"`
+}
+
 // UpdateSpaceParams defines parameters for UpdateSpace.
 type UpdateSpaceParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// GrantSpaceAdminJSONBody defines parameters for GrantSpaceAdmin.
+type GrantSpaceAdminJSONBody struct {
+	UserId openapi_types.UUID `json:"user_id"`
+}
+
+// ArchiveSpaceParams defines parameters for ArchiveSpace.
+type ArchiveSpaceParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
 }
@@ -6583,17 +6987,31 @@ type CreateAutomationRuleJSONBody struct {
 	// ContainerId Batasi ke satu project atau folder
 	ContainerId *openapi_types.UUID `json:"container_id,omitempty"`
 
-	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
 	Definition AutomationDefinition `json:"definition"`
 	Name       string               `json:"name"`
 }
 
 // DryRunAutomationJSONBody defines parameters for DryRunAutomation.
 type DryRunAutomationJSONBody struct {
-	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before 0-30), form.submitted (form_id). if: hingga 10 kondisi (field importance, status_group, item_type, assignee, due_date, start_date, fields.<id>). then: 1-10 aksi (set_field, assign, comment, notify, create_item). Kunci yang tidak dikenal ditolak
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
 	Definition AutomationDefinition `json:"definition"`
 	ItemId     openapi_types.UUID   `json:"item_id"`
+
+	// RuleId Aturan yang sudah ada: dijalankan sebagai pemiliknya. Kosong untuk aturan baru: pembuatnya yang dipakai.
+	RuleId *openapi_types.UUID `json:"rule_id,omitempty"`
 }
+
+// ImportAutomationRuleJSONBody defines parameters for ImportAutomationRule.
+type ImportAutomationRuleJSONBody struct {
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
+	Definition AutomationDefinition               `json:"definition"`
+	Format     ImportAutomationRuleJSONBodyFormat `json:"format"`
+	Name       *string                            `json:"name,omitempty"`
+}
+
+// ImportAutomationRuleJSONBodyFormat defines parameters for ImportAutomationRule.
+type ImportAutomationRuleJSONBodyFormat string
 
 // CreateBlueprintJSONBody defines parameters for CreateBlueprint.
 type CreateBlueprintJSONBody struct {
@@ -6618,6 +7036,11 @@ type SetSpaceCreateMenuJSONBody struct {
 // SetSpaceCreateMenuParams defines parameters for SetSpaceCreateMenu.
 type SetSpaceCreateMenuParams struct {
 	IfMatch string `json:"If-Match"`
+}
+
+// StartSpaceExcelExportJSONBody defines parameters for StartSpaceExcelExport.
+type StartSpaceExcelExportJSONBody struct {
+	Filter *map[string]interface{} `json:"filter,omitempty"`
 }
 
 // ImportProjectExcelMultipartBody defines parameters for ImportProjectExcel.
@@ -6651,11 +7074,28 @@ type ListSpaceRootItemsParams struct {
 	Field *ItemFilterField `form:"field,omitempty" json:"field,omitempty"`
 }
 
+// RestoreSpaceParams defines parameters for RestoreSpace.
+type RestoreSpaceParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// RestoreSpace200JSONResponseBodyWarnings defines parameters for RestoreSpace.
+type RestoreSpace200JSONResponseBodyWarnings string
+
 // ReplaceSpaceSharesParams defines parameters for ReplaceSpaceShares.
 type ReplaceSpaceSharesParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
 }
+
+// TransferSpaceOwnershipJSONBody defines parameters for TransferSpaceOwnership.
+type TransferSpaceOwnershipJSONBody struct {
+	UserId openapi_types.UUID `json:"user_id"`
+}
+
+// ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth defines parameters for ListSpaceWorkspaceRules.
+type ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth string
 
 // ListStars200JSONResponseBodyItemsType defines parameters for ListStars.
 type ListStars200JSONResponseBodyItemsType string
@@ -6851,6 +7291,18 @@ type UpdateAutomationRuleJSONRequestBody UpdateAutomationRuleJSONBody
 
 // SaveAutomationDraftJSONRequestBody defines body for SaveAutomationDraft for application/json ContentType.
 type SaveAutomationDraftJSONRequestBody SaveAutomationDraftJSONBody
+
+// TransferAutomationRuleJSONRequestBody defines body for TransferAutomationRule for application/json ContentType.
+type TransferAutomationRuleJSONRequestBody TransferAutomationRuleJSONBody
+
+// SetAutomationTargetsJSONRequestBody defines body for SetAutomationTargets for application/json ContentType.
+type SetAutomationTargetsJSONRequestBody SetAutomationTargetsJSONBody
+
+// SetAutomationLimitsJSONRequestBody defines body for SetAutomationLimits for application/json ContentType.
+type SetAutomationLimitsJSONRequestBody = AutomationLimits
+
+// CreateWorkspaceRuleJSONRequestBody defines body for CreateWorkspaceRule for application/json ContentType.
+type CreateWorkspaceRuleJSONRequestBody CreateWorkspaceRuleJSONBody
 
 // EditBlueprintJSONRequestBody defines body for EditBlueprint for application/json ContentType.
 type EditBlueprintJSONRequestBody EditBlueprintJSONBody
@@ -7083,11 +7535,17 @@ type CreateSpaceJSONRequestBody = SpaceCreate
 // UpdateSpaceJSONRequestBody defines body for UpdateSpace for application/json ContentType.
 type UpdateSpaceJSONRequestBody = SpaceUpdate
 
+// GrantSpaceAdminJSONRequestBody defines body for GrantSpaceAdmin for application/json ContentType.
+type GrantSpaceAdminJSONRequestBody GrantSpaceAdminJSONBody
+
 // CreateAutomationRuleJSONRequestBody defines body for CreateAutomationRule for application/json ContentType.
 type CreateAutomationRuleJSONRequestBody CreateAutomationRuleJSONBody
 
 // DryRunAutomationJSONRequestBody defines body for DryRunAutomation for application/json ContentType.
 type DryRunAutomationJSONRequestBody DryRunAutomationJSONBody
+
+// ImportAutomationRuleJSONRequestBody defines body for ImportAutomationRule for application/json ContentType.
+type ImportAutomationRuleJSONRequestBody ImportAutomationRuleJSONBody
 
 // CreateBlueprintJSONRequestBody defines body for CreateBlueprint for application/json ContentType.
 type CreateBlueprintJSONRequestBody CreateBlueprintJSONBody
@@ -7107,6 +7565,12 @@ type CreateCustomFieldJSONRequestBody = CustomFieldCreate
 // UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
 type UpdateCustomFieldJSONRequestBody = CustomFieldUpdate
 
+// SetSpaceDefaultWorkflowsJSONRequestBody defines body for SetSpaceDefaultWorkflows for application/json ContentType.
+type SetSpaceDefaultWorkflowsJSONRequestBody = SpaceDefaultWorkflows
+
+// StartSpaceExcelExportJSONRequestBody defines body for StartSpaceExcelExport for application/json ContentType.
+type StartSpaceExcelExportJSONRequestBody StartSpaceExcelExportJSONBody
+
 // ImportProjectExcelMultipartRequestBody defines body for ImportProjectExcel for multipart/form-data ContentType.
 type ImportProjectExcelMultipartRequestBody ImportProjectExcelMultipartBody
 
@@ -7115,6 +7579,9 @@ type CreateFormJSONRequestBody = FormInput
 
 // ReplaceSpaceSharesJSONRequestBody defines body for ReplaceSpaceShares for application/json ContentType.
 type ReplaceSpaceSharesJSONRequestBody = ShareReplace
+
+// TransferSpaceOwnershipJSONRequestBody defines body for TransferSpaceOwnership for application/json ContentType.
+type TransferSpaceOwnershipJSONRequestBody TransferSpaceOwnershipJSONBody
 
 // PutSsoConfigJSONRequestBody defines body for PutSsoConfig for application/json ContentType.
 type PutSsoConfigJSONRequestBody = SsoConfigInput
@@ -7559,7 +8026,7 @@ type ServerInterface interface {
 	// StartSso Mulai masuk (atau menautkan, link=1 butuh sesi) dan arahkan peramban ke penyedia identitas
 	// (GET /auth/sso/{kind}/start)
 	StartSso(w http.ResponseWriter, r *http.Request, kind string, params StartSsoParams)
-	// DeleteAutomationRule Hapus aturan beserta versi dan lognya
+	// DeleteAutomationRule Arsipkan aturan (tidak menghapus versi, log, atau riwayat; aturan berhenti berjalan)
 	// (DELETE /automation-rules/{ruleId})
 	DeleteAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
 	// GetAutomationRule Aturan beserta semua versinya
@@ -7568,21 +8035,57 @@ type ServerInterface interface {
 	// UpdateAutomationRule Ganti nama atau aktif/nonaktifkan; aktif hanya bila ada versi terbit. Pemilik atau admin
 	// (PATCH /automation-rules/{ruleId})
 	UpdateAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// ArchiveAutomationRule Arsipkan aturan dan matikan; riwayat tetap ada. Pemilik atau admin
+	// (POST /automation-rules/{ruleId}/archive)
+	ArchiveAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
 	// SaveAutomationDraft Ganti draft (atau mulai versi berikutnya); versi terbit tidak pernah berubah
 	// (PUT /automation-rules/{ruleId}/draft)
 	SaveAutomationDraft(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// DuplicateAutomationRule Salin definisi terbaru menjadi aturan baru yang nonaktif dan belum terbit, milik yang menyalin
+	// (POST /automation-rules/{ruleId}/duplicate)
+	DuplicateAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// ExportAutomationRule Definisi terbaru sebagai berkas (tanpa id, pemilik, atau riwayat)
+	// (GET /automation-rules/{ruleId}/export)
+	ExportAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// TransferAutomationRule Pindahkan kepemilikan aturan. Hanya admin workspace; pemilik baru harus bisa menjalankan aturan di Space ini
+	// (POST /automation-rules/{ruleId}/owner)
+	TransferAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
 	// PublishAutomationRule Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi
 	// (POST /automation-rules/{ruleId}/publish)
 	PublishAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
+	// RestoreAutomationRule Pulihkan aturan yang diarsipkan sebagai aturan nonaktif; aktifkan lagi untuk memvalidasi ulang
+	// (POST /automation-rules/{ruleId}/restore)
+	RestoreAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
 	// ListAutomationRuns Log eksekusi sebuah aturan, terbaru dulu (AUT-04)
 	// (GET /automation-rules/{ruleId}/runs)
 	ListAutomationRuns(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID, params ListAutomationRunsParams)
+	// SetAutomationTargets Ganti daftar Space target aturan Workspace (snapshot, bukan wildcard). Hanya admin workspace
+	// (POST /automation-rules/{ruleId}/targets)
+	SetAutomationTargets(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID)
 	// ListDeadAutomationEvents Event yang diparkir pengirim setelah gagal berulang (hanya admin)
 	// (GET /automation/dead-events)
 	ListDeadAutomationEvents(w http.ResponseWriter, r *http.Request)
 	// ReplayAutomationEvent Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi
 	// (POST /automation/events/{eventId}/replay)
 	ReplayAutomationEvent(w http.ResponseWriter, r *http.Request, eventId openapi_types.UUID)
+	// GetAutomationLimits Batas eksekusi per jam (rule, workspace, Space). Hanya admin workspace
+	// (GET /automation/limits)
+	GetAutomationLimits(w http.ResponseWriter, r *http.Request)
+	// SetAutomationLimits Ubah batas eksekusi. Setiap perubahan dicatat di audit
+	// (PUT /automation/limits)
+	SetAutomationLimits(w http.ResponseWriter, r *http.Request)
+	// ListAutomationTemplates Templat bawaan (data tetap, tanpa id)
+	// (GET /automation/templates)
+	ListAutomationTemplates(w http.ResponseWriter, r *http.Request)
+	// GetAutomationUsage Pemakaian dalam satu jam bergulir terhadap batas: aturan, Workspace, dan Space. Pemakaian yang sama dipakai untuk membatasi eksekusi
+	// (GET /automation/usage)
+	GetAutomationUsage(w http.ResponseWriter, r *http.Request, params GetAutomationUsageParams)
+	// ListWorkspaceRules Aturan Workspace untuk admin workspace (metadata saja: tanpa judul item atau isi)
+	// (GET /automation/workspace-rules)
+	ListWorkspaceRules(w http.ResponseWriter, r *http.Request)
+	// CreateWorkspaceRule Buat aturan Workspace (draf tanpa target). Hanya admin workspace
+	// (POST /automation/workspace-rules)
+	CreateWorkspaceRule(w http.ResponseWriter, r *http.Request)
 	// GetBaselineVariance Selisih tanggal item terhadap baseline, dalam hari (positif = lebih lambat dari rencana)
 	// (GET /baselines/{baselineId}/variance)
 	GetBaselineVariance(w http.ResponseWriter, r *http.Request, baselineId openapi_types.UUID)
@@ -7721,6 +8224,9 @@ type ServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(w http.ResponseWriter, r *http.Request, exportId openapi_types.UUID)
+
+	// (GET /excel-imports/{reportId})
+	GetExcelImportReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID)
 	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
 	// (GET /feedback)
 	ListFeedback(w http.ResponseWriter, r *http.Request)
@@ -8129,6 +8635,9 @@ type ServerInterface interface {
 	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
 	// (PUT /settings/work-schedule)
 	ReplaceWorkSchedule(w http.ResponseWriter, r *http.Request, params ReplaceWorkScheduleParams)
+	// ListSpaceIcons Katalog kunci ikon Space (D-04)
+	// (GET /space-icons)
+	ListSpaceIcons(w http.ResponseWriter, r *http.Request)
 	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
 	// (GET /space-templates)
 	ListSpaceTemplates(w http.ResponseWriter, r *http.Request)
@@ -8141,6 +8650,9 @@ type ServerInterface interface {
 	// CreateSpace Buat Space (SPC-01)
 	// (POST /spaces)
 	CreateSpace(w http.ResponseWriter, r *http.Request)
+	// DiscoverSpaces Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul
+	// (GET /spaces/discover)
+	DiscoverSpaces(w http.ResponseWriter, r *http.Request, params DiscoverSpacesParams)
 	// DeleteSpace Hapus Space beserta isinya ke Recycle bin; Personal space tidak bisa dihapus
 	// (DELETE /spaces/{spaceId})
 	DeleteSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -8150,6 +8662,18 @@ type ServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params UpdateSpaceParams)
+
+	// (GET /spaces/{spaceId}/admins)
+	ListSpaceAdmins(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-05)
+	// (POST /spaces/{spaceId}/admins)
+	GrantSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+	// (DELETE /spaces/{spaceId}/admins/{userId})
+	RevokeSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId, userId openapi_types.UUID)
+	// ArchiveSpace Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace
+	// (POST /spaces/{spaceId}/archive)
+	ArchiveSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ArchiveSpaceParams)
 	// ListAutomationRules Aturan otomasi sebuah Space (AUT-02); butuh hak Edit
 	// (GET /spaces/{spaceId}/automation-rules)
 	ListAutomationRules(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -8159,6 +8683,9 @@ type ServerInterface interface {
 	// DryRunAutomation Uji definisi pada satu item tanpa menjalankan apa pun (AUT-05)
 	// (POST /spaces/{spaceId}/automation-rules/dry-run)
 	DryRunAutomation(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ImportAutomationRule Buat draf nonaktif dari berkas ekspor; definisi divalidasi dan referensinya harus ada di Space ini
+	// (POST /spaces/{spaceId}/automation-rules/import)
+	ImportAutomationRule(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID)
 	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
 	// (GET /spaces/{spaceId}/blueprints)
 	ListBlueprints(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -8195,6 +8722,18 @@ type ServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(w http.ResponseWriter, r *http.Request, spaceId SpaceId, fieldId openapi_types.UUID)
+	// GetSpaceDefaultWorkflows Workflow default Space untuk root Task dan Project (B)
+	// (GET /spaces/{spaceId}/default-workflows)
+	GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// SetSpaceDefaultWorkflows Ganti default workflow Task dan Project. Item yang sudah ada tidak berubah (B)
+	// (PUT /spaces/{spaceId}/default-workflows)
+	SetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// GetSpaceDeleteImpact Pratinjau dampak hapus Space (D). Hanya membaca
+	// (GET /spaces/{spaceId}/delete-impact)
+	GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+
+	// (POST /spaces/{spaceId}/excel-exports)
+	StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 
 	// (POST /spaces/{spaceId}/excel-imports)
 	ImportProjectExcel(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -8207,15 +8746,30 @@ type ServerInterface interface {
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ListSpaceRootItemsParams)
+	// JoinSpace Ikuti Space Public; memberi akses Read saja (D-01)
+	// (POST /spaces/{spaceId}/join)
+	JoinSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ListSpaceMembers Anggota efektif Space beserta alasan aksesnya (D-06)
+	// (GET /spaces/{spaceId}/members)
+	ListSpaceMembers(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// RestoreSpace Pulihkan Space terarsip; mengembalikan peringatan yang harus diperiksa (D-03)
+	// (POST /spaces/{spaceId}/restore)
+	RestoreSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params RestoreSpaceParams)
 
 	// (GET /spaces/{spaceId}/shares)
 	ListSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// ReplaceSpaceShares Ganti seluruh daftar share Space (SPC-11)
 	// (PUT /spaces/{spaceId}/shares)
 	ReplaceSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ReplaceSpaceSharesParams)
+	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-05)
+	// (POST /spaces/{spaceId}/transfer-ownership)
+	TransferSpaceOwnership(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ListSpaceWorkspaceRules Aturan Workspace yang bekerja di Space ini: nama dan status saja (tanpa pemilik atau isi)
+	// (GET /spaces/{spaceId}/workspace-automation)
+	ListSpaceWorkspaceRules(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID)
 	// DeleteSsoConfig Hapus penyedia beserta semua identitas tertaut (admin)
 	// (DELETE /sso/{kind})
 	DeleteSsoConfig(w http.ResponseWriter, r *http.Request, kind string)
@@ -9715,6 +10269,32 @@ func (siw *ServerInterfaceWrapper) UpdateAutomationRule(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// ArchiveAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // SaveAutomationDraft operation middleware
 func (siw *ServerInterfaceWrapper) SaveAutomationDraft(w http.ResponseWriter, r *http.Request) {
 
@@ -9741,6 +10321,84 @@ func (siw *ServerInterfaceWrapper) SaveAutomationDraft(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// DuplicateAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) DuplicateAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DuplicateAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ExportAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) ExportAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ExportAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// TransferAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) TransferAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TransferAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // PublishAutomationRule operation middleware
 func (siw *ServerInterfaceWrapper) PublishAutomationRule(w http.ResponseWriter, r *http.Request) {
 
@@ -9758,6 +10416,32 @@ func (siw *ServerInterfaceWrapper) PublishAutomationRule(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PublishAutomationRule(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RestoreAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) RestoreAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreAutomationRule(w, r, ruleId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -9835,6 +10519,32 @@ func (siw *ServerInterfaceWrapper) ListAutomationRuns(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// SetAutomationTargets operation middleware
+func (siw *ServerInterfaceWrapper) SetAutomationTargets(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "ruleId" -------------
+	var ruleId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "ruleId", r.PathValue("ruleId"), &ruleId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "ruleId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetAutomationTargets(w, r, ruleId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListDeadAutomationEvents operation middleware
 func (siw *ServerInterfaceWrapper) ListDeadAutomationEvents(w http.ResponseWriter, r *http.Request) {
 
@@ -9866,6 +10576,122 @@ func (siw *ServerInterfaceWrapper) ReplayAutomationEvent(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReplayAutomationEvent(w, r, eventId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAutomationLimits operation middleware
+func (siw *ServerInterfaceWrapper) GetAutomationLimits(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAutomationLimits(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetAutomationLimits operation middleware
+func (siw *ServerInterfaceWrapper) SetAutomationLimits(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetAutomationLimits(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListAutomationTemplates operation middleware
+func (siw *ServerInterfaceWrapper) ListAutomationTemplates(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListAutomationTemplates(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetAutomationUsage operation middleware
+func (siw *ServerInterfaceWrapper) GetAutomationUsage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetAutomationUsageParams
+
+	// ------------- Optional query parameter "rule_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "rule_id", r.URL.Query(), &params.RuleId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "rule_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "rule_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "space_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "space_id", r.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "space_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_id", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetAutomationUsage(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListWorkspaceRules operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkspaceRules(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkspaceRules(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateWorkspaceRule operation middleware
+func (siw *ServerInterfaceWrapper) CreateWorkspaceRule(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateWorkspaceRule(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11283,6 +12109,32 @@ func (siw *ServerInterfaceWrapper) DownloadProjectExcelExport(w http.ResponseWri
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DownloadProjectExcelExport(w, r, exportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExcelImportReport operation middleware
+func (siw *ServerInterfaceWrapper) GetExcelImportReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExcelImportReport(w, r, reportId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -15083,6 +15935,20 @@ func (siw *ServerInterfaceWrapper) ReplaceWorkSchedule(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ListSpaceIcons operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceIcons(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceIcons(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceTemplates operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceTemplates(w http.ResponseWriter, r *http.Request) {
 
@@ -15142,6 +16008,39 @@ func (siw *ServerInterfaceWrapper) CreateSpace(w http.ResponseWriter, r *http.Re
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateSpace(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DiscoverSpaces operation middleware
+func (siw *ServerInterfaceWrapper) DiscoverSpaces(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params DiscoverSpacesParams
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DiscoverSpaces(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -15257,6 +16156,147 @@ func (siw *ServerInterfaceWrapper) UpdateSpace(w http.ResponseWriter, r *http.Re
 	handler.ServeHTTP(w, r)
 }
 
+// ListSpaceAdmins operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceAdmins(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceAdmins(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GrantSpaceAdmin operation middleware
+func (siw *ServerInterfaceWrapper) GrantSpaceAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GrantSpaceAdmin(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeSpaceAdmin operation middleware
+func (siw *ServerInterfaceWrapper) RevokeSpaceAdmin(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeSpaceAdmin(w, r, spaceId, userId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveSpace operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveSpace(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ArchiveSpaceParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveSpace(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListAutomationRules operation middleware
 func (siw *ServerInterfaceWrapper) ListAutomationRules(w http.ResponseWriter, r *http.Request) {
 
@@ -15326,6 +16366,32 @@ func (siw *ServerInterfaceWrapper) DryRunAutomation(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DryRunAutomation(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ImportAutomationRule operation middleware
+func (siw *ServerInterfaceWrapper) ImportAutomationRule(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ImportAutomationRule(w, r, spaceId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -15711,6 +16777,110 @@ func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// GetSpaceDefaultWorkflows operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceDefaultWorkflows(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetSpaceDefaultWorkflows operation middleware
+func (siw *ServerInterfaceWrapper) SetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetSpaceDefaultWorkflows(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpaceDeleteImpact operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceDeleteImpact(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// StartSpaceExcelExport operation middleware
+func (siw *ServerInterfaceWrapper) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.StartSpaceExcelExport(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ImportProjectExcel operation middleware
 func (siw *ServerInterfaceWrapper) ImportProjectExcel(w http.ResponseWriter, r *http.Request) {
 
@@ -15909,6 +17079,112 @@ func (siw *ServerInterfaceWrapper) ListSpaceRootItems(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// JoinSpace operation middleware
+func (siw *ServerInterfaceWrapper) JoinSpace(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.JoinSpace(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceMembers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceMembers(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RestoreSpace operation middleware
+func (siw *ServerInterfaceWrapper) RestoreSpace(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params RestoreSpaceParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreSpace(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceShares operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceShares(w http.ResponseWriter, r *http.Request) {
 
@@ -15989,6 +17265,32 @@ func (siw *ServerInterfaceWrapper) ReplaceSpaceShares(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// TransferSpaceOwnership operation middleware
+func (siw *ServerInterfaceWrapper) TransferSpaceOwnership(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId SpaceId
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.TransferSpaceOwnership(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceViews operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceViews(w http.ResponseWriter, r *http.Request) {
 
@@ -16006,6 +17308,32 @@ func (siw *ServerInterfaceWrapper) ListSpaceViews(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListSpaceViews(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceWorkspaceRules operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceWorkspaceRules(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceWorkspaceRules(w, r, spaceId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17502,8 +18830,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.DeleteDashboardWidget)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/dashboards/{dashboardId}/widgets/{widgetId}", wrapper.ReplaceDashboardWidget)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/excel-exports", wrapper.StartProjectExcelExport)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/excel-exports", wrapper.StartSpaceExcelExport)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-exports/{exportId}", wrapper.GetProjectExcelExport)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-exports/{exportId}/file", wrapper.DownloadProjectExcelExport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/excel-imports/{reportId}", wrapper.GetExcelImportReport)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/excel-imports", wrapper.ImportProjectExcel)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-summary", wrapper.GetProjectTimeSummary)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-entries", wrapper.ListProjectTimeEntries)
@@ -17561,6 +18891,20 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/automation-rules/{ruleId}", wrapper.UpdateAutomationRule)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/automation-rules/{ruleId}/draft", wrapper.SaveAutomationDraft)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/publish", wrapper.PublishAutomationRule)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/archive", wrapper.ArchiveAutomationRule)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/restore", wrapper.RestoreAutomationRule)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/owner", wrapper.TransferAutomationRule)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/duplicate", wrapper.DuplicateAutomationRule)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation-rules/{ruleId}/export", wrapper.ExportAutomationRule)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules/import", wrapper.ImportAutomationRule)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation/workspace-rules", wrapper.ListWorkspaceRules)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation/workspace-rules", wrapper.CreateWorkspaceRule)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation-rules/{ruleId}/targets", wrapper.SetAutomationTargets)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/workspace-automation", wrapper.ListSpaceWorkspaceRules)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation/usage", wrapper.GetAutomationUsage)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation/limits", wrapper.GetAutomationLimits)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/automation/limits", wrapper.SetAutomationLimits)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation/templates", wrapper.ListAutomationTemplates)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/automation-rules/{ruleId}/runs", wrapper.ListAutomationRuns)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/webhooks", wrapper.ListWebhooks)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/webhooks", wrapper.CreateWebhook)
@@ -17577,6 +18921,19 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.DeleteSpace)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.GetSpace)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/spaces/{spaceId}", wrapper.UpdateSpace)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/members", wrapper.ListSpaceMembers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/archive", wrapper.ArchiveSpace)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/restore", wrapper.RestoreSpace)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/admins", wrapper.ListSpaceAdmins)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/admins", wrapper.GrantSpaceAdmin)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/admins/{userId}", wrapper.RevokeSpaceAdmin)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/transfer-ownership", wrapper.TransferSpaceOwnership)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/discover", wrapper.DiscoverSpaces)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/join", wrapper.JoinSpace)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/default-workflows", wrapper.GetSpaceDefaultWorkflows)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/default-workflows", wrapper.SetSpaceDefaultWorkflows)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/delete-impact", wrapper.GetSpaceDeleteImpact)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-icons", wrapper.ListSpaceIcons)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/shares", wrapper.ListSpaceShares)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/shares", wrapper.ReplaceSpaceShares)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-fields", wrapper.ListWorkspaceCustomFields)
@@ -20375,6 +21732,58 @@ func (response UpdateAutomationRule422ApplicationProblemPlusJSONResponse) VisitU
 	return err
 }
 
+type ArchiveAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type ArchiveAutomationRuleResponseObject interface {
+	VisitArchiveAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type ArchiveAutomationRule200JSONResponse AutomationRule
+
+func (response ArchiveAutomationRule200JSONResponse) VisitArchiveAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ArchiveAutomationRule403ApplicationProblemPlusJSONResponse) VisitArchiveAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveAutomationRule404ApplicationProblemPlusJSONResponse) VisitArchiveAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type SaveAutomationDraftRequestObject struct {
 	RuleId openapi_types.UUID `json:"ruleId"`
 	Body   *SaveAutomationDraftJSONRequestBody
@@ -20431,6 +21840,182 @@ func (response SaveAutomationDraft404ApplicationProblemPlusJSONResponse) VisitSa
 type SaveAutomationDraft422ApplicationProblemPlusJSONResponse Problem
 
 func (response SaveAutomationDraft422ApplicationProblemPlusJSONResponse) VisitSaveAutomationDraftResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type DuplicateAutomationRuleResponseObject interface {
+	VisitDuplicateAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type DuplicateAutomationRule201JSONResponse AutomationRule
+
+func (response DuplicateAutomationRule201JSONResponse) VisitDuplicateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DuplicateAutomationRule403ApplicationProblemPlusJSONResponse) VisitDuplicateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DuplicateAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response DuplicateAutomationRule404ApplicationProblemPlusJSONResponse) VisitDuplicateAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExportAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type ExportAutomationRuleResponseObject interface {
+	VisitExportAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type ExportAutomationRule200JSONResponse struct {
+	// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
+	Definition AutomationDefinition                          `json:"definition"`
+	Format     ExportAutomationRule200JSONResponseBodyFormat `json:"format"`
+	Name       string                                        `json:"name"`
+}
+
+func (response ExportAutomationRule200JSONResponse) VisitExportAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExportAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ExportAutomationRule403ApplicationProblemPlusJSONResponse) VisitExportAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ExportAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response ExportAutomationRule404ApplicationProblemPlusJSONResponse) VisitExportAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+	Body   *TransferAutomationRuleJSONRequestBody
+}
+
+type TransferAutomationRuleResponseObject interface {
+	VisitTransferAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type TransferAutomationRule200JSONResponse AutomationRule
+
+func (response TransferAutomationRule200JSONResponse) VisitTransferAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response TransferAutomationRule403ApplicationProblemPlusJSONResponse) VisitTransferAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferAutomationRule404ApplicationProblemPlusJSONResponse) VisitTransferAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferAutomationRule422ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferAutomationRule422ApplicationProblemPlusJSONResponse) VisitTransferAutomationRuleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -20508,6 +22093,58 @@ func (response PublishAutomationRule422ApplicationProblemPlusJSONResponse) Visit
 	return err
 }
 
+type RestoreAutomationRuleRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+}
+
+type RestoreAutomationRuleResponseObject interface {
+	VisitRestoreAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type RestoreAutomationRule200JSONResponse AutomationRule
+
+func (response RestoreAutomationRule200JSONResponse) VisitRestoreAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RestoreAutomationRule403ApplicationProblemPlusJSONResponse) VisitRestoreAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreAutomationRule404ApplicationProblemPlusJSONResponse) VisitRestoreAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListAutomationRunsRequestObject struct {
 	RuleId openapi_types.UUID `json:"ruleId"`
 	Params ListAutomationRunsParams
@@ -20567,6 +22204,73 @@ func (response ListAutomationRuns404ApplicationProblemPlusJSONResponse) VisitLis
 type ListAutomationRuns422ApplicationProblemPlusJSONResponse Problem
 
 func (response ListAutomationRuns422ApplicationProblemPlusJSONResponse) VisitListAutomationRunsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutomationTargetsRequestObject struct {
+	RuleId openapi_types.UUID `json:"ruleId"`
+	Body   *SetAutomationTargetsJSONRequestBody
+}
+
+type SetAutomationTargetsResponseObject interface {
+	VisitSetAutomationTargetsResponse(w http.ResponseWriter) error
+}
+
+type SetAutomationTargets200JSONResponse AutomationRule
+
+func (response SetAutomationTargets200JSONResponse) VisitSetAutomationTargetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutomationTargets403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetAutomationTargets403ApplicationProblemPlusJSONResponse) VisitSetAutomationTargetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutomationTargets404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetAutomationTargets404ApplicationProblemPlusJSONResponse) VisitSetAutomationTargetsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutomationTargets422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetAutomationTargets422ApplicationProblemPlusJSONResponse) VisitSetAutomationTargetsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -20675,6 +22379,291 @@ func (response ReplayAutomationEvent404ApplicationProblemPlusJSONResponse) Visit
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationLimitsRequestObject struct {
+}
+
+type GetAutomationLimitsResponseObject interface {
+	VisitGetAutomationLimitsResponse(w http.ResponseWriter) error
+}
+
+type GetAutomationLimits200JSONResponse AutomationLimits
+
+func (response GetAutomationLimits200JSONResponse) VisitGetAutomationLimitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationLimits403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAutomationLimits403ApplicationProblemPlusJSONResponse) VisitGetAutomationLimitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutomationLimitsRequestObject struct {
+	Body *SetAutomationLimitsJSONRequestBody
+}
+
+type SetAutomationLimitsResponseObject interface {
+	VisitSetAutomationLimitsResponse(w http.ResponseWriter) error
+}
+
+type SetAutomationLimits200JSONResponse AutomationLimits
+
+func (response SetAutomationLimits200JSONResponse) VisitSetAutomationLimitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutomationLimits403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetAutomationLimits403ApplicationProblemPlusJSONResponse) VisitSetAutomationLimitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetAutomationLimits422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetAutomationLimits422ApplicationProblemPlusJSONResponse) VisitSetAutomationLimitsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationTemplatesRequestObject struct {
+}
+
+type ListAutomationTemplatesResponseObject interface {
+	VisitListAutomationTemplatesResponse(w http.ResponseWriter) error
+}
+
+type ListAutomationTemplates200JSONResponse struct {
+	Items []struct {
+		// Definition Skema tertutup WHEN/IF/THEN. when.type: item.status_changed (to_status_id), item.assigned (user_id), item.created (item_type), item.due_reached (days_before -30..30, negatif = lewat due; calendar: work = hari kerja; tanggal dievaluasi pada hari lokal zona waktu Workspace, UTC jika belum diatur), item.inactive (days 1..365), form.submitted (form_id), approval.decided (decision approved|rejected), comment.created. then.type: set_field, assign, comment, mention (text; user_ids, followers, dan group_ids dihitung saat run; hanya yang bisa melihat item yang menerima; maksimum 50 orang), notify, create_item (under=item untuk subitem), move (container_id: proyek atau folder di Space ini).
+		Definition  AutomationDefinition `json:"definition"`
+		Description string               `json:"description"`
+		Id          string               `json:"id"`
+		Name        string               `json:"name"`
+	} `json:"items"`
+}
+
+func (response ListAutomationTemplates200JSONResponse) VisitListAutomationTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListAutomationTemplates403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListAutomationTemplates403ApplicationProblemPlusJSONResponse) VisitListAutomationTemplatesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationUsageRequestObject struct {
+	Params GetAutomationUsageParams
+}
+
+type GetAutomationUsageResponseObject interface {
+	VisitGetAutomationUsageResponse(w http.ResponseWriter) error
+}
+
+type GetAutomationUsage200JSONResponse struct {
+	Rule  *AutomationCounter `json:"rule,omitempty"`
+	Space *AutomationCounter `json:"space,omitempty"`
+
+	// ThrottledBy rule_quota, workspace_quota, space_quota, atau kosong
+	ThrottledBy string                                      `json:"throttled_by"`
+	Window      GetAutomationUsage200JSONResponseBodyWindow `json:"window"`
+	Workspace   *AutomationCounter                          `json:"workspace,omitempty"`
+}
+
+func (response GetAutomationUsage200JSONResponse) VisitGetAutomationUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationUsage403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetAutomationUsage403ApplicationProblemPlusJSONResponse) VisitGetAutomationUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetAutomationUsage404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetAutomationUsage404ApplicationProblemPlusJSONResponse) VisitGetAutomationUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWorkspaceRulesRequestObject struct {
+}
+
+type ListWorkspaceRulesResponseObject interface {
+	VisitListWorkspaceRulesResponse(w http.ResponseWriter) error
+}
+
+type ListWorkspaceRules200JSONResponse struct {
+	Items []AutomationRule `json:"items"`
+}
+
+func (response ListWorkspaceRules200JSONResponse) VisitListWorkspaceRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWorkspaceRules403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListWorkspaceRules403ApplicationProblemPlusJSONResponse) VisitListWorkspaceRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkspaceRuleRequestObject struct {
+	Body *CreateWorkspaceRuleJSONRequestBody
+}
+
+type CreateWorkspaceRuleResponseObject interface {
+	VisitCreateWorkspaceRuleResponse(w http.ResponseWriter) error
+}
+
+type CreateWorkspaceRule201JSONResponse AutomationRule
+
+func (response CreateWorkspaceRule201JSONResponse) VisitCreateWorkspaceRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkspaceRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateWorkspaceRule403ApplicationProblemPlusJSONResponse) VisitCreateWorkspaceRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateWorkspaceRule422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateWorkspaceRule422ApplicationProblemPlusJSONResponse) VisitCreateWorkspaceRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -23671,6 +25660,50 @@ func (response DownloadProjectExcelExport409ApplicationProblemPlusJSONResponse) 
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetExcelImportReportRequestObject struct {
+	ReportId openapi_types.UUID `json:"reportId"`
+}
+
+type GetExcelImportReportResponseObject interface {
+	VisitGetExcelImportReportResponse(w http.ResponseWriter) error
+}
+
+type GetExcelImportReport200JSONResponse struct {
+	Created      *int                      `json:"created,omitempty"`
+	Dependencies *int                      `json:"dependencies,omitempty"`
+	Destination  *string                   `json:"destination,omitempty"`
+	Rescheduled  *[]map[string]interface{} `json:"rescheduled,omitempty"`
+	Sheet        *string                   `json:"sheet,omitempty"`
+}
+
+func (response GetExcelImportReport200JSONResponse) VisitGetExcelImportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetExcelImportReport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetExcelImportReport404ApplicationProblemPlusJSONResponse) VisitGetExcelImportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -31424,6 +33457,21 @@ func (response ReplaceWorkSchedule428ApplicationProblemPlusJSONResponse) VisitRe
 	return err
 }
 
+type ListSpaceIconsRequestObject struct {
+}
+
+type ListSpaceIconsResponseObject interface {
+	VisitListSpaceIconsResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceIcons200Response struct {
+}
+
+func (response ListSpaceIcons200Response) VisitListSpaceIconsResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
 type ListSpaceTemplatesRequestObject struct {
 }
 
@@ -31619,6 +33667,38 @@ func (response CreateSpace422ApplicationProblemPlusJSONResponse) VisitCreateSpac
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DiscoverSpacesRequestObject struct {
+	Params DiscoverSpacesParams
+}
+
+type DiscoverSpacesResponseObject interface {
+	VisitDiscoverSpacesResponse(w http.ResponseWriter) error
+}
+
+type DiscoverSpaces200Response struct {
+}
+
+func (response DiscoverSpaces200Response) VisitDiscoverSpacesResponse(w http.ResponseWriter) error {
+	w.WriteHeader(200)
+	return nil
+}
+
+type DiscoverSpaces403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DiscoverSpaces403ApplicationProblemPlusJSONResponse) VisitDiscoverSpacesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -31837,6 +33917,211 @@ func (response UpdateSpace428ApplicationProblemPlusJSONResponse) VisitUpdateSpac
 	return err
 }
 
+type ListSpaceAdminsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListSpaceAdminsResponseObject interface {
+	VisitListSpaceAdminsResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceAdmins200JSONResponse struct {
+	Items *[]struct {
+		GrantedAt *string `json:"granted_at,omitempty"`
+		Name      *string `json:"name,omitempty"`
+		UserId    *string `json:"user_id,omitempty"`
+	} `json:"items,omitempty"`
+}
+
+func (response ListSpaceAdmins200JSONResponse) VisitListSpaceAdminsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceAdmins404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceAdmins404ApplicationProblemPlusJSONResponse) VisitListSpaceAdminsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantSpaceAdminRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *GrantSpaceAdminJSONRequestBody
+}
+
+type GrantSpaceAdminResponseObject interface {
+	VisitGrantSpaceAdminResponse(w http.ResponseWriter) error
+}
+
+type GrantSpaceAdmin204Response struct {
+}
+
+func (response GrantSpaceAdmin204Response) VisitGrantSpaceAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type GrantSpaceAdmin403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GrantSpaceAdmin403ApplicationProblemPlusJSONResponse) VisitGrantSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantSpaceAdmin422ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantSpaceAdmin422ApplicationProblemPlusJSONResponse) VisitGrantSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeSpaceAdminRequestObject struct {
+	SpaceId SpaceId            `json:"spaceId"`
+	UserId  openapi_types.UUID `json:"userId"`
+}
+
+type RevokeSpaceAdminResponseObject interface {
+	VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error
+}
+
+type RevokeSpaceAdmin204Response struct {
+}
+
+func (response RevokeSpaceAdmin204Response) VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type RevokeSpaceAdmin403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeSpaceAdmin403ApplicationProblemPlusJSONResponse) VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeSpaceAdmin422ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeSpaceAdmin422ApplicationProblemPlusJSONResponse) VisitRevokeSpaceAdminResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpaceRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Params  ArchiveSpaceParams
+}
+
+type ArchiveSpaceResponseObject interface {
+	VisitArchiveSpaceResponse(w http.ResponseWriter) error
+}
+
+type ArchiveSpace200JSONResponse Space
+
+func (response ArchiveSpace200JSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpace403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ArchiveSpace403ApplicationProblemPlusJSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpace409ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveSpace409ApplicationProblemPlusJSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveSpace422ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveSpace422ApplicationProblemPlusJSONResponse) VisitArchiveSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListAutomationRulesRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -31974,7 +34259,10 @@ type DryRunAutomation200JSONResponse struct {
 		Index int  `json:"index"`
 	} `json:"conditions"`
 	ItemTitle string `json:"item_title"`
-	WouldRun  bool   `json:"would_run"`
+
+	// Trace Langkah berurutan: pemicu, tiap kondisi (holds/fails), lalu berhenti atau jalan
+	Trace    *[]string `json:"trace,omitempty"`
+	WouldRun bool      `json:"would_run"`
 }
 
 func (response DryRunAutomation200JSONResponse) VisitDryRunAutomationResponse(w http.ResponseWriter) error {
@@ -32022,6 +34310,73 @@ func (response DryRunAutomation404ApplicationProblemPlusJSONResponse) VisitDryRu
 type DryRunAutomation422ApplicationProblemPlusJSONResponse Problem
 
 func (response DryRunAutomation422ApplicationProblemPlusJSONResponse) VisitDryRunAutomationResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportAutomationRuleRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	Body    *ImportAutomationRuleJSONRequestBody
+}
+
+type ImportAutomationRuleResponseObject interface {
+	VisitImportAutomationRuleResponse(w http.ResponseWriter) error
+}
+
+type ImportAutomationRule201JSONResponse AutomationRule
+
+func (response ImportAutomationRule201JSONResponse) VisitImportAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportAutomationRule403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ImportAutomationRule403ApplicationProblemPlusJSONResponse) VisitImportAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportAutomationRule404ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportAutomationRule404ApplicationProblemPlusJSONResponse) VisitImportAutomationRuleResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ImportAutomationRule422ApplicationProblemPlusJSONResponse Problem
+
+func (response ImportAutomationRule422ApplicationProblemPlusJSONResponse) VisitImportAutomationRuleResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -32746,6 +35101,216 @@ func (response UpdateCustomField422ApplicationProblemPlusJSONResponse) VisitUpda
 	return err
 }
 
+type GetSpaceDefaultWorkflowsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type GetSpaceDefaultWorkflowsResponseObject interface {
+	VisitGetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceDefaultWorkflows200JSONResponse SpaceDefaultWorkflows
+
+func (response GetSpaceDefaultWorkflows200JSONResponse) VisitGetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDefaultWorkflows404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceDefaultWorkflows404ApplicationProblemPlusJSONResponse) VisitGetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceDefaultWorkflowsRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *SetSpaceDefaultWorkflowsJSONRequestBody
+}
+
+type SetSpaceDefaultWorkflowsResponseObject interface {
+	VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error
+}
+
+type SetSpaceDefaultWorkflows200JSONResponse SpaceDefaultWorkflows
+
+func (response SetSpaceDefaultWorkflows200JSONResponse) VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceDefaultWorkflows403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetSpaceDefaultWorkflows403ApplicationProblemPlusJSONResponse) VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceDefaultWorkflows422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceDefaultWorkflows422ApplicationProblemPlusJSONResponse) VisitSetSpaceDefaultWorkflowsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDeleteImpactRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type GetSpaceDeleteImpactResponseObject interface {
+	VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceDeleteImpact200JSONResponse map[string]interface{}
+
+func (response GetSpaceDeleteImpact200JSONResponse) VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDeleteImpact403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceDeleteImpact403ApplicationProblemPlusJSONResponse) VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceDeleteImpact404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSpaceDeleteImpact404ApplicationProblemPlusJSONResponse) VisitGetSpaceDeleteImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSpaceExcelExportRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *StartSpaceExcelExportJSONRequestBody
+}
+
+type StartSpaceExcelExportResponseObject interface {
+	VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error
+}
+
+type StartSpaceExcelExport202JSONResponse ExcelExport
+
+func (response StartSpaceExcelExport202JSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(202)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSpaceExcelExport404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response StartSpaceExcelExport404ApplicationProblemPlusJSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSpaceExcelExport422ApplicationProblemPlusJSONResponse Problem
+
+func (response StartSpaceExcelExport422ApplicationProblemPlusJSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type StartSpaceExcelExport429ApplicationProblemPlusJSONResponse Problem
+
+func (response StartSpaceExcelExport429ApplicationProblemPlusJSONResponse) VisitStartSpaceExcelExportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ImportProjectExcelRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 	Body    *multipart.Reader
@@ -33041,6 +35606,168 @@ func (response ListSpaceRootItems422ApplicationProblemPlusJSONResponse) VisitLis
 	return err
 }
 
+type JoinSpaceRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type JoinSpaceResponseObject interface {
+	VisitJoinSpaceResponse(w http.ResponseWriter) error
+}
+
+type JoinSpace200JSONResponse Space
+
+func (response JoinSpace200JSONResponse) VisitJoinSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type JoinSpace403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response JoinSpace403ApplicationProblemPlusJSONResponse) VisitJoinSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type JoinSpace404ApplicationProblemPlusJSONResponse Problem
+
+func (response JoinSpace404ApplicationProblemPlusJSONResponse) VisitJoinSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceMembersRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+}
+
+type ListSpaceMembersResponseObject interface {
+	VisitListSpaceMembersResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceMembers200JSONResponse struct {
+	Items []SpaceMember `json:"items"`
+}
+
+func (response ListSpaceMembers200JSONResponse) VisitListSpaceMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceMembers404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceMembers404ApplicationProblemPlusJSONResponse) VisitListSpaceMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Params  RestoreSpaceParams
+}
+
+type RestoreSpaceResponseObject interface {
+	VisitRestoreSpaceResponse(w http.ResponseWriter) error
+}
+
+type RestoreSpace200JSONResponse struct {
+	Space    *Space                                     `json:"space,omitempty"`
+	Warnings *[]RestoreSpace200JSONResponseBodyWarnings `json:"warnings,omitempty"`
+}
+
+func (response RestoreSpace200JSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpace403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RestoreSpace403ApplicationProblemPlusJSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpace409ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpace409ApplicationProblemPlusJSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpace422ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpace422ApplicationProblemPlusJSONResponse) VisitRestoreSpaceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceSharesRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -33195,6 +35922,53 @@ func (response ReplaceSpaceShares428ApplicationProblemPlusJSONResponse) VisitRep
 	return err
 }
 
+type TransferSpaceOwnershipRequestObject struct {
+	SpaceId SpaceId `json:"spaceId"`
+	Body    *TransferSpaceOwnershipJSONRequestBody
+}
+
+type TransferSpaceOwnershipResponseObject interface {
+	VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error
+}
+
+type TransferSpaceOwnership204Response struct {
+}
+
+func (response TransferSpaceOwnership204Response) VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type TransferSpaceOwnership403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response TransferSpaceOwnership403ApplicationProblemPlusJSONResponse) VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type TransferSpaceOwnership422ApplicationProblemPlusJSONResponse Problem
+
+func (response TransferSpaceOwnership422ApplicationProblemPlusJSONResponse) VisitTransferSpaceOwnershipResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceViewsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -33222,6 +35996,65 @@ type ListSpaceViews404ApplicationProblemPlusJSONResponse struct {
 }
 
 func (response ListSpaceViews404ApplicationProblemPlusJSONResponse) VisitListSpaceViewsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceWorkspaceRulesRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+}
+
+type ListSpaceWorkspaceRulesResponseObject interface {
+	VisitListSpaceWorkspaceRulesResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceWorkspaceRules200JSONResponse struct {
+	Items []struct {
+		Enabled bool                                                  `json:"enabled"`
+		Health  ListSpaceWorkspaceRules200JSONResponseBodyItemsHealth `json:"health"`
+		Id      openapi_types.UUID                                    `json:"id"`
+		Name    string                                                `json:"name"`
+	} `json:"items"`
+}
+
+func (response ListSpaceWorkspaceRules200JSONResponse) VisitListSpaceWorkspaceRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceWorkspaceRules403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceWorkspaceRules403ApplicationProblemPlusJSONResponse) VisitListSpaceWorkspaceRulesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceWorkspaceRules404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceWorkspaceRules404ApplicationProblemPlusJSONResponse) VisitListSpaceWorkspaceRulesResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -35617,7 +38450,7 @@ type StrictServerInterface interface {
 	// StartSso Mulai masuk (atau menautkan, link=1 butuh sesi) dan arahkan peramban ke penyedia identitas
 	// (GET /auth/sso/{kind}/start)
 	StartSso(ctx context.Context, request StartSsoRequestObject) (StartSsoResponseObject, error)
-	// DeleteAutomationRule Hapus aturan beserta versi dan lognya
+	// DeleteAutomationRule Arsipkan aturan (tidak menghapus versi, log, atau riwayat; aturan berhenti berjalan)
 	// (DELETE /automation-rules/{ruleId})
 	DeleteAutomationRule(ctx context.Context, request DeleteAutomationRuleRequestObject) (DeleteAutomationRuleResponseObject, error)
 	// GetAutomationRule Aturan beserta semua versinya
@@ -35626,21 +38459,57 @@ type StrictServerInterface interface {
 	// UpdateAutomationRule Ganti nama atau aktif/nonaktifkan; aktif hanya bila ada versi terbit. Pemilik atau admin
 	// (PATCH /automation-rules/{ruleId})
 	UpdateAutomationRule(ctx context.Context, request UpdateAutomationRuleRequestObject) (UpdateAutomationRuleResponseObject, error)
+	// ArchiveAutomationRule Arsipkan aturan dan matikan; riwayat tetap ada. Pemilik atau admin
+	// (POST /automation-rules/{ruleId}/archive)
+	ArchiveAutomationRule(ctx context.Context, request ArchiveAutomationRuleRequestObject) (ArchiveAutomationRuleResponseObject, error)
 	// SaveAutomationDraft Ganti draft (atau mulai versi berikutnya); versi terbit tidak pernah berubah
 	// (PUT /automation-rules/{ruleId}/draft)
 	SaveAutomationDraft(ctx context.Context, request SaveAutomationDraftRequestObject) (SaveAutomationDraftResponseObject, error)
+	// DuplicateAutomationRule Salin definisi terbaru menjadi aturan baru yang nonaktif dan belum terbit, milik yang menyalin
+	// (POST /automation-rules/{ruleId}/duplicate)
+	DuplicateAutomationRule(ctx context.Context, request DuplicateAutomationRuleRequestObject) (DuplicateAutomationRuleResponseObject, error)
+	// ExportAutomationRule Definisi terbaru sebagai berkas (tanpa id, pemilik, atau riwayat)
+	// (GET /automation-rules/{ruleId}/export)
+	ExportAutomationRule(ctx context.Context, request ExportAutomationRuleRequestObject) (ExportAutomationRuleResponseObject, error)
+	// TransferAutomationRule Pindahkan kepemilikan aturan. Hanya admin workspace; pemilik baru harus bisa menjalankan aturan di Space ini
+	// (POST /automation-rules/{ruleId}/owner)
+	TransferAutomationRule(ctx context.Context, request TransferAutomationRuleRequestObject) (TransferAutomationRuleResponseObject, error)
 	// PublishAutomationRule Terbitkan draft; versi sebelumnya dipensiunkan dalam satu transaksi
 	// (POST /automation-rules/{ruleId}/publish)
 	PublishAutomationRule(ctx context.Context, request PublishAutomationRuleRequestObject) (PublishAutomationRuleResponseObject, error)
+	// RestoreAutomationRule Pulihkan aturan yang diarsipkan sebagai aturan nonaktif; aktifkan lagi untuk memvalidasi ulang
+	// (POST /automation-rules/{ruleId}/restore)
+	RestoreAutomationRule(ctx context.Context, request RestoreAutomationRuleRequestObject) (RestoreAutomationRuleResponseObject, error)
 	// ListAutomationRuns Log eksekusi sebuah aturan, terbaru dulu (AUT-04)
 	// (GET /automation-rules/{ruleId}/runs)
 	ListAutomationRuns(ctx context.Context, request ListAutomationRunsRequestObject) (ListAutomationRunsResponseObject, error)
+	// SetAutomationTargets Ganti daftar Space target aturan Workspace (snapshot, bukan wildcard). Hanya admin workspace
+	// (POST /automation-rules/{ruleId}/targets)
+	SetAutomationTargets(ctx context.Context, request SetAutomationTargetsRequestObject) (SetAutomationTargetsResponseObject, error)
 	// ListDeadAutomationEvents Event yang diparkir pengirim setelah gagal berulang (hanya admin)
 	// (GET /automation/dead-events)
 	ListDeadAutomationEvents(ctx context.Context, request ListDeadAutomationEventsRequestObject) (ListDeadAutomationEventsResponseObject, error)
 	// ReplayAutomationEvent Antrekan ulang event (hanya admin); idempoten, hanya yang belum terjadi yang dicoba lagi
 	// (POST /automation/events/{eventId}/replay)
 	ReplayAutomationEvent(ctx context.Context, request ReplayAutomationEventRequestObject) (ReplayAutomationEventResponseObject, error)
+	// GetAutomationLimits Batas eksekusi per jam (rule, workspace, Space). Hanya admin workspace
+	// (GET /automation/limits)
+	GetAutomationLimits(ctx context.Context, request GetAutomationLimitsRequestObject) (GetAutomationLimitsResponseObject, error)
+	// SetAutomationLimits Ubah batas eksekusi. Setiap perubahan dicatat di audit
+	// (PUT /automation/limits)
+	SetAutomationLimits(ctx context.Context, request SetAutomationLimitsRequestObject) (SetAutomationLimitsResponseObject, error)
+	// ListAutomationTemplates Templat bawaan (data tetap, tanpa id)
+	// (GET /automation/templates)
+	ListAutomationTemplates(ctx context.Context, request ListAutomationTemplatesRequestObject) (ListAutomationTemplatesResponseObject, error)
+	// GetAutomationUsage Pemakaian dalam satu jam bergulir terhadap batas: aturan, Workspace, dan Space. Pemakaian yang sama dipakai untuk membatasi eksekusi
+	// (GET /automation/usage)
+	GetAutomationUsage(ctx context.Context, request GetAutomationUsageRequestObject) (GetAutomationUsageResponseObject, error)
+	// ListWorkspaceRules Aturan Workspace untuk admin workspace (metadata saja: tanpa judul item atau isi)
+	// (GET /automation/workspace-rules)
+	ListWorkspaceRules(ctx context.Context, request ListWorkspaceRulesRequestObject) (ListWorkspaceRulesResponseObject, error)
+	// CreateWorkspaceRule Buat aturan Workspace (draf tanpa target). Hanya admin workspace
+	// (POST /automation/workspace-rules)
+	CreateWorkspaceRule(ctx context.Context, request CreateWorkspaceRuleRequestObject) (CreateWorkspaceRuleResponseObject, error)
 	// GetBaselineVariance Selisih tanggal item terhadap baseline, dalam hari (positif = lebih lambat dari rencana)
 	// (GET /baselines/{baselineId}/variance)
 	GetBaselineVariance(ctx context.Context, request GetBaselineVarianceRequestObject) (GetBaselineVarianceResponseObject, error)
@@ -35779,6 +38648,9 @@ type StrictServerInterface interface {
 
 	// (GET /excel-exports/{exportId}/file)
 	DownloadProjectExcelExport(ctx context.Context, request DownloadProjectExcelExportRequestObject) (DownloadProjectExcelExportResponseObject, error)
+
+	// (GET /excel-imports/{reportId})
+	GetExcelImportReport(ctx context.Context, request GetExcelImportReportRequestObject) (GetExcelImportReportResponseObject, error)
 	// ListFeedback Umpan balik terbaru (maks 200); hanya admin (NAV-09)
 	// (GET /feedback)
 	ListFeedback(ctx context.Context, request ListFeedbackRequestObject) (ListFeedbackResponseObject, error)
@@ -36187,6 +39059,9 @@ type StrictServerInterface interface {
 	// ReplaceWorkSchedule Ganti work schedule (admin saja, SET-07)
 	// (PUT /settings/work-schedule)
 	ReplaceWorkSchedule(ctx context.Context, request ReplaceWorkScheduleRequestObject) (ReplaceWorkScheduleResponseObject, error)
+	// ListSpaceIcons Katalog kunci ikon Space (D-04)
+	// (GET /space-icons)
+	ListSpaceIcons(ctx context.Context, request ListSpaceIconsRequestObject) (ListSpaceIconsResponseObject, error)
 	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
 	// (GET /space-templates)
 	ListSpaceTemplates(ctx context.Context, request ListSpaceTemplatesRequestObject) (ListSpaceTemplatesResponseObject, error)
@@ -36199,6 +39074,9 @@ type StrictServerInterface interface {
 	// CreateSpace Buat Space (SPC-01)
 	// (POST /spaces)
 	CreateSpace(ctx context.Context, request CreateSpaceRequestObject) (CreateSpaceResponseObject, error)
+	// DiscoverSpaces Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul
+	// (GET /spaces/discover)
+	DiscoverSpaces(ctx context.Context, request DiscoverSpacesRequestObject) (DiscoverSpacesResponseObject, error)
 	// DeleteSpace Hapus Space beserta isinya ke Recycle bin; Personal space tidak bisa dihapus
 	// (DELETE /spaces/{spaceId})
 	DeleteSpace(ctx context.Context, request DeleteSpaceRequestObject) (DeleteSpaceResponseObject, error)
@@ -36208,6 +39086,18 @@ type StrictServerInterface interface {
 
 	// (PATCH /spaces/{spaceId})
 	UpdateSpace(ctx context.Context, request UpdateSpaceRequestObject) (UpdateSpaceResponseObject, error)
+
+	// (GET /spaces/{spaceId}/admins)
+	ListSpaceAdmins(ctx context.Context, request ListSpaceAdminsRequestObject) (ListSpaceAdminsResponseObject, error)
+	// GrantSpaceAdmin Jadikan anggota sebagai Space Admin (D-05)
+	// (POST /spaces/{spaceId}/admins)
+	GrantSpaceAdmin(ctx context.Context, request GrantSpaceAdminRequestObject) (GrantSpaceAdminResponseObject, error)
+	// RevokeSpaceAdmin Cabut Space Admin. Admin terakhir tidak bisa dicabut tanpa pengganti (D-05)
+	// (DELETE /spaces/{spaceId}/admins/{userId})
+	RevokeSpaceAdmin(ctx context.Context, request RevokeSpaceAdminRequestObject) (RevokeSpaceAdminResponseObject, error)
+	// ArchiveSpace Arsipkan Space (D-03). Hanya Space Admin atau admin Workspace
+	// (POST /spaces/{spaceId}/archive)
+	ArchiveSpace(ctx context.Context, request ArchiveSpaceRequestObject) (ArchiveSpaceResponseObject, error)
 	// ListAutomationRules Aturan otomasi sebuah Space (AUT-02); butuh hak Edit
 	// (GET /spaces/{spaceId}/automation-rules)
 	ListAutomationRules(ctx context.Context, request ListAutomationRulesRequestObject) (ListAutomationRulesResponseObject, error)
@@ -36217,6 +39107,9 @@ type StrictServerInterface interface {
 	// DryRunAutomation Uji definisi pada satu item tanpa menjalankan apa pun (AUT-05)
 	// (POST /spaces/{spaceId}/automation-rules/dry-run)
 	DryRunAutomation(ctx context.Context, request DryRunAutomationRequestObject) (DryRunAutomationResponseObject, error)
+	// ImportAutomationRule Buat draf nonaktif dari berkas ekspor; definisi divalidasi dan referensinya harus ada di Space ini
+	// (POST /spaces/{spaceId}/automation-rules/import)
+	ImportAutomationRule(ctx context.Context, request ImportAutomationRuleRequestObject) (ImportAutomationRuleResponseObject, error)
 	// ListBlueprints Blueprint di Space (butuh view pada Space; SPC-13)
 	// (GET /spaces/{spaceId}/blueprints)
 	ListBlueprints(ctx context.Context, request ListBlueprintsRequestObject) (ListBlueprintsResponseObject, error)
@@ -36253,6 +39146,18 @@ type StrictServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(ctx context.Context, request UpdateCustomFieldRequestObject) (UpdateCustomFieldResponseObject, error)
+	// GetSpaceDefaultWorkflows Workflow default Space untuk root Task dan Project (B)
+	// (GET /spaces/{spaceId}/default-workflows)
+	GetSpaceDefaultWorkflows(ctx context.Context, request GetSpaceDefaultWorkflowsRequestObject) (GetSpaceDefaultWorkflowsResponseObject, error)
+	// SetSpaceDefaultWorkflows Ganti default workflow Task dan Project. Item yang sudah ada tidak berubah (B)
+	// (PUT /spaces/{spaceId}/default-workflows)
+	SetSpaceDefaultWorkflows(ctx context.Context, request SetSpaceDefaultWorkflowsRequestObject) (SetSpaceDefaultWorkflowsResponseObject, error)
+	// GetSpaceDeleteImpact Pratinjau dampak hapus Space (D). Hanya membaca
+	// (GET /spaces/{spaceId}/delete-impact)
+	GetSpaceDeleteImpact(ctx context.Context, request GetSpaceDeleteImpactRequestObject) (GetSpaceDeleteImpactResponseObject, error)
+
+	// (POST /spaces/{spaceId}/excel-exports)
+	StartSpaceExcelExport(ctx context.Context, request StartSpaceExcelExportRequestObject) (StartSpaceExcelExportResponseObject, error)
 
 	// (POST /spaces/{spaceId}/excel-imports)
 	ImportProjectExcel(ctx context.Context, request ImportProjectExcelRequestObject) (ImportProjectExcelResponseObject, error)
@@ -36265,15 +39170,30 @@ type StrictServerInterface interface {
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(ctx context.Context, request ListSpaceRootItemsRequestObject) (ListSpaceRootItemsResponseObject, error)
+	// JoinSpace Ikuti Space Public; memberi akses Read saja (D-01)
+	// (POST /spaces/{spaceId}/join)
+	JoinSpace(ctx context.Context, request JoinSpaceRequestObject) (JoinSpaceResponseObject, error)
+	// ListSpaceMembers Anggota efektif Space beserta alasan aksesnya (D-06)
+	// (GET /spaces/{spaceId}/members)
+	ListSpaceMembers(ctx context.Context, request ListSpaceMembersRequestObject) (ListSpaceMembersResponseObject, error)
+	// RestoreSpace Pulihkan Space terarsip; mengembalikan peringatan yang harus diperiksa (D-03)
+	// (POST /spaces/{spaceId}/restore)
+	RestoreSpace(ctx context.Context, request RestoreSpaceRequestObject) (RestoreSpaceResponseObject, error)
 
 	// (GET /spaces/{spaceId}/shares)
 	ListSpaceShares(ctx context.Context, request ListSpaceSharesRequestObject) (ListSpaceSharesResponseObject, error)
 	// ReplaceSpaceShares Ganti seluruh daftar share Space (SPC-11)
 	// (PUT /spaces/{spaceId}/shares)
 	ReplaceSpaceShares(ctx context.Context, request ReplaceSpaceSharesRequestObject) (ReplaceSpaceSharesResponseObject, error)
+	// TransferSpaceOwnership Serah-terima kepemilikan secara eksplisit (D-05)
+	// (POST /spaces/{spaceId}/transfer-ownership)
+	TransferSpaceOwnership(ctx context.Context, request TransferSpaceOwnershipRequestObject) (TransferSpaceOwnershipResponseObject, error)
 
 	// (GET /spaces/{spaceId}/views)
 	ListSpaceViews(ctx context.Context, request ListSpaceViewsRequestObject) (ListSpaceViewsResponseObject, error)
+	// ListSpaceWorkspaceRules Aturan Workspace yang bekerja di Space ini: nama dan status saja (tanpa pemilik atau isi)
+	// (GET /spaces/{spaceId}/workspace-automation)
+	ListSpaceWorkspaceRules(ctx context.Context, request ListSpaceWorkspaceRulesRequestObject) (ListSpaceWorkspaceRulesResponseObject, error)
 	// DeleteSsoConfig Hapus penyedia beserta semua identitas tertaut (admin)
 	// (DELETE /sso/{kind})
 	DeleteSsoConfig(ctx context.Context, request DeleteSsoConfigRequestObject) (DeleteSsoConfigResponseObject, error)
@@ -37772,6 +40692,32 @@ func (sh *strictHandler) UpdateAutomationRule(w http.ResponseWriter, r *http.Req
 	}
 }
 
+// ArchiveAutomationRule operation middleware
+func (sh *strictHandler) ArchiveAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request ArchiveAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveAutomationRule(ctx, request.(ArchiveAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ArchiveAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitArchiveAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // SaveAutomationDraft operation middleware
 func (sh *strictHandler) SaveAutomationDraft(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
 	var request SaveAutomationDraftRequestObject
@@ -37805,6 +40751,91 @@ func (sh *strictHandler) SaveAutomationDraft(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// DuplicateAutomationRule operation middleware
+func (sh *strictHandler) DuplicateAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request DuplicateAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DuplicateAutomationRule(ctx, request.(DuplicateAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DuplicateAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DuplicateAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitDuplicateAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ExportAutomationRule operation middleware
+func (sh *strictHandler) ExportAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request ExportAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ExportAutomationRule(ctx, request.(ExportAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ExportAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ExportAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitExportAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// TransferAutomationRule operation middleware
+func (sh *strictHandler) TransferAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request TransferAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	var body TransferAutomationRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TransferAutomationRule(ctx, request.(TransferAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TransferAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TransferAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitTransferAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // PublishAutomationRule operation middleware
 func (sh *strictHandler) PublishAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
 	var request PublishAutomationRuleRequestObject
@@ -37824,6 +40855,32 @@ func (sh *strictHandler) PublishAutomationRule(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PublishAutomationRuleResponseObject); ok {
 		if err := validResponse.VisitPublishAutomationRuleResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreAutomationRule operation middleware
+func (sh *strictHandler) RestoreAutomationRule(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request RestoreAutomationRuleRequestObject
+
+	request.RuleId = ruleId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreAutomationRule(ctx, request.(RestoreAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RestoreAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitRestoreAutomationRuleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -37851,6 +40908,39 @@ func (sh *strictHandler) ListAutomationRuns(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListAutomationRunsResponseObject); ok {
 		if err := validResponse.VisitListAutomationRunsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetAutomationTargets operation middleware
+func (sh *strictHandler) SetAutomationTargets(w http.ResponseWriter, r *http.Request, ruleId openapi_types.UUID) {
+	var request SetAutomationTargetsRequestObject
+
+	request.RuleId = ruleId
+
+	var body SetAutomationTargetsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetAutomationTargets(ctx, request.(SetAutomationTargetsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetAutomationTargets")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetAutomationTargetsResponseObject); ok {
+		if err := validResponse.VisitSetAutomationTargetsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -37901,6 +40991,166 @@ func (sh *strictHandler) ReplayAutomationEvent(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReplayAutomationEventResponseObject); ok {
 		if err := validResponse.VisitReplayAutomationEventResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAutomationLimits operation middleware
+func (sh *strictHandler) GetAutomationLimits(w http.ResponseWriter, r *http.Request) {
+	var request GetAutomationLimitsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAutomationLimits(ctx, request.(GetAutomationLimitsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAutomationLimits")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAutomationLimitsResponseObject); ok {
+		if err := validResponse.VisitGetAutomationLimitsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetAutomationLimits operation middleware
+func (sh *strictHandler) SetAutomationLimits(w http.ResponseWriter, r *http.Request) {
+	var request SetAutomationLimitsRequestObject
+
+	var body SetAutomationLimitsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetAutomationLimits(ctx, request.(SetAutomationLimitsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetAutomationLimits")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetAutomationLimitsResponseObject); ok {
+		if err := validResponse.VisitSetAutomationLimitsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListAutomationTemplates operation middleware
+func (sh *strictHandler) ListAutomationTemplates(w http.ResponseWriter, r *http.Request) {
+	var request ListAutomationTemplatesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListAutomationTemplates(ctx, request.(ListAutomationTemplatesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListAutomationTemplates")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListAutomationTemplatesResponseObject); ok {
+		if err := validResponse.VisitListAutomationTemplatesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetAutomationUsage operation middleware
+func (sh *strictHandler) GetAutomationUsage(w http.ResponseWriter, r *http.Request, params GetAutomationUsageParams) {
+	var request GetAutomationUsageRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetAutomationUsage(ctx, request.(GetAutomationUsageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetAutomationUsage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetAutomationUsageResponseObject); ok {
+		if err := validResponse.VisitGetAutomationUsageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListWorkspaceRules operation middleware
+func (sh *strictHandler) ListWorkspaceRules(w http.ResponseWriter, r *http.Request) {
+	var request ListWorkspaceRulesRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWorkspaceRules(ctx, request.(ListWorkspaceRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWorkspaceRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWorkspaceRulesResponseObject); ok {
+		if err := validResponse.VisitListWorkspaceRulesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateWorkspaceRule operation middleware
+func (sh *strictHandler) CreateWorkspaceRule(w http.ResponseWriter, r *http.Request) {
+	var request CreateWorkspaceRuleRequestObject
+
+	var body CreateWorkspaceRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateWorkspaceRule(ctx, request.(CreateWorkspaceRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateWorkspaceRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateWorkspaceRuleResponseObject); ok {
+		if err := validResponse.VisitCreateWorkspaceRuleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -39251,6 +42501,32 @@ func (sh *strictHandler) DownloadProjectExcelExport(w http.ResponseWriter, r *ht
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DownloadProjectExcelExportResponseObject); ok {
 		if err := validResponse.VisitDownloadProjectExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetExcelImportReport operation middleware
+func (sh *strictHandler) GetExcelImportReport(w http.ResponseWriter, r *http.Request, reportId openapi_types.UUID) {
+	var request GetExcelImportReportRequestObject
+
+	request.ReportId = reportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetExcelImportReport(ctx, request.(GetExcelImportReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetExcelImportReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetExcelImportReportResponseObject); ok {
+		if err := validResponse.VisitGetExcelImportReportResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -43084,6 +46360,30 @@ func (sh *strictHandler) ReplaceWorkSchedule(w http.ResponseWriter, r *http.Requ
 	}
 }
 
+// ListSpaceIcons operation middleware
+func (sh *strictHandler) ListSpaceIcons(w http.ResponseWriter, r *http.Request) {
+	var request ListSpaceIconsRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceIcons(ctx, request.(ListSpaceIconsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceIcons")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceIconsResponseObject); ok {
+		if err := validResponse.VisitListSpaceIconsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceTemplates operation middleware
 func (sh *strictHandler) ListSpaceTemplates(w http.ResponseWriter, r *http.Request) {
 	var request ListSpaceTemplatesRequestObject
@@ -43196,6 +46496,32 @@ func (sh *strictHandler) CreateSpace(w http.ResponseWriter, r *http.Request) {
 	}
 }
 
+// DiscoverSpaces operation middleware
+func (sh *strictHandler) DiscoverSpaces(w http.ResponseWriter, r *http.Request, params DiscoverSpacesParams) {
+	var request DiscoverSpacesRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DiscoverSpaces(ctx, request.(DiscoverSpacesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DiscoverSpaces")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DiscoverSpacesResponseObject); ok {
+		if err := validResponse.VisitDiscoverSpacesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteSpace operation middleware
 func (sh *strictHandler) DeleteSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request DeleteSpaceRequestObject
@@ -43275,6 +46601,119 @@ func (sh *strictHandler) UpdateSpace(w http.ResponseWriter, r *http.Request, spa
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateSpaceResponseObject); ok {
 		if err := validResponse.VisitUpdateSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceAdmins operation middleware
+func (sh *strictHandler) ListSpaceAdmins(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListSpaceAdminsRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceAdmins(ctx, request.(ListSpaceAdminsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceAdmins")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceAdminsResponseObject); ok {
+		if err := validResponse.VisitListSpaceAdminsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GrantSpaceAdmin operation middleware
+func (sh *strictHandler) GrantSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GrantSpaceAdminRequestObject
+
+	request.SpaceId = spaceId
+
+	var body GrantSpaceAdminJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GrantSpaceAdmin(ctx, request.(GrantSpaceAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GrantSpaceAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GrantSpaceAdminResponseObject); ok {
+		if err := validResponse.VisitGrantSpaceAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeSpaceAdmin operation middleware
+func (sh *strictHandler) RevokeSpaceAdmin(w http.ResponseWriter, r *http.Request, spaceId SpaceId, userId openapi_types.UUID) {
+	var request RevokeSpaceAdminRequestObject
+
+	request.SpaceId = spaceId
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeSpaceAdmin(ctx, request.(RevokeSpaceAdminRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeSpaceAdmin")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeSpaceAdminResponseObject); ok {
+		if err := validResponse.VisitRevokeSpaceAdminResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ArchiveSpace operation middleware
+func (sh *strictHandler) ArchiveSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ArchiveSpaceParams) {
+	var request ArchiveSpaceRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveSpace(ctx, request.(ArchiveSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveSpace")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ArchiveSpaceResponseObject); ok {
+		if err := validResponse.VisitArchiveSpaceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -43367,6 +46806,39 @@ func (sh *strictHandler) DryRunAutomation(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DryRunAutomationResponseObject); ok {
 		if err := validResponse.VisitDryRunAutomationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ImportAutomationRule operation middleware
+func (sh *strictHandler) ImportAutomationRule(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID) {
+	var request ImportAutomationRuleRequestObject
+
+	request.SpaceId = spaceId
+
+	var body ImportAutomationRuleJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ImportAutomationRule(ctx, request.(ImportAutomationRuleRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ImportAutomationRule")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ImportAutomationRuleResponseObject); ok {
+		if err := validResponse.VisitImportAutomationRuleResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -43733,6 +47205,127 @@ func (sh *strictHandler) UpdateCustomField(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// GetSpaceDefaultWorkflows operation middleware
+func (sh *strictHandler) GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GetSpaceDefaultWorkflowsRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceDefaultWorkflows(ctx, request.(GetSpaceDefaultWorkflowsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceDefaultWorkflows")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceDefaultWorkflowsResponseObject); ok {
+		if err := validResponse.VisitGetSpaceDefaultWorkflowsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetSpaceDefaultWorkflows operation middleware
+func (sh *strictHandler) SetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request SetSpaceDefaultWorkflowsRequestObject
+
+	request.SpaceId = spaceId
+
+	var body SetSpaceDefaultWorkflowsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetSpaceDefaultWorkflows(ctx, request.(SetSpaceDefaultWorkflowsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetSpaceDefaultWorkflows")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetSpaceDefaultWorkflowsResponseObject); ok {
+		if err := validResponse.VisitSetSpaceDefaultWorkflowsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpaceDeleteImpact operation middleware
+func (sh *strictHandler) GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request GetSpaceDeleteImpactRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceDeleteImpact(ctx, request.(GetSpaceDeleteImpactRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceDeleteImpact")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceDeleteImpactResponseObject); ok {
+		if err := validResponse.VisitGetSpaceDeleteImpactResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// StartSpaceExcelExport operation middleware
+func (sh *strictHandler) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request StartSpaceExcelExportRequestObject
+
+	request.SpaceId = spaceId
+
+	var body StartSpaceExcelExportJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		if !errors.Is(err, io.EOF) {
+			sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+			return
+		}
+	} else {
+		request.Body = &body
+	}
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.StartSpaceExcelExport(ctx, request.(StartSpaceExcelExportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "StartSpaceExcelExport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(StartSpaceExcelExportResponseObject); ok {
+		if err := validResponse.VisitStartSpaceExcelExportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ImportProjectExcel operation middleware
 func (sh *strictHandler) ImportProjectExcel(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ImportProjectExcelRequestObject
@@ -43852,6 +47445,85 @@ func (sh *strictHandler) ListSpaceRootItems(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// JoinSpace operation middleware
+func (sh *strictHandler) JoinSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request JoinSpaceRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.JoinSpace(ctx, request.(JoinSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "JoinSpace")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(JoinSpaceResponseObject); ok {
+		if err := validResponse.VisitJoinSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceMembers operation middleware
+func (sh *strictHandler) ListSpaceMembers(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request ListSpaceMembersRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceMembers(ctx, request.(ListSpaceMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceMembers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceMembersResponseObject); ok {
+		if err := validResponse.VisitListSpaceMembersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreSpace operation middleware
+func (sh *strictHandler) RestoreSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params RestoreSpaceParams) {
+	var request RestoreSpaceRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreSpace(ctx, request.(RestoreSpaceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreSpace")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RestoreSpaceResponseObject); ok {
+		if err := validResponse.VisitRestoreSpaceResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceShares operation middleware
 func (sh *strictHandler) ListSpaceShares(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ListSpaceSharesRequestObject
@@ -43912,6 +47584,39 @@ func (sh *strictHandler) ReplaceSpaceShares(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// TransferSpaceOwnership operation middleware
+func (sh *strictHandler) TransferSpaceOwnership(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
+	var request TransferSpaceOwnershipRequestObject
+
+	request.SpaceId = spaceId
+
+	var body TransferSpaceOwnershipJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.TransferSpaceOwnership(ctx, request.(TransferSpaceOwnershipRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "TransferSpaceOwnership")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(TransferSpaceOwnershipResponseObject); ok {
+		if err := validResponse.VisitTransferSpaceOwnershipResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceViews operation middleware
 func (sh *strictHandler) ListSpaceViews(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ListSpaceViewsRequestObject
@@ -43931,6 +47636,32 @@ func (sh *strictHandler) ListSpaceViews(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListSpaceViewsResponseObject); ok {
 		if err := validResponse.VisitListSpaceViewsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceWorkspaceRules operation middleware
+func (sh *strictHandler) ListSpaceWorkspaceRules(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID) {
+	var request ListSpaceWorkspaceRulesRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceWorkspaceRules(ctx, request.(ListSpaceWorkspaceRulesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceWorkspaceRules")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceWorkspaceRulesResponseObject); ok {
+		if err := validResponse.VisitListSpaceWorkspaceRulesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

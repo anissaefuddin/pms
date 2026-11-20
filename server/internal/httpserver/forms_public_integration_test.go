@@ -44,6 +44,8 @@ func TestPublicFormLink(t *testing.T) {
 	f.share(intake, "user", editor.id, "editor")
 	f.share(intake, "user", reader.id, "read")
 	f.share(work, "user", editor.id, "editor")
+	f.share(intake, "user", admin.id, "full") // A1.2: the admin builds and links the form in its Space, with items placed in Work
+	f.share(work, "user", admin.id, "full")
 	progress := f.queryID("SELECT id::text FROM statuses WHERE name='In Progress' AND workflow_id=(SELECT id FROM workflows WHERE is_default)")
 	body := map[string]any{"name": "Public help", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
@@ -214,6 +216,8 @@ func TestConcurrentPublicFormSubmissionsAllSucceedOnce(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	intake, work := f.space("Intake"), f.space("Work")
+	f.share(work, "user", admin.id, "full")   // A1.2: admin creates this Space's content as an explicit member
+	f.share(intake, "user", admin.id, "full") // A1.2: the admin builds the form in the intake Space
 	body := map[string]any{"name": "Concurrent", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
 	}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": work}, "title_question": "subject"}}
@@ -257,6 +261,8 @@ func TestPublicConfirmationUsesTheFormsWording(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	intake, work := f.space("Intake"), f.space("Work")
+	f.share(work, "user", admin.id, "full")   // A1.2: admin creates this Space's content as an explicit member
+	f.share(intake, "user", admin.id, "full") // A1.2: the admin builds the form in the intake Space
 	body := map[string]any{"name": "Brand form", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},
 	}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": work}, "title_question": "subject",

@@ -12,6 +12,7 @@ func TestItemLists(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("List")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	parent := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Parent',$1) RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", parent, space)
 	active := f.queryID("SELECT id::text FROM statuses WHERE name='New'")
@@ -57,6 +58,7 @@ func TestItemListFiveHundred(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Large list")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.exec(`
 WITH batch AS (
  INSERT INTO items(type,title,created_by)

@@ -38,6 +38,10 @@ func TestNotificationWorkerHonoursEmailPreferences(t *testing.T) {
 	if _, err := pool.Exec(ctx, "INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space); err != nil {
 		t.Fatal(err)
 	}
+	// A1.3: a notification is delivered only to a recipient who can view the item; the recipient is an explicit member here.
+	if _, err := pool.Exec(ctx, "INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('space',$1,'user',$2,'full')", space, boot.AdminID); err != nil {
+		t.Fatal(err)
+	}
 	smtp := newFakeSMTP(t, false)
 	host, port, err := net.SplitHostPort(smtp.ln.Addr().String())
 	if err != nil {
@@ -93,5 +97,51 @@ func TestNotificationWorkerHonoursEmailPreferences(t *testing.T) {
 	send("comment")
 	if sent() != 9 {
 		t.Fatalf("task_changes muted or comment emailed: %d", sent())
+	}
+}
+
+// A1.7 regression: a notification about an item the recipient cannot view is never delivered, so notifications cannot leak
+// content across Spaces. The Workspace admin recipient has no grant on the item's Space here.
+func TestNotificationNeverLeaksAnItemTheRecipientCannotView(t *testing.T) {
+	ctx := context.Background()
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	boot, err := bootstrap.Run(ctx, pool, "Pilot", "admin@example.test", func(_ context.Context, _ pgx.Tx, _, _ string) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, "UPDATE users SET status='active',first_name='A',last_name='B',password_hash='x' WHERE id=$1", boot.AdminID); err != nil {
+		t.Fatal(err)
+	}
+	var space, item string
+	if err := pool.QueryRow(ctx, "INSERT INTO spaces(name,kind) VALUES ('Private','shared') RETURNING id::text").Scan(&space); err != nil {
+		t.Fatal(err)
+	}
+	if err := pool.QueryRow(ctx, "INSERT INTO items(type,title,created_by) VALUES ('task','Secret',$1) RETURNING id::text", boot.AdminID).Scan(&item); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := pool.Exec(ctx, "INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space); err != nil {
+		t.Fatal(err)
+	}
+	smtp := newFakeSMTP(t, false)
+	host, port, err := net.SplitHostPort(smtp.ln.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	worker := NotificationWorker{pool: pool, mail: &Worker{cfg: config.Config{SMTPHost: host, SMTPPort: port, SMTPFrom: "PMS <noreply@example.test>", PublicURL: "https://pilot.example.test"}}}
+	var id string
+	if err := pool.QueryRow(ctx, "INSERT INTO notifications(id,recipient_id,kind,item_id) VALUES (gen_random_uuid(),$1,'mention',$2) RETURNING id::text", boot.AdminID, item).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	if err := worker.Work(ctx, &river.Job[NotificationArgs]{Args: NotificationArgs{ID: id}}); err != nil {
+		t.Fatal(err)
+	}
+	smtp.mu.Lock()
+	defer smtp.mu.Unlock()
+	if n := len(smtp.messages); n != 0 {
+		t.Fatalf("a recipient without access received %d emails about a private item", n)
 	}
 }

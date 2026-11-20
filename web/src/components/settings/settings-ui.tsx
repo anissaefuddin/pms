@@ -39,7 +39,7 @@ const DirtyContext = createContext<() => void>(() => undefined);
 /** Sticky footer for batch-save forms: shows whether changes are waiting, with Cancel and Save. */
 export function SettingsSaveBar({ dirty, busy, onCancel }: { dirty: boolean; busy: boolean; onCancel: () => void }) {
   const { t } = useTranslation();
-  return <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur sm:-mx-8 sm:px-8">
+  return <div className="sticky bottom-0 -mx-4 flex items-center justify-between gap-3 border-t bg-background/95 px-4 py-3 backdrop-blur sm:-mx-6 sm:px-6">
     <p role="status" className="text-sm text-muted-foreground">{dirty ? t("settings.unsaved") : t("settings.allSaved")}</p>
     <div className="flex gap-2">
       <Button type="button" variant="outline" onClick={onCancel} disabled={busy || !dirty}>{t("settings.cancel")}</Button>

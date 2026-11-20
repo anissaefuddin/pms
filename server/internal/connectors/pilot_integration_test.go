@@ -59,6 +59,8 @@ func newPilot(t *testing.T) *pilot {
 	if err := pool.QueryRow(ctx, `INSERT INTO spaces(name,kind) VALUES ('Repo','shared') RETURNING id::text`).Scan(&p.space); err != nil {
 		t.Fatal(err)
 	}
+	// A Workspace admin has no implicit content access (A1): the pilot admin works in the Space through an explicit share.
+	exec(`INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('space',$1,'user',$2,'full')`, p.space, p.admin)
 	key := make([]byte, 32)
 	_, _ = rand.Read(key)
 	p.ghSrv = httptest.NewServer(p.gh)

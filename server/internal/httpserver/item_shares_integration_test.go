@@ -7,6 +7,7 @@ func TestItemSharesVersionedReplace(t *testing.T) {
 	admin := f.person("admin")
 	member := f.person("regular")
 	space := f.space("Shared")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Plan',$1) RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 	path := "/items/" + item + "/shares"

@@ -29,6 +29,9 @@
   "search.label": "Cari",
   "inbox.label": "Kotak masuk",
   "more.label": "Lainnya",
+  "favorites.label": "Favorit",
+  "recent.label": "Baru dibuka",
+  "item.actions": "Aksi lainnya untuk {{name}}",
   "inbox.unreadOnly": "Yang belum dibaca saja",
   "inbox.unread": "Belum dibaca",
   "inbox.readAll": "Tandai semua sudah dibaca",
@@ -99,7 +102,6 @@
   "blueprints": "Blueprint",
   "blueprintsUnavailable": "Blueprint belum tersedia",
   "resize": "Ubah ukuran sidebar",
-  "space.overview": "Ikhtisar Ruang",
   "space.tools": "Alat",
   "space.projects": "Proyek dan folder",
   "space.createIn": "Buat di {{name}}",
@@ -206,5 +208,12 @@
   "recycle.spaceFilter": "Filter menurut Ruang",
   "recycle.allSpaces": "Semua Ruang",
   "recycle.noMatch": "Tidak ada item terhapus yang cocok dengan filter ini.",
-  "space.settingsFor": "Pengaturan {{name}}"
+  "space.settingsFor": "Pengaturan {{name}}",
+  "inbox.event.import_summary": "Impor Excel selesai",
+  "inbox.reportUnavailable": "Laporan impor tidak tersedia.",
+  "inbox.report.created": "Item dibuat",
+  "inbox.report.dependencies": "Dependensi",
+  "inbox.report.rescheduled": "Baris dijadwal ulang",
+  "space.actionsFor": "Aksi untuk {{name}}",
+  "space.archived": "Diarsipkan"
 }

@@ -69,6 +69,7 @@ func TestSchedulingChain(t *testing.T) {
 	f := newFixture(t)
 	admin, observer := f.person("admin"), f.person("regular")
 	space := f.space("Scheduling chain")
+	f.share(space, "user", admin.id, "full") // A1.2: the schedule owner is an explicit member
 	f.share(space, "user", observer.id, "read")
 	scheduleHoliday(f, admin)
 
@@ -183,6 +184,7 @@ func TestSchedulingDependencyChanges(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Dependency scheduling")
+	f.share(space, "user", admin.id, "full") // A1.2: the schedule owner is an explicit member
 	scheduleHoliday(f, admin)
 	a := scheduledItem(f, admin, space, "Predecessor", "2026-01-13", "2026-01-15", 3)
 
@@ -236,6 +238,7 @@ func TestSchedulingDirectEditAndRecycleBin(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Active schedule")
+	f.share(space, "user", admin.id, "full") // A1.2: the schedule owner is an explicit member
 	a := scheduledItem(f, admin, space, "Predecessor", "2026-01-07", "2026-01-07", 1)
 	b := scheduledItem(f, admin, space, "Milestone", "2026-01-08", "2026-01-08", 0)
 	c := scheduledItem(f, admin, space, "Successor", "2026-01-09", "2026-01-09", 1)
@@ -271,6 +274,8 @@ func TestConcurrentSchedulingEdits(t *testing.T) {
 	f := newFixture(t)
 	first, second := f.person("admin"), f.person("admin")
 	space := f.space("Concurrent scheduling")
+	f.share(space, "user", first.id, "full") // A1.2: the two concurrent editors are explicit members
+	f.share(space, "user", second.id, "full")
 	a := scheduledItem(f, first, space, "First predecessor", "2026-01-05", "2026-01-05", 1)
 	c := scheduledItem(f, first, space, "Second predecessor", "2026-01-05", "2026-01-05", 1)
 	b := scheduledItem(f, first, space, "Successor", "2026-01-06", "2026-01-06", 1)
@@ -342,6 +347,9 @@ func TestSchedulingHiddenSuccessor(t *testing.T) {
 	admin, editor := f.person("admin"), f.person("regular")
 	rootObserver, tailObserver := f.person("regular"), f.person("regular")
 	source, hidden, visible := f.space("Source"), f.space("Hidden"), f.space("Visible")
+	for _, planned := range []string{source, hidden, visible} {
+		f.share(planned, "user", admin.id, "full") // A1.2: the planner owns every schedule in this scenario
+	}
 	f.share(source, "user", editor.id, "editor")
 	f.share(visible, "user", editor.id, "read")
 	f.share(source, "user", rootObserver.id, "read")

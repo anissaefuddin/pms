@@ -24,6 +24,7 @@ func TestDependencyLifecycle(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Dependencies")
+	f.share(space, "user", admin.id, "full") // A1.2: the schedule owner is an explicit member
 	a := dependencyItem(f, admin, space, "A")
 	b := dependencyItem(f, admin, space, "B")
 	c := dependencyItem(f, admin, space, "C")
@@ -91,6 +92,8 @@ func TestDependencyAccess(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, reader := f.person("admin"), f.person("regular"), f.person("regular")
 	first, second := f.space("Predecessor"), f.space("Successor")
+	f.share(first, "user", admin.id, "full")
+	f.share(second, "user", admin.id, "full") // A1.2: the planner owns both ends of the link
 	f.share(second, "user", editor.id, "editor")
 	f.share(first, "user", reader.id, "read")
 	f.share(second, "user", reader.id, "read")
@@ -143,6 +146,7 @@ func TestConcurrentDependenciesCannotCreateCycle(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Concurrent dependencies")
+	f.share(space, "user", admin.id, "full") // A1.2: the schedule owner is an explicit member
 	a := dependencyItem(f, admin, space, "A")
 	b := dependencyItem(f, admin, space, "B")
 
@@ -193,6 +197,7 @@ func TestQueryDependenciesAmongItems(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Gantt links")
+	f.share(space, "user", admin.id, "full") // A1.2: the schedule owner is an explicit member
 	a, b, c := dependencyItem(f, admin, space, "A"), dependencyItem(f, admin, space, "B"), dependencyItem(f, admin, space, "C")
 	f.want(f.call(admin, "POST", dependencyPath(b), dependencyInput(a, "FS")), 201, "a to b")
 	f.want(f.call(admin, "POST", dependencyPath(c), dependencyInput(b, "SS")), 201, "b to c")

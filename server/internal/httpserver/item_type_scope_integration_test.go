@@ -11,6 +11,8 @@ func TestItemTypeScope(t *testing.T) {
 	f.share(spaceA, "user", editorA.id, "editor")
 	f.share(spaceA, "user", reader.id, "read")
 	f.share(spaceB, "user", editorB.id, "editor")
+	f.share(spaceA, "user", admin.id, "full") // A1.2: the admin creates items in both Spaces to test type scope
+	f.share(spaceB, "user", admin.id, "full")
 
 	ws := f.call(admin, "POST", "/item-types", map[string]any{"key": "wsrisk", "name": "Workspace risk", "base": "task"})
 	f.want(ws, 201, "admin creates a Workspace type")

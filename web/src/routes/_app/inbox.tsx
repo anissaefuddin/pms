@@ -1,7 +1,7 @@
 import { formatDateTime, useProfile } from "@/lib/profile";
 import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Archive, Bell } from "lucide-react";
 import { api } from "@/lib/api";
@@ -9,6 +9,29 @@ import { listNotifications, notificationKey, type Notification } from "@/lib/not
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/auth/form-error";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+
+// The summary notification carries a typed reference to its import report; the report API checks access on every read.
+function reportIdOf(entry: Notification) {
+  return entry.reference?.kind === "excel_import_report" ? entry.reference.id : undefined;
+}
+
+// ImportReport shows what an import did, read from the report the summary links to.
+function ImportReport({ reportId }: { reportId: string }) {
+  const { t } = useTranslation();
+  const report = useQuery({
+    queryKey: ["excel-import-report", reportId],
+    queryFn: ({ signal }) => api<{ created: number; dependencies: number; rescheduled?: { row: number; key: string; start: string; finish?: string }[] }>(
+      `/api/v1/excel-imports/${reportId}`, { signal }),
+    retry: false,
+  });
+  if (report.isPending) return <p className="text-sm">{t("items.loading")}</p>;
+  if (report.isError) return <FormError message={t("nav.inbox.reportUnavailable")} />;
+  return <dl className="grid grid-cols-2 gap-1 rounded border p-2 text-sm">
+    <dt>{t("nav.inbox.report.created")}</dt><dd>{report.data.created}</dd>
+    <dt>{t("nav.inbox.report.dependencies")}</dt><dd>{report.data.dependencies}</dd>
+    <dt>{t("nav.inbox.report.rescheduled")}</dt><dd>{report.data.rescheduled?.length ?? 0}</dd>
+  </dl>;
+}
 
 export const Route = createFileRoute("/_app/inbox")({
   validateSearch: (search: Record<string, unknown>): { unread?: boolean; box?: Box } => ({
@@ -136,6 +159,7 @@ function Inbox() {
           <p className="text-sm font-medium">{eventText(selected)}</p>
           {selected.recipient && box === "sent" && <p className="text-sm text-muted-foreground">{t("nav.inbox.sentTo", { name: selected.recipient.name })}</p>}
           {selected.snippet && <p className="whitespace-pre-wrap text-sm">{selected.snippet}</p>}
+          {reportIdOf(selected) && <ImportReport reportId={reportIdOf(selected)!} />}
           <time className="block text-xs text-muted-foreground" dateTime={selected.created_at}>{formatDateTime(selected.created_at, profile)}</time>
           {selected.item_id && <Link className="text-sm underline" to="/tasks/$itemId" params={{ itemId: selected.item_id }}>{t("nav.inbox.open")}</Link>}
           {!selected.item_id && selected.space_id && <Link className="text-sm underline" to="/spaces/$spaceId" params={{ spaceId: selected.space_id }}>{t("nav.inbox.open")}</Link>}

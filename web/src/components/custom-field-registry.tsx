@@ -29,15 +29,19 @@ const selectClass = "h-9 rounded-lg border border-input bg-background px-2 text-
  * Creating, editing, and archive confirmation share the same components as the Space dialog. Workspace fields need an administrator;
  * a Space's fields need the Space's full role, which the server checks on every write.
  */
-export function CustomFieldRegistry() {
+/** The Workspace custom-field registry. `spaceId` pins it to one Space (C: Space Settings > Custom fields); the same components then manage that Space's fields. */
+export function CustomFieldRegistry({ spaceId: pinnedSpaceId }: { spaceId?: string } = {}) {
   const { t, i18n } = useTranslation();
   const client = useQueryClient();
   const isAdmin = useProfile()?.user_type === "admin";
   const spaces = useSpaces();
   const manageable = (spaces.data ?? []).filter((space) => can(space, "share"));
-  const [scope, setScope] = useState<Scope>(isAdmin ? "workspace" : "space");
+  const [scope, setScopeState] = useState<Scope>(pinnedSpaceId ? "space" : isAdmin ? "workspace" : "space");
+  const setScope = (next: Scope) => { if (!pinnedSpaceId) setScopeState(next); };
   const [spaceId, setSpaceId] = useState("");
-  const chosenSpace = manageable.find((space) => space.id === spaceId) ?? manageable[0];
+  const chosenSpace = pinnedSpaceId
+    ? spaces.data?.find((space) => space.id === pinnedSpaceId) ?? (pinnedSpaceId ? { id: pinnedSpaceId, name: "" } as (typeof manageable)[number] : undefined)
+    : manageable.find((space) => space.id === spaceId) ?? manageable[0];
   const [search, setSearch] = useState("");
   const [status, setStatus] = useState<Status>("all");
   const [sort, setSort] = useState<{ key: SortKey; dir: 1 | -1 }>({ key: "name", dir: 1 });
@@ -126,9 +130,9 @@ export function CustomFieldRegistry() {
     </div>
 
     <div className="flex flex-wrap items-center gap-3">
-      <SegmentedControl aria-label={t("settings.customFields.scopeLabel")} value={scope}
+      {!pinnedSpaceId && <SegmentedControl aria-label={t("settings.customFields.scopeLabel")} value={scope}
         items={SCOPES.map((value) => ({ value, label: t(`settings.customFields.scope.${value}`) }))}
-        onChange={(value) => { setScope(value as Scope); setArchiving(null); setDrawer(null); setActionError(""); }} />
+        onChange={(value) => { setScope(value as Scope); setArchiving(null); setDrawer(null); setActionError(""); }} />}
       {scope === "space" && <label className="flex items-center gap-2 text-sm">
         <span>{t("settings.customFields.spaceLabel")}</span>
         <select className={selectClass} value={chosenSpace?.id ?? ""} disabled={manageable.length === 0}

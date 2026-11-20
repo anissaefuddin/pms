@@ -8,6 +8,9 @@ func TestFormBranchingBlueprintItem(t *testing.T) {
 	f := newFixture(t)
 	admin, editor, requester := f.person("admin"), f.person("regular"), f.person("regular")
 	intake, work, other := f.space("Intake"), f.space("Work"), f.space("Other")
+	for _, sp := range []string{intake, work, other} {
+		f.share(sp, "user", admin.id, "full") // A1.2: the admin builds the routed items across the scenario's Spaces
+	}
 	f.share(intake, "user", editor.id, "editor")
 	f.share(work, "user", editor.id, "editor")
 	f.want(f.call(admin, "POST", "/item-types", map[string]any{"key": "bug", "name": "Bug", "base": "task"}), 201, "bug type")

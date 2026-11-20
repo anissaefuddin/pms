@@ -13,6 +13,7 @@ func TestAttachmentVersionsAreImmutableAndPolicyChecked(t *testing.T) {
 	f := newFixture(t)
 	owner, reader, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("Versions")
+	f.share(space, "user", owner.id, "full") // A1.2: the owner creates the item and its attachments as an explicit member
 	f.share(space, "user", reader.id, "read")
 	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Spec',$1) RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)

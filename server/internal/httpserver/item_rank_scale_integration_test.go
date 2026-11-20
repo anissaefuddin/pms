@@ -96,6 +96,7 @@ func TestRankingWithLegacyLongRanks(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.space("Legacy rank")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	parent := f.call(admin, "POST", "/items", map[string]any{"type": "folder", "title": "Parent", "locations": []map[string]any{{"space_id": space}}})
 	f.want(parent, 201, "parent")
 	pid := parent.body["id"].(string)

@@ -21,6 +21,8 @@ func setupScopedForm(t *testing.T, f *fixture) scopeSetup {
 	f.share(s.intake, "user", s.editor.id, "editor")
 	f.share(s.work, "user", s.editor.id, "editor")
 	f.share(s.other, "user", s.editor.id, "full")
+	f.share(s.intake, "user", s.admin.id, "full") // A1.2: the admin builds and links the form in intake, with destination work
+	f.share(s.work, "user", s.admin.id, "full")
 	progress := f.queryID("SELECT id::text FROM statuses WHERE name='In Progress' AND workflow_id=(SELECT id FROM workflows WHERE is_default)")
 	body := map[string]any{"name": "Scoped help", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
 		{"key": "subject", "kind": "single_line", "label": "Subject", "required": true},

@@ -14,6 +14,7 @@ func lockFixture(t *testing.T) (f *fixture, admin *person, space string, mk func
 	f = newFixture(t)
 	admin = f.person("admin")
 	space = f.space("Work")
+	f.share(space, "user", admin.id, "full") // A1.2: the admin builds this Space's hierarchy as an explicit member
 	mk = func(parent, title string) reply {
 		loc := map[string]any{"space_id": space}
 		if parent != "" {

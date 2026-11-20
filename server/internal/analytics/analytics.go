@@ -85,6 +85,9 @@ type Row struct {
 type Result struct {
 	Rows  []Row   `json:"rows"`
 	Total float64 `json:"total"`
+	// Operational is set on an operational aggregate (A1.3). Suppressed counts groups hidden for being too small.
+	Operational bool `json:"operational,omitempty"`
+	Suppressed  int  `json:"suppressed,omitempty"`
 }
 
 // fieldRef stands for the parameter that carries the custom field id; build replaces it.
@@ -353,6 +356,13 @@ func ratio(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q, num Q
 }
 
 func runPlain(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query) (Result, error) {
+	return runGrouped(ctx, pool, actor, q, false)
+}
+
+// runGrouped is the one calculation path. Regular reports drop every row whose item the actor may not view. An operational
+// aggregate (operational=true, see RunOperational) skips that per-item gate because it returns no item, only groups, and
+// hides groups with fewer than MinGroupItems distinct items.
+func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query, operational bool) (Result, error) {
 	ctx, cancel := context.WithTimeout(ctx, Timeout)
 	defer cancel()
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
@@ -371,7 +381,7 @@ func runPlain(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Que
 		return Result{}, mapErr(err)
 	}
 	visible := map[string]bool{}
-	for start := 0; start < len(hits); {
+	for start := 0; !operational && start < len(hits); {
 		ids := []string{}
 		for ; start < len(hits) && len(ids) < 1000; start++ {
 			if id := hits[start].itemID; !visible[id] && !slices.Contains(ids, id) {
@@ -388,15 +398,36 @@ func runPlain(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Que
 	}
 	type key struct{ g, b string }
 	sums, groups, breaks := map[key]float64{}, map[string]Label{}, map[string]Label{}
+	members := map[string]map[string]bool{} // distinct items per group, for the operational privacy threshold
 	var total float64
 	for _, h := range hits {
-		if !visible[h.itemID] {
+		if !operational && !visible[h.itemID] {
 			continue
 		}
 		sums[key{h.gKey, h.bKey}] += h.value
-		total += h.value
+		if members[h.gKey] == nil {
+			members[h.gKey] = map[string]bool{}
+		}
+		members[h.gKey][h.itemID] = true
 		groups[h.gKey] = Label{h.gKey, h.gLabel}
 		breaks[h.bKey] = Label{h.bKey, h.bLabel}
+	}
+	suppressed := 0
+	if operational {
+		for k := range sums {
+			if len(members[k.g]) < MinGroupItems {
+				delete(sums, k)
+				suppressed++
+			}
+		}
+		// The total covers only the groups shown, so the hidden ones cannot be recovered by subtraction.
+		for _, v := range sums {
+			total += v
+		}
+	} else {
+		for _, v := range sums {
+			total += v
+		}
 	}
 	capacity := 0.0
 	if q.Metric == "utilization" {
@@ -404,7 +435,7 @@ func runPlain(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Que
 			return Result{}, mapErr(err)
 		}
 	}
-	out := Result{Rows: []Row{}, Total: total}
+	out := Result{Rows: []Row{}, Total: total, Operational: operational, Suppressed: suppressed}
 	for k, v := range sums {
 		row := Row{Group: groups[k.g], Value: v}
 		if q.BreakBy != "" {
@@ -811,4 +842,30 @@ func TemplateByKey(key string) (Template, bool) {
 		}
 	}
 	return Template{}, false
+}
+
+// MinGroupItems is the smallest number of distinct items a group must have to appear in an operational aggregate.
+const MinGroupItems = 5
+
+// RunOperational answers a Workspace-level aggregate under the operational-reporting contract (A1.3). The caller must hold
+// CanViewOperationalReport. Only group counts or sums come back: no item rows, no break-down, no cost (finance has its own
+// authorization), and groups below MinGroupItems are suppressed. The caller audits the use.
+func RunOperational(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Query) (Result, error) {
+	if !policy.CanViewOperationalReport(actor) {
+		return Result{}, items.ErrForbidden
+	}
+	if err := q.Validate(); err != nil {
+		return Result{}, err
+	}
+	if q.Metric == "actual_cost_minor" {
+		return Result{}, items.ErrForbidden // financial reporting needs its own authorization
+	}
+	if q.BreakBy != "" {
+		return Result{}, items.ErrForbidden // no drill-down: a second dimension would narrow groups until they identify people
+	}
+	switch q.Metric {
+	case "completion_percent", "avg_field":
+		return Result{}, items.ErrForbidden // derived metrics go through the regular path, whose content gate applies
+	}
+	return runGrouped(ctx, pool, actor, q, true)
 }

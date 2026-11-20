@@ -121,5 +121,30 @@ export function toggleOpen(ids: readonly string[], id: string): string[] {
   return ids.includes(id) ? ids.filter((entry) => entry !== id) : [...ids, id];
 }
 
+export type RecentEntry = { id: string; title: string; type: string };
+export const RECENT_MAX = 5;
+export const recentKey = (userId: string) => `pms:sidebar-recent:${userId}`;
+
+/** Item terakhir dibuka dari sidebar (per pengguna dan per perangkat). Entri rusak dibuang. */
+export function readRecent(userId: string): RecentEntry[] {
+  try {
+    const parsed = JSON.parse(read(recentKey(userId)) ?? "[]");
+    return Array.isArray(parsed)
+      ? parsed.filter((e) => typeof e?.id === "string" && typeof e?.title === "string").slice(0, RECENT_MAX)
+      : [];
+  } catch {
+    return [];
+  }
+}
+
+export function writeRecent(userId: string, list: readonly RecentEntry[]) {
+  write(recentKey(userId), JSON.stringify(list));
+}
+
+/** Item yang baru dibuka ke paling depan; satu item hanya muncul sekali. */
+export function pushRecent(list: readonly RecentEntry[], entry: RecentEntry): RecentEntry[] {
+  return [entry, ...list.filter((e) => e.id !== entry.id)].slice(0, RECENT_MAX);
+}
+
 /** Kelas tema sidebar. Default terang; ganti ke "sidebar-navy" setelah D-84 disetujui. */
 export const SIDEBAR_THEME = "sidebar-navy";

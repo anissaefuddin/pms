@@ -18,7 +18,8 @@ func TestReportSubscriptionsAreDeliveredOncePerSlotWithTheSubscribersRights(t *t
 		t.Fatalf("queue with the digest job: %v", err)
 	}
 	admin, reader, stranger := f.person("admin"), f.person("regular"), f.person("regular")
-	shared, secret := f.space("Digest shared"), f.space("Digest secret")
+	shared, secret := f.space("Digest shared"), f.spaceWithoutAdmins("Digest secret")
+	f.share(shared, "user", admin.id, "full") // A1.2: admin creates this Space's content as an explicit member
 	f.share(shared, "user", reader.id, "read")
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	task := func(space, title string) string {
@@ -93,9 +94,10 @@ FROM users u WHERE u.id = rs.user_id`)
 	if n := deliver(); n != 2 || sent[0].To == sent[1].To {
 		t.Fatalf("next week both subscribers are due once, got %d", n)
 	}
+	// A1.3: a Workspace admin's digest must not carry the total of Spaces the admin holds no grant on.
 	for _, m := range sent {
-		if m.To == f.queryID("SELECT email::text FROM users WHERE id=$1", admin.id) && !strings.Contains(m.Message, "Total: 630") {
-			t.Fatalf("the admin sees every Space:\n%s", m.Message)
+		if m.To == f.queryID("SELECT email::text FROM users WHERE id=$1", admin.id) && strings.Contains(m.Message, "Total: 630") {
+			t.Fatalf("the admin is not shown every Space:\n%s", m.Message)
 		}
 	}
 
