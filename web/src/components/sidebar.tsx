@@ -373,7 +373,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
       {can(space as SpaceType, EDIT_CAPABILITY) && <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
           aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
-        <DropdownMenuContent align="start">
+        <DropdownMenuContent align="start" sideOffset={6} className="w-44">
           {/* Rename follows the same rule as the Space General tab: not for a personal or archived Space. */}
           {(space as SpaceType).kind !== "personal" && !(space as SpaceType).archived && <DropdownMenuItem onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
           <DropdownMenuItem onClick={() => void navigate({ to: "/spaces/$spaceId/settings/$tab", params: { spaceId: space.id, tab: "general" } })}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>
@@ -398,6 +398,7 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
         </>}
       </div>
       {/* The Space's projects and folders sit directly under the Space; the create action is on the Space row. Filter narrows the top level only. */}
+      <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.space.projects")}</p>
       <input type="search" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}
         aria-label={t("nav.space.filterProjects", { name })} placeholder={t("nav.space.filterProjectsPlaceholder")}
         className="mx-2 w-[calc(100%-1rem)] rounded border border-nav-hover bg-transparent px-2 py-1 text-xs text-nav-text placeholder:text-nav-muted" />
@@ -420,13 +421,15 @@ function ItemTree({ id, space = false, onEmpty, filter = "" }: { id: string; spa
     {query.isPending && <li className="p-1 text-xs" role="status">{t("items.loading")}</li>}
     {query.isError && <li><Button variant="link" size="sm" className="text-nav-text" onClick={() => void query.refetch()}>{t("items.retry")}</Button></li>}
     {query.data?.filter((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase()))
-      .map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} />)}
+      .map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} seq={item.seq} />)}
     {filter.trim() && query.isSuccess && !query.data?.some((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase())) &&
       <li className="p-1 text-xs text-nav-muted">{t("nav.space.noProjectMatch")}</li>}
   </ul>;
 }
 
-function Branch({ id, name, type }: { id: string; name: string; type?: string }) {
+function Branch({ id, name, type, seq }: { id: string; name: string; type?: string; seq?: number }) {
+  // Long titles that share a prefix are shortened and keep their number, so rows stay tellable apart; the full name is in title.
+  const shown = seq !== undefined && name.length > 24 ? `${name.slice(0, 20).trimEnd()}… · #${seq}` : name;
   const { t } = useTranslation();
   const client = useQueryClient();
   const stars = useStars();
@@ -454,7 +457,7 @@ function Branch({ id, name, type }: { id: string; name: string; type?: string })
             setExpanded(event.key === "ArrowRight");
           }
         }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>}
-      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} activeProps={activeLink} onClick={openItem}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
+      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} aria-label={name} activeProps={activeLink} onClick={openItem}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{shown}</span></span></Link>
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`${treeToggle} ${revealOnHover}`}
           aria-label={t("nav.item.actions", { name })} title={t("nav.item.actions", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
