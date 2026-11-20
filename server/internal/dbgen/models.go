@@ -714,6 +714,14 @@ type Blueprint struct {
 	OwnerID   pgtype.UUID        `json:"owner_id"`
 }
 
+type BlueprintUse struct {
+	ID          pgtype.UUID        `json:"id"`
+	BlueprintID pgtype.UUID        `json:"blueprint_id"`
+	UsedBy      pgtype.UUID        `json:"used_by"`
+	RootItemID  pgtype.UUID        `json:"root_item_id"`
+	UsedAt      pgtype.Timestamptz `json:"used_at"`
+}
+
 type Comment struct {
 	ID        pgtype.UUID        `json:"id"`
 	ItemID    pgtype.UUID        `json:"item_id"`
@@ -850,6 +858,14 @@ type DomainEvent struct {
 	Attempts      int32              `json:"attempts"`
 	LastError     pgtype.Text        `json:"last_error"`
 	OriginSpaceID pgtype.UUID        `json:"origin_space_id"`
+}
+
+type ExcelImportReport struct {
+	ID        pgtype.UUID        `json:"id"`
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Report    []byte             `json:"report"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
 type Feedback struct {
@@ -1019,16 +1035,18 @@ type LoginCode struct {
 }
 
 type Notification struct {
-	ID          pgtype.UUID        `json:"id"`
-	RecipientID pgtype.UUID        `json:"recipient_id"`
-	ActorID     pgtype.UUID        `json:"actor_id"`
-	Kind        string             `json:"kind"`
-	ItemID      pgtype.UUID        `json:"item_id"`
-	SpaceID     pgtype.UUID        `json:"space_id"`
-	Snippet     pgtype.Text        `json:"snippet"`
-	ReadAt      pgtype.Timestamptz `json:"read_at"`
-	ArchivedAt  pgtype.Timestamptz `json:"archived_at"`
-	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	ID            pgtype.UUID        `json:"id"`
+	RecipientID   pgtype.UUID        `json:"recipient_id"`
+	ActorID       pgtype.UUID        `json:"actor_id"`
+	Kind          string             `json:"kind"`
+	ItemID        pgtype.UUID        `json:"item_id"`
+	SpaceID       pgtype.UUID        `json:"space_id"`
+	Snippet       pgtype.Text        `json:"snippet"`
+	ReadAt        pgtype.Timestamptz `json:"read_at"`
+	ArchivedAt    pgtype.Timestamptz `json:"archived_at"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+	ReferenceKind pgtype.Text        `json:"reference_kind"`
+	ReferenceID   pgtype.UUID        `json:"reference_id"`
 }
 
 type OauthClient struct {
@@ -1078,6 +1096,9 @@ type ProjectExcelExport struct {
 	Workbook       []byte             `json:"workbook"`
 	ItemIds        []pgtype.UUID      `json:"item_ids"`
 	IncludesFields bool               `json:"includes_fields"`
+	Scope          string             `json:"scope"`
+	TotalItems     int32              `json:"total_items"`
+	ProcessedItems int32              `json:"processed_items"`
 }
 
 type ProjectExcelImport struct {
@@ -1217,6 +1238,17 @@ type Space struct {
 	DeletedBy        pgtype.UUID        `json:"deleted_by"`
 	Locked           bool               `json:"locked"`
 	CreateMenuHidden []string           `json:"create_menu_hidden"`
+	Visibility       string             `json:"visibility"`
+	ArchivedAt       pgtype.Timestamptz `json:"archived_at"`
+	ArchivedBy       pgtype.UUID        `json:"archived_by"`
+	IconKey          pgtype.Text        `json:"icon_key"`
+}
+
+type SpaceAdmin struct {
+	SpaceID   pgtype.UUID        `json:"space_id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	GrantedBy pgtype.UUID        `json:"granted_by"`
+	GrantedAt pgtype.Timestamptz `json:"granted_at"`
 }
 
 type SpaceBookmark struct {
@@ -1229,6 +1261,14 @@ type SpaceBookmark struct {
 	CreatedBy   pgtype.UUID        `json:"created_by"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+type SpaceDefaultWorkflow struct {
+	SpaceID    pgtype.UUID        `json:"space_id"`
+	BaseType   string             `json:"base_type"`
+	WorkflowID pgtype.UUID        `json:"workflow_id"`
+	SetBy      pgtype.UUID        `json:"set_by"`
+	SetAt      pgtype.Timestamptz `json:"set_at"`
 }
 
 type SpaceTemplateRun struct {
