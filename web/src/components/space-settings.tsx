@@ -234,7 +234,7 @@ function LifecycleSection({ space, me }: { space: Space; me?: CurrentUser }) {
   const [pending, setPending] = useState<null | "public" | "private" | "archive" | "restore">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const canAdminister = me?.user_type === "admin" || !!space.is_space_admin;
+  const canAdminister = !!space.is_space_admin; // D-SA1: a workspace admin without the explicit role is not a Space Admin
   if (!canAdminister) return null;
   const isPublic = space.visibility === "public";
 
@@ -364,7 +364,7 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
     queryKey: ["space-admins", space.id],
     queryFn: async () => (await api<{ items: SpaceAdmin[] }>(`/api/v1/spaces/${space.id}/admins`)).items,
   });
-  const canAdminister = me?.user_type === "admin" || !!space.is_space_admin;
+  const canAdminister = !!space.is_space_admin; // D-SA1: a workspace admin without the explicit role is not a Space Admin
   const adminIds = new Set((admins.data ?? []).map((a) => a.user_id));
   // S-1: only an admin or regular user can be offered the role; the backend refuses the others with 422.
   const candidates = members.filter((m) => !adminIds.has(m.user_id) && (m.user_type === "admin" || m.user_type === "regular"));
