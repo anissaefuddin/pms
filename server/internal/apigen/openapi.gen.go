@@ -1950,6 +1950,42 @@ func (e NotificationKind) Valid() bool {
 	}
 }
 
+// Defines values for OverviewTimelineItemStatusGroup.
+const (
+	OverviewTimelineItemStatusGroupActive   OverviewTimelineItemStatusGroup = "active"
+	OverviewTimelineItemStatusGroupDeferred OverviewTimelineItemStatusGroup = "deferred"
+)
+
+// Valid indicates whether the value is a known member of the OverviewTimelineItemStatusGroup enum.
+func (e OverviewTimelineItemStatusGroup) Valid() bool {
+	switch e {
+	case OverviewTimelineItemStatusGroupActive:
+		return true
+	case OverviewTimelineItemStatusGroupDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for OverviewTimelineProjectStatusGroup.
+const (
+	OverviewTimelineProjectStatusGroupActive   OverviewTimelineProjectStatusGroup = "active"
+	OverviewTimelineProjectStatusGroupDeferred OverviewTimelineProjectStatusGroup = "deferred"
+)
+
+// Valid indicates whether the value is a known member of the OverviewTimelineProjectStatusGroup enum.
+func (e OverviewTimelineProjectStatusGroup) Valid() bool {
+	switch e {
+	case OverviewTimelineProjectStatusGroupActive:
+		return true
+	case OverviewTimelineProjectStatusGroupDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for PrincipalType.
 const (
 	PrincipalTypeGroup PrincipalType = "group"
@@ -3066,6 +3102,174 @@ const (
 func (e ApproveOAuthAuthorizeJSONBodyCodeChallengeMethod) Valid() bool {
 	switch e {
 	case S256:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverviewParamsSort.
+const (
+	GetOverviewParamsSortLastActivity GetOverviewParamsSort = "last_activity"
+	GetOverviewParamsSortName         GetOverviewParamsSort = "name"
+	GetOverviewParamsSortOverdue      GetOverviewParamsSort = "overdue"
+	GetOverviewParamsSortProgress     GetOverviewParamsSort = "progress"
+)
+
+// Valid indicates whether the value is a known member of the GetOverviewParamsSort enum.
+func (e GetOverviewParamsSort) Valid() bool {
+	switch e {
+	case GetOverviewParamsSortLastActivity:
+		return true
+	case GetOverviewParamsSortName:
+		return true
+	case GetOverviewParamsSortOverdue:
+		return true
+	case GetOverviewParamsSortProgress:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus.
+const (
+	NOTAVAILABLE GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus = "NOT_AVAILABLE"
+)
+
+// Valid indicates whether the value is a known member of the GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus enum.
+func (e GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus) Valid() bool {
+	switch e {
+	case NOTAVAILABLE:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverview200JSONResponseBodySpacesEffectiveAccess.
+const (
+	GetOverview200JSONResponseBodySpacesEffectiveAccessEditor     GetOverview200JSONResponseBodySpacesEffectiveAccess = "editor"
+	GetOverview200JSONResponseBodySpacesEffectiveAccessFull       GetOverview200JSONResponseBodySpacesEffectiveAccess = "full"
+	GetOverview200JSONResponseBodySpacesEffectiveAccessLimited    GetOverview200JSONResponseBodySpacesEffectiveAccess = "limited"
+	GetOverview200JSONResponseBodySpacesEffectiveAccessRead       GetOverview200JSONResponseBodySpacesEffectiveAccess = "read"
+	GetOverview200JSONResponseBodySpacesEffectiveAccessSpaceAdmin GetOverview200JSONResponseBodySpacesEffectiveAccess = "space_admin"
+)
+
+// Valid indicates whether the value is a known member of the GetOverview200JSONResponseBodySpacesEffectiveAccess enum.
+func (e GetOverview200JSONResponseBodySpacesEffectiveAccess) Valid() bool {
+	switch e {
+	case GetOverview200JSONResponseBodySpacesEffectiveAccessEditor:
+		return true
+	case GetOverview200JSONResponseBodySpacesEffectiveAccessFull:
+		return true
+	case GetOverview200JSONResponseBodySpacesEffectiveAccessLimited:
+		return true
+	case GetOverview200JSONResponseBodySpacesEffectiveAccessRead:
+		return true
+	case GetOverview200JSONResponseBodySpacesEffectiveAccessSpaceAdmin:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverview200JSONResponseBodySpacesHealth.
+const (
+	Attention GetOverview200JSONResponseBodySpacesHealth = "attention"
+	Empty     GetOverview200JSONResponseBodySpacesHealth = "empty"
+	OnTrack   GetOverview200JSONResponseBodySpacesHealth = "on_track"
+)
+
+// Valid indicates whether the value is a known member of the GetOverview200JSONResponseBodySpacesHealth enum.
+func (e GetOverview200JSONResponseBodySpacesHealth) Valid() bool {
+	switch e {
+	case Attention:
+		return true
+	case Empty:
+		return true
+	case OnTrack:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverviewAgendaParamsType.
+const (
+	GetOverviewAgendaParamsTypeProject GetOverviewAgendaParamsType = "project"
+	GetOverviewAgendaParamsTypeTask    GetOverviewAgendaParamsType = "task"
+)
+
+// Valid indicates whether the value is a known member of the GetOverviewAgendaParamsType enum.
+func (e GetOverviewAgendaParamsType) Valid() bool {
+	switch e {
+	case GetOverviewAgendaParamsTypeProject:
+		return true
+	case GetOverviewAgendaParamsTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverviewAgenda200JSONResponseBodyItemsStatusGroup.
+const (
+	GetOverviewAgenda200JSONResponseBodyItemsStatusGroupActive   GetOverviewAgenda200JSONResponseBodyItemsStatusGroup = "active"
+	GetOverviewAgenda200JSONResponseBodyItemsStatusGroupDeferred GetOverviewAgenda200JSONResponseBodyItemsStatusGroup = "deferred"
+)
+
+// Valid indicates whether the value is a known member of the GetOverviewAgenda200JSONResponseBodyItemsStatusGroup enum.
+func (e GetOverviewAgenda200JSONResponseBodyItemsStatusGroup) Valid() bool {
+	switch e {
+	case GetOverviewAgenda200JSONResponseBodyItemsStatusGroupActive:
+		return true
+	case GetOverviewAgenda200JSONResponseBodyItemsStatusGroupDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverviewAgenda200JSONResponseBodyItemsType.
+const (
+	GetOverviewAgenda200JSONResponseBodyItemsTypeProject GetOverviewAgenda200JSONResponseBodyItemsType = "project"
+	GetOverviewAgenda200JSONResponseBodyItemsTypeTask    GetOverviewAgenda200JSONResponseBodyItemsType = "task"
+)
+
+// Valid indicates whether the value is a known member of the GetOverviewAgenda200JSONResponseBodyItemsType enum.
+func (e GetOverviewAgenda200JSONResponseBodyItemsType) Valid() bool {
+	switch e {
+	case GetOverviewAgenda200JSONResponseBodyItemsTypeProject:
+		return true
+	case GetOverviewAgenda200JSONResponseBodyItemsTypeTask:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess.
+const (
+	GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessEditor     GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess = "editor"
+	GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessFull       GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess = "full"
+	GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessLimited    GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess = "limited"
+	GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessRead       GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess = "read"
+	GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessSpaceAdmin GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess = "space_admin"
+)
+
+// Valid indicates whether the value is a known member of the GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess enum.
+func (e GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess) Valid() bool {
+	switch e {
+	case GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessEditor:
+		return true
+	case GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessFull:
+		return true
+	case GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessLimited:
+		return true
+	case GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessRead:
+		return true
+	case GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccessSpaceAdmin:
 		return true
 	default:
 		return false
@@ -5153,6 +5357,29 @@ type NotificationPage struct {
 	UnreadCount int            `json:"unread_count"`
 }
 
+// OverviewTimelineItem defines model for OverviewTimelineItem.
+type OverviewTimelineItem struct {
+	DueDate     openapi_types.Date              `json:"due_date"`
+	Id          openapi_types.UUID              `json:"id"`
+	StatusGroup OverviewTimelineItemStatusGroup `json:"status_group"`
+	Title       string                          `json:"title"`
+}
+
+// OverviewTimelineItemStatusGroup defines model for OverviewTimelineItem.StatusGroup.
+type OverviewTimelineItemStatusGroup string
+
+// OverviewTimelineProject defines model for OverviewTimelineProject.
+type OverviewTimelineProject struct {
+	DueDate     openapi_types.Date                 `json:"due_date"`
+	Id          openapi_types.UUID                 `json:"id"`
+	StatusGroup OverviewTimelineProjectStatusGroup `json:"status_group"`
+	Tasks       []OverviewTimelineItem             `json:"tasks"`
+	Title       string                             `json:"title"`
+}
+
+// OverviewTimelineProjectStatusGroup defines model for OverviewTimelineProject.StatusGroup.
+type OverviewTimelineProjectStatusGroup string
+
 // Page defines model for Page.
 type Page struct {
 	NextCursor *string `json:"next_cursor,omitempty"`
@@ -6829,6 +7056,59 @@ type CreateOAuthClientJSONBody struct {
 	RedirectUris []string `json:"redirect_uris"`
 }
 
+// GetOverviewParams defines parameters for GetOverview.
+type GetOverviewParams struct {
+	SpaceId         *openapi_types.UUID    `form:"space_id,omitempty" json:"space_id,omitempty"`
+	IncludeArchived *bool                  `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+	Sort            *GetOverviewParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
+	Limit           *int                   `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor          *string                `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// GetOverviewParamsSort defines parameters for GetOverview.
+type GetOverviewParamsSort string
+
+// GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus defines parameters for GetOverview.
+type GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus string
+
+// GetOverview200JSONResponseBodySpacesEffectiveAccess defines parameters for GetOverview.
+type GetOverview200JSONResponseBodySpacesEffectiveAccess string
+
+// GetOverview200JSONResponseBodySpacesHealth defines parameters for GetOverview.
+type GetOverview200JSONResponseBodySpacesHealth string
+
+// GetOverviewAgendaParams defines parameters for GetOverviewAgenda.
+type GetOverviewAgendaParams struct {
+	// From Tanggal awal; kosong berarti hari ini di zona pengguna
+	From            *openapi_types.Date          `form:"from,omitempty" json:"from,omitempty"`
+	Days            *int                         `form:"days,omitempty" json:"days,omitempty"`
+	SpaceId         *openapi_types.UUID          `form:"space_id,omitempty" json:"space_id,omitempty"`
+	Type            *GetOverviewAgendaParamsType `form:"type,omitempty" json:"type,omitempty"`
+	Limit           *int                         `form:"limit,omitempty" json:"limit,omitempty"`
+	IncludeArchived *bool                        `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+}
+
+// GetOverviewAgendaParamsType defines parameters for GetOverviewAgenda.
+type GetOverviewAgendaParamsType string
+
+// GetOverviewAgenda200JSONResponseBodyItemsStatusGroup defines parameters for GetOverviewAgenda.
+type GetOverviewAgenda200JSONResponseBodyItemsStatusGroup string
+
+// GetOverviewAgenda200JSONResponseBodyItemsType defines parameters for GetOverviewAgenda.
+type GetOverviewAgenda200JSONResponseBodyItemsType string
+
+// GetOverviewTimelineParams defines parameters for GetOverviewTimeline.
+type GetOverviewTimelineParams struct {
+	// From Tanggal awal; kosong berarti hari ini di zona pengguna
+	From            *openapi_types.Date `form:"from,omitempty" json:"from,omitempty"`
+	Days            *int                `form:"days,omitempty" json:"days,omitempty"`
+	SpaceId         *openapi_types.UUID `form:"space_id,omitempty" json:"space_id,omitempty"`
+	IncludeArchived *bool               `form:"include_archived,omitempty" json:"include_archived,omitempty"`
+}
+
+// GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess defines parameters for GetOverviewTimeline.
+type GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess string
+
 // GetPortfolioTimelineJSONBody defines parameters for GetPortfolioTimeline.
 type GetPortfolioTimelineJSONBody struct {
 	ProjectIds []openapi_types.UUID `json:"project_ids"`
@@ -8491,6 +8771,15 @@ type ServerInterface interface {
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(w http.ResponseWriter, r *http.Request)
+	// GetOverview Workspace Overview lintas Space, hanya Space yang bisa dilihat pengguna (D-17.1); cache beberapa menit pada klien
+	// (GET /overview)
+	GetOverview(w http.ResponseWriter, r *http.Request, params GetOverviewParams)
+	// GetOverviewAgenda Project dan Task jatuh tempo, diurutkan tanggal, dengan penanda terlambat (read-only); item selesai dan dibatalkan tidak ditampilkan
+	// (GET /overview/agenda)
+	GetOverviewAgenda(w http.ResponseWriter, r *http.Request, params GetOverviewAgendaParams)
+	// GetOverviewTimeline Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
+	// (GET /overview/timeline)
+	GetOverviewTimeline(w http.ResponseWriter, r *http.Request, params GetOverviewTimelineParams)
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(w http.ResponseWriter, r *http.Request)
@@ -14579,6 +14868,261 @@ func (siw *ServerInterfaceWrapper) CompleteOnboarding(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetOverview operation middleware
+func (siw *ServerInterfaceWrapper) GetOverview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOverviewParams
+
+	// ------------- Optional query parameter "space_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "space_id", r.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "space_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_archived"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOverview(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOverviewAgenda operation middleware
+func (siw *ServerInterfaceWrapper) GetOverviewAgenda(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOverviewAgendaParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "days" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "days", r.URL.Query(), &params.Days, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "days"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "days", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "space_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "space_id", r.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "space_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "type" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "type", r.URL.Query(), &params.Type, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "type"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "type", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_archived"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOverviewAgenda(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetOverviewTimeline operation middleware
+func (siw *ServerInterfaceWrapper) GetOverviewTimeline(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params GetOverviewTimelineParams
+
+	// ------------- Optional query parameter "from" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "from", r.URL.Query(), &params.From, runtime.BindQueryParameterOptions{Type: "string", Format: "date"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "from"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "from", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "days" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "days", r.URL.Query(), &params.Days, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "days"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "days", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "space_id" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "space_id", r.URL.Query(), &params.SpaceId, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "space_id"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "space_id", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "include_archived" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_archived", r.URL.Query(), &params.IncludeArchived, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_archived"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_archived", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetOverviewTimeline(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPortfolioTimeline operation middleware
 func (siw *ServerInterfaceWrapper) GetPortfolioTimeline(w http.ResponseWriter, r *http.Request) {
 
@@ -18821,6 +19365,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/me/identities/{kind}", wrapper.UnlinkMyIdentity)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/audit-events", wrapper.ListAuditEvents)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/audit-events/export", wrapper.ExportAuditEvents)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/overview", wrapper.GetOverview)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/overview/timeline", wrapper.GetOverviewTimeline)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/overview/agenda", wrapper.GetOverviewAgenda)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards", wrapper.ListDashboards)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/dashboards", wrapper.CreateDashboard)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}", wrapper.DeleteDashboard)
@@ -29789,6 +30336,239 @@ func (response CompleteOnboarding403ApplicationProblemPlusJSONResponse) VisitCom
 	return err
 }
 
+type GetOverviewRequestObject struct {
+	Params GetOverviewParams
+}
+
+type GetOverviewResponseObject interface {
+	VisitGetOverviewResponse(w http.ResponseWriter) error
+}
+
+type GetOverview200JSONResponse struct {
+	GeneratedAt time.Time `json:"generated_at"`
+	Kpis        struct {
+		AccessibleSpaces *int `json:"accessible_spaces,omitempty"`
+
+		// ActiveProjects Project berstatus grup active, dihitung distinct per ID
+		ActiveProjects *int `json:"active_projects,omitempty"`
+		AtRiskProjects *struct {
+			Status *GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus `json:"status,omitempty"`
+		} `json:"at_risk_projects,omitempty"`
+
+		// CompletedThisWeek Task grup completed sejak Senin 00:00 zona pengguna
+		CompletedThisWeek *int `json:"completed_this_week,omitempty"`
+
+		// OverdueTasks Task grup active dengan due_date sebelum hari ini (zona pengguna)
+		OverdueTasks *int `json:"overdue_tasks,omitempty"`
+	} `json:"kpis"`
+	NextCursor *string `json:"next_cursor,omitempty"`
+	Spaces     []struct {
+		Archived        *bool                                                `json:"archived,omitempty"`
+		DoneTaskCount   *int                                                 `json:"done_task_count,omitempty"`
+		EffectiveAccess *GetOverview200JSONResponseBodySpacesEffectiveAccess `json:"effective_access,omitempty"`
+		Health          *GetOverview200JSONResponseBodySpacesHealth          `json:"health,omitempty"`
+		IconKey         *string                                              `json:"icon_key,omitempty"`
+		Id              *openapi_types.UUID                                  `json:"id,omitempty"`
+		LastActivity    *time.Time                                           `json:"last_activity,omitempty"`
+		Name            *string                                              `json:"name,omitempty"`
+		OverdueCount    *int                                                 `json:"overdue_count,omitempty"`
+		ProgressPercent *int                                                 `json:"progress_percent,omitempty"`
+		ProjectCount    *int                                                 `json:"project_count,omitempty"`
+		TaskCount       *int                                                 `json:"task_count,omitempty"`
+	} `json:"spaces"`
+
+	// Timezone Zona waktu pengguna yang dipakai untuk batas hari dan minggu
+	Timezone string `json:"timezone"`
+	Total    int    `json:"total"`
+}
+
+func (response GetOverview200JSONResponse) VisitGetOverviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverview404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOverview404ApplicationProblemPlusJSONResponse) VisitGetOverviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverview422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOverview422ApplicationProblemPlusJSONResponse) VisitGetOverviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverviewAgendaRequestObject struct {
+	Params GetOverviewAgendaParams
+}
+
+type GetOverviewAgendaResponseObject interface {
+	VisitGetOverviewAgendaResponse(w http.ResponseWriter) error
+}
+
+type GetOverviewAgenda200JSONResponse struct {
+	From  openapi_types.Date `json:"from"`
+	Items []struct {
+		DueDate     openapi_types.Date                                   `json:"due_date"`
+		Id          openapi_types.UUID                                   `json:"id"`
+		Overdue     bool                                                 `json:"overdue"`
+		SpaceId     openapi_types.UUID                                   `json:"space_id"`
+		SpaceName   string                                               `json:"space_name"`
+		StatusGroup GetOverviewAgenda200JSONResponseBodyItemsStatusGroup `json:"status_group"`
+		Title       string                                               `json:"title"`
+		Type        GetOverviewAgenda200JSONResponseBodyItemsType        `json:"type"`
+	} `json:"items"`
+
+	// OverdueCount Semua Task aktif yang sudah lewat jatuh tempo, di luar rentang
+	OverdueCount int                `json:"overdue_count"`
+	Timezone     string             `json:"timezone"`
+	To           openapi_types.Date `json:"to"`
+	Today        openapi_types.Date `json:"today"`
+	Truncated    bool               `json:"truncated"`
+}
+
+func (response GetOverviewAgenda200JSONResponse) VisitGetOverviewAgendaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverviewAgenda404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOverviewAgenda404ApplicationProblemPlusJSONResponse) VisitGetOverviewAgendaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverviewAgenda422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOverviewAgenda422ApplicationProblemPlusJSONResponse) VisitGetOverviewAgendaResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverviewTimelineRequestObject struct {
+	Params GetOverviewTimelineParams
+}
+
+type GetOverviewTimelineResponseObject interface {
+	VisitGetOverviewTimelineResponse(w http.ResponseWriter) error
+}
+
+type GetOverviewTimeline200JSONResponse struct {
+	// From Inklusif
+	From   openapi_types.Date `json:"from"`
+	Spaces []struct {
+		EffectiveAccess GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess `json:"effective_access"`
+		IconKey         *string                                                     `json:"icon_key,omitempty"`
+		Id              openapi_types.UUID                                          `json:"id"`
+		Name            string                                                      `json:"name"`
+
+		// Projects Project dengan due_date di rentang; due_date-nya dipakai sebagai milestone
+		Projects []OverviewTimelineProject `json:"projects"`
+
+		// UnassignedTasks Task di rentang tanpa Project di rentang pada Space yang sama
+		UnassignedTasks []OverviewTimelineItem `json:"unassigned_tasks"`
+	} `json:"spaces"`
+	Timezone string `json:"timezone"`
+
+	// To Inklusif
+	To openapi_types.Date `json:"to"`
+
+	// Truncated true bila baris melebihi batas pembacaan (2000)
+	Truncated bool `json:"truncated"`
+}
+
+func (response GetOverviewTimeline200JSONResponse) VisitGetOverviewTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverviewTimeline404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetOverviewTimeline404ApplicationProblemPlusJSONResponse) VisitGetOverviewTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetOverviewTimeline422ApplicationProblemPlusJSONResponse Problem
+
+func (response GetOverviewTimeline422ApplicationProblemPlusJSONResponse) VisitGetOverviewTimelineResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetPortfolioTimelineRequestObject struct {
 	Body *GetPortfolioTimelineJSONRequestBody
 }
@@ -38915,6 +39695,15 @@ type StrictServerInterface interface {
 	// CompleteOnboarding Tandai wizard first-run selesai atau dilewati (AUTH-07); idempoten, hanya admin
 	// (POST /onboarding/complete)
 	CompleteOnboarding(ctx context.Context, request CompleteOnboardingRequestObject) (CompleteOnboardingResponseObject, error)
+	// GetOverview Workspace Overview lintas Space, hanya Space yang bisa dilihat pengguna (D-17.1); cache beberapa menit pada klien
+	// (GET /overview)
+	GetOverview(ctx context.Context, request GetOverviewRequestObject) (GetOverviewResponseObject, error)
+	// GetOverviewAgenda Project dan Task jatuh tempo, diurutkan tanggal, dengan penanda terlambat (read-only); item selesai dan dibatalkan tidak ditampilkan
+	// (GET /overview/agenda)
+	GetOverviewAgenda(ctx context.Context, request GetOverviewAgendaRequestObject) (GetOverviewAgendaResponseObject, error)
+	// GetOverviewTimeline Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
+	// (GET /overview/timeline)
+	GetOverviewTimeline(ctx context.Context, request GetOverviewTimelineRequestObject) (GetOverviewTimelineResponseObject, error)
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(ctx context.Context, request GetPortfolioTimelineRequestObject) (GetPortfolioTimelineResponseObject, error)
@@ -44980,6 +45769,84 @@ func (sh *strictHandler) CompleteOnboarding(w http.ResponseWriter, r *http.Reque
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CompleteOnboardingResponseObject); ok {
 		if err := validResponse.VisitCompleteOnboardingResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOverview operation middleware
+func (sh *strictHandler) GetOverview(w http.ResponseWriter, r *http.Request, params GetOverviewParams) {
+	var request GetOverviewRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOverview(ctx, request.(GetOverviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOverview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOverviewResponseObject); ok {
+		if err := validResponse.VisitGetOverviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOverviewAgenda operation middleware
+func (sh *strictHandler) GetOverviewAgenda(w http.ResponseWriter, r *http.Request, params GetOverviewAgendaParams) {
+	var request GetOverviewAgendaRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOverviewAgenda(ctx, request.(GetOverviewAgendaRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOverviewAgenda")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOverviewAgendaResponseObject); ok {
+		if err := validResponse.VisitGetOverviewAgendaResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetOverviewTimeline operation middleware
+func (sh *strictHandler) GetOverviewTimeline(w http.ResponseWriter, r *http.Request, params GetOverviewTimelineParams) {
+	var request GetOverviewTimelineRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetOverviewTimeline(ctx, request.(GetOverviewTimelineRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetOverviewTimeline")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetOverviewTimelineResponseObject); ok {
+		if err := validResponse.VisitGetOverviewTimelineResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

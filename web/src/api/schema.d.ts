@@ -1308,6 +1308,57 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/overview": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Workspace Overview lintas Space, hanya Space yang bisa dilihat pengguna (D-17.1); cache beberapa menit pada klien */
+        get: operations["getOverview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/timeline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only) */
+        get: operations["getOverviewTimeline"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/overview/agenda": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project dan Task jatuh tempo, diurutkan tanggal, dengan penanda terlambat (read-only); item selesai dan dibatalkan tidak ditampilkan */
+        get: operations["getOverviewAgenda"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboards": {
         parameters: {
             query?: never;
@@ -4423,6 +4474,18 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
+        OverviewTimelineItem: {
+            /** Format: uuid */
+            id: string;
+            title: string;
+            /** Format: date */
+            due_date: string;
+            /** @enum {string} */
+            status_group: "active" | "deferred";
+        };
+        OverviewTimelineProject: components["schemas"]["OverviewTimelineItem"] & {
+            tasks: components["schemas"]["OverviewTimelineItem"][];
+        };
         ConnectorInstall: {
             /** Format: uuid */
             id: string;
@@ -9741,6 +9804,182 @@ export interface operations {
             };
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getOverview: {
+        parameters: {
+            query?: {
+                space_id?: string;
+                include_archived?: boolean;
+                sort?: "name" | "overdue" | "progress" | "last_activity";
+                limit?: number;
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: date-time */
+                        generated_at: string;
+                        /** @description Zona waktu pengguna yang dipakai untuk batas hari dan minggu */
+                        timezone: string;
+                        kpis: {
+                            accessible_spaces?: number;
+                            /** @description Project berstatus grup active, dihitung distinct per ID */
+                            active_projects?: number;
+                            /** @description Task grup active dengan due_date sebelum hari ini (zona pengguna) */
+                            overdue_tasks?: number;
+                            /** @description Task grup completed sejak Senin 00:00 zona pengguna */
+                            completed_this_week?: number;
+                            at_risk_projects?: {
+                                /** @enum {string} */
+                                status?: "NOT_AVAILABLE";
+                            };
+                        };
+                        spaces: {
+                            /** Format: uuid */
+                            id?: string;
+                            name?: string;
+                            icon_key?: string;
+                            archived?: boolean;
+                            project_count?: number;
+                            task_count?: number;
+                            done_task_count?: number;
+                            progress_percent?: number | null;
+                            overdue_count?: number;
+                            /** @enum {string} */
+                            health?: "empty" | "attention" | "on_track";
+                            /** Format: date-time */
+                            last_activity?: string | null;
+                            /** @enum {string} */
+                            effective_access?: "space_admin" | "full" | "editor" | "limited" | "read";
+                        }[];
+                        next_cursor?: string | null;
+                        total: number;
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getOverviewTimeline: {
+        parameters: {
+            query?: {
+                /** @description Tanggal awal; kosong berarti hari ini di zona pengguna */
+                from?: string;
+                days?: number;
+                space_id?: string;
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        timezone: string;
+                        /**
+                         * Format: date
+                         * @description Inklusif
+                         */
+                        from: string;
+                        /**
+                         * Format: date
+                         * @description Inklusif
+                         */
+                        to: string;
+                        /** @description true bila baris melebihi batas pembacaan (2000) */
+                        truncated: boolean;
+                        spaces: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            icon_key?: string;
+                            /** @enum {string} */
+                            effective_access: "space_admin" | "full" | "editor" | "limited" | "read";
+                            /** @description Project dengan due_date di rentang; due_date-nya dipakai sebagai milestone */
+                            projects: components["schemas"]["OverviewTimelineProject"][];
+                            /** @description Task di rentang tanpa Project di rentang pada Space yang sama */
+                            unassigned_tasks: components["schemas"]["OverviewTimelineItem"][];
+                        }[];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getOverviewAgenda: {
+        parameters: {
+            query?: {
+                /** @description Tanggal awal; kosong berarti hari ini di zona pengguna */
+                from?: string;
+                days?: number;
+                space_id?: string;
+                type?: "project" | "task";
+                limit?: number;
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        timezone: string;
+                        /** Format: date */
+                        today: string;
+                        /** Format: date */
+                        from: string;
+                        /** Format: date */
+                        to: string;
+                        /** @description Semua Task aktif yang sudah lewat jatuh tempo, di luar rentang */
+                        overdue_count: number;
+                        truncated: boolean;
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            /** @enum {string} */
+                            type: "project" | "task";
+                            /** Format: date */
+                            due_date: string;
+                            /** @enum {string} */
+                            status_group: "active" | "deferred";
+                            /** Format: uuid */
+                            space_id: string;
+                            space_name: string;
+                            overdue: boolean;
+                        }[];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

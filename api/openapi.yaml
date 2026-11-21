@@ -1843,6 +1843,143 @@ paths:
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /overview:
+    get:
+      tags: [overview]
+      operationId: getOverview
+      summary: Workspace Overview lintas Space, hanya Space yang bisa dilihat pengguna (D-17.1); cache beberapa menit pada klien
+      parameters:
+        - { name: space_id, in: query, required: false, schema: { type: string, format: uuid } }
+        - { name: include_archived, in: query, required: false, schema: { type: boolean, default: false } }
+        - { name: sort, in: query, required: false, schema: { type: string, enum: [name, overdue, progress, last_activity], default: name } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 100, default: 25 } }
+        - { name: cursor, in: query, required: false, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [generated_at, timezone, kpis, spaces, total]
+                properties:
+                  generated_at: { type: string, format: date-time }
+                  timezone: { type: string, description: 'Zona waktu pengguna yang dipakai untuk batas hari dan minggu' }
+                  kpis:
+                    type: object
+                    properties:
+                      accessible_spaces: { type: integer }
+                      active_projects: { type: integer, description: 'Project berstatus grup active, dihitung distinct per ID' }
+                      overdue_tasks: { type: integer, description: 'Task grup active dengan due_date sebelum hari ini (zona pengguna)' }
+                      completed_this_week: { type: integer, description: 'Task grup completed sejak Senin 00:00 zona pengguna' }
+                      at_risk_projects: { type: object, properties: { status: { type: string, enum: [NOT_AVAILABLE] } } }
+                  spaces:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id: { type: string, format: uuid }
+                        name: { type: string }
+                        icon_key: { type: string }
+                        archived: { type: boolean }
+                        project_count: { type: integer }
+                        task_count: { type: integer }
+                        done_task_count: { type: integer }
+                        progress_percent: { type: integer, nullable: true }
+                        overdue_count: { type: integer }
+                        health: { type: string, enum: [empty, attention, on_track] }
+                        last_activity: { type: string, format: date-time, nullable: true }
+                        effective_access: { type: string, enum: [space_admin, full, editor, limited, read] }
+                  next_cursor: { type: string, nullable: true }
+                  total: { type: integer }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /overview/timeline:
+    get:
+      tags: [overview]
+      operationId: getOverviewTimeline
+      summary: Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
+      parameters:
+        - { name: from, in: query, required: false, schema: { type: string, format: date }, description: 'Tanggal awal; kosong berarti hari ini di zona pengguna' }
+        - { name: days, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 90, default: 60 } }
+        - { name: space_id, in: query, required: false, schema: { type: string, format: uuid } }
+        - { name: include_archived, in: query, required: false, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [timezone, from, to, spaces, truncated]
+                properties:
+                  timezone: { type: string }
+                  from: { type: string, format: date, description: 'Inklusif' }
+                  to: { type: string, format: date, description: 'Inklusif' }
+                  truncated: { type: boolean, description: 'true bila baris melebihi batas pembacaan (2000)' }
+                  spaces:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, name, effective_access, projects, unassigned_tasks]
+                      properties:
+                        id: { type: string, format: uuid }
+                        name: { type: string }
+                        icon_key: { type: string }
+                        effective_access: { type: string, enum: [space_admin, full, editor, limited, read] }
+                        projects:
+                          type: array
+                          description: 'Project dengan due_date di rentang; due_date-nya dipakai sebagai milestone'
+                          items: { $ref: '#/components/schemas/OverviewTimelineProject' }
+                        unassigned_tasks:
+                          type: array
+                          description: 'Task di rentang tanpa Project di rentang pada Space yang sama'
+                          items: { $ref: '#/components/schemas/OverviewTimelineItem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /overview/agenda:
+    get:
+      tags: [overview]
+      operationId: getOverviewAgenda
+      summary: Project dan Task jatuh tempo, diurutkan tanggal, dengan penanda terlambat (read-only); item selesai dan dibatalkan tidak ditampilkan
+      parameters:
+        - { name: from, in: query, required: false, schema: { type: string, format: date }, description: 'Tanggal awal; kosong berarti hari ini di zona pengguna' }
+        - { name: days, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 31, default: 14 } }
+        - { name: space_id, in: query, required: false, schema: { type: string, format: uuid } }
+        - { name: type, in: query, required: false, schema: { type: string, enum: [project, task] } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 500, default: 200 } }
+        - { name: include_archived, in: query, required: false, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [timezone, today, from, to, items, overdue_count, truncated]
+                properties:
+                  timezone: { type: string }
+                  today: { type: string, format: date }
+                  from: { type: string, format: date }
+                  to: { type: string, format: date }
+                  overdue_count: { type: integer, description: 'Semua Task aktif yang sudah lewat jatuh tempo, di luar rentang' }
+                  truncated: { type: boolean }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title, type, due_date, status_group, space_id, space_name, overdue]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        type: { type: string, enum: [project, task] }
+                        due_date: { type: string, format: date }
+                        status_group: { type: string, enum: [active, deferred] }
+                        space_id: { type: string, format: uuid }
+                        space_name: { type: string }
+                        overdue: { type: boolean }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /dashboards:
     get:
       operationId: listDashboards
@@ -6207,6 +6344,23 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
+    OverviewTimelineItem:
+      type: object
+      required: [id, title, due_date, status_group]
+      properties:
+        id: { type: string, format: uuid }
+        title: { type: string }
+        due_date: { type: string, format: date }
+        status_group: { type: string, enum: [active, deferred] }
+    OverviewTimelineProject:
+      allOf:
+        - $ref: '#/components/schemas/OverviewTimelineItem'
+        - type: object
+          required: [tasks]
+          properties:
+            tasks:
+              type: array
+              items: { $ref: '#/components/schemas/OverviewTimelineItem' }
     ConnectorInstall:
       type: object
       required: [id, kind, name, config, secret_names, enabled, created_at]
