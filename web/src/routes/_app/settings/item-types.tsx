@@ -9,9 +9,10 @@ import { useProfile } from "@/lib/profile";
 import { useSpaces } from "@/lib/space-queries";
 import { can } from "@/lib/spaces";
 import { FormError } from "@/components/auth/form-error";
-import { Layers } from "lucide-react";
+import { Blocks, Layers } from "lucide-react";
 import { AdminStatus } from "@/components/admin/admin-ui";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { CustomFieldsDialog } from "@/components/custom-fields-dialog";
@@ -173,6 +174,10 @@ export function ItemTypesPanel({ spaceId }: { spaceId?: string }) {
       <Button variant="outline" size="sm" disabled={bulkBusy} onClick={() => void setActiveFor(false)}>{t("settings.itemTypes.deactivate")}</Button>
       <Button variant="ghost" size="sm" onClick={() => setSelected([])}>{t("settings.itemTypes.clearSelection")}</Button>
     </div>}
+    {/* A Space with no types of its own: say what is still available and what to add, unless a filter is hiding them. */}
+    {spaceId && !search && scopeFilter === "all" && statusFilter === "all" && !(types.data ?? []).some((type) => type.space_id === spaceId) && <EmptyState
+      icon={<Blocks />} title={t("settings.itemTypes.spaceEmptyTitle")} description={t("settings.itemTypes.spaceEmptyDescription")}
+      canCreate={manage} primaryAction={{ label: t("settings.itemTypes.spaceEmptyAction"), onClick: () => setEditing("new") }} />}
     {sorted.length === 0 && <p role="status" className="text-sm text-muted-foreground">{t("settings.itemTypes.noMatch")}</p>}
     {groups.map((group) => <section key={group.label} aria-label={group.label} className="space-y-2">
       <h2 className="text-sm font-medium">{group.label}</h2>

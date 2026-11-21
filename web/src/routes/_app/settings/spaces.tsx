@@ -3,6 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
 import { Link, createFileRoute } from "@tanstack/react-router";
+import { MoreHorizontal } from "lucide-react";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useTranslation } from "react-i18next";
 import { can, spaceKeys, type Space } from "@/lib/spaces";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -12,7 +14,21 @@ import { AdminEmptyState, AdminPageHeader, AdminStatus } from "@/components/admi
 import { FormError } from "@/components/auth/form-error";
 import { SpaceIcon } from "@/components/space-icon";
 
-export const Route = createFileRoute("/_app/settings/spaces")({ component: SpacesManagement });
+// Filters, sort, grouping and page live in the URL, so returning from a Space's settings restores the same view.
+// Only non-default values are kept in the URL; a missing key means the default.
+type RegistrySearch = { q?: string; status?: "all" | "active" | "archived"; visibility?: "all" | "public" | "private"; sort?: SortKey; group?: "none" | "visibility" | "status"; page?: number };
+const SORT_KEYS: SortKey[] = ["name", "created", "activity", "projects"];
+export const Route = createFileRoute("/_app/settings/spaces")({
+  validateSearch: (raw: Record<string, unknown>): RegistrySearch => ({
+    ...(typeof raw.q === "string" && raw.q ? { q: raw.q.slice(0, 100) } : {}),
+    ...(raw.status === "active" || raw.status === "archived" ? { status: raw.status } : {}),
+    ...(raw.visibility === "public" || raw.visibility === "private" ? { visibility: raw.visibility } : {}),
+    ...(SORT_KEYS.find((key) => key === raw.sort) ? { sort: raw.sort as SortKey } : {}),
+    ...(raw.group === "visibility" || raw.group === "status" ? { group: raw.group } : {}),
+    ...(Number.isInteger(Number(raw.page)) && Number(raw.page) > 0 ? { page: Number(raw.page) } : {}),
+  }),
+  component: SpacesManagement,
+});
 
 const EDIT_CAPABILITY = "edit" as const;
 const PAGE_SIZE = 25;
@@ -34,13 +50,18 @@ function SpacesManagement() {
     queryFn: async () => (await api<{ items: Row[] }>("/api/v1/spaces/registry")).items,
   });
   const [renaming, setRenaming] = useState<Row>();
-  const [query, setQuery] = useState("");
-  const [status, setStatus] = useState<"all" | "active" | "archived">("all");
-  const [visibility, setVisibility] = useState<"all" | "public" | "private">("all");
-  const [sortKey, setSortKey] = useState<SortKey>("name");
-  const [group, setGroup] = useState<"none" | "visibility" | "status">("none");
+  const search = Route.useSearch();
+  const query = search.q ?? "";
+  const status = search.status ?? "all";
+  const visibility = search.visibility ?? "all";
+  const sortKey = search.sort ?? "name";
+  const group = search.group ?? "none";
+  const page = search.page ?? 0;
+  const navigate = Route.useNavigate();
   const [columns, setColumns] = useState<Set<OptionalColumn>>(new Set<OptionalColumn>([COLUMN.created, COLUMN.activity]));
-  const [page, setPage] = useState(0);
+  function setParams(patch: Partial<RegistrySearch>) {
+    void navigate({ search: (previous) => ({ ...previous, ...patch }), replace: true });
+  }
   const all = registry.data ?? [];
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -77,15 +98,15 @@ function SpacesManagement() {
     {registry.isPending && <p role="status" className="text-sm text-muted-foreground">{t("spaces.spaceSettings.registry.loading")}</p>}
     {registry.data && !all.length && <AdminEmptyState title={t("settings.spaces.emptyTitle")} description={t("spaces.spaceSettings.registry.emptyDescription")} />}
     {!!all.length && <div className="flex flex-wrap items-end gap-3">
-      <Input type="search" value={query} onChange={(event) => { setQuery(event.target.value); setPage(0); }} placeholder={t("settings.spaces.search")}
+      <Input type="search" value={query} onChange={(event) => setParams({ q: event.target.value, page: 0 })} placeholder={t("settings.spaces.search")}
         aria-label={t("settings.spaces.search")} className="max-w-xs" />
-      <Filter label={t("spaces.spaceSettings.registry.status")} value={status} onChange={(v) => { setStatus(v as typeof status); setPage(0); }}
+      <Filter label={t("spaces.spaceSettings.registry.status")} value={status} onChange={(v) => setParams({ status: v as RegistrySearch["status"], page: 0 })}
         options={[["all", t("spaces.spaceSettings.registry.all")], ["active", t("spaces.spaceSettings.registry.active")], ["archived", t("spaces.spaceSettings.registry.archived")]]} />
-      <Filter label={t("spaces.spaceSettings.lifecycle.visibility")} value={visibility} onChange={(v) => { setVisibility(v as typeof visibility); setPage(0); }}
+      <Filter label={t("spaces.spaceSettings.lifecycle.visibility")} value={visibility} onChange={(v) => setParams({ visibility: v as RegistrySearch["visibility"], page: 0 })}
         options={[["all", t("spaces.spaceSettings.registry.all")], ["public", t("spaces.spaceSettings.registry.public")], ["private", t("spaces.spaceSettings.registry.private")]]} />
-      <Filter label={t("spaces.spaceSettings.registry.sort")} value={sortKey} onChange={(v) => setSortKey(v as SortKey)}
+      <Filter label={t("spaces.spaceSettings.registry.sort")} value={sortKey} onChange={(v) => setParams({ sort: v as SortKey })}
         options={[["name", t("spaces.spaceSettings.registry.sortName")], ["created", t("spaces.spaceSettings.registry.sortCreated")], ["activity", t("spaces.spaceSettings.registry.sortActivity")], ["projects", t("spaces.spaceSettings.registry.sortProjects")]]} />
-      <Filter label={t("spaces.spaceSettings.registry.group")} value={group} onChange={(v) => setGroup(v as typeof group)}
+      <Filter label={t("spaces.spaceSettings.registry.group")} value={group} onChange={(v) => setParams({ group: v as RegistrySearch["group"] })}
         options={[["none", t("spaces.spaceSettings.registry.noGroup")], ["visibility", t("spaces.spaceSettings.lifecycle.visibility")], ["status", t("spaces.spaceSettings.registry.status")]]} />
       <fieldset className="flex flex-wrap gap-3 text-sm">
         <legend className="sr-only">{t("spaces.spaceSettings.registry.columns")}</legend>
@@ -97,7 +118,7 @@ function SpacesManagement() {
     </div>}
     {!!all.length && !filtered.length && <div role="status" className="space-y-2 text-sm">
       <p>{t("spaces.spaceSettings.registry.noMatches")}</p>
-      {filtering && <Button variant="outline" size="sm" onClick={() => { setQuery(""); setStatus("all"); setVisibility("all"); }}>{t("spaces.spaceSettings.registry.clear")}</Button>}
+      {filtering && <Button variant="outline" size="sm" onClick={() => setParams({ q: "", status: "all", visibility: "all", page: 0 })}>{t("spaces.spaceSettings.registry.clear")}</Button>}
     </div>}
     {!!filtered.length && <div className="overflow-x-auto rounded-lg border">
       <table className="w-full text-start text-sm">
@@ -139,11 +160,16 @@ function SpacesManagement() {
               {columns.has(COLUMN.activity) && <td className="px-3 py-2.5">{row.last_activity ? formatDate(row.last_activity) : t("spaces.spaceSettings.registry.noActivity")}</td>}
               <td className="px-3 py-2.5 text-end">
                 <span className="inline-flex flex-wrap justify-end gap-1">
-                  {canEdit && <Button size="sm" variant="ghost" aria-label={t("settings.spaces.renameNamed", { name: row.name })} onClick={() => setRenaming(row)}>{t("settings.spaces.rename")}</Button>}
-                  {canEdit && <Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: row.id, tab: "general" }} className={buttonVariants({ variant: "ghost", size: "sm" })}
-                    aria-label={t("spaces.spaceSettings.open")}>{t("spaces.spaceSettings.open")}</Link>}
-                  <Button size="sm" variant="ghost" aria-label={t("spaces.spaceSettings.registry.copyLinkNamed", { name: row.name })} onClick={() => void copyLink(row)}>{t("spaces.spaceSettings.registry.copyLink")}</Button>
-                  <Link to="/spaces/$spaceId" params={{ spaceId: row.id }} className={buttonVariants({ variant: "outline", size: "sm" })}>{t("settings.spaces.open")}</Link>
+                  {/* One menu per row: the actions follow the Space's effective capabilities. */}
+                  <DropdownMenu>
+                    <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("settings.spaces.actionsNamed", { name: row.name })} />}><MoreHorizontal /></DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-40">
+                      <DropdownMenuItem onClick={() => void navigate({ to: "/spaces/$spaceId", params: { spaceId: row.id } })}>{t("settings.spaces.open")}</DropdownMenuItem>
+                      <DropdownMenuItem onClick={() => void copyLink(row)}>{t("spaces.spaceSettings.registry.copyLink")}</DropdownMenuItem>
+                      {canEdit && <DropdownMenuItem onClick={() => setRenaming(row)}>{t("settings.spaces.rename")}</DropdownMenuItem>}
+                      {canEdit && <DropdownMenuItem onClick={() => void navigate({ to: "/settings/spaces/$spaceId/$tab", params: { spaceId: row.id, tab: "general" } })}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>}
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                 </span>
               </td>
             </tr>;
@@ -152,9 +178,9 @@ function SpacesManagement() {
       </table>
     </div>}
     {pages > 1 && <nav aria-label={t("spaces.spaceSettings.registry.pages")} className="flex items-center justify-between gap-2 text-sm">
-      <Button variant="outline" size="sm" disabled={current === 0} onClick={() => setPage(current - 1)}>{t("spaces.spaceSettings.registry.prev")}</Button>
+      <Button variant="outline" size="sm" disabled={current === 0} onClick={() => setParams({ page: current - 1 })}>{t("spaces.spaceSettings.registry.prev")}</Button>
       <span>{t("spaces.spaceSettings.registry.pageOf", { page: current + 1, pages })}</span>
-      <Button variant="outline" size="sm" disabled={current >= pages - 1} onClick={() => setPage(current + 1)}>{t("spaces.spaceSettings.registry.next")}</Button>
+      <Button variant="outline" size="sm" disabled={current >= pages - 1} onClick={() => setParams({ page: current + 1 })}>{t("spaces.spaceSettings.registry.next")}</Button>
     </nav>}
     <DiscoverSection />
     {renaming && <SpaceDialog open={!!renaming} onOpenChange={(open) => { if (!open) { setRenaming(undefined); void queryClient.invalidateQueries({ queryKey: ["spaces-registry"] }); } }}
