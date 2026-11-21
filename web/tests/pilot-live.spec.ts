@@ -32,7 +32,7 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
 
     const initial = page.getByRole("region", { name: "New", exact: true });
     const done = page.getByRole("region", { name: "Completed", exact: true });
-    await page.getByRole("button", { name: "Add task", exact: true }).click(); // the empty board has no column to add to yet
+    await page.getByRole("button", { name: "New task", exact: true }).click(); // the empty board has no column to add to yet
     const task = page.getByRole("dialog", { name: "Add subtask" });
     await task.getByLabel("Name").fill("Prepare pilot checklist");
     await task.getByRole("button", { name: "Create item" }).click();

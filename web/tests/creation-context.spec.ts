@@ -47,7 +47,7 @@ test("Add task on a Project creates the task under that Project", async ({ page 
     },
   } });
   await page.goto(`/tasks/${projectId}`);
-  await page.getByRole("button", { name: "Add task" }).click();
+  await page.getByRole("button", { name: "New task" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Name").fill("Child task");
   await dialog.getByRole("button", { name: "Create item" }).click();
