@@ -57,16 +57,18 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
   const personal = space.kind === "personal";
   return (
     <WorkspaceLayout>
-      {/* Breadcrumb: shows that this is one Space's settings, not the Workspace's. */}
-      <nav aria-label={t("spaces.spaceSettings.breadcrumb")} className="mb-2 text-sm text-muted-foreground">
-        <ol className="flex flex-wrap items-center gap-1">
-          <li><Link to="/settings/spaces" className="underline-offset-2 hover:underline">{t("spaces.spaceSettings.crumbSpaces")}</Link> <span aria-hidden="true">/</span></li>
-          <li><Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
-          <li>{t("spaces.spaceSettings.crumbSettings")} <span aria-hidden="true">/</span></li>
-          <li aria-current="page" className="text-foreground">{t(TAB_LABEL[tab])}</li>
-        </ol>
-      </nav>
+      {/* Breadcrumb: shows that this is one Space's settings, not the Workspace's. The header moves it into the top bar. */}
       <WorkspaceHeader
+        breadcrumb={
+        <nav aria-label={t("spaces.spaceSettings.breadcrumb")} className="mb-2 text-sm text-muted-foreground">
+          <ol className="flex flex-wrap items-center gap-1">
+            <li><Link to="/settings/spaces" className="underline-offset-2 hover:underline">{t("spaces.spaceSettings.crumbSpaces")}</Link> <span aria-hidden="true">/</span></li>
+            <li><Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
+            <li>{t("spaces.spaceSettings.crumbSettings")} <span aria-hidden="true">/</span></li>
+            <li aria-current="page" className="text-foreground">{t(TAB_LABEL[tab])}</li>
+          </ol>
+        </nav>
+        }
         title={t("spaces.spaceSettings.title")}
         meta={<p className="mt-1 text-sm text-muted-foreground">
           <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link>
