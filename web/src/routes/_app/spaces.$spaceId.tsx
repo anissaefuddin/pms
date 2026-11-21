@@ -7,6 +7,7 @@ import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { useSpace } from "@/lib/space-queries";
 import { itemKeys, listItems } from "@/lib/items";
 import { CreateItemDialog } from "@/components/create-item-dialog";
+import { menuAllows, useCreateMenu } from "@/lib/create-menu";
 import { ViewWorkspace } from "@/components/view-workspace";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { WorkspaceLayout } from "@/components/workspace-layout";
@@ -72,6 +73,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const [deleteError, setDeleteError] = useState("");
   const [pending, setPending] = useState(false);
   const [creating, setCreating] = useState<"project" | "folder" | "task" | null>(null);
+  const kindIcons = { project: <FolderKanban />, folder: <Folder />, task: <SquareCheck /> } as const;
   const items = useQuery({ queryKey: itemKeys.root(space.id), queryFn: () => listItems(`/api/v1/spaces/${space.id}/items`) });
   const impact = useQuery({
     queryKey: ["space-delete-impact", space.id], enabled: deleting,
@@ -84,6 +86,8 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const canRename = shared && !space.archived && can(space, "edit"); // same rule as the Space General tab
   const canDelete = shared && can(space, "delete");
   const canCreate = can(space, "create");
+  const createMenu = useCreateMenu(space.id, canCreate).data;
+  const newKinds = (["project", "folder", "task"] as const).filter((kind) => menuAllows(createMenu, kind));
   const canLock = shared && me?.user_type === "admin" && can(space, "share");
   const canEditForms = can(space, "edit"); // also gates the Forms link
   const canManageFields = can(space, "share") && can(space, "delete");
@@ -132,13 +136,13 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
           <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
           {canEditForms && <Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.open")}</Link>}
           {/* D-CREATE: the one primary create action of a Space; the kinds stay the same as the global menu. */}
-          {me && canCreate && (
+          {me && newKinds.length > 0 && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button />}><Plus />{t("items.new")}</DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-44">
-                <DropdownMenuItem onClick={() => setCreating("project")}><FolderKanban />{t("items.project")}</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCreating("folder")}><Folder />{t("items.folder")}</DropdownMenuItem>
-                <DropdownMenuItem onClick={() => setCreating("task")}><SquareCheck />{t("items.task")}</DropdownMenuItem>
+                {newKinds.map((kind) => (
+                  <DropdownMenuItem key={kind} onClick={() => setCreating(kind)}>{kindIcons[kind]}{t(`items.${kind}`)}</DropdownMenuItem>
+                ))}
               </DropdownMenuContent>
             </DropdownMenu>
           )}
