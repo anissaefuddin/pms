@@ -25,6 +25,7 @@ test("Space New item creates a top-level item in that Space", async ({ page }) =
   } });
   await page.goto(`/spaces/${marketing.id}`);
   await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+  await page.getByRole("menuitem", { name: /^Task/ }).click();
   const dialog = page.getByRole("dialog", { name: "Create item" });
   await dialog.getByRole("radio", { name: /^Task/ }).check({ force: true });
   await dialog.getByLabel("Name").fill("Top level");
@@ -46,7 +47,7 @@ test("Add task on a Project creates the task under that Project", async ({ page 
     },
   } });
   await page.goto(`/tasks/${projectId}`);
-  await page.getByRole("button", { name: "Add task" }).click();
+  await page.getByRole("button", { name: "New task" }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Name").fill("Child task");
   await dialog.getByRole("button", { name: "Create item" }).click();

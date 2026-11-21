@@ -26,7 +26,7 @@ import { menuAllows, useCreateMenu } from "@/lib/create-menu";
 const LANGUAGE_NAMES: Record<Language, string> = { en: "English", id: "Bahasa Indonesia" };
 const LANGUAGE_SHORT: Record<Language, string> = { en: "EN", id: "ID" };
 
-export function Topbar({ onCreate, live, search, navigation, inSettings = false, spaceId }: { onCreate?: (kind?: CreateKind, typeKey?: string) => void; live: boolean; search?: ReactNode; navigation?: ReactNode; inSettings?: boolean; spaceId?: string }) {
+export function Topbar({ onCreate, live, search, navigation, inSettings = false, spaceId, containerActive = false }: { onCreate?: (kind?: CreateKind, typeKey?: string) => void; live: boolean; search?: ReactNode; navigation?: ReactNode; inSettings?: boolean; spaceId?: string; containerActive?: boolean }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const unread = useQuery({ queryKey: [...notificationKey, "badge"], queryFn: () => listNotifications(1) }).data?.unread_count;
@@ -37,7 +37,8 @@ export function Topbar({ onCreate, live, search, navigation, inSettings = false,
       <div id="topbar-breadcrumb" className="flex min-w-0 flex-1 items-center text-sm" />
       <span role="status" data-live={live ? "true" : "false"} className="shrink-0 text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
       {search}
-      {!inSettings && <CreateMenu onCreate={onCreate} spaceId={spaceId} />}
+      {/* D-CREATE: global Create only where no container is open; a Space, Folder, Project or Task has its own primary Create. */}
+      {!inSettings && !containerActive && <CreateMenu onCreate={onCreate} spaceId={spaceId} />}
       {!inSettings && <Link to="/inbox" className="relative rounded p-2 hover:bg-accent" aria-label={unread ? t("nav.inbox.badge", { count: unread }) : t("nav.inbox.label")}>
         <Bell className="size-5" />
         {!!unread && <span className="absolute -top-1 right-0 rounded-full bg-primary px-1 text-[10px] text-primary-foreground">{formatNumber(unread, profile)}</span>}

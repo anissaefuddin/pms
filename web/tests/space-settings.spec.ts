@@ -50,7 +50,8 @@ test.describe("Space settings", () => {
   });
 
   test("archive asks first and sends the Space version", async ({ page }) => {
-    const { calls } = await mockSpaces(page, { extra: { [`POST /spaces/${marketing.id}/archive`]: () => ({ body: { space: { ...marketing, archived: true, version: 5 }, warnings: [] } }) } });
+    // Archiving needs the explicit Space Admin role (D-17.1, D-SA1), not a workspace admin type or a Full share.
+    const { calls } = await mockSpaces(page, { spaces: [{ ...marketing, is_space_admin: true }], extra: { [`POST /spaces/${marketing.id}/archive`]: () => ({ body: { space: { ...marketing, archived: true, version: 5 }, warnings: [] } }) } });
     await page.goto(`/spaces/${marketing.id}/settings/general`);
     await page.getByRole("button", { name: "Archive Space", exact: true }).click();
     const dialog = page.getByRole("alertdialog", { name: "Archive “Marketing”?" }).or(page.getByRole("dialog", { name: "Archive “Marketing”?" }));

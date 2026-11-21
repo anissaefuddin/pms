@@ -100,7 +100,7 @@ function AppShell() {
         {inSettings
           // Settings has its own page header (breadcrumb, mobile menu) and no top bar; the palette stays mounted for Ctrl+K.
           ? <SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />
-          : <Topbar live={live} navigation={<MobileSidebar me={me.data} />} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind, typeKey) => setCreating({ kind, typeKey }) : undefined} spaceId={spaceId} />}
+          : <Topbar live={live} navigation={<MobileSidebar me={me.data} />} search={<SearchPalette spaceId={spaceId} containerId={itemId} hideTrigger />} onCreate={canCreate ? (kind, typeKey) => setCreating({ kind, typeKey }) : undefined} spaceId={spaceId} containerActive={!!spaceId || !!itemId} />}
         <div className="min-w-0 flex-1"><Outlet /></div>
       </div>
       {me.data.onboarding_pending && <OnboardingWizard me={me.data} />}

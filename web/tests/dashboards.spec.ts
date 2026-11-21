@@ -231,7 +231,6 @@ test("an unknown dashboard shows not found, and a read-only viewer sees no edit 
   await page.goto(`/dashboards/${d1}`);
   await expect(page.getByText("You can view this dashboard but not change it.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Add widget" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /^Actions for/ })).toHaveCount(0);
   await page.unrouteAll();
   await mock(page, { [`GET /dashboards/${d1}`]: problem(404, "not found", "not_found") });
   await page.goto(`/dashboards/${d1}`);

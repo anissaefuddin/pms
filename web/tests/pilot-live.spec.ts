@@ -22,6 +22,7 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     await expect(page.getByRole("heading", { name: "Browser collaboration" })).toBeVisible();
 
     await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+    await page.getByRole("menuitem", { name: /^Project/ }).click();
     const project = page.getByRole("dialog", { name: "Create item" });
     await project.getByLabel("Name").fill("Pilot launch");
     await project.getByText("Advanced options", { exact: true }).click(); // the default view choice sits under Advanced options
@@ -31,8 +32,8 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
 
     const initial = page.getByRole("region", { name: "New", exact: true });
     const done = page.getByRole("region", { name: "Completed", exact: true });
-    await page.getByRole("button", { name: "Add task", exact: true }).click(); // the empty board has no column to add to yet
-    const task = page.getByRole("dialog", { name: "Add subitem" });
+    await page.getByRole("button", { name: "New task", exact: true }).click(); // the empty board has no column to add to yet
+    const task = page.getByRole("dialog", { name: "Add subtask" });
     await task.getByLabel("Name").fill("Prepare pilot checklist");
     await task.getByRole("button", { name: "Create item" }).click();
 

@@ -21,6 +21,7 @@ test("SPC-14: an admin hides Folder from the Space's '+' menu; the dialog stops 
   await expect(dialog).toBeHidden();
 
   await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+  await page.getByRole("menuitem", { name: /^Project/ }).click();
   const create = page.getByRole("dialog", { name: "Create item" });
   await expect(create.getByRole("radio", { name: /^Project/ })).toBeVisible();
   await expect(create.getByRole("radio", { name: /^Folder/ })).toHaveCount(0);

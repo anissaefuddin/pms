@@ -90,7 +90,7 @@
   "childCount_other": "{{count}} sub-item",
   "fileCount_other": "{{count}} file",
   "commentCount_other": "{{count}} komentar",
-  "addChild": "Tambah sub-item",
+  "addChild": "Tambah subtask",
   "noChildren": "Belum ada sub-item",
   "parentLink": "Kembali ke induk",
   "browseChildren": "Telusuri di dalam",

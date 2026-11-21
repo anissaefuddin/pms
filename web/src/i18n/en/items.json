@@ -94,7 +94,7 @@
   "fileCount_other": "{{count}} files",
   "commentCount_one": "{{count}} comment",
   "commentCount_other": "{{count}} comments",
-  "addChild": "Add subitem",
+  "addChild": "Add subtask",
   "noChildren": "No subitems yet",
   "parentLink": "Back to parent",
   "browseChildren": "Browse inside",
