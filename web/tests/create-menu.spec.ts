@@ -21,6 +21,7 @@ test("admin toggles item types of the '+' menu; the dialog passes axe; the creat
   await page.goto(`/spaces/${marketing.id}`);
   // The hidden type is not offered; the enabled ones are, and a blueprint shows its name, icon and type.
   await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+  await page.getByRole("menuitem", { name: /^Project/ }).click();
   const create = page.getByRole("dialog", { name: "Create item" });
   await expect(create.getByRole("radio", { name: /^Project/ })).toBeVisible();
   await expect(create.getByRole("radio", { name: /^Task/ })).toBeVisible();
@@ -46,5 +47,6 @@ test("admin toggles item types of the '+' menu; the dialog passes axe; the creat
   expect(put?.body).toEqual({ enabled: ["task", "project", "folder"] });
   expect(put?.headers["if-match"]).toBe('"4"');
   await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+  await page.getByRole("menuitem", { name: /^Project/ }).click();
   await expect(page.getByRole("dialog", { name: "Create item" }).getByRole("radio", { name: /^Folder/ })).toBeVisible();
 });

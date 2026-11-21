@@ -25,6 +25,7 @@ test("Space New item creates a top-level item in that Space", async ({ page }) =
   } });
   await page.goto(`/spaces/${marketing.id}`);
   await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+  await page.getByRole("menuitem", { name: /^Task/ }).click();
   const dialog = page.getByRole("dialog", { name: "Create item" });
   await dialog.getByRole("radio", { name: /^Task/ }).check({ force: true });
   await dialog.getByLabel("Name").fill("Top level");

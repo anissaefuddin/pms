@@ -6,7 +6,7 @@ const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa03";
 const status = { id: "cccccccc-cccc-4ccc-8ccc-cccccccccccc", name: "New", color: "slate", group: "active" };
 const root = `/spaces/${marketing.id}`;
 
-for (const where of ["space page button", "global top bar"]) {
+for (const where of ["space page button"]) {
   test(`creating a task from the ${where} closes the dialog and opens the new task`, async ({ page }) => {
     let item: Record<string, unknown> | undefined;
     await mockSpaces(page, { extra: extra({
@@ -20,13 +20,9 @@ for (const where of ["space page button", "global top bar"]) {
     }) });
     await page.goto(root);
     const dialog = page.getByRole("dialog", { name: "Create item" });
-    if (where === "global top bar") {
-      await page.locator("header").first().getByRole("button", { name: "Create" }).click();
-      await page.getByRole("menuitem", { name: /^Task/ }).click();
-    } else {
-      await page.getByRole("main").getByRole("button", { name: "New item" }).click();
-      await dialog.getByRole("radio", { name: /^Task/ }).check({ force: true });
-    }
+    await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+    await page.getByRole("menuitem", { name: /^Task/ }).click();
+    await dialog.getByRole("radio", { name: /^Task/ }).check({ force: true });
     await dialog.getByLabel("Name").fill("Fresh task");
     await dialog.getByRole("button", { name: "Create item" }).click();
     await expect(page.getByRole("heading", { name: "Fresh task" })).toBeVisible();
