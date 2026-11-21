@@ -20,9 +20,21 @@ import {
 } from "@/lib/sidebar-prefs";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { can, type Space as SpaceType } from "@/lib/spaces";
+import type { Space as SpaceType } from "@/lib/spaces";
+import { spaceActions } from "@/lib/space-actions";
 
-const EDIT_CAPABILITY = "edit" as const;
+/** Route of a Space's settings tabs (kept as a constant so the route is not a literal in JSX). */
+const SPACE_SETTINGS_ROUTE = "/spaces/$spaceId/settings/$tab" as const;
+
+/** Copies the Space's address; a refused clipboard is reported instead of failing silently. */
+async function copySpaceLink(id: string, t: (key: string) => string) {
+  try {
+    await navigator.clipboard.writeText(`${window.location.origin}/spaces/${id}`);
+    toast.success(t("nav.space.menu.linkCopied"));
+  } catch {
+    toast.error(t("nav.space.menu.linkCopyFailed"));
+  }
+}
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
@@ -367,16 +379,24 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
       <Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
         aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
         onClick={() => window.dispatchEvent(new CustomEvent("pms:create-item", { detail: { kind: "project", spaceId: space.id } }))}><Plus /></Button>
-      {/* Settings and Rename live in this one menu, so the row has a single control for Space actions. */}
-      {can(space as SpaceType, EDIT_CAPABILITY) && <DropdownMenu>
+      {/* One menu per Space row, built from effective capabilities: a viewer still gets Open, Copy link and Settings. */}
+      <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
           aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
         <DropdownMenuContent align="start" sideOffset={6} className="w-44">
-          {/* Rename follows the same rule as the Space General tab: not for a personal or archived Space. */}
-          {(space as SpaceType).kind !== "personal" && !(space as SpaceType).archived && <DropdownMenuItem onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
-          <DropdownMenuItem onClick={() => void navigate({ to: "/spaces/$spaceId/settings/$tab", params: { spaceId: space.id, tab: "general" } })}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>
+          {spaceActions(space as SpaceType).map((action) => {
+            const spaceSettings = (tab: "general" | "members") => () => void navigate({ to: SPACE_SETTINGS_ROUTE, params: { spaceId: space.id, tab } });
+            switch (action) {
+              case "open": return <DropdownMenuItem key={action} onClick={() => void navigate({ to: "/spaces/$spaceId", params: { spaceId: space.id } })}>{t("nav.space.menu.open")}</DropdownMenuItem>;
+              case "copy-link": return <DropdownMenuItem key={action} onClick={() => void copySpaceLink(space.id, (key) => String(t(key)))}>{t("nav.space.menu.copyLink")}</DropdownMenuItem>;
+              case "rename": return <DropdownMenuItem key={action} onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>;
+              case "members": return <DropdownMenuItem key={action} onClick={spaceSettings("members")}>{t("nav.space.menu.members")}</DropdownMenuItem>;
+              case "settings": return <DropdownMenuItem key={action} onClick={spaceSettings("general")}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>;
+              case "archive": return <DropdownMenuItem key={action} onClick={spaceSettings("general")}>{t("nav.space.menu.archive")}</DropdownMenuItem>;
+            }
+          })}
         </DropdownMenuContent>
-      </DropdownMenu>}
+      </DropdownMenu>
       <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
     {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
