@@ -388,7 +388,7 @@
   "spaceSettings.workflows.saved": "Default saved. Existing items keep their workflow.",
   "spaceSettings.workflows.loadError": "Could not load workflow defaults.",
   "spaceSettings.workflows.readOnly": "Only people who can edit this Space can change its default workflows.",
-  "spaceSettings.blueprints.empty": "No blueprints in this Space yet.",
+  "spaceSettings.blueprints.empty": "Blueprints are reusable structures for creating items. Save an item as a blueprint, then reuse it here or on the Blueprints page.",
   "spaceSettings.blueprints.loadError": "Could not load blueprints.",
   "spaceSettings.blueprints.count": "{{count}} items",
   "spaceSettings.blueprints.version": "version {{version}}",
@@ -411,5 +411,6 @@
   "spaceSettings.direct.savedKeepsGroup": "Role saved. The effective role may stay the same, because a group also gives {{groups}} access.",
   "spaceSettings.crumbSpaces": "Spaces",
   "spaceSettings.crumbSettings": "Settings",
-  "spaceSettings.breadcrumb": "Breadcrumb"
+  "spaceSettings.breadcrumb": "Breadcrumb",
+  "spaceSettings.blueprints.emptyTitle": "No blueprints yet"
 }

@@ -13,7 +13,7 @@ for (const width of [1280, 1440, 1920]) for (const scheme of ["light", "dark"] a
     await expect(page.getByRole("button", { name: `Edit: ${bug.name}` })).toBeVisible();
     await page.screenshot({ path: `${out}/registry_${width}_${scheme}.png`, fullPage: true });
     await page.goto(`/spaces/${marketing.id}/item-types`);
-    await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Item types in this Space", exact: true })).toBeVisible();
     await page.screenshot({ path: `${out}/space-item-types_${width}_${scheme}.png`, fullPage: true });
   });
 }

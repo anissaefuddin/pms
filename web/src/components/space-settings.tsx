@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useBlocker } from "@tanstack/react-router";
+import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
+import { LayoutTemplate } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ import { FormError } from "@/components/auth/form-error";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SpaceIconPicker } from "@/components/space-icon";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Tab slugs are the URL contract: /spaces/:spaceId/settings/:tab. Labels are translated below.
 export const SPACE_SETTINGS_TABS = ["general", "members", "tools", "item-types", "custom-fields", "workflows", "automation", "forms", "blueprints"] as const;
@@ -97,6 +99,7 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
         {tab === "tools" && <LinkTab title={t("spaces.spaceSettings.tools.title")} description={t("spaces.spaceSettings.tools.description")}>
           <SpaceToolsPanel space={space} />
         </LinkTab>}
+        {tab === "item-types" && <ItemTypesPanel spaceId={space.id} />}
         {tab === "custom-fields" && <CustomFieldsTab space={space} />}
         {tab === "workflows" && <WorkflowDefaultsTab space={space} />}
         {tab === "automation" && <LinkTab title={t("spaces.spaceSettings.automation.title")} description={t("spaces.spaceSettings.automation.description")}>
@@ -333,6 +336,7 @@ type SpaceBlueprint = { id: string; name: string; item_type: string | null; item
 /** Blueprints of this Space (C). Lists only what the server returns to people who can view the Space; create and edit reuse the Blueprint page. */
 function BlueprintsTab({ space }: { space: Space }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const blueprints = useQuery({
     queryKey: ["space-blueprints", space.id],
     queryFn: async () => (await api<{ items: SpaceBlueprint[] }>(`/api/v1/spaces/${space.id}/blueprints`)).items,
@@ -340,14 +344,15 @@ function BlueprintsTab({ space }: { space: Space }) {
   });
   return <SettingsSection title={t("spaces.spaceSettings.blueprints.title")} description={t("spaces.spaceSettings.blueprints.description")}>
     {blueprints.isError && <FormError message={t("spaces.spaceSettings.blueprints.loadError")} />}
-    {blueprints.data && !blueprints.data.length && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.blueprints.empty")}</p>}
+    {blueprints.data && !blueprints.data.length && <EmptyState icon={<LayoutTemplate />} title={t("spaces.spaceSettings.blueprints.emptyTitle")}
+      description={t("spaces.spaceSettings.blueprints.empty")} primaryAction={{ label: t("spaces.spaceSettings.blueprints.open"), onClick: () => void navigate({ to: "/blueprints" }) }} />}
     {!!blueprints.data?.length && <ul className="divide-y rounded-lg border text-sm">
       {blueprints.data.map((bp) => <li key={bp.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
         <span className="font-medium">{bp.name}</span>
         <span className="text-xs text-muted-foreground">{t("spaces.spaceSettings.blueprints.count", { count: bp.item_count })} · {t("spaces.spaceSettings.blueprints.version", { version: bp.version })}{bp.item_type && <> · {bp.item_type}</>}</span>
       </li>)}
     </ul>}
-    <Link to="/blueprints" className={linkClass}>{t("spaces.spaceSettings.blueprints.open")}</Link>
+    {!(blueprints.data && !blueprints.data.length) && <Link to="/blueprints" className={linkClass}>{t("spaces.spaceSettings.blueprints.open")}</Link>}
   </SettingsSection>;
 }
 

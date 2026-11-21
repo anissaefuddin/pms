@@ -388,7 +388,7 @@
   "spaceSettings.workflows.saved": "Default disimpan. Item yang sudah ada tetap memakai workflow-nya.",
   "spaceSettings.workflows.loadError": "Default workflow tidak bisa dimuat.",
   "spaceSettings.workflows.readOnly": "Hanya orang yang bisa mengubah Space ini yang bisa mengubah default workflow-nya.",
-  "spaceSettings.blueprints.empty": "Belum ada blueprint di Space ini.",
+  "spaceSettings.blueprints.empty": "Blueprint adalah struktur yang bisa dipakai ulang untuk membuat item. Simpan sebuah item sebagai blueprint, lalu pakai di sini atau di halaman Blueprint.",
   "spaceSettings.blueprints.loadError": "Blueprint tidak bisa dimuat.",
   "spaceSettings.blueprints.count": "{{count}} item",
   "spaceSettings.blueprints.version": "versi {{version}}",
@@ -411,5 +411,6 @@
   "spaceSettings.direct.savedKeepsGroup": "Role disimpan. Role efektif bisa tetap sama, karena group {{groups}} juga memberi akses.",
   "spaceSettings.crumbSpaces": "Space",
   "spaceSettings.crumbSettings": "Pengaturan",
-  "spaceSettings.breadcrumb": "Jejak navigasi"
+  "spaceSettings.breadcrumb": "Jejak navigasi",
+  "spaceSettings.blueprints.emptyTitle": "Belum ada blueprint"
 }
