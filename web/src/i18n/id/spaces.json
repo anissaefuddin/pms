@@ -412,5 +412,7 @@
   "spaceSettings.crumbSpaces": "Space",
   "spaceSettings.crumbSettings": "Pengaturan",
   "spaceSettings.breadcrumb": "Jejak navigasi",
-  "spaceSettings.blueprints.emptyTitle": "Belum ada blueprint"
+  "spaceSettings.blueprints.emptyTitle": "Belum ada blueprint",
+  "spaceSettings.backAll": "Kembali ke semua Space",
+  "spaceSettings.backSpace": "Kembali ke Space"
 }

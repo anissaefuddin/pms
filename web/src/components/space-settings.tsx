@@ -12,6 +12,9 @@ import { WorkspaceHeader } from "@/components/workspace-header";
 import { WorkspaceLayout } from "@/components/workspace-layout";
 import { SettingsRow, SettingsSaveBar, SettingsSection } from "@/components/settings/settings-ui";
 import { ItemTypesPanel } from "@/routes/_app/settings/item-types";
+import { useSpace } from "@/lib/space-queries";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { SpaceAutomationPanel } from "@/components/space-automation";
 import { FormsList } from "@/routes/_app/spaces_.$spaceId.forms";
 import { CustomFieldRegistry } from "@/components/custom-field-registry";
@@ -51,7 +54,29 @@ export function isSpaceSettingsTab(value: string): value is SpaceSettingsTab {
 }
 
 /** Full Space Settings page. The Space header gear, the sidebar gear and direct links all open this. */
-export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUser; tab: SpaceSettingsTab }) {
+/** Where the Space settings are opened from: the Workspace registry (/settings/spaces) or the Space work area. Same content, different URLs and back link. */
+export type SpaceSettingsContext = "workspace" | "space";
+const TAB_PATH = { workspace: "/settings/spaces/$spaceId/$tab", space: "/spaces/$spaceId/settings/$tab" } as const;
+
+/** Loads the Space for either settings route and handles loading, not found and error the same way. */
+export function SpaceSettingsPage({ spaceId, tab, context }: { spaceId: string; tab: SpaceSettingsTab; context: SpaceSettingsContext }) {
+  const { t } = useTranslation();
+  const space = useSpace(spaceId);
+  const queryClient = useQueryClient();
+  const me = queryClient.getQueryData<CurrentUser>(["me"]);
+  if (space.isPending) return <main className="p-8"><LoadingState label={t("spaces.page.loading")} /></main>;
+  if (space.error instanceof ApiError && space.error.status === 404) {
+    return <main className="p-8"><div className="max-w-md space-y-3">
+      <h1 className="workspace-title">{t("spaces.notFound.title")}</h1>
+      <p className="text-muted-foreground">{t("spaces.notFound.description")}</p>
+      {me && <Link to="/spaces/$spaceId" params={{ spaceId: me.personal_space_id }} className={buttonVariants({ variant: "outline" })}>{t("spaces.notFound.home")}</Link>}
+    </div></main>;
+  }
+  if (space.isError) return <main className="p-8"><ErrorState message={t("spaces.page.error")} retryLabel={t("spaces.page.retry")} onRetry={() => void space.refetch()} /></main>;
+  return <SpaceSettings space={space.data} me={me} tab={tab} context={context} />;
+}
+
+export function SpaceSettings({ space, me, tab, context = "space" }: { space: Space; me?: CurrentUser; tab: SpaceSettingsTab; context?: SpaceSettingsContext }) {
   const { t } = useTranslation();
   const [dirty, setDirty] = useState(false);
   // Leaving the page or switching tab with unsaved General changes asks first.
@@ -65,13 +90,20 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
         <nav aria-label={t("spaces.spaceSettings.breadcrumb")} className="mb-2 text-sm text-muted-foreground">
           <ol className="flex flex-wrap items-center gap-1">
             <li><Link to="/settings/spaces" className="underline-offset-2 hover:underline">{t("spaces.spaceSettings.crumbSpaces")}</Link> <span aria-hidden="true">/</span></li>
-            <li><Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
-            <li>{t("spaces.spaceSettings.crumbSettings")} <span aria-hidden="true">/</span></li>
+            {context === "workspace"
+              ? <li><Link to="/settings/spaces/$spaceId/$tab" params={{ spaceId: space.id, tab: "general" }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
+              : <>
+                <li><Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
+                <li>{t("spaces.spaceSettings.crumbSettings")} <span aria-hidden="true">/</span></li>
+              </>}
             <li aria-current="page" className="text-foreground">{t(TAB_LABEL[tab])}</li>
           </ol>
         </nav>
         }
         title={t("spaces.spaceSettings.title")}
+        actions={context === "workspace"
+          ? <Link to="/settings/spaces" className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.backAll")}</Link>
+          : <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.backSpace")}</Link>}
         meta={<p className="mt-1 text-sm text-muted-foreground">
           <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link>
         </p>}
@@ -83,7 +115,7 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
             <div key={group.id} className="flex gap-1 lg:flex-col lg:gap-0.5">
               {group.label && <p className="hidden px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:block">{t(group.label)}</p>}
               {group.tabs.map((key) => (
-                <Link key={key} to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: key }}
+                <Link key={key} to={TAB_PATH[context]} params={{ spaceId: space.id, tab: key }}
                   aria-current={key === tab ? "page" : undefined}
                   className={cn("shrink-0 border-b-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground lg:border-b-0 lg:border-s-2 lg:rounded-e-md",
                     key === tab ? "border-primary font-medium text-foreground lg:bg-muted" : "border-transparent")}>

@@ -412,5 +412,7 @@
   "spaceSettings.crumbSpaces": "Spaces",
   "spaceSettings.crumbSettings": "Settings",
   "spaceSettings.breadcrumb": "Breadcrumb",
-  "spaceSettings.blueprints.emptyTitle": "No blueprints yet"
+  "spaceSettings.blueprints.emptyTitle": "No blueprints yet",
+  "spaceSettings.backAll": "Back to all Spaces",
+  "spaceSettings.backSpace": "Back to Space"
 }

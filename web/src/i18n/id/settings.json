@@ -680,5 +680,6 @@
   "nav.version": "Versi {{version}}",
   "itemTypes.spaceEmptyTitle": "Belum ada tipe item khusus di Space ini",
   "itemTypes.spaceEmptyDescription": "Task, Project, dan Folder selalu tersedia, dan tipe Workspace juga ditampilkan di sini. Tambahkan tipe yang hanya dipakai Space ini.",
-  "itemTypes.spaceEmptyAction": "Tipe item khusus baru"
+  "itemTypes.spaceEmptyAction": "Tipe item khusus baru",
+  "spaces.actionsNamed": "Tindakan untuk {{name}}"
 }

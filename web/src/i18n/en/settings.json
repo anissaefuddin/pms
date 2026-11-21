@@ -684,5 +684,6 @@
   "nav.version": "Version {{version}}",
   "itemTypes.spaceEmptyTitle": "No custom item types in this Space yet",
   "itemTypes.spaceEmptyDescription": "Task, Project and Folder are always available, and Workspace types are shown here too. Add a type that only this Space uses.",
-  "itemTypes.spaceEmptyAction": "New custom item type"
+  "itemTypes.spaceEmptyAction": "New custom item type",
+  "spaces.actionsNamed": "Actions for {{name}}"
 }
