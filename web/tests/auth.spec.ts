@@ -12,7 +12,7 @@ test.describe("login", () => {
     await page.getByRole("textbox", { name: "Email" }).fill("ada@example.test");
     await page.getByLabel("Password").fill("correct horse");
     await page.getByRole("button", { name: "Log in" }).click();
-    await expect(page.getByRole("heading", { name: "Your workspace is ready" })).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboards$/); // the home page is Dashboards
     expect(calls.find((c) => c.path === "/auth/login")?.body).toEqual({ email: "ada@example.test", password: "correct horse" });
   });
 
@@ -34,8 +34,8 @@ test.describe("login", () => {
     await expect(password).toHaveAttribute("type", "text");
   });
 
-  for (const [next, expected] of [["/settings/security", "/settings/security"], ["//evil.test", "/"]] as const) {
-    test(`next=${next} ${expected === "/" ? "is ignored" : "is honored"}`, async ({ page, baseURL }) => {
+  for (const [next, expected] of [["/settings/security", "/settings/security"], ["//evil.test", "/dashboards"]] as const) {
+    test(`next=${next} ${expected === "/dashboards" ? "is ignored" : "is honored"}`, async ({ page, baseURL }) => {
       let signedIn = false;
       await mockApi(page, {
         "POST /auth/login": () => { signedIn = true; return { body: me }; },
@@ -136,7 +136,7 @@ test.describe("accept invitation", () => {
 
     await page.getByRole("checkbox", { name: /Terms of Service/ }).check();
     await page.getByRole("button", { name: "Get started" }).click();
-    await expect(page.getByRole("heading", { name: "Your workspace is ready" })).toBeVisible();
+    await expect(page).toHaveURL(/\/dashboards$/);
     expect(calls.find((c) => c.path === "/auth/invitations/accept")?.body).toEqual({
       token: "good", first_name: "Grace", last_name: "Hopper", password: "longenough1", accept_terms: true,
     });
