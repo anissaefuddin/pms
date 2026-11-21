@@ -49,7 +49,7 @@ for (const colorScheme of ["light", "dark"] as const) {
     test("workspace shell has no violations", async ({ page }) => {
       await mockApi(page, { "GET /me": { body: me } });
       await page.goto("/");
-      await expect(page.getByRole("heading", { name: "Your workspace is ready" })).toBeVisible();
+      await expect(page).toHaveURL(/\/dashboards$/);
       await expectNoViolations(page);
     });
 

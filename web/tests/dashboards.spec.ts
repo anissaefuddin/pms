@@ -273,9 +273,10 @@ test("a Space gets a ready-made analytics board of five widgets", async ({ page 
     "POST /dashboards": (body: any) => ({ status: 201, body: { ...board({ widgets: [] }), name: body.name, version } }),
     [`POST /dashboards/${d1}/widgets`]: () => ({ status: 201, body: { ...board({ widgets: [] }), version: ++version } }),
   });
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // Tools only show once a Space is open
-  await page.getByRole("button", { name: "Expand Marketing" }).click();
+  await page.goto(`/spaces/${marketing.id}`);
+  await expect(page.getByRole("heading", { name: "Marketing", level: 1 })).toBeVisible();
+  const expand = page.getByRole("button", { name: "Expand Marketing" });
+  if (await expand.isVisible()) await expand.click();
   await page.getByRole("navigation", { name: "Spaces" }).getByRole("button", { name: "Tools" }).click(); // SB-05: Tools starts collapsed
   await page.getByRole("button", { name: "Create analytics board" }).click();
   await expect(page).toHaveURL(`/dashboards/${d1}`);

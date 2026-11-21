@@ -20,8 +20,8 @@ export const SHORTCUT_LABEL_KEY: Record<ShortcutId, string> = {
   reviews: "items.fileReview.nav", recycle: "nav.recycle.label",
 };
 
-/** Bawaan: Request forms dan Stream tersemat, sama seperti tampilan sebelumnya. */
-export const DEFAULT_PINNED: readonly ShortcutId[] = ["request_forms", "stream"];
+/** Bawaan: Dashboards paling atas, lalu Request forms dan Stream. Search dan Inbox selalu tampil di atas daftar ini. */
+export const DEFAULT_PINNED: readonly ShortcutId[] = ["dashboards", "request_forms", "stream"];
 
 /** Hanya shortcut yang punya kunci API (sidebar_pinned) yang bisa disematkan; yang lain selalu di More. */
 export const PINNABLE_IDS = SHORTCUT_IDS.filter((id) => SHORTCUT_HIDE_KEY[id] !== undefined);
