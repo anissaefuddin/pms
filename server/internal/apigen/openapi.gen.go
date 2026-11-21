@@ -30347,34 +30347,34 @@ type GetOverviewResponseObject interface {
 type GetOverview200JSONResponse struct {
 	GeneratedAt time.Time `json:"generated_at"`
 	Kpis        struct {
-		AccessibleSpaces *int `json:"accessible_spaces,omitempty"`
+		AccessibleSpaces int `json:"accessible_spaces"`
 
 		// ActiveProjects Project berstatus grup active, dihitung distinct per ID
-		ActiveProjects *int `json:"active_projects,omitempty"`
-		AtRiskProjects *struct {
+		ActiveProjects int `json:"active_projects"`
+		AtRiskProjects struct {
 			Status *GetOverview200JSONResponseBodyKpisAtRiskProjectsStatus `json:"status,omitempty"`
-		} `json:"at_risk_projects,omitempty"`
+		} `json:"at_risk_projects"`
 
 		// CompletedThisWeek Task grup completed sejak Senin 00:00 zona pengguna
-		CompletedThisWeek *int `json:"completed_this_week,omitempty"`
+		CompletedThisWeek int `json:"completed_this_week"`
 
 		// OverdueTasks Task grup active dengan due_date sebelum hari ini (zona pengguna)
-		OverdueTasks *int `json:"overdue_tasks,omitempty"`
+		OverdueTasks int `json:"overdue_tasks"`
 	} `json:"kpis"`
 	NextCursor *string `json:"next_cursor,omitempty"`
 	Spaces     []struct {
-		Archived        *bool                                                `json:"archived,omitempty"`
-		DoneTaskCount   *int                                                 `json:"done_task_count,omitempty"`
-		EffectiveAccess *GetOverview200JSONResponseBodySpacesEffectiveAccess `json:"effective_access,omitempty"`
-		Health          *GetOverview200JSONResponseBodySpacesHealth          `json:"health,omitempty"`
-		IconKey         *string                                              `json:"icon_key,omitempty"`
-		Id              *openapi_types.UUID                                  `json:"id,omitempty"`
-		LastActivity    *time.Time                                           `json:"last_activity,omitempty"`
-		Name            *string                                              `json:"name,omitempty"`
-		OverdueCount    *int                                                 `json:"overdue_count,omitempty"`
-		ProgressPercent *int                                                 `json:"progress_percent,omitempty"`
-		ProjectCount    *int                                                 `json:"project_count,omitempty"`
-		TaskCount       *int                                                 `json:"task_count,omitempty"`
+		Archived        bool                                                `json:"archived"`
+		DoneTaskCount   int                                                 `json:"done_task_count"`
+		EffectiveAccess GetOverview200JSONResponseBodySpacesEffectiveAccess `json:"effective_access"`
+		Health          GetOverview200JSONResponseBodySpacesHealth          `json:"health"`
+		IconKey         *string                                             `json:"icon_key,omitempty"`
+		Id              openapi_types.UUID                                  `json:"id"`
+		LastActivity    *time.Time                                          `json:"last_activity"`
+		Name            string                                              `json:"name"`
+		OverdueCount    int                                                 `json:"overdue_count"`
+		ProgressPercent *int                                                `json:"progress_percent"`
+		ProjectCount    int                                                 `json:"project_count"`
+		TaskCount       int                                                 `json:"task_count"`
 	} `json:"spaces"`
 
 	// Timezone Zona waktu pengguna yang dipakai untuk batas hari dan minggu

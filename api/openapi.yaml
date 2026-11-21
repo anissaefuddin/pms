@@ -1867,6 +1867,7 @@ paths:
                   timezone: { type: string, description: 'Zona waktu pengguna yang dipakai untuk batas hari dan minggu' }
                   kpis:
                     type: object
+                    required: [accessible_spaces, active_projects, overdue_tasks, completed_this_week, at_risk_projects]
                     properties:
                       accessible_spaces: { type: integer }
                       active_projects: { type: integer, description: 'Project berstatus grup active, dihitung distinct per ID' }
@@ -1877,6 +1878,7 @@ paths:
                     type: array
                     items:
                       type: object
+                      required: [id, name, archived, project_count, task_count, done_task_count, progress_percent, overdue_count, health, last_activity, effective_access]
                       properties:
                         id: { type: string, format: uuid }
                         name: { type: string }

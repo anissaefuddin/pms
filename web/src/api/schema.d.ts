@@ -9834,35 +9834,35 @@ export interface operations {
                         /** @description Zona waktu pengguna yang dipakai untuk batas hari dan minggu */
                         timezone: string;
                         kpis: {
-                            accessible_spaces?: number;
+                            accessible_spaces: number;
                             /** @description Project berstatus grup active, dihitung distinct per ID */
-                            active_projects?: number;
+                            active_projects: number;
                             /** @description Task grup active dengan due_date sebelum hari ini (zona pengguna) */
-                            overdue_tasks?: number;
+                            overdue_tasks: number;
                             /** @description Task grup completed sejak Senin 00:00 zona pengguna */
-                            completed_this_week?: number;
-                            at_risk_projects?: {
+                            completed_this_week: number;
+                            at_risk_projects: {
                                 /** @enum {string} */
                                 status?: "NOT_AVAILABLE";
                             };
                         };
                         spaces: {
                             /** Format: uuid */
-                            id?: string;
-                            name?: string;
+                            id: string;
+                            name: string;
                             icon_key?: string;
-                            archived?: boolean;
-                            project_count?: number;
-                            task_count?: number;
-                            done_task_count?: number;
-                            progress_percent?: number | null;
-                            overdue_count?: number;
+                            archived: boolean;
+                            project_count: number;
+                            task_count: number;
+                            done_task_count: number;
+                            progress_percent: number | null;
+                            overdue_count: number;
                             /** @enum {string} */
-                            health?: "empty" | "attention" | "on_track";
+                            health: "empty" | "attention" | "on_track";
                             /** Format: date-time */
-                            last_activity?: string | null;
+                            last_activity: string | null;
                             /** @enum {string} */
-                            effective_access?: "space_admin" | "full" | "editor" | "limited" | "read";
+                            effective_access: "space_admin" | "full" | "editor" | "limited" | "read";
                         }[];
                         next_cursor?: string | null;
                         total: number;
