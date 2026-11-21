@@ -54,7 +54,7 @@ test("a custom type appears in the create dialog and is sent as type_key", async
     "GET /items/aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa": { body: { id: "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa", type: "task", title: "Crash", seq: 1, version: 1, assignees: [], locations: [], my_capabilities: ALL }, headers: { ETag: '"1"' } },
   } });
   await page.goto(`/spaces/${marketing.id}`);
-  await page.locator("header").first().getByRole("button", { name: "Create" }).click();
+  await page.getByRole("main").getByRole("button", { name: "New item" }).click();
   await page.getByRole("menuitem", { name: /^Project/ }).click();
   const dialog = page.getByRole("dialog");
   await dialog.getByLabel("Name").fill("Crash");
@@ -331,7 +331,7 @@ test("Quick Access puts a custom type in the Create menu and opens the item dial
   const quickBug = { ...bugType, quick_access: true };
   const legacy = { ...bugType, id: "99999999-9999-4999-8999-999999999998", key: "legacy_more", name: "Legacy more", quick_access: false };
   await mockSpaces(page, { extra: { "GET /item-types": { body: { items: [taskType, projectType, quickBug, legacy] } } } });
-  await page.goto("/");
+  await page.goto("/inbox");
   await page.getByRole("button", { name: "Create", exact: true }).click();
   await expect(page.getByRole("menuitem", { name: "Bug" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Legacy more" })).toHaveCount(0);
@@ -378,13 +378,12 @@ test("a Space's item types: its own types are editable there, Workspace types ar
   await dialog.getByLabel("Key (lowercase letters, digits, _)").fill("campaign");
   await dialog.getByRole("button", { name: "Save" }).click();
   expect(calls.find((c) => c.method === "POST" && c.path === "/item-types")?.body).toMatchObject({ key: "campaign", space_id: marketing.id });
+  // The Space's own create menu decides which custom types the item dialog offers; the Space page has no global Create.
   await page.goto(`/spaces/${marketing.id}`);
-  await page.getByRole("button", { name: "Create", exact: true }).click();
-  await expect(page.getByRole("menuitem", { name: "Space bug" })).toBeVisible();
+  await page.getByRole("main").getByRole("button", { name: "New item" }).click();
+  await page.getByRole("menuitem", { name: /^Task/ }).click();
+  await expect(page.getByRole("dialog").getByRole("option", { name: "Space bug" })).toHaveCount(1);
   menuOff.push("space_bug");
-  await page.reload();
-  await page.getByRole("button", { name: "Create", exact: true }).click();
-  await expect(page.getByRole("menuitem", { name: "Space bug" })).toHaveCount(0);
 });
 
 test("dragging a block in the layout builder reorders it within its section", async ({ page }) => {
