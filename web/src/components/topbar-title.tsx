@@ -8,7 +8,7 @@ export function TopbarTitle({ children, extra }: { children: ReactNode; extra?: 
   useEffect(() => { setSlot({ node: document.getElementById("topbar-breadcrumb") }); }, []);
   if (!slot) return null;
   const title = <div className="flex min-w-0 items-center gap-2">
-    <h1 className="flex min-w-0 items-center gap-2 text-base font-semibold"><span className="min-w-0 truncate">{children}</span></h1>
+    <h1 className="flex min-w-0 items-center gap-2 text-base font-semibold"><span className="flex min-w-0 items-center gap-2 truncate">{children}</span></h1>
     {extra}
   </div>;
   return slot.node ? createPortal(title, slot.node) : title;
