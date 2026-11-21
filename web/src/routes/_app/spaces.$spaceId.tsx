@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { FolderOpen, Lock, MoreHorizontal, Share2 } from "lucide-react";
+import { Folder, FolderKanban, FolderOpen, Lock, MoreHorizontal, Plus, Share2, SquareCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { useSpace } from "@/lib/space-queries";
@@ -71,7 +71,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
   const [deleting, setDeleting] = useState(false);
   const [deleteError, setDeleteError] = useState("");
   const [pending, setPending] = useState(false);
-  const [creating, setCreating] = useState(false);
+  const [creating, setCreating] = useState<"project" | "folder" | "task" | null>(null);
   const items = useQuery({ queryKey: itemKeys.root(space.id), queryFn: () => listItems(`/api/v1/spaces/${space.id}/items`) });
   const impact = useQuery({
     queryKey: ["space-delete-impact", space.id], enabled: deleting,
@@ -131,7 +131,17 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
           {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
           <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
           {canEditForms && <Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.open")}</Link>}
-          {me && canCreate && <Button onClick={() => setCreating(true)}>{t("items.new")}</Button>}
+          {/* D-CREATE: the one primary create action of a Space; the kinds stay the same as the global menu. */}
+          {me && canCreate && (
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button />}><Plus />{t("items.new")}</DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-44">
+                <DropdownMenuItem onClick={() => setCreating("project")}><FolderKanban />{t("items.project")}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCreating("folder")}><Folder />{t("items.folder")}</DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setCreating("task")}><SquareCheck />{t("items.task")}</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
           {(canRename || canDelete || canManageFields || canCreate || canLock || canEditForms) && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
@@ -151,12 +161,12 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
       {items.isError && <ErrorState className="mt-6 space-y-2" message={t("items.loadError")} retryLabel={t("items.retry")} onRetry={() => void items.refetch()} />}
       {items.data?.length === 0 && <EmptyState className="mt-8 p-12" icon={<ProjectIllustration />} title={t("spaces.empty.title")}
         description={t("spaces.empty.description")} canCreate={canCreate}
-        primaryAction={{ label: t("spaces.empty.newProject"), onClick: () => setCreating(true) }}
-        secondaryAction={{ label: t("spaces.empty.browseBlueprints"), onClick: () => void navigate({ to: "/blueprints" }) }} />}
+        primaryAction={{ label: t("spaces.empty.browseBlueprints"), onClick: () => void navigate({ to: "/blueprints" }) }}
+        secondaryAction={{ label: t("spaces.empty.newProject"), onClick: () => setCreating("project") }} />}
       <div className="mt-6"><ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
 
-      {me && <CreateItemDialog open={creating} onOpenChange={setCreating} me={me} location={{ space_id: space.id }}
-        onCreated={openItem} />}
+      {me && <CreateItemDialog open={creating !== null} onOpenChange={(open) => { if (!open) setCreating(null); }} me={me} location={{ space_id: space.id }}
+        initialKind={creating ?? undefined} onCreated={openItem} />}
       {importingExcel && <SpaceExcelImport open={importingExcel} onOpenChange={setImportingExcel} spaceId={space.id} />}
       {exportingSpace && <SpaceExcelExport open={exportingSpace} onOpenChange={setExportingSpace} spaceId={space.id} spaceName={space.name} />}
       {canManageFields && <CustomFieldsDialog open={managingFields} onOpenChange={setManagingFields} spaceId={space.id} />}
