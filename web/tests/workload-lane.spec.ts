@@ -8,7 +8,7 @@ const from = new Date();
 const dayAt = (i: number) => new Date(Date.UTC(from.getUTCFullYear(), from.getUTCMonth(), from.getUTCDate() + i));
 
 function setup(page: Page, plannedFirstDay = 0) {
-  const capacity = Array.from({ length: 14 }, (_, i) => ([1, 2, 3, 4, 5].includes(dayAt(i).getUTCDay()) ? 480 : 0));
+  const capacity = Array.from({ length: 14 }, (_, i) => (i === 0 || i === 3 || [1, 2, 3, 4, 5].includes(dayAt(i).getUTCDay()) ? 480 : 0));
   const person = { ...ana, capacity, planned: capacity.map((_, i) => (i === 0 ? plannedFirstDay : 0)), booked: capacity.map(() => 0) };
   const posted: any[] = [];
   return mockSpaces(page, { extra: {

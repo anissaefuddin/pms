@@ -37,7 +37,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   // C-03: Month or Week. Week mode keeps its own anchor day, so moving by week never changes the month view.
   const [mode, setMode] = useState<"month" | "week">("month");
-  const [scheduleMode, setScheduleMode] = useState<"boundaries" | "all">("boundaries");
+  const [scheduleMode, setScheduleMode] = useState<"boundaries" | "all">("all");
   const [weekDay, setWeekDay] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); });
   const [drag, setDrag] = useState<{ id: string; from?: Date }>();
   const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
@@ -151,7 +151,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
               const more = layout.overflowByCol[col];
               const openKey = `${week}-${col}`;
               return <div role="gridcell" key={key} onDragOver={(event) => { if (drag) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); dropOn(day); }}
-                className={`relative h-28 min-w-0 border p-1 ${day.getMonth() !== month.getMonth() ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "bg-primary/5 ring-2 ring-inset ring-primary" : ""}`}>
+                className={`relative h-28 min-w-0 border p-1 ${day.getMonth() !== month.getMonth() ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "ring-2 ring-inset ring-primary" : ""}`}>
                 {onCreateOn && !readonly && !off && <button type="button" className="absolute right-1 top-1 z-20 rounded px-1 text-xs text-primary hover:bg-accent"
                   aria-label={t("views.calendar.newOn", { date: fmt(fullFormat).format(day) })} onClick={() => onCreateOn(key)}>+</button>}
                 <p className="text-xs text-muted-foreground"><span aria-hidden>{day.getDate()}</span>

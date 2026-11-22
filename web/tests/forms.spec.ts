@@ -53,7 +53,8 @@ test("list shows forms and the Space page links to it for editors", async ({ pag
   await mock(page);
   await page.goto(`/spaces/${marketing.id}`);
   // Forms live in Space Settings (one entry point in the header), not as a separate header link.
-  await page.getByRole("link", { name: "Settings", exact: true }).click();
+  await page.getByRole("button", { name: "Space actions" }).click();
+  await page.getByRole("menuitem", { name: "Settings", exact: true }).click();
   await page.getByRole("link", { name: "Request forms" }).click();
   await expect(page).toHaveURL(`/spaces/${marketing.id}/settings/forms`);
   const row = page.getByRole("row", { name: /IT request/ });

@@ -68,7 +68,7 @@ test("Board card shows chip, avatars, duration; status changes by drag and by th
   await page.goto(`${path}?view=${boardId}`);
   const todoCol = page.getByRole("region", { name: "To do", exact: true });
   const doneCol = page.getByRole("region", { name: "Completed", exact: true });
-  await expect(todoCol.locator("[data-status-chip]")).toHaveText("To do");
+  await expect(todoCol.locator("[data-status-chip]")).toHaveCount(0);
   await expect(todoCol.getByRole("img", { name: "Ann Lee" })).toBeVisible();
   await expect(todoCol).toContainText("(3d)");
   await expect(todoCol.getByRole("combobox")).toHaveCount(0);
@@ -77,7 +77,8 @@ test("Board card shows chip, avatars, duration; status changes by drag and by th
   await page.getByRole("menuitem", { name: "Completed" }).click();
   await expect.poll(() => patches).toEqual([{ status_id: done.id }]);
   await expect(doneCol.getByRole("listitem")).toHaveCount(1);
-  await doneCol.getByRole("listitem").dragTo(todoCol);
+  await page.getByRole("button", { name: "Hide empty columns" }).click();
+  await doneCol.getByRole("listitem").dragTo(page.getByRole("region", { name: "To do", exact: true }));
   await expect.poll(() => patches.at(-1)).toEqual({ status_id: todo.id });
 });
 
@@ -102,10 +103,10 @@ test("Gantt: selectable Status/Start/Due columns, bars coloured by status with a
   await expect.poll(async () => (await bar(page, design).boundingBox())!.width).toBeLessThan(before);
   await page.getByRole("button", { name: "Zoom in" }).click();
   await expect.poll(async () => (await bar(page, design).boundingBox())!.width).toBe(before);
-  await expect(page.getByRole("button", { name: "Keyboard help" })).toHaveAttribute("title", /Arrow up and down/);
+  await expect(page.getByText(/Arrow up and down choose a task/)).toBeVisible();
   await page.getByRole("button", { name: "Columns" }).click();
   const dialog = page.getByRole("dialog", { name: "Choose columns" });
   await expect(dialog.getByLabel("Status", { exact: true })).toBeChecked();
-  await expect(dialog.getByLabel("Start date")).toBeChecked();
+  await expect(dialog.getByLabel("Start date")).not.toBeChecked();
   expect(await new AxeBuilder({ page }).analyze().then((r) => r.violations.filter((v) => v.impact === "serious" || v.impact === "critical"))).toEqual([]);
 });

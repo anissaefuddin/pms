@@ -76,7 +76,8 @@ test("a role in use cannot be deleted, a stale edit says so, and a regular user 
 test("the Share dialog offers custom roles, shows their names, and saves custom:<id>", async ({ page }) => {
   const { calls } = await mockSpaces(page, { extra: extra({ "GET /custom-roles": { body: { items: [role()] } } }) });
   await page.goto(`/spaces/${marketing.id}`);
-  await page.getByRole("button", { name: "Share" }).click();
+  await page.getByRole("button", { name: "Space actions" }).click();
+  await page.getByRole("menuitem", { name: "Share" }).click();
   const dialog = page.getByRole("dialog", { name: "Share “Marketing”" });
   await dialog.getByLabel("Add people or groups").fill("gra");
   await expect(dialog.getByText("grace@example.test")).toBeVisible();

@@ -107,7 +107,7 @@ async function select(page: import("@playwright/test").Page, downs: number) {
 }
 
 test("links come from the server; type and removal go through the API", async ({ page }) => {
-  const { calls } = await mockGantt(page, { deps: [existing] });
+  const { calls } = await mockGantt(page, { deps: [existing], config: { columns: ["predecessors"] } });
   await page.goto(`${path}?view=${ganttId}`);
   await expect(page.locator(".wx-line").first()).toBeAttached();
   await page.getByRole("button", { name: "Predecessors of Build" }).click(); // the Predecessors column opens the links
@@ -121,7 +121,7 @@ test("links come from the server; type and removal go through the API", async ({
 });
 
 test("adding a predecessor shifts the successor from the server's data, and a cycle is refused", async ({ page }) => {
-  const { calls } = await mockGantt(page);
+  const { calls } = await mockGantt(page, { config: { columns: ["predecessors"] } });
   await page.goto(`${path}?view=${ganttId}`);
   await page.getByRole("button", { name: "Predecessors of Ship" }).click();
   const panel = page.getByRole("dialog");

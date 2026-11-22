@@ -99,7 +99,8 @@ for (const colorScheme of ["light", "dark"] as const) {
     test("share dialog has no violations, with results, an unknown email and the self warning", async ({ page }) => {
       await mockSpaces(page, { extra: extra() });
       await page.goto(`/spaces/${marketing.id}`);
-      await page.getByRole("button", { name: "Share" }).click();
+      await page.getByRole("button", { name: "Space actions" }).click();
+      await page.getByRole("menuitem", { name: "Share" }).click();
       const dialog = page.getByRole("dialog", { name: "Share “Marketing”" });
       await expect(dialog.getByText("Linus Pauling")).toBeVisible();
       await expectNoViolations(page);

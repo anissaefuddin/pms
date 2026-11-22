@@ -5,7 +5,8 @@ import { extra, grace, shareRows, marketing, mockSpaces, team } from "./spaces-m
 const url = `/spaces/${marketing.id}`;
 async function openShare(page: Page) {
   await page.goto(url);
-  await page.getByRole("button", { name: "Share" }).click();
+  await page.getByRole("button", { name: "Space actions" }).click();
+  await page.getByRole("menuitem", { name: "Share" }).click();
   const dialog = page.getByRole("dialog", { name: "Share “Marketing”" });
   await expect(dialog.getByText("Linus Pauling")).toBeVisible();
   return dialog;

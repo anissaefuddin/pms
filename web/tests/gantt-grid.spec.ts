@@ -1,13 +1,13 @@
 import { expect, test } from "@playwright/test";
 import { ganttId, kids, mockGantt, path } from "./gantt-mock";
 
-test("the grid shows number, predecessors and duration by default, and no status column", async ({ page }) => {
+test("the grid shows number and status by default, with advanced columns hidden", async ({ page }) => {
   await mockGantt(page);
   await page.goto(`${path}?view=${ganttId}`);
-  await expect(page.getByText("Predecessors", { exact: true }).first()).toBeVisible();
-  await expect(page.getByText("Duration", { exact: true }).first()).toBeVisible();
   await expect(page.getByText("#", { exact: true }).first()).toBeVisible();
-  await expect(page.getByRole("columnheader", { name: "Status", exact: true })).toHaveCount(0);
+  await expect(page.getByRole("columnheader", { name: "Status", exact: true })).toBeVisible();
+  await expect(page.getByText("Predecessors", { exact: true })).toHaveCount(0);
+  await expect(page.getByText("Duration", { exact: true })).toHaveCount(0);
 });
 
 test("grid columns can be resized by their grips", async ({ page }) => {

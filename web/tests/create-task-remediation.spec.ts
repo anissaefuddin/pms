@@ -101,7 +101,7 @@ test("Table: the row menu's Add subitem opens the create dialog under that row a
   await page.goto(path);
   // The row menu is labelled "Move <title>" when the row can also be reordered (manual sort, edit permission).
   await page.getByRole("button", { name: `Move ${project.title}`, exact: true }).click();
-  await page.getByRole("menuitem", { name: "Add subitem" }).click();
+  await page.getByRole("menuitem", { name: "Add subtask" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.locator('input[name="title"]').fill("Child task");
@@ -116,7 +116,7 @@ test("Table: Add subitem under a Task is allowed (a Task may sit under a Task)",
   const { calls } = await setup(page, { view: "table" });
   await page.goto(path);
   await page.getByRole("button", { name: `Move ${existing.title}`, exact: true }).click();
-  await page.getByRole("menuitem", { name: "Add subitem" }).click();
+  await page.getByRole("menuitem", { name: "Add subtask" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog).toBeVisible();
   await dialog.locator('input[name="title"]').fill("Nested task");
@@ -141,9 +141,9 @@ test("Table: a Folder row offers Add subitem, the same rule as the Item Detail p
   const { calls } = await setup(page, { view: "table", items: [folder] });
   await page.goto(path);
   await page.getByRole("row", { name: /Team folder/ }).getByRole("button", { name: /^(Move|Actions)/ }).click();
-  await page.getByRole("menuitem", { name: "Add subitem" }).click();
-  await page.getByRole("dialog", { name: "Add subitem" }).locator('input[name="title"]').fill("Folder child");
-  await page.getByRole("dialog", { name: "Add subitem" }).getByRole("button", { name: "Create item" }).click();
+  await page.getByRole("menuitem", { name: "Add subtask" }).click();
+  await page.getByRole("dialog", { name: "Add subtask" }).locator('input[name="title"]').fill("Folder child");
+  await page.getByRole("dialog", { name: "Add subtask" }).getByRole("button", { name: "Create item" }).click();
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")?.body).toMatchObject({
     title: "Folder child", locations: [{ space_id: marketing.id, parent_item_id: folder.id }],
   });
@@ -162,8 +162,8 @@ test("Folder page (Item Detail equivalent): New item creates under the folder, l
   });
   await page.goto(`/items/${folder.id}`);
   await page.getByRole("button", { name: "New item", exact: true }).click();
-  await page.getByRole("dialog", { name: "Add subitem" }).locator('input[name="title"]').fill("Folder detail child");
-  await page.getByRole("dialog", { name: "Add subitem" }).getByRole("button", { name: "Create item" }).click();
+  await page.getByRole("dialog", { name: "Add subtask" }).locator('input[name="title"]').fill("Folder detail child");
+  await page.getByRole("dialog", { name: "Add subtask" }).getByRole("button", { name: "Create item" }).click();
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")?.body).toMatchObject({
     title: "Folder detail child", locations: [{ space_id: marketing.id, parent_item_id: folder.id }],
   });

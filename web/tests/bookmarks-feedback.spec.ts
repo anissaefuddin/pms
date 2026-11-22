@@ -15,7 +15,8 @@ test("bookmarks open in a new tab with noopener, can be added and removed, and b
     [`DELETE /spaces/${marketing.id}/bookmarks/b1`]: () => { list.shift(); return { status: 204 }; },
   } });
   await page.goto(`/spaces/${marketing.id}`);
-  await page.getByRole("button", { name: "Bookmarks" }).click();
+  await page.getByRole("button", { name: "Space actions" }).click();
+  await page.getByRole("menuitem", { name: "Bookmarks" }).click();
   const link = page.getByRole("link", { name: /Docs/ });
   await expect(link).toHaveAttribute("target", "_blank");
   await expect(link).toHaveAttribute("rel", /noopener/);

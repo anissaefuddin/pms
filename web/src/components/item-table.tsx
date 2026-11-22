@@ -321,6 +321,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
           {header.headers.map((cell) => <div role="columnheader" key={cell.id} className={`relative border-b bg-card px-2 py-2 font-medium ${cell.column.id === "name" ? `${stickyName} z-30` : cell.column.id === "actions" ? "sticky right-0 z-30 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
             {flexRender(cell.column.columnDef.header, cell.getContext())}
             {cell.column.id !== "actions" && <div role="separator" aria-orientation="vertical" tabIndex={0} aria-label={t("views.columnResize", { name: typeof cell.column.columnDef.header === "string" ? cell.column.columnDef.header : cell.column.id })}
+              aria-valuemin={minimumWidth[cell.column.id ?? ""] ?? 80} aria-valuemax={1200} aria-valuenow={widthOf(cell.column.id ?? "")}
               onPointerDown={(event) => startResize(event, cell.column.id ?? "")}
               onDoubleClick={() => setWidths((current) => { const next = { ...current }; delete next[cell.column.id ?? ""]; return next; })}
               onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); const id = cell.column.id ?? ""; setWidths((current) => ({ ...current, [id]: Math.max(minimumWidth[id] ?? 80, widthOf(id) + (event.key === "ArrowRight" ? 16 : -16)) })); } }}
