@@ -32,7 +32,7 @@ test("more events than lanes: +N opens an anchored list with the hidden event", 
 test("a bar shows its details on keyboard focus, and the bar is described by that card", async ({ page }) => {
   await page.setViewportSize({ width: 1400, height: 1200 });
   await page.goto(path);
-  const bar = page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: /Design/ });
+  const bar = page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: /Start Design/ });
   await bar.focus();
   const card = page.getByRole("tooltip").filter({ hasText: "Design" });
   await expect(card).toBeVisible();
