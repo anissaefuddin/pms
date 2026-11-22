@@ -276,7 +276,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<div role="status" aria-label={t("views.gantt.loading")} className="h-[60vh] min-h-72 animate-pulse overflow-hidden rounded border bg-card p-3"><div className="mb-3 h-8 w-72 rounded bg-muted" /><div className="grid h-full grid-cols-[22rem_1fr] gap-px bg-border"><div className="space-y-px bg-card">{Array.from({ length: 9 }, (_, index) => <div key={index} className="h-11 bg-muted/60" />)}</div><div className="bg-[repeating-linear-gradient(90deg,transparent_0,transparent_35px,hsl(var(--border))_36px)]" /></div><span className="sr-only">{t("views.gantt.loading")}</span></div>}>
-        <ItemGantt key={active?.id} onTimelineCreate={collection.canCreate ? (start, finish) => setCreating({ day: start, finishDay: finish }) : undefined} onRowAdd={(kind, item, previousId) => {
+        <ItemGantt key={active?.id} onQuickCreate={collection.canCreate ? (title, id) => quickCreate("", title, id) : undefined} onTimelineCreate={collection.canCreate ? (start, finish) => setCreating({ day: start, finishDay: finish }) : undefined} onRowAdd={(kind, item, previousId) => {
           if (kind === "child") { setCreating({ parent: item }); return; }
           const parentId = item.locations.find((loc) => loc.space_id === spaceId)?.parent_item_id ?? null;
           const parentItem = parentId ? (items.data ?? []).find((entry) => entry.id === parentId) : undefined;

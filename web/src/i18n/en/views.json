@@ -193,7 +193,14 @@
     "undated": "{{count}} items without dates are not drawn",
     "more": "More",
     "offLeft": "{{count}} earlier",
-    "offRight": "{{count}} later"
+    "offRight": "{{count}} later",
+    "index": "#",
+    "predecessors": "Predecessors",
+    "duration": "Duration",
+    "days": "{{count}}d",
+    "addTask": "Add task, then press Enter",
+    "quarter": "Quarters",
+    "year": "Years"
   },
   "unassigned": "Unassigned",
   "reassign": {

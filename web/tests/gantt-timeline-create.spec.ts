@@ -1,5 +1,5 @@
 import { expect, test, type Page } from "@playwright/test";
-import { ganttId, mockGantt, path } from "./gantt-mock";
+import { ganttId, mockGantt, path, pickScale } from "./gantt-mock";
 
 // Batch 3C: timeline create on the Gantt (day scale). Double-click an empty day, or drag across empty days. The range is
 // inclusive and includes weekends (G1). No create on a plain click, a bar, or when the user cannot create (G2, G3, G4).
@@ -88,14 +88,14 @@ test("G2: double-click on an existing bar creates nothing", async ({ page }) => 
 
 test("Week and Month: timeline create is off, the chart says why, and the row menu still works", async ({ page }) => {
   const { calls, chart, y } = await openChart(page);
-  await page.getByRole("button", { name: "Weeks" }).click();
+  await pickScale(page, "Weeks");
   await expect(page.locator(".gantt-chart")).toHaveAttribute("title", "Switch to Day view to create a task on the timeline.");
   await page.mouse.dblclick(dayX(chart, 20), y);
   await expect(page.getByText("Switch to Day view to create a task on the timeline.")).toBeVisible();
   await expect(page.getByRole("dialog", { name: "Create item" })).toHaveCount(0);
   expect(creates(calls)).toHaveLength(0);
   // The scale does not change on its own, and the row menu is still there.
-  await expect(page.getByRole("button", { name: "Weeks" })).toHaveAttribute("aria-pressed", "true");
+  await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Weeks/);
   await expect(page.getByRole("button", { name: "Actions for Design" })).toBeVisible();
 });
 

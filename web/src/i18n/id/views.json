@@ -191,7 +191,14 @@
     "undated": "{{count}} item tanpa tanggal tidak digambar",
     "more": "Lainnya",
     "offLeft": "{{count}} lebih awal",
-    "offRight": "{{count}} lebih lambat"
+    "offRight": "{{count}} lebih lambat",
+    "index": "#",
+    "predecessors": "Pendahulu",
+    "duration": "Durasi",
+    "days": "{{count}} hr",
+    "addTask": "Tambah task, lalu tekan Enter",
+    "quarter": "Kuartal",
+    "year": "Tahun"
   },
   "unassigned": "Belum ditugaskan",
   "reassign": {

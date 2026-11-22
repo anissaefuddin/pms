@@ -4,7 +4,7 @@ import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
+import { ChevronDown, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { canAddSubitem } from "@/lib/create-item-validate";
@@ -27,8 +27,13 @@ type DependencyType = Dependency["type"];
 const linkTypes = { FS: "e2s", SS: "s2s", FF: "e2e", SF: "s2e" } as const;
 const dependencyTypes: DependencyType[] = ["FS", "SS", "FF", "SF"];
 const fromLink = (type: string) => (Object.keys(linkTypes) as DependencyType[]).find((key) => linkTypes[key] === type);
-type Scale = "day" | "week" | "month";
-const scaleOptions: Scale[] = ["day", "week", "month"];
+type Scale = "day" | "week" | "month" | "quarter" | "year";
+const scaleOptions: Scale[] = ["year", "quarter", "month", "week", "day"];
+/** One row per scale: the px a cell takes, and how many px one day takes (for the off-view count). */
+const scaleGeometry: Record<Scale, { cell: number; perDay: number }> = {
+  year: { cell: 24, perDay: 24 / 30 }, quarter: { cell: 90, perDay: 90 / 90 }, month: { cell: 90, perDay: 90 / 30 },
+  week: { cell: 80, perDay: 80 / 7 }, day: { cell: 36, perDay: 36 },
+};
 const gridPresets = ["minimal", "standard", "detail"] as const;
 type GridPreset = (typeof gridPresets)[number];
 /** Bar colours by workflow colour token: 700/900 shades keep white labels above 4.5:1. */
@@ -45,6 +50,37 @@ function BarLabel({ data }: { data: ITask }) {
     style={{ background: `linear-gradient(to right, ${dark} ${done}%, ${base} ${done}%)` }}>
     <span className="truncate">{[data.text, data.assignee_names].filter(Boolean).join(" • ")}</span>
   </div>;
+}
+
+/** Task name in the grid: double-click or F2 to edit. Enter saves, Escape cancels, a click outside saves. The draft lives in ItemGantt, so a grid re-render cannot drop what was typed. */
+function NameCell({ row, editing, draft, canEdit, onStart, onDraft, onEnd, onSave }: { row: ITask; editing: boolean; draft: string; canEdit: boolean; onStart: (id: string) => void; onDraft: (value: string) => void; onEnd: () => void; onSave: (id: string, title: string) => void }) {
+  const { t } = useTranslation();
+  const title = String(row.text ?? "");
+  const input = useRef<HTMLInputElement>(null);
+  const finished = useRef(false);
+  const latest = useRef({ draft, finish: (_value: string | null) => {} });
+  function finish(value: string | null) {
+    if (finished.current) return;
+    finished.current = true;
+    onEnd();
+    const next = value?.trim() ?? "";
+    if (next && next !== title) onSave(String(row.id), next);
+  }
+  latest.current = { draft, finish };
+  useEffect(() => { if (editing) finished.current = false; }, [editing]);
+  useEffect(() => {
+    if (!editing) return;
+    // Focus moves inside the grid while it renders, so blur is not a reliable end; only a click outside the field saves.
+    const outside = (event: MouseEvent) => { if (input.current && !input.current.contains(event.target as Node)) latest.current.finish(latest.current.draft); };
+    document.addEventListener("mousedown", outside);
+    return () => document.removeEventListener("mousedown", outside);
+  }, [editing]);
+  if (!editing) return <span className="min-w-0 truncate" title={title} onDoubleClick={canEdit ? () => onStart(String(row.id)) : undefined}>{title}</span>;
+  return <form className="min-w-0 flex-1" onSubmit={(event) => { event.preventDefault(); finish(draft); }}>
+    <input ref={input} name="title" value={draft} autoFocus maxLength={500} aria-label={t("views.gantt.name")} className="w-full rounded border bg-background px-1 text-sm"
+      onChange={(event) => onDraft(event.target.value)}
+      onKeyDown={(event) => { if (event.key === "Escape") { finished.current = true; onEnd(); } }} />
+  </form>;
 }
 
 /** Status column: workflow colour square + name (the name stays text, colour is only a cue). */
@@ -103,7 +139,7 @@ function RowActionsCell({ row }: { row: ITask }) {
   return <GanttRowMenu item={item} previousId={previousId} spaceId={ctx.spaceId} onAdd={ctx.onRowAdd} />;
 }
 
-export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd, onTimelineCreate }: {
+export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd, onTimelineCreate, onQuickCreate }: {
   initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
   onOpenChange?: (open: boolean) => void;
   items: Item[];
@@ -114,11 +150,13 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   readonly: boolean;
   onOpen: (item: Item) => void;
   onAdd?: () => void;
+  /** Creates a Task with this name at the end of the list, immediately. Absent when the viewer cannot create. */
+  onQuickCreate?: (title: string, id: string) => Promise<void>;
   /** Batch 3B: add a subitem, or a Task above/below a row (previousId is the row above it among its siblings, or null). */
   onRowAdd?: (kind: GanttRowAdd, item: Item, previousId: string | null) => void;
   /** Batch 3C: a double-click or a drag on empty timeline days opens Quick Create with that range (YYYY-MM-DD, inclusive). */
   onTimelineCreate?: (start: string, finish: string) => void;
-  onPatch: (item: Item, update: { start_date: string | null; due_date: string | null }) => Promise<void>;
+  onPatch: (item: Item, update: { start_date?: string | null; due_date?: string | null; title?: string }) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation();
   const profile = useProfile();
@@ -224,7 +262,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   }, [tasks]);
   // Bars that lie left or right of the visible part of the chart. Counted on scroll, so the user sees that work exists beyond the view.
   const [outside, setOutside] = useState<{ left: string[]; right: string[] }>({ left: [], right: [] });
-  const pxPerDay = scale === "day" ? 36 : scale === "week" ? 80 / 7 : 90 / 30;
+  const pxPerDay = scaleGeometry[scale].perDay;
   const dayOf = (date: Date) => Math.round((date.getTime() - range.start!.getTime()) / 86_400_000);
   function measureOutside() {
     const chart = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
@@ -293,11 +331,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const locale = i18n.language;
   const scales = useMemo(() => {
     const label = (options: Intl.DateTimeFormatOptions) => (date: Date) => new Intl.DateTimeFormat(locale, options).format(date);
-    return scale === "day"
-      ? [{ unit: "month", step: 1, format: label({ month: "long", year: "numeric" }) }, { unit: "day", step: 1, format: label({ day: "numeric" }) }]
-      : scale === "week"
-        ? [{ unit: "month", step: 1, format: label({ month: "long", year: "numeric" }) }, { unit: "week", step: 1, format: label({ day: "numeric", month: "short" }) }]
-        : [{ unit: "year", step: 1, format: label({ year: "numeric" }) }, { unit: "month", step: 1, format: label({ month: "short" }) }];
+    if (scale === "day") return [{ unit: "month", step: 1, format: label({ month: "long", year: "numeric" }) }, { unit: "day", step: 1, format: label({ day: "numeric" }) }];
+    if (scale === "week") return [{ unit: "month", step: 1, format: label({ month: "long", year: "numeric" }) }, { unit: "week", step: 1, format: label({ day: "numeric", month: "short" }) }];
+    if (scale === "quarter") return [{ unit: "year", step: 1, format: label({ year: "numeric" }) }, { unit: "month", step: 3, format: (date: Date) => `Q${Math.floor(date.getMonth() / 3) + 1}` }];
+    if (scale === "year") return [{ unit: "year", step: 1, format: label({ year: "numeric" }) }, { unit: "month", step: 1, format: label({ month: "narrow" }) }];
+    return [{ unit: "year", step: 1, format: label({ year: "numeric" }) }, { unit: "month", step: 1, format: label({ month: "short" }) }];
   }, [scale, locale]);
 
   /** Both drag/resize and the keyboard end here: nothing changes on screen until the server answers. */
@@ -346,6 +384,8 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
     instance.on("select-task", (event: { id: string | number }) => setSelected(String(event.id)));
   }
   function keyboard(event: KeyboardEvent<HTMLDivElement>) {
+    // F2 edits the selected task's name, as in a spreadsheet; double-click does the same for the mouse.
+    if (event.key === "F2" && selected && !readonly) { event.preventDefault(); startEditing(selected); return; }
     const ids = tasks.map((task) => String(task.id));
     const at = selected ? ids.indexOf(selected) : -1;
     if (event.key === "ArrowDown" || event.key === "ArrowUp") {
@@ -396,12 +436,43 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
     return () => observer.disconnect();
   }, [tasks, byId]);
 
+  // Task numbers follow the order the grid shows the rows; predecessors and duration come from the same data.
+  const numbers = useMemo(() => new Map(tasks.map((task, index) => [String(task.id), index + 1])), [tasks]);
+  const dayCount = (task: ITask) => (task.start && task.end ? Math.round((task.end.getTime() - task.start.getTime()) / 86_400_000) : null);
+  const predecessorText = (id: string) => deps.filter((dep) => String(dep.successor_id) === id)
+    .map((dep) => numbers.get(String(dep.predecessor_id))).filter((n): n is number => n !== undefined).sort((x, y) => x - y).join(", ");
+  const [editingId, setEditingId] = useState<string>();
+  const [nameDraft, setNameDraft] = useState("");
+  // Starts a name edit with the current title in the draft.
+  function startEditing(id: string) {
+    setNameDraft(byId.get(id)?.title ?? "");
+    setEditingId(id);
+  }
+  function saveTitle(id: string, title: string) {
+    const item = byId.get(id);
+    if (!item || readonly || !item.my_capabilities.includes("edit")) { toast.error(t("views.gantt.noEdit", { name: item?.title ?? "" })); return; }
+    void onPatch(item, { title });
+  }
+  const saveRef = useRef(saveTitle);
+  saveRef.current = saveTitle;
+  // Memoised so the grid keeps its cells (and an open name editor) between renders.
+  const gridColumns = useMemo(() => [
+    { id: "index", header: t("views.gantt.index"), width: 48, cell: ({ row }: { row: ITask }) => <span className="tabular-nums text-muted-foreground">{numbers.get(String(row.id)) ?? ""}</span> },
+    { id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240, cell: ({ row }: { row: ITask }) => <NameCell row={row} editing={editingId === String(row.id)} draft={nameDraft} canEdit={!readonly} onStart={startEditing} onDraft={setNameDraft} onEnd={() => setEditingId(undefined)} onSave={(id, title) => saveRef.current(id, title)} /> },
+    ...(gridPreset !== "minimal" ? [
+      { id: "predecessors", header: t("views.gantt.predecessors"), width: 104, cell: ({ row }: { row: ITask }) => <span className="tabular-nums">{predecessorText(String(row.id))}</span> },
+      { id: "duration", header: t("views.gantt.duration"), width: 72, cell: ({ row }: { row: ITask }) => { const n = dayCount(row); return <span className="tabular-nums">{n ? t("views.gantt.days", { count: n }) : ""}</span>; } },
+    ] : []),
+    ...(gridPreset === "detail" && hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
+    ...(gridPreset === "detail" && hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
+    ...(gridPreset === "detail" && hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),
+    ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
+    ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 })),
+    ...(onRowAdd && !readonly ? [{ id: "row_actions", header: t("views.actions"), width: 44, cell: RowActionsCell }] : []),
+  ], [numbers, deps, gridPreset, columns, baselineId, shownFields, readonly, editingId, nameDraft, onRowAdd, t]);
+
   return <div className="space-y-2">
     <div className="flex flex-wrap items-center gap-2">
-      <div role="group" aria-label={t("views.gantt.scale")} className="flex gap-1">
-        {scaleOptions.map((value) => <Button key={value} size="sm" variant={scale === value ? "default" : "outline"}
-          aria-pressed={scale === value} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</Button>)}
-      </div>
       <label className="flex items-center gap-1 text-sm"><span>{t("views.gantt.gridPreset")}</span>
         <select value={gridPreset} className="rounded border bg-background p-1" onChange={(event) => {
           const value = event.target.value as GridPreset;
@@ -449,10 +520,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
           <Button type="submit" size="sm" disabled={busy}>{t("views.gantt.baselineCreate")}</Button>
         </form>}
       </>}
-      <Button size="icon-sm" variant="outline" aria-label={t("views.gantt.zoomOut")} disabled={scale === "month"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Minus /></Button>
-      <Button size="icon-sm" variant="outline" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Plus /></Button>
       {undated > 0 && <span className="text-xs font-medium text-muted-foreground">{t("views.gantt.undated", { count: undated })}</span>}
     </div>
+    <div className="relative">
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0}
       onKeyDown={(event) => { if (drag && event.key === "Escape") { setDrag(undefined); return; } keyboard(event); }}
       title={onTimelineCreate && !readonly && scale !== "day" ? t("views.gantt.dayOnlyCreate") : undefined}
@@ -484,17 +554,35 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       {dragPreview}
       <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
       <Theme>
-        <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
+        <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scaleGeometry[scale].cell}
           highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
-          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(gridPreset !== "minimal" && hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
-            ...(gridPreset === "detail" && hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
-            ...(gridPreset === "detail" && hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),
-            ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
-            ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 })),
-            ...(onRowAdd && !readonly ? [{ id: "row_actions", header: t("views.actions"), width: 44, cell: RowActionsCell }] : [])]} />
+          columns={gridColumns} />
       </Theme>
       </RowActionsContext.Provider>
     </div>
+      {/* Floating over the chart, top right: scale and zoom, as in the Wrike layout. Nothing here changes the grid or the rows. */}
+      <div className="absolute right-2 top-2 z-30 flex items-center gap-1 rounded-md border bg-card p-1 shadow-sm">
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={t("views.gantt.scale")} />}>{t(`views.gantt.${scale}`)}<ChevronDown /></DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-36">
+            {scaleOptions.map((value) => <DropdownMenuItem key={value} aria-current={scale === value ? "true" : undefined} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</DropdownMenuItem>)}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomOut")} disabled={scale === "year"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Minus /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Plus /></Button>
+      </div>
+    </div>
+    {onQuickCreate && !readonly && <form className="flex items-center gap-2 border-t px-3 py-2" onSubmit={(event) => {
+      event.preventDefault();
+      const input = event.currentTarget.elements.namedItem("newTask") as HTMLInputElement;
+      const title = input.value.trim();
+      if (!title) return;
+      input.value = "";
+      void onQuickCreate(title, crypto.randomUUID());
+    }}>
+      <Plus className="size-4 shrink-0 text-primary" aria-hidden />
+      <input name="newTask" maxLength={500} aria-label={t("views.gantt.addTask")} placeholder={t("views.gantt.addTask")} className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
+    </form>}
     {/* The keys stay on screen under the chart: the chart above keeps its height, so timeline positions do not move. */}
     <p id="gantt-keys" className="text-xs text-muted-foreground">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}
       {undated > 0 && <span className="ml-3 font-medium text-foreground">{t("views.gantt.undated", { count: undated })}</span>}</p>

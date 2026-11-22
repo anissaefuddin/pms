@@ -1,6 +1,6 @@
 import { expect, test } from "@playwright/test";
 import AxeBuilder from "@axe-core/playwright";
-import { bar, design, ganttId, kids, milestone, mockGantt, path, project } from "./gantt-mock";
+import { bar, design, ganttId, kids, milestone, mockGantt, path, pickScale, project } from "./gantt-mock";
 
 async function drag(page: import("@playwright/test").Page, id: string, dx: number, edge: "move" | "end" = "move") {
   const box = (await bar(page, id).boundingBox())!;
@@ -22,13 +22,13 @@ test("shows the hierarchy with progress, a milestone and the three scales", asyn
   await expect(bar(page, design)).toBeVisible();
   const width = async () => (await bar(page, design).boundingBox())!.width;
   expect(await width()).toBe(72); // 2 days (Nov 2 to 3, inclusive) x 36px
-  await page.getByRole("button", { name: "Weeks" }).click();
+  await pickScale(page, "Weeks");
   await expect.poll(width).toBeLessThan(40); // narrower than the 72px day-scale bar
   const weekWidth = await width();
-  await page.getByRole("button", { name: "Months" }).click();
-  await expect(page.getByRole("button", { name: "Months" })).toHaveAttribute("aria-pressed", "true");
+  await pickScale(page, "Months");
+  await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Months/);
   await expect.poll(width).toBeLessThan(weekWidth);
-  await page.getByRole("button", { name: "Days" }).click();
+  await pickScale(page, "Days");
   await expect(page.getByRole("button", { name: "Today" })).toBeVisible();
 });
 

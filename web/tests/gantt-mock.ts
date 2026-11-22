@@ -46,3 +46,9 @@ export function mockGantt(page: import("@playwright/test").Page, opts: { root?: 
 export const bar = (page: import("@playwright/test").Page, id: string) => page.locator(`.wx-bar[data-id=":${id}"]`);
 
 export const design = kids[0].id;
+
+/** The Gantt scale is chosen from the floating menu at the top right of the chart. */
+export async function pickScale(page: import("@playwright/test").Page, name: string) {
+  await page.getByRole("button", { name: "Time scale" }).click();
+  await page.getByRole("menuitem", { name, exact: true }).click();
+}
