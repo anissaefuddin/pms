@@ -38,8 +38,8 @@ export const ganttColumnGroups = [
   { id: "management", columns: ["status", "assignee"] },
   { id: "schedule", columns: ["start_date", "due_date"] },
 ] as const;
-/** A Gantt view starts with the number, predecessors and duration; the saved choice wins. */
-export const ganttDefaultColumns = ["index", "predecessors", "duration"];
+/** A Gantt view starts with the task name and status; secondary facts remain available in Columns. */
+export const ganttDefaultColumns = ["status"];
 export function ganttColumns(config?: Record<string, unknown> | null): string[] {
   return savedColumns(config) ?? ganttDefaultColumns;
 }

@@ -7,7 +7,7 @@ import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/compone
 import { api } from "@/lib/api";
 import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { addDays, daysBetween, fromDay, toDay } from "@/lib/calendar-days";
-import { MAX_LANES, layoutWeek, type Bar } from "@/lib/calendar-layout";
+import { calendarEntries, layoutWeek, type Bar } from "@/lib/calendar-layout";
 import { formatDate, useProfile } from "@/lib/profile";
 import type { Item } from "@/lib/items";
 import { tintOf } from "@/components/ui/status-chip";
@@ -16,6 +16,7 @@ import { TypeGlyph } from "@/components/type-badge";
 type Update = { start_date: string | null; due_date: string | null };
 
 const calendarModes = ["month", "week"] as const;
+const scheduleModes = ["boundaries", "all"] as const;
 const monthFormat: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
 const weekdayFormat: Intl.DateTimeFormatOptions = { weekday: "short" };
 const fullFormat: Intl.DateTimeFormatOptions = { dateStyle: "full" };
@@ -36,6 +37,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   // C-03: Month or Week. Week mode keeps its own anchor day, so moving by week never changes the month view.
   const [mode, setMode] = useState<"month" | "week">("month");
+  const [scheduleMode, setScheduleMode] = useState<"boundaries" | "all">("boundaries");
   const [weekDay, setWeekDay] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); });
   const [drag, setDrag] = useState<{ id: string; from?: Date }>();
   const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
@@ -51,6 +53,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const weeks = mode === "week" ? 1 : Math.ceil(((month.getDay() - weekStart + 7) % 7 + new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()) / 7);
   const days = Array.from({ length: weeks * 7 }, (_, index) => addDays(first, index));
   const scheduled = items.filter((item) => startOf(item));
+  const entries = calendarEntries(scheduled.map((item) => ({ id: item.id, start: startOf(item)!, end: endOf(item)! })), mode === "month" && scheduleMode === "boundaries");
   const unscheduled = items.filter((item) => !startOf(item));
   const today = fromDay(new Date());
 
@@ -117,6 +120,10 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
         <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.nextWeek") : t("views.calendar.next")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, 7)) : setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)))}><ChevronRight /></Button>
       </div>
       <h2 className="font-semibold" aria-live="polite">{mode === "week" ? `${fmt(fullFormat).format(first)} – ${fmt(fullFormat).format(addDays(first, 6))}` : fmt(monthFormat).format(month)}</h2>
+      {mode === "month" && <div role="group" aria-label={t("views.calendar.scheduleDisplay")} className="flex gap-1">
+        {scheduleModes.map((value) => <Button key={value} size="sm" variant={scheduleMode === value ? "secondary" : "ghost"} aria-pressed={scheduleMode === value}
+          onClick={() => setScheduleMode(value)}>{t(`views.calendar.schedule${value === "boundaries" ? "Boundaries" : "All"}`)}</Button>)}
+      </div>}
       <Button size="sm" className="ml-auto" variant={unscheduledOpen ? "secondary" : "outline"} aria-expanded={unscheduledOpen} onClick={() => setUnscheduledOpen((value) => !value)}>
         <CalendarClock />{t("views.calendar.unscheduledCount", { count: unscheduled.length })}
       </Button>
@@ -130,8 +137,9 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
         {Array.from({ length: weeks }, (_, week) => {
           // C2: one bar per item per week, drawn in the cell where the visible part starts and widened across its days.
           const weekDays = days.slice(week * 7, week * 7 + 7);
-          const layout = layoutWeek(scheduled.map((item) => ({ id: item.id, start: startOf(item)!, end: endOf(item)! })), weekDays[0]);
-          const byId = new Map(items.map((item) => [item.id, item]));
+          const layout = layoutWeek(entries, weekDays[0]);
+          const itemById = new Map(items.map((item) => [item.id, item]));
+          const entryById = new Map(entries.map((entry) => [entry.id, itemById.get(entry.itemId)]));
           const barsAt = (col: number) => layout.bars.filter((bar) => bar.startCol === col);
           const hiddenAt = (col: number) => layout.hidden.filter((entry) => entry.startCol <= col && col <= entry.endCol);
           return <div role="row" key={week} className="grid min-w-[44rem] grid-cols-7">
@@ -148,12 +156,12 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
                 <p className="text-xs text-muted-foreground"><span aria-hidden>{day.getDate()}</span>
                   <span className="sr-only">{t("views.calendar.day", { date: fmt(fullFormat).format(day), count: more + layout.bars.filter((bar) => bar.startCol <= col && col <= bar.endCol).length })}</span>{holiday ? ` · ${holiday}` : ""}</p>
                 {barsAt(col).map((bar) => {
-                  const item = byId.get(bar.id);
+                  const item = entryById.get(bar.id);
                   return item ? <div key={bar.id} className="absolute left-0 z-10" style={{ top: `${1.5 + bar.lane * 1.5}rem`, width: `${(bar.endCol - bar.startCol + 1) * 100}%` }}>
                     {barButton(item, bar, day)}
                   </div> : null;
                 })}
-                {more > 0 && <button type="button" aria-haspopup="dialog" onClick={() => setOverflow({ day, items: hiddenAt(col).map((entry) => byId.get(entry.id)).filter((item): item is Item => !!item) })}
+                {more > 0 && <button type="button" aria-haspopup="dialog" onClick={() => setOverflow({ day, items: hiddenAt(col).map((entry) => entryById.get(entry.id)).filter((item): item is Item => !!item) })}
                   className="absolute bottom-0.5 left-1 z-20 rounded px-1 text-xs font-medium text-primary hover:underline">{t("views.calendar.more", { count: more })}</button>}
               </div>;
             })}

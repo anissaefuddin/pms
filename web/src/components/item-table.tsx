@@ -22,6 +22,7 @@ import { fieldColumn } from "@/lib/view-columns";
 import { useSearchPages } from "@/lib/search";
 import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
 import type { ItemCollectionProps } from "./item-collection-types";
+import { clampedWidth, clampWidths } from "@/lib/view-widths";
 
 type PathStep = { id: string; title: string; type: string };
 /** Saved column widths for this view; a broken entry is dropped. */
@@ -215,10 +216,11 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   const columns = allColumns.filter((column) => column.id === "name" || column.id === "actions" || (shown.includes(column.id ?? "") && !empty.has(column.id ?? "")));
   // Column widths in px, kept per view in this browser. Each header has a grip; the actions column is fixed.
   const widthsKey = `pms:table-widths:${spaceId}:${parentId ?? "root"}`;
-  const [widths, setWidths] = useState<Record<string, number>>(() => readWidths(widthsKey));
+  const minimumWidth: Record<string, number> = { name: 240, type: 104, status: 112, progress: 112, assignee: 120, start_date: 128, due_date: 128 };
+  const [widths, setWidths] = useState<Record<string, number>>(() => clampWidths(readWidths(widthsKey), minimumWidth));
   useEffect(() => { try { localStorage.setItem(widthsKey, JSON.stringify(widths)); } catch { /* storage can be blocked */ } }, [widths, widthsKey]);
-  const defaultWidth: Record<string, number> = { name: 240, progress: 136, start_date: 128, due_date: 128, actions: 40 };
-  const widthOf = (id: string) => widths[id] ?? defaultWidth[id] ?? 128;
+  const defaultWidth: Record<string, number> = { name: 280, type: 112, status: 128, progress: 136, assignee: 136, start_date: 136, due_date: 136, actions: 40 };
+  const widthOf = (id: string) => clampedWidth(id, widths, defaultWidth, minimumWidth);
   const sized = [40, ...columns.map((column) => (column.id === "actions" ? 40 : widthOf(column.id ?? "")))];
   const grid = "grid";
   // The selection column (40px) and the Name column stay in view while the table scrolls sideways.
@@ -230,7 +232,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     event.stopPropagation();
     const startX = event.clientX;
     const startWidth = widthOf(id);
-    const move = (moveEvent: PointerEvent) => setWidths((current) => ({ ...current, [id]: Math.max(64, Math.round(startWidth + moveEvent.clientX - startX)) }));
+    const move = (moveEvent: PointerEvent) => setWidths((current) => ({ ...current, [id]: Math.max(minimumWidth[id] ?? 80, Math.round(startWidth + moveEvent.clientX - startX)) }));
     const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
     window.addEventListener("pointermove", move);
     window.addEventListener("pointerup", up);
@@ -320,7 +322,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
             {flexRender(cell.column.columnDef.header, cell.getContext())}
             {cell.column.id !== "actions" && <div role="separator" aria-orientation="vertical" tabIndex={0} aria-label={t("views.columnResize", { name: typeof cell.column.columnDef.header === "string" ? cell.column.columnDef.header : cell.column.id })}
               onPointerDown={(event) => startResize(event, cell.column.id ?? "")}
-              onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); const id = cell.column.id ?? ""; setWidths((current) => ({ ...current, [id]: Math.max(64, widthOf(id) + (event.key === "ArrowRight" ? 16 : -16)) })); } }}
+              onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); const id = cell.column.id ?? ""; setWidths((current) => ({ ...current, [id]: Math.max(minimumWidth[id] ?? 80, widthOf(id) + (event.key === "ArrowRight" ? 16 : -16)) })); } }}
               className="absolute right-0 top-0 z-10 h-full w-2 cursor-col-resize touch-none outline-none hover:bg-primary/30 focus-visible:bg-primary/40" />}
           </div>)}
         </div>)}

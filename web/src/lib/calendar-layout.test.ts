@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { layoutWeek } from "./calendar-layout.ts";
+import { calendarEntries, layoutWeek } from "./calendar-layout.ts";
 
 const day = (value: string) => new Date(`${value}T00:00:00`);
 const week = day("2026-11-16"); // Monday
@@ -46,4 +46,13 @@ test("C2: a same-day milestone is one bar, and dates outside the week are ignore
   assert.deepEqual(layout.bars.map((bar) => bar.id), []);
   const inside = layoutWeek([item("m", "2026-11-22", "2026-11-22")], week);
   assert.equal(inside.bars[0].startCol, 6);
+});
+
+test("month boundaries show a long item only on its start and finish dates", () => {
+  const entries = calendarEntries([item("project", "2026-10-05", "2027-02-05")], true);
+  assert.deepEqual(entries.map((entry) => [entry.id, `${entry.start.getFullYear()}-${String(entry.start.getMonth() + 1).padStart(2, "0")}-${String(entry.start.getDate()).padStart(2, "0")}`]), [
+    ["project:start", "2026-10-05"],
+    ["project:end", "2027-02-05"],
+  ]);
+  assert.equal(layoutWeek(entries, week).bars.length, 0);
 });

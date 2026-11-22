@@ -9,6 +9,19 @@ export const MAX_LANES = 3;
 export type Bar = { id: string; startCol: number; endCol: number; lane: number; continuesBefore: boolean; continuesAfter: boolean };
 export type WeekLayout = { bars: Bar[]; hidden: { id: string; startCol: number; endCol: number }[]; overflowByCol: number[] };
 
+export type CalendarEntry = { id: string; itemId: string; start: Date; end: Date };
+
+/** Month view defaults to meaningful boundaries instead of repeating a months-long item every week. */
+export function calendarEntries(items: { id: string; start: Date; end: Date }[], boundariesOnly: boolean): CalendarEntry[] {
+  if (!boundariesOnly) return items.map((item) => ({ ...item, itemId: item.id }));
+  return items.flatMap((item) => item.start.getTime() === item.end.getTime()
+    ? [{ ...item, itemId: item.id }]
+    : [
+        { id: `${item.id}:start`, itemId: item.id, start: item.start, end: item.start },
+        { id: `${item.id}:end`, itemId: item.id, start: item.end, end: item.end },
+      ]);
+}
+
 /**
  * Tata letak satu minggu (7 kolom) dari `weekStart`. Item diberi lane pertama yang bebas; yang melewati MAX_LANES
  * tidak digambar tetapi dihitung per kolom (`overflowByCol`) dan disimpan di `hidden`, supaya tetap bisa dibuka lewat "+N".

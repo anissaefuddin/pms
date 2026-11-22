@@ -18,6 +18,7 @@ import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 import { dayCellWidth, dayIndexAt, dayRange, isDragStep } from "@/lib/gantt-timeline";
 import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { customFieldText, type CustomField } from "@/lib/custom-fields";
+import { clampedWidth, clampWidths } from "@/lib/view-widths";
 import { fieldColumn } from "@/lib/view-columns";
 import { statusDotClass } from "@/lib/status-colors";
 
@@ -216,7 +217,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const [selected, setSelected] = useState<string>();
   const [baselineId, setBaselineId] = useState("");
   const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
-  const [gridWidth, setGridWidth] = useState(() => { try { return Math.min(720, Math.max(280, Number(localStorage.getItem(`${ganttPrefKey}:width`)) || 480)); } catch { return 480; } });
+  const [gridWidth, setGridWidth] = useState(() => { try { return Math.min(760, Math.max(420, Number(localStorage.getItem(`${ganttPrefKey}:width`)) || 520)); } catch { return 520; } });
   const [naming, setNaming] = useState(false);
   // WA-D05: the collapse state comes from the server profile for this view and every change is sent back.
   const [allOpen, setAllOpenState] = useState(() => initialOpen ?? true);
@@ -398,10 +399,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   function init(instance: IApi) {
     chart.current = instance;
     instance.on("resize-column", (event: { id: string | number; width: number }) => {
-      setColWidths((current) => ({ ...current, [String(event.id)]: Math.max(40, Math.round(event.width)) }));
+      const id = String(event.id);
+      setColWidths((current) => ({ ...current, [id]: Math.max(columnMinimums[id] ?? 80, Math.round(event.width)) }));
     });
     instance.on("resize-grid", (event: { width: number; inProgress?: boolean }) => {
-      const width = Math.min(720, Math.max(280, event.width));
+      const width = Math.min(760, Math.max(420, event.width));
       setGridWidth(width);
       if (!event.inProgress) try { localStorage.setItem(`${ganttPrefKey}:width`, String(Math.round(width))); } catch { /* storage can be blocked */ }
     });
@@ -493,8 +495,10 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const [predOpenId, setPredOpenId] = useState<string>();
   // Column widths the user dragged to, kept per view in this browser (SVAR reports each drag through resize-column).
   const colWidthsKey = `${ganttPrefKey}:columns`;
-  const [colWidths, setColWidths] = useState<Record<string, number>>(() => { try { return JSON.parse(localStorage.getItem(colWidthsKey) ?? "{}") as Record<string, number>; } catch { return {}; } });
-  const widthOf = (id: string, fallback: number) => colWidths[id] ?? fallback;
+  const columnMinimums: Record<string, number> = { index: 48, text: 280, predecessors: 120, duration: 80, status_name: 120, assignee_names: 140, start_text: 128, due_text: 128 };
+  const columnDefaults: Record<string, number> = { index: 48, text: 300, predecessors: 132, duration: 88, status_name: 128, assignee_names: 148, start_text: 136, due_text: 136 };
+  const [colWidths, setColWidths] = useState<Record<string, number>>(() => { try { return clampWidths(JSON.parse(localStorage.getItem(colWidthsKey) ?? "{}") as Record<string, number>, columnMinimums); } catch { return {}; } });
+  const widthOf = (id: string, fallback: number) => clampedWidth(id, colWidths, { ...columnDefaults, [id]: fallback }, columnMinimums);
   useEffect(() => { try { localStorage.setItem(colWidthsKey, JSON.stringify(colWidths)); } catch { /* storage can be blocked */ } }, [colWidths, colWidthsKey]);
   const [nameDraft, setNameDraft] = useState("");
   // Starts a name edit with the current title in the draft.
