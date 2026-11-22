@@ -39,7 +39,7 @@ export function WorkspaceTimeline() {
   const toggle = (id: string) => setOpenIds((ids) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
   const allOpen = data.spaces.length > 0 && data.spaces.every((space) => openIds.includes(space.id));
   const scheduled = data.spaces.reduce((sum, space) => sum + space.projects.length + space.unassigned_tasks.length
-    + space.projects.reduce((inner, p) => inner + p.tasks.length, 0), 0);
+    + space.projects.reduce((inner, p) => inner + (p.tasks ?? []).length, 0), 0);
   const ctx: Ctx = { from: data.from, dates, days, profile, isOpen: (id) => openIds.includes(id), toggle };
   return <div className="space-y-4">
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -119,7 +119,7 @@ function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
   const open = ctx.isOpen(space.id);
   const Chevron = open ? ChevronDown : ChevronRight;
   const UnassignedChevron = unassignedOpen ? ChevronDown : ChevronRight;
-  const count = space.projects.length + space.unassigned_tasks.length + space.projects.reduce((sum, p) => sum + p.tasks.length, 0);
+  const count = space.projects.length + space.unassigned_tasks.length + space.projects.reduce((sum, p) => sum + (p.tasks ?? []).length, 0);
   return <section aria-label={space.name}>
     <Row ctx={ctx} tone="bg-muted/50" label={<>
       <button type="button" aria-expanded={open} onClick={() => ctx.toggle(space.id)} title={space.name}
@@ -159,9 +159,9 @@ function ProjectRows({ project, ctx }: { project: TimelineProject; ctx: Ctx }) {
         title={t("dashboards.overview.timeline.milestone", { date: formatDate(project.due_date, ctx.profile) })}
         style={(left) => ({ left: left + 4, width: DAY_PX - 8 })} />
     </Row>
-    {open && (project.tasks.length === 0
+    {open && ((project.tasks ?? []).length === 0
       ? <Row ctx={ctx} label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.noTasks")}</span>} />
-      : project.tasks.map((task) => <TaskRow key={task.id} task={task} ctx={ctx} indent />))}
+      : (project.tasks ?? []).map((task) => <TaskRow key={task.id} task={task} ctx={ctx} indent />))}
   </>;
 }
 

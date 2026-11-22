@@ -98,7 +98,7 @@ func BuildTimeline(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 			continue
 		}
 		si := spaceFor(&res, spaceIdx, r.spaceID, byID)
-		res.Spaces[si].Projects = append(res.Spaces[si].Projects, TimelineProject{TimelineItem: item(r)})
+		res.Spaces[si].Projects = append(res.Spaces[si].Projects, TimelineProject{TimelineItem: item(r), Tasks: []TimelineItem{}})
 		projIdx[key{r.spaceID, r.itemID}] = [2]int{si, len(res.Spaces[si].Projects) - 1}
 	}
 	// Pass 2: Tasks go under their Project in the same Space, otherwise into the Space's unassigned list.
