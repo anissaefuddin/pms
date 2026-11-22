@@ -181,7 +181,7 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
       {overdue(item) && <p className="flex items-center gap-1 text-xs font-medium text-destructive"><AlertTriangle className="size-3" aria-hidden />{t("views.card.overdue")}</p>}
       {item.type === "project" && item.progress_percent != null && <p className="flex items-center gap-2 text-xs tabular-nums text-muted-foreground">
         <span aria-hidden className="relative block h-1 flex-1 overflow-hidden rounded-full bg-muted"><span className="absolute inset-y-0 start-0 rounded-full bg-primary" style={{ width: `${item.progress_percent}%` }} /></span>
-        {t("items.progress.percent", { value: item.progress_percent })}</p>}
+        {t("items.progress.percent", { value: item.progress_percent })}{item.progress_percent === 0 && <span>· {t("items.progress.notStarted")}</span>}</p>}
       {profile && fields.map((field) => <p key={field.id} className="flex flex-wrap gap-1 text-xs">
         <span className="text-muted-foreground">{field.name}:</span>
         <CustomFieldDisplay field={field} value={item.fields?.[field.id]} people={peopleOf(item, field, item.fields?.[field.id])} profile={profile} />

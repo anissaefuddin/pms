@@ -4,7 +4,7 @@ import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { canAddSubitem } from "@/lib/create-item-validate";
@@ -222,6 +222,36 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
     const last = Math.max(...dated.map((task) => task.end!.getTime()));
     return { start: addDays(new Date(first), -3), end: addDays(new Date(last), 21) };
   }, [tasks]);
+  // Bars that lie left or right of the visible part of the chart. Counted on scroll, so the user sees that work exists beyond the view.
+  const [outside, setOutside] = useState<{ left: string[]; right: string[] }>({ left: [], right: [] });
+  const pxPerDay = scale === "day" ? 36 : scale === "week" ? 80 / 7 : 90 / 30;
+  const dayOf = (date: Date) => Math.round((date.getTime() - range.start!.getTime()) / 86_400_000);
+  function measureOutside() {
+    const chart = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
+    if (!chart || !range.start) { setOutside({ left: [], right: [] }); return; }
+    const first = chart.scrollLeft / pxPerDay;
+    const last = (chart.scrollLeft + chart.clientWidth) / pxPerDay;
+    const dated = tasks.filter((task) => task.start && task.end);
+    setOutside({
+      left: dated.filter((task) => dayOf(task.end!) < first).sort((a, b) => dayOf(b.end!) - dayOf(a.end!)).map((task) => String(task.id)),
+      right: dated.filter((task) => dayOf(task.start!) > last).sort((a, b) => dayOf(a.start!) - dayOf(b.start!)).map((task) => String(task.id)),
+    });
+  }
+  // Scroll events from the chart do not bubble, so the listener sits on the region in the capture phase.
+  useEffect(() => {
+    const region = chartRegion.current;
+    region?.addEventListener("scroll", measureOutside, true);
+    measureOutside();
+    return () => region?.removeEventListener("scroll", measureOutside, true);
+  }, [tasks, scale, range.start?.getTime()]);
+  function jumpOutside(side: "left" | "right") {
+    const chart = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
+    const id = side === "left" ? outside.left[0] : outside.right[0];
+    const task = tasks.find((entry) => String(entry.id) === id);
+    if (!chart || !task || !range.start) return;
+    if (side === "right") chart.scrollLeft = Math.max(0, dayOf(task.start!) * pxPerDay - 2 * pxPerDay);
+    else chart.scrollLeft = Math.max(0, dayOf(task.end!) * pxPerDay - chart.clientWidth + 3 * pxPerDay);
+  }
   // Batch 3C: the drag in progress on the timeline. Nothing is created until the pointer is released after a real move.
   const [drag, setDrag] = useState<{ from: number; to: number; fromX: number; moved: boolean }>();
   // Timeline create runs on the day scale only: a day is the unit a drag can select exactly.
@@ -468,6 +498,10 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
     {/* The keys stay on screen under the chart: the chart above keeps its height, so timeline positions do not move. */}
     <p id="gantt-keys" className="text-xs text-muted-foreground">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}
       {undated > 0 && <span className="ml-3 font-medium text-foreground">{t("views.gantt.undated", { count: undated })}</span>}</p>
+    {(outside.left.length > 0 || outside.right.length > 0) && <div className="flex flex-wrap gap-2">
+      {outside.left.length > 0 && <Button size="sm" variant="outline" onClick={() => jumpOutside("left")}><ChevronLeft />{t("views.gantt.offLeft", { count: outside.left.length })}</Button>}
+      {outside.right.length > 0 && <Button size="sm" variant="outline" onClick={() => jumpOutside("right")}>{t("views.gantt.offRight", { count: outside.right.length })}<ChevronRight /></Button>}
+    </div>}
     {onAdd && <Button variant="ghost" size="sm" className="text-primary" onClick={onAdd}><Plus />{t("views.add")}</Button>}
     {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">
       <h2 className="font-medium">{t("views.gantt.dependencies", { name: current.title })}</h2>

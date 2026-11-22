@@ -104,6 +104,9 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       const canEditTitle = item.my_capabilities.includes("edit") && editing?.id !== item.id;
       return <div className="flex min-w-0 items-center gap-1" style={{ paddingInlineStart: depth * 14 }}>
         {groupLabel && <span className="shrink-0 rounded bg-secondary px-1 text-xs">{groupLabel}</span>}
+        {/* In a status group, a new item starts in that status: the add sits on the group's first row, not only at the bottom. */}
+        {groupLabel && group === "status" && depth === 0 && canCreate && item.status && <Button size="icon-sm" variant="ghost" className="shrink-0 text-primary"
+          aria-label={t("views.addToGroup", { name: groupLabel })} title={t("views.addToGroup", { name: groupLabel })} onClick={() => onAdd(item.status!.id)}><Plus /></Button>}
         {expandable && <Button size="icon-sm" variant="ghost" aria-expanded={isExpanded}
           aria-label={t(isExpanded ? "views.collapse" : "views.expand", { name: item.title })}
           onClick={() => setExpanded((open) => (open.includes(item.id) ? open.filter((id) => id !== item.id) : [...open, item.id]))}>

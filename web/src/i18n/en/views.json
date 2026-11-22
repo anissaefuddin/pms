@@ -191,7 +191,9 @@
     "addBelow": "Add task below",
     "dayOnlyCreate": "Switch to Day view to create a task on the timeline.",
     "undated": "{{count}} items without dates are not drawn",
-    "more": "More"
+    "more": "More",
+    "offLeft": "{{count}} earlier",
+    "offRight": "{{count}} later"
   },
   "unassigned": "Unassigned",
   "reassign": {
@@ -234,7 +236,8 @@
     "closeUnscheduled": "Close unscheduled items",
     "help": "Calendar help",
     "moreOn": "More items on {{date}}",
-    "closeMore": "Close more items"
+    "closeMore": "Close more items",
+    "navigate": "Calendar navigation"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",
@@ -327,5 +330,6 @@
   "milestone": "Milestone",
   "boardBreakdown": "{{tasks}} tasks · {{milestones}} milestones",
   "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded.",
-  "card.overdue": "Overdue"
+  "card.overdue": "Overdue",
+  "addToGroup": "Add item to {{name}}"
 }

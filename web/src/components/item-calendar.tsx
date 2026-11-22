@@ -100,6 +100,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
         <span className="block">{t("views.calendar.cardStatus")}: {item.status?.name ?? t("views.noStatus")}</span>
         <span className="block">{t("views.calendar.cardAssignees")}: {item.assignees.map((person) => person.name).join(", ") || t("items.chips.noAssignee")}</span>
         <span className="block">{t("views.calendar.cardDates")}: {itemRange(item) || t("items.chips.noDates")}</span>
+        {item.type === "project" && item.progress_percent != null && <span className="block">{t("items.progress.project")}: {t("items.progress.percent", { value: item.progress_percent })}{item.progress_percent === 0 ? ` · ${t("items.progress.notStarted")}` : ""}</span>}
       </span>
     </span>;
   };
@@ -110,11 +111,13 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
         {calendarModes.map((value) => <Button key={value} size="sm" variant={mode === value ? "default" : "outline"} aria-pressed={mode === value}
           onClick={() => { setMode(value); if (value === "week") setWeekDay(new Date(month.getFullYear(), month.getMonth(), Math.min(new Date().getDate(), new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()))); }}>{t(`views.calendar.mode${value === "month" ? "Month" : "Week"}`)}</Button>)}
       </div>
-      <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.prevWeek") : t("views.calendar.prev")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, -7)) : setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)))}><ChevronLeft /></Button>
-      <Button size="sm" variant="outline" onClick={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setWeekDay(new Date(now.getFullYear(), now.getMonth(), now.getDate())); }}>{t("views.calendar.today")}</Button>
-      <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.nextWeek") : t("views.calendar.next")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, 7)) : setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)))}><ChevronRight /></Button>
+      <div role="group" aria-label={t("views.calendar.navigate")} className="flex gap-1">
+        <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.prevWeek") : t("views.calendar.prev")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, -7)) : setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)))}><ChevronLeft /></Button>
+        <Button size="sm" variant="outline" onClick={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setWeekDay(new Date(now.getFullYear(), now.getMonth(), now.getDate())); }}>{t("views.calendar.today")}</Button>
+        <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.nextWeek") : t("views.calendar.next")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, 7)) : setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)))}><ChevronRight /></Button>
+      </div>
       <h2 className="font-semibold" aria-live="polite">{mode === "week" ? `${fmt(fullFormat).format(first)} – ${fmt(fullFormat).format(addDays(first, 6))}` : fmt(monthFormat).format(month)}</h2>
-      <Button size="sm" variant={unscheduledOpen ? "secondary" : "outline"} aria-expanded={unscheduledOpen} onClick={() => setUnscheduledOpen((value) => !value)}>
+      <Button size="sm" className="ml-auto" variant={unscheduledOpen ? "secondary" : "outline"} aria-expanded={unscheduledOpen} onClick={() => setUnscheduledOpen((value) => !value)}>
         <CalendarClock />{t("views.calendar.unscheduledCount", { count: unscheduled.length })}
       </Button>
       {!readonly && <Button size="icon-sm" variant="ghost" aria-label={t("views.calendar.help")} aria-expanded={helpOpen} onClick={() => setHelpOpen(true)}><CircleHelp /></Button>}

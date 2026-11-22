@@ -189,7 +189,9 @@
     "addBelow": "Tambah task di bawah",
     "dayOnlyCreate": "Pilih tampilan Hari untuk membuat task di timeline.",
     "undated": "{{count}} item tanpa tanggal tidak digambar",
-    "more": "Lainnya"
+    "more": "Lainnya",
+    "offLeft": "{{count}} lebih awal",
+    "offRight": "{{count}} lebih lambat"
   },
   "unassigned": "Belum ditugaskan",
   "reassign": {
@@ -230,7 +232,8 @@
     "closeUnscheduled": "Tutup item yang belum dijadwalkan",
     "help": "Bantuan kalender",
     "moreOn": "Item lainnya pada {{date}}",
-    "closeMore": "Tutup item lainnya"
+    "closeMore": "Tutup item lainnya",
+    "navigate": "Navigasi kalender"
   },
   "priority": "Prioritas",
   "predecessors": "Pendahulu",
@@ -322,5 +325,6 @@
   "milestone": "Milestone",
   "boardBreakdown": "{{tasks}} tugas · {{milestones}} milestone",
   "chartScope": "Tugas yang dapat dikerjakan di proyek ini dan subtree-nya. Milestone dan folder tidak termasuk.",
-  "card.overdue": "Terlambat"
+  "card.overdue": "Terlambat",
+  "addToGroup": "Tambah item ke {{name}}"
 }
