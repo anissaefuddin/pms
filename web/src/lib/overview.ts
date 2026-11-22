@@ -64,10 +64,10 @@ export function useOverviewPages(sort: OverviewSort) {
 }
 
 /** Projects and Tasks due in a range. from null means today in the server's view of the user's zone. */
-export function useOverviewTimeline(from: string | null) {
+export function useOverviewTimeline(from: string | null, days: number = TIMELINE_DAYS) {
   return useQuery({
-    queryKey: ["overview", "timeline", from],
-    queryFn: () => api<TimelineResponse>(`/api/v1/overview/timeline${query({ from, days: TIMELINE_DAYS })}`),
+    queryKey: ["overview", "timeline", from, days],
+    queryFn: () => api<TimelineResponse>(`/api/v1/overview/timeline${query({ from, days })}`),
     staleTime: OVERVIEW_STALE_MS,
   });
 }
