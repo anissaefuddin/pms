@@ -34,10 +34,10 @@ test.describe("sidebar", () => {
     await expect(page.getByRole("button", { name: "New Space" })).toHaveCount(0);
   });
 
-  test("keeps the existing nav items before the Spaces list", async ({ page }) => {
+  test("keeps the fixed nav items before the Spaces list", async ({ page }) => {
     await mockSpaces(page);
     await page.goto("/");
-    await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button")).toHaveText([/^Search/, "Inbox", "Dashboards", "Request forms", "Stream", "More"]);
+    await expect(page.getByRole("navigation", { name: "Main navigation" }).getByRole("button")).toHaveText(["Dashboards", "Inbox", /^Search/, "Request forms", "Stream", "More"]);
   });
 });
 
