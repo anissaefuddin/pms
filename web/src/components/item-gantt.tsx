@@ -568,8 +568,8 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
             {scaleOptions.map((value) => <DropdownMenuItem key={value} aria-current={scale === value ? "true" : undefined} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</DropdownMenuItem>)}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomOut")} disabled={scale === "year"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Minus /></Button>
-        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Plus /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomOut")} disabled={scale === "year"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Minus /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Plus /></Button>
       </div>
     </div>
     {onQuickCreate && !readonly && <form className="flex items-center gap-2 border-t px-3 py-2" onSubmit={(event) => {

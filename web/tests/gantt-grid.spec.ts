@@ -19,6 +19,16 @@ test("the scale menu floats at the top right and lists five scales", async ({ pa
   await page.keyboard.press("Escape");
 });
 
+test("zoom out from Days goes to Weeks, and zoom in comes back", async ({ page }) => {
+  await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Days/);
+  await page.getByRole("button", { name: "Zoom out" }).click();
+  await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Weeks/);
+  await page.getByRole("button", { name: "Zoom in" }).click();
+  await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Days/);
+});
+
 test("the add-task row creates a task at once, and a double-click edits the name", async ({ page }) => {
   const { calls } = await mockGantt(page, { extra: {
     "POST /items": (body: any) => ({ status: 201, body: { id: "99999999-9999-4999-8999-999999999999", title: body.title, start_date: null, due_date: null, locations: body.locations, my_capabilities: ["edit"], assignees: [], status: null } }),
