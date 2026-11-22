@@ -10,7 +10,7 @@ export type ShortcutId = (typeof SHORTCUT_IDS)[number];
 /** Kunci sidebar_hidden (profil) yang menyembunyikan shortcut; shortcut tanpa kunci selalu tampil. */
 export const SHORTCUT_HIDE_KEY: Partial<Record<ShortcutId, string>> = {
   request_forms: "request_forms", stream: "stream", workload: "workload", timesheets: "timesheets",
-  starred: "starred", dashboards: "dashboards", reports: "reports", my_todo: "my_todo", calendars: "calendars", created_by_me: "created_by_me", portfolio: "portfolio", reviews: "reviews",
+  starred: "starred", reports: "reports", my_todo: "my_todo", calendars: "calendars", created_by_me: "created_by_me", portfolio: "portfolio", reviews: "reviews",
 };
 
 export const SHORTCUT_LABEL_KEY: Record<ShortcutId, string> = {
@@ -20,10 +20,13 @@ export const SHORTCUT_LABEL_KEY: Record<ShortcutId, string> = {
   reviews: "items.fileReview.nav", recycle: "nav.recycle.label",
 };
 
-/** Bawaan: Request forms dan Stream tersemat, sama seperti tampilan sebelumnya. */
+/** Selalu tampil di atas sidebar, urutannya Dashboards, Inbox, lalu Search. Tidak bisa disematkan atau dihapus. */
+export const FIXED_SHORTCUT: ShortcutId = "dashboards";
+
+/** Bawaan: Request forms dan Stream. */
 export const DEFAULT_PINNED: readonly ShortcutId[] = ["request_forms", "stream"];
 
-/** Hanya shortcut yang punya kunci API (sidebar_pinned) yang bisa disematkan; yang lain selalu di More. */
+/** Hanya shortcut yang punya kunci API (sidebar_pinned) yang bisa disematkan; yang lain selalu di More. Dashboards tidak ada di sini karena selalu tampil. */
 export const PINNABLE_IDS = SHORTCUT_IDS.filter((id) => SHORTCUT_HIDE_KEY[id] !== undefined);
 
 export const WIDTH_KEY = "pms:sidebar-width";

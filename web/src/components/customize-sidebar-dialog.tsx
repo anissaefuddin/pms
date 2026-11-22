@@ -4,7 +4,7 @@ import { ArrowDown, ArrowUp } from "lucide-react";
 import { Button } from "./ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "./ui/dialog";
 import {
-  DEFAULT_PINNED, PINNABLE_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, isShortcutVisible, movePin, togglePin,
+  DEFAULT_PINNED, FIXED_SHORTCUT, PINNABLE_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, isShortcutVisible, movePin, togglePin,
   type ShortcutId,
 } from "@/lib/sidebar-prefs";
 
@@ -74,8 +74,9 @@ function CustomizeForm({ pinOrder, hidden, onCancel, onSave }: {
       <div aria-hidden="true" className={`${SIDEBAR_THEME} rounded-lg border border-border bg-nav p-3 text-nav-text`}>
         <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.customize.preview")}</p>
         <ul className="space-y-1 text-sm">
-          <li className="px-2 py-1">{t("nav.search.label")}</li>
+          <li className="px-2 py-1">{name(FIXED_SHORTCUT)}</li>
           <li className="px-2 py-1">{t("nav.inbox.label")}</li>
+          <li className="px-2 py-1">{t("nav.search.label")}</li>
           {visibleDraft.map((id) => <li key={id} className="rounded-md px-2 py-1">{name(id)}</li>)}
           <li className="px-2 py-1 text-nav-muted">{t("nav.more.label")}</li>
         </ul>

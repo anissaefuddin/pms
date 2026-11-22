@@ -12,3 +12,8 @@ export async function loadWorkSchedule() {
   const data = await api<WorkSchedule>("/api/v1/settings/work-schedule", undefined, (headers) => { etag = headers.get("ETag") ?? ""; });
   return { data, etag };
 }
+
+/** Public holidays from the work-schedule settings, keyed by YYYY-MM-DD. */
+export function holidayMap(schedule?: WorkSchedule): Map<string, string> {
+  return new Map((schedule?.exceptions ?? []).map((entry) => [entry.date, entry.name]));
+}

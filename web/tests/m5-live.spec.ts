@@ -36,6 +36,7 @@ async function addWidget(name: string, type: string, choose: (dialog: ReturnType
 
 test("flow 1: a project manager builds a dashboard from the UI and the numbers match the data", async () => {
   await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "My dashboards" }).click();
   await expect(page.getByText("No dashboards here yet")).toBeVisible();
   await page.getByLabel("Name", { exact: true }).fill("Delivery board");
   await page.getByRole("button", { name: "Create dashboard" }).click();
@@ -71,6 +72,7 @@ test("flow 1: a project manager builds a dashboard from the UI and the numbers m
   await page.goto("/starred");
   await expect(page.getByRole("main").getByRole("link", { name: "Fresh work" })).toBeVisible();
   await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "My dashboards" }).click();
   await page.getByRole("link", { name: "Delivery board" }).click();
   await addWidget("Starred", "task_list", async (dialog) => { await dialog.getByLabel(/^List or template/).selectOption("template:starred"); });
   await expect(page.getByRole("region", { name: "Starred" }).getByRole("link")).toHaveText(["Fresh work"]);
@@ -93,6 +95,7 @@ test("flow 1: a project manager builds a dashboard from the UI and the numbers m
 
   // rename, duplicate and delete from the list, with confirmation
   await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "My dashboards" }).click();
   await page.getByRole("button", { name: "Actions for Delivery board" }).click();
   await page.getByRole("menuitem", { name: "Rename" }).click();
   await page.getByLabel("Name", { exact: true }).last().fill("Delivery board v2");

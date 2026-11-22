@@ -156,7 +156,7 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
   await expect(confirmation).toBeVisible();
   expect(calls.some((call) => call.method === "DELETE")).toBe(false);
   await confirmation.getByRole("button", { name: "Delete item" }).click();
-  await expect(page).toHaveURL(`/spaces/${me.personal_space_id}`);
+  await expect(page).toHaveURL(`/dashboards`);
   expect(calls.filter((call) => call.method === "DELETE")).toHaveLength(1);
 });
 
