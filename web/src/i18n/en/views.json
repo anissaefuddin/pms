@@ -190,7 +190,8 @@
     "addAbove": "Add task above",
     "addBelow": "Add task below",
     "dayOnlyCreate": "Switch to Day view to create a task on the timeline.",
-    "undated": "{{count}} items without dates are not drawn"
+    "undated": "{{count}} items without dates are not drawn",
+    "more": "More"
   },
   "unassigned": "Unassigned",
   "reassign": {

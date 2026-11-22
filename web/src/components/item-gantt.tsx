@@ -4,9 +4,8 @@ import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { ChevronsDownUp, ChevronsUpDown, Keyboard, Minus, MoreHorizontal, Plus } from "lucide-react";
+import { ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { canAddSubitem } from "@/lib/create-item-validate";
 import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
@@ -214,7 +213,6 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const removeDependency = (id: string) => mutate(() => api(`/api/v1/dependencies/${id}`, { method: "DELETE" }));
 
   // SVAR only auto-sizes to a default window, so a plan months away from today would be off screen.
-  const [keysOpen, setKeysOpen] = useState(false);
   // Items without a start or finish date cannot be drawn; say how many, so they are not mistaken for missing work.
   const undated = useMemo(() => tasks.filter((task) => !task.start || !task.end).length, [tasks]);
   const range = useMemo(() => {
@@ -398,8 +396,14 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
             <option value="">{t("views.gantt.baselineNone")}</option>
             {baselines.data?.items.map((b) => <option key={b.id} value={b.id}>{b.name}</option>)}
           </select></label>
-        {!readonly && !naming && <Button size="sm" variant="outline" onClick={() => setNaming(true)}>{t("views.gantt.baselineSave")}</Button>}
-        {!readonly && <Button size="sm" variant="outline" onClick={() => setSharing(true)}>{t("views.snapshot.open")}</Button>}
+        {!readonly && <DropdownMenu>
+          {/* Saving a baseline and sharing snapshots are occasional, so they sit in one menu instead of the toolbar row. */}
+          <DropdownMenuTrigger render={<Button size="sm" variant="outline" />}><MoreHorizontal />{t("views.gantt.more")}</DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            {!naming && <DropdownMenuItem onClick={() => setNaming(true)}>{t("views.gantt.baselineSave")}</DropdownMenuItem>}
+            <DropdownMenuItem onClick={() => setSharing(true)}>{t("views.snapshot.open")}</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>}
         <GanttSnapshotDialog projectId={parentId} open={sharing} onOpenChange={setSharing} />
         {!readonly && naming && <form className="flex items-end gap-1" onSubmit={(event) => {
           event.preventDefault();
@@ -417,15 +421,6 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       </>}
       <Button size="icon-sm" variant="outline" aria-label={t("views.gantt.zoomOut")} disabled={scale === "month"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Minus /></Button>
       <Button size="icon-sm" variant="outline" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Plus /></Button>
-      {/* The keys open in a dialog from a labeled button: visible on demand, without changing the chart's layout. */}
-      <Button size="sm" variant="ghost" aria-haspopup="dialog" onClick={() => setKeysOpen(true)}><Keyboard />{t("views.gantt.keysLabel")}</Button>
-      {readonly && <span className="text-xs text-muted-foreground">{t("views.gantt.readonly")}</span>}
-      <Dialog open={keysOpen} onOpenChange={setKeysOpen}>
-        <DialogContent>
-          <DialogTitle>{t("views.gantt.keysLabel")}</DialogTitle>
-          <DialogDescription>{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</DialogDescription>
-        </DialogContent>
-      </Dialog>
       {undated > 0 && <span className="text-xs font-medium text-muted-foreground">{t("views.gantt.undated", { count: undated })}</span>}
     </div>
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0}
@@ -470,6 +465,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       </Theme>
       </RowActionsContext.Provider>
     </div>
+    {/* The keys stay on screen under the chart: the chart above keeps its height, so timeline positions do not move. */}
+    <p id="gantt-keys" className="text-xs text-muted-foreground">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}
+      {undated > 0 && <span className="ml-3 font-medium text-foreground">{t("views.gantt.undated", { count: undated })}</span>}</p>
     {onAdd && <Button variant="ghost" size="sm" className="text-primary" onClick={onAdd}><Plus />{t("views.add")}</Button>}
     {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">
       <h2 className="font-medium">{t("views.gantt.dependencies", { name: current.title })}</h2>
