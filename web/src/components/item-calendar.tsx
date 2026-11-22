@@ -3,7 +3,7 @@ import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, Diamond, ChevronLeft, ChevronRight, CircleHelp, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { addDays, daysBetween, fromDay, toDay } from "@/lib/calendar-days";
@@ -28,7 +28,8 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   onCreateOn?: (day: string) => void;
 }) {
   const { t, i18n } = useTranslation();
-  const [overflowOpen, setOverflowOpen] = useState<string>();
+  // "+N more" opens this day's full list in a dialog; a popover in a cell was clipped at the edges of the grid.
+  const [overflow, setOverflow] = useState<{ day: Date; items: Item[] }>();
   const [unscheduledOpen, setUnscheduledOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
   const profile = useProfile();
@@ -149,12 +150,8 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
                     {barButton(item, bar, day)}
                   </div> : null;
                 })}
-                {more > 0 && <button type="button" aria-expanded={overflowOpen === openKey} onClick={() => setOverflowOpen(overflowOpen === openKey ? undefined : openKey)}
+                {more > 0 && <button type="button" aria-haspopup="dialog" onClick={() => setOverflow({ day, items: hiddenAt(col).map((entry) => byId.get(entry.id)).filter((item): item is Item => !!item) })}
                   className="absolute bottom-0.5 left-1 z-20 rounded px-1 text-xs font-medium text-primary hover:underline">{t("views.calendar.more", { count: more })}</button>}
-                {overflowOpen === openKey && <div role="dialog" aria-label={t("views.calendar.moreOn", { date: fmt(fullFormat).format(day) })} className="absolute left-0 top-6 z-30 w-64 space-y-2 rounded border bg-popover p-2 shadow-md">
-                  <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold">{fmt(fullFormat).format(day)}</p><Button size="icon-sm" variant="ghost" aria-label={t("views.calendar.closeMore")} onClick={() => setOverflowOpen(undefined)}><X /></Button></div>
-                  <ul className="space-y-1">{hiddenAt(col).map((entry) => byId.get(entry.id)).filter((item): item is Item => !!item).map((item) => <li key={item.id} className="space-y-1">{chip(item)}<p className="px-1 text-xs text-muted-foreground">{item.status?.name ?? t("views.noStatus")} · {itemRange(item)}</p></li>)}</ul>
-                </div>}
               </div>;
             })}
           </div>;
@@ -165,6 +162,16 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
         {unscheduled.length ? <ul className="space-y-0.5">{unscheduled.map((item) => chip(item))}</ul> : <p className="text-sm text-muted-foreground">{t("views.calendar.noneUnscheduled")}</p>}
       </section>}
     </div>
+    <Dialog open={!!overflow} onOpenChange={(open) => { if (!open) setOverflow(undefined); }}>
+      <DialogContent>
+        {overflow && <>
+          <DialogTitle>{fmt(fullFormat).format(overflow.day)}</DialogTitle>
+          <DialogDescription>{t("views.calendar.moreOn", { date: fmt(fullFormat).format(overflow.day) })}</DialogDescription>
+          <ul className="max-h-[60vh] space-y-2 overflow-y-auto">{overflow.items.map((item) => <li key={item.id} className="space-y-1">{chip(item)}
+            <p className="px-1 text-xs text-muted-foreground">{item.status?.name ?? t("views.noStatus")} · {itemRange(item)}</p></li>)}</ul>
+        </>}
+      </DialogContent>
+    </Dialog>
     <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
       <DialogContent>
         <DialogTitle>{t("views.calendar.help")}</DialogTitle>

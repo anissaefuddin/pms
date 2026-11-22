@@ -187,7 +187,8 @@
     "rowActions": "Aksi untuk {{name}}",
     "addAbove": "Tambah task di atas",
     "addBelow": "Tambah task di bawah",
-    "dayOnlyCreate": "Pilih tampilan Hari untuk membuat task di timeline."
+    "dayOnlyCreate": "Pilih tampilan Hari untuk membuat task di timeline.",
+    "undated": "{{count}} item tanpa tanggal tidak digambar"
   },
   "unassigned": "Belum ditugaskan",
   "reassign": {

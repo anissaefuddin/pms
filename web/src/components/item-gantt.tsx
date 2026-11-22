@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ChevronsDownUp, ChevronsUpDown, Keyboard, Minus, MoreHorizontal, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { canAddSubitem } from "@/lib/create-item-validate";
 import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
@@ -213,6 +214,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const removeDependency = (id: string) => mutate(() => api(`/api/v1/dependencies/${id}`, { method: "DELETE" }));
 
   // SVAR only auto-sizes to a default window, so a plan months away from today would be off screen.
+  const [keysOpen, setKeysOpen] = useState(false);
+  // Items without a start or finish date cannot be drawn; say how many, so they are not mistaken for missing work.
+  const undated = useMemo(() => tasks.filter((task) => !task.start || !task.end).length, [tasks]);
   const range = useMemo(() => {
     const dated = tasks.filter((task) => task.start && task.end);
     if (!dated.length) return {};
@@ -413,9 +417,17 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       </>}
       <Button size="icon-sm" variant="outline" aria-label={t("views.gantt.zoomOut")} disabled={scale === "month"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Minus /></Button>
       <Button size="icon-sm" variant="outline" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Plus /></Button>
-      <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.keysLabel")} title={readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}><Keyboard /></Button>
+      {/* The keys open in a dialog from a labeled button: visible on demand, without changing the chart's layout. */}
+      <Button size="sm" variant="ghost" aria-haspopup="dialog" onClick={() => setKeysOpen(true)}><Keyboard />{t("views.gantt.keysLabel")}</Button>
+      {readonly && <span className="text-xs text-muted-foreground">{t("views.gantt.readonly")}</span>}
+      <Dialog open={keysOpen} onOpenChange={setKeysOpen}>
+        <DialogContent>
+          <DialogTitle>{t("views.gantt.keysLabel")}</DialogTitle>
+          <DialogDescription>{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</DialogDescription>
+        </DialogContent>
+      </Dialog>
+      {undated > 0 && <span className="text-xs font-medium text-muted-foreground">{t("views.gantt.undated", { count: undated })}</span>}
     </div>
-    <p id="gantt-keys" className="sr-only">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</p>
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0}
       onKeyDown={(event) => { if (drag && event.key === "Escape") { setDrag(undefined); return; } keyboard(event); }}
       title={onTimelineCreate && !readonly && scale !== "day" ? t("views.gantt.dayOnlyCreate") : undefined}

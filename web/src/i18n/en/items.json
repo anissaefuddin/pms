@@ -67,7 +67,8 @@
     "complete": "{{value}}% complete",
     "manual": "Manual progress (%)",
     "save": "Save progress",
-    "clear": "Leave blank to clear manual progress."
+    "clear": "Leave blank to clear manual progress.",
+    "notStarted": "Not started"
   },
   "assignees": "Assignees",
   "effortAllocation": "Effort and allocation",

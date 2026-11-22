@@ -67,7 +67,8 @@
     "complete": "{{value}}% selesai",
     "manual": "Progres manual (%)",
     "save": "Simpan progres",
-    "clear": "Kosongkan untuk menghapus progres manual."
+    "clear": "Kosongkan untuk menghapus progres manual.",
+    "notStarted": "Belum dimulai"
   },
   "assignees": "Penerima tugas",
   "effortAllocation": "Usaha dan alokasi",
