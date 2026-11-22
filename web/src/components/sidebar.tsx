@@ -14,7 +14,7 @@ import { itemKeys, listItems, type Item } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
 import type { Space } from "@/lib/spaces";
 import {
-  pinPatch, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
+  FIXED_SHORTCUT, pinPatch, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
   pushRecent, readOpenSpaces, readRecent, readWidth, sanitizePinOrder, toggleOpen, writeOpenSpaces, writeRecent, writeWidth,
   type RecentEntry, type ShortcutId,
 } from "@/lib/sidebar-prefs";
@@ -178,7 +178,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
   const hidden = me.sidebar_hidden ?? [];
   const visible = (id: ShortcutId) => isShortcutVisible(id, hidden);
   const pinned = pinOrder.filter(visible);
-  const more = SHORTCUT_IDS.filter((id) => !pinOrder.includes(id) && visible(id));
+  const more = SHORTCUT_IDS.filter((id) => id !== FIXED_SHORTCUT && !pinOrder.includes(id) && visible(id));
   const isCurrent = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
   const shortcut = (id: ShortcutId) => {
     const to = SHORTCUT_ROUTE[id];
@@ -204,8 +204,9 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
       {/* Hanya area ini yang bisa di-scroll; header dan footer (akun, pengaturan) tetap terlihat. */}
       <div className="sidebar-scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto">
       <nav className="space-y-1" aria-label={t("nav.main.label")}>
-        <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />
+        {shortcut(FIXED_SHORTCUT)}
         <Nav icon={<Inbox />} label={t("nav.inbox.label")} collapsed={collapsed} badge={unread} current={isCurrent("/inbox")} onClick={() => go("/inbox")} />
+        <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />
         {pinned.map(shortcut)}
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}

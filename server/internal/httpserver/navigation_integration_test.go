@@ -28,7 +28,7 @@ func TestSidebarPinnedKeepsOrderAndValidates(t *testing.T) {
 	f := newFixture(t)
 	member := f.person("regular")
 	pinned := f.call(member, "GET", "/me", nil).body["sidebar_pinned"].([]any)
-	if len(pinned) != 3 || pinned[0] != "dashboards" || pinned[1] != "request_forms" || pinned[2] != "stream" {
+	if len(pinned) != 2 || pinned[0] != "request_forms" || pinned[1] != "stream" {
 		t.Fatalf("default pins = %v", pinned)
 	}
 	f.want(f.call(member, "PATCH", "/me", map[string]any{"sidebar_pinned": []string{"starred", "my_todo", "stream"}}), 200, "pin in order")

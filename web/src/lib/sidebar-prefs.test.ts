@@ -35,6 +35,7 @@ test("sanitizePinOrder drops unknown and duplicate ids and keeps the first posit
 test("only shortcuts with an API key can be pinned, so the others never reach sidebar_pinned", () => {
   assert.deepEqual(sanitizePinOrder(["portfolio", "stream", "recycle"]), ["portfolio", "stream"]);
   assert.equal(PINNABLE_IDS.includes("reviews"), true);
+  assert.equal(PINNABLE_IDS.includes("dashboards"), false);
   assert.equal(PINNABLE_IDS.includes("recycle"), false);
   assert.deepEqual(sanitizePinOrder(undefined), [...DEFAULT_PINNED]);
 });
