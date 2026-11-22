@@ -113,6 +113,10 @@ func BuildTimeline(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 		}
 		res.Spaces[si].UnassignedTasks = append(res.Spaces[si].UnassignedTasks, item(r))
 	}
+	// Every visible Space is listed, even when nothing is due in range, so the timeline matches the Space list.
+	for _, id := range ids {
+		spaceFor(&res, spaceIdx, id, byID)
+	}
 	sort.SliceStable(res.Spaces, func(i, j int) bool { return res.Spaces[i].Name < res.Spaces[j].Name })
 	return res, nil
 }

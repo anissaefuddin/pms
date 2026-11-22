@@ -224,6 +224,7 @@
   "overview.timeline.milestone": "Milestone {{date}}",
   "overview.timeline.noTasks": "No tasks due in this range.",
   "overview.timeline.unassigned": "Tasks without a project in this range",
+  "overview.timeline.nothingDue": "Nothing is due in this range.",
   "overview.timeline.openSpace": "Open Space",
   "overview.timeline.legend.project": "Project",
   "overview.timeline.legend.deferred": "Deferred project",

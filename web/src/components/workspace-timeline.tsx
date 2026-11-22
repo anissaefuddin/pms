@@ -110,6 +110,7 @@ function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
       <span className="shrink-0 text-xs text-muted-foreground">{t(`dashboards.overview.access.${space.effective_access}`)}</span>
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="shrink-0 text-xs underline">{t("dashboards.overview.timeline.openSpace")}</Link></>} />
     {open && <>
+      {space.projects.length === 0 && space.unassigned_tasks.length === 0 && <Row label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.nothingDue")}</span>} />}
       {space.projects.map((project) => <ProjectRows key={project.id} project={project} ctx={ctx} />)}
       {space.unassigned_tasks.length > 0 && <>
         <Row label={<button type="button" aria-expanded={unassignedOpen} onClick={() => setUnassignedOpen(!unassignedOpen)}
