@@ -32,5 +32,14 @@ export const fieldFilterRef = (field?: string) => {
 /** Optional facts on a Board card; the title and activity counts are always shown. */
 export const cardFieldGroups = [{ id: "card", columns: ["cover", "id", "type", "assignee", "start_date", "due_date", "importance", "locations", "author", "days_in_status"] }] as const;
 
-/** Built-in columns the Gantt grid can show next to the name. */
-export const ganttColumnGroups = [{ id: "management", columns: ["status"] }, { id: "schedule", columns: ["start_date", "due_date"] }] as const;
+/** Columns the Gantt grid can show next to the name, in the Columns picker. */
+export const ganttColumnGroups = [
+  { id: "other", columns: ["index", "predecessors", "duration"] },
+  { id: "management", columns: ["status", "assignee"] },
+  { id: "schedule", columns: ["start_date", "due_date"] },
+] as const;
+/** A Gantt view starts with the number, predecessors and duration; the saved choice wins. */
+export const ganttDefaultColumns = ["index", "predecessors", "duration"];
+export function ganttColumns(config?: Record<string, unknown> | null): string[] {
+  return savedColumns(config) ?? ganttDefaultColumns;
+}

@@ -25,7 +25,7 @@ import { ViewToolbar } from "@/components/view-toolbar";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import type { CustomField } from "@/lib/custom-fields";
-import { visibleColumns } from "@/lib/view-columns";
+import { ganttColumns, visibleColumns } from "@/lib/view-columns";
 import { useViewExpansion } from "@/lib/use-view-expansion";
 import { FileSpreadsheet, Maximize2, Minimize2 } from "lucide-react";
 
@@ -270,19 +270,17 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
       table={{ search: filter, preset, sort, columns: visibleColumns(active.config, false), typeFilter, fieldFilter, viewId: active.id }} />}
     {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? <ProjectChart project={parent} /> : isGantt ? <>
-      <ViewToolbar filterOnly {...toolbar} columns={!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
-        fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
-          spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />} />
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<div role="status" aria-label={t("views.gantt.loading")} className="h-[60vh] min-h-72 animate-pulse overflow-hidden rounded border bg-card p-3"><div className="mb-3 h-8 w-72 rounded bg-muted" /><div className="grid h-full grid-cols-[22rem_1fr] gap-px bg-border"><div className="space-y-px bg-card">{Array.from({ length: 9 }, (_, index) => <div key={index} className="h-11 bg-muted/60" />)}</div><div className="bg-[repeating-linear-gradient(90deg,transparent_0,transparent_35px,hsl(var(--border))_36px)]" /></div><span className="sr-only">{t("views.gantt.loading")}</span></div>}>
-        <ItemGantt key={active?.id} onQuickCreate={collection.canCreate ? (title, id) => quickCreate("", title, id) : undefined} onTimelineCreate={collection.canCreate ? (start, finish) => setCreating({ day: start, finishDay: finish }) : undefined} onRowAdd={(kind, item, previousId) => {
+        <ItemGantt key={active?.id} columns={ganttColumns(active.config)} renderToolbar={(controls) => <ViewToolbar filterOnly {...toolbar} columns={<>{!!spaceId && <ColumnPicker fieldsOnly key={active.id + ganttColumns(active.config).join()} selected={ganttColumns(active.config)}
+          fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}{controls}</>} />} onQuickCreate={collection.canCreate ? (title, id) => quickCreate("", title, id) : undefined} onTimelineCreate={collection.canCreate ? (start, finish) => setCreating({ day: start, finishDay: finish }) : undefined} onRowAdd={(kind, item, previousId) => {
           if (kind === "child") { setCreating({ parent: item }); return; }
           const parentId = item.locations.find((loc) => loc.space_id === spaceId)?.parent_item_id ?? null;
           const parentItem = parentId ? (items.data ?? []).find((entry) => entry.id === parentId) : undefined;
           setCreating({ parent: parentItem, day: item.start_date ?? item.due_date ?? undefined, locationParent: parentId, placement: { parentId, after: kind === "below" ? item.id : previousId } });
         }} initialOpen={!expansion.initial.gantt_collapsed} onOpenChange={(open) => expansion.save({ rows: [], gantt_collapsed: !open })} items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
-          customFields={customFields} columns={visibleColumns(active.config, false)}
+          customFields={customFields}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
     </> : isCalendar ? <>

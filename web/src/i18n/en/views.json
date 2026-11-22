@@ -128,7 +128,10 @@
     "manageForbidden": "You can see only the fields in this Space.",
     "addToSpace": "Add to Space",
     "removeFromSpace": "Remove from Space",
-    "createField": "Create field…"
+    "createField": "Create field…",
+    "index": "#",
+    "predecessors": "Predecessors",
+    "duration": "Duration"
   },
   "fieldFilter": {
     "field": "Filter by field",
@@ -200,7 +203,8 @@
     "days": "{{count}}d",
     "addTask": "Add task, then press Enter",
     "quarter": "Quarters",
-    "year": "Years"
+    "year": "Years",
+    "predecessorsOf": "Predecessors of {{name}}"
   },
   "unassigned": "Unassigned",
   "reassign": {

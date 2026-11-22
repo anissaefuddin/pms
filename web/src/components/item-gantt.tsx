@@ -1,10 +1,11 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { createContext, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react-gantt";
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { canAddSubitem } from "@/lib/create-item-validate";
@@ -34,8 +35,6 @@ const scaleGeometry: Record<Scale, { cell: number; perDay: number }> = {
   year: { cell: 24, perDay: 24 / 30 }, quarter: { cell: 90, perDay: 90 / 90 }, month: { cell: 90, perDay: 90 / 30 },
   week: { cell: 80, perDay: 80 / 7 }, day: { cell: 36, perDay: 36 },
 };
-const gridPresets = ["minimal", "standard", "detail"] as const;
-type GridPreset = (typeof gridPresets)[number];
 /** Bar colours by workflow colour token: 700/900 shades keep white labels above 4.5:1. */
 const barColors: Record<string, [string, string]> = {
   slate: ["#334155", "#0f172a"], blue: ["#1d4ed8", "#1e3a8a"], sky: ["#0369a1", "#0c4a6e"], teal: ["#0f766e", "#134e4a"], // allow-hex
@@ -50,6 +49,57 @@ function BarLabel({ data }: { data: ITask }) {
     style={{ background: `linear-gradient(to right, ${dark} ${done}%, ${base} ${done}%)` }}>
     <span className="truncate">{[data.text, data.assignee_names].filter(Boolean).join(" • ")}</span>
   </div>;
+}
+
+/** Predecessors in one cell: the task numbers. Click to add, remove, or change the link type; this is the old panel, now in the column. */
+function PredecessorCell({ row, open, onOpenChange, options, value, readonly, busy, onAdd, onRemove, onType }: {
+  row: ITask; open: boolean; onOpenChange: (open: boolean) => void; options: ITask[]; value: { id: string; predecessorId: string; number: number; type: DependencyType }[]; readonly: boolean; busy: boolean;
+  onAdd: (predecessor: string, successor: string, type: DependencyType) => void; onRemove: (id: string) => void; onType: (id: string, type: DependencyType) => void;
+}) {
+  const { t } = useTranslation();
+  const successor = String(row.id);
+  const name = String(row.text ?? "");
+  const shown = value.map((entry) => entry.number).sort((x, y) => x - y).join(", ");
+  const titleOf = (predecessorId: string) => options.find((task) => String(task.id) === predecessorId)?.text ?? predecessorId;
+  return <Popover open={open} onOpenChange={onOpenChange}>
+    <PopoverTrigger render={<button type="button" disabled={readonly} aria-label={shown ? `${t("views.gantt.predecessorsOf", { name })}: ${shown}` : t("views.gantt.predecessorsOf", { name })}
+      className="min-w-0 truncate rounded px-1 text-left tabular-nums hover:bg-muted disabled:hover:bg-transparent" />}>
+      {shown || (readonly ? null : <Plus aria-hidden className="size-3.5 text-muted-foreground" />)}
+    </PopoverTrigger>
+    <PopoverContent align="start" className="w-80 space-y-3">
+      <p className="font-medium">{t("views.gantt.dependencies", { name })}</p>
+      <ul className="space-y-1">
+        {value.map((entry) => <li key={entry.id} className="flex flex-wrap items-center gap-2 text-sm">
+          <span className="min-w-0 truncate">{entry.number}. {titleOf(entry.predecessorId)}</span>
+          <select aria-label={t("views.gantt.depType", { name: titleOf(entry.predecessorId) })} value={entry.type} disabled={readonly || busy}
+            className="rounded border bg-background p-1" onChange={(event) => onType(entry.id, event.target.value as DependencyType)}>
+            {dependencyTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select>
+          {!readonly && <Button size="sm" variant="outline" disabled={busy} onClick={() => onRemove(entry.id)}
+            aria-label={t("views.gantt.removeDep", { name: titleOf(entry.predecessorId) })}>{t("views.gantt.remove")}</Button>}
+        </li>)}
+        {!value.length && <li className="text-sm text-muted-foreground">{t("views.gantt.noDeps")}</li>}
+      </ul>
+      {!readonly && <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
+        event.preventDefault();
+        const data = new FormData(event.currentTarget);
+        const predecessor = String(data.get("predecessor") ?? "");
+        if (predecessor) onAdd(predecessor, successor, String(data.get("type")) as DependencyType);
+        event.currentTarget.reset();
+      }}>
+        <label className="space-y-1"><span className="block text-sm">{t("views.gantt.predecessor")}</span>
+          <select name="predecessor" required defaultValue="" className="rounded border bg-background p-1">
+            <option value="" disabled />
+            {options.filter((task) => String(task.id) !== successor).map((task) => <option key={String(task.id)} value={String(task.id)}>{task.text}</option>)}
+          </select></label>
+        <label className="space-y-1"><span className="block text-sm">{t("views.gantt.type")}</span>
+          <select name="type" defaultValue="FS" className="rounded border bg-background p-1">
+            {dependencyTypes.map((type) => <option key={type} value={type}>{type}</option>)}
+          </select></label>
+        <Button type="submit" size="sm" disabled={busy}>{t("views.gantt.addDep")}</Button>
+      </form>}
+    </PopoverContent>
+  </Popover>;
 }
 
 /** Task name in the grid: double-click or F2 to edit. Enter saves, Escape cancels, a click outside saves. The draft lives in ItemGantt, so a grid re-render cannot drop what was typed. */
@@ -139,7 +189,7 @@ function RowActionsCell({ row }: { row: ITask }) {
   return <GanttRowMenu item={item} previousId={previousId} spaceId={ctx.spaceId} onAdd={ctx.onRowAdd} />;
 }
 
-export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd, onTimelineCreate, onQuickCreate }: {
+export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd, onTimelineCreate, onQuickCreate, renderToolbar }: {
   initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
   onOpenChange?: (open: boolean) => void;
   items: Item[];
@@ -150,6 +200,8 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   readonly: boolean;
   onOpen: (item: Item) => void;
   onAdd?: () => void;
+  /** The filter row. The workspace passes the shared toolbar; the Gantt's own controls go into its columns slot. */
+  renderToolbar?: (controls: ReactNode) => ReactNode;
   /** Creates a Task with this name at the end of the list, immediately. Absent when the viewer cannot create. */
   onQuickCreate?: (title: string, id: string) => Promise<void>;
   /** Batch 3B: add a subitem, or a Task above/below a row (previousId is the row above it among its siblings, or null). */
@@ -165,13 +217,6 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const [baselineId, setBaselineId] = useState("");
   const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
   const [gridWidth, setGridWidth] = useState(() => { try { return Math.min(720, Math.max(280, Number(localStorage.getItem(`${ganttPrefKey}:width`)) || 480)); } catch { return 480; } });
-  const [gridPreset, setGridPreset] = useState<GridPreset>(() => {
-    const configuredDefault = columns.some((column) => column.startsWith("field:")) ? "detail" : "standard";
-    try {
-      const value = localStorage.getItem(`${ganttPrefKey}:preset`);
-      return value === "minimal" || value === "detail" || value === "standard" ? value : configuredDefault;
-    } catch { return configuredDefault; }
-  });
   const [naming, setNaming] = useState(false);
   // WA-D05: the collapse state comes from the server profile for this view and every change is sent back.
   const [allOpen, setAllOpenState] = useState(() => initialOpen ?? true);
@@ -186,7 +231,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
     combine: (results) => results.map((result) => result.data),
   });
   const hasColumn = (id: string) => columns.includes(id);
-  const shownFields = useMemo(() => gridPreset === "detail" ? customFields.filter((field) => columns.includes(fieldColumn(field.id))) : [], [customFields, columns, gridPreset]);
+  const shownFields = useMemo(() => customFields.filter((field) => columns.includes(fieldColumn(field.id))), [customFields, columns]);
   const { tasks, byId } = useMemo(() => {
     const children = new Map(parents.map((id, index) => [id, branches[index] ?? []]));
     const out: ITask[] = [];
@@ -442,9 +487,10 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   // Task numbers follow the order the grid shows the rows; predecessors and duration come from the same data.
   const numbers = useMemo(() => new Map(tasks.map((task, index) => [String(task.id), index + 1])), [tasks]);
   const dayCount = (task: ITask) => (task.start && task.end ? Math.round((task.end.getTime() - task.start.getTime()) / 86_400_000) : null);
-  const predecessorText = (id: string) => deps.filter((dep) => String(dep.successor_id) === id)
-    .map((dep) => numbers.get(String(dep.predecessor_id))).filter((n): n is number => n !== undefined).sort((x, y) => x - y).join(", ");
+  const predecessorList = (id: string) => deps.filter((dep) => String(dep.successor_id) === id)
+    .map((dep) => ({ id: String(dep.id), predecessorId: String(dep.predecessor_id), number: numbers.get(String(dep.predecessor_id)) ?? 0, type: dep.type as DependencyType }));
   const [editingId, setEditingId] = useState<string>();
+  const [predOpenId, setPredOpenId] = useState<string>();
   // Column widths the user dragged to, kept per view in this browser (SVAR reports each drag through resize-column).
   const colWidthsKey = `${ganttPrefKey}:columns`;
   const [colWidths, setColWidths] = useState<Record<string, number>>(() => { try { return JSON.parse(localStorage.getItem(colWidthsKey) ?? "{}") as Record<string, number>; } catch { return {}; } });
@@ -467,29 +513,20 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const gridColumns = useMemo(() => [
     { id: "index", header: t("views.gantt.index"), width: widthOf("index", 48), resize: true, cell: ({ row }: { row: ITask }) => <span className="tabular-nums text-muted-foreground">{numbers.get(String(row.id)) ?? ""}</span> },
     { id: "text", header: t("views.gantt.name"), flexgrow: 1, width: widthOf("text", 240), resize: true, cell: ({ row }: { row: ITask }) => <NameCell row={row} editing={editingId === String(row.id)} draft={nameDraft} canEdit={!readonly} onStart={startEditing} onDraft={setNameDraft} onEnd={() => setEditingId(undefined)} onSave={(id, title) => saveRef.current(id, title)} /> },
-    ...(gridPreset !== "minimal" ? [
-      { id: "predecessors", header: t("views.gantt.predecessors"), width: widthOf("predecessors", 104), resize: true, cell: ({ row }: { row: ITask }) => <span className="tabular-nums">{predecessorText(String(row.id))}</span> },
-      { id: "duration", header: t("views.gantt.duration"), width: widthOf("duration", 72), resize: true, cell: ({ row }: { row: ITask }) => { const n = dayCount(row); return <span className="tabular-nums">{n ? t("views.gantt.days", { count: n }) : ""}</span>; } },
-    ] : []),
-    ...(gridPreset === "detail" && hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: widthOf("status_name", 120), resize: true, cell: StatusCell }] : []),
-    ...(gridPreset === "detail" && hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: widthOf("start_text", 112), resize: true }] : []),
-    ...(gridPreset === "detail" && hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: widthOf("due_text", 112), resize: true }] : []),
+    ...(hasColumn("predecessors") ? [{ id: "predecessors", header: t("views.gantt.predecessors"), width: widthOf("predecessors", 120), resize: true,
+      cell: ({ row }: { row: ITask }) => <PredecessorCell row={row} open={predOpenId === String(row.id)} onOpenChange={(next) => setPredOpenId(next ? String(row.id) : undefined)} options={tasks} value={predecessorList(String(row.id))} readonly={readonly} busy={busy}
+        onAdd={(predecessor, successor, type) => void addDependency(predecessor, successor, type)} onRemove={(id) => void removeDependency(id)} onType={(id, type) => void changeDependency(id, type)} /> }] : []),
+    ...(hasColumn("duration") ? [{ id: "duration", header: t("views.gantt.duration"), width: widthOf("duration", 72), resize: true, cell: ({ row }: { row: ITask }) => { const n = dayCount(row); return <span className="tabular-nums">{n ? t("views.gantt.days", { count: n }) : ""}</span>; } }] : []),
+    ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: widthOf("status_name", 120), resize: true, cell: StatusCell }] : []),
+    ...(hasColumn("assignee") ? [{ id: "assignee_names", header: t("items.assignees"), width: widthOf("assignee_names", 140), resize: true }] : []),
+    ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: widthOf("start_text", 112), resize: true }] : []),
+    ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: widthOf("due_text", 112), resize: true }] : []),
     ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
     ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 })),
     ...(onRowAdd && !readonly ? [{ id: "row_actions", header: t("views.actions"), width: 44, cell: RowActionsCell }] : []),
-  ], [numbers, deps, gridPreset, columns, baselineId, shownFields, readonly, editingId, nameDraft, colWidths, onRowAdd, t]);
+  ], [numbers, deps, tasks, columns, baselineId, shownFields, readonly, busy, editingId, predOpenId, nameDraft, colWidths, onRowAdd, t]);
 
-  return <div className="space-y-2">
-    <div className="flex flex-wrap items-center gap-2">
-      <label className="flex items-center gap-1 text-sm"><span>{t("views.gantt.gridPreset")}</span>
-        <select value={gridPreset} className="rounded border bg-background p-1" onChange={(event) => {
-          const value = event.target.value as GridPreset;
-          setGridPreset(value);
-          try { localStorage.setItem(`${ganttPrefKey}:preset`, value); } catch { /* storage can be blocked */ }
-        }}>
-          {gridPresets.map((value) => <option key={value} value={value}>{t(`views.gantt.gridPresets.${value}`)}</option>)}
-        </select>
-      </label>
+  const controls = <>
       <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
       <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(".gantt-today")?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.today")}</Button>
       {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
@@ -529,7 +566,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
         </form>}
       </>}
       {undated > 0 && <span className="text-xs font-medium text-muted-foreground">{t("views.gantt.undated", { count: undated })}</span>}
-    </div>
+  </>;
+  return <div className="space-y-2">
+    <div className="flex flex-wrap items-center gap-2">{renderToolbar ? renderToolbar(controls) : controls}</div>
     <div className="relative">
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0}
       onKeyDown={(event) => { if (drag && event.key === "Escape") { setDrag(undefined); return; } keyboard(event); }}
@@ -599,38 +638,6 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       {outside.right.length > 0 && <Button size="sm" variant="outline" onClick={() => jumpOutside("right")}>{t("views.gantt.offRight", { count: outside.right.length })}<ChevronRight /></Button>}
     </div>}
     {onAdd && <Button variant="ghost" size="sm" className="text-primary" onClick={onAdd}><Plus />{t("views.add")}</Button>}
-    {current && <section aria-label={t("views.gantt.dependencies", { name: current.title })} className="space-y-2 rounded border p-3">
-      <h2 className="font-medium">{t("views.gantt.dependencies", { name: current.title })}</h2>
-      <ul className="space-y-1">
-        {deps.filter((dep) => dep.successor_id === current.id).map((dep) => <li key={dep.id} className="flex flex-wrap items-center gap-2">
-          <span>{byId.get(dep.predecessor_id)?.title ?? dep.predecessor_id}</span>
-          <select aria-label={t("views.gantt.depType", { name: byId.get(dep.predecessor_id)?.title })} value={dep.type} disabled={readonly || busy}
-            className="rounded border bg-background p-1" onChange={(event) => void changeDependency(dep.id, event.target.value as DependencyType)}>
-            {dependencyTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-          </select>
-          {!readonly && <Button size="sm" variant="outline" disabled={busy} onClick={() => void removeDependency(dep.id)}
-            aria-label={t("views.gantt.removeDep", { name: byId.get(dep.predecessor_id)?.title })}>{t("views.gantt.remove")}</Button>}
-        </li>)}
-        {!deps.some((dep) => dep.successor_id === current.id) && <li className="text-sm text-muted-foreground">{t("views.gantt.noDeps")}</li>}
-      </ul>
-      {!readonly && <form className="flex flex-wrap items-end gap-2" onSubmit={(event) => {
-        event.preventDefault();
-        const data = new FormData(event.currentTarget);
-        const predecessor = String(data.get("predecessor") ?? "");
-        if (predecessor) void addDependency(predecessor, current.id, String(data.get("type")) as DependencyType);
-      }}>
-        <label className="space-y-1"><span className="block text-sm">{t("views.gantt.predecessor")}</span>
-          <select name="predecessor" required defaultValue="" className="rounded border bg-background p-1">
-            <option value="" disabled />
-            {[...byId.values()].filter((item) => item.id !== current.id).map((item) => <option key={item.id} value={item.id}>{item.title}</option>)}
-          </select></label>
-        <label className="space-y-1"><span className="block text-sm">{t("views.gantt.type")}</span>
-          <select name="type" defaultValue="FS" className="rounded border bg-background p-1">
-            {dependencyTypes.map((type) => <option key={type} value={type}>{type}</option>)}
-          </select></label>
-        <Button type="submit" size="sm" disabled={busy}>{t("views.gantt.addDep")}</Button>
-      </form>}
-    </section>}
     <p role="status" className="sr-only">{current ? (current.start_date || current.due_date
       ? t("views.gantt.selected", { name: current.title, start: formatDate(current.start_date ?? current.due_date, profile), end: formatDate(current.due_date ?? current.start_date, profile) })
       : t("views.gantt.unscheduled", { name: current.title })) : ""}</p>

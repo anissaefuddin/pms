@@ -93,7 +93,7 @@ for (const scheme of ["light", "dark"] as const) {
     await page.getByRole("application", { name: "Gantt chart" }).focus();
     await page.keyboard.press("ArrowDown");
     await page.keyboard.press("ArrowDown");
-    const found = await new AxeBuilder({ page }).include('[role="application"]').include('[aria-label^="Predecessors"]').analyze();
+    const found = await new AxeBuilder({ page }).include('[role="application"]').analyze();
     expect(found.violations.map((v) => `${v.id}: ${v.nodes[0]?.html.slice(0, 100)}`)).toEqual([]);
   });
 }
@@ -110,8 +110,8 @@ test("links come from the server; type and removal go through the API", async ({
   const { calls } = await mockGantt(page, { deps: [existing] });
   await page.goto(`${path}?view=${ganttId}`);
   await expect(page.locator(".wx-line").first()).toBeAttached();
-  await select(page, 3); // Launch, Design, Build
-  const panel = page.getByRole("region", { name: "Predecessors of Build" });
+  await page.getByRole("button", { name: "Predecessors of Build" }).click(); // the Predecessors column opens the links
+  const panel = page.getByRole("dialog");
   await expect(panel.locator("li").getByText("Design")).toBeVisible();
   await panel.getByRole("combobox", { name: "Link type from Design" }).selectOption("SS");
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/dependencies/${depId}`)?.body).toEqual({ type: "SS" });
@@ -123,8 +123,8 @@ test("links come from the server; type and removal go through the API", async ({
 test("adding a predecessor shifts the successor from the server's data, and a cycle is refused", async ({ page }) => {
   const { calls } = await mockGantt(page);
   await page.goto(`${path}?view=${ganttId}`);
-  await select(page, 4); // ... Ship
-  const panel = page.getByRole("region", { name: "Predecessors of Ship" });
+  await page.getByRole("button", { name: "Predecessors of Ship" }).click();
+  const panel = page.getByRole("dialog");
   const before = (await bar(page, kids[2].id).boundingBox())!.x;
   await panel.getByRole("combobox", { name: "Predecessor" }).selectOption({ label: "Design" });
   await panel.getByRole("button", { name: "Add predecessor" }).click();

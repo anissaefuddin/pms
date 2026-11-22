@@ -126,7 +126,10 @@
     "manageForbidden": "Anda hanya bisa melihat field di Space ini.",
     "addToSpace": "Tambah ke Space",
     "removeFromSpace": "Hapus dari Space",
-    "createField": "Buat field…"
+    "createField": "Buat field…",
+    "index": "#",
+    "predecessors": "Pendahulu",
+    "duration": "Durasi"
   },
   "fieldFilter": {
     "field": "Filter menurut field",
@@ -198,7 +201,8 @@
     "days": "{{count}} hr",
     "addTask": "Tambah task, lalu tekan Enter",
     "quarter": "Kuartal",
-    "year": "Tahun"
+    "year": "Tahun",
+    "predecessorsOf": "Pendahulu dari {{name}}"
   },
   "unassigned": "Belum ditugaskan",
   "reassign": {
