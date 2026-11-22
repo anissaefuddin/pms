@@ -99,7 +99,7 @@ test("agenda groups by date, flags overdue work, and filters by type", async ({ 
   await expect(page.getByRole("heading", { name: "2026-11-25" })).toBeVisible();
   await page.getByRole("radio", { name: "Tasks" }).click();
   await expect.poll(() => calls.some((c) => c.query.get("type") === "task")).toBe(true);
-  await page.getByRole("combobox").selectOption(ops.id);
+  await page.getByRole("combobox", { name: /^Space/ }).selectOption(ops.id);
   await expect.poll(() => calls.some((c) => c.query.get("space_id") === ops.id)).toBe(true);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });

@@ -276,5 +276,12 @@
   "overview.timeline.jumpFirst": "Go to first item",
   "overview.agenda.range": "Range",
   "overview.agenda.days": "{{count}} days",
-  "overview.agenda.month": "1 month"
+  "overview.agenda.month": "1 month",
+  "overview.agenda.day": "Day",
+  "overview.agenda.pickDay": "Pick a day",
+  "overview.agenda.close": "Close",
+  "overview.agenda.empty.title": "No work due in this range",
+  "overview.agenda.empty.description": "Nothing is due in the next {{count}} days. Try a longer range or another Space.",
+  "overview.agenda.dayEmpty.title": "Nothing due this day",
+  "overview.agenda.dayEmpty.description": "No project or task is due on this day."
 }

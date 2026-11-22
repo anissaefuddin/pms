@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useMemo, useRef, useState, type CSSProperties, type ReactNode } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { holidayMap, loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronRight } from "lucide-react";
@@ -48,6 +50,8 @@ export function WorkspaceTimeline() {
   const [days, setDays] = useState<number>(TIMELINE_DAYS);
   const [openIds, setOpenIds] = useState<string[]>([]);
   const q = useOverviewTimeline(from, days);
+  const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
+  const holidays = useMemo(() => holidayMap(schedule.data?.data), [schedule.data]);
   const regionRef = useRef<HTMLDivElement>(null);
   const jumpToFirst = () => {
     const index = q.data ? firstScheduledIndex(q.data) : null;
@@ -66,7 +70,7 @@ export function WorkspaceTimeline() {
   const allOpen = data.spaces.length > 0 && data.spaces.every((space) => openIds.includes(space.id));
   const scheduled = data.spaces.reduce((sum, space) => sum + space.projects.length + space.unassigned_tasks.length
     + space.projects.reduce((inner, p) => inner + (p.tasks ?? []).length, 0), 0);
-  const ctx: Ctx = { from: data.from, dates, days, profile, isOpen: (id) => openIds.includes(id), toggle };
+  const ctx: Ctx = { from: data.from, dates, days, profile, holidays, isOpen: (id) => openIds.includes(id), toggle };
   return <div className="space-y-4">
     <div className="flex flex-wrap items-end justify-between gap-3">
       <PeriodNav start={data.from} end={data.to} days={days} onMove={setFrom} />
@@ -97,7 +101,7 @@ export function WorkspaceTimeline() {
   </div>;
 }
 
-type Ctx = { from: string; dates: string[]; days: number; profile?: CurrentUser; isOpen: (id: string) => boolean; toggle: (id: string) => void };
+type Ctx = { from: string; dates: string[]; days: number; profile?: CurrentUser; holidays: Map<string, string>; isOpen: (id: string) => boolean; toggle: (id: string) => void };
 
 function Header({ ctx }: { ctx: Ctx }) {
   const { t } = useTranslation();
@@ -116,8 +120,9 @@ function Header({ ctx }: { ctx: Ctx }) {
     <div className="flex">
       <div className="sticky left-0 z-10 flex shrink-0 items-center border-r bg-card px-4 py-1.5 font-medium text-foreground" style={{ width: LABEL_PX }}>
         {t("dashboards.overview.timeline.item")}</div>
-      {ctx.dates.map((date) => <div key={date} style={{ width: DAY_PX }}
-        className={cn("shrink-0 border-l py-1.5 text-center tabular-nums", isWeekend(date) && "bg-muted/40", date === today && "bg-primary/10 font-semibold text-foreground")}>
+      {ctx.dates.map((date) => <div key={date} style={{ width: DAY_PX }} title={ctx.holidays.get(date)}
+        className={cn("shrink-0 border-l py-1.5 text-center tabular-nums", isWeekend(date) && "bg-muted/40",
+          ctx.holidays.has(date) && "bg-rose-100 font-semibold text-rose-700 dark:bg-rose-500/20 dark:text-rose-300", date === today && "bg-primary/10 font-semibold text-foreground")}>
         {dayNumber(date)}</div>)}
     </div>
   </div>;
