@@ -276,5 +276,6 @@
   "overview.agenda.modes.list": "List",
   "overview.agenda.modes.calendar": "Calendar",
   "overview.agenda.count": "{{count}} items",
-  "overview.agenda.more": "+{{count}} more"
+  "overview.agenda.more": "+{{count}} more",
+  "overview.timeline.jumpFirst": "Go to first item"
 }

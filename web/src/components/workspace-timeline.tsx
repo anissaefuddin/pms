@@ -1,8 +1,8 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useEffect, useRef, useState, type CSSProperties, type ReactNode } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { addDays, TIMELINE_DAYS, useOverviewTimeline, type TimelineProject, type TimelineSpace, type TimelineTask } from "@/lib/overview";
+import { addDays, TIMELINE_DAYS, useOverviewTimeline, type TimelineProject, type TimelineResponse, type TimelineSpace, type TimelineTask } from "@/lib/overview";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { formatDate, useProfile } from "@/lib/profile";
 import type { CurrentUser } from "@/lib/api";
@@ -23,6 +23,23 @@ const dayNumber = (date: string) => new Date(utc(date)).getUTCDate();
 
 const DAY_OPTIONS = [30, 60, 90] as const;
 
+/** Column offset of the earliest Project or Task in the range, or null when nothing is scheduled. */
+function firstScheduledIndex(data: TimelineResponse): number | null {
+  let best: number | null = null;
+  const consider = (date: string) => {
+    const index = Math.round((utc(date) - utc(data.from)) / DAY_MS);
+    if (index >= 0 && (best === null || index < best)) best = index;
+  };
+  for (const space of data.spaces) {
+    space.unassigned_tasks.forEach((task) => consider(task.due_date));
+    for (const project of space.projects) {
+      consider(project.due_date);
+      (project.tasks ?? []).forEach((task) => consider(task.due_date));
+    }
+  }
+  return best;
+}
+
 /** Read-only Gantt-style grid: one column per day, Projects and Tasks placed on their due date. Nothing can be dragged here. */
 export function WorkspaceTimeline() {
   const { t } = useTranslation();
@@ -31,6 +48,15 @@ export function WorkspaceTimeline() {
   const [days, setDays] = useState<number>(TIMELINE_DAYS);
   const [openIds, setOpenIds] = useState<string[]>([]);
   const q = useOverviewTimeline(from, days);
+  const regionRef = useRef<HTMLDivElement>(null);
+  const jumpToFirst = () => {
+    const index = q.data ? firstScheduledIndex(q.data) : null;
+    if (index === null || !regionRef.current) return;
+    // Keep two days of context to the left of the first item; the label column is part of the scrolled width.
+    regionRef.current.scrollLeft = Math.max(0, LABEL_PX + index * DAY_PX - 2 * DAY_PX);
+  };
+  // Opening a range should show where its work is, not the first days of an empty stretch.
+  useEffect(() => { jumpToFirst(); }, [q.data]);
   if (q.isPending) return <p role="status" className="text-sm text-muted-foreground">{t("dashboards.overview.loading")}</p>;
   if (q.isError) return <div><p role="alert">{t("dashboards.overview.error")}</p>
     <Button variant="outline" className="mt-3" onClick={() => q.refetch()}>{t("dashboards.overview.retry")}</Button></div>;
@@ -56,11 +82,12 @@ export function WorkspaceTimeline() {
       <span className="flex items-center gap-1.5"><span className="h-3 w-5 rounded-md bg-sky-500" />{t("dashboards.overview.timeline.legend.project")}</span>
       <span className="flex items-center gap-1.5"><span className="h-3 w-5 rounded-md bg-muted-foreground/50" />{t("dashboards.overview.timeline.legend.deferred")}</span>
       <span className="flex items-center gap-1.5"><span className="h-3 w-5 rounded-sm bg-primary" />{t("dashboards.overview.timeline.legend.task")}</span>
+      {scheduled > 0 && <Button variant="outline" size="sm" onClick={jumpToFirst}>{t("dashboards.overview.timeline.jumpFirst")}</Button>}
       <span className="ml-auto">{t("dashboards.overview.timeline.scheduled", { count: scheduled })}</span>
     </div>
     {data.truncated && <p role="status" className="text-sm text-muted-foreground">{t("dashboards.overview.timeline.truncated")}</p>}
     {data.spaces.length === 0 && <p className="text-sm text-muted-foreground">{t("dashboards.overview.timeline.empty")}</p>}
-    {data.spaces.length > 0 && <div role="region" tabIndex={0} aria-label={t("dashboards.overview.timeline.region")}
+    {data.spaces.length > 0 && <div ref={regionRef} role="region" tabIndex={0} aria-label={t("dashboards.overview.timeline.region")}
       className="overflow-x-auto rounded-xl border bg-card outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
       <div style={{ minWidth: LABEL_PX + days * DAY_PX }}>
         <Header ctx={ctx} />

@@ -276,5 +276,6 @@
   "overview.agenda.modes.list": "Daftar",
   "overview.agenda.modes.calendar": "Kalender",
   "overview.agenda.count": "{{count}} item",
-  "overview.agenda.more": "+{{count}} lainnya"
+  "overview.agenda.more": "+{{count}} lainnya",
+  "overview.timeline.jumpFirst": "Ke item pertama"
 }
