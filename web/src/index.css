@@ -359,6 +359,7 @@
 .gantt-chart .wx-summary { border-width: 2px; }
 .gantt-chart .wx-milestone .wx-content { outline: 2px solid color-mix(in srgb, var(--foreground) 35%, transparent); outline-offset: 1px; }
 .gantt-chart .wx-table-container .wx-header { position: sticky; top: 0; z-index: 3; background: var(--background); }
+.gantt-chart .wx-grip { width: 12px; right: -6px; z-index: 20; }
 .gantt-chart .gantt-today { background: rgb(220 38 38 / .18); }
 /* Plain SVAR bars (public snapshot) default to cyan; white text needs 4.5:1 (#0891b2 gives 3.8:1). allow-hex */
 .gantt-chart .wx-bar.wx-task:not(.wx-split) { background-color: #0e7490; }

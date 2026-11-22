@@ -10,7 +10,7 @@ import { Button } from "@/components/ui/button";
 import { DatePicker, calendarDate, dateValue } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { canAddSubitem } from "@/lib/create-item-validate";
+import { canAddSubitem, newItemId } from "@/lib/create-item-validate";
 import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
 import { ApiError, api } from "@/lib/api";
 import type { components } from "@/api/schema";
@@ -134,6 +134,29 @@ function NameCell({ row, editing, draft, canEdit, onStart, onDraft, onEnd, onSav
     <input ref={input} name="title" value={draft} autoFocus maxLength={500} aria-label={t("views.gantt.name")} className="w-full rounded border bg-background px-1 text-sm"
       onChange={(event) => onDraft(event.target.value)}
       onKeyDown={(event) => { if (event.key === "Escape") { finished.current = true; onEnd(); } }} />
+  </form>;
+}
+
+function QuickCreateRow({ width, taskWidth, onCreate }: { width: number; taskWidth: number; onCreate: (title: string, id: string) => Promise<void> }) {
+  const { t } = useTranslation();
+  const [title, setTitle] = useState("");
+  const [busy, setBusy] = useState(false);
+  return <form style={{ width }} className="flex h-[38px] shrink-0 items-center border-r border-t bg-card" onSubmit={async (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const next = title.trim();
+    if (!next || busy) return;
+    setBusy(true);
+    try { await onCreate(next, newItemId()); setTitle(""); }
+    catch (err) { toast.error((err as Error).message || t("views.createFailed")); }
+    finally { setBusy(false); }
+  }}>
+    <span className="w-12 shrink-0" aria-hidden />
+    <span style={{ width: taskWidth }} className="flex min-w-0 items-center gap-1.5 px-2">
+      <Plus className="size-4 shrink-0 text-primary" aria-hidden />
+      <input value={title} disabled={busy} maxLength={500} aria-label={t("views.gantt.addTask")} placeholder={t("views.gantt.addTask")}
+        className="min-w-0 flex-1 bg-transparent text-sm outline-none" onChange={(event) => setTitle(event.target.value)} />
+    </span>
   </form>;
 }
 
@@ -441,9 +464,12 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   }
   function init(instance: IApi) {
     chart.current = instance;
-    instance.on("resize-column", (event: { id: string | number; width: number }) => {
-      const id = String(event.id);
-      setColWidths((current) => ({ ...current, [id]: Math.max(columnMinimums[id] ?? 80, Math.round(event.width)) }));
+    instance.on("set-columns", (event: { columns: { id?: string | number; width?: number }[] }) => {
+      setColWidths((current) => Object.fromEntries(event.columns.map((column) => {
+        const id = String(column.id ?? "");
+        const width = Number.isFinite(column.width) ? Math.round(column.width!) : current[id];
+        return [id, Math.max(columnMinimums[id] ?? 80, width ?? columnDefaults[id] ?? 80)];
+      }).filter(([id]) => id)));
     });
     instance.on("resize-grid", (event: { width: number; inProgress?: boolean }) => {
       const width = Math.min(760, Math.max(420, event.width));
@@ -536,9 +562,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
     .map((dep) => ({ id: String(dep.id), predecessorId: String(dep.predecessor_id), number: numbers.get(String(dep.predecessor_id)) ?? 0, type: dep.type as DependencyType }));
   const [editingId, setEditingId] = useState<string>();
   const [predOpenId, setPredOpenId] = useState<string>();
-  // Column widths the user dragged to, kept per view in this browser (SVAR reports each drag through resize-column).
+  // Column widths the user dragged to, kept per view in this browser (SVAR publishes the completed column set).
   const colWidthsKey = `${ganttPrefKey}:columns`;
-  const columnMinimums: Record<string, number> = { index: 48, text: 280, predecessors: 120, duration: 80, status_name: 120, assignee_names: 140, start_text: 128, due_text: 128 };
+  const columnMinimums: Record<string, number> = { index: 48, text: 160, predecessors: 120, duration: 80, status_name: 120, assignee_names: 140, start_text: 128, due_text: 128 };
   const columnDefaults: Record<string, number> = { index: 48, text: 300, predecessors: 132, duration: 88, status_name: 128, assignee_names: 148, start_text: 136, due_text: 136 };
   const [colWidths, setColWidths] = useState<Record<string, number>>(() => { try { return clampWidths(JSON.parse(localStorage.getItem(colWidthsKey) ?? "{}") as Record<string, number>, columnMinimums); } catch { return {}; } });
   const widthOf = (id: string, fallback: number) => clampedWidth(id, colWidths, { ...columnDefaults, [id]: fallback }, columnMinimums);
@@ -559,7 +585,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   // Memoised so the grid keeps its cells (and an open name editor) between renders.
   const gridColumns = useMemo(() => [
     { id: "index", header: t("views.gantt.index"), width: widthOf("index", 48), resize: true, cell: ({ row }: { row: ITask }) => <span className="tabular-nums text-muted-foreground">{numbers.get(String(row.id)) ?? ""}</span> },
-    { id: "text", header: t("views.gantt.name"), flexgrow: 1, width: widthOf("text", 240), resize: true, cell: ({ row }: { row: ITask }) => <NameCell row={row} editing={editingId === String(row.id)} draft={nameDraft} canEdit={!readonly} onStart={startEditing} onDraft={setNameDraft} onEnd={() => setEditingId(undefined)} onSave={(id, title) => saveRef.current(id, title)} /> },
+    { id: "text", header: t("views.gantt.name"), width: widthOf("text", 240), resize: true, cell: ({ row }: { row: ITask }) => <NameCell row={row} editing={editingId === String(row.id)} draft={nameDraft} canEdit={!readonly} onStart={startEditing} onDraft={setNameDraft} onEnd={() => setEditingId(undefined)} onSave={(id, title) => saveRef.current(id, title)} /> },
     ...(hasColumn("predecessors") ? [{ id: "predecessors", header: t("views.gantt.predecessors"), width: widthOf("predecessors", 120), resize: true,
       cell: ({ row }: { row: ITask }) => <PredecessorCell row={row} open={predOpenId === String(row.id)} onOpenChange={(next) => setPredOpenId(next ? String(row.id) : undefined)} options={tasks} value={predecessorList(String(row.id))} readonly={readonly} busy={busy}
         onAdd={(predecessor, successor, type) => void addDependency(predecessor, successor, type)} onRemove={(id) => void removeDependency(id)} onType={(id, type) => void changeDependency(id, type)} /> }] : []),
@@ -655,13 +681,16 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       onPointerCancel={() => setDrag(undefined)}
       className="gantt-chart relative h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
       {dragPreview}
-      <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
-      <Theme>
+      <div className={onQuickCreate && !readonly ? "h-[calc(100%-38px)]" : "h-full"}>
+        <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
+        <Theme>
         <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scaleGeometry[scale].cell}
           highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
           columns={gridColumns} />
-      </Theme>
-      </RowActionsContext.Provider>
+        </Theme>
+        </RowActionsContext.Provider>
+      </div>
+      {onQuickCreate && !readonly && <QuickCreateRow width={gridWidth} taskWidth={widthOf("text", 240)} onCreate={onQuickCreate} />}
     </div>
       {/* Floating over the chart, top right: scale and zoom, as in the Wrike layout. Nothing here changes the grid or the rows. */}
       <div className="absolute right-2 top-2 z-30 flex items-center gap-1 rounded-md border bg-card p-1 shadow-sm">
@@ -675,17 +704,6 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Plus /></Button>
       </div>
     </div>
-    {onQuickCreate && !readonly && <form className="flex items-center gap-2 border-t px-3 py-2" onSubmit={(event) => {
-      event.preventDefault();
-      const input = event.currentTarget.elements.namedItem("newTask") as HTMLInputElement;
-      const title = input.value.trim();
-      if (!title) return;
-      input.value = "";
-      void onQuickCreate(title, crypto.randomUUID());
-    }}>
-      <Plus className="size-4 shrink-0 text-primary" aria-hidden />
-      <input name="newTask" maxLength={500} aria-label={t("views.gantt.addTask")} placeholder={t("views.gantt.addTask")} className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
-    </form>}
     {/* The keys stay on screen under the chart: the chart above keeps its height, so timeline positions do not move. */}
     <p id="gantt-keys" className="sr-only">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</p>
     {(outside.left.length > 0 || outside.right.length > 0) && <div className="flex flex-wrap gap-2">

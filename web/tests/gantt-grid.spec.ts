@@ -1,5 +1,6 @@
 import { expect, test } from "@playwright/test";
 import { ganttId, kids, mockGantt, path } from "./gantt-mock";
+import { problem } from "./mock-api";
 
 test("the grid shows number and status by default, with advanced columns hidden", async ({ page }) => {
   await mockGantt(page);
@@ -13,7 +14,14 @@ test("the grid shows number and status by default, with advanced columns hidden"
 test("grid columns can be resized by their grips", async ({ page }) => {
   await mockGantt(page);
   await page.goto(`${path}?view=${ganttId}`);
-  await expect(page.locator(".wx-grip").first()).toBeAttached();
+  const header = page.getByRole("columnheader", { name: "Status", exact: true });
+  const before = (await header.boundingBox())!.width;
+  const grip = header.locator(".wx-grip");
+  const box = (await grip.boundingBox())!;
+  await grip.dispatchEvent("mousedown", { clientX: box.x + box.width / 2 });
+  await page.mouse.move(box.x + box.width / 2 + 80, box.y + box.height / 2, { steps: 4 });
+  await page.mouse.up();
+  await expect.poll(async () => (await header.boundingBox())!.width).toBeGreaterThan(before + 50);
 });
 
 test("the scale menu floats at the top right and lists five scales", async ({ page }) => {
@@ -41,9 +49,10 @@ test("the add-task row creates a task at once, and a double-click edits the name
   } });
   await page.goto(`${path}?view=${ganttId}`);
   const input = page.getByRole("textbox", { name: "Add task, then press Enter" });
+  await expect(page.getByRole("application", { name: "Gantt chart" }).getByRole("textbox", { name: "Add task, then press Enter" })).toBeVisible();
   await input.fill("Quick task");
   await input.press("Enter");
-  await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")?.body).toMatchObject({ title: "Quick task" });
+  await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")?.body).toMatchObject({ title: "Quick task", id: expect.stringMatching(/^[0-9a-f]{8}-[0-9a-f]{4}-7[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/) });
   // Select the row, then F2 opens its name for editing; Enter saves.
   await page.getByText(kids[0].title, { exact: true }).first().click();
   await page.locator('[role="application"]').first().press("F2");
@@ -52,4 +61,14 @@ test("the add-task row creates a task at once, and a double-click edits the name
   await edit.fill("Renamed task");
   await edit.press("Enter");
   await expect.poll(() => calls.find((c) => c.method === "PATCH")?.body).toMatchObject({ title: "Renamed task" });
+});
+
+test("the add-task row keeps the title and reports an API failure", async ({ page }) => {
+  await mockGantt(page, { extra: { "POST /items": () => problem(422, "Task could not be created", "validation_failed") } });
+  await page.goto(`${path}?view=${ganttId}`);
+  const input = page.getByRole("textbox", { name: "Add task, then press Enter" });
+  await input.fill("Keep this title");
+  await input.press("Enter");
+  await expect(input).toHaveValue("Keep this title");
+  await expect(page.getByText("Task could not be created")).toBeVisible();
 });
