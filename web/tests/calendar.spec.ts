@@ -29,6 +29,7 @@ const cell = (page: import("@playwright/test").Page, day: number) => page.getByR
 test("shows a multi-day item once per week, holidays, and Unscheduled", async ({ page }) => {
   await mock(page);
   await page.goto(path);
+  await page.getByRole("button", { name: "All scheduled" }).click();
   // C2: a multi-day item is one bar in the week, drawn where it starts; it is not repeated in each day cell.
   await expect(cell(page, 10).getByRole("button", { name: /Launch prep/ })).toBeVisible();
   await expect(page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: /Launch prep/ })).toHaveCount(1);
@@ -41,6 +42,15 @@ test("shows a multi-day item once per week, holidays, and Unscheduled", async ({
   await expect(page.getByRole("button", { name: /Launch prep/ })).toHaveCount(0);
   await page.getByRole("button", { name: "Today" }).click();
   await expect(cell(page, 10).getByRole("button", { name: /Launch prep/ })).toBeVisible();
+});
+
+test("month view starts with the quieter boundaries display and remembers an explicit change", async ({ page }) => {
+  await mock(page);
+  await page.goto(path);
+  await expect(page.getByRole("button", { name: "Starts & deadlines" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "All scheduled" }).click();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "All scheduled" })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("dragging moves the whole span, dropping an unscheduled item gives it one day, and keys move by day or week", async ({ page }) => {

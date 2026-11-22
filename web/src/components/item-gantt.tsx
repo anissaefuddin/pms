@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { DatePicker, calendarDate, dateValue } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { canAddSubitem } from "@/lib/create-item-validate";
@@ -14,7 +15,8 @@ import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
 import { ApiError, api } from "@/lib/api";
 import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
-import { itemKeys, listItems, type Item } from "@/lib/items";
+import { itemKeys, listItems, type Item, type ItemStatus, type ItemUpdate } from "@/lib/items";
+import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 import { dayCellWidth, dayIndexAt, dayRange, isDragStep } from "@/lib/gantt-timeline";
 import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
@@ -136,8 +138,41 @@ function NameCell({ row, editing, draft, canEdit, onStart, onDraft, onEnd, onSav
 }
 
 /** Status column: workflow colour square + name (the name stays text, colour is only a cue). */
-function StatusCell({ row }: { row: ITask }) {
-  return <span className="inline-flex items-center gap-1.5"><span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${statusDotClass(String(row.status_color ?? ""))}`} />{String(row.status_name ?? "")}</span>;
+function StatusCell({ row, item, statuses, readonly, onPatch }: { row: ITask; item?: Item; statuses: ItemStatus[]; readonly: boolean; onPatch: (item: Item, update: ItemUpdate) => Promise<void> }) {
+  const { t } = useTranslation();
+  if (!item || readonly || !item.my_capabilities.includes("change_status")) return <span className="inline-flex items-center gap-1.5"><span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${statusDotClass(String(row.status_color ?? ""))}`} />{String(row.status_name ?? "")}</span>;
+  return <select aria-label={`${t("items.status")}: ${item.title}`} className="w-full truncate rounded border bg-background px-1 text-sm" value={item.status?.id ?? ""}
+    onChange={(event) => void onPatch(item, { status_id: event.target.value })}>
+    {!item.status && <option value="" disabled>—</option>}
+    {item.status && !statuses.some((status) => status.id === item.status?.id) && <option value={item.status.id}>{item.status.name}</option>}
+    {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
+  </select>;
+}
+
+function DateCell({ item, field, readonly, onPatch }: { item?: Item; field: "start_date" | "due_date"; readonly: boolean; onPatch: (item: Item, update: ItemUpdate) => Promise<void> }) {
+  const { t } = useTranslation();
+  const profile = useProfile();
+  if (!item) return null;
+  if (readonly || !item.my_capabilities.includes("edit")) return <span>{formatDate(item[field], profile)}</span>;
+  return <DatePicker value={calendarDate(item[field])} label={`${t(`views.${field}`)}: ${item.title}`} workingDays
+    onChange={(date) => { const value = dateValue(date) || null; if (value !== (item[field] ?? null)) void onPatch(item, { [field]: value }); }} />;
+}
+
+function AssigneeCell({ item, readonly, onPatch }: { item?: Item; readonly: boolean; onPatch: (item: Item, update: ItemUpdate) => Promise<void> }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [selected, setSelected] = useState<PersonOption[]>(item?.assignees ?? []);
+  if (!item || readonly || !item.my_capabilities.includes("edit")) return <span>{item?.assignees.map((person) => person.name).join(", ")}</span>;
+  return <Popover open={open} onOpenChange={(next) => { setOpen(next); if (next) setSelected(item.assignees); }}>
+    <PopoverTrigger render={<button type="button" className="w-full truncate text-left text-sm hover:underline" aria-label={`${t("items.assignees")}: ${item.title}`} />}>
+      {item.assignees.map((person) => person.name).join(", ") || t("views.unassigned")}
+    </PopoverTrigger>
+    <PopoverContent className="w-80 space-y-3">
+      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} autoFocus />
+      <div className="flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={() => setOpen(false)}>{t("items.cancel")}</Button>
+        <Button size="sm" onClick={() => { void onPatch(item, { assignee_ids: selected.map((person) => person.id) }); setOpen(false); }}>{t("items.save")}</Button></div>
+    </PopoverContent>
+  </Popover>;
 }
 
 export function ganttTask(item: Item, parent?: string): ITask {
@@ -191,10 +226,11 @@ function RowActionsCell({ row }: { row: ITask }) {
   return <GanttRowMenu item={item} previousId={previousId} spaceId={ctx.spaceId} onAdd={ctx.onRowAdd} />;
 }
 
-export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd, onTimelineCreate, onQuickCreate, renderToolbar }: {
+export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd, onTimelineCreate, onQuickCreate, renderToolbar }: {
   initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
   onOpenChange?: (open: boolean) => void;
   items: Item[];
+  statuses: ItemStatus[];
   customFields: CustomField[];
   columns: string[];
   spaceId: string;
@@ -210,7 +246,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   onRowAdd?: (kind: GanttRowAdd, item: Item, previousId: string | null) => void;
   /** Batch 3C: a double-click or a drag on empty timeline days opens Quick Create with that range (YYYY-MM-DD, inclusive). */
   onTimelineCreate?: (start: string, finish: string) => void;
-  onPatch: (item: Item, update: { start_date?: string | null; due_date?: string | null; title?: string }) => Promise<void>;
+  onPatch: (item: Item, update: ItemUpdate) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation();
   const profile = useProfile();
@@ -525,14 +561,14 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       cell: ({ row }: { row: ITask }) => <PredecessorCell row={row} open={predOpenId === String(row.id)} onOpenChange={(next) => setPredOpenId(next ? String(row.id) : undefined)} options={tasks} value={predecessorList(String(row.id))} readonly={readonly} busy={busy}
         onAdd={(predecessor, successor, type) => void addDependency(predecessor, successor, type)} onRemove={(id) => void removeDependency(id)} onType={(id, type) => void changeDependency(id, type)} /> }] : []),
     ...(hasColumn("duration") ? [{ id: "duration", header: t("views.gantt.duration"), width: widthOf("duration", 72), resize: true, cell: ({ row }: { row: ITask }) => { const n = dayCount(row); return <span className="tabular-nums">{n ? t("views.gantt.days", { count: n }) : ""}</span>; } }] : []),
-    ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: widthOf("status_name", 120), resize: true, cell: StatusCell }] : []),
-    ...(hasColumn("assignee") ? [{ id: "assignee_names", header: t("items.assignees"), width: widthOf("assignee_names", 140), resize: true }] : []),
-    ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: widthOf("start_text", 112), resize: true }] : []),
-    ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: widthOf("due_text", 112), resize: true }] : []),
+    ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: widthOf("status_name", 120), resize: true, cell: ({ row }: { row: ITask }) => <StatusCell row={row} item={byId.get(String(row.id))} statuses={statuses} readonly={readonly} onPatch={onPatch} /> }] : []),
+    ...(hasColumn("assignee") ? [{ id: "assignee_names", header: t("items.assignees"), width: widthOf("assignee_names", 140), resize: true, cell: ({ row }: { row: ITask }) => <AssigneeCell item={byId.get(String(row.id))} readonly={readonly} onPatch={onPatch} /> }] : []),
+    ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: widthOf("start_text", 112), resize: true, cell: ({ row }: { row: ITask }) => <DateCell item={byId.get(String(row.id))} field="start_date" readonly={readonly} onPatch={onPatch} /> }] : []),
+    ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: widthOf("due_text", 112), resize: true, cell: ({ row }: { row: ITask }) => <DateCell item={byId.get(String(row.id))} field="due_date" readonly={readonly} onPatch={onPatch} /> }] : []),
     ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
     ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 })),
     ...(onRowAdd && !readonly ? [{ id: "row_actions", header: t("views.actions"), width: 44, cell: RowActionsCell }] : []),
-  ], [numbers, deps, tasks, columns, baselineId, shownFields, readonly, busy, editingId, predOpenId, nameDraft, colWidths, onRowAdd, t]);
+  ], [numbers, deps, tasks, columns, baselineId, shownFields, readonly, busy, editingId, predOpenId, nameDraft, colWidths, onRowAdd, statuses, byId, onPatch, t]);
 
   const controls = <>
       <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>

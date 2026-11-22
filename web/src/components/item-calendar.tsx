@@ -1,4 +1,4 @@
-import { useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, Diamond, ChevronLeft, ChevronRight, CircleHelp, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -22,6 +22,7 @@ const weekdayFormat: Intl.DateTimeFormatOptions = { weekday: "short" };
 const fullFormat: Intl.DateTimeFormatOptions = { dateStyle: "full" };
 const startOf = (value: Item) => toDay(value.start_date) ?? toDay(value.due_date);
 const endOf = (value: Item) => toDay(value.due_date) ?? toDay(value.start_date);
+const schedulePreferenceKey = "pms:calendar:schedule-display";
 
 export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   items: Item[]; readonly: boolean; onOpen: (item: Item) => void; onPatch: (item: Item, update: Update) => Promise<void>;
@@ -37,7 +38,11 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   // C-03: Month or Week. Week mode keeps its own anchor day, so moving by week never changes the month view.
   const [mode, setMode] = useState<"month" | "week">("month");
-  const [scheduleMode, setScheduleMode] = useState<"boundaries" | "all">("all");
+  const [scheduleMode, setScheduleMode] = useState<"boundaries" | "all">(() => {
+    try { return localStorage.getItem(schedulePreferenceKey) === "all" ? "all" : "boundaries"; }
+    catch { return "boundaries"; }
+  });
+  useEffect(() => { try { localStorage.setItem(schedulePreferenceKey, scheduleMode); } catch { /* storage can be blocked */ } }, [scheduleMode]);
   const [weekDay, setWeekDay] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); });
   const [drag, setDrag] = useState<{ id: string; from?: Date }>();
   const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
@@ -88,13 +93,12 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const barButton = (item: Item, bar: Bar, from: Date) => {
     const canEdit = !readonly && item.my_capabilities.includes("edit");
     const boundary = bar.id.endsWith(":start") ? t("views.calendar.starts") : bar.id.endsWith(":end") ? t("views.calendar.deadline") : "";
-    const label = t("views.calendar.item", { title: item.title, start: formatDate(item.start_date ?? item.due_date, profile), end: formatDate(item.due_date ?? item.start_date, profile) });
     // C-01: the card opens on hover or keyboard focus of the bar; the bar's accessible description points at it.
     const cardId = `calendar-card-${item.id}-${bar.lane}-${bar.startCol}`;
     return <span className="group relative block">
       <button type="button" draggable={canEdit} onClick={() => onOpen(item)} onKeyDown={(event) => keyboard(event, item)} aria-describedby={cardId}
         onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); setDrag({ id: item.id, from }); }}
-        onDragEnd={() => setDrag(undefined)} aria-label={`${label}${bar.continuesBefore ? ` · ${t("views.calendar.continuesBefore")}` : ""}${bar.continuesAfter ? ` · ${t("views.calendar.continuesAfter")}` : ""}`}
+        onDragEnd={() => setDrag(undefined)}
         className={`flex h-6 w-full items-center gap-1 truncate rounded border-l-4 border-current px-1.5 text-left text-xs font-medium ${tintOf(item.status?.color)} ${bar.continuesBefore ? "rounded-l-none" : ""} ${bar.continuesAfter ? "rounded-r-none" : ""}`}>
         {bar.continuesBefore && <span aria-hidden>‹</span>}<TypeGlyph item={item} className="size-3 shrink-0" />{boundary && <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide">{boundary}</span>}<span className="flex min-w-0 items-center gap-1">{item.is_milestone && <Diamond aria-hidden className="size-3 shrink-0" />}<span className="truncate">{item.title}</span></span>{bar.continuesAfter && <span aria-hidden className="ml-auto">›</span>}
       </button>
