@@ -123,7 +123,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
           </form>
           : <Button variant="ghost" size="sm" className="min-w-0 justify-start"
               onClick={() => onOpen(item)}><span className="truncate">{item.title}</span></Button>}
-        {canEditTitle && <Button size="icon-sm" variant="ghost" aria-label={t("views.editTitle", { name: item.title })}
+        {canEditTitle && <Button size="icon-sm" variant="ghost" className="opacity-0 transition-opacity group-hover/table-row:opacity-100 group-focus-within/table-row:opacity-100 [@media(hover:none)]:opacity-100" aria-label={t("views.editTitle", { name: item.title })}
           onClick={() => setEditing({ id: item.id, field: "title" })}><Pencil /></Button>}
         {!!item.child_count && <span className="shrink-0 text-xs text-muted-foreground">{t("items.childCount", { count: item.child_count })}</span>}
       </div>;
@@ -216,9 +216,10 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     const current = rows[index]?.item;
     if (!current) return;
     const key = event.key.toLowerCase();
-    if (key === "j" || key === "k") {
+    if (key === "j" || key === "k" || key === "arrowdown" || key === "arrowup" || key === "home" || key === "end") {
       event.preventDefault();
-      const next = Math.min(rows.length - 1, Math.max(0, index + (key === "j" ? 1 : -1)));
+      const next = key === "home" ? 0 : key === "end" ? rows.length - 1
+        : Math.min(rows.length - 1, Math.max(0, index + (key === "j" || key === "arrowdown" ? 1 : -1)));
       setSelected(next);
       virtual.scrollToIndex(next);
     } else if (key === "enter") {
@@ -226,6 +227,15 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       onOpen(current);
     } else if (key === "s") {
       viewport.current?.querySelector<HTMLSelectElement>(`[data-index="${index}"] [data-field="status"]`)?.focus();
+    } else if (key === " " && canBulk(current)) {
+      event.preventDefault();
+      togglePicked(current.id);
+    } else if (key === "arrowright" && (current.type !== "task" || !!current.child_count) && !expanded.includes(current.id)) {
+      event.preventDefault();
+      setExpanded((open) => [...open, current.id]);
+    } else if (key === "arrowleft" && expanded.includes(current.id)) {
+      event.preventDefault();
+      setExpanded((open) => open.filter((id) => id !== current.id));
     } else if ((key === "e" || key === "a") && current.my_capabilities.includes("edit")) {
       setEditing({ id: current.id, field: key === "e" ? "title" : "assignees" });
     }
@@ -266,12 +276,12 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       onKeyDown={keyboard} className="max-h-[60vh] min-h-28 overflow-auto rounded border focus-visible:outline-ring">
       <div role="rowgroup" className="sticky top-0 z-10 bg-card">
         {table.getHeaderGroups().map((header) => <div role="row" aria-rowindex={1} key={header.id} className={grid} style={gridStyle}>
-          <div role="columnheader" className="flex items-center border-b px-2 py-2">
+          <div role="columnheader" className="sticky left-0 z-30 flex items-center border-b bg-card px-2 py-2">
             <input type="checkbox" aria-label={t("views.bulk.selectAll")} disabled={!pickable.length} checked={allPicked}
               ref={(element) => { if (element) element.indeterminate = somePicked; }}
               onChange={() => setPicked(allPicked ? [] : pickable.map((item) => item.id))} />
           </div>
-          {header.headers.map((cell) => <div role="columnheader" key={cell.id} className="border-b px-2 py-2 font-medium">
+          {header.headers.map((cell) => <div role="columnheader" key={cell.id} className={`border-b bg-card px-2 py-2 font-medium ${cell.column.id === "name" ? "sticky left-10 z-30 shadow-[2px_0_0_hsl(var(--border))]" : ""} ${cell.column.id === "actions" ? "sticky right-0 z-30 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
             {flexRender(cell.column.columnDef.header, cell.getContext())}
           </div>)}
         </div>)}
@@ -281,8 +291,9 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
           const row = model[entry.index];
           const { item, parent } = row.original;
           const canDrag = manual && !pending && inLocation(item, parent) && item.my_capabilities.includes("edit");
-          return <div key={row.id} role="row" aria-rowindex={entry.index + 2} data-index={entry.index}
-            className={`${grid} absolute inset-x-0 border-b ${selected === entry.index ? "bg-muted/60" : ""}`}
+          const parentRow = item.type === "project" || item.type === "folder" || !!item.child_count;
+          return <div key={row.id} role="row" aria-rowindex={entry.index + 2} aria-current={selected === entry.index ? "true" : undefined} data-index={entry.index}
+            className={`${grid} group/table-row absolute inset-x-0 border-b ${parentRow ? "font-medium" : ""} ${selected === entry.index ? "bg-muted/60" : ""}`}
             style={{ ...gridStyle, height: entry.size, transform: `translateY(${entry.start}px)` }}
             draggable={canDrag} onMouseDown={() => setSelected(entry.index)}
             onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); dragging.current = item.id; }}
@@ -294,10 +305,10 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
               if (source && source.item.id !== item.id && inLocation(item, parent)) void onReorder(source.item, parent, item.id);
               dragging.current = undefined;
             }}>
-            <div role="cell" className="flex items-center px-2">
+            <div role="cell" className="sticky left-0 z-20 flex items-center bg-card px-2">
               {canBulk(item) && <input type="checkbox" aria-label={t("views.bulk.selectRow", { title: item.title })} checked={picked.includes(item.id)} onChange={() => togglePicked(item.id)} onMouseDown={(event) => event.stopPropagation()} />}
             </div>
-            {row.getVisibleCells().map((cell) => <div role="cell" key={cell.id} className="flex min-w-0 items-center px-2">
+            {row.getVisibleCells().map((cell) => <div role="cell" key={cell.id} className={`flex min-w-0 items-center bg-card px-2 ${cell.column.id === "name" ? "sticky left-10 z-20 shadow-[2px_0_0_hsl(var(--border))]" : ""} ${cell.column.id === "actions" ? "sticky right-0 z-20 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
               {/* called, not rendered as a component: a new component type per render would remount the cell between mousedown and mouseup and swallow the click (QA-D-lane3-010) */}
               {(cell.column.columnDef.cell as (context: ReturnType<typeof cell.getContext>) => React.ReactNode)(cell.getContext())}
             </div>)}
@@ -307,7 +318,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     </div>
     {showEmpty && model.length === 0 && (filter.trim() && noResults ? noResults : <p className="text-muted-foreground">{t("views.empty")}</p>)}
     {remote.hasNextPage && <Button variant="outline" size="sm" disabled={remote.isFetchingNextPage} onClick={() => void remote.fetchNextPage()}>{t("views.loadMore")}</Button>}
-    {canCreate && <Button variant="ghost" size="sm" className="w-full justify-start text-primary" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
+    {canCreate && <Button variant="ghost" size="sm" className="sticky bottom-0 z-10 w-full justify-start border-t bg-background text-primary" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
     {editedField && editedFieldItem && profile && <FieldEdit key={editedFieldItem.id + editedField.id} field={editedField} item={editedFieldItem}
       locale={profile.locale} pending={pending} onCancel={() => setEditing(undefined)}
       onSave={async (value) => { await onPatch(editedFieldItem, { fields: { [editedField.id]: value } }); setEditing(undefined); }} />}

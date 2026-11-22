@@ -121,6 +121,17 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
     writeWidth(width);
   }, [mobile, width]);
 
+  // View focus mode is temporary: leaving it restores the user's previous sidebar state.
+  useEffect(() => {
+    if (mobile) return;
+    const apply = (event: Event) => setCollapsed(() => {
+      const focused = (event as CustomEvent<boolean>).detail;
+      return focused || localStorage.getItem(storageKey) === "collapsed";
+    });
+    window.addEventListener("pms:view-focus", apply);
+    return () => window.removeEventListener("pms:view-focus", apply);
+  }, [mobile, storageKey]);
+
   // Pintasan "[" menciutkan atau membuka sidebar, kecuali saat mengetik.
   useEffect(() => {
     if (mobile) return;

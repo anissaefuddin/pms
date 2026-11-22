@@ -96,3 +96,36 @@ test("without lanes a status drop is still immediate, and the card picker saves 
   await expect(card).toContainText("2026-11-20");
   await expect(card.locator("img")).toHaveAttribute("src", "/api/v1/attachments/c1000000-0000-4000-8000-000000000001/download");
 });
+
+test("empty columns can be hidden without hiding active columns", async ({ page }) => {
+  await mock(page);
+  await page.goto(path);
+  await expect(page.getByRole("region", { name: "Done" })).toBeVisible();
+  await page.getByRole("button", { name: "Hide empty columns" }).click();
+  await expect(page.getByRole("region", { name: "Done" })).toHaveCount(0);
+  await expect(page.getByRole("region", { name: "New" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide empty columns" })).toHaveAttribute("aria-pressed", "true");
+});
+
+test("cards can move status without drag and without a duplicate status chip", async ({ page }) => {
+  const { calls } = await mock(page);
+  await page.goto(path);
+  const card = page.getByRole("listitem").filter({ hasText: "Solo work" });
+  await card.getByRole("button", { name: "Move to status: Solo work" }).click();
+  await page.getByRole("menuitem", { name: "Done" }).click();
+  await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${solo.id}`)?.body).toEqual({ status_id: done.id });
+  await expect(card.getByText("New", { exact: true })).toHaveCount(0);
+});
+
+test("focus mode collapses the sidebar per view and restores the previous state", async ({ page }) => {
+  await mock(page);
+  await page.goto(path);
+  await expect(page.getByRole("button", { name: "Collapse sidebar" })).toBeVisible();
+  await page.getByRole("button", { name: "Focus" }).click();
+  await expect(page.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Exit focus" })).toHaveAttribute("aria-pressed", "true");
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Expand sidebar" })).toBeVisible();
+  await page.getByRole("button", { name: "Exit focus" }).click();
+  await expect(page.getByRole("button", { name: "Collapse sidebar" })).toBeVisible();
+});

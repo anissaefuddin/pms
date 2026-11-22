@@ -35,6 +35,7 @@ test("shows a multi-day item once per week, holidays, and Unscheduled", async ({
   // Only item bars count here: the "New task on" control of a working day is not an item.
   await expect(cell(page, 13).getByRole("button", { name: /^(?!New task on)/ })).toHaveCount(0);
   await expect(cell(page, 11)).toContainText("Founders Day");
+  await page.getByRole("button", { name: "Unscheduled 1" }).click();
   await expect(page.getByRole("region", { name: "Unscheduled" }).getByRole("button", { name: "Someday" })).toBeVisible();
   await page.getByRole("button", { name: "Next month" }).click();
   await expect(page.getByRole("button", { name: /Launch prep/ })).toHaveCount(0);
@@ -49,6 +50,7 @@ test("dragging moves the whole span, dropping an unscheduled item gives it one d
   await cell(page, 10).getByRole("button", { name: /Launch prep/ }).dragTo(cell(page, 17));
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${span.id}`)?.body)
     .toEqual({ start_date: `${ym}-17`, due_date: `${ym}-19` });
+  await page.getByRole("button", { name: "Unscheduled 1" }).click();
   await page.getByRole("region", { name: "Unscheduled" }).getByRole("button", { name: "Someday" }).dragTo(cell(page, 20));
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${loose.id}`)?.body)
     .toEqual({ start_date: `${ym}-20`, due_date: `${ym}-20` });
@@ -82,4 +84,14 @@ test("the calendar scrolls locally by keyboard on a narrow screen", async ({ pag
   await grid.focus();
   await page.keyboard.press("ArrowRight");
   await expect.poll(() => grid.evaluate((element) => element.scrollLeft)).toBeGreaterThan(0);
+  await expect(page.getByRole("toolbar", { name: "View toolbar" })).toHaveClass(/border/);
+  await expect(page.getByRole("textbox", { name: "Filter items" })).toBeVisible();
+});
+
+test("calendar keyboard help is available on demand", async ({ page }) => {
+  await mock(page);
+  await page.goto(path);
+  await page.getByRole("button", { name: "Calendar help" }).click();
+  const dialog = page.getByRole("dialog", { name: "Calendar help" });
+  await expect(dialog).toContainText("Alt with an arrow key");
 });

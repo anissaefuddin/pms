@@ -52,6 +52,7 @@
     "project": "Project progress",
     "task": "Task progress",
     "method": "Progress method",
+    "methodValue": "Progress method: {{method}}",
     "methods": {
       "task_count": "Completed task count",
       "weighted_duration": "Weighted by duration",

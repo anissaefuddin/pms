@@ -27,7 +27,7 @@ export function ViewToolbar({ filter, preset, typeFilter, sort, group, fieldFilt
   setSearch: (key: string, value: string) => void; columns?: ReactNode; filterOnly?: boolean;
 }) {
   const { t } = useTranslation();
-  return <div role="toolbar" aria-label={t("views.toolbar")} className="flex flex-wrap items-center gap-2">
+  return <div role="toolbar" aria-label={t("views.toolbar")} className="flex flex-wrap items-center gap-1.5 rounded-lg border bg-card p-1.5 md:flex-nowrap">
     <Chip label={t("views.chip.filter")} icon={<Filter />} active={!!(preset || typeFilter || fieldFilter)}>
       <label className="block space-y-1"><span>{t("views.preset.label")}</span>
         <select aria-label={t("views.preset.label")} value={preset || "all"} onChange={(event) => setSearch("preset", event.target.value === "all" ? "" : event.target.value)} className={selectClass}>
@@ -55,9 +55,9 @@ export function ViewToolbar({ filter, preset, typeFilter, sort, group, fieldFilt
         </select></label>
     </Chip>}
     {columns}
-    <label className="relative ml-auto flex items-center">
+    <label className="relative flex w-full items-center sm:ml-auto sm:w-auto">
       <Search className="pointer-events-none absolute left-2 size-4 text-muted-foreground" aria-hidden />
-      <Input aria-label={t("views.filter")} placeholder={t("views.searchPlaceholder")} value={filter} maxLength={120} className="h-8 w-44 pl-8"
+      <Input aria-label={t("views.filter")} placeholder={t("views.searchPlaceholder")} value={filter} maxLength={120} className="h-8 w-full pl-8 sm:w-44"
         onChange={(event) => setSearch("filter", event.target.value)} />
     </label>
   </div>;

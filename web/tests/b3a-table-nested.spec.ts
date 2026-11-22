@@ -35,3 +35,25 @@ test("the filter finds an unexpanded nested row through server search and shows 
   await expect(page.getByText("ITA › Kurau Plant")).toBeVisible();
   await expect(page.getByText("No matching items")).toHaveCount(0);
 });
+
+test("the table keeps its primary and action columns pinned", async ({ page }) => {
+  await mockSpaces(page, { extra });
+  await page.goto(path);
+  const table = page.getByRole("table");
+  await expect(table.getByRole("columnheader", { name: "Name" })).toHaveClass(/sticky/);
+  await expect(table.getByRole("columnheader", { name: "Actions" })).toHaveClass(/sticky/);
+  await expect(table.getByRole("row").nth(1).getByRole("cell").nth(1)).toHaveClass(/sticky/);
+});
+
+test("the table supports standard keyboard row navigation", async ({ page }) => {
+  await mockSpaces(page, { extra });
+  await page.goto(path);
+  const grid = page.getByRole("table");
+  await grid.focus();
+  await page.keyboard.press("ArrowRight");
+  await expect(page.getByRole("button", { name: "Kurau Plant", exact: true })).toBeVisible();
+  await page.keyboard.press("ArrowDown");
+  await expect(grid.getByRole("row").nth(2)).toHaveAttribute("aria-current", "true");
+  await page.keyboard.press("Home");
+  await expect(grid.getByRole("row").nth(1)).toHaveAttribute("aria-current", "true");
+});

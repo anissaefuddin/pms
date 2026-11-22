@@ -52,6 +52,7 @@
     "project": "Progres proyek",
     "task": "Progres tugas",
     "method": "Metode progres",
+    "methodValue": "Metode progres: {{method}}",
     "methods": {
       "task_count": "Jumlah tugas selesai",
       "weighted_duration": "Dibobot menurut durasi",

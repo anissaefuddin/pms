@@ -24,6 +24,12 @@
   "moveTop": "Pindahkan ke atas",
   "moveAfter": "Pindahkan setelah {{name}}",
   "moveStatus": "Pindahkan ke status",
+  "boardHideEmpty": "Sembunyikan kolom kosong",
+  "boardCompact": "Kartu ringkas",
+  "focus": {
+    "enter": "Fokus",
+    "exit": "Keluar fokus"
+  },
   "noStatus": "Tanpa status",
   "options": "Opsi {{name}}",
   "rename": "Ganti nama tampilan",
@@ -172,6 +178,12 @@
     "keysLabel": "Bantuan keyboard",
     "fit": "Sesuaikan proyek",
     "showSelected": "Tampilkan yang dipilih",
+    "gridPreset": "Grid",
+    "gridPresets": {
+      "minimal": "Minimal",
+      "standard": "Standar",
+      "detail": "Detail"
+    },
     "rowActions": "Aksi untuk {{name}}",
     "addAbove": "Tambah task di atas",
     "addBelow": "Tambah task di bawah",
@@ -211,7 +223,12 @@
     "nextWeek": "Minggu berikutnya",
     "continuesBefore": "berlanjut dari minggu sebelumnya",
     "continuesAfter": "berlanjut ke minggu berikutnya",
-    "newOn": "Task baru pada {{date}}"
+    "newOn": "Task baru pada {{date}}",
+    "unscheduledCount": "Belum dijadwalkan {{count}}",
+    "closeUnscheduled": "Tutup item yang belum dijadwalkan",
+    "help": "Bantuan kalender",
+    "moreOn": "Item lainnya pada {{date}}",
+    "closeMore": "Tutup item lainnya"
   },
   "priority": "Prioritas",
   "predecessors": "Pendahulu",

@@ -1,13 +1,14 @@
 import { useMemo, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Diamond, ChevronLeft, ChevronRight } from "lucide-react";
+import { CalendarClock, Diamond, ChevronLeft, ChevronRight, CircleHelp, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { api } from "@/lib/api";
 import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
 import { addDays, daysBetween, fromDay, toDay } from "@/lib/calendar-days";
 import { MAX_LANES, layoutWeek, type Bar } from "@/lib/calendar-layout";
-import { useProfile } from "@/lib/profile";
+import { formatDate, useProfile } from "@/lib/profile";
 import type { Item } from "@/lib/items";
 import { tintOf } from "@/components/ui/status-chip";
 import { TypeGlyph } from "@/components/type-badge";
@@ -28,6 +29,8 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
 }) {
   const { t, i18n } = useTranslation();
   const [overflowOpen, setOverflowOpen] = useState<string>();
+  const [unscheduledOpen, setUnscheduledOpen] = useState(false);
+  const [helpOpen, setHelpOpen] = useState(false);
   const profile = useProfile();
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   // C-03: Month or Week. Week mode keeps its own anchor day, so moving by week never changes the month view.
@@ -40,6 +43,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const weekStart = profile?.week_start === "sunday" ? 0 : profile?.week_start === "saturday" ? 6 : 1;
   const locale = i18n.language;
   const fmt = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, options);
+  const itemRange = (item: Item) => [item.start_date, item.due_date].filter(Boolean).map((date) => formatDate(date, profile)).join(" – ");
 
   const anchor = mode === "week" ? weekDay : month;
   const first = addDays(anchor, -((anchor.getDay() - weekStart + 7) % 7));
@@ -72,14 +76,14 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
     return <li key={item.id}>
       <button type="button" draggable={canEdit} onClick={() => onOpen(item)} onKeyDown={(event) => keyboard(event, item)}
         onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); setDrag({ id: item.id, from: day }); }} onDragEnd={() => setDrag(undefined)}
-        aria-label={item.start_date || item.due_date ? t("views.calendar.item", { title: item.title, start: item.start_date ?? item.due_date, end: item.due_date ?? item.start_date }) : item.title}
+        aria-label={item.start_date || item.due_date ? t("views.calendar.item", { title: item.title, start: formatDate(item.start_date ?? item.due_date, profile), end: formatDate(item.due_date ?? item.start_date, profile) }) : item.title}
         className={`flex w-full items-center gap-1 truncate rounded border-l-4 border-current px-1.5 py-0.5 text-left text-xs font-medium ${tintOf(item.status?.color)}`}><TypeGlyph item={item} className="size-3" /><span className="flex min-w-0 items-center gap-1">{item.is_milestone && <Diamond aria-hidden className="size-3 shrink-0" />}<span className="truncate">{item.title}</span></span></button>
     </li>;
   };
   const names = Array.from({ length: 7 }, (_, index) => addDays(first, index));
   const barButton = (item: Item, bar: Bar, from: Date) => {
     const canEdit = !readonly && item.my_capabilities.includes("edit");
-    const label = t("views.calendar.item", { title: item.title, start: item.start_date ?? item.due_date, end: item.due_date ?? item.start_date });
+    const label = t("views.calendar.item", { title: item.title, start: formatDate(item.start_date ?? item.due_date, profile), end: formatDate(item.due_date ?? item.start_date, profile) });
     // C-01: the card opens on hover or keyboard focus of the bar; the bar's accessible description points at it.
     const cardId = `calendar-card-${item.id}-${bar.lane}-${bar.startCol}`;
     return <span className="group relative block">
@@ -94,7 +98,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
         <span className="block">{t("views.calendar.cardType")}: {item.item_type?.name ?? t("items.type")}</span>
         <span className="block">{t("views.calendar.cardStatus")}: {item.status?.name ?? t("views.noStatus")}</span>
         <span className="block">{t("views.calendar.cardAssignees")}: {item.assignees.map((person) => person.name).join(", ") || t("items.chips.noAssignee")}</span>
-        <span className="block">{t("views.calendar.cardDates")}: {[item.start_date, item.due_date].filter(Boolean).join(" – ") || t("items.chips.noDates")}</span>
+        <span className="block">{t("views.calendar.cardDates")}: {itemRange(item) || t("items.chips.noDates")}</span>
       </span>
     </span>;
   };
@@ -109,7 +113,10 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
       <Button size="sm" variant="outline" onClick={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setWeekDay(new Date(now.getFullYear(), now.getMonth(), now.getDate())); }}>{t("views.calendar.today")}</Button>
       <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.nextWeek") : t("views.calendar.next")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, 7)) : setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)))}><ChevronRight /></Button>
       <h2 className="font-semibold" aria-live="polite">{mode === "week" ? `${fmt(fullFormat).format(first)} – ${fmt(fullFormat).format(addDays(first, 6))}` : fmt(monthFormat).format(month)}</h2>
-      {!readonly && <p className="text-sm text-muted-foreground">{t("views.calendar.keys")}</p>}
+      <Button size="sm" variant={unscheduledOpen ? "secondary" : "outline"} aria-expanded={unscheduledOpen} onClick={() => setUnscheduledOpen((value) => !value)}>
+        <CalendarClock />{t("views.calendar.unscheduledCount", { count: unscheduled.length })}
+      </Button>
+      {!readonly && <Button size="icon-sm" variant="ghost" aria-label={t("views.calendar.help")} aria-expanded={helpOpen} onClick={() => setHelpOpen(true)}><CircleHelp /></Button>}
     </div>
     <div className="flex flex-col gap-3 lg:flex-row">
       <div role="grid" aria-label={t("views.calendar.label")} tabIndex={0} className="relative w-full min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-ring lg:w-auto lg:flex-1">
@@ -138,24 +145,31 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
                   <span className="sr-only">{t("views.calendar.day", { date: fmt(fullFormat).format(day), count: more + layout.bars.filter((bar) => bar.startCol <= col && col <= bar.endCol).length })}</span>{holiday ? ` · ${holiday}` : ""}</p>
                 {barsAt(col).map((bar) => {
                   const item = byId.get(bar.id);
-                  return item ? <div key={bar.id} className="absolute left-0 right-0 z-10" style={{ top: `${1.5 + bar.lane * 1.5}rem`, width: `${(bar.endCol - bar.startCol + 1) * 100}%` }}>
+                  return item ? <div key={bar.id} className="absolute left-0 z-10" style={{ top: `${1.5 + bar.lane * 1.5}rem`, width: `${(bar.endCol - bar.startCol + 1) * 100}%` }}>
                     {barButton(item, bar, day)}
                   </div> : null;
                 })}
                 {more > 0 && <button type="button" aria-expanded={overflowOpen === openKey} onClick={() => setOverflowOpen(overflowOpen === openKey ? undefined : openKey)}
                   className="absolute bottom-0.5 left-1 z-20 rounded px-1 text-xs font-medium text-primary hover:underline">{t("views.calendar.more", { count: more })}</button>}
-                {overflowOpen === openKey && <ul className="absolute left-0 top-6 z-30 w-56 space-y-0.5 rounded border bg-popover p-2 shadow-md">
-                  {hiddenAt(col).map((entry) => byId.get(entry.id)).filter((item): item is Item => !!item).map((item) => <li key={item.id}>{chip(item)}</li>)}
-                </ul>}
+                {overflowOpen === openKey && <div role="dialog" aria-label={t("views.calendar.moreOn", { date: fmt(fullFormat).format(day) })} className="absolute left-0 top-6 z-30 w-64 space-y-2 rounded border bg-popover p-2 shadow-md">
+                  <div className="flex items-center justify-between gap-2"><p className="text-xs font-semibold">{fmt(fullFormat).format(day)}</p><Button size="icon-sm" variant="ghost" aria-label={t("views.calendar.closeMore")} onClick={() => setOverflowOpen(undefined)}><X /></Button></div>
+                  <ul className="space-y-1">{hiddenAt(col).map((entry) => byId.get(entry.id)).filter((item): item is Item => !!item).map((item) => <li key={item.id} className="space-y-1">{chip(item)}<p className="px-1 text-xs text-muted-foreground">{item.status?.name ?? t("views.noStatus")} · {itemRange(item)}</p></li>)}</ul>
+                </div>}
               </div>;
             })}
           </div>;
         })}
       </div>
-      <section aria-label={t("views.calendar.unscheduled")} className="w-full min-w-0 shrink-0 space-y-1 break-words rounded border p-2 lg:w-56">
-        <h3 className="font-medium">{t("views.calendar.unscheduled")}</h3>
+      {unscheduledOpen && <section aria-label={t("views.calendar.unscheduled")} className="w-full min-w-0 shrink-0 space-y-1 break-words rounded border p-2 lg:w-56">
+        <div className="flex items-center justify-between"><h3 className="font-medium">{t("views.calendar.unscheduled")}</h3><Button size="icon-sm" variant="ghost" aria-label={t("views.calendar.closeUnscheduled")} onClick={() => setUnscheduledOpen(false)}><X /></Button></div>
         {unscheduled.length ? <ul className="space-y-0.5">{unscheduled.map((item) => chip(item))}</ul> : <p className="text-sm text-muted-foreground">{t("views.calendar.noneUnscheduled")}</p>}
-      </section>
+      </section>}
     </div>
+    <Dialog open={helpOpen} onOpenChange={setHelpOpen}>
+      <DialogContent>
+        <DialogTitle>{t("views.calendar.help")}</DialogTitle>
+        <p>{t("views.calendar.keys")}</p>
+      </DialogContent>
+    </Dialog>
   </div>;
 }

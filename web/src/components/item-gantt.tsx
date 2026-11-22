@@ -29,6 +29,8 @@ const dependencyTypes: DependencyType[] = ["FS", "SS", "FF", "SF"];
 const fromLink = (type: string) => (Object.keys(linkTypes) as DependencyType[]).find((key) => linkTypes[key] === type);
 type Scale = "day" | "week" | "month";
 const scaleOptions: Scale[] = ["day", "week", "month"];
+const gridPresets = ["minimal", "standard", "detail"] as const;
+type GridPreset = (typeof gridPresets)[number];
 /** Bar colours by workflow colour token: 700/900 shades keep white labels above 4.5:1. */
 const barColors: Record<string, [string, string]> = {
   slate: ["#334155", "#0f172a"], blue: ["#1d4ed8", "#1e3a8a"], sky: ["#0369a1", "#0c4a6e"], teal: ["#0f766e", "#134e4a"], // allow-hex
@@ -39,7 +41,7 @@ const barColors: Record<string, [string, string]> = {
 function BarLabel({ data }: { data: ITask }) {
   const [base, dark] = barColors[String(data.status_color)] ?? barColors.blue;
   const done = Math.min(100, Math.max(0, Number(data.progress ?? 0)));
-  return <div data-bar-status={String(data.status_color ?? "")} className="gantt-bar-fill"
+  return <div data-bar-status={String(data.status_color ?? "")} data-bar-kind={String(data.type ?? "task")} data-bar-state={String(data.status_group ?? "")} data-overdue={String(!!data.overdue)} className="gantt-bar-fill"
     style={{ background: `linear-gradient(to right, ${dark} ${done}%, ${base} ${done}%)` }}>
     <span className="truncate">{[data.text, data.assignee_names].filter(Boolean).join(" • ")}</span>
   </div>;
@@ -53,8 +55,10 @@ function StatusCell({ row }: { row: ITask }) {
 export function ganttTask(item: Item, parent?: string): ITask {
   const start = toDay(item.start_date) ?? toDay(item.due_date);
   const finish = toDay(item.due_date) ?? start;
+  const today = toDay(new Date().toISOString().slice(0, 10));
   return {
-    status_name: item.status?.name ?? "", status_color: item.status?.color ?? "",
+    status_name: item.status?.name ?? "", status_color: item.status?.color ?? "", status_group: item.status?.group ?? "",
+    overdue: !!finish && !!today && finish < today && item.status?.group !== "completed",
     assignee_names: item.assignees.map((person) => person.name).join(", "),
     id: item.id, text: item.title, parent: parent ?? 0, open: true, progress: item.progress_percent ?? 0,
     type: item.is_milestone ? "milestone" : item.child_count ? "summary" : "task",
@@ -121,6 +125,15 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const [scale, setScale] = useState<Scale>("day");
   const [selected, setSelected] = useState<string>();
   const [baselineId, setBaselineId] = useState("");
+  const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
+  const [gridWidth, setGridWidth] = useState(() => { try { return Math.min(720, Math.max(280, Number(localStorage.getItem(`${ganttPrefKey}:width`)) || 480)); } catch { return 480; } });
+  const [gridPreset, setGridPreset] = useState<GridPreset>(() => {
+    const configuredDefault = columns.some((column) => column.startsWith("field:")) ? "detail" : "standard";
+    try {
+      const value = localStorage.getItem(`${ganttPrefKey}:preset`);
+      return value === "minimal" || value === "detail" || value === "standard" ? value : configuredDefault;
+    } catch { return configuredDefault; }
+  });
   const [naming, setNaming] = useState(false);
   // WA-D05: the collapse state comes from the server profile for this view and every change is sent back.
   const [allOpen, setAllOpenState] = useState(() => initialOpen ?? true);
@@ -135,7 +148,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
     combine: (results) => results.map((result) => result.data),
   });
   const hasColumn = (id: string) => columns.includes(id);
-  const shownFields = useMemo(() => customFields.filter((field) => columns.includes(fieldColumn(field.id))), [customFields, columns]);
+  const shownFields = useMemo(() => gridPreset === "detail" ? customFields.filter((field) => columns.includes(fieldColumn(field.id))) : [], [customFields, columns, gridPreset]);
   const { tasks, byId } = useMemo(() => {
     const children = new Map(parents.map((id, index) => [id, branches[index] ?? []]));
     const out: ITask[] = [];
@@ -269,6 +282,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   }
   function init(instance: IApi) {
     chart.current = instance;
+    instance.on("resize-grid", (event: { width: number; inProgress?: boolean }) => {
+      const width = Math.min(720, Math.max(280, event.width));
+      setGridWidth(width);
+      if (!event.inProgress) try { localStorage.setItem(`${ganttPrefKey}:width`, String(Math.round(width))); } catch { /* storage can be blocked */ }
+    });
     // SVAR reports the edge it moved (`start` and/or `end`) and a whole-day `diff`; the dates themselves come from our item.
     instance.intercept("update-task", (event: { id: string | number; diff?: number; task?: ITask; inProgress?: boolean }) => {
       if (event.inProgress) return true; // live preview while dragging
@@ -334,6 +352,8 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
           let level = 1;
           for (let parent = taskParents.get(id); parent && taskParents.has(parent); parent = taskParents.get(parent)) level++;
           if (row.getAttribute("aria-level") !== String(level)) row.setAttribute("aria-level", String(level));
+          const label = row.querySelector<HTMLElement>(".wx-text, .gantt-row-cell > span");
+          if (label?.textContent?.trim()) label.title = label.textContent.trim();
         }
       }
     };
@@ -350,6 +370,15 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
         {scaleOptions.map((value) => <Button key={value} size="sm" variant={scale === value ? "default" : "outline"}
           aria-pressed={scale === value} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</Button>)}
       </div>
+      <label className="flex items-center gap-1 text-sm"><span>{t("views.gantt.gridPreset")}</span>
+        <select value={gridPreset} className="rounded border bg-background p-1" onChange={(event) => {
+          const value = event.target.value as GridPreset;
+          setGridPreset(value);
+          try { localStorage.setItem(`${ganttPrefKey}:preset`, value); } catch { /* storage can be blocked */ }
+        }}>
+          {gridPresets.map((value) => <option key={value} value={value}>{t(`views.gantt.gridPresets.${value}`)}</option>)}
+        </select>
+      </label>
       <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
       <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(".gantt-today")?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.today")}</Button>
       {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
@@ -418,11 +447,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       {dragPreview}
       <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
       <Theme>
-        <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
+        <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scale === "day" ? 36 : scale === "week" ? 80 : 90}
           highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
-          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
-            ...(hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
-            ...(hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),
+          columns={[{ id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240 }, ...(gridPreset !== "minimal" && hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
+            ...(gridPreset === "detail" && hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
+            ...(gridPreset === "detail" && hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),
             ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
             ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 })),
             ...(onRowAdd && !readonly ? [{ id: "row_actions", header: t("views.actions"), width: 44, cell: RowActionsCell }] : [])]} />

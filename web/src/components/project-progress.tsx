@@ -10,12 +10,12 @@ const riskColors = { green: "bg-success", yellow: "bg-warning", red: "bg-danger"
 export function ProjectProgress({ item }: { item: Item }) {
   const { t } = useTranslation();
   if (item.type !== "project" || item.progress_percent == null || !item.progress_risk) return null;
-  return <span className="inline-flex items-center gap-2 tabular-nums">
+  return <span className="inline-flex items-center gap-2 tabular-nums" title={t("items.progress.methodValue", { method: t(`items.progress.methods.${item.progress_method ?? "task_count"}`) })}>
     <span>{t("items.progress.percent", { value: item.progress_percent })}</span>
-    <span className="inline-flex items-center gap-1 whitespace-nowrap">
+    {item.progress_percent > 0 && <span className="inline-flex items-center gap-1 whitespace-nowrap">
       <span aria-hidden="true" className={`size-2 rounded-full ${riskColors[item.progress_risk]}`} />
       {t(`items.progress.risk.${item.progress_risk}`)}
-    </span>
+    </span>}
   </span>;
 }
 
