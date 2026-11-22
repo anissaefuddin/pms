@@ -15,7 +15,8 @@ import { TypeGlyph } from "@/components/type-badge";
 
 type Update = { start_date: string | null; due_date: string | null };
 
-const calendarModes = ["month", "week"] as const;
+const calendarModes = ["month", "week", "quarter", "year"] as const;
+type CalendarMode = (typeof calendarModes)[number];
 const scheduleModes = ["boundaries", "all"] as const;
 const monthFormat: Intl.DateTimeFormatOptions = { month: "long", year: "numeric" };
 const weekdayFormat: Intl.DateTimeFormatOptions = { weekday: "short" };
@@ -37,7 +38,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const profile = useProfile();
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   // C-03: Month or Week. Week mode keeps its own anchor day, so moving by week never changes the month view.
-  const [mode, setMode] = useState<"month" | "week">("month");
+  const [mode, setMode] = useState<CalendarMode>("month");
   const [scheduleMode, setScheduleMode] = useState<"boundaries" | "all">(() => {
     try { return localStorage.getItem(schedulePreferenceKey) === "all" ? "all" : "boundaries"; }
     catch { return "boundaries"; }
@@ -53,12 +54,16 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const fmt = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(locale, options);
   const itemRange = (item: Item) => [item.start_date, item.due_date].filter(Boolean).map((date) => formatDate(date, profile)).join(" – ");
 
-  const anchor = mode === "week" ? weekDay : month;
+  const periodMonth = mode === "quarter" ? new Date(month.getFullYear(), Math.floor(month.getMonth() / 3) * 3, 1)
+    : mode === "year" ? new Date(month.getFullYear(), 0, 1) : month;
+  const periodEnd = mode === "quarter" ? new Date(periodMonth.getFullYear(), periodMonth.getMonth() + 3, 0)
+    : mode === "year" ? new Date(periodMonth.getFullYear(), 11, 31) : new Date(month.getFullYear(), month.getMonth() + 1, 0);
+  const anchor = mode === "week" ? weekDay : periodMonth;
   const first = addDays(anchor, -((anchor.getDay() - weekStart + 7) % 7));
-  const weeks = mode === "week" ? 1 : Math.ceil(((month.getDay() - weekStart + 7) % 7 + new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()) / 7);
+  const weeks = mode === "week" ? 1 : Math.ceil((daysBetween(first, periodEnd) + 1) / 7);
   const days = Array.from({ length: weeks * 7 }, (_, index) => addDays(first, index));
   const scheduled = items.filter((item) => startOf(item));
-  const entries = calendarEntries(scheduled.map((item) => ({ id: item.id, start: startOf(item)!, end: endOf(item)! })), mode === "month" && scheduleMode === "boundaries");
+  const entries = calendarEntries(scheduled.map((item) => ({ id: item.id, start: startOf(item)!, end: endOf(item)! })), mode !== "week" && scheduleMode === "boundaries");
   const unscheduled = items.filter((item) => !startOf(item));
   const today = fromDay(new Date());
 
@@ -117,15 +122,15 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
     <div className="flex flex-wrap items-center gap-2">
       <div role="group" aria-label={t("views.calendar.mode")} className="flex gap-1">
         {calendarModes.map((value) => <Button key={value} size="sm" variant={mode === value ? "default" : "outline"} aria-pressed={mode === value}
-          onClick={() => { setMode(value); if (value === "week") setWeekDay(new Date(month.getFullYear(), month.getMonth(), Math.min(new Date().getDate(), new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()))); }}>{t(`views.calendar.mode${value === "month" ? "Month" : "Week"}`)}</Button>)}
+          onClick={() => { setMode(value); if (value === "week") setWeekDay(new Date(month.getFullYear(), month.getMonth(), Math.min(new Date().getDate(), new Date(month.getFullYear(), month.getMonth() + 1, 0).getDate()))); }}>{t(`views.calendar.mode${value[0].toUpperCase()}${value.slice(1)}`)}</Button>)}
       </div>
       <div role="group" aria-label={t("views.calendar.navigate")} className="flex gap-1">
-        <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.prevWeek") : t("views.calendar.prev")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, -7)) : setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1)))}><ChevronLeft /></Button>
+        <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.prevWeek") : t("views.calendar.prev")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, -7)) : setMonth(new Date(month.getFullYear(), month.getMonth() + (mode === "quarter" ? -3 : mode === "year" ? -12 : -1), 1)))}><ChevronLeft /></Button>
         <Button size="sm" variant="outline" onClick={() => { const now = new Date(); setMonth(new Date(now.getFullYear(), now.getMonth(), 1)); setWeekDay(new Date(now.getFullYear(), now.getMonth(), now.getDate())); }}>{t("views.calendar.today")}</Button>
-        <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.nextWeek") : t("views.calendar.next")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, 7)) : setMonth(new Date(month.getFullYear(), month.getMonth() + 1, 1)))}><ChevronRight /></Button>
+        <Button size="sm" variant="outline" aria-label={mode === "week" ? t("views.calendar.nextWeek") : t("views.calendar.next")} onClick={() => (mode === "week" ? setWeekDay(addDays(weekDay, 7)) : setMonth(new Date(month.getFullYear(), month.getMonth() + (mode === "quarter" ? 3 : mode === "year" ? 12 : 1), 1)))}><ChevronRight /></Button>
       </div>
-      <h2 className="font-semibold" aria-live="polite">{mode === "week" ? `${fmt(fullFormat).format(first)} – ${fmt(fullFormat).format(addDays(first, 6))}` : fmt(monthFormat).format(month)}</h2>
-      {mode === "month" && <div role="group" aria-label={t("views.calendar.scheduleDisplay")} className="flex gap-1">
+      <h2 className="font-semibold" aria-live="polite">{mode === "week" ? `${fmt(fullFormat).format(first)} – ${fmt(fullFormat).format(addDays(first, 6))}` : mode === "quarter" ? `${t("views.calendar.quarter", { value: Math.floor(periodMonth.getMonth() / 3) + 1 })} ${periodMonth.getFullYear()}` : mode === "year" ? periodMonth.getFullYear() : fmt(monthFormat).format(month)}</h2>
+      {mode !== "week" && <div role="group" aria-label={t("views.calendar.scheduleDisplay")} className="flex gap-1">
         {scheduleModes.map((value) => <Button key={value} size="sm" variant={scheduleMode === value ? "secondary" : "ghost"} aria-pressed={scheduleMode === value}
           onClick={() => setScheduleMode(value)}>{t(`views.calendar.schedule${value === "boundaries" ? "Boundaries" : "All"}`)}</Button>)}
       </div>}
@@ -155,7 +160,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
               const more = layout.overflowByCol[col];
               const openKey = `${week}-${col}`;
               return <div role="gridcell" key={key} onDragOver={(event) => { if (drag) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); dropOn(day); }}
-                className={`relative h-28 min-w-0 border p-1 ${day.getMonth() !== month.getMonth() ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "ring-2 ring-inset ring-primary" : ""}`}>
+                className={`relative h-28 min-w-0 border p-1 ${day < periodMonth || day > periodEnd ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "ring-2 ring-inset ring-primary" : ""}`}>
                 {onCreateOn && !readonly && !off && <button type="button" className="absolute right-1 top-1 z-20 rounded px-1 text-xs text-primary hover:bg-accent"
                   aria-label={t("views.calendar.newOn", { date: fmt(fullFormat).format(day) })} onClick={() => onCreateOn(key)}>+</button>}
                 <p className="text-xs text-muted-foreground"><span aria-hidden>{day.getDate()}</span>

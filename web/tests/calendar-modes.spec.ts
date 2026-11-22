@@ -25,3 +25,20 @@ test("Week mode shows seven days and moves by a week; Month returns to the month
   await page.getByRole("button", { name: "Month", exact: true }).click();
   await expect(grid.getByRole("gridcell")).toHaveCount(monthCells);
 });
+
+test("Quarter and Year modes show their complete planning ranges", async ({ page }) => {
+  await mockSpaces(page, { extra: {
+    [`GET ${path}/views`]: { body: { items: [{ id: calId, type: "calendar", name: "Calendar", visibility: "public", position: 0, is_default: true, config: {} }] } },
+    [`GET ${path}/items`]: { body: { items: [] } },
+    "GET /workflows": { body: { items: [] } },
+    "GET /settings/work-schedule": { body: { working_days: [1, 2, 3, 4, 5], daily_hours: 8, version: 1, exceptions: [] } },
+  } });
+  await page.goto(path);
+  const grid = page.getByRole("grid", { name: "Calendar" });
+  await page.getByRole("button", { name: "Quarter", exact: true }).click();
+  expect(await grid.getByRole("gridcell").count()).toBeGreaterThanOrEqual(84);
+  await expect(page.getByRole("heading", { level: 2, name: /Q[1-4]/ })).toBeVisible();
+  await page.getByRole("button", { name: "Year", exact: true }).click();
+  expect(await grid.getByRole("gridcell").count()).toBeGreaterThanOrEqual(364);
+  await expect(page.getByRole("heading", { level: 2, name: String(new Date().getFullYear()) })).toBeVisible();
+});

@@ -25,6 +25,18 @@ test("a second-level row expands and loads its children", async ({ page }) => {
   await expect(page.getByRole("button", { name: "HAZOP study", exact: true })).toBeVisible();
 });
 
+test("table density and hierarchy controls are persistent and expand nested rows", async ({ page }) => {
+  await mockSpaces(page, { extra });
+  await page.goto(path);
+  await page.getByRole("button", { name: "Compact rows" }).click();
+  await page.getByRole("button", { name: "Expand all" }).click();
+  await expect(page.getByRole("button", { name: "HAZOP study", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Collapse all" }).click();
+  await expect(page.getByRole("button", { name: "Kurau Plant", exact: true })).toHaveCount(0);
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Compact rows" })).toHaveAttribute("aria-pressed", "true");
+});
+
 test("the filter finds an unexpanded nested row through server search and shows its path", async ({ page }) => {
   await mockSpaces(page, { extra: { ...extra,
     "GET /search": { body: { items: [{ ...hazop, path: [{ id: ita.id, title: "ITA", type: "project" }, { id: kurau.id, title: "Kurau Plant", type: "folder" }] }], comments: [], users: [] } } } });

@@ -26,6 +26,9 @@
   "moveStatus": "Pindahkan ke status",
   "boardHideEmpty": "Sembunyikan kolom kosong",
   "boardCompact": "Kartu ringkas",
+  "tableCompact": "Baris ringkas",
+  "boardCollapseColumn": "Ciutkan kolom {{name}}",
+  "boardExpandColumn": "Perluas kolom {{name}}",
   "focus": {
     "enter": "Fokus",
     "exit": "Keluar fokus"
@@ -236,6 +239,9 @@
     "more": "+{{count}} lainnya",
     "modeMonth": "Bulan",
     "modeWeek": "Minggu",
+    "modeQuarter": "Kuartal",
+    "modeYear": "Tahun",
+    "quarter": "K{{value}}",
     "mode": "Mode kalender",
     "scheduleDisplay": "Item kalender",
     "scheduleBoundaries": "Mulai & tenggat",

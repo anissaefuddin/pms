@@ -15,8 +15,9 @@ const mk = (n: number, title: string, assignees: object[], extra: object = {}) =
 const shared = mk(1, "Shared work", [ann, bob], {
   cover_attachment_id: "c1000000-0000-4000-8000-000000000001", importance: "high", start_date: "2026-11-10", due_date: "2026-11-20",
 });
-const solo = mk(2, "Solo work", [ann]);
+const solo = mk(2, "Solo work", [ann], { child_count: 1 });
 const orphan = mk(3, "Nobody's work", []);
+const child = { ...mk(4, "Solo subtask", [ann]), locations: [{ space_id: marketing.id, parent_item_id: solo.id }] };
 
 function mock(page: import("@playwright/test").Page, config: object = {}) {
   let views = [{ id: boardId, type: "board", name: "Board", visibility: "public", position: 0, is_default: true, config }];
@@ -25,6 +26,7 @@ function mock(page: import("@playwright/test").Page, config: object = {}) {
     [`GET ${path}/views`]: () => ({ body: { items: views } }),
     [`GET ${path}/items`]: () => ({ body: { items } }),
     "GET /workflows": { body: { items: [{ is_default: true, statuses: [nw, done] }] } },
+    [`GET /items/${solo.id}/children`]: { body: { items: [child] } },
     [`PATCH /views/${boardId}`]: (body) => { views = [{ ...views[0], ...body }]; return { body: views[0] }; },
     ...Object.fromEntries(items.map((item) => [`PATCH /items/${item.id}`, (body: any) => {
       const assignees = body.assignee_ids ? body.assignee_ids.map((id: string) => [ann, bob].find((person) => person.id === id)) : item.assignees;
@@ -109,6 +111,18 @@ test("empty columns can be hidden without hiding active columns", async ({ page 
   await page.getByRole("button", { name: "Hide empty columns" }).click();
   await expect(page.getByRole("region", { name: "Done" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Hide empty columns" })).toHaveAttribute("aria-pressed", "false");
+});
+
+test("columns collapse persistently and subitems expand inside a card", async ({ page }) => {
+  await mock(page);
+  await page.goto(path);
+  await page.getByRole("button", { name: "Collapse New column" }).click();
+  await expect(page.getByRole("button", { name: "Expand New column" })).toBeVisible();
+  await page.reload();
+  await page.getByRole("button", { name: "Expand New column" }).click();
+  const card = page.getByRole("listitem").filter({ hasText: "Solo work" });
+  await card.getByRole("button", { name: "1 subitem" }).click();
+  await expect(card.getByRole("button", { name: "Solo subtask" })).toBeVisible();
 });
 
 test("cards can move status without drag and without a duplicate status chip", async ({ page }) => {

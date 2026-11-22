@@ -3,7 +3,7 @@ import { useQueries } from "@tanstack/react-query";
 import { canAddSubitem } from "@/lib/create-item-validate";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
 import { useVirtualizer } from "@tanstack/react-virtual";
-import { ChevronDown, ChevronRight, MoreHorizontal, Pencil, Plus } from "lucide-react";
+import { ChevronDown, ChevronRight, ChevronsDownUp, ChevronsUpDown, MoreHorizontal, Pencil, Plus, Rows3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { formatDate, useProfile } from "@/lib/profile";
 import { DatePicker, calendarDate, dateValue } from "@/components/ui/date-picker";
@@ -52,12 +52,16 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   const profile = useProfile();
   // WA-D05: the caller restores expanded rows from the server profile and receives every change to save them.
   const [expanded, setExpandedState] = useState<string[]>(() => initialExpanded ?? []);
+  const [expandAll, setExpandAll] = useState(false);
   const setExpanded = (update: (open: string[]) => string[]) => {
     const next = update(expanded);
     setExpandedState(next);
     onExpandedChange?.(next);
   };
   const [selected, setSelected] = useState(0);
+  const densityKey = `pms:table-compact:${spaceId}:${parentId ?? "root"}`;
+  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) === "1"; } catch { return false; } });
+  const toggleCompact = () => setCompact((value) => { const next = !value; try { localStorage.setItem(densityKey, next ? "1" : "0"); } catch { /* storage can be blocked */ } return next; });
   // B-02: rows picked for a bulk action. Only loaded rows the user may change can be picked; the server still checks every update.
   const [picked, setPicked] = useState<string[]>([]);
   const [bulkResult, setBulkResult] = useState<{ done: number; failed: { title: string; message: string }[] }>();
@@ -105,6 +109,11 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       return false;
     });
   }, [items, expanded, children, group, spaceId, parentId, t, needle, hits]);
+  useEffect(() => {
+    if (!expandAll) return;
+    const missing = rows.filter((row) => row.item.child_count && !expanded.includes(row.item.id)).map((row) => row.item.id);
+    if (missing.length) setExpanded((open) => [...new Set([...open, ...missing])]);
+  }, [expandAll, rows, expanded]);
 
   const allColumns: ColumnDef<TableRow>[] = [
     { id: "name", header: t("items.name"), cell: ({ row }) => {
@@ -239,7 +248,8 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   }
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel(), autoResetAll: false });
   const model = table.getRowModel().rows;
-  const virtual = useVirtualizer({ count: model.length, getScrollElement: () => viewport.current, estimateSize: () => 44, overscan: 8 });
+  const virtual = useVirtualizer({ count: model.length, getScrollElement: () => viewport.current, estimateSize: () => compact ? 36 : 44, overscan: 8 });
+  useEffect(() => virtual.measure(), [compact, virtual]);
   const editedItem = editing?.field === "assignees" ? rows.find((row) => row.item.id === editing.id)?.item : undefined;
   const editedField = editing?.field.startsWith("field:") ? customFields.find((field) => fieldColumn(field.id) === editing.field) : undefined;
   const editedFieldItem = editedField ? rows.find((row) => row.item.id === editing?.id)?.item : undefined;
@@ -292,6 +302,11 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   }
 
   return <div className="space-y-2">
+    <div className="flex flex-wrap items-center gap-2">
+      <Button size="sm" variant={compact ? "secondary" : "outline"} aria-pressed={compact} onClick={toggleCompact}><Rows3 />{t("views.tableCompact")}</Button>
+      <Button size="sm" variant="outline" disabled={!items.some((item) => item.child_count)} onClick={() => { setExpandAll(true); setExpanded(() => items.filter((item) => item.child_count).map((item) => item.id)); }}><ChevronsUpDown />{t("views.gantt.expandAll")}</Button>
+      <Button size="sm" variant="outline" disabled={!expanded.length} onClick={() => { setExpandAll(false); setExpanded(() => []); }}><ChevronsDownUp />{t("views.gantt.collapseAll")}</Button>
+    </div>
     {(picked.length > 0 || bulkResult) && <div role="toolbar" aria-label={t("views.bulk.toolbar")} className="flex flex-wrap items-center gap-2 rounded border bg-muted/40 p-2 text-sm">
       {picked.length > 0 && <>
         <span className="font-medium">{t("views.bulk.selected", { count: pickedItems.length })}</span>

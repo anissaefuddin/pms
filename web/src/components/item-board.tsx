@@ -1,6 +1,7 @@
 import { formatNumber, formatDate, useProfile } from "@/lib/profile";
-import { useRef, useState } from "react";
-import { AlertTriangle, Diamond, CalendarDays, EyeOff, ListTree, MoreHorizontal, Plus, Rows3 } from "lucide-react";
+import { useQuery } from "@tanstack/react-query";
+import { useEffect, useRef, useState } from "react";
+import { AlertTriangle, Diamond, CalendarDays, ChevronDown, ChevronRight, EyeOff, ListTree, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Plus, Rows3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,7 +14,7 @@ import { statusDotClass } from "@/lib/status-colors";
 import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import { peopleOf } from "@/components/item-table";
-import type { Item, ItemUpdate } from "@/lib/items";
+import { itemKeys, listItems, type Item, type ItemUpdate } from "@/lib/items";
 import { newItemId } from "@/lib/create-item-validate";
 import type { ItemCollectionProps } from "./item-collection-types";
 
@@ -35,13 +36,24 @@ function lanesOf(items: Item[], swimlanes: boolean, unassigned: string): Lane[] 
 }
 
 /** Board density and empty-column preferences, kept per view in this browser. The workspace owns them so the toggles can sit in the shared toolbar. */
-export type BoardPrefs = { compact: boolean; hideEmpty: boolean; toggleCompact: () => void; toggleEmpty: () => void };
+export type BoardPrefs = { compact: boolean; hideEmpty: boolean; collapsed: string[]; toggleCompact: () => void; toggleEmpty: () => void; toggleColumn: (id: string) => void };
 export function useBoardPrefs(preferenceKey: string): BoardPrefs {
   const emptyKey = `pms:board-hide-empty:${preferenceKey}`;
   // Empty columns are hidden unless the user turned that off before; "0" is the only value that shows them.
   const [hideEmpty, setHideEmpty] = useState(() => { try { return localStorage.getItem(emptyKey) !== "0"; } catch { return true; } });
   const densityKey = `pms:board-compact:${preferenceKey}`;
   const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) === "1"; } catch { return false; } });
+  const collapsedKey = `pms:board-collapsed:${preferenceKey}`;
+  const [collapsed, setCollapsed] = useState<string[]>(() => { try { const value = JSON.parse(localStorage.getItem(collapsedKey) ?? "[]"); return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []; } catch { return []; } });
+  useEffect(() => {
+    if (!preferenceKey) return;
+    try {
+      setHideEmpty(localStorage.getItem(emptyKey) !== "0");
+      setCompact(localStorage.getItem(densityKey) === "1");
+      const value = JSON.parse(localStorage.getItem(collapsedKey) ?? "[]");
+      setCollapsed(Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []);
+    } catch { /* storage can be blocked */ }
+  }, [preferenceKey, emptyKey, densityKey, collapsedKey]);
   const toggleEmpty = () => setHideEmpty((value) => {
     const next = !value;
     try { localStorage.setItem(emptyKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
@@ -52,7 +64,8 @@ export function useBoardPrefs(preferenceKey: string): BoardPrefs {
     try { localStorage.setItem(densityKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
     return next;
   });
-  return { compact, hideEmpty, toggleCompact, toggleEmpty };
+  const toggleColumn = (id: string) => setCollapsed((value) => { const next = value.includes(id) ? value.filter((entry) => entry !== id) : [...value, id]; try { localStorage.setItem(collapsedKey, JSON.stringify(next)); } catch { /* storage can be blocked */ } return next; });
+  return { compact, hideEmpty, collapsed, toggleCompact, toggleEmpty, toggleColumn };
 }
 
 /** The two board toggles, rendered in the view toolbar row. */
@@ -81,7 +94,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
     : <Button size="sm" variant="outline" onClick={() => onAdd(columnId)}><Plus />{t("views.add")}</Button>;
   const [move, setMove] = useState<Move>();
   const [now] = useState(() => Date.now());
-  const { hideEmpty, compact } = prefs;
+  const { hideEmpty, compact, collapsed, toggleColumn } = prefs;
   const cardFields = customFields.filter((field) => shown.includes(fieldColumn(field.id)));
   const known = new Set(statuses.map((status) => status.id));
 
@@ -109,20 +122,20 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
         ...(unlisted.length ? [{ id: "", name: t("views.noStatus"), color: noColor, items: unlisted }] : []),
       ];
       const visibleCols = cols.filter((column) => !hideEmpty || column.items.length > 0);
-      const fill = visibleCols.length <= 3;
       const board = <div className="flex gap-3 overflow-x-auto pb-3">
-        {visibleCols.map((column) => <section key={column.id} aria-label={lane.name ? `${lane.name}: ${column.name}` : column.name}
-          className={`${fill ? "min-w-72 max-w-[30rem] flex-1" : "w-72 shrink-0"} space-y-2`}
+        {visibleCols.map((column) => { const columnKey = `${lane.key}:${column.id}`; const folded = collapsed.includes(columnKey); return <section key={column.id} aria-label={lane.name ? `${lane.name}: ${column.name}` : column.name}
+          className={`${folded ? "w-12" : "w-80"} shrink-0 space-y-2 transition-[width]`}
           onDragOver={(event) => { if (dragging && !pending && (column.id || swimlanes)) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); drop(lane, column.id); }}>
-          <h3 className={`flex items-center gap-2 rounded-md px-3 py-2 font-semibold ${tintOf(column.color)}`}>
-            <span aria-hidden className={`size-2 rounded-full ${statusDotClass(column.color)}`} />{column.name} <span className="font-normal">{formatNumber(column.items.length, profile)}</span>{column.items.some((item) => item.is_milestone) && <span className="text-xs font-normal text-muted-foreground">{t("views.boardBreakdown", { tasks: column.items.filter((item) => !item.is_milestone).length, milestones: column.items.filter((item) => item.is_milestone).length })}</span>}</h3>
-          <ul className="space-y-2">
+          <h3 className={`flex items-center gap-2 rounded-md px-2 py-2 font-semibold ${tintOf(column.color)}`}>
+            {!folded && <><span aria-hidden className={`size-2 rounded-full ${statusDotClass(column.color)}`} />{column.name} <span className="font-normal">{formatNumber(column.items.length, profile)}</span>{column.items.some((item) => item.is_milestone) && <span className="text-xs font-normal text-muted-foreground">{t("views.boardBreakdown", { tasks: column.items.filter((item) => !item.is_milestone).length, milestones: column.items.filter((item) => item.is_milestone).length })}</span>}</>}
+            <Button size="icon-sm" variant="ghost" className={folded ? "mx-auto" : "ml-auto"} aria-label={t(folded ? "views.boardExpandColumn" : "views.boardCollapseColumn", { name: column.name })} onClick={() => toggleColumn(columnKey)}>{folded ? <PanelLeftOpen /> : <PanelLeftClose />}</Button></h3>
+          {!folded && <><ul className="space-y-2">
             {column.items.map((item) => <Card key={item.id} item={item} lane={lane.key} now={now} fields={cardFields} shown={shown} compact={compact} showStatus={swimlanes}
               statuses={statuses} pending={pending} onOpen={onOpen} onPatch={onPatch} onDrag={setDragging} />)}
           </ul>
-          {canCreate && column.id && addButton(column.id)}
-        </section>)}
+          {canCreate && column.id && addButton(column.id)}</>}
+        </section>; })}
       </div>;
       return swimlanes
         ? <section key={lane.key} aria-label={lane.name} className="space-y-2">
@@ -158,6 +171,8 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
   const profile = useProfile();
   const canMove = item.my_capabilities.includes("change_status");
   const draggable = (canMove || item.my_capabilities.includes("edit")) && !pending;
+  const [childrenOpen, setChildrenOpen] = useState(false);
+  const children = useQuery({ queryKey: itemKeys.children(item.id), queryFn: () => listItems(`/api/v1/items/${item.id}/children`), enabled: childrenOpen && !!item.child_count });
   const meta = [
     shown.includes("id") && `#${item.seq}`,
     shown.includes("importance") && t(`items.importance.${item.importance ?? "normal"}`),
@@ -205,10 +220,14 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
       </p>)}
     </div>
     {(!!item.child_count || !!item.attachment_count || !!item.comment_count) && <div className={`flex flex-wrap items-center gap-3 border-t px-3 ${compact ? "py-1" : "py-2"} text-xs text-muted-foreground`}>
-      {!!item.child_count && <span title={t("items.childCount", { count: item.child_count })} className="inline-flex items-center gap-1"><ListTree className="size-3.5" aria-hidden />{item.child_count}<span className="sr-only"> {t("items.childCount", { count: item.child_count })}</span></span>}
+      {!!item.child_count && <button type="button" title={t("items.childCount", { count: item.child_count })} aria-expanded={childrenOpen} className="inline-flex items-center gap-1 hover:underline" onClick={() => setChildrenOpen((value) => !value)}>{childrenOpen ? <ChevronDown className="size-3.5" aria-hidden /> : <ChevronRight className="size-3.5" aria-hidden />}<ListTree className="size-3.5" aria-hidden />{item.child_count}<span className="sr-only"> {t("items.childCount", { count: item.child_count })}</span></button>}
       {!!item.attachment_count && <span>{t("views.attachments", { count: item.attachment_count })}</span>}
       {!!item.comment_count && <span>{t("views.comments", { count: item.comment_count })}</span>}
     </div>}
+    {childrenOpen && <div className="border-t bg-muted/20 px-3 py-2"><ul className="space-y-1">
+      {children.isPending && <li className="text-xs text-muted-foreground">{t("items.loading")}</li>}
+      {children.data?.map((child) => <li key={child.id}><button type="button" className="flex w-full items-center gap-2 rounded px-1 py-1 text-left text-xs hover:bg-muted" onClick={() => onOpen(child)}><TypeGlyph item={child} className="size-3" /><span className="min-w-0 flex-1 truncate">{child.title}</span>{child.status && <StatusChip status={child.status} />}</button></li>)}
+    </ul></div>}
     {canMove && showStatus && <div className={`border-t px-3 ${compact ? "py-1" : "py-2"}`}><DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-auto w-full justify-start p-0" disabled={pending} aria-label={`${item.status?.name ?? t("views.noStatus")}. ${t("views.moveStatus")}: ${item.title}`} />}>
         {item.status ? <StatusChip status={item.status} /> : t("views.noStatus")}

@@ -26,6 +26,9 @@
   "moveStatus": "Move to status",
   "boardHideEmpty": "Hide empty columns",
   "boardCompact": "Compact cards",
+  "tableCompact": "Compact rows",
+  "boardCollapseColumn": "Collapse {{name}} column",
+  "boardExpandColumn": "Expand {{name}} column",
   "focus": {
     "enter": "Focus",
     "exit": "Exit focus"
@@ -240,6 +243,9 @@
     "more": "+{{count}} more",
     "modeMonth": "Month",
     "modeWeek": "Week",
+    "modeQuarter": "Quarter",
+    "modeYear": "Year",
+    "quarter": "Q{{value}}",
     "mode": "Calendar mode",
     "scheduleDisplay": "Calendar items",
     "scheduleBoundaries": "Starts & deadlines",
