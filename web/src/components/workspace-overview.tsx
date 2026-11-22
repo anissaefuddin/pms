@@ -44,30 +44,45 @@ function Summary() {
   for (const space of spaces) health[space.health] = (health[space.health] ?? 0) + 1;
   const attention = attentionSpaces(spaces);
   const n = (value: number) => formatNumber(value, profile);
+  const total_spaces = spaces.length || 1;
+  const tone: Record<string, string> = { attention: "bg-amber-500", on_track: "bg-emerald-500", empty: "bg-muted-foreground/30" };
   return <div className="space-y-6">
-    <p className="text-xs text-muted-foreground">{t("dashboards.overview.updated", { time: formatDateTime(generated_at, profile) })}</p>
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs text-muted-foreground">{t("dashboards.overview.updated", { time: formatDateTime(generated_at, profile) })}</p>
+    </div>
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       <KpiCard label={t("dashboards.overview.kpi.spaces")} value={n(kpis.accessible_spaces)} />
       <KpiCard label={t("dashboards.overview.kpi.projects")} value={n(kpis.active_projects)} />
-      <KpiCard label={t("dashboards.overview.kpi.overdue")} value={n(kpis.overdue_tasks)} />
-      <KpiCard label={t("dashboards.overview.kpi.completed")} value={n(kpis.completed_this_week)} />
+      <KpiCard label={t("dashboards.overview.kpi.overdue")} value={n(kpis.overdue_tasks)} className={kpis.overdue_tasks > 0 ? "border-amber-400/60" : undefined} />
+      <KpiCard label={t("dashboards.overview.kpi.completed")} value={n(kpis.completed_this_week)} className="border-emerald-400/60" />
       <KpiCard label={t("dashboards.overview.kpi.atRisk")} value={t("dashboards.overview.none")} hint={t("dashboards.overview.kpi.atRiskHint")} />
     </div>
     <div className="grid gap-6 lg:grid-cols-2">
-      <section aria-labelledby="overview-health" className="space-y-2">
+      <section aria-labelledby="overview-health" className="space-y-3 rounded-xl border bg-card p-4">
         <h2 id="overview-health" className="text-sm font-semibold">{t("dashboards.overview.health.heading")}</h2>
-        <ul className="space-y-1 text-sm">
-          {HEALTH.map((key) => <li key={key} className="flex justify-between border-b py-1">
-            <span>{t(`dashboards.overview.health.${key}`)}</span><span className="tabular-nums">{n(health[key] ?? 0)}</span></li>)}
+        <div role="img" aria-label={HEALTH.map((key) => `${t(`dashboards.overview.health.${key}`)}: ${n(health[key] ?? 0)}`).join(", ")}
+          className="flex h-2.5 overflow-hidden rounded-full bg-muted">
+          {HEALTH.map((key) => (health[key] ?? 0) > 0 && <div key={key} className={tone[key]}
+            style={{ width: `${((health[key] ?? 0) / total_spaces) * 100}%` }} />)}
+        </div>
+        <ul className="grid grid-cols-3 gap-2 text-sm">
+          {HEALTH.map((key) => <li key={key} className="rounded-lg bg-muted/50 px-3 py-2">
+            <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <span aria-hidden className={`size-2 rounded-full ${tone[key]}`} />{t(`dashboards.overview.health.${key}`)}</span>
+            <span className="mt-0.5 block text-lg font-semibold tabular-nums">{n(health[key] ?? 0)}</span></li>)}
         </ul>
       </section>
-      <section aria-labelledby="overview-attention" className="space-y-2">
+      <section aria-labelledby="overview-attention" className="space-y-3 rounded-xl border bg-card p-4">
         <h2 id="overview-attention" className="text-sm font-semibold">{t("dashboards.overview.attention.heading")}</h2>
         {attention.length === 0
           ? <p className="text-sm text-muted-foreground">{t("dashboards.overview.attention.none")}</p>
-          : <ul className="space-y-1 text-sm">{attention.map((space) => <li key={space.id} className="flex justify-between border-b py-1">
-              <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline">{space.name}</Link>
-              <span className="tabular-nums">{n(space.overdue_count)}</span></li>)}</ul>}
+          : <ul className="space-y-2">{attention.map((space) => <li key={space.id}>
+              <Link to="/spaces/$spaceId" params={{ spaceId: space.id }}
+                className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm transition-colors hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50 outline-none">
+                <span className="truncate font-medium">{space.name}</span>
+                <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
+                  {t("dashboards.overview.attention.overdue", { value: n(space.overdue_count) })}</span>
+              </Link></li>)}</ul>}
         {total > spaces.length && <p className="text-xs text-muted-foreground">{t("dashboards.overview.partial", { shown: spaces.length, total })}</p>}
       </section>
     </div>

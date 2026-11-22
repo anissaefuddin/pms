@@ -28,7 +28,7 @@ function Dashboards() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const spaces = (useSpaces().data ?? []).filter((space) => space.kind === "shared");
-  const [view, setView] = useState<"boards" | "overview">("boards"); // the overview is a system entry, not a dashboard
+  const [view, setView] = useState<"boards" | "overview">("overview"); // the overview is a system entry, not a dashboard; it opens first
   const [location, setLocation] = useState(""); // "" = my personal dashboards
   const list = useQuery({
     queryKey: ["dashboards", location], retry: false,
@@ -71,7 +71,7 @@ function Dashboards() {
       <p className="text-sm text-muted-foreground">{t("dashboards.description")}</p>
     </header>
     <SegmentedControl aria-label={t("dashboards.views.label")} value={view} onChange={(v) => setView(v as "boards" | "overview")}
-      items={[{ value: "boards", label: t("dashboards.views.boards") }, { value: "overview", label: t("dashboards.views.overview") }]} />
+      items={[{ value: "overview", label: t("dashboards.views.overview") }, { value: "boards", label: t("dashboards.views.boards") }]} />
     {view === "overview" ? <WorkspaceOverview /> : <>
     <div className="flex flex-wrap items-end gap-3">
       <label className="block text-sm">{t("dashboards.scope.label")}
