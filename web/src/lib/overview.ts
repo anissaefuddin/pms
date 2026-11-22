@@ -73,10 +73,10 @@ export function useOverviewTimeline(from: string | null, days: number = TIMELINE
 }
 
 /** Due Projects and Tasks ordered by date, optionally narrowed to one Space or one type. */
-export function useOverviewAgenda(from: string | null, spaceId: string, kind: AgendaKind) {
+export function useOverviewAgenda(from: string | null, spaceId: string, kind: AgendaKind, days: number = AGENDA_DAYS) {
   return useQuery({
-    queryKey: ["overview", "agenda", from, spaceId, kind],
-    queryFn: () => api<AgendaResponse>(`/api/v1/overview/agenda${query({ from, days: AGENDA_DAYS, space_id: spaceId, type: kind })}`),
+    queryKey: ["overview", "agenda", from, spaceId, kind, days],
+    queryFn: () => api<AgendaResponse>(`/api/v1/overview/agenda${query({ from, days, space_id: spaceId, type: kind })}`),
     staleTime: OVERVIEW_STALE_MS,
   });
 }

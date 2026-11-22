@@ -272,10 +272,9 @@
   "overview.timeline.expandAll": "Expand all",
   "overview.timeline.collapseAll": "Collapse all",
   "overview.timeline.scheduled": "{{count}} scheduled items",
-  "overview.agenda.mode": "View",
-  "overview.agenda.modes.list": "List",
-  "overview.agenda.modes.calendar": "Calendar",
-  "overview.agenda.count": "{{count}} items",
   "overview.agenda.more": "+{{count}} more",
-  "overview.timeline.jumpFirst": "Go to first item"
+  "overview.timeline.jumpFirst": "Go to first item",
+  "overview.agenda.range": "Range",
+  "overview.agenda.days": "{{count}} days",
+  "overview.agenda.month": "1 month"
 }

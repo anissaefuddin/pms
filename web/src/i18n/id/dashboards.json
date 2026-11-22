@@ -272,10 +272,9 @@
   "overview.timeline.expandAll": "Buka semua",
   "overview.timeline.collapseAll": "Tutup semua",
   "overview.timeline.scheduled": "{{count}} item terjadwal",
-  "overview.agenda.mode": "Tampilan",
-  "overview.agenda.modes.list": "Daftar",
-  "overview.agenda.modes.calendar": "Kalender",
-  "overview.agenda.count": "{{count}} item",
   "overview.agenda.more": "+{{count}} lainnya",
-  "overview.timeline.jumpFirst": "Ke item pertama"
+  "overview.timeline.jumpFirst": "Ke item pertama",
+  "overview.agenda.range": "Rentang",
+  "overview.agenda.days": "{{count}} hari",
+  "overview.agenda.month": "1 bulan"
 }
