@@ -75,11 +75,15 @@ test("timeline groups by Space, expands a Project, and moves by one period", asy
   await page.goto("/dashboards");
   await page.getByRole("radio", { name: "Workspace overview" }).click();
   await page.getByRole("radio", { name: "Timeline" }).click();
+  await expect(page.getByRole("button", { name: /Launch plan/ })).toHaveCount(0);
+  await page.getByRole("button", { name: "Marketing", exact: true }).click();
   const row = page.getByRole("button", { name: /Launch plan/ });
   await expect(row).toHaveAttribute("aria-expanded", "false");
   await row.click();
   await expect(row).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByText("Write brief")).toBeVisible();
+  await expect(page.getByText("Book venue")).toHaveCount(0);
+  await page.getByRole("button", { name: /Tasks without a project/ }).click();
   await expect(page.getByText("Book venue")).toBeVisible();
   await page.getByRole("button", { name: "Next period" }).click();
   await expect.poll(() => calls.some((c) => c.query.get("from") === "2027-01-21")).toBe(true);

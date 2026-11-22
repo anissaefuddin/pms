@@ -37,7 +37,7 @@ export function WorkspaceTimeline() {
     <div className="flex flex-wrap items-center gap-4 text-xs text-muted-foreground">
       <span className="flex items-center gap-1.5"><span className="h-3 w-5 rounded-md bg-sky-500" />{t("dashboards.overview.timeline.legend.project")}</span>
       <span className="flex items-center gap-1.5"><span className="h-3 w-5 rounded-md bg-muted-foreground/50" />{t("dashboards.overview.timeline.legend.deferred")}</span>
-      <span className="flex items-center gap-1.5"><span className="size-2.5 rounded-full bg-primary" />{t("dashboards.overview.timeline.legend.task")}</span>
+      <span className="flex items-center gap-1.5"><span className="h-3 w-5 rounded-sm bg-primary" />{t("dashboards.overview.timeline.legend.task")}</span>
     </div>
     {data.truncated && <p role="status" className="text-sm text-muted-foreground">{t("dashboards.overview.timeline.truncated")}</p>}
     {data.spaces.length === 0 && <p className="text-sm text-muted-foreground">{t("dashboards.overview.timeline.empty")}</p>}
@@ -93,16 +93,32 @@ function Marker({ ctx, date, className, style, title }: { ctx: Ctx; date: string
   return <div title={title} className={cn("absolute", className)} style={style(index * DAY_PX)} />;
 }
 
+/** A Space is collapsed by default; its Projects and its unassigned Tasks sit under one header. */
 function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
   const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const [unassignedOpen, setUnassignedOpen] = useState(false);
+  const Chevron = open ? ChevronDown : ChevronRight;
+  const UnassignedChevron = unassignedOpen ? ChevronDown : ChevronRight;
   return <section aria-label={space.name}>
     <Row tone="bg-muted/50" label={<>
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="min-w-0 truncate font-semibold underline">{space.name}</Link>
-      <span className="ml-auto shrink-0 text-xs text-muted-foreground">{t(`dashboards.overview.access.${space.effective_access}`)}</span></>} />
-    {space.projects.map((project) => <ProjectRows key={project.id} project={project} ctx={ctx} />)}
-    {space.unassigned_tasks.length > 0 && <>
-      <Row label={<span className="text-xs font-medium text-muted-foreground">{t("dashboards.overview.timeline.unassigned")}</span>} />
-      {space.unassigned_tasks.map((task) => <TaskRow key={task.id} task={task} ctx={ctx} />)}
+      <button type="button" aria-expanded={open} onClick={() => setOpen(!open)}
+        className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left font-semibold outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+        <Chevron className="size-4 shrink-0" aria-hidden />
+        <span className="min-w-0 truncate">{space.name}</span>
+      </button>
+      <span className="shrink-0 text-xs text-muted-foreground">{t(`dashboards.overview.access.${space.effective_access}`)}</span>
+      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="shrink-0 text-xs underline">{t("dashboards.overview.timeline.openSpace")}</Link></>} />
+    {open && <>
+      {space.projects.map((project) => <ProjectRows key={project.id} project={project} ctx={ctx} />)}
+      {space.unassigned_tasks.length > 0 && <>
+        <Row label={<button type="button" aria-expanded={unassignedOpen} onClick={() => setUnassignedOpen(!unassignedOpen)}
+          className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left text-xs font-medium text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
+          <UnassignedChevron className="size-4 shrink-0" aria-hidden />
+          <span className="min-w-0 truncate">{t("dashboards.overview.timeline.unassigned")}</span>
+          <span className="ml-auto shrink-0 tabular-nums">{space.unassigned_tasks.length}</span></button>} />
+        {unassignedOpen && space.unassigned_tasks.map((task) => <TaskRow key={task.id} task={task} ctx={ctx} indent />)}
+      </>}
     </>}
   </section>;
 }
@@ -131,7 +147,7 @@ function TaskRow({ task, ctx, indent }: { task: TimelineTask; ctx: Ctx; indent?:
   return <Row label={<>
     <span className={cn("min-w-0 truncate text-sm", indent && "pl-6")}>{task.title}</span>
     <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatDate(task.due_date, ctx.profile)}</span></>}>
-    <Marker ctx={ctx} date={task.due_date} className="top-1/2 size-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-primary"
-      title={task.title} style={(left) => ({ left: left + DAY_PX / 2 })} />
+    <Marker ctx={ctx} date={task.due_date} className="top-1/2 h-3 -translate-y-1/2 rounded-sm bg-primary"
+      title={task.title} style={(left) => ({ left: left + 4, width: DAY_PX - 8 })} />
   </Row>;
 }

@@ -224,6 +224,7 @@
   "overview.timeline.milestone": "Tonggak {{date}}",
   "overview.timeline.noTasks": "Tidak ada tugas yang jatuh tempo dalam rentang ini.",
   "overview.timeline.unassigned": "Tugas tanpa proyek dalam rentang ini",
+  "overview.timeline.openSpace": "Buka Ruang",
   "overview.timeline.legend.project": "Proyek",
   "overview.timeline.legend.deferred": "Proyek ditunda",
   "overview.timeline.legend.task": "Tugas",
