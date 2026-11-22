@@ -141,12 +141,15 @@ function NameCell({ row, editing, draft, canEdit, onStart, onDraft, onEnd, onSav
 function StatusCell({ row, item, statuses, readonly, onPatch }: { row: ITask; item?: Item; statuses: ItemStatus[]; readonly: boolean; onPatch: (item: Item, update: ItemUpdate) => Promise<void> }) {
   const { t } = useTranslation();
   if (!item || readonly || !item.my_capabilities.includes("change_status")) return <span className="inline-flex items-center gap-1.5"><span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${statusDotClass(String(row.status_color ?? ""))}`} />{String(row.status_name ?? "")}</span>;
-  return <select aria-label={`${t("items.status")}: ${item.title}`} className="w-full truncate rounded border bg-background px-1 text-sm" value={item.status?.id ?? ""}
-    onChange={(event) => void onPatch(item, { status_id: event.target.value })}>
-    {!item.status && <option value="" disabled>—</option>}
-    {item.status && !statuses.some((status) => status.id === item.status?.id) && <option value={item.status.id}>{item.status.name}</option>}
-    {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
-  </select>;
+  return <span className="flex w-full items-center gap-1.5">
+    <span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${statusDotClass(String(row.status_color ?? ""))}`} />
+    <select aria-label={`${t("items.status")}: ${item.title}`} className="min-w-0 flex-1 truncate rounded border bg-background px-1 text-sm" value={item.status?.id ?? ""}
+      onChange={(event) => void onPatch(item, { status_id: event.target.value })}>
+      {!item.status && <option value="" disabled>—</option>}
+      {item.status && !statuses.some((status) => status.id === item.status?.id) && <option value={item.status.id}>{item.status.name}</option>}
+      {statuses.map((status) => <option key={status.id} value={status.id}>{status.name}</option>)}
+    </select>
+  </span>;
 }
 
 function DateCell({ item, field, readonly, onPatch }: { item?: Item; field: "start_date" | "due_date"; readonly: boolean; onPatch: (item: Item, update: ItemUpdate) => Promise<void> }) {

@@ -96,7 +96,7 @@ test("Gantt: selectable Status/Start/Due columns, bars coloured by status with a
   await mockGantt(page, { root: [withStatus(project)], children: [...kids, milestone].map(withStatus) });
   await page.goto(`${ganttPath}?view=${ganttId}`);
   await expect(bar(page, design)).toBeVisible();
-  await expect(page.locator('.wx-grid [data-id], .wx-table-box').getByText("To do").first()).toBeVisible(); // Status column
+  await expect(page.getByRole("combobox", { name: "Status: Design" })).toHaveValue(todo.id); // Editable Status column
   await expect(bar(page, design).locator('[data-bar-status="amber"]')).toContainText("Design • Ann Lee");
   const before = (await bar(page, design).boundingBox())!.width;
   await page.getByRole("button", { name: "Zoom out" }).click();
