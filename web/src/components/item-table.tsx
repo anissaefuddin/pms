@@ -322,6 +322,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
             {flexRender(cell.column.columnDef.header, cell.getContext())}
             {cell.column.id !== "actions" && <div role="separator" aria-orientation="vertical" tabIndex={0} aria-label={t("views.columnResize", { name: typeof cell.column.columnDef.header === "string" ? cell.column.columnDef.header : cell.column.id })}
               onPointerDown={(event) => startResize(event, cell.column.id ?? "")}
+              onDoubleClick={() => setWidths((current) => { const next = { ...current }; delete next[cell.column.id ?? ""]; return next; })}
               onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); const id = cell.column.id ?? ""; setWidths((current) => ({ ...current, [id]: Math.max(minimumWidth[id] ?? 80, widthOf(id) + (event.key === "ArrowRight" ? 16 : -16)) })); } }}
               className="absolute right-0 top-0 z-10 h-full w-2 cursor-col-resize touch-none outline-none hover:bg-primary/30 focus-visible:bg-primary/40" />}
           </div>)}

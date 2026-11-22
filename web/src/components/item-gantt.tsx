@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { ChevronDown, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { canAddSubitem } from "@/lib/create-item-validate";
 import { GanttSnapshotDialog } from "@/components/gantt-snapshot-dialog";
@@ -215,6 +216,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const profile = useProfile();
   const [scale, setScale] = useState<Scale>("day");
   const [selected, setSelected] = useState<string>();
+  const [undatedOpen, setUndatedOpen] = useState(false);
   const [baselineId, setBaselineId] = useState("");
   const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
   const [gridWidth, setGridWidth] = useState(() => { try { return Math.min(760, Math.max(420, Number(localStorage.getItem(`${ganttPrefKey}:width`)) || 520)); } catch { return 520; } });
@@ -298,7 +300,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
 
   // SVAR only auto-sizes to a default window, so a plan months away from today would be off screen.
   // Items without a start or finish date cannot be drawn; say how many, so they are not mistaken for missing work.
-  const undated = useMemo(() => tasks.filter((task) => !task.start || !task.end).length, [tasks]);
+  const undatedItems = useMemo(() => tasks.filter((task) => (!task.start || !task.end) && byId.get(String(task.id))?.type !== "folder")
+    .map((task) => byId.get(String(task.id))).filter((item): item is Item => !!item), [tasks, byId]);
+  const undated = undatedItems.length;
   const range = useMemo(() => {
     const dated = tasks.filter((task) => task.start && task.end);
     if (!dated.length) return {};
@@ -535,7 +539,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(".gantt-today")?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.today")}</Button>
       {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
       {/* C-04: brings the selected bar into view; nothing changes on screen until a bar is selected. */}
-      <Button size="sm" variant="outline" disabled={!selected} onClick={() => chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.showSelected")}</Button>
+      {selected && <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.showSelected")}</Button>}
       <Button size="sm" variant="outline" disabled={!tasks.some((task) => task.start)} onClick={() => {
         const earliest = tasks.filter((task) => task.start).sort((a, b) => a.start!.getTime() - b.start!.getTime())[0];
         chartRegion.current?.querySelector(`.wx-bar[data-id=":${earliest?.id}"]`)?.scrollIntoView({ inline: "start", block: "nearest" });
@@ -569,10 +573,19 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
           <Button type="submit" size="sm" disabled={busy}>{t("views.gantt.baselineCreate")}</Button>
         </form>}
       </>}
-      {undated > 0 && <span className="text-xs font-medium text-muted-foreground">{t("views.gantt.undated", { count: undated })}</span>}
+      {undated > 0 && <Button size="sm" variant="ghost" onClick={() => setUndatedOpen(true)}>{t("views.gantt.unscheduledCount", { count: undated })}</Button>}
   </>;
   return <div className="space-y-2">
     <div className="flex flex-wrap items-center gap-2">{renderToolbar ? renderToolbar(controls) : controls}</div>
+    <Dialog open={undatedOpen} onOpenChange={setUndatedOpen}>
+      <DialogContent>
+        <DialogTitle>{t("views.gantt.unscheduledTitle")}</DialogTitle>
+        <DialogDescription>{t("views.gantt.unscheduledDescription")}</DialogDescription>
+        <ul className="max-h-[60vh] divide-y overflow-y-auto">{undatedItems.map((item) => <li key={item.id}>
+          <button type="button" className="w-full px-2 py-3 text-left text-sm hover:bg-muted focus-visible:outline-ring" onClick={() => { setUndatedOpen(false); onOpen(item); }}>{item.title}</button>
+        </li>)}</ul>
+      </DialogContent>
+    </Dialog>
     <div className="relative">
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0}
       onKeyDown={(event) => { if (drag && event.key === "Escape") { setDrag(undefined); return; } keyboard(event); }}
@@ -635,8 +648,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
       <input name="newTask" maxLength={500} aria-label={t("views.gantt.addTask")} placeholder={t("views.gantt.addTask")} className="min-w-0 flex-1 bg-transparent text-sm outline-none" />
     </form>}
     {/* The keys stay on screen under the chart: the chart above keeps its height, so timeline positions do not move. */}
-    <p id="gantt-keys" className="text-xs text-muted-foreground">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}
-      {undated > 0 && <span className="ml-3 font-medium text-foreground">{t("views.gantt.undated", { count: undated })}</span>}</p>
+    <p id="gantt-keys" className="sr-only">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</p>
     {(outside.left.length > 0 || outside.right.length > 0) && <div className="flex flex-wrap gap-2">
       {outside.left.length > 0 && <Button size="sm" variant="outline" onClick={() => jumpOutside("left")}><ChevronLeft />{t("views.gantt.offLeft", { count: outside.left.length })}</Button>}
       {outside.right.length > 0 && <Button size="sm" variant="outline" onClick={() => jumpOutside("right")}>{t("views.gantt.offRight", { count: outside.right.length })}<ChevronRight /></Button>}

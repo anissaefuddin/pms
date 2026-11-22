@@ -108,9 +108,11 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
         ...statuses.map((status) => ({ id: status.id, name: status.name, color: status.color, items: lane.items.filter((item) => item.status?.id === status.id) })),
         ...(unlisted.length ? [{ id: "", name: t("views.noStatus"), color: noColor, items: unlisted }] : []),
       ];
+      const visibleCols = cols.filter((column) => !hideEmpty || column.items.length > 0);
+      const fill = visibleCols.length <= 3;
       const board = <div className="flex gap-3 overflow-x-auto pb-3">
-        {cols.filter((column) => !hideEmpty || column.items.length > 0).map((column) => <section key={column.id} aria-label={lane.name ? `${lane.name}: ${column.name}` : column.name}
-          className="w-72 shrink-0 space-y-2"
+        {visibleCols.map((column) => <section key={column.id} aria-label={lane.name ? `${lane.name}: ${column.name}` : column.name}
+          className={`${fill ? "min-w-72 max-w-[30rem] flex-1" : "w-72 shrink-0"} space-y-2`}
           onDragOver={(event) => { if (dragging && !pending && (column.id || swimlanes)) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); drop(lane, column.id); }}>
           <h3 className={`flex items-center gap-2 rounded-md px-3 py-2 font-semibold ${tintOf(column.color)}`}>
@@ -193,9 +195,10 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
         </p>}
       </div>}
       {overdue(item) && <p className="flex items-center gap-1 text-xs font-medium text-destructive"><AlertTriangle className="size-3" aria-hidden />{t("views.card.overdue")}</p>}
-      {item.type === "project" && item.progress_percent != null && <p className="flex items-center gap-2 text-xs tabular-nums text-muted-foreground">
+      {item.type === "project" && item.progress_percent === 0 && <p className="text-xs text-muted-foreground">{t("items.progress.notStarted")}</p>}
+      {item.type === "project" && item.progress_percent != null && item.progress_percent > 0 && <p className="flex items-center gap-2 text-xs tabular-nums text-muted-foreground">
         <span aria-hidden className="relative block h-1 flex-1 overflow-hidden rounded-full bg-muted"><span className="absolute inset-y-0 start-0 rounded-full bg-primary" style={{ width: `${item.progress_percent}%` }} /></span>
-        {t("items.progress.percent", { value: item.progress_percent })}{item.progress_percent === 0 && <span>· {t("items.progress.notStarted")}</span>}</p>}
+        {t("items.progress.percent", { value: item.progress_percent })}</p>}
       {profile && fields.map((field) => <p key={field.id} className="flex flex-wrap gap-1 text-xs">
         <span className="text-muted-foreground">{field.name}:</span>
         <CustomFieldDisplay field={field} value={item.fields?.[field.id]} people={peopleOf(item, field, item.fields?.[field.id])} profile={profile} />

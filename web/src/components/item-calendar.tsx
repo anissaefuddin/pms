@@ -87,6 +87,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
   const names = Array.from({ length: 7 }, (_, index) => addDays(first, index));
   const barButton = (item: Item, bar: Bar, from: Date) => {
     const canEdit = !readonly && item.my_capabilities.includes("edit");
+    const boundary = bar.id.endsWith(":start") ? t("views.calendar.starts") : bar.id.endsWith(":end") ? t("views.calendar.deadline") : "";
     const label = t("views.calendar.item", { title: item.title, start: formatDate(item.start_date ?? item.due_date, profile), end: formatDate(item.due_date ?? item.start_date, profile) });
     // C-01: the card opens on hover or keyboard focus of the bar; the bar's accessible description points at it.
     const cardId = `calendar-card-${item.id}-${bar.lane}-${bar.startCol}`;
@@ -95,7 +96,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
         onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); setDrag({ id: item.id, from }); }}
         onDragEnd={() => setDrag(undefined)} aria-label={`${label}${bar.continuesBefore ? ` · ${t("views.calendar.continuesBefore")}` : ""}${bar.continuesAfter ? ` · ${t("views.calendar.continuesAfter")}` : ""}`}
         className={`flex h-6 w-full items-center gap-1 truncate rounded border-l-4 border-current px-1.5 text-left text-xs font-medium ${tintOf(item.status?.color)} ${bar.continuesBefore ? "rounded-l-none" : ""} ${bar.continuesAfter ? "rounded-r-none" : ""}`}>
-        {bar.continuesBefore && <span aria-hidden>‹</span>}<TypeGlyph item={item} className="size-3 shrink-0" /><span className="flex min-w-0 items-center gap-1">{item.is_milestone && <Diamond aria-hidden className="size-3 shrink-0" />}<span className="truncate">{item.title}</span></span>{bar.continuesAfter && <span aria-hidden className="ml-auto">›</span>}
+        {bar.continuesBefore && <span aria-hidden>‹</span>}<TypeGlyph item={item} className="size-3 shrink-0" />{boundary && <span className="shrink-0 text-[10px] font-semibold uppercase tracking-wide">{boundary}</span>}<span className="flex min-w-0 items-center gap-1">{item.is_milestone && <Diamond aria-hidden className="size-3 shrink-0" />}<span className="truncate">{item.title}</span></span>{bar.continuesAfter && <span aria-hidden className="ml-auto">›</span>}
       </button>
       <span role="tooltip" id={cardId} className="pointer-events-none invisible absolute left-0 top-full z-40 mt-1 w-64 space-y-1 rounded-md border bg-popover p-3 text-xs text-popover-foreground shadow-md group-focus-within:visible group-hover:visible">
         <span className="block font-medium">{item.title}</span>
@@ -150,7 +151,7 @@ export function ItemCalendar({ items, readonly, onOpen, onPatch, onCreateOn }: {
               const more = layout.overflowByCol[col];
               const openKey = `${week}-${col}`;
               return <div role="gridcell" key={key} onDragOver={(event) => { if (drag) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); dropOn(day); }}
-                className={`relative h-28 min-w-0 border p-1 ${day.getMonth() !== month.getMonth() ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "ring-2 ring-primary" : ""}`}>
+                className={`relative h-28 min-w-0 border p-1 ${day.getMonth() !== month.getMonth() ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "bg-primary/5 ring-2 ring-inset ring-primary" : ""}`}>
                 {onCreateOn && !readonly && !off && <button type="button" className="absolute right-1 top-1 z-20 rounded px-1 text-xs text-primary hover:bg-accent"
                   aria-label={t("views.calendar.newOn", { date: fmt(fullFormat).format(day) })} onClick={() => onCreateOn(key)}>+</button>}
                 <p className="text-xs text-muted-foreground"><span aria-hidden>{day.getDate()}</span>
