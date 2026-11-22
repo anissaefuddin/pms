@@ -124,7 +124,9 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
       </div>;
       return swimlanes
         ? <section key={lane.key} aria-label={lane.name} className="space-y-2">
-          <h2 className="font-semibold">{lane.name} <span className="text-muted-foreground">{formatNumber(lane.items.length, profile)}</span></h2>
+          <h2 className="flex items-center gap-2 font-semibold">{lane.name} <span className="text-muted-foreground">{formatNumber(lane.items.length, profile)}</span>
+            {canCreate && lane.key && <Button size="icon-sm" variant="ghost" className="text-primary" aria-label={t("views.addToGroup", { name: lane.name ?? "" })} title={t("views.addToGroup", { name: lane.name ?? "" })}
+              onClick={() => onAdd(undefined, undefined, { id: lane.key, name: lane.name ?? "" })}><Plus /></Button>}</h2>
           {board}
         </section>
         : <div key="all">{board}</div>;

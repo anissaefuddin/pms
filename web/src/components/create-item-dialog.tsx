@@ -37,6 +37,8 @@ type Props = {
   initialKind?: CreateKind;
   /** A Quick Access or "More item types" choice; the dialog still checks it against the chosen destination. */
   initialTypeKey?: string;
+  /** A person to assign the new Task to, from an assignee group on the Board. */
+  initialAssignee?: { id: string; name: string };
   /** YYYY-MM-DD: prefills start and finish (a one-day Task from a Calendar date). */
   initialDate?: string;
   /** YYYY-MM-DD: the finish day when it differs from initialDate (a drag range on the Gantt). */
@@ -66,7 +68,7 @@ export function CreateItemDialog(props: Props) {
 
 type FieldKey = "title" | "location" | "parent" | "due_date";
 
-function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey, initialDate, initialFinish }: Props) {
+function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey, initialAssignee, initialDate, initialFinish }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const spaces = useSpaces();
@@ -81,7 +83,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const [trail, setTrail] = useState<Item[]>([]);
   const [owner, setOwner] = useState<PersonOption[]>([{ id: me.id, name: `${me.first_name} ${me.last_name}`.trim() }]);
   // A task takes assignees; a project takes one owner; a folder takes neither (the API accepts assignee_ids for tasks only in this form).
-  const [assignees, setAssignees] = useState<PersonOption[]>([]);
+  const [assignees, setAssignees] = useState<PersonOption[]>(() => (initialAssignee ? [{ id: initialAssignee.id, name: initialAssignee.name }] : []));
   const [shares, setShares] = useState<Share[]>([]);
   const [sharingOpen, setSharingOpen] = useState(false);
   const [view, setView] = useState<SupportedDefaultView>("table");

@@ -9,7 +9,8 @@ export type ItemCollectionProps = {
   canCreate: boolean;
   pending: boolean;
   onOpen: (item: Item) => void;
-  onAdd: (status?: string) => void;
+  /** Opens Create. A group passes the status, the type or the assignee it belongs to, so the new item starts there. */
+  onAdd: (status?: string, typeKey?: string, assignee?: { id: string; name: string }) => void;
   /** Space custom field definitions and the field ids the view shows (as `field:<id>` columns). */
   customFields: CustomField[];
   columns: string[];
