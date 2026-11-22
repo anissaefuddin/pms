@@ -1,6 +1,6 @@
 import { formatNumber, formatDate, useProfile } from "@/lib/profile";
 import { useRef, useState } from "react";
-import { Diamond, CalendarDays, EyeOff, ListTree, MoreHorizontal, Plus, Rows3 } from "lucide-react";
+import { AlertTriangle, Diamond, CalendarDays, EyeOff, ListTree, MoreHorizontal, Plus, Rows3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +48,8 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
   const [move, setMove] = useState<Move>();
   const [now] = useState(() => Date.now());
   const storageKey = `pms:board-hide-empty:${preferenceKey}`;
-  const [hideEmpty, setHideEmpty] = useState(() => { try { return localStorage.getItem(storageKey) === "1"; } catch { return false; } });
+  // Empty columns are hidden unless the user turned that off before; "0" is the only value that shows them.
+  const [hideEmpty, setHideEmpty] = useState(() => { try { return localStorage.getItem(storageKey) !== "0"; } catch { return true; } });
   const toggleEmpty = () => setHideEmpty((value) => {
     const next = !value;
     try { localStorage.setItem(storageKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
@@ -123,6 +124,14 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
   </div>;
 }
 
+/** Due before today and not finished. Uses the viewer's local day, so the badge matches what the date shows. */
+function overdue(item: Item): boolean {
+  if (!item.due_date || item.status?.group === "completed" || item.status?.group === "cancelled") return false;
+  const today = new Date();
+  const local = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  return item.due_date < local;
+}
+
 function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, pending, onOpen, onPatch, onDrag }: {
   item: Item; lane: string; now: number; fields: ItemCollectionProps["customFields"]; shown: string[];
   compact: boolean; showStatus: boolean;
@@ -169,6 +178,10 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
           {item.start_date && item.due_date && <span>({t("views.card.duration", { count: Math.max(1, Math.round((Date.parse(item.due_date) - Date.parse(item.start_date)) / DAY) + 1) })})</span>}
         </p>}
       </div>}
+      {overdue(item) && <p className="flex items-center gap-1 text-xs font-medium text-destructive"><AlertTriangle className="size-3" aria-hidden />{t("views.card.overdue")}</p>}
+      {item.type === "project" && item.progress_percent != null && <p className="flex items-center gap-2 text-xs tabular-nums text-muted-foreground">
+        <span aria-hidden className="relative block h-1 flex-1 overflow-hidden rounded-full bg-muted"><span className="absolute inset-y-0 start-0 rounded-full bg-primary" style={{ width: `${item.progress_percent}%` }} /></span>
+        {t("items.progress.percent", { value: item.progress_percent })}</p>}
       {profile && fields.map((field) => <p key={field.id} className="flex flex-wrap gap-1 text-xs">
         <span className="text-muted-foreground">{field.name}:</span>
         <CustomFieldDisplay field={field} value={item.fields?.[field.id]} people={peopleOf(item, field, item.fields?.[field.id])} profile={profile} />

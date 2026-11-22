@@ -71,6 +71,8 @@ test("without lanes a status drop is still immediate, and the card picker saves 
   const { calls } = await mock(page);
   await page.goto(path);
   // The first drag can land before React has rendered the drop targets on a slow runner, so retry the whole gesture.
+  // Show the empty columns first: the drop target is the empty Done column.
+  await page.getByRole("button", { name: "Hide empty columns" }).click();
   await expect(async () => {
     await page.getByRole("listitem").filter({ hasText: "Solo work" }).dragTo(page.getByRole("region", { name: "Done" }));
     expect(calls.find((call) => call.method === "PATCH" && call.path === `/items/${solo.id}`)?.body).toEqual({ status_id: done.id });
@@ -100,11 +102,13 @@ test("without lanes a status drop is still immediate, and the card picker saves 
 test("empty columns can be hidden without hiding active columns", async ({ page }) => {
   await mock(page);
   await page.goto(path);
-  await expect(page.getByRole("region", { name: "Done" })).toBeVisible();
-  await page.getByRole("button", { name: "Hide empty columns" }).click();
+  // Empty columns are hidden by default, so the empty Done column is not there until the user turns hiding off.
   await expect(page.getByRole("region", { name: "Done" })).toHaveCount(0);
   await expect(page.getByRole("region", { name: "New" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Hide empty columns" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Hide empty columns" }).click();
+  await expect(page.getByRole("region", { name: "Done" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "Hide empty columns" })).toHaveAttribute("aria-pressed", "false");
 });
 
 test("cards can move status without drag and without a duplicate status chip", async ({ page }) => {

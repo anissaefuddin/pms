@@ -324,5 +324,6 @@
   },
   "milestone": "Milestone",
   "boardBreakdown": "{{tasks}} tasks · {{milestones}} milestones",
-  "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded."
+  "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded.",
+  "card.overdue": "Overdue"
 }

@@ -319,5 +319,6 @@
   },
   "milestone": "Milestone",
   "boardBreakdown": "{{tasks}} tugas · {{milestones}} milestone",
-  "chartScope": "Tugas yang dapat dikerjakan di proyek ini dan subtree-nya. Milestone dan folder tidak termasuk."
+  "chartScope": "Tugas yang dapat dikerjakan di proyek ini dan subtree-nya. Milestone dan folder tidak termasuk.",
+  "card.overdue": "Terlambat"
 }

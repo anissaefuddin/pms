@@ -54,18 +54,12 @@ test("axe finds no serious violations on Space settings and the registry", async
   }
 });
 
-test("the Space header actions come in the documented order and are all focusable", async ({ page }) => {
+test("the Space header keeps New item primary; Share, Bookmarks and Settings are first in the actions menu", async ({ page }) => {
   await mockSpaces(page);
   await page.goto(`/spaces/${marketing.id}`);
-  const names = ["Share", "Bookmarks", "Settings", "New item"];
-  for (const name of names) await expect(page.getByRole("button", { name, exact: true }).or(page.getByRole("link", { name, exact: true }))).toBeVisible();
-  await page.getByRole("button", { name: "Share", exact: true }).focus();
-  const order: string[] = [];
-  for (let i = 0; i < 3; i++) {
-    await page.keyboard.press("Tab");
-    order.push(await focusName(page));
-  }
-  expect(order[0]).toContain("Bookmarks");
-  expect(order[1]).toContain("Settings");
-  expect(order[2]).toContain("New item");
+  await expect(page.getByRole("button", { name: "New item", exact: true })).toBeVisible();
+  await page.getByRole("button", { name: "Space actions" }).click();
+  await expect(page.getByRole("menuitem").first()).toBeVisible();
+  const names = await page.getByRole("menuitem").allInnerTexts();
+  expect(names.slice(0, 3)).toEqual(["Share", "Bookmarks", "Settings"]);
 });

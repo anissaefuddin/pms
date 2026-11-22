@@ -132,9 +132,6 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         </>}
         actions={<>
           {/* Same order as a Project or Folder: shared and configuration actions first, the primary create action last. */}
-          {canShare && <Button variant="outline" onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</Button>}
-          <Button variant="outline" onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</Button>
-          {canEditForms && <Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.open")}</Link>}
           {/* D-CREATE: the one primary create action of a Space; the kinds stay the same as the global menu. */}
           {me && newKinds.length > 0 && (
             <DropdownMenu>
@@ -146,10 +143,15 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
               </DropdownMenuContent>
             </DropdownMenu>
           )}
-          {(canRename || canDelete || canManageFields || canCreate || canLock || canEditForms) && (
+          {/* Bookmarks is open to everyone who can see the Space, so this menu is always there. */}
+          {true && (
             <DropdownMenu>
               <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-40">
+              <DropdownMenuContent align="end" className="w-44">
+                {/* Share, Bookmarks and Settings sit here so the header keeps one primary action and the Table, Board, Calendar and Gantt tabs get the room. */}
+                {canShare && <DropdownMenuItem onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</DropdownMenuItem>}
+                <DropdownMenuItem onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</DropdownMenuItem>
+                {canEditForms && <DropdownMenuItem render={<Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} />}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>}
                 {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
                 <DropdownMenuItem onClick={() => setExportingSpace(true)}>{t("excel.exportSpaceTitle")}</DropdownMenuItem>
                 {canEditForms && <DropdownMenuItem onClick={() => setMenuConfig(true)}>{t("spaces.createMenu.link")}</DropdownMenuItem>}

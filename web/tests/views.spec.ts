@@ -211,6 +211,8 @@ test("Board rolls back conflict, supports drag and creates in the target column"
     "POST /items": (body) => ({ status: 201, body: { ...item, ...body } }),
   } });
   await page.goto(path + "?view=" + boardId);
+  // Empty columns are hidden by default; show them so the empty Completed column can take the drop.
+  await page.getByRole("button", { name: "Hide empty columns" }).click();
   const before = page.getByRole("region", { name: "New", exact: true });
   const after = page.getByRole("region", { name: "Completed", exact: true });
   await expect(before.getByText("2 subitems")).toBeVisible();

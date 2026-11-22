@@ -194,7 +194,12 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       </DropdownMenu>;
     } },
   ];
-  const columns = allColumns.filter((column) => column.id === "name" || column.id === "actions" || shown.includes(column.id ?? ""));
+  // A column with nothing to show for any row (no Project progress, nobody assigned) is left out; the Columns picker can still add it back.
+  const empty = new Set<string>([
+    ...(rows.some((row) => row.item.type === "project" && (row.item.progress_percent ?? 0) > 0) ? [] : ["progress"]),
+    ...(rows.some((row) => row.item.assignees.length > 0) ? [] : ["assignee"]),
+  ]);
+  const columns = allColumns.filter((column) => column.id === "name" || column.id === "actions" || (shown.includes(column.id ?? "") && !empty.has(column.id ?? "")));
   const widths: Record<string, [string, number]> = { name: ["minmax(15rem,2fr)", 15], progress: ["8.5rem", 8.5], start_date: ["8rem", 8], due_date: ["8rem", 8], actions: ["2.5rem", 2.5] };
   const sized = [["2.5rem", 2.5] as [string, number], ...columns.map((column) => widths[column.id ?? ""] ?? ["minmax(8rem,1fr)", 8])];
   const grid = "grid";

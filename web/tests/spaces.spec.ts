@@ -183,7 +183,7 @@ test.describe("Space page", () => {
     await expect(page.getByRole("heading", { name: "Personal", level: 1 })).toBeVisible();
     await expect(page.getByRole("button", { name: "Share" })).toHaveCount(0);
     await page.getByRole("button", { name: "Space actions" }).click();
-    await expect(page.getByRole("menuitem")).toHaveText(["Import from Excel", "Export Space to Excel", "“+” menu", "Custom fields"]);
+    await expect(page.getByRole("menuitem")).toHaveText(["Bookmarks", "Settings", "Import from Excel", "Export Space to Excel", "“+” menu", "Custom fields"]);
   });
 
   test("actions follow my_capabilities", async ({ page }) => {
@@ -191,7 +191,7 @@ test.describe("Space page", () => {
     await page.goto(`/spaces/${marketing.id}`);
     await expect(page.getByRole("button", { name: "Share" })).toHaveCount(0);
     await page.getByRole("button", { name: "Space actions" }).click();
-    await expect(page.getByRole("menuitem")).toHaveText(["Export Space to Excel", "“+” menu", "Rename"]);
+    await expect(page.getByRole("menuitem")).toHaveText(["Bookmarks", "Settings", "Export Space to Excel", "“+” menu", "Rename"]);
   });
 
   test("a viewer gets no actions at all", async ({ page }) => {
@@ -199,7 +199,9 @@ test.describe("Space page", () => {
     await page.goto(`/spaces/${marketing.id}`);
     await expect(page.getByRole("heading", { name: "Marketing", level: 1 })).toBeVisible();
     await expect(page.getByRole("button", { name: "Share" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Space actions" })).toHaveCount(0);
+    // Bookmarks and the read-only export stay available to any viewer; nothing that edits the Space is listed.
+    await page.getByRole("button", { name: "Space actions" }).click();
+    await expect(page.getByRole("menuitem")).toHaveText(["Bookmarks", "Export Space to Excel"]);
   });
 
   test("404 shows Space not found without detail", async ({ page }) => {
