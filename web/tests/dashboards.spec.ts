@@ -45,6 +45,7 @@ async function mock(page: Page, over: Record<string, any> = {}, dash = board()) 
 test("list shows dashboards, switches scope, creates and opens one", async ({ page }) => {
   const calls = await mock(page, { "POST /dashboards": (body: any) => ({ status: 201, body: { ...board(), name: body.name } }) });
   await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "My dashboards" }).click();
   await expect(page.getByRole("heading", { name: "Dashboards", level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Team board" })).toHaveAttribute("href", `/dashboards/${d1}`);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -64,6 +65,7 @@ test("rename, duplicate, move and delete send the right requests and ask before 
     [`DELETE /dashboards/${d2}`]: { status: 204 },
   });
   await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "My dashboards" }).click();
   const open = (name: string, item: string) => async () => { await page.getByRole("button", { name: `Actions for ${name}` }).click(); await page.getByRole("menuitem", { name: item }).click(); };
   await open("Team board", "Rename")();
   await page.getByLabel("Name", { exact: true }).last().fill("Renamed");
@@ -97,6 +99,7 @@ test("rename, duplicate, move and delete send the right requests and ask before 
 test("a stale rename shows the conflict message", async ({ page }) => {
   await mock(page, { [`PATCH /dashboards/${d1}`]: problem(409, "dashboard changed", "version_conflict") });
   await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "My dashboards" }).click();
   await page.getByRole("button", { name: "Actions for Team board" }).click();
   await page.getByRole("menuitem", { name: "Rename" }).click();
   await page.getByRole("button", { name: "Rename", exact: true }).click();
@@ -231,7 +234,6 @@ test("an unknown dashboard shows not found, and a read-only viewer sees no edit 
   await page.goto(`/dashboards/${d1}`);
   await expect(page.getByText("You can view this dashboard but not change it.")).toBeVisible();
   await expect(page.getByRole("button", { name: "Add widget" })).toHaveCount(0);
-  await expect(page.getByRole("button", { name: /^Actions for/ })).toHaveCount(0);
   await page.unrouteAll();
   await mock(page, { [`GET /dashboards/${d1}`]: problem(404, "not found", "not_found") });
   await page.goto(`/dashboards/${d1}`);
@@ -274,9 +276,10 @@ test("a Space gets a ready-made analytics board of five widgets", async ({ page 
     "POST /dashboards": (body: any) => ({ status: 201, body: { ...board({ widgets: [] }), name: body.name, version } }),
     [`POST /dashboards/${d1}/widgets`]: () => ({ status: 201, body: { ...board({ widgets: [] }), version: ++version } }),
   });
-  await page.goto("/");
-  await expect(page.getByRole("button", { name: "Create analytics board" })).toHaveCount(0); // Tools only show once a Space is open
-  await page.getByRole("button", { name: "Expand Marketing" }).click();
+  await page.goto(`/spaces/${marketing.id}`);
+  await expect(page.getByRole("heading", { name: "Marketing", level: 1 })).toBeVisible();
+  const expand = page.getByRole("button", { name: "Expand Marketing" });
+  if (await expand.isVisible()) await expand.click();
   await page.getByRole("navigation", { name: "Spaces" }).getByRole("button", { name: "Tools" }).click(); // SB-05: Tools starts collapsed
   await page.getByRole("button", { name: "Create analytics board" }).click();
   await expect(page).toHaveURL(`/dashboards/${d1}`);

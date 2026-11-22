@@ -9,6 +9,7 @@ import { listNotifications, notificationKey, type Notification } from "@/lib/not
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/auth/form-error";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { TopbarTitle } from "@/components/topbar-title";
 
 // The summary notification carries a typed reference to its import report; the report API checks access on every read.
 function reportIdOf(entry: Notification) {
@@ -101,7 +102,7 @@ function Inbox() {
   });
 
   return <main className="space-y-4 p-6">
-    <h1 className="workspace-title">{t("nav.inbox.label")}</h1>
+    <TopbarTitle>{t("nav.inbox.label")}</TopbarTitle>
     <div role="tablist" aria-label={t("nav.inbox.tabs")} className="flex gap-1 border-b">
       {boxes.map((value) => <button key={value} type="button" role="tab" aria-selected={box === value}
         className={`-mb-px px-3 py-2 text-sm ${box === value ? "border-b-2 border-primary font-medium" : "text-muted-foreground hover:text-foreground"}`}

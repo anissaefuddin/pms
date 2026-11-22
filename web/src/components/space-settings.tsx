@@ -1,5 +1,6 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { Link, useBlocker } from "@tanstack/react-router";
+import { Link, useBlocker, useNavigate } from "@tanstack/react-router";
+import { LayoutTemplate } from "lucide-react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -10,8 +11,10 @@ import { cn } from "@/lib/utils";
 import { WorkspaceHeader } from "@/components/workspace-header";
 import { WorkspaceLayout } from "@/components/workspace-layout";
 import { SettingsRow, SettingsSaveBar, SettingsSection } from "@/components/settings/settings-ui";
-import { SpaceShareDialog } from "@/components/space-share-dialog";
 import { ItemTypesPanel } from "@/routes/_app/settings/item-types";
+import { useSpace } from "@/lib/space-queries";
+import { LoadingState } from "@/components/ui/loading-state";
+import { ErrorState } from "@/components/ui/error-state";
 import { SpaceAutomationPanel } from "@/components/space-automation";
 import { FormsList } from "@/routes/_app/spaces_.$spaceId.forms";
 import { CustomFieldRegistry } from "@/components/custom-field-registry";
@@ -20,6 +23,7 @@ import { FormError } from "@/components/auth/form-error";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { SpaceIconPicker } from "@/components/space-icon";
 import { Input } from "@/components/ui/input";
+import { EmptyState } from "@/components/ui/empty-state";
 
 // Tab slugs are the URL contract: /spaces/:spaceId/settings/:tab. Labels are translated below.
 export const SPACE_SETTINGS_TABS = ["general", "members", "tools", "item-types", "custom-fields", "workflows", "automation", "forms", "blueprints"] as const;
@@ -37,12 +41,42 @@ const TAB_LABEL = {
   blueprints: "spaces.spaceSettings.tab.blueprints",
 } as const satisfies Record<SpaceSettingsTab, string>;
 
+// Navigation groups for the Space settings sidebar. Every tab belongs to exactly one group.
+const SPACE_SETTINGS_GROUPS: { id: string; label?: string; tabs: SpaceSettingsTab[] }[] = [
+  { id: "general", tabs: ["general"] },
+  { id: "access", label: "spaces.spaceSettings.group.access", tabs: ["members"] },
+  { id: "configuration", label: "spaces.spaceSettings.group.configuration", tabs: ["item-types", "custom-fields", "workflows"] },
+  { id: "tools", label: "spaces.spaceSettings.group.toolsAutomation", tabs: ["tools", "automation", "forms", "blueprints"] },
+];
+
 export function isSpaceSettingsTab(value: string): value is SpaceSettingsTab {
   return (SPACE_SETTINGS_TABS as readonly string[]).includes(value);
 }
 
 /** Full Space Settings page. The Space header gear, the sidebar gear and direct links all open this. */
-export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUser; tab: SpaceSettingsTab }) {
+/** Where the Space settings are opened from: the Workspace registry (/settings/spaces) or the Space work area. Same content, different URLs and back link. */
+export type SpaceSettingsContext = "workspace" | "space";
+const TAB_PATH = { workspace: "/settings/spaces/$spaceId/$tab", space: "/spaces/$spaceId/settings/$tab" } as const;
+
+/** Loads the Space for either settings route and handles loading, not found and error the same way. */
+export function SpaceSettingsPage({ spaceId, tab, context }: { spaceId: string; tab: SpaceSettingsTab; context: SpaceSettingsContext }) {
+  const { t } = useTranslation();
+  const space = useSpace(spaceId);
+  const queryClient = useQueryClient();
+  const me = queryClient.getQueryData<CurrentUser>(["me"]);
+  if (space.isPending) return <main className="p-8"><LoadingState label={t("spaces.page.loading")} /></main>;
+  if (space.error instanceof ApiError && space.error.status === 404) {
+    return <main className="p-8"><div className="max-w-md space-y-3">
+      <h1 className="workspace-title">{t("spaces.notFound.title")}</h1>
+      <p className="text-muted-foreground">{t("spaces.notFound.description")}</p>
+      {me && <Link to="/spaces/$spaceId" params={{ spaceId: me.personal_space_id }} className={buttonVariants({ variant: "outline" })}>{t("spaces.notFound.home")}</Link>}
+    </div></main>;
+  }
+  if (space.isError) return <main className="p-8"><ErrorState message={t("spaces.page.error")} retryLabel={t("spaces.page.retry")} onRetry={() => void space.refetch()} /></main>;
+  return <SpaceSettings space={space.data} me={me} tab={tab} context={context} />;
+}
+
+export function SpaceSettings({ space, me, tab, context = "space" }: { space: Space; me?: CurrentUser; tab: SpaceSettingsTab; context?: SpaceSettingsContext }) {
   const { t } = useTranslation();
   const [dirty, setDirty] = useState(false);
   // Leaving the page or switching tab with unsaved General changes asks first.
@@ -50,28 +84,54 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
   const personal = space.kind === "personal";
   return (
     <WorkspaceLayout>
+      {/* Breadcrumb: shows that this is one Space's settings, not the Workspace's. The header moves it into the top bar. */}
       <WorkspaceHeader
+        breadcrumb={
+        <nav aria-label={t("spaces.spaceSettings.breadcrumb")} className="mb-2 text-sm text-muted-foreground">
+          <ol className="flex flex-wrap items-center gap-1">
+            <li><Link to="/settings/spaces" className="underline-offset-2 hover:underline">{t("spaces.spaceSettings.crumbSpaces")}</Link> <span aria-hidden="true">/</span></li>
+            {context === "workspace"
+              ? <li><Link to="/settings/spaces/$spaceId/$tab" params={{ spaceId: space.id, tab: "general" }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
+              : <>
+                <li><Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link> <span aria-hidden="true">/</span></li>
+                <li>{t("spaces.spaceSettings.crumbSettings")} <span aria-hidden="true">/</span></li>
+              </>}
+            <li aria-current="page" className="text-foreground">{t(TAB_LABEL[tab])}</li>
+          </ol>
+        </nav>
+        }
         title={t("spaces.spaceSettings.title")}
+        actions={context === "workspace"
+          ? <Link to="/settings/spaces" className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.backAll")}</Link>
+          : <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={buttonVariants({ variant: "outline" })}>{t("spaces.spaceSettings.backSpace")}</Link>}
         meta={<p className="mt-1 text-sm text-muted-foreground">
           <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="underline-offset-2 hover:underline">{personal ? t("spaces.personal") : space.name}</Link>
         </p>}
       />
-      <nav aria-label={t("spaces.spaceSettings.navLabel")} className="mt-4 flex gap-1 overflow-x-auto border-b">
-        {SPACE_SETTINGS_TABS.map((key) => (
-          <Link key={key} to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: key }}
-            aria-current={key === tab ? "page" : undefined}
-            className={cn("-mb-px shrink-0 border-b-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground",
-              key === tab ? "border-primary font-medium text-foreground" : "border-transparent")}>
-            {t(TAB_LABEL[key])}
-          </Link>
-        ))}
-      </nav>
-      <div className="mt-6 max-w-3xl">
+      {/* Grouped: a row of tabs on small screens (scrolls), a side list with group headings from lg up. */}
+      <div className="mt-4 grid gap-6 lg:grid-cols-[12rem_minmax(0,1fr)]">
+        <nav aria-label={t("spaces.spaceSettings.navLabel")} className="flex gap-1 overflow-x-auto border-b lg:flex-col lg:gap-4 lg:overflow-visible lg:border-b-0 lg:border-r lg:pe-4">
+          {SPACE_SETTINGS_GROUPS.map((group) => (
+            <div key={group.id} className="flex gap-1 lg:flex-col lg:gap-0.5">
+              {group.label && <p className="hidden px-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground lg:block">{t(group.label)}</p>}
+              {group.tabs.map((key) => (
+                <Link key={key} to={TAB_PATH[context]} params={{ spaceId: space.id, tab: key }}
+                  aria-current={key === tab ? "page" : undefined}
+                  className={cn("shrink-0 border-b-2 px-3 py-2 text-sm text-muted-foreground hover:text-foreground lg:border-b-0 lg:border-s-2 lg:rounded-e-md",
+                    key === tab ? "border-primary font-medium text-foreground lg:bg-muted" : "border-transparent")}>
+                  {t(TAB_LABEL[key])}
+                </Link>
+              ))}
+            </div>
+          ))}
+        </nav>
+        <div className="min-w-0 max-w-3xl">
         {tab === "general" && <GeneralTab space={space} me={me} onDirtyChange={setDirty} />}
         {tab === "members" && <MembersTab space={space} me={me} />}
         {tab === "tools" && <LinkTab title={t("spaces.spaceSettings.tools.title")} description={t("spaces.spaceSettings.tools.description")}>
           <SpaceToolsPanel space={space} />
         </LinkTab>}
+        {tab === "item-types" && <ItemTypesPanel spaceId={space.id} />}
         {tab === "custom-fields" && <CustomFieldsTab space={space} />}
         {tab === "workflows" && <WorkflowDefaultsTab space={space} />}
         {tab === "automation" && <LinkTab title={t("spaces.spaceSettings.automation.title")} description={t("spaces.spaceSettings.automation.description")}>
@@ -81,6 +141,7 @@ export function SpaceSettings({ space, me, tab }: { space: Space; me?: CurrentUs
           <FormsList spaceId={space.id} embedded />
         </LinkTab>}
         {tab === "blueprints" && <BlueprintsTab space={space} />}
+        </div>
       </div>
       <ConfirmDialog
         open={blocker.status === "blocked"}
@@ -210,7 +271,7 @@ function LifecycleSection({ space, me }: { space: Space; me?: CurrentUser }) {
   const [pending, setPending] = useState<null | "public" | "private" | "archive" | "restore">(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const canAdminister = me?.user_type === "admin" || !!space.is_space_admin;
+  const canAdminister = !!space.is_space_admin; // D-SA1: a workspace admin without the explicit role is not a Space Admin
   if (!canAdminister) return null;
   const isPublic = space.visibility === "public";
 
@@ -307,6 +368,7 @@ type SpaceBlueprint = { id: string; name: string; item_type: string | null; item
 /** Blueprints of this Space (C). Lists only what the server returns to people who can view the Space; create and edit reuse the Blueprint page. */
 function BlueprintsTab({ space }: { space: Space }) {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const blueprints = useQuery({
     queryKey: ["space-blueprints", space.id],
     queryFn: async () => (await api<{ items: SpaceBlueprint[] }>(`/api/v1/spaces/${space.id}/blueprints`)).items,
@@ -314,14 +376,15 @@ function BlueprintsTab({ space }: { space: Space }) {
   });
   return <SettingsSection title={t("spaces.spaceSettings.blueprints.title")} description={t("spaces.spaceSettings.blueprints.description")}>
     {blueprints.isError && <FormError message={t("spaces.spaceSettings.blueprints.loadError")} />}
-    {blueprints.data && !blueprints.data.length && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.blueprints.empty")}</p>}
+    {blueprints.data && !blueprints.data.length && <EmptyState icon={<LayoutTemplate />} title={t("spaces.spaceSettings.blueprints.emptyTitle")}
+      description={t("spaces.spaceSettings.blueprints.empty")} primaryAction={{ label: t("spaces.spaceSettings.blueprints.open"), onClick: () => void navigate({ to: "/blueprints" }) }} />}
     {!!blueprints.data?.length && <ul className="divide-y rounded-lg border text-sm">
       {blueprints.data.map((bp) => <li key={bp.id} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
         <span className="font-medium">{bp.name}</span>
         <span className="text-xs text-muted-foreground">{t("spaces.spaceSettings.blueprints.count", { count: bp.item_count })} · {t("spaces.spaceSettings.blueprints.version", { version: bp.version })}{bp.item_type && <> · {bp.item_type}</>}</span>
       </li>)}
     </ul>}
-    <Link to="/blueprints" className={linkClass}>{t("spaces.spaceSettings.blueprints.open")}</Link>
+    {!(blueprints.data && !blueprints.data.length) && <Link to="/blueprints" className={linkClass}>{t("spaces.spaceSettings.blueprints.open")}</Link>}
   </SettingsSection>;
 }
 
@@ -332,16 +395,19 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [picked, setPicked] = useState("");
+  // Removing your own admin role is allowed only when another admin remains; it is confirmed first because you lose control of the Space.
+  const [selfRemove, setSelfRemove] = useState(false);
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const admins = useQuery({
     queryKey: ["space-admins", space.id],
     queryFn: async () => (await api<{ items: SpaceAdmin[] }>(`/api/v1/spaces/${space.id}/admins`)).items,
   });
-  const canAdminister = me?.user_type === "admin" || !!space.is_space_admin;
+  const canAdminister = !!space.is_space_admin; // D-SA1: a workspace admin without the explicit role is not a Space Admin
   const adminIds = new Set((admins.data ?? []).map((a) => a.user_id));
   // S-1: only an admin or regular user can be offered the role; the backend refuses the others with 422.
   const candidates = members.filter((m) => !adminIds.has(m.user_id) && (m.user_type === "admin" || m.user_type === "regular"));
+  const removeAdmin = (userID: string) => api(`/api/v1/spaces/${space.id}/admins/${userID}`, { method: "DELETE" });
   async function run(action: () => Promise<unknown>) {
     setBusy(true); setError("");
     try {
@@ -357,9 +423,12 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
       {admins.data && <ul className="divide-y rounded-lg border text-sm">
         {admins.data.map((admin) => <li key={admin.user_id} className="flex items-center justify-between gap-2 px-3 py-2">
           <span>{admin.name}</span>
-          {canAdminister && <Button variant="ghost" size="sm" disabled={busy || admins.data.length <= 1} onClick={() => void run(() => api(`/api/v1/spaces/${space.id}/admins/${admin.user_id}`, { method: "DELETE" }))}>
-            {t("spaces.spaceSettings.admins.remove", { name: admin.name })}
-          </Button>}
+          {canAdminister && <span title={admins.data.length <= 1 ? t("spaces.spaceSettings.admins.lastAdmin") : undefined} className="inline-flex">
+            <Button variant="ghost" size="sm" disabled={busy || admins.data.length <= 1} aria-describedby={admins.data.length <= 1 ? "last-admin-hint" : undefined}
+              onClick={() => (admin.user_id === me?.id ? setSelfRemove(true) : void run(() => removeAdmin(admin.user_id)))}>
+              {t("spaces.spaceSettings.admins.remove", { name: admin.name })}
+            </Button>
+          </span>}
         </li>)}
         {!admins.data.length && <li className="px-3 py-2 text-muted-foreground">{t("spaces.spaceSettings.admins.none")}</li>}
       </ul>}
@@ -378,7 +447,17 @@ function AdminsSection({ space, me, members }: { space: Space; me?: CurrentUser;
           {t("spaces.spaceSettings.admins.transfer")}
         </Button>
       </div>}
+      {admins.data && admins.data.length <= 1 && <p id="last-admin-hint" className="text-xs text-muted-foreground">{t("spaces.spaceSettings.admins.lastAdmin")}</p>}
       <p role="alert" className="text-sm text-destructive">{error}</p>
+      <ConfirmDialog
+        open={selfRemove}
+        onOpenChange={(open) => { if (!open) setSelfRemove(false); }}
+        title={t("spaces.spaceSettings.admins.selfTitle")}
+        description={t("spaces.spaceSettings.admins.selfDescription")}
+        confirmLabel={t("spaces.spaceSettings.admins.selfConfirm")}
+        cancelLabel={t("spaces.spaceSettings.general.stay")}
+        onConfirm={() => { setSelfRemove(false); void run(() => removeAdmin(me?.id ?? "")); }}
+      />
     </SettingsSection>
   );
 }
@@ -436,7 +515,12 @@ function DirectAccessEditor({ space, me, members }: { space: Space; me: CurrentU
           <span className="flex items-center gap-2">
             <select aria-label={t("spaces.spaceSettings.direct.roleFor", { name: row.principal_name })} disabled={busy || row.role.startsWith("custom:")}
               value={row.role} className="h-8 rounded-md border border-input bg-background px-2 text-sm"
-              onChange={(e) => void save(rows.map((r) => r === row ? { ...r, role: e.target.value } : r), t("spaces.spaceSettings.direct.saved"))}>
+              onChange={(e) => {
+                // Direct role and effective role can differ: say so when a group still gives this person access.
+                const groupNames = row.principal_type === "user" ? viaGroups(row.principal_name) : [];
+                void save(rows.map((r) => r === row ? { ...r, role: e.target.value } : r),
+                  groupNames.length ? t("spaces.spaceSettings.direct.savedKeepsGroup", { groups: groupNames.join(", ") }) : t("spaces.spaceSettings.direct.saved"));
+              }}>
               {row.role.startsWith("custom:") && <option value={row.role}>{row.role_name || t("share.role.custom")}</option>}
               {SHARE_ROLES.map((r) => <option key={r} value={r}>{t(`share.role.${r}`)}</option>)}
             </select>
@@ -517,7 +601,6 @@ function SpaceToolsPanel({ space }: { space: Space }) {
 function MembersTab({ space, me }: { space: Space; me?: CurrentUser }) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [open, setOpen] = useState(false);
   const shared = space.kind === "shared";
   const canShare = shared && can(space, "share");
   const members = useQuery({
@@ -531,11 +614,7 @@ function MembersTab({ space, me }: { space: Space; me?: CurrentUser }) {
       <SettingsSection title={t("spaces.spaceSettings.members.title")} description={t("spaces.spaceSettings.members.description")}>
         {!shared && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.personal")}</p>}
         {shared && !canShare && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.noPermission")}</p>}
-        {canShare && me && <>
-          <Button variant="outline" onClick={() => setOpen(true)} className="w-fit">{t("spaces.spaceSettings.members.open")}</Button>
-          <SpaceShareDialog open={open} onOpenChange={(next) => { setOpen(next); if (!next) void queryClient.invalidateQueries({ queryKey: ["space-members", space.id] }); }}
-            space={space} me={me} canShare={canShare} />
-        </>}
+        {/* Read-only summary: who has access and why. Changes happen in "Direct access" below, the one place to add or edit. */}
         {members.isPending && shared && <p role="status" className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.loading")}</p>}
         {members.isError && <FormError message={t("spaces.spaceSettings.members.loadError")} />}
         {members.data && !members.data.length && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.members.empty")}</p>}

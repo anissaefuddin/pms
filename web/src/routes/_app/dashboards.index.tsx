@@ -13,6 +13,9 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
+import { TopbarTitle } from "@/components/topbar-title";
+import { SegmentedControl } from "@/components/ui/segmented-control";
+import { WorkspaceOverview } from "@/components/workspace-overview";
 
 export const Route = createFileRoute("/_app/dashboards/")({ component: Dashboards });
 
@@ -25,6 +28,7 @@ function Dashboards() {
   const qc = useQueryClient();
   const navigate = useNavigate();
   const spaces = (useSpaces().data ?? []).filter((space) => space.kind === "shared");
+  const [view, setView] = useState<"boards" | "overview">("overview"); // the overview is a system entry, not a dashboard; it opens first
   const [location, setLocation] = useState(""); // "" = my personal dashboards
   const list = useQuery({
     queryKey: ["dashboards", location], retry: false,
@@ -62,10 +66,13 @@ function Dashboards() {
   }
 
   return <main className="space-y-5 p-8">
+    <TopbarTitle>{t("dashboards.title")}</TopbarTitle>
     <header className="border-b pb-5">
-      <h1 className="workspace-title">{t("dashboards.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("dashboards.description")}</p>
     </header>
+    <SegmentedControl aria-label={t("dashboards.views.label")} value={view} onChange={(v) => setView(v as "boards" | "overview")}
+      items={[{ value: "overview", label: t("dashboards.views.overview") }, { value: "boards", label: t("dashboards.views.boards") }]} />
+    {view === "overview" ? <WorkspaceOverview /> : <>
     <div className="flex flex-wrap items-end gap-3">
       <label className="block text-sm">{t("dashboards.scope.label")}
         <select className={select} value={location} onChange={(e) => setLocation(e.target.value)}>
@@ -104,6 +111,7 @@ function Dashboards() {
         </td>
       </tr>)}</tbody>
     </table>}
+    </>}
     {edit && <EditDialog key={`${edit.mode}:${edit.dashboard.id}`} {...edit} spaces={spaces.filter((s) => s.my_capabilities?.includes("create"))} onClose={() => setEdit(undefined)} onDone={refresh} />}
     <ConfirmDialog open={!!deleting} onOpenChange={(open) => !open && setDeleting(undefined)} busy={busy} error={error}
       title={t("dashboards.delete.title")} description={t("dashboards.delete.description", { name: deleting?.name ?? "" })}

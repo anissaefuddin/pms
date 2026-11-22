@@ -33,12 +33,13 @@ test("global create opens the Item panel and submits project options", async ({ 
   await page.clock.setFixedTime(new Date(2026, 10, 12, 12));
   await serveCreatedItem(page, () => item);
   await page.goto(root);
-  await page.locator("header").first().getByRole("button", { name: "Create" }).click();
+  await page.getByRole("main").getByRole("button", { name: "New item" }).click();
   await page.getByRole("menuitem", { name: /^Project/ }).click();
   const dialog = page.getByRole("dialog", { name: "Create item" });
   await dialog.getByRole("button", { name: "Create item" }).click();
   await expect(dialog.getByRole("alert")).toContainText("Enter an item name");
   await dialog.getByLabel("Name").fill("Plan");
+  await dialog.getByText("Advanced options").click();
   await dialog.getByRole("radio", { name: /^Board/ }).check({ force: true });
   await dialog.getByRole("button", { name: "Start date" }).click();
   const startPicker = page.getByRole("dialog", { name: "Start date" });
@@ -101,8 +102,8 @@ test("detail actions use latest ETag and add a subitem with a parent link", asyn
   await assignees.getByRole("searchbox").fill("gra");
   await assignees.getByRole("button", { name: "Grace Hopper" }).click();
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").at(-1)?.body.assignee_ids).toEqual([grace.id]);
-  await page.getByRole("button", { name: "Add subitem" }).click();
-  const form = page.getByRole("dialog", { name: "Add subitem" });
+  await page.getByRole("button", { name: "Add subtask" }).click();
+  const form = page.getByRole("dialog", { name: "Add subtask" });
   await expect(form.getByRole("combobox", { name: "Parent" })).toHaveCount(0);
   await form.getByLabel("Name").fill("Outline");
   await form.getByRole("button", { name: "Create item" }).click();
@@ -158,7 +159,7 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
   await expect(confirmation).toBeVisible();
   expect(calls.some((call) => call.method === "DELETE")).toBe(false);
   await confirmation.getByRole("button", { name: "Delete item" }).click();
-  await expect(page).toHaveURL(`/spaces/${me.personal_space_id}`);
+  await expect(page).toHaveURL(`/dashboards`);
   expect(calls.filter((call) => call.method === "DELETE")).toHaveLength(1);
 });
 

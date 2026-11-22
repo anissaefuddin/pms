@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import type { CurrentUser } from "@/lib/api";
 import { itemKeys, listItems } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/created-by-me")({ component: CreatedByMe });
 
@@ -19,8 +20,8 @@ function CreatedByMe() {
       .flat().filter((item) => item.created_by?.id === me?.id),
   });
   return <main className="space-y-5 p-8">
+    <TopbarTitle>{t("nav.created.title")}</TopbarTitle>
     <header className="border-b pb-5">
-      <h1 className="workspace-title">{t("nav.created.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("nav.created.description")}</p>
     </header>
     {query.isPending && <p role="status" className="text-sm text-muted-foreground">{t("items.loading")}</p>}

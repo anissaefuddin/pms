@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent, type ReactElement } from "react";
-import { Activity, BarChart3, Briefcase, Folder, ChevronDown, ChevronLeft, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
+import { Activity, Briefcase, Folder, ChevronDown, ChevronLeft, ChevronRight, Clock, ClipboardCheck, CalendarDays, ClipboardList, UserPen, FileText, Inbox, LayoutDashboard, ListChecks, Menu, MoreHorizontal, PanelLeft, Plus, Search, Settings, Share2, LayoutTemplate, Star, Trash2, Users } from "lucide-react";
 import { Link, useNavigate, useLocation } from "@tanstack/react-router";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
-import { ProfileMenu } from "@/components/topbar";
+import { SidebarFooter } from "@/components/topbar";
 import { useQuery, useQueryClient, type QueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
@@ -14,15 +14,27 @@ import { itemKeys, listItems, type Item } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
 import type { Space } from "@/lib/spaces";
 import {
-  pinPatch, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
+  FIXED_SHORTCUT, pinPatch, SHORTCUT_IDS, SHORTCUT_LABEL_KEY, SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, isShortcutVisible,
   pushRecent, readOpenSpaces, readRecent, readWidth, sanitizePinOrder, toggleOpen, writeOpenSpaces, writeRecent, writeWidth,
   type RecentEntry, type ShortcutId,
 } from "@/lib/sidebar-prefs";
 import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
-import { can, type Space as SpaceType } from "@/lib/spaces";
+import type { Space as SpaceType } from "@/lib/spaces";
+import { spaceActions } from "@/lib/space-actions";
 
-const EDIT_CAPABILITY = "edit" as const;
+/** Route of a Space's settings tabs (kept as a constant so the route is not a literal in JSX). */
+const SPACE_SETTINGS_ROUTE = "/spaces/$spaceId/settings/$tab" as const;
+
+/** Copies the Space's address; a refused clipboard is reported instead of failing silently. */
+async function copySpaceLink(id: string, t: (key: string) => string) {
+  try {
+    await navigator.clipboard.writeText(`${window.location.origin}/spaces/${id}`);
+    toast.success(t("nav.space.menu.linkCopied"));
+  } catch {
+    toast.error(t("nav.space.menu.linkCopyFailed"));
+  }
+}
 import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from "./ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
@@ -177,7 +189,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
   const hidden = me.sidebar_hidden ?? [];
   const visible = (id: ShortcutId) => isShortcutVisible(id, hidden);
   const pinned = pinOrder.filter(visible);
-  const more = SHORTCUT_IDS.filter((id) => !pinOrder.includes(id) && visible(id));
+  const more = SHORTCUT_IDS.filter((id) => id !== FIXED_SHORTCUT && !pinOrder.includes(id) && visible(id));
   const isCurrent = (to: string) => pathname === to || pathname.startsWith(`${to}/`);
   const shortcut = (id: ShortcutId) => {
     const to = SHORTCUT_ROUTE[id];
@@ -187,28 +199,29 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
 
   const style = mobile ? undefined : { width: collapsed ? "var(--sidebar-width-collapsed)" : `${width}px` };
   return <>
-    <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex min-h-0 flex-col border-r border-border bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
-      <div className={`mb-4 flex items-center gap-1 ${collapsed ? "flex-col" : ""}`}>
-        {!collapsed && <p className="min-w-0 flex-1 truncate px-2 font-semibold" title={me.account_name}>{me.account_name}</p>}
-        <div className={`flex shrink-0 items-center gap-1 ${collapsed ? "flex-col" : "ml-auto"}`}>
-          {!mobile && <Tooltip>
-            <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed} aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
-              className="shrink-0 bg-transparent text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted" />}>
-              {collapsed ? <ChevronRight /> : <ChevronLeft />}
-            </TooltipTrigger>
-            <TooltipContent>{t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}</TooltipContent>
-          </Tooltip>}
-        </div>
+    <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} group/sidebar relative flex min-h-0 flex-col border-r border-nav-hover bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
+      <div className={`mb-4 flex items-center gap-2 ${collapsed ? "flex-col" : ""}`}>
+        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{(me.account_name || "W").trim().charAt(0).toUpperCase()}</span>
+        {!collapsed && <p className="min-w-0 flex-1 truncate font-semibold" title={me.account_name}>{me.account_name}</p>}
+        {/* The toggle shows when the pointer is over the sidebar (or it has keyboard focus); collapsed, it always shows so the sidebar can be opened again. */}
+        {!mobile && <Tooltip>
+          <TooltipTrigger render={<Button variant="ghost" size="icon-sm" onClick={toggle} aria-expanded={!collapsed} aria-label={t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}
+            className={`shrink-0 bg-transparent text-nav-muted hover:bg-nav-hover hover:text-nav-text aria-expanded:bg-transparent aria-expanded:text-nav-muted ${collapsed ? "" : "opacity-0 transition-opacity group-hover/sidebar:opacity-100 focus-visible:opacity-100"}`} />}>
+            <PanelLeft />
+          </TooltipTrigger>
+          <TooltipContent>{t(collapsed ? "nav.expandSidebar" : "nav.collapseSidebar")}</TooltipContent>
+        </Tooltip>}
       </div>
       {/* Hanya area ini yang bisa di-scroll; header dan footer (akun, pengaturan) tetap terlihat. */}
-      <div className="sidebar-scroll flex min-h-0 flex-1 flex-col overflow-y-auto">
+      <div className="sidebar-scroll-area flex min-h-0 flex-1 flex-col overflow-y-auto">
       <nav className="space-y-1" aria-label={t("nav.main.label")}>
-        <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />
+        {shortcut(FIXED_SHORTCUT)}
         <Nav icon={<Inbox />} label={t("nav.inbox.label")} collapsed={collapsed} badge={unread} current={isCurrent("/inbox")} onClick={() => go("/inbox")} />
+        <Nav icon={<Search />} label={t("nav.search.label")} collapsed={collapsed} hint={/Mac|iPhone|iPad/.test(navigator.platform) ? "⌘K" : "Ctrl K"} onClick={() => { onNavigate?.(); window.dispatchEvent(new Event("pms:open-search")); }} />
         {pinned.map(shortcut)}
         <DropdownMenu>
           <DropdownMenuTrigger render={<Button variant="ghost" aria-label={t("nav.more.label")}
-            className={`text-nav-text hover:bg-nav-hover hover:text-nav-text ${collapsed ? "w-full px-0" : "w-full justify-start px-3"}`} />}>
+            className={`flex-row items-center gap-3 whitespace-nowrap text-nav-text hover:bg-nav-hover hover:text-nav-text ${collapsed ? "w-full px-0" : "w-full justify-start px-3"}`} />}>
             <MoreHorizontal />{!collapsed && t("nav.more.label")}
           </DropdownMenuTrigger>
           <DropdownMenuContent>
@@ -232,10 +245,8 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
       {!collapsed && <Favorites userId={me.id} />}
       {!collapsed && <SpacesNav me={me} />}
       </div>
-      <div className={`mt-2 flex shrink-0 items-center gap-2 border-t border-border pt-2 ${collapsed ? "flex-col" : ""}`}>
-        <ProfileMenu compact={collapsed} />
-        {!collapsed && <p className="min-w-0 flex-1 truncate text-xs text-nav-muted">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>}
-      </div>
+      {/* The top bar already shows the inbox bell; the footer bell would be a second link with the same name. */}
+      <SidebarFooter collapsed={collapsed} inbox={false} />
       {!mobile && !collapsed && <div role="separator" aria-orientation="vertical" aria-label={t("nav.resize")} aria-valuemin={SIDEBAR_WIDTH.min} aria-valuemax={SIDEBAR_WIDTH.max} aria-valuenow={width} tabIndex={0}
         onKeyDown={onHandleKey} onPointerDown={onHandleDown} onPointerMove={onHandleMove} onPointerUp={() => { drag.current = null; }}
         className="absolute inset-y-0 right-0 w-1 cursor-col-resize touch-none hover:bg-nav-hover focus-visible:bg-nav-active focus-visible:outline-none" />}
@@ -248,7 +259,7 @@ function Nav({ icon, label, onClick, collapsed = false, current = false, hint, b
   const state = current ? "bg-nav-active font-medium" : "hover:bg-nav-hover";
   return <button type="button" onClick={onClick} title={collapsed ? label : undefined} aria-label={collapsed ? label : undefined}
     aria-current={current ? "page" : undefined}
-    className={`flex w-full items-center gap-3 rounded-md py-2 text-sm ${collapsed ? "justify-center px-0" : "px-3"} ${state}`}>
+    className={`flex w-full flex-row items-center gap-3 whitespace-nowrap rounded-md py-2 text-sm ${collapsed ? "justify-center px-0" : "px-3"} ${state}`}>
     <span className="[&>svg]:size-4">{icon}</span>{!collapsed && label}
     {!collapsed && !!badge && <span className="ml-auto rounded-full bg-destructive px-1.5 text-[10px] font-medium text-destructive-foreground" aria-hidden="true">{badge}</span>}
     {!collapsed && hint && <kbd aria-hidden="true" className="ml-auto text-xs text-nav-muted">{hint}</kbd>}
@@ -288,7 +299,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
   }
 
   return (
-    <nav className="sidebar-scroll mt-5 flex flex-col" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
+    <nav className="mt-5 flex flex-col" aria-label={t("spaces.nav.label")} onKeyDown={walk}>
       <div className="flex items-center justify-between px-3 pb-1">
         <h2 className="text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("spaces.nav.label")}</h2>
         <div className="flex items-center">
@@ -311,7 +322,7 @@ function SpacesNav({ me }: { me: CurrentUser }) {
             open={openSpaces.includes(s.id)} onToggle={() => toggleSpace(s.id)} />
         ))}
       </ul>
-      <ul className="border-t border-border pt-1">
+      <ul className="border-t border-nav-hover pt-1">
         <li><Link to="/shared-with-me" className={navRow} activeProps={activeNav}><Share2 className="size-4" aria-hidden />{t("nav.shared.label")}</Link></li>
         <li><Link to="/blueprints" className={navRow} activeProps={activeNav}><LayoutTemplate className="size-4" aria-hidden />{t("blueprints.nav")}</Link></li>
       </ul>
@@ -360,8 +371,11 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
   const pathname = useLocation({ select: (location) => location.pathname });
   const onTool = pathname.startsWith("/dashboards") || pathname.startsWith("/reports");
   const [toolsOpen, setToolsOpen] = useState(onTool);
+  const [projectFilter, setProjectFilter] = useState("");
+  // The Space whose page (or Settings, or its tools) is open gets a soft highlight, so the active context is visible in the sidebar.
+  const inSpace = pathname === `/spaces/${space.id}` || pathname.startsWith(`/spaces/${space.id}/`);
   return <li>
-    <div className="group/row flex min-w-0 items-center">
+    <div className={`group/row flex min-w-0 items-center rounded-md ${inSpace ? "bg-nav-hover/50" : ""}`}>
       <Button variant="ghost" size="icon-sm" className={treeToggle} aria-expanded={open}
         aria-label={t(open ? "nav.tree.collapse" : "nav.tree.expand", { name })}
         onClick={onToggle} onKeyDown={(event) => {
@@ -374,45 +388,56 @@ function SpaceNode({ space, name, open, onToggle }: { space: Space; name: string
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className={`${linkClass} min-w-0 flex-1`} title={name} activeOptions={{ exact: true }} activeProps={activeLink}>
         <SpaceIcon iconKey={(space as SpaceType).icon_key} className="me-2 inline-block align-[-2px]" />{name}{(space as SpaceType).archived && <span className="ms-1 text-xs text-nav-muted">{t("nav.space.archived")}</span>}
       </Link>
-      {can(space as SpaceType, EDIT_CAPABILITY) && <>
-        <Button variant="ghost" size="icon-sm" nativeButton={false} className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
-          aria-label={t("nav.space.settingsFor", { name })} title={t("nav.space.settingsFor", { name })}
-          render={<Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} />}><Settings /></Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
-            aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
-          <DropdownMenuContent align="start">
-            <DropdownMenuItem onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </>}
+      <Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
+        aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
+        onClick={() => window.dispatchEvent(new CustomEvent("pms:create-item", { detail: { kind: "project", spaceId: space.id } }))}><Plus /></Button>
+      {/* One menu per Space row, built from effective capabilities: a viewer still gets Open, Copy link and Settings. */}
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`shrink-0 text-nav-muted hover:bg-nav-hover hover:text-nav-text ${revealOnHover}`}
+          aria-label={t("nav.space.actionsFor", { name })} title={t("nav.space.actionsFor", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>
+        <DropdownMenuContent align="start" sideOffset={6} className="w-44">
+          {spaceActions(space as SpaceType).map((action) => {
+            const spaceSettings = (tab: "general" | "members") => () => void navigate({ to: SPACE_SETTINGS_ROUTE, params: { spaceId: space.id, tab } });
+            switch (action) {
+              case "open": return <DropdownMenuItem key={action} onClick={() => void navigate({ to: "/spaces/$spaceId", params: { spaceId: space.id } })}>{t("nav.space.menu.open")}</DropdownMenuItem>;
+              case "copy-link": return <DropdownMenuItem key={action} onClick={() => void copySpaceLink(space.id, (key) => String(t(key)))}>{t("nav.space.menu.copyLink")}</DropdownMenuItem>;
+              case "rename": return <DropdownMenuItem key={action} onClick={() => setEditing(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>;
+              case "members": return <DropdownMenuItem key={action} onClick={spaceSettings("members")}>{t("nav.space.menu.members")}</DropdownMenuItem>;
+              case "settings": return <DropdownMenuItem key={action} onClick={spaceSettings("general")}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>;
+              case "archive": return <DropdownMenuItem key={action} onClick={spaceSettings("general")}>{t("nav.space.menu.archive")}</DropdownMenuItem>;
+            }
+          })}
+        </DropdownMenuContent>
+      </DropdownMenu>
       <SpaceDialog open={editing} onOpenChange={setEditing} space={space as SpaceType} />
     </div>
     {open && <div className="ml-3 space-y-2 border-l border-nav-hover pl-2 pb-2">
       <div>
         <button type="button" aria-expanded={toolsOpen} onClick={() => setToolsOpen(!toolsOpen)}
-          className="flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider text-nav-muted hover:text-nav-text focus-visible:outline-2 focus-visible:outline-ring">
+          className={`flex w-full items-center gap-1 rounded px-2 text-left text-xs font-semibold uppercase tracking-wider hover:text-nav-text focus:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 ${toolsOpen ? "text-nav-text" : "text-nav-muted"}`}>
           {toolsOpen ? <ChevronDown aria-hidden="true" className="size-3" /> : <ChevronRight aria-hidden="true" className="size-3" />}{t("nav.space.tools")}
         </button>
         {toolsOpen && <>
-          <Link to="/dashboards" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
+          {/* Creating an analytics board is an action, so it sits as a + beside Dashboards rather than as another destination. */}
+          <div className="group/dash flex items-center gap-1">
+            <Link to="/dashboards" className={`${linkClass} min-w-0 flex-1 text-sm`} activeProps={activeLink}>{t("dashboards.nav.label")}</Link>
+            {space.my_capabilities?.includes("create") && <Button variant="ghost" size="icon-sm" disabled={busy} className={`shrink-0 text-nav-text hover:bg-nav-hover hover:text-nav-text ${revealOnHover.replace(/row/g, "dash")}`}
+              aria-label={t("dashboards.analytics.create")} title={t("dashboards.analytics.create")} onClick={() => void analytics()}><Plus /></Button>}
+          </div>
           <Link to="/reports" className={`${linkClass} text-sm`} activeProps={activeLink}>{t("reports.nav.label")}</Link>
-          {space.my_capabilities?.includes("create") && <Button variant="ghost" size="sm" disabled={busy} className="w-full justify-start gap-2 px-2 text-nav-text hover:bg-nav-hover hover:text-nav-text" onClick={() => void analytics()}><BarChart3 />{t("dashboards.analytics.create")}</Button>}
         </>}
       </div>
-      <div>
-        <div className="flex items-center justify-between pr-1">
-          <p className="px-2 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.space.projects")}</p>
-          <Button variant="ghost" size="icon-sm" className="text-nav-text hover:bg-nav-hover hover:text-nav-text" aria-label={t("nav.space.createIn", { name })} title={t("nav.space.createIn", { name })}
-            onClick={() => window.dispatchEvent(new CustomEvent("pms:create-item", { detail: { kind: "project", spaceId: space.id } }))}><Plus /></Button>
-        </div>
-        <ItemTree id={space.id} space />
-      </div>
+      {/* The Space's projects and folders sit directly under the Space; the create action is on the Space row. Filter narrows the top level only. */}
+      <p className="px-2 pb-1 text-xs font-semibold uppercase tracking-wider text-nav-muted">{t("nav.space.projects")}</p>
+      <input type="search" value={projectFilter} onChange={(event) => setProjectFilter(event.target.value)}
+        aria-label={t("nav.space.filterProjects", { name })} placeholder={t("nav.space.filterProjectsPlaceholder")}
+        className="mx-2 w-[calc(100%-1rem)] rounded border border-nav-hover bg-transparent px-2 py-1 text-xs text-nav-text placeholder:text-nav-muted" />
+      <ItemTree id={space.id} space filter={projectFilter} />
     </div>}
   </li>;
 }
 
-function ItemTree({ id, space = false, onEmpty }: { id: string; space?: boolean; onEmpty?: () => void }) {
+function ItemTree({ id, space = false, onEmpty, filter = "" }: { id: string; space?: boolean; onEmpty?: () => void; filter?: string }) {
   const { t } = useTranslation();
   const query = useQuery({
     queryKey: [...(space ? itemKeys.root(id) : itemKeys.children(id)), "sidebar"],
@@ -425,7 +450,10 @@ function ItemTree({ id, space = false, onEmpty }: { id: string; space?: boolean;
   return <ul>
     {query.isPending && <li className="p-1 text-xs" role="status">{t("items.loading")}</li>}
     {query.isError && <li><Button variant="link" size="sm" className="text-nav-text" onClick={() => void query.refetch()}>{t("items.retry")}</Button></li>}
-    {query.data?.filter((item: Item) => item.type !== "task").map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} />)}
+    {query.data?.filter((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase()))
+      .map((item) => <Branch key={item.id} id={item.id} name={item.title} type={item.type} />)}
+    {filter.trim() && query.isSuccess && !query.data?.some((item: Item) => item.type !== "task" && item.title.toLowerCase().includes(filter.trim().toLowerCase())) &&
+      <li className="p-1 text-xs text-nav-muted">{t("nav.space.noProjectMatch")}</li>}
   </ul>;
 }
 
@@ -457,7 +485,7 @@ function Branch({ id, name, type }: { id: string; name: string; type?: string })
             setExpanded(event.key === "ArrowRight");
           }
         }}>{expanded ? <ChevronDown /> : <ChevronRight />}</Button>}
-      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} activeProps={activeLink} onClick={openItem}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
+      <Link to="/items/$itemId" params={{ itemId: id }} className={linkClass} title={name} aria-label={name} activeProps={activeLink} onClick={openItem}><span className="flex items-center gap-2">{type === "project" ? <Briefcase aria-hidden="true" className="size-4 shrink-0" /> : type === "folder" ? <Folder aria-hidden="true" className="size-4 shrink-0" /> : null}<span className="truncate">{name}</span></span></Link>
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" className={`${treeToggle} ${revealOnHover}`}
           aria-label={t("nav.item.actions", { name })} title={t("nav.item.actions", { name })} />}><MoreHorizontal /></DropdownMenuTrigger>

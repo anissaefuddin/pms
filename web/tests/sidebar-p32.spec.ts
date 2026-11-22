@@ -39,11 +39,14 @@ test("SB-T07 / SB-01: an expanded Space toggle keeps the sidebar colours instead
   expect(bg === "rgba(0, 0, 0, 0)" || bg === "transparent").toBe(true);
 });
 
-test("SB-T14 / SB-02: the Spaces list uses a thin scrollbar", async ({ page }) => {
+test("SB-T14 / SB-02: the sidebar scrollbar is hidden at rest and shows while the pointer is over the sidebar", async ({ page }) => {
   await mockSpaces(page, { extra: common as never });
   await page.goto(`/spaces/${marketing.id}`);
-  const width = await page.getByRole("navigation", { name: "Spaces" }).evaluate((el) => getComputedStyle(el).scrollbarWidth);
-  expect(width).toBe("thin");
+  const area = page.locator(".sidebar-scroll-area").first();
+  const idle = await area.evaluate((el) => getComputedStyle(el).scrollbarColor);
+  expect(idle).toBe("rgba(0, 0, 0, 0) rgba(0, 0, 0, 0)");
+  await area.hover();
+  await expect.poll(() => area.evaluate((el) => getComputedStyle(el).scrollbarColor)).not.toBe(idle);
 });
 
 test("SB-T15 / SB-14: a long project name is truncated and its full name is available on hover", async ({ page }) => {

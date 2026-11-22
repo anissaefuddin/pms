@@ -5,6 +5,7 @@ import { ItemCalendar } from "@/components/item-calendar";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { itemKeys, type ItemPage } from "@/lib/items";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/calendars")({ component: Calendars });
 
@@ -14,8 +15,8 @@ function Calendars() {
   // shortcut: first page (the server's default size) of My to-do, read-only; upgrade with a date-range endpoint
   const query = useQuery({ queryKey: [...itemKeys.all, "calendars"], queryFn: () => api<ItemPage>("/api/v1/me/todo?filter=all&sort=date") });
   return <main className="space-y-5 p-8">
+    <TopbarTitle>{t("nav.calendars.title")}</TopbarTitle>
     <header className="border-b pb-5">
-      <h1 className="workspace-title">{t("nav.calendars.title")}</h1>
       <p className="text-sm text-muted-foreground">{t("nav.calendars.description")}</p>
     </header>
     {query.isPending && <p role="status" className="text-sm text-muted-foreground">{t("items.loading")}</p>}

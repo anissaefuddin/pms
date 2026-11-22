@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { groupBy } from "@/lib/todo-groups";
 import { changedFieldLabels, groupByDay } from "@/lib/activity-format";
 import { formatDate } from "@/lib/profile";
+import { TopbarTitle } from "@/components/topbar-title";
 
 type Entry = components["schemas"]["StreamEntry"];
 type Page = components["schemas"]["StreamPage"];
@@ -45,7 +46,7 @@ function Stream() {
   }));
   return <main className="grid gap-6 p-6 lg:grid-cols-[minmax(0,1fr)_16rem]">
     <div className="mx-auto w-full max-w-3xl space-y-4">
-      <h1 className="workspace-title">{t("nav.stream.title")}</h1>
+      <TopbarTitle>{t("nav.stream.title")}</TopbarTitle>
       {query.isPending && <p role="status" className="text-muted-foreground">{t("items.loading")}</p>}
       {query.isError && <div><p role="alert">{t("nav.stream.error")}</p>
         <Button variant="link" className="px-0" onClick={() => void query.refetch()}>{t("nav.stream.retry")}</Button></div>}

@@ -12,6 +12,7 @@ import { getItem, itemKeys, type Item, type ItemPage } from "@/lib/items";
 import { Avatars, StatusPill } from "@/components/todo-chips";
 import { bucketOrder, dueBucket, groupBy } from "@/lib/todo-groups";
 import { useSpaces } from "@/lib/space-queries";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/my-todo")({ component: MyTodo });
 
@@ -98,7 +99,7 @@ function MyTodo() {
   }
 
   return <main className="space-y-4 p-6">
-    <h1 className="workspace-title">{t("nav.todo.label")}</h1>
+    <TopbarTitle>{t("nav.todo.label")}</TopbarTitle>
     <div className="flex flex-wrap items-center gap-3 border-b pb-2">
       <label className="flex items-center gap-1 text-sm"><Filter aria-hidden="true" className="size-4 text-primary" /><span className="sr-only">{t("nav.todo.filter")}</span>
         <select className={selectClass} value={filter} onChange={(event) => updateSearch("filter", event.target.value)}>

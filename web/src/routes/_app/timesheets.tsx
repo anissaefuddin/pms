@@ -10,6 +10,7 @@ import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 import { formatDate, useProfile } from "@/lib/profile";
 import { useSearchResults } from "@/lib/search";
 import { formatMinutes, parseMinutes, timeEntryPage, type TimeEntry } from "@/lib/time-entries";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/timesheets")({ component: Timesheets });
 type Task = { id: string; title: string };
@@ -117,7 +118,7 @@ function Timesheet({ user, start, today }: { user: string; start: "monday" | "su
   }
 
   return <main className="min-w-0 space-y-4 p-6">
-    <h1 className="workspace-title">{t("time.timesheet")}</h1>
+    <TopbarTitle>{t("time.timesheet")}</TopbarTitle>
     <div className="flex flex-wrap items-center gap-2">
       <Button variant="outline" onClick={() => setWeek(week - 1)}>{t("time.previous")}</Button>
       <Button variant="outline" onClick={() => setWeek(0)}>{t("time.current")}</Button>

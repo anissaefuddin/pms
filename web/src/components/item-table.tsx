@@ -121,7 +121,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
             <Input name="title" aria-label={t("items.name")} defaultValue={item.title} maxLength={500} required autoFocus
               onKeyDown={(event) => { if (event.key === "Escape") setEditing(undefined); }} />
           </form>
-          : <Button variant="ghost" size="sm" className="min-w-0 justify-start"
+          : <Button variant="ghost" size="sm" className="min-w-0 justify-start" title={item.title}
               onClick={() => onOpen(item)}><span className="truncate">{item.title}</span></Button>}
         {canEditTitle && <Button size="icon-sm" variant="ghost" className="opacity-0 transition-opacity group-hover/table-row:opacity-100 group-focus-within/table-row:opacity-100 [@media(hover:none)]:opacity-100" aria-label={t("views.editTitle", { name: item.title })}
           onClick={() => setEditing({ id: item.id, field: "title" })}><Pencil /></Button>}
@@ -149,7 +149,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       return canEdit ? <Button variant="ghost" size="sm" className="max-w-full truncate"
         onClick={() => setEditing({ id: item.id, field: "assignees" })}>
         <span className="sr-only">{`${t("items.assignees")}: ${item.title}`}</span>
-        {item.assignees.length ? <AvatarStack people={item.assignees} /> : t("items.assignees")}
+        {item.assignees.length ? <AvatarStack people={item.assignees} /> : t("views.unassigned")}
       </Button> : <AvatarStack people={item.assignees} />;
     } },
     ...(["start_date", "due_date"] as const).map((field): ColumnDef<TableRow> => ({
@@ -198,6 +198,8 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   const widths: Record<string, [string, number]> = { name: ["minmax(15rem,2fr)", 15], progress: ["8.5rem", 8.5], start_date: ["8rem", 8], due_date: ["8rem", 8], actions: ["2.5rem", 2.5] };
   const sized = [["2.5rem", 2.5] as [string, number], ...columns.map((column) => widths[column.id ?? ""] ?? ["minmax(8rem,1fr)", 8])];
   const grid = "grid";
+  // The selection column (2.5rem) and the Name column stay in view while the table scrolls sideways.
+  const stickyName = "sticky left-10 shadow-[2px_0_0_hsl(var(--border))]";
   const minWidth = `${sized.reduce((total, [, rem]) => total + rem, 0)}rem`;
   const gridStyle = { gridTemplateColumns: sized.map(([width]) => width).join(" "), minWidth };
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel(), autoResetAll: false });
@@ -281,7 +283,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
               ref={(element) => { if (element) element.indeterminate = somePicked; }}
               onChange={() => setPicked(allPicked ? [] : pickable.map((item) => item.id))} />
           </div>
-          {header.headers.map((cell) => <div role="columnheader" key={cell.id} className={`border-b bg-card px-2 py-2 font-medium ${cell.column.id === "name" ? "sticky left-10 z-30 shadow-[2px_0_0_hsl(var(--border))]" : ""} ${cell.column.id === "actions" ? "sticky right-0 z-30 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
+          {header.headers.map((cell) => <div role="columnheader" key={cell.id} className={`border-b bg-card px-2 py-2 font-medium ${cell.column.id === "name" ? `${stickyName} z-30` : cell.column.id === "actions" ? "sticky right-0 z-30 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
             {flexRender(cell.column.columnDef.header, cell.getContext())}
           </div>)}
         </div>)}
@@ -308,7 +310,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
             <div role="cell" className="sticky left-0 z-20 flex items-center bg-card px-2">
               {canBulk(item) && <input type="checkbox" aria-label={t("views.bulk.selectRow", { title: item.title })} checked={picked.includes(item.id)} onChange={() => togglePicked(item.id)} onMouseDown={(event) => event.stopPropagation()} />}
             </div>
-            {row.getVisibleCells().map((cell) => <div role="cell" key={cell.id} className={`flex min-w-0 items-center bg-card px-2 ${cell.column.id === "name" ? "sticky left-10 z-20 shadow-[2px_0_0_hsl(var(--border))]" : ""} ${cell.column.id === "actions" ? "sticky right-0 z-20 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
+            {row.getVisibleCells().map((cell) => <div role="cell" key={cell.id} className={`flex min-w-0 items-center px-2 ${cell.column.id === "name" ? `${stickyName} z-20 bg-card` : cell.column.id === "actions" ? "sticky right-0 z-20 bg-card shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
               {/* called, not rendered as a component: a new component type per render would remount the cell between mousedown and mouseup and swallow the click (QA-D-lane3-010) */}
               {(cell.column.columnDef.cell as (context: ReturnType<typeof cell.getContext>) => React.ReactNode)(cell.getContext())}
             </div>)}

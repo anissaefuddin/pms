@@ -10,6 +10,7 @@ import { useSearchResults } from "@/lib/search";
 import { useProfile } from "@/lib/profile";
 import { useSpaces } from "@/lib/space-queries";
 import { laneCreateBody, laneOverCapacity, laneWorkingDays } from "@/lib/workload-lane";
+import { TopbarTitle } from "@/components/topbar-title";
 
 export const Route = createFileRoute("/_app/workload")({ component: Workload });
 type Drag = { person: Person; anchor: number; cursor: number };
@@ -65,7 +66,7 @@ function Workload() {
   const columns = Array.from({ length: days }, (_, i) => i).filter((i) => !weekly || i % 7 === 0);
 
   return <main className="min-w-0 space-y-5 p-4 sm:p-8">
-    <h1 className="workspace-title">{t("settings.workload.workload")}</h1>
+    <TopbarTitle>{t("settings.workload.workload")}</TopbarTitle>
     <div className="flex flex-wrap items-end gap-3">
       <label>{t("settings.workload.from")}<Input type="date" value={from} onChange={e => setFrom(e.target.value)} /></label>
       <label>{t("settings.workload.to")}<Input type="date" value={to} onChange={e => setTo(e.target.value)} /></label>

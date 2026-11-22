@@ -33,6 +33,7 @@ test("E2E-PAR-01/02: an admin defines a Bug type in the UI, and a Bug made from 
 
   await admin.goto(`/spaces/${e.PMS_FIXTURE_M8_WORK}`);
   await admin.getByRole("main").getByRole("button", { name: "New item" }).click();
+  await admin.getByRole("menuitem", { name: /^Task/ }).click();
   const create = admin.getByRole("dialog");
   await create.getByLabel("Name").fill("Crash on save");
   await create.getByRole("radio", { name: /^Task/ }).check({ force: true });

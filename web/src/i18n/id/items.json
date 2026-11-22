@@ -91,7 +91,7 @@
   "childCount_other": "{{count}} sub-item",
   "fileCount_other": "{{count}} file",
   "commentCount_other": "{{count}} komentar",
-  "addChild": "Tambah sub-item",
+  "addChild": "Tambah subtask",
   "noChildren": "Belum ada sub-item",
   "parentLink": "Kembali ke induk",
   "browseChildren": "Telusuri di dalam",
@@ -327,5 +327,6 @@
       "folder": "Field yang dicentang di sini berlaku untuk folder ini dan item di dalamnya. Field tanpa penetapan project atau folder berlaku untuk seluruh Space."
     }
   },
-  "taskChildOnly": "Task hanya boleh berisi Task. Pilih induk Task untuk tipe lain."
+  "taskChildOnly": "Task hanya boleh berisi Task. Pilih induk Task untuk tipe lain.",
+  "advancedOptions": "Opsi lanjutan"
 }

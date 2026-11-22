@@ -95,7 +95,7 @@
   "fileCount_other": "{{count}} files",
   "commentCount_one": "{{count}} comment",
   "commentCount_other": "{{count}} comments",
-  "addChild": "Add subitem",
+  "addChild": "Add subtask",
   "noChildren": "No subitems yet",
   "parentLink": "Back to parent",
   "browseChildren": "Browse inside",
@@ -333,5 +333,6 @@
       "folder": "Fields checked here apply to this folder and the items inside it. A field with no project or folder assignment applies to the whole Space."
     }
   },
-  "taskChildOnly": "A Task can only contain Tasks. Choose a Task, Project, or Folder parent for other types."
+  "taskChildOnly": "A Task can only contain Tasks. Choose a Task, Project, or Folder parent for other types.",
+  "advancedOptions": "Advanced options"
 }

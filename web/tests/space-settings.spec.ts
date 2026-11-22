@@ -16,7 +16,8 @@ test.describe("Space settings", () => {
     const table = page.getByRole("table");
     await expect(table.getByRole("row", { name: /Grace Hopper/ })).toContainText("Via group Design team");
     await expect(table.getByRole("row", { name: /Ada Lovelace/ })).toContainText("Limited by user type");
-    await expect(page.getByRole("button", { name: "Manage members and access" })).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Direct access" })).toBeVisible(); // one place to add and change direct access
+    await expect(page.getByRole("button", { name: "Manage members and access" })).toHaveCount(0);
   });
 
   test("an unknown tab goes back to General", async ({ page }) => {
@@ -49,7 +50,8 @@ test.describe("Space settings", () => {
   });
 
   test("archive asks first and sends the Space version", async ({ page }) => {
-    const { calls } = await mockSpaces(page, { extra: { [`POST /spaces/${marketing.id}/archive`]: () => ({ body: { space: { ...marketing, archived: true, version: 5 }, warnings: [] } }) } });
+    // Archiving needs the explicit Space Admin role (D-17.1, D-SA1), not a workspace admin type or a Full share.
+    const { calls } = await mockSpaces(page, { spaces: [{ ...marketing, is_space_admin: true }], extra: { [`POST /spaces/${marketing.id}/archive`]: () => ({ body: { space: { ...marketing, archived: true, version: 5 }, warnings: [] } }) } });
     await page.goto(`/spaces/${marketing.id}/settings/general`);
     await page.getByRole("button", { name: "Archive Space", exact: true }).click();
     const dialog = page.getByRole("alertdialog", { name: "Archive “Marketing”?" }).or(page.getByRole("dialog", { name: "Archive “Marketing”?" }));
@@ -129,7 +131,29 @@ test.describe("Space settings", () => {
     } });
     await page.goto(`/spaces/${marketing.id}/settings/workflows`);
     await page.getByRole("combobox", { name: "Root task workflow" }).selectOption({ label: "Alpha flow" });
-    const put = calls.find((c) => c.method === "PUT" && c.path.endsWith("/default-workflows"));
-    expect(put?.body).toEqual({ task: "a1111111-1111-4111-8111-111111111111", project: null });
+    // The save is asynchronous: wait for the PUT to reach the mock instead of reading the list once.
+    await expect.poll(() => calls.find((c) => c.method === "PUT" && c.path.endsWith("/default-workflows"))?.body).toEqual({ task: "a1111111-1111-4111-8111-111111111111", project: null });
   });
+});
+
+// Empty states: a Space with no blueprints or custom item types says what to do next, and the action works.
+const builtinType = (key: string, base: string, name: string, id: string) => ({ id, key, name, icon: "circle", base, is_builtin: true, active: true, allowed_children: [], defaults: {}, layout: {}, version: 1 });
+
+test("Space blueprints tab empty state offers the Blueprints page", async ({ page }) => {
+  await mockSpaces(page, { extra: { [`GET /spaces/${marketing.id}/blueprints`]: { body: { items: [] } } } });
+  await page.goto(`/spaces/${marketing.id}/settings/blueprints`);
+  await expect(page.getByRole("heading", { name: "No blueprints yet" })).toBeVisible();
+  await expect(page.getByText(/Blueprints are reusable structures/)).toBeVisible();
+  await page.getByRole("button", { name: "Browse blueprints" }).click();
+  await expect(page).toHaveURL(/\/blueprints/);
+});
+
+test("Space item types empty state names the next step when the Space has no custom types", async ({ page }) => {
+  await mockSpaces(page, { extra: { "GET /item-types": { body: { items: [
+    builtinType("task", "task", "Task", "11111111-1111-4111-8111-111111111111"),
+    builtinType("project", "project", "Project", "22222222-2222-4222-8222-222222222222"),
+  ] } } } });
+  await page.goto(`/spaces/${marketing.id}/settings/item-types`);
+  await expect(page.getByText("No custom item types in this Space yet")).toBeVisible();
+  await expect(page.getByRole("button", { name: "New custom item type" })).toBeVisible();
 });

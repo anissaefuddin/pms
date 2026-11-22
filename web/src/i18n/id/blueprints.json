@@ -137,5 +137,7 @@
     "noMatches": "Tidak ada blueprint yang cocok dengan filter ini.",
     "partialError": "Sebagian Space tidak bisa dimuat. Daftar mungkin belum lengkap.",
     "accountOwner": "Personal Space (akun)"
-  }
+  },
+  "createFrom": "Buat dari blueprint",
+  "searchInCreate": "Cari blueprint"
 }
