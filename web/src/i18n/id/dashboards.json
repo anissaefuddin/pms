@@ -277,11 +277,10 @@
   "overview.agenda.range": "Rentang",
   "overview.agenda.days": "{{count}} hari",
   "overview.agenda.month": "1 bulan",
-  "overview.agenda.day": "Hari",
-  "overview.agenda.pickDay": "Pilih hari",
   "overview.agenda.close": "Tutup",
   "overview.agenda.empty.title": "Tidak ada pekerjaan jatuh tempo",
   "overview.agenda.empty.description": "Tidak ada yang jatuh tempo dalam {{count}} hari ke depan. Coba rentang lebih panjang atau Space lain.",
   "overview.agenda.dayEmpty.title": "Tidak ada yang jatuh tempo hari ini",
-  "overview.agenda.dayEmpty.description": "Tidak ada proyek atau tugas yang jatuh tempo pada hari ini."
+  "overview.agenda.dayEmpty.description": "Tidak ada proyek atau tugas yang jatuh tempo pada hari ini.",
+  "overview.agenda.openDay": "Buka {{date}}, {{count}} item"
 }

@@ -78,11 +78,6 @@ export function WorkspaceAgenda() {
     {data.truncated && <p role="status" className="text-sm text-muted-foreground">{t("dashboards.overview.agenda.truncated")}</p>}
     {byDate.size === 0 && <EmptyState icon={<CalendarX />} title={t("dashboards.overview.agenda.empty.title")}
       description={t("dashboards.overview.agenda.empty.description", { count: days })} canCreate={false} />}
-    {byDate.size > 0 && <label className="block max-w-xs text-sm">{t("dashboards.overview.agenda.day")}
-      <select className={select} value={openDay ?? ""} onChange={(e) => setOpenDay(e.target.value || null)}>
-        <option value="">{t("dashboards.overview.agenda.pickDay")}</option>
-        {dates.map((date) => <option key={date} value={date}>{formatDate(date, profile)}{byDate.has(date) ? ` (${byDate.get(date)!.length})` : ""}</option>)}
-      </select></label>}
     {byDate.size > 0 && <div className="grid gap-2 sm:grid-cols-2 md:grid-cols-7">
       {dates.map((date) => <DayBox key={date} date={date} items={byDate.get(date) ?? []} profile={profile} holiday={holidays.get(date)}
         off={!working.has(new Date(`${date}T00:00:00Z`).getUTCDay())} onOpen={() => setOpenDay(date)} />)}
@@ -103,28 +98,31 @@ export function WorkspaceAgenda() {
   </div>;
 }
 
-/** One calendar box per day: weekday and date, then up to three items. The rest open in a drawer. */
+/** One calendar box per day: weekday and date, then up to three items. The whole box opens that day's panel. */
 function DayBox({ date, items, profile, holiday, off, onOpen }: { date: string; items: AgendaItem[]; profile?: CurrentUser; holiday?: string; off: boolean; onOpen: () => void }) {
   const { t } = useTranslation();
   const weekday = new Intl.DateTimeFormat(profile?.locale ?? "en", { weekday: "short", timeZone: "UTC" }).format(new Date(`${date}T00:00:00Z`));
   const extra = items.length - DAY_CHIPS;
-  return <div className={cn("flex min-h-28 flex-col gap-1.5 rounded-lg border p-2",
-    holiday ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10" : off ? "bg-muted/40" : "bg-card",
-    date === todayKey() && "border-primary/60 ring-1 ring-primary/30")} title={holiday}>
-    <div className="flex items-baseline justify-between gap-2">
-      <h2 className="text-xs text-muted-foreground"><span className={cn(holiday && "font-semibold text-rose-700 dark:text-rose-300")}>{weekday}</span> <span className="sr-only">{formatDate(date, profile)}</span></h2>
-      <span className={cn("text-sm font-semibold tabular-nums", holiday && "text-rose-700 dark:text-rose-300")} aria-hidden>{Number(date.slice(8))}</span>
+  return <div title={holiday}
+    className={cn("relative flex min-h-28 flex-col gap-1.5 rounded-lg border p-2 transition-colors hover:border-primary/50 focus-within:ring-3 focus-within:ring-ring/50",
+      holiday ? "border-rose-300 bg-rose-50 dark:border-rose-500/40 dark:bg-rose-500/10" : off ? "bg-muted/40" : "bg-card",
+      date === todayKey() && "border-primary/60 ring-1 ring-primary/30")}>
+    <button type="button" onClick={onOpen} aria-label={t("dashboards.overview.agenda.openDay", { date: formatDate(date, profile), count: items.length })}
+      className="absolute inset-0 rounded-lg outline-none" />
+    <div className="pointer-events-none flex flex-col gap-1.5">
+      <div className="flex items-baseline justify-between gap-2">
+        <h2 className="text-xs text-muted-foreground"><span className={cn(holiday && "font-semibold text-rose-700 dark:text-rose-300")}>{weekday}</span> <span className="sr-only">{formatDate(date, profile)}</span></h2>
+        <span className={cn("text-sm font-semibold tabular-nums", holiday && "text-rose-700 dark:text-rose-300")} aria-hidden>{Number(date.slice(8))}</span>
+      </div>
+      {holiday && <p className="truncate text-xs font-medium text-rose-700 dark:text-rose-300">{holiday}</p>}
+      {items.slice(0, DAY_CHIPS).map((item) => <span key={`${item.id}-${item.space_id}`} title={item.title}
+        className={cn("block rounded-md border-l-2 px-1.5 py-1 text-xs",
+          item.overdue ? "border-destructive bg-destructive/10" : item.type === "project" ? "border-sky-500 bg-sky-500/10" : "border-primary bg-primary/5")}>
+        <span className="block truncate font-medium">{item.title}</span>
+        <span className="block truncate text-xs text-foreground/80">{item.space_name}</span>
+      </span>)}
+      {extra > 0 && <span className="px-1.5 text-xs font-medium text-primary">{t("dashboards.overview.agenda.more", { count: extra })}</span>}
     </div>
-    {holiday && <p className="truncate text-xs font-medium text-rose-700 dark:text-rose-300">{holiday}</p>}
-    {items.slice(0, DAY_CHIPS).map((item) => <Link key={`${item.id}-${item.space_id}`} to="/spaces/$spaceId" params={{ spaceId: item.space_id }}
-      title={`${item.title} · ${item.space_name} · ${t(`dashboards.overview.type.${item.type}`)}`}
-      className={cn("block rounded-md border-l-2 px-1.5 py-1 text-xs outline-none hover:bg-muted focus-visible:ring-3 focus-visible:ring-ring/50",
-        item.overdue ? "border-destructive bg-destructive/10" : item.type === "project" ? "border-sky-500 bg-sky-500/10" : "border-primary bg-primary/5")}>
-      <span className="block truncate font-medium">{item.title}</span>
-      <span className="block truncate text-xs text-foreground/80">{item.space_name}</span>
-    </Link>)}
-    {extra > 0 && <Button variant="ghost" size="sm" className="h-6 justify-start px-1.5 text-xs" onClick={onOpen}>
-      {t("dashboards.overview.agenda.more", { count: extra })}</Button>}
   </div>;
 }
 
