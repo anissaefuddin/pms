@@ -9,7 +9,7 @@ import { isProjectDetail, itemKeys, listItems, listSubtree, subtreeChildren, typ
 import { Button } from "@/components/ui/button";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
-import { ItemBoard } from "@/components/item-board";
+import { BoardToggles, ItemBoard, useBoardPrefs } from "@/components/item-board";
 import { createItemOnce, quickTaskInput } from "@/lib/create-item-service";
 const ItemCalendar = lazy(() => import("@/components/item-calendar").then((module) => ({ default: module.ItemCalendar })));
 const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
@@ -78,6 +78,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
 
   // WA-D05: expansion is saved on the server per view. Each view is keyed by its id, so state never carries over between views.
   const expansion = useViewExpansion(active?.id);
+  // The board toggles live in the shared toolbar row, so their state is held here, above the early return below.
+  const boardPrefs = useBoardPrefs(active?.id ?? "");
   const isBoard = active?.type === "board";
   const group = !isBoard && (search.group === "status" || search.group === "type") ? search.group : undefined;
   const swimlanes = isBoard && search.group === "assignee";
@@ -298,8 +300,11 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       <p className="text-sm text-muted-foreground">{t("views.placeholder")}</p>
     </div> : <>
       <ViewToolbar {...toolbar} groups={isBoard ? boardGroups : tableGroups}
-        columns={!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
-          spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />} />
+        columns={<>
+          {!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
+            spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}
+          {isBoard && <BoardToggles prefs={boardPrefs} />}
+        </>} />
       {blocked && <div role="alert" className="space-y-1 rounded border border-destructive p-3 text-sm">
         <p className="font-medium">{t("views.blocked.title", { title: blocked.title })}</p>
         <ul className="list-disc pl-5">{blocked.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul>
@@ -310,7 +315,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isSuccess && (!spaceEmpty && !noMatches && items.data.length === 0 ? <EmptyState icon={<ProjectIllustration />} title={t("views.noItems.title")}
           description={t("views.noItems.description")} canCreate={canCreate}
           primaryAction={{ label: t("items.new"), onClick: () => setCreating({}) }} />
-        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} preferenceKey={active.id} onQuickCreate={quickCreate} />)
+        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} prefs={boardPrefs} onQuickCreate={quickCreate} />)
         : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}

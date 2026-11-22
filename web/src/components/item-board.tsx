@@ -34,7 +34,41 @@ function lanesOf(items: Item[], swimlanes: boolean, unassigned: string): Lane[] 
   return [...lanes, ...(rest.length || !lanes.length ? [{ key: "", name: unassigned, items: rest }] : [])];
 }
 
-export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, preferenceKey, canCreate, pending, onOpen, onAdd, onPatch, onQuickCreate }: ItemCollectionProps & { swimlanes: boolean; preferenceKey: string; onQuickCreate?: (columnId: string, title: string, id: string) => Promise<void> }) {
+/** Board density and empty-column preferences, kept per view in this browser. The workspace owns them so the toggles can sit in the shared toolbar. */
+export type BoardPrefs = { compact: boolean; hideEmpty: boolean; toggleCompact: () => void; toggleEmpty: () => void };
+export function useBoardPrefs(preferenceKey: string): BoardPrefs {
+  const emptyKey = `pms:board-hide-empty:${preferenceKey}`;
+  // Empty columns are hidden unless the user turned that off before; "0" is the only value that shows them.
+  const [hideEmpty, setHideEmpty] = useState(() => { try { return localStorage.getItem(emptyKey) !== "0"; } catch { return true; } });
+  const densityKey = `pms:board-compact:${preferenceKey}`;
+  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) === "1"; } catch { return false; } });
+  const toggleEmpty = () => setHideEmpty((value) => {
+    const next = !value;
+    try { localStorage.setItem(emptyKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
+    return next;
+  });
+  const toggleCompact = () => setCompact((value) => {
+    const next = !value;
+    try { localStorage.setItem(densityKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
+    return next;
+  });
+  return { compact, hideEmpty, toggleCompact, toggleEmpty };
+}
+
+/** The two board toggles, rendered in the view toolbar row. */
+export function BoardToggles({ prefs }: { prefs: BoardPrefs }) {
+  const { t } = useTranslation();
+  return <>
+    <Button size="sm" variant={prefs.compact ? "secondary" : "outline"} aria-pressed={prefs.compact} onClick={prefs.toggleCompact}>
+      <Rows3 />{t("views.boardCompact")}
+    </Button>
+    <Button size="sm" variant={prefs.hideEmpty ? "secondary" : "outline"} aria-pressed={prefs.hideEmpty} onClick={prefs.toggleEmpty}>
+      <EyeOff />{t("views.boardHideEmpty")}
+    </Button>
+  </>;
+}
+
+export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, prefs, canCreate, pending, onOpen, onAdd, onPatch, onQuickCreate }: ItemCollectionProps & { swimlanes: boolean; prefs: BoardPrefs; onQuickCreate?: (columnId: string, title: string, id: string) => Promise<void> }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const [dragging, setDragging] = useState<{ id: string; lane: string }>();
@@ -47,21 +81,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
     : <Button size="sm" variant="outline" onClick={() => onAdd(columnId)}><Plus />{t("views.add")}</Button>;
   const [move, setMove] = useState<Move>();
   const [now] = useState(() => Date.now());
-  const storageKey = `pms:board-hide-empty:${preferenceKey}`;
-  // Empty columns are hidden unless the user turned that off before; "0" is the only value that shows them.
-  const [hideEmpty, setHideEmpty] = useState(() => { try { return localStorage.getItem(storageKey) !== "0"; } catch { return true; } });
-  const toggleEmpty = () => setHideEmpty((value) => {
-    const next = !value;
-    try { localStorage.setItem(storageKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
-    return next;
-  });
-  const densityKey = `pms:board-compact:${preferenceKey}`;
-  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) === "1"; } catch { return false; } });
-  const toggleCompact = () => setCompact((value) => {
-    const next = !value;
-    try { localStorage.setItem(densityKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
-    return next;
-  });
+  const { hideEmpty, compact } = prefs;
   const cardFields = customFields.filter((field) => shown.includes(fieldColumn(field.id)));
   const known = new Set(statuses.map((status) => status.id));
 
@@ -82,14 +102,6 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
 
   const lanes = lanesOf(items, swimlanes, t("views.unassigned"));
   return <div className="space-y-4">
-    <div className="flex justify-end gap-2">
-      <Button size="sm" variant={compact ? "secondary" : "outline"} aria-pressed={compact} onClick={toggleCompact}>
-        <Rows3 />{t("views.boardCompact")}
-      </Button>
-      <Button size="sm" variant={hideEmpty ? "secondary" : "outline"} aria-pressed={hideEmpty} onClick={toggleEmpty}>
-        <EyeOff />{t("views.boardHideEmpty")}
-      </Button>
-    </div>
     {lanes.map((lane) => {
       const unlisted = lane.items.filter((item) => !item.status || !known.has(item.status.id));
       const cols = [
