@@ -338,5 +338,6 @@
   "boardBreakdown": "{{tasks}} tasks · {{milestones}} milestones",
   "chartScope": "Executable tasks in this project and its subtree. Milestones and folders are excluded.",
   "card.overdue": "Overdue",
-  "addToGroup": "Add item to {{name}}"
+  "addToGroup": "Add item to {{name}}",
+  "columnResize": "Resize column {{name}}"
 }

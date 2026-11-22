@@ -10,6 +10,12 @@ test("the grid shows number, predecessors and duration by default, and no status
   await expect(page.getByRole("columnheader", { name: "Status", exact: true })).toHaveCount(0);
 });
 
+test("grid columns can be resized by their grips", async ({ page }) => {
+  await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(page.locator(".wx-grip").first()).toBeAttached();
+});
+
 test("the scale menu floats at the top right and lists five scales", async ({ page }) => {
   await mockGantt(page);
   await page.goto(`${path}?view=${ganttId}`);

@@ -352,6 +352,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   }
   function init(instance: IApi) {
     chart.current = instance;
+    instance.on("resize-column", (event: { id: string | number; width: number }) => {
+      setColWidths((current) => ({ ...current, [String(event.id)]: Math.max(40, Math.round(event.width)) }));
+    });
     instance.on("resize-grid", (event: { width: number; inProgress?: boolean }) => {
       const width = Math.min(720, Math.max(280, event.width));
       setGridWidth(width);
@@ -442,6 +445,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   const predecessorText = (id: string) => deps.filter((dep) => String(dep.successor_id) === id)
     .map((dep) => numbers.get(String(dep.predecessor_id))).filter((n): n is number => n !== undefined).sort((x, y) => x - y).join(", ");
   const [editingId, setEditingId] = useState<string>();
+  // Column widths the user dragged to, kept per view in this browser (SVAR reports each drag through resize-column).
+  const colWidthsKey = `${ganttPrefKey}:columns`;
+  const [colWidths, setColWidths] = useState<Record<string, number>>(() => { try { return JSON.parse(localStorage.getItem(colWidthsKey) ?? "{}") as Record<string, number>; } catch { return {}; } });
+  const widthOf = (id: string, fallback: number) => colWidths[id] ?? fallback;
+  useEffect(() => { try { localStorage.setItem(colWidthsKey, JSON.stringify(colWidths)); } catch { /* storage can be blocked */ } }, [colWidths, colWidthsKey]);
   const [nameDraft, setNameDraft] = useState("");
   // Starts a name edit with the current title in the draft.
   function startEditing(id: string) {
@@ -457,19 +465,19 @@ export function ItemGantt({ initialOpen, onOpenChange, items, spaceId, parentId,
   saveRef.current = saveTitle;
   // Memoised so the grid keeps its cells (and an open name editor) between renders.
   const gridColumns = useMemo(() => [
-    { id: "index", header: t("views.gantt.index"), width: 48, cell: ({ row }: { row: ITask }) => <span className="tabular-nums text-muted-foreground">{numbers.get(String(row.id)) ?? ""}</span> },
-    { id: "text", header: t("views.gantt.name"), flexgrow: 1, width: 240, cell: ({ row }: { row: ITask }) => <NameCell row={row} editing={editingId === String(row.id)} draft={nameDraft} canEdit={!readonly} onStart={startEditing} onDraft={setNameDraft} onEnd={() => setEditingId(undefined)} onSave={(id, title) => saveRef.current(id, title)} /> },
+    { id: "index", header: t("views.gantt.index"), width: widthOf("index", 48), resize: true, cell: ({ row }: { row: ITask }) => <span className="tabular-nums text-muted-foreground">{numbers.get(String(row.id)) ?? ""}</span> },
+    { id: "text", header: t("views.gantt.name"), flexgrow: 1, width: widthOf("text", 240), resize: true, cell: ({ row }: { row: ITask }) => <NameCell row={row} editing={editingId === String(row.id)} draft={nameDraft} canEdit={!readonly} onStart={startEditing} onDraft={setNameDraft} onEnd={() => setEditingId(undefined)} onSave={(id, title) => saveRef.current(id, title)} /> },
     ...(gridPreset !== "minimal" ? [
-      { id: "predecessors", header: t("views.gantt.predecessors"), width: 104, cell: ({ row }: { row: ITask }) => <span className="tabular-nums">{predecessorText(String(row.id))}</span> },
-      { id: "duration", header: t("views.gantt.duration"), width: 72, cell: ({ row }: { row: ITask }) => { const n = dayCount(row); return <span className="tabular-nums">{n ? t("views.gantt.days", { count: n }) : ""}</span>; } },
+      { id: "predecessors", header: t("views.gantt.predecessors"), width: widthOf("predecessors", 104), resize: true, cell: ({ row }: { row: ITask }) => <span className="tabular-nums">{predecessorText(String(row.id))}</span> },
+      { id: "duration", header: t("views.gantt.duration"), width: widthOf("duration", 72), resize: true, cell: ({ row }: { row: ITask }) => { const n = dayCount(row); return <span className="tabular-nums">{n ? t("views.gantt.days", { count: n }) : ""}</span>; } },
     ] : []),
-    ...(gridPreset === "detail" && hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: 120, cell: StatusCell }] : []),
-    ...(gridPreset === "detail" && hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: 112 }] : []),
-    ...(gridPreset === "detail" && hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: 112 }] : []),
+    ...(gridPreset === "detail" && hasColumn("status") ? [{ id: "status_name", header: t("views.columns.status"), width: widthOf("status_name", 120), resize: true, cell: StatusCell }] : []),
+    ...(gridPreset === "detail" && hasColumn("start_date") ? [{ id: "start_text", header: t("views.start_date"), width: widthOf("start_text", 112), resize: true }] : []),
+    ...(gridPreset === "detail" && hasColumn("due_date") ? [{ id: "due_text", header: t("views.due_date"), width: widthOf("due_text", 112), resize: true }] : []),
     ...(baselineId ? [{ id: "baseline", header: t("views.gantt.baselineDates"), width: 150 }, { id: "variance", header: t("views.gantt.variance"), width: 90 }] : []),
     ...shownFields.map((field) => ({ id: `cf_${field.id}`, header: field.name, width: 120 })),
     ...(onRowAdd && !readonly ? [{ id: "row_actions", header: t("views.actions"), width: 44, cell: RowActionsCell }] : []),
-  ], [numbers, deps, gridPreset, columns, baselineId, shownFields, readonly, editingId, nameDraft, onRowAdd, t]);
+  ], [numbers, deps, gridPreset, columns, baselineId, shownFields, readonly, editingId, nameDraft, colWidths, onRowAdd, t]);
 
   return <div className="space-y-2">
     <div className="flex flex-wrap items-center gap-2">

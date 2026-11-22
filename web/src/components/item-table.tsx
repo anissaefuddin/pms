@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { canAddSubitem } from "@/lib/create-item-validate";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
@@ -24,6 +24,15 @@ import type { CustomField, CustomFieldValue } from "@/lib/custom-fields";
 import type { ItemCollectionProps } from "./item-collection-types";
 
 type PathStep = { id: string; title: string; type: string };
+/** Saved column widths for this view; a broken entry is dropped. */
+function readWidths(key: string): Record<string, number> {
+  try {
+    const parsed = JSON.parse(localStorage.getItem(key) ?? "{}") as unknown;
+    if (!parsed || typeof parsed !== "object") return {};
+    return Object.fromEntries(Object.entries(parsed).filter((entry): entry is [string, number] => typeof entry[1] === "number" && entry[1] > 0));
+  } catch { return {}; }
+}
+
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string; path?: PathStep[] };
 
 export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onAddChild, onPatch, onBulkPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
@@ -204,13 +213,28 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     ...(rows.some((row) => row.item.assignees.length > 0) ? [] : ["assignee"]),
   ]);
   const columns = allColumns.filter((column) => column.id === "name" || column.id === "actions" || (shown.includes(column.id ?? "") && !empty.has(column.id ?? "")));
-  const widths: Record<string, [string, number]> = { name: ["minmax(15rem,2fr)", 15], progress: ["8.5rem", 8.5], start_date: ["8rem", 8], due_date: ["8rem", 8], actions: ["2.5rem", 2.5] };
-  const sized = [["2.5rem", 2.5] as [string, number], ...columns.map((column) => widths[column.id ?? ""] ?? ["minmax(8rem,1fr)", 8])];
+  // Column widths in px, kept per view in this browser. Each header has a grip; the actions column is fixed.
+  const widthsKey = `pms:table-widths:${spaceId}:${parentId ?? "root"}`;
+  const [widths, setWidths] = useState<Record<string, number>>(() => readWidths(widthsKey));
+  useEffect(() => { try { localStorage.setItem(widthsKey, JSON.stringify(widths)); } catch { /* storage can be blocked */ } }, [widths, widthsKey]);
+  const defaultWidth: Record<string, number> = { name: 240, progress: 136, start_date: 128, due_date: 128, actions: 40 };
+  const widthOf = (id: string) => widths[id] ?? defaultWidth[id] ?? 128;
+  const sized = [40, ...columns.map((column) => (column.id === "actions" ? 40 : widthOf(column.id ?? "")))];
   const grid = "grid";
-  // The selection column (2.5rem) and the Name column stay in view while the table scrolls sideways.
+  // The selection column (40px) and the Name column stay in view while the table scrolls sideways.
   const stickyName = "sticky left-10 shadow-[2px_0_0_hsl(var(--border))]";
-  const minWidth = `${sized.reduce((total, [, rem]) => total + rem, 0)}rem`;
-  const gridStyle = { gridTemplateColumns: sized.map(([width]) => width).join(" "), minWidth };
+  const minWidth = `${sized.reduce((total, px) => total + px, 0)}px`;
+  const gridStyle = { gridTemplateColumns: sized.map((px) => `${px}px`).join(" "), minWidth };
+  function startResize(event: ReactPointerEvent, id: string) {
+    event.preventDefault();
+    event.stopPropagation();
+    const startX = event.clientX;
+    const startWidth = widthOf(id);
+    const move = (moveEvent: PointerEvent) => setWidths((current) => ({ ...current, [id]: Math.max(64, Math.round(startWidth + moveEvent.clientX - startX)) }));
+    const up = () => { window.removeEventListener("pointermove", move); window.removeEventListener("pointerup", up); };
+    window.addEventListener("pointermove", move);
+    window.addEventListener("pointerup", up);
+  }
   const table = useReactTable({ data: rows, columns, getCoreRowModel: getCoreRowModel(), autoResetAll: false });
   const model = table.getRowModel().rows;
   const virtual = useVirtualizer({ count: model.length, getScrollElement: () => viewport.current, estimateSize: () => 44, overscan: 8 });
@@ -292,8 +316,12 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
               ref={(element) => { if (element) element.indeterminate = somePicked; }}
               onChange={() => setPicked(allPicked ? [] : pickable.map((item) => item.id))} />
           </div>
-          {header.headers.map((cell) => <div role="columnheader" key={cell.id} className={`border-b bg-card px-2 py-2 font-medium ${cell.column.id === "name" ? `${stickyName} z-30` : cell.column.id === "actions" ? "sticky right-0 z-30 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
+          {header.headers.map((cell) => <div role="columnheader" key={cell.id} className={`relative border-b bg-card px-2 py-2 font-medium ${cell.column.id === "name" ? `${stickyName} z-30` : cell.column.id === "actions" ? "sticky right-0 z-30 shadow-[-2px_0_0_hsl(var(--border))]" : ""}`}>
             {flexRender(cell.column.columnDef.header, cell.getContext())}
+            {cell.column.id !== "actions" && <div role="separator" aria-orientation="vertical" tabIndex={0} aria-label={t("views.columnResize", { name: typeof cell.column.columnDef.header === "string" ? cell.column.columnDef.header : cell.column.id })}
+              onPointerDown={(event) => startResize(event, cell.column.id ?? "")}
+              onKeyDown={(event) => { if (event.key === "ArrowLeft" || event.key === "ArrowRight") { event.preventDefault(); const id = cell.column.id ?? ""; setWidths((current) => ({ ...current, [id]: Math.max(64, widthOf(id) + (event.key === "ArrowRight" ? 16 : -16)) })); } }}
+              className="absolute right-0 top-0 z-10 h-full w-2 cursor-col-resize touch-none outline-none hover:bg-primary/30 focus-visible:bg-primary/40" />}
           </div>)}
         </div>)}
       </div>

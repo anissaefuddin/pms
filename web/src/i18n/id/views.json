@@ -333,5 +333,6 @@
   "boardBreakdown": "{{tasks}} tugas · {{milestones}} milestone",
   "chartScope": "Tugas yang dapat dikerjakan di proyek ini dan subtree-nya. Milestone dan folder tidak termasuk.",
   "card.overdue": "Terlambat",
-  "addToGroup": "Tambah item ke {{name}}"
+  "addToGroup": "Tambah item ke {{name}}",
+  "columnResize": "Ubah lebar kolom {{name}}"
 }
