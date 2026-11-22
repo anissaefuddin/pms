@@ -27,7 +27,7 @@ import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import type { CustomField } from "@/lib/custom-fields";
 import { visibleColumns } from "@/lib/view-columns";
 import { useViewExpansion } from "@/lib/use-view-expansion";
-import { Maximize2, Minimize2 } from "lucide-react";
+import { FileSpreadsheet, Maximize2, Minimize2 } from "lucide-react";
 
 export { viewSorts } from "@/components/view-toolbar";
 const tableGroups = ["none", "status", "type"] as const;
@@ -267,11 +267,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
         {focused ? <Minimize2 /> : <Maximize2 />}{t(focused ? "views.focus.exit" : "views.focus.enter")}
       </Button>
     </div>
-    {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && <>
-      <button type="button" className="mt-2 text-sm underline" onClick={() => setExportingTable(true)}>{t("excel.exportTable")}</button>
-      {exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
-        table={{ search: filter, preset, sort, columns: visibleColumns(active.config, false), typeFilter, fieldFilter, viewId: active.id }} />}
-    </>}
+    {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
+      table={{ search: filter, preset, sort, columns: visibleColumns(active.config, false), typeFilter, fieldFilter, viewId: active.id }} />}
     {active.type === "timelog" && parent ? <Timelog project={parent.id} /> : active.type === "files" && parent ? <ProjectFiles project={parent} onOpen={onOpen} /> : active.type === "chart" && parent ? <ProjectChart project={parent} /> : isGantt ? <>
       <ViewToolbar filterOnly {...toolbar} columns={!!spaceId && <ColumnPicker fieldsOnly key={active.id + visibleColumns(active.config, false).join()} selected={visibleColumns(active.config, false)}
         fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
@@ -304,6 +301,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
           {!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
             spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}
           {isBoard && <BoardToggles prefs={boardPrefs} />}
+          {!!parent && (parent.type === "project" || parent.type === "folder") && !isBoard && <Button size="sm" variant="outline" onClick={() => setExportingTable(true)}><FileSpreadsheet />{t("excel.exportTable")}</Button>}
         </>} />
       {blocked && <div role="alert" className="space-y-1 rounded border border-destructive p-3 text-sm">
         <p className="font-medium">{t("views.blocked.title", { title: blocked.title })}</p>
