@@ -42,8 +42,10 @@ test("a regular user sees the schedule read-only", async ({ page }) => {
     "GET /settings/work-schedule": { body: initial, headers: { ETag: '"1"' } },
   } });
   await page.goto("/settings/work-schedule");
-  await expect(page.getByText("Only administrators can change the work schedule.")).toBeVisible();
-  await expect(page.getByLabel("Hours per working day")).toBeDisabled();
+  await expect(page.getByText(/shown for reference/)).toBeVisible();
+  await expect(page.getByRole("heading", { name: "January" })).toBeVisible();
+  await expect(page.getByLabel("Hours per working day")).toHaveCount(0);
+  await expect(page.getByText("Holidays", { exact: true })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Save work schedule" })).toHaveCount(0);
 });
 

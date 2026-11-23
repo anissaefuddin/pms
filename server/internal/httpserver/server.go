@@ -145,7 +145,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("DELETE /api/v1/me/avatar", s.requireUser(s.removeAvatar))
 	mux.HandleFunc("PUT /api/v1/me/view-expansion/{viewId}", s.requireUser(s.saveViewExpansion))
 	mux.HandleFunc("PUT /api/v1/me/view-preferences/{scopeId}", s.requireUser(s.saveViewPreferences))
-	mux.HandleFunc("GET /api/v1/account", s.requireUser(s.accountInfo))
+	mux.HandleFunc("GET /api/v1/account", s.requireUser(requireAdmin(s.accountInfo)))
 	mux.HandleFunc("PATCH /api/v1/account", s.requireUser(requireAdmin(s.renameAccount)))
 	mux.HandleFunc("POST /api/v1/onboarding/complete", s.requireUser(requireAdmin(s.completeOnboarding)))
 	mux.HandleFunc("GET /api/v1/me/shared", s.requireUser(s.listSharedItems))

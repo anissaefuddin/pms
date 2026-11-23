@@ -40,3 +40,17 @@ test("save an item as a blueprint, then create items from it with a start date",
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path.endsWith(`/blueprints/${bp}/items`))?.body)
     .toEqual({ locations: [{ space_id: marketing.id, parent_item_id: id }], title: "Q2 plan", start_date: "2026-11-12" });
 });
+
+test("a viewer is not offered Save as blueprint without an eligible destination", async ({ page }) => {
+  const view = ["view"];
+  await mockSpaces(page, { spaces: [{ ...marketing, my_capabilities: view }] as any, extra: {
+    [`GET /items/${id}`]: { body: { ...item, my_capabilities: view }, headers: { ETag: '"1"' } },
+    [`GET /items/${id}/children`]: { body: { items: [] } },
+    [`GET /items/${id}/comments`]: { body: { items: [] } },
+    [`GET /items/${id}/attachments`]: { body: { items: [] } },
+    [`GET /items/${id}/approvals`]: { body: { items: [] } },
+  } });
+  await page.goto(`/tasks/${id}`);
+  await page.getByRole("button", { name: "Item actions" }).click();
+  await expect(page.getByRole("menuitem", { name: "Save as blueprint" })).toHaveCount(0);
+});

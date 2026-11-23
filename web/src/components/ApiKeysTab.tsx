@@ -31,7 +31,7 @@ export function ApiKeysTab() {
   const when = (v: string | null) => v ? new Date(v).toLocaleString(i18n.language) : t("apps.api.never");
   const items = keys.data?.items ?? [];
   return <section className="space-y-5">
-    <AdminPageHeader description={t("apps.api.hint")} action={<Button onClick={() => { setCreated(null); setCreating(true); }}>{t("apps.api.createNew")}</Button>} />
+    <AdminPageHeader title={t("apps.tab.api")} description={t("apps.api.hint")} action={<Button onClick={() => { setCreated(null); setCreating(true); }}>{t("apps.api.createNew")}</Button>} />
     {error && <p role="alert" className="text-sm text-destructive">{error.message}</p>}
 
     {items.length ? <div className="overflow-x-auto rounded-lg border">

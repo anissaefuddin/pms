@@ -25,7 +25,7 @@ function Resources() {
   const admin = me?.user_type === "admin";
   const id = user || me?.id;
   const query = useQuery({ queryKey: ["resource-directory"], enabled: admin, queryFn: () => api<Directory>("/api/v1/resource-directory") });
-  const capacity = useQuery({ queryKey: ["capacity", id], enabled: !!id, queryFn: () => api<Capacity>(`/api/v1/users/${id}/capacity`) });
+  const capacity = useQuery({ queryKey: ["capacity", id], enabled: admin && !!id, queryFn: () => api<Capacity>(`/api/v1/users/${id}/capacity`) });
   const save = useMutation({ mutationFn: ({ path, method, body }: { path: string; method: string; body?: object }) =>
     api(path, { method, body: body && JSON.stringify(body) }),
     onSuccess: async () => {
@@ -39,6 +39,7 @@ function Resources() {
   ];
   const visibleTabs = tabs.filter((item) => admin || !item.adminOnly);
   const selected = directory?.users.find((entry) => entry.id === id);
+  if (me && !admin) return <p role="alert">{t("settings.adminOnly")}</p>;
   return <section className="min-w-0 space-y-6">
     <AdminPageHeader description={t("settings.resources.description")} />
     {(save.error || query.error || capacity.error) && <p role="alert" className="text-sm text-destructive">{(save.error ?? query.error ?? capacity.error)?.message}</p>}

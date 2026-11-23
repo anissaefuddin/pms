@@ -21,7 +21,7 @@ export function AuthorizedApps() {
     onSuccess: () => { setRevoking(undefined); void cache.invalidateQueries({ queryKey: ["oauth-grants"] }); },
   });
   return <section className="space-y-6">
-    <AdminPageHeader description={t("oauth.authorized.hint")} />
+    <AdminPageHeader title={t("oauth.authorized.title")} description={t("oauth.authorized.hint")} />
     <p className="text-xs text-muted-foreground">{t("oauth.authorized.personalNote")}</p>
     <FormError message={grants.error?.message ?? revoke.error?.message ?? ""} />
 

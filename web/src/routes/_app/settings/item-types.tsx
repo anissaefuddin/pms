@@ -21,6 +21,9 @@ import { TYPE_ICON_NAMES } from "@/components/type-icon";
 export const Route = createFileRoute("/_app/settings/item-types")({ component: ItemTypesRoute });
 
 function ItemTypesRoute() {
+  const { t } = useTranslation();
+  const admin = useProfile()?.user_type === "admin";
+  if (!admin) return <p role="alert">{t("settings.adminOnly")}</p>;
   return <ItemTypesPanel />;
 }
 

@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { MobileSidebar } from "@/components/sidebar";
 import { settingsGroups } from "@/components/settings-sidebar";
 import { useProfile } from "@/lib/profile";
+import { useSpaces } from "@/lib/space-queries";
 
 export const Route = createFileRoute("/_app/settings")({ component: SettingsLayout });
 
@@ -19,8 +20,9 @@ function contentWidth(pathname: string) {
 function SettingsLayout() {
   const { t } = useTranslation();
   const profile = useProfile();
+  const spaces = useSpaces();
   const pathname = useLocation({ select: (location) => location.pathname });
-  const groups = settingsGroups(profile, t);
+  const groups = settingsGroups(profile, t, spaces.data ?? []);
   const matches = groups.flatMap((group) => group.items.map((item) => ({ group, item })))
     .filter(({ item }) => pathname === item.to || pathname.startsWith(`${item.to}/`))
     .sort((a, b) => b.item.to.length - a.item.to.length);

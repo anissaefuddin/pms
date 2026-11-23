@@ -7,8 +7,7 @@ test("authorized apps tab lists and revokes", async ({ page }) => {
     "GET /oauth/grants": () => ({ body: { items: revoked ? [] : [{ id: "g1", app_name: "Sync Bot", scopes: ["read"], created_at: "2026-11-01T00:00:00Z" }] } }),
     "DELETE /oauth/grants/g1": () => { revoked = true; return { status: 204, body: null }; },
   } });
-  await page.goto("/settings/apps");
-  await page.getByRole("tab", { name: "Authorized apps" }).click(); // API keys is the first tab
+  await page.goto("/settings/security");
   await expect(page.getByText("Sync Bot")).toBeVisible();
   await page.getByRole("button", { name: "Revoke Sync Bot?" }).click();
   await page.getByRole("dialog", { name: "Revoke access for Sync Bot?" }).getByRole("button", { name: "Revoke", exact: true }).click();

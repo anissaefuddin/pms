@@ -14,6 +14,9 @@ export const Route = createFileRoute("/_app/settings/request-forms")({ component
 // Admin side of request forms: every form you can manage, and the way to start a new one. Requesters use /requests.
 function RequestFormsSettings() {
   const { t } = useTranslation();
+  const spaces = useSpaces();
+  const editable = (spaces.data ?? []).filter((space) => can(space, "edit"));
+  if (spaces.isSuccess && editable.length === 0) return <p role="alert">{t("settings.noManageableSpace")}</p>;
   return <section className="space-y-5">
     <AdminPageHeader description={t("forms.manage.description")} action={<div className="flex flex-wrap gap-2"><ConfigureEmailsButton /><NewFormButton /></div>} />
     <FormManagePanel />

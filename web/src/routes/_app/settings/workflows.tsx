@@ -36,7 +36,8 @@ function WorkflowsRoute() {
   const [moveTo, setMoveTo] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const query = useQuery({ queryKey: ["workflows"], queryFn: () => api<{ items: Workflow[] }>(`${base}/workflows`) });
+  const query = useQuery({ queryKey: ["workflows"], enabled: admin, queryFn: () => api<{ items: Workflow[] }>(`${base}/workflows`) });
+  if (!admin) return <p role="alert">{t("settings.adminOnly")}</p>;
   const workflows = query.data?.items;
   if (!workflows) return null;
   const workflow = workflows.find((wf) => wf.id === picked) ?? workflows.find((wf) => wf.is_default) ?? workflows[0];

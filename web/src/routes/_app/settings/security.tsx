@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { toast } from "sonner";
 import { useTranslation } from "react-i18next";
-import { Mail, KeyRound, ShieldCheck, AppWindow, ChevronRight } from "lucide-react";
+import { Mail, KeyRound, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
 import { useProfile } from "@/lib/profile";
 import { FormError } from "@/components/auth/form-error";
@@ -12,6 +12,7 @@ import { SsoIdentities } from "@/components/sso-identities";
 import { TwoFactorSettings } from "@/components/two-factor-settings";
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { SettingsRow, SettingsSection } from "@/components/settings/settings-ui";
+import { AuthorizedApps } from "@/components/AuthorizedApps";
 
 export const Route = createFileRoute("/_app/settings/security")({ component: Security });
 
@@ -39,15 +40,13 @@ function Security() {
           <SettingsRow icon={<ShieldCheck />} label={t("settings.security.twoFactor")} hint={t("settings.security.twoFactorHint")}>
             <a href="#two-factor" className="text-sm underline">{t("settings.security.manage")}</a>
           </SettingsRow>
-          <SettingsRow icon={<AppWindow />} label={t("settings.security.connectedApps")} hint={t("settings.security.connectedAppsHint")}>
-            <Link to="/settings/apps" className="inline-flex items-center gap-1 text-sm underline">{t("settings.security.manage")}<ChevronRight className="size-4" /></Link>
-          </SettingsRow>
         </div>
       </SettingsSection>
       <div id="two-factor" className="scroll-mt-4">
         <TwoFactorSettings />
       </div>
       <SsoIdentities />
+      <AuthorizedApps />
     </div>
   );
 }

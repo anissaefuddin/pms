@@ -124,7 +124,7 @@ export function ProfileMenu({ compact = false, footer = false }: { compact?: boo
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => navigate({ to: "/recycle-bin" })}><Trash2 />{t("nav.recycle.label")}</DropdownMenuItem>
-            <DropdownMenuItem onClick={() => navigate({ to: "/settings/apps" })}><Blocks />{t("nav.apps.label")}</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => navigate({ to: profile?.user_type === "admin" ? "/settings/apps" : "/settings/developer" })}><Blocks />{t("nav.apps.label")}</DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuGroup>

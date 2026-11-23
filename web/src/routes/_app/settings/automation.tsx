@@ -27,6 +27,8 @@ function AutomationSettings() {
   const [spaceId, setSpaceId] = useState("");
   const chosen = manageable.find((space) => space.id === spaceId) ?? manageable[0];
 
+  if (spaces.isSuccess && !isAdmin && manageable.length === 0) return <p role="alert">{t("settings.noManageableSpace")}</p>;
+
   return <section className="space-y-5">
     <p className="text-sm text-muted-foreground">{t("automation.settingsDescription")}</p>
     <SegmentedControl aria-label={t("automation.tabsLabel")} value={current}

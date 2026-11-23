@@ -6,6 +6,7 @@
     "clients": "OAuth apps"
   },
   "authorized": {
+    "title": "Authorized apps",
     "hint": "Apps you let sign in as you. Revoking cuts off access immediately.",
     "empty": "No app has access to your account.",
     "scopes": "Access",

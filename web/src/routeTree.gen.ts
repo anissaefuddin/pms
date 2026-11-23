@@ -53,6 +53,7 @@ import { Route as AppSettingsAuditRouteImport } from './routes/_app/settings/aud
 import { Route as AppSettingsAutomationRouteImport } from './routes/_app/settings/automation'
 import { Route as AppSettingsBlueprintsRouteImport } from './routes/_app/settings/blueprints'
 import { Route as AppSettingsCustomFieldsRouteImport } from './routes/_app/settings/custom-fields'
+import { Route as AppSettingsDeveloperRouteImport } from './routes/_app/settings/developer'
 import { Route as AppSettingsEmailRouteImport } from './routes/_app/settings/email'
 import { Route as AppSettingsItemTypesRouteImport } from './routes/_app/settings/item-types'
 import { Route as AppSettingsLanguageRouteImport } from './routes/_app/settings/language'
@@ -304,6 +305,11 @@ const AppSettingsCustomFieldsRoute = AppSettingsCustomFieldsRouteImport.update({
   path: '/custom-fields',
   getParentRoute: () => AppSettingsRoute,
 } as any)
+const AppSettingsDeveloperRoute = AppSettingsDeveloperRouteImport.update({
+  id: '/developer',
+  path: '/developer',
+  getParentRoute: () => AppSettingsRoute,
+} as any)
 const AppSettingsEmailRoute = AppSettingsEmailRouteImport.update({
   id: '/email',
   path: '/email',
@@ -496,6 +502,7 @@ export interface FileRoutesByFullPath {
   '/settings/automation': typeof AppSettingsAutomationRoute
   '/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
+  '/settings/developer': typeof AppSettingsDeveloperRoute
   '/settings/email': typeof AppSettingsEmailRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/language': typeof AppSettingsLanguageRoute
@@ -569,6 +576,7 @@ export interface FileRoutesByTo {
   '/settings/automation': typeof AppSettingsAutomationRoute
   '/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
+  '/settings/developer': typeof AppSettingsDeveloperRoute
   '/settings/email': typeof AppSettingsEmailRoute
   '/settings/item-types': typeof AppSettingsItemTypesRoute
   '/settings/language': typeof AppSettingsLanguageRoute
@@ -644,6 +652,7 @@ export interface FileRoutesById {
   '/_app/settings/automation': typeof AppSettingsAutomationRoute
   '/_app/settings/blueprints': typeof AppSettingsBlueprintsRoute
   '/_app/settings/custom-fields': typeof AppSettingsCustomFieldsRoute
+  '/_app/settings/developer': typeof AppSettingsDeveloperRoute
   '/_app/settings/email': typeof AppSettingsEmailRoute
   '/_app/settings/item-types': typeof AppSettingsItemTypesRoute
   '/_app/settings/language': typeof AppSettingsLanguageRoute
@@ -720,6 +729,7 @@ export interface FileRouteTypes {
     | '/settings/automation'
     | '/settings/blueprints'
     | '/settings/custom-fields'
+    | '/settings/developer'
     | '/settings/email'
     | '/settings/item-types'
     | '/settings/language'
@@ -793,6 +803,7 @@ export interface FileRouteTypes {
     | '/settings/automation'
     | '/settings/blueprints'
     | '/settings/custom-fields'
+    | '/settings/developer'
     | '/settings/email'
     | '/settings/item-types'
     | '/settings/language'
@@ -867,6 +878,7 @@ export interface FileRouteTypes {
     | '/_app/settings/automation'
     | '/_app/settings/blueprints'
     | '/_app/settings/custom-fields'
+    | '/_app/settings/developer'
     | '/_app/settings/email'
     | '/_app/settings/item-types'
     | '/_app/settings/language'
@@ -1224,6 +1236,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppSettingsCustomFieldsRouteImport
       parentRoute: typeof AppSettingsRoute
     }
+    '/_app/settings/developer': {
+      id: '/_app/settings/developer'
+      path: '/developer'
+      fullPath: '/settings/developer'
+      preLoaderRoute: typeof AppSettingsDeveloperRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/email': {
       id: '/_app/settings/email'
       path: '/email'
@@ -1451,6 +1470,7 @@ interface AppSettingsRouteChildren {
   AppSettingsAutomationRoute: typeof AppSettingsAutomationRoute
   AppSettingsBlueprintsRoute: typeof AppSettingsBlueprintsRoute
   AppSettingsCustomFieldsRoute: typeof AppSettingsCustomFieldsRoute
+  AppSettingsDeveloperRoute: typeof AppSettingsDeveloperRoute
   AppSettingsEmailRoute: typeof AppSettingsEmailRoute
   AppSettingsItemTypesRoute: typeof AppSettingsItemTypesRoute
   AppSettingsLanguageRoute: typeof AppSettingsLanguageRoute
@@ -1481,6 +1501,7 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsAutomationRoute: AppSettingsAutomationRoute,
   AppSettingsBlueprintsRoute: AppSettingsBlueprintsRoute,
   AppSettingsCustomFieldsRoute: AppSettingsCustomFieldsRoute,
+  AppSettingsDeveloperRoute: AppSettingsDeveloperRoute,
   AppSettingsEmailRoute: AppSettingsEmailRoute,
   AppSettingsItemTypesRoute: AppSettingsItemTypesRoute,
   AppSettingsLanguageRoute: AppSettingsLanguageRoute,

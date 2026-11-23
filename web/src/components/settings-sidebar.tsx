@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Search, BadgeDollarSign, Blocks, Boxes, CalendarClock, ClipboardList, Crown, History, IdCard, KeyRound, Languages, Layers, LayoutTemplate, ListChecks, Mail, Palette, ScrollText, Shapes, ShieldCheck, SlidersHorizontal, UserCog, UserPlus, UserRound, Users, Workflow, Zap } from "lucide-react";
+import { ArrowLeft, Search, BadgeDollarSign, Blocks, Boxes, CalendarClock, ClipboardList, Code2, Crown, History, IdCard, KeyRound, Languages, Layers, LayoutTemplate, ListChecks, Mail, Palette, ScrollText, Shapes, ShieldCheck, SlidersHorizontal, UserCog, UserPlus, UserRound, Users, Workflow, Zap } from "lucide-react";
 
 // One icon per Settings page, so each item reads at a glance.
 const SETTINGS_ICON: Record<string, LucideIcon> = {
@@ -13,6 +13,7 @@ const SETTINGS_ICON: Record<string, LucideIcon> = {
   "/settings/email": Mail,
   "/settings/appearance": Palette,
   "/settings/security": ShieldCheck,
+  "/settings/developer": Code2,
   "/settings/users": Users,
   "/settings/resources": Boxes,
   "/settings/apps": Blocks,
@@ -32,6 +33,9 @@ const SETTINGS_ICON: Record<string, LucideIcon> = {
   "/settings/audit": History,
 };
 import type { CurrentUser } from "@/lib/api";
+import type { Space } from "@/lib/spaces";
+import { can } from "@/lib/spaces";
+import { useSpaces } from "@/lib/space-queries";
 import type { LucideIcon } from "lucide-react";
 import { SidebarFooter } from "@/components/topbar";
 import { SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, readWidth, writeWidth } from "@/lib/sidebar-prefs";
@@ -41,33 +45,42 @@ type SettingsItem = { to: string; hash?: string; params?: { spaceId: string }; l
 type SettingsGroup = { title: string; items: SettingsItem[] };
 
 /** Settings shell sidebar (prototype): its own groups, a "Find settings" filter, and a link back to the workspace. */
-export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => string): SettingsGroup[] {
+export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => string, spaces: Space[] = []): SettingsGroup[] {
   const isAdmin = me?.user_type === "admin";
+  const managesSpace = spaces.some((space) => can(space, "edit"));
+  const managesBlueprint = spaces.some((space) => can(space, "create_blueprint") || can(space, "manage_blueprint"));
   return [
     { title: t("settings.nav.personal"), items: [
       { to: "/settings/profile", label: t("settings.profile.title") },
       { to: "/settings/work-schedule", label: t("settings.workSchedule.title") },
       { to: "/settings/language", label: t("settings.nav.language") },
       { to: "/settings/work-preferences", label: t("settings.nav.work") },
-      { to: "/settings/account", label: t("settings.account.title") },
       { to: "/settings/email", label: t("nav.account.emailPrefs") },
       { to: "/settings/appearance", label: t("nav.account.appearance") },
       { to: "/settings/security", label: t("settings.security.title") },
+      { to: "/settings/developer", label: t("settings.developer.title") },
     ] },
     { title: t("settings.nav.accountManagement"), items: [
       ...(me?.capabilities.manage_users ? [{ to: "/settings/users", label: t("settings.users.title") }] : []),
-      { to: "/settings/resources", label: t("settings.resources") },
-      { to: "/settings/apps", label: t("apps.title") },
-      ...(isAdmin ? [{ to: "/settings/rates", label: t("settings.rates") }] : []),
+      ...(isAdmin ? [
+        { to: "/settings/account", label: t("settings.account.title") },
+        { to: "/settings/resources", label: t("settings.resources") },
+        { to: "/settings/apps", label: t("apps.title") },
+        { to: "/settings/rates", label: t("settings.rates") },
+      ] : []),
       { to: "/settings/spaces", label: t("settings.spacesManagement") },
     ] },
     { title: t("settings.nav.workConfiguration"), items: [
-      { to: "/settings/item-types", label: t("settings.itemTypes.title") },
-      { to: "/settings/workflows", label: t("settings.workflows.title") },
-      { to: "/settings/custom-fields", label: t("settings.customFields.title") },
-      { to: "/settings/automation", label: t("automation.title") },
-      { to: "/settings/request-forms", label: t("forms.manage.title") },
-      { to: "/settings/blueprints", label: t("blueprints.nav") },
+      ...(isAdmin ? [
+        { to: "/settings/item-types", label: t("settings.itemTypes.title") },
+        { to: "/settings/workflows", label: t("settings.workflows.title") },
+        { to: "/settings/custom-fields", label: t("settings.customFields.title") },
+      ] : []),
+      ...((isAdmin || managesSpace) ? [
+        { to: "/settings/automation", label: t("automation.title") },
+        { to: "/settings/request-forms", label: t("forms.manage.title") },
+      ] : []),
+      ...((isAdmin || managesBlueprint) ? [{ to: "/settings/blueprints", label: t("blueprints.nav") }] : []),
     ] },
     { title: t("settings.nav.security"), items: isAdmin ? [
       { to: "/settings/sso", label: t("sso.admin.title") },
@@ -104,7 +117,8 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
     if (drag.current) setWidth(clampWidth(drag.current.width + event.clientX - drag.current.x));
   }
   const q = query.trim().toLowerCase();
-  const groups = settingsGroups(me, t).map((group) => ({
+  const spaces = useSpaces();
+  const groups = settingsGroups(me, t, spaces.data ?? []).map((group) => ({
     ...group,
     items: group.items.filter((item) => !q || item.label.toLowerCase().includes(q)),
   })).filter((group) => group.items.length > 0);

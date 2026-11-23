@@ -15,7 +15,9 @@ type Account = components["schemas"]["Account"];
 function AccountRoute() {
   const { t } = useTranslation();
   const me = useProfile() as CurrentUser | undefined;
-  const account = useQuery({ queryKey: ["account"], queryFn: () => api<Account>("/api/v1/account") });
+  const admin = me?.user_type === "admin";
+  const account = useQuery({ queryKey: ["account"], enabled: admin, queryFn: () => api<Account>("/api/v1/account") });
+  if (me && !admin) return <p role="alert">{t("settings.adminOnly")}</p>;
   if (account.isError) return <FormError message={t("settings.account.loadError")} />;
   if (!account.data || !me) return <p role="status">{t("items.loading")}</p>;
   const { data } = account;

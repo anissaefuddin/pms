@@ -6,6 +6,7 @@
     "clients": "Aplikasi OAuth"
   },
   "authorized": {
+    "title": "Aplikasi yang diotorisasi",
     "hint": "Aplikasi yang Anda izinkan masuk sebagai Anda. Mencabut akses langsung memutus aksesnya.",
     "empty": "Tidak ada aplikasi yang memiliki akses ke akun Anda.",
     "scopes": "Akses",

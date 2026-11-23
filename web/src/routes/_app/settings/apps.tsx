@@ -2,11 +2,8 @@ import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useProfile } from "@/lib/profile";
-import { ApiKeysTab } from "@/components/ApiKeysTab";
-import { AuthorizedApps } from "@/components/AuthorizedApps";
 import { ConnectorsTab } from "@/components/ConnectorsTab";
 import { OAuthClients } from "@/components/OAuthClients";
-import { WebhooksTab } from "@/components/WebhooksTab";
 import { IntegrationGallery } from "@/components/integration-gallery";
 
 export const Route = createFileRoute("/_app/settings/apps")({ component: Apps });
@@ -17,18 +14,16 @@ function Apps() {
   const { t } = useTranslation();
   const me = useProfile();
   const admin = me?.user_type === "admin";
-  const [active, setActive] = useState("api");
+  const [active, setActive] = useState("gallery");
   const sections = [
-    { id: "connectors", label: t("settings.apps.connectors.title"), body: <ConnectorsTab />, adminOnly: true },
-    { id: "authorized", label: t("oauth.apps.authorized"), body: <AuthorizedApps /> },
-    { id: "api", label: t("apps.tab.api"), body: <ApiKeysTab /> },
-    { id: "webhooks", label: t("webhooks.title"), body: <WebhooksTab /> },
-    { id: "clients", label: t("oauth.apps.clients"), body: <OAuthClients />, adminOnly: true },
-  ].filter((x) => admin || !x.adminOnly);
+    { id: "connectors", label: t("settings.apps.connectors.title"), body: <ConnectorsTab /> },
+    { id: "clients", label: t("oauth.apps.clients"), body: <OAuthClients /> },
+  ];
   const tabs = [
     { id: "gallery", label: t("apps.tab.gallery"), body: <IntegrationGallery admin={admin} onOpen={setActive} /> },
     ...sections,
   ];
+  if (me && !admin) return <p role="alert">{t("settings.adminOnly")}</p>;
   const current = tabs.find((x) => x.id === active) ?? tabs[0];
   return <section className="space-y-5">
     <h2 className="text-lg font-semibold">{t("apps.center.title")}</h2>

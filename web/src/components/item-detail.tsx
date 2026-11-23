@@ -90,6 +90,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
   const spaces = useSpaces();
   const fieldSpaceId = item.locations[0]?.space_id ?? "";
   const canManageFields = !!spaces.data?.some((space) => space.id === fieldSpaceId && can(space, "share"));
+  const canSaveBlueprint = !!spaces.data?.some((space) => space.kind === "shared" && can(space, "create_blueprint"));
   const saving = useRef(false);
   const [error, setError] = useState("");
   const [conflictDraft, setConflictDraft] = useState<ItemUpdate>();
@@ -213,7 +214,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
             onClick={() => void navigate({ to: "/spaces/$spaceId/automation", params: { spaceId: item.locations[0].space_id }, search: { container: item.id } })}>{t("automation.link")}</DropdownMenuItem>}
           {(item.type === "project" || item.type === "folder") && item.locations.length > 0 && <DropdownMenuItem onClick={() => setExporting(true)}>{t("excel.exportTitle")}</DropdownMenuItem>}
           {(item.type === "project" || item.type === "folder") && fieldSpaceId && canManageFields && <DropdownMenuItem onClick={() => setAssigningFields(true)}>{t("items.fieldAssignments.menu")}</DropdownMenuItem>}
-          <DropdownMenuItem onClick={() => setSavingBlueprint(true)}>{t("blueprints.menu")}</DropdownMenuItem>
+          {canSaveBlueprint && <DropdownMenuItem onClick={() => setSavingBlueprint(true)}>{t("blueprints.menu")}</DropdownMenuItem>}
           {canDelete && <DropdownMenuItem disabled={busy} variant="destructive"
             onClick={() => { setError(""); setDeleting(true); }}>{t("items.delete")}</DropdownMenuItem>}
         </DropdownMenuContent>

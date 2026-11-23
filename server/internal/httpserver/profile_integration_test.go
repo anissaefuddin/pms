@@ -53,9 +53,12 @@ func TestProfileEmailAndTaskDefaultsAndAccountInfo(t *testing.T) {
 		len(got.body["email_muted"].([]any)) != 0 || got.body["default_task_duration_days"] != nil || got.body["default_task_effort_minutes"] != float64(90) {
 		t.Fatalf("clear: %+v", got)
 	}
-	account := f.call(member, "GET", "/account", nil)
+	if account := f.call(member, "GET", "/account", nil); account.status != 403 {
+		t.Fatalf("regular account access: %+v", account)
+	}
+	account := f.call(admin, "GET", "/account", nil)
 	admins, _ := account.body["administrators"].([]any)
-	if account.status != 200 || account.body["role"] != "regular" || len(admins) != 1 || admins[0].(map[string]any)["id"] != admin.id || account.body["seats"] == nil || account.body["joined_at"] == nil {
+	if account.status != 200 || account.body["role"] != "admin" || len(admins) != 1 || admins[0].(map[string]any)["id"] != admin.id || account.body["seats"] == nil || account.body["joined_at"] == nil {
 		t.Fatalf("account: %+v", account)
 	}
 	if resp, err := http.Get(f.srv.URL + "/api/v1/account"); err != nil || resp.StatusCode != 401 {

@@ -15,8 +15,7 @@ test("creates a webhook, shows the secret once, pauses it and reads its log", as
     [`PATCH /webhooks/${hid}`]: (body: Record<string, unknown>) => { items = [{ ...(items[0] as object), ...body }]; return { body: items[0] }; },
     [`GET /webhooks/${hid}/deliveries`]: { body: { items: [{ id: "d1", event_type: "item.created", status: "success", attempts: 1, response_status: 200, last_error: null, created_at: "2026-11-14T10:00:00Z" }] } },
   } as never });
-  await page.goto("/settings/apps");
-  await page.getByRole("tab", { name: "Webhooks" }).click(); // API keys is the first tab
+  await page.goto("/settings/developer");
   await page.getByLabel("Name").fill("CI hook");
   await page.getByLabel("HTTPS endpoint URL").fill("https://example.com/h");
   await page.getByRole("checkbox", { name: "item.created" }).check();

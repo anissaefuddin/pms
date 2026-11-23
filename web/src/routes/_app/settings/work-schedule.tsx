@@ -107,6 +107,11 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
 
+  if (!admin) return <section className="space-y-4">
+    <p className="text-sm text-muted-foreground">{t("settings.workSchedule.calendarOnly")}</p>
+    <AnnualCalendar year={year} days={days} holidays={holidays} disabled onYear={setYear} onPick={() => undefined} />
+  </section>;
+
   function toggle(day: number) {
     const next = new Set(days);
     if (next.has(day)) next.delete(day); else next.add(day);
@@ -138,7 +143,7 @@ function ScheduleForm({ schedule, etag, reload }: { schedule: WorkSchedule; etag
   // Wide layout: rules on the left, the annual calendar uses the remaining width instead of leaving it empty.
   return <form className="space-y-6" onSubmit={save}>
     <header>
-      <p className="text-sm text-muted-foreground">{admin ? t("settings.workSchedule.description") : t("settings.workSchedule.readOnly")}</p>
+      <p className="text-sm text-muted-foreground">{t("settings.workSchedule.description")}</p>
     </header>
     <div className="grid gap-8 lg:grid-cols-[22rem_minmax(0,1fr)] lg:items-start">
     <div className="space-y-6">

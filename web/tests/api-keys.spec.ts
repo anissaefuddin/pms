@@ -13,9 +13,8 @@ test("a person creates, rotates and revokes an API key; the secret is shown once
     "POST /api-keys/k1/rotate": () => ({ body: { key: keys[0], secret: "pmsk_SECRET_TWO" } }),
     "DELETE /api-keys/k1": () => { keys = []; return { status: 204, body: null }; },
   } });
-  await page.goto("/settings/apps");
-  await expect(page.getByRole("tab", { name: "API keys" })).toBeVisible();
-  await expect(page.getByRole("tab", { name: "API keys" })).toBeVisible();
+  await page.goto("/settings/developer");
+  await expect(page.getByRole("heading", { name: "API keys" })).toBeVisible();
   await page.getByRole("button", { name: "Create API key" }).click();
   await page.getByLabel("Key name").fill("CI");
   await page.getByRole("button", { name: "Create key" }).click();
