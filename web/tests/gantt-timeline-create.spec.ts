@@ -25,13 +25,13 @@ async function openChart(page: Page, opts: Parameters<typeof mockGantt>[1] = {})
 
 const creates = (calls: any[]) => calls.filter((c) => c.method === "POST" && c.path === "/items");
 
-test("G2: double-click on an empty day opens Quick Create for that day (start = finish)", async ({ page }) => {
+test("G2: double-click on an empty day opens inline Quick Create for that day (start = finish)", async ({ page }) => {
   const { calls, chart, y } = await openChart(page);
   await page.mouse.dblclick(dayX(chart, 20), y);
-  const dialog = page.getByRole("dialog", { name: "Create item" });
-  await expect(dialog).toBeVisible();
-  await dialog.locator('input[name="title"]').fill("Double clicked");
-  await dialog.getByRole("button", { name: "Create item" }).click();
+  const input = page.getByRole("textbox", { name: "New task name" });
+  await expect(input).toBeVisible();
+  await input.fill("Double clicked");
+  await input.press("Enter");
   await expect.poll(() => creates(calls)[0]?.body).toMatchObject({ title: "Double clicked", start_date: dayText(20), due_date: dayText(20) });
 });
 
@@ -42,10 +42,10 @@ test("G1: drag Monday to Friday creates a range Monday to Friday", async ({ page
   await page.mouse.move(dayX(chart, 19), y, { steps: 4 });
   await page.mouse.move(dayX(chart, 21), y, { steps: 4 });
   await page.mouse.up();
-  const dialog = page.getByRole("dialog", { name: "Create item" });
-  await expect(dialog).toBeVisible();
-  await dialog.locator('input[name="title"]').fill("Mon to Fri");
-  await dialog.getByRole("button", { name: "Create item" }).click();
+  const input = page.getByRole("textbox", { name: "New task name" });
+  await expect(input).toBeVisible();
+  await input.fill("Mon to Fri");
+  await input.press("Enter");
   await expect.poll(() => creates(calls)[0]?.body).toMatchObject({ start_date: dayText(17), due_date: dayText(21) });
 });
 
@@ -56,9 +56,9 @@ test("G1: drag Friday to Monday keeps the weekend inside the range, and creates 
   await page.mouse.move(dayX(chart, 22), y, { steps: 4 });
   await page.mouse.move(dayX(chart, 21), y, { steps: 4 });
   await page.mouse.up();
-  const dialog = page.getByRole("dialog", { name: "Create item" });
-  await dialog.locator('input[name="title"]').fill("Fri to Mon");
-  await dialog.getByRole("button", { name: "Create item" }).click();
+  const input = page.getByRole("textbox", { name: "New task name" });
+  await input.fill("Fri to Mon");
+  await input.press("Enter");
   await expect.poll(() => creates(calls)[0]?.body).toMatchObject({ start_date: dayText(21), due_date: dayText(24) });
   expect(creates(calls)[0].body.assignee_allocations ?? []).toEqual([]);
 });
@@ -66,13 +66,13 @@ test("G1: drag Friday to Monday keeps the weekend inside the range, and creates 
 test("G4: a click without a move creates nothing; a drag that leaves the timeline is cancelled", async ({ page }) => {
   const { calls, chart, y } = await openChart(page);
   await page.mouse.click(dayX(chart, 18), y);
-  await expect(page.getByRole("dialog", { name: "Create item" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "New task name" })).toHaveCount(0);
   await page.mouse.move(dayX(chart, 17), y);
   await page.mouse.down();
   await page.mouse.move(dayX(chart, 20), y, { steps: 4 });
   await page.mouse.move(dayX(chart, 20), chart.y - 80, { steps: 4 });
   await page.mouse.up();
-  await expect(page.getByRole("dialog", { name: "Create item" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "New task name" })).toHaveCount(0);
   expect(creates(calls)).toHaveLength(0);
 });
 
@@ -81,9 +81,19 @@ test("G2: double-click on an existing bar creates nothing", async ({ page }) => 
   const bar = page.locator('.wx-bar[data-id=":b0000000-0000-4000-8000-000000000001"]');
   const box = (await bar.boundingBox())!;
   await page.mouse.dblclick(box.x + box.width / 2, box.y + box.height / 2);
-  await expect(page.getByRole("dialog", { name: "Create item" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "New task name" })).toHaveCount(0);
   expect(creates(calls)).toHaveLength(0);
   expect(chart.width).toBeGreaterThan(0);
+});
+
+test("Escape cancels the inline timeline create without creating an item", async ({ page }) => {
+  const { calls, chart, y } = await openChart(page);
+  await page.mouse.dblclick(dayX(chart, 20), y);
+  const input = page.getByRole("textbox", { name: "New task name" });
+  await input.fill("Cancel me");
+  await input.press("Escape");
+  await expect(input).toHaveCount(0);
+  expect(creates(calls)).toHaveLength(0);
 });
 
 test("Week and Month: timeline create is off, the chart says why, and the row menu still works", async ({ page }) => {
@@ -92,7 +102,7 @@ test("Week and Month: timeline create is off, the chart says why, and the row me
   await expect(page.locator(".gantt-chart")).toHaveAttribute("title", "Switch to Day view to create a task on the timeline.");
   await page.mouse.dblclick(dayX(chart, 20), y);
   await expect(page.getByText("Switch to Day view to create a task on the timeline.")).toBeVisible();
-  await expect(page.getByRole("dialog", { name: "Create item" })).toHaveCount(0);
+  await expect(page.getByRole("textbox", { name: "New task name" })).toHaveCount(0);
   expect(creates(calls)).toHaveLength(0);
   // The scale does not change on its own, and the row menu is still there.
   await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Weeks/);

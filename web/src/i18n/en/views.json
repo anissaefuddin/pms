@@ -185,6 +185,9 @@
     "zoomOut": "Zoom out",
     "keysLabel": "Keyboard help",
     "fit": "Fit project",
+    "fitAll": "Fit all scheduled items",
+    "fitVisible": "Fit visible items",
+    "fitSelected": "Fit selected item",
     "showSelected": "Show selected",
     "gridPreset": "Grid",
     "gridPresets": {
@@ -208,6 +211,14 @@
     "duration": "Duration",
     "days": "{{count}}d",
     "addTask": "Add task, then press Enter",
+    "timelineTaskName": "New task name",
+    "createOnDate": "Create task on {{date}}",
+    "choosePeriod": "Choose timeline month",
+    "go": "Go",
+    "scheduleItem": "Schedule {{name}}",
+    "scheduleUpdated": "Schedule updated",
+    "scheduleRestored": "Previous schedule restored",
+    "undo": "Undo",
     "quarter": "Quarters",
     "year": "Years",
     "predecessorsOf": "Predecessors of {{name}}"
@@ -263,6 +274,23 @@
     "moreOn": "More items on {{date}}",
     "closeMore": "Close more items",
     "navigate": "Calendar navigation"
+    ,"choosePeriod": "Choose calendar period"
+    ,"yearInput": "Year"
+    ,"go": "Go"
+    ,"chooseDate": "Choose date"
+    ,"density": "Density"
+    ,"comfortable": "Comfortable"
+    ,"compact": "Compact"
+    ,"dayDetails": "Day details"
+    ,"scheduledCount_one": "{{count}} scheduled item"
+    ,"scheduledCount_other": "{{count}} scheduled items"
+    ,"newItem": "New item"
+    ,"openWeek": "Open week"
+    ,"itemsOnDate": "Items on this date"
+    ,"noItemsDate": "No scheduled items in this period."
+    ,"weekAgenda": "This week's agenda"
+    ,"monthSummary": "{{deadlines}} due · {{milestones}} milestones · {{overdue}} overdue"
+    ,"activity": "{{active}} active · {{boundaries}} starts or deadlines"
     ,"options": "Customize calendar"
     ,"showWeekends": "Show weekends"
     ,"showWeekNumbers": "Show week numbers"

@@ -135,9 +135,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   }
   // B2.2: a Board column creates its Task through the shared service. B2.4: if an active filter hides the new item,
   // say so instead of implying the create failed. The filter is left as the user set it.
-  async function quickCreate(columnId: string, title: string, id: string) {
+  async function quickCreate(columnId: string, title: string, id: string, dates?: { start: string; finish: string }) {
     if (!me || !spaceId) throw new Error(t("views.createFailed"));
-    const item = await createItemOnce(qc, { ...quickTaskInput(me, spaceId, parent?.id, title, columnId), id }, me);
+    const item = await createItemOnce(qc, { ...quickTaskInput(me, spaceId, parent?.id, title, columnId),
+      ...(dates ? { start_date: dates.start, due_date: dates.finish } : {}), id }, me);
     if (!noticeIfHidden(item)) toast.success(t("items.created", { name: item.title }));
   }
   // B2.4 / R4: a create that the active filter hides must say so, for every entry point (Board, Table "+ Add", the dialog).
@@ -296,7 +297,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {items.isSuccess && <Suspense fallback={<div role="status" aria-label={t("views.gantt.loading")} className="h-[60vh] min-h-72 animate-pulse overflow-hidden rounded border bg-card p-3"><div className="mb-3 h-8 w-72 rounded bg-muted" /><div className="grid h-full grid-cols-[22rem_1fr] gap-px bg-border"><div className="space-y-px bg-card">{Array.from({ length: 9 }, (_, index) => <div key={index} className="h-11 bg-muted/60" />)}</div><div className="bg-[repeating-linear-gradient(90deg,transparent_0,transparent_35px,hsl(var(--border))_36px)]" /></div><span className="sr-only">{t("views.gantt.loading")}</span></div>}>
         <ItemGantt key={active?.id} statuses={collection.statuses} columns={ganttColumns(active.config)} renderToolbar={(controls) => <ViewToolbar filterOnly {...toolbar} columns={<>{!!spaceId && <ColumnPicker fieldsOnly key={active.id + ganttColumns(active.config).join()} selected={ganttColumns(active.config)}
-          fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}{controls}</>} />} onQuickCreate={collection.canCreate ? (title, id) => quickCreate("", title, id) : undefined} onTimelineCreate={collection.canCreate ? (start, finish) => setCreating({ day: start, finishDay: finish }) : undefined} onRowAdd={(kind, item, previousId) => {
+          fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}{controls}</>} />} onQuickCreate={collection.canCreate ? (title, id) => quickCreate("", title, id) : undefined}
+          onTimelineQuickCreate={collection.canCreate ? (title, id, start, finish) => quickCreate("", title, id, { start, finish }) : undefined} onRowAdd={(kind, item, previousId) => {
           if (kind === "child") { setCreating({ parent: item }); return; }
           const parentId = item.locations.find((loc) => loc.space_id === spaceId)?.parent_item_id ?? null;
           const parentItem = parentId ? (items.data ?? []).find((entry) => entry.id === parentId) : undefined;
@@ -306,11 +308,11 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
     </> : isCalendar ? <>
-      <ViewToolbar filterOnly {...toolbar} />
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {noMatches && !spaceEmpty ? emptyResults : items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
-        <ItemCalendar items={filtered} statuses={collection.statuses} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} onDelete={setDeleting} onCreateOn={collection.canCreate ? (day) => setCreating({ day }) : undefined} />
+        <ItemCalendar items={filtered} statuses={collection.statuses} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} onDelete={setDeleting} onCreateOn={collection.canCreate ? (day) => setCreating({ day }) : undefined}
+          renderToolbar={(controls) => <ViewToolbar filterOnly {...toolbar} columns={controls} />} />
       </Suspense>}
     </> : !isCollection ? <div className="space-y-1 rounded border p-4">
       <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>

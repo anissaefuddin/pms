@@ -55,6 +55,14 @@ test("a conflict keeps the bar where it was and says so", async ({ page }) => {
   expect((await bar(page, design).boundingBox())!.x).toBe(before);
 });
 
+test("a schedule change offers Undo and restores the previous dates", async ({ page }) => {
+  const { calls } = await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await drag(page, design, 36);
+  await page.getByRole("button", { name: "Undo" }).click();
+  await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toEqual({ start_date: "2026-11-02", due_date: "2026-11-03" });
+});
+
 test("view-only users cannot drag, and the chart says so", async ({ page }) => {
   const { calls } = await mockGantt(page, { space: ["view"] });
   await page.goto(`${path}?view=${ganttId}`);

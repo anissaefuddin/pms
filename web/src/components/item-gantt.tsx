@@ -4,9 +4,10 @@ import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react
 import "@svar-ui/react-gantt/style.css";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
-import { ChevronDown, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus } from "lucide-react";
+import { CalendarDays, ChevronDown, ChevronLeft, ChevronRight, ChevronsDownUp, ChevronsUpDown, Minus, MoreHorizontal, Plus, RotateCcw } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DatePicker, calendarDate, dateValue } from "@/components/ui/date-picker";
 import { Dialog, DialogContent, DialogDescription, DialogTitle } from "@/components/ui/dialog";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -35,6 +36,8 @@ const dependencyTypes: DependencyType[] = ["FS", "SS", "FF", "SF"];
 const fromLink = (type: string) => (Object.keys(linkTypes) as DependencyType[]).find((key) => linkTypes[key] === type);
 type Scale = "day" | "week" | "month" | "quarter" | "year";
 const scaleOptions: Scale[] = ["year", "quarter", "month", "week", "day"];
+const ganttMonthFormat: Intl.DateTimeFormatOptions = { month: "short", year: "numeric" };
+const ganttShortMonthFormat: Intl.DateTimeFormatOptions = { month: "short" };
 /** One row per scale: the px a cell takes, and how many px one day takes (for the off-view count). */
 const scaleGeometry: Record<Scale, { cell: number; perDay: number }> = {
   year: { cell: 24, perDay: 24 / 30 }, quarter: { cell: 90, perDay: 90 / 90 }, month: { cell: 90, perDay: 90 / 30 },
@@ -54,7 +57,7 @@ function BarLabel({ data }: { data: ITask }) {
   const item = actions?.byId.get(String(data.id));
   const [base, dark] = barColors[String(data.status_color)] ?? barColors.blue;
   const done = Math.min(100, Math.max(0, Number(data.progress ?? 0)));
-  return <div data-bar-status={String(data.status_color ?? "")} data-bar-kind={String(data.type ?? "task")} data-bar-state={String(data.status_group ?? "")} data-overdue={String(!!data.overdue)} className="gantt-bar-fill group relative"
+  return <div title={`${String(data.text ?? "")} · ${done}%`} data-bar-status={String(data.status_color ?? "")} data-bar-kind={String(data.type ?? "task")} data-bar-state={String(data.status_group ?? "")} data-overdue={String(!!data.overdue)} className="gantt-bar-fill group relative"
     style={{ background: `linear-gradient(to right, ${dark} ${done}%, ${base} ${done}%)` }}>
     <span className="truncate pr-5">{[data.text, data.assignee_names].filter(Boolean).join(" • ")}</span>
     {actions && item && <span className="absolute right-0.5 top-0.5 z-20"><ItemChartMenu item={item} statuses={actions.statuses} readonly={actions.readonly} onOpen={actions.onOpen} onPatch={actions.onPatch} onDelete={actions.onDelete} /></span>}
@@ -258,7 +261,7 @@ function RowActionsCell({ row }: { row: ITask }) {
   return <GanttRowMenu item={item} previousId={previousId} spaceId={ctx.spaceId} onAdd={ctx.onRowAdd} />;
 }
 
-export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onDelete, onAdd, onRowAdd, onTimelineCreate, onQuickCreate, renderToolbar }: {
+export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onDelete, onAdd, onRowAdd, onTimelineCreate, onTimelineQuickCreate, onQuickCreate, renderToolbar }: {
   initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
   onOpenChange?: (open: boolean) => void;
   items: Item[];
@@ -279,12 +282,18 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   onRowAdd?: (kind: GanttRowAdd, item: Item, previousId: string | null) => void;
   /** Batch 3C: a double-click or a drag on empty timeline days opens Quick Create with that range (YYYY-MM-DD, inclusive). */
   onTimelineCreate?: (start: string, finish: string) => void;
+  /** Creates a dated Task from the compact editor shown directly on the timeline. */
+  onTimelineQuickCreate?: (title: string, id: string, start: string, finish: string) => Promise<void>;
   onPatch: (item: Item, update: ItemUpdate) => Promise<void>;
 }) {
   const { t, i18n } = useTranslation();
   const profile = useProfile();
   const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
   const [scale, setScale] = useState<Scale>(() => { try { const saved = localStorage.getItem(`${ganttPrefKey}:scale`) as Scale | null; return saved && scaleOptions.includes(saved) ? saved : "day"; } catch { return "day"; } });
+  const [navigationDate, setNavigationDate] = useState(() => { const date = new Date(); return new Date(date.getFullYear(), date.getMonth(), 1); });
+  const [rangeAnchor, setRangeAnchor] = useState<Date>();
+  const [navigationYear, setNavigationYear] = useState(() => String(new Date().getFullYear()));
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
   const [selected, setSelected] = useState<string>();
   const [undatedOpen, setUndatedOpen] = useState(false);
   const [baselineId, setBaselineId] = useState("");
@@ -382,11 +391,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   const undated = undatedItems.length;
   const range = useMemo(() => {
     const dated = tasks.filter((task) => task.start && task.end);
-    if (!dated.length) return {};
-    const first = Math.min(...dated.map((task) => task.start!.getTime()));
-    const last = Math.max(...dated.map((task) => task.end!.getTime()));
+    if (!dated.length && !rangeAnchor) return {};
+    const first = Math.min(...(rangeAnchor ? [rangeAnchor.getTime()] : []), ...dated.map((task) => task.start!.getTime()));
+    const last = Math.max(...(rangeAnchor ? [addDays(rangeAnchor, 31).getTime()] : []), ...dated.map((task) => task.end!.getTime()));
     return { start: addDays(new Date(first), -3), end: addDays(new Date(last), 21) };
-  }, [tasks]);
+  }, [tasks, rangeAnchor]);
   // Bars that lie left or right of the visible part of the chart. Counted on scroll, so the user sees that work exists beyond the view.
   const [outside, setOutside] = useState<{ left: string[]; right: string[] }>({ left: [], right: [] });
   const pxPerDay = scaleGeometry[scale].perDay;
@@ -417,10 +426,23 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
     if (side === "right") chart.scrollLeft = Math.max(0, dayOf(task.start!) * pxPerDay - 2 * pxPerDay);
     else chart.scrollLeft = Math.max(0, dayOf(task.end!) * pxPerDay - chart.clientWidth + 3 * pxPerDay);
   }
+  function scrollToDate(date: Date) {
+    setNavigationDate(new Date(date.getFullYear(), date.getMonth(), 1));
+    setRangeAnchor(new Date(date.getFullYear(), date.getMonth(), 1));
+    setNavigationYear(String(date.getFullYear()));
+    const dated = tasks.filter((task) => task.start);
+    const origin = addDays(new Date(Math.min(date.getTime(), ...dated.map((task) => task.start!.getTime()))), -3);
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      const chart = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
+      if (chart) chart.scrollLeft = Math.max(0, Math.round((date.getTime() - origin.getTime()) / 86_400_000) * pxPerDay - chart.clientWidth / 3);
+    }));
+  }
   // Batch 3C: the drag in progress on the timeline. Nothing is created until the pointer is released after a real move.
   const [drag, setDrag] = useState<{ from: number; to: number; fromX: number; moved: boolean }>();
+  const [timelineCandidate, setTimelineCandidate] = useState<{ index: number; top: number }>();
+  const [timelineDraft, setTimelineDraft] = useState<{ first: number; last: number; top: number; title: string; busy: boolean }>();
   // Timeline create runs on the day scale only: a day is the unit a drag can select exactly.
-  const timelineCreate = !!onTimelineCreate && !readonly && scale === "day" && !!range.start;
+  const timelineCreate = !!(onTimelineCreate || onTimelineQuickCreate) && !readonly && scale === "day" && !!range.start;
   const dayAt = (clientX: number) => {
     const chart = chartRegion.current?.querySelector(".wx-chart") as HTMLElement | null;
     return chart ? dayIndexAt(clientX, chart.getBoundingClientRect().left, chart.scrollLeft, dayCellWidth) : null;
@@ -432,6 +454,12 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
     return !el.closest(".wx-bar, .wx-link, .wx-milestone, .wx-summary, .wx-progress-marker, [class*='resize']");
   };
   const dayDate = (index: number) => fromDay(addDays(range.start!, index));
+  function beginTimelineCreate(first: number, last: number, clientY: number) {
+    if (onTimelineQuickCreate) {
+      const wrap = chartRegion.current?.getBoundingClientRect();
+      setTimelineDraft({ first, last, top: Math.max(72, clientY - (wrap?.top ?? 0) - 18), title: "", busy: false });
+    } else onTimelineCreate?.(dayDate(first), dayDate(last));
+  }
   const dragPreview = (() => {
         const chart = chartRegion.current?.querySelector(".wx-chart") as HTMLElement | null;
         const wrap = chartRegion.current;
@@ -444,6 +472,34 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
           style={{ left: offset + first * dayCellWidth, width: (last - first + 1) * dayCellWidth }}>
           <span className="absolute left-1 top-1 rounded bg-background px-1 text-xs shadow">{formatDate(startDay, profile)} – {formatDate(endDay, profile)}</span>
         </div>;
+  })();
+  const timelineEditor = (() => {
+    const chart = chartRegion.current?.querySelector(".wx-chart") as HTMLElement | null;
+    const wrap = chartRegion.current;
+    if (!timelineDraft || !chart || !wrap) return null;
+    const offset = chart.getBoundingClientRect().left - wrap.getBoundingClientRect().left - chart.scrollLeft;
+    return <form className="absolute z-40 flex h-8 items-center rounded border border-primary bg-background p-0.5 shadow-lg"
+      style={{ left: offset + timelineDraft.first * dayCellWidth, top: timelineDraft.top, width: Math.max(180, (timelineDraft.last - timelineDraft.first + 1) * dayCellWidth) }}
+      onSubmit={async (event) => {
+        event.preventDefault();
+        const title = timelineDraft.title.trim();
+        if (!title || timelineDraft.busy || !onTimelineQuickCreate) return;
+        setTimelineDraft((current) => current && { ...current, busy: true });
+        try { await onTimelineQuickCreate(title, newItemId(), dayDate(timelineDraft.first), dayDate(timelineDraft.last)); setTimelineDraft(undefined); }
+        catch (err) { toast.error((err as Error).message || t("views.createFailed")); setTimelineDraft((current) => current && { ...current, busy: false }); }
+      }}>
+      <input autoFocus value={timelineDraft.title} disabled={timelineDraft.busy} maxLength={500} aria-label={t("views.gantt.timelineTaskName")} placeholder={t("views.gantt.timelineTaskName")}
+        className="min-w-0 flex-1 bg-transparent px-2 text-sm outline-none" onChange={(event) => setTimelineDraft((current) => current && { ...current, title: event.target.value })}
+        onKeyDown={(event) => { if (event.key === "Escape") { event.preventDefault(); setTimelineDraft(undefined); } }} />
+    </form>;
+  })();
+  const timelineAdd = (() => {
+    const chart = chartRegion.current?.querySelector(".wx-chart") as HTMLElement | null;
+    const wrap = chartRegion.current;
+    if (!timelineCandidate || timelineDraft || !chart || !wrap) return null;
+    const offset = chart.getBoundingClientRect().left - wrap.getBoundingClientRect().left - chart.scrollLeft;
+    return <Button type="button" size="icon-sm" className="absolute z-40 size-6 rounded-full shadow" aria-label={t("views.gantt.createOnDate", { date: formatDate(dayDate(timelineCandidate.index), profile) })}
+      style={{ left: offset + timelineCandidate.index * dayCellWidth + 5, top: timelineCandidate.top }} onClick={() => { beginTimelineCreate(timelineCandidate.index, timelineCandidate.index, timelineCandidate.top + (wrap.getBoundingClientRect().top ?? 0)); setTimelineCandidate(undefined); }}><Plus /></Button>;
   })();
 
   const ref = useRef({ byId, readonly, onPatch, t, addDependency, removeDependency });
@@ -481,7 +537,12 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       return;
     }
     const next = { start_date: fromDay(start), due_date: fromDay(finish) };
-    if (next.start_date !== item.start_date || next.due_date !== item.due_date) void onPatch(item, next);
+    if (next.start_date !== item.start_date || next.due_date !== item.due_date) {
+      const previous = { start_date: item.start_date, due_date: item.due_date };
+      void onPatch(item, next).then(() => toast.success(t("views.gantt.scheduleUpdated"), { action: {
+        label: t("views.gantt.undo"), onClick: () => void onPatch(item, previous).then(() => toast.success(t("views.gantt.scheduleRestored"))),
+      } })).catch((err) => toast.error((err as Error).message || t("views.gantt.moveError")));
+    }
   }
   function init(instance: IApi) {
     chart.current = instance;
@@ -622,14 +683,34 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
 
   const controls = <>
       <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
-      <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(".gantt-today")?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.today")}</Button>
+      <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
+        <PopoverTrigger render={<Button size="sm" variant="outline" aria-label={t("views.gantt.choosePeriod")} />}><CalendarDays />{new Intl.DateTimeFormat(i18n.language, ganttMonthFormat).format(navigationDate)}<ChevronDown /></PopoverTrigger>
+        <PopoverContent align="start" className="w-72 space-y-3">
+          <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); const year = Number(navigationYear); if (year >= 1900 && year <= 9999) scrollToDate(new Date(year, navigationDate.getMonth(), 1)); }}>
+            <label className="flex-1 text-xs font-medium">{t("views.gantt.year")}<Input type="number" min={1900} max={9999} value={navigationYear} onChange={(event) => setNavigationYear(event.target.value)} className="mt-1" /></label>
+            <Button type="submit" size="sm">{t("views.gantt.go")}</Button>
+          </form>
+          <div className="grid grid-cols-4 gap-1">{Array.from({ length: 12 }, (_, monthIndex) => {
+            const date = new Date(Number(navigationYear) || navigationDate.getFullYear(), monthIndex, 1);
+            return <Button key={monthIndex} size="sm" variant={navigationDate.getMonth() === monthIndex ? "secondary" : "ghost"} onClick={() => { scrollToDate(date); setDatePickerOpen(false); }}>{new Intl.DateTimeFormat(i18n.language, ganttShortMonthFormat).format(date)}</Button>;
+          })}</div>
+        </PopoverContent>
+      </Popover>
+      <Button size="sm" variant="outline" onClick={() => scrollToDate(new Date())}>{t("views.gantt.today")}</Button>
       {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
       {/* C-04: brings the selected bar into view; nothing changes on screen until a bar is selected. */}
       {selected && <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.showSelected")}</Button>}
-      <Button size="sm" variant="outline" disabled={!tasks.some((task) => task.start)} onClick={() => {
-        const earliest = tasks.filter((task) => task.start).sort((a, b) => a.start!.getTime() - b.start!.getTime())[0];
-        chartRegion.current?.querySelector(`.wx-bar[data-id=":${earliest?.id}"]`)?.scrollIntoView({ inline: "start", block: "nearest" });
-      }}>{t("views.gantt.fit")}</Button>
+      <DropdownMenu>
+        <DropdownMenuTrigger render={<Button size="sm" variant="outline" disabled={!tasks.some((task) => task.start)} />}><span>{t("views.gantt.fit")}</span><ChevronDown /></DropdownMenuTrigger>
+        <DropdownMenuContent align="start">
+          <DropdownMenuItem onClick={() => {
+            const earliest = tasks.filter((task) => task.start).sort((a, b) => a.start!.getTime() - b.start!.getTime())[0];
+            chartRegion.current?.querySelector(`.wx-bar[data-id=":${earliest?.id}"]`)?.scrollIntoView({ inline: "start", block: "nearest" });
+          }}>{t("views.gantt.fitAll")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={() => measureOutside()}>{t("views.gantt.fitVisible")}</DropdownMenuItem>
+          <DropdownMenuItem disabled={!selected} onClick={() => selected && chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.fitSelected")}</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
       {!!parentId && <>
         <label className="flex items-center gap-1 text-sm">{t("views.gantt.baseline")}
           <select value={baselineId} onChange={(event) => setBaselineId(event.target.value)} className="rounded border bg-background p-1">
@@ -677,20 +758,27 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       <DialogContent>
         <DialogTitle>{t("views.gantt.unscheduledTitle")}</DialogTitle>
         <DialogDescription>{t("views.gantt.unscheduledDescription")}</DialogDescription>
-        <ul className="max-h-[60vh] divide-y overflow-y-auto">{undatedItems.map((item) => <li key={item.id}>
-          <button type="button" className="w-full px-2 py-3 text-left text-sm hover:bg-muted focus-visible:outline-ring" onClick={() => { setUndatedOpen(false); onOpen(item); }}>{item.title}</button>
+        <ul className="max-h-[60vh] divide-y overflow-y-auto">{undatedItems.map((item) => <li key={item.id} className="flex items-center gap-2 px-2 py-2">
+          <button type="button" className="min-w-0 flex-1 truncate text-left text-sm hover:underline focus-visible:outline-ring" onClick={() => { setUndatedOpen(false); onOpen(item); }}>{item.title}</button>
+          {!readonly && item.my_capabilities.includes("edit") && <DatePicker label={t("views.gantt.scheduleItem", { name: item.title })} workingDays onChange={(date) => { const day = dateValue(date); if (day) { const parsed = toDay(day); if (parsed) { change(item.id, parsed, parsed); setUndatedOpen(false); } } }} />}
         </li>)}</ul>
       </DialogContent>
     </Dialog>
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0}
-      onKeyDown={(event) => { if (drag && event.key === "Escape") { setDrag(undefined); return; } keyboard(event); }}
-      title={onTimelineCreate && !readonly && scale !== "day" ? t("views.gantt.dayOnlyCreate") : undefined}
+      onKeyDown={(event) => { if (event.key === "Escape" && (drag || timelineCandidate)) { setDrag(undefined); setTimelineCandidate(undefined); return; } keyboard(event); }}
+      title={(onTimelineCreate || onTimelineQuickCreate) && !readonly && scale !== "day" ? t("views.gantt.dayOnlyCreate") : undefined}
+      onClick={(event) => {
+        if (!timelineCreate || drag?.moved || !onEmptyTimeline(event.target)) return;
+        const index = dayAt(event.clientX);
+        const wrap = chartRegion.current?.getBoundingClientRect();
+        if (index !== null) setTimelineCandidate({ index, top: Math.max(72, event.clientY - (wrap?.top ?? 0) - 12) });
+      }}
       onDoubleClick={(event) => {
         // On Week and Month the timeline does not create; say why instead of doing nothing (the row menu and + Add still work).
-        if (onTimelineCreate && !readonly && scale !== "day" && onEmptyTimeline(event.target)) { toast.info(t("views.gantt.dayOnlyCreate")); return; }
+        if ((onTimelineCreate || onTimelineQuickCreate) && !readonly && scale !== "day" && onEmptyTimeline(event.target)) { toast.info(t("views.gantt.dayOnlyCreate")); return; }
         if (!timelineCreate || !onEmptyTimeline(event.target)) return;
         const index = dayAt(event.clientX);
-        if (index !== null) { const day = dayDate(index); onTimelineCreate!(day, day); }
+        if (index !== null) beginTimelineCreate(index, index, event.clientY);
       }}
       onPointerDown={(event) => {
         if (!timelineCreate || event.button !== 0 || !onEmptyTimeline(event.target)) return;
@@ -703,14 +791,16 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         if (index === null) return;
         setDrag((current) => current && { ...current, to: index, moved: current.moved || isDragStep(current.fromX, event.clientX) });
       }}
-      onPointerUp={() => {
-        if (drag?.moved) { const { first, last } = dayRange(drag.from, drag.to); onTimelineCreate!(dayDate(first), dayDate(last)); }
+      onPointerUp={(event) => {
+        if (drag?.moved) { const { first, last } = dayRange(drag.from, drag.to); beginTimelineCreate(first, last, event.clientY); }
         setDrag(undefined);
       }}
       onPointerLeave={() => setDrag(undefined)}
       onPointerCancel={() => setDrag(undefined)}
       className="gantt-chart relative min-h-72 overflow-hidden rounded border text-[13px] focus-visible:outline-ring [&_.wx-theme]:h-full" style={{ height: chartHeight }}>
       {dragPreview}
+      {timelineAdd}
+      {timelineEditor}
       <div className={onQuickCreate && !readonly ? "h-[calc(100%-38px)]" : "h-full"}>
         <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
         <Theme>

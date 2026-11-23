@@ -183,6 +183,9 @@
     "zoomOut": "Perkecil",
     "keysLabel": "Bantuan keyboard",
     "fit": "Sesuaikan proyek",
+    "fitAll": "Sesuaikan semua item terjadwal",
+    "fitVisible": "Sesuaikan item yang terlihat",
+    "fitSelected": "Sesuaikan item terpilih",
     "showSelected": "Tampilkan yang dipilih",
     "gridPreset": "Grid",
     "gridPresets": {
@@ -206,6 +209,14 @@
     "duration": "Durasi",
     "days": "{{count}} hr",
     "addTask": "Tambah task, lalu tekan Enter",
+    "timelineTaskName": "Nama task baru",
+    "createOnDate": "Buat task pada {{date}}",
+    "choosePeriod": "Pilih bulan timeline",
+    "go": "Buka",
+    "scheduleItem": "Jadwalkan {{name}}",
+    "scheduleUpdated": "Jadwal diperbarui",
+    "scheduleRestored": "Jadwal sebelumnya dipulihkan",
+    "undo": "Urungkan",
     "quarter": "Kuartal",
     "year": "Tahun",
     "predecessorsOf": "Pendahulu dari {{name}}"
@@ -259,6 +270,22 @@
     "moreOn": "Item lainnya pada {{date}}",
     "closeMore": "Tutup item lainnya",
     "navigate": "Navigasi kalender"
+    ,"choosePeriod": "Pilih periode kalender"
+    ,"yearInput": "Tahun"
+    ,"go": "Buka"
+    ,"chooseDate": "Pilih tanggal"
+    ,"density": "Kepadatan"
+    ,"comfortable": "Nyaman"
+    ,"compact": "Ringkas"
+    ,"dayDetails": "Detail hari"
+    ,"scheduledCount": "{{count}} item terjadwal"
+    ,"newItem": "Item baru"
+    ,"openWeek": "Buka minggu"
+    ,"itemsOnDate": "Item pada tanggal ini"
+    ,"noItemsDate": "Tidak ada item terjadwal pada periode ini."
+    ,"weekAgenda": "Agenda minggu ini"
+    ,"monthSummary": "{{deadlines}} tenggat · {{milestones}} milestone · {{overdue}} terlambat"
+    ,"activity": "{{active}} aktif · {{boundaries}} mulai atau tenggat"
     ,"options": "Sesuaikan kalender"
     ,"showWeekends": "Tampilkan akhir pekan"
     ,"showWeekNumbers": "Tampilkan nomor minggu"
