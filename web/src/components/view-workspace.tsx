@@ -94,6 +94,9 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const isCollection = active?.type === "table" || active?.type === "board";
   const items = useQuery({
     queryKey: flat ? [...sortedKey, "subtree"] : sortedKey, enabled: !active || isCollection || isGantt || isCalendar || active?.type === "chart",
+    // Keep the active view mounted while a filter or sort refetches. Besides avoiding a blank
+    // flash, this preserves open toolbar popovers so users can adjust several options at once.
+    placeholderData: (previous) => previous,
     queryFn: async () => {
       const query = (path: string) => listItems(path, sort === "manual" ? undefined : sort, typeFilter || undefined, fieldFilter || undefined, preset || undefined);
       const top = await query(base + (parent ? "/children" : "/items"));

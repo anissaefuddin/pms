@@ -368,7 +368,7 @@ test("a Space's item types: its own types are editable there, Workspace types ar
     [`POST /item-types`]: (body: Record<string, unknown>) => ({ status: 201, body: { ...bugType, ...body, id: "66666666-6666-4666-8666-666666666666", version: 1 }, headers: { ETag: '"1"' } }),
   } });
   await page.goto(`/spaces/${marketing.id}/item-types`);
-  await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Item types in this Space", exact: true })).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit: Space bug" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Edit: Bug" })).toHaveCount(0);
   await page.getByRole("button", { name: "Create a custom item type" }).first().click();
@@ -415,7 +415,7 @@ test("the registry, the type form, and a Space's item types pass axe", async ({ 
   expect((await new AxeBuilder({ page }).include('[role="dialog"]').analyze()).violations).toEqual([]);
   await page.keyboard.press("Escape");
   await page.goto(`/spaces/${marketing.id}/item-types`);
-  await expect(page.getByRole("heading", { name: "Item types in this Space" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Item types in this Space", exact: true })).toBeVisible();
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
