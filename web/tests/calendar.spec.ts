@@ -31,40 +31,40 @@ test("shows a multi-day item once per week, holidays, and Unscheduled", async ({
   await page.goto(path);
   await page.getByRole("button", { name: "All scheduled" }).click();
   // C2: a multi-day item is one bar in the week, drawn where it starts; it is not repeated in each day cell.
-  await expect(cell(page, 10).getByRole("button", { name: /Launch prep/ })).toBeVisible();
-  await expect(page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: /Launch prep/ })).toHaveCount(1);
+  await expect(cell(page, 10).getByRole("button", { name: "Launch prep", exact: true })).toBeVisible();
+  await expect(page.getByRole("grid", { name: "Calendar" }).getByRole("button", { name: "Launch prep", exact: true })).toHaveCount(1);
   // Only item bars count here: the "New task on" control of a working day is not an item.
   await expect(cell(page, 13).getByRole("button", { name: /^(?!New task on)/ })).toHaveCount(0);
   await expect(cell(page, 11)).toContainText("Founders Day");
   await page.getByRole("button", { name: "Unscheduled 1" }).click();
   await expect(page.getByRole("region", { name: "Unscheduled" }).getByRole("button", { name: "Someday" })).toBeVisible();
   await page.getByRole("button", { name: "Next month" }).click();
-  await expect(page.getByRole("button", { name: /Launch prep/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: "Launch prep", exact: true })).toHaveCount(0);
   await page.getByRole("button", { name: "Today" }).click();
-  await expect(cell(page, 10).getByRole("button", { name: /Launch prep/ })).toBeVisible();
+  await expect(cell(page, 10).getByRole("button", { name: "Launch prep", exact: true })).toBeVisible();
 });
 
-test("month view starts with the quieter boundaries display and remembers an explicit change", async ({ page }) => {
+test("month view starts with all scheduled items and remembers an explicit change", async ({ page }) => {
   await mock(page);
   await page.goto(path);
-  await expect(page.getByRole("button", { name: "Starts & deadlines" })).toHaveAttribute("aria-pressed", "true");
-  await page.getByRole("button", { name: "All scheduled" }).click();
-  await page.reload();
   await expect(page.getByRole("button", { name: "All scheduled" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Starts & deadlines" }).click();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Starts & deadlines" })).toHaveAttribute("aria-pressed", "true");
 });
 
 test("dragging moves the whole span, dropping an unscheduled item gives it one day, and keys move by day or week", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto(path);
   await page.setViewportSize({ width: 1400, height: 1200 });
-  await cell(page, 10).getByRole("button", { name: /Launch prep/ }).dragTo(cell(page, 17));
+  await cell(page, 10).getByRole("button", { name: "Launch prep", exact: true }).dragTo(cell(page, 17));
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${span.id}`)?.body)
     .toEqual({ start_date: `${ym}-17`, due_date: `${ym}-19` });
   await page.getByRole("button", { name: "Unscheduled 1" }).click();
   await page.getByRole("region", { name: "Unscheduled" }).getByRole("button", { name: "Someday" }).dragTo(cell(page, 20));
   await expect.poll(() => calls.find((call) => call.method === "PATCH" && call.path === `/items/${loose.id}`)?.body)
     .toEqual({ start_date: `${ym}-20`, due_date: `${ym}-20` });
-  await cell(page, 17).getByRole("button", { name: /Launch prep/ }).focus();
+  await cell(page, 17).getByRole("button", { name: "Launch prep", exact: true }).focus();
   await page.keyboard.press("Alt+ArrowRight");
   await expect.poll(() => calls.filter((call) => call.method === "PATCH" && call.path === `/items/${span.id}`).at(-1)?.body)
     .toEqual({ start_date: `${ym}-18`, due_date: `${ym}-20` });
@@ -73,8 +73,8 @@ test("dragging moves the whole span, dropping an unscheduled item gives it one d
 test("view-only users cannot move items; axe is clean", async ({ page }) => {
   const { calls } = await mock(page, ["view"]);
   await page.goto(path);
-  await expect(cell(page, 10).getByRole("button", { name: /Launch prep/ })).toHaveAttribute("draggable", "false");
-  await cell(page, 10).getByRole("button", { name: /Launch prep/ }).focus();
+  await expect(cell(page, 10).getByRole("button", { name: "Launch prep", exact: true })).toHaveAttribute("draggable", "false");
+  await cell(page, 10).getByRole("button", { name: "Launch prep", exact: true }).focus();
   await page.keyboard.press("Alt+ArrowRight");
   expect(calls.some((call) => call.method === "PATCH")).toBe(false);
   for (const scheme of ["light", "dark"] as const) {
@@ -104,4 +104,18 @@ test("calendar keyboard help is available on demand", async ({ page }) => {
   await page.getByRole("button", { name: "Calendar help" }).click();
   const dialog = page.getByRole("dialog", { name: "Calendar help" });
   await expect(dialog).toContainText("Alt with an arrow key");
+});
+
+test("calendar options hide weekends, show week numbers, and persist", async ({ page }) => {
+  await mock(page);
+  await page.goto(path);
+  await page.getByRole("button", { name: "Customize calendar" }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Show weekends" }).click();
+  await page.getByRole("menuitemcheckbox", { name: "Show week numbers" }).click();
+  await expect(page.getByRole("columnheader", { name: "Sat" })).toHaveCount(0);
+  await expect(page.getByRole("columnheader", { name: "Sun" })).toHaveCount(0);
+  await expect(page.getByRole("columnheader", { name: "Wk" })).toBeVisible();
+  await page.reload();
+  await expect(page.getByRole("columnheader", { name: "Sat" })).toHaveCount(0);
+  await expect(page.getByRole("columnheader", { name: "Wk" })).toBeVisible();
 });

@@ -259,6 +259,15 @@
     "moreOn": "Item lainnya pada {{date}}",
     "closeMore": "Tutup item lainnya",
     "navigate": "Navigasi kalender"
+    ,"options": "Sesuaikan kalender"
+    ,"showWeekends": "Tampilkan akhir pekan"
+    ,"showWeekNumbers": "Tampilkan nomor minggu"
+    ,"showSubitems": "Tampilkan subitem"
+    ,"colorBy": "Warna berdasarkan"
+    ,"colorStatus": "Status"
+    ,"colorType": "Tipe item"
+    ,"maxItems": "Maksimum item terlihat"
+    ,"weekShort": "Mg"
   },
   "priority": "Prioritas",
   "predecessors": "Pendahulu",

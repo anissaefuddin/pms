@@ -2,12 +2,11 @@
 // Fungsi murni: bisa dites tanpa React. Tanggal dipakai sebagai hari (lihat calendar-days.ts), tanpa zona waktu.
 // Helper kecil di sini (bukan impor) agar bisa dites dengan node --test tanpa resolusi alias.
 const addDays = (date: Date, days: number) => new Date(date.getFullYear(), date.getMonth(), date.getDate() + days);
-const daysBetween = (from: Date, to: Date) => Math.round((to.getTime() - from.getTime()) / 86_400_000);
 
 export const MAX_LANES = 3;
 
 export type Bar = { id: string; startCol: number; endCol: number; lane: number; continuesBefore: boolean; continuesAfter: boolean };
-export type WeekLayout = { bars: Bar[]; hidden: { id: string; startCol: number; endCol: number }[]; overflowByCol: number[] };
+export type WeekLayout = { bars: Bar[]; hidden: Omit<Bar, "lane">[]; overflowByCol: number[] };
 
 export type CalendarEntry = { id: string; itemId: string; start: Date; end: Date };
 
@@ -27,27 +26,29 @@ export function calendarEntries(items: { id: string; start: Date; end: Date }[],
  * tidak digambar tetapi dihitung per kolom (`overflowByCol`) dan disimpan di `hidden`, supaya tetap bisa dibuka lewat "+N".
  * Urutan deterministik: mulai lebih dulu, lalu lebih panjang, lalu id.
  */
-export function layoutWeek(items: { id: string; start: Date; end: Date }[], weekStart: Date): WeekLayout {
-  const weekEnd = addDays(weekStart, 6);
+export function layoutDays(items: { id: string; start: Date; end: Date }[], days: Date[], maxLanes = MAX_LANES): WeekLayout {
+  const weekStart = days[0], weekEnd = days[days.length - 1];
   const segments = items
     .filter((item) => item.end >= weekStart && item.start <= weekEnd && item.end >= item.start)
     .map((item) => {
-      const from = item.start < weekStart ? weekStart : item.start;
-      const to = item.end > weekEnd ? weekEnd : item.end;
-      return { id: item.id, startCol: daysBetween(weekStart, from), endCol: daysBetween(weekStart, to),
+      const startCol = days.findIndex((day) => day >= item.start);
+      let endCol = -1;
+      for (let index = days.length - 1; index >= 0; index--) if (days[index] <= item.end) { endCol = index; break; }
+      return { id: item.id, startCol, endCol,
         continuesBefore: item.start < weekStart, continuesAfter: item.end > weekEnd };
     })
+    .filter((item) => item.startCol >= 0 && item.endCol >= item.startCol)
     .sort((a, b) => a.startCol - b.startCol || (b.endCol - b.startCol) - (a.endCol - a.startCol) || a.id.localeCompare(b.id));
 
   const laneEnds: number[][] = []; // per lane: columns already taken
   const bars: Bar[] = [];
   const hidden: WeekLayout["hidden"] = [];
-  const overflowByCol = Array.from({ length: 7 }, () => 0);
+  const overflowByCol = Array.from({ length: days.length }, () => 0);
   for (const segment of segments) {
     let lane = laneEnds.findIndex((taken) => taken.every((col) => col < segment.startCol || col > segment.endCol));
     if (lane === -1) lane = laneEnds.length;
-    if (lane >= MAX_LANES) {
-      hidden.push({ id: segment.id, startCol: segment.startCol, endCol: segment.endCol });
+    if (lane >= maxLanes) {
+      hidden.push(segment);
       for (let col = segment.startCol; col <= segment.endCol; col++) overflowByCol[col]++;
       continue;
     }
@@ -56,4 +57,8 @@ export function layoutWeek(items: { id: string; start: Date; end: Date }[], week
     bars.push({ ...segment, lane });
   }
   return { bars, hidden, overflowByCol };
+}
+
+export function layoutWeek(items: { id: string; start: Date; end: Date }[], weekStart: Date, maxLanes = MAX_LANES): WeekLayout {
+  return layoutDays(items, Array.from({ length: 7 }, (_, index) => addDays(weekStart, index)), maxLanes);
 }

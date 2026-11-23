@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { calendarEntries, layoutWeek } from "./calendar-layout.ts";
+import { calendarEntries, layoutDays, layoutWeek } from "./calendar-layout.ts";
 
 const day = (value: string) => new Date(`${value}T00:00:00`);
 const week = day("2026-11-16"); // Monday
@@ -55,4 +55,10 @@ test("month boundaries show a long item only on its start and finish dates", () 
     ["project:end", "2027-02-05"],
   ]);
   assert.equal(layoutWeek(entries, week).bars.length, 0);
+});
+
+test("hidden weekends use five real date columns without losing a spanning item", () => {
+  const workdays = ["2026-11-16", "2026-11-17", "2026-11-18", "2026-11-19", "2026-11-20"].map(day);
+  const layout = layoutDays([item("a", "2026-11-19", "2026-11-23")], workdays);
+  assert.deepEqual(layout.bars[0], { id: "a", startCol: 3, endCol: 4, lane: 0, continuesBefore: false, continuesAfter: true });
 });

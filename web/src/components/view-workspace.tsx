@@ -28,6 +28,7 @@ import type { CustomField } from "@/lib/custom-fields";
 import { ganttColumns, visibleColumns } from "@/lib/view-columns";
 import { useViewExpansion } from "@/lib/use-view-expansion";
 import { FileSpreadsheet, Maximize2, Minimize2 } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export { viewSorts } from "@/components/view-toolbar";
 const tableGroups = ["none", "status", "type"] as const;
@@ -43,6 +44,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   onOpen: (item: Item) => void;
 }) {
   const { t } = useTranslation();
+  const [deleting, setDeleting] = useState<Item>();
+  const [deleteError, setDeleteError] = useState("");
   const router = useRouter();
   const search = useSearch({ strict: false });
   const qc = useQueryClient();
@@ -108,7 +111,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const [savingColumns, setSavingColumns] = useState(false);
   const [exportingTable, setExportingTable] = useState(false);
   const workflows = useQuery({
-    queryKey: ["workflows"], enabled: isCollection,
+    queryKey: ["workflows"], enabled: isCollection || isCalendar || isGantt,
     queryFn: () => api<{ items: components["schemas"]["Workflow"][] }>("/api/v1/workflows"),
   });
   const workflow = workflows.data?.items.find((wf) => wf.id === parent?.default_workflow_id)
@@ -208,6 +211,16 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       setPending(false);
     }
   }
+  async function remove() {
+    if (!deleting || pending) return;
+    setPending(true); setDeleteError("");
+    try {
+      await api(`/api/v1/items/${deleting.id}`, { method: "DELETE" });
+      await qc.invalidateQueries(isList);
+      setDeleting(undefined);
+    } catch (error) { setDeleteError((error as Error).message); }
+    finally { setPending(false); }
+  }
   async function saveColumns(columns: string[]) {
     if (!active) return;
     setSavingColumns(true);
@@ -280,7 +293,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
           const parentItem = parentId ? (items.data ?? []).find((entry) => entry.id === parentId) : undefined;
           setCreating({ parent: parentItem, day: item.start_date ?? item.due_date ?? undefined, locationParent: parentId, placement: { parentId, after: kind === "below" ? item.id : previousId } });
         }} initialOpen={!expansion.initial.gantt_collapsed} onOpenChange={(open) => expansion.save({ rows: [], gantt_collapsed: !open })} items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
-          customFields={customFields}
+          customFields={customFields} onDelete={setDeleting}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
     </> : isCalendar ? <>
@@ -288,7 +301,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {noMatches && !spaceEmpty ? emptyResults : items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
-        <ItemCalendar items={filtered} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} onCreateOn={collection.canCreate ? (day) => setCreating({ day }) : undefined} />
+        <ItemCalendar items={filtered} statuses={collection.statuses} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} onDelete={setDeleting} onCreateOn={collection.canCreate ? (day) => setCreating({ day }) : undefined} />
       </Suspense>}
     </> : !isCollection ? <div className="space-y-1 rounded border p-4">
       <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>
@@ -316,5 +329,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
       initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialTypeKey={creating.typeKey} initialAssignee={creating.assignee} initialDate={creating.day} initialFinish={creating.finishDay} location={{ space_id: spaceId, parent_item_id: creating.locationParent !== undefined ? (creating.locationParent ?? undefined) : (creating.parent?.id ?? parent?.id) }} me={me} onCreated={(item) => { noticeIfHidden(item); if (creating?.placement) void placeNextTo(item, creating.placement); onOpen(item); }} />}
+    <ConfirmDialog open={!!deleting} onOpenChange={(open) => { if (!open) setDeleting(undefined); }} title={t("items.delete")} description={t("items.deleteDescription")}
+      confirmLabel={t("items.delete")} cancelLabel={t("items.cancel")} onConfirm={remove} busy={pending} error={deleteError} />
   </section>;
 }

@@ -263,6 +263,15 @@
     "moreOn": "More items on {{date}}",
     "closeMore": "Close more items",
     "navigate": "Calendar navigation"
+    ,"options": "Customize calendar"
+    ,"showWeekends": "Show weekends"
+    ,"showWeekNumbers": "Show week numbers"
+    ,"showSubitems": "Show subitems"
+    ,"colorBy": "Color by"
+    ,"colorStatus": "Status"
+    ,"colorType": "Item type"
+    ,"maxItems": "Maximum visible items"
+    ,"weekShort": "Wk"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",

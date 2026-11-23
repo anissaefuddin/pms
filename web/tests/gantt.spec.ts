@@ -155,3 +155,16 @@ test("selected custom fields become Gantt grid columns", async ({ page }) => {
   await expect(page.getByRole("gridcell", { name: "20" })).toBeVisible();
   await expect(page.getByRole("button", { name: "Columns" })).toBeVisible();
 });
+
+test("a Gantt bar menu exposes direct item actions", async ({ page }) => {
+  const active = { id: "88888888-8888-4888-8888-888888888888", name: "Active", color: "blue", group: "active" };
+  const done = { id: "99999999-9999-4999-8999-999999999999", name: "Done", color: "green", group: "completed" };
+  await mockGantt(page, { extra: { "GET /workflows": { body: { items: [{ is_default: true, statuses: [active, done] }] } } } });
+  await page.goto(`${path}?view=${ganttId}`);
+  await page.getByRole("button", { name: "Item actions: Design" }).click();
+  await expect(page.getByRole("menuitem", { name: "Go to full details" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Copy link" })).toBeVisible();
+  await page.getByRole("menuitem", { name: "Status" }).hover();
+  await expect(page.getByRole("menuitem", { name: "Done" })).toBeVisible();
+  await expect(page.getByRole("menuitem", { name: "Delete item" })).toBeVisible();
+});

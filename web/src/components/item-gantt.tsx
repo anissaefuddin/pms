@@ -24,6 +24,7 @@ import { customFieldText, type CustomField } from "@/lib/custom-fields";
 import { clampedWidth, clampWidths } from "@/lib/view-widths";
 import { fieldColumn } from "@/lib/view-columns";
 import { statusDotClass } from "@/lib/status-colors";
+import { ItemChartMenu } from "@/components/item-chart-menu";
 
 type Baseline = components["schemas"]["Baseline"];
 type Variance = components["schemas"]["BaselineVariance"];
@@ -45,13 +46,18 @@ const barColors: Record<string, [string, string]> = {
   green: ["#15803d", "#14532d"], lime: ["#4d7c0f", "#365314"], amber: ["#b45309", "#78350f"], orange: ["#c2410c", "#7c2d12"], // allow-hex
   red: ["#b91c1c", "#7f1d1d"], pink: ["#be185d", "#831843"], purple: ["#7e22ce", "#581c87"], indigo: ["#4338ca", "#312e81"], // allow-hex
 };
+type BarActionsValue = { byId: Map<string, Item>; statuses: ItemStatus[]; readonly: boolean; onOpen: (item: Item) => void; onPatch: (item: Item, update: ItemUpdate) => Promise<void>; onDelete: (item: Item) => void };
+const BarActionsContext = createContext<BarActionsValue | null>(null);
 /** Bar content: fill coloured by status (darker part = progress) plus "name • assignees". */
 function BarLabel({ data }: { data: ITask }) {
+  const actions = useContext(BarActionsContext);
+  const item = actions?.byId.get(String(data.id));
   const [base, dark] = barColors[String(data.status_color)] ?? barColors.blue;
   const done = Math.min(100, Math.max(0, Number(data.progress ?? 0)));
-  return <div data-bar-status={String(data.status_color ?? "")} data-bar-kind={String(data.type ?? "task")} data-bar-state={String(data.status_group ?? "")} data-overdue={String(!!data.overdue)} className="gantt-bar-fill"
+  return <div data-bar-status={String(data.status_color ?? "")} data-bar-kind={String(data.type ?? "task")} data-bar-state={String(data.status_group ?? "")} data-overdue={String(!!data.overdue)} className="gantt-bar-fill group relative"
     style={{ background: `linear-gradient(to right, ${dark} ${done}%, ${base} ${done}%)` }}>
-    <span className="truncate">{[data.text, data.assignee_names].filter(Boolean).join(" • ")}</span>
+    <span className="truncate pr-5">{[data.text, data.assignee_names].filter(Boolean).join(" • ")}</span>
+    {actions && item && <span className="absolute right-0.5 top-0.5 z-20"><ItemChartMenu item={item} statuses={actions.statuses} readonly={actions.readonly} onOpen={actions.onOpen} onPatch={actions.onPatch} onDelete={actions.onDelete} /></span>}
   </div>;
 }
 
@@ -252,7 +258,7 @@ function RowActionsCell({ row }: { row: ITask }) {
   return <GanttRowMenu item={item} previousId={previousId} spaceId={ctx.spaceId} onAdd={ctx.onRowAdd} />;
 }
 
-export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onAdd, onRowAdd, onTimelineCreate, onQuickCreate, renderToolbar }: {
+export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId, parentId, readonly, customFields, columns, onOpen, onPatch, onDelete, onAdd, onRowAdd, onTimelineCreate, onQuickCreate, renderToolbar }: {
   initialOpen?: boolean; // WA-D05: whether the hierarchy opens expanded
   onOpenChange?: (open: boolean) => void;
   items: Item[];
@@ -263,6 +269,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   parentId?: string;
   readonly: boolean;
   onOpen: (item: Item) => void;
+  onDelete: (item: Item) => void;
   onAdd?: () => void;
   /** The filter row. The workspace passes the shared toolbar; the Gantt's own controls go into its columns slot. */
   renderToolbar?: (controls: ReactNode) => ReactNode;
@@ -684,9 +691,9 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       <div className={onQuickCreate && !readonly ? "h-[calc(100%-38px)]" : "h-full"}>
         <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
         <Theme>
-        <Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scaleGeometry[scale].cell}
+        <BarActionsContext.Provider value={{ byId, statuses, readonly, onOpen, onPatch, onDelete }}><Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scaleGeometry[scale].cell}
           highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
-          columns={gridColumns} />
+          columns={gridColumns} /></BarActionsContext.Provider>
         </Theme>
         </RowActionsContext.Provider>
       </div>
