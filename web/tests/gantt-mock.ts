@@ -47,7 +47,7 @@ export const bar = (page: import("@playwright/test").Page, id: string) => page.l
 
 export const design = kids[0].id;
 
-/** The Gantt scale is chosen from the floating menu at the top right of the chart. */
+/** The Gantt scale is chosen from the controls in the shared view toolbar. */
 export async function pickScale(page: import("@playwright/test").Page, name: string) {
   await page.getByRole("button", { name: "Time scale" }).click();
   await page.getByRole("menuitem", { name, exact: true }).click();

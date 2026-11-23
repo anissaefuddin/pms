@@ -54,11 +54,28 @@ test("axe finds no serious violations on Space settings and the registry", async
   }
 });
 
-test("the Space header keeps New item primary; Share, Bookmarks and Settings are first in the actions menu", async ({ page }) => {
-  await mockSpaces(page);
+test("Space information stays behind the title icon and view actions share the tabs row", async ({ page }) => {
+  await mockSpaces(page, { extra: {
+    [`GET /spaces/${marketing.id}/views`]: { body: { items: [{ id: "11111111-1111-4111-8111-111111111111", type: "table", name: "Table", visibility: "public", position: 0, is_default: true, config: {} }] } },
+    "GET /workflows": { body: { items: [] } },
+  } });
   await page.goto(`/spaces/${marketing.id}`);
-  await expect(page.getByRole("button", { name: "New item", exact: true })).toBeVisible();
-  await page.getByRole("button", { name: "Space actions" }).click();
+  await expect(page.getByText(marketing.description, { exact: true })).toHaveCount(0);
+  await page.getByRole("button", { name: "Space information" }).click();
+  await expect(page.getByText(marketing.description, { exact: true })).toBeVisible();
+  await page.keyboard.press("Escape");
+
+  const tabs = page.getByRole("navigation", { name: "Views" });
+  const focus = page.getByRole("button", { name: "Focus", exact: true });
+  const create = page.getByRole("button", { name: "New item", exact: true });
+  const menu = page.getByRole("button", { name: "Space actions" });
+  for (const action of [focus, create, menu]) await expect(action).toBeVisible();
+  const tabsBox = (await tabs.boundingBox())!;
+  const boxes = await Promise.all([focus, create, menu].map((action) => action.boundingBox()));
+  expect(boxes.every((box) => box && Math.abs(box.y - tabsBox.y) < 12)).toBe(true);
+  expect(boxes.map((box) => box!.x)).toEqual([...boxes.map((box) => box!.x)].sort((a, b) => a - b));
+
+  await menu.click();
   await expect(page.getByRole("menuitem").first()).toBeVisible();
   const names = await page.getByRole("menuitem").allInnerTexts();
   expect(names.slice(0, 3)).toEqual(["Share", "Bookmarks", "Settings"]);

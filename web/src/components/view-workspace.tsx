@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type ReactNode } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -34,7 +34,7 @@ export { viewSorts } from "@/components/view-toolbar";
 const tableGroups = ["none", "status", "type"] as const;
 const boardGroups = ["none", "assignee"] as const;
 
-export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen, spaceEmpty = false }: {
+export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen, spaceEmpty = false, actions }: {
   spaceId: string;
   spaceEmpty?: boolean;
   parent?: Item;
@@ -42,6 +42,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   canCreate: boolean;
   canEdit: boolean;
   onOpen: (item: Item) => void;
+  actions?: ReactNode;
 }) {
   const { t } = useTranslation();
   const [deleting, setDeleting] = useState<Item>();
@@ -259,10 +260,12 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     router.history.replace(url.pathname + url.search + url.hash);
   }
   // The existing Space empty state stays available while the View list loads.
-  if (!active) return views.isError && !!items.data?.length
-    ? <ul className="mt-4 divide-y rounded border">{items.data.map((item) => <li key={item.id}>
+  if (!active) return <section className="min-w-0 space-y-2 text-[13px]">
+    {actions && <div className="flex justify-end gap-2">{actions}</div>}
+    {views.isError && !!items.data?.length && <ul className="divide-y rounded border">{items.data.map((item) => <li key={item.id}>
       <button type="button" className="block w-full p-3 text-left" onClick={() => onOpen(item)}>{item.title}</button>
-    </li>)}</ul> : null;
+    </li>)}</ul>}
+  </section>;
   const filtered = (items.data ?? []).filter((item) => (!flat || item.type !== "folder") && item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase()));
   const noMatches = items.isSuccess && filtered.length === 0 && hasFilters;
   const emptyResults = <div className="space-y-2"><p role="status">{t("views.empty")}</p>
@@ -281,9 +284,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       <div className="min-w-0 flex-1"><ViewTabs views={available} selected={active} canEdit={canEdit}
         project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
         onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} /></div>
-      <Button size="sm" variant={focused ? "secondary" : "ghost"} aria-pressed={focused} onClick={toggleFocus} className="hidden shrink-0 lg:inline-flex">
+      <Button size="sm" variant={focused ? "secondary" : "ghost"} aria-pressed={focused} onClick={toggleFocus} className="shrink-0">
         {focused ? <Minimize2 /> : <Maximize2 />}{t(focused ? "views.focus.exit" : "views.focus.enter")}
       </Button>
+      {actions}
     </div>
     {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
       table={{ search: filter, preset, sort, columns: visibleColumns(active.config, false), typeFilter, fieldFilter, viewId: active.id }} />}

@@ -322,10 +322,9 @@
 }
 
 /* Gantt (S2.4.2): SVAR's default bar colours fail 4.5:1 against white labels. */
-/* C-04: non-working days and holidays in the timeline, from the work schedule (tokens only). */
-.gantt-chart .gantt-off {
-  background-color: var(--muted);
-}
+/* C-04: non-working days and configured holidays remain distinct across the full timeline column. */
+.gantt-chart .gantt-weekend { background-color: color-mix(in srgb, var(--muted) 75%, transparent); }
+.gantt-chart .gantt-holiday { background-color: color-mix(in srgb, var(--destructive) 12%, var(--muted)); }
 
 .gantt-chart .wx-theme {
   --wx-gantt-task-color: var(--cat-5);
@@ -359,6 +358,8 @@
 .gantt-chart .wx-summary { border-width: 2px; }
 .gantt-chart .wx-milestone .wx-content { outline: 2px solid color-mix(in srgb, var(--foreground) 35%, transparent); outline-offset: 1px; }
 .gantt-chart .wx-table-container .wx-header { position: sticky; top: 0; z-index: 3; background: var(--background); }
+.gantt-chart .wx-table-box [role="columnheader"],
+.gantt-chart .wx-table-box [role="gridcell"] { border-inline-end: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .gantt-chart .wx-grip { width: 12px; right: -6px; z-index: 20; }
 .gantt-chart .gantt-today { background: rgb(220 38 38 / .18); }
 /* Plain SVAR bars (public snapshot) default to cyan; white text needs 4.5:1 (#0891b2 gives 3.8:1). allow-hex */

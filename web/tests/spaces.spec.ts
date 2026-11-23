@@ -22,6 +22,8 @@ test.describe("sidebar", () => {
     await sidebar(page).getByRole("link", { name: "Marketing" }).click();
     await expect(page).toHaveURL(new RegExp(`/spaces/${marketing.id}$`));
     await expect(page.getByRole("heading", { name: "Marketing", level: 1 })).toBeVisible();
+    await expect(page.getByText("Campaigns and launches")).toHaveCount(0);
+    await page.getByRole("button", { name: "Space information" }).click();
     await expect(page.getByText("Campaigns and launches")).toBeVisible();
     await expect(page.getByRole("heading", { name: "No projects yet" })).toBeVisible();
     await expect(sidebar(page).getByRole("link", { name: "Marketing" })).toHaveAttribute("aria-current", "page");

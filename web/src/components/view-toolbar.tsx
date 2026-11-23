@@ -55,7 +55,7 @@ export function ViewToolbar({ filter, preset, typeFilter, sort, group, fieldFilt
         </select></label>
     </Chip>}
     {columns}
-    <label className="relative flex w-full items-center sm:ml-auto sm:w-auto">
+    <label className="relative ml-auto flex w-full items-center sm:w-auto">
       <Search className="pointer-events-none absolute left-2 size-4 text-muted-foreground" aria-hidden />
       <Input aria-label={t("views.filter")} placeholder={t("views.searchPlaceholder")} value={filter} maxLength={120} className="h-8 w-full pl-8 sm:w-44"
         onChange={(event) => setSearch("filter", event.target.value)} />

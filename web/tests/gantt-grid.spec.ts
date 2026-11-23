@@ -24,15 +24,30 @@ test("grid columns can be resized by their grips", async ({ page }) => {
   await expect.poll(async () => (await header.boundingBox())!.width).toBeGreaterThan(before + 50);
 });
 
-test("the scale menu floats at the top right, lists five scales, and persists the selection", async ({ page }) => {
+test("the scale controls stay in the toolbar, list five scales, and persist the selection", async ({ page }) => {
   await mockGantt(page);
   await page.goto(`${path}?view=${ganttId}`);
+  const controls = page.getByTestId("gantt-scale-controls");
+  await expect(controls).toBeVisible();
+  await expect(page.getByRole("application", { name: "Gantt chart" }).getByRole("button", { name: "Time scale" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Days/);
   await page.getByRole("button", { name: "Time scale" }).click();
   for (const name of ["Years", "Quarters", "Months", "Weeks", "Days"]) await expect(page.getByRole("menuitem", { name, exact: true })).toBeVisible();
   await page.getByRole("menuitem", { name: "Weeks", exact: true }).click();
   await page.reload();
   await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Weeks/);
+});
+
+test("left grid columns have visible cell borders and search stays at the right edge", async ({ page }) => {
+  await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  const cell = page.getByRole("columnheader", { name: "Status", exact: true });
+  await expect(cell).toHaveCSS("border-right-width", "1px");
+  const toolbar = page.getByRole("toolbar", { name: "View toolbar" });
+  const search = toolbar.getByRole("textbox", { name: "Filter items" });
+  const toolbarBox = (await toolbar.boundingBox())!;
+  const searchBox = (await search.boundingBox())!;
+  expect(toolbarBox.x + toolbarBox.width - (searchBox.x + searchBox.width)).toBeLessThan(12);
 });
 
 test("zoom out from Days goes to Weeks, and zoom in comes back", async ({ page }) => {

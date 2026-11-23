@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Folder, FolderKanban, FolderOpen, Lock, MoreHorizontal, Plus, Share2, SquareCheck } from "lucide-react";
+import { Folder, FolderKanban, FolderOpen, Info, Lock, MoreHorizontal, Plus, Share2, SquareCheck } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { ApiError, api, type CurrentUser } from "@/lib/api";
 import { useSpace } from "@/lib/space-queries";
@@ -29,6 +29,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
 import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 
 export const Route = createFileRoute("/_app/spaces/$spaceId")({ component: SpacePage });
 
@@ -123,53 +124,50 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
     }
   }
 
+  const viewActions = <>
+    {me && newKinds.length > 0 && <DropdownMenu>
+      <DropdownMenuTrigger render={<Button />}><Plus />{t("items.new")}</DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        {newKinds.map((kind) => <DropdownMenuItem key={kind} onClick={() => setCreating(kind)}>{kindIcons[kind]}{t(`items.${kind}`)}</DropdownMenuItem>)}
+      </DropdownMenuContent>
+    </DropdownMenu>}
+    <DropdownMenu>
+      <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-44">
+        {canShare && <DropdownMenuItem onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</DropdownMenuItem>}
+        <DropdownMenuItem onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</DropdownMenuItem>
+        {canEditForms && <DropdownMenuItem render={<Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} />}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>}
+        {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
+        <DropdownMenuItem onClick={() => setExportingSpace(true)}>{t("excel.exportSpaceTitle")}</DropdownMenuItem>
+        {canEditForms && <DropdownMenuItem onClick={() => setMenuConfig(true)}>{t("spaces.createMenu.link")}</DropdownMenuItem>}
+        {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
+        {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
+        {canLock && <DropdownMenuItem onClick={() => void setLocked(!space.locked)}>{space.locked ? t("spaces.lock.unlock") : t("spaces.lock.lock")}</DropdownMenuItem>}
+        {canDelete && <DropdownMenuItem variant="destructive" onClick={() => { setDeleteError(""); setDeleting(true); }}>{t("spaces.menu.delete")}</DropdownMenuItem>}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  </>;
+
   return (
     <WorkspaceLayout>
       <WorkspaceHeader titleInTopbar icon={<SpaceIcon iconKey={space.icon_key} className="size-5" />} title={personal ? t("spaces.personal") : space.name}
-        meta={<>
-          {space.description && <p className="workspace-context mt-1 max-w-2xl text-sm text-muted-foreground">{space.description}</p>}
-          {space.locked && <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><Lock className="size-4" aria-hidden="true" />{t("spaces.lock.badge")}<span className="sr-only">. {t("spaces.lock.explain")}</span></p>}
-        </>}
-        actions={<>
-          {/* Same order as a Project or Folder: shared and configuration actions first, the primary create action last. */}
-          {/* D-CREATE: the one primary create action of a Space; the kinds stay the same as the global menu. */}
-          {me && newKinds.length > 0 && (
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button />}><Plus />{t("items.new")}</DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                {newKinds.map((kind) => (
-                  <DropdownMenuItem key={kind} onClick={() => setCreating(kind)}>{kindIcons[kind]}{t(`items.${kind}`)}</DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-          {/* Bookmarks is open to everyone who can see the Space, so this menu is always there. */}
-          {true && (
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon" aria-label={t("spaces.menu.label")} />}><MoreHorizontal /></DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-44">
-                {/* Share, Bookmarks and Settings sit here so the header keeps one primary action and the Table, Board, Calendar and Gantt tabs get the room. */}
-                {canShare && <DropdownMenuItem onClick={() => setSharing(true)}><Share2 />{t("spaces.share")}</DropdownMenuItem>}
-                <DropdownMenuItem onClick={() => setBookmarks(true)}>{t("spaces.bookmarks.link")}</DropdownMenuItem>
-                {canEditForms && <DropdownMenuItem render={<Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} />}>{t("spaces.spaceSettings.open")}</DropdownMenuItem>}
-                {canCreate && <DropdownMenuItem onClick={() => setImportingExcel(true)}>{t("excel.importTitle")}</DropdownMenuItem>}
-                <DropdownMenuItem onClick={() => setExportingSpace(true)}>{t("excel.exportSpaceTitle")}</DropdownMenuItem>
-                {canEditForms && <DropdownMenuItem onClick={() => setMenuConfig(true)}>{t("spaces.createMenu.link")}</DropdownMenuItem>}
-                {canManageFields && <DropdownMenuItem onClick={() => setManagingFields(true)}>{t("spaces.customFields.title")}</DropdownMenuItem>}
-                {canRename && <DropdownMenuItem onClick={() => setRenaming(true)}>{t("spaces.menu.rename")}</DropdownMenuItem>}
-                {canLock && <DropdownMenuItem onClick={() => void setLocked(!space.locked)}>{space.locked ? t("spaces.lock.unlock") : t("spaces.lock.lock")}</DropdownMenuItem>}
-                {canDelete && <DropdownMenuItem variant="destructive" onClick={() => { setDeleteError(""); setDeleting(true); }}>{t("spaces.menu.delete")}</DropdownMenuItem>}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
-        </>} />
+        titleExtra={<Popover>
+          <PopoverTrigger render={<Button variant="ghost" size="icon-sm" aria-label={t("spaces.information")} />}><Info /></PopoverTrigger>
+          <PopoverContent align="start" className="w-80 space-y-3">
+            <h2 className="font-semibold">{t("spaces.information")}</h2>
+            <div><p className="text-xs font-medium text-muted-foreground">{t("spaces.form.description")}</p>
+              <p className="mt-1 text-sm">{space.description || t("spaces.noDescription")}</p></div>
+            {canEditForms && <Link to="/spaces/$spaceId/settings/$tab" params={{ spaceId: space.id, tab: "general" }} className="inline-flex text-sm font-medium text-primary hover:underline">{t("spaces.spaceSettings.open")}</Link>}
+          </PopoverContent>
+        </Popover>}
+        meta={space.locked ? <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><Lock className="size-4" aria-hidden="true" />{t("spaces.lock.badge")}<span className="sr-only">. {t("spaces.lock.explain")}</span></p> : undefined} />
       {items.isPending && <LoadingState className="mt-6 text-sm text-muted-foreground" label={t("items.loading")} />}
       {items.isError && <ErrorState className="mt-6 space-y-2" message={t("items.loadError")} retryLabel={t("items.retry")} onRetry={() => void items.refetch()} />}
       {items.data?.length === 0 && <EmptyState className="mt-8 p-12" icon={<ProjectIllustration />} title={t("spaces.empty.title")}
         description={t("spaces.empty.description")} canCreate={canCreate}
         primaryAction={{ label: t("spaces.empty.browseBlueprints"), onClick: () => void navigate({ to: "/blueprints" }) }}
         secondaryAction={{ label: t("spaces.empty.newProject"), onClick: () => setCreating("project") }} />}
-      <div className="mt-3"><ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
+      <ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} actions={viewActions} />
 
       {me && <CreateItemDialog open={creating !== null} onOpenChange={(open) => { if (!open) setCreating(null); }} me={me} location={{ space_id: space.id }}
         initialKind={creating ?? undefined} onCreated={openItem} />}

@@ -182,6 +182,9 @@ for (const { type, label, visibility } of [
     const grid = page.getByRole("table", { name: "Table" });
     await expect(tab).toHaveAttribute("aria-checked", "true");
     await expect(heading).toBeVisible();
+    await page.getByRole("button", { name: "Focus", exact: true }).click();
+    await expect(page.getByRole("button", { name: "Exit focus", exact: true })).toHaveAttribute("aria-pressed", "true");
+    await page.getByRole("button", { name: "Exit focus", exact: true }).click();
     await nav.getByRole("radio", { name: "Table", exact: true }).click();
     await expect(grid).toBeVisible();
     await tab.click();

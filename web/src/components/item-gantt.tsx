@@ -454,7 +454,13 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
   const workingDays = new Set(schedule.data?.data.working_days ?? [1, 2, 3, 4, 5]);
   const holidayDays = new Set((schedule.data?.data.exceptions ?? []).map((entry) => entry.date));
-  const offDay = (date: Date) => !workingDays.has(date.getDay()) || holidayDays.has(fromDay(date));
+  const dayTone = (date: Date) => {
+    const classes = [];
+    if (!workingDays.has(date.getDay())) classes.push("gantt-weekend");
+    if (holidayDays.has(fromDay(date))) classes.push("gantt-holiday");
+    if (date.getTime() === today.getTime()) classes.push("gantt-today");
+    return classes.join(" ");
+  };
   const locale = i18n.language;
   const scales = useMemo(() => {
     const label = (options: Intl.DateTimeFormatOptions) => (date: Date) => new Intl.DateTimeFormat(locale, options).format(date);
@@ -654,6 +660,16 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         </form>}
       </>}
       {undated > 0 && <Button size="sm" variant="ghost" onClick={() => setUndatedOpen(true)}>{t("views.gantt.unscheduledCount", { count: undated })}</Button>}
+      <div className="flex items-center gap-0.5 rounded-md border bg-background p-0.5" data-testid="gantt-scale-controls">
+        <DropdownMenu>
+          <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={t("views.gantt.scale")} />}>{t(`views.gantt.${scale}`)}<ChevronDown /></DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-36">
+            {scaleOptions.map((value) => <DropdownMenuItem key={value} aria-current={scale === value ? "true" : undefined} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</DropdownMenuItem>)}
+          </DropdownMenuContent>
+        </DropdownMenu>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomOut")} disabled={scale === "year"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Minus /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Plus /></Button>
+      </div>
   </>;
   return <div className="space-y-1.5">
     <div className="flex flex-wrap items-center gap-1.5">{renderToolbar ? renderToolbar(controls) : controls}</div>
@@ -666,7 +682,6 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         </li>)}</ul>
       </DialogContent>
     </Dialog>
-    <div className="relative">
     <div ref={chartRegion} role="application" aria-describedby="gantt-keys" aria-label={t("views.gantt.label")} tabIndex={0}
       onKeyDown={(event) => { if (drag && event.key === "Escape") { setDrag(undefined); return; } keyboard(event); }}
       title={onTimelineCreate && !readonly && scale !== "day" ? t("views.gantt.dayOnlyCreate") : undefined}
@@ -700,24 +715,12 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
         <Theme>
         <BarActionsContext.Provider value={{ byId, statuses, readonly, onOpen, onPatch, onDelete }}><Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scaleGeometry[scale].cell}
-          highlightTime={(date, unit) => unit !== "day" ? "" : date.getTime() === today.getTime() ? "gantt-today" : offDay(date) ? "gantt-off" : ""} schedule={{ auto: false }} unscheduledTasks
+          highlightTime={(date, unit) => unit === "day" ? dayTone(date) : ""} schedule={{ auto: false }} unscheduledTasks
           columns={gridColumns} /></BarActionsContext.Provider>
         </Theme>
         </RowActionsContext.Provider>
       </div>
       {onQuickCreate && !readonly && <QuickCreateRow width={gridWidth} taskWidth={widthOf("text", 240)} onCreate={onQuickCreate} />}
-    </div>
-      {/* Floating over the chart, top right: scale and zoom, as in the Wrike layout. Nothing here changes the grid or the rows. */}
-      <div className="absolute right-2 top-2 z-30 flex items-center gap-1 rounded-md border bg-card p-1 shadow-sm">
-        <DropdownMenu>
-          <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={t("views.gantt.scale")} />}>{t(`views.gantt.${scale}`)}<ChevronDown /></DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-36">
-            {scaleOptions.map((value) => <DropdownMenuItem key={value} aria-current={scale === value ? "true" : undefined} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</DropdownMenuItem>)}
-          </DropdownMenuContent>
-        </DropdownMenu>
-        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomOut")} disabled={scale === "year"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Minus /></Button>
-        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Plus /></Button>
-      </div>
     </div>
     {/* The keys stay on screen under the chart: the chart above keeps its height, so timeline positions do not move. */}
     <p id="gantt-keys" className="sr-only">{readonly ? t("views.gantt.readonly") : t("views.gantt.keys")}</p>
