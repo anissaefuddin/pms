@@ -50,9 +50,11 @@ func (w *InvitationWorker) Work(ctx context.Context, job *river.Job[InvitationAr
 	}
 	args := Args{Template: "set_password"}
 	var inviter *string
-	err = tx.QueryRow(ctx, `SELECT email::text,locale,invitation_message,invited_by::text
-FROM users WHERE id=$1 AND status='invited' AND invitation_generation=$2 FOR UPDATE`,
-		job.Args.UserID, job.Args.Generation).Scan(&args.To, &args.Locale, &args.Message, &inviter)
+	err = tx.QueryRow(ctx, `SELECT u.email::text,u.locale,u.invitation_message,u.invited_by::text,a.name,
+COALESCE(NULLIF(concat_ws(' ',iv.first_name,iv.last_name),''),'Administrator')
+FROM users u CROSS JOIN account a LEFT JOIN users iv ON iv.id=u.invited_by
+WHERE u.id=$1 AND u.status='invited' AND u.invitation_generation=$2 AND a.id=1 FOR UPDATE OF u`,
+		job.Args.UserID, job.Args.Generation).Scan(&args.To, &args.Locale, &args.Message, &inviter, &args.Data.Workspace, &args.Data.Inviter)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil
 	}
@@ -74,5 +76,7 @@ FROM users WHERE id=$1 AND status='invited' AND invitation_generation=$2 FOR UPD
 		return err
 	}
 	args.URL = fmt.Sprintf("%s/invitations/%s", w.mail.cfg.PublicURL, plain)
+	args.Data.Kind = "set_password"
+	args.Data.Expires = map[bool]string{true: "7 hari", false: "7 days"}[isID(args.Locale)]
 	return w.mail.deliver(ctx, args)
 }

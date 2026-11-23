@@ -1369,6 +1369,7 @@ type User struct {
 	DefaultTaskDurationDays  pgtype.Int4        `json:"default_task_duration_days"`
 	DefaultTaskEffortMinutes pgtype.Int4        `json:"default_task_effort_minutes"`
 	EmailMuted               []string           `json:"email_muted"`
+	DueReminders             []byte             `json:"due_reminders"`
 	Accent                   string             `json:"accent"`
 	ScimExternalID           pgtype.Text        `json:"scim_external_id"`
 	ScimProvisioned          bool               `json:"scim_provisioned"`

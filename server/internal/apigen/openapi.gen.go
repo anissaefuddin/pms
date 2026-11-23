@@ -1158,6 +1158,45 @@ func (e DependencyType) Valid() bool {
 	}
 }
 
+// Defines values for DueReminderPreferencesDaysBefore.
+const (
+	DueReminderPreferencesDaysBeforeN0 DueReminderPreferencesDaysBefore = 0
+	DueReminderPreferencesDaysBeforeN1 DueReminderPreferencesDaysBefore = 1
+	DueReminderPreferencesDaysBeforeN3 DueReminderPreferencesDaysBefore = 3
+)
+
+// Valid indicates whether the value is a known member of the DueReminderPreferencesDaysBefore enum.
+func (e DueReminderPreferencesDaysBefore) Valid() bool {
+	switch e {
+	case DueReminderPreferencesDaysBeforeN0:
+		return true
+	case DueReminderPreferencesDaysBeforeN1:
+		return true
+	case DueReminderPreferencesDaysBeforeN3:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DueReminderPreferencesDelivery.
+const (
+	Digest     DueReminderPreferencesDelivery = "digest"
+	Individual DueReminderPreferencesDelivery = "individual"
+)
+
+// Valid indicates whether the value is a known member of the DueReminderPreferencesDelivery enum.
+func (e DueReminderPreferencesDelivery) Valid() bool {
+	switch e {
+	case Digest:
+		return true
+	case Individual:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for EmailGroup.
 const (
 	EmailGroupAssigned    EmailGroup = "assigned"
@@ -2825,13 +2864,13 @@ func (e ListSsoProviders200JSONResponseBodyItemsKind) Valid() bool {
 
 // Defines values for StartSsoParamsLink.
 const (
-	N1 StartSsoParamsLink = "1"
+	StartSsoParamsLinkN1 StartSsoParamsLink = "1"
 )
 
 // Valid indicates whether the value is a known member of the StartSsoParamsLink enum.
 func (e StartSsoParamsLink) Valid() bool {
 	switch e {
-	case N1:
+	case StartSsoParamsLinkN1:
 		return true
 	default:
 		return false
@@ -4504,6 +4543,22 @@ type DashboardWidgetInputType string
 // DependencyType defines model for DependencyType.
 type DependencyType string
 
+// DueReminderPreferences defines model for DueReminderPreferences.
+type DueReminderPreferences struct {
+	DaysBefore       []DueReminderPreferencesDaysBefore `json:"days_before"`
+	Delivery         DueReminderPreferencesDelivery     `json:"delivery"`
+	Enabled          bool                               `json:"enabled"`
+	Hour             int                                `json:"hour"`
+	Overdue          bool                               `json:"overdue"`
+	OverdueEveryDays int                                `json:"overdue_every_days"`
+}
+
+// DueReminderPreferencesDaysBefore defines model for DueReminderPreferences.DaysBefore.
+type DueReminderPreferencesDaysBefore int
+
+// DueReminderPreferencesDelivery defines model for DueReminderPreferences.Delivery.
+type DueReminderPreferencesDelivery string
+
 // EmailGroup task_changes mencakup perubahan status dan approval; notifikasi komentar tidak pernah dikirim lewat email
 type EmailGroup string
 
@@ -5185,10 +5240,11 @@ type Me struct {
 	DefaultTaskDurationDays *int `json:"default_task_duration_days,omitempty"`
 
 	// DefaultTaskEffortMinutes Effort awal task baru (SET-03)
-	DefaultTaskEffortMinutes *int                `json:"default_task_effort_minutes,omitempty"`
-	Density                  *MeDensity          `json:"density,omitempty"`
-	Department               *string             `json:"department,omitempty"`
-	Email                    openapi_types.Email `json:"email"`
+	DefaultTaskEffortMinutes *int                    `json:"default_task_effort_minutes,omitempty"`
+	Density                  *MeDensity              `json:"density,omitempty"`
+	Department               *string                 `json:"department,omitempty"`
+	DueReminders             *DueReminderPreferences `json:"due_reminders,omitempty"`
+	Email                    openapi_types.Email     `json:"email"`
 
 	// EmailMuted Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif
 	EmailMuted  *[]EmailGroup      `json:"email_muted,omitempty"`
@@ -5267,6 +5323,7 @@ type MeUpdate struct {
 	DefaultTaskEffortMinutes *int                     `json:"default_task_effort_minutes,omitempty"`
 	Density                  *MeUpdateDensity         `json:"density,omitempty"`
 	Department               *string                  `json:"department,omitempty"`
+	DueReminders             *DueReminderPreferences  `json:"due_reminders,omitempty"`
 	EmailMuted               *[]EmailGroup            `json:"email_muted,omitempty"`
 	FirstName                *string                  `json:"first_name,omitempty"`
 	JobTitle                 *string                  `json:"job_title,omitempty"`

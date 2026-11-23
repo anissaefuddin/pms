@@ -20,7 +20,7 @@ func TestRenderFallsBackToEnglish(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if subject != "Reset your PMS password" || text == "" || !strings.Contains(html, `href="https://example.test/reset"`) {
+	if subject != "[LENS] Permintaan reset password" || text == "" || !strings.Contains(html, `href="https://example.test/reset"`) {
 		t.Fatalf("unexpected template: %q %q", subject, text)
 	}
 }

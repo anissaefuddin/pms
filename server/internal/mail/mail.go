@@ -28,19 +28,29 @@ import (
 )
 
 type Args struct {
-	To       string `json:"to"`
-	Template string `json:"template"`
-	URL      string `json:"url"`
-	Locale   string `json:"locale"`
-	Message  string `json:"message,omitempty"`
-	Subject  string `json:"subject,omitempty"` // report_digest only
-	HTML     string `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
+	To       string       `json:"to"`
+	Template string       `json:"template"`
+	URL      string       `json:"url"`
+	Locale   string       `json:"locale"`
+	Message  string       `json:"message,omitempty"`
+	Subject  string       `json:"subject,omitempty"` // report_digest only
+	HTML     string       `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
+	Data     TemplateData `json:"data,omitempty"`
 	// Form confirmation branding (FORM-04, request_received only); every value is escaped when rendered.
 	SenderName string `json:"sender_name,omitempty"`
 	LogoURL    string `json:"logo_url,omitempty"`
 	Greeting   string `json:"greeting,omitempty"`
 	Closing    string `json:"closing,omitempty"`
 }
+
+type TemplateData struct {
+	Kind, Preheader, Actor, Item, ItemType, Space, Status, Before, After        string
+	Due, OccurredAt, Access, Workspace, Inviter, Expires, Period, Metric, Total string
+	Rows                                                                        []ReportRow `json:"rows,omitempty"`
+	Days                                                                        int         `json:"days,omitempty"`
+}
+
+type ReportRow struct{ Label, Break, Value string }
 
 func (Args) Kind() string { return "send_email" }
 
@@ -211,14 +221,9 @@ func (q *Queue) SendTx(ctx context.Context, tx pgx.Tx, args Args) error {
 
 // render returns the subject, plain text and HTML body of a template. Only English exists (MVP); other locales fall back to it.
 func render(args Args) (subject, text, html string, err error) {
-	link := htmlpkg.EscapeString(args.URL)
-	page := func(heading, intro, expires string) string {
-		return fmt.Sprintf(`<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>%s</h2><p>%s</p><p><a href="%s" style="background:#2563eb;color:#ffffff;padding:10px 16px;border-radius:6px;text-decoration:none">Open link</a></p><p style="color:#6b7280;font-size:13px">%s If the button does not work, copy this address into your browser:<br>%s</p></body></html>`, heading, intro, link, expires, link)
-	}
 	switch args.Template {
 	case "notification":
-		return "New PMS notification", "You have a new notification in PMS. Open " + args.URL,
-			fmt.Sprintf(`<p>You have a new notification in PMS.</p><p><a href="%s">Open Inbox</a></p>`, link), nil
+		return renderProductEmail(args)
 	case "request_received", "request_status":
 		// Message is composed by the server from the form name, the item title and the status; it holds no internal data.
 		subject = map[string]string{"request_received": "We received your request", "request_status": "Your request was updated"}[args.Template]
@@ -227,25 +232,16 @@ func render(args Args) (subject, text, html string, err error) {
 		}
 		return subject, args.Message, fmt.Sprintf(`<p>%s</p>`, htmlpkg.EscapeString(args.Message)), nil
 	case "report_digest":
-		return args.Subject, args.Message, `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827">` + args.HTML + `</body></html>`, nil
+		return renderProductEmail(args)
 	case "set_password":
-		note, intro := "", "You have been invited to PMS. Activate your account and choose a password."
-		if args.Message != "" {
-			note = args.Message + "\n\n"
-			intro += "</p><p>" + htmlpkg.EscapeString(args.Message)
-		}
-		return "Set your PMS password",
-			note + fmt.Sprintf("Open %s to activate your account and set your password. This link expires in 7 days.", args.URL),
-			page("Activate your PMS account", intro, "This link expires in 7 days."), nil
+		return renderProductEmail(args)
 	case "login_code":
 		// The code is the whole secret: six digits, ten minutes, one use. Message carries it (like the reset link, it sits in the job row for a while).
 		return "Your PMS sign-in code is " + args.Message,
 			fmt.Sprintf("Your PMS sign-in code is %s. It expires in 10 minutes and works once. If you did not ask for it, ignore this email.", args.Message),
 			fmt.Sprintf(`<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>Your sign-in code</h2><p style="font-size:28px;letter-spacing:6px;font-weight:bold">%s</p><p style="color:#6b7280;font-size:13px">It expires in 10 minutes and works once. If you did not ask for it, ignore this email.</p></body></html>`, htmlpkg.EscapeString(args.Message)), nil
 	case "reset_password":
-		return "Reset your PMS password",
-			fmt.Sprintf("Open %s to reset your password. This link expires in one hour.", args.URL),
-			page("Reset your PMS password", "We received a request to reset your password. If it was not you, ignore this email.", "This link expires in one hour."), nil
+		return renderProductEmail(args)
 	default:
 		return "", "", "", fmt.Errorf("unknown email template %q", args.Template)
 	}

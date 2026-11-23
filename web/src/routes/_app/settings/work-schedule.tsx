@@ -35,7 +35,6 @@ function WorkScheduleRoute() {
 
 
 /** 1 Jan 2024 was a Monday: these seven dates give Monday-first weekday labels without literal strings. */
-const locale = "en";
 const weekdayFormat: Intl.DateTimeFormatOptions = { weekday: "narrow" };
 const mondayFirst = Array.from({ length: 7 }, (_, i) => new Date(2024, 0, 1 + i));
 
@@ -49,14 +48,15 @@ function AnnualCalendar({ year, days, holidays, disabled, onYear, onPick }: {
   year: number; days: Set<number>; holidays: { date: string; name: string }[]; disabled: boolean;
   onYear: (year: number) => void; onPick: (key: string, exception?: string) => void;
 }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = i18n.language;
   const exceptions = new Map(holidays.map((h) => [h.date, h.name]));
   const months = Array.from({ length: 12 }, (_, month) => {
     const first = new Date(year, month, 1);
     const offset = (first.getDay() + 6) % 7; // Monday first
     const count = new Date(year, month + 1, 0).getDate();
     const cells: (Date | null)[] = [...Array(offset).fill(null), ...Array.from({ length: count }, (_, i) => new Date(year, month, i + 1))];
-    return { label: first.toLocaleString("en", { month: "long" }), cells };
+    return { label: first.toLocaleString(locale, { month: "long" }), cells };
   });
   return <div className="space-y-3">
     <div className="flex items-center gap-2">

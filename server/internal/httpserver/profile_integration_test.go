@@ -44,9 +44,18 @@ func TestProfileEmailAndTaskDefaultsAndAccountInfo(t *testing.T) {
 		len(got.body["email_muted"].([]any)) != 2 || got.body["default_task_duration_days"] != float64(3) || got.body["default_task_effort_minutes"] != float64(90) {
 		t.Fatalf("save: %+v", got)
 	}
+	due := map[string]any{"enabled": true, "days_before": []int{3, 1, 0}, "overdue": true, "overdue_every_days": 3, "delivery": "digest", "hour": 8}
+	if got := f.call(member, "PATCH", "/me", map[string]any{"due_reminders": due}); got.status != 200 || got.body["due_reminders"].(map[string]any)["delivery"] != "digest" {
+		t.Fatalf("due reminders: %+v", got)
+	}
 	for _, bad := range []map[string]any{{"email_muted": []string{"comment"}}, {"email_muted": nil}, {"default_task_duration_days": -1}, {"default_task_duration_days": 4000}, {"default_task_effort_minutes": "x"}} {
 		if got := f.call(member, "PATCH", "/me", bad); got.status != 422 {
 			t.Fatalf("invalid accepted %v: %+v", bad, got)
+		}
+	}
+	for _, bad := range []any{map[string]any{"enabled": true}, map[string]any{"enabled": true, "days_before": []int{2}, "overdue": true, "overdue_every_days": 0, "delivery": "digest", "hour": 25}} {
+		if got := f.call(member, "PATCH", "/me", map[string]any{"due_reminders": bad}); got.status != 422 {
+			t.Fatalf("invalid due reminder accepted: %+v", got)
 		}
 	}
 	if got := f.call(member, "PATCH", "/me", map[string]any{"email_muted": []string{}, "default_task_duration_days": nil}); got.status != 200 ||

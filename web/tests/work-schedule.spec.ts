@@ -47,6 +47,15 @@ test("a regular user sees the schedule read-only", async ({ page }) => {
   await expect(page.getByRole("button", { name: "Save work schedule" })).toHaveCount(0);
 });
 
+test("the annual calendar follows the profile locale", async ({ page }) => {
+  await mockSpaces(page, { me: { ...me, locale: "id" }, extra: {
+    "GET /settings/work-schedule": { body: initial, headers: { ETag: '"1"' } },
+  } });
+  await page.goto("/settings/work-schedule");
+  await expect(page.getByRole("heading", { name: "Januari" })).toBeVisible();
+  await expect(page.getByText("January", { exact: true })).toHaveCount(0);
+});
+
 for (const scheme of ["light", "dark"] as const) {
   test(`work schedule has no axe violations (${scheme})`, async ({ page }) => {
     await page.emulateMedia({ colorScheme: scheme });

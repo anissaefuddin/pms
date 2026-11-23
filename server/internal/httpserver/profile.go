@@ -80,6 +80,31 @@ func (s *Server) updateMe(w http.ResponseWriter, r *http.Request) {
 	values := []any{actor.ID}
 	assignments := make([]string, 0, len(fields))
 	for _, key := range fields {
+		if key == "due_reminders" {
+			var p struct {
+				Enabled          bool   `json:"enabled"`
+				DaysBefore       []int  `json:"days_before"`
+				Overdue          bool   `json:"overdue"`
+				OverdueEveryDays int    `json:"overdue_every_days"`
+				Delivery         string `json:"delivery"`
+				Hour             int    `json:"hour"`
+			}
+			if json.Unmarshal(input[key], &p) != nil || p.DaysBefore == nil || p.OverdueEveryDays < 1 || p.OverdueEveryDays > 30 || p.Hour < 0 || p.Hour > 23 || !slices.Contains([]string{"digest", "individual"}, p.Delivery) {
+				writeError(w, 422, "invalid profile field: "+key)
+				return
+			}
+			seen := map[int]bool{}
+			for _, day := range p.DaysBefore {
+				if !slices.Contains([]int{0, 1, 3}, day) || seen[day] {
+					writeError(w, 422, "invalid profile field: "+key)
+					return
+				}
+				seen[day] = true
+			}
+			values = append(values, input[key])
+			assignments = append(assignments, key+"=$"+strconv.Itoa(len(values))+"::jsonb")
+			continue
+		}
 		if allowed, isList := profileLists[key]; isList {
 			var list []string
 			if json.Unmarshal(input[key], &list) != nil || list == nil {

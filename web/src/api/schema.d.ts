@@ -5233,6 +5233,7 @@ export interface components {
             };
             /** @description Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif */
             email_muted?: components["schemas"]["EmailGroup"][];
+            due_reminders?: components["schemas"]["DueReminderPreferences"];
             /** @description true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati */
             onboarding_pending: boolean;
             /**
@@ -5285,6 +5286,7 @@ export interface components {
             /** @description Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422) */
             sidebar_pinned?: components["schemas"]["SidebarKey"][];
             email_muted?: components["schemas"]["EmailGroup"][];
+            due_reminders?: components["schemas"]["DueReminderPreferences"];
             default_task_duration_days?: number | null;
             default_task_effort_minutes?: number | null;
         };
@@ -5293,6 +5295,15 @@ export interface components {
          * @enum {string}
          */
         EmailGroup: "mention" | "assigned" | "shared" | "task_changes" | "report";
+        DueReminderPreferences: {
+            enabled: boolean;
+            days_before: (0 | 1 | 3)[];
+            overdue: boolean;
+            overdue_every_days: number;
+            /** @enum {string} */
+            delivery: "digest" | "individual";
+            hour: number;
+        };
         Account: {
             name: string;
             /** Format: date-time */
