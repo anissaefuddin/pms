@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type KeyboardEvent, type PointerEvent as ReactPointerEvent, type ReactNode } from "react";
 import { useQueries } from "@tanstack/react-query";
 import { canAddSubitem } from "@/lib/create-item-validate";
 import { flexRender, getCoreRowModel, useReactTable, type ColumnDef } from "@tanstack/react-table";
@@ -36,7 +36,7 @@ function readWidths(key: string): Record<string, number> {
 
 type TableRow = { item: Item; depth: number; parent?: string; groupLabel?: string; path?: PathStep[] };
 
-export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onAddChild, onPatch, onBulkPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults }: ItemCollectionProps & {
+export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, spaceId, parentId, customFields, columns: shown, canCreate, pending, onOpen, onAdd, onAddChild, onPatch, onBulkPatch, group, manual, onReorder, showEmpty = true, filter = "", noResults, renderToolbar }: ItemCollectionProps & {
   showEmpty?: boolean;
   /** B2.3: row menu → Add subitem. The caller opens the create dialog with this row as parent. */
   onAddChild?: (item: Item) => void;
@@ -44,6 +44,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   onExpandedChange?: (rows: string[]) => void;
   filter?: string; // RT-37: title filter applied to the whole tree, so loaded nested rows match too
   noResults?: React.ReactNode;
+  renderToolbar?: (controls: ReactNode) => ReactNode;
   group?: "status" | "type";
   manual: boolean;
   onReorder: (item: Item, parent: string | undefined, after: string | null) => Promise<void>;
@@ -60,7 +61,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   };
   const [selected, setSelected] = useState(0);
   const densityKey = `pms:table-compact:${spaceId}:${parentId ?? "root"}`;
-  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) === "1"; } catch { return false; } });
+  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) !== "0"; } catch { return true; } });
   const toggleCompact = () => setCompact((value) => { const next = !value; try { localStorage.setItem(densityKey, next ? "1" : "0"); } catch { /* storage can be blocked */ } return next; });
   // B-02: rows picked for a bulk action. Only loaded rows the user may change can be picked; the server still checks every update.
   const [picked, setPicked] = useState<string[]>([]);
@@ -250,6 +251,10 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
   const model = table.getRowModel().rows;
   const virtual = useVirtualizer({ count: model.length, getScrollElement: () => viewport.current, estimateSize: () => compact ? 36 : 44, overscan: 8 });
   useEffect(() => virtual.measure(), [compact, virtual]);
+  const virtualRows = virtual.getVirtualItems();
+  useEffect(() => {
+    if (virtualRows.at(-1)?.index === model.length - 1 && remote.hasNextPage && !remote.isFetchingNextPage) void remote.fetchNextPage();
+  }, [virtualRows, model.length, remote]);
   const editedItem = editing?.field === "assignees" ? rows.find((row) => row.item.id === editing.id)?.item : undefined;
   const editedField = editing?.field.startsWith("field:") ? customFields.find((field) => fieldColumn(field.id) === editing.field) : undefined;
   const editedFieldItem = editedField ? rows.find((row) => row.item.id === editing?.id)?.item : undefined;
@@ -301,12 +306,13 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
     setPicked([]);
   }
 
-  return <div className="space-y-2">
-    <div className="flex flex-wrap items-center gap-2">
+  const controls = <>
       <Button size="sm" variant={compact ? "secondary" : "outline"} aria-pressed={compact} onClick={toggleCompact}><Rows3 />{t("views.tableCompact")}</Button>
       <Button size="sm" variant="outline" disabled={!items.some((item) => item.child_count)} onClick={() => { setExpandAll(true); setExpanded(() => items.filter((item) => item.child_count).map((item) => item.id)); }}><ChevronsUpDown />{t("views.gantt.expandAll")}</Button>
       <Button size="sm" variant="outline" disabled={!expanded.length} onClick={() => { setExpandAll(false); setExpanded(() => []); }}><ChevronsDownUp />{t("views.gantt.collapseAll")}</Button>
-    </div>
+    </>;
+  return <div className="space-y-1.5">
+    {renderToolbar ? renderToolbar(controls) : <div className="flex flex-wrap items-center gap-1.5">{controls}</div>}
     {(picked.length > 0 || bulkResult) && <div role="toolbar" aria-label={t("views.bulk.toolbar")} className="flex flex-wrap items-center gap-2 rounded border bg-muted/40 p-2 text-sm">
       {picked.length > 0 && <>
         <span className="font-medium">{t("views.bulk.selected", { count: pickedItems.length })}</span>
@@ -325,7 +331,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       </p>}
     </div>}
     <div ref={viewport} role="table" aria-label={t("items.table")} aria-rowcount={model.length + 1} tabIndex={0}
-      onKeyDown={keyboard} className="max-h-[60vh] min-h-28 overflow-auto rounded border focus-visible:outline-ring">
+      onKeyDown={keyboard} className="h-[calc(100dvh-19rem)] min-h-72 overflow-auto rounded border focus-visible:outline-ring">
       <div role="rowgroup" className="sticky top-0 z-10 bg-card">
         {table.getHeaderGroups().map((header) => <div role="row" aria-rowindex={1} key={header.id} className={grid} style={gridStyle}>
           <div role="columnheader" className="sticky left-0 z-30 flex items-center border-b bg-card px-2 py-2">
@@ -345,7 +351,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
         </div>)}
       </div>
       <div role="rowgroup" className="relative" style={{ height: virtual.getTotalSize(), minWidth }}>
-        {virtual.getVirtualItems().map((entry) => {
+        {virtualRows.map((entry) => {
           const row = model[entry.index];
           const { item, parent } = row.original;
           const canDrag = manual && !pending && inLocation(item, parent) && item.my_capabilities.includes("edit");
@@ -375,7 +381,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
       </div>
     </div>
     {showEmpty && model.length === 0 && (filter.trim() && noResults ? noResults : <p className="text-muted-foreground">{t("views.empty")}</p>)}
-    {remote.hasNextPage && <Button variant="outline" size="sm" disabled={remote.isFetchingNextPage} onClick={() => void remote.fetchNextPage()}>{t("views.loadMore")}</Button>}
+    {remote.isFetchingNextPage && <p role="status" className="px-2 text-xs text-muted-foreground">{t("items.loading")}</p>}
     {canCreate && <Button variant="ghost" size="sm" className="sticky bottom-0 z-10 w-full justify-start border-t bg-background text-primary" onClick={() => onAdd()}><Plus />{t("views.add")}</Button>}
     {editedField && editedFieldItem && profile && <FieldEdit key={editedFieldItem.id + editedField.id} field={editedField} item={editedFieldItem}
       locale={profile.locale} pending={pending} onCancel={() => setEditing(undefined)}

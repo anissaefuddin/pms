@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type KeyboardEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { CalendarClock, Diamond, ChevronLeft, ChevronRight, CircleHelp, Settings2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -48,6 +48,8 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
   const [overflow, setOverflow] = useState<{ day: Date; items: Item[] }>();
   const [unscheduledOpen, setUnscheduledOpen] = useState(false);
   const [helpOpen, setHelpOpen] = useState(false);
+  const calendarRef = useRef<HTMLDivElement>(null);
+  const [calendarHeight, setCalendarHeight] = useState(480);
   const profile = useProfile();
   const [month, setMonth] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), 1); });
   // C-03: Month or Week. Week mode keeps its own anchor day, so moving by week never changes the month view.
@@ -62,6 +64,12 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
   });
   useEffect(() => { try { localStorage.setItem(schedulePreferenceKey, scheduleMode); } catch { /* storage can be blocked */ } }, [scheduleMode]);
   useEffect(() => { try { localStorage.setItem(optionsPreferenceKey, JSON.stringify(options)); } catch { /* storage can be blocked */ } }, [options]);
+  useLayoutEffect(() => {
+    const fit = () => setCalendarHeight(Math.max(240, window.innerHeight - (calendarRef.current?.getBoundingClientRect().top ?? 0) - 16));
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, [mode, unscheduledOpen]);
   const [weekDay, setWeekDay] = useState(() => { const now = new Date(); return new Date(now.getFullYear(), now.getMonth(), now.getDate()); });
   const [drag, setDrag] = useState<{ id: string; from?: Date }>();
   const schedule = useQuery({ queryKey: workScheduleKey, queryFn: loadWorkSchedule });
@@ -121,6 +129,8 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
     </li>;
   };
   const names = Array.from({ length: 7 }, (_, index) => addDays(first, index));
+  const compactMonths = Array.from({ length: mode === "quarter" ? 3 : 12 }, (_, index) => new Date(periodMonth.getFullYear(), periodMonth.getMonth() + index, 1));
+  const itemsOn = (day: Date) => scheduled.filter((item) => startOf(item)! <= day && endOf(item)! >= day);
   const barButton = (item: Item, bar: Bar, from: Date, showLabel: boolean) => {
     const canEdit = !readonly && item.my_capabilities.includes("edit");
     const boundary = bar.id.endsWith(":start") ? t("views.calendar.starts") : bar.id.endsWith(":end") ? t("views.calendar.deadline") : "";
@@ -190,7 +200,37 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
       {!readonly && <Button size="icon-sm" variant="ghost" aria-label={t("views.calendar.help")} aria-expanded={helpOpen} onClick={() => setHelpOpen(true)}><CircleHelp /></Button>}
     </div>
     <div className="flex flex-col gap-3 lg:flex-row">
-      <div role="grid" aria-label={t("views.calendar.label")} tabIndex={0} className="relative w-full min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-ring lg:w-auto lg:flex-1">
+      {(mode === "quarter" || mode === "year") ? <div ref={calendarRef} role="grid" aria-label={t("views.calendar.label")} className={`grid min-h-0 flex-1 gap-2 overflow-hidden ${mode === "quarter" ? "grid-cols-3" : "grid-cols-4 grid-rows-3"}`} style={{ height: calendarHeight }}>
+        {compactMonths.map((compactMonth) => {
+          const compactFirst = addDays(compactMonth, -((compactMonth.getDay() - weekStart + 7) % 7));
+          const compactDays = Array.from({ length: 42 }, (_, index) => addDays(compactFirst, index));
+          const compactNames = compactDays.slice(0, 7);
+          return <section key={compactMonth.toISOString()} aria-label={fmt(monthFormat).format(compactMonth)} className="grid min-h-0 grid-rows-[auto_auto_1fr] overflow-hidden rounded border bg-card">
+            <h3 className="px-2 py-1 text-sm font-semibold">{fmt(monthFormat).format(compactMonth)}</h3>
+            <div role="row" className="grid grid-cols-7 border-y bg-muted/30 text-center text-[10px] font-medium text-muted-foreground">
+              {compactNames.map((day) => <div role="columnheader" key={day.getDay()}>{fmt(weekdayFormat).format(day).slice(0, 1)}</div>)}
+            </div>
+            <div className="grid min-h-0 grid-cols-7 grid-rows-6">
+              {compactDays.map((day) => {
+                const key = fromDay(day);
+                const dayItems = itemsOn(day);
+                const holiday = holidays.get(key);
+                const outside = day.getMonth() !== compactMonth.getMonth();
+                return <button role="gridcell" type="button" key={key} disabled={outside || !dayItems.length}
+                  aria-label={`${fmt(fullFormat).format(day)}${dayItems.length ? `: ${dayItems.map((item) => item.title).join(", ")}` : ""}`}
+                  title={holiday ?? dayItems.map((item) => item.title).join(", ")}
+                  onClick={() => setOverflow({ day, items: dayItems })}
+                  className={`relative min-h-0 border-b border-r p-0.5 text-left text-[10px] leading-none ${outside ? "text-muted-foreground/30" : "hover:bg-accent"} ${key === today ? "bg-primary/10 font-bold text-primary ring-1 ring-inset ring-primary" : ""}`}>
+                  <span>{day.getDate()}</span>
+                  {!outside && (holiday || dayItems.length > 0) && <span className={`absolute bottom-0.5 left-1/2 size-1.5 -translate-x-1/2 rounded-full ${holiday ? "bg-rose-500" : options.colorBy === "status" && dayItems[0]?.status?.color ? "bg-primary" : "bg-sky-500"}`} />}
+                  {!outside && dayItems.length > 1 && <span className="absolute bottom-0 right-0.5 text-[9px] font-semibold text-primary">{dayItems.length}</span>}
+                </button>;
+              })}
+            </div>
+          </section>;
+        })}
+      </div> :
+      <div ref={calendarRef} role="grid" aria-label={t("views.calendar.label")} tabIndex={0} className="relative w-full min-w-0 overflow-x-auto focus-visible:outline-2 focus-visible:outline-ring lg:w-auto lg:flex-1">
         <div role="row" className="grid min-w-[44rem] text-sm font-medium" style={{ gridTemplateColumns: `${options.weekNumbers ? "3rem " : ""}repeat(${options.weekends ? 7 : 5}, minmax(0, 1fr))` }}>
           {options.weekNumbers && <div role="columnheader" className="px-1">{t("views.calendar.weekShort")}</div>}
           {names.filter((day) => options.weekends || (day.getDay() !== 0 && day.getDay() !== 6)).map((day) => <div role="columnheader" key={day.getDay()} className="px-1">{fmt(weekdayFormat).format(day)}</div>)}
@@ -213,7 +253,8 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
               const more = hidden.length;
               const openKey = `${week}-${col}`;
               return <div role="gridcell" key={key} onDragOver={(event) => { if (drag) event.preventDefault(); }} onDrop={(event) => { event.preventDefault(); dropOn(day); }}
-                className={`relative h-28 min-w-0 border p-1 ${day < periodMonth || day > periodEnd ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "ring-2 ring-inset ring-primary" : ""}`}>
+                className={`relative min-h-16 min-w-0 border p-1 ${day < periodMonth || day > periodEnd ? "bg-muted/30" : ""} ${off ? "bg-muted/50" : ""} ${key === today ? "ring-2 ring-inset ring-primary" : ""}`}
+                style={{ height: mode === "week" ? calendarHeight - 24 : `clamp(4rem, ${(calendarHeight - 24) / weeks}px, 7rem)` }}>
                 {onCreateOn && !readonly && !off && <button type="button" className="absolute right-1 top-1 z-20 rounded px-1 text-xs text-primary hover:bg-accent"
                   aria-label={t("views.calendar.newOn", { date: fmt(fullFormat).format(day) })} onClick={() => onCreateOn(key)}>+</button>}
                 <p className="flex min-w-0 items-center gap-1 text-xs text-muted-foreground"><span aria-hidden>{day.getDate()}</span>
@@ -221,7 +262,7 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
                 {barsAt(col).map((bar) => {
                   const item = entryById.get(bar.id);
                   return item ? <div key={bar.id} className="absolute left-0 z-10" style={{ top: `${1.5 + bar.lane * 1.5}rem`, width: `${(bar.endCol - bar.startCol + 1) * 100}%` }}>
-                    {barButton(item, bar, day, !bar.continuesBefore || week === 0)}
+                    {barButton(item, bar, day, true)}
                   </div> : null;
                 })}
                 {more > 0 && <button type="button" aria-haspopup="dialog" onClick={() => setOverflow({ day, items: hidden.map((entry) => entryById.get(entry.id)).filter((item): item is Item => !!item) })}
@@ -230,7 +271,7 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
             })}
           </div>;
         })}
-      </div>
+      </div>}
       {unscheduledOpen && <section aria-label={t("views.calendar.unscheduled")} className="w-full min-w-0 shrink-0 space-y-1 break-words rounded border p-2 lg:w-56">
         <div className="flex items-center justify-between"><h3 className="font-medium">{t("views.calendar.unscheduled")}</h3><Button size="icon-sm" variant="ghost" aria-label={t("views.calendar.closeUnscheduled")} onClick={() => setUnscheduledOpen(false)}><X /></Button></div>
         {unscheduled.length ? <ul className="space-y-0.5">{unscheduled.map((item) => chip(item))}</ul> : <p className="text-sm text-muted-foreground">{t("views.calendar.noneUnscheduled")}</p>}

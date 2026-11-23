@@ -24,13 +24,15 @@ test("grid columns can be resized by their grips", async ({ page }) => {
   await expect.poll(async () => (await header.boundingBox())!.width).toBeGreaterThan(before + 50);
 });
 
-test("the scale menu floats at the top right and lists five scales", async ({ page }) => {
+test("the scale menu floats at the top right, lists five scales, and persists the selection", async ({ page }) => {
   await mockGantt(page);
   await page.goto(`${path}?view=${ganttId}`);
   await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Days/);
   await page.getByRole("button", { name: "Time scale" }).click();
   for (const name of ["Years", "Quarters", "Months", "Weeks", "Days"]) await expect(page.getByRole("menuitem", { name, exact: true })).toBeVisible();
-  await page.keyboard.press("Escape");
+  await page.getByRole("menuitem", { name: "Weeks", exact: true }).click();
+  await page.reload();
+  await expect(page.getByRole("button", { name: "Time scale" })).toHaveText(/Weeks/);
 });
 
 test("zoom out from Days goes to Weeks, and zoom in comes back", async ({ page }) => {

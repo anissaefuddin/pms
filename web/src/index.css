@@ -372,6 +372,9 @@
   font-weight: 600;
 }
 
+/* Focus mode gives the active data view the vertical space used by descriptive Space context. */
+html[data-view-focus="true"] .workspace-context { display: none; }
+
 /* Tema sidebar (S-UX.A1). Default: terang (sidebar-light). Navy (D-84) menunggu persetujuan pemilik; aktifkan dengan class sidebar-navy. */
 /* `@theme inline` memasukkan var(--nav*) langsung ke utilitas bg-nav/text-nav-*, jadi tema menimpa --nav*, bukan --color-nav*. */
 .sidebar-light {

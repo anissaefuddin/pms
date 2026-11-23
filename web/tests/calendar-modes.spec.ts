@@ -27,6 +27,7 @@ test("Week mode shows seven days and moves by a week; Month returns to the month
 });
 
 test("Quarter and Year modes show their complete planning ranges", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
   await mockSpaces(page, { extra: {
     [`GET ${path}/views`]: { body: { items: [{ id: calId, type: "calendar", name: "Calendar", visibility: "public", position: 0, is_default: true, config: {} }] } },
     [`GET ${path}/items`]: { body: { items: [] } },
@@ -38,7 +39,9 @@ test("Quarter and Year modes show their complete planning ranges", async ({ page
   await page.getByRole("button", { name: "Quarter", exact: true }).click();
   expect(await grid.getByRole("gridcell").count()).toBeGreaterThanOrEqual(84);
   await expect(page.getByRole("heading", { level: 2, name: /Q[1-4]/ })).toBeVisible();
+  await expect.poll(async () => { const box = await grid.boundingBox(); return box!.y + box!.height; }).toBeLessThanOrEqual(900);
   await page.getByRole("button", { name: "Year", exact: true }).click();
   expect(await grid.getByRole("gridcell").count()).toBeGreaterThanOrEqual(364);
   await expect(page.getByRole("heading", { level: 2, name: String(new Date().getFullYear()) })).toBeVisible();
+  await expect.poll(async () => { const box = await grid.boundingBox(); return box!.y + box!.height; }).toBeLessThanOrEqual(900);
 });

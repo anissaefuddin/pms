@@ -68,13 +68,15 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     let next = false;
     try { next = localStorage.getItem(key) === "1"; } catch { /* storage can be blocked */ }
     setFocused(next);
+    document.documentElement.dataset.viewFocus = String(next);
     window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: next }));
-    return () => { window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: false })); };
+    return () => { delete document.documentElement.dataset.viewFocus; window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: false })); };
   }, [active?.id]);
   function toggleFocus() {
     if (!active) return;
     const next = !focused;
     setFocused(next);
+    document.documentElement.dataset.viewFocus = String(next);
     try { localStorage.setItem(`pms:view-focus:${active.id}`, next ? "1" : "0"); } catch { /* storage can be blocked */ }
     window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: next }));
   }
@@ -271,7 +273,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     filter, preset, typeFilter, sort, fieldFilter, customFields, itemTypes: itemTypes.data?.filter((def) => !def.space_id || def.space_id === spaceId), setSearch: (key: string, value: string) => setSearch(key, value),
     group: group ?? (swimlanes ? "assignee" : "none"),
   };
-  return <section className="min-w-0 space-y-3">
+  return <section className="min-w-0 space-y-2 text-[13px]">
     <div className="flex items-start gap-2">
       <div className="min-w-0 flex-1"><ViewTabs views={available} selected={active} canEdit={canEdit}
         project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
@@ -307,13 +309,12 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>
       <p className="text-sm text-muted-foreground">{t("views.placeholder")}</p>
     </div> : <>
-      <ViewToolbar {...toolbar} groups={isBoard ? boardGroups : tableGroups}
+      {isBoard && <ViewToolbar {...toolbar} groups={boardGroups}
         columns={<>
           {!!spaceId && <ColumnPicker board={isBoard} key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)}
             spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}
           {isBoard && <BoardToggles prefs={boardPrefs} />}
-          {!!parent && (parent.type === "project" || parent.type === "folder") && !isBoard && <Button size="sm" variant="outline" onClick={() => setExportingTable(true)}><FileSpreadsheet />{t("excel.exportTable")}</Button>}
-        </>} />
+        </>} />}
       {blocked && <div role="alert" className="space-y-1 rounded border border-destructive p-3 text-sm">
         <p className="font-medium">{t("views.blocked.title", { title: blocked.title })}</p>
         <ul className="list-disc pl-5">{blocked.problems.map((problem) => <li key={problem}>{problem}</li>)}</ul>
@@ -325,7 +326,8 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
           description={t("views.noItems.description")} canCreate={canCreate}
           primaryAction={{ label: t("items.new"), onClick: () => setCreating({}) }} />
         : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} prefs={boardPrefs} onQuickCreate={quickCreate} />)
-        : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
+        : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })} initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder}
+          renderToolbar={(controls) => <ViewToolbar {...toolbar} groups={tableGroups} columns={<>{!!spaceId && <ColumnPicker key={active.id + columns.join()} selected={columns} fields={customFields} canSave={canEdit} saving={savingColumns} onSave={(next) => void saveColumns(next)} spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />}{!!parent && (parent.type === "project" || parent.type === "folder") && <Button size="sm" variant="outline" onClick={() => setExportingTable(true)}><FileSpreadsheet />{t("excel.exportTable")}</Button>}{controls}</>} />} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
       initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialTypeKey={creating.typeKey} initialAssignee={creating.assignee} initialDate={creating.day} initialFinish={creating.finishDay} location={{ space_id: spaceId, parent_item_id: creating.locationParent !== undefined ? (creating.locationParent ?? undefined) : (creating.parent?.id ?? parent?.id) }} me={me} onCreated={(item) => { noticeIfHidden(item); if (creating?.placement) void placeNextTo(item, creating.placement); onOpen(item); }} />}

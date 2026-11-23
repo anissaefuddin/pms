@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { createContext, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { useQueries, useQuery, useQueryClient } from "@tanstack/react-query";
 import { Gantt, Willow, WillowDark, type IApi, type ITask } from "@svar-ui/react-gantt";
 import "@svar-ui/react-gantt/style.css";
@@ -283,11 +283,11 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
 }) {
   const { t, i18n } = useTranslation();
   const profile = useProfile();
-  const [scale, setScale] = useState<Scale>("day");
+  const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
+  const [scale, setScale] = useState<Scale>(() => { try { const saved = localStorage.getItem(`${ganttPrefKey}:scale`) as Scale | null; return saved && scaleOptions.includes(saved) ? saved : "day"; } catch { return "day"; } });
   const [selected, setSelected] = useState<string>();
   const [undatedOpen, setUndatedOpen] = useState(false);
   const [baselineId, setBaselineId] = useState("");
-  const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
   const [gridWidth, setGridWidth] = useState(() => { try { return Math.min(760, Math.max(420, Number(localStorage.getItem(`${ganttPrefKey}:width`)) || 520)); } catch { return 520; } });
   const [naming, setNaming] = useState(false);
   // WA-D05: the collapse state comes from the server profile for this view and every change is sent back.
@@ -296,6 +296,14 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   const [sharing, setSharing] = useState(false);
   const chart = useRef<IApi>(undefined);
   const chartRegion = useRef<HTMLDivElement>(null);
+  const [chartHeight, setChartHeight] = useState(520);
+  useEffect(() => { try { localStorage.setItem(`${ganttPrefKey}:scale`, scale); } catch { /* storage can be blocked */ } }, [ganttPrefKey, scale]);
+  useLayoutEffect(() => {
+    const fit = () => setChartHeight(Math.max(288, window.innerHeight - (chartRegion.current?.getBoundingClientRect().top ?? 0) - 56));
+    fit();
+    window.addEventListener("resize", fit);
+    return () => window.removeEventListener("resize", fit);
+  }, []);
   // Every level is fetched with the same cache keys as Table, so SSE updates and PATCH responses reach the chart.
   const [parents, setParents] = useState<string[]>([]);
   const branches = useQueries({
@@ -647,8 +655,8 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       </>}
       {undated > 0 && <Button size="sm" variant="ghost" onClick={() => setUndatedOpen(true)}>{t("views.gantt.unscheduledCount", { count: undated })}</Button>}
   </>;
-  return <div className="space-y-2">
-    <div className="flex flex-wrap items-center gap-2">{renderToolbar ? renderToolbar(controls) : controls}</div>
+  return <div className="space-y-1.5">
+    <div className="flex flex-wrap items-center gap-1.5">{renderToolbar ? renderToolbar(controls) : controls}</div>
     <Dialog open={undatedOpen} onOpenChange={setUndatedOpen}>
       <DialogContent>
         <DialogTitle>{t("views.gantt.unscheduledTitle")}</DialogTitle>
@@ -686,7 +694,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       }}
       onPointerLeave={() => setDrag(undefined)}
       onPointerCancel={() => setDrag(undefined)}
-      className="gantt-chart relative h-[60vh] min-h-72 overflow-hidden rounded border focus-visible:outline-ring [&_.wx-theme]:h-full">
+      className="gantt-chart relative min-h-72 overflow-hidden rounded border text-[13px] focus-visible:outline-ring [&_.wx-theme]:h-full" style={{ height: chartHeight }}>
       {dragPreview}
       <div className={onQuickCreate && !readonly ? "h-[calc(100%-38px)]" : "h-full"}>
         <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>

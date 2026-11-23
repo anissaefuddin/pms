@@ -18,10 +18,10 @@ export function WorkspaceHeader({ breadcrumb, icon, title, starItemId, meta, act
   // The breadcrumb moves into the top bar when it is there; otherwise it stays above the title.
   const [slot, setSlot] = useState<HTMLElement | null>(null);
   useEffect(() => { setSlot(document.getElementById("topbar-breadcrumb")); }, []);
-  return <header className="space-y-4 border-b pb-5">
+  return <header className="space-y-2 border-b pb-3">
     {breadcrumb && (slot ? createPortal(breadcrumb, slot) : breadcrumb)}
     {titleInTopbar && <TopbarTitle extra={starItemId && <StarButton itemId={starItemId} />}>{icon}{title}</TopbarTitle>}
-    <div className="flex flex-wrap items-start justify-between gap-4">
+    <div className="flex flex-wrap items-start justify-between gap-2">
       <div className="min-w-0">
         {!titleInTopbar && <div className="flex min-w-0 items-center gap-2">
           {icon}

@@ -12,7 +12,7 @@ export function WorkspaceLayout({ children, className, header, nav, toolbar }: {
   nav?: ReactNode;
   toolbar?: ReactNode;
 }) {
-  return <main className={cn("mx-auto w-full p-4 sm:p-6", className)}>
+  return <main className={cn("mx-auto w-full p-3 sm:p-4", className)}>
     {header}
     {nav}
     {toolbar}

@@ -28,6 +28,9 @@ test("a second-level row expands and loads its children", async ({ page }) => {
 test("table density and hierarchy controls are persistent and expand nested rows", async ({ page }) => {
   await mockSpaces(page, { extra });
   await page.goto(path);
+  await expect(page.getByRole("button", { name: "Compact rows" })).toHaveAttribute("aria-pressed", "true");
+  await page.getByRole("button", { name: "Compact rows" }).click();
+  await expect(page.getByRole("button", { name: "Compact rows" })).toHaveAttribute("aria-pressed", "false");
   await page.getByRole("button", { name: "Compact rows" }).click();
   await page.getByRole("button", { name: "Expand all" }).click();
   await expect(page.getByRole("button", { name: "HAZOP study", exact: true })).toBeVisible();

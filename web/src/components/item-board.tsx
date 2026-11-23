@@ -42,14 +42,14 @@ export function useBoardPrefs(preferenceKey: string): BoardPrefs {
   // Empty columns are hidden unless the user turned that off before; "0" is the only value that shows them.
   const [hideEmpty, setHideEmpty] = useState(() => { try { return localStorage.getItem(emptyKey) !== "0"; } catch { return true; } });
   const densityKey = `pms:board-compact:${preferenceKey}`;
-  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) === "1"; } catch { return false; } });
+  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) !== "0"; } catch { return true; } });
   const collapsedKey = `pms:board-collapsed:${preferenceKey}`;
   const [collapsed, setCollapsed] = useState<string[]>(() => { try { const value = JSON.parse(localStorage.getItem(collapsedKey) ?? "[]"); return Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []; } catch { return []; } });
   useEffect(() => {
     if (!preferenceKey) return;
     try {
       setHideEmpty(localStorage.getItem(emptyKey) !== "0");
-      setCompact(localStorage.getItem(densityKey) === "1");
+      setCompact(localStorage.getItem(densityKey) !== "0");
       const value = JSON.parse(localStorage.getItem(collapsedKey) ?? "[]");
       setCollapsed(Array.isArray(value) ? value.filter((id): id is string => typeof id === "string") : []);
     } catch { /* storage can be blocked */ }
@@ -114,7 +114,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
   }
 
   const lanes = lanesOf(items, swimlanes, t("views.unassigned"));
-  return <div className="space-y-4">
+  return <div className="h-[calc(100dvh-19rem)] min-h-72 space-y-2 overflow-y-auto">
     {lanes.map((lane) => {
       const unlisted = lane.items.filter((item) => !item.status || !known.has(item.status.id));
       const cols = [
@@ -122,15 +122,15 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
         ...(unlisted.length ? [{ id: "", name: t("views.noStatus"), color: noColor, items: unlisted }] : []),
       ];
       const visibleCols = cols.filter((column) => !hideEmpty || column.items.length > 0);
-      const board = <div className="flex gap-3 overflow-x-auto pb-3">
+      const board = <div className="flex h-full gap-2 overflow-x-auto pb-2">
         {visibleCols.map((column) => { const columnKey = `${lane.key}:${column.id}`; const folded = collapsed.includes(columnKey); return <section key={column.id} aria-label={lane.name ? `${lane.name}: ${column.name}` : column.name}
-          className={`${folded ? "w-12" : "w-80"} shrink-0 space-y-2 transition-[width]`}
+          className={`${folded ? "w-12" : "w-72"} flex h-full shrink-0 flex-col gap-1.5 transition-[width]`}
           onDragOver={(event) => { if (dragging && !pending && (column.id || swimlanes)) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); drop(lane, column.id); }}>
-          <h3 className={`flex items-center gap-2 rounded-md px-2 py-2 font-semibold ${tintOf(column.color)}`}>
+          <h3 className={`sticky top-0 z-10 flex items-center gap-1.5 rounded-md px-2 py-1.5 text-[13px] font-semibold ${tintOf(column.color)}`}>
             {!folded && <><span aria-hidden className={`size-2 rounded-full ${statusDotClass(column.color)}`} />{column.name} <span className="font-normal">{formatNumber(column.items.length, profile)}</span>{column.items.some((item) => item.is_milestone) && <span className="text-xs font-normal text-muted-foreground">{t("views.boardBreakdown", { tasks: column.items.filter((item) => !item.is_milestone).length, milestones: column.items.filter((item) => item.is_milestone).length })}</span>}</>}
             <Button size="icon-sm" variant="ghost" className={folded ? "mx-auto" : "ml-auto"} aria-label={t(folded ? "views.boardExpandColumn" : "views.boardCollapseColumn", { name: column.name })} onClick={() => toggleColumn(columnKey)}>{folded ? <PanelLeftOpen /> : <PanelLeftClose />}</Button></h3>
-          {!folded && <><ul className="space-y-2">
+          {!folded && <><ul className="min-h-0 flex-1 space-y-1.5 overflow-y-auto pr-1">
             {column.items.map((item) => <Card key={item.id} item={item} lane={lane.key} now={now} fields={cardFields} shown={shown} compact={compact} showStatus={swimlanes}
               statuses={statuses} pending={pending} onOpen={onOpen} onPatch={onPatch} onDrag={setDragging} />)}
           </ul>
@@ -181,7 +181,7 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
     shown.includes("locations") && item.locations.map((loc) => loc.space_name).filter(Boolean).join(", "),
   ].filter(Boolean);
   const milestone = item.is_milestone ? <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground"><Diamond aria-hidden className="size-3" />{t("views.milestone")}</span> : null;
-  return <li className="rounded-lg border bg-card shadow-xs"
+  return <li className="rounded-lg border bg-card shadow-xs" style={{ contentVisibility: "auto", containIntrinsicSize: "120px" }}
     draggable={draggable} onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); onDrag({ id: item.id, lane }); }}
     onDragEnd={() => onDrag(undefined)}>
     <div className={compact ? "space-y-1 p-2" : "space-y-2 p-3"}>
@@ -189,7 +189,7 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
         src={`/api/v1/attachments/${item.cover_attachment_id}/download`} />}
       <div className="flex items-start gap-2">
         <TypeGlyph item={item} className="mt-1.5 size-4 text-muted-foreground" />
-        <Button variant="ghost" size="sm" title={item.title} className="line-clamp-2 h-auto min-w-0 flex-1 justify-start whitespace-normal p-0 text-left text-sm font-medium hover:bg-transparent hover:underline" onClick={() => onOpen(item)}>{item.title}</Button>
+        <Button variant="ghost" size="sm" title={item.title} className="line-clamp-2 h-auto min-w-0 flex-1 justify-start whitespace-normal p-0 text-left text-[13px] font-medium hover:bg-transparent hover:underline" onClick={() => onOpen(item)}>{item.title}</Button>
         {canMove && !showStatus && <DropdownMenu>
           <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" disabled={pending} aria-label={`${t("views.moveStatus")}: ${item.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
           <DropdownMenuContent align="end">

@@ -27,7 +27,7 @@ export function ViewToolbar({ filter, preset, typeFilter, sort, group, fieldFilt
   setSearch: (key: string, value: string) => void; columns?: ReactNode; filterOnly?: boolean;
 }) {
   const { t } = useTranslation();
-  return <div role="toolbar" aria-label={t("views.toolbar")} className="flex flex-wrap items-center gap-1.5 rounded-lg border bg-card p-1.5 md:flex-nowrap">
+  return <div role="toolbar" aria-label={t("views.toolbar")} className="flex flex-wrap items-center gap-1 rounded-lg border bg-card p-1 text-[13px] md:flex-nowrap">
     <Chip label={t("views.chip.filter")} icon={<Filter />} active={!!(preset || typeFilter || fieldFilter)}>
       <label className="block space-y-1"><span>{t("views.preset.label")}</span>
         <select aria-label={t("views.preset.label")} value={preset || "all"} onChange={(event) => setSearch("preset", event.target.value === "all" ? "" : event.target.value)} className={selectClass}>

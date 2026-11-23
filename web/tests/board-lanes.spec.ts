@@ -72,6 +72,7 @@ test("dragging to another lane asks first, then replaces only that assignee", as
 test("without lanes a status drop is still immediate, and the card picker saves the chosen fields", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto(path);
+  await expect(page.getByRole("button", { name: "Compact cards" })).toHaveAttribute("aria-pressed", "true");
   // The first drag can land before React has rendered the drop targets on a slow runner, so retry the whole gesture.
   // Show the empty columns first: the drop target is the empty Done column.
   await page.getByRole("button", { name: "Hide empty columns" }).click();

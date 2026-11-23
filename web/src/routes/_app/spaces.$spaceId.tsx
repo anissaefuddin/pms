@@ -127,7 +127,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
     <WorkspaceLayout>
       <WorkspaceHeader titleInTopbar icon={<SpaceIcon iconKey={space.icon_key} className="size-5" />} title={personal ? t("spaces.personal") : space.name}
         meta={<>
-          {space.description && <p className="mt-1 max-w-2xl text-muted-foreground">{space.description}</p>}
+          {space.description && <p className="workspace-context mt-1 max-w-2xl text-sm text-muted-foreground">{space.description}</p>}
           {space.locked && <p className="mt-1 flex items-center gap-1 text-sm text-muted-foreground"><Lock className="size-4" aria-hidden="true" />{t("spaces.lock.badge")}<span className="sr-only">. {t("spaces.lock.explain")}</span></p>}
         </>}
         actions={<>
@@ -169,7 +169,7 @@ function SpaceView({ space, me }: { space: Space; me?: CurrentUser }) {
         description={t("spaces.empty.description")} canCreate={canCreate}
         primaryAction={{ label: t("spaces.empty.browseBlueprints"), onClick: () => void navigate({ to: "/blueprints" }) }}
         secondaryAction={{ label: t("spaces.empty.newProject"), onClick: () => setCreating("project") }} />}
-      <div className="mt-6"><ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
+      <div className="mt-3"><ViewWorkspace spaceEmpty={items.data?.length === 0} spaceId={space.id} me={me} canCreate={canCreate} canEdit={can(space, "edit")} onOpen={openItem} /></div>
 
       {me && <CreateItemDialog open={creating !== null} onOpenChange={(open) => { if (!open) setCreating(null); }} me={me} location={{ space_id: space.id }}
         initialKind={creating ?? undefined} onCreated={openItem} />}
