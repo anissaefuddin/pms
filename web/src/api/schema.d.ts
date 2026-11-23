@@ -2124,6 +2124,23 @@ export interface paths {
         patch: operations["renameAccount"];
         trace?: never;
     };
+    "/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Identitas visual Workspace yang aman untuk halaman publik dan aplikasi */
+        get: operations["getWorkspaceBranding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/account/branding/{asset}": {
         parameters: {
             query?: never;
@@ -2133,7 +2150,7 @@ export interface paths {
             };
             cookie?: never;
         };
-        /** Ambil icon atau logo Workspace */
+        /** Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client */
         get: operations["getWorkspaceBrandAsset"];
         /** Upload icon atau logo Workspace (hanya admin) */
         put: operations["saveWorkspaceBrandAsset"];
@@ -5280,6 +5297,16 @@ export interface components {
                 manage_users?: boolean;
                 create_space?: boolean;
             };
+        };
+        WorkspaceBranding: {
+            name: string;
+            brand_color: string;
+            /** Format: int64 */
+            icon_image_version: number;
+            /** Format: int64 */
+            logo_light_version: number;
+            /** Format: int64 */
+            logo_dark_version: number;
         };
         MeUpdate: {
             first_name?: string;
@@ -11488,6 +11515,26 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getWorkspaceBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceBranding"];
+                };
+            };
         };
     };
     getWorkspaceBrandAsset: {

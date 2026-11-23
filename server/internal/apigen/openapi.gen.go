@@ -6437,6 +6437,15 @@ type WorkloadTask struct {
 	Version       *int                  `json:"version,omitempty"`
 }
 
+// WorkspaceBranding defines model for WorkspaceBranding.
+type WorkspaceBranding struct {
+	BrandColor       string `json:"brand_color"`
+	IconImageVersion int64  `json:"icon_image_version"`
+	LogoDarkVersion  int64  `json:"logo_dark_version"`
+	LogoLightVersion int64  `json:"logo_light_version"`
+	Name             string `json:"name"`
+}
+
 // Cursor defines model for Cursor.
 type Cursor = string
 
@@ -8276,7 +8285,7 @@ type ServerInterface interface {
 	// RemoveWorkspaceBrandAsset Hapus icon atau logo Workspace (hanya admin)
 	// (DELETE /account/branding/{asset})
 	RemoveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
-	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace
+	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client
 	// (GET /account/branding/{asset})
 	GetWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
 	// SaveWorkspaceBrandAsset Upload icon atau logo Workspace (hanya admin)
@@ -8477,6 +8486,9 @@ type ServerInterface interface {
 	// PreviewBlueprint Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
 	// (POST /blueprints/{blueprintId}/preview)
 	PreviewBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
+	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
+	// (GET /branding)
+	GetWorkspaceBranding(w http.ResponseWriter, r *http.Request)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID)
@@ -11308,6 +11320,20 @@ func (siw *ServerInterfaceWrapper) PreviewBlueprint(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PreviewBlueprint(w, r, blueprintId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkspaceBranding operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkspaceBranding(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkspaceBranding(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19590,6 +19616,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/invitation/resend", wrapper.ResendInvitation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account", wrapper.GetAccount)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/account", wrapper.RenameAccount)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/branding", wrapper.GetWorkspaceBranding)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/account/branding/{asset}", wrapper.RemoveWorkspaceBrandAsset)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account/branding/{asset}", wrapper.GetWorkspaceBrandAsset)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/account/branding/{asset}", wrapper.SaveWorkspaceBrandAsset)
@@ -23905,6 +23932,27 @@ func (response PreviewBlueprint422ApplicationProblemPlusJSONResponse) VisitPrevi
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceBrandingRequestObject struct {
+}
+
+type GetWorkspaceBrandingResponseObject interface {
+	VisitGetWorkspaceBrandingResponse(w http.ResponseWriter) error
+}
+
+type GetWorkspaceBranding200JSONResponse WorkspaceBranding
+
+func (response GetWorkspaceBranding200JSONResponse) VisitGetWorkspaceBrandingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -39439,7 +39487,7 @@ type StrictServerInterface interface {
 	// RemoveWorkspaceBrandAsset Hapus icon atau logo Workspace (hanya admin)
 	// (DELETE /account/branding/{asset})
 	RemoveWorkspaceBrandAsset(ctx context.Context, request RemoveWorkspaceBrandAssetRequestObject) (RemoveWorkspaceBrandAssetResponseObject, error)
-	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace
+	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client
 	// (GET /account/branding/{asset})
 	GetWorkspaceBrandAsset(ctx context.Context, request GetWorkspaceBrandAssetRequestObject) (GetWorkspaceBrandAssetResponseObject, error)
 	// SaveWorkspaceBrandAsset Upload icon atau logo Workspace (hanya admin)
@@ -39640,6 +39688,9 @@ type StrictServerInterface interface {
 	// PreviewBlueprint Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
 	// (POST /blueprints/{blueprintId}/preview)
 	PreviewBlueprint(ctx context.Context, request PreviewBlueprintRequestObject) (PreviewBlueprintResponseObject, error)
+	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
+	// (GET /branding)
+	GetWorkspaceBranding(ctx context.Context, request GetWorkspaceBrandingRequestObject) (GetWorkspaceBrandingResponseObject, error)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(ctx context.Context, request DeleteCommentRequestObject) (DeleteCommentResponseObject, error)
@@ -42532,6 +42583,30 @@ func (sh *strictHandler) PreviewBlueprint(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PreviewBlueprintResponseObject); ok {
 		if err := validResponse.VisitPreviewBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkspaceBranding operation middleware
+func (sh *strictHandler) GetWorkspaceBranding(w http.ResponseWriter, r *http.Request) {
+	var request GetWorkspaceBrandingRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkspaceBranding(ctx, request.(GetWorkspaceBrandingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkspaceBranding")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkspaceBrandingResponseObject); ok {
+		if err := validResponse.VisitGetWorkspaceBrandingResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

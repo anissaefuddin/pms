@@ -11,6 +11,7 @@ import { FormError } from "@/components/auth/form-error";
 import { SettingsSection } from "@/components/settings/settings-ui";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { workspaceBrandingFromAccount, workspaceBrandingKey } from "@/lib/workspace-branding";
 
 export const Route = createFileRoute("/_app/settings/account")({ component: AccountRoute });
 
@@ -74,21 +75,21 @@ function BrandingTab({ account }: { account: Account }) {
     setBusy(kind);
     try {
       const updated = await api<Account>(`/api/v1/account/branding/${kind}`, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
-      client.setQueryData(["account"], updated); toast.success(t("settings.account.saved"));
+      client.setQueryData(["account"], updated); client.setQueryData(workspaceBrandingKey, workspaceBrandingFromAccount(updated)); toast.success(t("settings.account.saved"));
     } catch (err) { toast.error((err as Error).message); } finally { setBusy(""); }
   }
   async function removeAsset(kind: string) {
     setBusy(kind);
     try {
       const updated = await api<Account>(`/api/v1/account/branding/${kind}`, { method: "DELETE" });
-      client.setQueryData(["account"], updated); toast.success(t("settings.account.saved"));
+      client.setQueryData(["account"], updated); client.setQueryData(workspaceBrandingKey, workspaceBrandingFromAccount(updated)); toast.success(t("settings.account.saved"));
     } catch (err) { toast.error((err as Error).message); } finally { setBusy(""); }
   }
   async function saveColor(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy("color");
     try {
       const updated = await api<Account>("/api/v1/account", { method: "PATCH", body: JSON.stringify({ brand_color: color }) });
-      client.setQueryData(["account"], updated); toast.success(t("settings.account.saved"));
+      client.setQueryData(["account"], updated); client.setQueryData(workspaceBrandingKey, workspaceBrandingFromAccount(updated)); toast.success(t("settings.account.saved"));
     } catch (err) { toast.error((err as Error).message); } finally { setBusy(""); }
   }
   return <div role="tabpanel" className="space-y-6">
@@ -111,7 +112,7 @@ function BrandingTab({ account }: { account: Account }) {
           <span className="sr-only">{t("settings.account.chooseColor")}</span>
         </label>
         <Input value={color} onChange={(event) => setColor(event.target.value)} pattern="^#[0-9A-Fa-f]{6}$" aria-label={t("settings.account.brandColor")} className="w-28 font-mono uppercase" />
-        <Button disabled={busy === "color"}>{t("settings.account.saveColor")}</Button>
+        <Button type="submit" disabled={busy === "color"}>{t("settings.account.saveColor")}</Button>
       </div>
     </form>
   </div>;
@@ -146,6 +147,7 @@ function WorkspaceForm({ account, fields }: { account: Account; fields: "general
     try {
       const updated = await api<Account>("/api/v1/account", { method: "PATCH", body: JSON.stringify(values) });
       client.setQueryData(["account"], updated);
+      client.setQueryData(workspaceBrandingKey, workspaceBrandingFromAccount(updated));
       client.setQueryData<CurrentUser>(["me"], (current) => current ? { ...current, account_name: updated.name } : current);
       toast.success(t("settings.account.saved"));
     } catch (err) { setError((err as Error).message); } finally { setBusy(false); }
@@ -156,7 +158,7 @@ function WorkspaceForm({ account, fields }: { account: Account; fields: "general
       <label className="block space-y-1 text-sm"><span>{t("settings.account.workspaceDescription")}</span>
         <textarea name="description" defaultValue={account.description} maxLength={500} rows={3} className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
     </SettingsSection> : null}
-    <FormError message={error} /><div className="flex justify-end"><Button disabled={busy}>{t("settings.account.save")}</Button></div>
+    <FormError message={error} /><div className="flex justify-end"><Button type="submit" disabled={busy}>{t("settings.account.save")}</Button></div>
   </form>;
 }
 

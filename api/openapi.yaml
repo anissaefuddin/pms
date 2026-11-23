@@ -2949,6 +2949,18 @@ paths:
               schema: { $ref: '#/components/schemas/Account' }
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /branding:
+    get:
+      tags: [users]
+      operationId: getWorkspaceBranding
+      summary: Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
+      security: []
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkspaceBranding' }
   /account/branding/{asset}:
     parameters:
       - name: asset
@@ -7289,6 +7301,15 @@ components:
               properties:
                 manage_users: { type: boolean }
                 create_space: { type: boolean }
+    WorkspaceBranding:
+      type: object
+      required: [name, brand_color, icon_image_version, logo_light_version, logo_dark_version]
+      properties:
+        name: { type: string }
+        brand_color: { type: string, pattern: '^#[0-9A-Fa-f]{6}$' }
+        icon_image_version: { type: integer, format: int64 }
+        logo_light_version: { type: integer, format: int64 }
+        logo_dark_version: { type: integer, format: int64 }
     MeUpdate:
       type: object
       properties:

@@ -19,6 +19,7 @@ type productView struct {
 	ReportRows                                                                   []ReportRow
 	ReportMetric, ReportTotal, ReportMore, Reason, PreferencesURL, HomeURL, Note string
 	BrandName, BrandColor, BrandLogoURL, BrandIconURL, BrandInitial              string
+	BrandLogoInline                                                              bool
 }
 type viewRow struct{ Label, Value string }
 
@@ -47,7 +48,7 @@ func renderProductEmail(args Args) (string, string, string, error) {
 		brand.Initial = strings.ToUpper(string([]rune(brand.Name)[0]))
 	}
 	v := productView{URL: args.URL, Item: name, HomeURL: rootURL(args.URL), PreferencesURL: rootURL(args.URL) + "/settings/email",
-		BrandName: brand.Name, BrandColor: brand.Color, BrandLogoURL: brand.LogoURL, BrandIconURL: brand.IconURL, BrandInitial: brand.Initial}
+		BrandName: brand.Name, BrandColor: brand.Color, BrandLogoURL: brand.LogoURL, BrandIconURL: brand.IconURL, BrandInitial: brand.Initial, BrandLogoInline: brand.LogoURL == "cid:workspace-logo"}
 	var subject string
 	switch d.Kind {
 	case "set_password":

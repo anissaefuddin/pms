@@ -149,6 +149,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("PUT /api/v1/me/view-preferences/{scopeId}", s.requireUser(s.saveViewPreferences))
 	mux.HandleFunc("GET /api/v1/account", s.requireUser(s.accountInfo))
 	mux.HandleFunc("PATCH /api/v1/account", s.requireUser(requireAdmin(s.renameAccount)))
+	mux.HandleFunc("GET /api/v1/branding", s.workspaceBranding)
 	// Branding assets are intentionally public so email clients can render the Workspace logo.
 	mux.HandleFunc("GET /api/v1/account/branding/{asset}", s.workspaceBrandAsset)
 	mux.HandleFunc("PUT /api/v1/account/branding/{asset}", s.requireUser(requireAdmin(s.saveWorkspaceBrandAsset)))

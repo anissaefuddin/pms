@@ -2,8 +2,9 @@ import { Link, Outlet, createRootRoute } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { buttonVariants } from "@/components/ui/button";
 import { Toaster } from "@/components/ui/toaster";
+import { WorkspaceBrandingEffects } from "@/lib/workspace-branding";
 
-export const Route = createRootRoute({ notFoundComponent: NotFoundPage, component: () => <><Outlet /><Toaster /></> });
+export const Route = createRootRoute({ notFoundComponent: NotFoundPage, component: () => <><WorkspaceBrandingEffects /><Outlet /><Toaster /></> });
 
 
 function NotFoundPage() {

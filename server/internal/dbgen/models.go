@@ -860,6 +860,15 @@ type DomainEvent struct {
 	OriginSpaceID pgtype.UUID        `json:"origin_space_id"`
 }
 
+type DueReminderDelivery struct {
+	UserID     pgtype.UUID        `json:"user_id"`
+	ItemID     pgtype.UUID        `json:"item_id"`
+	DueDate    pgtype.Date        `json:"due_date"`
+	Kind       string             `json:"kind"`
+	OffsetDays int32              `json:"offset_days"`
+	SentAt     pgtype.Timestamptz `json:"sent_at"`
+}
+
 type ExcelImportReport struct {
 	ID        pgtype.UUID        `json:"id"`
 	SpaceID   pgtype.UUID        `json:"space_id"`
@@ -1369,13 +1378,13 @@ type User struct {
 	DefaultTaskDurationDays  pgtype.Int4        `json:"default_task_duration_days"`
 	DefaultTaskEffortMinutes pgtype.Int4        `json:"default_task_effort_minutes"`
 	EmailMuted               []string           `json:"email_muted"`
-	DueReminders             []byte             `json:"due_reminders"`
 	Accent                   string             `json:"accent"`
 	ScimExternalID           pgtype.Text        `json:"scim_external_id"`
 	ScimProvisioned          bool               `json:"scim_provisioned"`
 	SidebarPinned            []string           `json:"sidebar_pinned"`
 	ViewExpansion            []byte             `json:"view_expansion"`
 	ViewPrefs                []byte             `json:"view_prefs"`
+	DueReminders             []byte             `json:"due_reminders"`
 }
 
 type UserAvatar struct {
@@ -1488,4 +1497,11 @@ type Workflow struct {
 	Name      string             `json:"name"`
 	IsDefault bool               `json:"is_default"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type WorkspaceBrandAsset struct {
+	Kind        string             `json:"kind"`
+	ContentType string             `json:"content_type"`
+	Data        []byte             `json:"data"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

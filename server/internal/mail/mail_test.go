@@ -3,6 +3,7 @@ package mail
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
@@ -40,6 +41,19 @@ func TestMessageHasDateAndMessageID(t *testing.T) {
 	for _, want := range []string{"\r\nDate: ", "\r\nMessage-ID: <", "@acme.test>", "\r\nTo: u@x.test"} {
 		if !strings.Contains(m, want) {
 			t.Fatalf("message lacks %q:\n%s", want, m)
+		}
+	}
+}
+
+func TestMessageEmbedsWorkspaceLogo(t *testing.T) {
+	raw, err := messageWithBrand("PMS <noreply@acme.test>", "noreply@acme.test", "", "u@x.test", "Hi", "body", `<img src="cid:workspace-logo">`, EmailBrand{LogoData: []byte("image"), LogoContentType: "image/png"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	message := string(raw)
+	for _, want := range []string{"multipart/related", "Content-ID: <workspace-logo>", base64.StdEncoding.EncodeToString([]byte("image"))} {
+		if !strings.Contains(message, want) {
+			t.Fatalf("embedded logo missing %q", want)
 		}
 	}
 }

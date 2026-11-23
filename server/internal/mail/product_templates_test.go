@@ -63,6 +63,18 @@ func TestProductEmailUsesWorkspaceBranding(t *testing.T) {
 	}
 }
 
+func TestProductEmailUsesInlineWorkspaceLogo(t *testing.T) {
+	_, _, html, err := render(Args{Template: "notification", Locale: "id", URL: "https://lens.test/items/1",
+		Brand: EmailBrand{Name: "Losaka", Color: "#0F766E", LogoURL: "cid:workspace-logo", Initial: "L"},
+		Data:  TemplateData{Kind: "assigned", Item: "UAT"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(html, `src="cid:workspace-logo"`) || strings.Contains(html, "ZgotmplZ") {
+		t.Fatalf("inline workspace logo was rejected: %s", html)
+	}
+}
+
 func TestReportDigestIsCompact(t *testing.T) {
 	rows := make([]ReportRow, 8)
 	for i := range rows {

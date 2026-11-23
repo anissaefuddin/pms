@@ -11,6 +11,29 @@ import (
 
 var workspaceAssetKinds = []string{"icon", "logo_light", "logo_dark"}
 
+type publicWorkspaceBranding struct {
+	Name         string `json:"name"`
+	BrandColor   string `json:"brand_color"`
+	IconVersion  int64  `json:"icon_image_version"`
+	LightVersion int64  `json:"logo_light_version"`
+	DarkVersion  int64  `json:"logo_dark_version"`
+}
+
+// workspaceBranding exposes only public visual identity, including to signed-out pages.
+func (s *Server) workspaceBranding(w http.ResponseWriter, r *http.Request) {
+	var brand publicWorkspaceBranding
+	err := s.pool.QueryRow(r.Context(), `SELECT name,COALESCE(NULLIF(settings->>'brand_color',''),'#2563EB'),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='icon'),0),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='logo_light'),0),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='logo_dark'),0)
+FROM account LIMIT 1`).Scan(&brand.Name, &brand.BrandColor, &brand.IconVersion, &brand.LightVersion, &brand.DarkVersion)
+	if err != nil {
+		writeError(w, 500, "could not load workspace branding")
+		return
+	}
+	writeJSON(w, 200, brand)
+}
+
 func workspaceAssetKind(r *http.Request) (string, bool) {
 	kind := r.PathValue("asset")
 	return kind, slices.Contains(workspaceAssetKinds, kind)

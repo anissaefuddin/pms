@@ -22,6 +22,7 @@ import { Button } from "./ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./ui/tooltip";
 import type { Space as SpaceType } from "@/lib/spaces";
 import { spaceActions } from "@/lib/space-actions";
+import { WorkspaceBrandMark } from "@/lib/workspace-branding";
 
 /** Route of a Space's settings tabs (kept as a constant so the route is not a literal in JSX). */
 const SPACE_SETTINGS_ROUTE = "/spaces/$spaceId/settings/$tab" as const;
@@ -201,7 +202,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
   return <>
     <aside style={{ ...style, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} group/sidebar relative flex min-h-0 flex-col border-r border-nav-hover bg-nav text-nav-text ${mobile ? "flex-1 p-3 pt-10" : `h-dvh shrink-0 ${collapsed ? "p-1" : "p-3"}`}`}>
       <div className={`mb-4 flex items-center gap-2 ${collapsed ? "flex-col" : ""}`}>
-        <span aria-hidden="true" className="grid size-8 shrink-0 place-items-center rounded-md bg-primary text-sm font-semibold text-primary-foreground">{(me.account_name || "W").trim().charAt(0).toUpperCase()}</span>
+        <WorkspaceBrandMark compact />
         {!collapsed && <p className="min-w-0 flex-1 truncate font-semibold" title={me.account_name}>{me.account_name}</p>}
         {/* The toggle shows when the pointer is over the sidebar (or it has keyboard focus); collapsed, it always shows so the sidebar can be opened again. */}
         {!mobile && <Tooltip>

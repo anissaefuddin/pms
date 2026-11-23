@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"github.com/anissaefuddin/pms/server/internal/previews"
 	"github.com/anissaefuddin/pms/server/internal/storage"
@@ -46,6 +47,8 @@ type Args struct {
 
 type EmailBrand struct {
 	Name, Color, LogoURL, IconURL, Initial string
+	LogoData                               []byte
+	LogoContentType                        string
 }
 
 type TemplateData struct {
@@ -97,7 +100,7 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 	if w.cfg.SMTPUser != "" {
 		auth = smtp.PlainAuth("", w.cfg.SMTPUser, w.cfg.SMTPPassword, w.cfg.SMTPHost)
 	}
-	msg, err := message(sender, from.Address, w.cfg.SMTPReplyTo, args.To, subject, text, html)
+	msg, err := messageWithBrand(sender, from.Address, w.cfg.SMTPReplyTo, args.To, subject, text, html, args.Brand)
 	if err != nil {
 		return err
 	}
@@ -109,12 +112,15 @@ func (w *Worker) brand(ctx context.Context) EmailBrand {
 	if w.pool == nil {
 		return brand
 	}
-	var lightURL string
+	var lightURL, logoContentType string
+	var logoData []byte
 	var lightVersion, iconVersion int64
 	err := w.pool.QueryRow(ctx, `SELECT a.name,COALESCE(a.settings->>'brand_color',''),COALESCE(a.settings->>'logo_light_url',''),
 COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='logo_light'),0),
-COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='icon'),0) FROM account a WHERE a.id=1`).
-		Scan(&brand.Name, &brand.Color, &lightURL, &lightVersion, &iconVersion)
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='icon'),0),
+COALESCE((SELECT content_type FROM workspace_brand_assets WHERE kind='logo_light'),''),
+COALESCE((SELECT data FROM workspace_brand_assets WHERE kind='logo_light'),'') FROM account a WHERE a.id=1`).
+		Scan(&brand.Name, &brand.Color, &lightURL, &lightVersion, &iconVersion, &logoContentType, &logoData)
 	if err != nil {
 		slog.Warn("could not load email branding; using defaults", "error", err)
 		return EmailBrand{Name: "LENS PMS", Color: "#2563EB", Initial: "L"}
@@ -129,7 +135,8 @@ COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_br
 	}
 	root := strings.TrimRight(w.cfg.PublicURL, "/")
 	if lightVersion > 0 {
-		brand.LogoURL = fmt.Sprintf("%s/api/v1/account/branding/logo_light?v=%d", root, lightVersion)
+		brand.LogoURL = "cid:workspace-logo"
+		brand.LogoData, brand.LogoContentType = logoData, logoContentType
 	} else if u, parseErr := neturl.Parse(lightURL); parseErr == nil && u.Scheme == "https" && u.Host != "" {
 		brand.LogoURL = lightURL
 	}
@@ -153,6 +160,10 @@ func validBrandColor(value string) bool {
 
 // message builds the mail text. Date and Message-ID are required by many receivers; without them mail is often marked as spam.
 func message(fromHeader, fromAddress, replyTo, to, subject, text, html string) ([]byte, error) {
+	return messageWithBrand(fromHeader, fromAddress, replyTo, to, subject, text, html, EmailBrand{})
+}
+
+func messageWithBrand(fromHeader, fromAddress, replyTo, to, subject, text, html string, brand EmailBrand) ([]byte, error) {
 	for _, field := range []string{fromHeader, replyTo, to, subject} { // a line break here would let data inject extra headers
 		if strings.ContainsAny(field, "\r\n") {
 			return nil, fmt.Errorf("email header contains a line break")
@@ -161,6 +172,7 @@ func message(fromHeader, fromAddress, replyTo, to, subject, text, html string) (
 	id := make([]byte, 12)
 	_, _ = rand.Read(id)
 	boundary := fmt.Sprintf("pms-%x", id)
+	related := boundary + "-related"
 	domain := "localhost"
 	if at := strings.LastIndex(fromAddress, "@"); at >= 0 {
 		domain = fromAddress[at+1:]
@@ -174,9 +186,25 @@ func message(fromHeader, fromAddress, replyTo, to, subject, text, html string) (
 		body.WriteString("\r\n")
 	}
 	fmt.Fprintf(&body, "--%s--\r\n", boundary)
+	if len(brand.LogoData) > 0 && strings.HasPrefix(brand.LogoContentType, "image/") {
+		var wrapped strings.Builder
+		fmt.Fprintf(&wrapped, "--%s\r\nContent-Type: multipart/alternative; boundary=%q\r\n\r\n%s", related, boundary, body.String())
+		fmt.Fprintf(&wrapped, "--%s\r\nContent-Type: %s\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <workspace-logo>\r\nContent-Disposition: inline; filename=workspace-logo\r\n\r\n", related, brand.LogoContentType)
+		encoded := base64.StdEncoding.EncodeToString(brand.LogoData)
+		for len(encoded) > 76 {
+			wrapped.WriteString(encoded[:76] + "\r\n")
+			encoded = encoded[76:]
+		}
+		wrapped.WriteString(encoded + "\r\n")
+		fmt.Fprintf(&wrapped, "--%s--\r\n", related)
+		body = wrapped
+	}
 	headers := []string{"From: " + fromHeader, "To: " + to, "Subject: " + mime.QEncoding.Encode("utf-8", subject),
 		"Date: " + time.Now().UTC().Format(time.RFC1123Z), fmt.Sprintf("Message-ID: <%x@%s>", id, domain),
 		"MIME-Version: 1.0", fmt.Sprintf("Content-Type: multipart/alternative; boundary=%q", boundary), ""}
+	if len(brand.LogoData) > 0 && strings.HasPrefix(brand.LogoContentType, "image/") {
+		headers[len(headers)-2] = fmt.Sprintf("Content-Type: multipart/related; boundary=%q", related)
+	}
 	if replyTo != "" {
 		headers = append([]string{"Reply-To: " + replyTo}, headers...)
 	}

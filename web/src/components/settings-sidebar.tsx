@@ -36,6 +36,7 @@ import type { LucideIcon } from "lucide-react";
 import { SidebarFooter } from "@/components/topbar";
 import { SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, readWidth, writeWidth } from "@/lib/sidebar-prefs";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
+import { WorkspaceBrandMark } from "@/lib/workspace-branding";
 
 type SettingsItem = { to: string; hash?: string; params?: { spaceId: string }; label: string };
 type SettingsGroup = { title: string; items: SettingsItem[] };
@@ -110,6 +111,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
   })).filter((group) => group.items.length > 0);
   return (
     <aside style={{ width: `${width}px`, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex h-dvh shrink-0 flex-col border-r border-nav-hover bg-nav p-3 text-nav-text`}>
+      <div className="mb-2 flex items-center gap-2 px-2"><WorkspaceBrandMark compact /><span className="truncate text-sm font-semibold">{me.account_name}</span></div>
       <div className="mb-3 flex items-center gap-1">
         {/* The label gets the room: the profile collapses to its avatar so "Back to workspace" fits on one line. */}
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm whitespace-nowrap text-nav-muted hover:bg-nav-hover hover:text-nav-text">

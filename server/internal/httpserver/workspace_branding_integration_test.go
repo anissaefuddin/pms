@@ -2,6 +2,7 @@ package httpserver_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"io"
 	"net/http"
 	"testing"
@@ -36,6 +37,18 @@ func TestWorkspaceBrandAssetUploadAndRemove(t *testing.T) {
 	}
 	if status, _, _ := send(admin, "PUT", "icon", png); status != 200 {
 		t.Fatalf("upload status %d, want 200", status)
+	}
+	branding, err := http.Get(f.srv.URL + "/api/v1/branding")
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer branding.Body.Close()
+	var publicBrand map[string]any
+	if err := json.NewDecoder(branding.Body).Decode(&publicBrand); err != nil {
+		t.Fatal(err)
+	}
+	if branding.StatusCode != 200 || publicBrand["name"] == "" || publicBrand["icon_image_version"].(float64) == 0 {
+		t.Fatalf("public branding: status=%d body=%+v", branding.StatusCode, publicBrand)
 	}
 	account := f.call(admin, "GET", "/account", nil)
 	if account.body["icon_image_version"].(float64) == 0 {
