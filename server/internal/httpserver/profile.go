@@ -197,6 +197,9 @@ func (s *Server) accountInfo(w http.ResponseWriter, r *http.Request) {
 		LogoLightURL string          `json:"logo_light_url"`
 		LogoDarkURL  string          `json:"logo_dark_url"`
 		BrandColor   string          `json:"brand_color"`
+		IconVersion  int64           `json:"icon_image_version"`
+		LightVersion int64           `json:"logo_light_version"`
+		DarkVersion  int64           `json:"logo_dark_version"`
 		CreatedAt    time.Time       `json:"created_at"`
 		Role         string          `json:"role"`
 		JoinedAt     time.Time       `json:"joined_at"`
@@ -205,10 +208,13 @@ func (s *Server) accountInfo(w http.ResponseWriter, r *http.Request) {
 	}
 	info.Seats = seats
 	if err == nil {
-		err = s.pool.QueryRow(r.Context(), `SELECT a.name,COALESCE(a.settings->>'description',''),COALESCE(a.settings->>'icon',''),COALESCE(a.settings->>'logo_light_url',''),COALESCE(a.settings->>'logo_dark_url',''),COALESCE(a.settings->>'brand_color',''),a.created_at,u.user_type::text,u.created_at,
+		err = s.pool.QueryRow(r.Context(), `SELECT a.name,COALESCE(a.settings->>'description',''),COALESCE(a.settings->>'icon',''),COALESCE(a.settings->>'logo_light_url',''),COALESCE(a.settings->>'logo_dark_url',''),COALESCE(a.settings->>'brand_color',''),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='icon'),0),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='logo_light'),0),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='logo_dark'),0),a.created_at,u.user_type::text,u.created_at,
 COALESCE((SELECT jsonb_agg(jsonb_build_object('id',x.id,'name',btrim(concat_ws(' ',x.first_name,x.last_name)),'email',x.email) ORDER BY x.first_name,x.last_name,x.id)
  FROM users x WHERE x.user_type='admin' AND x.status='active'),'[]'::jsonb)
-FROM account a CROSS JOIN users u WHERE u.id=$1::uuid`, actorOf(r).ID).Scan(&info.Name, &info.Description, &info.Icon, &info.LogoLightURL, &info.LogoDarkURL, &info.BrandColor, &info.CreatedAt, &info.Role, &info.JoinedAt, &info.Admins)
+FROM account a CROSS JOIN users u WHERE u.id=$1::uuid`, actorOf(r).ID).Scan(&info.Name, &info.Description, &info.Icon, &info.LogoLightURL, &info.LogoDarkURL, &info.BrandColor, &info.IconVersion, &info.LightVersion, &info.DarkVersion, &info.CreatedAt, &info.Role, &info.JoinedAt, &info.Admins)
 	}
 	if err != nil {
 		writeError(w, 500, "could not load account")

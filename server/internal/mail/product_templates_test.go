@@ -46,6 +46,23 @@ func TestProductEmailEscapesNotificationContent(t *testing.T) {
 	}
 }
 
+func TestProductEmailUsesWorkspaceBranding(t *testing.T) {
+	_, _, html, err := render(Args{Template: "notification", Locale: "id", URL: "https://lens.test/items/1",
+		Brand: EmailBrand{Name: "Losaka", Color: "#0F766E", LogoURL: "https://lens.test/api/v1/account/branding/logo_light?v=1", Initial: "L"},
+		Data:  TemplateData{Kind: "assigned", Item: "UAT"}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"Losaka", "#0F766E", "branding/logo_light?v=1", "Powered by LENS PMS"} {
+		if !strings.Contains(html, want) {
+			t.Fatalf("branded email missing %q: %s", want, html)
+		}
+	}
+	if strings.Contains(html, "ZgotmplZ") {
+		t.Fatalf("valid brand color was rejected by html/template: %s", html)
+	}
+}
+
 func TestReportDigestIsCompact(t *testing.T) {
 	rows := make([]ReportRow, 8)
 	for i := range rows {

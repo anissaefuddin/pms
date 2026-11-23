@@ -18,6 +18,7 @@ type productView struct {
 	Rows                                                                         []viewRow
 	ReportRows                                                                   []ReportRow
 	ReportMetric, ReportTotal, ReportMore, Reason, PreferencesURL, HomeURL, Note string
+	BrandName, BrandColor, BrandLogoURL, BrandIconURL, BrandInitial              string
 }
 type viewRow struct{ Label, Value string }
 
@@ -37,7 +38,16 @@ func renderProductEmail(args Args) (string, string, string, error) {
 	}
 	name := nonempty(d.Item, map[bool]string{true: "item terkait", false: "related item"}[id])
 	actor := nonempty(d.Actor, "LENS")
-	v := productView{URL: args.URL, Item: name, HomeURL: rootURL(args.URL), PreferencesURL: rootURL(args.URL) + "/settings/email"}
+	brand := args.Brand
+	brand.Name = nonempty(brand.Name, "LENS PMS")
+	if !validBrandColor(brand.Color) {
+		brand.Color = "#2563EB"
+	}
+	if strings.TrimSpace(brand.Initial) == "" {
+		brand.Initial = strings.ToUpper(string([]rune(brand.Name)[0]))
+	}
+	v := productView{URL: args.URL, Item: name, HomeURL: rootURL(args.URL), PreferencesURL: rootURL(args.URL) + "/settings/email",
+		BrandName: brand.Name, BrandColor: brand.Color, BrandLogoURL: brand.LogoURL, BrandIconURL: brand.IconURL, BrandInitial: brand.Initial}
 	var subject string
 	switch d.Kind {
 	case "set_password":

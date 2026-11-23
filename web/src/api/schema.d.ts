@@ -2124,6 +2124,27 @@ export interface paths {
         patch: operations["renameAccount"];
         trace?: never;
     };
+    "/account/branding/{asset}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        /** Ambil icon atau logo Workspace */
+        get: operations["getWorkspaceBrandAsset"];
+        /** Upload icon atau logo Workspace (hanya admin) */
+        put: operations["saveWorkspaceBrandAsset"];
+        post?: never;
+        /** Hapus icon atau logo Workspace (hanya admin) */
+        delete: operations["removeWorkspaceBrandAsset"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/onboarding/complete": {
         parameters: {
             query?: never;
@@ -5316,6 +5337,12 @@ export interface components {
             logo_light_url: string;
             logo_dark_url: string;
             brand_color: string;
+            /** Format: int64 */
+            icon_image_version: number;
+            /** Format: int64 */
+            logo_light_version: number;
+            /** Format: int64 */
+            logo_dark_version: number;
             /** Format: date-time */
             created_at: string;
             role: components["schemas"]["UserType"];
@@ -11461,6 +11488,83 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getWorkspaceBrandAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @description Runtime Content-Type adalah image/png */
+                    "application/octet-stream": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    saveWorkspaceBrandAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /** @description PNG */
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Updated Workspace */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removeWorkspaceBrandAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Updated Workspace */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            403: components["responses"]["Problem"];
         };
     };
     completeOnboarding: {

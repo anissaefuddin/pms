@@ -1,8 +1,9 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
+import { ImageUp, Trash2 } from "lucide-react";
 import { api, type CurrentUser } from "@/lib/api";
 import { formatDate, useProfile } from "@/lib/profile";
 import type { components } from "@/api/schema";
@@ -16,6 +17,8 @@ export const Route = createFileRoute("/_app/settings/account")({ component: Acco
 type Account = components["schemas"]["Account"];
 type Tab = "general" | "branding" | "members";
 const tabs: Tab[] = ["general", "branding", "members"];
+const imageTypes = ["image/png", "image/jpeg", "image/webp"];
+const brandColors = ["#0F766E", "#2563EB", "#7C3AED", "#EA580C"];
 
 function AccountRoute() {
   const { t } = useTranslation();
@@ -42,7 +45,7 @@ function WorkspacePreview({ account }: { account: Account }) {
   const { t } = useTranslation();
   const mark = account.icon || account.name.slice(0, 1).toUpperCase();
   return <section className="flex items-center gap-4 rounded-lg border p-4">
-    {account.logo_light_url ? <img src={account.logo_light_url} alt="" className="size-14 rounded-xl object-contain" />
+    {account.logo_light_version > 0 ? <img src={`/api/v1/account/branding/logo_light?v=${account.logo_light_version}`} alt="" className="size-14 rounded-xl object-contain" />
       : <span aria-hidden="true" style={account.brand_color ? { backgroundColor: account.brand_color } : undefined}
         className="grid size-14 shrink-0 place-items-center rounded-xl bg-primary text-lg font-semibold text-primary-foreground">{mark}</span>}
     <div className="min-w-0"><p className="truncate text-lg font-semibold">{account.name}</p>
@@ -60,7 +63,75 @@ function GeneralTab({ account, me }: { account: Account; me: CurrentUser }) {
 }
 
 function BrandingTab({ account }: { account: Account }) {
-  return <div role="tabpanel" className="space-y-6"><WorkspacePreview account={account} /><WorkspaceForm account={account} fields="branding" /></div>;
+  const { t } = useTranslation();
+  const client = useQueryClient();
+  const [color, setColor] = useState(account.brand_color || brandColors[0]);
+  const [busy, setBusy] = useState("");
+  async function updateAsset(kind: string, file?: File) {
+    if (!file) return;
+    if (!imageTypes.includes(file.type)) return void toast.error(t("settings.account.imageType"));
+    if (file.size > 2 << 20) return void toast.error(t("settings.account.imageSize"));
+    setBusy(kind);
+    try {
+      const updated = await api<Account>(`/api/v1/account/branding/${kind}`, { method: "PUT", headers: { "Content-Type": file.type }, body: file });
+      client.setQueryData(["account"], updated); toast.success(t("settings.account.saved"));
+    } catch (err) { toast.error((err as Error).message); } finally { setBusy(""); }
+  }
+  async function removeAsset(kind: string) {
+    setBusy(kind);
+    try {
+      const updated = await api<Account>(`/api/v1/account/branding/${kind}`, { method: "DELETE" });
+      client.setQueryData(["account"], updated); toast.success(t("settings.account.saved"));
+    } catch (err) { toast.error((err as Error).message); } finally { setBusy(""); }
+  }
+  async function saveColor(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault(); setBusy("color");
+    try {
+      const updated = await api<Account>("/api/v1/account", { method: "PATCH", body: JSON.stringify({ brand_color: color }) });
+      client.setQueryData(["account"], updated); toast.success(t("settings.account.saved"));
+    } catch (err) { toast.error((err as Error).message); } finally { setBusy(""); }
+  }
+  return <div role="tabpanel" className="space-y-6">
+    <SettingsSection title={t("settings.account.branding")} description={t("settings.account.brandingHint")}>
+      <div className="grid gap-5 md:grid-cols-2">
+        <AssetUpload title={t("settings.account.workspaceIcon")} hint={t("settings.account.iconUploadHint")} kind="icon" version={account.icon_image_version}
+          previewClass="size-20 rounded-xl" busy={busy === "icon"} onUpload={updateAsset} onRemove={removeAsset} fallback={<span style={{ backgroundColor: color }} className="grid size-20 place-items-center rounded-xl text-xl font-semibold text-white">{account.name.slice(0, 1).toUpperCase()}</span>} />
+        <AssetUpload title={t("settings.account.workspaceLogoLight")} hint={t("settings.account.logoLightHint")} kind="logo_light" version={account.logo_light_version}
+          previewClass="h-20 max-w-full object-contain" busy={busy === "logo_light"} onUpload={updateAsset} onRemove={removeAsset} fallback={<span className="text-sm font-semibold">{account.name}</span>} />
+        <AssetUpload title={t("settings.account.workspaceLogoDark")} hint={t("settings.account.logoDarkHint")} kind="logo_dark" version={account.logo_dark_version}
+          previewClass="h-20 max-w-full object-contain" previewDark busy={busy === "logo_dark"} onUpload={updateAsset} onRemove={removeAsset} fallback={<span className="text-sm font-semibold text-white">{account.name}</span>} />
+      </div>
+    </SettingsSection>
+    <form onSubmit={saveColor} className="space-y-4 border-t pt-6">
+      <div><h2 className="text-base font-semibold">{t("settings.account.brandColor")}</h2><p className="text-sm text-muted-foreground">{t("settings.account.brandColorHint")}</p></div>
+      <div className="flex flex-wrap items-center gap-3">
+        {brandColors.map((preset) => <button key={preset} type="button" aria-label={preset} onClick={() => setColor(preset)} style={{ backgroundColor: preset }} className={`size-9 rounded-lg ${color.toLowerCase() === preset.toLowerCase() ? "ring-2 ring-ring ring-offset-2" : ""}`} />)}
+        <label className="relative grid size-9 cursor-pointer place-items-center overflow-hidden rounded-lg border" title={t("settings.account.chooseColor")}>
+          <input type="color" value={color} onChange={(event) => setColor(event.target.value)} className="absolute inset-[-8px] size-14 cursor-pointer border-0" />
+          <span className="sr-only">{t("settings.account.chooseColor")}</span>
+        </label>
+        <Input value={color} onChange={(event) => setColor(event.target.value)} pattern="^#[0-9A-Fa-f]{6}$" aria-label={t("settings.account.brandColor")} className="w-28 font-mono uppercase" />
+        <Button disabled={busy === "color"}>{t("settings.account.saveColor")}</Button>
+      </div>
+    </form>
+  </div>;
+}
+
+function AssetUpload({ title, hint, kind, version, previewClass, previewDark = false, busy, onUpload, onRemove, fallback }: {
+  title: string; hint: string; kind: string; version: number; previewClass: string; previewDark?: boolean; busy: boolean;
+  onUpload: (kind: string, file?: File) => void; onRemove: (kind: string) => void; fallback: ReactNode;
+}) {
+  const { t } = useTranslation();
+  const input = useRef<HTMLInputElement>(null);
+  return <section className="space-y-3">
+    <div><h3 className="text-sm font-medium">{title}</h3><p className="text-xs text-muted-foreground">{hint}</p></div>
+    <div className={`flex min-h-28 items-center justify-center rounded-lg border p-4 ${previewDark ? "bg-slate-950" : "bg-muted/20"}`}>
+      {version > 0 ? <img src={`/api/v1/account/branding/${kind}?v=${version}`} alt="" className={previewClass} /> : fallback}
+    </div>
+    <input ref={input} type="file" accept={imageTypes.join(",")} className="sr-only" onChange={(event) => { void onUpload(kind, event.target.files?.[0]); event.target.value = ""; }} />
+    <div className="flex gap-2"><Button type="button" variant="outline" size="sm" disabled={busy} onClick={() => input.current?.click()}><ImageUp aria-hidden="true" className="size-4" />{t("settings.account.upload")}</Button>
+      {version > 0 && <Button type="button" variant="ghost" size="sm" disabled={busy} onClick={() => void onRemove(kind)}><Trash2 aria-hidden="true" className="size-4" />{t("settings.account.remove")}</Button>}</div>
+  </section>;
 }
 
 function WorkspaceForm({ account, fields }: { account: Account; fields: "general" | "branding" }) {
@@ -84,14 +155,7 @@ function WorkspaceForm({ account, fields }: { account: Account; fields: "general
       <label className="block space-y-1 text-sm"><span>{t("settings.account.name")}</span><Input name="name" defaultValue={account.name} maxLength={120} required /></label>
       <label className="block space-y-1 text-sm"><span>{t("settings.account.workspaceDescription")}</span>
         <textarea name="description" defaultValue={account.description} maxLength={500} rows={3} className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring" /></label>
-    </SettingsSection> : <SettingsSection title={t("settings.account.branding")} description={t("settings.account.brandingHint")}>
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block space-y-1 text-sm"><span>{t("settings.account.icon")}</span><Input name="icon" defaultValue={account.icon} maxLength={8} placeholder="L" /></label>
-        <label className="block space-y-1 text-sm"><span>{t("settings.account.brandColor")}</span><Input name="brand_color" defaultValue={account.brand_color} pattern="^#[0-9A-Fa-f]{6}$" placeholder={t("settings.account.brandColorPlaceholder")} /></label>
-        <label className="block space-y-1 text-sm sm:col-span-2"><span>{t("settings.account.logoLight")}</span><Input type="url" name="logo_light_url" defaultValue={account.logo_light_url} placeholder={t("settings.account.logoPlaceholder")} /></label>
-        <label className="block space-y-1 text-sm sm:col-span-2"><span>{t("settings.account.logoDark")}</span><Input type="url" name="logo_dark_url" defaultValue={account.logo_dark_url} placeholder={t("settings.account.logoPlaceholder")} /></label>
-      </div>
-    </SettingsSection>}
+    </SettingsSection> : null}
     <FormError message={error} /><div className="flex justify-end"><Button disabled={busy}>{t("settings.account.save")}</Button></div>
   </form>;
 }

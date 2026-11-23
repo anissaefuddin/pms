@@ -161,7 +161,7 @@ func TestSendDeliversExactlyOneMessage(t *testing.T) {
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if len(f.messages) != 1 || !strings.Contains(f.messages[0], "Subject: Set your PMS password") {
+	if len(f.messages) != 1 || !strings.Contains(f.messages[0], "Subject: [LENS] You are invited") {
 		t.Fatalf("expected one invitation message, got %q", f.messages)
 	}
 	if parts := messageParts(t, f.messages[0]); !strings.Contains(parts["text/plain"], "token=abc") || !strings.Contains(parts["text/html"], "token=abc") {

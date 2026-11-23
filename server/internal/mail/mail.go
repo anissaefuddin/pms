@@ -36,11 +36,16 @@ type Args struct {
 	Subject  string       `json:"subject,omitempty"` // report_digest only
 	HTML     string       `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
 	Data     TemplateData `json:"data,omitempty"`
+	Brand    EmailBrand   `json:"brand,omitempty"`
 	// Form confirmation branding (FORM-04, request_received only); every value is escaped when rendered.
 	SenderName string `json:"sender_name,omitempty"`
 	LogoURL    string `json:"logo_url,omitempty"`
 	Greeting   string `json:"greeting,omitempty"`
 	Closing    string `json:"closing,omitempty"`
+}
+
+type EmailBrand struct {
+	Name, Color, LogoURL, IconURL, Initial string
 }
 
 type TemplateData struct {
@@ -56,7 +61,8 @@ func (Args) Kind() string { return "send_email" }
 
 type Worker struct {
 	river.WorkerDefaults[Args]
-	cfg config.Config
+	cfg  config.Config
+	pool *pgxpool.Pool
 }
 
 func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
@@ -64,6 +70,7 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
 }
 
 func (w *Worker) deliver(ctx context.Context, args Args) error {
+	args.Brand = w.brand(ctx)
 	subject, text, html, err := render(args)
 	if err != nil {
 		return err
@@ -95,6 +102,53 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 		return err
 	}
 	return send(ctx, address, w.cfg.SMTPHost, auth, from.Address, args.To, msg)
+}
+
+func (w *Worker) brand(ctx context.Context) EmailBrand {
+	brand := EmailBrand{Name: "LENS PMS", Color: "#2563EB", Initial: "L"}
+	if w.pool == nil {
+		return brand
+	}
+	var lightURL string
+	var lightVersion, iconVersion int64
+	err := w.pool.QueryRow(ctx, `SELECT a.name,COALESCE(a.settings->>'brand_color',''),COALESCE(a.settings->>'logo_light_url',''),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='logo_light'),0),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='icon'),0) FROM account a WHERE a.id=1`).
+		Scan(&brand.Name, &brand.Color, &lightURL, &lightVersion, &iconVersion)
+	if err != nil {
+		slog.Warn("could not load email branding; using defaults", "error", err)
+		return EmailBrand{Name: "LENS PMS", Color: "#2563EB", Initial: "L"}
+	}
+	brand.Name = strings.TrimSpace(brand.Name)
+	if brand.Name == "" {
+		brand.Name = "LENS PMS"
+	}
+	brand.Initial = strings.ToUpper(string([]rune(brand.Name)[0]))
+	if !validBrandColor(brand.Color) {
+		brand.Color = "#2563EB"
+	}
+	root := strings.TrimRight(w.cfg.PublicURL, "/")
+	if lightVersion > 0 {
+		brand.LogoURL = fmt.Sprintf("%s/api/v1/account/branding/logo_light?v=%d", root, lightVersion)
+	} else if u, parseErr := neturl.Parse(lightURL); parseErr == nil && u.Scheme == "https" && u.Host != "" {
+		brand.LogoURL = lightURL
+	}
+	if iconVersion > 0 {
+		brand.IconURL = fmt.Sprintf("%s/api/v1/account/branding/icon?v=%d", root, iconVersion)
+	}
+	return brand
+}
+
+func validBrandColor(value string) bool {
+	if len(value) != 7 || value[0] != '#' {
+		return false
+	}
+	for _, char := range value[1:] {
+		if !strings.ContainsRune("0123456789abcdefABCDEF", char) {
+			return false
+		}
+	}
+	return true
 }
 
 // message builds the mail text. Date and Message-ID are required by many receivers; without them mail is often marked as spam.
@@ -186,7 +240,7 @@ type Option func(workers *river.Workers, periodic *[]*river.PeriodicJob)
 
 func New(pool *pgxpool.Pool, cfg config.Config, options ...Option) (*Queue, error) {
 	workers := river.NewWorkers()
-	mailer := &Worker{cfg: cfg}
+	mailer := &Worker{cfg: cfg, pool: pool}
 	river.AddWorker(workers, mailer)
 	river.AddWorker(workers, &projectexcel.ExportWorker{Pool: pool})
 	river.AddWorker(workers, &previews.Worker{Pool: pool, Store: storage.LocalStorage{Dir: cfg.FilesDir}})

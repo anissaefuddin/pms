@@ -3646,16 +3646,19 @@ type Account struct {
 		Id    openapi_types.UUID  `json:"id"`
 		Name  string              `json:"name"`
 	} `json:"administrators"`
-	BrandColor   string    `json:"brand_color"`
-	CreatedAt    time.Time `json:"created_at"`
-	Description  string    `json:"description"`
-	Icon         string    `json:"icon"`
-	JoinedAt     time.Time `json:"joined_at"`
-	LogoDarkUrl  string    `json:"logo_dark_url"`
-	LogoLightUrl string    `json:"logo_light_url"`
-	Name         string    `json:"name"`
-	Role         UserType  `json:"role"`
-	Seats        Seats     `json:"seats"`
+	BrandColor       string    `json:"brand_color"`
+	CreatedAt        time.Time `json:"created_at"`
+	Description      string    `json:"description"`
+	Icon             string    `json:"icon"`
+	IconImageVersion int64     `json:"icon_image_version"`
+	JoinedAt         time.Time `json:"joined_at"`
+	LogoDarkUrl      string    `json:"logo_dark_url"`
+	LogoDarkVersion  int64     `json:"logo_dark_version"`
+	LogoLightUrl     string    `json:"logo_light_url"`
+	LogoLightVersion int64     `json:"logo_light_version"`
+	Name             string    `json:"name"`
+	Role             UserType  `json:"role"`
+	Seats            Seats     `json:"seats"`
 }
 
 // AccountOwnership defines model for AccountOwnership.
@@ -8270,6 +8273,15 @@ type ServerInterface interface {
 	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
 	// (GET /account-blueprints)
 	ListAccountBlueprints(w http.ResponseWriter, r *http.Request)
+	// RemoveWorkspaceBrandAsset Hapus icon atau logo Workspace (hanya admin)
+	// (DELETE /account/branding/{asset})
+	RemoveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
+	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace
+	// (GET /account/branding/{asset})
+	GetWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
+	// SaveWorkspaceBrandAsset Upload icon atau logo Workspace (hanya admin)
+	// (PUT /account/branding/{asset})
+	SaveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
 	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
 	// (GET /account/ownership)
 	GetAccountOwnership(w http.ResponseWriter, r *http.Request)
@@ -9363,6 +9375,84 @@ func (siw *ServerInterfaceWrapper) ListAccountBlueprints(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListAccountBlueprints(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveWorkspaceBrandAsset operation middleware
+func (siw *ServerInterfaceWrapper) RemoveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "asset" -------------
+	var asset string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "asset", r.PathValue("asset"), &asset, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "asset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveWorkspaceBrandAsset(w, r, asset)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkspaceBrandAsset operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "asset" -------------
+	var asset string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "asset", r.PathValue("asset"), &asset, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "asset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkspaceBrandAsset(w, r, asset)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveWorkspaceBrandAsset operation middleware
+func (siw *ServerInterfaceWrapper) SaveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "asset" -------------
+	var asset string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "asset", r.PathValue("asset"), &asset, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "asset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveWorkspaceBrandAsset(w, r, asset)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19500,6 +19590,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/invitation/resend", wrapper.ResendInvitation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account", wrapper.GetAccount)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/account", wrapper.RenameAccount)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/account/branding/{asset}", wrapper.RemoveWorkspaceBrandAsset)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account/branding/{asset}", wrapper.GetWorkspaceBrandAsset)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/account/branding/{asset}", wrapper.SaveWorkspaceBrandAsset)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/onboarding/complete", wrapper.CompleteOnboarding)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/seats", wrapper.GetSeats)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/groups", wrapper.ListGroups)
@@ -19991,6 +20084,155 @@ func (response ListAccountBlueprints200JSONResponse) VisitListAccountBlueprintsR
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveWorkspaceBrandAssetRequestObject struct {
+	Asset string `json:"asset"`
+}
+
+type RemoveWorkspaceBrandAssetResponseObject interface {
+	VisitRemoveWorkspaceBrandAssetResponse(w http.ResponseWriter) error
+}
+
+type RemoveWorkspaceBrandAsset200JSONResponse Account
+
+func (response RemoveWorkspaceBrandAsset200JSONResponse) VisitRemoveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse) VisitRemoveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceBrandAssetRequestObject struct {
+	Asset string `json:"asset"`
+}
+
+type GetWorkspaceBrandAssetResponseObject interface {
+	VisitGetWorkspaceBrandAssetResponse(w http.ResponseWriter) error
+}
+
+type GetWorkspaceBrandAsset200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetWorkspaceBrandAsset200ApplicationoctetStreamResponse) VisitGetWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetWorkspaceBrandAsset404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetWorkspaceBrandAsset404ApplicationProblemPlusJSONResponse) VisitGetWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAssetRequestObject struct {
+	Asset string `json:"asset"`
+	Body  io.Reader
+}
+
+type SaveWorkspaceBrandAssetResponseObject interface {
+	VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error
+}
+
+type SaveWorkspaceBrandAsset200JSONResponse Account
+
+func (response SaveWorkspaceBrandAsset200JSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAsset413ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveWorkspaceBrandAsset413ApplicationProblemPlusJSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAsset422ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveWorkspaceBrandAsset422ApplicationProblemPlusJSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -39194,6 +39436,15 @@ type StrictServerInterface interface {
 	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
 	// (GET /account-blueprints)
 	ListAccountBlueprints(ctx context.Context, request ListAccountBlueprintsRequestObject) (ListAccountBlueprintsResponseObject, error)
+	// RemoveWorkspaceBrandAsset Hapus icon atau logo Workspace (hanya admin)
+	// (DELETE /account/branding/{asset})
+	RemoveWorkspaceBrandAsset(ctx context.Context, request RemoveWorkspaceBrandAssetRequestObject) (RemoveWorkspaceBrandAssetResponseObject, error)
+	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace
+	// (GET /account/branding/{asset})
+	GetWorkspaceBrandAsset(ctx context.Context, request GetWorkspaceBrandAssetRequestObject) (GetWorkspaceBrandAssetResponseObject, error)
+	// SaveWorkspaceBrandAsset Upload icon atau logo Workspace (hanya admin)
+	// (PUT /account/branding/{asset})
+	SaveWorkspaceBrandAsset(ctx context.Context, request SaveWorkspaceBrandAssetRequestObject) (SaveWorkspaceBrandAssetResponseObject, error)
 	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
 	// (GET /account/ownership)
 	GetAccountOwnership(ctx context.Context, request GetAccountOwnershipRequestObject) (GetAccountOwnershipResponseObject, error)
@@ -40354,6 +40605,86 @@ func (sh *strictHandler) ListAccountBlueprints(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListAccountBlueprintsResponseObject); ok {
 		if err := validResponse.VisitListAccountBlueprintsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveWorkspaceBrandAsset operation middleware
+func (sh *strictHandler) RemoveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string) {
+	var request RemoveWorkspaceBrandAssetRequestObject
+
+	request.Asset = asset
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveWorkspaceBrandAsset(ctx, request.(RemoveWorkspaceBrandAssetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveWorkspaceBrandAsset")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveWorkspaceBrandAssetResponseObject); ok {
+		if err := validResponse.VisitRemoveWorkspaceBrandAssetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkspaceBrandAsset operation middleware
+func (sh *strictHandler) GetWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string) {
+	var request GetWorkspaceBrandAssetRequestObject
+
+	request.Asset = asset
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkspaceBrandAsset(ctx, request.(GetWorkspaceBrandAssetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkspaceBrandAsset")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkspaceBrandAssetResponseObject); ok {
+		if err := validResponse.VisitGetWorkspaceBrandAssetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveWorkspaceBrandAsset operation middleware
+func (sh *strictHandler) SaveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string) {
+	var request SaveWorkspaceBrandAssetRequestObject
+
+	request.Asset = asset
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveWorkspaceBrandAsset(ctx, request.(SaveWorkspaceBrandAssetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveWorkspaceBrandAsset")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveWorkspaceBrandAssetResponseObject); ok {
+		if err := validResponse.VisitSaveWorkspaceBrandAssetResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

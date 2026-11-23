@@ -2949,6 +2949,50 @@ paths:
               schema: { $ref: '#/components/schemas/Account' }
         '403': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /account/branding/{asset}:
+    parameters:
+      - name: asset
+        in: path
+        required: true
+        schema: { type: string, enum: [icon, logo_light, logo_dark] }
+    get:
+      tags: [users]
+      operationId: getWorkspaceBrandAsset
+      summary: Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client
+      responses:
+        '200':
+          description: Image bytes
+          content:
+            application/octet-stream: { schema: { type: string, format: binary }, description: Runtime Content-Type adalah image/png, image/jpeg, atau image/webp }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [users]
+      operationId: saveWorkspaceBrandAsset
+      summary: Upload icon atau logo Workspace (hanya admin)
+      requestBody:
+        required: true
+        content:
+          application/octet-stream: { schema: { type: string, format: binary }, description: PNG, JPEG, atau WebP; tipe divalidasi dari bytes }
+      responses:
+        '200':
+          description: Updated Workspace
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [users]
+      operationId: removeWorkspaceBrandAsset
+      summary: Hapus icon atau logo Workspace (hanya admin)
+      responses:
+        '200':
+          description: Updated Workspace
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Account' }
+        '403': { $ref: '#/components/responses/Problem' }
   /onboarding/complete:
     post:
       tags: [users]
@@ -7295,7 +7339,7 @@ components:
         hour: { type: integer, minimum: 0, maximum: 23 }
     Account:
       type: object
-      required: [name, description, icon, logo_light_url, logo_dark_url, brand_color, created_at, role, joined_at, administrators, seats]
+      required: [name, description, icon, logo_light_url, logo_dark_url, brand_color, icon_image_version, logo_light_version, logo_dark_version, created_at, role, joined_at, administrators, seats]
       properties:
         name: { type: string }
         description: { type: string }
@@ -7303,6 +7347,9 @@ components:
         logo_light_url: { type: string }
         logo_dark_url: { type: string }
         brand_color: { type: string }
+        icon_image_version: { type: integer, format: int64 }
+        logo_light_version: { type: integer, format: int64 }
+        logo_dark_version: { type: integer, format: int64 }
         created_at: { type: string, format: date-time }
         role: { $ref: '#/components/schemas/UserType' }
         joined_at: { type: string, format: date-time }
