@@ -2120,7 +2120,7 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Ubah nama workspace (hanya admin) */
+        /** Ubah identitas dan branding workspace (hanya admin) */
         patch: operations["renameAccount"];
         trace?: never;
     };
@@ -5241,6 +5241,11 @@ export interface components {
              * @description Foto profil: epoch ms saat terakhir diunggah, 0 berarti tidak ada foto. Dipakai sebagai penanda cache pada GET /api/v1/me/avatar
              */
             avatar_version: number;
+            /**
+             * Format: date-time
+             * @description Tanggal user bergabung ke workspace
+             */
+            joined_at: string;
             /** @description Durasi awal task baru (SET-03) */
             default_task_duration_days?: number | null;
             /** @description Effort awal task baru (SET-03) */
@@ -5306,6 +5311,11 @@ export interface components {
         };
         Account: {
             name: string;
+            description: string;
+            icon: string;
+            logo_light_url: string;
+            logo_dark_url: string;
+            brand_color: string;
             /** Format: date-time */
             created_at: string;
             role: components["schemas"]["UserType"];
@@ -11421,7 +11431,21 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    name: string;
+                    name?: string;
+                    description?: string;
+                    icon?: string;
+                    /**
+                     * Format: uri
+                     * @description URL HTTPS atau string kosong
+                     */
+                    logo_light_url?: string;
+                    /**
+                     * Format: uri
+                     * @description URL HTTPS atau string kosong
+                     */
+                    logo_dark_url?: string;
+                    /** @description Warna hex atau string kosong */
+                    brand_color?: string;
                 };
             };
         };

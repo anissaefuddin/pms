@@ -49,12 +49,12 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/work-schedule", label: t("settings.workSchedule.title") },
       { to: "/settings/language", label: t("settings.nav.language") },
       { to: "/settings/work-preferences", label: t("settings.nav.work") },
-      { to: "/settings/account", label: t("settings.account.title") },
       { to: "/settings/email", label: t("nav.account.emailPrefs") },
       { to: "/settings/appearance", label: t("nav.account.appearance") },
       { to: "/settings/security", label: t("settings.security.title") },
     ] },
     { title: t("settings.nav.accountManagement"), items: [
+      ...(isAdmin ? [{ to: "/settings/account", label: t("settings.account.title") }] : []),
       ...(me?.capabilities.manage_users ? [{ to: "/settings/users", label: t("settings.users.title") }] : []),
       { to: "/settings/resources", label: t("settings.resources") },
       { to: "/settings/apps", label: t("apps.title") },

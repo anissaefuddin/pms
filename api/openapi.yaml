@@ -2927,16 +2927,20 @@ paths:
     patch:
       tags: [users]
       operationId: renameAccount
-      summary: Ubah nama workspace (hanya admin)
+      summary: Ubah identitas dan branding workspace (hanya admin)
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [name]
               properties:
                 name: { type: string, minLength: 1, maxLength: 120 }
+                description: { type: string, maxLength: 500 }
+                icon: { type: string, maxLength: 8 }
+                logo_light_url: { type: string, format: uri, maxLength: 500, description: URL HTTPS atau string kosong }
+                logo_dark_url: { type: string, format: uri, maxLength: 500, description: URL HTTPS atau string kosong }
+                brand_color: { type: string, pattern: '^#[0-9A-Fa-f]{6}$', description: Warna hex atau string kosong }
       responses:
         '200':
           description: OK
@@ -7181,7 +7185,7 @@ components:
       allOf:
         - $ref: '#/components/schemas/User'
         - type: object
-          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, account_name, capabilities, onboarding_pending, avatar_version]
+          required: [locale, timezone, date_format, time_format, week_start, personal_space_id, account_name, capabilities, onboarding_pending, avatar_version, joined_at]
           properties:
             company: { type: string, nullable: true }
             country: { type: string, nullable: true }
@@ -7230,6 +7234,7 @@ components:
             due_reminders: { $ref: '#/components/schemas/DueReminderPreferences' }
             onboarding_pending: { type: boolean, description: true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati }
             avatar_version: { type: integer, format: int64, description: 'Foto profil: epoch ms saat terakhir diunggah, 0 berarti tidak ada foto. Dipakai sebagai penanda cache pada GET /api/v1/me/avatar' }
+            joined_at: { type: string, format: date-time, description: Tanggal user bergabung ke workspace }
             default_task_duration_days: { type: integer, nullable: true, minimum: 0, maximum: 3650, description: Durasi awal task baru (SET-03) }
             default_task_effort_minutes: { type: integer, nullable: true, minimum: 0, maximum: 525600, description: Effort awal task baru (SET-03) }
             account_name: { type: string, description: Nama workspace }
@@ -7290,9 +7295,14 @@ components:
         hour: { type: integer, minimum: 0, maximum: 23 }
     Account:
       type: object
-      required: [name, created_at, role, joined_at, administrators, seats]
+      required: [name, description, icon, logo_light_url, logo_dark_url, brand_color, created_at, role, joined_at, administrators, seats]
       properties:
         name: { type: string }
+        description: { type: string }
+        icon: { type: string }
+        logo_light_url: { type: string }
+        logo_dark_url: { type: string }
+        brand_color: { type: string }
         created_at: { type: string, format: date-time }
         role: { $ref: '#/components/schemas/UserType' }
         joined_at: { type: string, format: date-time }

@@ -77,6 +77,8 @@ func TestOnboardingIsAdminOnlyAndShownOnce(t *testing.T) {
 	admin, other, member := f.person("admin"), f.person("admin"), f.person("regular")
 	if got := f.call(admin, "GET", "/me", nil); got.body["onboarding_pending"] != true {
 		t.Fatalf("admin must see the wizard: %+v", got)
+	} else if got.body["joined_at"] == nil {
+		t.Fatalf("member since must be available on profile: %+v", got)
 	}
 	if got := f.call(member, "GET", "/me", nil); got.body["onboarding_pending"] != false {
 		t.Fatalf("member must not: %+v", got)
@@ -94,8 +96,17 @@ func TestOnboardingIsAdminOnlyAndShownOnce(t *testing.T) {
 			t.Fatalf("bad name %q accepted: %+v", bad, got)
 		}
 	}
-	if got := f.call(admin, "PATCH", "/account", map[string]string{"name": "  Pilot Co "}); got.status != 200 || got.body["name"] != "Pilot Co" {
-		t.Fatalf("rename: %+v", got)
+	for label, body := range map[string]map[string]string{
+		"empty": {}, "description": {"description": strings.Repeat("x", 501)},
+		"logo": {"logo_light_url": "http://example.test/logo.png"}, "color": {"brand_color": "teal"},
+	} {
+		if got := f.call(admin, "PATCH", "/account", body); got.status != 422 {
+			t.Fatalf("bad %s accepted: %+v", label, got)
+		}
+	}
+	identity := map[string]string{"name": "  Pilot Co ", "description": "Delivery workspace", "icon": "PC", "logo_light_url": "https://example.test/light.png", "logo_dark_url": "https://example.test/dark.png", "brand_color": "#0F766E"}
+	if got := f.call(admin, "PATCH", "/account", identity); got.status != 200 || got.body["name"] != "Pilot Co" || got.body["description"] != "Delivery workspace" || got.body["icon"] != "PC" || got.body["brand_color"] != "#0F766E" {
+		t.Fatalf("workspace update: %+v", got)
 	}
 	if got := f.call(admin, "GET", "/me", nil); got.body["account_name"] != "Pilot Co" {
 		t.Fatalf("account_name: %+v", got)

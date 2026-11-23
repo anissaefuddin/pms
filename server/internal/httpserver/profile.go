@@ -3,6 +3,7 @@ package httpserver
 import (
 	"encoding/json"
 	"net/http"
+	"net/url"
 	"slices"
 	"strconv"
 	"strings"
@@ -190,19 +191,24 @@ func (s *Server) updateMe(w http.ResponseWriter, r *http.Request) {
 func (s *Server) accountInfo(w http.ResponseWriter, r *http.Request) {
 	seats, err := s.seatUsage(r.Context(), s.pool)
 	var info struct {
-		Name      string          `json:"name"`
-		CreatedAt time.Time       `json:"created_at"`
-		Role      string          `json:"role"`
-		JoinedAt  time.Time       `json:"joined_at"`
-		Admins    json.RawMessage `json:"administrators"`
-		Seats     seatUse         `json:"seats"`
+		Name         string          `json:"name"`
+		Description  string          `json:"description"`
+		Icon         string          `json:"icon"`
+		LogoLightURL string          `json:"logo_light_url"`
+		LogoDarkURL  string          `json:"logo_dark_url"`
+		BrandColor   string          `json:"brand_color"`
+		CreatedAt    time.Time       `json:"created_at"`
+		Role         string          `json:"role"`
+		JoinedAt     time.Time       `json:"joined_at"`
+		Admins       json.RawMessage `json:"administrators"`
+		Seats        seatUse         `json:"seats"`
 	}
 	info.Seats = seats
 	if err == nil {
-		err = s.pool.QueryRow(r.Context(), `SELECT a.name,a.created_at,u.user_type::text,u.created_at,
+		err = s.pool.QueryRow(r.Context(), `SELECT a.name,COALESCE(a.settings->>'description',''),COALESCE(a.settings->>'icon',''),COALESCE(a.settings->>'logo_light_url',''),COALESCE(a.settings->>'logo_dark_url',''),COALESCE(a.settings->>'brand_color',''),a.created_at,u.user_type::text,u.created_at,
 COALESCE((SELECT jsonb_agg(jsonb_build_object('id',x.id,'name',btrim(concat_ws(' ',x.first_name,x.last_name)),'email',x.email) ORDER BY x.first_name,x.last_name,x.id)
  FROM users x WHERE x.user_type='admin' AND x.status='active'),'[]'::jsonb)
-FROM account a CROSS JOIN users u WHERE u.id=$1::uuid`, actorOf(r).ID).Scan(&info.Name, &info.CreatedAt, &info.Role, &info.JoinedAt, &info.Admins)
+FROM account a CROSS JOIN users u WHERE u.id=$1::uuid`, actorOf(r).ID).Scan(&info.Name, &info.Description, &info.Icon, &info.LogoLightURL, &info.LogoDarkURL, &info.BrandColor, &info.CreatedAt, &info.Role, &info.JoinedAt, &info.Admins)
 	}
 	if err != nil {
 		writeError(w, 500, "could not load account")
@@ -211,20 +217,77 @@ FROM account a CROSS JOIN users u WHERE u.id=$1::uuid`, actorOf(r).ID).Scan(&inf
 	writeJSON(w, 200, info)
 }
 
-// renameAccount lets an administrator set the workspace name (AUTH-07 first step).
+// renameAccount updates workspace identity without mixing it with personal appearance settings.
 func (s *Server) renameAccount(w http.ResponseWriter, r *http.Request) {
 	var input struct {
-		Name string `json:"name"`
+		Name         *string `json:"name"`
+		Description  *string `json:"description"`
+		Icon         *string `json:"icon"`
+		LogoLightURL *string `json:"logo_light_url"`
+		LogoDarkURL  *string `json:"logo_dark_url"`
+		BrandColor   *string `json:"brand_color"`
 	}
 	if !decode(w, r, &input) {
 		return
 	}
-	name := strings.TrimSpace(input.Name)
-	if n := utf8.RuneCountInString(name); n < 1 || n > 120 || strings.ContainsRune(name, 0) {
-		writeError(w, 422, "name must be 1 to 120 characters")
+	if input.Name == nil && input.Description == nil && input.Icon == nil && input.LogoLightURL == nil && input.LogoDarkURL == nil && input.BrandColor == nil {
+		writeError(w, 422, "at least one workspace field is required")
 		return
 	}
-	if _, err := s.pool.Exec(r.Context(), "UPDATE account SET name=$1", name); err != nil {
+	trim := func(value *string) *string {
+		if value == nil {
+			return nil
+		}
+		v := strings.TrimSpace(*value)
+		return &v
+	}
+	input.Name = trim(input.Name)
+	input.Description = trim(input.Description)
+	input.Icon = trim(input.Icon)
+	input.LogoLightURL = trim(input.LogoLightURL)
+	input.LogoDarkURL = trim(input.LogoDarkURL)
+	input.BrandColor = trim(input.BrandColor)
+	if input.Name != nil {
+		name := *input.Name
+		if n := utf8.RuneCountInString(name); n < 1 || n > 120 || strings.ContainsRune(name, 0) {
+			writeError(w, 422, "name must be 1 to 120 characters")
+			return
+		}
+	}
+	if input.Description != nil && (utf8.RuneCountInString(*input.Description) > 500 || strings.ContainsRune(*input.Description, 0)) {
+		writeError(w, 422, "description must be at most 500 characters")
+		return
+	}
+	if input.Icon != nil && (utf8.RuneCountInString(*input.Icon) > 8 || strings.ContainsRune(*input.Icon, 0)) {
+		writeError(w, 422, "icon must be at most 8 characters")
+		return
+	}
+	validURL := func(value *string) bool {
+		if value == nil || *value == "" {
+			return true
+		}
+		u, e := url.Parse(*value)
+		return e == nil && u.Scheme == "https" && u.Host != "" && len(*value) <= 500
+	}
+	if !validURL(input.LogoLightURL) || !validURL(input.LogoDarkURL) {
+		writeError(w, 422, "logo URL must use https")
+		return
+	}
+	if input.BrandColor != nil && *input.BrandColor != "" {
+		v := *input.BrandColor
+		if len(v) != 7 || v[0] != '#' {
+			writeError(w, 422, "brand color must be a hex color")
+			return
+		}
+		for _, c := range v[1:] {
+			if !strings.ContainsRune("0123456789abcdefABCDEF", c) {
+				writeError(w, 422, "brand color must be a hex color")
+				return
+			}
+		}
+	}
+	if _, err := s.pool.Exec(r.Context(), `UPDATE account SET name=COALESCE($1,name),settings=settings||jsonb_build_object(
+'description',COALESCE($2,settings->>'description',''),'icon',COALESCE($3,settings->>'icon',''),'logo_light_url',COALESCE($4,settings->>'logo_light_url',''),'logo_dark_url',COALESCE($5,settings->>'logo_dark_url',''),'brand_color',COALESCE($6,settings->>'brand_color',''))`, input.Name, input.Description, input.Icon, input.LogoLightURL, input.LogoDarkURL, input.BrandColor); err != nil {
 		writeError(w, 500, "could not update account")
 		return
 	}

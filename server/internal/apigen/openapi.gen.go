@@ -3646,11 +3646,16 @@ type Account struct {
 		Id    openapi_types.UUID  `json:"id"`
 		Name  string              `json:"name"`
 	} `json:"administrators"`
-	CreatedAt time.Time `json:"created_at"`
-	JoinedAt  time.Time `json:"joined_at"`
-	Name      string    `json:"name"`
-	Role      UserType  `json:"role"`
-	Seats     Seats     `json:"seats"`
+	BrandColor   string    `json:"brand_color"`
+	CreatedAt    time.Time `json:"created_at"`
+	Description  string    `json:"description"`
+	Icon         string    `json:"icon"`
+	JoinedAt     time.Time `json:"joined_at"`
+	LogoDarkUrl  string    `json:"logo_dark_url"`
+	LogoLightUrl string    `json:"logo_light_url"`
+	Name         string    `json:"name"`
+	Role         UserType  `json:"role"`
+	Seats        Seats     `json:"seats"`
 }
 
 // AccountOwnership defines model for AccountOwnership.
@@ -5247,12 +5252,15 @@ type Me struct {
 	Email                    openapi_types.Email     `json:"email"`
 
 	// EmailMuted Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif
-	EmailMuted  *[]EmailGroup      `json:"email_muted,omitempty"`
-	FirstName   string             `json:"first_name"`
-	Id          openapi_types.UUID `json:"id"`
-	JobTitle    *string            `json:"job_title,omitempty"`
-	LastLoginAt *time.Time         `json:"last_login_at,omitempty"`
-	LastName    string             `json:"last_name"`
+	EmailMuted *[]EmailGroup      `json:"email_muted,omitempty"`
+	FirstName  string             `json:"first_name"`
+	Id         openapi_types.UUID `json:"id"`
+	JobTitle   *string            `json:"job_title,omitempty"`
+
+	// JoinedAt Tanggal user bergabung ke workspace
+	JoinedAt    time.Time  `json:"joined_at"`
+	LastLoginAt *time.Time `json:"last_login_at,omitempty"`
+	LastName    string     `json:"last_name"`
 
 	// Locale Example: en
 	Locale   string  `json:"locale"`
@@ -6488,7 +6496,17 @@ type PutAccessPolicyParams struct {
 
 // RenameAccountJSONBody defines parameters for RenameAccount.
 type RenameAccountJSONBody struct {
-	Name string `json:"name"`
+	// BrandColor Warna hex atau string kosong
+	BrandColor  *string `json:"brand_color,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Icon        *string `json:"icon,omitempty"`
+
+	// LogoDarkUrl URL HTTPS atau string kosong
+	LogoDarkUrl *string `json:"logo_dark_url,omitempty"`
+
+	// LogoLightUrl URL HTTPS atau string kosong
+	LogoLightUrl *string `json:"logo_light_url,omitempty"`
+	Name         *string `json:"name,omitempty"`
 }
 
 // TransferAccountOwnershipJSONBody defines parameters for TransferAccountOwnership.
@@ -8246,7 +8264,7 @@ type ServerInterface interface {
 	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
 	// (GET /account)
 	GetAccount(w http.ResponseWriter, r *http.Request)
-	// RenameAccount Ubah nama workspace (hanya admin)
+	// RenameAccount Ubah identitas dan branding workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(w http.ResponseWriter, r *http.Request)
 	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
@@ -39170,7 +39188,7 @@ type StrictServerInterface interface {
 	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
 	// (GET /account)
 	GetAccount(ctx context.Context, request GetAccountRequestObject) (GetAccountResponseObject, error)
-	// RenameAccount Ubah nama workspace (hanya admin)
+	// RenameAccount Ubah identitas dan branding workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(ctx context.Context, request RenameAccountRequestObject) (RenameAccountResponseObject, error)
 	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
