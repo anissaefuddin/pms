@@ -32,7 +32,7 @@ function AccountRoute() {
     <p className="text-sm text-muted-foreground">{t("settings.account.description")}</p>
     <div role="tablist" aria-label={t("settings.account.tabsLabel")} className="grid grid-cols-3 rounded-lg bg-muted p-1">
       {tabs.map((value) => <button key={value} role="tab" aria-selected={tab === value}
-        onClick={() => setTab(value)} className={`rounded-md px-3 py-2 text-sm font-medium ${tab === value ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"}`}>
+        onClick={() => setTab(value)} className={`rounded-md px-3 py-2 text-sm font-medium ${tab === value ? "bg-background shadow-sm" : "text-foreground hover:bg-background/60"}`}>
         {t(`settings.account.tabs.${value}`)}
       </button>)}
     </div>

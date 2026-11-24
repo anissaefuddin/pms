@@ -25,6 +25,7 @@ test("opening an assigned item from the Calendar view shows the Effort block wit
   }) });
   await page.goto(`/tasks/${id}`);
   await expect(page.getByRole("button", { name: "Next month" })).toBeVisible();
+  await page.getByRole("button", { name: "Unscheduled 1" }).click();
   await page.getByLabel("Assigned task").click();
   await page.getByText("More fields", { exact: true }).click();
   await expect(page.getByRole("region", { name: "Effort and allocation" })).toBeVisible();

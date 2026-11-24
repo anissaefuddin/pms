@@ -223,9 +223,9 @@ test("Board rolls back conflict, supports drag and creates in the target column"
   await expect(after.getByRole("button", { name: "Plan", exact: true })).toBeVisible();
   await expect(after.getByRole("button", { name: "Move to status: Plan" })).toBeEnabled();
   await after.getByRole("button", { name: "Add item", exact: true }).click();
-  const form = page.getByRole("dialog", { name: "Create item" });
-  await form.getByRole("textbox", { name: "Name", exact: true }).fill("Checklist");
-  await form.getByRole("button", { name: "Create item" }).click();
+  const name = after.getByPlaceholder("Task name");
+  await name.fill("Checklist");
+  await name.press("Enter");
   await expect.poll(() => calls.find((call) => call.method === "POST" && call.path === "/items")?.body)
     .toMatchObject({ type: "task", status_id: completed.id, title: "Checklist" });
 });

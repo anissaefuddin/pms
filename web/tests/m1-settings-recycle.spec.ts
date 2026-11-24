@@ -126,6 +126,7 @@ test("account page lists seats and administrators; email and task defaults save"
   } });
   await page.goto("/settings/account");
   await expect(page.getByText("Pilot Co")).toBeVisible();
+  await page.getByRole("tab", { name: "Members & Seats" }).click();
   await expect(page.getByText("/ 5 seats used")).toBeVisible();
   await expect(page.getByText("Available", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "admin@example.test" })).toBeVisible();
