@@ -138,6 +138,16 @@ function Row({ ctx, label, tone, children }: { ctx: Ctx; label: ReactNode; tone?
   </div>;
 }
 
+/** Summary dots on a collapsed row: one per distinct due date underneath, so the row shows its work without expanding. */
+function DueDots({ ctx, dates }: { ctx: Ctx; dates: string[] }) {
+  return <>{[...new Set(dates)].map((date) => {
+    const index = Math.round((utc(date) - utc(ctx.from)) / DAY_MS);
+    if (index < 0 || index >= ctx.days) return null;
+    return <div key={date} data-summary="" title={formatDate(date, ctx.profile)} className="absolute top-1/2 size-2 -translate-y-1/2 rounded-full bg-primary/60"
+      style={{ left: index * DAY_PX + DAY_PX / 2 - 4 }} />;
+  })}</>;
+}
+
 function Marker({ ctx, date, className, style, title }: { ctx: Ctx; date: string; className: string; style: (left: number) => CSSProperties; title: string }) {
   const index = Math.round((utc(date) - utc(ctx.from)) / DAY_MS);
   if (index < 0 || index >= ctx.days) return null;
@@ -160,7 +170,9 @@ function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
         <span className="min-w-0 truncate">{space.name}</span>
       </button>
       <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{count}</span>
-      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="shrink-0 text-xs underline">{t("dashboards.overview.timeline.openSpace")}</Link></>} />
+      <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="shrink-0 text-xs underline">{t("dashboards.overview.timeline.openSpace")}</Link></>}>
+      {!open && <DueDots ctx={ctx} dates={[...space.unassigned_tasks, ...space.projects.flatMap((p) => [p, ...(p.tasks ?? [])])].map((x) => x.due_date)} />}
+    </Row>
     {open && <>
       {space.projects.length === 0 && space.unassigned_tasks.length === 0 && <Row ctx={ctx} label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.nothingDue")}</span>} />}
       {space.projects.map((project) => <ProjectRows key={project.id} project={project} ctx={ctx} />)}
@@ -169,7 +181,9 @@ function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
           className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left text-xs font-medium text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
           <UnassignedChevron className="size-4 shrink-0" aria-hidden />
           <span className="min-w-0 truncate">{t("dashboards.overview.timeline.unassigned")}</span>
-          <span className="ml-auto shrink-0 tabular-nums">{space.unassigned_tasks.length}</span></button>} />
+          <span className="ml-auto shrink-0 tabular-nums">{space.unassigned_tasks.length}</span></button>}>
+          {!unassignedOpen && <DueDots ctx={ctx} dates={space.unassigned_tasks.map((task) => task.due_date)} />}
+        </Row>
         {unassignedOpen && space.unassigned_tasks.map((task) => <TaskRow key={task.id} task={task} ctx={ctx} indent />)}
       </>}
     </>}
@@ -190,6 +204,7 @@ function ProjectRows({ project, ctx }: { project: TimelineProject; ctx: Ctx }) {
       <Marker ctx={ctx} date={project.due_date} className={cn("top-1/2 h-4 -translate-y-1/2 rounded-md", project.status_group === "deferred" ? "bg-muted-foreground/50" : "bg-sky-500")}
         title={t("dashboards.overview.timeline.milestone", { date: formatDate(project.due_date, ctx.profile) })}
         style={(left) => ({ left: left + 4, width: DAY_PX - 8 })} />
+      {!open && <DueDots ctx={ctx} dates={(project.tasks ?? []).map((task) => task.due_date)} />}
     </Row>
     {open && ((project.tasks ?? []).length === 0
       ? <Row ctx={ctx} label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.noTasks")}</span>} />
