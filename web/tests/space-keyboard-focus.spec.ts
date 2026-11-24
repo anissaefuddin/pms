@@ -66,12 +66,12 @@ test("Space information stays behind the title icon and view actions share the t
   await page.keyboard.press("Escape");
 
   const tabs = page.getByRole("navigation", { name: "Views" });
-  const focus = page.getByRole("button", { name: "Focus", exact: true });
+  // Focus is an app-wide control in the top bar (see focus-mode.spec.ts), so only the Space's own actions share this row.
   const create = page.getByRole("button", { name: "New item", exact: true });
   const menu = page.getByRole("button", { name: "Space actions" });
-  for (const action of [focus, create, menu]) await expect(action).toBeVisible();
+  for (const action of [create, menu]) await expect(action).toBeVisible();
   const tabsBox = (await tabs.boundingBox())!;
-  const boxes = await Promise.all([focus, create, menu].map((action) => action.boundingBox()));
+  const boxes = await Promise.all([create, menu].map((action) => action.boundingBox()));
   expect(boxes.every((box) => box && Math.abs(box.y - tabsBox.y) < 12)).toBe(true);
   expect(boxes.map((box) => box!.x)).toEqual([...boxes.map((box) => box!.x)].sort((a, b) => a - b));
 

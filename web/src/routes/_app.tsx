@@ -13,6 +13,7 @@ import type { CreateKind } from "@/lib/create-item-validate";
 import type { Location } from "@/lib/items";
 import { useSpaces } from "@/lib/space-queries";
 import { lastSpaceKey } from "@/lib/session-state";
+import { readFocus } from "@/lib/view-focus";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { ProfileContext, useAppearance } from "@/lib/profile";
 import { useRealtime } from "@/lib/realtime";
@@ -40,6 +41,8 @@ function AppShell() {
     retry: (count, err) => !(err instanceof ApiError && err.status === 401) && count < 2,
   });
   useAppearance(me.data);
+  // Focus mode is app-wide; apply the saved choice on load so the Space header and sidebar match it.
+  useEffect(() => { document.documentElement.dataset.viewFocus = String(readFocus()); }, []);
   // The saved profile language wins over the browser choice once signed in.
   const locale = me.data?.locale;
   useEffect(() => {

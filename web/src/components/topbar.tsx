@@ -1,6 +1,6 @@
 import { useProfile, formatNumber } from "@/lib/profile";
-import { useRef, useState, type KeyboardEvent, type ReactNode } from "react";
-import { MoreHorizontal, Shapes, Bell, Blocks, ChevronDown, CircleHelp, Languages, Layers, LogOut, MessageSquare, Palette, Plus, Settings, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, Trash2, UserPlus } from "lucide-react";
+import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
+import { Maximize2, Minimize2, MoreHorizontal, Shapes, Bell, Blocks, ChevronDown, CircleHelp, Languages, Layers, LogOut, MessageSquare, Palette, Plus, Settings, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, Trash2, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { LANGUAGES, isLanguage, setLanguage, type Language } from "@/i18n";
 
 import { clearSessionState } from "@/lib/session-state";
 import { nextIndex } from "@/lib/ui-kit";
+import { FOCUS_EVENT, readFocus, setFocus } from "@/lib/view-focus";
 import { UserAvatar } from "@/components/user-avatar";
 import type { CreateKind } from "@/lib/create-item-validate";
 import { toast } from "sonner";
@@ -36,6 +37,7 @@ export function Topbar({ onCreate, live, search, navigation, inSettings = false,
       {/* Page breadcrumbs are portaled here (see WorkspaceHeader), so the top bar holds the path instead of a separate row. */}
       <div id="topbar-breadcrumb" className="flex min-w-0 flex-1 items-center text-sm" />
       <span role="status" data-live={live ? "true" : "false"} className="shrink-0 text-xs text-muted-foreground">{!live && t("nav.realtime.reconnecting")}</span>
+      {!inSettings && <FocusToggle />}
       {search}
       {/* D-CREATE: global Create only where no container is open; a Space, Folder, Project or Task has its own primary Create. */}
       {!inSettings && !containerActive && <CreateMenu onCreate={onCreate} spaceId={spaceId} />}
@@ -45,6 +47,20 @@ export function Topbar({ onCreate, live, search, navigation, inSettings = false,
       </Link>}
     </header>
   );
+}
+
+/** Focus mode for every page, the same kind of app-wide control as the sidebar toggle. */
+function FocusToggle() {
+  const { t } = useTranslation();
+  const [focused, setFocused] = useState(readFocus);
+  useEffect(() => {
+    const sync = (event: Event) => setFocused((event as CustomEvent<boolean>).detail);
+    window.addEventListener(FOCUS_EVENT, sync);
+    return () => window.removeEventListener(FOCUS_EVENT, sync);
+  }, []);
+  return <Button size="sm" variant={focused ? "secondary" : "ghost"} aria-pressed={focused} onClick={() => setFocus(!focused)} className="shrink-0">
+    {focused ? <Minimize2 /> : <Maximize2 />}{t(focused ? "views.focus.exit" : "views.focus.enter")}
+  </Button>;
 }
 
 /** Sidebar footer: profile (name and menu) and the inbox bell. Collapsed, it is the avatar only. Shared by the Workspace and Settings sidebars. */

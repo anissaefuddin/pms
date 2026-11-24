@@ -40,6 +40,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuGroup, DropdownMenuItem,
 import { Dialog, DialogContent, DialogTitle, DialogTrigger } from "./ui/dialog";
 import { SpaceDialog } from "./space-dialog";
 import { SpaceIcon } from "./space-icon";
+import { FOCUS_EVENT, readFocus } from "@/lib/view-focus";
 import { CustomizeSidebarDialog, openCustomizeSidebar } from "./customize-sidebar-dialog";
 
 const linkClass = "block min-w-0 flex-1 truncate rounded-md px-2 py-1.5 text-sm hover:bg-nav-hover";
@@ -110,7 +111,7 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
   const navigate = useNavigate();
   const pathname = useLocation({ select: (location) => location.pathname });
   const storageKey = `pms:sidebar:${me.id}`;
-  const [desktopCollapsed, setCollapsed] = useState(() => localStorage.getItem(storageKey) === "collapsed");
+  const [desktopCollapsed, setCollapsed] = useState(() => readFocus() || localStorage.getItem(storageKey) === "collapsed");
   const collapsed = !mobile && desktopCollapsed;
   const [width, setWidth] = useState(readWidth);
   const client = useQueryClient();
@@ -141,8 +142,8 @@ export function Sidebar({ me, mobile = false, onNavigate }: { me: CurrentUser; m
       const focused = (event as CustomEvent<boolean>).detail;
       return focused || localStorage.getItem(storageKey) === "collapsed";
     });
-    window.addEventListener("pms:view-focus", apply);
-    return () => window.removeEventListener("pms:view-focus", apply);
+    window.addEventListener(FOCUS_EVENT, apply);
+    return () => window.removeEventListener(FOCUS_EVENT, apply);
   }, [mobile, storageKey]);
 
   // Pintasan "[" menciutkan atau membuka sidebar, kecuali saat mengetik.

@@ -27,7 +27,7 @@ import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import type { CustomField } from "@/lib/custom-fields";
 import { ganttColumns, visibleColumns } from "@/lib/view-columns";
 import { useViewExpansion } from "@/lib/use-view-expansion";
-import { FileSpreadsheet, Maximize2, Minimize2 } from "lucide-react";
+import { FileSpreadsheet } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 export { viewSorts } from "@/components/view-toolbar";
@@ -62,26 +62,6 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const views = useQuery({ queryKey: viewKey, queryFn: () => api<{ items: SavedView[] }>(base + "/views") });
   const available = views.data?.items ?? [];
   const active = available.find((view) => view.id === search.view) ?? available.find((view) => view.is_default) ?? available[0];
-  const [focused, setFocused] = useState(false);
-  useEffect(() => {
-    if (!active?.id) return;
-    const key = `pms:view-focus:${active.id}`;
-    let next = false;
-    try { next = localStorage.getItem(key) === "1"; } catch { /* storage can be blocked */ }
-    setFocused(next);
-    document.documentElement.dataset.viewFocus = String(next);
-    window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: next }));
-    return () => { delete document.documentElement.dataset.viewFocus; window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: false })); };
-  }, [active?.id]);
-  function toggleFocus() {
-    if (!active) return;
-    const next = !focused;
-    setFocused(next);
-    document.documentElement.dataset.viewFocus = String(next);
-    try { localStorage.setItem(`pms:view-focus:${active.id}`, next ? "1" : "0"); } catch { /* storage can be blocked */ }
-    window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: next }));
-  }
-
   // WA-D05: expansion is saved on the server per view. Each view is keyed by its id, so state never carries over between views.
   const expansion = useViewExpansion(active?.id);
   // The board toggles live in the shared toolbar row, so their state is held here, above the early return below.
@@ -285,9 +265,6 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       <div className="min-w-0 flex-1"><ViewTabs views={available} selected={active} canEdit={canEdit}
         project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
         onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} /></div>
-      <Button size="sm" variant={focused ? "secondary" : "ghost"} aria-pressed={focused} onClick={toggleFocus} className="shrink-0">
-        {focused ? <Minimize2 /> : <Maximize2 />}{t(focused ? "views.focus.exit" : "views.focus.enter")}
-      </Button>
       {actions}
     </div>
     {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
