@@ -34,7 +34,7 @@ func TestSpaceTemplatesBuildWholeSpaceOnceAndOnlyForCreators(t *testing.T) {
 		}{
 			"projects":      {"SELECT count(*) FROM item_locations l JOIN items i ON i.id=l.item_id WHERE l.space_id=$1 AND i.type='project'", counts["projects"]},
 			"tasks":         {"SELECT count(*) FROM item_locations l JOIN items i ON i.id=l.item_id WHERE l.space_id=$1 AND i.type='task'", counts["tasks"]},
-			"views":         {"SELECT count(*) FROM views WHERE scope_space_id=$1", counts["views"].(float64) + 2}, // + the Table and Board every Space starts with,
+			"views":         {"SELECT count(*) FROM views WHERE scope_space_id=$1", counts["views"].(float64) + 4}, // + Table, Board, Gantt and Calendar every Space starts with,
 			"forms":         {"SELECT count(*) FROM request_forms WHERE space_id=$1", counts["forms"]},
 			"custom_fields": {"SELECT count(*) FROM custom_fields WHERE space_id=$1", counts["custom_fields"]},
 		} {
