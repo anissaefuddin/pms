@@ -15,7 +15,7 @@ import (
 
 const (
 	maxRangeRows   = 2000 // rows read per request; a larger range sets truncated
-	timelineMaxDay = 90
+	timelineMaxDay = 400  // a calendar year plus room for a custom range
 	agendaMaxDay   = 31
 )
 
@@ -30,13 +30,14 @@ type TimelineOptions struct {
 // TimelineNode is one item in a Space's real hierarchy: Space > Folder or Project > Task > Subtask. Items due in the
 // range are marked InRange; their ancestors are included without a due date so the structure stays intact.
 type TimelineNode struct {
-	ID       string         `json:"id"`
-	Title    string         `json:"title"`
-	Type     string         `json:"type"`
-	DueDate  *string        `json:"due_date"`
-	Status   string         `json:"status_group"`
-	InRange  bool           `json:"in_range"`
-	Children []TimelineNode `json:"children"`
+	ID        string         `json:"id"`
+	Title     string         `json:"title"`
+	Type      string         `json:"type"`
+	StartDate *string        `json:"start_date"`
+	DueDate   *string        `json:"due_date"`
+	Status    string         `json:"status_group"`
+	InRange   bool           `json:"in_range"`
+	Children  []TimelineNode `json:"children"`
 }
 
 // TimelineSpace groups one Space's tree. Nodes are the Space's top-level items (those without a parent in the Space).
@@ -64,7 +65,7 @@ type rangeRow struct {
 
 // chainRow is one item location in a Space that is either due in the range or an ancestor of one.
 type chainRow struct {
-	spaceID, itemID, parentID, typ, title, due, status string
+	spaceID, itemID, parentID, typ, title, start, due, status string
 }
 
 // BuildTimeline groups the actor's dated Projects and Tasks by Space, following each item's real parents.
@@ -82,7 +83,7 @@ func BuildTimeline(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 	if len(ids) == 0 {
 		return res, nil
 	}
-	rows, truncated, err := readRange(ctx, pool, ids, from, opts.Days, "")
+	rows, truncated, err := readTimelineRows(ctx, pool, ids, from, opts.Days)
 	if err != nil {
 		return TimelineResult{}, err
 	}
@@ -90,8 +91,8 @@ func BuildTimeline(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 	inRange := map[string]bool{}
 	var due []string
 	for _, r := range rows {
-		inRange[r.spaceID+"|"+r.itemID] = true
-		due = append(due, r.itemID)
+		inRange[r[0]+"|"+r[1]] = true
+		due = append(due, r[1])
 	}
 	chain, err := readChain(ctx, pool, ids, due)
 	if err != nil {
@@ -109,6 +110,10 @@ func BuildTimeline(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 	for _, c := range chain {
 		key := c.spaceID + "|" + c.itemID
 		b := &built{node: TimelineNode{ID: c.itemID, Title: c.title, Type: c.typ, Status: c.status, InRange: inRange[key], Children: []TimelineNode{}}}
+		if c.start != "" {
+			st := c.start
+			b.node.StartDate = &st
+		}
 		if c.due != "" {
 			d := c.due
 			b.node.DueDate = &d
@@ -188,7 +193,7 @@ WITH RECURSIVE chain AS (
   JOIN item_locations p ON p.space_id = c.space_id AND p.item_id = c.parent_item_id AND p.deleted_root_id IS NULL
 )
 SELECT c.space_id::text, c.item_id::text, COALESCE(c.parent_item_id::text, ''), i.type::text, i.title,
-       COALESCE(i.due_date::text, ''), COALESCE(s.grp::text, '')
+       COALESCE(i.start_date::text, ''), COALESCE(i.due_date::text, ''), COALESCE(s.grp::text, '')
 FROM chain c
 JOIN items i ON i.id = c.item_id AND i.deleted_at IS NULL
 LEFT JOIN statuses s ON s.id = i.status_id`, ids, due)
@@ -199,12 +204,48 @@ LEFT JOIN statuses s ON s.id = i.status_id`, ids, due)
 	var out []chainRow
 	for rs.Next() {
 		var r chainRow
-		if err := rs.Scan(&r.spaceID, &r.itemID, &r.parentID, &r.typ, &r.title, &r.due, &r.status); err != nil {
+		if err := rs.Scan(&r.spaceID, &r.itemID, &r.parentID, &r.typ, &r.title, &r.start, &r.due, &r.status); err != nil {
 			return nil, err
 		}
 		out = append(out, r)
 	}
 	return out, rs.Err()
+}
+
+// readTimelineRows lists [space, item] pairs whose span (start or due, to due) overlaps the window. A dated item
+// without a start is a single day on its due date. Rows past maxRangeRows set truncated.
+func readTimelineRows(ctx context.Context, pool *pgxpool.Pool, ids []string, from string, days int) ([][2]string, bool, error) {
+	rs, err := pool.Query(ctx, `
+SELECT l.space_id::text, i.id::text
+FROM item_locations l
+JOIN items i ON i.id = l.item_id AND i.deleted_at IS NULL
+LEFT JOIN statuses s ON s.id = i.status_id
+WHERE l.deleted_root_id IS NULL AND l.space_id = ANY($1::uuid[])
+  AND i.type IN ('project', 'task') AND i.due_date IS NOT NULL
+  AND i.due_date >= $2::date
+  AND COALESCE(i.start_date, i.due_date) < ($2::date + $3::int)
+  AND COALESCE(s.grp::text, 'active') NOT IN ('completed', 'cancelled')
+ORDER BY i.due_date, i.id
+LIMIT $4`, ids, from, days, maxRangeRows+1)
+	if err != nil {
+		return nil, false, err
+	}
+	defer rs.Close()
+	var out [][2]string
+	for rs.Next() {
+		var r [2]string
+		if err := rs.Scan(&r[0], &r[1]); err != nil {
+			return nil, false, err
+		}
+		out = append(out, r)
+	}
+	if err := rs.Err(); err != nil {
+		return nil, false, err
+	}
+	if len(out) > maxRangeRows {
+		return out[:maxRangeRows], true, nil
+	}
+	return out, false, nil
 }
 
 // AgendaOptions are validated by the handler. Kind is "" (any), "project" or "task".

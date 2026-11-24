@@ -67,7 +67,7 @@ func (s *Server) getOverviewTimeline(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	from, days, ok := parseRange(q, overview.TimelineMaxDays, 60)
 	if !ok {
-		writeError(w, 422, "from must be YYYY-MM-DD and days between 1 and 90")
+		writeError(w, 422, "from must be YYYY-MM-DD and days between 1 and 400")
 		return
 	}
 	res, err := overview.BuildTimeline(r.Context(), s.pool, actorOf(r), overview.TimelineOptions{

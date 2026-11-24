@@ -5490,8 +5490,11 @@ type OverviewTimelineNode struct {
 	DueDate *openapi_types.Date `json:"due_date,omitempty"`
 	Id      openapi_types.UUID  `json:"id"`
 
-	// InRange true bila item jatuh tempo di rentang; false untuk induk yang hanya ditampilkan sebagai konteks
-	InRange     bool                            `json:"in_range"`
+	// InRange true bila rentang item (mulai sampai jatuh tempo) beririsan dengan rentang tampilan; false untuk induk yang hanya ditampilkan sebagai konteks
+	InRange bool `json:"in_range"`
+
+	// StartDate Kosong bila item tidak punya tanggal mulai
+	StartDate   *openapi_types.Date             `json:"start_date,omitempty"`
 	StatusGroup OverviewTimelineNodeStatusGroup `json:"status_group"`
 	Title       string                          `json:"title"`
 

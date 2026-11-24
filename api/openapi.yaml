@@ -1903,7 +1903,7 @@ paths:
       summary: Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
       parameters:
         - { name: from, in: query, required: false, schema: { type: string, format: date }, description: 'Tanggal awal; kosong berarti hari ini di zona pengguna' }
-        - { name: days, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 90, default: 60 } }
+        - { name: days, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 400, default: 60 } }
         - { name: space_id, in: query, required: false, schema: { type: string, format: uuid } }
         - { name: include_archived, in: query, required: false, schema: { type: boolean, default: false } }
       responses:
@@ -6462,9 +6462,10 @@ components:
         id: { type: string, format: uuid }
         title: { type: string }
         type: { type: string, description: 'Tipe item: project, folder, task, atau tipe kustom' }
+        start_date: { type: string, format: date, nullable: true, description: 'Kosong bila item tidak punya tanggal mulai' }
         due_date: { type: string, format: date, nullable: true, description: 'Kosong bila item tidak punya tanggal jatuh tempo' }
         status_group: { type: string, enum: [active, deferred, completed, cancelled] }
-        in_range: { type: boolean, description: 'true bila item jatuh tempo di rentang; false untuk induk yang hanya ditampilkan sebagai konteks' }
+        in_range: { type: boolean, description: 'true bila rentang item (mulai sampai jatuh tempo) beririsan dengan rentang tampilan; false untuk induk yang hanya ditampilkan sebagai konteks' }
         children:
           type: array
           items: { $ref: '#/components/schemas/OverviewTimelineNode' }

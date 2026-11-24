@@ -69,7 +69,7 @@ func TestWorkspaceOverviewTimelineGroupsDueWork(t *testing.T) {
 	}
 
 	// Out-of-range input is refused, not clamped.
-	f.want(ovGetPath(f, member, "/overview/timeline?days=91"), http.StatusUnprocessableEntity, "range above 90")
+	f.want(ovGetPath(f, member, "/overview/timeline?days=401"), http.StatusUnprocessableEntity, "range above 90")
 	f.want(ovGetPath(f, member, "/overview/timeline?from=2026-13-01"), http.StatusUnprocessableEntity, "bad date")
 	f.want(ovGetPath(f, member, "/overview/timeline?space_id="+open+"&days=0"), http.StatusUnprocessableEntity, "zero days")
 
@@ -123,4 +123,32 @@ func TestWorkspaceOverviewAgendaOrderOverdueAndKind(t *testing.T) {
 	f.want(ovGetPath(f, member, "/overview/agenda?type=secret"), http.StatusUnprocessableEntity, "unknown type")
 	f.want(ovGetPath(f, member, "/overview/agenda?days=32"), http.StatusUnprocessableEntity, "days above 31")
 	f.want(ovGetPath(f, member, "/overview/agenda?limit=0"), http.StatusUnprocessableEntity, "limit zero")
+}
+
+// A bar overlaps the window when it starts before it and ends inside it, or starts inside it and ends after it.
+func TestWorkspaceOverviewTimelineBarsOverlapTheWindow(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	member := f.person("regular")
+	open := f.spaceWithoutAdmins("Overlap")
+	f.share(open, "user", member.id, "read")
+	due := func(n int) string { return "(now() AT TIME ZONE 'UTC')::date + " + strconv.Itoa(n) }
+	before := ovItem(f, admin.id, "task", "T-from-before", "active", due(3), "", open)
+	f.exec("UPDATE items SET start_date = (now() AT TIME ZONE 'UTC')::date - 10 WHERE id=$1", before)
+	after := ovItem(f, admin.id, "task", "T-into-after", "active", due(200), "", open)
+	f.exec("UPDATE items SET start_date = (now() AT TIME ZONE 'UTC')::date + 5 WHERE id=$1", after)
+
+	res := ovGetPath(f, member, "/overview/timeline?days=60")
+	f.want(res, http.StatusOK, "timeline")
+	nodes := res.body["spaces"].([]any)[0].(map[string]any)["nodes"].([]any)
+	got := map[string]map[string]any{}
+	for _, n := range nodes {
+		got[n.(map[string]any)["title"].(string)] = n.(map[string]any)
+	}
+	if b := got["T-from-before"]; b == nil || b["in_range"] != true || b["start_date"] == nil {
+		t.Fatalf("a task that starts before the window and ends inside it is in range: %v", b)
+	}
+	if a := got["T-into-after"]; a == nil || a["in_range"] != true {
+		t.Fatalf("a task that starts inside the window and ends after it is in range: %v", a)
+	}
 }

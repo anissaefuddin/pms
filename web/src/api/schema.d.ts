@@ -4537,12 +4537,17 @@ export interface components {
             type: string;
             /**
              * Format: date
+             * @description Kosong bila item tidak punya tanggal mulai
+             */
+            start_date?: string | null;
+            /**
+             * Format: date
              * @description Kosong bila item tidak punya tanggal jatuh tempo
              */
             due_date?: string | null;
             /** @enum {string} */
             status_group: "active" | "deferred" | "completed" | "cancelled";
-            /** @description true bila item jatuh tempo di rentang; false untuk induk yang hanya ditampilkan sebagai konteks */
+            /** @description true bila rentang item (mulai sampai jatuh tempo) beririsan dengan rentang tampilan; false untuk induk yang hanya ditampilkan sebagai konteks */
             in_range: boolean;
             children: components["schemas"]["OverviewTimelineNode"][];
         };

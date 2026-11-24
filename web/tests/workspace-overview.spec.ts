@@ -160,3 +160,18 @@ test("the overview tabs end with Custom dashboard, after Tasks", async ({ page }
   await sections.last().click();
   await expect(page.getByRole("radio", { name: "Custom dashboard" })).toBeChecked();
 });
+
+test("timeline ranges ask for calendar periods and scales change the grid", async ({ page }) => {
+  const { calls } = await mock(page);
+  await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "Timeline" }).click();
+  await page.getByRole("radio", { name: "Quarter", exact: true }).click();
+  await expect.poll(() => calls.at(-1)?.query.get("days")).toMatch(/^(89|90|91|92)$/);
+  const quarter = calls.at(-1)!.query;
+  expect(quarter.get("from")).toMatch(/-(01|04|07|10)-01$/);
+  await page.getByRole("radio", { name: "Year", exact: true }).click();
+  await expect.poll(() => calls.at(-1)?.query.get("days")).toMatch(/^(365|366)$/);
+  expect(calls.at(-1)!.query.get("from")).toMatch(/-01-01$/);
+  await page.getByRole("radio", { name: "Months", exact: true }).click();
+  await expect(page.getByRole("radio", { name: "Months", exact: true })).toBeChecked();
+});
