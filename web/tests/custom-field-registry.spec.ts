@@ -45,17 +45,13 @@ test("admin lists Workspace fields, filters them, and opens the drawer with unsa
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
 });
 
-test("a person without administrator rights sees their Space's fields and a clear message for Workspace fields", async ({ page }) => {
-  const spaceField = { ...risk, space_id: marketing.id, name: "Budget band" };
+test("a person without administrator rights is refused the Custom fields settings page", async ({ page }) => {
+  // Space fields stay on the Space's own settings; the workspace-wide page is administrator-only (see settings-access).
   await mockSpaces(page, { me: { ...grace, capabilities: { manage_users: false } } as typeof me, extra: {
-    [`GET /spaces/${marketing.id}/custom-fields`]: () => ({ body: { items: [spaceField] } }),
     "GET /item-types": () => ({ body: { items: [] } }),
   } });
   await page.goto("/settings/custom-fields");
-  await page.getByRole("combobox", { name: "Space" }).selectOption(marketing.id);
-  await expect(page.getByRole("table").getByRole("rowheader", { name: "Budget band" })).toBeVisible();
-  await page.getByRole("radio", { name: "Workspace" }).click();
-  await expect(page.getByRole("status").filter({ hasText: "Only administrators manage Workspace fields." })).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveText("Administrator access is required.");
 });
 
 test("an administrator assigns a Workspace field to a Space from the drawer; the Space shows it only when assigned", async ({ page }) => {

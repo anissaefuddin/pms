@@ -44,9 +44,18 @@ func TestProfileEmailAndTaskDefaultsAndAccountInfo(t *testing.T) {
 		len(got.body["email_muted"].([]any)) != 2 || got.body["default_task_duration_days"] != float64(3) || got.body["default_task_effort_minutes"] != float64(90) {
 		t.Fatalf("save: %+v", got)
 	}
+	due := map[string]any{"enabled": true, "days_before": []int{3, 1, 0}, "overdue": true, "overdue_every_days": 3, "delivery": "digest", "hour": 8}
+	if got := f.call(member, "PATCH", "/me", map[string]any{"due_reminders": due}); got.status != 200 || got.body["due_reminders"].(map[string]any)["delivery"] != "digest" {
+		t.Fatalf("due reminders: %+v", got)
+	}
 	for _, bad := range []map[string]any{{"email_muted": []string{"comment"}}, {"email_muted": nil}, {"default_task_duration_days": -1}, {"default_task_duration_days": 4000}, {"default_task_effort_minutes": "x"}} {
 		if got := f.call(member, "PATCH", "/me", bad); got.status != 422 {
 			t.Fatalf("invalid accepted %v: %+v", bad, got)
+		}
+	}
+	for _, bad := range []any{map[string]any{"enabled": true}, map[string]any{"enabled": true, "days_before": []int{2}, "overdue": true, "overdue_every_days": 0, "delivery": "digest", "hour": 25}} {
+		if got := f.call(member, "PATCH", "/me", map[string]any{"due_reminders": bad}); got.status != 422 {
+			t.Fatalf("invalid due reminder accepted: %+v", got)
 		}
 	}
 	if got := f.call(member, "PATCH", "/me", map[string]any{"email_muted": []string{}, "default_task_duration_days": nil}); got.status != 200 ||
@@ -71,6 +80,8 @@ func TestOnboardingIsAdminOnlyAndShownOnce(t *testing.T) {
 	admin, other, member := f.person("admin"), f.person("admin"), f.person("regular")
 	if got := f.call(admin, "GET", "/me", nil); got.body["onboarding_pending"] != true {
 		t.Fatalf("admin must see the wizard: %+v", got)
+	} else if got.body["joined_at"] == nil {
+		t.Fatalf("member since must be available on profile: %+v", got)
 	}
 	if got := f.call(member, "GET", "/me", nil); got.body["onboarding_pending"] != false {
 		t.Fatalf("member must not: %+v", got)
@@ -88,8 +99,17 @@ func TestOnboardingIsAdminOnlyAndShownOnce(t *testing.T) {
 			t.Fatalf("bad name %q accepted: %+v", bad, got)
 		}
 	}
-	if got := f.call(admin, "PATCH", "/account", map[string]string{"name": "  Pilot Co "}); got.status != 200 || got.body["name"] != "Pilot Co" {
-		t.Fatalf("rename: %+v", got)
+	for label, body := range map[string]map[string]string{
+		"empty": {}, "description": {"description": strings.Repeat("x", 501)},
+		"logo": {"logo_light_url": "http://example.test/logo.png"}, "color": {"brand_color": "teal"},
+	} {
+		if got := f.call(admin, "PATCH", "/account", body); got.status != 422 {
+			t.Fatalf("bad %s accepted: %+v", label, got)
+		}
+	}
+	identity := map[string]string{"name": "  Pilot Co ", "description": "Delivery workspace", "icon": "PC", "logo_light_url": "https://example.test/light.png", "logo_dark_url": "https://example.test/dark.png", "brand_color": "#0F766E"}
+	if got := f.call(admin, "PATCH", "/account", identity); got.status != 200 || got.body["name"] != "Pilot Co" || got.body["description"] != "Delivery workspace" || got.body["icon"] != "PC" || got.body["brand_color"] != "#0F766E" {
+		t.Fatalf("workspace update: %+v", got)
 	}
 	if got := f.call(admin, "GET", "/me", nil); got.body["account_name"] != "Pilot Co" {
 		t.Fatalf("account_name: %+v", got)

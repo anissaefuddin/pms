@@ -19,7 +19,6 @@ test("editing a nested task refreshes the Project panel and Space Table in other
     const table = overview.getByRole("table", { name: "Table" });
     const row = table.getByRole("row").filter({ has: overview.getByRole("button", { name: "Progress roadmap", exact: true }) });
     await expect(panel.getByText("0%")).toBeVisible();
-    await expect(row.getByText("Green risk")).toBeVisible();
     await expect(page.locator('[data-live="true"]')).toBeAttached();
     await expect(overview.locator('[data-live="true"]')).toBeAttached();
     const method = panel.getByRole("combobox", { name: "Progress method" });
@@ -34,6 +33,7 @@ test("editing a nested task refreshes the Project panel and Space Table in other
     await taskPanel.getByRole("button", { name: "Save progress" }).click();
     await expect(panel.getByText("60%")).toBeVisible({ timeout: 3000 });
     await expect(row.getByText("60%")).toBeVisible({ timeout: 3000 });
+    await expect(row.getByText("Green risk")).toBeVisible(); // the Progress column appears once a project has progress
   } finally {
     await editorContext.close();
     await overview.close();

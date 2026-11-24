@@ -19,6 +19,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/connectors/gcal"
 	"github.com/anissaefuddin/pms/server/internal/connectors/github"
 	"github.com/anissaefuddin/pms/server/internal/database"
+	"github.com/anissaefuddin/pms/server/internal/duereminders"
 	"github.com/anissaefuddin/pms/server/internal/httpserver"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
@@ -117,7 +118,7 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	connectors.Default.Register(github.New())
 	connectors.Default.Register(gcal.New())
 	connectorSync := &connectors.Service{Pool: pool, Keys: twofactor.Keys{Current: cfg.ConnectorKey, Previous: cfg.ConnectorKeyPrevious}}
-	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL), engine.Option(), httpserver.ApprovalDeadlines(pool), connectors.Option(connectorSync))
+	queue, err := mailqueue.New(pool, cfg, reportdigest.Option(pool, cfg.PublicURL), duereminders.Option(pool, cfg.PublicURL), engine.Option(), httpserver.ApprovalDeadlines(pool), connectors.Option(connectorSync))
 	if err != nil {
 		return err
 	}

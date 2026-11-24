@@ -16,7 +16,7 @@ test("/settings/audit table scrolls inside its region", async ({ page }) => {
 test("/settings/apps tabs wrap instead of widening the page", async ({ page }) => {
   await mockSpaces(page, { me, extra: { "GET /api-keys": { body: { items: [] } } } });
   await page.goto("/settings/apps");
-  await expect(page.getByRole("tab", { name: "API" })).toBeVisible();
+  await expect(page.getByRole("tab", { name: "Gallery", exact: true })).toBeVisible(); // API keys now live in Developer tools
   expect(await hscroll(page)).toBeLessThanOrEqual(0);
 });
 test("approval Edit/Reassign/Delete buttons wrap on a phone", async ({ page }) => {

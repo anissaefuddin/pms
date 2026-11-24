@@ -19,10 +19,10 @@ export function ProjectProgress({ item }: { item: Item }) {
     </span>
     <span className="w-9 text-end">{t("items.progress.percent", { value })}</span>
     {value === 0 && <span className="text-xs text-muted-foreground">{t("items.progress.notStarted")}</span>}
-    {value > 0 && <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs">
+    <span className="inline-flex shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-2 py-0.5 text-xs">
       <span aria-hidden="true" className={`size-2 rounded-full ${riskColors[item.progress_risk]}`} />
       {t(`items.progress.risk.${item.progress_risk}`)}
-    </span>}
+    </span>
   </span>;
 }
 

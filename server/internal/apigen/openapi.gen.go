@@ -1158,6 +1158,45 @@ func (e DependencyType) Valid() bool {
 	}
 }
 
+// Defines values for DueReminderPreferencesDaysBefore.
+const (
+	DueReminderPreferencesDaysBeforeN0 DueReminderPreferencesDaysBefore = 0
+	DueReminderPreferencesDaysBeforeN1 DueReminderPreferencesDaysBefore = 1
+	DueReminderPreferencesDaysBeforeN3 DueReminderPreferencesDaysBefore = 3
+)
+
+// Valid indicates whether the value is a known member of the DueReminderPreferencesDaysBefore enum.
+func (e DueReminderPreferencesDaysBefore) Valid() bool {
+	switch e {
+	case DueReminderPreferencesDaysBeforeN0:
+		return true
+	case DueReminderPreferencesDaysBeforeN1:
+		return true
+	case DueReminderPreferencesDaysBeforeN3:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for DueReminderPreferencesDelivery.
+const (
+	Digest     DueReminderPreferencesDelivery = "digest"
+	Individual DueReminderPreferencesDelivery = "individual"
+)
+
+// Valid indicates whether the value is a known member of the DueReminderPreferencesDelivery enum.
+func (e DueReminderPreferencesDelivery) Valid() bool {
+	switch e {
+	case Digest:
+		return true
+	case Individual:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for EmailGroup.
 const (
 	EmailGroupAssigned    EmailGroup = "assigned"
@@ -2825,13 +2864,13 @@ func (e ListSsoProviders200JSONResponseBodyItemsKind) Valid() bool {
 
 // Defines values for StartSsoParamsLink.
 const (
-	N1 StartSsoParamsLink = "1"
+	StartSsoParamsLinkN1 StartSsoParamsLink = "1"
 )
 
 // Valid indicates whether the value is a known member of the StartSsoParamsLink enum.
 func (e StartSsoParamsLink) Valid() bool {
 	switch e {
-	case N1:
+	case StartSsoParamsLinkN1:
 		return true
 	default:
 		return false
@@ -3607,11 +3646,19 @@ type Account struct {
 		Id    openapi_types.UUID  `json:"id"`
 		Name  string              `json:"name"`
 	} `json:"administrators"`
-	CreatedAt time.Time `json:"created_at"`
-	JoinedAt  time.Time `json:"joined_at"`
-	Name      string    `json:"name"`
-	Role      UserType  `json:"role"`
-	Seats     Seats     `json:"seats"`
+	BrandColor       string    `json:"brand_color"`
+	CreatedAt        time.Time `json:"created_at"`
+	Description      string    `json:"description"`
+	Icon             string    `json:"icon"`
+	IconImageVersion int64     `json:"icon_image_version"`
+	JoinedAt         time.Time `json:"joined_at"`
+	LogoDarkUrl      string    `json:"logo_dark_url"`
+	LogoDarkVersion  int64     `json:"logo_dark_version"`
+	LogoLightUrl     string    `json:"logo_light_url"`
+	LogoLightVersion int64     `json:"logo_light_version"`
+	Name             string    `json:"name"`
+	Role             UserType  `json:"role"`
+	Seats            Seats     `json:"seats"`
 }
 
 // AccountOwnership defines model for AccountOwnership.
@@ -4504,6 +4551,22 @@ type DashboardWidgetInputType string
 // DependencyType defines model for DependencyType.
 type DependencyType string
 
+// DueReminderPreferences defines model for DueReminderPreferences.
+type DueReminderPreferences struct {
+	DaysBefore       []DueReminderPreferencesDaysBefore `json:"days_before"`
+	Delivery         DueReminderPreferencesDelivery     `json:"delivery"`
+	Enabled          bool                               `json:"enabled"`
+	Hour             int                                `json:"hour"`
+	Overdue          bool                               `json:"overdue"`
+	OverdueEveryDays int                                `json:"overdue_every_days"`
+}
+
+// DueReminderPreferencesDaysBefore defines model for DueReminderPreferences.DaysBefore.
+type DueReminderPreferencesDaysBefore int
+
+// DueReminderPreferencesDelivery defines model for DueReminderPreferences.Delivery.
+type DueReminderPreferencesDelivery string
+
 // EmailGroup task_changes mencakup perubahan status dan approval; notifikasi komentar tidak pernah dikirim lewat email
 type EmailGroup string
 
@@ -5185,18 +5248,22 @@ type Me struct {
 	DefaultTaskDurationDays *int `json:"default_task_duration_days,omitempty"`
 
 	// DefaultTaskEffortMinutes Effort awal task baru (SET-03)
-	DefaultTaskEffortMinutes *int                `json:"default_task_effort_minutes,omitempty"`
-	Density                  *MeDensity          `json:"density,omitempty"`
-	Department               *string             `json:"department,omitempty"`
-	Email                    openapi_types.Email `json:"email"`
+	DefaultTaskEffortMinutes *int                    `json:"default_task_effort_minutes,omitempty"`
+	Density                  *MeDensity              `json:"density,omitempty"`
+	Department               *string                 `json:"department,omitempty"`
+	DueReminders             *DueReminderPreferences `json:"due_reminders,omitempty"`
+	Email                    openapi_types.Email     `json:"email"`
 
 	// EmailMuted Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif
-	EmailMuted  *[]EmailGroup      `json:"email_muted,omitempty"`
-	FirstName   string             `json:"first_name"`
-	Id          openapi_types.UUID `json:"id"`
-	JobTitle    *string            `json:"job_title,omitempty"`
-	LastLoginAt *time.Time         `json:"last_login_at,omitempty"`
-	LastName    string             `json:"last_name"`
+	EmailMuted *[]EmailGroup      `json:"email_muted,omitempty"`
+	FirstName  string             `json:"first_name"`
+	Id         openapi_types.UUID `json:"id"`
+	JobTitle   *string            `json:"job_title,omitempty"`
+
+	// JoinedAt Tanggal user bergabung ke workspace
+	JoinedAt    time.Time  `json:"joined_at"`
+	LastLoginAt *time.Time `json:"last_login_at,omitempty"`
+	LastName    string     `json:"last_name"`
 
 	// Locale Example: en
 	Locale   string  `json:"locale"`
@@ -5267,6 +5334,7 @@ type MeUpdate struct {
 	DefaultTaskEffortMinutes *int                     `json:"default_task_effort_minutes,omitempty"`
 	Density                  *MeUpdateDensity         `json:"density,omitempty"`
 	Department               *string                  `json:"department,omitempty"`
+	DueReminders             *DueReminderPreferences  `json:"due_reminders,omitempty"`
 	EmailMuted               *[]EmailGroup            `json:"email_muted,omitempty"`
 	FirstName                *string                  `json:"first_name,omitempty"`
 	JobTitle                 *string                  `json:"job_title,omitempty"`
@@ -6369,6 +6437,15 @@ type WorkloadTask struct {
 	Version       *int                  `json:"version,omitempty"`
 }
 
+// WorkspaceBranding defines model for WorkspaceBranding.
+type WorkspaceBranding struct {
+	BrandColor       string `json:"brand_color"`
+	IconImageVersion int64  `json:"icon_image_version"`
+	LogoDarkVersion  int64  `json:"logo_dark_version"`
+	LogoLightVersion int64  `json:"logo_light_version"`
+	Name             string `json:"name"`
+}
+
 // Cursor defines model for Cursor.
 type Cursor = string
 
@@ -6431,7 +6508,17 @@ type PutAccessPolicyParams struct {
 
 // RenameAccountJSONBody defines parameters for RenameAccount.
 type RenameAccountJSONBody struct {
-	Name string `json:"name"`
+	// BrandColor Warna hex atau string kosong
+	BrandColor  *string `json:"brand_color,omitempty"`
+	Description *string `json:"description,omitempty"`
+	Icon        *string `json:"icon,omitempty"`
+
+	// LogoDarkUrl URL HTTPS atau string kosong
+	LogoDarkUrl *string `json:"logo_dark_url,omitempty"`
+
+	// LogoLightUrl URL HTTPS atau string kosong
+	LogoLightUrl *string `json:"logo_light_url,omitempty"`
+	Name         *string `json:"name,omitempty"`
 }
 
 // TransferAccountOwnershipJSONBody defines parameters for TransferAccountOwnership.
@@ -8189,12 +8276,21 @@ type ServerInterface interface {
 	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
 	// (GET /account)
 	GetAccount(w http.ResponseWriter, r *http.Request)
-	// RenameAccount Ubah nama workspace (hanya admin)
+	// RenameAccount Ubah identitas dan branding workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(w http.ResponseWriter, r *http.Request)
 	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
 	// (GET /account-blueprints)
 	ListAccountBlueprints(w http.ResponseWriter, r *http.Request)
+	// RemoveWorkspaceBrandAsset Hapus icon atau logo Workspace (hanya admin)
+	// (DELETE /account/branding/{asset})
+	RemoveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
+	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client
+	// (GET /account/branding/{asset})
+	GetWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
+	// SaveWorkspaceBrandAsset Upload icon atau logo Workspace (hanya admin)
+	// (PUT /account/branding/{asset})
+	SaveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string)
 	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
 	// (GET /account/ownership)
 	GetAccountOwnership(w http.ResponseWriter, r *http.Request)
@@ -8390,6 +8486,9 @@ type ServerInterface interface {
 	// PreviewBlueprint Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
 	// (POST /blueprints/{blueprintId}/preview)
 	PreviewBlueprint(w http.ResponseWriter, r *http.Request, blueprintId openapi_types.UUID)
+	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
+	// (GET /branding)
+	GetWorkspaceBranding(w http.ResponseWriter, r *http.Request)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID)
@@ -9288,6 +9387,84 @@ func (siw *ServerInterfaceWrapper) ListAccountBlueprints(w http.ResponseWriter, 
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListAccountBlueprints(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveWorkspaceBrandAsset operation middleware
+func (siw *ServerInterfaceWrapper) RemoveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "asset" -------------
+	var asset string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "asset", r.PathValue("asset"), &asset, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "asset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveWorkspaceBrandAsset(w, r, asset)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkspaceBrandAsset operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "asset" -------------
+	var asset string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "asset", r.PathValue("asset"), &asset, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "asset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkspaceBrandAsset(w, r, asset)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveWorkspaceBrandAsset operation middleware
+func (siw *ServerInterfaceWrapper) SaveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "asset" -------------
+	var asset string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "asset", r.PathValue("asset"), &asset, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "asset", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveWorkspaceBrandAsset(w, r, asset)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11143,6 +11320,20 @@ func (siw *ServerInterfaceWrapper) PreviewBlueprint(w http.ResponseWriter, r *ht
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.PreviewBlueprint(w, r, blueprintId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkspaceBranding operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkspaceBranding(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkspaceBranding(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19425,6 +19616,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/{userId}/invitation/resend", wrapper.ResendInvitation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account", wrapper.GetAccount)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/account", wrapper.RenameAccount)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/branding", wrapper.GetWorkspaceBranding)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/account/branding/{asset}", wrapper.RemoveWorkspaceBrandAsset)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/account/branding/{asset}", wrapper.GetWorkspaceBrandAsset)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/account/branding/{asset}", wrapper.SaveWorkspaceBrandAsset)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/onboarding/complete", wrapper.CompleteOnboarding)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/seats", wrapper.GetSeats)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/groups", wrapper.ListGroups)
@@ -19916,6 +20111,155 @@ func (response ListAccountBlueprints200JSONResponse) VisitListAccountBlueprintsR
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveWorkspaceBrandAssetRequestObject struct {
+	Asset string `json:"asset"`
+}
+
+type RemoveWorkspaceBrandAssetResponseObject interface {
+	VisitRemoveWorkspaceBrandAssetResponse(w http.ResponseWriter) error
+}
+
+type RemoveWorkspaceBrandAsset200JSONResponse Account
+
+func (response RemoveWorkspaceBrandAsset200JSONResponse) VisitRemoveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse) VisitRemoveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceBrandAssetRequestObject struct {
+	Asset string `json:"asset"`
+}
+
+type GetWorkspaceBrandAssetResponseObject interface {
+	VisitGetWorkspaceBrandAssetResponse(w http.ResponseWriter) error
+}
+
+type GetWorkspaceBrandAsset200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetWorkspaceBrandAsset200ApplicationoctetStreamResponse) VisitGetWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetWorkspaceBrandAsset404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetWorkspaceBrandAsset404ApplicationProblemPlusJSONResponse) VisitGetWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAssetRequestObject struct {
+	Asset string `json:"asset"`
+	Body  io.Reader
+}
+
+type SaveWorkspaceBrandAssetResponseObject interface {
+	VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error
+}
+
+type SaveWorkspaceBrandAsset200JSONResponse Account
+
+func (response SaveWorkspaceBrandAsset200JSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveWorkspaceBrandAsset403ApplicationProblemPlusJSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAsset413ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveWorkspaceBrandAsset413ApplicationProblemPlusJSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveWorkspaceBrandAsset422ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveWorkspaceBrandAsset422ApplicationProblemPlusJSONResponse) VisitSaveWorkspaceBrandAssetResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -23588,6 +23932,27 @@ func (response PreviewBlueprint422ApplicationProblemPlusJSONResponse) VisitPrevi
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceBrandingRequestObject struct {
+}
+
+type GetWorkspaceBrandingResponseObject interface {
+	VisitGetWorkspaceBrandingResponse(w http.ResponseWriter) error
+}
+
+type GetWorkspaceBranding200JSONResponse WorkspaceBranding
+
+func (response GetWorkspaceBranding200JSONResponse) VisitGetWorkspaceBrandingResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -39113,12 +39478,21 @@ type StrictServerInterface interface {
 	// GetAccount Info workspace untuk user yang login (SET-04); tanpa status trial karena instance berdiri sendiri
 	// (GET /account)
 	GetAccount(ctx context.Context, request GetAccountRequestObject) (GetAccountResponseObject, error)
-	// RenameAccount Ubah nama workspace (hanya admin)
+	// RenameAccount Ubah identitas dan branding workspace (hanya admin)
 	// (PATCH /account)
 	RenameAccount(ctx context.Context, request RenameAccountRequestObject) (RenameAccountResponseObject, error)
 	// ListAccountBlueprints Blueprint akun yang boleh dilihat pemanggil (miliknya; semua untuk admin instance)
 	// (GET /account-blueprints)
 	ListAccountBlueprints(ctx context.Context, request ListAccountBlueprintsRequestObject) (ListAccountBlueprintsResponseObject, error)
+	// RemoveWorkspaceBrandAsset Hapus icon atau logo Workspace (hanya admin)
+	// (DELETE /account/branding/{asset})
+	RemoveWorkspaceBrandAsset(ctx context.Context, request RemoveWorkspaceBrandAssetRequestObject) (RemoveWorkspaceBrandAssetResponseObject, error)
+	// GetWorkspaceBrandAsset Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client
+	// (GET /account/branding/{asset})
+	GetWorkspaceBrandAsset(ctx context.Context, request GetWorkspaceBrandAssetRequestObject) (GetWorkspaceBrandAssetResponseObject, error)
+	// SaveWorkspaceBrandAsset Upload icon atau logo Workspace (hanya admin)
+	// (PUT /account/branding/{asset})
+	SaveWorkspaceBrandAsset(ctx context.Context, request SaveWorkspaceBrandAssetRequestObject) (SaveWorkspaceBrandAssetResponseObject, error)
 	// GetAccountOwnership Pemilik akun, apakah saya pemiliknya, dan admin yang dapat menerima kepemilikan (hanya untuk pemilik) (admin)
 	// (GET /account/ownership)
 	GetAccountOwnership(ctx context.Context, request GetAccountOwnershipRequestObject) (GetAccountOwnershipResponseObject, error)
@@ -39314,6 +39688,9 @@ type StrictServerInterface interface {
 	// PreviewBlueprint Pratinjau item dan tanggal yang akan dibuat dari blueprint (tidak menulis apa pun; butuh use_blueprint)
 	// (POST /blueprints/{blueprintId}/preview)
 	PreviewBlueprint(ctx context.Context, request PreviewBlueprintRequestObject) (PreviewBlueprintResponseObject, error)
+	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
+	// (GET /branding)
+	GetWorkspaceBranding(ctx context.Context, request GetWorkspaceBrandingRequestObject) (GetWorkspaceBrandingResponseObject, error)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(ctx context.Context, request DeleteCommentRequestObject) (DeleteCommentResponseObject, error)
@@ -40279,6 +40656,86 @@ func (sh *strictHandler) ListAccountBlueprints(w http.ResponseWriter, r *http.Re
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListAccountBlueprintsResponseObject); ok {
 		if err := validResponse.VisitListAccountBlueprintsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveWorkspaceBrandAsset operation middleware
+func (sh *strictHandler) RemoveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string) {
+	var request RemoveWorkspaceBrandAssetRequestObject
+
+	request.Asset = asset
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveWorkspaceBrandAsset(ctx, request.(RemoveWorkspaceBrandAssetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveWorkspaceBrandAsset")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveWorkspaceBrandAssetResponseObject); ok {
+		if err := validResponse.VisitRemoveWorkspaceBrandAssetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkspaceBrandAsset operation middleware
+func (sh *strictHandler) GetWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string) {
+	var request GetWorkspaceBrandAssetRequestObject
+
+	request.Asset = asset
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkspaceBrandAsset(ctx, request.(GetWorkspaceBrandAssetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkspaceBrandAsset")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkspaceBrandAssetResponseObject); ok {
+		if err := validResponse.VisitGetWorkspaceBrandAssetResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveWorkspaceBrandAsset operation middleware
+func (sh *strictHandler) SaveWorkspaceBrandAsset(w http.ResponseWriter, r *http.Request, asset string) {
+	var request SaveWorkspaceBrandAssetRequestObject
+
+	request.Asset = asset
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveWorkspaceBrandAsset(ctx, request.(SaveWorkspaceBrandAssetRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveWorkspaceBrandAsset")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveWorkspaceBrandAssetResponseObject); ok {
+		if err := validResponse.VisitSaveWorkspaceBrandAssetResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -42126,6 +42583,30 @@ func (sh *strictHandler) PreviewBlueprint(w http.ResponseWriter, r *http.Request
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(PreviewBlueprintResponseObject); ok {
 		if err := validResponse.VisitPreviewBlueprintResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkspaceBranding operation middleware
+func (sh *strictHandler) GetWorkspaceBranding(w http.ResponseWriter, r *http.Request) {
+	var request GetWorkspaceBrandingRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkspaceBranding(ctx, request.(GetWorkspaceBrandingRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkspaceBranding")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkspaceBrandingResponseObject); ok {
+		if err := validResponse.VisitGetWorkspaceBrandingResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

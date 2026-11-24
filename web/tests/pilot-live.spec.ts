@@ -33,13 +33,14 @@ test("pilot workflow logs in, creates project and task, drags status, and notifi
     const initial = page.getByRole("region", { name: "New", exact: true });
     const done = page.getByRole("region", { name: "Completed", exact: true });
     await page.getByRole("button", { name: "New task", exact: true }).click(); // the empty board has no column to add to yet
-    const task = page.getByRole("dialog", { name: "Add subtask" });
+    const task = page.getByRole("dialog", { name: "Add subitem" });
     await task.getByLabel("Name").fill("Prepare pilot checklist");
     await task.getByRole("button", { name: "Create item" }).click();
 
     await expect(page.getByRole("heading", { name: "Prepare pilot checklist", exact: true })).toBeVisible();
     await page.goBack();
     await expect(page.getByRole("heading", { name: "Pilot launch" })).toBeVisible();
+    await page.getByRole("button", { name: "Hide empty columns", exact: true }).click(); // the board hides empty columns by default, so show Completed as a drop target
     const card = initial.getByRole("listitem").filter({ hasText: "Prepare pilot checklist" });
     await expect(async () => { // the drop target can render after the first drag on a slow runner
       await card.dragTo(done);

@@ -76,7 +76,7 @@ test("flow 3: Calendar drag changes dates and a swimlane drag changes the assign
   await page.goto(`/spaces/${e.PMS_FIXTURE_M2_SPACE}?view=${e.PMS_FIXTURE_M2_CALENDAR}`);
   const [y, m] = e.PMS_FIXTURE_M2_CAL_DAY!.split("-").map(Number);
   const cell = (d: number) => page.getByRole("gridcell").filter({ hasText: new Date(y, m - 1, d).toLocaleDateString("en-US", { dateStyle: "full" }) });
-  await cell(10).getByRole("button", { name: /Calendar task/ }).dragTo(cell(17));
+  await cell(10).getByRole("button", { name: "Calendar task", exact: true }).dragTo(cell(17)); // not the "Item actions: Calendar task" button
   const moved = `${y}-${String(m).padStart(2, "0")}-17`;
   await expect.poll(async () => (await item(page, e.PMS_FIXTURE_M2_CAL_TASK!)).due_date).toBe(moved);
   expect((await item(page, e.PMS_FIXTURE_M2_CAL_TASK!)).start_date).toBe(moved);

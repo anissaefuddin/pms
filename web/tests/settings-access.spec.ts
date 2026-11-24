@@ -22,7 +22,7 @@ test("admin sees workspace administration and configuration destinations", async
   const nav = page.getByRole("navigation", { name: "Settings navigation" });
   await expect(nav.getByRole("link", { name: "Apps" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Resources" })).toBeVisible();
-  await expect(nav.getByRole("link", { name: "Account", exact: true })).toBeVisible();
+  await expect(nav.getByRole("link", { name: "Workspace", exact: true })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Item types" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Workflows" })).toBeVisible();
   await expect(nav.getByRole("link", { name: "Custom fields" })).toBeVisible();

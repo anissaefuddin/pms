@@ -69,6 +69,7 @@ test("Board card shows chip, avatars, duration; status changes by drag and by th
   const todoCol = page.getByRole("region", { name: "To do", exact: true });
   const doneCol = page.getByRole("region", { name: "Completed", exact: true });
   await expect(todoCol.locator("[data-status-chip]")).toHaveCount(0);
+  await expect(todoCol.getByRole("button", { name: "Move to status: Plan" })).toBeVisible();
   await expect(todoCol.getByRole("img", { name: "Ann Lee" })).toBeVisible();
   await expect(todoCol).toContainText("(3d)");
   await expect(todoCol.getByRole("combobox")).toHaveCount(0);

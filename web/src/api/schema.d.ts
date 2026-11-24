@@ -2120,8 +2120,46 @@ export interface paths {
         delete?: never;
         options?: never;
         head?: never;
-        /** Ubah nama workspace (hanya admin) */
+        /** Ubah identitas dan branding workspace (hanya admin) */
         patch: operations["renameAccount"];
+        trace?: never;
+    };
+    "/branding": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Identitas visual Workspace yang aman untuk halaman publik dan aplikasi */
+        get: operations["getWorkspaceBranding"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/account/branding/{asset}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        /** Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client */
+        get: operations["getWorkspaceBrandAsset"];
+        /** Upload icon atau logo Workspace (hanya admin) */
+        put: operations["saveWorkspaceBrandAsset"];
+        post?: never;
+        /** Hapus icon atau logo Workspace (hanya admin) */
+        delete: operations["removeWorkspaceBrandAsset"];
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/onboarding/complete": {
@@ -5233,6 +5271,7 @@ export interface components {
             };
             /** @description Grup email notifikasi yang dimatikan user (SET-05); kosong berarti semua aktif */
             email_muted?: components["schemas"]["EmailGroup"][];
+            due_reminders?: components["schemas"]["DueReminderPreferences"];
             /** @description true bagi administrator selama wizard first-run (AUTH-07) belum selesai atau dilewati */
             onboarding_pending: boolean;
             /**
@@ -5240,6 +5279,11 @@ export interface components {
              * @description Foto profil: epoch ms saat terakhir diunggah, 0 berarti tidak ada foto. Dipakai sebagai penanda cache pada GET /api/v1/me/avatar
              */
             avatar_version: number;
+            /**
+             * Format: date-time
+             * @description Tanggal user bergabung ke workspace
+             */
+            joined_at: string;
             /** @description Durasi awal task baru (SET-03) */
             default_task_duration_days?: number | null;
             /** @description Effort awal task baru (SET-03) */
@@ -5253,6 +5297,16 @@ export interface components {
                 manage_users?: boolean;
                 create_space?: boolean;
             };
+        };
+        WorkspaceBranding: {
+            name: string;
+            brand_color: string;
+            /** Format: int64 */
+            icon_image_version: number;
+            /** Format: int64 */
+            logo_light_version: number;
+            /** Format: int64 */
+            logo_dark_version: number;
         };
         MeUpdate: {
             first_name?: string;
@@ -5285,6 +5339,7 @@ export interface components {
             /** @description Urutan tampil dipertahankan sesuai kiriman; nilai duplikat ditolak (422) */
             sidebar_pinned?: components["schemas"]["SidebarKey"][];
             email_muted?: components["schemas"]["EmailGroup"][];
+            due_reminders?: components["schemas"]["DueReminderPreferences"];
             default_task_duration_days?: number | null;
             default_task_effort_minutes?: number | null;
         };
@@ -5293,8 +5348,28 @@ export interface components {
          * @enum {string}
          */
         EmailGroup: "mention" | "assigned" | "shared" | "task_changes" | "report";
+        DueReminderPreferences: {
+            enabled: boolean;
+            days_before: (0 | 1 | 3)[];
+            overdue: boolean;
+            overdue_every_days: number;
+            /** @enum {string} */
+            delivery: "digest" | "individual";
+            hour: number;
+        };
         Account: {
             name: string;
+            description: string;
+            icon: string;
+            logo_light_url: string;
+            logo_dark_url: string;
+            brand_color: string;
+            /** Format: int64 */
+            icon_image_version: number;
+            /** Format: int64 */
+            logo_light_version: number;
+            /** Format: int64 */
+            logo_dark_version: number;
             /** Format: date-time */
             created_at: string;
             role: components["schemas"]["UserType"];
@@ -11410,7 +11485,21 @@ export interface operations {
         requestBody: {
             content: {
                 "application/json": {
-                    name: string;
+                    name?: string;
+                    description?: string;
+                    icon?: string;
+                    /**
+                     * Format: uri
+                     * @description URL HTTPS atau string kosong
+                     */
+                    logo_light_url?: string;
+                    /**
+                     * Format: uri
+                     * @description URL HTTPS atau string kosong
+                     */
+                    logo_dark_url?: string;
+                    /** @description Warna hex atau string kosong */
+                    brand_color?: string;
                 };
             };
         };
@@ -11426,6 +11515,103 @@ export interface operations {
             };
             403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getWorkspaceBranding: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["WorkspaceBranding"];
+                };
+            };
+        };
+    };
+    getWorkspaceBrandAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Image bytes */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    /** @description Runtime Content-Type adalah image/png */
+                    "application/octet-stream": string;
+                };
+            };
+            404: components["responses"]["Problem"];
+        };
+    };
+    saveWorkspaceBrandAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                /** @description PNG */
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description Updated Workspace */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removeWorkspaceBrandAsset: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                asset: "icon" | "logo_light" | "logo_dark";
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Updated Workspace */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Account"];
+                };
+            };
+            403: components["responses"]["Problem"];
         };
     };
     completeOnboarding: {

@@ -199,7 +199,7 @@ export function ItemCalendar({ items, statuses, readonly, onOpen, onPatch, onDel
     if (Number.isInteger(year) && year >= 1900 && year <= 9999) showPeriod(mode, new Date(year, mode === "quarter" ? periodMonth.getMonth() : month.getMonth(), 1));
   };
   const picker = <Popover open={pickerOpen} onOpenChange={setPickerOpen}>
-    <PopoverTrigger render={<Button size="sm" variant="outline" aria-label={t("views.calendar.choosePeriod")} />}><CalendarDays />{periodLabel}<ChevronDown /></PopoverTrigger>
+    <PopoverTrigger render={<Button size="sm" variant="outline" aria-label={`${t("views.calendar.choosePeriod")}: ${periodLabel}`} />}><CalendarDays />{periodLabel}<ChevronDown /></PopoverTrigger>
     <PopoverContent align="center" className="w-80 space-y-3">
       <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); chooseYear(); }}>
         <label className="flex-1 text-xs font-medium">{t("views.calendar.yearInput")}<Input type="number" min={1900} max={9999} value={yearDraft} onChange={(event) => setYearDraft(event.target.value)} className="mt-1" /></label>

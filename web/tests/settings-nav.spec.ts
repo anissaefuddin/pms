@@ -16,7 +16,7 @@ test("the settings menu lists Apps & Integrations once, for an administrator and
   await page.unrouteAll();
   await mockSpaces(page, { me: { ...me, user_type: "regular", capabilities: { manage_users: false, create_space: true } } as typeof me });
   await page.goto("/settings/profile");
-  await expect(nav.getByRole("link", { name: "Apps & Integrations" })).toHaveCount(1);
-  await nav.getByRole("link", { name: "Apps & Integrations" }).click();
-  await expect(page).toHaveURL(/\/settings\/apps$/);
+  // Integrations are administrator-only; a regular user gets the Developer tools entry instead.
+  await expect(nav.getByRole("link", { name: "Apps & Integrations" })).toHaveCount(0);
+  await expect(nav.getByRole("link", { name: "Developer tools" })).toBeVisible();
 });

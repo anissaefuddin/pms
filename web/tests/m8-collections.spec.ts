@@ -68,6 +68,7 @@ test("Board card shows the type and a blocked move shows every problem and keeps
   await expect(alert).toContainText("this status needs an assignee");
   await expect(alert).toContainText("Crash was not moved");
   await expect(page.getByRole("region", { name: "To do" }).getByText("Crash")).toBeVisible();
+  await expect(card.getByRole("button", { name: "Move to status: Crash" })).toBeVisible();
   await expect(card.getByRole("button", { name: "Move to status: Crash" })).toBeEnabled();
   expect(await new AxeBuilder({ page }).include('[role="alert"]').analyze().then((r) => r.violations)).toEqual([]);
   await alert.getByRole("button", { name: "Dismiss" }).click();

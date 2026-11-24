@@ -3,6 +3,7 @@ package mail
 import (
 	"bufio"
 	"context"
+	"encoding/base64"
 	"fmt"
 	"io"
 	"mime"
@@ -20,7 +21,7 @@ func TestRenderFallsBackToEnglish(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if subject != "Reset your PMS password" || text == "" || !strings.Contains(html, `href="https://example.test/reset"`) {
+	if subject != "[LENS] Permintaan reset password" || text == "" || !strings.Contains(html, `href="https://example.test/reset"`) {
 		t.Fatalf("unexpected template: %q %q", subject, text)
 	}
 }
@@ -40,6 +41,19 @@ func TestMessageHasDateAndMessageID(t *testing.T) {
 	for _, want := range []string{"\r\nDate: ", "\r\nMessage-ID: <", "@acme.test>", "\r\nTo: u@x.test"} {
 		if !strings.Contains(m, want) {
 			t.Fatalf("message lacks %q:\n%s", want, m)
+		}
+	}
+}
+
+func TestMessageEmbedsWorkspaceLogo(t *testing.T) {
+	raw, err := messageWithBrand("PMS <noreply@acme.test>", "noreply@acme.test", "", "u@x.test", "Hi", "body", `<img src="cid:workspace-logo">`, EmailBrand{LogoData: []byte("image"), LogoContentType: "image/png"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	message := string(raw)
+	for _, want := range []string{"multipart/related", "Content-ID: <workspace-logo>", base64.StdEncoding.EncodeToString([]byte("image"))} {
+		if !strings.Contains(message, want) {
+			t.Fatalf("embedded logo missing %q", want)
 		}
 	}
 }
@@ -161,7 +175,7 @@ func TestSendDeliversExactlyOneMessage(t *testing.T) {
 	}
 	f.mu.Lock()
 	defer f.mu.Unlock()
-	if len(f.messages) != 1 || !strings.Contains(f.messages[0], "Subject: Set your PMS password") {
+	if len(f.messages) != 1 || !strings.Contains(f.messages[0], "Subject: [LENS] You are invited") {
 		t.Fatalf("expected one invitation message, got %q", f.messages)
 	}
 	if parts := messageParts(t, f.messages[0]); !strings.Contains(parts["text/plain"], "token=abc") || !strings.Contains(parts["text/html"], "token=abc") {

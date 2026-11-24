@@ -43,7 +43,7 @@ test("admin creates and deactivates item types with a layout; the dialog passes 
 test("only administrators see edit controls for item types", async ({ page }) => {
   await mockSpaces(page, { me: { ...me, user_type: "regular", capabilities: { ...me.capabilities, manage_users: false } } as typeof me, extra: { "GET /item-types": { body: { items: [taskType, bugType] } } } });
   await page.goto("/settings/item-types");
-  await expect(page.getByText("Only administrators can change item types.")).toBeVisible();
+  await expect(page.getByRole("alert")).toHaveText("Administrator access is required.");
   await expect(page.getByRole("button", { name: /Create a custom item type|Edit:/ })).toHaveCount(0);
 });
 

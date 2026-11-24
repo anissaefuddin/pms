@@ -11,7 +11,11 @@ test("E2E-PAR-08: a saved baseline stays put while the plan slips, and the varia
   const page = await context.newPage();
   await page.goto(`/tasks/${e.PMS_FIXTURE_M10_PROJECT}`);
   await page.getByRole("radio", { name: "Plan", exact: true }).click();
-  await page.getByRole("button", { name: "Save baseline" }).click();
+  await expect(async () => { // the Gantt re-renders after the Plan radio, which can close the menu
+    await page.getByRole("main").getByRole("button", { name: "More", exact: true }).click(); // not the sidebar's More
+    await expect(page.getByRole("menuitem", { name: "Save baseline", exact: true })).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 15000 });
+  await page.getByRole("menuitem", { name: "Save baseline", exact: true }).click();
   await page.getByLabel("Baseline name").fill("Kickoff");
   await page.getByRole("button", { name: "Create baseline" }).click();
   await expect(page.getByRole("combobox", { name: "Baseline" })).toHaveValue(/.+/);
@@ -38,7 +42,11 @@ test("SPC-16: a public snapshot opens without an account, stays frozen, and stop
   const page = await context.newPage();
   await page.goto(`/tasks/${e.PMS_FIXTURE_M10_PROJECT}`);
   await page.getByRole("radio", { name: "Plan", exact: true }).click();
-  await page.getByRole("button", { name: "Share snapshot" }).click();
+  await expect(async () => { // the Gantt re-renders after the Plan radio, which can close the menu
+    await page.getByRole("main").getByRole("button", { name: "More", exact: true }).click(); // not the sidebar's More
+    await expect(page.getByRole("menuitem", { name: "Share snapshot", exact: true })).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 15000 });
+  await page.getByRole("menuitem", { name: "Share snapshot", exact: true }).click();
   const dialog = page.getByRole("dialog", { name: "Share a Gantt snapshot" });
   await dialog.getByLabel("Snapshot name").fill("For the client");
   await dialog.getByRole("button", { name: "Create link" }).click();

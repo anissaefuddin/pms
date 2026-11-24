@@ -102,9 +102,8 @@ test("server rule errors are shown inline", async ({ page }) => {
 test("a regular user sees the workflows without edit controls", async ({ page }) => {
   await mockSpaces(page, { me: { ...me, user_type: "regular" }, extra: workflowApi({ items: seed() }) });
   await page.goto("/settings/workflows");
-  await expect(page.getByText("Only administrators can change workflows.")).toBeVisible();
-  await page.getByRole("button", { name: "New", exact: true }).click();
-  await expect(page.getByLabel("Status name: New")).toBeDisabled();
+  await expect(page.getByRole("alert")).toHaveText("Administrator access is required."); // workflows are admin-only
+  await expect(page.getByRole("button", { name: "New", exact: true })).toHaveCount(0);
   for (const name of ["Create workflow", "Add status", "Delete workflow", "Rename workflow"]) await expect(page.getByRole("button", { name })).toHaveCount(0);
 });
 

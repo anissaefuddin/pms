@@ -40,8 +40,8 @@ test("F4: with a task as parent, the Project and Folder types cannot be picked",
     "GET /workflows": { body: { items: [{ id: "wf", is_default: true, statuses: [status] }] } },
   } });
   await page.goto(`/tasks/${taskId}`);
-  await page.getByRole("button", { name: "Add subtask" }).click();
-  const dialog = page.getByRole("dialog", { name: "Add subtask" });
+  await page.getByRole("button", { name: "Add subitem" }).click();
+  const dialog = page.getByRole("dialog", { name: "Add subitem" });
   await expect(dialog.getByRole("radio", { name: /^Project/ })).toBeDisabled();
   await expect(dialog.getByRole("radio", { name: /^Folder/ })).toBeDisabled();
   await expect(dialog.getByRole("radio", { name: /^Task/ })).toBeChecked();

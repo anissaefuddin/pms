@@ -20,7 +20,7 @@ func TestSecurityReviewPublicOperationsRefuseAnonymousCallers(t *testing.T) {
 	if len(public) < 30 {
 		t.Fatalf("only %d public operations found", len(public))
 	}
-	open := map[string]bool{"GET /auth/sso/providers": true, "GET /healthz": true, "GET /readyz": true, "GET /auth/sso/saml/metadata": true}
+	open := map[string]bool{"GET /auth/sso/providers": true, "GET /healthz": true, "GET /readyz": true, "GET /auth/sso/saml/metadata": true, "GET /branding": true}
 	client := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error { return http.ErrUseLastResponse }}
 	for i, op := range public {
 		path := pathParam.ReplaceAllString(op.path, "00000000-0000-0000-0000-000000000000")

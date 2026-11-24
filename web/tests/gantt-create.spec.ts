@@ -37,7 +37,7 @@ test("Gantt: Add task below creates a one-day Task on the row's day and places i
 test("Gantt: Add subitem on a row creates a child of that row", async ({ page }) => {
   const { calls } = await setup(page);
   await openRowMenu(page, kids[0].title);
-  await page.getByRole("menuitem", { name: "Add subtask" }).click();
+  await page.getByRole("menuitem", { name: "Add subitem" }).click();
   await page.locator('input[name="title"]').fill("Child of design");
   await page.getByRole("dialog").getByRole("button", { name: "Create item" }).click();
   await expect.poll(() => calls.find((c) => c.method === "POST" && c.path === "/items")?.body).toMatchObject({
