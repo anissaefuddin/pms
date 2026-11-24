@@ -208,7 +208,8 @@ function Header({ ctx }: { ctx: Ctx }) {
     ? new Intl.DateTimeFormat(locale, { month: "short", year: "numeric", timeZone: "UTC" }).format(new Date(utc(date)))
     : String(new Date(utc(date)).getUTCFullYear()));
   const bottom = bottomCells(ctx, locale);
-  return <div className="border-b text-xs text-muted-foreground">
+  // The header sits above the column tints so its own cells keep their colours.
+  return <div className="relative z-10 border-b bg-card text-xs text-muted-foreground">
     <div className="flex">
       <div className="sticky left-0 z-20 shrink-0 border-r bg-card" style={{ width: LABEL_PX }} />
       {top.map((m, i) => <div key={i} className="shrink-0 border-l px-2 py-1 font-medium text-foreground" style={{ width: m.span * ctx.px }}>{m.label}</div>)}
