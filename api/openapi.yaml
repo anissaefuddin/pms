@@ -2971,6 +2971,7 @@ paths:
       tags: [users]
       operationId: getWorkspaceBrandAsset
       summary: Ambil icon atau logo Workspace; publik agar dapat dirender oleh email client
+      security: []
       responses:
         '200':
           description: Image bytes

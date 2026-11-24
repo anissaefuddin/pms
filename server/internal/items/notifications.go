@@ -38,7 +38,7 @@ func notifyChanges(ctx context.Context, tx pgx.Tx, batch *notifications.Batch, a
 	}
 	if !creating && old.Status != current.Status {
 		var oldName, currentName string
-		_ = tx.QueryRow(ctx, `SELECT COALESCE((SELECT name FROM statuses WHERE id=$1::uuid),''),COALESCE((SELECT name FROM statuses WHERE id=$2::uuid),'')`, old.Status, current.Status).Scan(&oldName, &currentName)
+		_ = tx.QueryRow(ctx, `SELECT COALESCE((SELECT name FROM statuses WHERE id=NULLIF($1,'')::uuid),''),COALESCE((SELECT name FROM statuses WHERE id=NULLIF($2,'')::uuid),'')`, old.Status, current.Status).Scan(&oldName, &currentName)
 		snippet := oldName + " → " + currentName
 		if _, err := batch.Record(ctx, tx, actor, "status_changed", target, snippet, []notifications.Principal{{Kind: "followers"}}, nil); err != nil {
 			return err
