@@ -169,11 +169,17 @@ function QuickCreateRow({ width, taskWidth, onCreate }: { width: number; taskWid
   </form>;
 }
 
+/** The grid takes focus on pointer down and moves it to its cell, which closes a native select at once.
+ *  Native listeners on the wrapper stop the event before the grid sees it. */
+function keepSelectFocus(element: HTMLSpanElement | null) {
+  for (const type of ["pointerdown", "mousedown", "click", "keydown"]) element?.addEventListener(type, (event) => event.stopPropagation());
+}
+
 /** Status column: workflow colour square + name (the name stays text, colour is only a cue). */
 function StatusCell({ row, item, statuses, readonly, onPatch }: { row: ITask; item?: Item; statuses: ItemStatus[]; readonly: boolean; onPatch: (item: Item, update: ItemUpdate) => Promise<void> }) {
   const { t } = useTranslation();
   if (!item || readonly || !item.my_capabilities.includes("change_status")) return <span className="inline-flex items-center gap-1.5"><span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${statusDotClass(String(row.status_color ?? ""))}`} />{String(row.status_name ?? "")}</span>;
-  return <span className="flex w-full items-center gap-1.5">
+  return <span ref={keepSelectFocus} className="flex w-full items-center gap-1.5">
     <span aria-hidden className={`size-2.5 shrink-0 rounded-sm ${statusDotClass(String(row.status_color ?? ""))}`} />
     <select aria-label={`${t("items.status")}: ${item.title}`} className="min-w-0 flex-1 truncate rounded border bg-background px-1 text-sm" value={item.status?.id ?? ""}
       onChange={(event) => void onPatch(item, { status_id: event.target.value })}>

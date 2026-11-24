@@ -176,3 +176,12 @@ test("a Gantt bar menu exposes direct item actions", async ({ page }) => {
   await expect(page.getByRole("menuitem", { name: "Done" })).toBeVisible();
   await expect(page.getByRole("menuitem", { name: "Delete item" })).toBeVisible();
 });
+
+test("clicking a row's status select keeps focus on it, so the native dropdown does not close", async ({ page }) => {
+  await mockGantt(page);
+  await page.goto(`${path}?view=${ganttId}`);
+  await expect(bar(page, design)).toBeVisible();
+  const status = page.getByRole("combobox", { name: /^Status:/ }).first();
+  await status.click();
+  await expect(status).toBeFocused(); // the grid used to move focus to its cell on pointer down
+});
