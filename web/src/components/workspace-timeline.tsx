@@ -198,11 +198,11 @@ function Header({ ctx }: { ctx: Ctx }) {
   const bottom = bottomCells(ctx, locale);
   return <div className="border-b text-xs text-muted-foreground">
     <div className="flex">
-      <div className="sticky left-0 z-10 shrink-0 border-r bg-card" style={{ width: LABEL_PX }} />
+      <div className="sticky left-0 z-20 shrink-0 border-r bg-card" style={{ width: LABEL_PX }} />
       {top.map((m, i) => <div key={i} className="shrink-0 border-l px-2 py-1 font-medium text-foreground" style={{ width: m.span * ctx.px }}>{m.label}</div>)}
     </div>
     <div className="flex">
-      <div className="sticky left-0 z-10 flex shrink-0 items-center border-r bg-card px-4 py-1.5 font-medium text-foreground" style={{ width: LABEL_PX }}>
+      <div className="sticky left-0 z-20 flex shrink-0 items-center border-r bg-card px-4 py-1.5 font-medium text-foreground" style={{ width: LABEL_PX }}>
         {t("dashboards.overview.timeline.item")}</div>
       {bottom.map((cell) => <div key={cell.key} style={{ width: cell.span * ctx.px }} title={cell.title}
         className={cn("shrink-0 truncate border-l py-1.5 text-center tabular-nums", cell.weekend && "bg-muted/40",
@@ -256,8 +256,8 @@ function groupBy(dates: string[], keyOf: (date: string) => string) {
 /** One line of the grid: a sticky label on the left, the day track on the right. */
 function Row({ ctx, label, tone, children }: { ctx: Ctx; label: ReactNode; tone?: string; children?: ReactNode }) {
   return <div className={cn("relative flex border-b last:border-b-0", tone)}>
-    <div className="sticky left-0 z-10 flex shrink-0 items-center gap-2 border-r bg-card px-4 py-1.5" style={{ width: LABEL_PX }}>{label}</div>
-    <div className="relative shrink-0" style={{ width: ctx.days * ctx.px }}>{children}</div>
+    <div className="sticky left-0 z-20 flex shrink-0 items-center gap-2 border-r bg-card px-4 py-1.5" style={{ width: LABEL_PX }}>{label}</div>
+    <div className="relative shrink-0 overflow-hidden" style={{ width: ctx.days * ctx.px }}>{children}</div>
   </div>;
 }
 

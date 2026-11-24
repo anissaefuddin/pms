@@ -175,3 +175,19 @@ test("timeline ranges ask for calendar periods and scales change the grid", asyn
   await page.getByRole("radio", { name: "Months", exact: true }).click();
   await expect(page.getByRole("radio", { name: "Months", exact: true })).toBeChecked();
 });
+
+test("timeline bars never cover the label column when the grid is scrolled", async ({ page }) => {
+  await mock(page);
+  await page.setViewportSize({ width: 1400, height: 900 });
+  await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "Timeline" }).click();
+  await page.getByRole("button", { name: "Marketing", exact: true }).click();
+  await page.getByRole("region", { name: /timeline/i }).evaluate((el) => { el.scrollLeft = 200; });
+  const onTop = await page.evaluate(() => {
+    const label = document.querySelector('[role="region"] button[aria-expanded]') as HTMLElement;
+    const row = label.closest(".flex.border-b") as HTMLElement;
+    const r = row.getBoundingClientRect();
+    return (document.elementFromPoint(r.x + 40, r.y + r.height / 2) as HTMLElement).closest(".sticky") !== null;
+  });
+  expect(onTop).toBe(true);
+});
