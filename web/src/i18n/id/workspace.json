@@ -16,6 +16,8 @@
   "onboarding.view.hint": "Bagaimana Anda ingin melihat pekerjaan Anda pertama kali?",
   "onboarding.view.table": "Tabel: daftar dengan kolom",
   "onboarding.view.board": "Papan: kolom menurut status",
+  "onboarding.view.gantt": "Gantt: linimasa menurut tanggal",
+  "onboarding.view.calendar": "Kalender: item menurut hari",
   "onboarding.view.create": "Buat proyek",
   "onboarding.invite.hint": "Undang rekan kerja lewat email, satu per baris. Anda juga bisa melakukannya nanti di Pengaturan.",
   "onboarding.invite.label": "Alamat email",

@@ -27,6 +27,8 @@ test("first-run wizard creates the workspace once, then stays away", async ({ pa
   await dialog.getByLabel("Task 1").fill("Write brief");
   await dialog.getByLabel("Task 2").fill("Book venue");
   await dialog.getByRole("button", { name: "Next" }).click();
+  await expect(dialog.getByLabel("Gantt: timeline of dates")).toBeVisible();
+  await expect(dialog.getByLabel("Calendar: items by day")).toBeVisible();
   await dialog.getByLabel("Board: columns by status").check();
   await dialog.getByRole("button", { name: "Create project" }).click();
   await dialog.getByLabel("Email addresses").fill("a@example.test\nb@example.test");

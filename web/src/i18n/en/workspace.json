@@ -16,6 +16,8 @@
   "onboarding.view.hint": "How do you want to look at your work first?",
   "onboarding.view.table": "Table: a list with columns",
   "onboarding.view.board": "Board: columns by status",
+  "onboarding.view.gantt": "Gantt: timeline of dates",
+  "onboarding.view.calendar": "Calendar: items by day",
   "onboarding.view.create": "Create project",
   "onboarding.invite.hint": "Invite teammates by email, one per line. You can also do this later in Settings.",
   "onboarding.invite.label": "Email addresses",

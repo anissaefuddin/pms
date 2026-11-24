@@ -10,7 +10,7 @@ import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/u
 import { Input } from "@/components/ui/input";
 
 const steps = 4;
-const viewKinds = ["table", "board"] as const;
+const viewKinds = ["table", "board", "gantt", "calendar"] as const;
 const post = (path: string, body?: unknown, method = "POST") => api<{ id: string }>(path, { method, body: body === undefined ? undefined : JSON.stringify(body) });
 
 /** First-run wizard for the administrator (AUTH-07): shown until it is finished or skipped, once per workspace. */
@@ -22,7 +22,7 @@ export function OnboardingWizard({ me }: { me: CurrentUser }) {
   const [org, setOrg] = useState(me.account_name);
   const [project, setProject] = useState("");
   const [tasks, setTasks] = useState(["", "", ""]);
-  const [view, setView] = useState<"table" | "board">("table");
+  const [view, setView] = useState<(typeof viewKinds)[number]>("table");
   const [emails, setEmails] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
