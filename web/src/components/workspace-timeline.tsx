@@ -67,15 +67,27 @@ function firstScheduledIndex(data: TimelineResponse): number | null {
   return best;
 }
 
-/** Every due date below a node (or Space), for the summary dots on a collapsed row. */
-function dueDatesBelow(nodes: TimelineNode[]): string[] {
-  const out: string[] = [];
+/** Start and end of every in-range item below a node, merged so overlapping spans become one block. */
+function spansBelow(nodes: TimelineNode[]): [string, string][] {
+  const spans: [string, string][] = [];
   const visit = (list: TimelineNode[]) => list.forEach((node) => {
-    if (node.due_date) out.push(node.due_date);
+    if (node.in_range) {
+      const end = node.due_date ?? node.start_date;
+      const start = node.start_date ?? node.due_date;
+      if (start && end) spans.push(start <= end ? [start, end] : [end, start]);
+    }
     visit(node.children);
   });
   visit(nodes);
-  return out;
+  spans.sort((a, b) => (a[0] < b[0] ? -1 : a[0] > b[0] ? 1 : 0));
+  const merged: [string, string][] = [];
+  for (const span of spans) {
+    const last = merged[merged.length - 1];
+    // Overlapping or touching spans (the next day counts as touching) become one block.
+    if (last && utc(span[0]) <= utc(last[1]) + DAY_MS) last[1] = span[1] > last[1] ? span[1] : last[1];
+    else merged.push([span[0], span[1]]);
+  }
+  return merged;
 }
 
 /** Items in the range within one Space's tree; context-only ancestors are not counted. */
@@ -262,21 +274,21 @@ function Row({ ctx, label, tone, children }: { ctx: Ctx; label: ReactNode; tone?
 }
 
 /** A bar from the start index to the end index (inclusive), clipped to the range. */
-function Bar({ ctx, start, end, className, title }: { ctx: Ctx; start: number; end: number; className: string; title: string }) {
+function Bar({ ctx, start, end, className, title, ...rest }: { ctx: Ctx; start: number; end: number; className: string; title: string } & Record<`data-${string}`, string>) {
   const first = Math.max(0, start);
   const last = Math.min(ctx.days - 1, end);
   if (last < first) return null;
   const width = (last - first + 1) * ctx.px;
-  return <div title={title} className={cn("absolute z-10", className)} style={{ left: first * ctx.px + 2, width: Math.max(4, width - 4) }} />;
+  return <div title={title} className={cn("absolute z-10", className)} style={{ left: first * ctx.px + 2, width: Math.max(4, width - 4) }} {...rest} />;
 }
 
-/** Summary dots on a collapsed row: one per distinct due date underneath. */
-function DueDots({ ctx, dates }: { ctx: Ctx; dates: string[] }) {
-  return <>{[...new Set(dates)].map((date) => {
-    const index = indexOf(ctx, date);
-    if (index < 0 || index >= ctx.days) return null;
-    return <div key={date} data-summary="" className="absolute top-1/2 z-10 size-2 -translate-y-1/2 rounded-full bg-primary/60"
-      title={formatDate(date, ctx.profile)} style={{ left: index * ctx.px + ctx.px / 2 - 4 }} />;
+/** Blocks on a collapsed row: the merged start-to-end spans of everything below it, so the range shows without expanding. */
+function SpanBlocks({ ctx, spans }: { ctx: Ctx; spans: [string, string][] }) {
+  return <>{spans.map(([start, end]) => {
+    const first = indexOf(ctx, start);
+    const last = indexOf(ctx, end);
+    return <Bar key={`${start}|${end}`} ctx={ctx} start={first} end={last} className="top-1/2 h-3 -translate-y-1/2 rounded-sm bg-primary/40 ring-1 ring-primary/50"
+      title={`${formatDate(start, ctx.profile)} – ${formatDate(end, ctx.profile)}`} data-span="" />;
   })}</>;
 }
 
@@ -295,7 +307,7 @@ function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
       </button>
       <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{count}</span>
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="shrink-0 text-xs underline">{t("dashboards.overview.timeline.openSpace")}</Link></>}>
-      {!open && <DueDots ctx={ctx} dates={dueDatesBelow(space.nodes)} />}
+      {!open && <SpanBlocks ctx={ctx} spans={spansBelow(space.nodes)} />}
     </Row>
     {open && <>
       {space.nodes.length === 0 && <Row ctx={ctx} label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.nothingDue")}</span>} />}
@@ -334,7 +346,7 @@ function NodeRows({ node, depth, ctx }: { node: TimelineNode; depth: number; ctx
   return <>
     <Row ctx={ctx} label={label}>
       {node.in_range && barStart !== null && barEnd !== null && <Bar ctx={ctx} start={barStart} end={barEnd} className={barClass} title={node.title} />}
-      {hasChildren && !open && <DueDots ctx={ctx} dates={dueDatesBelow(node.children)} />}
+      {hasChildren && !open && <SpanBlocks ctx={ctx} spans={spansBelow(node.children)} />}
     </Row>
     {hasChildren && open && node.children.map((child) => <NodeRows key={child.id} node={child} depth={depth + 1} ctx={ctx} />)}
   </>;

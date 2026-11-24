@@ -86,8 +86,7 @@ test("timeline groups by Space, expands a Project, and moves by one period", asy
   await page.getByRole("radio", { name: "Timeline" }).click();
   await expect(page.getByRole("button", { name: /Launch plan/ })).toHaveCount(0);
   // Collapsed Space and Project rows still show where their work falls, before anything is expanded.
-  await expect(page.locator("[data-summary]").first()).toBeVisible();
-  await expect(page.locator("[data-summary]")).toHaveCount(3); // Nov 24 and Nov 25 on the Space row, Dec 1 for the unassigned Task
+  await expect(page.locator("[data-span]")).toHaveCount(2); // Nov 24 to 25 touch and merge; Dec 1 is its own block, both on the collapsed Space row
   await page.getByRole("button", { name: "Marketing", exact: true }).click();
   const row = page.getByRole("button", { name: /Launch plan/ });
   await expect(row).toHaveAttribute("aria-expanded", "false");
