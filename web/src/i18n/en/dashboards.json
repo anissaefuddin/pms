@@ -217,6 +217,7 @@
   "overview.tabs.agenda": "Agenda",
   "overview.tabs.tasks": "Tasks",
   "overview.tabs.custom": "Custom dashboard",
+  "overview.timeline.context": "Context: parent not due in this range",
   "overview.status.completed": "Completed",
   "overview.status.cancelled": "Cancelled",
   "overview.tasks.hint": "Tasks from every Space you can see. Combine the filters; figures on the Summary open this list already filtered.",

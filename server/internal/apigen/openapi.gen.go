@@ -1989,36 +1989,24 @@ func (e NotificationKind) Valid() bool {
 	}
 }
 
-// Defines values for OverviewTimelineItemStatusGroup.
+// Defines values for OverviewTimelineNodeStatusGroup.
 const (
-	OverviewTimelineItemStatusGroupActive   OverviewTimelineItemStatusGroup = "active"
-	OverviewTimelineItemStatusGroupDeferred OverviewTimelineItemStatusGroup = "deferred"
+	OverviewTimelineNodeStatusGroupActive    OverviewTimelineNodeStatusGroup = "active"
+	OverviewTimelineNodeStatusGroupCancelled OverviewTimelineNodeStatusGroup = "cancelled"
+	OverviewTimelineNodeStatusGroupCompleted OverviewTimelineNodeStatusGroup = "completed"
+	OverviewTimelineNodeStatusGroupDeferred  OverviewTimelineNodeStatusGroup = "deferred"
 )
 
-// Valid indicates whether the value is a known member of the OverviewTimelineItemStatusGroup enum.
-func (e OverviewTimelineItemStatusGroup) Valid() bool {
+// Valid indicates whether the value is a known member of the OverviewTimelineNodeStatusGroup enum.
+func (e OverviewTimelineNodeStatusGroup) Valid() bool {
 	switch e {
-	case OverviewTimelineItemStatusGroupActive:
+	case OverviewTimelineNodeStatusGroupActive:
 		return true
-	case OverviewTimelineItemStatusGroupDeferred:
+	case OverviewTimelineNodeStatusGroupCancelled:
 		return true
-	default:
-		return false
-	}
-}
-
-// Defines values for OverviewTimelineProjectStatusGroup.
-const (
-	OverviewTimelineProjectStatusGroupActive   OverviewTimelineProjectStatusGroup = "active"
-	OverviewTimelineProjectStatusGroupDeferred OverviewTimelineProjectStatusGroup = "deferred"
-)
-
-// Valid indicates whether the value is a known member of the OverviewTimelineProjectStatusGroup enum.
-func (e OverviewTimelineProjectStatusGroup) Valid() bool {
-	switch e {
-	case OverviewTimelineProjectStatusGroupActive:
+	case OverviewTimelineNodeStatusGroupCompleted:
 		return true
-	case OverviewTimelineProjectStatusGroupDeferred:
+	case OverviewTimelineNodeStatusGroupDeferred:
 		return true
 	default:
 		return false
@@ -5494,28 +5482,25 @@ type NotificationPage struct {
 	UnreadCount int            `json:"unread_count"`
 }
 
-// OverviewTimelineItem defines model for OverviewTimelineItem.
-type OverviewTimelineItem struct {
-	DueDate     openapi_types.Date              `json:"due_date"`
-	Id          openapi_types.UUID              `json:"id"`
-	StatusGroup OverviewTimelineItemStatusGroup `json:"status_group"`
+// OverviewTimelineNode defines model for OverviewTimelineNode.
+type OverviewTimelineNode struct {
+	Children []OverviewTimelineNode `json:"children"`
+
+	// DueDate Kosong bila item tidak punya tanggal jatuh tempo
+	DueDate *openapi_types.Date `json:"due_date,omitempty"`
+	Id      openapi_types.UUID  `json:"id"`
+
+	// InRange true bila item jatuh tempo di rentang; false untuk induk yang hanya ditampilkan sebagai konteks
+	InRange     bool                            `json:"in_range"`
+	StatusGroup OverviewTimelineNodeStatusGroup `json:"status_group"`
 	Title       string                          `json:"title"`
+
+	// Type Tipe item: project, folder, task, atau tipe kustom
+	Type string `json:"type"`
 }
 
-// OverviewTimelineItemStatusGroup defines model for OverviewTimelineItem.StatusGroup.
-type OverviewTimelineItemStatusGroup string
-
-// OverviewTimelineProject defines model for OverviewTimelineProject.
-type OverviewTimelineProject struct {
-	DueDate     openapi_types.Date                 `json:"due_date"`
-	Id          openapi_types.UUID                 `json:"id"`
-	StatusGroup OverviewTimelineProjectStatusGroup `json:"status_group"`
-	Tasks       []OverviewTimelineItem             `json:"tasks"`
-	Title       string                             `json:"title"`
-}
-
-// OverviewTimelineProjectStatusGroup defines model for OverviewTimelineProject.StatusGroup.
-type OverviewTimelineProjectStatusGroup string
+// OverviewTimelineNodeStatusGroup defines model for OverviewTimelineNode.StatusGroup.
+type OverviewTimelineNodeStatusGroup string
 
 // Page defines model for Page.
 type Page struct {
@@ -31175,11 +31160,8 @@ type GetOverviewTimeline200JSONResponse struct {
 		Id              openapi_types.UUID                                          `json:"id"`
 		Name            string                                                      `json:"name"`
 
-		// Projects Project dengan due_date di rentang; due_date-nya dipakai sebagai milestone
-		Projects []OverviewTimelineProject `json:"projects"`
-
-		// UnassignedTasks Task di rentang tanpa Project di rentang pada Space yang sama
-		UnassignedTasks []OverviewTimelineItem `json:"unassigned_tasks"`
+		// Nodes Item tingkat atas Space (tanpa induk di Space ini), dalam hierarki nyata: Folder atau Project, Task, Subtask
+		Nodes []OverviewTimelineNode `json:"nodes"`
 	} `json:"spaces"`
 	Timezone string `json:"timezone"`
 

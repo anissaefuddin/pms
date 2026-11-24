@@ -32,6 +32,8 @@ func TestWorkspaceOverviewTimelineGroupsDueWork(t *testing.T) {
 	ovChildOf(f, inside, project, open)
 	ovItem(f, admin.id, "task", "T-unassigned", "active", due(7), "", open)
 	ovItem(f, admin.id, "task", "T-far", "active", due(200), "", open)
+	folderID := ovItem(f, admin.id, "folder", "F-context", "active", "", "", open)
+	ovChildOf(f, ovItem(f, admin.id, "task", "T-in-folder", "active", due(9), ""), folderID, open)
 	ovItem(f, admin.id, "task", "T-done", "completed", due(8), "", open)
 
 	res := ovGetPath(f, member, "/overview/timeline")
@@ -41,12 +43,29 @@ func TestWorkspaceOverviewTimelineGroupsDueWork(t *testing.T) {
 		t.Fatalf("one Space with due work, got %d: %v", len(spaces), res.body)
 	}
 	s := spaces[0].(map[string]any)
-	projects := s["projects"].([]any)
-	if len(projects) != 1 || len(projects[0].(map[string]any)["tasks"].([]any)) != 1 {
-		t.Fatalf("project P holds exactly its child task in range: %v", projects)
+	// The real hierarchy: P (in range) holds T-inside (in range); T-unassigned sits at the top of the Space.
+	// A Folder without a due date is kept as context for a Task due in range, not dropped.
+	nodes := s["nodes"].([]any)
+	if len(nodes) != 3 {
+		t.Fatalf("top level holds P, T-unassigned and the context Folder: %v", nodes)
 	}
-	if u := s["unassigned_tasks"].([]any); len(u) != 1 || u[0].(map[string]any)["title"] != "T-unassigned" {
-		t.Fatalf("only the unparented task is unassigned: %v", u)
+	byTitle := map[string]map[string]any{}
+	for _, n := range nodes {
+		byTitle[n.(map[string]any)["title"].(string)] = n.(map[string]any)
+	}
+	p := byTitle["P"]
+	if p == nil || p["in_range"] != true || len(p["children"].([]any)) != 1 || p["children"].([]any)[0].(map[string]any)["title"] != "T-inside" {
+		t.Fatalf("project P holds exactly its child task in range: %v", p)
+	}
+	if u := byTitle["T-unassigned"]; u == nil || u["in_range"] != true {
+		t.Fatalf("the unparented task sits at the top of the Space: %v", byTitle)
+	}
+	ctxFolder := byTitle["F-context"]
+	if ctxFolder == nil || ctxFolder["in_range"] != false || ctxFolder["due_date"] != nil {
+		t.Fatalf("an undated folder is context, not in range: %v", ctxFolder)
+	}
+	if kids := ctxFolder["children"].([]any); len(kids) != 1 || kids[0].(map[string]any)["title"] != "T-in-folder" {
+		t.Fatalf("the folder keeps its task in range: %v", ctxFolder)
 	}
 
 	// Out-of-range input is refused, not clamped.

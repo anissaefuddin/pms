@@ -1,5 +1,5 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query";
-import type { paths } from "@/api/schema";
+import type { components, paths } from "@/api/schema";
 import { api } from "@/lib/api";
 
 // Response types come from api/openapi.yaml. Nothing here recomputes access: the server decides which Spaces,
@@ -10,8 +10,7 @@ export type OverviewSort = "name" | "overdue" | "progress" | "last_activity";
 
 export type TimelineResponse = paths["/overview/timeline"]["get"]["responses"][200]["content"]["application/json"];
 export type TimelineSpace = TimelineResponse["spaces"][number];
-export type TimelineProject = TimelineSpace["projects"][number];
-export type TimelineTask = TimelineSpace["unassigned_tasks"][number];
+export type TimelineNode = components["schemas"]["OverviewTimelineNode"];
 
 export type AgendaResponse = paths["/overview/agenda"]["get"]["responses"][200]["content"]["application/json"];
 export type AgendaItem = AgendaResponse["items"][number];

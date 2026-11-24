@@ -217,6 +217,7 @@
   "overview.tabs.agenda": "Agenda",
   "overview.tabs.tasks": "Tugas",
   "overview.tabs.custom": "Dasbor kustom",
+  "overview.timeline.context": "Konteks: induk tidak jatuh tempo di rentang ini",
   "overview.status.completed": "Selesai",
   "overview.status.cancelled": "Dibatalkan",
   "overview.tasks.hint": "Tugas dari setiap Space yang bisa Anda lihat. Kombinasikan filter; angka di Ringkasan membuka daftar ini sudah tersaring.",

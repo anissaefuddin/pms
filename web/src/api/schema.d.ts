@@ -4529,17 +4529,22 @@ export interface paths {
 export type webhooks = Record<string, never>;
 export interface components {
     schemas: {
-        OverviewTimelineItem: {
+        OverviewTimelineNode: {
             /** Format: uuid */
             id: string;
             title: string;
-            /** Format: date */
-            due_date: string;
+            /** @description Tipe item: project, folder, task, atau tipe kustom */
+            type: string;
+            /**
+             * Format: date
+             * @description Kosong bila item tidak punya tanggal jatuh tempo
+             */
+            due_date?: string | null;
             /** @enum {string} */
-            status_group: "active" | "deferred";
-        };
-        OverviewTimelineProject: components["schemas"]["OverviewTimelineItem"] & {
-            tasks: components["schemas"]["OverviewTimelineItem"][];
+            status_group: "active" | "deferred" | "completed" | "cancelled";
+            /** @description true bila item jatuh tempo di rentang; false untuk induk yang hanya ditampilkan sebagai konteks */
+            in_range: boolean;
+            children: components["schemas"]["OverviewTimelineNode"][];
         };
         ConnectorInstall: {
             /** Format: uuid */
@@ -10012,10 +10017,8 @@ export interface operations {
                             icon_key?: string;
                             /** @enum {string} */
                             effective_access: "space_admin" | "full" | "editor" | "limited" | "read";
-                            /** @description Project dengan due_date di rentang; due_date-nya dipakai sebagai milestone */
-                            projects: components["schemas"]["OverviewTimelineProject"][];
-                            /** @description Task di rentang tanpa Project di rentang pada Space yang sama */
-                            unassigned_tasks: components["schemas"]["OverviewTimelineItem"][];
+                            /** @description Item tingkat atas Space (tanpa induk di Space ini), dalam hierarki nyata: Folder atau Project, Task, Subtask */
+                            nodes: components["schemas"]["OverviewTimelineNode"][];
                         }[];
                     };
                 };

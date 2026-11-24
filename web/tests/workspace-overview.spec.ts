@@ -23,11 +23,13 @@ const timeline = {
   timezone: "Asia/Jakarta", from: "2026-11-22", to: "2027-01-20", truncated: false,
   spaces: [{
     id: marketing.id, name: "Marketing", effective_access: "full",
-    projects: [{ id: project, title: "Launch plan", due_date: "2026-11-25", status_group: "active", tasks: [{ id: task, title: "Write brief", due_date: "2026-11-24", status_group: "active" }] }],
-    unassigned_tasks: [{ id: loose, title: "Book venue", due_date: "2026-12-01", status_group: "active" }],
+    nodes: [
+      { id: project, title: "Launch plan", type: "project", due_date: "2026-11-25", status_group: "active", in_range: true,
+        children: [{ id: task, title: "Write brief", type: "task", due_date: "2026-11-24", status_group: "active", in_range: true, children: [] }] },
+      { id: loose, title: "Book venue", type: "task", due_date: "2026-12-01", status_group: "active", in_range: true, children: [] },
+    ],
   }],
 };
-
 const me = "11111111-1111-4111-8111-111111111111";
 const tasksBody = {
   timezone: "Asia/Jakarta", today: "2026-11-22", truncated: false,
@@ -92,8 +94,7 @@ test("timeline groups by Space, expands a Project, and moves by one period", asy
   await row.click();
   await expect(row).toHaveAttribute("aria-expanded", "true");
   await expect(page.getByText("Write brief")).toBeVisible();
-  await expect(page.getByText("Book venue")).toHaveCount(0);
-  await page.getByRole("button", { name: /Tasks without a project/ }).click();
+  // Items sit under their real parents: "Book venue" is a top-level Task of the Space, not a separate group.
   await expect(page.getByText("Book venue")).toBeVisible();
   await page.getByRole("button", { name: "Next period" }).click();
   await expect.poll(() => calls.some((c) => c.query.get("from") === "2027-01-21")).toBe(true);

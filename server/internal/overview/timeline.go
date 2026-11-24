@@ -3,6 +3,7 @@ package overview
 import (
 	"context"
 	"sort"
+	"strings"
 	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
@@ -26,29 +27,25 @@ type TimelineOptions struct {
 	IncludeArchived bool
 }
 
-// TimelineItem is a Task with a due date in the range.
-type TimelineItem struct {
-	ID      string `json:"id"`
-	Title   string `json:"title"`
-	DueDate string `json:"due_date"`
-	Status  string `json:"status_group"`
+// TimelineNode is one item in a Space's real hierarchy: Space > Folder or Project > Task > Subtask. Items due in the
+// range are marked InRange; their ancestors are included without a due date so the structure stays intact.
+type TimelineNode struct {
+	ID       string         `json:"id"`
+	Title    string         `json:"title"`
+	Type     string         `json:"type"`
+	DueDate  *string        `json:"due_date"`
+	Status   string         `json:"status_group"`
+	InRange  bool           `json:"in_range"`
+	Children []TimelineNode `json:"children"`
 }
 
-// TimelineProject is a Project with a due date in the range. Its Tasks are the direct children in the same Space that
-// are also due in the range. A Project's due date is shown as its milestone.
-type TimelineProject struct {
-	TimelineItem
-	Tasks []TimelineItem `json:"tasks"`
-}
-
-// TimelineSpace groups one Space's rows. UnassignedTasks are due in the range but have no Project in the range.
+// TimelineSpace groups one Space's tree. Nodes are the Space's top-level items (those without a parent in the Space).
 type TimelineSpace struct {
-	ID              string            `json:"id"`
-	Name            string            `json:"name"`
-	Icon            string            `json:"icon_key,omitempty"`
-	Access          string            `json:"effective_access"`
-	Projects        []TimelineProject `json:"projects"`
-	UnassignedTasks []TimelineItem    `json:"unassigned_tasks"`
+	ID     string         `json:"id"`
+	Name   string         `json:"name"`
+	Icon   string         `json:"icon_key,omitempty"`
+	Access string         `json:"effective_access"`
+	Nodes  []TimelineNode `json:"nodes"`
 }
 
 // TimelineResult is the response body. From and To are inclusive dates.
@@ -65,7 +62,12 @@ type rangeRow struct {
 	spaceID, itemID, parentID, typ, title, due, status string
 }
 
-// BuildTimeline groups the actor's dated Projects and Tasks by Space.
+// chainRow is one item location in a Space that is either due in the range or an ancestor of one.
+type chainRow struct {
+	spaceID, itemID, parentID, typ, title, due, status string
+}
+
+// BuildTimeline groups the actor's dated Projects and Tasks by Space, following each item's real parents.
 func BuildTimeline(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, opts TimelineOptions) (TimelineResult, error) {
 	tz := userTimezone(ctx, pool, actor.ID)
 	byID, ids, err := scope(ctx, pool, actor, opts.SpaceID, opts.IncludeArchived)
@@ -85,40 +87,124 @@ func BuildTimeline(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 		return TimelineResult{}, err
 	}
 	res.Truncated = truncated
+	inRange := map[string]bool{}
+	var due []string
+	for _, r := range rows {
+		inRange[r.spaceID+"|"+r.itemID] = true
+		due = append(due, r.itemID)
+	}
+	chain, err := readChain(ctx, pool, ids, due)
+	if err != nil {
+		return TimelineResult{}, err
+	}
 
-	// Pass 1: Projects, so that Tasks can attach to them in pass 2.
-	type key struct{ space, item string }
-	spaceIdx := map[string]int{}
-	projIdx := map[key][2]int{} // space+item -> [space index, project index]
-	for _, r := range rows {
-		if r.typ != "project" {
-			continue
-		}
-		if _, seen := projIdx[key{r.spaceID, r.itemID}]; seen {
-			continue
-		}
-		si := spaceFor(&res, spaceIdx, r.spaceID, byID)
-		res.Spaces[si].Projects = append(res.Spaces[si].Projects, TimelineProject{TimelineItem: item(r), Tasks: []TimelineItem{}})
-		projIdx[key{r.spaceID, r.itemID}] = [2]int{si, len(res.Spaces[si].Projects) - 1}
+	// One node per (Space, item). A node's parent is its parent_item_id inside the same Space; a missing parent
+	// means the node is top level in that Space.
+	type built struct {
+		node   TimelineNode
+		parent string
+		kids   []string
 	}
-	// Pass 2: Tasks go under their Project in the same Space, otherwise into the Space's unassigned list.
-	for _, r := range rows {
-		if r.typ != "task" {
-			continue
+	nodes := map[string]*built{}
+	for _, c := range chain {
+		key := c.spaceID + "|" + c.itemID
+		b := &built{node: TimelineNode{ID: c.itemID, Title: c.title, Type: c.typ, Status: c.status, InRange: inRange[key], Children: []TimelineNode{}}}
+		if c.due != "" {
+			d := c.due
+			b.node.DueDate = &d
 		}
-		si := spaceFor(&res, spaceIdx, r.spaceID, byID)
-		if p, ok := projIdx[key{r.spaceID, r.parentID}]; ok && r.parentID != "" {
-			res.Spaces[p[0]].Projects[p[1]].Tasks = append(res.Spaces[p[0]].Projects[p[1]].Tasks, item(r))
-			continue
+		if c.parentID != "" {
+			b.parent = c.spaceID + "|" + c.parentID
 		}
-		res.Spaces[si].UnassignedTasks = append(res.Spaces[si].UnassignedTasks, item(r))
+		nodes[key] = b
 	}
-	// Every visible Space is listed, even when nothing is due in range, so the timeline matches the Space list.
+	roots := map[string][]string{} // space -> top-level keys
+	for key, b := range nodes {
+		if _, ok := nodes[b.parent]; ok && b.parent != "" {
+			nodes[b.parent].kids = append(nodes[b.parent].kids, key)
+			continue
+		}
+		space := key[:strings.IndexByte(key, '|')]
+		roots[space] = append(roots[space], key)
+	}
+
+	// Build the nested values from the leaves up, guarding against a cycle in bad data.
+	var build func(key string, seen map[string]bool) TimelineNode
+	build = func(key string, seen map[string]bool) TimelineNode {
+		b := nodes[key]
+		n := b.node
+		seen[key] = true
+		kids := append([]string(nil), b.kids...)
+		sort.SliceStable(kids, func(i, j int) bool { return lessNode(nodes[kids[i]].node, nodes[kids[j]].node) })
+		for _, k := range kids {
+			if !seen[k] {
+				n.Children = append(n.Children, build(k, seen))
+			}
+		}
+		return n
+	}
 	for _, id := range ids {
-		spaceFor(&res, spaceIdx, id, byID)
+		a := byID[id]
+		space := TimelineSpace{ID: id, Name: a.Name, Icon: a.IconKey, Access: accessLabel(a), Nodes: []TimelineNode{}}
+		top := roots[id]
+		sort.SliceStable(top, func(i, j int) bool { return lessNode(nodes[top[i]].node, nodes[top[j]].node) })
+		for _, key := range top {
+			space.Nodes = append(space.Nodes, build(key, map[string]bool{}))
+		}
+		res.Spaces = append(res.Spaces, space)
 	}
 	sort.SliceStable(res.Spaces, func(i, j int) bool { return res.Spaces[i].Name < res.Spaces[j].Name })
 	return res, nil
+}
+
+// lessNode orders siblings by due date (undated last), then title, then id.
+func lessNode(a, b TimelineNode) bool {
+	switch {
+	case a.DueDate == nil && b.DueDate != nil:
+		return false
+	case a.DueDate != nil && b.DueDate == nil:
+		return true
+	case a.DueDate != nil && b.DueDate != nil && *a.DueDate != *b.DueDate:
+		return *a.DueDate < *b.DueDate
+	case a.Title != b.Title:
+		return a.Title < b.Title
+	}
+	return a.ID < b.ID
+}
+
+// readChain loads the due items and every ancestor they have inside the same visible Spaces.
+func readChain(ctx context.Context, pool *pgxpool.Pool, ids, due []string) ([]chainRow, error) {
+	if len(due) == 0 {
+		return nil, nil
+	}
+	rs, err := pool.Query(ctx, `
+WITH RECURSIVE chain AS (
+  SELECT l.space_id, l.item_id, l.parent_item_id
+  FROM item_locations l
+  WHERE l.deleted_root_id IS NULL AND l.space_id = ANY($1::uuid[]) AND l.item_id = ANY($2::uuid[])
+  UNION
+  SELECT p.space_id, p.item_id, p.parent_item_id
+  FROM chain c
+  JOIN item_locations p ON p.space_id = c.space_id AND p.item_id = c.parent_item_id AND p.deleted_root_id IS NULL
+)
+SELECT c.space_id::text, c.item_id::text, COALESCE(c.parent_item_id::text, ''), i.type::text, i.title,
+       COALESCE(i.due_date::text, ''), COALESCE(s.grp::text, '')
+FROM chain c
+JOIN items i ON i.id = c.item_id AND i.deleted_at IS NULL
+LEFT JOIN statuses s ON s.id = i.status_id`, ids, due)
+	if err != nil {
+		return nil, err
+	}
+	defer rs.Close()
+	var out []chainRow
+	for rs.Next() {
+		var r chainRow
+		if err := rs.Scan(&r.spaceID, &r.itemID, &r.parentID, &r.typ, &r.title, &r.due, &r.status); err != nil {
+			return nil, err
+		}
+		out = append(out, r)
+	}
+	return out, rs.Err()
 }
 
 // AgendaOptions are validated by the handler. Kind is "" (any), "project" or "task".
@@ -249,22 +335,6 @@ func addDays(date string, n int) string {
 		return date
 	}
 	return t.AddDate(0, 0, n).Format("2006-01-02")
-}
-
-func item(r rangeRow) TimelineItem {
-	return TimelineItem{ID: r.itemID, Title: r.title, DueDate: r.due, Status: r.status}
-}
-
-// spaceFor returns the index of a Space in res, adding it on first use.
-func spaceFor(res *TimelineResult, idx map[string]int, id string, byID map[string]policy.SpaceAccess) int {
-	if i, ok := idx[id]; ok {
-		return i
-	}
-	a := byID[id]
-	res.Spaces = append(res.Spaces, TimelineSpace{ID: id, Name: a.Name, Icon: a.IconKey, Access: accessLabel(a),
-		Projects: []TimelineProject{}, UnassignedTasks: []TimelineItem{}})
-	idx[id] = len(res.Spaces) - 1
-	return idx[id]
 }
 
 // Limits exposed to the handler.

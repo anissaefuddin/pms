@@ -1923,20 +1923,16 @@ paths:
                     type: array
                     items:
                       type: object
-                      required: [id, name, effective_access, projects, unassigned_tasks]
+                      required: [id, name, effective_access, nodes]
                       properties:
                         id: { type: string, format: uuid }
                         name: { type: string }
                         icon_key: { type: string }
                         effective_access: { type: string, enum: [space_admin, full, editor, limited, read] }
-                        projects:
+                        nodes:
                           type: array
-                          description: 'Project dengan due_date di rentang; due_date-nya dipakai sebagai milestone'
-                          items: { $ref: '#/components/schemas/OverviewTimelineProject' }
-                        unassigned_tasks:
-                          type: array
-                          description: 'Task di rentang tanpa Project di rentang pada Space yang sama'
-                          items: { $ref: '#/components/schemas/OverviewTimelineItem' }
+                          description: 'Item tingkat atas Space (tanpa induk di Space ini), dalam hierarki nyata: Folder atau Project, Task, Subtask'
+                          items: { $ref: '#/components/schemas/OverviewTimelineNode' }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
   /overview/agenda:
@@ -6459,23 +6455,19 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
-    OverviewTimelineItem:
+    OverviewTimelineNode:
       type: object
-      required: [id, title, due_date, status_group]
+      required: [id, title, type, status_group, in_range, children]
       properties:
         id: { type: string, format: uuid }
         title: { type: string }
-        due_date: { type: string, format: date }
-        status_group: { type: string, enum: [active, deferred] }
-    OverviewTimelineProject:
-      allOf:
-        - $ref: '#/components/schemas/OverviewTimelineItem'
-        - type: object
-          required: [tasks]
-          properties:
-            tasks:
-              type: array
-              items: { $ref: '#/components/schemas/OverviewTimelineItem' }
+        type: { type: string, description: 'Tipe item: project, folder, task, atau tipe kustom' }
+        due_date: { type: string, format: date, nullable: true, description: 'Kosong bila item tidak punya tanggal jatuh tempo' }
+        status_group: { type: string, enum: [active, deferred, completed, cancelled] }
+        in_range: { type: boolean, description: 'true bila item jatuh tempo di rentang; false untuk induk yang hanya ditampilkan sebagai konteks' }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/OverviewTimelineNode' }
     ConnectorInstall:
       type: object
       required: [id, kind, name, config, secret_names, enabled, created_at]

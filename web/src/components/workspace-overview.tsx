@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { formatDate, formatDateTime, formatNumber, useProfile } from "@/lib/profile";
-import { AGENDA_DAYS, attentionSpaces, useOverviewAgenda, useOverviewPages, useOverviewSummary, useOverviewTimeline, TIMELINE_DAYS, type OverviewSort, type OverviewSpace } from "@/lib/overview";
+import { AGENDA_DAYS, attentionSpaces, useOverviewAgenda, useOverviewPages, useOverviewSummary, useOverviewTimeline, TIMELINE_DAYS, type OverviewSort, type OverviewSpace, type TimelineNode } from "@/lib/overview";
 import { Layers, Search } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -24,6 +24,11 @@ const HEALTH_TONE: Record<string, string> = {
   empty: "bg-muted text-muted-foreground",
 };
 const BAR_TONE: Record<string, string> = { attention: "bg-amber-500", on_track: "bg-emerald-500", empty: "bg-muted-foreground/30" };
+
+/** Items due in the range within one Space's tree; context-only ancestors are not counted. */
+function countInRange(nodes: TimelineNode[]): number {
+  return nodes.reduce((sum, node) => sum + (node.in_range ? 1 : 0) + countInRange(node.children), 0);
+}
 
 /** Read-only cross-Space summary. Everything here is what the server returns for the signed-in user. */
 export function WorkspaceOverview() {
@@ -65,7 +70,7 @@ function Summary({ onOpenTasks }: { onOpenTasks: (seed: TasksSeed) => void }) {
   const upcoming = (milestones.data?.items ?? []).slice(0, 5);
   const loadMap = (timeline.data?.spaces ?? []).map((space) => ({
     id: space.id, name: space.name,
-    count: space.projects.length + space.unassigned_tasks.length + space.projects.reduce((sum, p) => sum + p.tasks.length, 0),
+    count: countInRange(space.nodes),
   }));
   const peak = Math.max(1, ...loadMap.map((row) => row.count));
   return <div className="space-y-6">

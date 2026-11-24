@@ -4,7 +4,7 @@ import { holidayMap, loadWorkSchedule, workScheduleKey } from "@/lib/work-schedu
 import { Link } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
 import { ChevronDown, ChevronRight } from "lucide-react";
-import { addDays, TIMELINE_DAYS, useOverviewTimeline, type TimelineProject, type TimelineResponse, type TimelineSpace, type TimelineTask } from "@/lib/overview";
+import { addDays, TIMELINE_DAYS, useOverviewTimeline, type TimelineNode, type TimelineResponse, type TimelineSpace } from "@/lib/overview";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { formatDate, useProfile } from "@/lib/profile";
 import type { CurrentUser } from "@/lib/api";
@@ -14,6 +14,7 @@ import { PeriodNav } from "@/components/overview-period-nav";
 
 const DAY_PX = 32;
 const LABEL_PX = 260;
+const INDENT_PX = 16;
 const DAY_MS = 86_400_000;
 const utc = (date: string) => Date.parse(`${date}T00:00:00Z`);
 const todayKey = () => {
@@ -22,27 +23,41 @@ const todayKey = () => {
 };
 const isWeekend = (date: string) => [0, 6].includes(new Date(utc(date)).getUTCDay());
 const dayNumber = (date: string) => new Date(utc(date)).getUTCDate();
+const isContainer = (node: TimelineNode) => node.type === "folder" || node.type === "project" || node.children.length > 0;
 
 const DAY_OPTIONS = [30, 60, 90] as const;
 
-/** Column offset of the earliest Project or Task in the range, or null when nothing is scheduled. */
+/** Every due date below a node (or Space), in any order. Used for the summary dots on a collapsed row. */
+function dueDatesBelow(nodes: TimelineNode[]): string[] {
+  const out: string[] = [];
+  const visit = (list: TimelineNode[]) => list.forEach((node) => {
+    if (node.due_date) out.push(node.due_date);
+    visit(node.children);
+  });
+  visit(nodes);
+  return out;
+}
+
+/** How many items in the Space are due in the range. Context-only ancestors are not counted. */
+function countInRange(nodes: TimelineNode[]): number {
+  return nodes.reduce((sum, node) => sum + (node.in_range ? 1 : 0) + countInRange(node.children), 0);
+}
+
+/** Column offset of the earliest item due in the range, or null when nothing is scheduled. */
 function firstScheduledIndex(data: TimelineResponse): number | null {
   let best: number | null = null;
-  const consider = (date: string) => {
-    const index = Math.round((utc(date) - utc(data.from)) / DAY_MS);
-    if (index >= 0 && (best === null || index < best)) best = index;
-  };
-  for (const space of data.spaces) {
-    space.unassigned_tasks.forEach((task) => consider(task.due_date));
-    for (const project of space.projects) {
-      consider(project.due_date);
-      (project.tasks ?? []).forEach((task) => consider(task.due_date));
+  const visit = (nodes: TimelineNode[]) => nodes.forEach((node) => {
+    if (node.in_range && node.due_date) {
+      const index = Math.round((utc(node.due_date) - utc(data.from)) / DAY_MS);
+      if (index >= 0 && (best === null || index < best)) best = index;
     }
-  }
+    visit(node.children);
+  });
+  data.spaces.forEach((space) => visit(space.nodes));
   return best;
 }
 
-/** Read-only Gantt-style grid: one column per day, Projects and Tasks placed on their due date. Nothing can be dragged here. */
+/** Read-only Gantt-style grid: one column per day. Rows follow the real hierarchy, Space > Folder or Project > Task > Subtask. */
 export function WorkspaceTimeline() {
   const { t } = useTranslation();
   const profile = useProfile();
@@ -68,8 +83,7 @@ export function WorkspaceTimeline() {
   const dates = Array.from({ length: days }, (_, i) => addDays(data.from, i));
   const toggle = (id: string) => setOpenIds((ids) => ids.includes(id) ? ids.filter((x) => x !== id) : [...ids, id]);
   const allOpen = data.spaces.length > 0 && data.spaces.every((space) => openIds.includes(space.id));
-  const scheduled = data.spaces.reduce((sum, space) => sum + space.projects.length + space.unassigned_tasks.length
-    + space.projects.reduce((inner, p) => inner + (p.tasks ?? []).length, 0), 0);
+  const scheduled = data.spaces.reduce((sum, space) => sum + countInRange(space.nodes), 0);
   const ctx: Ctx = { from: data.from, dates, days, profile, holidays, isOpen: (id) => openIds.includes(id), toggle };
   return <div className="space-y-4">
     <div className="flex flex-wrap items-end justify-between gap-3">
@@ -138,6 +152,12 @@ function Row({ ctx, label, tone, children }: { ctx: Ctx; label: ReactNode; tone?
   </div>;
 }
 
+function Marker({ ctx, date, className, style, title }: { ctx: Ctx; date: string; className: string; style: (left: number) => CSSProperties; title: string }) {
+  const index = Math.round((utc(date) - utc(ctx.from)) / DAY_MS);
+  if (index < 0 || index >= ctx.days) return null;
+  return <div title={title} className={cn("absolute", className)} style={style(index * DAY_PX)} />;
+}
+
 /** Summary dots on a collapsed row: one per distinct due date underneath, so the row shows its work without expanding. */
 function DueDots({ ctx, dates }: { ctx: Ctx; dates: string[] }) {
   return <>{[...new Set(dates)].map((date) => {
@@ -148,20 +168,12 @@ function DueDots({ ctx, dates }: { ctx: Ctx; dates: string[] }) {
   })}</>;
 }
 
-function Marker({ ctx, date, className, style, title }: { ctx: Ctx; date: string; className: string; style: (left: number) => CSSProperties; title: string }) {
-  const index = Math.round((utc(date) - utc(ctx.from)) / DAY_MS);
-  if (index < 0 || index >= ctx.days) return null;
-  return <div title={title} className={cn("absolute", className)} style={style(index * DAY_PX)} />;
-}
-
-/** A Space is collapsed by default; its Projects and its unassigned Tasks sit under one header. */
+/** A Space is collapsed by default; its top-level items sit under one header, in their real hierarchy. */
 function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
   const { t } = useTranslation();
-  const [unassignedOpen, setUnassignedOpen] = useState(false);
   const open = ctx.isOpen(space.id);
   const Chevron = open ? ChevronDown : ChevronRight;
-  const UnassignedChevron = unassignedOpen ? ChevronDown : ChevronRight;
-  const count = space.projects.length + space.unassigned_tasks.length + space.projects.reduce((sum, p) => sum + (p.tasks ?? []).length, 0);
+  const count = countInRange(space.nodes);
   return <section aria-label={space.name}>
     <Row ctx={ctx} tone="bg-muted/50" label={<>
       <button type="button" aria-expanded={open} onClick={() => ctx.toggle(space.id)} title={space.name}
@@ -171,52 +183,46 @@ function SpaceRows({ space, ctx }: { space: TimelineSpace; ctx: Ctx }) {
       </button>
       <span className="shrink-0 rounded-full bg-background px-2 py-0.5 text-xs tabular-nums text-muted-foreground">{count}</span>
       <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="shrink-0 text-xs underline">{t("dashboards.overview.timeline.openSpace")}</Link></>}>
-      {!open && <DueDots ctx={ctx} dates={[...space.unassigned_tasks, ...space.projects.flatMap((p) => [p, ...(p.tasks ?? [])])].map((x) => x.due_date)} />}
+      {!open && <DueDots ctx={ctx} dates={dueDatesBelow(space.nodes)} />}
     </Row>
     {open && <>
-      {space.projects.length === 0 && space.unassigned_tasks.length === 0 && <Row ctx={ctx} label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.nothingDue")}</span>} />}
-      {space.projects.map((project) => <ProjectRows key={project.id} project={project} ctx={ctx} />)}
-      {space.unassigned_tasks.length > 0 && <>
-        <Row ctx={ctx} label={<button type="button" aria-expanded={unassignedOpen} onClick={() => setUnassignedOpen(!unassignedOpen)}
-          className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left text-xs font-medium text-muted-foreground outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-          <UnassignedChevron className="size-4 shrink-0" aria-hidden />
-          <span className="min-w-0 truncate">{t("dashboards.overview.timeline.unassigned")}</span>
-          <span className="ml-auto shrink-0 tabular-nums">{space.unassigned_tasks.length}</span></button>}>
-          {!unassignedOpen && <DueDots ctx={ctx} dates={space.unassigned_tasks.map((task) => task.due_date)} />}
-        </Row>
-        {unassignedOpen && space.unassigned_tasks.map((task) => <TaskRow key={task.id} task={task} ctx={ctx} indent />)}
-      </>}
+      {space.nodes.length === 0 && <Row ctx={ctx} label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.nothingDue")}</span>} />}
+      {space.nodes.map((node) => <NodeRows key={node.id} node={node} depth={0} ctx={ctx} />)}
     </>}
   </section>;
 }
 
-function ProjectRows({ project, ctx }: { project: TimelineProject; ctx: Ctx }) {
+/** One item and, when expanded, everything below it. Context-only ancestors have no bar of their own. */
+function NodeRows({ node, depth, ctx }: { node: TimelineNode; depth: number; ctx: Ctx }) {
   const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
+  const hasChildren = node.children.length > 0;
+  const open = ctx.isOpen(node.id);
   const Chevron = open ? ChevronDown : ChevronRight;
-  return <>
-    <Row ctx={ctx} label={<button type="button" aria-expanded={open} onClick={() => setOpen(!open)} title={project.title}
-      className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50">
-      <Chevron className="size-4 shrink-0" aria-hidden />
-      <span className="min-w-0 truncate font-medium">{project.title}</span>
-      <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatDate(project.due_date, ctx.profile)}</span>
-      <span className="sr-only">{t(`dashboards.overview.status.${project.status_group}`)}</span></button>}>
-      <Marker ctx={ctx} date={project.due_date} className={cn("top-1/2 h-4 -translate-y-1/2 rounded-md", project.status_group === "deferred" ? "bg-muted-foreground/50" : "bg-sky-500")}
-        title={t("dashboards.overview.timeline.milestone", { date: formatDate(project.due_date, ctx.profile) })}
-        style={(left) => ({ left: left + 4, width: DAY_PX - 8 })} />
-      {!open && <DueDots ctx={ctx} dates={(project.tasks ?? []).map((task) => task.due_date)} />}
-    </Row>
-    {open && ((project.tasks ?? []).length === 0
-      ? <Row ctx={ctx} label={<span className="pl-6 text-xs text-muted-foreground">{t("dashboards.overview.timeline.noTasks")}</span>} />
-      : (project.tasks ?? []).map((task) => <TaskRow key={task.id} task={task} ctx={ctx} indent />))}
+  const container = isContainer(node);
+  const label = <>
+    {hasChildren
+      ? <button type="button" aria-expanded={open} onClick={() => ctx.toggle(node.id)} title={node.title}
+        className="flex min-w-0 flex-1 items-center gap-1.5 rounded-sm text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
+        style={{ paddingLeft: depth * INDENT_PX }}>
+        <Chevron className="size-4 shrink-0" aria-hidden />
+        <span className={cn("min-w-0 truncate", container ? "font-medium" : "text-sm", !node.in_range && "text-muted-foreground")}>{node.title}</span>
+      </button>
+      : <span title={node.title} className={cn("flex min-w-0 flex-1 items-center gap-1.5", container ? "font-medium" : "text-sm", !node.in_range && "text-muted-foreground")}
+        style={{ paddingLeft: depth * INDENT_PX + (container ? 0 : 20) }}>
+        <span className="min-w-0 truncate">{node.title}</span>
+      </span>}
+    {node.due_date && node.in_range && <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatDate(node.due_date, ctx.profile)}</span>}
+    {!node.in_range && <span className="sr-only">{t("dashboards.overview.timeline.context")}</span>}
   </>;
-}
-
-function TaskRow({ task, ctx, indent }: { task: TimelineTask; ctx: Ctx; indent?: boolean }) {
-  return <Row ctx={ctx} label={<>
-    <span title={task.title} className={cn("min-w-0 truncate text-sm", indent && "pl-6")}>{task.title}</span>
-    <span className="ml-auto shrink-0 text-xs text-muted-foreground">{formatDate(task.due_date, ctx.profile)}</span></>}>
-    <Marker ctx={ctx} date={task.due_date} className="top-1/2 h-3 -translate-y-1/2 rounded-sm bg-primary"
-      title={task.title} style={(left) => ({ left: left + 4, width: DAY_PX - 8 })} />
-  </Row>;
+  return <>
+    <Row ctx={ctx} label={label}>
+      {node.in_range && node.due_date && <Marker ctx={ctx} date={node.due_date}
+        className={cn(container ? "top-1/2 h-4 -translate-y-1/2 rounded-md" : "top-1/2 h-3 -translate-y-1/2 rounded-sm",
+          container ? (node.status_group === "deferred" ? "bg-muted-foreground/50" : "bg-sky-500") : "bg-primary")}
+        title={node.title}
+        style={(left) => ({ left: left + 4, width: DAY_PX - 8 })} />}
+      {hasChildren && !open && <DueDots ctx={ctx} dates={dueDatesBelow(node.children)} />}
+    </Row>
+    {hasChildren && open && node.children.map((child) => <NodeRows key={child.id} node={child} depth={depth + 1} ctx={ctx} />)}
+  </>;
 }
