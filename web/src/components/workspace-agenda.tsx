@@ -34,7 +34,6 @@ function uniqueItems(items: AgendaItem[]): AgendaItem[] {
     return true;
   });
 }
-
 /** Due Projects and Tasks as a calendar: one box per day, three items shown and the rest behind +N. Range is 14 days or one month. */
 export function WorkspaceAgenda() {
   const { t } = useTranslation();
@@ -149,4 +148,3 @@ function SlidePanel({ title, subtitle, onClose, children }: { title: string; sub
     </aside>
   </div>;
 }
-

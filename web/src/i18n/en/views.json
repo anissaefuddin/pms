@@ -15,10 +15,21 @@
   "editTitle": "Edit name: {{name}}",
   "collapse": "Collapse {{name}}",
   "add": "Add item",
+  "quickCreateName": "Task name",
+  "quickCreateDetail": "Full details",
+  "createFailed": "The item could not be created. Your name is kept, so you can try again.",
+  "createdHidden": "Task saved, but the active filter hides it.",
+  "openCreated": "Open",
   "move": "Move {{name}}",
   "moveTop": "Move to top",
   "moveAfter": "Move after {{name}}",
   "moveStatus": "Move to status",
+  "boardHideEmpty": "Hide empty columns",
+  "boardCompact": "Compact cards",
+  "focus": {
+    "enter": "Focus",
+    "exit": "Exit focus"
+  },
   "noStatus": "No status",
   "options": "{{name}} options",
   "rename": "Rename view",
@@ -168,7 +179,17 @@
     "zoomOut": "Zoom out",
     "keysLabel": "Keyboard help",
     "fit": "Fit project",
-    "showSelected": "Show selected"
+    "showSelected": "Show selected",
+    "gridPreset": "Grid",
+    "gridPresets": {
+      "minimal": "Minimal",
+      "standard": "Standard",
+      "detail": "Detail"
+    },
+    "rowActions": "Actions for {{name}}",
+    "addAbove": "Add task above",
+    "addBelow": "Add task below",
+    "dayOnlyCreate": "Switch to Day view to create a task on the timeline."
   },
   "unassigned": "Unassigned",
   "reassign": {
@@ -205,7 +226,13 @@
     "prevWeek": "Previous week",
     "nextWeek": "Next week",
     "continuesBefore": "continues from an earlier week",
-    "continuesAfter": "continues into a later week"
+    "continuesAfter": "continues into a later week",
+    "newOn": "New task on {{date}}",
+    "unscheduledCount": "Unscheduled {{count}}",
+    "closeUnscheduled": "Close unscheduled items",
+    "help": "Calendar help",
+    "moreOn": "More items on {{date}}",
+    "closeMore": "Close more items"
   },
   "priority": "Priority",
   "predecessors": "Predecessors",

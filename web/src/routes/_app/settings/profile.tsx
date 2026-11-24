@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import { api, type CurrentUser } from "@/lib/api";
-import { useProfile } from "@/lib/profile";
+import { formatDate, useProfile } from "@/lib/profile";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { UserAvatar } from "@/components/user-avatar";
@@ -74,6 +74,10 @@ function Identity({ profile }: { profile: CurrentUser }) {
 function IdentitySection({ profile }: { profile: CurrentUser }) {
   const { t } = useTranslation();
   return <SettingsSection title={t("settings.sections.personal")} description={t("settings.pages.profile")}>
+    <dl className="rounded-lg border bg-muted/30 px-3 py-2 text-sm">
+      <dt className="text-muted-foreground">{t("settings.profile.memberSince")}</dt>
+      <dd className="font-medium">{formatDate(profile.joined_at, profile)}</dd>
+    </dl>
     <div className="grid gap-4 sm:grid-cols-2">
       {identityFields.map((field) => <label key={field.key} className="space-y-1 text-sm">
         <span>{t(`settings.profile.fields.${field.key}`)}</span>

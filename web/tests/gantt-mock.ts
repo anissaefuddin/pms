@@ -10,7 +10,7 @@ export const kids = ["Design", "Build", "Ship"].map((title, i) => ({ ...base, id
   start_date: `2026-11-0${i * 2 + 2}`, due_date: `2026-11-0${i * 2 + 3}`, progress_percent: 25 * i, child_count: 0, locations: loc(project.id) }));
 export const milestone = { ...base, id: "c0000000-0000-4000-8000-000000000001", seq: 9, type: "task", title: "Go live", is_milestone: true, start_date: "2026-11-13", due_date: "2026-11-13", child_count: 0, locations: loc(project.id) };
 
-export function mockGantt(page: import("@playwright/test").Page, opts: { root?: object[]; children?: object[]; space?: string[]; conflict?: boolean; deps?: any[]; fields?: any[]; config?: object } = {}) {
+export function mockGantt(page: import("@playwright/test").Page, opts: { root?: object[]; children?: object[]; space?: string[]; conflict?: boolean; deps?: any[]; fields?: any[]; config?: object; extra?: Record<string, any> } = {}) {
   let views = [{ id: "44444444-4444-4444-8444-444444444441", type: "table", name: "Table", visibility: "public", position: 0, is_default: true, config: {} },
     { id: ganttId, type: "gantt", name: "Gantt", visibility: "public", position: 1, is_default: false, config: opts.config ?? {} }];
   const deps: any[] = [...(opts.deps ?? [])];
@@ -37,6 +37,7 @@ export function mockGantt(page: import("@playwright/test").Page, opts: { root?: 
       [`GET /items/${id}/children`, { body: { items: [] } }],
       [`PATCH /items/${id}`, (body: any) => { if (opts.conflict) return problem(409, "Version conflict"); const item = { ...store.get(id), ...body, version: store.get(id).version + 1 }; store.set(id, item); return { body: item }; }],
     ]).filter(([key]) => key !== `GET /items/${project.id}/children`)),
+    ...(opts.extra ?? {}),
   } });
 }
 

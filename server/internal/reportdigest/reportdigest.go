@@ -7,10 +7,8 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
-	htmlpkg "html"
 	"log/slog"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/analytics"
@@ -23,7 +21,7 @@ import (
 
 const (
 	interval = 15 * time.Minute // a slot is one hour long, so a few runs per slot make a late or missed run harmless
-	maxRows  = 50
+	maxRows  = 8
 )
 
 type Args struct{}
@@ -147,48 +145,30 @@ func build(ctx context.Context, tx pgx.Tx, pool *pgxpool.Pool, publicURL string,
 		return mail.Args{}, false, fmt.Errorf("run report: %w", err)
 	}
 	link := publicURL + "/reports/" + d.reportID
-	text, html := render(d.name, def.Query, result, link)
-	return mail.Args{To: d.email, Template: "report_digest", Locale: d.locale, URL: link, Subject: "Report: " + d.name, Message: text, HTML: html}, true, nil
+	data := render(d.name, def.Query, result)
+	data.Kind = "report_digest"
+	data.Item = d.name
+	data.Period = time.Now().Format("2 Jan 2006")
+	return mail.Args{To: d.email, Template: "report_digest", Locale: d.locale, URL: link, Data: data}, true, nil
 }
 
-// render writes the report as plain text and as an HTML table; every label from the data is escaped.
-func render(name string, q analytics.Query, result analytics.Result, link string) (string, string) {
+// render limits email to a compact summary; full data remains in the application.
+func render(name string, q analytics.Query, result analytics.Result) mail.TemplateData {
 	number := func(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
-	var text, table strings.Builder
-	fmt.Fprintf(&text, "%s\n\n", name)
-	table.WriteString("<table style=\"border-collapse:collapse\"><thead><tr><th align=\"left\">Group</th>")
-	if q.BreakBy != "" {
-		table.WriteString("<th align=\"left\">Break</th>")
-	}
-	fmt.Fprintf(&table, "<th align=\"right\">%s</th></tr></thead><tbody>", htmlpkg.EscapeString(q.Metric))
+	d := mail.TemplateData{Metric: q.Metric, Total: number(result.Total)}
 	for i, row := range result.Rows {
 		if i == maxRows {
-			more := fmt.Sprintf("… and %d more rows", len(result.Rows)-maxRows)
-			text.WriteString(more + "\n")
-			fmt.Fprintf(&table, "<tr><td colspan=\"3\">%s</td></tr>", more)
 			break
 		}
 		label := row.Group.Label
 		if label == "" {
 			label = "(none)"
 		}
+		breakLabel := ""
 		if row.Break != nil {
-			label += " / " + row.Break.Label
+			breakLabel = row.Break.Label
 		}
-		fmt.Fprintf(&text, "%s: %s\n", label, number(row.Value))
-		fmt.Fprintf(&table, "<tr><td>%s</td>", htmlpkg.EscapeString(row.Group.Label))
-		if q.BreakBy != "" {
-			label := ""
-			if row.Break != nil {
-				label = row.Break.Label
-			}
-			fmt.Fprintf(&table, "<td>%s</td>", htmlpkg.EscapeString(label))
-		}
-		fmt.Fprintf(&table, "<td align=\"right\">%s</td></tr>", number(row.Value))
+		d.Rows = append(d.Rows, mail.ReportRow{Label: label, Break: breakLabel, Value: number(row.Value)})
 	}
-	fmt.Fprintf(&text, "\nTotal: %s\nOpen the report: %s\n", number(result.Total), link)
-	table.WriteString("</tbody></table>")
-	html := fmt.Sprintf("<h2>%s</h2>%s<p>Total: %s</p><p><a href=\"%s\">Open the report</a></p>",
-		htmlpkg.EscapeString(name), table.String(), number(result.Total), htmlpkg.EscapeString(link))
-	return text.String(), html
+	return d
 }

@@ -37,9 +37,12 @@ export async function mockApi(page: Page, handlers: Record<string, Handler>): Pr
     let body: any;
     try { body = request.postDataJSON(); } catch { body = undefined; }
     const req: Req = { query: url.searchParams, headers: request.headers() };
-    calls.push({ method: request.method(), path, body, ...req });
     const handler = handlers[`${request.method()} ${path}`];
-    const reply = handler === undefined ? problem(404, "not mocked") : typeof handler === "function" ? handler(body, req) : handler;
+    const implicitBranding = request.method() === "GET" && path === "/branding" && handler === undefined;
+    if (!implicitBranding) calls.push({ method: request.method(), path, body, ...req });
+    const reply = implicitBranding
+      ? { body: { name: "LENS PMS", brand_color: "#2563EB", icon_image_version: 0, logo_light_version: 0, logo_dark_version: 0 } }
+      : handler === undefined ? problem(404, "not mocked") : typeof handler === "function" ? handler(body, req) : handler;
     const status = reply.status ?? 200;
     await route.fulfill({
       status,

@@ -94,6 +94,8 @@ type me struct {
 	ViewPrefs                json.RawMessage `json:"view_prefs"`
 	SidebarPinned            []string        `json:"sidebar_pinned"`
 	EmailMuted               []string        `json:"email_muted"`
+	DueReminders             json.RawMessage `json:"due_reminders"`
+	JoinedAt                 time.Time       `json:"joined_at"`
 	OnboardingPending        bool            `json:"onboarding_pending"`
 	AvatarVersion            int64           `json:"avatar_version"` // epoch ms of the photo's last upload; 0 when there is no photo
 	DefaultTaskDurationDays  *int            `json:"default_task_duration_days"`
@@ -147,6 +149,11 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("PUT /api/v1/me/view-preferences/{scopeId}", s.requireUser(s.saveViewPreferences))
 	mux.HandleFunc("GET /api/v1/account", s.requireUser(s.accountInfo))
 	mux.HandleFunc("PATCH /api/v1/account", s.requireUser(requireAdmin(s.renameAccount)))
+	mux.HandleFunc("GET /api/v1/branding", s.workspaceBranding)
+	// Branding assets are intentionally public so email clients can render the Workspace logo.
+	mux.HandleFunc("GET /api/v1/account/branding/{asset}", s.workspaceBrandAsset)
+	mux.HandleFunc("PUT /api/v1/account/branding/{asset}", s.requireUser(requireAdmin(s.saveWorkspaceBrandAsset)))
+	mux.HandleFunc("DELETE /api/v1/account/branding/{asset}", s.requireUser(requireAdmin(s.removeWorkspaceBrandAsset)))
 	mux.HandleFunc("POST /api/v1/onboarding/complete", s.requireUser(requireAdmin(s.completeOnboarding)))
 	mux.HandleFunc("GET /api/v1/me/shared", s.requireUser(s.listSharedItems))
 	mux.HandleFunc("GET /api/v1/me/todo", s.requireUser(s.listMyTodo))
@@ -258,8 +265,8 @@ func loadMe(ctx context.Context, db interface {
 }, userID string) (me, error) {
 	var m me
 	var jobTitle, department string
-	err := db.QueryRow(ctx, `SELECT u.id::text,u.email::text,u.first_name,u.last_name,u.user_type::text,u.status::text,u.job_title,u.department,u.last_login_at,u.locale,u.timezone,u.date_format,u.time_format,u.week_start,COALESCE((SELECT id::text FROM spaces WHERE owner_id=u.id AND kind='personal'),''),a.name,u.company,u.country,u.location,u.phone,u.density,u.theme,u.accent,u.comment_shortcut,u.sidebar_hidden,u.sidebar_pinned,u.view_expansion,u.view_prefs,u.email_muted,u.default_task_duration_days,u.default_task_effort_minutes,u.user_type='admin' AND NOT COALESCE((a.settings->>'onboarding_done')::boolean,false),COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM user_avatars WHERE user_id=u.id),0) FROM users u CROSS JOIN account a WHERE u.id=$1`, userID).
-		Scan(&m.ID, &m.Email, &m.FirstName, &m.LastName, &m.UserType, &m.Status, &jobTitle, &department, &m.LastLoginAt, &m.Locale, &m.Timezone, &m.DateFormat, &m.TimeFormat, &m.WeekStart, &m.PersonalSpaceID, &m.AccountName, &m.Company, &m.Country, &m.Location, &m.Phone, &m.Density, &m.Theme, &m.Accent, &m.CommentShortcut, &m.SidebarHidden, &m.SidebarPinned, &m.ViewExpansion, &m.ViewPrefs, &m.EmailMuted, &m.DefaultTaskDurationDays, &m.DefaultTaskEffortMinutes, &m.OnboardingPending, &m.AvatarVersion)
+	err := db.QueryRow(ctx, `SELECT u.id::text,u.email::text,u.first_name,u.last_name,u.user_type::text,u.status::text,u.job_title,u.department,u.last_login_at,u.locale,u.timezone,u.date_format,u.time_format,u.week_start,COALESCE((SELECT id::text FROM spaces WHERE owner_id=u.id AND kind='personal'),''),a.name,u.company,u.country,u.location,u.phone,u.density,u.theme,u.accent,u.comment_shortcut,u.sidebar_hidden,u.sidebar_pinned,u.view_expansion,u.view_prefs,u.email_muted,u.due_reminders,u.created_at,u.default_task_duration_days,u.default_task_effort_minutes,u.user_type='admin' AND NOT COALESCE((a.settings->>'onboarding_done')::boolean,false),COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM user_avatars WHERE user_id=u.id),0) FROM users u CROSS JOIN account a WHERE u.id=$1`, userID).
+		Scan(&m.ID, &m.Email, &m.FirstName, &m.LastName, &m.UserType, &m.Status, &jobTitle, &department, &m.LastLoginAt, &m.Locale, &m.Timezone, &m.DateFormat, &m.TimeFormat, &m.WeekStart, &m.PersonalSpaceID, &m.AccountName, &m.Company, &m.Country, &m.Location, &m.Phone, &m.Density, &m.Theme, &m.Accent, &m.CommentShortcut, &m.SidebarHidden, &m.SidebarPinned, &m.ViewExpansion, &m.ViewPrefs, &m.EmailMuted, &m.DueReminders, &m.JoinedAt, &m.DefaultTaskDurationDays, &m.DefaultTaskEffortMinutes, &m.OnboardingPending, &m.AvatarVersion)
 	if err != nil {
 		return me{}, err
 	}

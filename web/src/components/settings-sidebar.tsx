@@ -36,6 +36,7 @@ import type { LucideIcon } from "lucide-react";
 import { SidebarFooter } from "@/components/topbar";
 import { SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, readWidth, writeWidth } from "@/lib/sidebar-prefs";
 import { sidebarThemeVars, useSidebarTheme } from "@/lib/sidebar-theme";
+import { WorkspaceBrandMark } from "@/lib/workspace-branding";
 
 type SettingsItem = { to: string; hash?: string; params?: { spaceId: string }; label: string };
 type SettingsGroup = { title: string; items: SettingsItem[] };
@@ -49,12 +50,12 @@ export function settingsGroups(me: CurrentUser | undefined, t: (key: string) => 
       { to: "/settings/work-schedule", label: t("settings.workSchedule.title") },
       { to: "/settings/language", label: t("settings.nav.language") },
       { to: "/settings/work-preferences", label: t("settings.nav.work") },
-      { to: "/settings/account", label: t("settings.account.title") },
       { to: "/settings/email", label: t("nav.account.emailPrefs") },
       { to: "/settings/appearance", label: t("nav.account.appearance") },
       { to: "/settings/security", label: t("settings.security.title") },
     ] },
     { title: t("settings.nav.accountManagement"), items: [
+      ...(isAdmin ? [{ to: "/settings/account", label: t("settings.account.title") }] : []),
       ...(me?.capabilities.manage_users ? [{ to: "/settings/users", label: t("settings.users.title") }] : []),
       { to: "/settings/resources", label: t("settings.resources") },
       { to: "/settings/apps", label: t("apps.title") },
@@ -110,6 +111,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
   })).filter((group) => group.items.length > 0);
   return (
     <aside style={{ width: `${width}px`, ...sidebarThemeVars(sidebarTheme) }} className={`${SIDEBAR_THEME} relative flex h-dvh shrink-0 flex-col border-r border-nav-hover bg-nav p-3 text-nav-text`}>
+      <div className="mb-2 flex items-center gap-2 px-2"><WorkspaceBrandMark compact /><span className="truncate text-sm font-semibold">{me.account_name}</span></div>
       <div className="mb-3 flex items-center gap-1">
         {/* The label gets the room: the profile collapses to its avatar so "Back to workspace" fits on one line. */}
         <Link to="/" className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md px-2 py-1.5 text-sm whitespace-nowrap text-nav-muted hover:bg-nav-hover hover:text-nav-text">

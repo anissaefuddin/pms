@@ -168,6 +168,19 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 			return Detail{}, Invalid("shares must be an array of up to 500 entries on a project or folder")
 		}
 	}
+	// Optional client id (UUIDv7): a retry after a lost response reuses it, and the primary key refuses the second item.
+	clientID := uuid.Nil
+	if raw, ok := fields["id"]; ok {
+		var text string
+		if json.Unmarshal(raw, &text) != nil {
+			return Detail{}, Invalid("id must be a UUID")
+		}
+		parsed, perr := uuid.Parse(text)
+		if perr != nil || parsed.Version() != 7 {
+			return Detail{}, Invalid("id must be a UUIDv7")
+		}
+		clientID = parsed
+	}
 	var workflowID *uuid.UUID
 	if raw, ok := fields["default_workflow_id"]; ok {
 		if json.Unmarshal(raw, &workflowID) != nil || workflowID == nil || kind == "task" {
@@ -312,26 +325,40 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 	if err != nil {
 		return Detail{}, err
 	}
-	id, err := uuid.NewV7()
-	if err != nil {
-		return Detail{}, err
+	id := clientID
+	if id == uuid.Nil {
+		if id, err = uuid.NewV7(); err != nil {
+			return Detail{}, err
+		}
 	}
 	if _, err := tx.Exec(ctx, `
 INSERT INTO items(id,type,type_id,title,status_id,created_by,default_workflow_id,default_view_type,completed_at)
 VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN now() END)`,
 		id, kind, status, actor.ID, workflowID, view, completed, itemType.ID); err != nil {
+		// A retry of the same client id (lost response) hits the primary key: the caller already has this item.
+		if pgCode(err) == "23505" {
+			return Detail{}, ErrConflict
+		}
 		return Detail{}, err
 	}
 	keys := make([]string, 0, len(fields))
 	for key := range fields {
 		switch key {
-		case "type", "type_key", "locations", "shares", "default_workflow_id", "default_view_type", "workflow_id":
+		case "id", "type", "type_key", "locations", "shares", "default_workflow_id", "default_view_type", "workflow_id":
 		default:
 			keys = append(keys, key)
 		}
 	}
 	sort.Strings(keys)
 	if err := applyFields(ctx, tx, actor, id.String(), kind, fields, keys, false); err != nil {
+		return Detail{}, err
+	}
+	// The status the item lands in (its first status, or the one the request named) gets the same required-field guard as a PATCH.
+	var landed string
+	if err := tx.QueryRow(ctx, "SELECT status_id::text FROM items WHERE id=$1", id.String()).Scan(&landed); err != nil {
+		return Detail{}, err
+	}
+	if err := checkStatusGuard(ctx, tx, actor, id.String(), landed); err != nil {
 		return Detail{}, err
 	}
 	for _, loc := range locations {
@@ -461,4 +488,59 @@ func spaceDefaultWorkflow(ctx context.Context, tx pgx.Tx, spaceID uuid.UUID, kin
 		return uuid.Nil, nil
 	}
 	return wf, err
+}
+
+// AuthorizeAssignments is W3 for a direct create (POST /items): assigning someone else needs Space Admin in each location.
+// Workspace admins are not checked here (an interpretation to confirm). Forms, blueprints, and automation do not call it,
+// so an intake form can still assign its team.
+func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage) error {
+	if actor.Type == policy.Admin {
+		return nil
+	}
+	others := assigneesOtherThan(fields, actor.ID)
+	if len(others) == 0 {
+		return nil
+	}
+	var locations []struct {
+		SpaceID string `json:"space_id"`
+	}
+	if raw, ok := fields["locations"]; ok {
+		_ = json.Unmarshal(raw, &locations)
+	}
+	for _, loc := range locations {
+		isAdmin, err := policy.IsSpaceAdmin(ctx, pool, actor.ID, loc.SpaceID)
+		if err != nil {
+			return err
+		}
+		if !isAdmin {
+			return ErrForbidden
+		}
+	}
+	return nil
+}
+
+// assigneesOtherThan lists the assignees of a create (assignee_ids and assignee_allocations) that are not the actor.
+func assigneesOtherThan(fields map[string]json.RawMessage, actorID string) []string {
+	var ids []string
+	var direct []string
+	if raw, ok := fields["assignee_ids"]; ok {
+		_ = json.Unmarshal(raw, &direct)
+	}
+	ids = append(ids, direct...)
+	if raw, ok := fields["assignee_allocations"]; ok {
+		var allocations []struct {
+			AssigneeID string `json:"assignee_id"`
+		}
+		_ = json.Unmarshal(raw, &allocations)
+		for _, a := range allocations {
+			ids = append(ids, a.AssigneeID)
+		}
+	}
+	var others []string
+	for _, id := range ids {
+		if id != "" && id != actorID {
+			others = append(others, id)
+		}
+	}
+	return others
 }

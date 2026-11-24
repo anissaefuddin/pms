@@ -12,7 +12,7 @@ export function ProjectProgress({ item }: { item: Item }) {
   if (item.type !== "project" || item.progress_percent == null || !item.progress_risk) return null;
   // Three separate reads: a bar, the percentage, and the risk as its own badge (not one run-on label).
   const value = Math.max(0, Math.min(100, item.progress_percent));
-  return <span className="inline-flex items-center gap-2 tabular-nums">
+  return <span className="inline-flex items-center gap-2 tabular-nums" title={t("items.progress.methodValue", { method: t(`items.progress.methods.${item.progress_method ?? "task_count"}`) })}>
     <span role="meter" aria-label={t("items.progress.percent", { value })} aria-valuemin={0} aria-valuemax={100} aria-valuenow={value}
       className="relative block h-1.5 w-14 shrink-0 overflow-hidden rounded-full bg-muted">
       <span aria-hidden="true" className="absolute inset-y-0 start-0 rounded-full bg-primary" style={{ width: `${value}%` }} />

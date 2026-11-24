@@ -2,6 +2,7 @@ package httpserver_test
 
 import (
 	"context"
+	"fmt"
 	"strings"
 	"testing"
 
@@ -71,16 +72,12 @@ FROM users u WHERE u.id = rs.user_id`)
 	}
 	mail := sent[0]
 	email := f.queryID("SELECT email::text FROM users WHERE id=$1", reader.id)
-	if mail.To != email || mail.Template != "report_digest" || mail.Subject != "Report: Daily time" || mail.URL != "https://pms.example.test/reports/"+id {
+	if mail.To != email || mail.Template != "report_digest" || mail.Data.Item != "Daily time" || mail.URL != "https://pms.example.test/reports/"+id {
 		t.Fatalf("unexpected email: %+v", mail)
 	}
 	// The reader's email holds only what the reader may see: 30 minutes, not the secret Space's 600.
-	if !strings.Contains(mail.Message, "Total: 30") || strings.Contains(mail.Message, "Hidden task") || strings.Contains(mail.HTML, "Hidden task") || strings.Contains(mail.Message, ": 600") { // not a bare "600": the random report id in the link can contain it
-		t.Fatalf("digest leaks or miscounts:\n%s", mail.Message)
-	}
-	// Every label from the data is escaped in the HTML part.
-	if strings.Contains(mail.HTML, "<b>Visible</b>") || !strings.Contains(mail.HTML, "&lt;b&gt;Visible&lt;/b&gt;") {
-		t.Fatalf("html is not escaped: %s", mail.HTML)
+	if mail.Data.Total != "30" || strings.Contains(fmt.Sprint(mail.Data.Rows), "Hidden task") || strings.Contains(fmt.Sprint(mail.Data.Rows), "600") {
+		t.Fatalf("digest leaks or miscounts: %+v", mail.Data)
 	}
 
 	// Once per slot: a second run in the same hour sends nothing, and a later week sends again.
@@ -96,8 +93,8 @@ FROM users u WHERE u.id = rs.user_id`)
 	}
 	// A1.3: a Workspace admin's digest must not carry the total of Spaces the admin holds no grant on.
 	for _, m := range sent {
-		if m.To == f.queryID("SELECT email::text FROM users WHERE id=$1", admin.id) && strings.Contains(m.Message, "Total: 630") {
-			t.Fatalf("the admin is not shown every Space:\n%s", m.Message)
+		if m.To == f.queryID("SELECT email::text FROM users WHERE id=$1", admin.id) && m.Data.Total == "630" {
+			t.Fatalf("the admin is not shown every Space: %+v", m.Data)
 		}
 	}
 

@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/rand"
 	"crypto/tls"
+	"encoding/base64"
 	"fmt"
 	"github.com/anissaefuddin/pms/server/internal/previews"
 	"github.com/anissaefuddin/pms/server/internal/storage"
@@ -28,13 +29,15 @@ import (
 )
 
 type Args struct {
-	To       string `json:"to"`
-	Template string `json:"template"`
-	URL      string `json:"url"`
-	Locale   string `json:"locale"`
-	Message  string `json:"message,omitempty"`
-	Subject  string `json:"subject,omitempty"` // report_digest only
-	HTML     string `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
+	To       string       `json:"to"`
+	Template string       `json:"template"`
+	URL      string       `json:"url"`
+	Locale   string       `json:"locale"`
+	Message  string       `json:"message,omitempty"`
+	Subject  string       `json:"subject,omitempty"` // report_digest only
+	HTML     string       `json:"html,omitempty"`    // report_digest only; the sender escapes every value in it
+	Data     TemplateData `json:"data,omitempty"`
+	Brand    EmailBrand   `json:"brand,omitempty"`
 	// Form confirmation branding (FORM-04, request_received only); every value is escaped when rendered.
 	SenderName string `json:"sender_name,omitempty"`
 	LogoURL    string `json:"logo_url,omitempty"`
@@ -42,11 +45,27 @@ type Args struct {
 	Closing    string `json:"closing,omitempty"`
 }
 
+type EmailBrand struct {
+	Name, Color, LogoURL, IconURL, Initial string
+	LogoData                               []byte
+	LogoContentType                        string
+}
+
+type TemplateData struct {
+	Kind, Preheader, Actor, Item, ItemType, Space, Status, Before, After        string
+	Due, OccurredAt, Access, Workspace, Inviter, Expires, Period, Metric, Total string
+	Rows                                                                        []ReportRow `json:"rows,omitempty"`
+	Days                                                                        int         `json:"days,omitempty"`
+}
+
+type ReportRow struct{ Label, Break, Value string }
+
 func (Args) Kind() string { return "send_email" }
 
 type Worker struct {
 	river.WorkerDefaults[Args]
-	cfg config.Config
+	cfg  config.Config
+	pool *pgxpool.Pool
 }
 
 func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
@@ -54,6 +73,7 @@ func (w *Worker) Work(ctx context.Context, job *river.Job[Args]) error {
 }
 
 func (w *Worker) deliver(ctx context.Context, args Args) error {
+	args.Brand = w.brand(ctx)
 	subject, text, html, err := render(args)
 	if err != nil {
 		return err
@@ -80,15 +100,70 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 	if w.cfg.SMTPUser != "" {
 		auth = smtp.PlainAuth("", w.cfg.SMTPUser, w.cfg.SMTPPassword, w.cfg.SMTPHost)
 	}
-	msg, err := message(sender, from.Address, w.cfg.SMTPReplyTo, args.To, subject, text, html)
+	msg, err := messageWithBrand(sender, from.Address, w.cfg.SMTPReplyTo, args.To, subject, text, html, args.Brand)
 	if err != nil {
 		return err
 	}
 	return send(ctx, address, w.cfg.SMTPHost, auth, from.Address, args.To, msg)
 }
 
+func (w *Worker) brand(ctx context.Context) EmailBrand {
+	brand := EmailBrand{Name: "LENS PMS", Color: "#2563EB", Initial: "L"}
+	if w.pool == nil {
+		return brand
+	}
+	var lightURL, logoContentType string
+	var logoData []byte
+	var lightVersion, iconVersion int64
+	err := w.pool.QueryRow(ctx, `SELECT a.name,COALESCE(a.settings->>'brand_color',''),COALESCE(a.settings->>'logo_light_url',''),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='logo_light'),0),
+COALESCE((SELECT (EXTRACT(EPOCH FROM updated_at)*1000)::bigint FROM workspace_brand_assets WHERE kind='icon'),0),
+COALESCE((SELECT content_type FROM workspace_brand_assets WHERE kind='logo_light'),''),
+COALESCE((SELECT data FROM workspace_brand_assets WHERE kind='logo_light'),'') FROM account a WHERE a.id=1`).
+		Scan(&brand.Name, &brand.Color, &lightURL, &lightVersion, &iconVersion, &logoContentType, &logoData)
+	if err != nil {
+		slog.Warn("could not load email branding; using defaults", "error", err)
+		return EmailBrand{Name: "LENS PMS", Color: "#2563EB", Initial: "L"}
+	}
+	brand.Name = strings.TrimSpace(brand.Name)
+	if brand.Name == "" {
+		brand.Name = "LENS PMS"
+	}
+	brand.Initial = strings.ToUpper(string([]rune(brand.Name)[0]))
+	if !validBrandColor(brand.Color) {
+		brand.Color = "#2563EB"
+	}
+	root := strings.TrimRight(w.cfg.PublicURL, "/")
+	if lightVersion > 0 {
+		brand.LogoURL = "cid:workspace-logo"
+		brand.LogoData, brand.LogoContentType = logoData, logoContentType
+	} else if u, parseErr := neturl.Parse(lightURL); parseErr == nil && u.Scheme == "https" && u.Host != "" {
+		brand.LogoURL = lightURL
+	}
+	if iconVersion > 0 {
+		brand.IconURL = fmt.Sprintf("%s/api/v1/account/branding/icon?v=%d", root, iconVersion)
+	}
+	return brand
+}
+
+func validBrandColor(value string) bool {
+	if len(value) != 7 || value[0] != '#' {
+		return false
+	}
+	for _, char := range value[1:] {
+		if !strings.ContainsRune("0123456789abcdefABCDEF", char) {
+			return false
+		}
+	}
+	return true
+}
+
 // message builds the mail text. Date and Message-ID are required by many receivers; without them mail is often marked as spam.
 func message(fromHeader, fromAddress, replyTo, to, subject, text, html string) ([]byte, error) {
+	return messageWithBrand(fromHeader, fromAddress, replyTo, to, subject, text, html, EmailBrand{})
+}
+
+func messageWithBrand(fromHeader, fromAddress, replyTo, to, subject, text, html string, brand EmailBrand) ([]byte, error) {
 	for _, field := range []string{fromHeader, replyTo, to, subject} { // a line break here would let data inject extra headers
 		if strings.ContainsAny(field, "\r\n") {
 			return nil, fmt.Errorf("email header contains a line break")
@@ -97,6 +172,7 @@ func message(fromHeader, fromAddress, replyTo, to, subject, text, html string) (
 	id := make([]byte, 12)
 	_, _ = rand.Read(id)
 	boundary := fmt.Sprintf("pms-%x", id)
+	related := boundary + "-related"
 	domain := "localhost"
 	if at := strings.LastIndex(fromAddress, "@"); at >= 0 {
 		domain = fromAddress[at+1:]
@@ -110,9 +186,25 @@ func message(fromHeader, fromAddress, replyTo, to, subject, text, html string) (
 		body.WriteString("\r\n")
 	}
 	fmt.Fprintf(&body, "--%s--\r\n", boundary)
+	if len(brand.LogoData) > 0 && strings.HasPrefix(brand.LogoContentType, "image/") {
+		var wrapped strings.Builder
+		fmt.Fprintf(&wrapped, "--%s\r\nContent-Type: multipart/alternative; boundary=%q\r\n\r\n%s", related, boundary, body.String())
+		fmt.Fprintf(&wrapped, "--%s\r\nContent-Type: %s\r\nContent-Transfer-Encoding: base64\r\nContent-ID: <workspace-logo>\r\nContent-Disposition: inline; filename=workspace-logo\r\n\r\n", related, brand.LogoContentType)
+		encoded := base64.StdEncoding.EncodeToString(brand.LogoData)
+		for len(encoded) > 76 {
+			wrapped.WriteString(encoded[:76] + "\r\n")
+			encoded = encoded[76:]
+		}
+		wrapped.WriteString(encoded + "\r\n")
+		fmt.Fprintf(&wrapped, "--%s--\r\n", related)
+		body = wrapped
+	}
 	headers := []string{"From: " + fromHeader, "To: " + to, "Subject: " + mime.QEncoding.Encode("utf-8", subject),
 		"Date: " + time.Now().UTC().Format(time.RFC1123Z), fmt.Sprintf("Message-ID: <%x@%s>", id, domain),
 		"MIME-Version: 1.0", fmt.Sprintf("Content-Type: multipart/alternative; boundary=%q", boundary), ""}
+	if len(brand.LogoData) > 0 && strings.HasPrefix(brand.LogoContentType, "image/") {
+		headers[len(headers)-2] = fmt.Sprintf("Content-Type: multipart/related; boundary=%q", related)
+	}
 	if replyTo != "" {
 		headers = append([]string{"Reply-To: " + replyTo}, headers...)
 	}
@@ -176,7 +268,7 @@ type Option func(workers *river.Workers, periodic *[]*river.PeriodicJob)
 
 func New(pool *pgxpool.Pool, cfg config.Config, options ...Option) (*Queue, error) {
 	workers := river.NewWorkers()
-	mailer := &Worker{cfg: cfg}
+	mailer := &Worker{cfg: cfg, pool: pool}
 	river.AddWorker(workers, mailer)
 	river.AddWorker(workers, &projectexcel.ExportWorker{Pool: pool})
 	river.AddWorker(workers, &previews.Worker{Pool: pool, Store: storage.LocalStorage{Dir: cfg.FilesDir}})
@@ -211,14 +303,9 @@ func (q *Queue) SendTx(ctx context.Context, tx pgx.Tx, args Args) error {
 
 // render returns the subject, plain text and HTML body of a template. Only English exists (MVP); other locales fall back to it.
 func render(args Args) (subject, text, html string, err error) {
-	link := htmlpkg.EscapeString(args.URL)
-	page := func(heading, intro, expires string) string {
-		return fmt.Sprintf(`<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>%s</h2><p>%s</p><p><a href="%s" style="background:#2563eb;color:#ffffff;padding:10px 16px;border-radius:6px;text-decoration:none">Open link</a></p><p style="color:#6b7280;font-size:13px">%s If the button does not work, copy this address into your browser:<br>%s</p></body></html>`, heading, intro, link, expires, link)
-	}
 	switch args.Template {
 	case "notification":
-		return "New PMS notification", "You have a new notification in PMS. Open " + args.URL,
-			fmt.Sprintf(`<p>You have a new notification in PMS.</p><p><a href="%s">Open Inbox</a></p>`, link), nil
+		return renderProductEmail(args)
 	case "request_received", "request_status":
 		// Message is composed by the server from the form name, the item title and the status; it holds no internal data.
 		subject = map[string]string{"request_received": "We received your request", "request_status": "Your request was updated"}[args.Template]
@@ -227,25 +314,16 @@ func render(args Args) (subject, text, html string, err error) {
 		}
 		return subject, args.Message, fmt.Sprintf(`<p>%s</p>`, htmlpkg.EscapeString(args.Message)), nil
 	case "report_digest":
-		return args.Subject, args.Message, `<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827">` + args.HTML + `</body></html>`, nil
+		return renderProductEmail(args)
 	case "set_password":
-		note, intro := "", "You have been invited to PMS. Activate your account and choose a password."
-		if args.Message != "" {
-			note = args.Message + "\n\n"
-			intro += "</p><p>" + htmlpkg.EscapeString(args.Message)
-		}
-		return "Set your PMS password",
-			note + fmt.Sprintf("Open %s to activate your account and set your password. This link expires in 7 days.", args.URL),
-			page("Activate your PMS account", intro, "This link expires in 7 days."), nil
+		return renderProductEmail(args)
 	case "login_code":
 		// The code is the whole secret: six digits, ten minutes, one use. Message carries it (like the reset link, it sits in the job row for a while).
 		return "Your PMS sign-in code is " + args.Message,
 			fmt.Sprintf("Your PMS sign-in code is %s. It expires in 10 minutes and works once. If you did not ask for it, ignore this email.", args.Message),
 			fmt.Sprintf(`<!doctype html><html><body style="font-family:Arial,sans-serif;color:#111827"><h2>Your sign-in code</h2><p style="font-size:28px;letter-spacing:6px;font-weight:bold">%s</p><p style="color:#6b7280;font-size:13px">It expires in 10 minutes and works once. If you did not ask for it, ignore this email.</p></body></html>`, htmlpkg.EscapeString(args.Message)), nil
 	case "reset_password":
-		return "Reset your PMS password",
-			fmt.Sprintf("Open %s to reset your password. This link expires in one hour.", args.URL),
-			page("Reset your PMS password", "We received a request to reset your password. If it was not you, ignore this email.", "This link expires in one hour."), nil
+		return renderProductEmail(args)
 	default:
 		return "", "", "", fmt.Errorf("unknown email template %q", args.Template)
 	}

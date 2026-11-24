@@ -1,5 +1,5 @@
 import { expect, test } from "@playwright/test";
-import { ALL, extra, marketing, mockSpaces } from "./spaces-mock";
+import { ALL, extra, marketing, mockSpaces, serveCreatedItem } from "./spaces-mock";
 
 // DR-03: after "Create item" the dialog must stay closed (no empty form), and the new item must be shown.
 const id = "aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaa03";
@@ -18,6 +18,7 @@ for (const where of ["space page button"]) {
         return { status: 201, body: item };
       },
     }) });
+    await serveCreatedItem(page, () => item);
     await page.goto(root);
     const dialog = page.getByRole("dialog", { name: "Create item" });
     await page.getByRole("main").getByRole("button", { name: "New item" }).click();

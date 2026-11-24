@@ -22,6 +22,8 @@ import { menuAllows, useCreateMenu } from "@/lib/create-menu";
 import { TypeIcon } from "@/components/type-icon";
 import { ItemDates } from "@/components/item-dates";
 import { payloadDates, validateCreate, type CreateKind, type CreateIssue, type SupportedDefaultView } from "@/lib/create-item-validate";
+import { newItemId } from "@/lib/create-item-validate";
+import { createItemOnce } from "@/lib/create-item-service";
 import { cn } from "@/lib/utils";
 
 type Props = {
@@ -35,6 +37,10 @@ type Props = {
   initialKind?: CreateKind;
   /** A Quick Access or "More item types" choice; the dialog still checks it against the chosen destination. */
   initialTypeKey?: string;
+  /** YYYY-MM-DD: prefills start and finish (a one-day Task from a Calendar date). */
+  initialDate?: string;
+  /** YYYY-MM-DD: the finish day when it differs from initialDate (a drag range on the Gantt). */
+  initialFinish?: string;
   onCreated: (item: Item) => void;
 };
 const kinds: CreateKind[] = ["project", "folder", "task"];
@@ -60,7 +66,7 @@ export function CreateItemDialog(props: Props) {
 
 type FieldKey = "title" | "location" | "parent" | "due_date";
 
-function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey }: Props) {
+function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialStatus, initialKind, initialTypeKey, initialDate, initialFinish }: Props) {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const spaces = useSpaces();
@@ -69,6 +75,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const lockedKind: CreateKind | undefined = taskOnly ? "task" : undefined;
   const [chosenKind, setKind] = useState<CreateKind>(lockedKind ?? initialKind ?? "project");
   const [spaceID, setSpaceID] = useState(location?.space_id ?? me.personal_space_id);
+  // One client id per open form: a retry of this form reuses it (see createItemOnce).
+  const [itemId] = useState(newItemId);
   const [parentID, setParentID] = useState(fixedParent ?? "");
   const [trail, setTrail] = useState<Item[]>([]);
   const [owner, setOwner] = useState<PersonOption[]>([{ id: me.id, name: `${me.first_name} ${me.last_name}`.trim() }]);
@@ -105,8 +113,8 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
   const customTypes = customOf(kind).filter((def) => !parentChildren.length || parentChildren.includes(def.id));
   const baseHidden = !fixedParent && !taskOnly && !menuAllows(menu, kind);
   const typeKey = customTypes.some((def) => def.key === typeKeyChoice) ? typeKeyChoice : baseHidden ? customTypes[0]?.key ?? "" : "";
-  // Task hanya boleh di bawah Project; folder dan project boleh di bawah item non-task.
-  const parentOptions = parents.data?.filter((item) => (kind === "task" ? item.type === "project" : item.type !== "task")
+  // Task boleh di bawah Project atau Task; folder dan project boleh di bawah item non-task (validateCreate dan server menegakkan sisanya).
+  const parentOptions = parents.data?.filter((item) => (kind === "task" ? item.type === "project" || item.type === "task" : item.type !== "task")
     && item.my_capabilities.includes("create")
     && item.locations.some((loc) => loc.space_id === spaceID && (loc.parent_item_id ?? "") === (directory?.id ?? "")));
   const canBrowse = !!parent && parent.id !== directory?.id;
@@ -164,7 +172,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         ? await api<Item>(`/api/v1/blueprints/${blueprint.id}/items`, {
           method: "POST", body: JSON.stringify({ locations: input.locations, title, ...(start ? { start_date: start } : due ? { finish_date: due } : {}) }),
         })
-        : await api<Item>("/api/v1/items", { method: "POST", body: JSON.stringify(input) });
+        : await createItemOnce(queryClient, { ...input, id: itemId }, me);
       await queryClient.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
       toast.success(<span>{t("items.created", { name: item.title })}{" "}
         <Link to="/tasks/$itemId" params={{ itemId: item.id }} className="underline">{t("items.openCreated")}</Link></span>);
@@ -289,7 +297,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}
         {kind === "task" && !blueprint && <ItemUserPicker label={t("items.assignees")} selected={assignees} onChange={setAssignees} multiple />}
         {kind !== "folder" && <div className="space-y-1 sm:col-span-2">
-          <ItemDates invalid={!!fieldErrors.due_date} />
+          <ItemDates initialStart={initialDate} initialDue={initialFinish ?? initialDate} invalid={!!fieldErrors.due_date} />
           {fieldErrors.due_date && <p id="create-due-error" role="alert" className="text-sm text-destructive">{fieldErrors.due_date}</p>}
         </div>}
         {kind === "folder" && <p className="text-sm text-muted-foreground sm:col-span-2">{t("items.noDates")}</p>}

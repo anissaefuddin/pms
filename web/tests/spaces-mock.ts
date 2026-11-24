@@ -72,3 +72,18 @@ export function extra(overrides: Record<string, any> = {}) {
   };
 }
 
+/**
+ * Serves GET /items/{id} for whatever id the client chose for a created item (Option B sends its own UUIDv7).
+ * Registered after mockSpaces, so it is matched first; anything else falls through to the fixed handlers.
+ */
+export async function serveCreatedItem(page: Page, current: () => { id?: string } | undefined) {
+  await page.route(/\/api\/v1\/items\/[0-9a-f-]{36}$/, async (route) => {
+    const item = current();
+    const id = route.request().url().split("/").pop();
+    if (route.request().method() === "GET" && item && item.id === id) {
+      return route.fulfill({ status: 200, headers: { ETag: '"1"' }, contentType: "application/json", body: JSON.stringify(item) });
+    }
+    return route.fallback();
+  });
+}
+

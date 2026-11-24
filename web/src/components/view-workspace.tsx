@@ -1,4 +1,4 @@
-import { Suspense, lazy, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter, useSearch } from "@tanstack/react-router";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ItemTable } from "@/components/item-table";
 import { ItemBoard } from "@/components/item-board";
+import { createItemOnce, quickTaskInput } from "@/lib/create-item-service";
 const ItemCalendar = lazy(() => import("@/components/item-calendar").then((module) => ({ default: module.ItemCalendar })));
 const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
 import { Timelog } from "@/components/timelog";
@@ -26,6 +27,7 @@ import { ProjectIllustration } from "@/components/ui/empty-illustrations";
 import type { CustomField } from "@/lib/custom-fields";
 import { visibleColumns } from "@/lib/view-columns";
 import { useViewExpansion } from "@/lib/use-view-expansion";
+import { Maximize2, Minimize2 } from "lucide-react";
 
 export { viewSorts } from "@/components/view-toolbar";
 const tableGroups = ["none", "status", "type"] as const;
@@ -56,6 +58,23 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const views = useQuery({ queryKey: viewKey, queryFn: () => api<{ items: SavedView[] }>(base + "/views") });
   const available = views.data?.items ?? [];
   const active = available.find((view) => view.id === search.view) ?? available.find((view) => view.is_default) ?? available[0];
+  const [focused, setFocused] = useState(false);
+  useEffect(() => {
+    if (!active?.id) return;
+    const key = `pms:view-focus:${active.id}`;
+    let next = false;
+    try { next = localStorage.getItem(key) === "1"; } catch { /* storage can be blocked */ }
+    setFocused(next);
+    window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: next }));
+    return () => { window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: false })); };
+  }, [active?.id]);
+  function toggleFocus() {
+    if (!active) return;
+    const next = !focused;
+    setFocused(next);
+    try { localStorage.setItem(`pms:view-focus:${active.id}`, next ? "1" : "0"); } catch { /* storage can be blocked */ }
+    window.dispatchEvent(new CustomEvent("pms:view-focus", { detail: next }));
+  }
 
   // WA-D05: expansion is saved on the server per view. Each view is keyed by its id, so state never carries over between views.
   const expansion = useViewExpansion(active?.id);
@@ -96,7 +115,32 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
   const itemTypes = useItemTypes(isCollection);
   const [blocked, setBlocked] = useState<{ title: string; problems: string[] }>();
   const [pending, setPending] = useState(false);
-  const [creating, setCreating] = useState<{ status?: string }>();
+  const [creating, setCreating] = useState<{ status?: string; parent?: Item; day?: string; finishDay?: string; locationParent?: string | null; placement?: { parentId: string | null; after: string | null } }>();
+  // Batch 3B: a Task created above or below a Gantt row is placed next to that row with the reorder endpoint.
+  async function placeNextTo(item: Item, placement: { parentId: string | null; after: string | null }) {
+    if (!spaceId) return;
+    await api(`/api/v1/items/${item.id}/reorder`, { method: "POST", body: JSON.stringify({ space_id: spaceId, parent_item_id: placement.parentId, after_item_id: placement.after }) });
+    await qc.invalidateQueries({ queryKey: itemKeys.all, predicate: ({ queryKey }) => queryKey[1] !== "detail" });
+  }
+  // B2.2: a Board column creates its Task through the shared service. B2.4: if an active filter hides the new item,
+  // say so instead of implying the create failed. The filter is left as the user set it.
+  async function quickCreate(columnId: string, title: string, id: string) {
+    if (!me || !spaceId) throw new Error(t("views.createFailed"));
+    const item = await createItemOnce(qc, { ...quickTaskInput(me, spaceId, parent?.id, title, columnId), id }, me);
+    if (!noticeIfHidden(item)) toast.success(t("items.created", { name: item.title }));
+  }
+  // B2.4 / R4: a create that the active filter hides must say so, for every entry point (Board, Table "+ Add", the dialog).
+  // Only root items are judged here: a subitem sits under a row that may be collapsed, so the list cannot show it yet.
+  // Returns true when it reported that the item is hidden. Filters are never changed.
+  function noticeIfHidden(item: Item): boolean {
+    if (item.locations.some((loc) => loc.parent_item_id)) return false;
+    const listKey = flat ? [...sortedKey, "subtree"] : sortedKey;
+    const listed = (qc.getQueryData<Item[]>(listKey) ?? []).some((entry) => entry.id === item.id);
+    const matchesTitle = item.title.toLocaleLowerCase().includes(filter.trim().toLocaleLowerCase());
+    if (listed && matchesTitle) return false;
+    toast.info(t("views.createdHidden"), { action: { label: t("views.openCreated"), onClick: () => onOpen(item) } });
+    return true;
+  }
   const locked = useRef(false);
   const isList = { queryKey: itemKeys.all, predicate: ({ queryKey }: { queryKey: readonly unknown[] }) => queryKey[1] !== "detail" };
 
@@ -213,9 +257,14 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
     group: group ?? (swimlanes ? "assignee" : "none"),
   };
   return <section className="min-w-0 space-y-3">
-    <ViewTabs views={available} selected={active} canEdit={canEdit}
-      project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
-      onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} />
+    <div className="flex items-start gap-2">
+      <div className="min-w-0 flex-1"><ViewTabs views={available} selected={active} canEdit={canEdit}
+        project={parent?.type === "project"} scope={parent ? { scope_item_id: parent.id } : { scope_space_id: spaceId }}
+        onSelect={(id) => setSearch("view", id, true)} onRefresh={async () => { await qc.invalidateQueries({ queryKey: viewKey }); }} /></div>
+      <Button size="sm" variant={focused ? "secondary" : "ghost"} aria-pressed={focused} onClick={toggleFocus} className="hidden shrink-0 lg:inline-flex">
+        {focused ? <Minimize2 /> : <Maximize2 />}{t(focused ? "views.focus.exit" : "views.focus.enter")}
+      </Button>
+    </div>
     {parent && (parent.type === "project" || parent.type === "folder") && active.type === "table" && <>
       <button type="button" className="mt-2 text-sm underline" onClick={() => setExportingTable(true)}>{t("excel.exportTable")}</button>
       {exportingTable && <ProjectExcelExport item={parent} open={exportingTable} onOpenChange={setExportingTable}
@@ -227,8 +276,13 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
           spaceId={spaceId} spaceName={spaceInfo?.name} canManage={canManageFields} />} />
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
-      {items.isSuccess && <Suspense fallback={<p role="status">{t("views.gantt.loading")}</p>}>
-        <ItemGantt key={active?.id} initialOpen={!expansion.initial.gantt_collapsed} onOpenChange={(open) => expansion.save({ rows: [], gantt_collapsed: !open })} items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
+      {items.isSuccess && <Suspense fallback={<div role="status" aria-label={t("views.gantt.loading")} className="h-[60vh] min-h-72 animate-pulse overflow-hidden rounded border bg-card p-3"><div className="mb-3 h-8 w-72 rounded bg-muted" /><div className="grid h-full grid-cols-[22rem_1fr] gap-px bg-border"><div className="space-y-px bg-card">{Array.from({ length: 9 }, (_, index) => <div key={index} className="h-11 bg-muted/60" />)}</div><div className="bg-[repeating-linear-gradient(90deg,transparent_0,transparent_35px,hsl(var(--border))_36px)]" /></div><span className="sr-only">{t("views.gantt.loading")}</span></div>}>
+        <ItemGantt key={active?.id} onTimelineCreate={collection.canCreate ? (start, finish) => setCreating({ day: start, finishDay: finish }) : undefined} onRowAdd={(kind, item, previousId) => {
+          if (kind === "child") { setCreating({ parent: item }); return; }
+          const parentId = item.locations.find((loc) => loc.space_id === spaceId)?.parent_item_id ?? null;
+          const parentItem = parentId ? (items.data ?? []).find((entry) => entry.id === parentId) : undefined;
+          setCreating({ parent: parentItem, day: item.start_date ?? item.due_date ?? undefined, locationParent: parentId, placement: { parentId, after: kind === "below" ? item.id : previousId } });
+        }} initialOpen={!expansion.initial.gantt_collapsed} onOpenChange={(open) => expansion.save({ rows: [], gantt_collapsed: !open })} items={filtered} spaceId={spaceId} parentId={parent?.id} readonly={!canEdit} onOpen={onOpen} onAdd={!!spaceId && canCreate ? () => setCreating({}) : undefined}
           customFields={customFields} columns={visibleColumns(active.config, false)}
           onPatch={(item, update) => patch(item, update)} />
       </Suspense>}
@@ -237,7 +291,7 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isPending && <p role="status">{t("items.loading")}</p>}
       {items.isError && <p role="alert">{t("items.loadError")}</p>}
       {noMatches && !spaceEmpty ? emptyResults : items.isSuccess && <Suspense fallback={<p role="status">{t("items.loading")}</p>}>
-        <ItemCalendar items={filtered} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} />
+        <ItemCalendar items={filtered} readonly={!canEdit} onOpen={onOpen} onPatch={(item, update) => patch(item, update)} onCreateOn={collection.canCreate ? (day) => setCreating({ day }) : undefined} />
       </Suspense>}
     </> : !isCollection ? <div className="space-y-1 rounded border p-4">
       <h2 className="font-semibold">{t(`views.types.${active.type}`)}</h2>
@@ -256,10 +310,10 @@ export function ViewWorkspace({ spaceId, parent, me, canCreate, canEdit, onOpen,
       {items.isSuccess && (!spaceEmpty && !noMatches && items.data.length === 0 ? <EmptyState icon={<ProjectIllustration />} title={t("views.noItems.title")}
           description={t("views.noItems.description")} canCreate={canCreate}
           primaryAction={{ label: t("items.new"), onClick: () => setCreating({}) }} />
-        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} />)
-        : <ItemTable key={active?.id} {...collection} initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
+        : active.type === "board" ? (!spaceEmpty && noMatches ? emptyResults : <ItemBoard {...collection} swimlanes={swimlanes} preferenceKey={active.id} onQuickCreate={quickCreate} />)
+        : <ItemTable key={active?.id} {...collection} onAddChild={(item) => setCreating({ parent: item })}initialExpanded={expansion.initial.rows} onExpandedChange={(rows) => expansion.save({ rows, gantt_collapsed: expansion.initial.gantt_collapsed })} items={items.data ?? []} filter={filter} noResults={emptyResults} showEmpty={!spaceEmpty} group={group} manual={!!spaceId && sort === "manual" && !group && !filter && !fieldFilter && !preset} onReorder={reorder} />)}
     </>}
     {me && creating && <CreateItemDialog open onOpenChange={(open) => { if (!open) setCreating(undefined); }}
-      initialKind="task" initialStatus={creating.status} location={{ space_id: spaceId, parent_item_id: parent?.id }} me={me} onCreated={onOpen} />}
+      initialKind="task" taskOnly={creating.parent?.type === "task"} initialStatus={creating.status} initialDate={creating.day} initialFinish={creating.finishDay} location={{ space_id: spaceId, parent_item_id: creating.locationParent !== undefined ? (creating.locationParent ?? undefined) : (creating.parent?.id ?? parent?.id) }} me={me} onCreated={(item) => { noticeIfHidden(item); if (creating?.placement) void placeNextTo(item, creating.placement); onOpen(item); }} />}
   </section>;
 }

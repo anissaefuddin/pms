@@ -108,6 +108,10 @@ func (s *Server) createItem(w http.ResponseWriter, r *http.Request) {
 	if !decode(w, r, &fields) {
 		return
 	}
+	if err := items.AuthorizeAssignments(r.Context(), s.pool, actorOf(r), fields); err != nil {
+		writeItemError(w, err)
+		return
+	}
 	batch := s.notificationBatch()
 	item, err := items.Create(r.Context(), s.pool, actorOf(r), fields, batch)
 	if err == nil {

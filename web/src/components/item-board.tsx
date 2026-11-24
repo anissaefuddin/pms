@@ -1,8 +1,9 @@
 import { formatNumber, formatDate, useProfile } from "@/lib/profile";
-import { useState } from "react";
-import { Diamond, CalendarDays, ListTree, Plus } from "lucide-react";
+import { useRef, useState } from "react";
+import { Diamond, CalendarDays, EyeOff, ListTree, MoreHorizontal, Plus, Rows3 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { CustomFieldDisplay } from "@/components/custom-field-editor";
@@ -13,6 +14,7 @@ import { TypeBadge, TypeGlyph } from "@/components/type-badge";
 import { fieldColumn } from "@/lib/view-columns";
 import { peopleOf } from "@/components/item-table";
 import type { Item, ItemUpdate } from "@/lib/items";
+import { newItemId } from "@/lib/create-item-validate";
 import type { ItemCollectionProps } from "./item-collection-types";
 
 type Lane = { key: string; name?: string; items: Item[] };
@@ -32,12 +34,33 @@ function lanesOf(items: Item[], swimlanes: boolean, unassigned: string): Lane[] 
   return [...lanes, ...(rest.length || !lanes.length ? [{ key: "", name: unassigned, items: rest }] : [])];
 }
 
-export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, canCreate, pending, onOpen, onAdd, onPatch }: ItemCollectionProps & { swimlanes: boolean }) {
+export function ItemBoard({ items, statuses, customFields, columns: shown, swimlanes, preferenceKey, canCreate, pending, onOpen, onAdd, onPatch, onQuickCreate }: ItemCollectionProps & { swimlanes: boolean; preferenceKey: string; onQuickCreate?: (columnId: string, title: string, id: string) => Promise<void> }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const [dragging, setDragging] = useState<{ id: string; lane: string }>();
+  // B2.2: the column whose inline name field is open.
+  const [quick, setQuick] = useState<string>();
+  const addButton = (columnId: string) => onQuickCreate
+    ? (quick === columnId
+      ? <QuickCreate onSubmit={(title, id) => onQuickCreate(columnId, title, id)} onCancel={() => setQuick(undefined)} onDetail={() => { setQuick(undefined); onAdd(columnId); }} />
+      : <Button size="sm" variant="outline" onClick={() => setQuick(columnId)}><Plus />{t("views.add")}</Button>)
+    : <Button size="sm" variant="outline" onClick={() => onAdd(columnId)}><Plus />{t("views.add")}</Button>;
   const [move, setMove] = useState<Move>();
   const [now] = useState(() => Date.now());
+  const storageKey = `pms:board-hide-empty:${preferenceKey}`;
+  const [hideEmpty, setHideEmpty] = useState(() => { try { return localStorage.getItem(storageKey) === "1"; } catch { return false; } });
+  const toggleEmpty = () => setHideEmpty((value) => {
+    const next = !value;
+    try { localStorage.setItem(storageKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
+    return next;
+  });
+  const densityKey = `pms:board-compact:${preferenceKey}`;
+  const [compact, setCompact] = useState(() => { try { return localStorage.getItem(densityKey) === "1"; } catch { return false; } });
+  const toggleCompact = () => setCompact((value) => {
+    const next = !value;
+    try { localStorage.setItem(densityKey, next ? "1" : "0"); } catch { /* storage can be blocked */ }
+    return next;
+  });
   const cardFields = customFields.filter((field) => shown.includes(fieldColumn(field.id)));
   const known = new Set(statuses.map((status) => status.id));
 
@@ -58,6 +81,14 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
 
   const lanes = lanesOf(items, swimlanes, t("views.unassigned"));
   return <div className="space-y-4">
+    <div className="flex justify-end gap-2">
+      <Button size="sm" variant={compact ? "secondary" : "outline"} aria-pressed={compact} onClick={toggleCompact}>
+        <Rows3 />{t("views.boardCompact")}
+      </Button>
+      <Button size="sm" variant={hideEmpty ? "secondary" : "outline"} aria-pressed={hideEmpty} onClick={toggleEmpty}>
+        <EyeOff />{t("views.boardHideEmpty")}
+      </Button>
+    </div>
     {lanes.map((lane) => {
       const unlisted = lane.items.filter((item) => !item.status || !known.has(item.status.id));
       const cols = [
@@ -65,17 +96,17 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
         ...(unlisted.length ? [{ id: "", name: t("views.noStatus"), color: noColor, items: unlisted }] : []),
       ];
       const board = <div className="flex gap-3 overflow-x-auto pb-3">
-        {cols.map((column) => <section key={column.id} aria-label={lane.name ? `${lane.name}: ${column.name}` : column.name}
+        {cols.filter((column) => !hideEmpty || column.items.length > 0).map((column) => <section key={column.id} aria-label={lane.name ? `${lane.name}: ${column.name}` : column.name}
           className="w-72 shrink-0 space-y-2"
           onDragOver={(event) => { if (dragging && !pending && (column.id || swimlanes)) event.preventDefault(); }}
           onDrop={(event) => { event.preventDefault(); drop(lane, column.id); }}>
           <h3 className={`flex items-center gap-2 rounded-md px-3 py-2 font-semibold ${tintOf(column.color)}`}>
             <span aria-hidden className={`size-2 rounded-full ${statusDotClass(column.color)}`} />{column.name} <span className="font-normal">{formatNumber(column.items.length, profile)}</span>{column.items.some((item) => item.is_milestone) && <span className="text-xs font-normal text-muted-foreground">{t("views.boardBreakdown", { tasks: column.items.filter((item) => !item.is_milestone).length, milestones: column.items.filter((item) => item.is_milestone).length })}</span>}</h3>
           <ul className="space-y-2">
-            {column.items.map((item) => <Card key={item.id} item={item} lane={lane.key} now={now} fields={cardFields} shown={shown}
+            {column.items.map((item) => <Card key={item.id} item={item} lane={lane.key} now={now} fields={cardFields} shown={shown} compact={compact} showStatus={swimlanes}
               statuses={statuses} pending={pending} onOpen={onOpen} onPatch={onPatch} onDrag={setDragging} />)}
           </ul>
-          {canCreate && column.id && <Button size="sm" variant="outline" onClick={() => onAdd(column.id)}><Plus />{t("views.add")}</Button>}
+          {canCreate && column.id && addButton(column.id)}
         </section>)}
       </div>;
       return swimlanes
@@ -92,8 +123,9 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
   </div>;
 }
 
-function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPatch, onDrag }: {
+function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, pending, onOpen, onPatch, onDrag }: {
   item: Item; lane: string; now: number; fields: ItemCollectionProps["customFields"]; shown: string[];
+  compact: boolean; showStatus: boolean;
   statuses: ItemCollectionProps["statuses"]; pending: boolean;
   onOpen: (item: Item) => void; onPatch: ItemCollectionProps["onPatch"]; onDrag: (value?: { id: string; lane: string }) => void;
 }) {
@@ -112,12 +144,18 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
   return <li className="rounded-lg border bg-card shadow-xs"
     draggable={draggable} onDragStart={(event) => { event.dataTransfer.setData("text/plain", item.id); onDrag({ id: item.id, lane }); }}
     onDragEnd={() => onDrag(undefined)}>
-    <div className="space-y-2 p-3">
-      {shown.includes("cover") && item.cover_attachment_id && <img alt="" loading="lazy" className="h-24 w-full rounded object-cover"
+    <div className={compact ? "space-y-1 p-2" : "space-y-2 p-3"}>
+      {shown.includes("cover") && item.cover_attachment_id && <img alt="" loading="lazy" className={`${compact ? "h-16" : "h-24"} w-full rounded object-cover`}
         src={`/api/v1/attachments/${item.cover_attachment_id}/download`} />}
       <div className="flex items-start gap-2">
         <TypeGlyph item={item} className="mt-1.5 size-4 text-muted-foreground" />
-        <Button variant="ghost" size="sm" className="h-auto min-w-0 flex-1 justify-start whitespace-normal p-0 text-left text-sm font-medium hover:bg-transparent hover:underline" onClick={() => onOpen(item)}>{item.title}</Button>
+        <Button variant="ghost" size="sm" title={item.title} className="line-clamp-2 h-auto min-w-0 flex-1 justify-start whitespace-normal p-0 text-left text-sm font-medium hover:bg-transparent hover:underline" onClick={() => onOpen(item)}>{item.title}</Button>
+        {canMove && !showStatus && <DropdownMenu>
+          <DropdownMenuTrigger render={<Button size="icon-sm" variant="ghost" disabled={pending} aria-label={`${t("views.moveStatus")}: ${item.title}`} />}><MoreHorizontal /></DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            {statuses.map((status) => <DropdownMenuItem key={status.id} disabled={status.id === item.status?.id} onClick={() => void onPatch(item, { status_id: status.id })}>{status.name}</DropdownMenuItem>)}
+          </DropdownMenuContent>
+        </DropdownMenu>}
       </div>
       {/* Agent B: the type icon already shows the type; the name stays for screen readers and tests (sr-only). */}
       {(!!meta.length || !!item.item_type || !!item.is_milestone) && <p className="flex flex-wrap items-center gap-x-1 text-xs text-muted-foreground">
@@ -136,12 +174,12 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
         <CustomFieldDisplay field={field} value={item.fields?.[field.id]} people={peopleOf(item, field, item.fields?.[field.id])} profile={profile} />
       </p>)}
     </div>
-    {(!!item.child_count || !!item.attachment_count || !!item.comment_count) && <div className="flex flex-wrap items-center gap-3 border-t px-3 py-2 text-xs text-muted-foreground">
+    {(!!item.child_count || !!item.attachment_count || !!item.comment_count) && <div className={`flex flex-wrap items-center gap-3 border-t px-3 ${compact ? "py-1" : "py-2"} text-xs text-muted-foreground`}>
       {!!item.child_count && <span title={t("items.childCount", { count: item.child_count })} className="inline-flex items-center gap-1"><ListTree className="size-3.5" aria-hidden />{item.child_count}<span className="sr-only"> {t("items.childCount", { count: item.child_count })}</span></span>}
       {!!item.attachment_count && <span>{t("views.attachments", { count: item.attachment_count })}</span>}
       {!!item.comment_count && <span>{t("views.comments", { count: item.comment_count })}</span>}
     </div>}
-    {canMove && <div className="border-t px-3 py-2"><DropdownMenu>
+    {canMove && showStatus && <div className={`border-t px-3 ${compact ? "py-1" : "py-2"}`}><DropdownMenu>
       <DropdownMenuTrigger render={<Button variant="ghost" size="sm" className="h-auto w-full justify-start p-0" disabled={pending} aria-label={`${item.status?.name ?? t("views.noStatus")}. ${t("views.moveStatus")}: ${item.title}`} />}>
         {item.status ? <StatusChip status={item.status} /> : t("views.noStatus")}
       </DropdownMenuTrigger>
@@ -150,4 +188,42 @@ function Card({ item, lane, now, fields, shown, statuses, pending, onOpen, onPat
       </DropdownMenuContent>
     </DropdownMenu></div>}
   </li>;
+}
+
+/** B2.2: a Task name typed inside a column. Enter or leaving the field creates it, Escape cancels, and a failed request keeps the name. */
+function QuickCreate({ onSubmit, onCancel, onDetail }: { onSubmit: (title: string, id: string) => Promise<void>; onCancel: () => void; onDetail: () => void }) {
+  const { t } = useTranslation();
+  const [title, setTitle] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  // One request at a time: Enter followed by blur must not create the item twice.
+  const inFlight = useRef(false);
+  // The id is chosen once per name: a retry after a lost response reuses it, so the server cannot store a second item.
+  const attempt = useRef<{ name: string; id: string } | undefined>(undefined);
+  async function submit() {
+    if (inFlight.current) return;
+    const name = title.trim();
+    if (!name) { onCancel(); return; }
+    if (attempt.current?.name !== name) attempt.current = { name, id: newItemId() };
+    inFlight.current = true;
+    setBusy(true);
+    setError("");
+    try {
+      await onSubmit(name, attempt.current.id);
+    } catch (err) {
+      setError(err instanceof Error && err.message ? err.message : t("views.createFailed"));
+      inFlight.current = false;
+      setBusy(false);
+    }
+  }
+  return <div className="space-y-1 rounded-md border bg-card p-2">
+    <Input autoFocus aria-label={t("views.quickCreateName")} placeholder={t("views.quickCreateName")} value={title} disabled={busy} maxLength={500}
+      onChange={(event) => setTitle(event.target.value)} onBlur={() => void submit()}
+      onKeyDown={(event) => {
+        if (event.key === "Enter") { event.preventDefault(); void submit(); }
+        if (event.key === "Escape") { event.preventDefault(); onCancel(); }
+      }} />
+    {error && <p role="alert" className="text-xs text-destructive">{error}</p>}
+    <button type="button" className="text-xs text-primary underline" onMouseDown={(event) => event.preventDefault()} onClick={onDetail}>{t("views.quickCreateDetail")}</button>
+  </div>;
 }
