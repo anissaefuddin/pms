@@ -41,6 +41,7 @@ func (s *Server) spaceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/spaces/registry", s.requireUser(s.listSpaceRegistry))
 	mux.HandleFunc("GET /api/v1/overview", s.requireUser(s.getOverview))
 	mux.HandleFunc("GET /api/v1/overview/timeline", s.requireUser(s.getOverviewTimeline))
+	mux.HandleFunc("GET /api/v1/overview/tasks", s.requireUser(s.getOverviewTasks))
 	mux.HandleFunc("GET /api/v1/overview/agenda", s.requireUser(s.getOverviewAgenda))
 	s.spaceGovernanceRoutes(mux)
 	mux.HandleFunc("GET /api/v1/users", s.requireUser(s.listUsers))

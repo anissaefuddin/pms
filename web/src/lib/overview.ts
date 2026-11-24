@@ -72,6 +72,33 @@ export function useOverviewTimeline(from: string | null, days: number = TIMELINE
   });
 }
 
+export type TasksResponse = paths["/overview/tasks"]["get"]["responses"][200]["content"]["application/json"];
+export type TasksPreset = "" | "overdue" | "completed_week";
+/** Every filter of the cross-Space Task list. Empty values mean "any". */
+export type TasksFilter = { preset: TasksPreset; spaces: string[]; assignees: string[]; statuses: string[]; dueFrom: string; dueTo: string; q: string };
+
+function tasksQuery(filter: TasksFilter): string {
+  const search = new URLSearchParams();
+  if (filter.preset) search.set("preset", filter.preset);
+  for (const id of filter.spaces) search.append("space_id", id);
+  for (const id of filter.assignees) search.append("assignee_id", id);
+  for (const status of filter.statuses) search.append("status", status);
+  if (filter.dueFrom) search.set("due_from", filter.dueFrom);
+  if (filter.dueTo) search.set("due_to", filter.dueTo);
+  if (filter.q.trim()) search.set("q", filter.q.trim());
+  const qs = search.toString();
+  return qs ? `?${qs}` : "";
+}
+
+/** Tasks across every visible Space, filtered. Each filter change is a new query. */
+export function useOverviewTasks(filter: TasksFilter) {
+  return useQuery({
+    queryKey: ["overview", "tasks", filter],
+    queryFn: () => api<TasksResponse>(`/api/v1/overview/tasks${tasksQuery(filter)}`),
+    staleTime: OVERVIEW_STALE_MS,
+  });
+}
+
 /** Due Projects and Tasks ordered by date, optionally narrowed to one Space or one type. */
 export function useOverviewAgenda(from: string | null, spaceId: string, kind: AgendaKind, days: number = AGENDA_DAYS) {
   return useQuery({

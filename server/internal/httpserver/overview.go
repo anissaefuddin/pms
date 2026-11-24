@@ -3,7 +3,9 @@ package httpserver
 import (
 	"net/http"
 	"net/url"
+	"regexp"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/overview"
@@ -104,6 +106,68 @@ func (s *Server) getOverviewAgenda(w http.ResponseWriter, r *http.Request) {
 		From: from, Days: days, SpaceID: q.Get("space_id"), Kind: kind, Limit: limit,
 		IncludeArchived: q.Get("include_archived") == "true",
 	})
+	if err != nil {
+		writeSpaceError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, res)
+}
+
+var uuidFormat = regexp.MustCompile(`^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$`)
+
+// getOverviewTasks serves the cross-Space Task list behind the Summary figures and the Tasks tab. Every filter is
+// optional and repeatable where it makes sense (space_id, assignee_id, status). Read-only.
+func (s *Server) getOverviewTasks(w http.ResponseWriter, r *http.Request) {
+	q := r.URL.Query()
+	opts := overview.TasksOptions{
+		Preset:          q.Get("preset"),
+		Spaces:          q["space_id"],
+		Assignees:       q["assignee_id"],
+		Statuses:        q["status"],
+		DueFrom:         q.Get("due_from"),
+		DueTo:           q.Get("due_to"),
+		Query:           strings.TrimSpace(q.Get("q")),
+		IncludeArchived: q.Get("include_archived") == "true",
+	}
+	if opts.Preset != "" && opts.Preset != "overdue" && opts.Preset != "completed_week" {
+		writeError(w, 422, "preset must be overdue or completed_week")
+		return
+	}
+	for _, id := range append(append([]string{}, opts.Spaces...), opts.Assignees...) {
+		if !uuidFormat.MatchString(id) {
+			writeError(w, 422, "space_id and assignee_id must be UUIDs")
+			return
+		}
+	}
+	for _, status := range opts.Statuses {
+		if status != "active" && status != "deferred" && status != "completed" && status != "cancelled" {
+			writeError(w, 422, "status must be active, deferred, completed or cancelled")
+			return
+		}
+	}
+	for _, date := range []string{opts.DueFrom, opts.DueTo} {
+		if date == "" {
+			continue
+		}
+		if _, err := time.Parse("2006-01-02", date); err != nil {
+			writeError(w, 422, "due_from and due_to must be YYYY-MM-DD")
+			return
+		}
+	}
+	if len([]rune(opts.Query)) > 120 {
+		writeError(w, 422, "q must be at most 120 characters")
+		return
+	}
+	opts.Limit = 200
+	if raw := q.Get("limit"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil || n < 1 || n > 500 {
+			writeError(w, 422, "limit must be between 1 and 500")
+			return
+		}
+		opts.Limit = n
+	}
+	res, err := overview.BuildTasks(r.Context(), s.pool, actorOf(r), opts)
 	if err != nil {
 		writeSpaceError(w, err)
 		return

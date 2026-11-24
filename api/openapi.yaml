@@ -1982,6 +1982,58 @@ paths:
                         overdue: { type: boolean }
         '404': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /overview/tasks:
+    get:
+      tags: [overview]
+      operationId: getOverviewTasks
+      summary: Task lintas Space yang terlihat, dengan filter bebas (read-only). Preset overdue dan completed_week memakai aturan yang sama dengan angka ringkasan.
+      parameters:
+        - { name: preset, in: query, required: false, schema: { type: string, enum: [overdue, completed_week] } }
+        - { name: space_id, in: query, required: false, description: 'Boleh diulang; kosong berarti semua Space yang terlihat', schema: { type: array, items: { type: string, format: uuid } }, style: form, explode: true }
+        - { name: assignee_id, in: query, required: false, description: 'Boleh diulang; Task yang punya salah satu penerima', schema: { type: array, items: { type: string, format: uuid } }, style: form, explode: true }
+        - { name: status, in: query, required: false, description: 'Boleh diulang; grup status', schema: { type: array, items: { type: string, enum: [active, deferred, completed, cancelled] } }, style: form, explode: true }
+        - { name: due_from, in: query, required: false, schema: { type: string, format: date } }
+        - { name: due_to, in: query, required: false, schema: { type: string, format: date } }
+        - { name: q, in: query, required: false, description: 'Judul mengandung teks ini (tidak peka huruf besar)', schema: { type: string, maxLength: 120 } }
+        - { name: limit, in: query, required: false, schema: { type: integer, minimum: 1, maximum: 500, default: 200 } }
+        - { name: include_archived, in: query, required: false, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [timezone, today, items, truncated]
+                properties:
+                  timezone: { type: string }
+                  today: { type: string, format: date }
+                  truncated: { type: boolean }
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [id, title, status_group, status_name, space_id, space_name, overdue, assignees]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        due_date: { type: string, format: date, nullable: true }
+                        start_date: { type: string, format: date, nullable: true }
+                        status_group: { type: string, enum: [active, deferred, completed, cancelled] }
+                        status_name: { type: string }
+                        completed_at: { type: string, nullable: true }
+                        space_id: { type: string, format: uuid }
+                        space_name: { type: string }
+                        overdue: { type: boolean }
+                        assignees:
+                          type: array
+                          items:
+                            type: object
+                            required: [id, name]
+                            properties:
+                              id: { type: string, format: uuid }
+                              name: { type: string }
+        '422': { $ref: '#/components/responses/Problem' }
   /dashboards:
     get:
       operationId: listDashboards

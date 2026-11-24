@@ -1359,6 +1359,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/overview/tasks": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Task lintas Space yang terlihat, dengan filter bebas (read-only). Preset overdue dan completed_week memakai aturan yang sama dengan angka ringkasan. */
+        get: operations["getOverviewTasks"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/dashboards": {
         parameters: {
             query?: never;
@@ -10060,6 +10077,68 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getOverviewTasks: {
+        parameters: {
+            query?: {
+                preset?: "overdue" | "completed_week";
+                /** @description Boleh diulang; kosong berarti semua Space yang terlihat */
+                space_id?: string[];
+                /** @description Boleh diulang; Task yang punya salah satu penerima */
+                assignee_id?: string[];
+                /** @description Boleh diulang; grup status */
+                status?: ("active" | "deferred" | "completed" | "cancelled")[];
+                due_from?: string;
+                due_to?: string;
+                /** @description Judul mengandung teks ini (tidak peka huruf besar) */
+                q?: string;
+                limit?: number;
+                include_archived?: boolean;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        timezone: string;
+                        /** Format: date */
+                        today: string;
+                        truncated: boolean;
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            /** Format: date */
+                            due_date?: string | null;
+                            /** Format: date */
+                            start_date?: string | null;
+                            /** @enum {string} */
+                            status_group: "active" | "deferred" | "completed" | "cancelled";
+                            status_name: string;
+                            completed_at?: string | null;
+                            /** Format: uuid */
+                            space_id: string;
+                            space_name: string;
+                            overdue: boolean;
+                            assignees: {
+                                /** Format: uuid */
+                                id: string;
+                                name: string;
+                            }[];
+                        }[];
+                    };
+                };
+            };
             422: components["responses"]["Problem"];
         };
     };

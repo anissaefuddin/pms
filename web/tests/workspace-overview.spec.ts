@@ -28,6 +28,15 @@ const timeline = {
   }],
 };
 
+const me = "11111111-1111-4111-8111-111111111111";
+const tasksBody = {
+  timezone: "Asia/Jakarta", today: "2026-11-22", truncated: false,
+  items: [
+    { id: task, title: "Write brief", due_date: "2026-11-24", start_date: null, status_group: "active", status_name: "In progress", completed_at: null, space_id: marketing.id, space_name: "Marketing", overdue: false, assignees: [{ id: me, name: "Ada" }] },
+    { id: loose, title: "Book venue", due_date: "2026-11-01", start_date: null, status_group: "active", status_name: "New", completed_at: null, space_id: ops.id, space_name: "Operations", overdue: true, assignees: [] },
+  ],
+};
+
 const agenda = {
   timezone: "Asia/Jakarta", today: "2026-11-22", from: "2026-11-22", to: "2026-12-05", truncated: false, overdue_count: 3,
   items: [
@@ -44,6 +53,7 @@ async function mock(page: Page) {
     ...record("/overview", (req) => ({ body: req.query.get("limit") === "100" ? summary : req.query.get("cursor") ? secondPage : summary })),
     ...record("/overview/timeline", () => ({ body: timeline })),
     ...record("/overview/agenda", () => ({ body: agenda })),
+    ...record("/overview/tasks", () => ({ body: tasksBody })),
   } });
   return { calls };
 }
@@ -100,7 +110,7 @@ test("agenda groups by date, flags overdue work, and filters by type", async ({ 
   await expect(page.getByText("3 overdue tasks in Spaces you can see")).toBeVisible();
   await expect(page.getByRole("heading", { name: "2026-11-22" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "2026-11-25" })).toBeVisible();
-  await page.getByRole("radio", { name: "Tasks" }).click();
+  await page.getByRole("radio", { name: "Tasks", exact: true }).last().click(); // the Agenda filter; the view tab has the same name
   await expect.poll(() => calls.some((c) => c.query.get("type") === "task")).toBe(true);
   await page.getByRole("combobox", { name: /^Space/ }).selectOption(ops.id);
   await expect.poll(() => calls.some((c) => c.query.get("space_id") === ops.id)).toBe(true);
@@ -120,4 +130,28 @@ test.describe("390 px", () => {
       expect(overflow).toBeLessThanOrEqual(0);
     });
   }
+});
+
+test("the Tasks tab lists Tasks across Spaces; filters combine; a Summary figure opens it already filtered", async ({ page }) => {
+  const { calls } = await mock(page);
+  await page.goto("/dashboards");
+  await page.getByRole("radio", { name: "Workspace overview" }).click();
+  await page.getByRole("button", { name: /Overdue tasks/ }).click();
+  await expect(page.getByRole("radio", { name: "Tasks", exact: true }).first()).toBeChecked();
+  await expect(page.getByRole("radio", { name: "Overdue", exact: true })).toBeChecked();
+  await expect(page.getByRole("row", { name: /Book venue/ })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Operations" }).last()).toHaveAttribute("href", `/spaces/${ops.id}`);
+  expect(calls.at(-1)?.query.get("preset")).toBe("overdue");
+
+  await page.getByRole("checkbox", { name: "Completed" }).check();
+  await expect.poll(() => calls.some((c) => c.query.getAll("status").includes("completed"))).toBe(true);
+  await page.getByLabel("Due from").fill("2026-11-01");
+  await expect.poll(() => calls.some((c) => c.query.get("due_from") === "2026-11-01")).toBe(true);
+  await page.getByRole("searchbox", { name: "Search title" }).fill("venue");
+  await expect.poll(() => calls.some((c) => c.query.get("q") === "venue")).toBe(true);
+  await page.locator("details summary").click();
+  await page.getByRole("checkbox", { name: "Marketing" }).check();
+  await page.getByRole("checkbox", { name: "Operations" }).check();
+  await expect.poll(() => calls.some((c) => c.query.getAll("space_id").length === 2 && c.query.getAll("space_id").includes(marketing.id))).toBe(true);
+  await expect(page.getByRole("status").filter({ hasText: "2 tasks" })).toBeVisible();
 });

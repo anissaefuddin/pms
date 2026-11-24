@@ -10,10 +10,11 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { WorkspaceTimeline } from "@/components/workspace-timeline";
 import { WorkspaceAgenda } from "@/components/workspace-agenda";
+import { WorkspaceTasks, type TasksSeed } from "@/components/workspace-tasks";
 
 const SORTS: OverviewSort[] = ["overdue", "name", "progress", "last_activity"];
 const HEALTH = ["attention", "on_track", "empty"] as const;
-const VIEWS = ["overview", "spaces", "timeline", "agenda"] as const;
+const VIEWS = ["overview", "spaces", "timeline", "agenda", "tasks"] as const;
 type View = (typeof VIEWS)[number];
 const select = "mt-1 block h-9 rounded-md border border-input bg-background px-2";
 const HEALTH_TONE: Record<string, string> = {
@@ -27,20 +28,24 @@ const BAR_TONE: Record<string, string> = { attention: "bg-amber-500", on_track: 
 export function WorkspaceOverview() {
   const { t } = useTranslation();
   const [view, setView] = useState<View>("overview");
+  // A figure on the Summary opens the Tasks tab already filtered; choosing a tab by hand starts it clean.
+  const [tasksSeed, setTasksSeed] = useState<TasksSeed>({});
+  const openTasks = (seed: TasksSeed) => { setTasksSeed(seed); setView("tasks"); };
   return <section className="space-y-5" aria-label={t("dashboards.overview.title")}>
     <div className="flex flex-wrap items-center justify-between gap-3">
-      <SegmentedControl aria-label={t("dashboards.overview.tabs.label")} value={view} onChange={(v) => setView(v as View)}
-        items={VIEWS.map((key) => ({ value: key, label: t(`dashboards.overview.tabs.${key}`) }))} />
+      <div className="max-w-full overflow-x-auto"><SegmentedControl aria-label={t("dashboards.overview.tabs.label")} value={view} onChange={(v) => { setView(v as View); setTasksSeed({}); }}
+        items={VIEWS.map((key) => ({ value: key, label: t(`dashboards.overview.tabs.${key}`) }))} /></div>
     </div>
     <p className="text-sm text-muted-foreground">{t("dashboards.overview.hint")}</p>
-    {view === "overview" && <Summary />}
-    {view === "spaces" && <SpaceTable />}
+    {view === "overview" && <Summary onOpenTasks={openTasks} />}
+    {view === "spaces" && <SpaceTable onOpenTasks={openTasks} />}
     {view === "timeline" && <WorkspaceTimeline />}
     {view === "agenda" && <WorkspaceAgenda />}
+    {view === "tasks" && <WorkspaceTasks seed={tasksSeed} />}
   </section>;
 }
 
-function Summary() {
+function Summary({ onOpenTasks }: { onOpenTasks: (seed: TasksSeed) => void }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const q = useOverviewSummary();
@@ -69,8 +74,14 @@ function Summary() {
     <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
       <KpiCard label={t("dashboards.overview.kpi.spaces")} value={n(kpis.accessible_spaces)} />
       <KpiCard label={t("dashboards.overview.kpi.projects")} value={n(kpis.active_projects)} />
-      <KpiCard label={t("dashboards.overview.kpi.overdue")} value={n(kpis.overdue_tasks)} className={kpis.overdue_tasks > 0 ? "border-amber-400/60" : undefined} />
-      <KpiCard label={t("dashboards.overview.kpi.completed")} value={n(kpis.completed_this_week)} className="border-emerald-400/60" />
+      <button type="button" onClick={() => onOpenTasks({ preset: "overdue" })}
+        className="rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 hover:opacity-90">
+        <KpiCard label={t("dashboards.overview.kpi.overdue")} value={n(kpis.overdue_tasks)} className={kpis.overdue_tasks > 0 ? "border-amber-400/60" : undefined} />
+      </button>
+      <button type="button" onClick={() => onOpenTasks({ preset: "completed_week" })}
+        className="rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 hover:opacity-90">
+        <KpiCard label={t("dashboards.overview.kpi.completed")} value={n(kpis.completed_this_week)} className="border-emerald-400/60" />
+      </button>
       <KpiCard label={t("dashboards.overview.kpi.atRisk")} value={t("dashboards.overview.none")} hint={t("dashboards.overview.kpi.atRiskHint")} />
     </div>
     <div className="grid gap-6 lg:grid-cols-2">
@@ -93,13 +104,11 @@ function Summary() {
         <h2 id="overview-attention" className="text-sm font-semibold">{t("dashboards.overview.attention.heading")}</h2>
         {attention.length === 0
           ? <p className="text-sm text-muted-foreground">{t("dashboards.overview.attention.none")}</p>
-          : <ul className="space-y-2">{attention.map((space) => <li key={space.id}>
-              <Link to="/spaces/$spaceId" params={{ spaceId: space.id }}
-                className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm transition-colors hover:bg-muted/60 focus-visible:ring-3 focus-visible:ring-ring/50 outline-none">
-                <span className="truncate font-medium">{space.name}</span>
-                <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-900 dark:bg-amber-500/20 dark:text-amber-200">
-                  {t("dashboards.overview.attention.overdue", { value: n(space.overdue_count) })}</span>
-              </Link></li>)}</ul>}
+          : <ul className="space-y-2">{attention.map((space) => <li key={space.id} className="flex items-center justify-between gap-3 rounded-lg border px-3 py-2 text-sm">
+              <Link to="/spaces/$spaceId" params={{ spaceId: space.id }} className="truncate font-medium underline-offset-2 hover:underline">{space.name}</Link>
+              <button type="button" onClick={() => onOpenTasks({ preset: "overdue", spaceId: space.id })}
+                className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold tabular-nums text-amber-900 hover:bg-amber-200 focus-visible:ring-3 focus-visible:ring-ring/50 outline-none dark:bg-amber-500/20 dark:text-amber-200">
+                {t("dashboards.overview.attention.overdue", { value: n(space.overdue_count) })}</button></li>)}</ul>}
         {total > spaces.length && <p className="text-xs text-muted-foreground">{t("dashboards.overview.partial", { shown: spaces.length, total })}</p>}
       </section>
     </div>
@@ -135,7 +144,7 @@ function Summary() {
 const STATUS_FILTERS = ["all", "attention", "on_track", "empty"] as const;
 
 /** One row per Space: icon, name, counts, overdue, progress, last activity and health. Search and filters narrow the loaded rows. */
-function SpaceTable() {
+function SpaceTable({ onOpenTasks }: { onOpenTasks: (seed: TasksSeed) => void }) {
   const { t } = useTranslation();
   const profile = useProfile();
   const [sort, setSort] = useState<OverviewSort>("overdue");
@@ -196,7 +205,10 @@ function SpaceTable() {
           <td className="px-4 py-3 text-right tabular-nums">{n(space.task_count)}</td>
           <td className="px-4 py-3 text-right">
             <span className={cn("inline-flex items-center gap-1.5 tabular-nums", space.overdue_count > 0 && "font-semibold text-amber-700 dark:text-amber-300")}>
-              {space.overdue_count > 0 && <span aria-hidden className="size-1.5 rounded-full bg-amber-500" />}{n(space.overdue_count)}</span></td>
+              {space.overdue_count > 0 && <span aria-hidden className="size-1.5 rounded-full bg-amber-500" />}
+              {space.overdue_count > 0
+                ? <button type="button" onClick={() => onOpenTasks({ preset: "overdue", spaceId: space.id })} className="tabular-nums underline-offset-2 hover:underline">{n(space.overdue_count)}</button>
+                : n(space.overdue_count)}</span></td>
           <td className="px-4 py-3">
             {space.progress_percent == null
               ? <span className="text-xs text-muted-foreground">{t("dashboards.overview.progress.none")}</span>
