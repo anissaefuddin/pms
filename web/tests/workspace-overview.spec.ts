@@ -61,7 +61,6 @@ async function mock(page: Page) {
 test("summary shows KPIs, the attention list and a read-only Space link", async ({ page }) => {
   await mock(page);
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "Workspace overview" }).click();
   await expect(page.getByRole("radio", { name: "Summary" })).toBeChecked();
   await expect(page.getByText("Active projects").locator("..").getByText("3")).toBeVisible();
   await expect(page.getByRole("heading", { name: "Needs attention" })).toBeVisible();
@@ -72,7 +71,6 @@ test("summary shows KPIs, the attention list and a read-only Space link", async 
 test("spaces tab sorts and loads the next page with the server cursor", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "Workspace overview" }).click();
   await page.getByRole("radio", { name: "Spaces" }).click();
   await expect(page.getByRole("row", { name: /Operations/ })).toBeVisible();
   await page.getByRole("button", { name: "Load more" }).click();
@@ -83,7 +81,6 @@ test("spaces tab sorts and loads the next page with the server cursor", async ({
 test("timeline groups by Space, expands a Project, and moves by one period", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "Workspace overview" }).click();
   await page.getByRole("radio", { name: "Timeline" }).click();
   await expect(page.getByRole("button", { name: /Launch plan/ })).toHaveCount(0);
   // Collapsed Space and Project rows still show where their work falls, before anything is expanded.
@@ -105,7 +102,6 @@ test("timeline groups by Space, expands a Project, and moves by one period", asy
 test("agenda groups by date, flags overdue work, and filters by type", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "Workspace overview" }).click();
   await page.getByRole("radio", { name: "Agenda" }).click();
   await expect(page.getByText("3 overdue tasks in Spaces you can see")).toBeVisible();
   await expect(page.getByRole("heading", { name: "2026-11-22" })).toBeVisible();
@@ -123,7 +119,6 @@ test.describe("390 px", () => {
     test(`${view} does not scroll the page sideways`, async ({ page }) => {
       await mock(page);
       await page.goto("/dashboards");
-      await page.getByRole("radio", { name: "Workspace overview" }).click();
       await page.getByRole("radio", { name: view }).click();
       await page.waitForLoadState("networkidle");
       const overflow = await page.evaluate(() => document.documentElement.scrollWidth - document.documentElement.clientWidth);
@@ -135,7 +130,6 @@ test.describe("390 px", () => {
 test("the Tasks tab lists Tasks across Spaces; filters combine; a Summary figure opens it already filtered", async ({ page }) => {
   const { calls } = await mock(page);
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "Workspace overview" }).click();
   await page.getByRole("button", { name: /Overdue tasks/ }).click();
   await expect(page.getByRole("radio", { name: "Tasks", exact: true }).first()).toBeChecked();
   await expect(page.getByRole("radio", { name: "Overdue", exact: true })).toBeChecked();
@@ -154,4 +148,14 @@ test("the Tasks tab lists Tasks across Spaces; filters combine; a Summary figure
   await page.getByRole("checkbox", { name: "Operations" }).check();
   await expect.poll(() => calls.some((c) => c.query.getAll("space_id").length === 2 && c.query.getAll("space_id").includes(marketing.id))).toBe(true);
   await expect(page.getByRole("status").filter({ hasText: "2 tasks" })).toBeVisible();
+});
+
+test("the overview tabs end with Custom dashboard, after Tasks", async ({ page }) => {
+  await mock(page);
+  await page.goto("/dashboards");
+  const sections = page.getByRole("radiogroup", { name: "Overview section" }).getByRole("radio");
+  await expect(sections).toHaveText(["Summary", "Spaces", "Timeline", "Agenda", "Tasks", "Custom dashboard"]);
+  await expect(page.getByRole("radio", { name: "My dashboards" })).toHaveCount(0);
+  await sections.last().click();
+  await expect(page.getByRole("radio", { name: "Custom dashboard" })).toBeChecked();
 });

@@ -10,11 +10,12 @@ import { KpiCard } from "@/components/ui/kpi-card";
 import { SegmentedControl } from "@/components/ui/segmented-control";
 import { WorkspaceTimeline } from "@/components/workspace-timeline";
 import { WorkspaceAgenda } from "@/components/workspace-agenda";
+import { CustomDashboards } from "@/components/custom-dashboards";
 import { WorkspaceTasks, type TasksSeed } from "@/components/workspace-tasks";
 
 const SORTS: OverviewSort[] = ["overdue", "name", "progress", "last_activity"];
 const HEALTH = ["attention", "on_track", "empty"] as const;
-const VIEWS = ["overview", "spaces", "timeline", "agenda", "tasks"] as const;
+const VIEWS = ["overview", "spaces", "timeline", "agenda", "tasks", "custom"] as const;
 type View = (typeof VIEWS)[number];
 const select = "mt-1 block h-9 rounded-md border border-input bg-background px-2";
 const HEALTH_TONE: Record<string, string> = {
@@ -42,6 +43,7 @@ export function WorkspaceOverview() {
     {view === "timeline" && <WorkspaceTimeline />}
     {view === "agenda" && <WorkspaceAgenda />}
     {view === "tasks" && <WorkspaceTasks seed={tasksSeed} />}
+    {view === "custom" && <CustomDashboards />}
   </section>;
 }
 

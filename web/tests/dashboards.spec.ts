@@ -45,7 +45,7 @@ async function mock(page: Page, over: Record<string, any> = {}, dash = board()) 
 test("list shows dashboards, switches scope, creates and opens one", async ({ page }) => {
   const calls = await mock(page, { "POST /dashboards": (body: any) => ({ status: 201, body: { ...board(), name: body.name } }) });
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "My dashboards" }).click();
+  await page.getByRole("radio", { name: "Custom dashboard" }).click();
   await expect(page.getByRole("heading", { name: "Dashboards", level: 1 })).toBeVisible();
   await expect(page.getByRole("link", { name: "Team board" })).toHaveAttribute("href", `/dashboards/${d1}`);
   expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
@@ -65,7 +65,7 @@ test("rename, duplicate, move and delete send the right requests and ask before 
     [`DELETE /dashboards/${d2}`]: { status: 204 },
   });
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "My dashboards" }).click();
+  await page.getByRole("radio", { name: "Custom dashboard" }).click();
   const open = (name: string, item: string) => async () => { await page.getByRole("button", { name: `Actions for ${name}` }).click(); await page.getByRole("menuitem", { name: item }).click(); };
   await open("Team board", "Rename")();
   await page.getByLabel("Name", { exact: true }).last().fill("Renamed");
@@ -99,7 +99,7 @@ test("rename, duplicate, move and delete send the right requests and ask before 
 test("a stale rename shows the conflict message", async ({ page }) => {
   await mock(page, { [`PATCH /dashboards/${d1}`]: problem(409, "dashboard changed", "version_conflict") });
   await page.goto("/dashboards");
-  await page.getByRole("radio", { name: "My dashboards" }).click();
+  await page.getByRole("radio", { name: "Custom dashboard" }).click();
   await page.getByRole("button", { name: "Actions for Team board" }).click();
   await page.getByRole("menuitem", { name: "Rename" }).click();
   await page.getByRole("button", { name: "Rename", exact: true }).click();
