@@ -102,8 +102,8 @@ test("detail actions use latest ETag and add a subitem with a parent link", asyn
   await assignees.getByRole("searchbox").fill("gra");
   await assignees.getByRole("button", { name: "Grace Hopper" }).click();
   await expect.poll(() => calls.filter((c) => c.method === "PATCH").at(-1)?.body.assignee_ids).toEqual([grace.id]);
-  await page.getByRole("button", { name: "Add subtask" }).click();
-  const form = page.getByRole("dialog", { name: "Add subtask" });
+  await page.getByRole("button", { name: "Add subitem" }).click();
+  const form = page.getByRole("dialog", { name: "Add subitem" });
   await expect(form.getByRole("combobox", { name: "Parent" })).toHaveCount(0);
   await form.getByLabel("Name").fill("Outline");
   await form.getByRole("button", { name: "Create item" }).click();
