@@ -2646,6 +2646,30 @@ func (e TimeEntryBillingType) Valid() bool {
 	}
 }
 
+// Defines values for TimeEntryStatus.
+const (
+	TimeEntryStatusApproved  TimeEntryStatus = "approved"
+	TimeEntryStatusDraft     TimeEntryStatus = "draft"
+	TimeEntryStatusRejected  TimeEntryStatus = "rejected"
+	TimeEntryStatusSubmitted TimeEntryStatus = "submitted"
+)
+
+// Valid indicates whether the value is a known member of the TimeEntryStatus enum.
+func (e TimeEntryStatus) Valid() bool {
+	switch e {
+	case TimeEntryStatusApproved:
+		return true
+	case TimeEntryStatusDraft:
+		return true
+	case TimeEntryStatusRejected:
+		return true
+	case TimeEntryStatusSubmitted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TimeEntryFieldsBillingType.
 const (
 	TimeEntryFieldsBillingTypeBillable    TimeEntryFieldsBillingType = "billable"
@@ -3039,6 +3063,27 @@ func (e GetProjectTimeSummary200JSONResponseBodyScope) Valid() bool {
 	case GetProjectTimeSummary200JSONResponseBodyScopePermittedEntries:
 		return true
 	case GetProjectTimeSummary200JSONResponseBodyScopeProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCreatedByMe200JSONResponseBodyItemsType.
+const (
+	ListCreatedByMe200JSONResponseBodyItemsTypeFolder  ListCreatedByMe200JSONResponseBodyItemsType = "folder"
+	ListCreatedByMe200JSONResponseBodyItemsTypeProject ListCreatedByMe200JSONResponseBodyItemsType = "project"
+	ListCreatedByMe200JSONResponseBodyItemsTypeTask    ListCreatedByMe200JSONResponseBodyItemsType = "task"
+)
+
+// Valid indicates whether the value is a known member of the ListCreatedByMe200JSONResponseBodyItemsType enum.
+func (e ListCreatedByMe200JSONResponseBodyItemsType) Valid() bool {
+	switch e {
+	case ListCreatedByMe200JSONResponseBodyItemsTypeFolder:
+		return true
+	case ListCreatedByMe200JSONResponseBodyItemsTypeProject:
+		return true
+	case ListCreatedByMe200JSONResponseBodyItemsTypeTask:
 		return true
 	default:
 		return false
@@ -3627,6 +3672,24 @@ func (e UpdateTimeEntryJSONBodyBillingType) Valid() bool {
 	case UpdateTimeEntryJSONBodyBillingTypeBillable:
 		return true
 	case UpdateTimeEntryJSONBodyBillingTypeNonBillable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReviewTimeEntryJSONBodyDecision.
+const (
+	ReviewTimeEntryJSONBodyDecisionApproved ReviewTimeEntryJSONBodyDecision = "approved"
+	ReviewTimeEntryJSONBodyDecisionRejected ReviewTimeEntryJSONBodyDecision = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ReviewTimeEntryJSONBodyDecision enum.
+func (e ReviewTimeEntryJSONBodyDecision) Valid() bool {
+	switch e {
+	case ReviewTimeEntryJSONBodyDecisionApproved:
+		return true
+	case ReviewTimeEntryJSONBodyDecisionRejected:
 		return true
 	default:
 		return false
@@ -6254,6 +6317,8 @@ type TimeEntry struct {
 	ItemTitle   *string              `json:"item_title,omitempty"`
 	Locked      bool                 `json:"locked"`
 	Minutes     int                  `json:"minutes"`
+	ReviewNote  string               `json:"review_note"`
+	Status      TimeEntryStatus      `json:"status"`
 	UserId      openapi_types.UUID   `json:"user_id"`
 	UserName    *string              `json:"user_name,omitempty"`
 	Version     int                  `json:"version"`
@@ -6261,6 +6326,9 @@ type TimeEntry struct {
 
 // TimeEntryBillingType defines model for TimeEntry.BillingType.
 type TimeEntryBillingType string
+
+// TimeEntryStatus defines model for TimeEntry.Status.
+type TimeEntryStatus string
 
 // TimeEntryFields defines model for TimeEntryFields.
 type TimeEntryFields struct {
@@ -7121,6 +7189,14 @@ type EnableTwoFactorJSONBody struct {
 	Code string `json:"code"`
 }
 
+// ListCreatedByMeParams defines parameters for ListCreatedByMe.
+type ListCreatedByMeParams struct {
+	Cursor *openapi_types.UUID `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// ListCreatedByMe200JSONResponseBodyItemsType defines parameters for ListCreatedByMe.
+type ListCreatedByMe200JSONResponseBodyItemsType string
+
 // ListMyRequestsParams defines parameters for ListMyRequests.
 type ListMyRequestsParams struct {
 	Limit  *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
@@ -7596,6 +7672,17 @@ type CreateTimeEntryJSONBody struct {
 // CreateTimeEntryJSONBodyBillingType defines parameters for CreateTimeEntry.
 type CreateTimeEntryJSONBodyBillingType string
 
+// ListTimeEntriesToReviewParams defines parameters for ListTimeEntriesToReview.
+type ListTimeEntriesToReviewParams struct {
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// SubmitTimeEntriesJSONBody defines parameters for SubmitTimeEntries.
+type SubmitTimeEntriesJSONBody struct {
+	From openapi_types.Date `json:"from"`
+	To   openapi_types.Date `json:"to"`
+}
+
 // DeleteTimeEntryParams defines parameters for DeleteTimeEntry.
 type DeleteTimeEntryParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -7619,6 +7706,21 @@ type UpdateTimeEntryParams struct {
 
 // UpdateTimeEntryJSONBodyBillingType defines parameters for UpdateTimeEntry.
 type UpdateTimeEntryJSONBodyBillingType string
+
+// ReviewTimeEntryJSONBody defines parameters for ReviewTimeEntry.
+type ReviewTimeEntryJSONBody struct {
+	Decision ReviewTimeEntryJSONBodyDecision `json:"decision"`
+	Note     *string                         `json:"note,omitempty"`
+}
+
+// ReviewTimeEntryParams defines parameters for ReviewTimeEntry.
+type ReviewTimeEntryParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// ReviewTimeEntryJSONBodyDecision defines parameters for ReviewTimeEntry.
+type ReviewTimeEntryJSONBodyDecision string
 
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
@@ -8049,8 +8151,14 @@ type UpdateStatusJSONRequestBody = StatusPatch
 // CreateTimeEntryJSONRequestBody defines body for CreateTimeEntry for application/json ContentType.
 type CreateTimeEntryJSONRequestBody CreateTimeEntryJSONBody
 
+// SubmitTimeEntriesJSONRequestBody defines body for SubmitTimeEntries for application/json ContentType.
+type SubmitTimeEntriesJSONRequestBody SubmitTimeEntriesJSONBody
+
 // UpdateTimeEntryJSONRequestBody defines body for UpdateTimeEntry for application/json ContentType.
 type UpdateTimeEntryJSONRequestBody UpdateTimeEntryJSONBody
+
+// ReviewTimeEntryJSONRequestBody defines body for ReviewTimeEntry for application/json ContentType.
+type ReviewTimeEntryJSONRequestBody ReviewTimeEntryJSONBody
 
 // InviteUserJSONRequestBody defines body for InviteUser for application/json ContentType.
 type InviteUserJSONRequestBody = InviteRequest
@@ -8897,6 +9005,9 @@ type ServerInterface interface {
 	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
 	// (POST /me/2fa/setup)
 	SetupTwoFactor(w http.ResponseWriter, r *http.Request)
+	// ListCreatedByMe Item buatan pemanggil di semua tingkat yang masih dapat dilihat, terbaru dulu (NAV-02)
+	// (GET /me/created)
+	ListCreatedByMe(w http.ResponseWriter, r *http.Request, params ListCreatedByMeParams)
 	// ListMyIdentities Identitas SSO yang tertaut ke pemanggil
 	// (GET /me/identities)
 	ListMyIdentities(w http.ResponseWriter, r *http.Request)
@@ -9278,6 +9389,12 @@ type ServerInterface interface {
 	// CreateTimeEntry Catat waktu sendiri untuk task dan tanggal
 	// (POST /time-entries)
 	CreateTimeEntry(w http.ResponseWriter, r *http.Request)
+	// ListTimeEntriesToReview Entry orang lain yang diajukan pada task dengan akses penuh, terlama dulu
+	// (GET /time-entries/review)
+	ListTimeEntriesToReview(w http.ResponseWriter, r *http.Request, params ListTimeEntriesToReviewParams)
+	// SubmitTimeEntries Ajukan time entry draf dan ditolak milik sendiri dalam satu periode untuk direview
+	// (POST /time-entries/submit)
+	SubmitTimeEntries(w http.ResponseWriter, r *http.Request)
 
 	// (DELETE /time-entries/{entryId})
 	DeleteTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params DeleteTimeEntryParams)
@@ -9287,6 +9404,9 @@ type ServerInterface interface {
 	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
 	// (PATCH /time-entries/{entryId})
 	UpdateTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params UpdateTimeEntryParams)
+	// ReviewTimeEntry Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
+	// (POST /time-entries/{entryId}/review)
+	ReviewTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params ReviewTimeEntryParams)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request, params ListUsersParams)
@@ -14617,6 +14737,39 @@ func (siw *ServerInterfaceWrapper) SetupTwoFactor(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// ListCreatedByMe operation middleware
+func (siw *ServerInterfaceWrapper) ListCreatedByMe(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCreatedByMeParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCreatedByMe(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListMyIdentities operation middleware
 func (siw *ServerInterfaceWrapper) ListMyIdentities(w http.ResponseWriter, r *http.Request) {
 
@@ -18626,6 +18779,53 @@ func (siw *ServerInterfaceWrapper) CreateTimeEntry(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ListTimeEntriesToReview operation middleware
+func (siw *ServerInterfaceWrapper) ListTimeEntriesToReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTimeEntriesToReviewParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTimeEntriesToReview(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubmitTimeEntries operation middleware
+func (siw *ServerInterfaceWrapper) SubmitTimeEntries(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubmitTimeEntries(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteTimeEntry operation middleware
 func (siw *ServerInterfaceWrapper) DeleteTimeEntry(w http.ResponseWriter, r *http.Request) {
 
@@ -18751,6 +18951,60 @@ func (siw *ServerInterfaceWrapper) UpdateTimeEntry(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateTimeEntry(w, r, entryId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReviewTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) ReviewTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReviewTimeEntryParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReviewTimeEntry(w, r, entryId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19731,6 +19985,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/resource-bookings/{bookingId}", wrapper.DeleteResourceBooking)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/analytics/query", wrapper.RunAnalyticsQuery)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stars", wrapper.ListStars)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/created", wrapper.ListCreatedByMe)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/items/{itemId}/star", wrapper.UnstarItem)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/items/{itemId}/star", wrapper.StarItem)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/report-templates", wrapper.ListReportTemplates)
@@ -19808,6 +20063,9 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-entries", wrapper.ListProjectTimeEntries)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries", wrapper.ListTimeEntries)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries", wrapper.CreateTimeEntry)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries/submit", wrapper.SubmitTimeEntries)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/review", wrapper.ListTimeEntriesToReview)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries/{entryId}/review", wrapper.ReviewTimeEntry)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.DeleteTimeEntry)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.GetTimeEntry)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.UpdateTimeEntry)
@@ -29564,9 +29822,12 @@ type GetProjectTimeSummaryResponseObject interface {
 }
 
 type GetProjectTimeSummary200JSONResponse struct {
-	// ActualCostMinor Actual cost (satuan minor per jam x menit/60, entry billable, rate snapshot); hanya untuk administrator
-	ActualCostMinor *int64                                        `json:"actual_cost_minor,omitempty"`
-	ActualMinutes   int64                                         `json:"actual_minutes"`
+	// ActualCostMinor Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)
+	ActualCostMinor *int64 `json:"actual_cost_minor,omitempty"`
+	ActualMinutes   int64  `json:"actual_minutes"`
+
+	// ApprovedMinutes Bagian yang sudah disetujui
+	ApprovedMinutes int64                                         `json:"approved_minutes"`
 	Scope           GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
 }
 
@@ -30287,6 +30548,51 @@ func (response SetupTwoFactor503ApplicationProblemPlusJSONResponse) VisitSetupTw
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCreatedByMeRequestObject struct {
+	Params ListCreatedByMeParams
+}
+
+type ListCreatedByMeResponseObject interface {
+	VisitListCreatedByMeResponse(w http.ResponseWriter) error
+}
+
+type ListCreatedByMe200JSONResponse struct {
+	Items []struct {
+		Id    openapi_types.UUID                          `json:"id"`
+		Title string                                      `json:"title"`
+		Type  ListCreatedByMe200JSONResponseBodyItemsType `json:"type"`
+	} `json:"items"`
+	NextCursor *openapi_types.UUID `json:"next_cursor"`
+}
+
+func (response ListCreatedByMe200JSONResponse) VisitListCreatedByMeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCreatedByMe422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCreatedByMe422ApplicationProblemPlusJSONResponse) VisitListCreatedByMeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -38017,6 +38323,84 @@ func (response CreateTimeEntry422ApplicationProblemPlusJSONResponse) VisitCreate
 	return err
 }
 
+type ListTimeEntriesToReviewRequestObject struct {
+	Params ListTimeEntriesToReviewParams
+}
+
+type ListTimeEntriesToReviewResponseObject interface {
+	VisitListTimeEntriesToReviewResponse(w http.ResponseWriter) error
+}
+
+type ListTimeEntriesToReview200JSONResponse TimeEntryPage
+
+func (response ListTimeEntriesToReview200JSONResponse) VisitListTimeEntriesToReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTimeEntriesToReview422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListTimeEntriesToReview422ApplicationProblemPlusJSONResponse) VisitListTimeEntriesToReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitTimeEntriesRequestObject struct {
+	Body *SubmitTimeEntriesJSONRequestBody
+}
+
+type SubmitTimeEntriesResponseObject interface {
+	VisitSubmitTimeEntriesResponse(w http.ResponseWriter) error
+}
+
+type SubmitTimeEntries200JSONResponse struct {
+	Submitted int `json:"submitted"`
+}
+
+func (response SubmitTimeEntries200JSONResponse) VisitSubmitTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitTimeEntries422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SubmitTimeEntries422ApplicationProblemPlusJSONResponse) VisitSubmitTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DeleteTimeEntryRequestObject struct {
 	EntryId openapi_types.UUID `json:"entryId"`
 	Params  DeleteTimeEntryParams
@@ -38221,6 +38605,105 @@ func (response UpdateTimeEntry422ApplicationProblemPlusJSONResponse) VisitUpdate
 type UpdateTimeEntry428ApplicationProblemPlusJSONResponse Problem
 
 func (response UpdateTimeEntry428ApplicationProblemPlusJSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntryRequestObject struct {
+	EntryId openapi_types.UUID `json:"entryId"`
+	Params  ReviewTimeEntryParams
+	Body    *ReviewTimeEntryJSONRequestBody
+}
+
+type ReviewTimeEntryResponseObject interface {
+	VisitReviewTimeEntryResponse(w http.ResponseWriter) error
+}
+
+type ReviewTimeEntry200JSONResponse struct{ TimeEntryJSONResponse }
+
+func (response ReviewTimeEntry200JSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReviewTimeEntry403ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry404ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry409ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry422ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry422ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry428ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry428ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -40295,6 +40778,9 @@ type StrictServerInterface interface {
 	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
 	// (POST /me/2fa/setup)
 	SetupTwoFactor(ctx context.Context, request SetupTwoFactorRequestObject) (SetupTwoFactorResponseObject, error)
+	// ListCreatedByMe Item buatan pemanggil di semua tingkat yang masih dapat dilihat, terbaru dulu (NAV-02)
+	// (GET /me/created)
+	ListCreatedByMe(ctx context.Context, request ListCreatedByMeRequestObject) (ListCreatedByMeResponseObject, error)
 	// ListMyIdentities Identitas SSO yang tertaut ke pemanggil
 	// (GET /me/identities)
 	ListMyIdentities(ctx context.Context, request ListMyIdentitiesRequestObject) (ListMyIdentitiesResponseObject, error)
@@ -40676,6 +41162,12 @@ type StrictServerInterface interface {
 	// CreateTimeEntry Catat waktu sendiri untuk task dan tanggal
 	// (POST /time-entries)
 	CreateTimeEntry(ctx context.Context, request CreateTimeEntryRequestObject) (CreateTimeEntryResponseObject, error)
+	// ListTimeEntriesToReview Entry orang lain yang diajukan pada task dengan akses penuh, terlama dulu
+	// (GET /time-entries/review)
+	ListTimeEntriesToReview(ctx context.Context, request ListTimeEntriesToReviewRequestObject) (ListTimeEntriesToReviewResponseObject, error)
+	// SubmitTimeEntries Ajukan time entry draf dan ditolak milik sendiri dalam satu periode untuk direview
+	// (POST /time-entries/submit)
+	SubmitTimeEntries(ctx context.Context, request SubmitTimeEntriesRequestObject) (SubmitTimeEntriesResponseObject, error)
 
 	// (DELETE /time-entries/{entryId})
 	DeleteTimeEntry(ctx context.Context, request DeleteTimeEntryRequestObject) (DeleteTimeEntryResponseObject, error)
@@ -40685,6 +41177,9 @@ type StrictServerInterface interface {
 	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
 	// (PATCH /time-entries/{entryId})
 	UpdateTimeEntry(ctx context.Context, request UpdateTimeEntryRequestObject) (UpdateTimeEntryResponseObject, error)
+	// ReviewTimeEntry Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
+	// (POST /time-entries/{entryId}/review)
+	ReviewTimeEntry(ctx context.Context, request ReviewTimeEntryRequestObject) (ReviewTimeEntryResponseObject, error)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(ctx context.Context, request ListUsersRequestObject) (ListUsersResponseObject, error)
@@ -46008,6 +46503,32 @@ func (sh *strictHandler) SetupTwoFactor(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// ListCreatedByMe operation middleware
+func (sh *strictHandler) ListCreatedByMe(w http.ResponseWriter, r *http.Request, params ListCreatedByMeParams) {
+	var request ListCreatedByMeRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCreatedByMe(ctx, request.(ListCreatedByMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCreatedByMe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCreatedByMeResponseObject); ok {
+		if err := validResponse.VisitListCreatedByMeResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListMyIdentities operation middleware
 func (sh *strictHandler) ListMyIdentities(w http.ResponseWriter, r *http.Request) {
 	var request ListMyIdentitiesRequestObject
@@ -49584,6 +50105,63 @@ func (sh *strictHandler) CreateTimeEntry(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+// ListTimeEntriesToReview operation middleware
+func (sh *strictHandler) ListTimeEntriesToReview(w http.ResponseWriter, r *http.Request, params ListTimeEntriesToReviewParams) {
+	var request ListTimeEntriesToReviewRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTimeEntriesToReview(ctx, request.(ListTimeEntriesToReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTimeEntriesToReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTimeEntriesToReviewResponseObject); ok {
+		if err := validResponse.VisitListTimeEntriesToReviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SubmitTimeEntries operation middleware
+func (sh *strictHandler) SubmitTimeEntries(w http.ResponseWriter, r *http.Request) {
+	var request SubmitTimeEntriesRequestObject
+
+	var body SubmitTimeEntriesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SubmitTimeEntries(ctx, request.(SubmitTimeEntriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SubmitTimeEntries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SubmitTimeEntriesResponseObject); ok {
+		if err := validResponse.VisitSubmitTimeEntriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteTimeEntry operation middleware
 func (sh *strictHandler) DeleteTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params DeleteTimeEntryParams) {
 	var request DeleteTimeEntryRequestObject
@@ -49664,6 +50242,40 @@ func (sh *strictHandler) UpdateTimeEntry(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateTimeEntryResponseObject); ok {
 		if err := validResponse.VisitUpdateTimeEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReviewTimeEntry operation middleware
+func (sh *strictHandler) ReviewTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params ReviewTimeEntryParams) {
+	var request ReviewTimeEntryRequestObject
+
+	request.EntryId = entryId
+	request.Params = params
+
+	var body ReviewTimeEntryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReviewTimeEntry(ctx, request.(ReviewTimeEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReviewTimeEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReviewTimeEntryResponseObject); ok {
+		if err := validResponse.VisitReviewTimeEntryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

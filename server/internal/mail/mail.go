@@ -271,7 +271,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, options ...Option) (*Queue, erro
 	mailer := &Worker{cfg: cfg, pool: pool}
 	river.AddWorker(workers, mailer)
 	river.AddWorker(workers, &projectexcel.ExportWorker{Pool: pool})
-	river.AddWorker(workers, &previews.Worker{Pool: pool, Store: storage.LocalStorage{Dir: cfg.FilesDir}})
+	river.AddWorker(workers, &previews.Worker{Pool: pool, Store: storage.FromConfig(cfg)})
 	river.AddWorker(workers, &InvitationWorker{pool: pool, mail: mailer})
 	river.AddWorker(workers, &NotificationWorker{pool: pool, mail: mailer})
 	// This is the process's only River client, so the daily cleanup is registered here too.

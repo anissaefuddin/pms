@@ -127,12 +127,13 @@ func (s *Server) projectTimeSummary(w http.ResponseWriter, r *http.Request) {
 		timeEntryError(w, err)
 		return
 	}
-	var minutes, cost int64
-	// Actual Cost = sum(hours x rate snapshot) of billable entries, in minor units; only an administrator is told.
+	var minutes, approved, cost int64
+	// Actual Cost = sum(hours x rate snapshot) of approved billable entries, in minor units; only an administrator is told.
 	err = tx.QueryRow(ctx, projectTimeScope+`
-SELECT COALESCE(sum(e.minutes),0),COALESCE(round(sum(CASE WHEN e.billing_type='billable' THEN e.minutes*COALESCE(e.rate_snapshot,0) END)::numeric/60),0)::bigint
+SELECT COALESCE(sum(e.minutes),0),COALESCE(sum(e.minutes) FILTER (WHERE e.status='approved'),0),
+ COALESCE(round(sum(CASE WHEN e.billing_type='billable' AND e.status='approved' THEN e.minutes*COALESCE(e.rate_snapshot,0) END)::numeric/60),0)::bigint
 FROM scoped_tasks t JOIN time_entries e ON e.item_id=t.item_id
-WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan(&minutes, &cost)
+WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan(&minutes, &approved, &cost)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -144,8 +145,9 @@ WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan
 	if len(spaces) == len(full) {
 		scope = "project"
 	}
-	out := map[string]any{"actual_minutes": minutes, "scope": scope}
-	if actor.Type == policy.Admin {
+	out := map[string]any{"actual_minutes": minutes, "approved_minutes": approved, "scope": scope}
+	// A cost over part of the entries is a wrong cost, so it is left out unless the caller sees every entry.
+	if actor.Type == policy.Admin && scope == "project" {
 		out["actual_cost_minor"] = cost
 	}
 	writeJSON(w, 200, out)

@@ -722,6 +722,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/created": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Item buatan pemanggil di semua tingkat yang masih dapat dilihat, terbaru dulu (NAV-02) */
+        get: operations["listCreatedByMe"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/items/{itemId}/star": {
         parameters: {
             query?: never;
@@ -1667,6 +1684,59 @@ export interface paths {
         put?: never;
         /** Catat waktu sendiri untuk task dan tanggal */
         post: operations["createTimeEntry"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/time-entries/submit": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Ajukan time entry draf dan ditolak milik sendiri dalam satu periode untuk direview */
+        post: operations["submitTimeEntries"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/time-entries/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Entry orang lain yang diajukan pada task dengan akses penuh, terlama dulu */
+        get: operations["listTimeEntriesToReview"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/time-entries/{entryId}/review": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali */
+        post: operations["reviewTimeEntry"];
         delete?: never;
         options?: never;
         head?: never;
@@ -5136,6 +5206,9 @@ export interface components {
             billing_type: "billable" | "non_billable";
             locked: boolean;
             version: number;
+            /** @enum {string} */
+            status: "draft" | "submitted" | "approved" | "rejected";
+            review_note: string;
             item_title?: string;
             user_name?: string;
         };
@@ -8519,6 +8592,39 @@ export interface operations {
             };
         };
     };
+    listCreatedByMe: {
+        parameters: {
+            query?: {
+                cursor?: string;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Daftar; halaman bisa pendek walau next_cursor terisi karena akses diperiksa setelah halaman dibaca */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        next_cursor: string | null;
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            /** @enum {string} */
+                            type: "project" | "folder" | "task";
+                        }[];
+                    };
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
     starItem: {
         parameters: {
             query?: never;
@@ -10638,11 +10744,16 @@ export interface operations {
                     "application/json": {
                         /** Format: int64 */
                         actual_minutes: number;
+                        /**
+                         * Format: int64
+                         * @description Bagian yang sudah disetujui
+                         */
+                        approved_minutes: number;
                         /** @enum {string} */
                         scope: "project" | "permitted_entries";
                         /**
                          * Format: int64
-                         * @description Actual cost (satuan minor per jam x menit/60, entry billable, rate snapshot); hanya untuk administrator
+                         * @description Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)
                          */
                         actual_cost_minor?: number;
                     };
@@ -10744,6 +10855,91 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    submitTimeEntries: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: date */
+                    from: string;
+                    /** Format: date */
+                    to: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Jumlah entry yang diajukan */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        submitted: number;
+                    };
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    listTimeEntriesToReview: {
+        parameters: {
+            query?: {
+                offset?: number;
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["TimeEntryPage"];
+                };
+            };
+            422: components["responses"]["Problem"];
+        };
+    };
+    reviewTimeEntry: {
+        parameters: {
+            query?: never;
+            header: {
+                /** @description Versi yang diedit, dalam tanda kutip (mis. `"7"`) */
+                "If-Match": components["parameters"]["IfMatch"];
+            };
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    decision: "approved" | "rejected";
+                    note?: string;
+                };
+            };
+        };
+        responses: {
+            200: components["responses"]["TimeEntry"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            428: components["responses"]["Problem"];
         };
     };
     getTimeEntry: {

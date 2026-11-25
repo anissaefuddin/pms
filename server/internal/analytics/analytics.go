@@ -99,8 +99,8 @@ var metrics = map[string]map[string]string{ // reporting_on → metric → SQL m
 	"tasks":    {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField, "completion_percent": "1", "avg_field": "1"},
 	"projects": {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField, "completion_percent": "1", "avg_field": "1"},
 	"time_entries": {"utilization": "te.minutes", "minutes": "te.minutes", "billable_minutes": "CASE WHEN te.billing_type='billable' THEN te.minutes ELSE 0 END", "count": "1",
-		// Money in minor units: minutes x the rate snapshot of the entry, billable only (same rule as the project panel). Administrators only, see Run.
-		"actual_cost_minor": "CASE WHEN te.billing_type='billable' THEN round(te.minutes*COALESCE(te.rate_snapshot,0)/60.0) ELSE 0 END"},
+		// Money in minor units: minutes x the rate snapshot of the entry, approved and billable only (same rule as the project panel). Administrators only, see Run.
+		"actual_cost_minor": "CASE WHEN te.billing_type='billable' AND te.status='approved' THEN round(te.minutes*COALESCE(te.rate_snapshot,0)/60.0) ELSE 0 END"},
 }
 
 type dim struct{ join, key, label string }

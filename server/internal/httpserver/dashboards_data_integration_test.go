@@ -245,3 +245,44 @@ func TestStarsAndStarredWidget(t *testing.T) {
 		t.Fatalf("stars of a deleted item = %s", n)
 	}
 }
+
+// DEF-008: "Created by me" lists the caller's own Items at every depth, never someone else's, a deleted one, or one out of reach.
+func TestCreatedByMeListsEveryDepth(t *testing.T) {
+	f := newFixture(t)
+	me, other := f.person("regular"), f.person("regular")
+	open, closed := f.spaceWithoutAdmins("Open"), f.spaceWithoutAdmins("Closed")
+	f.share(open, "user", me.id, "editor")
+	f.share(open, "user", other.id, "editor")
+	project := f.call(me, "POST", "/items", map[string]any{"type": "project", "title": "Mine", "locations": []map[string]any{{"space_id": open}}})
+	f.want(project, 201, "project")
+	child := func(p *person, title string) string {
+		made := f.call(p, "POST", "/items", map[string]any{"type": "task", "title": title, "locations": []map[string]any{{"space_id": open, "parent_item_id": project.body["id"]}}})
+		f.want(made, 201, title)
+		return made.body["id"].(string)
+	}
+	child(me, "Nested")
+	child(other, "Not mine")
+	gone := child(me, "Deleted")
+	f.exec("UPDATE items SET deleted_at=now() WHERE id=$1", gone)
+	hidden := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Out of reach',$1) RETURNING id::text", me.id)
+	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", hidden, closed)
+	list := f.call(me, "GET", "/me/created", nil)
+	f.want(list, 200, "created")
+	var titles []string
+	for _, item := range list.items() {
+		titles = append(titles, item["title"].(string))
+	}
+	if fmt.Sprint(titles) != "[Nested Mine]" || list.body["next_cursor"] != nil {
+		t.Fatalf("created = %v (%v)", titles, list.body["next_cursor"])
+	}
+	for i := 0; i < 205; i++ {
+		f.exec("WITH i AS (INSERT INTO items(type,title,created_by) VALUES ('task','Bulk',$1) RETURNING id) INSERT INTO item_locations(item_id,space_id,rank) SELECT id,$2::uuid,'U'||$3::text FROM i", me.id, open, fmt.Sprint(i))
+	}
+	first := f.call(me, "GET", "/me/created", nil)
+	second := f.call(me, "GET", "/me/created?cursor="+fmt.Sprint(first.body["next_cursor"]), nil)
+	f.want(second, 200, "second page")
+	if len(first.items())+len(second.items()) != 207 || second.body["next_cursor"] != nil {
+		t.Fatalf("pages = %d + %d", len(first.items()), len(second.items()))
+	}
+	f.want(f.call(me, "GET", "/me/created?cursor=x", nil), 422, "bad cursor")
+}

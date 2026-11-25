@@ -26,6 +26,8 @@ type timeEntry struct {
 	BillingType string `json:"billing_type"`
 	Locked      bool   `json:"locked"`
 	Version     int    `json:"version"`
+	Status      string `json:"status"` // draft, submitted, approved or rejected
+	ReviewNote  string `json:"review_note"`
 	ItemTitle   string `json:"item_title,omitempty"`
 	UserName    string `json:"user_name,omitempty"`
 }
@@ -40,10 +42,10 @@ type timeEntryInput struct {
 	Locked      *bool   `json:"locked,omitempty"`
 }
 
-const timeEntryColumns = "e.id::text,e.item_id::text,e.user_id::text,to_char(e.entry_date,'YYYY-MM-DD'),e.minutes,e.category,e.comment,e.billing_type,e.locked,e.version"
+const timeEntryColumns = "e.id::text,e.item_id::text,e.user_id::text,to_char(e.entry_date,'YYYY-MM-DD'),e.minutes,e.category,e.comment,e.billing_type,e.locked,e.version,e.status,e.review_note"
 
 func (e *timeEntry) scan(row pgx.Row) error {
-	return row.Scan(&e.ID, &e.ItemID, &e.UserID, &e.Date, &e.Minutes, &e.Category, &e.Comment, &e.BillingType, &e.Locked, &e.Version)
+	return row.Scan(&e.ID, &e.ItemID, &e.UserID, &e.Date, &e.Minutes, &e.Category, &e.Comment, &e.BillingType, &e.Locked, &e.Version, &e.Status, &e.ReviewNote)
 }
 
 func validEntryDate(value string) bool {
@@ -82,6 +84,9 @@ func (s *Server) timeEntryRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/items/{itemId}/time-entries", s.requireUser(s.listTimeEntries))
 	mux.HandleFunc("GET /api/v1/time-entries", s.requireUser(s.listTimeEntries))
 	mux.HandleFunc("POST /api/v1/time-entries", s.requireUser(s.createTimeEntry))
+	mux.HandleFunc("POST /api/v1/time-entries/submit", s.requireUser(s.submitTimeEntries))
+	mux.HandleFunc("GET /api/v1/time-entries/review", s.requireUser(s.listTimeEntriesToReview))
+	mux.HandleFunc("POST /api/v1/time-entries/{entryId}/review", s.requireUser(s.reviewTimeEntry))
 	for _, method := range []string{"GET", "PATCH", "DELETE"} {
 		mux.HandleFunc(method+" /api/v1/time-entries/{entryId}", s.requireUser(s.timeEntryByID))
 	}
@@ -229,6 +234,10 @@ func (s *Server) timeEntryByID(w http.ResponseWriter, r *http.Request) {
 	}
 	if e.Locked && in.Locked == nil {
 		writeProblem(w, 409, "time_entry_locked", "this time entry is locked")
+		return
+	}
+	if in.Locked == nil && (e.Status == "submitted" || e.Status == "approved") {
+		writeProblem(w, 409, "time_entry_submitted", "this time entry is submitted or approved; a reviewer must reject it before it changes")
 		return
 	}
 	if r.Method == http.MethodDelete {

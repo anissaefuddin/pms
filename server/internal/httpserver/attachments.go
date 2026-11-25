@@ -46,17 +46,7 @@ func (s *Server) attachmentRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) attachmentStore() storage.Storage {
-	switch s.cfg.Storage {
-	case "s3":
-		return storage.S3(s.cfg.S3URL, s.cfg.S3Region, s.cfg.S3AccessKey, s.cfg.S3SecretKey)
-	case "pydio":
-		return storage.Pydio(s.cfg.PydioURL, s.cfg.PydioToken)
-	}
-	dir := s.cfg.FilesDir
-	if dir == "" {
-		dir = "/data/files"
-	}
-	return storage.LocalStorage{Dir: dir}
+	return storage.FromConfig(s.cfg)
 }
 
 func attachmentAccess(r *http.Request, db policy.DB, id uuid.UUID, need policy.Capability) (policy.Caps, error) {

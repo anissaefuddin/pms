@@ -64,5 +64,22 @@
   "filteredTotal": "Total untuk entri yang difilter: {{time}}",
   "billableTotal": "Dapat ditagihkan: {{time}}",
   "nonBillableTotal": "Tidak dapat ditagihkan: {{time}}",
-  "pageOnlyTotal": "Hanya di halaman ini: {{time}}"
+  "pageOnlyTotal": "Hanya di halaman ini: {{time}}",
+  "submitWeek_other": "Ajukan {{count}} entri",
+  "status": {
+    "draft": "Draf",
+    "submitted": "Diajukan",
+    "approved": "Disetujui",
+    "rejected": "Ditolak"
+  },
+  "review": {
+    "title": "Waktu untuk direview",
+    "note": "Catatan (opsional)",
+    "noteFor": "Catatan untuk {{label}}",
+    "approve": "Setujui",
+    "approveFor": "Setujui {{label}}",
+    "reject": "Tolak",
+    "rejectFor": "Tolak {{label}}",
+    "more": "Entri lain muncul setelah ini direview."
+  }
 }

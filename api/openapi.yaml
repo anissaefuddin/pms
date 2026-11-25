@@ -1037,6 +1037,33 @@ paths:
                         id: { type: string, format: uuid }
                         title: { type: string }
                         type: { type: string, enum: [project, folder, task] }
+  /me/created:
+    get:
+      operationId: listCreatedByMe
+      summary: Item buatan pemanggil di semua tingkat yang masih dapat dilihat, terbaru dulu (NAV-02)
+      parameters:
+        - { name: cursor, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Daftar; halaman bisa pendek walau next_cursor terisi karena akses diperiksa setelah halaman dibaca
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor]
+                properties:
+                  next_cursor: { type: string, format: uuid, nullable: true }
+                  items:
+                    type: array
+                    maxItems: 200
+                    items:
+                      type: object
+                      required: [id, title, type]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        type: { type: string, enum: [project, folder, task] }
+        '422': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/star:
     parameters:
       - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -2347,11 +2374,12 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [actual_minutes, scope]
+                required: [actual_minutes, approved_minutes, scope]
                 properties:
                   actual_minutes: { type: integer, format: int64 }
+                  approved_minutes: { type: integer, format: int64, description: Bagian yang sudah disetujui }
                   scope: { type: string, enum: [project, permitted_entries] }
-                  actual_cost_minor: { type: integer, format: int64, description: 'Actual cost (satuan minor per jam x menit/60, entry billable, rate snapshot); hanya untuk administrator' }
+                  actual_cost_minor: { type: integer, format: int64, description: 'Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)' }
         '404': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/time-entries:
     parameters:
@@ -2420,6 +2448,69 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/submit:
+    post:
+      operationId: submitTimeEntries
+      summary: Ajukan time entry draf dan ditolak milik sendiri dalam satu periode untuk direview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from: { type: string, format: date }
+                to: { type: string, format: date }
+      responses:
+        '200':
+          description: Jumlah entry yang diajukan
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [submitted]
+                properties:
+                  submitted: { type: integer }
+        '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/review:
+    get:
+      operationId: listTimeEntriesToReview
+      summary: Entry orang lain yang diajukan pada task dengan akses penuh, terlama dulu
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeEntryPage' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/{entryId}/review:
+    parameters:
+      - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: reviewTimeEntry
+      summary: Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [approved, rejected] }
+                note: { type: string, maxLength: 1000 }
+      responses:
+        '200': { $ref: '#/components/responses/TimeEntry' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /time-entries/{entryId}:
     parameters:
       - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -7146,7 +7237,7 @@ components:
       allOf:
         - { $ref: '#/components/schemas/TimeEntryFields' }
         - type: object
-          required: [id, item_id, user_id, date, minutes, category, comment, billing_type, locked, version]
+          required: [id, item_id, user_id, date, minutes, category, comment, billing_type, locked, version, status, review_note]
           properties:
             id: { type: string, format: uuid }
             item_id: { type: string, format: uuid }
@@ -7158,6 +7249,8 @@ components:
             billing_type: { type: string, enum: [billable, non_billable] }
             locked: { type: boolean }
             version: { type: integer }
+            status: { type: string, enum: [draft, submitted, approved, rejected] }
+            review_note: { type: string, maxLength: 1000 }
             item_title: { type: string }
             user_name: { type: string }
     TimeEntryPage:
