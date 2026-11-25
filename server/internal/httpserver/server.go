@@ -19,10 +19,12 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/buildinfo"
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/directory"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
+	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/anissaefuddin/pms/server/internal/realtime"
 	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/security"
@@ -139,6 +141,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	// Paths follow api/openapi.yaml (servers.url = /api/v1). Keep them in sync with the contract.
 	mux.HandleFunc("GET /api/v1/healthz", s.healthz)
 	mux.HandleFunc("GET /api/v1/readyz", s.readyz)
+	mux.HandleFunc("GET /api/v1/version", s.requireUser(s.version))
 	mux.HandleFunc("POST /api/v1/auth/login", s.login)
 	mux.HandleFunc("POST /api/v1/auth/logout", s.requireUser(s.logout))
 	mux.HandleFunc("GET /api/v1/me", s.requireUser(s.me))
@@ -258,6 +261,15 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+// version identifies the build for any signed-in user; image identity is infrastructure detail for admins only.
+func (s *Server) version(w http.ResponseWriter, r *http.Request) {
+	info := buildinfo.Current()
+	if actorOf(r).Type != policy.Admin {
+		info.Image = nil
+	}
+	writeJSON(w, http.StatusOK, info)
 }
 
 // loadMe builds the Me payload from the users row.

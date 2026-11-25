@@ -6503,6 +6503,28 @@ type UtilizationRow struct {
 	PlannedPercent float32            `json:"planned_percent"`
 }
 
+// VersionInfo defines model for VersionInfo.
+type VersionInfo struct {
+	// BuiltAt Waktu build (UTC); "unknown" bila tidak diberikan
+	BuiltAt string `json:"built_at"`
+
+	// Commit Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build
+	Commit string `json:"commit"`
+
+	// Image Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan.
+	Image *struct {
+		// Id ID image lokal di host (sha256)
+		Id string `json:"id"`
+
+		// Ref Referensi image yang dikonfigurasi (biasanya tag
+		Ref string `json:"ref"`
+
+		// RegistryDigest Digest manifest registry; hanya untuk image yang ditarik dari registry
+		RegistryDigest string `json:"registry_digest"`
+	} `json:"image,omitempty"`
+	Version string `json:"version"`
+}
+
 // View defines model for View.
 type View struct {
 	// Config Kolom, urutan kolom, grouping, dan preset bawaan view
@@ -9551,6 +9573,9 @@ type ServerInterface interface {
 	// GetUtilization Utilization planned vs actual per orang (RSC-06); menit terencana = effort task + booking, aktual = time entry
 	// (GET /utilization)
 	GetUtilization(w http.ResponseWriter, r *http.Request, params GetUtilizationParams)
+	// GetVersion Identitas build yang sedang berjalan; `image` hanya untuk admin
+	// (GET /version)
+	GetVersion(w http.ResponseWriter, r *http.Request)
 	// CreateView Tambah view (VIEW-08)
 	// (POST /views)
 	CreateView(w http.ResponseWriter, r *http.Request)
@@ -19581,6 +19606,20 @@ func (siw *ServerInterfaceWrapper) GetUtilization(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// GetVersion operation middleware
+func (siw *ServerInterfaceWrapper) GetVersion(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetVersion(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateView operation middleware
 func (siw *ServerInterfaceWrapper) CreateView(w http.ResponseWriter, r *http.Request) {
 
@@ -20448,6 +20487,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}/definition", wrapper.GetFormDefinition)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/forms/{formId}/submissions", wrapper.SubmitForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/events", wrapper.StreamEvents)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/version", wrapper.GetVersion)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/healthz", wrapper.Healthz)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/readyz", wrapper.Readyz)
 
@@ -39611,6 +39651,43 @@ func (response GetUtilization422ApplicationProblemPlusJSONResponse) VisitGetUtil
 	return err
 }
 
+type GetVersionRequestObject struct {
+}
+
+type GetVersionResponseObject interface {
+	VisitGetVersionResponse(w http.ResponseWriter) error
+}
+
+type GetVersion200JSONResponse VersionInfo
+
+func (response GetVersion200JSONResponse) VisitGetVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetVersion401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetVersion401ApplicationProblemPlusJSONResponse) VisitGetVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateViewRequestObject struct {
 	Body *CreateViewJSONRequestBody
 }
@@ -41549,6 +41626,9 @@ type StrictServerInterface interface {
 	// GetUtilization Utilization planned vs actual per orang (RSC-06); menit terencana = effort task + booking, aktual = time entry
 	// (GET /utilization)
 	GetUtilization(ctx context.Context, request GetUtilizationRequestObject) (GetUtilizationResponseObject, error)
+	// GetVersion Identitas build yang sedang berjalan; `image` hanya untuk admin
+	// (GET /version)
+	GetVersion(ctx context.Context, request GetVersionRequestObject) (GetVersionResponseObject, error)
 	// CreateView Tambah view (VIEW-08)
 	// (POST /views)
 	CreateView(ctx context.Context, request CreateViewRequestObject) (CreateViewResponseObject, error)
@@ -51021,6 +51101,30 @@ func (sh *strictHandler) GetUtilization(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetUtilizationResponseObject); ok {
 		if err := validResponse.VisitGetUtilizationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetVersion operation middleware
+func (sh *strictHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
+	var request GetVersionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetVersion(ctx, request.(GetVersionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetVersion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetVersionResponseObject); ok {
+		if err := validResponse.VisitGetVersionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

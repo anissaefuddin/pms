@@ -18,3 +18,23 @@ entity_counts() {
 
 # sha_cmd: portable SHA-256 (Linux sha256sum, macOS shasum).
 sha_cmd() { if command -v sha256sum >/dev/null; then sha256sum "$@"; else shasum -a 256 "$@"; fi; }
+
+# export_image_identity REF: PMS_IMAGE_ID (local image ID) and PMS_IMAGE_DIGEST (registry manifest digest) for the app container.
+# shortcut: with Docker's containerd image store a local build also has a RepoDigest, so an image built by hand under a registry
+# name and never pushed would be believed; update-local.sh clears it for its own builds.
+# The digest is set only when REF names a registry host and Docker records exactly one digest for that repository; a tag or a
+# locally built image gets none. Always recomputed, never stored, so it cannot go stale.
+export_image_identity() {
+  PMS_IMAGE_ID= PMS_IMAGE_DIGEST=
+  if [ -n "$1" ]; then
+    PMS_IMAGE_ID=$(docker image inspect --format '{{.Id}}' "$1" 2>/dev/null) || PMS_IMAGE_ID=
+    _name=${1%@*}
+    case "${_name##*/}" in *:*) _name=${_name%:*} ;; esac
+    case "${_name%%/*}" in
+    *.* | *:* | localhost)
+      _digests=$(docker image inspect --format '{{range .RepoDigests}}{{println .}}{{end}}' "$1" 2>/dev/null | sed -n "s|^$_name@\(sha256:[0-9a-f]\{64\}\)\$|\1|p") || _digests=
+      [ "$(printf '%s\n' "$_digests" | grep -c sha256)" != 1 ] || PMS_IMAGE_DIGEST=$_digests ;;
+    esac
+  fi
+  export PMS_IMAGE_ID PMS_IMAGE_DIGEST
+}

@@ -6421,6 +6421,18 @@ paths:
             text/event-stream:
               schema: { $ref: '#/components/schemas/RealtimeEvent' }
         '401': { $ref: '#/components/responses/Problem' }
+  /version:
+    get:
+      tags: [system]
+      operationId: getVersion
+      summary: Identitas build yang sedang berjalan; `image` hanya untuk admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VersionInfo' }
+        '401': { $ref: '#/components/responses/Problem' }
   /healthz:
     get:
       tags: [system]
@@ -6608,6 +6620,21 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
+    VersionInfo:
+      type: object
+      required: [version, commit, built_at]
+      properties:
+        version: { type: string }
+        commit: { type: string, description: 'Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build' }
+        built_at: { type: string, description: 'Waktu build (UTC); "unknown" bila tidak diberikan' }
+        image:
+          type: object
+          description: Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan.
+          required: [ref, id, registry_digest]
+          properties:
+            ref: { type: string, description: Referensi image yang dikonfigurasi (biasanya tag, bukan bukti isi) }
+            id: { type: string, description: ID image lokal di host (sha256) }
+            registry_digest: { type: string, description: Digest manifest registry; hanya untuk image yang ditarik dari registry }
     OverviewTimelineNode:
       type: object
       required: [id, title, type, status_group, in_range, children]

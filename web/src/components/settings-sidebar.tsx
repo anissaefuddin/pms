@@ -36,6 +36,7 @@ import type { CurrentUser } from "@/lib/api";
 import type { Space } from "@/lib/spaces";
 import { can } from "@/lib/spaces";
 import { useSpaces } from "@/lib/space-queries";
+import { useAppVersion } from "@/lib/profile";
 import type { LucideIcon } from "lucide-react";
 import { SidebarFooter } from "@/components/topbar";
 import { SIDEBAR_THEME, SIDEBAR_WIDTH, clampWidth, readWidth, writeWidth } from "@/lib/sidebar-prefs";
@@ -119,6 +120,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
   }
   const q = query.trim().toLowerCase();
   const spaces = useSpaces();
+  const appVersion = useAppVersion();
   const groups = settingsGroups(me, t, spaces.data ?? []).map((group) => ({
     ...group,
     items: group.items.filter((item) => !q || item.label.toLowerCase().includes(q)),
@@ -149,7 +151,7 @@ export function SettingsSidebar({ me }: { me: CurrentUser }) {
         {/* Installation: the running version, in the same scroll area as the sections above. */}
         <div className="border-t border-nav-hover px-2 pt-3">
           <p className="text-[11px] font-semibold uppercase tracking-wider text-nav-muted">{t("settings.nav.installation")}</p>
-          <p className="mt-1 text-sm text-nav-text">{t("settings.nav.version", { version: __APP_VERSION__ })}</p>
+          <p className="mt-1 text-sm text-nav-text">{t("settings.nav.version", { version: appVersion })}</p>
         </div>
       </nav>
       <SidebarFooter />

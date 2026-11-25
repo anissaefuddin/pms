@@ -14,6 +14,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/automation"
 	"github.com/anissaefuddin/pms/server/internal/bootstrap"
+	"github.com/anissaefuddin/pms/server/internal/buildinfo"
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/connectors"
 	"github.com/anissaefuddin/pms/server/internal/connectors/gcal"
@@ -29,8 +30,6 @@ import (
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
-
-var version = "dev"
 
 func main() {
 	slog.SetDefault(slog.New(reqid.Handler(slog.NewJSONHandler(os.Stdout, nil))))
@@ -48,7 +47,7 @@ func run() error {
 		command = os.Args[1]
 	}
 	if command == "version" {
-		fmt.Println(version)
+		fmt.Println(buildinfo.Version)
 		return nil
 	}
 	cfg, err := config.Load()
@@ -137,7 +136,9 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	metrics := &http.Server{Addr: cfg.MetricsAddress, Handler: httpserver.Metrics(), ReadHeaderTimeout: 5 * time.Second}
 	errors := make(chan error, 2)
 	go func() {
-		slog.Info("server started", "address", cfg.ListenAddress, "metrics_address", cfg.MetricsAddress, "version", version)
+		build := buildinfo.Current()
+		slog.Info("server started", "address", cfg.ListenAddress, "metrics_address", cfg.MetricsAddress, "version", build.Version, "commit", build.Commit, "built_at", build.BuiltAt,
+			"image_ref", build.Image.Ref, "image_id", build.Image.ID, "image_registry_digest", build.Image.RegistryDigest)
 		errors <- server.ListenAndServe()
 	}()
 	go func() { errors <- metrics.ListenAndServe() }()

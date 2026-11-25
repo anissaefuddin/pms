@@ -10,6 +10,7 @@ backup_output=$(./backup.sh)
 printf '%s\n' "$backup_output"
 stamp=$(printf '%s\n' "$backup_output" | sed -n 's/^Backup completed: //p')
 PMS_IMAGE=$new_image docker compose pull app
+export_image_identity "$new_image"
 PMS_IMAGE=$new_image docker compose up -d app
 if ! wait_ready; then
   # Migrations only move forward, so the old image cannot simply be started again: restore the pre-deploy backup.

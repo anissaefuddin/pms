@@ -1,8 +1,14 @@
 import { createContext, useContext, useEffect } from "react";
-import type { CurrentUser } from "@/lib/api";
+import { useQuery } from "@tanstack/react-query";
+import { api, type CurrentUser } from "@/lib/api";
+import type { components } from "@/api/schema";
 
 export const ProfileContext = createContext<CurrentUser | undefined>(undefined);
 export const useProfile = () => useContext(ProfileContext);
+
+/** Version of the running server (not of the bundled web package), so UI, API and startup log agree. */
+export const useAppVersion = () => useQuery({ queryKey: ["version"], staleTime: Infinity,
+  queryFn: () => api<components["schemas"]["VersionInfo"]>("/api/v1/version") }).data?.version ?? "…";
 
 export function useAppearance(profile?: CurrentUser) {
   const theme = profile?.theme;

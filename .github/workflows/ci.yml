@@ -62,7 +62,7 @@ jobs:
           "$(go env GOPATH)/bin/sqlc" generate
           git diff --exit-code -- server/internal/apigen server/internal/dbgen web/src/api || { echo "Generated code is stale: run 'make generate' and commit"; exit 1; }
       - name: Build container
-        run: docker build --build-arg VERSION="$GITHUB_REF_NAME" -t pms:test .
+        run: docker build --build-arg VERSION="$GITHUB_REF_NAME" --build-arg COMMIT="$GITHUB_SHA" -t pms:test .
 
   # Its own job so it can be named as a required check (S1.1.4) without waiting for the whole suite; a repository setting, not code,
   # makes it block merges, and GitHub refuses that setting on a private repository without a paid plan (HTTP 403).
@@ -140,5 +140,7 @@ jobs:
         with:
           context: .
           push: true
-          build-args: VERSION=${{ github.ref_name }}
+          build-args: |
+            VERSION=${{ github.ref_name }}
+            COMMIT=${{ github.sha }}
           tags: ghcr.io/anissaefuddin/pms:${{ github.ref_name }}

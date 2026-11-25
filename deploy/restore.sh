@@ -17,6 +17,7 @@ cd "$script_dir"
 set -a
 [ ! -f .env ] || . ./.env
 set +a
+export_image_identity "${PMS_IMAGE:-}"
 backup_dir=${BACKUP_DIR:-./backups}
 db_dump=$backup_dir/$stamp-database.dump
 files_dump=$backup_dir/$stamp-files.tar.gz
