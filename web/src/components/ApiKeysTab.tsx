@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { MoreHorizontal, ShieldCheck } from "lucide-react";
 import { api } from "@/lib/api";
+import { formatDate, formatDateTime, useProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -15,7 +16,8 @@ type Created = { key: ApiKey; secret: string };
 
 /** Keys are the main content. Creating one happens in a dialog; the full secret is shown once, in that dialog only. */
 export function ApiKeysTab() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const profile = useProfile();
   const cache = useQueryClient();
   const [creating, setCreating] = useState(false);
   const [created, setCreated] = useState<Created | null>(null);
@@ -28,7 +30,7 @@ export function ApiKeysTab() {
   const revoke = useMutation({ mutationFn: (id: string) => api(`/api/v1/api-keys/${id}`, { method: "DELETE" }),
     onSuccess: () => { setRevoking(undefined); void cache.invalidateQueries({ queryKey: ["api-keys"] }); } });
   const error = create.error ?? rotate.error ?? revoke.error ?? keys.error;
-  const when = (v: string | null) => v ? new Date(v).toLocaleString(i18n.language) : t("apps.api.never");
+  const when = (v: string | null) => v ? formatDateTime(v, profile) : t("apps.api.never");
   const items = keys.data?.items ?? [];
   return <section className="space-y-5">
     <AdminPageHeader title={t("apps.tab.api")} description={t("apps.api.hint")} action={<Button onClick={() => { setCreated(null); setCreating(true); }}>{t("apps.api.createNew")}</Button>} />
@@ -52,7 +54,7 @@ export function ApiKeysTab() {
             <code className="text-xs font-normal text-muted-foreground">{k.prefix}…</code>
           </th>
           <td className="px-3 py-2.5">{t(`apps.api.${k.scope}`)}</td>
-          <td className="px-3 py-2.5">{k.expires_at ? new Date(k.expires_at).toLocaleDateString(i18n.language) : t("apps.api.noExpiry")}</td>
+          <td className="px-3 py-2.5">{k.expires_at ? formatDate(k.expires_at, profile) : t("apps.api.noExpiry")}</td>
           <td className="px-3 py-2.5">{when(k.last_used_at)}</td>
           <td className="px-3 py-2.5 text-end">
             <DropdownMenu>

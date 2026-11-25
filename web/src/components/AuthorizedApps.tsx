@@ -3,6 +3,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { AppWindow } from "lucide-react";
 import { api } from "@/lib/api";
+import { formatDate, useProfile } from "@/lib/profile";
 import { Button } from "@/components/ui/button";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { FormError } from "@/components/auth/form-error";
@@ -12,7 +13,8 @@ type Grant = { id: string; app_name: string; scopes: string[]; created_at: strin
 
 /** Apps you let sign in as you. This list is personal: it does not show connectors, which belong to a workspace or Space. */
 export function AuthorizedApps() {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const profile = useProfile();
   const cache = useQueryClient();
   const [revoking, setRevoking] = useState<Grant>();
   const grants = useQuery({ queryKey: ["oauth-grants"], queryFn: () => api<{ items: Grant[] }>("/api/v1/oauth/grants") });
@@ -32,7 +34,7 @@ export function AuthorizedApps() {
         <AppWindow aria-hidden="true" className="size-5 shrink-0 text-muted-foreground" />
         <div className="min-w-0 flex-1">
           <p className="truncate font-medium">{grant.app_name}</p>
-          <p className="text-xs text-muted-foreground">{t("oauth.authorized.since")} {new Date(grant.created_at).toLocaleDateString(i18n.language)}</p>
+          <p className="text-xs text-muted-foreground">{t("oauth.authorized.since")} {formatDate(grant.created_at, profile)}</p>
         </div>
         <div className="flex flex-wrap gap-1.5">
           {grant.scopes.map((scope) => <span key={scope} className="rounded-full bg-muted px-2 py-0.5 text-xs">{t(`oauth.scope.${scope}`, { defaultValue: scope })}</span>)}

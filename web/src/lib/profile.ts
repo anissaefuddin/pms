@@ -55,7 +55,8 @@ export function formatDate(value?: string | null, profile?: CurrentUser) {
   return `${year}-${month}-${day}`;
 }
 
-export function formatDateTime(value: string, profile?: CurrentUser) {
+export function formatDateTime(value?: string | null, profile?: CurrentUser) {
+  if (!value || Number.isNaN(Date.parse(value))) return ""; // Intl throws on a missing or broken timestamp
   const time = new Intl.DateTimeFormat(profile?.locale ?? "en", {
     hour: "2-digit", minute: "2-digit", timeZone: profile?.timezone ?? "UTC",
     hourCycle: profile?.time_format === "12h" ? "h12" : "h23",

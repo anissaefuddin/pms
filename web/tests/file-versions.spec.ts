@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { me } from "./mock-api";
 import { ALL, marketing, mockSpaces } from "./spaces-mock";
 
 const id = "b0000000-0000-4000-8000-000000000002";
@@ -51,4 +52,26 @@ test("a link attachment opens its address and has no version controls", async ({
   const anchor = page.getByRole("link", { name: "Design doc" });
   await expect(anchor).toHaveAttribute("href", "https://example.com/doc");
   await expect(page.getByRole("button", { name: "Upload new version" })).toHaveCount(0);
+});
+
+// DEF-024: server timestamps follow the user's date format, clock and time zone.
+test("version and comment times follow the profile preferences, and a missing time stays blank", async ({ page }) => {
+  await mockSpaces(page, { me: { ...me, date_format: "dd/mm/yyyy", time_format: "12h", timezone: "Asia/Tokyo" }, extra: {
+    [`GET /items/${id}`]: { body: item, headers: { ETag: '"1"' } },
+    [`GET /items/${id}/children`]: { body: { items: [] } },
+    [`GET /items/${id}/comments`]: { body: { items: [{ id: "c1", item_id: id, version: 1, author: ann, body: { type: "doc", content: [] }, created_at: "2026-11-14T10:00:00Z", updated_at: "2026-11-14T10:00:00Z" }] } },
+    [`GET /items/${id}/approvals`]: { body: { items: [] } },
+    [`GET /items/${id}/attachments`]: { body: { items: [attachment(2, "spec.txt")], max_upload_bytes: 1048576 } },
+    [`GET /attachments/${file}/versions`]: { body: { items: [
+      { attachment_id: file, version: 2, filename: "spec.txt", content_type: "text/plain", size_bytes: 9, is_current: true, uploader: ann, created_at: "2026-11-14T16:30:00Z" },
+      { attachment_id: file, version: 1, filename: "old.txt", content_type: "text/plain", size_bytes: 9, is_current: false, uploader: ann },
+    ] } },
+  } });
+  await page.goto(`/tasks/${id}`);
+  await expect(page.locator("time")).toHaveText(/^14\/11\/2026 07:00\sPM$/i);
+  await page.getByRole("button", { name: "v2" }).click();
+  const rows = page.getByRole("list", { name: "Version history" }).getByRole("listitem");
+  await expect(rows.first()).toContainText(/Ann Lee · 15\/11\/2026 01:30\sAM · /i);
+  await expect(rows.nth(1)).toContainText("Ann Lee");
+  await expect(rows.nth(1)).not.toContainText(/Invalid|1970|NaN/);
 });

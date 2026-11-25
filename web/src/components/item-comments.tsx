@@ -10,13 +10,14 @@ import { mention, MentionPicker } from "@/components/rich-text-mention";
 import { Button } from "@/components/ui/button";
 import { FormError } from "@/components/auth/form-error";
 import { AvatarStack } from "@/components/ui/avatar-stack";
-import { useProfile } from "@/lib/profile";
+import { formatDateTime, useProfile } from "@/lib/profile";
 
 type Comment = components["schemas"]["Comment"];
 const extensions = [StarterKit.configure({ link: { openOnClick: false } }), mention];
 
 export function ItemComments({ item, userId }: { item: Item; userId: string }) {
   const { t } = useTranslation();
+  const profile = useProfile();
   const heading = useId();
   const qc = useQueryClient();
   const [cursor, setCursor] = useState<string>();
@@ -38,7 +39,7 @@ export function ItemComments({ item, userId }: { item: Item; userId: string }) {
       return <article key={comment.id} className="space-y-2 rounded-lg bg-muted/40 p-3">
         <p className="flex items-center gap-2"><AvatarStack people={[comment.author]} />
           <span className="font-medium">{comment.author.name}</span>
-          <time className="text-xs text-muted-foreground" dateTime={comment.created_at}>{new Date(comment.created_at).toLocaleString()}</time></p>
+          <time className="text-xs text-muted-foreground" dateTime={comment.created_at}>{formatDateTime(comment.created_at, profile)}</time></p>
         <CommentEditor key={editing?.id === comment.id ? "editing" : comment.version}
           body={editing?.id === comment.id ? editing.body : comment.body}
           editable={editing?.id === comment.id} save={async (body) => {
