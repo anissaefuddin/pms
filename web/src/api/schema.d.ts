@@ -4666,6 +4666,317 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/me/avatar": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Foto profil pemanggil */
+        get: operations["getMyAvatar"];
+        /** Ganti foto profil (PNG, JPEG, WebP; maksimum 2 MB) */
+        put: operations["saveMyAvatar"];
+        post?: never;
+        /** Hapus foto profil */
+        delete: operations["removeMyAvatar"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/registry": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daftar Space yang sudah terlihat oleh pemanggil, dengan hitungan dan admin */
+        get: operations["listSpaceRegistry"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/field-choices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Field Workspace dan apakah Space ini memakainya (akses Full) */
+        get: operations["listSpaceFieldChoices"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/fields": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Field yang berlaku pada view Space; field yang tidak boleh dibaca tidak ikut */
+        get: operations["listSpaceViewFields"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/custom-fields/{fieldId}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Grant akses field Workspace (pengelola field) */
+        get: operations["listWorkspaceFieldGrants"];
+        /** Ganti grant field Workspace; daftar kosong menghapus pembatasan */
+        put: operations["setWorkspaceFieldGrants"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/custom-fields/{fieldId}/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Jumlah pemakaian field Workspace sebelum diarsipkan */
+        get: operations["getWorkspaceFieldImpact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/custom-fields/{fieldId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pulihkan field Workspace yang diarsipkan */
+        post: operations["restoreWorkspaceField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/custom-fields/{fieldId}/grants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Grant akses field Space (pengelola field) */
+        get: operations["listSpaceFieldGrants"];
+        /** Ganti grant field Space; daftar kosong menghapus pembatasan */
+        put: operations["setSpaceFieldGrants"];
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/custom-fields/{fieldId}/impact": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Jumlah pemakaian field Space sebelum diarsipkan */
+        get: operations["getSpaceFieldImpact"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/custom-fields/{fieldId}/restore": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Pulihkan field Space yang diarsipkan */
+        post: operations["restoreSpaceField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/custom-fields/{fieldId}/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Tempat field berlaku di Space */
+        get: operations["listFieldAssignments"];
+        put?: never;
+        /** Berlakukan field di Space, project, atau folder (akses Full) */
+        post: operations["assignField"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/custom-fields/{fieldId}/assignments/{scopeKind}/{scopeId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cabut field dari tempat itu; nilai tersimpan tidak dihapus */
+        delete: operations["unassignField"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/item-types/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Jumlah item hidup per tipe (administrator) */
+        get: operations["getItemTypeUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/item-types/usage": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Jumlah item per tipe dalam satu Space */
+        get: operations["getSpaceItemTypeUsage"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/analytics/operational": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Agregat Workspace tanpa baris item dan tanpa biaya; grup kecil disembunyikan */
+        post: operations["runOperationalAnalytics"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/excel-templates/{kind}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Unduh template impor Excel */
+        get: operations["getExcelTemplate"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/excel-imports/{reportId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Laporan impor milik pemanggil */
+        get: operations["getSpaceExcelImportReport"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/spaces/{spaceId}/excel-destinations": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Project dan folder tujuan impor */
+        get: operations["listExcelDestinations"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -4678,7 +4989,7 @@ export interface components {
             built_at: string;
             /** @description Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan. */
             image?: {
-                /** @description Referensi image yang dikonfigurasi (biasanya tag */
+                /** @description Referensi image yang dikonfigurasi (biasanya tag, bukan bukti isi) */
                 ref: string;
                 /** @description ID image lokal di host (sha256) */
                 id: string;
@@ -5223,7 +5534,7 @@ export interface components {
              */
             pie_style?: "classic" | "donut" | "ring";
             /**
-             * @description Khusus task_list (DASH-01); gunakan list atau template
+             * @description Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya
              * @enum {string}
              */
             list?: "todo_this_week" | "to_review" | "completed" | "assigned_to_me";
@@ -6666,7 +6977,7 @@ export interface components {
             status_changed_at?: string;
             /**
              * Format: uuid
-             * @description Lampiran gambar pertama yang masih ada
+             * @description Lampiran gambar pertama yang masih ada, untuk sampul kartu
              */
             cover_attachment_id?: string;
             version: number;
@@ -6693,7 +7004,7 @@ export interface components {
              */
             id?: string;
             type?: components["schemas"]["ItemType"];
-            /** @description Kunci tipe item aktif */
+            /** @description Kunci tipe item aktif, mis. bug */
             type_key?: string;
             title: string;
             description?: components["schemas"]["RichText"];
@@ -6751,7 +7062,7 @@ export interface components {
             type: components["schemas"]["DependencyType"];
             /**
              * Format: int32
-             * @description Lag dalam hari kerja
+             * @description Lag dalam hari kerja, boleh negatif
              */
             lag: number;
         };
@@ -6872,7 +7183,7 @@ export interface components {
             size_bytes: number;
             /** @description Terisi untuk lampiran tautan (tanpa berkas) */
             link_url?: string | null;
-            /** @description Nomor versi terbaru; filename */
+            /** @description Nomor versi terbaru; filename, ukuran dan unduhan mengikuti versi ini */
             version?: number;
             uploader: components["schemas"]["UserRef"];
             /** Format: date-time */
@@ -8236,7 +8547,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description access_token */
+            /** @description access_token, refresh_token, token_type, expires_in, scope */
             200: {
                 headers: {
                     [name: string]: unknown;
@@ -9241,7 +9552,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Berhasil */
+            /** @description Berhasil, tanpa isi */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -9420,7 +9731,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Berhasil */
+            /** @description Berhasil, tanpa isi */
             204: {
                 headers: {
                     [name: string]: unknown;
@@ -9554,7 +9865,7 @@ export interface operations {
             };
         };
         responses: {
-            /** @description Diterima; bila alamat milik pengguna aktif */
+            /** @description Diterima; bila alamat milik pengguna aktif, kode dikirim (satu per menit per orang) */
             202: {
                 headers: {
                     [name: string]: unknown;
@@ -9919,7 +10230,7 @@ export interface operations {
         };
         requestBody?: never;
         responses: {
-            /** @description Pengalihan ke penyedia identitas */
+            /** @description Pengalihan ke penyedia identitas, atau ke /login tanpa sesi bila link=1 */
             302: {
                 headers: {
                     [name: string]: unknown;
@@ -10078,9 +10389,9 @@ export interface operations {
     listAuditEvents: {
         parameters: {
             query?: {
-                /** @description Aksi persis */
+                /** @description Aksi persis, misalnya auth.login */
                 action?: string;
-                /** @description Area */
+                /** @description Area, misalnya auth, user, share, role, sso, api_key */
                 category?: string;
                 actor_id?: string;
                 from?: string;
@@ -10888,7 +11199,7 @@ export interface operations {
                              * @description planned - actual; negatif berarti melebihi anggaran; null bila biaya tidak lengkap
                              */
                             variance_minor: number | null;
-                            /** @description null bila anggaran kosong atau nol */
+                            /** @description null bila anggaran kosong atau nol, atau biaya tidak lengkap */
                             utilization_percent: number | null;
                         }[];
                         /** @enum {string} */
@@ -12017,7 +12328,6 @@ export interface operations {
                     [name: string]: unknown;
                 };
                 content: {
-                    /** @description Runtime Content-Type adalah image/png */
                     "application/octet-stream": string;
                 };
             };
@@ -12035,7 +12345,6 @@ export interface operations {
         };
         requestBody: {
             content: {
-                /** @description PNG */
                 "application/octet-stream": string;
             };
         };
@@ -14287,7 +14596,7 @@ export interface operations {
                     type: components["schemas"]["DependencyType"];
                     /**
                      * Format: int32
-                     * @description Lag dalam hari kerja
+                     * @description Lag dalam hari kerja, boleh negatif
                      * @default 0
                      */
                     lag?: number;
@@ -14377,7 +14686,7 @@ export interface operations {
                     type?: components["schemas"]["DependencyType"];
                     /**
                      * Format: int32
-                     * @description Lag dalam hari kerja
+                     * @description Lag dalam hari kerja, boleh negatif
                      */
                     lag?: number;
                 };
@@ -15487,10 +15796,10 @@ export interface operations {
                 assigned_to_me?: boolean;
                 /** @description Hanya item dengan grup status ini (NAV-07) */
                 status_group?: "active" | "completed" | "deferred" | "cancelled";
-                /** @description Hanya item (dan komentar pada item) bertipe ini */
+                /** @description Hanya item (dan komentar pada item) bertipe ini, mis. bug (S8.1.5) */
                 type_key?: string;
                 sort?: "relevance" | "date_modified";
-                /** @description Lewati sekian hasil yang boleh dilihat per grup */
+                /** @description Lewati sekian hasil yang boleh dilihat per grup, untuk paginasi */
                 offset?: number;
             };
             header?: never;
@@ -16831,6 +17140,742 @@ export interface operations {
                 };
                 content?: never;
             };
+        };
+    };
+    getMyAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/octet-stream": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    saveMyAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/octet-stream": string;
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            413: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    removeMyAvatar: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Me"];
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    listSpaceRegistry: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            [key: string]: unknown;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+        };
+    };
+    listSpaceFieldChoices: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            name: string;
+                            type: string;
+                            assigned: boolean;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listSpaceViewFields: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["CustomField"][];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listWorkspaceFieldGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            subject_kind: "user" | "group";
+                            /** Format: uuid */
+                            subject_id: string;
+                            /** @enum {string} */
+                            level: "view" | "edit" | "none";
+                            subject_name?: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    setWorkspaceFieldGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    grants: {
+                        /** @enum {string} */
+                        subject_kind: "user" | "group";
+                        /** Format: uuid */
+                        subject_id: string;
+                        /** @enum {string} */
+                        level: "view" | "edit" | "none";
+                        subject_name?: string;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            subject_kind: "user" | "group";
+                            /** Format: uuid */
+                            subject_id: string;
+                            /** @enum {string} */
+                            level: "view" | "edit" | "none";
+                            subject_name?: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getWorkspaceFieldImpact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: number;
+                        item_types: number;
+                        status_guards: number;
+                        views: number;
+                        request_forms: number;
+                        automations: number;
+                        blueprints: number;
+                        widgets: number;
+                        relations: number;
+                        formulas: string[] | null;
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    restoreWorkspaceField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listSpaceFieldGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            subject_kind: "user" | "group";
+                            /** Format: uuid */
+                            subject_id: string;
+                            /** @enum {string} */
+                            level: "view" | "edit" | "none";
+                            subject_name?: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    setSpaceFieldGrants: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    grants: {
+                        /** @enum {string} */
+                        subject_kind: "user" | "group";
+                        /** Format: uuid */
+                        subject_id: string;
+                        /** @enum {string} */
+                        level: "view" | "edit" | "none";
+                        subject_name?: string;
+                    }[];
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            subject_kind: "user" | "group";
+                            /** Format: uuid */
+                            subject_id: string;
+                            /** @enum {string} */
+                            level: "view" | "edit" | "none";
+                            subject_name?: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getSpaceFieldImpact: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: number;
+                        item_types: number;
+                        status_guards: number;
+                        views: number;
+                        request_forms: number;
+                        automations: number;
+                        blueprints: number;
+                        widgets: number;
+                        relations: number;
+                        formulas: string[] | null;
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    restoreSpaceField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["CustomField"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listFieldAssignments: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            field_id: string;
+                            /** Format: uuid */
+                            space_id: string;
+                            /** @enum {string} */
+                            scope_kind: "space" | "project" | "folder";
+                            /** Format: uuid */
+                            scope_id: string;
+                            scope_name: string;
+                            /** Format: date-time */
+                            created_at: string;
+                        }[];
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    assignField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                fieldId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** @enum {string} */
+                    scope_kind: "space" | "project" | "folder";
+                    /** Format: uuid */
+                    scope_id: string;
+                };
+            };
+        };
+        responses: {
+            /** @description OK */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        field_id: string;
+                        space_id: string;
+                        scope_kind: string;
+                        scope_id: string;
+                        scope_name: string;
+                        created_at: string;
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    unassignField: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                fieldId: string;
+                scopeKind: "space" | "project" | "folder";
+                scopeId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getItemTypeUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            [key: string]: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+        };
+    };
+    getSpaceItemTypeUsage: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            [key: string]: number;
+                        };
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    runOperationalAnalytics: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["AnalyticsQuery"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["AnalyticsResult"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
+        };
+    };
+    getExcelTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                kind: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": string;
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    getSpaceExcelImportReport: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                spaceId: string;
+                reportId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        [key: string]: unknown;
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listExcelDestinations: {
+        parameters: {
+            query?: {
+                parent?: string;
+            };
+            header?: never;
+            path: {
+                spaceId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** Format: uuid */
+                            id: string;
+                            title: string;
+                            type: string;
+                            can_create: boolean;
+                        }[];
+                        next_cursor: string | null;
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
 }
