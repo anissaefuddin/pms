@@ -3,11 +3,13 @@
 package reportdigest
 
 import (
+	"cmp"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"time"
 
@@ -152,7 +154,8 @@ func build(ctx context.Context, tx pgx.Tx, pool *pgxpool.Pool, publicURL string,
 	return mail.Args{To: d.email, Template: "report_digest", Locale: d.locale, URL: link, Data: data}, true, nil
 }
 
-// render limits email to a compact summary; full data remains in the application.
+// render limits email to a compact summary; full data remains in the application. The largest rows are kept, and the email says how
+// many are left out, so the total is never read as the sum of what is listed (DEF-029).
 func render(name string, q analytics.Query, result analytics.Result) mail.TemplateData {
 	number := func(v float64) string {
 		if q.Metric == "actual_cost_minor" { // minor units, as on screen
@@ -164,10 +167,13 @@ func render(name string, q analytics.Query, result analytics.Result) mail.Templa
 	if result.CostStatus == "partial" {
 		d.Total += " (partial: known subtotal only)"
 	}
-	for i, row := range result.Rows {
-		if i == maxRows {
-			break
-		}
+	rows := slices.Clone(result.Rows)
+	slices.SortStableFunc(rows, func(a, b analytics.Row) int { return cmp.Compare(b.Value, a.Value) })
+	if len(rows) > maxRows {
+		d.More = len(rows) - maxRows
+		rows = rows[:maxRows]
+	}
+	for _, row := range rows {
 		label := row.Group.Label
 		if label == "" {
 			label = "(none)"

@@ -131,6 +131,9 @@ func renderProductEmail(args Args) (string, string, string, error) {
 		v.ReportRows = d.Rows
 		v.ReportMetric = d.Metric
 		v.ReportTotal = d.Total
+		if d.More > 0 {
+			v.Note = fmt.Sprintf(reason(id, "%d baris lain tidak ditampilkan; total mencakup semuanya. Buka laporan untuk melihatnya.", "%d more rows are not listed; the total includes them. Open the report to see them."), d.More)
+		}
 		v.Reason = reason(id, "Anda berlangganan laporan terjadwal ini.", "You are subscribed to this scheduled report.")
 	case "timesheet_submitted", "timesheet_approved", "timesheet_rejected", "timesheet_locked":
 		titles := map[string][2]string{"timesheet_submitted": {"Time to review", "Waktu untuk direview"}, "timesheet_approved": {"Time approved", "Waktu disetujui"},
@@ -205,6 +208,9 @@ func renderProductEmail(args Args) (string, string, string, error) {
 			label += " · " + r.Break
 		}
 		text += label + ": " + r.Value + "\n"
+	}
+	if d.More > 0 {
+		text += v.Note + "\n"
 	}
 	if v.ReportTotal != "" {
 		text += "Total: " + v.ReportTotal + "\n"

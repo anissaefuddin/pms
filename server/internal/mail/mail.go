@@ -53,6 +53,7 @@ type EmailBrand struct {
 
 type TemplateData struct {
 	Kind, Preheader, Actor, Item, ItemType, Space, Status, Before, After        string
+	More                                                                        int // report rows not listed
 	Due, OccurredAt, Access, Workspace, Inviter, Expires, Period, Metric, Total string
 	Rows                                                                        []ReportRow `json:"rows,omitempty"`
 	Days                                                                        int         `json:"days,omitempty"`
