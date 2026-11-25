@@ -29,7 +29,7 @@ import { ItemActivity } from "@/components/item-activity";
 import { ItemBlocks } from "@/components/item-blocks";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ContainerFieldAssignments } from "@/components/container-field-assignments";
-import { useSpaces } from "@/lib/space-queries";
+import { useLocationName, useSpaces } from "@/lib/space-queries";
 import { can } from "@/lib/spaces";
 import { ItemAttachments } from "@/components/item-attachments";
 import { AvatarStack } from "@/components/ui/avatar-stack";
@@ -88,6 +88,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
   const [assigningFields, setAssigningFields] = useState(false);
   // Field assignments are for Space managers (Full role), and they name the Space of the item's first location.
   const spaces = useSpaces();
+  const locationName = useLocationName();
   const fieldSpaceId = item.locations[0]?.space_id ?? "";
   const canManageFields = !!spaces.data?.some((space) => space.id === fieldSpaceId && can(space, "share"));
   const canSaveBlueprint = !!spaces.data?.some((space) => space.kind === "shared" && can(space, "create_blueprint"));
@@ -190,7 +191,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
   }
   const datesText = [item.start_date, item.due_date].filter(Boolean).map((day) => formatDate(day!, me)).join(" – ") || t("items.chips.noDates");
   const assigneesText = item.assignees.map((person) => person.name).join(", ") || t("items.chips.noAssignee");
-  const locationText = [item.locations[0]?.space_name, item.locations.length > 1 ? `+${item.locations.length - 1}` : ""].filter(Boolean).join(" ");
+  const spaceName = item.locations.map(locationName).find(Boolean);
+  const locationText = [spaceName, item.locations.length > 1 ? `+${item.locations.length - 1}` : ""].filter(Boolean).join(" ");
 
   return <article className="space-y-5">
     {parentId && !parent.isError && <Button size="sm" variant="ghost" onClick={() => onOpen(parentId)}>{parent.data?.item.title ?? t("items.parentLink")}</Button>}
@@ -258,7 +260,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
         <ItemUserPicker multiple label={t("items.assignees")} selected={item.assignees} selfOnly={assignSelfOnly(me, item.my_capabilities)}
           onChange={(people) => void save({ assignee_ids: people.map((person) => person.id) })} />
       }><AvatarStack people={item.assignees} max={2} />{assigneesText}</PopoverChip> : item.assignees.length > 0 && <span className={chipClass}><AvatarStack people={item.assignees} max={2} />{assigneesText}</span>}
-      {item.locations.length > 0 && <PopoverChip label={t("items.chips.locations", { value: locationText })} content={
+      {spaceName && <PopoverChip label={t("items.chips.locations", { value: locationText })} content={
         <ItemLocations item={item} editable={canEdit} disabled={busy || stale} />
       }>{locationText}</PopoverChip>}
     </div>

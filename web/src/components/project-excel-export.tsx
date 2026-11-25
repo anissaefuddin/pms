@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
-import { useSpaces } from "@/lib/space-queries";
+import { useLocationName, useSpaces } from "@/lib/space-queries";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { loadPresets, presetKey, removePreset, upsertPreset, type ExportPreset } from "@/lib/export-presets";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogTitle } from "@/components/ui/dialog";
@@ -84,9 +84,10 @@ function ExportForm({ item, table, spaceId, spaceName, namespaceView, onClose }:
   const [selectedPreset, setSelectedPreset] = useState("");
   const [columns, setColumns] = useState<string[]>(exportColumns);
   const { data: spaces } = useSpaces();
+  const locationName = useLocationName();
   const choices: [string, string | undefined][] = spaceId
     ? [[spaceId, spaceName]]
-    : [...new Map((item?.locations ?? []).map((location) => [location.space_id, location.space_name])).entries()];
+    : [...new Map((item?.locations ?? []).map((location) => [location.space_id, locationName(location)])).entries()];
   const [selected, setSelected] = useState("");
   // Scope: the whole tree, or only tasks in one status group (folders and projects that hold a match stay).
   const [scope, setScope] = useState("");
