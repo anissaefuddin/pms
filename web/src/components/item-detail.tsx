@@ -237,7 +237,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
     }}>
       <label className="min-w-0 flex-1"><span className="sr-only">{t("items.name")}</span>
         <Input className="text-xl font-semibold" ref={titleInput} name="title" defaultValue={item.title} onChange={() => beginDraft("title")} maxLength={500} required /></label>
-      <Button disabled={busy || stale}>{t("items.save")}</Button>
+      <Button type="submit" disabled={busy || stale}>{t("items.save")}</Button>
     </form>}
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("items.chips.group")}>
       {canStatus ? <select aria-label={t("items.status")} className={`${chipClass} border-transparent font-medium ${tintOf(item.status?.color)}`} value={item.status?.id ?? ""}

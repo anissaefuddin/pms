@@ -146,7 +146,7 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
   await page.getByRole("button", { name: "Discard my changes" }).click();
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Updated by teammate");
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("Reviewed");
-  await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
+  await page.locator("form", { has: page.getByRole("textbox", { name: "Name", exact: true }) }).getByRole("button", { name: "Save", exact: true }).click(); // the button must submit too, not only Enter
   await page.keyboard.press("Escape"); // the detail panel is modal; the header title is visible once it closes
   await expect(page.getByRole("heading", { name: "Reviewed", level: 1 })).toBeVisible();
   await page.getByRole("button", { name: "Info" }).click(); // item actions live in the detail panel
