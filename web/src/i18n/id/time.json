@@ -92,5 +92,8 @@
     "rejected": "Ditolak",
     "locked": "Dikunci",
     "unlocked": "Dibuka"
-  }
+  },
+  "budgetOver": "Melebihi anggaran {{amount}}",
+  "budgetLeft": "Sisa anggaran: {{amount}}",
+  "knownCost": "Subtotal biaya yang diketahui: {{cost}}."
 }

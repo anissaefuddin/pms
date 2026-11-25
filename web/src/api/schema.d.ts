@@ -4058,6 +4058,23 @@ export interface paths {
         patch: operations["renameWorkflow"];
         trace?: never;
     };
+    "/workflows/{workflowId}/revisions/{revision}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Salinan beku aturan workflow pada satu revisi (administrator) */
+        get: operations["getWorkflowRevision"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/workflows/{workflowId}/statuses": {
         parameters: {
             query?: never;
@@ -4959,6 +4976,11 @@ export interface components {
         };
         AnalyticsResult: {
             total: number;
+            /**
+             * @description Hanya pada metrik biaya. partial: sebagian waktu yang disetujui belum punya tarif atau tidak boleh dilihat; angka adalah subtotal yang diketahui
+             * @enum {string}
+             */
+            cost_status?: "full" | "partial";
             rows: {
                 group: components["schemas"]["AnalyticsLabel"];
                 break: components["schemas"]["AnalyticsLabel"] | null;
@@ -6913,6 +6935,13 @@ export interface components {
             };
             /** Format: date-time */
             created_at: string;
+            /** @description Revisi aturan workflow saat status diubah; null untuk entry lain dan perubahan lama */
+            workflow?: {
+                /** Format: uuid */
+                id: string;
+                revision: number;
+            } | null;
+            request_id?: string;
         };
         ActivityPage: components["schemas"]["Page"] & {
             items: components["schemas"]["Activity"][];
@@ -10830,6 +10859,31 @@ export interface operations {
                          * @description Bagian yang sudah disetujui
                          */
                         approved_minutes: number;
+                        /**
+                         * Format: int64
+                         * @description Draf dan diajukan
+                         */
+                        pending_minutes: number;
+                        /**
+                         * Format: int64
+                         * @description Subtotal yang diketahui bila cost_status partial; hanya administrator
+                         */
+                        known_cost_minor?: number;
+                        budgets: {
+                            /** Format: uuid */
+                            field_id: string;
+                            name: string;
+                            currency: string;
+                            /** Format: int64 */
+                            planned_minor: number | null;
+                            /**
+                             * Format: int64
+                             * @description planned - actual; negatif berarti melebihi anggaran; null bila biaya tidak lengkap
+                             */
+                            variance_minor: number | null;
+                            /** @description null bila anggaran kosong atau nol */
+                            utilization_percent: number | null;
+                        }[];
                         /** @enum {string} */
                         scope: "project" | "permitted_entries";
                         /**
@@ -15617,6 +15671,40 @@ export interface operations {
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
+        };
+    };
+    getWorkflowRevision: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                workflowId: string;
+                revision: number;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** Format: uuid */
+                        workflow_id: string;
+                        revision: number;
+                        /** Format: date-time */
+                        created_at: string;
+                        definition: {
+                            [key: string]: unknown;
+                        };
+                    };
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     createStatus: {

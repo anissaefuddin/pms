@@ -24,7 +24,10 @@ export function WidgetBody({ type, config, data, pending, error }: { type: Widge
   if (!data) return null;
   if (data.kind === "tasks") return <TaskList items={data.items ?? []} />;
   if (!config.query || !data.result) return <p className="text-sm text-muted-foreground">{t("dashboards.widget.notReady")}</p>;
-  return <Series type={type} config={config} query={config.query} result={data.result} />;
+  const series = <Series type={type} config={config} query={config.query} result={data.result} />;
+  // A table says it itself; a chart or pivot needs the note beside it.
+  return data.result.cost_status === "partial" && (type === "pivot" || isChart(type))
+    ? <><p role="status" className="text-xs text-muted-foreground">{t("reports.result.partialCost")}</p>{series}</> : series;
 }
 
 /** Rows are the group, columns the break; every row and column carries its total (DASH-03B). */

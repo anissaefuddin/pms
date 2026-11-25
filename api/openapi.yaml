@@ -2374,10 +2374,24 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [actual_minutes, approved_minutes, scope, cost_status]
+                required: [actual_minutes, approved_minutes, pending_minutes, scope, cost_status, budgets]
                 properties:
                   actual_minutes: { type: integer, format: int64 }
                   approved_minutes: { type: integer, format: int64, description: Bagian yang sudah disetujui }
+                  pending_minutes: { type: integer, format: int64, description: Draf dan diajukan }
+                  known_cost_minor: { type: integer, format: int64, description: Subtotal yang diketahui bila cost_status partial; hanya administrator }
+                  budgets:
+                    type: array
+                    items:
+                      type: object
+                      required: [field_id, name, currency, planned_minor, variance_minor, utilization_percent]
+                      properties:
+                        field_id: { type: string, format: uuid }
+                        name: { type: string }
+                        currency: { type: string }
+                        planned_minor: { type: integer, format: int64, nullable: true }
+                        variance_minor: { type: integer, format: int64, nullable: true, description: planned - actual; negatif berarti melebihi anggaran; null bila biaya tidak lengkap }
+                        utilization_percent: { type: number, nullable: true, description: null bila anggaran kosong atau nol, atau biaya tidak lengkap }
                   scope: { type: string, enum: [project, permitted_entries] }
                   cost_status: { type: string, enum: [full, partial, unauthorized], description: 'partial: sebagian entry tidak terlihat atau belum punya tarif, sehingga angka tidak dikirim' }
                   actual_cost_minor: { type: integer, format: int64, description: 'Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)' }
@@ -5628,6 +5642,28 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /workflows/{workflowId}/revisions/{revision}:
+    get:
+      operationId: getWorkflowRevision
+      summary: Salinan beku aturan workflow pada satu revisi (administrator)
+      parameters:
+        - { name: workflowId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: revision, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [workflow_id, revision, created_at, definition]
+                properties:
+                  workflow_id: { type: string, format: uuid }
+                  revision: { type: integer }
+                  created_at: { type: string, format: date-time }
+                  definition: { type: object, additionalProperties: true }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /workflows/{workflowId}/statuses:
     parameters:
       - { name: workflowId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -6997,6 +7033,7 @@ components:
       required: [rows, total]
       properties:
         total: { type: number }
+        cost_status: { type: string, enum: [full, partial], description: 'Hanya pada metrik biaya. partial: sebagian waktu yang disetujui belum punya tarif atau tidak boleh dilihat; angka adalah subtotal yang diketahui' }
         rows:
           type: array
           items:
@@ -8949,6 +8986,15 @@ components:
               from: {}
               to: {}
         created_at: { type: string, format: date-time }
+        workflow:
+          type: object
+          nullable: true
+          description: Revisi aturan workflow saat status diubah; null untuk entry lain dan perubahan lama
+          required: [id, revision]
+          properties:
+            id: { type: string, format: uuid }
+            revision: { type: integer, minimum: 1 }
+        request_id: { type: string }
     ActivityPage:
       allOf:
         - $ref: '#/components/schemas/Page'

@@ -279,6 +279,24 @@ func (e AnalyticsQueryReportingOn) Valid() bool {
 	}
 }
 
+// Defines values for AnalyticsResultCostStatus.
+const (
+	AnalyticsResultCostStatusFull    AnalyticsResultCostStatus = "full"
+	AnalyticsResultCostStatusPartial AnalyticsResultCostStatus = "partial"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsResultCostStatus enum.
+func (e AnalyticsResultCostStatus) Valid() bool {
+	switch e {
+	case AnalyticsResultCostStatusFull:
+		return true
+	case AnalyticsResultCostStatusPartial:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ApiKeyScope.
 const (
 	ApiKeyScopeRead  ApiKeyScope = "read"
@@ -3875,6 +3893,13 @@ type Activity struct {
 	} `json:"changes"`
 	CreatedAt time.Time `json:"created_at"`
 	Id        int64     `json:"id"`
+	RequestId *string   `json:"request_id,omitempty"`
+
+	// Workflow Revisi aturan workflow saat status diubah; null untuk entry lain dan perubahan lama
+	Workflow *struct {
+		Id       openapi_types.UUID `json:"id"`
+		Revision int                `json:"revision"`
+	} `json:"workflow,omitempty"`
 }
 
 // ActivityPage defines model for ActivityPage.
@@ -3961,13 +3986,18 @@ type AnalyticsQueryReportingOn string
 
 // AnalyticsResult defines model for AnalyticsResult.
 type AnalyticsResult struct {
-	Rows []struct {
+	// CostStatus Hanya pada metrik biaya. partial: sebagian waktu yang disetujui belum punya tarif atau tidak boleh dilihat; angka adalah subtotal yang diketahui
+	CostStatus *AnalyticsResultCostStatus `json:"cost_status,omitempty"`
+	Rows       []struct {
 		Break *AnalyticsLabel `json:"break"`
 		Group AnalyticsLabel  `json:"group"`
 		Value float32         `json:"value"`
 	} `json:"rows"`
 	Total float32 `json:"total"`
 }
+
+// AnalyticsResultCostStatus Hanya pada metrik biaya. partial: sebagian waktu yang disetujui belum punya tarif atau tidak boleh dilihat; angka adalah subtotal yang diketahui
+type AnalyticsResultCostStatus string
 
 // ApiKey defines model for ApiKey.
 type ApiKey struct {
@@ -9615,6 +9645,9 @@ type ServerInterface interface {
 	// RenameWorkflow Ubah nama workflow (admin saja)
 	// (PATCH /workflows/{workflowId})
 	RenameWorkflow(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
+	// GetWorkflowRevision Salinan beku aturan workflow pada satu revisi (administrator)
+	// (GET /workflows/{workflowId}/revisions/{revision})
+	GetWorkflowRevision(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID, revision int)
 	// ReorderStatuses Urutkan status; harus memuat semua status workflow, dan status pertama harus Active
 	// (PUT /workflows/{workflowId}/status-order)
 	ReorderStatuses(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
@@ -19898,6 +19931,41 @@ func (siw *ServerInterfaceWrapper) RenameWorkflow(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// GetWorkflowRevision operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkflowRevision(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "workflowId" -------------
+	var workflowId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflowId", r.PathValue("workflowId"), &workflowId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflowId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "revision" -------------
+	var revision int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "revision", r.PathValue("revision"), &revision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "revision", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkflowRevision(w, r, workflowId, revision)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ReorderStatuses operation middleware
 func (siw *ServerInterfaceWrapper) ReorderStatuses(w http.ResponseWriter, r *http.Request) {
 
@@ -20450,6 +20518,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/workflows", wrapper.CreateWorkflow)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/workflows/{workflowId}", wrapper.DeleteWorkflow)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/workflows/{workflowId}", wrapper.RenameWorkflow)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/workflows/{workflowId}/revisions/{revision}", wrapper.GetWorkflowRevision)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/workflows/{workflowId}/statuses", wrapper.CreateStatus)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/workflows/{workflowId}/status-order", wrapper.ReorderStatuses)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/statuses/{statusId}", wrapper.DeleteStatus)
@@ -30045,10 +30114,28 @@ type GetProjectTimeSummary200JSONResponse struct {
 
 	// ApprovedMinutes Bagian yang sudah disetujui
 	ApprovedMinutes int64 `json:"approved_minutes"`
+	Budgets         []struct {
+		Currency     string             `json:"currency"`
+		FieldId      openapi_types.UUID `json:"field_id"`
+		Name         string             `json:"name"`
+		PlannedMinor *int64             `json:"planned_minor"`
+
+		// UtilizationPercent null bila anggaran kosong atau nol
+		UtilizationPercent *float32 `json:"utilization_percent"`
+
+		// VarianceMinor planned - actual; negatif berarti melebihi anggaran; null bila biaya tidak lengkap
+		VarianceMinor *int64 `json:"variance_minor"`
+	} `json:"budgets"`
 
 	// CostStatus partial: sebagian entry tidak terlihat atau belum punya tarif, sehingga angka tidak dikirim
 	CostStatus GetProjectTimeSummary200JSONResponseBodyCostStatus `json:"cost_status"`
-	Scope      GetProjectTimeSummary200JSONResponseBodyScope      `json:"scope"`
+
+	// KnownCostMinor Subtotal yang diketahui bila cost_status partial; hanya administrator
+	KnownCostMinor *int64 `json:"known_cost_minor,omitempty"`
+
+	// PendingMinutes Draf dan diajukan
+	PendingMinutes int64                                         `json:"pending_minutes"`
+	Scope          GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
 }
 
 func (response GetProjectTimeSummary200JSONResponse) VisitGetProjectTimeSummaryResponse(w http.ResponseWriter) error {
@@ -40403,6 +40490,64 @@ func (response RenameWorkflow422ApplicationProblemPlusJSONResponse) VisitRenameW
 	return err
 }
 
+type GetWorkflowRevisionRequestObject struct {
+	WorkflowId openapi_types.UUID `json:"workflowId"`
+	Revision   int                `json:"revision"`
+}
+
+type GetWorkflowRevisionResponseObject interface {
+	VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error
+}
+
+type GetWorkflowRevision200JSONResponse struct {
+	CreatedAt  time.Time              `json:"created_at"`
+	Definition map[string]interface{} `json:"definition"`
+	Revision   int                    `json:"revision"`
+	WorkflowId openapi_types.UUID     `json:"workflow_id"`
+}
+
+func (response GetWorkflowRevision200JSONResponse) VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkflowRevision403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetWorkflowRevision403ApplicationProblemPlusJSONResponse) VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkflowRevision404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetWorkflowRevision404ApplicationProblemPlusJSONResponse) VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReorderStatusesRequestObject struct {
 	WorkflowId openapi_types.UUID `json:"workflowId"`
 	Body       *ReorderStatusesJSONRequestBody
@@ -41668,6 +41813,9 @@ type StrictServerInterface interface {
 	// RenameWorkflow Ubah nama workflow (admin saja)
 	// (PATCH /workflows/{workflowId})
 	RenameWorkflow(ctx context.Context, request RenameWorkflowRequestObject) (RenameWorkflowResponseObject, error)
+	// GetWorkflowRevision Salinan beku aturan workflow pada satu revisi (administrator)
+	// (GET /workflows/{workflowId}/revisions/{revision})
+	GetWorkflowRevision(ctx context.Context, request GetWorkflowRevisionRequestObject) (GetWorkflowRevisionResponseObject, error)
 	// ReorderStatuses Urutkan status; harus memuat semua status workflow, dan status pertama harus Active
 	// (PUT /workflows/{workflowId}/status-order)
 	ReorderStatuses(ctx context.Context, request ReorderStatusesRequestObject) (ReorderStatusesResponseObject, error)
@@ -51502,6 +51650,33 @@ func (sh *strictHandler) RenameWorkflow(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RenameWorkflowResponseObject); ok {
 		if err := validResponse.VisitRenameWorkflowResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkflowRevision operation middleware
+func (sh *strictHandler) GetWorkflowRevision(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID, revision int) {
+	var request GetWorkflowRevisionRequestObject
+
+	request.WorkflowId = workflowId
+	request.Revision = revision
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkflowRevision(ctx, request.(GetWorkflowRevisionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkflowRevision")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkflowRevisionResponseObject); ok {
+		if err := validResponse.VisitGetWorkflowRevisionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

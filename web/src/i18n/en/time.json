@@ -94,5 +94,8 @@
     "rejected": "Rejected",
     "locked": "Locked",
     "unlocked": "Unlocked"
-  }
+  },
+  "budgetOver": "Over budget by {{amount}}",
+  "budgetLeft": "Remaining budget: {{amount}}",
+  "knownCost": "Known cost subtotal: {{cost}}."
 }

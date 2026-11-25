@@ -17,7 +17,8 @@ export function ResultTable({ result, query, caption }: { result: AnalyticsResul
   // Cost comes in minor units (cents); shown with two decimals like the rates page.
   const money = query.metric === "actual_cost_minor";
   const fmt = (v: number) => money ? new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v / 100) : String(v);
-  return <table className="w-full text-left text-sm">
+  return <>{result.cost_status === "partial" && <p role="status" className="text-sm text-muted-foreground">{t("reports.result.partialCost")}</p>}
+  <table className="w-full text-left text-sm">
     {caption && <caption className="sr-only">{caption}</caption>}
     <thead><tr className="border-b">
       <th scope="col" className="py-2 pr-4">{labels.group}</th>
@@ -30,5 +31,5 @@ export function ResultTable({ result, query, caption }: { result: AnalyticsResul
       <td className="py-2 pr-4 text-right tabular-nums">{fmt(row.value)}</td>
     </tr>)}</tbody>
     <tfoot><tr><th scope="row" colSpan={query.break_by ? 2 : 1} className="py-2 pr-4 text-left">{money ? t("reports.result.totalMoney", { amount: fmt(result.total) }) : t("reports.result.total", { count: result.total })}</th><td /></tr></tfoot>
-  </table>;
+  </table></>;
 }
