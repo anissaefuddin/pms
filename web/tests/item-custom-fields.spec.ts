@@ -128,3 +128,14 @@ test("People keeps an inactive selection and only offers active users", async ({
   await expect(section.getByText("Grace Hopper")).toBeVisible();
   expect(patches()[1]?.body).toEqual({ fields: { [peopleId]: [grace.id] } });
 });
+
+test("a field with a view grant only is shown without an edit control, and a field without one is not shown (DEF-016)", async ({ page }) => {
+  const field = { id: currencyId, space_id: marketing.id, name: "Budget line", type: "text", position: 0, options: [], config: {}, access: "view" } as unknown as CustomField;
+  await mockItem(page, field, "Confidential");
+  await expect(page.getByText("Budget line")).toBeVisible();
+  await expect(page.getByRole("button", { name: "Edit Budget line" })).toHaveCount(0);
+  await page.route(`**/api/v1/spaces/${marketing.id}/custom-fields`, (route) => route.fulfill({ json: { items: [{ ...field, access: "none" }] } }));
+  await page.reload();
+  await expect(page.getByRole("textbox", { name: "Name", exact: true })).toBeVisible();
+  await expect(page.getByText("Budget line")).toHaveCount(0);
+});

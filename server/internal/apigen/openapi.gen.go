@@ -795,6 +795,27 @@ func (e ConnectorConflictResolution) Valid() bool {
 	}
 }
 
+// Defines values for CustomFieldAccess.
+const (
+	CustomFieldAccessEdit CustomFieldAccess = "edit"
+	CustomFieldAccessNone CustomFieldAccess = "none"
+	CustomFieldAccessView CustomFieldAccess = "view"
+)
+
+// Valid indicates whether the value is a known member of the CustomFieldAccess enum.
+func (e CustomFieldAccess) Valid() bool {
+	switch e {
+	case CustomFieldAccessEdit:
+		return true
+	case CustomFieldAccessNone:
+		return true
+	case CustomFieldAccessView:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for CustomFieldConfigAggregation.
 const (
 	CustomFieldConfigAggregationAverage CustomFieldConfigAggregation = "average"
@@ -4448,6 +4469,8 @@ type CreateMenu struct {
 
 // CustomField defines model for CustomField.
 type CustomField struct {
+	// Access Akses pemanggil ke nilai field; hanya pada daftar. Field dengan none hanya dikirim ke pengelolanya
+	Access     *CustomFieldAccess  `json:"access,omitempty"`
 	ArchivedAt *time.Time          `json:"archived_at,omitempty"`
 	Config     *CustomFieldConfig  `json:"config,omitempty"`
 	Id         openapi_types.UUID  `json:"id"`
@@ -4457,6 +4480,9 @@ type CustomField struct {
 	SpaceId    openapi_types.UUID  `json:"space_id"`
 	Type       CustomFieldType     `json:"type"`
 }
+
+// CustomFieldAccess Akses pemanggil ke nilai field; hanya pada daftar. Field dengan none hanya dikirim ke pengelolanya
+type CustomFieldAccess string
 
 // CustomFieldConfig defines model for CustomFieldConfig.
 type CustomFieldConfig struct {

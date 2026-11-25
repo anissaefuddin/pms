@@ -238,14 +238,10 @@ func ListSpaceFields(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor
 	if err != nil {
 		return nil, err
 	}
-	hidden, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
-	if err != nil {
-		return nil, err
-	}
 	rows, err := tx.Query(ctx, "SELECT "+customFieldColumns+` FROM custom_fields f
 WHERE f.archived_at IS NULL AND (f.space_id=$1::uuid OR (f.space_id IS NULL AND EXISTS(SELECT 1 FROM custom_field_assignments a
   WHERE a.field_id=f.id AND a.space_id=$1::uuid AND a.scope_kind='space' AND a.scope_id=$1::uuid)))
-AND NOT (f.id::text = ANY($2::text[])) ORDER BY f.position`, space, nonNilStrings(hidden))
+ORDER BY f.position`, space)
 	if err != nil {
 		return nil, err
 	}
@@ -253,8 +249,8 @@ AND NOT (f.id::text = ANY($2::text[])) ORDER BY f.position`, space, nonNilString
 	if err != nil {
 		return nil, err
 	}
-	if fields == nil {
-		fields = []CustomField{}
+	if fields, err = withFieldAccess(ctx, tx, actor, fields, false); err != nil {
+		return nil, err
 	}
 	return fields, tx.Commit(ctx)
 }

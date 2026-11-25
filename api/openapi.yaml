@@ -8573,6 +8573,7 @@ components:
             space_id: { type: string, format: uuid }
             position: { type: integer, minimum: 0 }
             archived_at: { type: string, format: date-time, nullable: true }
+            access: { type: string, enum: [edit, view, none], description: Akses pemanggil ke nilai field; hanya pada daftar. Field dengan none hanya dikirim ke pengelolanya }
             options:
               type: array
               items: { $ref: '#/components/schemas/CustomFieldOption' }

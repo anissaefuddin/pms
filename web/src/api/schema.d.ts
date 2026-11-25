@@ -6531,6 +6531,11 @@ export interface components {
             position: number;
             /** Format: date-time */
             archived_at?: string | null;
+            /**
+             * @description Akses pemanggil ke nilai field; hanya pada daftar. Field dengan none hanya dikirim ke pengelolanya
+             * @enum {string}
+             */
+            access?: "edit" | "view" | "none";
             options: components["schemas"]["CustomFieldOption"][];
         };
         CustomFieldPerson: components["schemas"]["UserRef"] & {

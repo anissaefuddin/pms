@@ -192,7 +192,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
         const { item } = row.original;
         const value = item.fields?.[field.id];
         const display = profile ? <CustomFieldDisplay field={field} value={value} people={peopleOf(item, field, value)} profile={profile} /> : null;
-        return item.my_capabilities.includes("edit") && !field.archived_at && field.type !== "formula" && profile
+        return item.my_capabilities.includes("edit") && !field.archived_at && field.type !== "formula" && field.access !== "view" && profile
           ? <Button variant="ghost" size="sm" className="max-w-full justify-start truncate" aria-label={`${field.name}: ${item.title}`}
             onClick={() => setEditing({ id: item.id, field: fieldColumn(field.id) as `field:${string}` })}>{display}</Button>
           : display;

@@ -2,6 +2,7 @@ package httpserver_test
 
 import (
 	"encoding/json"
+	"fmt"
 	"net/http"
 	"strings"
 	"testing"
@@ -158,6 +159,53 @@ func TestCustomFieldHistoryHidesWhatTheItemHides(t *testing.T) {
 			if strings.Contains(string(seen), secret) {
 				t.Fatalf("%s leaks %s: %s", path, secret, seen)
 			}
+		}
+	}
+}
+
+// DEF-016: a person without a view grant is not sent the definition of a restricted field or of a formula that reads it; a view grant
+// is marked read-only; the person who manages fields still sees it, marked as not theirs to read.
+func TestCustomFieldDefinitionsFollowTheGrants(t *testing.T) {
+	f := newFixture(t)
+	owner, editor, viewer, manager := f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
+	space := f.spaceWithoutAdmins("Definitions")
+	f.share(space, "user", owner.id, "full")
+	f.share(space, "user", manager.id, "full")
+	f.share(space, "user", editor.id, "editor")
+	f.share(space, "user", viewer.id, "editor")
+	field := func(body map[string]any) string {
+		made := f.call(owner, http.MethodPost, "/spaces/"+space+"/custom-fields", body)
+		f.want(made, 201, "field")
+		return made.body["id"].(string)
+	}
+	salary := field(map[string]any{"name": "Salary", "type": "number"})
+	field(map[string]any{"name": "Bonus", "type": "formula", "config": map[string]any{"expression": "[Salary]*2"}})
+	field(map[string]any{"name": "Plain", "type": "text"})
+	f.want(f.call(owner, http.MethodPut, "/spaces/"+space+"/custom-fields/"+salary+"/grants", map[string]any{"grants": []map[string]any{
+		{"subject_kind": "user", "subject_id": owner.id, "level": "edit"}, {"subject_kind": "user", "subject_id": viewer.id, "level": "view"}}}), 200, "restrict")
+	access := func(p *person, path string) string {
+		list := f.call(p, http.MethodGet, "/spaces/"+space+path, nil)
+		f.want(list, 200, path)
+		out := ""
+		for _, row := range list.items() {
+			out += row["name"].(string) + "=" + fmt.Sprint(row["access"]) + " "
+		}
+		return out
+	}
+	for _, c := range []struct {
+		p          *person
+		list, used string
+	}{
+		{owner, "Salary=edit Bonus=view Plain=edit ", "Salary=edit Bonus=view Plain=edit "},
+		{viewer, "Salary=view Bonus=view Plain=edit ", "Salary=view Bonus=view Plain=edit "},
+		{editor, "Plain=edit ", "Plain=edit "},
+		{manager, "Salary=none Bonus=none Plain=edit ", "Plain=edit "},
+	} {
+		if got := access(c.p, "/custom-fields"); got != c.list {
+			t.Errorf("definitions = %q, want %q", got, c.list)
+		}
+		if got := access(c.p, "/fields"); got != c.used {
+			t.Errorf("view fields = %q, want %q", got, c.used)
 		}
 	}
 }

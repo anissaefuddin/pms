@@ -29,7 +29,7 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/custom-fields`),
   })) });
   const fields = queries.flatMap((query) => query.data?.items ?? [])
-    .filter((field) => (!field.archived_at || item.fields?.[field.id] != null) &&
+    .filter((field) => field.access !== "none" && (!field.archived_at || item.fields?.[field.id] != null) &&
       (item.type === "project" || !field.config?.project_budget));
   const budgetFields = fields.filter((field) => field.config?.project_budget);
   const actual = useQuery({
@@ -85,7 +85,7 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
               {field.config?.project_budget && actual.data?.cost_status === "partial" && <p className="text-sm text-muted-foreground">{t("time.costPartial")}</p>}
               {field.config?.project_budget && actual.isError && <FormError message={actual.error.message} />}
             </div>
-            {editable && !field.archived_at && field.type !== "formula" && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}
+            {editable && !field.archived_at && field.type !== "formula" && field.access !== "view" && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}
               ref={(button) => {
                 if (button && returnFocus.current === field.id) {
                   button.focus();
