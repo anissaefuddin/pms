@@ -706,7 +706,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   const controls = <>
       <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
       <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-        <PopoverTrigger render={<Button size="sm" variant="outline" aria-label={t("views.gantt.choosePeriod")} />}><CalendarDays />{new Intl.DateTimeFormat(i18n.language, ganttMonthFormat).format(navigationDate)}<ChevronDown /></PopoverTrigger>
+        <PopoverTrigger render={<Button size="sm" variant="outline" aria-label={`${t("views.gantt.choosePeriod")}: ${new Intl.DateTimeFormat(i18n.language, ganttMonthFormat).format(navigationDate)}`} />}><CalendarDays />{new Intl.DateTimeFormat(i18n.language, ganttMonthFormat).format(navigationDate)}<ChevronDown /></PopoverTrigger>
         <PopoverContent align="start" className="w-72 space-y-3">
           <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); const year = Number(navigationYear); if (year >= 1900 && year <= 9999) scrollToDate(new Date(year, navigationDate.getMonth(), 1)); }}>
             <label className="flex-1 text-xs font-medium">{t("views.gantt.year")}<Input type="number" min={1900} max={9999} value={navigationYear} onChange={(event) => setNavigationYear(event.target.value)} className="mt-1" /></label>
@@ -761,7 +761,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       {undated > 0 && <Button size="sm" variant="ghost" onClick={() => setUndatedOpen(true)}>{t("views.gantt.unscheduledCount", { count: undated })}</Button>}
       <div className="flex items-center gap-0.5 rounded-md border bg-background p-0.5" data-testid="gantt-scale-controls">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={t("views.gantt.scale")} />}>{t(`views.gantt.${scale}`)}<ChevronDown /></DropdownMenuTrigger>
+          <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={`${t("views.gantt.scale")}: ${t(`views.gantt.${scale}`)}`} />}>{t(`views.gantt.${scale}`)}<ChevronDown /></DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-36">
             {scaleOptions.map((value) => <DropdownMenuItem key={value} aria-current={scale === value ? "true" : undefined} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</DropdownMenuItem>)}
           </DropdownMenuContent>

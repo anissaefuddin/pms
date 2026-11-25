@@ -53,7 +53,7 @@ test("the account menu is the one place for Settings, Recycle bin, Apps, Help an
 });
 
 test("More lists Calendars and Created by me; Calendars and Created by me pages open without axe violations", async ({ page }) => {
-  await mockSpaces(page, { extra: common as never });
+  await mockSpaces(page, { extra: { ...common, "GET /me/created": { body: { items: [{ id: project, title: "Roadmap", type: "project" }], next_cursor: null } } } as never });
   await page.goto("/");
   await page.getByRole("button", { name: "More", exact: true }).click();
   await expect(page.getByRole("menuitem", { name: "Customize sidebar" })).toBeVisible();
