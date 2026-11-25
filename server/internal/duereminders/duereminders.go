@@ -89,7 +89,9 @@ func deliverTo(ctx context.Context, pool *pgxpool.Pool, u recipient, publicURL s
 	rows, err := tx.Query(ctx, `SELECT i.id::text,i.title,COALESCE(st.name,''),i.due_date::text,(i.due_date-$2::date)::int
 FROM item_assignees ia JOIN items i ON i.id=ia.item_id AND i.type='task' AND i.deleted_at IS NULL AND i.due_date IS NOT NULL
 LEFT JOIN statuses st ON st.id=i.status_id
-WHERE ia.user_id=$1::uuid AND COALESCE(st.grp::text,'active') NOT IN ('completed','cancelled') ORDER BY i.due_date,i.id`, u.ID, localToday)
+WHERE ia.user_id=$1::uuid AND COALESCE(st.grp::text,'active') NOT IN ('completed','cancelled')
+AND EXISTS (SELECT 1 FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.deleted_at IS NULL AND s.archived_at IS NULL
+  WHERE l.item_id=i.id AND l.deleted_root_id IS NULL) ORDER BY i.due_date,i.id`, u.ID, localToday)
 	if err != nil {
 		return err
 	}
