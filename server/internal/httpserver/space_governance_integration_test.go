@@ -115,3 +115,19 @@ func TestSpaceRegistryShowsOnlyWhatTheCallerCanSee(t *testing.T) {
 		}
 	}
 }
+
+// DEF-001: a Space made through the API starts with its creator as Space Admin, so governance works from day one.
+func TestSpaceCreatorIsTheFirstSpaceAdmin(t *testing.T) {
+	f := newFixture(t)
+	creator, member := f.person("regular"), f.person("regular")
+	made := f.call(creator, "POST", "/spaces", map[string]any{"name": "Fresh"})
+	f.want(made, 201, "create")
+	if made.body["is_space_admin"] != true {
+		t.Fatalf("the creator must be a Space Admin: %v", made.body)
+	}
+	space := made.body["id"].(string)
+	f.share(space, "user", member.id, "full")
+	f.want(f.call(member, "POST", "/spaces/"+space+"/archive", nil, "If-Match", fmt.Sprintf(`"%d"`, versionOf(f, space))), 403, "a Full share is still not an admin")
+	f.want(f.call(creator, "POST", "/spaces/"+space+"/admins", map[string]any{"user_id": member.id}), 204, "the creator names another admin")
+	f.want(f.call(creator, "POST", "/spaces/"+space+"/archive", nil, "If-Match", fmt.Sprintf(`"%d"`, versionOf(f, space))), 200, "the creator archives")
+}

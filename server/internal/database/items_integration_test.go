@@ -38,10 +38,7 @@ func TestItemLocationRejectsCycle(t *testing.T) {
 	if err := pool.QueryRow(ctx, "SELECT id::text FROM items WHERE title='A'").Scan(&itemID); err != nil {
 		t.Fatal(err)
 	}
-	// D-17 A1: the admin needs an explicit grant on the Space to edit its items.
-	if _, err := pool.Exec(ctx, "INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) SELECT 'space', s.id, 'user', $1::uuid, 'full' FROM spaces s WHERE s.name='General'", admin.AdminID); err != nil {
-		t.Fatal(err)
-	}
+	// D-17 A1: the admin edits through the explicit grant bootstrap gives on General.
 	caps, err := policy.ItemCaps(ctx, pool, policy.Actor{ID: admin.AdminID, Type: policy.Admin}, itemID)
 	if err != nil || !caps.Has(policy.Edit) {
 		t.Fatalf("admin access through shared Space: caps=%v err=%v", caps, err)

@@ -181,6 +181,10 @@ func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput
 	if err := writeShares(ctx, tx, id, actor, shares, policy.Ceiling(actor.Type), batch); err != nil {
 		return Space{}, err
 	}
+	// D-SA1: the creator is the first Space Admin; only a Space Admin can name another, so a Space must never start without one.
+	if _, err := tx.Exec(ctx, "INSERT INTO space_admins(space_id,user_id,granted_by) VALUES ($1,$2,$2)", id, actor.ID); err != nil {
+		return Space{}, err
+	}
 	access, found, err := policy.SpaceAccessFor(ctx, tx, actor, id)
 	if err != nil || !found {
 		return Space{}, errors.Join(err, errors.New("created space is not visible to its creator"))
