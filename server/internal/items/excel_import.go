@@ -199,6 +199,15 @@ func planExcel(ctx context.Context, tx pgx.Tx, actor policy.Actor, space, destin
 		add(1, "", "workbook has no header")
 		return p, nil, nil
 	}
+	target := Location{SpaceID: space}
+	if destination != uuid.Nil {
+		target.ParentID = &destination
+	}
+	caps, err := locationCaps(ctx, tx, actor, target)
+	if err != nil {
+		return p, nil, err
+	}
+	canAssign := actor.Type == policy.Admin || caps.Has(policy.Share) // W3, as on a direct create
 	p.Columns = rows[0]
 	for _, row := range rows[1:min(len(rows), 6)] {
 		sample := make([]string, len(row))
@@ -401,6 +410,10 @@ func planExcel(ctx context.Context, tx pgx.Tx, actor policy.Actor, space, destin
 				id, msg := resolveAssignee(ctx, tx, space, strings.TrimSpace(email))
 				if msg != "" {
 					add(row, "assignee_email", msg)
+					continue
+				}
+				if id != actor.ID && !canAssign {
+					add(row, "assignee_email", ErrAssignForbidden.Error())
 					continue
 				}
 				ids = append(ids, id)

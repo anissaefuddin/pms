@@ -522,6 +522,24 @@ func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.
 	return nil
 }
 
+// requireReassign is the same rule for an edit: an Editor may take or leave a Task, not give it to someone else. A change made by
+// an automation rule counts as its owner's.
+func requireReassign(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID string, assignees []uuid.UUID) error {
+	if actor.Type == policy.Admin {
+		return nil
+	}
+	var addsOthers bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM unnest($2::uuid[]) u WHERE u<>$3::uuid
+ AND NOT EXISTS(SELECT 1 FROM item_assignees a WHERE a.item_id=$1::uuid AND a.user_id=u))`, itemID, assignees, actor.ID).Scan(&addsOthers); err != nil || !addsOthers {
+		return err
+	}
+	caps, err := policy.ItemCaps(ctx, tx, actor, itemID)
+	if err == nil && !caps.Has(policy.Share) {
+		err = ErrAssignForbidden
+	}
+	return err
+}
+
 // assigneesOtherThan lists the assignees of a create (assignee_ids and assignee_allocations) that are not the actor.
 func assigneesOtherThan(fields map[string]json.RawMessage, actorID string) []string {
 	var ids []string

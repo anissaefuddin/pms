@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { ItemUserPicker, assignSelfOnly, type PersonOption } from "@/components/item-user-picker";
 import { ProjectProgress } from "@/components/project-progress";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
 import { AvatarStack } from "@/components/ui/avatar-stack";
@@ -413,10 +413,11 @@ function FieldEdit({ field, item, locale, pending, onSave, onCancel }: {
 function AssigneeEdit({ item, onSave, onCancel }: { item: Item; onSave: (people: PersonOption[]) => void; onCancel: () => void }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState(item.assignees);
+  const profile = useProfile();
   return <Dialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
     <DialogContent>
       <DialogTitle>{t("items.assignees")}</DialogTitle>
-      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} />
+      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} selfOnly={assignSelfOnly(profile, item.my_capabilities)} />
       <div className="flex gap-2">
         <Button size="sm" onClick={() => onSave(selected)}>{t("items.save")}</Button>
         <Button size="sm" variant="ghost" onClick={onCancel}>{t("items.cancel")}</Button>

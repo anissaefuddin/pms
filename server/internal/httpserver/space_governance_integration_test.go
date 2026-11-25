@@ -131,3 +131,35 @@ func TestSpaceCreatorIsTheFirstSpaceAdmin(t *testing.T) {
 	f.want(f.call(creator, "POST", "/spaces/"+space+"/admins", map[string]any{"user_id": member.id}), 204, "the creator names another admin")
 	f.want(f.call(creator, "POST", "/spaces/"+space+"/archive", nil, "If-Match", fmt.Sprintf(`"%d"`, versionOf(f, space))), 200, "the creator archives")
 }
+
+// Owner decision (2026-11-26): a Space whose only Space Admin is deactivated stays active for its members, nobody else's role
+// changes, and the admin has the role back on reactivation.
+func TestSpaceStaysActiveWithoutAnActiveAdmin(t *testing.T) {
+	f := newFixture(t)
+	admin, creator, member, reader := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
+	made := f.call(creator, "POST", "/spaces", map[string]any{"name": "Survives"})
+	f.want(made, 201, "create")
+	space := made.body["id"].(string)
+	f.share(space, "user", member.id, "full")
+	f.share(space, "user", reader.id, "read")
+	roles := func() string {
+		return f.queryID("SELECT string_agg(principal_id::text||role::text, ',' ORDER BY principal_id) || (SELECT string_agg(user_id::text,',') FROM space_admins WHERE space_id=$1) FROM shares WHERE target_id=$1", space)
+	}
+	before := roles()
+	f.want(f.call(admin, "POST", "/users/"+creator.id+"/deactivate", nil), 200, "deactivate the only Space Admin")
+	if after := roles(); after != before {
+		t.Fatalf("roles changed: %s -> %s", before, after)
+	}
+	got := f.call(member, "GET", "/spaces/"+space, nil)
+	f.want(got, 200, "still open")
+	if got.body["archived"] != false || got.body["is_space_admin"] != false {
+		t.Fatalf("the Space must stay active and promote nobody: %v", got.body)
+	}
+	f.want(f.call(member, "POST", "/items", map[string]any{"type": "task", "title": "Goes on", "assignee_ids": []string{reader.id}, "locations": []map[string]any{{"space_id": space}}}), 201, "work continues")
+	f.want(f.call(reader, "POST", "/items", map[string]any{"type": "task", "title": "No", "locations": []map[string]any{{"space_id": space}}}), 403, "a Read member is still only a reader")
+	f.want(f.call(admin, "GET", "/spaces/"+space, nil), 404, "a Workspace Admin gains no access")
+	f.want(f.call(admin, "POST", "/users/"+creator.id+"/reactivate", nil), 200, "reactivate")
+	if n := f.queryID("SELECT count(*)::text FROM space_admins WHERE space_id=$1 AND user_id=$2", space, creator.id); n != "1" {
+		t.Fatalf("the admin role comes back with the account, rows=%s", n)
+	}
+}

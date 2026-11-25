@@ -361,6 +361,11 @@ WHERE i.id=$2::uuid AND next.id=$1
 		}
 	}
 	if replaceAssignees {
+		if incrementVersion {
+			if err := requireReassign(ctx, tx, actor, id, assignees); err != nil {
+				return err
+			}
+		}
 		if err := setAssignees(ctx, tx, id, assignees); err != nil {
 			return err
 		}

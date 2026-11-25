@@ -20,7 +20,7 @@ import { FormError } from "@/components/auth/form-error";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ProjectExcelExport } from "@/components/project-excel-export";
 import { SaveBlueprintDialog } from "@/components/save-blueprint-dialog";
-import { ItemUserPicker } from "@/components/item-user-picker";
+import { ItemUserPicker, assignSelfOnly } from "@/components/item-user-picker";
 import { ItemDates } from "@/components/item-dates";
 import { ItemEffort } from "@/components/item-effort";
 import { ItemLocations } from "@/components/item-locations";
@@ -255,7 +255,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
           initialDue={item.due_date} onEdit={() => beginDraft("start_date")} onChange={saveDates} />
       }>{datesText}</PopoverChip> : datesText !== t("items.chips.noDates") && <span className={chipClass}>{datesText}</span>}
       {canEdit ? <PopoverChip disabled={busy || stale} label={t("items.chips.assignees", { value: assigneesText })} content={
-        <ItemUserPicker multiple label={t("items.assignees")} selected={item.assignees}
+        <ItemUserPicker multiple label={t("items.assignees")} selected={item.assignees} selfOnly={assignSelfOnly(me, item.my_capabilities)}
           onChange={(people) => void save({ assignee_ids: people.map((person) => person.id) })} />
       }><AvatarStack people={item.assignees} max={2} />{assigneesText}</PopoverChip> : item.assignees.length > 0 && <span className={chipClass}><AvatarStack people={item.assignees} max={2} />{assigneesText}</span>}
       {item.locations.length > 0 && <PopoverChip label={t("items.chips.locations", { value: locationText })} content={

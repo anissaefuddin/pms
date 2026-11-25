@@ -101,6 +101,8 @@
   "parentLink": "Back to parent",
   "browseChildren": "Browse inside",
   "searchUsers": "Search active users",
+  "assignToMe": "Assign to me",
+  "assignSelfOnly": "Only people with Full access can assign someone else.",
   "remove": "Remove {{name}}",
   "customFields": {
     "title": "Custom fields",

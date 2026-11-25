@@ -17,7 +17,7 @@ import { ApiError, api } from "@/lib/api";
 import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
 import { itemKeys, listItems, type Item, type ItemStatus, type ItemUpdate } from "@/lib/items";
-import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { ItemUserPicker, assignSelfOnly, type PersonOption } from "@/components/item-user-picker";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 import { dayCellWidth, dayIndexAt, dayRange, isDragStep } from "@/lib/gantt-timeline";
 import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
@@ -203,13 +203,14 @@ function AssigneeCell({ item, readonly, onPatch }: { item?: Item; readonly: bool
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<PersonOption[]>(item?.assignees ?? []);
+  const profile = useProfile();
   if (!item || readonly || !item.my_capabilities.includes("edit")) return <span>{item?.assignees.map((person) => person.name).join(", ")}</span>;
   return <Popover open={open} onOpenChange={(next) => { setOpen(next); if (next) setSelected(item.assignees); }}>
     <PopoverTrigger render={<button type="button" className="w-full truncate text-left text-sm hover:underline" aria-label={`${t("items.assignees")}: ${item.title}`} />}>
       {item.assignees.map((person) => person.name).join(", ") || t("views.unassigned")}
     </PopoverTrigger>
     <PopoverContent className="w-80 space-y-3">
-      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} autoFocus />
+      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} autoFocus selfOnly={assignSelfOnly(profile, item.my_capabilities)} />
       <div className="flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={() => setOpen(false)}>{t("items.cancel")}</Button>
         <Button size="sm" onClick={() => { void onPatch(item, { assignee_ids: selected.map((person) => person.id) }); setOpen(false); }}>{t("items.save")}</Button></div>
     </PopoverContent>

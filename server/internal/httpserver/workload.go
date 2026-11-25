@@ -145,7 +145,7 @@ func loadWorkload(r *http.Request, tx pgx.Tx, actor policy.Actor, from, to time.
 		if !caps[task.ID].Has(policy.View) {
 			continue
 		}
-		task.Editable = caps[task.ID].Has(policy.Edit)
+		task.Editable = caps[task.ID].Has(policy.Edit) && (actor.Type == policy.Admin || caps[task.ID].Has(policy.Share)) // reassign (W3)
 		visible = append(visible, task)
 		for i, id := range task.Assignees {
 			if at, ok := index[id]; ok {
