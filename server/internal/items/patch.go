@@ -20,7 +20,9 @@ import (
 
 var (
 	ErrForbidden = errors.New("item operation forbidden")
-	ErrConflict  = errors.New("item version conflict")
+	// ErrAssignForbidden is W3: the caller may create here, but not assign other people.
+	ErrAssignForbidden = errors.New("assigning other people needs Full access or the Space Admin role here")
+	ErrConflict        = errors.New("item version conflict")
 )
 
 type Invalid string

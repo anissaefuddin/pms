@@ -5,15 +5,16 @@ import (
 	"testing"
 )
 
-// Batch 4 (W1, W3): assigning someone else on a direct create needs Space Admin; the Task's allocations are saved with it.
+// Batch 4 (W1, W3): assigning someone else on a direct create needs Space Admin or Full access; the Task's allocations are saved with it.
 func TestDirectCreateAssignmentRulesAndAllocations(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	member, other, planner := f.person("regular"), f.person("regular"), f.person("regular")
+	member, other, planner, manager := f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
 	space := f.space("Lane")
 	f.share(space, "user", member.id, "editor")
 	f.share(space, "user", planner.id, "editor")
 	f.share(space, "user", other.id, "read")
+	f.share(space, "user", manager.id, "full")
 	f.exec("INSERT INTO space_admins(space_id,user_id) VALUES ($1,$2)", space, planner.id)
 
 	body := func(title string, assignee string) map[string]any {
@@ -27,6 +28,11 @@ func TestDirectCreateAssignmentRulesAndAllocations(t *testing.T) {
 	f.want(f.call(member, http.MethodPost, "/items", body("Other lane", other.id)), http.StatusForbidden, "member cannot assign someone else")
 	f.want(f.call(member, http.MethodPost, "/items", body("Own lane", member.id)), http.StatusCreated, "member can assign self")
 	f.want(f.call(planner, http.MethodPost, "/items", body("Planned lane", other.id)), http.StatusCreated, "space admin can assign someone else")
+	f.want(f.call(manager, http.MethodPost, "/items", body("Managed lane", other.id)), http.StatusCreated, "Full access can assign someone else (DEF-006)")
+	personal := f.queryID("SELECT id::text FROM spaces WHERE kind='personal' AND owner_id=$1", manager.id)
+	inPersonal := body("Private lane", other.id)
+	inPersonal["locations"] = []map[string]string{{"space_id": personal}}
+	f.want(f.call(manager, http.MethodPost, "/items", inPersonal), http.StatusForbidden, "nobody else is assigned in a personal Space")
 	f.want(f.call(admin, http.MethodPost, "/items", body("Admin lane", other.id)), http.StatusCreated, "workspace admin can assign someone else")
 
 	// W1: allocations are created with the Task, atomically; no resource booking is created.

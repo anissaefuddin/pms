@@ -490,7 +490,8 @@ func spaceDefaultWorkflow(ctx context.Context, tx pgx.Tx, spaceID uuid.UUID, kin
 	return wf, err
 }
 
-// AuthorizeAssignments is W3 for a direct create (POST /items): assigning someone else needs Space Admin in each location.
+// AuthorizeAssignments is W3 for a direct create (POST /items): until LENS has an assign capability, assigning someone else
+// needs a Space Admin or a project manager, meaning Full access (share) on each location of a shared Space.
 // Workspace admins are not checked here (an interpretation to confirm). Forms, blueprints, and automation do not call it,
 // so an intake form can still assign its team.
 func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage) error {
@@ -501,19 +502,21 @@ func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.
 	if len(others) == 0 {
 		return nil
 	}
-	var locations []struct {
-		SpaceID string `json:"space_id"`
-	}
+	var locations []Location
 	if raw, ok := fields["locations"]; ok {
 		_ = json.Unmarshal(raw, &locations)
 	}
 	for _, loc := range locations {
-		isAdmin, err := policy.IsSpaceAdmin(ctx, pool, actor.ID, loc.SpaceID)
+		space, _, err := policy.SpaceAccessFor(ctx, pool, actor, loc.SpaceID.String())
 		if err != nil {
 			return err
 		}
-		if !isAdmin {
-			return ErrForbidden
+		caps, err := locationCaps(ctx, pool, actor, loc)
+		if err != nil {
+			return err
+		}
+		if space.Kind == "personal" || !caps.Has(policy.Share) {
+			return ErrAssignForbidden
 		}
 	}
 	return nil

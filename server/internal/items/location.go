@@ -14,7 +14,7 @@ type Location struct {
 	ParentID *uuid.UUID `json:"parent_item_id"`
 }
 
-func locationCaps(ctx context.Context, tx pgx.Tx, actor policy.Actor, loc Location) (policy.Caps, error) {
+func locationCaps(ctx context.Context, tx policy.DB, actor policy.Actor, loc Location) (policy.Caps, error) {
 	if loc.SpaceID == uuid.Nil || (loc.ParentID != nil && *loc.ParentID == uuid.Nil) {
 		return 0, Invalid("location IDs must be UUIDs")
 	}
