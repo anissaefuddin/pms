@@ -110,10 +110,17 @@ func (s *Server) attachmentLimit() int64 {
 // POST /attachments/{id}/versions (next version of an existing file).
 func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 	var existing *uuid.UUID
-	id, err := uuid.Parse(r.PathValue("itemId"))
-	if raw := r.PathValue("attachmentId"); raw != "" {
-		var aid uuid.UUID
-		if aid, err = uuid.Parse(raw); err == nil {
+	var id uuid.UUID
+	var err error
+	if raw := r.PathValue("attachmentId"); raw == "" {
+		if id, err = uuid.Parse(r.PathValue("itemId")); err != nil {
+			err = items.ErrNotFound // a malformed id names nothing (DEF-021)
+		}
+	} else {
+		aid, perr := uuid.Parse(raw)
+		if perr != nil {
+			err = items.ErrNotFound
+		} else {
 			existing = &aid
 			var link *string
 			err = s.pool.QueryRow(r.Context(), "SELECT item_id,link_url FROM attachments WHERE id=$1 AND deleted_at IS NULL", aid).Scan(&id, &link)

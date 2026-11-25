@@ -493,6 +493,9 @@ func Get(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, ruleID str
 
 // List returns the rules of a Space for people who can edit it, with the registry columns (A2).
 func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID string) ([]Rule, error) {
+	if _, err := uuid.Parse(spaceID); err != nil {
+		return nil, items.ErrNotFound // DEF-021
+	}
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return nil, err
