@@ -11,6 +11,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/schedule"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -427,11 +428,11 @@ func recordChange(ctx context.Context, tx pgx.Tx, id, actor, action string, befo
 	}
 	via, ruleID := AttributionFrom(ctx)
 	_, err := tx.Exec(ctx, `
-INSERT INTO activity(item_id,actor_id,action,changes,via,rule_id)
+INSERT INTO activity(item_id,actor_id,action,changes,via,rule_id,request_id)
 SELECT $1::uuid,$2::uuid,$3,COALESCE(jsonb_object_agg(COALESCE(a.key,b.key),
-  jsonb_build_object('from',a.value,'to',b.value)), '{}'),$6,$7::uuid
+  jsonb_build_object('from',a.value,'to',b.value)), '{}'),$6,$7::uuid,$8
 FROM jsonb_each($4::jsonb) a FULL JOIN jsonb_each($5::jsonb) b USING (key)
-WHERE a.value IS DISTINCT FROM b.value`, id, actor, action, before, after, via, ruleID)
+WHERE a.value IS DISTINCT FROM b.value`, id, actor, action, before, after, via, ruleID, reqid.From(ctx))
 	return err
 }
 

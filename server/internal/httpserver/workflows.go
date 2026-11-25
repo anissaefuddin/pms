@@ -39,6 +39,7 @@ type wfProblem struct {
 func (p wfProblem) Error() string { return p.message }
 
 func (s *Server) workflowRoutes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /api/v1/workflows/{workflowId}/revisions/{revision}", s.requireUser(requireAdmin(s.getWorkflowRevision)))
 	mux.HandleFunc("POST /api/v1/workflows", s.requireUser(s.createWorkflow))
 	mux.HandleFunc("PATCH /api/v1/workflows/{workflowId}", s.requireUser(s.renameWorkflow))
 	mux.HandleFunc("DELETE /api/v1/workflows/{workflowId}", s.requireUser(s.deleteWorkflow))

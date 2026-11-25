@@ -55,7 +55,7 @@ func (s *Server) listItemActivity(w http.ResponseWriter, r *http.Request) {
 		}
 		before = n
 	}
-	rows, err := s.pool.Query(r.Context(), `SELECT a.id,a.action,a.changes,a.created_at,u.id::text,btrim(concat_ws(' ',u.first_name,u.last_name))
+	rows, err := s.pool.Query(r.Context(), `SELECT a.id,a.action,a.changes,a.created_at,u.id::text,btrim(concat_ws(' ',u.first_name,u.last_name)),a.workflow_id::text,a.workflow_revision,a.request_id
 FROM activity a JOIN users u ON u.id=a.actor_id WHERE a.item_id=$1 AND a.id<$2 ORDER BY a.id DESC LIMIT $3`, id, before, limit+1)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "could not load activity")
@@ -67,11 +67,19 @@ FROM activity a JOIN users u ON u.id=a.actor_id WHERE a.item_id=$1 AND a.id<$2 O
 		Changes   json.RawMessage `json:"changes"`
 		CreatedAt any             `json:"created_at"`
 		Actor     map[string]any  `json:"actor"`
+		// Workflow names the rules a status change was made under; null for other entries and for changes made before 00359.
+		Workflow  *workflowRef `json:"workflow"`
+		RequestID string       `json:"request_id"`
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (entry, error) {
 		var e entry
 		var actorID, name string
-		err := row.Scan(&e.ID, &e.Action, &e.Changes, &e.CreatedAt, &actorID, &name)
+		var flow *string
+		var revision *int
+		err := row.Scan(&e.ID, &e.Action, &e.Changes, &e.CreatedAt, &actorID, &name, &flow, &revision, &e.RequestID)
+		if flow != nil && revision != nil {
+			e.Workflow = &workflowRef{ID: *flow, Revision: *revision}
+		}
 		e.Actor = map[string]any{"id": actorID, "name": name}
 		return e, err
 	})
@@ -143,4 +151,27 @@ func (s *Server) replaceItemFollowers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	w.WriteHeader(http.StatusNoContent)
+}
+
+type workflowRef struct {
+	ID       string `json:"id"`
+	Revision int    `json:"revision"`
+}
+
+// getWorkflowRevision is the frozen rule set behind a status change, for the administrators who configure workflows.
+func (s *Server) getWorkflowRevision(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("workflowId"))
+	revision, convErr := strconv.Atoi(r.PathValue("revision"))
+	if err != nil || convErr != nil {
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+	var definition json.RawMessage
+	var created any
+	err = s.pool.QueryRow(r.Context(), "SELECT definition,created_at FROM workflow_revisions WHERE workflow_id=$1 AND revision=$2", id, revision).Scan(&definition, &created)
+	if err != nil {
+		writeError(w, http.StatusNotFound, "not found")
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"workflow_id": id, "revision": revision, "created_at": created, "definition": definition})
 }
