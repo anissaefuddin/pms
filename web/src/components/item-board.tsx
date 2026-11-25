@@ -108,7 +108,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
     const statusChanged = !!columnId && columnId !== item.status?.id && item.my_capabilities.includes("change_status");
     if (swimlanes && lane.key !== from) {
       if (!item.my_capabilities.includes("edit")) return;
-      if (lane.key && lane.key !== profile?.id && !canAssignOthers(profile, item.my_capabilities)) return void toast.error(t("items.assignSelfOnly"));
+      if (lane.key && lane.key !== profile?.id && !canAssignOthers(item.my_capabilities)) return void toast.error(t("items.assignSelfOnly"));
       const ids = item.assignees.map((person) => person.id).filter((id) => id !== from);
       const update: ItemUpdate = { assignee_ids: lane.key ? [...new Set([...ids, lane.key])] : ids, ...(statusChanged ? { status_id: columnId } : {}) };
       const name = (key: string) => item.assignees.find((person) => person.id === key)?.name ?? lanes.find((entry) => entry.key === key)?.name ?? t("views.unassigned");

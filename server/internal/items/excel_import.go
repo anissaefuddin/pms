@@ -203,11 +203,10 @@ func planExcel(ctx context.Context, tx pgx.Tx, actor policy.Actor, space, destin
 	if destination != uuid.Nil {
 		target.ParentID = &destination
 	}
-	caps, err := locationCaps(ctx, tx, actor, target)
+	canAssign, err := CanAssignOthers(ctx, tx, actor, []Location{target}) // W3, as on a direct create
 	if err != nil {
 		return p, nil, err
 	}
-	canAssign := actor.Type == policy.Admin || caps.Has(policy.Share) // W3, as on a direct create
 	p.Columns = rows[0]
 	for _, row := range rows[1:min(len(rows), 6)] {
 		sample := make([]string, len(row))

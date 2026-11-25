@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/anissaefuddin/pms/server/internal/schedule"
 	"github.com/jackc/pgx/v5"
@@ -145,7 +146,12 @@ func loadWorkload(r *http.Request, tx pgx.Tx, actor policy.Actor, from, to time.
 		if !caps[task.ID].Has(policy.View) {
 			continue
 		}
-		task.Editable = caps[task.ID].Has(policy.Edit) && (actor.Type == policy.Admin || caps[task.ID].Has(policy.Share)) // reassign (W3)
+		task.Editable = false // may reassign (W3)
+		if caps[task.ID].Has(policy.Edit) && caps[task.ID].Has(policy.Share) {
+			if task.Editable, err = items.CanReassign(ctx, tx, actor, task.ID); err != nil {
+				return nil, err
+			}
+		}
 		visible = append(visible, task)
 		for i, id := range task.Assignees {
 			if at, ok := index[id]; ok {

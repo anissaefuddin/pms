@@ -454,13 +454,17 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 	}
 	onlyAssignee := ""
 	if external == nil {
-		limited, err := items.FormSubmitterIsLimited(ctx, tx, actor, items.Location{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID})
+		editor, member, err := items.FormSubmitter(ctx, tx, actor, items.Location{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID})
 		if err != nil {
 			return createdItem{}, err
 		}
-		if limited { // an Editor takes the task or leaves it unassigned; the answers still name the people they chose
+		own := func(id uuid.UUID) bool { return id.String() == actor.ID }
+		switch {
+		case editor: // takes the Task or leaves it unassigned; the answers still name the people they chose
 			onlyAssignee = actor.ID
-			assignees = slices.DeleteFunc(assignees, func(id uuid.UUID) bool { return id.String() != actor.ID })
+			assignees = slices.DeleteFunc(assignees, func(id uuid.UUID) bool { return !own(id) })
+		case member: // the form's preset stands; their own picks of other people do not
+			assignees = slices.DeleteFunc(assignees, func(id uuid.UUID) bool { return !own(id) && !slices.Contains(row.Response.AssigneeIDs, id) })
 		}
 	}
 	locations := []map[string]any{{"space_id": row.Response.Location.SpaceID, "parent_item_id": row.Response.Location.ParentItemID}}

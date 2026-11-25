@@ -736,6 +736,11 @@ func editBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.U
 		if err := validateEditedGraph(parsed); err != nil {
 			return nil, err
 		}
+		if spaceID != nil {
+			if err := requireBlueprintAssignAuthority(ctx, tx, actor, id, *spaceID, parsed); err != nil {
+				return nil, err
+			}
+		}
 		for i, n := range parsed.Nodes {
 			if n.StatusID == nil {
 				continue

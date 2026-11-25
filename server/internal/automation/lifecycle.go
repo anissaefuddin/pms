@@ -161,6 +161,13 @@ func TransferOwner(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 	if err != nil {
 		return Rule{}, err
 	}
+	current, err := ruleDefinitions(ctx, tx, rule.ID)
+	if err != nil {
+		return Rule{}, err
+	}
+	if err := requireAssignAuthority(ctx, tx, actor, rule, current...); err != nil {
+		return Rule{}, err
+	}
 	// A workspace rule has no Space of its own: its new owner must be active, and each run still checks access to its Space.
 	if rule.Scope == "workspace" {
 		var active bool

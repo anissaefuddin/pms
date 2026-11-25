@@ -42,6 +42,10 @@ func (s *Server) formRoutes(mux *http.ServeMux) {
 }
 
 func writeFormError(w http.ResponseWriter, err error) {
+	if errors.Is(err, items.ErrAssignForbidden) {
+		writeError(w, http.StatusForbidden, err.Error())
+		return
+	}
 	var invalid forms.Error
 	var pgErr *pgconn.PgError
 	switch {
@@ -352,6 +356,11 @@ func saveForm(ctx context.Context, tx pgx.Tx, actor policy.Actor, id, spaceID uu
 	}
 	if err := checkDestination(ctx, tx, actor, resp); err != nil {
 		return err
+	}
+	if !creating {
+		if err := requireFormAssignAuthority(ctx, tx, actor, id, def, resp); err != nil {
+			return err
+		}
 	}
 	definition, _ := json.Marshal(def)
 	response, _ := json.Marshal(resp)

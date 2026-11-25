@@ -10,12 +10,11 @@ import { Input } from "@/components/ui/input";
 export type PersonOption = { id: string; name: string; status?: User["status"] };
 
 /** W3: giving a task to someone else needs Full access; an Editor may only take or leave it. The server enforces the same rule. */
-export const canAssignOthers = (me: { user_type: string } | undefined, caps: readonly string[] | undefined) =>
-  me?.user_type === "admin" || !!caps?.includes("share");
+export const canAssignOthers = (caps: readonly string[] | undefined) => !!caps?.includes("share");
 
 /** The `selfOnly` value for a task's assignee picker: undefined when the person may assign anyone. */
 export const assignSelfOnly = (me: CurrentUser | undefined, caps: readonly string[] | undefined): PersonOption | undefined =>
-  me && !canAssignOthers(me, caps) ? { id: me.id, name: `${me.first_name} ${me.last_name}`.trim() } : undefined;
+  me && !canAssignOthers(caps) ? { id: me.id, name: `${me.first_name} ${me.last_name}`.trim() } : undefined;
 
 export function ItemUserPicker({ label, selected, onChange, multiple = false, disabled = false, maxSelected, autoFocus, selfOnly }: {
   label: string;

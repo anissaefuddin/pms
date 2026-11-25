@@ -492,12 +492,8 @@ func spaceDefaultWorkflow(ctx context.Context, tx pgx.Tx, spaceID uuid.UUID, kin
 
 // AuthorizeAssignments is W3 for a direct create (POST /items): until LENS has an assign capability, assigning someone else
 // needs a Space Admin or a project manager, meaning Full access (share) on each location of a shared Space.
-// Workspace admins are not checked here (an interpretation to confirm). Forms, blueprints, and automation do not call it,
-// so an intake form can still assign its team.
+// Forms, blueprints, and automation do not call it: each decides from the rights of the person who is behind it.
 func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage) error {
-	if actor.Type == policy.Admin {
-		return nil
-	}
 	others := assigneesOtherThan(fields, actor.ID)
 	if len(others) == 0 {
 		return nil
@@ -513,12 +509,9 @@ func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.
 	return err
 }
 
-// CanAssignOthers reports whether the actor may give a Task to someone else in every one of these places: a Workspace admin, or
-// Full access (share) to a shared Space.
+// CanAssignOthers reports whether the actor may give a Task to someone else in every one of these places: Full access (share) to a
+// shared Space. The Workspace role never stands in for it.
 func CanAssignOthers(ctx context.Context, db policy.DB, actor policy.Actor, locations []Location) (bool, error) {
-	if actor.Type == policy.Admin {
-		return true, nil
-	}
 	for _, loc := range locations {
 		space, _, err := policy.SpaceAccessFor(ctx, db, actor, loc.SpaceID.String())
 		if err != nil {
@@ -532,34 +525,64 @@ func CanAssignOthers(ctx context.Context, db policy.DB, actor policy.Actor, loca
 			return false, nil
 		}
 	}
-	return true, nil
+	return len(locations) > 0, nil
 }
 
-// FormSubmitterIsLimited reports whether someone sending a request form works in the destination without Full access (an Editor).
-// A form must not give them what they cannot do directly. People who do not work there keep the form's own routing: assigning the
-// team is what an intake form is for.
-func FormSubmitterIsLimited(ctx context.Context, db policy.DB, actor policy.Actor, location Location) (bool, error) {
-	caps, err := locationCaps(ctx, db, actor, location)
-	if err != nil || !caps.Has(policy.Edit) {
+// CanReassign is the same rule for an existing Item: Full access in every shared place of the Item that the actor can see, and in at
+// least one. A personal Space gives no say, so placing a Task in one's own Space adds nothing. Another place where the actor is only
+// an Editor is enough to refuse, so adding a Space of one's own as a second location adds nothing either.
+func CanReassign(ctx context.Context, db policy.DB, actor policy.Actor, itemID string) (bool, error) {
+	rows, err := db.Query(ctx, `SELECT DISTINCT l.space_id::text FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.kind='shared' AND s.deleted_at IS NULL
+WHERE l.item_id=$1::uuid AND l.deleted_root_id IS NULL`, itemID)
+	if err != nil {
 		return false, err
 	}
-	ok, err := CanAssignOthers(ctx, db, actor, []Location{location})
-	return !ok, err
+	places, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return false, err
+	}
+	allowed := false
+	for _, place := range places {
+		caps, err := policy.ItemCapsInSpace(ctx, db, actor, itemID, place)
+		if err != nil {
+			return false, err
+		}
+		if !caps.Has(policy.View) {
+			continue
+		}
+		if !caps.Has(policy.Share) {
+			return false, nil
+		}
+		allowed = true
+	}
+	return allowed, nil
 }
 
-// requireReassign is the same rule for an edit: an Editor may take or leave a Task, not give it to someone else. A change made by
-// an automation rule counts as its owner's.
-func requireReassign(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID string, assignees []uuid.UUID) error {
-	if actor.Type == policy.Admin {
-		return nil
+// FormSubmitter says what a person sending a request form may decide about assignees. editor: works in the destination without Full
+// access, so nobody but themself is assigned. member: can see the destination but not edit it, so the form's own preset stands and
+// their own picks of others do not. Neither: someone outside the Space, for whom assigning the team is what an intake form is for.
+func FormSubmitter(ctx context.Context, db policy.DB, actor policy.Actor, location Location) (editor, member bool, err error) {
+	caps, err := locationCaps(ctx, db, actor, location)
+	if err != nil || !caps.Has(policy.View) {
+		return false, false, err
 	}
+	ok, err := CanAssignOthers(ctx, db, actor, []Location{location})
+	if err != nil || ok {
+		return false, false, err
+	}
+	return caps.Has(policy.Edit), !caps.Has(policy.Edit), nil
+}
+
+// requireReassign applies the rule to an edit: without it a person may take or leave a Task, not give it to someone else. A change
+// made by an automation rule counts as its owner's, with the owner's rights at the time it runs.
+func requireReassign(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID string, assignees []uuid.UUID) error {
 	var addsOthers bool
 	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM unnest($2::uuid[]) u WHERE u<>$3::uuid
  AND NOT EXISTS(SELECT 1 FROM item_assignees a WHERE a.item_id=$1::uuid AND a.user_id=u))`, itemID, assignees, actor.ID).Scan(&addsOthers); err != nil || !addsOthers {
 		return err
 	}
-	caps, err := policy.ItemCaps(ctx, tx, actor, itemID)
-	if err == nil && !caps.Has(policy.Share) {
+	ok, err := CanReassign(ctx, tx, actor, itemID)
+	if err == nil && !ok {
 		err = ErrAssignForbidden
 	}
 	return err
