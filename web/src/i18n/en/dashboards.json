@@ -186,8 +186,6 @@
   "overview.kpi.projects": "Active projects",
   "overview.kpi.overdue": "Overdue tasks",
   "overview.kpi.completed": "Completed this week",
-  "overview.kpi.atRisk": "At-risk projects",
-  "overview.kpi.atRiskHint": "Not available yet",
   "overview.health.heading": "Spaces by health",
   "overview.health.attention": "Needs attention",
   "overview.health.on_track": "On track",

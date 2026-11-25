@@ -78,18 +78,17 @@ function Summary({ onOpenTasks }: { onOpenTasks: (seed: TasksSeed) => void }) {
       <h2 className="text-lg font-semibold">{t("dashboards.overview.title")}</h2>
       <p className="text-xs text-muted-foreground">{t("dashboards.overview.updated", { time: formatDateTime(generated_at, profile) })}</p>
     </div>
-    <div className="grid grid-cols-2 gap-3 lg:grid-cols-5">
+    <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
       <KpiCard label={t("dashboards.overview.kpi.spaces")} value={n(kpis.accessible_spaces)} />
       <KpiCard label={t("dashboards.overview.kpi.projects")} value={n(kpis.active_projects)} />
       <button type="button" onClick={() => onOpenTasks({ preset: "overdue" })}
-        className="rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 hover:opacity-90">
+        className="grid rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 hover:opacity-90">
         <KpiCard label={t("dashboards.overview.kpi.overdue")} value={n(kpis.overdue_tasks)} className={kpis.overdue_tasks > 0 ? "border-amber-400/60" : undefined} />
       </button>
       <button type="button" onClick={() => onOpenTasks({ preset: "completed_week" })}
-        className="rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 hover:opacity-90">
+        className="grid rounded-xl text-left outline-none focus-visible:ring-3 focus-visible:ring-ring/50 hover:opacity-90">
         <KpiCard label={t("dashboards.overview.kpi.completed")} value={n(kpis.completed_this_week)} className="border-emerald-400/60" />
       </button>
-      <KpiCard label={t("dashboards.overview.kpi.atRisk")} value={t("dashboards.overview.none")} hint={t("dashboards.overview.kpi.atRiskHint")} />
     </div>
     <div className="grid gap-6 lg:grid-cols-2">
       <section aria-labelledby="overview-health" className="space-y-3 rounded-xl border bg-card p-4">

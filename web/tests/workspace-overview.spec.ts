@@ -190,3 +190,21 @@ test("timeline bars never cover the label column when the grid is scrolled", asy
   });
   expect(onTop).toBe(true);
 });
+
+// DEF-025: the KPI cards share one row and one height; there is no placeholder card; zero is a number.
+test("KPI cards line up, show zero as 0, and carry no unavailable placeholder", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockSpaces(page, { extra: {
+    "GET /overview": { body: { ...summary, kpis: { ...summary.kpis, overdue_tasks: 0 } } },
+    "GET /overview/timeline": { body: timeline },
+    "GET /overview/agenda": { body: agenda },
+  } });
+  await page.goto("/dashboards");
+  const labels = ["Spaces you can see", "Active projects", "Overdue tasks", "Completed this week"];
+  const cards = labels.map((label) => page.getByText(label, { exact: true }).locator(".."));
+  await expect(cards[2].getByText("0", { exact: true })).toBeVisible();
+  const boxes = await Promise.all(cards.map(async (card) => (await card.boundingBox())!));
+  for (const box of boxes) expect([box.y, box.height]).toEqual([boxes[0].y, boxes[0].height]);
+  await expect(page.getByText("At-risk projects")).toHaveCount(0);
+  await expect(page.getByText("Not available yet")).toHaveCount(0);
+});
