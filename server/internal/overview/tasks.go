@@ -76,7 +76,7 @@ SELECT x.id, x.title, x.due_date, x.start_date, x.grp, x.status_name, x.complete
 FROM (
   SELECT DISTINCT ON (i.id) i.id::text AS id, i.title, i.due_date::text AS due_date, i.start_date::text AS start_date,
          COALESCE(s.grp::text,'') AS grp, COALESCE(s.name,'') AS status_name, i.completed_at::text AS completed_at,
-         l.space_id::text AS space_id, (i.due_date < t.today) AS overdue, i.due_date AS due, i.title AS sort_title
+         l.space_id::text AS space_id, COALESCE(i.due_date < t.today, false) AS overdue, i.due_date AS due, i.title AS sort_title
   FROM t, items i
   JOIN item_locations l ON l.item_id=i.id AND l.deleted_root_id IS NULL AND l.space_id = ANY($1::uuid[])
   LEFT JOIN statuses s ON s.id=i.status_id
