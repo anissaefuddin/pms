@@ -30,7 +30,7 @@ CASE WHEN $2='item.deleted' THEN deleted_root_id=item_id ELSE deleted_root_id IS
 		event.Locations, err = pgx.CollectRows(rows, pgx.RowToStructByPos[realtime.Location])
 	}
 	if err != nil {
-		slog.Error("route realtime event", "error", err)
+		slog.ErrorContext(r.Context(), "route realtime event", "error", err)
 	}
 	s.events.Publish(event)
 }

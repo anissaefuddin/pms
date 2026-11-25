@@ -5145,6 +5145,8 @@ export interface components {
             details: {
                 [key: string]: unknown;
             };
+            /** @description Sama dengan X-Request-ID dan log aplikasi; kosong untuk event lama dan pekerjaan latar */
+            request_id: string;
         };
         AuditPage: {
             items: components["schemas"]["AuditEvent"][];

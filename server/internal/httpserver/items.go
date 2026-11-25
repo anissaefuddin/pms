@@ -233,7 +233,7 @@ func writeItemError(w http.ResponseWriter, err error) {
 	case errors.As(err, &invalid):
 		writeError(w, http.StatusUnprocessableEntity, invalid.Error())
 	default:
-		slog.Error("item operation", "error", err)
+		slog.ErrorContext(logContext(w), "item operation", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 	}
 }

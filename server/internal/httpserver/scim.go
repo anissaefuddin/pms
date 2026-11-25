@@ -78,7 +78,7 @@ func scimFail(w http.ResponseWriter, err error) {
 	case errors.As(err, &pg) && (pg.Code == "23514" || pg.Code == "22P02" || pg.Code == "23503"):
 		e = scimErr{400, "invalidValue", "a value is not valid"}
 	default:
-		slog.Error("scim operation failed", "error", err)
+		slog.ErrorContext(logContext(w), "scim operation failed", "error", err)
 		e = scimErr{500, "", "internal error"}
 	}
 	body := map[string]any{"schemas": []string{scimSchemaError}, "status": strconv.Itoa(e.status), "detail": e.detail}
@@ -125,7 +125,7 @@ func (s *Server) scimAuth(next func(http.ResponseWriter, *http.Request, scimToke
 WHERE token_hash=$1 AND revoked_at IS NULL RETURNING id::text,name,default_user_type::text`, sum[:]).Scan(&t.ID, &t.Name, &t.DefaultType)
 		if err != nil {
 			if !errors.Is(err, pgx.ErrNoRows) {
-				slog.Error("scim token lookup", "error", err)
+				slog.ErrorContext(r.Context(), "scim token lookup", "error", err)
 			}
 			w.Header().Set("WWW-Authenticate", `Bearer realm="scim"`)
 			scimFail(w, scimErr{401, "", "the token is not valid"})

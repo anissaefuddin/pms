@@ -67,7 +67,7 @@ func writeViewError(w http.ResponseWriter, err error) {
 	case errors.As(err, &pgErr) && (pgErr.Code == "40001" || pgErr.Code == "40P01" || pgErr.Code == "23505"):
 		writeError(w, 409, "view changed; reload and try again")
 	default:
-		slog.Error("view operation", "error", err)
+		slog.ErrorContext(logContext(w), "view operation", "error", err)
 		writeError(w, 500, "internal error")
 	}
 }

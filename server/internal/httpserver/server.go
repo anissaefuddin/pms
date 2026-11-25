@@ -24,6 +24,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/directory"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/realtime"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/security"
 	"github.com/anissaefuddin/pms/server/internal/spaces"
 	"github.com/anissaefuddin/pms/server/web"
@@ -240,7 +241,7 @@ func jobCount(pool *pgxpool.Pool, state string) float64 {
 	defer cancel()
 	var count float64
 	if err := pool.QueryRow(ctx, "SELECT count(*)::float8 FROM river_job WHERE state=$1", state).Scan(&count); err != nil {
-		slog.Error("collect job metric", "state", state, "error", err)
+		slog.ErrorContext(ctx, "collect job metric", "state", state, "error", err)
 		return 0
 	}
 	return count
@@ -252,7 +253,7 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 	if err := database.Ready(ctx, s.pool); err != nil {
-		slog.Error("not ready", "error", err)
+		slog.ErrorContext(r.Context(), "not ready", "error", err)
 		writeError(w, http.StatusServiceUnavailable, "database unavailable or migrations pending")
 		return
 	}
@@ -419,7 +420,7 @@ func (s *Server) forgotPassword(w http.ResponseWriter, r *http.Request) {
 				err = tx.Commit(r.Context())
 			}
 			if err != nil {
-				slog.Error("queue reset email", "error", err)
+				slog.ErrorContext(r.Context(), "queue reset email", "error", err)
 			}
 		}
 	}
@@ -803,6 +804,11 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	_ = json.NewEncoder(w).Encode(value)
 }
 
+// logContext is the request's context for code that only has the response writer, such as the shared error writers.
+func logContext(w http.ResponseWriter) context.Context {
+	return reqid.With(context.Background(), w.Header().Get("X-Request-ID"))
+}
+
 type statusWriter struct {
 	http.ResponseWriter
 	status int
@@ -834,7 +840,7 @@ func recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if v := recover(); v != nil {
-				slog.Error("handler panic", "request_id", w.Header().Get("X-Request-ID"), "route", r.Pattern, "panic", fmt.Sprint(v), "stack", string(debug.Stack()))
+				slog.ErrorContext(r.Context(), "handler panic", "route", r.Pattern, "panic", fmt.Sprint(v), "stack", string(debug.Stack()))
 				writeError(w, http.StatusInternalServerError, "internal error")
 			}
 		}()
@@ -861,7 +867,9 @@ func (s *Server) requestID(next http.Handler) http.Handler {
 			id = plain[:16]
 		}
 		w.Header().Set("X-Request-ID", id)
-		next.ServeHTTP(w, r)
+		inner := r.WithContext(reqid.With(r.Context(), id))
+		next.ServeHTTP(w, inner)
+		r.Pattern = inner.Pattern // the access log outside reads the matched route from its own request
 	})
 }
 

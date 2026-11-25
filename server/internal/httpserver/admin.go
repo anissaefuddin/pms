@@ -39,7 +39,7 @@ func adminWriteError(w http.ResponseWriter, err error) {
 	case errors.Is(err, pgx.ErrNoRows):
 		writeError(w, 404, "not found")
 	default:
-		slog.Error("admin operation failed", "error", err)
+		slog.ErrorContext(logContext(w), "admin operation failed", "error", err)
 		writeError(w, 500, "could not complete admin operation")
 	}
 }

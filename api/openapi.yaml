@@ -7191,7 +7191,7 @@ components:
         last_login_at: { type: string, format: date-time, nullable: true }
     AuditEvent:
       type: object
-      required: [id, at, actor_id, actor_name, action, target_type, target_id, ip, details]
+      required: [id, at, actor_id, actor_name, action, target_type, target_id, ip, details, request_id]
       properties:
         id: { type: integer, format: int64 }
         at: { type: string, format: date-time }
@@ -7202,6 +7202,7 @@ components:
         target_id: { type: string }
         ip: { type: string }
         details: { type: object, additionalProperties: true }
+        request_id: { type: string, description: Sama dengan X-Request-ID dan log aplikasi; kosong untuk event lama dan pekerjaan latar }
     AuditPage:
       type: object
       required: [items, next_cursor]

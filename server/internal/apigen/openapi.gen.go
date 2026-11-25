@@ -4141,15 +4141,18 @@ type AttachmentVersion struct {
 // AuditEvent defines model for AuditEvent.
 type AuditEvent struct {
 	// Action Bentuk "area.verb"
-	Action     string                 `json:"action"`
-	ActorId    *openapi_types.UUID    `json:"actor_id"`
-	ActorName  string                 `json:"actor_name"`
-	At         time.Time              `json:"at"`
-	Details    map[string]interface{} `json:"details"`
-	Id         int64                  `json:"id"`
-	Ip         string                 `json:"ip"`
-	TargetId   string                 `json:"target_id"`
-	TargetType string                 `json:"target_type"`
+	Action    string                 `json:"action"`
+	ActorId   *openapi_types.UUID    `json:"actor_id"`
+	ActorName string                 `json:"actor_name"`
+	At        time.Time              `json:"at"`
+	Details   map[string]interface{} `json:"details"`
+	Id        int64                  `json:"id"`
+	Ip        string                 `json:"ip"`
+
+	// RequestId Sama dengan X-Request-ID dan log aplikasi; kosong untuk event lama dan pekerjaan latar
+	RequestId  string `json:"request_id"`
+	TargetId   string `json:"target_id"`
+	TargetType string `json:"target_type"`
 }
 
 // AuditPage defines model for AuditPage.

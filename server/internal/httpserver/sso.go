@@ -69,7 +69,7 @@ func (s *Server) ssoProviders(w http.ResponseWriter, r *http.Request) {
 	}
 	list, err := s.ssoStore().Enabled(r.Context())
 	if err != nil {
-		slog.Error("sso providers", "error", err)
+		slog.ErrorContext(r.Context(), "sso providers", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -159,7 +159,7 @@ func (s *Server) ssoStart(w http.ResponseWriter, r *http.Request) {
 	case "oidc":
 		client, cerr := s.ssoOIDC(ctx, provider)
 		if cerr != nil {
-			slog.Error("sso start", "error", cerr)
+			slog.ErrorContext(r.Context(), "sso start", "error", cerr)
 			s.ssoFail(w, r, purpose, "failed", "", kind, nil)
 			return
 		}
@@ -172,12 +172,12 @@ func (s *Server) ssoStart(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	if err != nil {
-		slog.Error("sso begin", "kind", kind, "error", err)
+		slog.ErrorContext(r.Context(), "sso begin", "kind", kind, "error", err)
 		s.ssoFail(w, r, purpose, "unavailable", "", kind, nil)
 		return
 	}
 	if err := store.SaveState(ctx, state, browser, st); err != nil {
-		slog.Error("sso state", "error", err)
+		slog.ErrorContext(r.Context(), "sso state", "error", err)
 		s.ssoFail(w, r, purpose, "failed", "", kind, nil)
 		return
 	}
@@ -270,7 +270,7 @@ func (s *Server) ssoCallback(w http.ResponseWriter, r *http.Request) {
 	}
 	client, err := s.ssoOIDC(ctx, provider)
 	if err != nil {
-		slog.Error("sso callback", "error", err)
+		slog.ErrorContext(r.Context(), "sso callback", "error", err)
 		s.ssoFail(w, r, st.Purpose, "failed", st.UserID, kind, nil)
 		return
 	}
@@ -280,7 +280,7 @@ func (s *Server) ssoCallback(w http.ResponseWriter, r *http.Request) {
 		s.ssoFail(w, r, st.Purpose, "domain", st.UserID, kind, nil)
 		return
 	case err != nil:
-		slog.Warn("sso verification failed", "kind", kind, "error", err)
+		slog.WarnContext(r.Context(), "sso verification failed", "kind", kind, "error", err)
 		s.ssoFail(w, r, st.Purpose, "failed", st.UserID, kind, nil)
 		return
 	}
@@ -316,7 +316,7 @@ func (s *Server) samlACS(w http.ResponseWriter, r *http.Request) {
 	}
 	client, err := s.ssoSAML(provider)
 	if err != nil {
-		slog.Error("saml config", "error", err)
+		slog.ErrorContext(r.Context(), "saml config", "error", err)
 		s.ssoFail(w, r, st.Purpose, "failed", st.UserID, kind, nil)
 		return
 	}
@@ -326,7 +326,7 @@ func (s *Server) samlACS(w http.ResponseWriter, r *http.Request) {
 		s.ssoFail(w, r, st.Purpose, "domain", st.UserID, kind, nil)
 		return
 	case err != nil:
-		slog.Warn("saml verification failed", "error", err)
+		slog.WarnContext(r.Context(), "saml verification failed", "error", err)
 		s.ssoFail(w, r, st.Purpose, "failed", st.UserID, kind, nil)
 		return
 	}
@@ -360,7 +360,7 @@ func (s *Server) ssoComplete(w http.ResponseWriter, r *http.Request, store sso.S
 		case errors.Is(err, errSSOInactive):
 			reason = "inactive"
 		default:
-			slog.Error("sso login", "error", err)
+			slog.ErrorContext(r.Context(), "sso login", "error", err)
 		}
 		s.ssoFail(w, r, "login", reason, "", kind, map[string]any{"subject": clipSubject(id.Subject)})
 		return
@@ -375,7 +375,7 @@ func (s *Server) ssoComplete(w http.ResponseWriter, r *http.Request, store sso.S
 	}
 	token, expires, err := s.newSession(ctx, userID)
 	if err != nil {
-		slog.Error("sso session", "error", err)
+		slog.ErrorContext(r.Context(), "sso session", "error", err)
 		s.ssoFail(w, r, "login", "failed", userID, kind, nil)
 		return
 	}
@@ -435,7 +435,7 @@ func (s *Server) ssoFinishLink(w http.ResponseWriter, r *http.Request, store sso
 		if errors.Is(err, sso.ErrTaken) {
 			reason = "already_linked"
 		} else {
-			slog.Error("sso link", "error", err)
+			slog.ErrorContext(r.Context(), "sso link", "error", err)
 		}
 		s.ssoFail(w, r, "link", reason, st.UserID, kind, nil)
 		return
@@ -540,7 +540,7 @@ func (s *Server) ssoGetConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		slog.Error("sso config", "error", err)
+		slog.ErrorContext(r.Context(), "sso config", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -607,7 +607,7 @@ func (s *Server) ssoPutConfig(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	if err != nil {
-		slog.Error("sso save", "error", err)
+		slog.ErrorContext(r.Context(), "sso save", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -625,7 +625,7 @@ func (s *Server) ssoDeleteConfig(w http.ResponseWriter, r *http.Request) {
 	}
 	ok, err := s.ssoStore().Delete(r.Context(), kind)
 	if err != nil {
-		slog.Error("sso delete", "error", err)
+		slog.ErrorContext(r.Context(), "sso delete", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -642,7 +642,7 @@ func (s *Server) ssoDeleteConfig(w http.ResponseWriter, r *http.Request) {
 func (s *Server) myIdentities(w http.ResponseWriter, r *http.Request) {
 	list, err := s.ssoStore().Linked(r.Context(), actorOf(r).ID)
 	if err != nil {
-		slog.Error("identities", "error", err)
+		slog.ErrorContext(r.Context(), "identities", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -663,7 +663,7 @@ func (s *Server) unlinkIdentity(w http.ResponseWriter, r *http.Request) {
 	}
 	ok, err := s.ssoStore().Unlink(r.Context(), user, kind)
 	if err != nil {
-		slog.Error("unlink", "error", err)
+		slog.ErrorContext(r.Context(), "unlink", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -696,7 +696,7 @@ func (s *Server) putSAMLConfig(w http.ResponseWriter, r *http.Request, in ssoCon
 	}
 	p, err := s.ssoStore().Save(r.Context(), "saml", in.Name, cfg, nil, in.Enabled)
 	if err != nil {
-		slog.Error("saml save", "error", err)
+		slog.ErrorContext(r.Context(), "saml save", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}

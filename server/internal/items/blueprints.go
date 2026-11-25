@@ -11,6 +11,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -267,9 +268,9 @@ func Audit(ctx context.Context, tx pgx.Tx, actor policy.Actor, action, targetTyp
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details)
-VALUES(NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NULLIF($1,'')::uuid),''), $2, $3, $4, $5)`,
-		actor.ID, action, targetType, targetID, raw)
+	_, err = tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details,request_id)
+VALUES(NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NULLIF($1,'')::uuid),''), $2, $3, $4, $5, $6)`,
+		actor.ID, action, targetType, targetID, raw, reqid.From(ctx))
 	return err
 }
 

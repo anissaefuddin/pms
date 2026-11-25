@@ -34,7 +34,7 @@ func startStatusApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, ite
 		}
 	}
 	if len(allowed) == 0 {
-		slog.Warn("status approval skipped: no configured approver can access the item", "item", itemID, "status", statusID)
+		slog.WarnContext(ctx, "status approval skipped: no configured approver can access the item", "item", itemID, "status", statusID)
 		return nil
 	}
 	id, err := uuid.NewV7()

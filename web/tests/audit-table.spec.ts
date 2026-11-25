@@ -34,7 +34,7 @@ test("admin searches loaded rows, opens an event drawer that closes with Escape 
   expect(file.suggestedFilename()).toMatch(/^audit-events-\d{4}-\d{2}-\d{2}\.csv$/);
   const lines = readFileSync(await file.path(), "utf8").replace(/^﻿/, "").split("\r\n");
   expect(lines).toHaveLength(2);
-  expect(lines[0]).toBe("id,at,actor_id,actor_name,action,target_type,target_id,ip,details");
+  expect(lines[0]).toBe("id,at,actor_id,actor_name,action,target_type,target_id,ip,details,request_id");
   expect(lines[1]).toContain('"ops, lead"');
   expect(lines[1]).toContain("share.space_changed,space,s1");
 });

@@ -23,6 +23,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/httpserver"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/jackc/pgx/v5"
@@ -32,7 +33,7 @@ import (
 var version = "dev"
 
 func main() {
-	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
+	slog.SetDefault(slog.New(reqid.Handler(slog.NewJSONHandler(os.Stdout, nil))))
 	if err := run(); err != nil {
 		slog.Error("command failed", "error", err)
 		os.Exit(1)
