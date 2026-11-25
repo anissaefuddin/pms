@@ -19,7 +19,7 @@ type Account = components["schemas"]["Account"];
 type Tab = "general" | "branding" | "members";
 const tabs: Tab[] = ["general", "branding", "members"];
 const imageTypes = ["image/png", "image/jpeg", "image/webp"];
-const brandColors = ["#0F766E", "#2563EB", "#7C3AED", "#EA580C"];
+const brandColors = ["#0F766E", "#2563EB", "#7C3AED", "#EA580C"]; // allow-hex: brand colour choices are data, not theme tokens
 
 function AccountRoute() {
   const { t } = useTranslation();
