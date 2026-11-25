@@ -134,7 +134,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
           {isExpanded ? <ChevronDown /> : <ChevronRight />}
         </Button>}
         <TypeGlyph item={item} className="size-4 text-muted-foreground" />
-        {!!path?.length && <span className="max-w-48 shrink-0 truncate text-xs text-muted-foreground" title={path.map((step) => step.title).join(" › ")}>{path.map((step) => step.title).join(" › ")}</span>}
+        {!!path?.length && <span className="min-w-0 max-w-48 truncate text-xs text-muted-foreground" title={path.map((step) => step.title).join(" › ")}>{path.map((step) => step.title).join(" › ")}</span>}
         {editing?.id === item.id && editing.field === "title"
           ? <form className="min-w-0 flex-1" onSubmit={(event) => {
             event.preventDefault();
@@ -145,7 +145,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
             <Input name="title" aria-label={t("items.name")} defaultValue={item.title} maxLength={500} required autoFocus
               onKeyDown={(event) => { if (event.key === "Escape") setEditing(undefined); }} />
           </form>
-          : <Button variant="ghost" size="sm" className="min-w-0 justify-start" title={item.title}
+          : <Button variant="ghost" size="sm" className="min-w-0 shrink justify-start" title={item.title}
               onClick={() => onOpen(item)}><span className="truncate">{item.title}</span></Button>}
         {canEditTitle && <Button size="icon-sm" variant="ghost" className="opacity-0 transition-opacity group-hover/table-row:opacity-100 group-focus-within/table-row:opacity-100 [@media(hover:none)]:opacity-100" aria-label={t("views.editTitle", { name: item.title })}
           onClick={() => setEditing({ id: item.id, field: "title" })}><Pencil /></Button>}
