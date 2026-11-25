@@ -3,6 +3,7 @@ package httpserver_test
 import (
 	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -112,4 +113,61 @@ func TestFullSpaceAccessIsNotWorkspaceConfiguration(t *testing.T) {
 		}
 	}
 	f.want(f.call(manager, "POST", "/spaces/"+space+"/custom-fields", map[string]any{"name": "S", "type": "text"}), http.StatusCreated, "the Space's own configuration stays available")
+}
+
+// Owner decision (2026-11-26): a blueprint or a request form is not a way around it. An Editor gets the structure and routing
+// without other people on it; Full access and people who do not work in the Space keep the preset team.
+func TestEditorCannotAssignThroughBlueprintOrForm(t *testing.T) {
+	f := newFixture(t)
+	manager, editor, teammate, requester := f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
+	space := f.space("Intake team")
+	f.share(space, "user", manager.id, "full")
+	f.share(space, "user", editor.id, "editor")
+	f.share(space, "user", teammate.id, "editor")
+	here := []map[string]string{{"space_id": space}}
+	assignees := func(item any) string {
+		return f.queryID("SELECT COALESCE(string_agg(user_id::text, ',' ORDER BY user_id), '') FROM item_assignees WHERE item_id=$1::uuid", item)
+	}
+
+	source := f.call(manager, "POST", "/items", map[string]any{"type": "project", "title": "Kit", "locations": here})
+	f.want(source, 201, "source")
+	child := f.call(manager, "POST", "/items", map[string]any{"type": "task", "title": "Step", "assignee_ids": []string{teammate.id, editor.id},
+		"locations": []map[string]any{{"space_id": space, "parent_item_id": source.body["id"]}}})
+	f.want(child, 201, "assigned step")
+	saved := f.call(manager, "POST", "/spaces/"+space+"/blueprints", map[string]any{"name": "Kit", "source_item_id": source.body["id"]})
+	f.want(saved, 201, "blueprint")
+	stepOf := func(p *person) string {
+		made := f.call(p, "POST", "/blueprints/"+saved.body["id"].(string)+"/items", map[string]any{"locations": here})
+		f.want(made, 201, "use blueprint")
+		return assignees(f.queryID("SELECT item_id::text FROM item_locations WHERE parent_item_id=$1::uuid", made.body["id"]))
+	}
+	if got := stepOf(editor); got != editor.id {
+		t.Fatalf("an Editor keeps only themself: %q", got)
+	}
+	if got := stepOf(manager); !strings.Contains(got, teammate.id) || !strings.Contains(got, editor.id) {
+		t.Fatalf("Full access keeps the blueprint's team: %q", got)
+	}
+
+	form := f.call(editor, "POST", "/spaces/"+space+"/forms", map[string]any{"name": "Ask", "definition": map[string]any{"pages": []map[string]any{{"title": "One", "elements": []map[string]any{
+		{"key": "who", "kind": "assignee", "label": "Who"}}}}}, "response": map[string]any{"item_type": "task", "location": map[string]any{"space_id": space}, "assignee_ids": []string{teammate.id}}})
+	f.want(form, 201, "an Editor builds a form")
+	id := form.body["id"].(string)
+	f.publishForm(editor, id)
+	f.exec("UPDATE request_forms SET access='internal' WHERE id=$1", id)
+	submit := func(p *person) string {
+		made := f.submit(p, id, map[string]any{"who": editor.id})
+		f.want(made, 201, "submit")
+		return assignees(made.body["item_id"])
+	}
+	if got := submit(editor); got != editor.id {
+		t.Fatalf("an Editor cannot assign someone else with a form: %q", got)
+	}
+	if got := submit(teammate); got != teammate.id {
+		t.Fatalf("another Editor keeps only their own preset, not the person they answered: %q", got)
+	}
+	for name, p := range map[string]*person{"Full access": manager, "a requester outside the Space": requester} {
+		if got := submit(p); !strings.Contains(got, teammate.id) || !strings.Contains(got, editor.id) {
+			t.Fatalf("%s keeps the form's routing: %q", name, got)
+		}
+	}
 }

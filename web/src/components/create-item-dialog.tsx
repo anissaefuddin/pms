@@ -290,6 +290,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
           </label>;
         })}
         {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
+        {blueprint && assignSelfOnly(me, (parent ?? selected)?.my_capabilities) && <small className="block text-muted-foreground">{t("items.assignSelfOnly")}</small>}
       </fieldset>
     </section>}
 

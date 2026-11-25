@@ -506,20 +506,45 @@ func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.
 	if raw, ok := fields["locations"]; ok {
 		_ = json.Unmarshal(raw, &locations)
 	}
+	ok, err := CanAssignOthers(ctx, pool, actor, locations)
+	if err == nil && !ok {
+		err = ErrAssignForbidden
+	}
+	return err
+}
+
+// CanAssignOthers reports whether the actor may give a Task to someone else in every one of these places: a Workspace admin, or
+// Full access (share) to a shared Space.
+func CanAssignOthers(ctx context.Context, db policy.DB, actor policy.Actor, locations []Location) (bool, error) {
+	if actor.Type == policy.Admin {
+		return true, nil
+	}
 	for _, loc := range locations {
-		space, _, err := policy.SpaceAccessFor(ctx, pool, actor, loc.SpaceID.String())
+		space, _, err := policy.SpaceAccessFor(ctx, db, actor, loc.SpaceID.String())
 		if err != nil {
-			return err
+			return false, err
 		}
-		caps, err := locationCaps(ctx, pool, actor, loc)
+		caps, err := locationCaps(ctx, db, actor, loc)
 		if err != nil {
-			return err
+			return false, err
 		}
 		if space.Kind == "personal" || !caps.Has(policy.Share) {
-			return ErrAssignForbidden
+			return false, nil
 		}
 	}
-	return nil
+	return true, nil
+}
+
+// FormSubmitterIsLimited reports whether someone sending a request form works in the destination without Full access (an Editor).
+// A form must not give them what they cannot do directly. People who do not work there keep the form's own routing: assigning the
+// team is what an intake form is for.
+func FormSubmitterIsLimited(ctx context.Context, db policy.DB, actor policy.Actor, location Location) (bool, error) {
+	caps, err := locationCaps(ctx, db, actor, location)
+	if err != nil || !caps.Has(policy.Edit) {
+		return false, err
+	}
+	ok, err := CanAssignOthers(ctx, db, actor, []Location{location})
+	return !ok, err
 }
 
 // requireReassign is the same rule for an edit: an Editor may take or leave a Task, not give it to someone else. A change made by

@@ -452,6 +452,17 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 			assignees = append(assignees, id)
 		}
 	}
+	onlyAssignee := ""
+	if external == nil {
+		limited, err := items.FormSubmitterIsLimited(ctx, tx, actor, items.Location{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID})
+		if err != nil {
+			return createdItem{}, err
+		}
+		if limited { // an Editor takes the task or leaves it unassigned; the answers still name the people they chose
+			onlyAssignee = actor.ID
+			assignees = slices.DeleteFunc(assignees, func(id uuid.UUID) bool { return id.String() != actor.ID })
+		}
+	}
 	locations := []map[string]any{{"space_id": row.Response.Location.SpaceID, "parent_item_id": row.Response.Location.ParentItemID}}
 	fields := map[string]json.RawMessage{
 		"type": marshal(row.Response.ItemType), "title": marshal(title), "locations": marshal(locations),
@@ -494,7 +505,7 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 		}
 		item, err = items.UseBlueprintTx(ctx, tx, elevated, *blueprint, items.BlueprintUse{
 			Locations: []items.Location{{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID}},
-			Title:     &title, Overrides: overrides}, batch)
+			Title:     &title, Overrides: overrides, OnlyAssignee: onlyAssignee}, batch)
 	} else {
 		item, err = items.CreateTx(ctx, tx, elevated, fields, batch)
 	}

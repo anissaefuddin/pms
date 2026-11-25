@@ -413,6 +413,8 @@ type BlueprintUse struct {
 	FinishDate *string `json:"finish_date"`
 	// Overrides replace the blueprint's defaults on the root item (a form's answers win over the blueprint).
 	Overrides map[string]json.RawMessage `json:"-"`
+	// OnlyAssignee keeps just this person among the blueprint's assignees: set for someone who may not assign others.
+	OnlyAssignee string `json:"-"`
 }
 
 // UseBlueprintTx is UseBlueprint inside the caller's transaction.
@@ -449,6 +451,15 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 	}
 	if err := validateBlueprintTree(tree); err != nil { // refused before anything is written
 		return Detail{}, err
+	}
+	if actor.Form == nil { // a form submission decides this from the submitter's own rights
+		ok, err := CanAssignOthers(ctx, tx, actor, use.Locations)
+		if err != nil {
+			return Detail{}, err
+		}
+		if !ok {
+			use.OnlyAssignee = actor.ID
+		}
 	}
 	anchor, err := blueprintAnchor(tree, use.StartDate, use.FinishDate)
 	if err != nil {
@@ -493,7 +504,7 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 		fields["importance"] = marshalJSON(n.Importance)
 		assignees := []uuid.UUID{}
 		for _, u := range n.AssigneeIDs {
-			if active[u] {
+			if active[u] && (use.OnlyAssignee == "" || u.String() == use.OnlyAssignee) {
 				assignees = append(assignees, u)
 			}
 		}
