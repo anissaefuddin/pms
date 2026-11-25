@@ -1,9 +1,11 @@
 package httpserver
 
 import (
+	"context"
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 	"unicode/utf8"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
@@ -11,8 +13,11 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-// submitTimeEntries sends the caller's own draft and rejected entries of a period for review. Entries on tasks the caller can no
-// longer see are left alone.
+// Lifecycle: draft -> submitted -> approved or rejected; a rejected entry is edited and submitted again. Locked is a freeze on top
+// of any state: until it is unlocked the entry cannot be edited, submitted or reviewed. Only approved time counts as cost, locked or not.
+
+// submitTimeEntries sends the caller's own draft and rejected entries of a period for review. Locked entries, and entries on tasks
+// the caller can no longer see, are left alone.
 func (s *Server) submitTimeEntries(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		From string `json:"from"`
@@ -37,9 +42,12 @@ func (s *Server) submitTimeEntries(w http.ResponseWriter, r *http.Request) {
 		timeEntryError(w, err)
 		return
 	}
-	tag, err := tx.Exec(ctx, `UPDATE time_entries SET status='submitted',submitted_at=now(),reviewed_by=NULL,reviewed_at=NULL,review_note='',version=version+1
-WHERE user_id=$1::uuid AND status IN ('draft','rejected') AND entry_date BETWEEN $2::text::date AND $3::text::date
-AND item_id=ANY(ARRAY(SELECT unnest($4::text[])::uuid))`, actor.ID, in.From, in.To, ids)
+	tag, err := tx.Exec(ctx, `WITH sent AS (
+UPDATE time_entries SET status='submitted',submitted_at=now(),reviewed_by=NULL,reviewed_at=NULL,review_note='',version=version+1
+WHERE user_id=$1::uuid AND status IN ('draft','rejected') AND NOT locked AND entry_date BETWEEN $2::text::date AND $3::text::date
+AND item_id=ANY(ARRAY(SELECT unnest($4::text[])::uuid))
+RETURNING id,minutes)
+INSERT INTO time_entry_history(entry_id,actor_id,action,minutes) SELECT id,$1::uuid,'submitted',minutes FROM sent`, actor.ID, in.From, in.To, ids)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -151,12 +159,18 @@ func (s *Server) reviewTimeEntry(w http.ResponseWriter, r *http.Request) {
 	case e.Version != version:
 		writeError(w, 409, "time entry version changed")
 		return
+	case e.Locked:
+		writeProblem(w, 409, "time_entry_locked", "this time entry is locked")
+		return
 	case e.Status != "submitted" && !(e.Status == "approved" && in.Decision == "rejected"):
 		writeProblem(w, 409, "time_entry_not_submitted", "only a submitted time entry can be reviewed")
 		return
 	}
 	err = e.scan(tx.QueryRow(ctx, `UPDATE time_entries e SET status=$3,review_note=$4,reviewed_by=$5::uuid,reviewed_at=now(),version=version+1
 WHERE id=$1 AND version=$2 RETURNING `+timeEntryColumns, id, version, in.Decision, in.Note, actor.ID))
+	if err == nil {
+		err = recordTimeEntry(ctx, tx, e, actor.ID, in.Decision, in.Note)
+	}
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -166,4 +180,60 @@ WHERE id=$1 AND version=$2 RETURNING `+timeEntryColumns, id, version, in.Decisio
 	}
 	setETag(w, e.Version)
 	writeJSON(w, 200, e)
+}
+
+func recordTimeEntry(ctx context.Context, tx pgx.Tx, e timeEntry, actor, action, note string) error {
+	_, err := tx.Exec(ctx, "INSERT INTO time_entry_history(entry_id,actor_id,action,note,minutes) VALUES ($1::uuid,$2::uuid,$3,$4,$5)", e.ID, actor, action, note, e.Minutes)
+	return err
+}
+
+// timeEntryHistory is the approval trail of one entry, for its author and for people with Full access to the task.
+func (s *Server) timeEntryHistory(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("entryId"))
+	if err != nil {
+		timeEntryError(w, pgx.ErrNoRows)
+		return
+	}
+	ctx, actor := r.Context(), actorOf(r)
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly})
+	if err != nil {
+		timeEntryError(w, err)
+		return
+	}
+	defer tx.Rollback(ctx)
+	var e timeEntry
+	if err = e.scan(tx.QueryRow(ctx, "SELECT "+timeEntryColumns+" FROM time_entries e WHERE id=$1", id)); err != nil {
+		timeEntryError(w, err)
+		return
+	}
+	caps, err := entryCaps(ctx, tx, actor, e.ItemID)
+	if err == nil && e.UserID != actor.ID && !caps.Contains(policy.RoleCaps(policy.Full)) {
+		err = pgx.ErrNoRows
+	}
+	if err != nil {
+		timeEntryError(w, err)
+		return
+	}
+	type step struct {
+		Action  string    `json:"action"`
+		Actor   string    `json:"actor_name"`
+		Note    string    `json:"note"`
+		Minutes int       `json:"minutes"`
+		At      time.Time `json:"at"`
+	}
+	rows, err := tx.Query(ctx, `SELECT h.action,COALESCE(concat_ws(' ',u.first_name,u.last_name),''),h.note,h.minutes,h.at
+FROM time_entry_history h LEFT JOIN users u ON u.id=h.actor_id WHERE h.entry_id=$1 ORDER BY h.id`, id)
+	if err != nil {
+		timeEntryError(w, err)
+		return
+	}
+	steps, err := pgx.CollectRows(rows, pgx.RowToStructByPos[step])
+	if err != nil {
+		timeEntryError(w, err)
+		return
+	}
+	if steps == nil {
+		steps = []step{}
+	}
+	writeJSON(w, 200, map[string]any{"items": steps})
 }

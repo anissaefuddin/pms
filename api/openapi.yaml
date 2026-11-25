@@ -2374,11 +2374,12 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [actual_minutes, approved_minutes, scope]
+                required: [actual_minutes, approved_minutes, scope, cost_status]
                 properties:
                   actual_minutes: { type: integer, format: int64 }
                   approved_minutes: { type: integer, format: int64, description: Bagian yang sudah disetujui }
                   scope: { type: string, enum: [project, permitted_entries] }
+                  cost_status: { type: string, enum: [full, partial, unauthorized], description: 'partial: sebagian entry tidak terlihat atau belum punya tarif, sehingga angka tidak dikirim' }
                   actual_cost_minor: { type: integer, format: int64, description: 'Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)' }
         '404': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/time-entries:
@@ -2486,6 +2487,33 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/TimeEntryPage' }
         '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/{entryId}/history:
+    parameters:
+      - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getTimeEntryHistory
+      summary: Riwayat pengajuan, persetujuan, penolakan, dan kunci satu entry
+      responses:
+        '200':
+          description: Urut dari yang paling lama
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [action, actor_name, note, minutes, at]
+                      properties:
+                        action: { type: string, enum: [submitted, approved, rejected, locked, unlocked] }
+                        actor_name: { type: string }
+                        note: { type: string }
+                        minutes: { type: integer }
+                        at: { type: string, format: date-time }
+        '404': { $ref: '#/components/responses/Problem' }
   /time-entries/{entryId}/review:
     parameters:
       - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -3989,7 +4017,7 @@ paths:
     get:
       tags: [spaces]
       operationId: listSpaceTemplates
-      summary: Template Space bawaan per kategori (SPC-18)
+      summary: Template Space bawaan per kategori (SPC-18) dan template tersimpan milik sendiri atau dari Space yang terlihat
       responses:
         '200':
           description: OK
@@ -4002,6 +4030,40 @@ paths:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/SpaceTemplate' }
+    post:
+      tags: [spaces]
+      operationId: saveSpaceTemplate
+      summary: Simpan struktur dan konfigurasi Space sebagai template (akses penuh); tanpa orang, tanggal, status, nilai field, komentar, file, waktu, form, otomatisasi, dan anggota
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [space_id, name]
+              properties:
+                space_id: { type: string, format: uuid }
+                name: { type: string, minLength: 1, maxLength: 120 }
+                description: { type: string, maxLength: 500 }
+      responses:
+        '201':
+          description: Tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SpaceTemplate' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /space-templates/{templateId}:
+    delete:
+      tags: [spaces]
+      operationId: deleteSpaceTemplate
+      summary: Hapus template tersimpan milik sendiri; Space yang dibuat darinya tidak berubah
+      parameters:
+        - { name: templateId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Dihapus }
+        '404': { $ref: '#/components/responses/Problem' }
   /space-templates/{templateId}/spaces:
     post:
       tags: [spaces]
@@ -7567,7 +7629,7 @@ components:
       enum: [shared, personal]
     SpaceTemplate:
       type: object
-      required: [id, name, category, description, version, compatible, counts]
+      required: [id, name, category, description, version, compatible, saved, mine, counts]
       properties:
         id: { type: string }
         name: { type: string }
@@ -7575,6 +7637,8 @@ components:
         description: { type: string }
         version: { type: integer }
         compatible: { type: boolean, description: false bila template ditulis untuk versi PMS yang lebih baru }
+        saved: { type: boolean, description: Dibuat dari sebuah Space; false untuk template bawaan }
+        mine: { type: boolean, description: Disimpan oleh pemanggil dan dapat dihapusnya }
         counts:
           type: object
           required: [projects, tasks, views, forms, custom_fields]

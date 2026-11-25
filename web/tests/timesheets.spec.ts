@@ -8,7 +8,7 @@ test("pins a task and saves a weekly duration and comment", async ({ page }) => 
     "GET /search": { body: { items: [task], comments: [], users: [] } },
     "GET /time-entries": () => ({ body: { items: entries, next_offset: null } }),
     "POST /time-entries": (body) => {
-      entries = [{ ...body, id: "entry", version: 1, item_title: task.title }];
+      entries = [{ ...body, id: "entry", version: 1, status: "draft", review_note: "", item_title: task.title }];
       return { status: 201, body: entries[0] };
     },
   } });
@@ -35,7 +35,7 @@ test("keeps a conflicted cell draft until the user discards it", async ({ page }
   const { calls } = await mockSpaces(page, { extra: {
     "GET /time-entries": (_, request) => ({ body: { items: [{
       id: "entry", item_id: task, item_title: "Delivery", date: request.query.get("from"),
-      minutes: version === 1 ? 90 : 120, comment: "", locked: false, version,
+      minutes: version === 1 ? 90 : 120, comment: "", locked: false, version, status: "draft", review_note: "",
     }], next_offset: null } }),
     "PATCH /time-entries/entry": () => {
       version = 2;
@@ -52,4 +52,34 @@ test("keeps a conflicted cell draft until the user discards it", async ({ page }
   expect(calls.find((call) => call.method === "PATCH")?.headers["if-match"]).toBe('"1"');
   await page.getByRole("button", { name: "Cancel", exact: true }).click();
   await expect(duration).toHaveValue("2:00");
+});
+
+test("submits the week, shows the decision and its history, and reviews other people's time", async ({ page }) => {
+  const task = "11111111-1111-4111-8111-111111111111";
+  let status = "draft";
+  let waiting = true;
+  const { calls } = await mockSpaces(page, { extra: {
+    "GET /time-entries": (_, request) => ({ body: { items: [{ id: "entry", item_id: task, item_title: "Delivery", date: request.query.get("from"),
+      minutes: 90, comment: "", locked: false, version: 1, status, review_note: status === "rejected" ? "Wrong task" : "" }], next_offset: null } }),
+    "POST /time-entries/submit": () => { status = "rejected"; return { body: { submitted: 1 } }; },
+    "GET /time-entries/entry/history": { body: { items: [{ action: "submitted", actor_name: "Ada Lovelace", note: "", minutes: 90, at: "2026-11-23T08:00:00Z" },
+      { action: "rejected", actor_name: "Grace Hopper", note: "Wrong task", minutes: 90, at: "2026-11-23T09:00:00Z" }] } },
+    "GET /time-entries/review": () => ({ body: { items: waiting ? [{ id: "theirs", item_id: task, item_title: "Delivery", user_name: "Grace Hopper", date: "2026-11-23",
+      minutes: 60, comment: "Design", locked: false, version: 4, status: "submitted", review_note: "" }] : [], next_offset: null } }),
+    "POST /time-entries/theirs/review": () => { waiting = false; return { body: {} }; },
+  } });
+  await page.goto("/timesheets");
+  await page.getByRole("button", { name: "Submit 1 entry" }).click();
+  await expect(page.getByText("Rejected: Wrong task")).toBeVisible();
+  expect(Object.keys(calls.find((call) => call.path === "/time-entries/submit")?.body as object).sort()).toEqual(["from", "to"]);
+  await page.getByRole("button", { name: /^History of Delivery/ }).click();
+  await expect(page.getByRole("dialog").getByText(/Grace Hopper · Rejected · 1:30 · Wrong task/)).toBeVisible();
+  await page.keyboard.press("Escape");
+  const review = page.getByRole("region", { name: "Time to review" });
+  await review.getByRole("textbox").fill("Thanks");
+  await review.getByRole("button", { name: /^Approve Grace Hopper/ }).click();
+  await expect(review).toBeHidden();
+  const sent = calls.find((call) => call.path === "/time-entries/theirs/review");
+  expect(sent?.headers["if-match"]).toBe('"4"');
+  expect(sent?.body).toEqual({ decision: "approved", note: "Thanks" });
 });

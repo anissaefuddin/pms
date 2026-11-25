@@ -34,7 +34,7 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
   const budgetFields = fields.filter((field) => field.config?.project_budget);
   const actual = useQuery({
     queryKey: ["time-entries", "summary", item.id], enabled: budgetFields.length > 0,
-    queryFn: ({ signal }) => api<{ actual_minutes: number; actual_cost_minor?: number; scope: "project" | "permitted_entries" }>(
+    queryFn: ({ signal }) => api<{ actual_minutes: number; actual_cost_minor?: number; cost_status: "full" | "partial" | "unauthorized"; scope: "project" | "permitted_entries" }>(
       `/api/v1/items/${item.id}/time-summary`, { signal }),
   });
   const pending = queries.some((query) => query.isPending);
@@ -82,6 +82,7 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
                 {t("time.actualCost", { cost: formatCustomNumber(field, actual.data.actual_cost_minor / 100, i18n.language) })}
                 {typeof value === "number" && value > 0 && ` · ${t("time.budgetUsed", { percent: Math.round(actual.data.actual_cost_minor / 100 / value * 100) })}`}
               </p>}
+              {field.config?.project_budget && actual.data?.cost_status === "partial" && <p className="text-sm text-muted-foreground">{t("time.costPartial")}</p>}
               {field.config?.project_budget && actual.isError && <FormError message={actual.error.message} />}
             </div>
             {editable && !field.archived_at && field.type !== "formula" && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}

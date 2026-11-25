@@ -3051,6 +3051,27 @@ func (e ListProjectTimeEntriesParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for GetProjectTimeSummary200JSONResponseBodyCostStatus.
+const (
+	GetProjectTimeSummary200JSONResponseBodyCostStatusFull         GetProjectTimeSummary200JSONResponseBodyCostStatus = "full"
+	GetProjectTimeSummary200JSONResponseBodyCostStatusPartial      GetProjectTimeSummary200JSONResponseBodyCostStatus = "partial"
+	GetProjectTimeSummary200JSONResponseBodyCostStatusUnauthorized GetProjectTimeSummary200JSONResponseBodyCostStatus = "unauthorized"
+)
+
+// Valid indicates whether the value is a known member of the GetProjectTimeSummary200JSONResponseBodyCostStatus enum.
+func (e GetProjectTimeSummary200JSONResponseBodyCostStatus) Valid() bool {
+	switch e {
+	case GetProjectTimeSummary200JSONResponseBodyCostStatusFull:
+		return true
+	case GetProjectTimeSummary200JSONResponseBodyCostStatusPartial:
+		return true
+	case GetProjectTimeSummary200JSONResponseBodyCostStatusUnauthorized:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetProjectTimeSummary200JSONResponseBodyScope.
 const (
 	GetProjectTimeSummary200JSONResponseBodyScopePermittedEntries GetProjectTimeSummary200JSONResponseBodyScope = "permitted_entries"
@@ -3672,6 +3693,33 @@ func (e UpdateTimeEntryJSONBodyBillingType) Valid() bool {
 	case UpdateTimeEntryJSONBodyBillingTypeBillable:
 		return true
 	case UpdateTimeEntryJSONBodyBillingTypeNonBillable:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for GetTimeEntryHistory200JSONResponseBodyItemsAction.
+const (
+	GetTimeEntryHistory200JSONResponseBodyItemsActionApproved  GetTimeEntryHistory200JSONResponseBodyItemsAction = "approved"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionLocked    GetTimeEntryHistory200JSONResponseBodyItemsAction = "locked"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionRejected  GetTimeEntryHistory200JSONResponseBodyItemsAction = "rejected"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionSubmitted GetTimeEntryHistory200JSONResponseBodyItemsAction = "submitted"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionUnlocked  GetTimeEntryHistory200JSONResponseBodyItemsAction = "unlocked"
+)
+
+// Valid indicates whether the value is a known member of the GetTimeEntryHistory200JSONResponseBodyItemsAction enum.
+func (e GetTimeEntryHistory200JSONResponseBodyItemsAction) Valid() bool {
+	switch e {
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionApproved:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionLocked:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionRejected:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionSubmitted:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionUnlocked:
 		return true
 	default:
 		return false
@@ -6146,8 +6194,14 @@ type SpaceTemplate struct {
 	} `json:"counts"`
 	Description string `json:"description"`
 	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Version     int    `json:"version"`
+
+	// Mine Disimpan oleh pemanggil dan dapat dihapusnya
+	Mine bool   `json:"mine"`
+	Name string `json:"name"`
+
+	// Saved Dibuat dari sebuah Space; false untuk template bawaan
+	Saved   bool `json:"saved"`
+	Version int  `json:"version"`
 }
 
 // SpaceUpdate defines model for SpaceUpdate.
@@ -7163,6 +7217,9 @@ type ListProjectTimeEntriesParamsBillingType string
 // ListProjectTimeEntriesParamsSort defines parameters for ListProjectTimeEntries.
 type ListProjectTimeEntriesParamsSort string
 
+// GetProjectTimeSummary200JSONResponseBodyCostStatus defines parameters for GetProjectTimeSummary.
+type GetProjectTimeSummary200JSONResponseBodyCostStatus string
+
 // GetProjectTimeSummary200JSONResponseBodyScope defines parameters for GetProjectTimeSummary.
 type GetProjectTimeSummary200JSONResponseBodyScope string
 
@@ -7484,6 +7541,13 @@ type ReplaceWorkScheduleParams struct {
 	IfMatch IfMatch `json:"If-Match"`
 }
 
+// SaveSpaceTemplateJSONBody defines parameters for SaveSpaceTemplate.
+type SaveSpaceTemplateJSONBody struct {
+	Description *string            `json:"description,omitempty"`
+	Name        string             `json:"name"`
+	SpaceId     openapi_types.UUID `json:"space_id"`
+}
+
 // CreateSpaceFromTemplateJSONBody defines parameters for CreateSpaceFromTemplate.
 type CreateSpaceFromTemplateJSONBody struct {
 	// Name Default nama template
@@ -7706,6 +7770,9 @@ type UpdateTimeEntryParams struct {
 
 // UpdateTimeEntryJSONBodyBillingType defines parameters for UpdateTimeEntry.
 type UpdateTimeEntryJSONBodyBillingType string
+
+// GetTimeEntryHistory200JSONResponseBodyItemsAction defines parameters for GetTimeEntryHistory.
+type GetTimeEntryHistory200JSONResponseBodyItemsAction string
 
 // ReviewTimeEntryJSONBody defines parameters for ReviewTimeEntry.
 type ReviewTimeEntryJSONBody struct {
@@ -8084,6 +8151,9 @@ type ScimPutUserApplicationScimPlusJSONRequestBody = ScimResource
 
 // ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
 type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
+
+// SaveSpaceTemplateJSONRequestBody defines body for SaveSpaceTemplate for application/json ContentType.
+type SaveSpaceTemplateJSONRequestBody SaveSpaceTemplateJSONBody
 
 // CreateSpaceFromTemplateJSONRequestBody defines body for CreateSpaceFromTemplate for application/json ContentType.
 type CreateSpaceFromTemplateJSONRequestBody CreateSpaceFromTemplateJSONBody
@@ -9230,9 +9300,15 @@ type ServerInterface interface {
 	// ListSpaceIcons Katalog kunci ikon Space (D-04)
 	// (GET /space-icons)
 	ListSpaceIcons(w http.ResponseWriter, r *http.Request)
-	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
+	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18) dan template tersimpan milik sendiri atau dari Space yang terlihat
 	// (GET /space-templates)
 	ListSpaceTemplates(w http.ResponseWriter, r *http.Request)
+	// SaveSpaceTemplate Simpan struktur dan konfigurasi Space sebagai template (akses penuh); tanpa orang, tanggal, status, nilai field, komentar, file, waktu, form, otomatisasi, dan anggota
+	// (POST /space-templates)
+	SaveSpaceTemplate(w http.ResponseWriter, r *http.Request)
+	// DeleteSpaceTemplate Hapus template tersimpan milik sendiri; Space yang dibuat darinya tidak berubah
+	// (DELETE /space-templates/{templateId})
+	DeleteSpaceTemplate(w http.ResponseWriter, r *http.Request, templateId openapi_types.UUID)
 	// CreateSpaceFromTemplate Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18)
 	// (POST /space-templates/{templateId}/spaces)
 	CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request, templateId string)
@@ -9404,6 +9480,9 @@ type ServerInterface interface {
 	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
 	// (PATCH /time-entries/{entryId})
 	UpdateTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params UpdateTimeEntryParams)
+	// GetTimeEntryHistory Riwayat pengajuan, persetujuan, penolakan, dan kunci satu entry
+	// (GET /time-entries/{entryId}/history)
+	GetTimeEntryHistory(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID)
 	// ReviewTimeEntry Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
 	// (POST /time-entries/{entryId}/review)
 	ReviewTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params ReviewTimeEntryParams)
@@ -17081,6 +17160,46 @@ func (siw *ServerInterfaceWrapper) ListSpaceTemplates(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// SaveSpaceTemplate operation middleware
+func (siw *ServerInterfaceWrapper) SaveSpaceTemplate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveSpaceTemplate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSpaceTemplate operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSpaceTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "templateId" -------------
+	var templateId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "templateId", r.PathValue("templateId"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "templateId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSpaceTemplate(w, r, templateId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateSpaceFromTemplate operation middleware
 func (siw *ServerInterfaceWrapper) CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request) {
 
@@ -18960,6 +19079,32 @@ func (siw *ServerInterfaceWrapper) UpdateTimeEntry(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// GetTimeEntryHistory operation middleware
+func (siw *ServerInterfaceWrapper) GetTimeEntryHistory(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTimeEntryHistory(w, r, entryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ReviewTimeEntry operation middleware
 func (siw *ServerInterfaceWrapper) ReviewTimeEntry(w http.ResponseWriter, r *http.Request) {
 
@@ -20065,6 +20210,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries", wrapper.CreateTimeEntry)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries/submit", wrapper.SubmitTimeEntries)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/review", wrapper.ListTimeEntriesToReview)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/{entryId}/history", wrapper.GetTimeEntryHistory)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries/{entryId}/review", wrapper.ReviewTimeEntry)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.DeleteTimeEntry)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.GetTimeEntry)
@@ -20146,6 +20292,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation/events/{eventId}/replay", wrapper.ReplayAutomationEvent)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules/dry-run", wrapper.DryRunAutomation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-templates", wrapper.ListSpaceTemplates)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates", wrapper.SaveSpaceTemplate)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/space-templates/{templateId}", wrapper.DeleteSpaceTemplate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates/{templateId}/spaces", wrapper.CreateSpaceFromTemplate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces", wrapper.ListSpaces)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces", wrapper.CreateSpace)
@@ -29827,8 +29975,11 @@ type GetProjectTimeSummary200JSONResponse struct {
 	ActualMinutes   int64  `json:"actual_minutes"`
 
 	// ApprovedMinutes Bagian yang sudah disetujui
-	ApprovedMinutes int64                                         `json:"approved_minutes"`
-	Scope           GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
+	ApprovedMinutes int64 `json:"approved_minutes"`
+
+	// CostStatus partial: sebagian entry tidak terlihat atau belum punya tarif, sehingga angka tidak dikirim
+	CostStatus GetProjectTimeSummary200JSONResponseBodyCostStatus `json:"cost_status"`
+	Scope      GetProjectTimeSummary200JSONResponseBodyScope      `json:"scope"`
 }
 
 func (response GetProjectTimeSummary200JSONResponse) VisitGetProjectTimeSummaryResponse(w http.ResponseWriter) error {
@@ -35232,6 +35383,104 @@ func (response ListSpaceTemplates200JSONResponse) VisitListSpaceTemplatesRespons
 	return err
 }
 
+type SaveSpaceTemplateRequestObject struct {
+	Body *SaveSpaceTemplateJSONRequestBody
+}
+
+type SaveSpaceTemplateResponseObject interface {
+	VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error
+}
+
+type SaveSpaceTemplate201JSONResponse SpaceTemplate
+
+func (response SaveSpaceTemplate201JSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveSpaceTemplate403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveSpaceTemplate403ApplicationProblemPlusJSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveSpaceTemplate404ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveSpaceTemplate404ApplicationProblemPlusJSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveSpaceTemplate422ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveSpaceTemplate422ApplicationProblemPlusJSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSpaceTemplateRequestObject struct {
+	TemplateId openapi_types.UUID `json:"templateId"`
+}
+
+type DeleteSpaceTemplateResponseObject interface {
+	VisitDeleteSpaceTemplateResponse(w http.ResponseWriter) error
+}
+
+type DeleteSpaceTemplate204Response struct {
+}
+
+func (response DeleteSpaceTemplate204Response) VisitDeleteSpaceTemplateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteSpaceTemplate404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteSpaceTemplate404ApplicationProblemPlusJSONResponse) VisitDeleteSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateSpaceFromTemplateRequestObject struct {
 	TemplateId string `json:"templateId"`
 	Body       *CreateSpaceFromTemplateJSONRequestBody
@@ -38616,6 +38865,52 @@ func (response UpdateTimeEntry428ApplicationProblemPlusJSONResponse) VisitUpdate
 	return err
 }
 
+type GetTimeEntryHistoryRequestObject struct {
+	EntryId openapi_types.UUID `json:"entryId"`
+}
+
+type GetTimeEntryHistoryResponseObject interface {
+	VisitGetTimeEntryHistoryResponse(w http.ResponseWriter) error
+}
+
+type GetTimeEntryHistory200JSONResponse struct {
+	Items []struct {
+		Action    GetTimeEntryHistory200JSONResponseBodyItemsAction `json:"action"`
+		ActorName string                                            `json:"actor_name"`
+		At        time.Time                                         `json:"at"`
+		Minutes   int                                               `json:"minutes"`
+		Note      string                                            `json:"note"`
+	} `json:"items"`
+}
+
+func (response GetTimeEntryHistory200JSONResponse) VisitGetTimeEntryHistoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTimeEntryHistory404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetTimeEntryHistory404ApplicationProblemPlusJSONResponse) VisitGetTimeEntryHistoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReviewTimeEntryRequestObject struct {
 	EntryId openapi_types.UUID `json:"entryId"`
 	Params  ReviewTimeEntryParams
@@ -41003,9 +41298,15 @@ type StrictServerInterface interface {
 	// ListSpaceIcons Katalog kunci ikon Space (D-04)
 	// (GET /space-icons)
 	ListSpaceIcons(ctx context.Context, request ListSpaceIconsRequestObject) (ListSpaceIconsResponseObject, error)
-	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
+	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18) dan template tersimpan milik sendiri atau dari Space yang terlihat
 	// (GET /space-templates)
 	ListSpaceTemplates(ctx context.Context, request ListSpaceTemplatesRequestObject) (ListSpaceTemplatesResponseObject, error)
+	// SaveSpaceTemplate Simpan struktur dan konfigurasi Space sebagai template (akses penuh); tanpa orang, tanggal, status, nilai field, komentar, file, waktu, form, otomatisasi, dan anggota
+	// (POST /space-templates)
+	SaveSpaceTemplate(ctx context.Context, request SaveSpaceTemplateRequestObject) (SaveSpaceTemplateResponseObject, error)
+	// DeleteSpaceTemplate Hapus template tersimpan milik sendiri; Space yang dibuat darinya tidak berubah
+	// (DELETE /space-templates/{templateId})
+	DeleteSpaceTemplate(ctx context.Context, request DeleteSpaceTemplateRequestObject) (DeleteSpaceTemplateResponseObject, error)
 	// CreateSpaceFromTemplate Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18)
 	// (POST /space-templates/{templateId}/spaces)
 	CreateSpaceFromTemplate(ctx context.Context, request CreateSpaceFromTemplateRequestObject) (CreateSpaceFromTemplateResponseObject, error)
@@ -41177,6 +41478,9 @@ type StrictServerInterface interface {
 	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
 	// (PATCH /time-entries/{entryId})
 	UpdateTimeEntry(ctx context.Context, request UpdateTimeEntryRequestObject) (UpdateTimeEntryResponseObject, error)
+	// GetTimeEntryHistory Riwayat pengajuan, persetujuan, penolakan, dan kunci satu entry
+	// (GET /time-entries/{entryId}/history)
+	GetTimeEntryHistory(ctx context.Context, request GetTimeEntryHistoryRequestObject) (GetTimeEntryHistoryResponseObject, error)
 	// ReviewTimeEntry Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
 	// (POST /time-entries/{entryId}/review)
 	ReviewTimeEntry(ctx context.Context, request ReviewTimeEntryRequestObject) (ReviewTimeEntryResponseObject, error)
@@ -48592,6 +48896,63 @@ func (sh *strictHandler) ListSpaceTemplates(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// SaveSpaceTemplate operation middleware
+func (sh *strictHandler) SaveSpaceTemplate(w http.ResponseWriter, r *http.Request) {
+	var request SaveSpaceTemplateRequestObject
+
+	var body SaveSpaceTemplateJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveSpaceTemplate(ctx, request.(SaveSpaceTemplateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveSpaceTemplate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveSpaceTemplateResponseObject); ok {
+		if err := validResponse.VisitSaveSpaceTemplateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteSpaceTemplate operation middleware
+func (sh *strictHandler) DeleteSpaceTemplate(w http.ResponseWriter, r *http.Request, templateId openapi_types.UUID) {
+	var request DeleteSpaceTemplateRequestObject
+
+	request.TemplateId = templateId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteSpaceTemplate(ctx, request.(DeleteSpaceTemplateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteSpaceTemplate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteSpaceTemplateResponseObject); ok {
+		if err := validResponse.VisitDeleteSpaceTemplateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreateSpaceFromTemplate operation middleware
 func (sh *strictHandler) CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request, templateId string) {
 	var request CreateSpaceFromTemplateRequestObject
@@ -50242,6 +50603,32 @@ func (sh *strictHandler) UpdateTimeEntry(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateTimeEntryResponseObject); ok {
 		if err := validResponse.VisitUpdateTimeEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTimeEntryHistory operation middleware
+func (sh *strictHandler) GetTimeEntryHistory(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID) {
+	var request GetTimeEntryHistoryRequestObject
+
+	request.EntryId = entryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTimeEntryHistory(ctx, request.(GetTimeEntryHistoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTimeEntryHistory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTimeEntryHistoryResponseObject); ok {
+		if err := validResponse.VisitGetTimeEntryHistoryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

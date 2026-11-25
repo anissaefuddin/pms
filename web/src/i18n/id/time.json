@@ -81,5 +81,16 @@
     "reject": "Tolak",
     "rejectFor": "Tolak {{label}}",
     "more": "Entri lain muncul setelah ini direview."
+  },
+  "costPartial": "Biaya realisasi tidak ditampilkan: sebagian waktu tidak terlihat oleh Anda atau belum punya tarif.",
+  "history": {
+    "title": "Riwayat",
+    "for": "Riwayat {{label}}",
+    "empty": "Belum ada langkah persetujuan yang tercatat.",
+    "submitted": "Diajukan",
+    "approved": "Disetujui",
+    "rejected": "Ditolak",
+    "locked": "Dikunci",
+    "unlocked": "Dibuka"
   }
 }

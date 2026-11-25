@@ -86,6 +86,7 @@ func (s *Server) timeEntryRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/time-entries", s.requireUser(s.createTimeEntry))
 	mux.HandleFunc("POST /api/v1/time-entries/submit", s.requireUser(s.submitTimeEntries))
 	mux.HandleFunc("GET /api/v1/time-entries/review", s.requireUser(s.listTimeEntriesToReview))
+	mux.HandleFunc("GET /api/v1/time-entries/{entryId}/history", s.requireUser(s.timeEntryHistory))
 	mux.HandleFunc("POST /api/v1/time-entries/{entryId}/review", s.requireUser(s.reviewTimeEntry))
 	for _, method := range []string{"GET", "PATCH", "DELETE"} {
 		mux.HandleFunc(method+" /api/v1/time-entries/{entryId}", s.requireUser(s.timeEntryByID))
@@ -256,6 +257,13 @@ func (s *Server) timeEntryByID(w http.ResponseWriter, r *http.Request) {
 		}
 		err = e.scan(tx.QueryRow(ctx, `UPDATE time_entries e SET minutes=$3,category=$4,comment=$5,billing_type=$6,locked=$7,version=version+1
 WHERE id=$1 AND version=$2 RETURNING `+timeEntryColumns, id, version, e.Minutes, e.Category, e.Comment, e.BillingType, e.Locked))
+		if err == nil && in.Locked != nil {
+			action := "unlocked"
+			if e.Locked {
+				action = "locked"
+			}
+			err = recordTimeEntry(ctx, tx, e, actor.ID, action, "")
+		}
 	}
 	if err == nil {
 		err = tx.Commit(ctx)

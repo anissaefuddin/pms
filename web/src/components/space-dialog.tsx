@@ -103,9 +103,16 @@ function SpaceForm({ space, onDone }: { space?: Space; onDone: () => void }) {
         <select id="space-template" value={templateId} onChange={(event) => setTemplateId(event.target.value)}
           className="block h-8 w-full rounded-md border border-input bg-background px-2 text-sm">
           <option value="">{t("spaces.template.blank")}</option>
-          {templates.data.filter((entry) => entry.compatible).map((entry) => <option key={entry.id} value={entry.id}>{entry.category}: {entry.name}</option>)}
+          {templates.data.filter((entry) => entry.compatible).map((entry) => <option key={entry.id} value={entry.id}>{entry.saved ? t("spaces.template.saved") : entry.category}: {entry.name}</option>)}
         </select>
         {template && <p className="text-sm text-muted-foreground">{template.description} {t("spaces.template.contents", { ...template.counts })}</p>}
+        {template?.mine && <Button type="button" variant="ghost" size="sm" disabled={pending} onClick={async () => {
+          try {
+            await api(`/api/v1/space-templates/${template.id}`, { method: "DELETE" });
+            setTemplateId("");
+            await queryClient.invalidateQueries({ queryKey: ["space-templates"] });
+          } catch (e) { setError((e as Error).message); }
+        }}>{t("spaces.template.delete")}</Button>}
       </div>}
       <TextField label={t("spaces.form.name")} name="name" defaultValue={space?.name ?? ""} maxLength={120} required autoComplete="off" />
       {!template && <div className="space-y-1.5">

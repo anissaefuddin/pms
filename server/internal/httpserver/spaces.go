@@ -20,6 +20,8 @@ func (s *Server) spaceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/spaces", s.requireUser(s.listSpaces))
 	mux.HandleFunc("POST /api/v1/spaces", s.requireUser(s.createSpace))
 	mux.HandleFunc("GET /api/v1/space-templates", s.requireUser(s.listSpaceTemplates))
+	mux.HandleFunc("POST /api/v1/space-templates", s.requireUser(s.saveSpaceTemplate))
+	mux.HandleFunc("DELETE /api/v1/space-templates/{templateId}", s.requireUser(s.deleteSpaceTemplate))
 	mux.HandleFunc("GET /api/v1/item-types", s.requireUser(s.listItemTypes))
 	mux.HandleFunc("POST /api/v1/item-types", s.requireUser(s.createItemType))
 	mux.HandleFunc("PATCH /api/v1/item-types/{typeId}", s.requireUser(s.updateItemType))

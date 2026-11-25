@@ -1724,6 +1724,25 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/time-entries/{entryId}/history": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        /** Riwayat pengajuan, persetujuan, penolakan, dan kunci satu entry */
+        get: operations["getTimeEntryHistory"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/time-entries/{entryId}/review": {
         parameters: {
             query?: never;
@@ -2835,11 +2854,29 @@ export interface paths {
             path?: never;
             cookie?: never;
         };
-        /** Template Space bawaan per kategori (SPC-18) */
+        /** Template Space bawaan per kategori (SPC-18) dan template tersimpan milik sendiri atau dari Space yang terlihat */
         get: operations["listSpaceTemplates"];
         put?: never;
-        post?: never;
+        /** Simpan struktur dan konfigurasi Space sebagai template (akses penuh); tanpa orang, tanggal, status, nilai field, komentar, file, waktu, form, otomatisasi, dan anggota */
+        post: operations["saveSpaceTemplate"];
         delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/space-templates/{templateId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Hapus template tersimpan milik sendiri; Space yang dibuat darinya tidak berubah */
+        delete: operations["deleteSpaceTemplate"];
         options?: never;
         head?: never;
         patch?: never;
@@ -5524,6 +5561,10 @@ export interface components {
             version: number;
             /** @description false bila template ditulis untuk versi PMS yang lebih baru */
             compatible: boolean;
+            /** @description Dibuat dari sebuah Space; false untuk template bawaan */
+            saved: boolean;
+            /** @description Disimpan oleh pemanggil dan dapat dihapusnya */
+            mine: boolean;
             counts: {
                 projects: number;
                 tasks: number;
@@ -10752,6 +10793,11 @@ export interface operations {
                         /** @enum {string} */
                         scope: "project" | "permitted_entries";
                         /**
+                         * @description partial: sebagian entry tidak terlihat atau belum punya tarif, sehingga angka tidak dikirim
+                         * @enum {string}
+                         */
+                        cost_status: "full" | "partial" | "unauthorized";
+                        /**
                          * Format: int64
                          * @description Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)
                          */
@@ -10910,6 +10956,39 @@ export interface operations {
                 };
             };
             422: components["responses"]["Problem"];
+        };
+    };
+    getTimeEntryHistory: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                entryId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Urut dari yang paling lama */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: {
+                            /** @enum {string} */
+                            action: "submitted" | "approved" | "rejected" | "locked" | "unlocked";
+                            actor_name: string;
+                            note: string;
+                            minutes: number;
+                            /** Format: date-time */
+                            at: string;
+                        }[];
+                    };
+                };
+            };
+            404: components["responses"]["Problem"];
         };
     };
     reviewTimeEntry: {
@@ -13092,6 +13171,59 @@ export interface operations {
                     };
                 };
             };
+        };
+    };
+    saveSpaceTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": {
+                    /** Format: uuid */
+                    space_id: string;
+                    name: string;
+                    description?: string;
+                };
+            };
+        };
+        responses: {
+            /** @description Tersimpan */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["SpaceTemplate"];
+                };
+            };
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    deleteSpaceTemplate: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                templateId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Dihapus */
+            204: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content?: never;
+            };
+            404: components["responses"]["Problem"];
         };
     };
     createSpaceFromTemplate: {

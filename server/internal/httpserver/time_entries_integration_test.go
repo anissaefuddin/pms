@@ -263,11 +263,47 @@ func TestTimesheetSubmitAndApprove(t *testing.T) {
 		t.Fatalf("approved time costs: %v", got)
 	}
 	partial := summary(onlooker)
-	if _, told := partial["actual_cost_minor"]; told || partial["scope"] != "permitted_entries" {
+	if _, told := partial["actual_cost_minor"]; told || partial["scope"] != "permitted_entries" || partial["cost_status"] != "partial" {
 		t.Fatalf("a partial cost is a wrong cost, so it is left out: %v", partial)
 	}
 	f.want(review(manager, inWeek, 6, "rejected", "Reopen"), 200, "rejecting an approved entry reopens it")
 	if got := summary(manager); got["actual_cost_minor"] != float64(0) {
 		t.Fatalf("a reopened entry costs nothing: %v", got)
+	}
+	if got := summary(member); got["cost_status"] != "unauthorized" || got["actual_cost_minor"] != nil {
+		t.Fatalf("a member is told there is a cost they may not see, not zero: %v", got)
+	}
+
+	// Locked freezes every step; unlocking brings them back.
+	lock := func(locked bool, version int) reply {
+		return f.call(manager, "PATCH", "/time-entries/"+inWeek, map[string]any{"locked": locked}, "If-Match", fmt.Sprintf(`"%d"`, version))
+	}
+	f.want(lock(true, 7), 200, "lock")
+	if got := f.call(member, "POST", "/time-entries/submit", week); got.body["submitted"] != float64(0) {
+		t.Fatalf("a locked entry is not submitted: %v", got.body)
+	}
+	f.want(lock(false, 8), 200, "unlock")
+	if got := f.call(member, "POST", "/time-entries/submit", week); got.body["submitted"] != float64(1) {
+		t.Fatalf("unlocked: %v", got.body)
+	}
+	f.want(lock(true, 10), 200, "lock a submitted entry")
+	f.want(review(manager, inWeek, 11, "approved", ""), 409, "a locked entry cannot be reviewed")
+
+	history := f.call(member, "GET", "/time-entries/"+inWeek+"/history", nil)
+	f.want(history, 200, "the author reads the trail")
+	steps := ""
+	for _, step := range history.items() {
+		steps += step["action"].(string) + " "
+	}
+	if steps != "submitted rejected submitted approved rejected locked unlocked submitted locked " {
+		t.Fatalf("trail: %s", steps)
+	}
+	f.want(f.call(manager, "GET", "/time-entries/"+inWeek+"/history", nil), 200, "Full access reads it too")
+	f.want(f.call(peer, "GET", "/time-entries/"+inWeek+"/history", nil), 404, "a peer does not")
+
+	// An approved billable entry with no rate makes the cost incomplete, not smaller.
+	f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type,status) VALUES ($1,$2,'2026-11-24',30,'billable','approved')", task, peer.id)
+	if got := summary(manager); got["cost_status"] != "partial" || got["actual_cost_minor"] != nil {
+		t.Fatalf("unpriced time: %v", got)
 	}
 }

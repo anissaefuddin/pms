@@ -260,7 +260,10 @@ func TestCreatedByMeListsEveryDepth(t *testing.T) {
 		f.want(made, 201, title)
 		return made.body["id"].(string)
 	}
-	child(me, "Nested")
+	nested := child(me, "Nested")
+	secondHome := f.spaceWithoutAdmins("Second home")
+	f.share(secondHome, "user", me.id, "editor")
+	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", nested, secondHome) // two places, one row
 	child(other, "Not mine")
 	gone := child(me, "Deleted")
 	f.exec("UPDATE items SET deleted_at=now() WHERE id=$1", gone)

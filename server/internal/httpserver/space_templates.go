@@ -17,9 +17,17 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-func (s *Server) listSpaceTemplates(w http.ResponseWriter, _ *http.Request) {
+func (s *Server) listSpaceTemplates(w http.ResponseWriter, r *http.Request) {
 	list := []spacetemplates.Summary{}
 	for _, t := range spacetemplates.All() {
+		list = append(list, t.Summary())
+	}
+	saved, err := s.savedTemplates(r.Context(), actorOf(r), "")
+	if err != nil {
+		writeSpaceError(w, err)
+		return
+	}
+	for _, t := range saved {
 		list = append(list, t.Summary())
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": list})
@@ -38,6 +46,13 @@ func writeTemplateError(w http.ResponseWriter, err error) {
 // the second call returns the Space the first one made instead of a duplicate.
 func (s *Server) createSpaceFromTemplate(w http.ResponseWriter, r *http.Request) {
 	template, ok := spacetemplates.Find(r.PathValue("templateId"))
+	if !ok {
+		var err error
+		if template, ok, err = s.savedTemplate(r.Context(), actorOf(r), r.PathValue("templateId")); err != nil {
+			writeSpaceError(w, err)
+			return
+		}
+	}
 	if !ok {
 		writeError(w, http.StatusNotFound, "not found")
 		return
@@ -112,7 +127,13 @@ func (s *Server) instantiateTemplate(ctx context.Context, actor policy.Actor, t 
 		for i, option := range field.Options {
 			options[i] = items.CustomFieldOption{ID: uuid.NewString(), Label: option.Label, Color: option.Color}
 		}
-		if _, err := items.CreateCustomFieldTx(ctx, tx, actor, space.ID, items.CustomFieldCreate{Name: field.Name, Type: field.Type, Options: options}); err != nil {
+		var config items.CustomFieldConfig
+		if field.Config != nil {
+			if err := json.Unmarshal(field.Config, &config); err != nil {
+				return spaces.Space{}, false, err
+			}
+		}
+		if _, err := items.CreateCustomFieldTx(ctx, tx, actor, space.ID, items.CustomFieldCreate{Name: field.Name, Type: field.Type, Options: options, Config: config}); err != nil {
 			return spaces.Space{}, false, err
 		}
 	}
@@ -160,6 +181,58 @@ func (s *Server) instantiateTemplate(ctx context.Context, actor policy.Actor, t 
 				return spaces.Space{}, false, err
 			}
 		}
+	}
+	// A workflow removed since the template was saved falls back to the default one.
+	rows, err := tx.Query(ctx, "SELECT id::text FROM workflows")
+	if err != nil {
+		return spaces.Space{}, false, err
+	}
+	workflows := map[string]bool{}
+	var workflowID string
+	if _, err := pgx.ForEachRow(rows, []any{&workflowID}, func() error { workflows[workflowID] = true; return nil }); err != nil {
+		return spaces.Space{}, false, err
+	}
+	for base, id := range t.DefaultWorkflows {
+		if !workflows[id] {
+			continue
+		}
+		if _, err := tx.Exec(ctx, "INSERT INTO space_default_workflows(space_id,base_type,workflow_id,set_by) VALUES ($1,$2,$3::uuid,$4::uuid)", spaceID, base, id, actor.ID); err != nil {
+			return spaces.Space{}, false, err
+		}
+	}
+	var build func(nodes []spacetemplates.Node, location map[string]any) error
+	build = func(nodes []spacetemplates.Node, location map[string]any) error {
+		for _, n := range nodes {
+			fields := map[string]any{"type": n.Type, "title": n.Title, "locations": []any{location}}
+			if n.Type == "project" {
+				fields["owner_id"] = actor.ID
+			}
+			if n.DefaultView != "" {
+				fields["default_view_type"] = n.DefaultView
+			}
+			if n.WorkflowID != "" && workflows[n.WorkflowID] {
+				fields["default_workflow_id"] = n.WorkflowID
+			}
+			if n.Importance != "" {
+				fields["importance"] = n.Importance
+			}
+			if n.Milestone {
+				fields["is_milestone"] = true
+			} else if n.DurationDays != nil {
+				fields["duration_days"] = *n.DurationDays
+			}
+			id, err := create(fields)
+			if err != nil {
+				return err
+			}
+			if err := build(n.Children, map[string]any{"space_id": space.ID, "parent_item_id": id}); err != nil {
+				return err
+			}
+		}
+		return nil
+	}
+	if err := build(t.Items, map[string]any{"space_id": space.ID}); err != nil {
+		return spaces.Space{}, false, err
 	}
 	for _, view := range t.Views {
 		if _, err := views.Create(ctx, tx, actor, views.CreateInput{Scope: views.Scope{SpaceID: &spaceID}, Type: view.Type, Name: view.Name, Visibility: "public", Config: view.Config}); err != nil {

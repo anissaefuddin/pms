@@ -83,5 +83,16 @@
     "reject": "Reject",
     "rejectFor": "Reject {{label}}",
     "more": "More entries appear after you review these."
+  },
+  "costPartial": "Actual cost is not shown: some time is not visible to you or has no rate.",
+  "history": {
+    "title": "History",
+    "for": "History of {{label}}",
+    "empty": "No approval steps recorded.",
+    "submitted": "Submitted",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "locked": "Locked",
+    "unlocked": "Unlocked"
   }
 }

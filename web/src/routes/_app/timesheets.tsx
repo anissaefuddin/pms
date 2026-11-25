@@ -3,11 +3,12 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useId, useState, type FormEvent, type KeyboardEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { FormError } from "@/components/auth/form-error";
 import { ApiError, api } from "@/lib/api";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
-import { formatDate, useProfile } from "@/lib/profile";
+import { formatDate, formatDateTime, useProfile } from "@/lib/profile";
 import { useSearchResults } from "@/lib/search";
 import { formatMinutes, parseMinutes, timeEntryPage, type TimeEntry, type TimeEntryPage } from "@/lib/time-entries";
 import { TopbarTitle } from "@/components/topbar-title";
@@ -35,6 +36,7 @@ function Timesheet({ user, start, today }: { user: string; start: "monday" | "su
   const [drafts, setDrafts] = useState<Record<string, Draft>>({});
   const [pending, setPending] = useState("");
   const [error, setError] = useState("");
+  const [history, setHistory] = useState<{ id: string; label: string }>();
   const date = toDay(today)!;
   const first = addDays(date, -((date.getDay() - { monday: 1, sunday: 0, saturday: 6 }[start] + 7) % 7) + 7 * week);
   const dates = Array.from({ length: 7 }, (_, i) => fromDay(addDays(first, i)));
@@ -172,6 +174,8 @@ function Timesheet({ user, start, today }: { user: string; start: "monday" | "su
                 {entry?.locked && <span>{t("time.locked")}</span>}
                 {entry && entry.status !== "draft" && <p className={entry.status === "rejected" ? "text-xs text-destructive" : "text-xs text-muted-foreground"}>
                   {t(`time.status.${entry.status}`)}{entry.review_note && `: ${entry.review_note}`}</p>}
+                {entry && entry.status !== "draft" && <Button type="button" variant="ghost" size="sm" aria-label={t("time.history.for", { label })}
+                  onClick={() => setHistory({ id: entry.id, label })}>{t("time.history.title")}</Button>}
                 {drafts[key] && <div className="flex gap-1">
                   <Button type="submit" size="sm" disabled={!!pending || closed}>{t("items.save")}</Button>
                   <Button variant="ghost" size="sm" type="button" disabled={pending === key} onClick={() => discard(key)}>{t("items.cancel")}</Button>
@@ -189,7 +193,30 @@ function Timesheet({ user, start, today }: { user: string; start: "monday" | "su
       </table>
     </div>}
     <TimeReview />
+    {history && <TimeHistory entry={history} onClose={() => setHistory(undefined)} />}
   </main>;
+}
+
+type HistoryStep = { action: string; actor_name: string; note: string; minutes: number; at: string };
+
+function TimeHistory({ entry, onClose }: { entry: { id: string; label: string }; onClose: () => void }) {
+  const { t } = useTranslation();
+  const profile = useProfile();
+  const steps = useQuery({
+    queryKey: ["time-entries", "history", entry.id],
+    queryFn: ({ signal }) => api<{ items: HistoryStep[] }>(`/api/v1/time-entries/${entry.id}/history`, { signal }),
+  });
+  return <Dialog open onOpenChange={(open) => { if (!open) onClose(); }}>
+    <DialogContent>
+      <DialogTitle>{t("time.history.for", { label: entry.label })}</DialogTitle>
+      <FormError message={steps.error?.message ?? ""} />
+      {steps.isPending && <p role="status">{t("items.loading")}</p>}
+      {steps.data?.items.length === 0 && <p className="text-sm text-muted-foreground">{t("time.history.empty")}</p>}
+      <ol className="space-y-1 text-sm">{steps.data?.items.map((step, index) => <li key={index}>
+        {formatDateTime(step.at, profile)} · {step.actor_name} · {t(`time.history.${step.action}`)} · {formatMinutes(step.minutes)}{step.note && ` · ${step.note}`}
+      </li>)}</ol>
+    </DialogContent>
+  </Dialog>;
 }
 
 /** Submitted time of other people on tasks this person has Full access to. Hidden when there is nothing to review. */
