@@ -275,7 +275,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   statuses: ItemStatus[];
   customFields: CustomField[];
   columns: string[];
-  spaceId: string;
+  spaceId: string; // "" for a portfolio: items of several Spaces
   parentId?: string;
   readonly: boolean;
   onOpen: (item: Item) => void;
@@ -337,7 +337,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         if (ancestors.has(item.id) || lookup.has(item.id)) continue;
         lookup.set(item.id, item);
         out.push({ ...ganttTask(item, parent), start_text: formatDate(item.start_date, profile), due_text: formatDate(item.due_date, profile), ...Object.fromEntries(shownFields.map((field) => [`cf_${field.id}`, customFieldText(field, item.fields?.[field.id], i18n.language, item.field_people)])) });
-        visit((children.get(item.id) ?? []).filter((child) => child.locations.some((loc) => loc.space_id === spaceId && loc.parent_item_id === item.id)),
+        visit((children.get(item.id) ?? []).filter((child) => child.locations.some((loc) => (!spaceId || loc.space_id === spaceId) && loc.parent_item_id === item.id)),
           item.id, new Set([...ancestors, item.id]));
       }
     }
@@ -432,6 +432,21 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
     if (!chart || !task || !range.start) return;
     if (side === "right") chart.scrollLeft = Math.max(0, dayOf(task.start!) * pxPerDay - 2 * pxPerDay);
     else chart.scrollLeft = Math.max(0, dayOf(task.end!) * pxPerDay - chart.clientWidth + 3 * pxPerDay);
+  }
+  /** The most detailed scale at which every scheduled bar is inside the chart, with the first one at the left edge. */
+  function fitAll() {
+    const dated = tasks.filter((task) => task.start && task.end);
+    const chart = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
+    if (!dated.length || !chart || !range.start) return;
+    const first = Math.min(...dated.map((task) => dayOf(task.start!)));
+    const days = Math.max(...dated.map((task) => dayOf(task.end!))) - first + 1;
+    const next = [...scaleOptions].reverse().find((option) => days * scaleGeometry[option].perDay <= chart.clientWidth) ?? "year";
+    setScale(next);
+    // The chart redraws for the new scale before it can be scrolled.
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      const drawn = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
+      if (drawn) drawn.scrollLeft = Math.max(0, (first - 1) * scaleGeometry[next].perDay);
+    }));
   }
   function scrollToDate(date: Date) {
     setNavigationDate(new Date(date.getFullYear(), date.getMonth(), 1));
@@ -704,16 +719,12 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         </PopoverContent>
       </Popover>
       <Button size="sm" variant="outline" onClick={() => scrollToDate(new Date())}>{t("views.gantt.today")}</Button>
-      {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
       {/* C-04: brings the selected bar into view; nothing changes on screen until a bar is selected. */}
       {selected && <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.showSelected")}</Button>}
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button size="sm" variant="outline" disabled={!tasks.some((task) => task.start)} />}><span>{t("views.gantt.fit")}</span><ChevronDown /></DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => {
-            const earliest = tasks.filter((task) => task.start).sort((a, b) => a.start!.getTime() - b.start!.getTime())[0];
-            chartRegion.current?.querySelector(`.wx-bar[data-id=":${earliest?.id}"]`)?.scrollIntoView({ inline: "start", block: "nearest" });
-          }}>{t("views.gantt.fitAll")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={fitAll}>{t("views.gantt.fitAll")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => measureOutside()}>{t("views.gantt.fitVisible")}</DropdownMenuItem>
           <DropdownMenuItem disabled={!selected} onClick={() => selected && chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.fitSelected")}</DropdownMenuItem>
         </DropdownMenuContent>
