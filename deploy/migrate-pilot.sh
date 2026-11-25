@@ -8,6 +8,7 @@
 #   ./migrate-pilot.sh verify [COUNTS]   TARGET: compare live counts with the bundle's counts file and check access.
 # Rollback plan: docs/PILOT_RUNBOOK.md, "Migrasi pilot ke instance klien".
 set -eu
+umask 077 # migration bundles hold the whole database
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$script_dir"
@@ -61,7 +62,7 @@ export)
   write_counts "$backup_dir/$stamp-counts.txt" "$backup_dir/$stamp-files.tar.gz"
   mkdir -p "$migration_dir"
   bundle=$migration_dir/pms-migration-$stamp.tar.gz
-  tar -czf "$bundle" -C "$backup_dir" "$stamp-database.dump" "$stamp-files.tar.gz" "$stamp-manifest.txt" "$stamp-counts.txt"
+  tar -czf "$bundle" -C "$backup_dir" "$stamp-database.dump" "$stamp-files.tar.gz" "$stamp-manifest.txt" "$stamp-counts.txt" "$stamp-SHA256SUMS"
   (cd "$migration_dir" && sha_cmd "pms-migration-$stamp.tar.gz" > "pms-migration-$stamp.tar.gz.sha256")
   printf 'Bundle: %s\nSource app is %s. Copy the bundle AND .sha256 over a secure channel; carry PMS_2FA_KEY / PMS_SSO_KEY / PMS_CONNECTOR_KEY separately (secret store).\n' "$bundle" "$([ "${KEEP_RUNNING:-0}" = 1 ] && echo running || echo stopped)"
   ;;
@@ -72,8 +73,8 @@ import)
   else echo "WARNING: no $bundle.sha256 next to the bundle; integrity not checked." >&2; fi
   # Allowlist the members: the bundle is data from another server, never extract unexpected paths.
   members=$(tar -tzf "$bundle")
-  printf '%s\n' "$members" | grep -Eqx '[0-9]{8}T[0-9]{6}Z-(database\.dump|files\.tar\.gz|manifest\.txt|counts\.txt)' || { echo "Unexpected bundle content." >&2; exit 1; }
-  [ "$(printf '%s\n' "$members" | grep -Evc '^[0-9]{8}T[0-9]{6}Z-(database\.dump|files\.tar\.gz|manifest\.txt|counts\.txt)$')" -eq 0 ] || { echo "Unexpected bundle content." >&2; exit 1; }
+  printf '%s\n' "$members" | grep -Eqx '[0-9]{8}T[0-9]{6}Z-(database\.dump|files\.tar\.gz|manifest\.txt|counts\.txt|SHA256SUMS)' || { echo "Unexpected bundle content." >&2; exit 1; }
+  [ "$(printf '%s\n' "$members" | grep -Evc '^[0-9]{8}T[0-9]{6}Z-(database\.dump|files\.tar\.gz|manifest\.txt|counts\.txt|SHA256SUMS)$')" -eq 0 ] || { echo "Unexpected bundle content." >&2; exit 1; }
   stamp=$(printf '%s\n' "$members" | sed -n 's/^\([0-9]\{8\}T[0-9]\{6\}Z\)-manifest\.txt$/\1/p')
   [ -n "$stamp" ] || { echo "Bundle has no manifest." >&2; exit 1; }
   mkdir -p "$backup_dir"

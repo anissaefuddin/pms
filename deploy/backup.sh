@@ -1,8 +1,10 @@
 #!/bin/sh
 set -eu
+umask 077 # dumps hold every record and password hash: readable only by the user running the backup
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$script_dir"
+. ./lib.sh
 set -a
 [ ! -f .env ] || . ./.env
 set +a
@@ -22,8 +24,10 @@ trap alert_failure HUP INT TERM EXIT
 # Database first: files are immutable, so the following file snapshot is consistent with this dump.
 # Keep it so: a purge job (S1.7.1) must never delete stored files, or a restore can reference a file missing from this archive. Purge only after the retention window and outside backups.
 docker compose exec -T postgres pg_dump -U pms -d pms -Fc > "$backup_dir/$stamp-database.dump"
-docker compose --profile ops run --rm backup tar -czf "/backups/$stamp-files.tar.gz" -C /data/files .
-printf '%s\n' "image=${PMS_IMAGE:-unknown}" "created_at=$stamp" > "$backup_dir/$stamp-manifest.txt"
+# Through stdout, not into a mounted directory: the file is then owned by this user with the umask above, not by root as 0644.
+docker compose --profile ops run --rm -T backup tar -czf - -C /data/files . > "$backup_dir/$stamp-files.tar.gz"
+(cd "$backup_dir" && sha_cmd "$stamp-database.dump" "$stamp-files.tar.gz" > "$stamp-SHA256SUMS")
+printf '%s\n' "image=${PMS_IMAGE:-unknown}" "created_at=$stamp" "checksums=sha256" > "$backup_dir/$stamp-manifest.txt"
 find "$backup_dir" -type f -mtime "+$retention_days" -delete
 # Off-server copy (PRD OPS-02). For encryption, make BACKUP_REMOTE an rclone "crypt" remote. Use a path used only by this instance:
 # the remote cleanup below deletes everything in it older than the retention period.
@@ -44,12 +48,13 @@ if [ -z "${BACKUP_REMOTE:-}" ] && [ -z "${BACKUP_RSYNC_DEST:-}" ]; then
 fi
 # Metric for the "backup too old" alert: node_exporter's textfile collector reads this directory.
 if [ -n "${BACKUP_TEXTFILE_DIR:-}" ]; then
-  mkdir -p "$BACKUP_TEXTFILE_DIR"
+  (umask 022 && mkdir -p "$BACKUP_TEXTFILE_DIR") # node_exporter runs as another user
   {
     echo '# HELP pms_backup_last_success_timestamp_seconds Unix time of the last successful backup.'
     echo '# TYPE pms_backup_last_success_timestamp_seconds gauge'
     echo "pms_backup_last_success_timestamp_seconds $(date +%s)"
   } > "$BACKUP_TEXTFILE_DIR/pms_backup.prom.tmp"
+  chmod 644 "$BACKUP_TEXTFILE_DIR/pms_backup.prom.tmp"
   mv "$BACKUP_TEXTFILE_DIR/pms_backup.prom.tmp" "$BACKUP_TEXTFILE_DIR/pms_backup.prom"
 fi
 trap - HUP INT TERM EXIT

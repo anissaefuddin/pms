@@ -2,7 +2,7 @@
 # Restore drill that never touches live data: restore the newest (or given) backup set into a scratch database
 # of this stack's Postgres, check it, drop it. Run it from cron/systemd (see systemd/) and read the exit code.
 #   ./restore-test.sh [BACKUP_TIMESTAMP]
-# Checks: dump restores, every table of the live schema exists, the files archive is readable, row counts are
+# Checks: set matches STAMP-SHA256SUMS, dump restores, every table of the live schema exists, the files archive is readable, row counts are
 # printed (and compared with STAMP-counts.txt when migrate-pilot.sh wrote one). Writes a Prometheus metric when
 # BACKUP_TEXTFILE_DIR is set.
 set -eu
@@ -28,6 +28,8 @@ psql_admin() { docker compose exec -T postgres psql -U pms -d postgres -v ON_ERR
 alert() { [ -z "${BACKUP_ALERT_URL:-}" ] || curl -fsS --connect-timeout 5 --max-time 10 -X POST -H 'Content-Type: application/json' --data "{\"text\":\"PMS restore test FAILED on $(hostname) for $stamp\"}" "$BACKUP_ALERT_URL" >/dev/null || true; }
 cleanup() { rc=$?; psql_admin -c "DROP DATABASE IF EXISTS $scratch" >/dev/null 2>&1 || true; [ "$rc" -eq 0 ] || { echo "Restore test FAILED for $stamp." >&2; alert; }; }
 trap cleanup HUP INT TERM EXIT
+
+verify_checksums "$backup_dir" "$stamp"
 
 start=$(date +%s)
 psql_admin -c "CREATE DATABASE $scratch" >/dev/null

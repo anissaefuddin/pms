@@ -23,6 +23,7 @@ db_dump=$backup_dir/$stamp-database.dump
 files_dump=$backup_dir/$stamp-files.tar.gz
 [ -f "$db_dump" ] && [ -f "$files_dump" ] || { echo "Backup set not found: $stamp" >&2; exit 1; }
 
+verify_checksums "$backup_dir" "$stamp" || exit 1
 docker compose exec -T postgres pg_restore -U pms --list < "$db_dump" >/dev/null || { echo "Database dump is unreadable." >&2; exit 1; }
 tar -tzf "$files_dump" >/dev/null || { echo "Files archive is unreadable." >&2; exit 1; }
 

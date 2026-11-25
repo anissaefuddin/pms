@@ -38,3 +38,17 @@ export_image_identity() {
   fi
   export PMS_IMAGE_ID PMS_IMAGE_DIGEST
 }
+
+# verify_checksums DIR STAMP: check a backup set against STAMP-SHA256SUMS. Sets made before checksums existed pass with a warning;
+# a set whose manifest says it has checksums must have them.
+verify_checksums() {
+  if [ ! -f "$1/$2-SHA256SUMS" ]; then
+    if grep -q '^checksums=' "$1/$2-manifest.txt" 2>/dev/null; then echo "Checksum file missing: $2-SHA256SUMS" >&2; return 1; fi
+    echo "WARNING: backup set $2 has no checksum file; integrity is not verified." >&2
+    return 0
+  fi
+  for _file in "$2-database.dump" "$2-files.tar.gz"; do
+    grep -q "  $_file\$" "$1/$2-SHA256SUMS" || { echo "Checksum file does not cover $_file." >&2; return 1; }
+  done
+  (cd "$1" && sha_cmd -c "$2-SHA256SUMS" >/dev/null) || { echo "Checksum mismatch in backup set $2." >&2; return 1; }
+}
