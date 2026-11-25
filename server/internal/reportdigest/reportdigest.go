@@ -154,8 +154,16 @@ func build(ctx context.Context, tx pgx.Tx, pool *pgxpool.Pool, publicURL string,
 
 // render limits email to a compact summary; full data remains in the application.
 func render(name string, q analytics.Query, result analytics.Result) mail.TemplateData {
-	number := func(v float64) string { return strconv.FormatFloat(v, 'f', -1, 64) }
+	number := func(v float64) string {
+		if q.Metric == "actual_cost_minor" { // minor units, as on screen
+			return strconv.FormatFloat(v/100, 'f', 2, 64)
+		}
+		return strconv.FormatFloat(v, 'f', -1, 64)
+	}
 	d := mail.TemplateData{Metric: q.Metric, Total: number(result.Total)}
+	if result.CostStatus == "partial" {
+		d.Total += " (partial: known subtotal only)"
+	}
 	for i, row := range result.Rows {
 		if i == maxRows {
 			break
