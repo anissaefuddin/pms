@@ -105,10 +105,14 @@ FROM notifications n LEFT JOIN users a ON a.id=n.actor_id JOIN spaces s ON s.id=
 		args.Data.Before = strings.TrimSpace(parts[0])
 		args.Data.After = strings.TrimSpace(parts[1])
 	}
+	if strings.HasPrefix(kind, "timesheet_") {
+		args.URL = w.mail.cfg.PublicURL + "/timesheets"
+	}
 	if strings.HasPrefix(kind, "approval_") {
 		args.Data.Status = snippet
 	}
-	known := map[string]bool{"mention": true, "assigned": true, "shared": true, "status_changed": true, "approval_requested": true, "approval_decided": true, "approval_reminder": true, "approval_escalated": true, "automation": true, "import_summary": true}
+	known := map[string]bool{"mention": true, "assigned": true, "shared": true, "status_changed": true, "approval_requested": true, "approval_decided": true, "approval_reminder": true, "approval_escalated": true, "automation": true, "import_summary": true,
+		"timesheet_submitted": true, "timesheet_approved": true, "timesheet_rejected": true, "timesheet_locked": true}
 	if !known[kind] {
 		slog.Warn("unsupported notification email kind; using safe fallback", "kind", kind, "notification", job.Args.ID)
 	}

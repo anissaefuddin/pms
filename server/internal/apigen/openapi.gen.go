@@ -1407,6 +1407,27 @@ func (e FormElementKind) Valid() bool {
 	}
 }
 
+// Defines values for FormFillAssignmentNotice.
+const (
+	FormFillAssignmentNoticeChoicesIgnored FormFillAssignmentNotice = "choices_ignored"
+	FormFillAssignmentNoticeEmpty          FormFillAssignmentNotice = ""
+	FormFillAssignmentNoticeWithoutOthers  FormFillAssignmentNotice = "without_others"
+)
+
+// Valid indicates whether the value is a known member of the FormFillAssignmentNotice enum.
+func (e FormFillAssignmentNotice) Valid() bool {
+	switch e {
+	case FormFillAssignmentNoticeChoicesIgnored:
+		return true
+	case FormFillAssignmentNoticeEmpty:
+		return true
+	case FormFillAssignmentNoticeWithoutOthers:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for FormResponseSettingsItemType.
 const (
 	FormResponseSettingsItemTypeProject FormResponseSettingsItemType = "project"
@@ -1985,17 +2006,21 @@ func (e NotificationReferenceKind) Valid() bool {
 
 // Defines values for NotificationKind.
 const (
-	NotificationKindApprovalDecided   NotificationKind = "approval_decided"
-	NotificationKindApprovalEscalated NotificationKind = "approval_escalated"
-	NotificationKindApprovalReminder  NotificationKind = "approval_reminder"
-	NotificationKindApprovalRequested NotificationKind = "approval_requested"
-	NotificationKindAssigned          NotificationKind = "assigned"
-	NotificationKindAutomation        NotificationKind = "automation"
-	NotificationKindComment           NotificationKind = "comment"
-	NotificationKindImportSummary     NotificationKind = "import_summary"
-	NotificationKindMention           NotificationKind = "mention"
-	NotificationKindShared            NotificationKind = "shared"
-	NotificationKindStatusChanged     NotificationKind = "status_changed"
+	NotificationKindApprovalDecided    NotificationKind = "approval_decided"
+	NotificationKindApprovalEscalated  NotificationKind = "approval_escalated"
+	NotificationKindApprovalReminder   NotificationKind = "approval_reminder"
+	NotificationKindApprovalRequested  NotificationKind = "approval_requested"
+	NotificationKindAssigned           NotificationKind = "assigned"
+	NotificationKindAutomation         NotificationKind = "automation"
+	NotificationKindComment            NotificationKind = "comment"
+	NotificationKindImportSummary      NotificationKind = "import_summary"
+	NotificationKindMention            NotificationKind = "mention"
+	NotificationKindShared             NotificationKind = "shared"
+	NotificationKindStatusChanged      NotificationKind = "status_changed"
+	NotificationKindTimesheetApproved  NotificationKind = "timesheet_approved"
+	NotificationKindTimesheetLocked    NotificationKind = "timesheet_locked"
+	NotificationKindTimesheetRejected  NotificationKind = "timesheet_rejected"
+	NotificationKindTimesheetSubmitted NotificationKind = "timesheet_submitted"
 )
 
 // Valid indicates whether the value is a known member of the NotificationKind enum.
@@ -2022,6 +2047,14 @@ func (e NotificationKind) Valid() bool {
 	case NotificationKindShared:
 		return true
 	case NotificationKindStatusChanged:
+		return true
+	case NotificationKindTimesheetApproved:
+		return true
+	case NotificationKindTimesheetLocked:
+		return true
+	case NotificationKindTimesheetRejected:
+		return true
+	case NotificationKindTimesheetSubmitted:
 		return true
 	default:
 		return false
@@ -3308,19 +3341,19 @@ func (e GetOverview200JSONResponseBodySpacesEffectiveAccess) Valid() bool {
 
 // Defines values for GetOverview200JSONResponseBodySpacesHealth.
 const (
-	Attention GetOverview200JSONResponseBodySpacesHealth = "attention"
-	Empty     GetOverview200JSONResponseBodySpacesHealth = "empty"
-	OnTrack   GetOverview200JSONResponseBodySpacesHealth = "on_track"
+	GetOverview200JSONResponseBodySpacesHealthAttention GetOverview200JSONResponseBodySpacesHealth = "attention"
+	GetOverview200JSONResponseBodySpacesHealthEmpty     GetOverview200JSONResponseBodySpacesHealth = "empty"
+	GetOverview200JSONResponseBodySpacesHealthOnTrack   GetOverview200JSONResponseBodySpacesHealth = "on_track"
 )
 
 // Valid indicates whether the value is a known member of the GetOverview200JSONResponseBodySpacesHealth enum.
 func (e GetOverview200JSONResponseBodySpacesHealth) Valid() bool {
 	switch e {
-	case Attention:
+	case GetOverview200JSONResponseBodySpacesHealthAttention:
 		return true
-	case Empty:
+	case GetOverview200JSONResponseBodySpacesHealthEmpty:
 		return true
-	case OnTrack:
+	case GetOverview200JSONResponseBodySpacesHealthOnTrack:
 		return true
 	default:
 		return false
@@ -4935,11 +4968,16 @@ type FormElementKind string
 
 // FormFill defines model for FormFill.
 type FormFill struct {
-	Definition  FormDefinition     `json:"definition"`
-	Description string             `json:"description"`
-	Id          openapi_types.UUID `json:"id"`
-	Name        string             `json:"name"`
+	// AssignmentNotice Kiriman pengguna ini tidak akan menugaskan orang lain; kosong bila tidak relevan
+	AssignmentNotice *FormFillAssignmentNotice `json:"assignment_notice,omitempty"`
+	Definition       FormDefinition            `json:"definition"`
+	Description      string                    `json:"description"`
+	Id               openapi_types.UUID        `json:"id"`
+	Name             string                    `json:"name"`
 }
+
+// FormFillAssignmentNotice Kiriman pengguna ini tidak akan menugaskan orang lain; kosong bila tidak relevan
+type FormFillAssignmentNotice string
 
 // FormInput defines model for FormInput.
 type FormInput struct {
@@ -6155,6 +6193,9 @@ type Space struct {
 	// Archived Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)
 	Archived    *bool   `json:"archived,omitempty"`
 	Description *string `json:"description,omitempty"`
+
+	// HasActiveAdmin Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan
+	HasActiveAdmin *bool `json:"has_active_admin,omitempty"`
 
 	// IconKey Kunci ikon dari katalog GET /space-icons (D-04)
 	IconKey *string            `json:"icon_key,omitempty"`

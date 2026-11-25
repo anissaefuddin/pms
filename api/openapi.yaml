@@ -7727,6 +7727,7 @@ components:
         archived: { type: boolean, description: 'Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)' }
         icon_key: { type: string, nullable: true, description: 'Kunci ikon dari katalog GET /space-icons (D-04)' }
         is_space_admin: { type: boolean, description: 'Explicit Space Admin; tidak diberikan oleh share Full saja (D-SA1)' }
+        has_active_admin: { type: boolean, description: Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan }
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }
@@ -8396,6 +8397,7 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
+        assignment_notice: { type: string, enum: ['', without_others, choices_ignored], description: Kiriman pengguna ini tidak akan menugaskan orang lain; kosong bila tidak relevan }
         definition: { $ref: '#/components/schemas/FormDefinition' }
     FormSubmitted:
       type: object
@@ -9037,7 +9039,7 @@ components:
     # ── Inbox & search ──
     NotificationKind:
       type: string
-      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated, import_summary]
+      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated, import_summary, timesheet_submitted, timesheet_approved, timesheet_rejected, timesheet_locked]
     Notification:
       type: object
       required: [id, kind, created_at]

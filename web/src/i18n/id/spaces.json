@@ -271,6 +271,7 @@
   "spaceSettings.members.ruleItems": "Izin item dan field diatur per item dan per field, bukan di sini.",
   "spaceSettings.members.ruleJobRole": "Job role hanya informasi. Job role tidak pernah memberi akses.",
   "spaceSettings.general.icon": "Ikon",
+  "spaceSettings.general.noActiveAdmin": "Ruang ini tidak punya Space Admin aktif. Pekerjaan tetap berjalan; arsip dan penunjukan admin belum tersedia sampai ada admin aktif lagi.",
   "spaceSettings.general.archivedNote": "Space ini diarsipkan dan hanya bisa dibaca. Item, pengaturan, dan riwayat tetap ada.",
   "spaceSettings.archivedBadge": "Diarsipkan",
   "spaceSettings.lifecycle.title": "Visibilitas dan arsip",

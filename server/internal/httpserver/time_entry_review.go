@@ -8,6 +8,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -42,12 +43,29 @@ func (s *Server) submitTimeEntries(w http.ResponseWriter, r *http.Request) {
 		timeEntryError(w, err)
 		return
 	}
-	tag, err := tx.Exec(ctx, `WITH sent AS (
+	rows, err := tx.Query(ctx, `WITH sent AS (
 UPDATE time_entries SET status='submitted',submitted_at=now(),reviewed_by=NULL,reviewed_at=NULL,review_note='',version=version+1
 WHERE user_id=$1::uuid AND status IN ('draft','rejected') AND NOT locked AND entry_date BETWEEN $2::text::date AND $3::text::date
 AND item_id=ANY(ARRAY(SELECT unnest($4::text[])::uuid))
-RETURNING id,minutes)
-INSERT INTO time_entry_history(entry_id,actor_id,action,minutes) SELECT id,$1::uuid,'submitted',minutes FROM sent`, actor.ID, in.From, in.To, ids)
+RETURNING id,minutes,item_id),
+logged AS (INSERT INTO time_entry_history(entry_id,actor_id,action,minutes) SELECT id,$1::uuid,'submitted',minutes FROM sent)
+SELECT item_id::text FROM sent`, actor.ID, in.From, in.To, ids)
+	var sent []string
+	if err == nil {
+		sent, err = pgx.CollectRows(rows, pgx.RowTo[string])
+	}
+	batch := s.notificationBatch()
+	told := map[string]bool{}
+	for _, item := range sent { // one notice per Task, however many days were sent
+		if err != nil || told[item] {
+			continue
+		}
+		told[item] = true
+		var reviewers []notifications.Principal
+		if reviewers, err = timeReviewers(ctx, tx, item); err == nil {
+			_, err = batch.Record(ctx, tx, actor, "timesheet_submitted", notifications.Target{Item: item}, in.From+" - "+in.To, reviewers, nil)
+		}
+	}
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -55,7 +73,8 @@ INSERT INTO time_entry_history(entry_id,actor_id,action,minutes) SELECT id,$1::u
 		timeEntryError(w, err)
 		return
 	}
-	writeJSON(w, 200, map[string]any{"submitted": tag.RowsAffected()})
+	s.publishNotifications(batch)
+	writeJSON(w, 200, map[string]any{"submitted": len(sent)})
 }
 
 const reviewPage = 200
@@ -171,6 +190,10 @@ WHERE id=$1 AND version=$2 RETURNING `+timeEntryColumns, id, version, in.Decisio
 	if err == nil {
 		err = recordTimeEntry(ctx, tx, e, actor.ID, in.Decision, in.Note)
 	}
+	batch := s.notificationBatch()
+	if err == nil {
+		err = notifyTimeEntry(ctx, tx, batch, actor, e, "timesheet_"+in.Decision, in.Note)
+	}
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -178,6 +201,7 @@ WHERE id=$1 AND version=$2 RETURNING `+timeEntryColumns, id, version, in.Decisio
 		timeEntryError(w, err)
 		return
 	}
+	s.publishNotifications(batch)
 	setETag(w, e.Version)
 	writeJSON(w, 200, e)
 }

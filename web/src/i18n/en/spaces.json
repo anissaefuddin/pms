@@ -271,6 +271,7 @@
   "spaceSettings.members.ruleItems": "Item and field permissions are set per item and per field, not here.",
   "spaceSettings.members.ruleJobRole": "A job role is information only. It never grants access.",
   "spaceSettings.general.icon": "Icon",
+  "spaceSettings.general.noActiveAdmin": "This Space has no active Space Admin. Work continues; archiving and naming admins are unavailable until one is active again.",
   "spaceSettings.general.archivedNote": "This Space is archived. It is read-only: items, settings and history are kept.",
   "spaceSettings.archivedBadge": "Archived",
   "spaceSettings.lifecycle.title": "Visibility and archive",

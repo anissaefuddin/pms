@@ -5650,6 +5650,8 @@ export interface components {
             icon_key?: string | null;
             /** @description Explicit Space Admin; tidak diberikan oleh share Full saja (D-SA1) */
             is_space_admin?: boolean;
+            /** @description Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan */
+            has_active_admin?: boolean;
             my_capabilities?: components["schemas"]["Capability"][];
         };
         SpaceMember: {
@@ -6347,6 +6349,11 @@ export interface components {
             id: string;
             name: string;
             description: string;
+            /**
+             * @description Kiriman pengguna ini tidak akan menugaskan orang lain; kosong bila tidak relevan
+             * @enum {string}
+             */
+            assignment_notice?: "" | "without_others" | "choices_ignored";
             definition: components["schemas"]["FormDefinition"];
         };
         FormSubmitted: {
@@ -6970,7 +6977,7 @@ export interface components {
             items: components["schemas"]["StreamEntry"][];
         };
         /** @enum {string} */
-        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided" | "automation" | "approval_reminder" | "approval_escalated" | "import_summary";
+        NotificationKind: "mention" | "assigned" | "status_changed" | "comment" | "shared" | "approval_requested" | "approval_decided" | "automation" | "approval_reminder" | "approval_escalated" | "import_summary" | "timesheet_submitted" | "timesheet_approved" | "timesheet_rejected" | "timesheet_locked";
         Notification: {
             /** Format: uuid */
             id: string;

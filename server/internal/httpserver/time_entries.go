@@ -241,6 +241,7 @@ func (s *Server) timeEntryByID(w http.ResponseWriter, r *http.Request) {
 		writeProblem(w, 409, "time_entry_submitted", "this time entry is submitted or approved; a reviewer must reject it before it changes")
 		return
 	}
+	batch := s.notificationBatch()
 	if r.Method == http.MethodDelete {
 		_, err = tx.Exec(ctx, "DELETE FROM time_entries WHERE id=$1 AND version=$2", id, version)
 	} else {
@@ -263,6 +264,9 @@ WHERE id=$1 AND version=$2 RETURNING `+timeEntryColumns, id, version, e.Minutes,
 				action = "locked"
 			}
 			err = recordTimeEntry(ctx, tx, e, actor.ID, action, "")
+			if err == nil && e.Locked {
+				err = notifyTimeEntry(ctx, tx, batch, actor, e, "timesheet_locked", "")
+			}
 		}
 	}
 	if err == nil {
@@ -272,6 +276,7 @@ WHERE id=$1 AND version=$2 RETURNING `+timeEntryColumns, id, version, e.Minutes,
 		timeEntryError(w, err)
 		return
 	}
+	s.publishNotifications(batch)
 	if r.Method == http.MethodDelete {
 		w.WriteHeader(204)
 		return

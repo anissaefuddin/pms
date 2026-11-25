@@ -228,6 +228,7 @@ function GeneralTab({ space, me, onDirtyChange }: { space: Space; me?: CurrentUs
             <Button type="button" size="sm" variant="outline" onClick={() => void reload()}>{t("spaces.conflict.reload")}</Button>
           </div>}
           {personal && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.general.personalReadOnly")}</p>}
+          {space.has_active_admin === false && <p role="note" className="text-sm text-warning-foreground">{t("spaces.spaceSettings.general.noActiveAdmin")}</p>}
           {space.archived && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.general.archivedNote")}</p>}
           {!personal && !space.archived && !canEdit && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.general.readOnly")}</p>}
           <fieldset disabled={!canEdit || busy} className="space-y-4">
