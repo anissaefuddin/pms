@@ -1,9 +1,11 @@
 package httpserver
 
 import (
+	"encoding/json"
 	"net/http"
 	"strconv"
 
+	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -60,11 +62,11 @@ FROM activity a JOIN users u ON u.id=a.actor_id WHERE a.item_id=$1 AND a.id<$2 O
 		return
 	}
 	type entry struct {
-		ID        int64          `json:"id"`
-		Action    string         `json:"action"`
-		Changes   map[string]any `json:"changes"`
-		CreatedAt any            `json:"created_at"`
-		Actor     map[string]any `json:"actor"`
+		ID        int64           `json:"id"`
+		Action    string          `json:"action"`
+		Changes   json.RawMessage `json:"changes"`
+		CreatedAt any             `json:"created_at"`
+		Actor     map[string]any  `json:"actor"`
 	}
 	list, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (entry, error) {
 		var e entry
@@ -82,6 +84,17 @@ FROM activity a JOIN users u ON u.id=a.actor_id WHERE a.item_id=$1 AND a.id<$2 O
 		list = list[:limit]
 		c := strconv.FormatInt(list[limit-1].ID, 10)
 		next = &c
+	}
+	ids, changes := make([]string, len(list)), make([]json.RawMessage, len(list))
+	for i, e := range list {
+		ids[i], changes[i] = id, e.Changes
+	}
+	if err := items.RedactHistory(r.Context(), s.pool, actorOf(r), ids, changes); err != nil {
+		writeError(w, http.StatusInternalServerError, "could not load activity")
+		return
+	}
+	for i := range list {
+		list[i].Changes = changes[i]
 	}
 	writeJSON(w, http.StatusOK, map[string]any{"items": list, "next_cursor": next})
 }
