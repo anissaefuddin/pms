@@ -81,12 +81,14 @@ AND NOT (CASE n.kind WHEN 'mention' THEN 'mention' WHEN 'assigned' THEN 'assigne
 	if itemID != "" {
 		args.URL = w.mail.cfg.PublicURL + "/items/" + itemID
 		err = tx.QueryRow(ctx, `SELECT COALESCE(NULLIF(concat_ws(' ',a.first_name,a.last_name),''),'LENS'),
-i.title,i.type::text,COALESCE(st.name,''),COALESCE(i.due_date::text,''),
-COALESCE((SELECT s.name FROM item_locations il JOIN spaces s ON s.id=il.space_id WHERE il.item_id=i.id ORDER BY il.rank LIMIT 1),'')
+i.title,i.type::text,COALESCE(st.name,''),COALESCE(i.due_date::text,'')
 FROM notifications n LEFT JOIN users a ON a.id=n.actor_id JOIN items i ON i.id=n.item_id
 LEFT JOIN statuses st ON st.id=i.status_id WHERE n.id=$1::uuid`, job.Args.ID).
-			Scan(&args.Data.Actor, &args.Data.Item, &args.Data.ItemType, &args.Data.Status, &args.Data.Due, &args.Data.Space)
+			Scan(&args.Data.Actor, &args.Data.Item, &args.Data.ItemType, &args.Data.Status, &args.Data.Due)
 		if err != nil {
+			return err
+		}
+		if args.Data.Space, err = policy.VisibleItemSpace(ctx, tx, actor, itemID); err != nil {
 			return err
 		}
 	} else if spaceID != "" {

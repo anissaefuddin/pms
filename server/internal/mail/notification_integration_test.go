@@ -3,6 +3,7 @@ package mail
 import (
 	"context"
 	"net"
+	"strings"
 	"testing"
 
 	"github.com/anissaefuddin/pms/server/internal/bootstrap"
@@ -143,5 +144,54 @@ func TestNotificationNeverLeaksAnItemTheRecipientCannotView(t *testing.T) {
 	defer smtp.mu.Unlock()
 	if n := len(smtp.messages); n != 0 {
 		t.Fatalf("a recipient without access received %d emails about a private item", n)
+	}
+}
+
+// DEF-004: the email names a Space the recipient can see, never another Space of a multi-location item, and none when there is none.
+func TestNotificationNamesOnlyASpaceTheRecipientCanSee(t *testing.T) {
+	ctx := t.Context()
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	boot, err := bootstrap.Run(ctx, pool, "Pilot", "admin@example.test", func(_ context.Context, _ pgx.Tx, _, _ string) error { return nil })
+	if err != nil {
+		t.Fatal(err)
+	}
+	var id string
+	if err := pool.QueryRow(ctx, `WITH u AS (UPDATE users SET status='active',first_name='A',last_name='B',password_hash='x' WHERE id=$1 RETURNING id),
+hidden AS (INSERT INTO spaces(name,kind) VALUES ('SecretClient','shared') RETURNING id),
+open AS (INSERT INTO spaces(name,kind) VALUES ('OpenSpace','shared') RETURNING id),
+i AS (INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id),
+l AS (INSERT INTO item_locations(item_id,space_id,rank) SELECT i.id,hidden.id,'A' FROM i,hidden UNION ALL SELECT i.id,open.id,'B' FROM i,open),
+s AS (INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) SELECT 'space',id,'user',$1,'read' FROM open)
+INSERT INTO notifications(id,recipient_id,kind,item_id) SELECT gen_random_uuid(),$1,'assigned',id FROM i RETURNING id::text`, boot.AdminID).Scan(&id); err != nil {
+		t.Fatal(err)
+	}
+	smtp := newFakeSMTP(t, false)
+	host, port, err := net.SplitHostPort(smtp.ln.Addr().String())
+	if err != nil {
+		t.Fatal(err)
+	}
+	worker := NotificationWorker{pool: pool, mail: &Worker{cfg: config.Config{SMTPHost: host, SMTPPort: port, SMTPFrom: "PMS <noreply@example.test>", PublicURL: "https://pilot.example.test"}}}
+	send := func() string {
+		t.Helper()
+		if err := worker.Work(ctx, &river.Job[NotificationArgs]{Args: NotificationArgs{ID: id}}); err != nil {
+			t.Fatal(err)
+		}
+		smtp.mu.Lock()
+		defer smtp.mu.Unlock()
+		return smtp.messages[len(smtp.messages)-1]
+	}
+	if msg := send(); !strings.Contains(msg, "OpenSpace") || strings.Contains(msg, "SecretClient") {
+		t.Fatalf("the email must name OpenSpace only: %s", msg)
+	}
+	// Access through the item alone shows no Space at all.
+	if _, err := pool.Exec(ctx, "UPDATE shares SET target_type='item', target_id=(SELECT item_id FROM notifications WHERE id=$1) WHERE target_id=(SELECT id FROM spaces WHERE name='OpenSpace')", id); err != nil {
+		t.Fatal(err)
+	}
+	if msg := send(); strings.Contains(msg, "OpenSpace") || strings.Contains(msg, "SecretClient") {
+		t.Fatalf("item-only access must not name a Space: %s", msg)
 	}
 }

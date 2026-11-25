@@ -3,6 +3,7 @@ package duereminders
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"sort"
 	"time"
@@ -57,91 +58,90 @@ type reminder struct {
 }
 
 // Deliver claims only the user's local delivery hour. The delivery ledger makes retries and overlapping workers harmless.
+// Each user is one transaction, so a failure for one person does not hold back everyone else's reminders.
 func Deliver(ctx context.Context, pool *pgxpool.Pool, publicURL string, now time.Time, enqueue func(context.Context, pgx.Tx, mail.Args) error) error {
-	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback(ctx)
-	rows, err := tx.Query(ctx, `SELECT id::text,email::text,user_type::text,locale,timezone,due_reminders
+	rows, err := pool.Query(ctx, `SELECT id::text,email::text,user_type::text,locale,timezone,due_reminders
 FROM users WHERE status='active' AND COALESCE((due_reminders->>'enabled')::boolean,false)
 AND COALESCE((due_reminders->>'hour')::int,8)=EXTRACT(hour FROM $1::timestamptz AT TIME ZONE timezone)`, now)
 	if err != nil {
 		return err
 	}
-	var users []recipient
-	for rows.Next() {
-		var u recipient
-		if err := rows.Scan(&u.ID, &u.Email, &u.Type, &u.Locale, &u.Timezone, &u.Preference); err != nil {
-			rows.Close()
-			return err
-		}
-		users = append(users, u)
-	}
-	rows.Close()
-	if err := rows.Err(); err != nil {
+	users, err := pgx.CollectRows(rows, pgx.RowToStructByPos[recipient])
+	if err != nil {
 		return err
 	}
+	var failed []error
 	for _, u := range users {
-		localToday := now.In(mustLocation(u.Timezone)).Format(time.DateOnly)
-		taskRows, err := tx.Query(ctx, `SELECT i.id::text,i.title,COALESCE(s.name,''),COALESCE(st.name,''),i.due_date::text,(i.due_date-$2::date)::int
+		if err := deliverTo(ctx, pool, u, publicURL, now, enqueue); err != nil {
+			failed = append(failed, fmt.Errorf("due reminders for user %s: %w", u.ID, err))
+		}
+	}
+	return errors.Join(failed...)
+}
+
+func deliverTo(ctx context.Context, pool *pgxpool.Pool, u recipient, publicURL string, now time.Time, enqueue func(context.Context, pgx.Tx, mail.Args) error) error {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	localToday := now.In(mustLocation(u.Timezone)).Format(time.DateOnly)
+	rows, err := tx.Query(ctx, `SELECT i.id::text,i.title,COALESCE(st.name,''),i.due_date::text,(i.due_date-$2::date)::int
 FROM item_assignees ia JOIN items i ON i.id=ia.item_id AND i.type='task' AND i.deleted_at IS NULL AND i.due_date IS NOT NULL
 LEFT JOIN statuses st ON st.id=i.status_id
-LEFT JOIN LATERAL (SELECT x.name FROM item_locations il JOIN spaces x ON x.id=il.space_id WHERE il.item_id=i.id ORDER BY il.rank LIMIT 1) s ON true
 WHERE ia.user_id=$1::uuid AND COALESCE(st.grp::text,'active') NOT IN ('completed','cancelled') ORDER BY i.due_date,i.id`, u.ID, localToday)
+	if err != nil {
+		return err
+	}
+	// Read every row before the next query: they share this transaction's connection.
+	tasks, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (r reminder, err error) {
+		err = row.Scan(&r.Item, &r.Title, &r.Status, &r.Due, &r.Offset)
+		return r, err
+	})
+	if err != nil {
+		return err
+	}
+	actor := policy.Actor{ID: u.ID, Type: policy.UserType(u.Type)}
+	var due []reminder
+	for _, r := range tasks {
+		if !eligible(u.Preference, &r) {
+			continue
+		}
+		caps, err := policy.ItemCaps(ctx, tx, actor, r.Item)
 		if err != nil {
 			return err
 		}
-		var due []reminder
-		for taskRows.Next() {
-			var r reminder
-			if err := taskRows.Scan(&r.Item, &r.Title, &r.Space, &r.Status, &r.Due, &r.Offset); err != nil {
-				taskRows.Close()
-				return err
-			}
-			if !eligible(u.Preference, &r) {
-				continue
-			}
-			caps, e := policy.ItemCaps(ctx, tx, policy.Actor{ID: u.ID, Type: policy.UserType(u.Type)}, r.Item)
-			if e != nil || !caps.Has(policy.View) {
-				continue
-			}
-			sent, err := exists(ctx, tx, u.ID, r)
-			if err != nil {
-				taskRows.Close()
-				return err
-			}
-			if sent {
-				continue
-			}
-			due = append(due, r)
-		}
-		taskRows.Close()
-		if err := taskRows.Err(); err != nil {
-			return err
-		}
-		if len(due) == 0 {
+		if !caps.Has(policy.View) {
 			continue
 		}
-		sort.SliceStable(due, func(i, j int) bool { return due[i].Offset < due[j].Offset })
-		if u.Preference.Delivery == "individual" {
-			for _, r := range due {
-				if err := enqueue(ctx, tx, individual(u, r, publicURL)); err != nil {
-					return err
-				}
-				if err := record(ctx, tx, u.ID, r); err != nil {
-					return err
-				}
-			}
-		} else {
-			if err := enqueue(ctx, tx, digest(u, due, publicURL, localToday)); err != nil {
+		sent, err := exists(ctx, tx, u.ID, r)
+		if err != nil {
+			return err
+		}
+		if sent {
+			continue
+		}
+		if r.Space, err = policy.VisibleItemSpace(ctx, tx, actor, r.Item); err != nil {
+			return err
+		}
+		due = append(due, r)
+	}
+	if len(due) == 0 {
+		return nil
+	}
+	sort.SliceStable(due, func(i, j int) bool { return due[i].Offset < due[j].Offset })
+	if u.Preference.Delivery == "individual" {
+		for _, r := range due {
+			if err := enqueue(ctx, tx, individual(u, r, publicURL)); err != nil {
 				return err
 			}
-			for _, r := range due {
-				if err := record(ctx, tx, u.ID, r); err != nil {
-					return err
-				}
-			}
+		}
+	} else if err := enqueue(ctx, tx, digest(u, due, publicURL, localToday)); err != nil {
+		return err
+	}
+	for _, r := range due {
+		if err := record(ctx, tx, u.ID, r); err != nil {
+			return err
 		}
 	}
 	return tx.Commit(ctx)
