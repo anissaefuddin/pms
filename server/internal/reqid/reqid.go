@@ -4,6 +4,7 @@ package reqid
 import (
 	"context"
 	"log/slog"
+	"sync/atomic"
 )
 
 type key struct{}
@@ -16,12 +17,24 @@ func From(ctx context.Context) string {
 	return id
 }
 
+type errorKey struct{}
+
+// Track returns a context that remembers whether an ERROR record was written with it (or a context derived from it),
+// so the access log can write one for a failed request that nothing else did, without writing two.
+func Track(ctx context.Context) (context.Context, *atomic.Bool) {
+	logged := new(atomic.Bool)
+	return context.WithValue(ctx, errorKey{}, logged), logged
+}
+
 // Handler adds request_id to every record logged with a request's context (slog.ErrorContext and friends).
 func Handler(next slog.Handler) slog.Handler { return handler{next} }
 
 type handler struct{ slog.Handler }
 
 func (h handler) Handle(ctx context.Context, r slog.Record) error {
+	if logged, ok := ctx.Value(errorKey{}).(*atomic.Bool); ok && r.Level >= slog.LevelError {
+		logged.Store(true)
+	}
 	if id := From(ctx); id != "" {
 		r.AddAttrs(slog.String("request_id", id))
 	}

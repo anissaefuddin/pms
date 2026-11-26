@@ -11,6 +11,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
 	"runtime"
 	"runtime/debug"
@@ -812,6 +813,9 @@ func writeError(w http.ResponseWriter, status int, message string) {
 }
 
 func writeProblem(w http.ResponseWriter, status int, code, message string) {
+	if sw := observed(w); sw != nil && status >= http.StatusInternalServerError {
+		sw.category, sw.detail, sw.source = code, message, errorSource()
+	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]any{"type": "about:blank", "title": http.StatusText(status), "status": status, "code": code, "detail": message, "request_id": w.Header().Get("X-Request-ID")})
@@ -824,12 +828,48 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 
 // logContext is the request's context for code that only has the response writer, such as the shared error writers.
 func logContext(w http.ResponseWriter) context.Context {
-	return reqid.With(context.Background(), w.Header().Get("X-Request-ID"))
+	ctx := context.Background()
+	if sw := observed(w); sw != nil {
+		ctx = context.WithoutCancel(sw.ctx)
+	}
+	return reqid.With(ctx, w.Header().Get("X-Request-ID"))
+}
+
+// observed finds the access log's writer under whatever wrapped it, or nil outside a request.
+func observed(w http.ResponseWriter) *statusWriter {
+	for {
+		switch v := w.(type) {
+		case *statusWriter:
+			return v
+		case interface{ Unwrap() http.ResponseWriter }:
+			w = v.Unwrap()
+		default:
+			return nil
+		}
+	}
+}
+
+// errorSource is the file and line that asked for the error response, past the shared error writers.
+func errorSource() string {
+	pcs := make([]uintptr, 8)
+	frames := runtime.CallersFrames(pcs[:runtime.Callers(3, pcs)])
+	for {
+		frame, more := frames.Next()
+		if !strings.HasSuffix(frame.Function, ".writeError") && !strings.HasSuffix(frame.Function, ".writeProblem") {
+			return filepath.Base(frame.File) + ":" + strconv.Itoa(frame.Line)
+		}
+		if !more {
+			return ""
+		}
+	}
 }
 
 type statusWriter struct {
 	http.ResponseWriter
 	status int
+	ctx    context.Context
+	// Set by writeProblem for a 5xx: the problem code, the message the client got, and who asked for it.
+	category, detail, source string
 }
 
 func (w *statusWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
@@ -841,7 +881,9 @@ func (w *statusWriter) WriteHeader(status int) {
 func (s *Server) observe(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		sw := &statusWriter{ResponseWriter: w, status: 200}
+		ctx, logged := reqid.Track(r.Context())
+		r = r.WithContext(ctx)
+		sw := &statusWriter{ResponseWriter: w, status: 200, ctx: ctx}
 		next.ServeHTTP(sw, r)
 		route := r.Pattern
 		if route == "" {
@@ -849,6 +891,12 @@ func (s *Server) observe(next http.Handler) http.Handler {
 		}
 		s.requests.WithLabelValues(r.Method, route, fmt.Sprint(sw.status)).Inc()
 		s.duration.WithLabelValues(r.Method, route).Observe(time.Since(start).Seconds())
+		// Every failed request leaves one ERROR line (DEF-030). 503 is left out: it is an expected state (not ready,
+		// not configured) that probes would repeat without end.
+		if sw.status >= http.StatusInternalServerError && sw.status != http.StatusServiceUnavailable && !logged.Load() {
+			slog.ErrorContext(reqid.With(ctx, w.Header().Get("X-Request-ID")), "server error", "method", r.Method, "route", route,
+				"status", sw.status, "category", sw.category, "detail", sw.detail, "source", sw.source)
+		}
 		slog.Info("request", "request_id", w.Header().Get("X-Request-ID"), "method", r.Method, "route", route, "status", sw.status, "duration_ms", time.Since(start).Milliseconds())
 	})
 }
