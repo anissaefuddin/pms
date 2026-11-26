@@ -183,3 +183,22 @@ func TestAssignmentRightCannotBeRevokedUnderAnEdit(t *testing.T) {
 		t.Fatalf("the grant was removed and committed, yet the assignment still committed afterwards")
 	}
 }
+
+// DEF-048 (review of the first fix): an item's own direct share does not authorize carrying itself to the Space root.
+func TestRestoreIsNotAuthorizedByTheShareItCarries(t *testing.T) {
+	c := newScopeCast(t)
+	f := c.f
+	task := c.make("task", "inside", c.g, c.teammate.id)
+	got := f.call(c.editor, "GET", "/items/"+task+"/shares", nil)
+	f.want(f.call(c.editor, "PUT", "/items/"+task+"/shares", map[string]any{"shares": []map[string]any{{"principal_type": "user", "principal_id": c.editor.id, "role": "full"}}}, "If-Match", got.header.Get("ETag")), 200, "inside G a direct share may be given")
+	del := func(id string) {
+		f.want(f.call(c.full, "DELETE", "/items/"+id, nil, "If-Match", `"`+f.queryID("SELECT version::text FROM items WHERE id=$1", id)+`"`), 204, "delete")
+	}
+	del(task)
+	del(c.g)
+	f.want(f.call(c.editor, "POST", "/recycle-bin/"+task+"/restore", nil), 403, "the folder is gone: it would land at the root")
+	if n := f.queryID("SELECT count(*)::text FROM items WHERE id=$1 AND deleted_at IS NOT NULL", task); n != "1" {
+		t.Fatalf("a refused restore changed the item")
+	}
+	f.want(f.call(c.full, "POST", "/recycle-bin/"+task+"/restore", nil), 200, "Full on the Space can")
+}

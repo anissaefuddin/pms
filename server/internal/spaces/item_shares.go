@@ -49,6 +49,9 @@ WHERE l.item_id=$1 AND l.deleted_root_id IS NULL AND s.kind='personal')`, id).Sc
 		}
 		// Giving someone a role that includes sharing hands out the right to assign, so it takes what assigning takes (DEF-041).
 		// Read before the write: the new share must not count for itself.
+		if err := items.LockGrants(ctx, tx, actor.ID); err != nil {
+			return nil, 0, itemShareConflict(err)
+		}
 		mayDelegate, err := items.CanReassign(ctx, tx, actor, id)
 		if err != nil {
 			return nil, 0, err

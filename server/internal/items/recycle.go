@@ -296,10 +296,8 @@ WHERE l.ctid=f.tid AND (f.rn>1 OR EXISTS (
 		return Detail{}, writeError(err)
 	}
 	if others {
-		if ok, err := CanReassign(ctx, tx, actor, id); err != nil {
+		if err := mayLand(ctx, tx, actor, id); err != nil {
 			return Detail{}, writeError(err)
-		} else if !ok {
-			return Detail{}, ErrAssignForbidden
 		}
 	}
 	out, err := readDetail(ctx, tx, actor, id)
@@ -307,4 +305,38 @@ WHERE l.ctid=f.tid AND (f.rn>1 OR EXISTS (
 		return Detail{}, writeError(err)
 	}
 	return out, writeError(tx.Commit(ctx))
+}
+
+// mayLand requires the right to assign on the restored Item, and, wherever it came back at a Space root (which is also where an
+// Item whose folder is gone or purged lands), the right to assign there that does not come from the Item's own shares: a share the
+// Item carries cannot authorize carrying it.
+func mayLand(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string) error {
+	if err := lockGrants(ctx, tx, actor.ID); err != nil {
+		return err
+	}
+	ok, err := CanReassign(ctx, tx, actor, id)
+	if err != nil {
+		return err
+	}
+	rows, err := tx.Query(ctx, `SELECT DISTINCT l.space_id FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.kind='shared'
+WHERE l.item_id=$1::uuid AND l.parent_item_id IS NULL AND l.deleted_root_id IS NULL`, id)
+	if err != nil {
+		return err
+	}
+	roots, err := pgx.CollectRows(rows, pgx.RowTo[uuid.UUID])
+	if err != nil {
+		return err
+	}
+	for _, space := range roots {
+		if !ok {
+			break
+		}
+		if ok, err = CanAssignOthers(ctx, tx, actor, []Location{{SpaceID: space}}); err != nil {
+			return err
+		}
+	}
+	if !ok {
+		return ErrAssignForbidden
+	}
+	return nil
 }

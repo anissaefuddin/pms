@@ -453,6 +453,9 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 		return Detail{}, err
 	}
 	if actor.Form == nil { // a form submission decides this from the submitter's own rights
+		if err := lockGrants(ctx, tx, actor.ID); err != nil {
+			return Detail{}, err
+		}
 		ok, err := CanAssignOthers(ctx, tx, actor, use.Locations)
 		if err != nil {
 			return Detail{}, err

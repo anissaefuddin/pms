@@ -216,6 +216,9 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 	// A share that includes sharing hands out the right to assign, so it takes what assigning takes (DEF-044).
 	for _, share := range shares {
 		if policy.ValidRole(share.Role) && policy.RoleCaps(policy.Role(share.Role)).Has(policy.Share) {
+			if err := lockGrants(ctx, tx, actor.ID); err != nil {
+				return Detail{}, err
+			}
 			ok, err := CanAssignOthers(ctx, tx, actor, locations)
 			if err != nil {
 				return Detail{}, err
