@@ -105,7 +105,9 @@ func TestMoveKeepsOrChecksTheAssignmentScope(t *testing.T) {
 	shared := c.make("task", "others", c.plain1, c.teammate.id, c.read.id)
 	c.move(c.editor, shared, 200, "same scope: another plain folder", c.plain2)
 	c.move(c.editor, shared, 200, "same scope: the root", "")
-	c.move(c.editor, shared, 200, "Full on the destination only: into G", c.g)
+	// DEC-10 as clarified (26 Nov): Full at the destination alone does not move others' work out of where it is.
+	c.move(c.editor, shared, 403, "Full on the destination only: into G", c.g)
+	c.move(c.full, shared, 200, "Full on both: into G", c.g)
 	c.move(c.editor, shared, 403, "Full on the source is not Full on the destination", c.plain1)
 	c.move(c.full, shared, 200, "Full on the Space moves it back", "")
 
@@ -113,12 +115,16 @@ func TestMoveKeepsOrChecksTheAssignmentScope(t *testing.T) {
 	sub := c.make("task", "sub", parent, c.teammate.id)
 	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Elsewhere"})
 	f.want(own, 201, "own space")
-	before := c.state(parent, sub)
 	elsewhere := map[string]any{"locations": []map[string]any{{"space_id": own.body["id"]}}}
-	f.want(f.call(c.editor, "PUT", "/items/"+parent+"/locations", elsewhere), 200, "into a Space where Full")
-	f.want(f.call(c.editor, "PUT", "/items/"+parent+"/locations", map[string]any{"locations": []map[string]any{c.at("")}}), 403, "an assigned subtask does not come back")
+	before := c.state(parent, sub)
+	f.want(f.call(c.editor, "PUT", "/items/"+parent+"/locations", elsewhere), 403, "an assigned subtask is not taken away by Full elsewhere")
+	if got := c.state(parent, sub); got != before {
+		t.Fatalf("refused, yet changed:\n%s\n%s", before, got)
+	}
+	f.share(own.body["id"].(string), "user", c.full.id, "full")
+	f.want(f.call(c.full, "PUT", "/items/"+parent+"/locations", elsewhere), 200, "Full on both sides moves it")
+	f.want(f.call(c.editor, "PUT", "/items/"+parent+"/locations", map[string]any{"locations": []map[string]any{c.at("")}}), 403, "nor does an Editor of the destination bring it back")
 	f.want(f.call(c.outsiderAdmin, "PUT", "/items/"+parent+"/locations", elsewhere), 404, "no grant")
-	_ = before
 
 	editorAdmin := c.make("task", "ws admin", c.g, c.teammate.id)
 	c.f.share2(c.g, c.adminEditor.id, "full")

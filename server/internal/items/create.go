@@ -36,6 +36,15 @@ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields 
 	}
 	var item Detail
 	err := inSerializable(ctx, pool, parentLockKeys(fields), func(tx pgx.Tx) (err error) {
+		// Checked again inside the writing transaction, with the grants held (DEF-049).
+		if len(assigneesOtherThan(fields, actor.ID)) > 0 {
+			if err := lockGrants(ctx, tx, actor.ID); err != nil {
+				return err
+			}
+			if err := authorizeAssignments(ctx, tx, actor, fields); err != nil {
+				return err
+			}
+		}
 		item, err = create(ctx, tx, actor, fields, batch)
 		return err
 	}, func() {
@@ -508,6 +517,10 @@ func spaceDefaultWorkflow(ctx context.Context, tx pgx.Tx, spaceID uuid.UUID, kin
 // needs a Space Admin or a project manager, meaning Full access (share) on each location of a shared Space.
 // Forms, blueprints, and automation do not call it: each decides from the rights of the person who is behind it.
 func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage) error {
+	return authorizeAssignments(ctx, pool, actor, fields)
+}
+
+func authorizeAssignments(ctx context.Context, db policy.DB, actor policy.Actor, fields map[string]json.RawMessage) error {
 	others := assigneesOtherThan(fields, actor.ID)
 	if len(others) == 0 {
 		return nil
@@ -516,7 +529,7 @@ func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.
 	if raw, ok := fields["locations"]; ok {
 		_ = json.Unmarshal(raw, &locations)
 	}
-	ok, err := CanAssignOthers(ctx, pool, actor, locations)
+	ok, err := CanAssignOthers(ctx, db, actor, locations)
 	if err == nil && !ok {
 		err = ErrAssignForbidden
 	}
@@ -624,6 +637,9 @@ func requireReassign(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID 
 	var addsOthers bool
 	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM unnest($2::uuid[]) u WHERE u<>$3::uuid
  AND NOT EXISTS(SELECT 1 FROM item_assignees a WHERE a.item_id=$1::uuid AND a.user_id=u))`, itemID, assignees, actor.ID).Scan(&addsOthers); err != nil || !addsOthers {
+		return err
+	}
+	if err := lockGrants(ctx, tx, actor.ID); err != nil {
 		return err
 	}
 	ok, err := CanReassign(ctx, tx, actor, itemID)

@@ -243,6 +243,19 @@ VALUES($1,$2,'user',$3,$4,$5)`, share.Type, share.ID, id, share.Role, actorOf(r)
 				return err
 			}
 		}
+		// The locked-Space rule of the share endpoints (D-95), read after every share of this invitation exists (DEF-047).
+		for _, share := range in.Share {
+			if share.Type != "item" {
+				continue
+			}
+			ok, err := policy.LockedAllows(ctx, tx, share.ID, "user", id)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return adminError{403, "forbidden", policy.ErrLockedSpace.Error()}
+			}
+		}
 		if err := s.mail.InviteTx(ctx, tx, id); err != nil {
 			return err
 		}

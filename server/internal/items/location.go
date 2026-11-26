@@ -2,6 +2,7 @@ package items
 
 import (
 	"context"
+	"maps"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
@@ -144,7 +145,16 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 	if err != nil {
 		return Detail{}, err
 	}
-	boundaries := map[string]bool{}
+	boundaries, scopes := map[string]bool{}, map[string]bool{}
+	atSource := false
+	if others { // read before anything moves: taking such work to another boundary needs the right where it is now (DEC-10)
+		if err := lockGrants(ctx, tx, actor.ID); err != nil {
+			return Detail{}, err
+		}
+		if atSource, err = CanReassign(ctx, tx, actor, id); err != nil {
+			return Detail{}, err
+		}
+	}
 	existing := map[[2]uuid.UUID]bool{}
 	var remove, kept int
 	for _, loc := range current {
@@ -159,6 +169,9 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 				return Detail{}, err
 			}
 			boundaries[b] = true
+			if wanted[key(loc)] {
+				scopes[b] = true
+			}
 		}
 		switch {
 		case !placement.Has(policy.View) || wanted[key(loc)]:
@@ -192,6 +205,11 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			return Detail{}, ErrForbidden
 		}
 		if others {
+			b, err := boundary(ctx, tx, loc)
+			if err != nil {
+				return Detail{}, err
+			}
+			scopes[b] = true
 			if err := mayCarryInto(ctx, tx, actor, loc, boundaries); err != nil {
 				return Detail{}, err
 			}
@@ -230,6 +248,9 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 			}
 			return Detail{}, writeError(err)
 		}
+	}
+	if others && !atSource && !maps.Equal(boundaries, scopes) {
+		return Detail{}, ErrAssignForbidden
 	}
 	if kept+len(want)-countExisting(want, existing, key) < 1 {
 		return Detail{}, Invalid("an item needs at least one location")

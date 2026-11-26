@@ -203,6 +203,9 @@ func planExcel(ctx context.Context, tx pgx.Tx, actor policy.Actor, space, destin
 	if destination != uuid.Nil {
 		target.ParentID = &destination
 	}
+	if err := lockGrants(ctx, tx, actor.ID); err != nil {
+		return p, nil, err
+	}
 	canAssign, err := CanAssignOthers(ctx, tx, actor, []Location{target}) // W3, as on a direct create
 	if err != nil {
 		return p, nil, err

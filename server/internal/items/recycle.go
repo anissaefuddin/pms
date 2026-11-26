@@ -242,11 +242,6 @@ func Restore(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id str
 		return Detail{}, err
 	}
 
-	// A place whose parent is gone moves to the Space root, which is a Move: DEC-10 applies to it too.
-	if err := canRestoreAssignments(ctx, tx, actor, parsed); err != nil {
-		return Detail{}, writeError(err)
-	}
-
 	// Coalesce multiple missing parents in a Space to one root placement, keeping a root that already exists.
 	if _, err := tx.Exec(ctx, `WITH fallback AS (
  SELECT l.ctid AS tid,l.item_id,l.space_id,row_number() OVER (PARTITION BY l.item_id,l.space_id ORDER BY l.rank COLLATE "C",l.parent_item_id) AS rn
@@ -294,34 +289,22 @@ WHERE l.ctid=f.tid AND (f.rn>1 OR EXISTS (
  FROM items WHERE id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND deleted_at IS NULL`, changed, actor.ID); err != nil {
 		return Detail{}, writeError(err)
 	}
+	// Restoring is a way of placing work, possibly somewhere else (the folder may be gone or purged): bringing back other people's
+	// assignments takes the right to assign them where they land (DEC-10, DEF-048). The rollback leaves the bin as it was.
+	others, err := carriesOthers(ctx, tx, parsed, actor.ID)
+	if err != nil {
+		return Detail{}, writeError(err)
+	}
+	if others {
+		if ok, err := CanReassign(ctx, tx, actor, id); err != nil {
+			return Detail{}, writeError(err)
+		} else if !ok {
+			return Detail{}, ErrAssignForbidden
+		}
+	}
 	out, err := readDetail(ctx, tx, actor, id)
 	if err != nil {
 		return Detail{}, writeError(err)
 	}
 	return out, writeError(tx.Commit(ctx))
-}
-
-func canRestoreAssignments(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UUID) error {
-	others, err := carriesOthers(ctx, tx, id, actor.ID)
-	if err != nil || !others {
-		return err
-	}
-	rows, err := tx.Query(ctx, `SELECT l.space_id, l.parent_item_id FROM item_locations l WHERE l.deleted_root_id=$1::uuid AND `+missingRestoreParent, id.String())
-	if err != nil {
-		return err
-	}
-	moved, err := pgx.CollectRows(rows, pgx.RowToStructByPos[Location])
-	if err != nil {
-		return err
-	}
-	for _, from := range moved {
-		before, err := boundary(ctx, tx, from)
-		if err != nil {
-			return err
-		}
-		if err := mayCarryInto(ctx, tx, actor, Location{SpaceID: from.SpaceID}, map[string]bool{before: true}); err != nil {
-			return err
-		}
-	}
-	return nil
 }
