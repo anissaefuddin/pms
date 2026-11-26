@@ -407,6 +407,7 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 	sums, groups, breaks := map[key]float64{}, map[string]Label{}, map[string]Label{}
 	members := map[string]map[string]bool{} // distinct items per group, for the operational privacy threshold
 	var total float64
+	unknown, priced := map[key]bool{}, map[key]bool{} // cost only: a group with nothing priced is left out, not shown as 0
 	costStatus := ""
 	if q.Metric == "actual_cost_minor" {
 		costStatus = "full"
@@ -425,7 +426,11 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 			}
 			if h.unpriced { // unknown, not free: no row of zero for it
 				costStatus = "partial"
+				unknown[key{h.gKey, h.bKey}] = true
 				continue
+			}
+			if h.countable {
+				priced[key{h.gKey, h.bKey}] = true
 			}
 		}
 		sums[key{h.gKey, h.bKey}] += h.value
@@ -435,6 +440,11 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 		members[h.gKey][h.itemID] = true
 		groups[h.gKey] = Label{h.gKey, h.gLabel}
 		breaks[h.bKey] = Label{h.bKey, h.bLabel}
+	}
+	for k := range unknown {
+		if !priced[k] {
+			delete(sums, k)
+		}
 	}
 	suppressed := 0
 	if operational {

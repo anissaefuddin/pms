@@ -136,6 +136,11 @@ func TestFinancialFiguresAgreeAcrossConsumers(t *testing.T) {
 	if a := analytics(finance); len(a.body["rows"].([]any)) != 1 {
 		t.Fatalf("an unknown cost is shown as a row: %v", a.body["rows"])
 	}
+	// Nor when they also have time that costs nothing yet.
+	f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type,status) VALUES ($1,$2,'2026-11-29',30,'billable','draft')", task, full.id)
+	if a := analytics(finance); len(a.body["rows"].([]any)) != 1 {
+		t.Fatalf("an unknown cost plus a draft became a zero row: %v", a.body["rows"])
+	}
 	if body := export(); !strings.Contains(body, "PARTIAL") {
 		t.Fatalf("export must say it is partial: %s", body)
 	}

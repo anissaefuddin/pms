@@ -165,7 +165,11 @@ func render(name string, q analytics.Query, result analytics.Result) mail.Templa
 	}
 	d := mail.TemplateData{Metric: q.Metric, Total: number(result.Total)}
 	if result.CostStatus == "partial" {
-		d.Total += " (partial: known subtotal only)"
+		if len(result.Rows) == 0 { // nothing known is not a total of zero
+			d.Total = "unknown (partial: no cost could be worked out)"
+		} else {
+			d.Total += " (partial: known subtotal only)"
+		}
 	}
 	rows := slices.Clone(result.Rows)
 	slices.SortStableFunc(rows, func(a, b analytics.Row) int { return cmp.Compare(b.Value, a.Value) })
