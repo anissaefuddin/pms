@@ -26,6 +26,11 @@ func TestSpaceAdminBackfill(t *testing.T) {
 	if _, err := provider.UpTo(ctx, 354); err != nil {
 		t.Fatal(err)
 	}
+	// One transaction, so a share written with its Space carries the same moment, as the application writes them.
+	tx, err := db.BeginTx(ctx, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
 	for _, stmt := range []string{
 		`INSERT INTO users(email,first_name,last_name,password_hash,user_type,status) VALUES
  ('owner@x.test','O','O','x','admin','active'),('maker@x.test','M','M','x','regular','active'),('gone@x.test','G','G','x','regular','active')`,
@@ -39,9 +44,12 @@ func TestSpaceAdminBackfill(t *testing.T) {
 		`WITH i AS (INSERT INTO items(type,title,created_by) SELECT 'task','T',id FROM users WHERE email='owner@x.test' RETURNING id)
  INSERT INTO item_locations(item_id,space_id,rank) SELECT i.id,s.id,'A' FROM i, spaces s WHERE s.name='OrphanWithItems'`,
 	} {
-		if _, err := db.ExecContext(ctx, stmt); err != nil {
+		if _, err := tx.ExecContext(ctx, stmt); err != nil {
 			t.Fatalf("%v\n%s", err, stmt)
 		}
+	}
+	if err := tx.Commit(); err != nil {
+		t.Fatal(err)
 	}
 	if _, err := provider.UpTo(ctx, 355); err != nil {
 		t.Fatal(err)
