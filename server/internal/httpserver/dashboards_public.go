@@ -13,6 +13,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/security"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (s *Server) publicDashboardRoutes(mux *http.ServeMux) {
@@ -30,25 +31,37 @@ type dashboardLinkBody struct {
 	Token       string     `json:"token,omitempty"`
 }
 
+func isSerialization(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && (pgErr.Code == "40001" || pgErr.Code == "40P01")
+}
+
 func (s *Server) linkTx(w http.ResponseWriter, r *http.Request, need policy.Capability, run func(ctx context.Context, tx pgx.Tx, id uuid.UUID) (any, int, error)) {
 	id, ok := dashboardID(w, r, "dashboardId")
 	if !ok {
 		return
 	}
 	ctx := r.Context()
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		writeDashboardError(w, err)
-		return
+	attempt := func() (any, int, error) {
+		tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+		if err != nil {
+			return nil, 0, err
+		}
+		defer tx.Rollback(ctx)
+		if _, err = readDashboard(ctx, tx, actorOf(r), id, need); err != nil {
+			return nil, 0, err
+		}
+		value, status, err := run(ctx, tx, id)
+		if err == nil {
+			err = tx.Commit(ctx)
+		}
+		return value, status, err
 	}
-	defer tx.Rollback(ctx)
-	if _, err = readDashboard(ctx, tx, actorOf(r), id, need); err != nil {
-		writeDashboardError(w, err)
-		return
-	}
-	value, status, err := run(ctx, tx, id)
-	if err == nil {
-		err = tx.Commit(ctx)
+	// The link carries no version to be stale, and run writes the same thing every time, so a serialization conflict with a
+	// save of the dashboard is simply tried again (DEF-039).
+	value, status, err := attempt()
+	for retry := 0; retry < 3 && isSerialization(err); retry++ {
+		value, status, err = attempt()
 	}
 	if err != nil {
 		writeDashboardError(w, err)

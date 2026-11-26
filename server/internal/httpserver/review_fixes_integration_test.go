@@ -93,3 +93,23 @@ func TestProjectCostAcrossSpaces(t *testing.T) {
 		t.Fatalf("hidden placement: %v", got.body)
 	}
 }
+
+// DEF-039: turning the public link on carries no version, so a serialization conflict (a layout save committing at the same
+// moment) is retried instead of telling the person that the dashboard changed.
+func TestPublicLinkRetriesASerializationConflict(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	made := f.call(admin, "POST", "/dashboards", map[string]any{"name": "Race"})
+	f.want(made, 201, "dashboard")
+	id := made.body["id"].(string)
+	f.exec("CREATE SEQUENCE link_fault")
+	f.exec(`CREATE FUNCTION link_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+IF nextval('link_fault') = 1 THEN RAISE serialization_failure; END IF; RETURN NEW; END $$`)
+	f.exec("CREATE TRIGGER link_fault BEFORE INSERT ON dashboard_public_links FOR EACH ROW EXECUTE FUNCTION link_fault()")
+	expires := time.Now().Add(48 * time.Hour).UTC().Format(time.RFC3339)
+	link := f.call(admin, "PUT", "/dashboards/"+id+"/public-link", map[string]any{"expires_at": expires})
+	f.want(link, 200, "link after one conflict")
+	if link.body["token"] == nil {
+		t.Fatalf("no token: %v", link.body)
+	}
+}
