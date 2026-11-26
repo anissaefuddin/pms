@@ -204,6 +204,37 @@ Product Owner menyetujui **implementasi B1 saja**: B1-01, B1-02, B1-03, B1-05, B
 
 Persetujuan ini **tidak** mencakup: Client Scope ADR secara keseluruhan, K-20..K-29, kesiapan migrasi, kesiapan produksi, atau batch B2 dan seterusnya.
 
+## 7c. Otorisasi PO untuk skema B2 (27 Nov 2026, Prompt #007)
+
+Product Owner menyetujui **skema B2-01 dan B2-02 saja**: migrasi `clients` dan `client_memberships`, dengan desain berikut.
+
+- `clients` adalah Customer Master kanonik. UUID dan kode ternormalisasi bersifat stabil.
+- `client_memberships` adalah kelayakan, bukan izin resource.
+- `items.owner_id` tetap referensi pengguna. Tabel dan kolom yang sudah ada tidak diubah.
+
+Tidak disetujui: B2-03 dan seterusnya, migrasi kepemilikan, K-25..K-29, kesiapan produksi.
+
+**Implementasi (migrasi `server/migrations/00363_clients.sql`, aditif):**
+
+| Aspek | Keputusan |
+|---|---|
+| Identitas klien | `id uuid` dengan `gen_random_uuid()`. Kode unik dan kanonik: tidak kosong, tanpa spasi di awal atau akhir, huruf besar |
+| Kode tidak berubah | Trigger `BEFORE UPDATE OF code` (`clients_code_no_change`), dengan pola yang sama seperti `approval_events`. Dicek di database, bukan hanya di aplikasi |
+| Nama | Tidak kosong (ada karakter non-spasi). Tidak ada aturan panjang atau regex lain |
+| Status | `active` (default) atau `archived`. `archived_at` terisi **tepat ketika** status `archived` |
+| Model membership | **Satu baris per pemberian.** Cabut = ubah status menjadi `revoked` dan isi `revoked_at`. Beri lagi = baris baru. Baris tidak pernah dihapus, jadi riwayat tetap ada tanpa bergantung pada `audit_events` |
+| Satu aktif per pasangan | Indeks unik parsial `client_memberships_one_active_idx (client_id, user_id) WHERE status = 'active'` |
+| Indeks lain | `client_memberships_active_user_idx (user_id) WHERE status='active'` untuk daftar klien yang layak per pengguna. `client_memberships_client_idx (client_id)` untuk pemeriksaan FK restrict |
+| Penghapusan klien | `ON DELETE RESTRICT` dari `client_memberships`. Klien dengan riwayat membership tidak bisa dihapus |
+| Penghapusan pengguna | `ON DELETE RESTRICT` untuk semua referensi pengguna baru (`created_by`, `granted_by`, `revoked_by`, `archived_by`, `user_id`). Pengguna yang tercatat tidak bisa dihapus. **Ini menyimpang** dari konvensi `ON DELETE SET NULL` untuk kolom audit yang ada, karena membership dan kepemilikan klien tidak boleh kehilangan aktornya. Pengguna dinonaktifkan, bukan dihapus |
+| Kolom aktor wajib | `created_by` dan `granted_by` NOT NULL. Keduanya selalu diisi oleh aksi admin |
+
+**Yang tidak dilakukan migrasi ini:** tidak ada perubahan `spaces`, `items`, `users`, `groups`, `shares`, policy, atau RBAC. Membership tidak memberi izin, tidak mengaktifkan admin, dan tidak mendaftarkan pengguna secara otomatis.
+
+## 7d. Referensi tes B2-01/02
+
+Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12).
+
 ## 8. Referensi
 
 - Rencana MVP v0.2: `docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md`

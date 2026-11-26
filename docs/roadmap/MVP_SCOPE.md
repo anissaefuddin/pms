@@ -282,3 +282,44 @@ Otorisasi: Product Owner, hanya B1 (lihat ADR §7b). Tidak ada batch lain yang d
 **Keterbatasan:** `TestCheckSolutionsGatesTheStart` menguji fungsi yang dipanggil `run()`, bukan `run()` itu sendiri. Tidak ada tes integrasi yang menjalankan binary dengan registry tidak valid. Tes semacam itu belum dibuat.
 
 **CI historis:** `TestReportSubscriptionsAreDeliveredOncePerSlotWithTheSubscribersRights` tetap terbuka dan tidak disentuh.
+
+---
+
+## 12. Bukti eksekusi B2-01/02 (skema, 27 Nov 2026)
+
+Otorisasi: Product Owner, hanya skema B2-01 dan B2-02 (ADR §7c). B2-03 dan seterusnya belum dikerjakan.
+
+| Task | Status | Bukti |
+|---|---|---|
+| B2-01 `clients` | DONE (skema) | `server/migrations/00363_clients.sql`. Lihat ADR §7c |
+| B2-02 `client_memberships` | DONE (skema) | Migrasi yang sama. Model riwayat, satu aktif per pasangan |
+
+**Hasil tes** (`go test ./server/internal/database`, `PMS_TEST_DATABASE_URL` menunjuk ke PostgreSQL lokal. Setiap tes membuat database `pms_test_<angka>` sendiri dan menghapusnya setelah selesai. Tidak ada staging atau production):
+
+| Tes | Cakupan | Hasil |
+|---|---|---|
+| `TestClientsMigrationUpDownFromThePreviousSchema` | DB-01, DB-02, DB-15, DB-16 | PASS |
+| `TestClientIdentityConstraints` | DB-03, DB-04, DB-05, DB-06, DB-07, DB-08, DB-11 (klien), perubahan kode ditolak | PASS |
+| `TestClientMembershipConstraints` | DB-09, DB-10, DB-11 (membership), DB-12 | PASS |
+| `TestMembershipRevokeAndRegrantKeepHistory` | DB-13 | PASS |
+| `TestDeletesAreRestrictedWhenMembershipHistoryExists` | DB-14 | PASS |
+| `TestSchemaRules` (sudah ada) | Aturan skema existing | PASS |
+| `TestUpgradeFromTheEarlySchemaKeepsEveryRow` (sudah ada) | Upgrade dari skema awal | PASS |
+
+Tiap penolakan dicek dengan SQLSTATE yang tepat (`23505`, `23514`, `23503`) dan dijalankan di transaksi sendiri, sehingga tidak ada yang lolos karena transaksi sebelumnya gagal.
+
+**Temuan selama pengujian:** `btrim()` PostgreSQL hanya memotong spasi, sehingga nama atau kode yang hanya berisi tab lolos sebagai "tidak kosong". Diperbaiki di migrasi dengan regex kelas whitespace. Tes DB-05 dan DB-06 sekarang mencakup kasus tab dan newline.
+
+**Yang belum diuji atau belum dilakukan:**
+- Tidak ada tes API atau aplikasi. Skema belum ada yang memakainya.
+- Kode immutable diuji di database. Pemeriksaan tambahan di aplikasi tetap wajib di B2-03 sebagai lapisan kedua.
+- Upgrade dan rollback di lingkungan operasional belum dilakukan (B3/B6).
+- Migrasi belum dijalankan di staging atau production.
+
+**Status AC:** AC-03 dan AC-04 **tidak** PASS. Keduanya membutuhkan CRUD, aturan domain, pengujian otorisasi, dan audit yang belum ada.
+
+**Sisa untuk B2-03:**
+- Guard aplikasi untuk kode yang tidak berubah (lapisan kedua).
+- Operasi CRUD klien, arsip, dan audit (`client.created`, `client.archived`, dan seterusnya).
+- Grant dan revoke membership dengan audit, serta aturan arsip yang membatasi kerja baru.
+- Pemeriksaan kelayakan di picker.

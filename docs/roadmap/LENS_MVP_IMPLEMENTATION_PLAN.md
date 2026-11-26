@@ -126,6 +126,8 @@ B1, B2, spike B4 dan OPS boleh paralel setelah B0. **Migrasi dan perubahan `poli
 
 ### B2 — Customer Master dan membership (M)
 
+> **Status 27 Nov 2026:** B2-01 dan B2-02 selesai di tingkat skema (`00363_clients.sql`, tes DB-01..16 lulus). B2-03 dan seterusnya belum dikerjakan. Bukti: [MVP_SCOPE §12](MVP_SCOPE.md#12-bukti-eksekusi-b2-01-02-skema-27-nov-2026).
+
 | ID | Task | Detail dan lokasi | Selesai bila |
 |---|---|---|---|
 | B2-01 | Migrasi `clients` | `00363_clients.sql`: `id uuid`, `code text` (dinormalisasi huruf besar, `UNIQUE`, immutable via trigger atau guard aplikasi), `name`, `short_name`, `status` (`active`/`archived`), `created_at/by`, `updated_at`, `archived_at/by`. Tanpa delete destruktif | Migrasi naik/turun di DB kosong dan salinan staging |
