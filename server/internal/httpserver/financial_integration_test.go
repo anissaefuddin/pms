@@ -36,6 +36,9 @@ func TestFinancialFiguresAgreeAcrossConsumers(t *testing.T) {
 	entry(60, "submitted", 6000, "billable", false)    // not counted
 	entry(60, "rejected", 6000, "billable", false)     // not counted
 	entry(60, "approved", 9000, "non_billable", false) // not billed
+	entry(60, "draft", 6000, "billable", true)         // locked is not approval (DEC-06 Rev.1)
+	entry(60, "submitted", 6000, "billable", true)     // locked is not approval
+	entry(60, "rejected", 6000, "billable", true)      // locked is not approval
 	const known = float64(12000)
 
 	summary := func(p *person) map[string]any {
@@ -68,7 +71,7 @@ func TestFinancialFiguresAgreeAcrossConsumers(t *testing.T) {
 
 	// Complete cost: the panel, analytics and the export give one number.
 	got := summary(finance)
-	if got["cost_status"] != "full" || got["actual_cost_minor"] != known || got["approved_minutes"] != float64(240) || got["pending_minutes"] != float64(120) || got["actual_minutes"] != float64(420) {
+	if got["cost_status"] != "full" || got["actual_cost_minor"] != known || got["approved_minutes"] != float64(240) || got["pending_minutes"] != float64(240) || got["actual_minutes"] != float64(600) {
 		t.Fatalf("panel: %v", got)
 	}
 	a := analytics(finance)
