@@ -111,3 +111,22 @@ func TestStorageBackendNeedsItsSettings(t *testing.T) {
 		t.Fatalf("s3: %+v %v", cfg, err)
 	}
 }
+
+func TestPydioLinkNeedsTokenAndRoots(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("PMS_PYDIO_LINK_URL", "https://dms.example.com/")
+	t.Setenv("PMS_PYDIO_LINK_TOKEN", "tok")
+	t.Setenv("PMS_PYDIO_LINK_ROOTS", "")
+	if _, err := Load(); err == nil {
+		t.Fatal("a link URL without roots must fail the start")
+	}
+	t.Setenv("PMS_PYDIO_LINK_ROOTS", " /projects/ ,common-files/Clients")
+	cfg, err := Load()
+	if err != nil || cfg.PydioLinkURL != "https://dms.example.com" || len(cfg.PydioLinkRoots) != 2 || cfg.PydioLinkRoots[0] != "projects" || cfg.PydioLinkRoots[1] != "common-files/Clients" {
+		t.Fatalf("cfg = %+v, %v", cfg, err)
+	}
+	t.Setenv("PMS_PYDIO_LINK_URL", "https://dms.example.com/io")
+	if _, err := Load(); err == nil {
+		t.Fatal("a link URL with a path must fail the start")
+	}
+}

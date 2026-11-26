@@ -27,6 +27,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/directory"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/pydio"
 	"github.com/anissaefuddin/pms/server/internal/realtime"
 	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/security"
@@ -61,6 +62,7 @@ type Server struct {
 	events              *realtime.Hub
 	eventEpoch          string
 	sseConnections      prometheus.Gauge
+	pydio               *pydio.Client // nil when PMS_PYDIO_LINK_URL is not set
 }
 
 type contextKey string
@@ -132,7 +134,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	if err != nil {
 		panic(err) // only fails if the system random source does
 	}
-	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), publicLimiter: newLimiter(120, time.Minute), publicSubmitLimiter: newLimiter(30, time.Hour), publicLinkLimiter: newLimiter(300, time.Hour), scimLimiter: newLimiter(600, time.Minute), requests: requests, duration: duration}
+	s := &Server{pool: pool, cfg: cfg, mail: mail, spaces: spaces.New(pool), directory: directory.New(pool), loginIPFails: newLimiter(20, 10*time.Minute), loginAcctFails: newLimiter(5, 15*time.Minute), mfaFails: newLimiter(5, 15*time.Minute), dummyHash: dummyHash, forgotLimiter: newLimiter(5, time.Minute), tokenLimiter: newLimiter(10, time.Minute), publicLimiter: newLimiter(120, time.Minute), publicSubmitLimiter: newLimiter(30, time.Hour), publicLinkLimiter: newLimiter(300, time.Hour), scimLimiter: newLimiter(600, time.Minute), requests: requests, duration: duration, pydio: pydio.New(cfg.PydioLinkURL, cfg.PydioLinkToken, cfg.PydioLinkRoots)}
 	mux := http.NewServeMux()
 	s.events = realtime.New()
 	s.eventEpoch = uuid.NewString()
@@ -199,6 +201,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.baselineRoutes(mux)
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)
+	s.pydioRoutes(mux)
 	s.connectorRoutes(mux)
 	s.OAuthRoutes(mux)
 	s.bookmarkRoutes(mux)

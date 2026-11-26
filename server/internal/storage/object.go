@@ -29,21 +29,7 @@ const emptySHA256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b785
 // S3 signs with AWS Signature V4, path style (works with MinIO). Base is endpoint/bucket[/prefix].
 func S3(endpointBucket, region, accessKey, secretKey string) ObjectStore {
 	return ObjectStore{Client: http.DefaultClient, Base: endpointBucket, Sign: func(r *http.Request, payload string) {
-		now := time.Now().UTC()
-		date, stamp := now.Format("20060102"), now.Format("20060102T150405Z")
-		r.Header.Set("x-amz-date", stamp)
-		r.Header.Set("x-amz-content-sha256", payload)
-		canonical := fmt.Sprintf("%s\n%s\n\nhost:%s\nx-amz-content-sha256:%s\nx-amz-date:%s\n\nhost;x-amz-content-sha256;x-amz-date\n%s",
-			r.Method, r.URL.EscapedPath(), r.URL.Host, payload, stamp, payload)
-		scope := date + "/" + region + "/s3/aws4_request"
-		digest := sha256.Sum256([]byte(canonical))
-		toSign := "AWS4-HMAC-SHA256\n" + stamp + "\n" + scope + "\n" + hex.EncodeToString(digest[:])
-		k := []byte("AWS4" + secretKey)
-		for _, part := range []string{date, region, "s3", "aws4_request"} {
-			k = hmacSHA256(k, part)
-		}
-		r.Header.Set("Authorization", "AWS4-HMAC-SHA256 Credential="+accessKey+"/"+scope+
-			", SignedHeaders=host;x-amz-content-sha256;x-amz-date, Signature="+hex.EncodeToString(hmacSHA256(k, toSign)))
+		SignV4(r, payload, region, accessKey, secretKey, time.Now())
 	}}
 }
 

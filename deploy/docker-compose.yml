@@ -28,6 +28,9 @@ services:
       PMS_CONNECTOR_KEY_PREVIOUS: ${PMS_CONNECTOR_KEY_PREVIOUS:-}
       PMS_OTP_KEY: ${PMS_OTP_KEY:-}
       PMS_SEED: ${PMS_SEED:-}
+      PMS_PYDIO_LINK_URL: ${PMS_PYDIO_LINK_URL:-}
+      PMS_PYDIO_LINK_TOKEN: ${PMS_PYDIO_LINK_TOKEN:-}
+      PMS_PYDIO_LINK_ROOTS: ${PMS_PYDIO_LINK_ROOTS:-}
     volumes:
       - pms_files:/data/files
     depends_on:

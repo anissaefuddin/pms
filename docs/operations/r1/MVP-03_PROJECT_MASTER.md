@@ -11,6 +11,7 @@
 | Objek | Detail | Akses |
 |---|---|---|
 | Field Workspace `Contract/PO Number` | Text | Mengikuti akses item (tanpa grant) |
+| Field Workspace `Pydio Folder` | Text; alamat folder proyek di Pydio (MVP-04, [prosedur](MVP-04_13_PYDIO_FOLDER.md)) | Mengikuti akses item (tanpa grant) |
 | Field Workspace `Contract Value` | Currency IDR, 0 desimal. **Bukan** `project_budget`, karena flag itu masuk ke laporan budget | **Terbatas:** hanya grup `Contract Managers` (edit). Orang lain tidak melihat nilainya di item, filter, export, maupun analytics (CF-D03). Workspace Admin tetap bisa mengelola field dan grant-nya |
 | Grup `Contract Managers` | Dibuat kosong, atau dipakai ulang bila sudah ada | Anggota ditambahkan admin |
 | Audit | Satu baris `custom_field.grants_changed` dengan aktor `seed` | — |

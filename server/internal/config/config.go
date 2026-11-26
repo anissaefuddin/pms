@@ -43,6 +43,11 @@ type Config struct {
 	ConnectorKey, ConnectorKeyPrevious []byte
 	// Seeds is PMS_SEED: comma-separated starter configuration applied once at start (see package seed).
 	Seeds string
+	// PydioLink* (MVP-13) let an item panel list the files of a Pydio Cells folder linked in a text field, read-only:
+	// LinkURL is the Cells address users open (https://dms.example.com), LinkToken a read-only account's personal access
+	// token, LinkRoots the top folders (workspace slug[/path]) a link may point into. Empty URL = feature off.
+	PydioLinkURL, PydioLinkToken string
+	PydioLinkRoots               []string
 }
 
 func Load() (Config, error) {
@@ -74,6 +79,22 @@ func Load() (Config, error) {
 	case cfg.Storage == "pydio" && cfg.PydioURL != "" && cfg.PydioToken != "":
 	default:
 		return Config{}, fmt.Errorf("PMS_STORAGE must be local, s3 (needs PMS_S3_URL, PMS_S3_ACCESS_KEY, PMS_S3_SECRET_KEY) or pydio (needs PMS_PYDIO_URL, PMS_PYDIO_TOKEN)")
+	}
+	cfg.PydioLinkURL, cfg.PydioLinkToken = strings.TrimRight(os.Getenv("PMS_PYDIO_LINK_URL"), "/"), os.Getenv("PMS_PYDIO_LINK_TOKEN")
+	for _, root := range strings.Split(os.Getenv("PMS_PYDIO_LINK_ROOTS"), ",") {
+		if root = strings.Trim(strings.TrimSpace(root), "/"); root != "" {
+			cfg.PydioLinkRoots = append(cfg.PydioLinkRoots, root)
+		}
+	}
+	if cfg.PydioLinkURL != "" {
+		u, err := url.Parse(cfg.PydioLinkURL)
+		if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" || u.Path != "" || u.RawQuery != "" {
+			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL must be the Cells address without a path, for example https://dms.example.com")
+		}
+		// Deny by default: without roots a link could point anywhere the token can read.
+		if cfg.PydioLinkToken == "" || len(cfg.PydioLinkRoots) == 0 {
+			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL needs PMS_PYDIO_LINK_TOKEN and PMS_PYDIO_LINK_ROOTS")
+		}
 	}
 	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious, "PMS_OTP_KEY": &cfg.OTPKey, "PMS_SSO_KEY": &cfg.SSOKey, "PMS_SSO_KEY_PREVIOUS": &cfg.SSOKeyPrevious, "PMS_CONNECTOR_KEY": &cfg.ConnectorKey, "PMS_CONNECTOR_KEY_PREVIOUS": &cfg.ConnectorKeyPrevious} {
 		if raw := os.Getenv(env); raw != "" {

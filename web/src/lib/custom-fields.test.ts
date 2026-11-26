@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { aggregateCustomField, customFieldMarker, formatCustomNumber, parseCustomNumber, validCustomNumber, type NumericField } from "./custom-fields.ts";
+import { aggregateCustomField, customFieldMarker, formatCustomNumber, parseCustomNumber, validCustomNumber, webLink, type NumericField } from "./custom-fields.ts";
 
 test("round-trips localized currency and rejects malformed grouping", () => {
   const usd: NumericField = { type: "currency", config: { currency: "USD" } };
@@ -57,4 +57,14 @@ test("aggregates finite numeric values including zero", () => {
     assert.equal(aggregateCustomField(field, []), aggregation === "count" ? 0 : undefined);
   }
   assert.equal(aggregateCustomField({ type: "number" }, values), undefined);
+});
+
+test("webLink turns only a lone http(s) address into a link", () => {
+  assert.equal(webLink(" https://dms.example.com/ws/project/folder "), "https://dms.example.com/ws/project/folder");
+  assert.equal(webLink("http://host/a?b=1#c"), "http://host/a?b=1#c");
+  assert.equal(webLink("javascript:alert(1)"), undefined);
+  assert.equal(webLink("data:text/html,x"), undefined);
+  assert.equal(webLink("see https://host/a"), undefined);
+  assert.equal(webLink("https://host/a https://host/b"), undefined);
+  assert.equal(webLink("ftp://host/a"), undefined);
 });

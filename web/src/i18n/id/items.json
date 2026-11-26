@@ -126,7 +126,19 @@
     "invalidNumber_other": "Masukkan angka dari −{{max}} sampai {{max}} dengan maksimal {{count}} angka desimal.",
     "invalidPercent": "Masukkan persentase dari 0 sampai {{max}} dengan maksimal enam angka desimal.",
     "invalidDuration": "Masukkan jumlah hari utuh dari 0 sampai {{max}}.",
-    "invalidText": "Masukkan maksimal 5.000 karakter."
+    "invalidText": "Masukkan maksimal 5.000 karakter.",
+    "pydio": {
+      "show": "Tampilkan file Pydio",
+      "hide": "Sembunyikan file Pydio",
+      "loading": "Memuat folder Pydio…",
+      "empty": "Folder kosong.",
+      "listLabel": "File di folder Pydio",
+      "truncated": "File lainnya: buka folder di Pydio",
+      "error": "Pydio tidak menjawab. Coba lagi nanti.",
+      "pydio_not_configured": "Daftar file Pydio belum diaktifkan untuk workspace ini.",
+      "pydio_link_not_allowed": "Tautan ini bukan folder proyek di Pydio yang terhubung.",
+      "pydio_folder_not_found": "Folder tidak ada di Pydio, atau PMS tidak boleh membacanya."
+    }
   },
   "comments": "Komentar",
   "comment": "Komentar",

@@ -399,6 +399,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{itemId}/pydio-files": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+         * @description Tautan dibaca dari nilai field item, jadi mengikuti akses item dan grant field. Tautan harus berada di host PMS_PYDIO_LINK_URL dan di dalam PMS_PYDIO_LINK_ROOTS. Isi file tidak diproksikan; setiap entri membawa alamat Cells.
+         */
+        get: operations["listPydioFiles"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/items/{projectId}/gantt-snapshots": {
         parameters: {
             query?: never;
@@ -6754,6 +6774,26 @@ export interface components {
             /** Format: date */
             effective_from: string;
         };
+        PydioListing: {
+            /** @description Alamat folder di Cells */
+            folder_url: string;
+            /** @description Folder berisi lebih dari 200 entri; sisanya dibuka di Pydio */
+            truncated: boolean;
+            items: components["schemas"]["PydioEntry"][];
+        };
+        PydioEntry: {
+            name: string;
+            folder: boolean;
+            /**
+             * Format: int64
+             * @description Byte; tidak ada untuk folder
+             */
+            size?: number;
+            /** Format: date-time */
+            modified_at?: string;
+            /** @description Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna */
+            url: string;
+        };
         GanttSnapshot: {
             /** Format: uuid */
             id: string;
@@ -8336,6 +8376,36 @@ export interface operations {
             };
             404: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+        };
+    };
+    listPydioFiles: {
+        parameters: {
+            query: {
+                /** @description Field text yang berisi tautan folder */
+                field: string;
+            };
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["PydioListing"];
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+            502: components["responses"]["Problem"];
+            503: components["responses"]["Problem"];
         };
     };
     listGanttSnapshots: {

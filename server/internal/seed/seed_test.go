@@ -70,8 +70,11 @@ func TestProjectMasterSeed(t *testing.T) {
 WHERE f.name='Contract Value' AND g.subject_kind='group' AND gr.name='Contract Managers' AND g.level='edit'`); n != 1 {
 		t.Fatalf("Contract Value grants = %d, want edit for Contract Managers", n)
 	}
-	if n := count("SELECT count(*) FROM custom_field_grants g JOIN custom_fields f ON f.id=g.field_id WHERE lower(f.name)='contract/po number'"); n != 0 {
-		t.Fatalf("Contract/PO Number grants = %d, want none (visible with the item)", n)
+	if n := count("SELECT count(*) FROM custom_field_grants g JOIN custom_fields f ON f.id=g.field_id WHERE lower(f.name) IN ('contract/po number','pydio folder')"); n != 0 {
+		t.Fatalf("Contract/PO Number and Pydio Folder grants = %d, want none (visible with the item)", n)
+	}
+	if n := count("SELECT count(*) FROM custom_fields WHERE space_id IS NULL AND name='Pydio Folder' AND type='text'"); n != 1 {
+		t.Fatalf("Pydio Folder fields = %d, want one text field", n)
 	}
 	if n := count("SELECT count(*) FROM audit_events WHERE actor_name='seed' AND action='custom_field.grants_changed'"); n != 1 {
 		t.Fatalf("audit rows = %d, want one for the restriction", n)

@@ -571,6 +571,26 @@ paths:
         '204': { description: Diselesaikan }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/pydio-files:
+    get:
+      tags: [items]
+      operationId: listPydioFiles
+      summary: Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+      description: Tautan dibaca dari nilai field item, jadi mengikuti akses item dan grant field. Tautan harus berada di host PMS_PYDIO_LINK_URL dan di dalam PMS_PYDIO_LINK_ROOTS. Isi file tidak diproksikan; setiap entri membawa alamat Cells.
+      parameters:
+        - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: field, in: query, required: true, description: Field text yang berisi tautan folder, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PydioListing' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '502': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
   /items/{projectId}/gantt-snapshots:
     parameters:
       - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -8960,6 +8980,24 @@ components:
         name: { type: string }
         rate_minor: { type: integer, format: int64 }
         effective_from: { type: string, format: date }
+    PydioListing:
+      type: object
+      required: [folder_url, items, truncated]
+      properties:
+        folder_url: { type: string, description: Alamat folder di Cells }
+        truncated: { type: boolean, description: Folder berisi lebih dari 200 entri; sisanya dibuka di Pydio }
+        items:
+          type: array
+          items: { $ref: '#/components/schemas/PydioEntry' }
+    PydioEntry:
+      type: object
+      required: [name, folder, url]
+      properties:
+        name: { type: string }
+        folder: { type: boolean }
+        size: { type: integer, format: int64, description: Byte; tidak ada untuk folder }
+        modified_at: { type: string, format: date-time }
+        url: { type: string, description: Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna }
     GanttSnapshot:
       type: object
       required: [id, project_id, name, show_assignees, expires_at, created_at]

@@ -67,7 +67,7 @@ Tujuan: rilis v0.13.0 untuk pemakaian internal Losaka. Customer **bukan** batas 
 | — | Target restore off-host | Docker di mesin lain; siapkan D1, jangan tunggu D4 | D1 |
 | MVP-02 | Customer reference | Custom field Workspace `single_select` "Customer", nilai `KODE — Nama`, **ditugaskan ke tiap Space customer** (bukan ke tipe Project: `item_type_fields` hanya default) dan diisi di Project. **Kode customer harus stabil sejak hari pertama** (akan di-backfill ke `clients` di P1). **Status: prosedur siap + tes `TestCustomerReferenceRecipe` lulus; eksekusi di staging menunggu MVP-01.** [Prosedur](../operations/r1/MVP-02_CUSTOMER_REFERENCE.md) | D2 |
 | MVP-03 | Project master | Seed otomatis `PMS_SEED=project-master` saat start: field Workspace `Contract/PO Number` (text) dan `Contract Value` (IDR, hanya grup `Contract Managers`). Sekali per database (`seed_runs`). Penugasan ke Space customer tetap manual. **Status: kode + tes lulus; aktif di staging setelah MVP-01.** [Prosedur](../operations/r1/MVP-03_PROJECT_MASTER.md). *Ini perubahan kode: berlaku aturan §3.3* | D2 |
-| MVP-04 | Tautan Pydio | Field text atau deskripsi proyek (tidak ada tipe URL); cek di staging apakah tautan bisa diklik | D2 |
+| MVP-04 | Tautan Pydio | Field Workspace `Pydio Folder` (text) dari seed `project-master`; di panel item nilai `http(s)://` tampil sebagai tautan tab baru. **Status: kode + tes lulus; verifikasi di staging.** [Prosedur](../operations/r1/MVP-04_13_PYDIO_FOLDER.md) | D2 |
 | SEC-PUB | Tutup endpoint publik | Blok prefix `/api/v1/public/` di reverse proxy (dashboard, form, snapshot Gantt); cabut token publik yang sudah ada | D2 |
 | MVP-06 | Akses | Grant eksplisit manajemen ke tiap Space customer (D-17.1) agar Portfolio terisi | D2 |
 | MVP-05 / MVP-12 | Onboarding Excel | Template **advanced** (sudah membawa Status, Workflow, Assignee Email, Depends On). Buat user dan grant **sebelum** import | D3 |
@@ -75,7 +75,7 @@ Tujuan: rilis v0.13.0 untuk pemakaian internal Losaka. Customer **bukan** batas 
 | B-5 | Pemeriksaan "satu Space satu customer" | Query read-only berkala atas `item_locations` dan `shares` yang menampilkan item dengan lokasi di Space milik customer berbeda | D3 |
 | — | Regresi terarah + uji negatif akses + restore off-host | Bandingkan checksum dump + files | D4 |
 | — | GO/NO-GO internal | Gate §3.4 | D5 |
-| MVP-13 | Konektor Pydio | **Ditunda** | — |
+| MVP-13 | Konektor Pydio (read-only) | **Diputuskan dikerjakan (26 Nov, pemilik produk):** daftar file folder Pydio di panel item, metadata saja, lewat S3 gateway Cells (SigV4) dengan token akun read-only; dibatasi `PMS_PYDIO_LINK_ROOTS`, mengikuti akses item dan grant field. Mati bila `PMS_PYDIO_LINK_URL` kosong. **Status: kode + tes lulus dengan server palsu; belum diuji ke Cells nyata.** [Prosedur](../operations/r1/MVP-04_13_PYDIO_FOLDER.md) | D2–D4 |
 | — | Customer Lite native | **Dikeluarkan dari R1**, masuk P1 sebagai backfill dari `single_select` | — |
 
 ### 3.2 Query pemeriksaan B-5 (draf, read-only)
@@ -123,6 +123,7 @@ Kode kecil, tiap butir dengan tes dan regresi terarah. Sumber: [backlog sesudah 
 | UI-1, ACL-1 | Picker assignee mengikuti aturan server; putuskan aturan hapus assignee | `web/src/components`, `policy` | S |
 | TEST-2 | Tambah CrossView, CreateNested, WorkspaceQuickCreate, Gantt perf ke CI | `.github/workflows/ci.yml` | S |
 | N-2 | Ganti rujukan defect Pydio menjadi **LL-DEF-023/037** di semua dokumen | docs | S |
+| STO-1 | Backend `PMS_STORAGE=pydio` memakai header `Bearer`; S3 gateway Cells memakai SigV4 (token sebagai access key, secret `gatewaysecret`). Ganti ke `storage.SignV4` dan uji ke Cells nyata sebelum backend ini dipakai | `server/internal/storage/object.go` | S |
 
 ## 5. G0 — Keputusan sebelum fase platform
 

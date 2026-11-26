@@ -6103,6 +6103,29 @@ type PublicGanttSnapshot struct {
 	ProjectTitle string             `json:"project_title"`
 }
 
+// PydioEntry defines model for PydioEntry.
+type PydioEntry struct {
+	Folder     bool       `json:"folder"`
+	ModifiedAt *time.Time `json:"modified_at,omitempty"`
+	Name       string     `json:"name"`
+
+	// Size Byte; tidak ada untuk folder
+	Size *int64 `json:"size,omitempty"`
+
+	// Url Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna
+	Url string `json:"url"`
+}
+
+// PydioListing defines model for PydioListing.
+type PydioListing struct {
+	// FolderUrl Alamat folder di Cells
+	FolderUrl string       `json:"folder_url"`
+	Items     []PydioEntry `json:"items"`
+
+	// Truncated Folder berisi lebih dari 200 entri; sisanya dibuka di Pydio
+	Truncated bool `json:"truncated"`
+}
+
 // RealtimeEvent defines model for RealtimeEvent.
 type RealtimeEvent struct {
 	// AffectedItems Item yang dapat dilihat penerima dalam event item.updated untuk satu perubahan jadwal
@@ -7633,6 +7656,12 @@ type ReplaceItemFollowersJSONBody struct {
 // ReplaceItemLocationsJSONBody defines parameters for ReplaceItemLocations.
 type ReplaceItemLocationsJSONBody struct {
 	Locations []Location `json:"locations"`
+}
+
+// ListPydioFilesParams defines parameters for ListPydioFiles.
+type ListPydioFilesParams struct {
+	// Field Field text yang berisi tautan folder
+	Field openapi_types.UUID `form:"field" json:"field"`
 }
 
 // ReorderItemJSONBody defines parameters for ReorderItem.
@@ -9540,6 +9569,9 @@ type ServerInterface interface {
 	// ReplaceItemLocations Ganti seluruh lokasi item (multi-lokasi)
 	// (PUT /items/{itemId}/locations)
 	ReplaceItemLocations(w http.ResponseWriter, r *http.Request, itemId ItemId)
+	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+	// (GET /items/{itemId}/pydio-files)
+	ListPydioFiles(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID, params ListPydioFilesParams)
 	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
 	// (GET /items/{itemId}/relations)
 	ListItemRelations(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -14891,6 +14923,48 @@ func (siw *ServerInterfaceWrapper) ReplaceItemLocations(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ReplaceItemLocations(w, r, itemId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListPydioFiles operation middleware
+func (siw *ServerInterfaceWrapper) ListPydioFiles(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPydioFilesParams
+
+	// ------------- Required query parameter "field" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, true, "field", r.URL.Query(), &params.Field, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "field"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "field", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPydioFiles(w, r, itemId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -21382,6 +21456,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connectors/{connectorId}/github-webhook", wrapper.GithubConnectorWebhook)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors/{connectorId}/conflicts", wrapper.ListConnectorConflicts)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connector-conflicts/{conflictId}/resolve", wrapper.ResolveConnectorConflict)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/pydio-files", wrapper.ListPydioFiles)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.CreateGanttSnapshot)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
@@ -31359,6 +31434,101 @@ func (response ReplaceItemLocations422ApplicationProblemPlusJSONResponse) VisitR
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFilesRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+	Params ListPydioFilesParams
+}
+
+type ListPydioFilesResponseObject interface {
+	VisitListPydioFilesResponse(w http.ResponseWriter) error
+}
+
+type ListPydioFiles200JSONResponse PydioListing
+
+func (response ListPydioFiles200JSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPydioFiles401ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles404ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles422ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles502ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles502ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(502)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPydioFiles503ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPydioFiles503ApplicationProblemPlusJSONResponse) VisitListPydioFilesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -44079,6 +44249,9 @@ type StrictServerInterface interface {
 	// ReplaceItemLocations Ganti seluruh lokasi item (multi-lokasi)
 	// (PUT /items/{itemId}/locations)
 	ReplaceItemLocations(ctx context.Context, request ReplaceItemLocationsRequestObject) (ReplaceItemLocationsResponseObject, error)
+	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
+	// (GET /items/{itemId}/pydio-files)
+	ListPydioFiles(ctx context.Context, request ListPydioFilesRequestObject) (ListPydioFilesResponseObject, error)
 	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
 	// (GET /items/{itemId}/relations)
 	ListItemRelations(ctx context.Context, request ListItemRelationsRequestObject) (ListItemRelationsResponseObject, error)
@@ -49472,6 +49645,33 @@ func (sh *strictHandler) ReplaceItemLocations(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ReplaceItemLocationsResponseObject); ok {
 		if err := validResponse.VisitReplaceItemLocationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPydioFiles operation middleware
+func (sh *strictHandler) ListPydioFiles(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID, params ListPydioFilesParams) {
+	var request ListPydioFilesRequestObject
+
+	request.ItemId = itemId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPydioFiles(ctx, request.(ListPydioFilesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPydioFiles")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPydioFilesResponseObject); ok {
+		if err := validResponse.VisitListPydioFilesResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

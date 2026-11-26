@@ -22,6 +22,13 @@ function numberFormatter(field: NumericField, locale: string) {
   });
 }
 
+// webLink returns a text field value that is exactly one http(s) address (a Pydio folder link, MVP-04), else undefined.
+// Only http and https, so a stored javascript: or data: value can never become a link.
+export function webLink(value: string) {
+  const v = value.trim();
+  return /^https?:\/\/[^\s]+$/i.test(v) ? v : undefined;
+}
+
 export function formatCustomNumber(field: NumericField, value: number, locale: string) {
   return numberFormatter(field, locale).format(field.type === "percent" ? value / 100 : value);
 }

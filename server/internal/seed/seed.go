@@ -31,10 +31,13 @@ type definition struct {
 var zero = 0
 
 var seeds = map[string]definition{
-	// MVP-03 (docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md §3.1): contract reference on projects. The contract value is
-	// visible only to the Contract Managers group. Not project_budget: that flag feeds budget reports, a contract is not a budget.
+	// MVP-03/MVP-04 (docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md §3.1): contract reference and the project's Pydio folder.
+	// The contract value is visible only to the Contract Managers group. Not project_budget: that flag feeds budget reports,
+	// a contract is not a budget. Pydio Folder is a text field; the item panel shows an http(s) value as a link.
+	// A seed runs once per database, so a field added here later does not reach instances that already ran it.
 	"project-master": {group: "Contract Managers", fields: []field{
 		{input: items.CustomFieldCreate{Name: "Contract/PO Number", Type: "text"}},
+		{input: items.CustomFieldCreate{Name: "Pydio Folder", Type: "text"}},
 		{input: items.CustomFieldCreate{Name: "Contract Value", Type: "currency", Config: items.CustomFieldConfig{Currency: "IDR", Decimals: &zero}}, restricted: true},
 	}},
 }
