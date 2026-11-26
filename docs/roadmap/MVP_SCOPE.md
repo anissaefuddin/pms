@@ -323,3 +323,24 @@ Tiap penolakan dicek dengan SQLSTATE yang tepat (`23505`, `23514`, `23503`) dan 
 - Operasi CRUD klien, arsip, dan audit (`client.created`, `client.archived`, dan seterusnya).
 - Grant dan revoke membership dengan audit, serta aturan arsip yang membatasi kerja baru.
 - Pemeriksaan kelayakan di picker.
+
+---
+
+## 13. Bukti eksekusi B2-03 (domain service, 27 Nov 2026)
+
+Otorisasi: Product Owner, hanya domain service B2-03 (ADR §7e). Tidak ada endpoint, UI, audit, atau enforcement.
+
+| Item | Status | Bukti |
+|---|---|---|
+| B2-03 domain service | DONE (domain) | `server/internal/clients/clients.go`, `membership.go` |
+| Tes domain | DONE | `clients_integration_test.go`: 26 PASS, 0 FAIL, 0 SKIP |
+| Enforcement API dan resource | PENDING | B2-04 dan B3 |
+| Audit | PENDING | B2-05 |
+| AC-03 | **PARTIAL** | CRUD dan aturan domain lulus tes. API, audit, dan kontrol akses belum ada |
+| AC-04 | **PARTIAL** | Membership tanpa izin konten dibuktikan di domain. Tes otorisasi resource belum ada |
+
+**Perintah:** `PMS_TEST_DATABASE_URL=postgres://…@localhost:5432/postgres?sslmode=disable go test ./server/internal/clients -count=1 -v` (database uji dibuat dan dihapus oleh harness). `go test ./server -run '^TestPackageDependencies$'`: PASS.
+
+**Pemeriksaan mutasi:** penguncian `FOR SHARE` pada grant dihapus sementara. MEM-11 gagal, dan dikembalikan. Tes konkurensi ini memang menangkap kesalahan penguncian.
+
+**Batas:** tidak ada pemeriksaan otorisasi (B2-04). Tidak ada audit (B2-05). Tidak ada rute (B2-06). Tidak ada tes migrasi baru. Tidak ada tes lintas klien pada resource (B3).

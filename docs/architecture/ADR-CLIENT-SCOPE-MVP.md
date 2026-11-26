@@ -231,9 +231,50 @@ Tidak disetujui: B2-03 dan seterusnya, migrasi kepemilikan, K-25..K-29, kesiapan
 
 **Yang tidak dilakukan migrasi ini:** tidak ada perubahan `spaces`, `items`, `users`, `groups`, `shares`, policy, atau RBAC. Membership tidak memberi izin, tidak mengaktifkan admin, dan tidak mendaftarkan pengguna secara otomatis.
 
+## 7e. Domain service B2-03 (27 Nov 2026, Prompt #008)
+
+Product Owner menyetujui **domain service B2-03 saja**: paket `server/internal/clients`. Tidak ada endpoint, UI, audit, atau enforcement resource. B2-04, B2-05, dan B2-06 belum disetujui.
+
+**Batas kepercayaan.** Paket ini mempercayai pemanggilnya. Ia memeriksa input dan aturan siklus hidup, tetapi **tidak** memeriksa siapa yang boleh memanggil. Otorisasi di batas HTTP (B2-04) dan rute (B2-06) wajib ada sebelum fungsi ini diekspos. Membership di sini tetap kelayakan saja.
+
+**Operasi:**
+
+| Operasi | Perilaku |
+|---|---|
+| `Create` | Kode dinormalisasi (trim, huruf besar). Duplikat ditolak oleh unique constraint `clients_code_key`, bukan cek terlebih dulu. Hanya membuat klien aktif |
+| `Get` | Berdasarkan UUID. Mengembalikan klien arsip juga. Tidak ditemukan: `ErrNotFound` |
+| `List` | Filter `All`/`Active`/`Archived`. Urut `code, id`. Batas default 50, maksimum 200, di luar itu ditolak |
+| `Update` | Hanya nama dan nama pendek. Tidak ada field kode atau UUID di kontrak. Nama pendek kosong menghapusnya. Klien arsip: `ErrArchived` (tidak diam-diam dipulihkan) |
+| `Archive` | Status menjadi arsip, dengan `archived_at` dan `archived_by`. Arsip ulang **tidak** menimpa metadata pertama. Riwayat membership tidak disentuh |
+| `ListMembers` | `history=false`: hanya aktif. `history=true`: termasuk yang dicabut. Batas 500. Tidak memilih kredensial atau field pengguna lain |
+| `Grant` | Hanya untuk klien aktif. Pengguna harus aktif dan bertipe `admin` atau `regular`. Grant ulang yang masih aktif **mengembalikan baris yang sama** tanpa mengubah actor atau waktu |
+| `Revoke` | Mengubah baris aktif menjadi dicabut dan mengisi `revoked_at`/`revoked_by`. Ulang: baris dicabut dikembalikan tanpa diubah. Tidak pernah ada: `ErrNotMember`. Boleh untuk klien arsip dan pengguna yang sudah tidak layak |
+
+**Kelayakan pengguna.** Sama dengan aturan staf internal di `policy.CanBrowseDirectory`: `admin` dan `regular`, dengan status `active`. Tipe `external`, `collaborator`, dan `viewer` ditolak sampai K-19 diputuskan. Status `invited` dan `deactivated` ditolak untuk grant baru, tetapi tetap boleh dicabut.
+
+**Strategi transaksi dan konkurensi:**
+
+- Urutan kunci: **klien dulu, lalu pengguna atau membership.**
+- Grant mengambil `FOR SHARE` pada baris klien. Arsip mengambil `FOR UPDATE`. Dengan begitu grant dan arsip saling menunggu: grant yang berjalan setelah arsip di-commit ditolak `ErrArchived`.
+- Grant juga mengambil `FOR SHARE` pada baris pengguna, sehingga deaktivasi menunggu grant yang berjalan.
+- Dua grant bersamaan untuk pasangan yang sama: yang kalah mendapat pelanggaran `client_memberships_one_active_idx` dan mencoba sekali lagi, lalu membaca baris pemenang. Hanya nama indeks itu yang dianggap "sudah ada". Kesalahan lain tidak ditelan.
+- Pembuatan klien bersamaan: unique constraint adalah otoritas. Satu berhasil, sisanya `ErrDuplicateCode`.
+
+**Pemetaan error.** Hanya nama constraint yang terverifikasi yang dipetakan ke error domain: `clients_code_key`, `clients_code_check`, `clients_name_check`, `clients_short_name_check`, `client_memberships_one_active_idx`, dan kesalahan FK ke pengguna (`ErrUserNotFound`). Error lain dibungkus sebagai error database generik. Tidak ada SQL atau nilai sensitif yang dikembalikan ke pengguna.
+
+**Kompatibilitas siklus hidup pengguna (B2-03 §4).** Diperiksa di kode:
+
+- Tidak ada jalur aplikasi yang menghapus pengguna dengan `DELETE FROM users`. Penghapusan hanya ada di tes (`schema_test.go`, `housekeeping_test.go`), dan pengguna tersebut tidak punya membership.
+- Deaktivasi memakai status (`deactivated`), bukan penghapusan. FK `RESTRICT` dari migrasi 00363 **tidak memblokir** operasi yang didukung.
+- Kalau nanti ada penghapusan pengguna yang tercatat di membership, operasi itu akan gagal dengan FK. Ini disengaja. Penanganannya adalah deaktivasi, bukan penghapusan. Ditulis sebagai catatan untuk siapa pun yang menambahkan fitur hapus pengguna.
+
+**Bukti tes:** `server/internal/clients/clients_integration_test.go`. CL-01..CL-10, MEM-01..MEM-09, MEM-12, konkurensi pembuatan, MEM-10 (grant bersamaan), dan MEM-11 (grant menunggu arsip). Lihat MVP_SCOPE §13.
+
+**Pemeriksaan mutasi:** tanpa `FOR SHARE` pada grant, MEM-11 gagal ("the grant never waited on the client lock"). Dengan penguncian dikembalikan, lulus.
+
 ## 7d. Referensi tes B2-01/02
 
-Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12).
+Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).
 
 ## 8. Referensi
 
