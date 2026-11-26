@@ -27,6 +27,7 @@ services:
       PMS_CONNECTOR_KEY: ${PMS_CONNECTOR_KEY:-}
       PMS_CONNECTOR_KEY_PREVIOUS: ${PMS_CONNECTOR_KEY_PREVIOUS:-}
       PMS_OTP_KEY: ${PMS_OTP_KEY:-}
+      PMS_SEED: ${PMS_SEED:-}
     volumes:
       - pms_files:/data/files
     depends_on:

@@ -66,7 +66,7 @@ Tujuan: rilis v0.13.0 untuk pemakaian internal Losaka. Customer **bukan** batas 
 | MVP-09 | Host, domain, TLS, IdP, SMTP production | Putuskan host (jangan menumpang DMS production tanpa catatan risiko); SMTP dengan SPF/DKIM; SSO **tidak** diaktifkan sebelum diuji | D1 |
 | — | Target restore off-host | Docker di mesin lain; siapkan D1, jangan tunggu D4 | D1 |
 | MVP-02 | Customer reference | Custom field Workspace `single_select` "Customer", nilai `KODE — Nama`, **ditugaskan ke tiap Space customer** (bukan ke tipe Project: `item_type_fields` hanya default) dan diisi di Project. **Kode customer harus stabil sejak hari pertama** (akan di-backfill ke `clients` di P1). **Status: prosedur siap + tes `TestCustomerReferenceRecipe` lulus; eksekusi di staging menunggu MVP-01.** [Prosedur](../operations/r1/MVP-02_CUSTOMER_REFERENCE.md) | D2 |
-| MVP-03 | Project master | Custom field nomor kontrak/PO, nilai kontrak; batasi dengan field grant | D2 |
+| MVP-03 | Project master | Seed otomatis `PMS_SEED=project-master` saat start: field Workspace `Contract/PO Number` (text) dan `Contract Value` (IDR, hanya grup `Contract Managers`). Sekali per database (`seed_runs`). Penugasan ke Space customer tetap manual. **Status: kode + tes lulus; aktif di staging setelah MVP-01.** [Prosedur](../operations/r1/MVP-03_PROJECT_MASTER.md). *Ini perubahan kode: berlaku aturan §3.3* | D2 |
 | MVP-04 | Tautan Pydio | Field text atau deskripsi proyek (tidak ada tipe URL); cek di staging apakah tautan bisa diklik | D2 |
 | SEC-PUB | Tutup endpoint publik | Blok prefix `/api/v1/public/` di reverse proxy (dashboard, form, snapshot Gantt); cabut token publik yang sudah ada | D2 |
 | MVP-06 | Akses | Grant eksplisit manajemen ke tiap Space customer (D-17.1) agar Portfolio terisi | D2 |

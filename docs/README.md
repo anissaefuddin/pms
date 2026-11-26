@@ -21,7 +21,7 @@ Mulai dari sini. Untuk melanjutkan pengembangan, baca berurutan:
 | [quality/](quality/) | Strategi tes, UAT, audit UI | TESTING, UAT, ui-audit/ |
 | [qa/](qa/) | Workspace eksekusi QA: seed, skrip, hasil lane, defect register, laporan per rilis | DEFECT_REGISTER.csv, releases/v0.13.0/ |
 | [security/](security/) | RBAC, threat model, audit izin | LENS_RBAC_CURRENT_STATE, rbac-audit/ |
-| [operations/](operations/) | Rilis, deploy, pilot, handover; prosedur eksekusi R1 di `r1/` | RELEASE_PROCESS, PILOT_RUNBOOK, r1/MVP-02_CUSTOMER_REFERENCE, HANDOVER (historis) |
+| [operations/](operations/) | Rilis, deploy, pilot, handover; prosedur eksekusi R1 di `r1/` | RELEASE_PROCESS, PILOT_RUNBOOK, r1/MVP-02_CUSTOMER_REFERENCE, r1/MVP-03_PROJECT_MASTER, HANDOVER (historis) |
 | [guides/](guides/) | Panduan pengguna dan admin (English) | user/, admin/ |
 | `screens/` | Screenshot referensi Wrike (lokal, di-ignore git) | — |
 

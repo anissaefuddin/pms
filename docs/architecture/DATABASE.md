@@ -279,6 +279,8 @@ Budget memakai definisi Currency dengan `config.project_budget` dan nilai di `it
 
 **OTP dan kepemilikan (S12.1.7, migrasi `00305`).** `login_codes(id, user_id, code_hash, attempts, expires_at, used_at, created_at)`; `access_policy.otp_login_enabled boolean default false`; `account.owner_id uuid` (diisi admin tertua untuk instance lama, bootstrap mengisinya untuk instance baru).
 
+**Seed opsional (R1 MVP-03, migrasi `00362`).** `seed_runs(name PK, applied_at)`: satu baris per seed `PMS_SEED` yang sudah dijalankan (paket `seed`). Baris ditulis dalam transaksi yang sama dengan datanya, sehingga seed berjalan sekali per database dan perubahan admin sesudahnya tidak ditimpa.
+
 ## 8. Data yang sengaja belum ada (M2+)
 
 `reports` dan `baselines`. Kolom `items.fields`, enum `views.type`, dan `statuses`/`workflows` sudah disiapkan agar penambahan ini tidak mengubah struktur tabel M1.

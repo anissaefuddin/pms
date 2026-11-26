@@ -25,6 +25,7 @@ import (
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
 	"github.com/anissaefuddin/pms/server/internal/reqid"
+	"github.com/anissaefuddin/pms/server/internal/seed"
 	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/jackc/pgx/v5"
@@ -109,6 +110,13 @@ func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
 	}
 	if cfg.ConnectorKey == nil {
 		slog.Warn("PMS_CONNECTOR_KEY is not set: connectors that need secrets cannot be installed, and webhook signing secrets are stored unencrypted")
+	}
+	seeds, err := seed.Parse(cfg.Seeds)
+	if err != nil {
+		return err
+	}
+	if err := seed.Apply(ctx, pool, seeds); err != nil {
+		return err
 	}
 	engine := automation.New(pool)
 	hooks := webhooks.New(pool).WithKeys(twofactor.Keys{Current: cfg.ConnectorKey, Previous: cfg.ConnectorKeyPrevious})

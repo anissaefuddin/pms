@@ -41,6 +41,8 @@ type Config struct {
 	SSOKey, SSOKeyPrevious []byte
 	// ConnectorKey and ConnectorKeyPrevious encrypt connector secrets (same format and rotation as the 2FA key).
 	ConnectorKey, ConnectorKeyPrevious []byte
+	// Seeds is PMS_SEED: comma-separated starter configuration applied once at start (see package seed).
+	Seeds string
 }
 
 func Load() (Config, error) {
@@ -56,6 +58,7 @@ func Load() (Config, error) {
 		SMTPPassword: os.Getenv("SMTP_PASSWORD"), SMTPFrom: value("SMTP_FROM", "PMS <noreply@localhost>"),
 		BackupAlertURL: os.Getenv("BACKUP_ALERT_URL"),
 		FilesDir:       value("PMS_FILES_DIR", "/data/files"),
+		Seeds:          os.Getenv("PMS_SEED"),
 	}
 	cfg.SMTPFromAuth, cfg.SMTPReplyTo = value("SMTP_FROM_AUTH", cfg.SMTPFrom), os.Getenv("SMTP_REPLY_TO")
 	cfg.MaxUploadMB, err = strconv.Atoi(value("PMS_MAX_UPLOAD_MB", "100"))
