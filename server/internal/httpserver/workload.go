@@ -141,17 +141,22 @@ func loadWorkload(r *http.Request, tx pgx.Tx, actor policy.Actor, from, to time.
 	if err != nil {
 		return nil, err
 	}
+	var manageable []string
+	for _, id := range ids {
+		if caps[id].Has(policy.Edit) && caps[id].Has(policy.Share) {
+			manageable = append(manageable, id)
+		}
+	}
+	reassignable, err := items.CanReassignMany(ctx, tx, actor, manageable)
+	if err != nil {
+		return nil, err
+	}
 	visible := tasks[:0]
 	for _, task := range tasks {
 		if !caps[task.ID].Has(policy.View) {
 			continue
 		}
-		task.Editable = false // may reassign (W3)
-		if caps[task.ID].Has(policy.Edit) && caps[task.ID].Has(policy.Share) {
-			if task.Editable, err = items.CanReassign(ctx, tx, actor, task.ID); err != nil {
-				return nil, err
-			}
-		}
+		task.Editable = reassignable[task.ID] // may reassign (W3)
 		visible = append(visible, task)
 		for i, id := range task.Assignees {
 			if at, ok := index[id]; ok {

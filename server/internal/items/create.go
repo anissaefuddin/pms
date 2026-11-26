@@ -532,28 +532,48 @@ func CanAssignOthers(ctx context.Context, db policy.DB, actor policy.Actor, loca
 // least one. A personal Space gives no say, so placing a Task in one's own Space adds nothing. Another place where the actor is only
 // an Editor is enough to refuse, so adding a Space of one's own as a second location adds nothing either.
 func CanReassign(ctx context.Context, db policy.DB, actor policy.Actor, itemID string) (bool, error) {
-	rows, err := db.Query(ctx, `SELECT DISTINCT l.space_id::text FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.kind='shared' AND s.deleted_at IS NULL
-WHERE l.item_id=$1::uuid AND l.deleted_root_id IS NULL`, itemID)
-	if err != nil {
-		return false, err
+	allowed, err := CanReassignMany(ctx, db, actor, []string{itemID})
+	return allowed[itemID], err
+}
+
+// CanReassignMany answers CanReassign for many Items with one permission query per Space, not one per Item.
+func CanReassignMany(ctx context.Context, db policy.DB, actor policy.Actor, itemIDs []string) (map[string]bool, error) {
+	allowed := map[string]bool{}
+	if len(itemIDs) == 0 {
+		return allowed, nil
 	}
-	places, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	rows, err := db.Query(ctx, `SELECT l.space_id::text, array_agg(DISTINCT l.item_id::text)
+FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.kind='shared' AND s.deleted_at IS NULL
+WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_id IS NULL GROUP BY l.space_id`, itemIDs)
 	if err != nil {
-		return false, err
+		return nil, err
 	}
-	allowed := false
-	for _, place := range places {
-		caps, err := policy.ItemCapsInSpace(ctx, db, actor, itemID, place)
+	type place struct {
+		Space string
+		Items []string
+	}
+	places, err := pgx.CollectRows(rows, pgx.RowToStructByPos[place])
+	if err != nil {
+		return nil, err
+	}
+	refused := map[string]bool{}
+	for _, p := range places {
+		caps, err := policy.ItemsCaps(ctx, db, actor, p.Items, &p.Space)
 		if err != nil {
-			return false, err
+			return nil, err
 		}
-		if !caps.Has(policy.View) {
-			continue
+		for _, id := range p.Items {
+			switch c := caps[id]; {
+			case !c.Has(policy.View):
+			case c.Has(policy.Share):
+				allowed[id] = true
+			default:
+				refused[id] = true
+			}
 		}
-		if !caps.Has(policy.Share) {
-			return false, nil
-		}
-		allowed = true
+	}
+	for id := range refused {
+		delete(allowed, id)
 	}
 	return allowed, nil
 }
