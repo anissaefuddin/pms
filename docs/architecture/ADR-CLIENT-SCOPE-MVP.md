@@ -304,6 +304,19 @@ Grant dan revoke mengembalikan 200. Grant ulang yang masih aktif mengembalikan b
 
 **Tes:** `server/internal/httpserver/clients_api_integration_test.go`. Hasil ada di MVP_SCOPE §14.
 
+## 7g. Antarmuka Customer Settings B2-07 (27 Nov 2026, Prompt #010)
+
+Product Owner menyetujui **B2-07 saja**: halaman Pelanggan di Settings untuk delapan operasi REST yang sudah ada. Tidak ada endpoint, izin, atau migrasi baru.
+
+- **Rute:** `/settings/customers` (daftar) dan `/settings/customers/{clientId}` (detail, tab Umum dan Anggota). Item menu ada di grup "Account management", hanya untuk admin.
+- **Guard:** sama dengan halaman admin lain (`settings.adminOnly` untuk non-admin). Guard ini **tampilan** saja. Otorisasi sebenarnya tetap di backend (B2-04).
+- **Pola yang dipakai ulang:** `AdminPageHeader`, `AdminToolbar`, `AdminStatus`, `AdminEmptyState`, `ConfirmDialog`, `Dialog`, `ErrorState`, `LoadingState`, dan `api()`. Tidak ada komponen atau dependensi baru.
+- **Keanggotaan** ditampilkan sebagai kelayakan, dengan teks yang menegaskan bahwa izin Space dan item dikelola terpisah. Tidak ada kontrol Full, Editor, Read Only, atau Limited.
+- **Picker anggota** hanya menawarkan admin dan staf aktif, dan menyembunyikan yang sudah menjadi anggota aktif. Tampilan ini tidak menggantikan aturan backend.
+- **Batas:** daftar hanya satu halaman (maksimal 200, tanpa cursor). Pencarian pada daftar berlaku pada hasil yang dimuat. Tidak ada Customer Picker untuk pembuatan Space atau project (B2-08).
+
+**Bukti:** `web/tests/customers.spec.ts` (6 tes), lihat MVP_SCOPE §15.
+
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).

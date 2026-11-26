@@ -388,3 +388,40 @@ Angka di atas adalah hasil dari perintah yang dijalankan sebelum commit. Perinta
 - Tidak ada Customer Picker (B2-08) dan belum ada pengaturan UI (B2-07).
 - Belum ada enforcement klien pada Space, item, atau resource. Itu B3.
 - AC-04 tetap PARTIAL sampai B3 membuktikan pengguna dengan membership tapi tanpa grant tidak bisa membaca konten klien.
+
+---
+
+## 15. Bukti eksekusi B2-07 (Customer Settings UI, 27 Nov 2026)
+
+Otorisasi: Product Owner, hanya B2-07 (Customer Management UI di Settings). B2-08 belum dikerjakan. Tidak ada perubahan backend, OpenAPI, atau migrasi.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Navigasi Settings | DONE | Item "Customers" di grup "Account management", hanya untuk admin (`components/settings-sidebar.tsx`) |
+| Daftar | DONE | `routes/_app/settings/customers/index.tsx`: filter Active/Archived, pencarian pada hasil yang dimuat, tabel, state loading, kosong, dan error dengan retry |
+| Buat, edit, arsip | DONE | Dialog buat dengan validasi; edit hanya `name` dan `short_name`; arsip dengan konfirmasi |
+| Detail dan anggota | DONE | `routes/_app/settings/customers/$clientId.tsx`: tab Umum dan Anggota, picker hanya admin dan staf aktif, cabut dengan konfirmasi |
+| Terjemahan EN dan ID | DONE | 93 kunci `settings.customers.*` di `i18n/en` dan `i18n/id` |
+| AC-03 | PASS (tidak berubah) | Sudah dibuktikan di backend pada §14 |
+| AC-04 | PARTIAL (tidak berubah) | Menunggu B3 |
+
+**Perintah dan hasil** (Playwright dengan API ter-mock, `npm run dev` oleh konfigurasi):
+
+| Perintah | Hasil |
+|---|---|
+| `npx playwright test tests/customers.spec.ts` | 6 PASS, 0 FAIL, 0 SKIP |
+| `npx playwright test tests/settings-access.spec.ts tests/rates.spec.ts` (regresi Settings) | 4 PASS, 0 FAIL, 0 SKIP |
+| `npm test` (unit) | lulus |
+| `npm run typecheck` | lulus |
+| `npx eslint` pada berkas yang diubah | 0 error (1 peringatan "file ignored" untuk `lib/*.ts` yang juga muncul pada berkas lain) |
+| `npm run build` | lulus |
+| `node scripts/check-no-hex.mjs` | lulus |
+
+**Cakupan tes:** UI-01 (admin melihat menu), UI-02 dan UI-03 (non-admin tidak melihat dan tidak bisa membuka URL langsung tanpa memanggil API), UI-05, UI-07, UI-08, UI-09, UI-10, UI-11, UI-12, UI-13, UI-14, UI-15, UI-16, UI-17, UI-18, UI-19, UI-20, UI-22, UI-23 (ID), dan pemeriksaan axe pada daftar, formulir, detail, dan picker. Loading dan error (UI-06) diuji dengan kegagalan 500 yang diikuti retry berhasil.
+
+**Keterbatasan:**
+- Pencarian dan daftar hanya pada hasil satu halaman, maksimal 200 klien, karena API belum punya cursor. Halaman menampilkan pemberitahuan bila hasil mencapai batas itu.
+- Picker anggota memakai pencarian server (`q`) pada endpoint pengguna, dengan maksimal 50 hasil.
+- Tes berjalan dengan API ter-mock, bukan backend nyata. Tes otorisasi backend ada di §14.
+- Pencegahan submit ganda saat request masih berjalan (UI-21) diterapkan dengan tombol disabled dan tidak diuji secara terpisah.
+- Pengarsipan belum mengubah akses ke proyek atau item. Ini dinyatakan di dialog dan dikerjakan di B3.

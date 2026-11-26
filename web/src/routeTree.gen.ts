@@ -75,6 +75,8 @@ import { Route as AppSettingsWorkflowsRouteImport } from './routes/_app/settings
 import { Route as AppSpacesSpaceIdRouteImport } from './routes/_app/spaces.$spaceId'
 import { Route as AppSpikesGanttRouteImport } from './routes/_app/spikes.gantt'
 import { Route as AppTasksItemIdRouteImport } from './routes/_app/tasks.$itemId'
+import { Route as AppSettingsCustomersIndexRouteImport } from './routes/_app/settings/customers/index'
+import { Route as AppSettingsCustomersClientIdRouteImport } from './routes/_app/settings/customers/$clientId'
 import { Route as AppSettingsUsersIndexRouteImport } from './routes/_app/settings/users/index'
 import { Route as AppSettingsUsersTypesRouteImport } from './routes/_app/settings/users/types'
 import { Route as AppSpacesSpaceIdAutomationRouteImport } from './routes/_app/spaces_.$spaceId.automation'
@@ -416,6 +418,18 @@ const AppTasksItemIdRoute = AppTasksItemIdRouteImport.update({
   path: '/tasks/$itemId',
   getParentRoute: () => AppRoute,
 } as any)
+const AppSettingsCustomersIndexRoute =
+  AppSettingsCustomersIndexRouteImport.update({
+    id: '/customers/',
+    path: '/customers/',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
+const AppSettingsCustomersClientIdRoute =
+  AppSettingsCustomersClientIdRouteImport.update({
+    id: '/customers/$clientId',
+    path: '/customers/$clientId',
+    getParentRoute: () => AppSettingsRoute,
+  } as any)
 const AppSettingsUsersIndexRoute = AppSettingsUsersIndexRouteImport.update({
   id: '/',
   path: '/',
@@ -528,10 +542,12 @@ export interface FileRoutesByFullPath {
   '/reports/': typeof AppReportsIndexRoute
   '/requests/': typeof AppRequestsIndexRoute
   '/settings/': typeof AppSettingsIndexRoute
+  '/settings/customers/$clientId': typeof AppSettingsCustomersClientIdRoute
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
   '/spaces/$spaceId/automation': typeof AppSpacesSpaceIdAutomationRoute
   '/spaces/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
   '/spaces/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
+  '/settings/customers/': typeof AppSettingsCustomersIndexRoute
   '/settings/users/': typeof AppSettingsUsersIndexRoute
   '/settings/spaces/$spaceId/$tab': typeof AppSettingsSpacesSpaceIdTabRoute
   '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
@@ -601,10 +617,12 @@ export interface FileRoutesByTo {
   '/reports': typeof AppReportsIndexRoute
   '/requests': typeof AppRequestsIndexRoute
   '/settings': typeof AppSettingsIndexRoute
+  '/settings/customers/$clientId': typeof AppSettingsCustomersClientIdRoute
   '/settings/users/types': typeof AppSettingsUsersTypesRoute
   '/spaces/$spaceId/automation': typeof AppSpacesSpaceIdAutomationRoute
   '/spaces/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
   '/spaces/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
+  '/settings/customers': typeof AppSettingsCustomersIndexRoute
   '/settings/users': typeof AppSettingsUsersIndexRoute
   '/settings/spaces/$spaceId/$tab': typeof AppSettingsSpacesSpaceIdTabRoute
   '/spaces/$spaceId/forms/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
@@ -678,10 +696,12 @@ export interface FileRoutesById {
   '/_app/reports/': typeof AppReportsIndexRoute
   '/_app/requests/': typeof AppRequestsIndexRoute
   '/_app/settings/': typeof AppSettingsIndexRoute
+  '/_app/settings/customers/$clientId': typeof AppSettingsCustomersClientIdRoute
   '/_app/settings/users/types': typeof AppSettingsUsersTypesRoute
   '/_app/spaces_/$spaceId/automation': typeof AppSpacesSpaceIdAutomationRoute
   '/_app/spaces_/$spaceId/forms': typeof AppSpacesSpaceIdFormsRoute
   '/_app/spaces_/$spaceId/item-types': typeof AppSpacesSpaceIdItemTypesRoute
+  '/_app/settings/customers/': typeof AppSettingsCustomersIndexRoute
   '/_app/settings/users/': typeof AppSettingsUsersIndexRoute
   '/_app/settings/spaces_/$spaceId/$tab': typeof AppSettingsSpacesSpaceIdTabRoute
   '/_app/spaces_/$spaceId/forms_/$formId': typeof AppSpacesSpaceIdFormsFormIdRoute
@@ -755,10 +775,12 @@ export interface FileRouteTypes {
     | '/reports/'
     | '/requests/'
     | '/settings/'
+    | '/settings/customers/$clientId'
     | '/settings/users/types'
     | '/spaces/$spaceId/automation'
     | '/spaces/$spaceId/forms'
     | '/spaces/$spaceId/item-types'
+    | '/settings/customers/'
     | '/settings/users/'
     | '/settings/spaces/$spaceId/$tab'
     | '/spaces/$spaceId/forms/$formId'
@@ -828,10 +850,12 @@ export interface FileRouteTypes {
     | '/reports'
     | '/requests'
     | '/settings'
+    | '/settings/customers/$clientId'
     | '/settings/users/types'
     | '/spaces/$spaceId/automation'
     | '/spaces/$spaceId/forms'
     | '/spaces/$spaceId/item-types'
+    | '/settings/customers'
     | '/settings/users'
     | '/settings/spaces/$spaceId/$tab'
     | '/spaces/$spaceId/forms/$formId'
@@ -904,10 +928,12 @@ export interface FileRouteTypes {
     | '/_app/reports/'
     | '/_app/requests/'
     | '/_app/settings/'
+    | '/_app/settings/customers/$clientId'
     | '/_app/settings/users/types'
     | '/_app/spaces_/$spaceId/automation'
     | '/_app/spaces_/$spaceId/forms'
     | '/_app/spaces_/$spaceId/item-types'
+    | '/_app/settings/customers/'
     | '/_app/settings/users/'
     | '/_app/settings/spaces_/$spaceId/$tab'
     | '/_app/spaces_/$spaceId/forms_/$formId'
@@ -1390,6 +1416,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AppTasksItemIdRouteImport
       parentRoute: typeof AppRoute
     }
+    '/_app/settings/customers/': {
+      id: '/_app/settings/customers/'
+      path: '/customers'
+      fullPath: '/settings/customers/'
+      preLoaderRoute: typeof AppSettingsCustomersIndexRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
+    '/_app/settings/customers/$clientId': {
+      id: '/_app/settings/customers/$clientId'
+      path: '/customers/$clientId'
+      fullPath: '/settings/customers/$clientId'
+      preLoaderRoute: typeof AppSettingsCustomersClientIdRouteImport
+      parentRoute: typeof AppSettingsRoute
+    }
     '/_app/settings/users/': {
       id: '/_app/settings/users/'
       path: '/'
@@ -1490,6 +1530,8 @@ interface AppSettingsRouteChildren {
   AppSettingsWorkScheduleRoute: typeof AppSettingsWorkScheduleRoute
   AppSettingsWorkflowsRoute: typeof AppSettingsWorkflowsRoute
   AppSettingsIndexRoute: typeof AppSettingsIndexRoute
+  AppSettingsCustomersClientIdRoute: typeof AppSettingsCustomersClientIdRoute
+  AppSettingsCustomersIndexRoute: typeof AppSettingsCustomersIndexRoute
   AppSettingsSpacesSpaceIdTabRoute: typeof AppSettingsSpacesSpaceIdTabRoute
 }
 
@@ -1521,6 +1563,8 @@ const AppSettingsRouteChildren: AppSettingsRouteChildren = {
   AppSettingsWorkScheduleRoute: AppSettingsWorkScheduleRoute,
   AppSettingsWorkflowsRoute: AppSettingsWorkflowsRoute,
   AppSettingsIndexRoute: AppSettingsIndexRoute,
+  AppSettingsCustomersClientIdRoute: AppSettingsCustomersClientIdRoute,
+  AppSettingsCustomersIndexRoute: AppSettingsCustomersIndexRoute,
   AppSettingsSpacesSpaceIdTabRoute: AppSettingsSpacesSpaceIdTabRoute,
 }
 

@@ -126,6 +126,8 @@ B1, B2, spike B4 dan OPS boleh paralel setelah B0. **Migrasi dan perubahan `poli
 
 ### B2 — Customer Master dan membership (M)
 
+> **Status 27 Nov 2026:** B2-07 selesai: halaman Pelanggan di Settings (daftar, buat, edit, arsip, anggota) dengan 6 tes Playwright lulus. Bukti: [MVP_SCOPE §15](MVP_SCOPE.md#15-bukti-eksekusi-b2-07-customer-settings-ui-27-nov-2026).
+>
 > **Status 27 Nov 2026:** B2-04, B2-05, dan B2-06 selesai: guard admin, audit transaksional, dan 8 operasi REST dengan OpenAPI. AC-03 PASS di tingkat CRUD dan audit. AC-04 PARTIAL sampai B3. Bukti: [MVP_SCOPE §14](MVP_SCOPE.md#14-bukti-eksekusi-b2-04-06-authorization-audit-api-27-nov-2026).
 >
 > **Status 27 Nov 2026:** B2-03 selesai di tingkat domain service (`server/internal/clients`, 26 tes PASS). B2-04..06 belum dikerjakan. Bukti: [MVP_SCOPE §13](MVP_SCOPE.md#13-bukti-eksekusi-b2-03-domain-service-27-nov-2026).
