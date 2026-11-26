@@ -41,16 +41,18 @@ type Service struct{ pool *pgxpool.Pool }
 func New(pool *pgxpool.Pool) *Service { return &Service{pool: pool} }
 
 type Space struct {
-	ID             string              `json:"id"`
-	Name           string              `json:"name"`
-	Description    *string             `json:"description"`
-	Kind           string              `json:"kind"`
-	Version        int                 `json:"version"`
-	Locked         bool                `json:"locked"`
-	Visibility     string              `json:"visibility"`
-	Archived       bool                `json:"archived"`
-	IconKey        *string             `json:"icon_key"`
-	IsSpaceAdmin   bool                `json:"is_space_admin"`
+	ID           string  `json:"id"`
+	Name         string  `json:"name"`
+	Description  *string `json:"description"`
+	Kind         string  `json:"kind"`
+	Version      int     `json:"version"`
+	Locked       bool    `json:"locked"`
+	Visibility   string  `json:"visibility"`
+	Archived     bool    `json:"archived"`
+	IconKey      *string `json:"icon_key"`
+	IsSpaceAdmin bool    `json:"is_space_admin"`
+	// HasActiveAdmin is set when one shared Space is read: false means nobody can archive it or name an admin for now.
+	HasActiveAdmin *bool               `json:"has_active_admin,omitempty"`
 	MyCapabilities []policy.Capability `json:"my_capabilities"`
 }
 
@@ -114,7 +116,16 @@ func (s *Service) Get(ctx context.Context, actor policy.Actor, id string) (Space
 	if !found {
 		return Space{}, ErrNotFound
 	}
-	return toSpace(access), nil
+	space := toSpace(access)
+	if access.Kind == "shared" {
+		var active bool
+		if err := s.pool.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM space_admins a JOIN users u ON u.id=a.user_id
+WHERE a.space_id=$1 AND u.status='active' AND u.user_type IN ('admin','regular'))`, id).Scan(&active); err != nil {
+			return Space{}, err
+		}
+		space.HasActiveAdmin = &active
+	}
+	return space, nil
 }
 
 type ShareInput struct {
@@ -179,6 +190,10 @@ func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput
 	}
 	// The creator is the owner of the new Space, so granting any role is within their power.
 	if err := writeShares(ctx, tx, id, actor, shares, policy.Ceiling(actor.Type), batch); err != nil {
+		return Space{}, err
+	}
+	// D-SA1: the creator is the first Space Admin; only a Space Admin can name another, so a Space must never start without one.
+	if _, err := tx.Exec(ctx, "INSERT INTO space_admins(space_id,user_id,granted_by) VALUES ($1,$2,$2)", id, actor.ID); err != nil {
 		return Space{}, err
 	}
 	access, found, err := policy.SpaceAccessFor(ctx, tx, actor, id)

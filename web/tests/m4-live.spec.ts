@@ -26,7 +26,7 @@ test("timesheet hours appear in project Timelog and alongside its budget", async
     const budget = fields.getByRole("form", { name: "Budget" });
     await budget.getByRole("textbox", { name: "Budget" }).fill("1250.75");
     await budget.getByRole("button", { name: "Save", exact: true }).click();
-    await expect(fields.getByText("$1,250.75")).toBeVisible();
+    await expect(fields.getByText("$1,250.75", { exact: true })).toBeVisible();
 
     await page.keyboard.press("Escape"); // close the Info panel (S-UIP.1.8)
     await page.getByRole("button", { name: "Add view", exact: true }).click();
@@ -39,6 +39,6 @@ test("timesheet hours appear in project Timelog and alongside its budget", async
     await expect(log.getByText("Delivered")).toBeVisible();
     await page.getByRole("button", { name: "Info" }).click();
     await page.getByText("More fields", { exact: true }).click();
-    await expect(fields.getByText("$1,250.75")).toBeVisible();
+    await expect(fields.getByText("$1,250.75", { exact: true })).toBeVisible();
   } finally { await worker.close(); }
 });

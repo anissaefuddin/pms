@@ -54,3 +54,33 @@ test("a refused location (cycle) shows the server's message and changes nothing"
   await expect(section.getByRole("alert")).toContainText("inside itself");
   await expect(section.getByRole("listitem")).toHaveCount(1);
 });
+
+// DEF-023: the server sends locations without space_name, and only those in Spaces the user can see.
+async function openDetail(page: import("@playwright/test").Page, locations: unknown[]) {
+  await mockSpaces(page, { extra: {
+    [`GET /items/${id}`]: { body: { id, seq: 1, type: "task", title: "Nested", version: 1, my_capabilities: ALL, assignees: [], locations }, headers: { ETag: '"1"' } },
+    [`GET /items/${id}/children`]: { body: { items: [] } },
+    [`GET /items/${id}/comments`]: { body: { items: [] } },
+    [`GET /items/${id}/attachments`]: { body: { items: [] } },
+    [`GET /items/${project.id}`]: { body: project, headers: { ETag: '"1"' } },
+  } });
+  await page.goto(`/tasks/${id}`);
+  await expect(page.getByRole("group", { name: "Item properties" })).toBeVisible();
+}
+
+test("a nested location without a name shows the visible Space's name, with every location listed", async ({ page }) => {
+  await openDetail(page, [{ space_id: marketing.id, parent_item_id: project.id }, { space_id: ops.id, parent_item_id: null }]);
+  const chip = page.getByRole("button", { name: /^Locations:/ });
+  await expect(chip).toHaveAccessibleName("Locations: Marketing +1");
+  await chip.click();
+  const section = page.getByRole("region", { name: "Locations" });
+  await expect(section.getByRole("listitem")).toHaveText([/^Marketing \/ Rollout/, /^Operations/]);
+});
+
+for (const [label, locations] of [["no location", []], ["only a Space the user cannot see", [{ space_id: "d0000000-0000-4000-8000-000000000009", parent_item_id: null }]]] as const) {
+  test(`${label} shows no Locations chip`, async ({ page }) => {
+    await openDetail(page, [...locations]);
+    await page.waitForLoadState("networkidle");
+    await expect(page.getByRole("button", { name: /^Locations:/ })).toHaveCount(0);
+  });
+}

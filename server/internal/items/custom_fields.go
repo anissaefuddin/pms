@@ -32,6 +32,9 @@ type CustomField struct {
 	Position   int                 `json:"position"`
 	ArchivedAt *time.Time          `json:"archived_at"`
 	Config     CustomFieldConfig   `json:"config"`
+	// Access is the caller's own access to the value (edit, view or none); only the list endpoints fill it. Only a person who
+	// manages the field is sent one with access none, so its restriction can still be changed.
+	Access string `json:"access,omitempty" db:"-"`
 }
 
 type CustomFieldCreate struct {
@@ -130,10 +133,57 @@ func ListCustomFields(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 	if err != nil {
 		return nil, err
 	}
-	if fields == nil {
-		fields = []CustomField{}
+	manages := id == "" // the Workspace list is for administrators only
+	if id != "" {
+		space, _, err := policy.SpaceAccessFor(ctx, tx, actor, id)
+		if err != nil {
+			return nil, err
+		}
+		manages = space.Caps.Contains(policy.RoleCaps(policy.Full))
+	}
+	if fields, err = withFieldAccess(ctx, tx, actor, fields, manages); err != nil {
+		return nil, err
 	}
 	return fields, tx.Commit(ctx)
+}
+
+// withFieldAccess says what the actor may do with each field's values, and drops the fields they may not read unless keepHidden.
+// A formula that reads a hidden field is hidden too, and no formula is ever edited.
+func withFieldAccess(ctx context.Context, tx pgx.Tx, actor policy.Actor, fields []CustomField, keepHidden bool) ([]CustomField, error) {
+	unreadable, err := HiddenFieldIDs(ctx, tx, actor, GrantView)
+	if err != nil {
+		return nil, err
+	}
+	unwritable, err := HiddenFieldIDs(ctx, tx, actor, GrantEdit)
+	if err != nil {
+		return nil, err
+	}
+	rows, err := tx.Query(ctx, `SELECT f.id::text FROM custom_fields f WHERE f.type='formula' AND EXISTS(SELECT 1 FROM custom_fields h
+WHERE h.id::text = ANY($1::text[]) AND h.space_id IS NOT DISTINCT FROM f.space_id AND position(lower(h.name) IN lower(f.config->>'expression'))>0)`, unreadable)
+	if err != nil {
+		return nil, err
+	}
+	formulas, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return nil, err
+	}
+	unreadable = append(unreadable, formulas...)
+	out := []CustomField{}
+	for _, field := range fields {
+		switch {
+		case fieldHidden(unreadable, field.ID):
+			if !keepHidden {
+				continue
+			}
+			field.Access = GrantNone
+		case field.Type == "formula" || fieldHidden(unwritable, field.ID):
+			field.Access = GrantView
+		default:
+			field.Access = GrantEdit
+		}
+		out = append(out, field)
+	}
+	return out, nil
 }
 
 func CreateCustomField(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID string, input CustomFieldCreate) (CustomField, error) {

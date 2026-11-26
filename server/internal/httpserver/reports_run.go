@@ -91,5 +91,8 @@ func (s *Server) exportReport(w http.ResponseWriter, r *http.Request) {
 		}
 		_ = out.Write(append(line, strconv.FormatFloat(row.Value, 'f', -1, 64)))
 	}
+	if result.CostStatus == "partial" {
+		_ = out.Write(append([]string{"PARTIAL: known cost subtotal only"}, make([]string, len(header)-1)...))
+	}
 	out.Flush()
 }

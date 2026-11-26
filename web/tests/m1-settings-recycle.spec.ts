@@ -140,6 +140,28 @@ test("account page lists seats and administrators; email and task defaults save"
   await expect.poll(() => calls.filter((call) => call.method === "PATCH").at(-1)?.body).toMatchObject({ default_task_duration_days: 3 });
 });
 
+test("system information shows build identity, says when a digest is missing, and copies the full values", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const id = `sha256:${"a".repeat(64)}`;
+  await mockSpaces(page, { extra: {
+    "GET /account": { body: { name: "Pilot Co", created_at: "2026-01-02T00:00:00Z", role: "admin", joined_at: "2026-01-03T00:00:00Z",
+      administrators: [], seats: { used: 1, pending: 0, max: 5, available: 4 } } },
+    "GET /version": { body: { version: "9.9.9", commit: "b".repeat(40), built_at: "2026-11-26T00:00:00Z", schema: 360, platform: "linux/amd64",
+      image: { ref: "registry.test/pms:9.9.9", id, registry_digest: "unavailable" } } },
+  } });
+  await page.goto("/settings/account");
+  const section = page.locator("section").filter({ has: page.getByRole("heading", { name: "System information" }) });
+  await expect(section.getByText(`sha256:${"a".repeat(12)}…`)).toBeVisible();
+  await expect(section.getByText("Unavailable", { exact: true })).toBeVisible();
+  await expect(section.getByText("linux/amd64")).toBeVisible();
+  await section.getByRole("button", { name: "Copy diagnostics" }).click();
+  await expect.poll(() => page.evaluate(() => navigator.clipboard.readText())).toContain(`imageId: ${id}`);
+  for (const colorScheme of ["light", "dark"] as const) {
+    await page.emulateMedia({ colorScheme });
+    expect((await new AxeBuilder({ page }).analyze()).violations).toEqual([]);
+  }
+});
+
 test("item detail lists the activity log", async ({ page }) => {
   await mockSpaces(page, { extra: {
     [`GET /items/${item.id}`]: { body: item, headers: { ETag: '"1"' } },

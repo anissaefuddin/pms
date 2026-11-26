@@ -136,7 +136,36 @@ func (s *Server) getFormDefinition(w http.ResponseWriter, r *http.Request) {
 		writeItemError(w, err)
 		return
 	}
-	writeJSON(w, http.StatusOK, map[string]any{"id": row.ID, "name": row.Name, "description": row.Desc, "definition": row.Definition})
+	notice, err := assignmentNotice(ctx, tx, actorOf(r), row)
+	if err != nil {
+		writeItemError(w, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"id": row.ID, "name": row.Name, "description": row.Desc, "definition": row.Definition, "assignment_notice": notice})
+}
+
+// assignmentNotice says whether this person's submission would leave out an assignee the form could set, so the page can say so
+// before they send it. It names nobody and nothing about the routing.
+func assignmentNotice(ctx context.Context, tx pgx.Tx, actor policy.Actor, row formRow) (string, error) {
+	editor, member, err := items.FormSubmitter(ctx, tx, actor, items.Location{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID})
+	if err != nil || (!editor && !member) {
+		return "", err
+	}
+	asks := false
+	for _, page := range row.Definition.Pages {
+		for _, el := range page.Elements {
+			asks = asks || el.Kind == forms.Assignee
+		}
+	}
+	preset := slices.ContainsFunc(row.Response.AssigneeIDs, func(id uuid.UUID) bool { return id.String() != actor.ID })
+	routed := slices.ContainsFunc(row.Response.Routes, func(route forms.Route) bool { return route.BlueprintID != nil })
+	switch {
+	case editor && (asks || preset || routed):
+		return "without_others", nil
+	case member && asks:
+		return "choices_ignored", nil
+	}
+	return "", nil
 }
 
 // listMyRequests lists what the signed-in user submitted through forms, newest first, with the current status of each Item.
@@ -372,6 +401,9 @@ func (s *Server) submitForm(w http.ResponseWriter, r *http.Request) {
 	case errors.As(err, &problems):
 		writeFieldErrors(w, problems)
 		return
+	case errors.Is(err, items.ErrAssignForbidden):
+		writeFormError(w, err)
+		return
 	case errors.Is(err, items.ErrNotFound) || errors.Is(err, items.ErrForbidden):
 		writeProblem(w, http.StatusUnprocessableEntity, formUnavailableCode, "this form can no longer create items; contact the form owner")
 		return
@@ -452,6 +484,21 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 			assignees = append(assignees, id)
 		}
 	}
+	onlyAssignee := ""
+	if external == nil {
+		editor, member, err := items.FormSubmitter(ctx, tx, actor, items.Location{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID})
+		if err != nil {
+			return createdItem{}, err
+		}
+		own := func(id uuid.UUID) bool { return id.String() == actor.ID }
+		switch {
+		case editor: // takes the Task or leaves it unassigned; the answers still name the people they chose
+			onlyAssignee = actor.ID
+			assignees = slices.DeleteFunc(assignees, func(id uuid.UUID) bool { return !own(id) })
+		case member: // the form's preset stands; their own picks of other people do not
+			assignees = slices.DeleteFunc(assignees, func(id uuid.UUID) bool { return !own(id) && !slices.Contains(row.Response.AssigneeIDs, id) })
+		}
+	}
 	locations := []map[string]any{{"space_id": row.Response.Location.SpaceID, "parent_item_id": row.Response.Location.ParentItemID}}
 	fields := map[string]json.RawMessage{
 		"type": marshal(row.Response.ItemType), "title": marshal(title), "locations": marshal(locations),
@@ -494,7 +541,7 @@ func createFromSubmission(ctx context.Context, tx pgx.Tx, actor policy.Actor, fo
 		}
 		item, err = items.UseBlueprintTx(ctx, tx, elevated, *blueprint, items.BlueprintUse{
 			Locations: []items.Location{{SpaceID: row.Response.Location.SpaceID, ParentID: row.Response.Location.ParentItemID}},
-			Title:     &title, Overrides: overrides}, batch)
+			Title:     &title, Overrides: overrides, OnlyAssignee: onlyAssignee}, batch)
 	} else {
 		item, err = items.CreateTx(ctx, tx, elevated, fields, batch)
 	}

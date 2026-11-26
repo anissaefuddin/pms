@@ -1,6 +1,7 @@
 package httpserver_test
 
 import (
+	"fmt"
 	"net/http"
 	"os"
 	"testing"
@@ -165,7 +166,7 @@ func TestRatesSnapshotKeepHistoryAndCostIsAdminOnly(t *testing.T) {
 	f.want(f.call(admin, "POST", "/rates", map[string]any{"user_id": member.id, "rate_minor": 7000, "effective_from": "2026-03-01"}), 422, "duplicate date")
 
 	entry := func(date string, minutes int, billing string) {
-		f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type) VALUES ($1,$2,$3,$4,$5)", task, member.id, date, minutes, billing)
+		f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type,status) VALUES ($1,$2,$3,$4,$5,'approved')", task, member.id, date, minutes, billing)
 	}
 	entry("2026-02-10", 60, "billable")      // before the personal rate: the role rate applies
 	entry("2026-03-10", 90, "billable")      // personal rate
@@ -183,5 +184,126 @@ func TestRatesSnapshotKeepHistoryAndCostIsAdminOnly(t *testing.T) {
 	f.want(hidden, 200, "member summary")
 	if _, leaked := hidden.body["actual_cost_minor"]; leaked {
 		t.Fatalf("a member must not see cost: %v", hidden.body)
+	}
+}
+
+// DEF-011: log, submit, review. Cost and approved minutes follow the approval; nobody reviews their own time; a submitted entry is
+// frozen until a reviewer rejects it. DEF-010: a Workspace Admin who sees only part of the entries is told no cost.
+func TestTimesheetSubmitAndApprove(t *testing.T) {
+	f := newFixture(t)
+	manager, member, peer := f.person("admin"), f.person("regular"), f.person("regular")
+	onlooker := f.unlinkedAdmin()
+	space := f.spaceWithoutAdmins("Timesheet")
+	f.share(space, "user", manager.id, "full")
+	f.share(space, "user", member.id, "editor")
+	f.share(space, "user", peer.id, "editor")
+	f.share(space, "user", onlooker.id, "read")
+	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", manager.id)
+	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", project, space)
+	task := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','T',$1) RETURNING id::text", manager.id)
+	f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'A')", task, space, project)
+	f.want(f.call(manager, "POST", "/rates", map[string]any{"user_id": member.id, "rate_minor": 6000, "effective_from": "2026-01-01"}), 201, "rate")
+	log := func(p *person, date string) string {
+		made := f.call(p, "POST", "/time-entries", map[string]any{"item_id": task, "date": date, "minutes": 60, "billing_type": "billable"})
+		f.want(made, 201, "log")
+		if made.body["status"] != "draft" {
+			t.Fatalf("new time is a draft: %v", made.body)
+		}
+		return made.body["id"].(string)
+	}
+	inWeek, later := log(member, "2026-11-23"), log(member, "2026-12-01")
+	own := log(manager, "2026-11-23")
+	summary := func(p *person) map[string]any {
+		got := f.call(p, "GET", "/items/"+project+"/time-summary", nil)
+		f.want(got, 200, "summary")
+		return got.body
+	}
+	if got := summary(manager); got["actual_cost_minor"] != float64(0) || got["approved_minutes"] != float64(0) || got["actual_minutes"] != float64(180) {
+		t.Fatalf("unapproved time costs nothing: %v", got)
+	}
+	week := map[string]any{"from": "2026-11-23", "to": "2026-11-29"}
+	if got := f.call(member, "POST", "/time-entries/submit", week); got.status != 200 || got.body["submitted"] != float64(1) {
+		t.Fatalf("submit only the week: %+v", got)
+	}
+	f.want(f.call(manager, "POST", "/time-entries/submit", week), 200, "manager submits too")
+	f.want(f.call(member, "POST", "/time-entries/submit", map[string]any{"from": "2026-11-29", "to": "2026-11-23"}), 422, "bad range")
+	f.want(f.call(member, "PATCH", "/time-entries/"+inWeek, map[string]any{"minutes": 90}, "If-Match", `"2"`), 409, "a submitted entry is frozen")
+	f.want(f.call(member, "DELETE", "/time-entries/"+inWeek, nil, "If-Match", `"2"`), 409, "and cannot be deleted")
+
+	list := f.call(manager, "GET", "/time-entries/review", nil)
+	if list.status != 200 || len(list.items()) != 1 || list.items()[0]["id"] != inWeek {
+		t.Fatalf("the reviewer sees other people's submitted time only: %v", list.body)
+	}
+	for _, p := range []*person{member, peer, onlooker} {
+		if got := f.call(p, "GET", "/time-entries/review", nil); got.status != 200 || len(got.items()) != 0 {
+			t.Fatalf("no Full access, nothing to review: %v", got.body)
+		}
+	}
+	review := func(p *person, id string, version int, decision, note string) reply {
+		return f.call(p, "POST", "/time-entries/"+id+"/review", map[string]any{"decision": decision, "note": note}, "If-Match", fmt.Sprintf(`"%d"`, version))
+	}
+	f.want(review(peer, inWeek, 2, "approved", ""), 404, "a peer cannot review")
+	f.want(review(member, inWeek, 2, "approved", ""), 403, "nobody reviews their own time")
+	f.want(review(manager, own, 2, "approved", ""), 403, "not even with Full access")
+	f.want(review(manager, later, 1, "approved", ""), 409, "a draft cannot be reviewed")
+	f.want(review(manager, inWeek, 1, "approved", ""), 409, "stale version")
+	f.want(review(manager, inWeek, 2, "maybe", ""), 422, "unknown decision")
+	f.want(review(manager, inWeek, 2, "rejected", "Wrong task"), 200, "reject")
+	f.want(f.call(member, "PATCH", "/time-entries/"+inWeek, map[string]any{"minutes": 90}, "If-Match", `"3"`), 200, "a rejected entry can be corrected")
+	f.want(f.call(member, "POST", "/time-entries/submit", week), 200, "submit again")
+	approved := review(manager, inWeek, 5, "approved", "")
+	f.want(approved, 200, "approve")
+	if approved.body["status"] != "approved" || approved.body["review_note"] != "" {
+		t.Fatalf("approved: %v", approved.body)
+	}
+	if by := f.queryID("SELECT reviewed_by::text FROM time_entries WHERE id=$1 AND reviewed_at IS NOT NULL", inWeek); by != manager.id {
+		t.Fatalf("the reviewer is stored: %s", by)
+	}
+	if got := summary(manager); got["actual_cost_minor"] != float64(9000) || got["approved_minutes"] != float64(90) {
+		t.Fatalf("approved time costs: %v", got)
+	}
+	partial := summary(onlooker)
+	if _, told := partial["actual_cost_minor"]; told || partial["scope"] != "permitted_entries" || partial["cost_status"] != "partial" {
+		t.Fatalf("a partial cost is a wrong cost, so it is left out: %v", partial)
+	}
+	f.want(review(manager, inWeek, 6, "rejected", "Reopen"), 200, "rejecting an approved entry reopens it")
+	if got := summary(manager); got["actual_cost_minor"] != float64(0) {
+		t.Fatalf("a reopened entry costs nothing: %v", got)
+	}
+	if got := summary(member); got["cost_status"] != "unauthorized" || got["actual_cost_minor"] != nil {
+		t.Fatalf("a member is told there is a cost they may not see, not zero: %v", got)
+	}
+
+	// Locked freezes every step; unlocking brings them back.
+	lock := func(locked bool, version int) reply {
+		return f.call(manager, "PATCH", "/time-entries/"+inWeek, map[string]any{"locked": locked}, "If-Match", fmt.Sprintf(`"%d"`, version))
+	}
+	f.want(lock(true, 7), 200, "lock")
+	if got := f.call(member, "POST", "/time-entries/submit", week); got.body["submitted"] != float64(0) {
+		t.Fatalf("a locked entry is not submitted: %v", got.body)
+	}
+	f.want(lock(false, 8), 200, "unlock")
+	if got := f.call(member, "POST", "/time-entries/submit", week); got.body["submitted"] != float64(1) {
+		t.Fatalf("unlocked: %v", got.body)
+	}
+	f.want(lock(true, 10), 200, "lock a submitted entry")
+	f.want(review(manager, inWeek, 11, "approved", ""), 409, "a locked entry cannot be reviewed")
+
+	history := f.call(member, "GET", "/time-entries/"+inWeek+"/history", nil)
+	f.want(history, 200, "the author reads the trail")
+	steps := ""
+	for _, step := range history.items() {
+		steps += step["action"].(string) + " "
+	}
+	if steps != "submitted rejected submitted approved rejected locked unlocked submitted locked " {
+		t.Fatalf("trail: %s", steps)
+	}
+	f.want(f.call(manager, "GET", "/time-entries/"+inWeek+"/history", nil), 200, "Full access reads it too")
+	f.want(f.call(peer, "GET", "/time-entries/"+inWeek+"/history", nil), 404, "a peer does not")
+
+	// An approved billable entry with no rate makes the cost incomplete, not smaller.
+	f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type,status) VALUES ($1,$2,'2026-11-24',30,'billable','approved')", task, peer.id)
+	if got := summary(manager); got["cost_status"] != "partial" || got["actual_cost_minor"] != nil {
+		t.Fatalf("unpriced time: %v", got)
 	}
 }

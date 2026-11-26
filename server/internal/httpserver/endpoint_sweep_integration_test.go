@@ -242,6 +242,12 @@ func TestStrangersAndReadersCannotTouchAnotherSpacesResourcesThroughAnyEndpoint(
 			if got.status != 403 {
 				t.Errorf("outsider GET %s answered %d, want 403", op.path, got.status)
 			}
+		case op.method == "GET" && (op.path == "/custom-fields/{fieldId}/impact" || op.path == "/custom-fields/{fieldId}/grants"):
+			// Workspace configuration is refused before the field is looked up, so an unknown id answers the same and nothing leaks.
+			unknown, _ := resolve(op.path, map[string]string{"fieldId": "00000000-0000-4000-8000-00000000dead"})
+			if got.status != 403 || f.call(outsider, op.method, unknown, nil).status != 403 {
+				t.Errorf("outsider GET %s answered %d, want 403 for a known and an unknown id alike", op.path, got.status)
+			}
 		case op.method == "GET" && got.status != 404:
 			t.Errorf("outsider GET %s answered %d, want 404", op.path, got.status)
 		case op.method == "DELETE" && strings.HasSuffix(op.path, "/star"): // D-51: removing one's own bookmark needs no access

@@ -472,6 +472,9 @@ LEFT JOIN items i ON i.type_id=t.id AND i.deleted_at IS NULL GROUP BY t.id`)
 
 // SpaceItemTypeUsage counts the live items in one Space, per item type. Anyone who can edit the Space sees it (the Space's own admin view).
 func SpaceItemTypeUsage(ctx context.Context, db dbQuerier, actor policy.Actor, spaceID string) (map[string]int, error) {
+	if _, err := uuid.Parse(spaceID); err != nil {
+		return nil, ErrNotFound // DEF-021
+	}
 	if err := authorizeTypeScope(ctx, db, actor, &spaceID); err != nil {
 		return nil, err
 	}

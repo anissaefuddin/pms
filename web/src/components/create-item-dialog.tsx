@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogFooter, DialogTitle } from "@/components/ui/dialog";
-import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { ItemUserPicker, assignSelfOnly, type PersonOption } from "@/components/item-user-picker";
 import { ViewTypePicker } from "@/components/view-type-picker";
 import { useItemTypes, type ItemTypeDef } from "@/lib/item-types";
 import { useBlueprints } from "@/lib/blueprints";
@@ -290,6 +290,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
           </label>;
         })}
         {blueprint && <small className="text-muted-foreground">{t("blueprints.hint")}</small>}
+        {blueprint && assignSelfOnly(me, (parent ?? selected)?.my_capabilities) && <small className="block text-muted-foreground">{t("items.assignSelfOnly")}</small>}
       </fieldset>
     </section>}
 
@@ -297,7 +298,7 @@ function CreateForm({ me, location, onCreated, onOpenChange, taskOnly, initialSt
       <h3 id="create-settings" className="text-sm font-semibold">{t("items.settings")}</h3>
       <div className="grid gap-4 sm:grid-cols-2">
         {kind === "project" && <ItemUserPicker label={t("items.owner")} selected={owner} onChange={setOwner} />}
-        {kind === "task" && !blueprint && <ItemUserPicker label={t("items.assignees")} selected={assignees} onChange={setAssignees} multiple />}
+        {kind === "task" && !blueprint && <ItemUserPicker label={t("items.assignees")} selected={assignees} onChange={setAssignees} multiple selfOnly={assignSelfOnly(me, (parent ?? selected)?.my_capabilities)} />}
         {kind !== "folder" && <div className="space-y-1 sm:col-span-2">
           <ItemDates initialStart={initialDate} initialDue={initialFinish ?? initialDate} invalid={!!fieldErrors.due_date} />
           {fieldErrors.due_date && <p id="create-due-error" role="alert" className="text-sm text-destructive">{fieldErrors.due_date}</p>}

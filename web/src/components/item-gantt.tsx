@@ -17,7 +17,7 @@ import { ApiError, api } from "@/lib/api";
 import type { components } from "@/api/schema";
 import { formatDate, useProfile } from "@/lib/profile";
 import { itemKeys, listItems, type Item, type ItemStatus, type ItemUpdate } from "@/lib/items";
-import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { ItemUserPicker, assignSelfOnly, type PersonOption } from "@/components/item-user-picker";
 import { addDays, fromDay, toDay } from "@/lib/calendar-days";
 import { dayCellWidth, dayIndexAt, dayRange, isDragStep } from "@/lib/gantt-timeline";
 import { loadWorkSchedule, workScheduleKey } from "@/lib/work-schedule";
@@ -203,13 +203,14 @@ function AssigneeCell({ item, readonly, onPatch }: { item?: Item; readonly: bool
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [selected, setSelected] = useState<PersonOption[]>(item?.assignees ?? []);
+  const profile = useProfile();
   if (!item || readonly || !item.my_capabilities.includes("edit")) return <span>{item?.assignees.map((person) => person.name).join(", ")}</span>;
   return <Popover open={open} onOpenChange={(next) => { setOpen(next); if (next) setSelected(item.assignees); }}>
     <PopoverTrigger render={<button type="button" className="w-full truncate text-left text-sm hover:underline" aria-label={`${t("items.assignees")}: ${item.title}`} />}>
       {item.assignees.map((person) => person.name).join(", ") || t("views.unassigned")}
     </PopoverTrigger>
     <PopoverContent className="w-80 space-y-3">
-      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} autoFocus />
+      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} autoFocus selfOnly={assignSelfOnly(profile, item.my_capabilities)} />
       <div className="flex justify-end gap-2"><Button size="sm" variant="ghost" onClick={() => setOpen(false)}>{t("items.cancel")}</Button>
         <Button size="sm" onClick={() => { void onPatch(item, { assignee_ids: selected.map((person) => person.id) }); setOpen(false); }}>{t("items.save")}</Button></div>
     </PopoverContent>
@@ -274,7 +275,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   statuses: ItemStatus[];
   customFields: CustomField[];
   columns: string[];
-  spaceId: string;
+  spaceId: string; // "" for a portfolio: items of several Spaces
   parentId?: string;
   readonly: boolean;
   onOpen: (item: Item) => void;
@@ -296,6 +297,10 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   const profile = useProfile();
   const ganttPrefKey = `pms:gantt-grid:${spaceId}:${parentId ?? "root"}`;
   const [scale, setScale] = useState<Scale>(() => { try { const saved = localStorage.getItem(`${ganttPrefKey}:scale`) as Scale | null; return saved && scaleOptions.includes(saved) ? saved : "day"; } catch { return "day"; } });
+  // Fit all shrinks the year scale's months when even they do not fit; choosing a scale goes back to the fixed widths.
+  const [fitCell, setFitCell] = useState<number>();
+  const geometry = scale === "year" && fitCell ? { cell: fitCell, perDay: fitCell / 30 } : scaleGeometry[scale];
+  const chooseScale = (next: Scale) => { setFitCell(undefined); setScale(next); };
   const [navigationDate, setNavigationDate] = useState(() => { const date = new Date(); return new Date(date.getFullYear(), date.getMonth(), 1); });
   const [rangeAnchor, setRangeAnchor] = useState<Date>();
   const [navigationYear, setNavigationYear] = useState(() => String(new Date().getFullYear()));
@@ -336,7 +341,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         if (ancestors.has(item.id) || lookup.has(item.id)) continue;
         lookup.set(item.id, item);
         out.push({ ...ganttTask(item, parent), start_text: formatDate(item.start_date, profile), due_text: formatDate(item.due_date, profile), ...Object.fromEntries(shownFields.map((field) => [`cf_${field.id}`, customFieldText(field, item.fields?.[field.id], i18n.language, item.field_people)])) });
-        visit((children.get(item.id) ?? []).filter((child) => child.locations.some((loc) => loc.space_id === spaceId && loc.parent_item_id === item.id)),
+        visit((children.get(item.id) ?? []).filter((child) => child.locations.some((loc) => (!spaceId || loc.space_id === spaceId) && loc.parent_item_id === item.id)),
           item.id, new Set([...ancestors, item.id]));
       }
     }
@@ -404,7 +409,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   }, [tasks, rangeAnchor]);
   // Bars that lie left or right of the visible part of the chart. Counted on scroll, so the user sees that work exists beyond the view.
   const [outside, setOutside] = useState<{ left: string[]; right: string[] }>({ left: [], right: [] });
-  const pxPerDay = scaleGeometry[scale].perDay;
+  const pxPerDay = geometry.perDay;
   const dayOf = (date: Date) => Math.round((date.getTime() - range.start!.getTime()) / 86_400_000);
   function measureOutside() {
     const chart = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
@@ -431,6 +436,24 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
     if (!chart || !task || !range.start) return;
     if (side === "right") chart.scrollLeft = Math.max(0, dayOf(task.start!) * pxPerDay - 2 * pxPerDay);
     else chart.scrollLeft = Math.max(0, dayOf(task.end!) * pxPerDay - chart.clientWidth + 3 * pxPerDay);
+  }
+  /** The most detailed scale at which every scheduled bar is inside the chart, with the first one at the left edge. */
+  function fitAll() {
+    const dated = tasks.filter((task) => task.start && task.end);
+    const chart = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
+    if (!dated.length || !chart || !range.start) return;
+    const first = Math.min(...dated.map((task) => dayOf(task.start!)));
+    const days = Math.max(...dated.map((task) => dayOf(task.end!))) - first + 1;
+    const next = [...scaleOptions].reverse().find((option) => days * scaleGeometry[option].perDay <= chart.clientWidth);
+    const cell = next ? undefined : Math.max(4, Math.floor(chart.clientWidth / (days / 30 + 1)));
+    setFitCell(cell);
+    setScale(next ?? "year");
+    const perDay = next ? scaleGeometry[next].perDay : cell! / 30;
+    // The chart redraws for the new scale before it can be scrolled.
+    window.requestAnimationFrame(() => window.requestAnimationFrame(() => {
+      const drawn = chartRegion.current?.querySelector<HTMLElement>(".wx-chart");
+      if (drawn) drawn.scrollLeft = Math.max(0, (first - 1) * perDay);
+    }));
   }
   function scrollToDate(date: Date) {
     setNavigationDate(new Date(date.getFullYear(), date.getMonth(), 1));
@@ -690,7 +713,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
   const controls = <>
       <Button size="sm" variant="outline" onClick={() => setAllOpen(!allOpen)}>{allOpen ? <ChevronsDownUp /> : <ChevronsUpDown />}{t(allOpen ? "views.gantt.collapseAll" : "views.gantt.expandAll")}</Button>
       <Popover open={datePickerOpen} onOpenChange={setDatePickerOpen}>
-        <PopoverTrigger render={<Button size="sm" variant="outline" aria-label={t("views.gantt.choosePeriod")} />}><CalendarDays />{new Intl.DateTimeFormat(i18n.language, ganttMonthFormat).format(navigationDate)}<ChevronDown /></PopoverTrigger>
+        <PopoverTrigger render={<Button size="sm" variant="outline" aria-label={`${t("views.gantt.choosePeriod")}: ${new Intl.DateTimeFormat(i18n.language, ganttMonthFormat).format(navigationDate)}`} />}><CalendarDays />{new Intl.DateTimeFormat(i18n.language, ganttMonthFormat).format(navigationDate)}<ChevronDown /></PopoverTrigger>
         <PopoverContent align="start" className="w-72 space-y-3">
           <form className="flex items-end gap-2" onSubmit={(event) => { event.preventDefault(); const year = Number(navigationYear); if (year >= 1900 && year <= 9999) scrollToDate(new Date(year, navigationDate.getMonth(), 1)); }}>
             <label className="flex-1 text-xs font-medium">{t("views.gantt.year")}<Input type="number" min={1900} max={9999} value={navigationYear} onChange={(event) => setNavigationYear(event.target.value)} className="mt-1" /></label>
@@ -703,16 +726,12 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
         </PopoverContent>
       </Popover>
       <Button size="sm" variant="outline" onClick={() => scrollToDate(new Date())}>{t("views.gantt.today")}</Button>
-      {/* Fit project: brings the earliest scheduled bar to the left edge (no zoom; SVAR free has no fit-to-range). */}
       {/* C-04: brings the selected bar into view; nothing changes on screen until a bar is selected. */}
       {selected && <Button size="sm" variant="outline" onClick={() => chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.showSelected")}</Button>}
       <DropdownMenu>
         <DropdownMenuTrigger render={<Button size="sm" variant="outline" disabled={!tasks.some((task) => task.start)} />}><span>{t("views.gantt.fit")}</span><ChevronDown /></DropdownMenuTrigger>
         <DropdownMenuContent align="start">
-          <DropdownMenuItem onClick={() => {
-            const earliest = tasks.filter((task) => task.start).sort((a, b) => a.start!.getTime() - b.start!.getTime())[0];
-            chartRegion.current?.querySelector(`.wx-bar[data-id=":${earliest?.id}"]`)?.scrollIntoView({ inline: "start", block: "nearest" });
-          }}>{t("views.gantt.fitAll")}</DropdownMenuItem>
+          <DropdownMenuItem onClick={fitAll}>{t("views.gantt.fitAll")}</DropdownMenuItem>
           <DropdownMenuItem onClick={() => measureOutside()}>{t("views.gantt.fitVisible")}</DropdownMenuItem>
           <DropdownMenuItem disabled={!selected} onClick={() => selected && chartRegion.current?.querySelector(`.wx-bar[data-id=":${selected}"]`)?.scrollIntoView({ inline: "center", block: "nearest" })}>{t("views.gantt.fitSelected")}</DropdownMenuItem>
         </DropdownMenuContent>
@@ -749,13 +768,13 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       {undated > 0 && <Button size="sm" variant="ghost" onClick={() => setUndatedOpen(true)}>{t("views.gantt.unscheduledCount", { count: undated })}</Button>}
       <div className="flex items-center gap-0.5 rounded-md border bg-background p-0.5" data-testid="gantt-scale-controls">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={t("views.gantt.scale")} />}>{t(`views.gantt.${scale}`)}<ChevronDown /></DropdownMenuTrigger>
+          <DropdownMenuTrigger render={<Button size="sm" variant="ghost" aria-label={`${t("views.gantt.scale")}: ${t(`views.gantt.${scale}`)}`} />}>{t(`views.gantt.${scale}`)}<ChevronDown /></DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-36">
-            {scaleOptions.map((value) => <DropdownMenuItem key={value} aria-current={scale === value ? "true" : undefined} onClick={() => setScale(value)}>{t(`views.gantt.${value}`)}</DropdownMenuItem>)}
+            {scaleOptions.map((value) => <DropdownMenuItem key={value} aria-current={scale === value ? "true" : undefined} onClick={() => chooseScale(value)}>{t(`views.gantt.${value}`)}</DropdownMenuItem>)}
           </DropdownMenuContent>
         </DropdownMenu>
-        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomOut")} disabled={scale === "year"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Minus /></Button>
-        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => setScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Plus /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomOut")} disabled={scale === "year"} onClick={() => chooseScale(scaleOptions[scaleOptions.indexOf(scale) - 1]!)}><Minus /></Button>
+        <Button size="icon-sm" variant="ghost" aria-label={t("views.gantt.zoomIn")} disabled={scale === "day"} onClick={() => chooseScale(scaleOptions[scaleOptions.indexOf(scale) + 1]!)}><Plus /></Button>
       </div>
   </>;
   return <div className="space-y-1.5">
@@ -810,7 +829,7 @@ export function ItemGantt({ initialOpen, onOpenChange, items, statuses, spaceId,
       <div className={onQuickCreate && !readonly ? "h-[calc(100%-38px)]" : "h-full"}>
         <RowActionsContext.Provider value={onRowAdd && !readonly ? { tasks, spaceId, byId, onRowAdd } : null}>
         <Theme>
-        <BarActionsContext.Provider value={{ byId, statuses, readonly, onOpen, onPatch, onDelete }}><Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={scaleGeometry[scale].cell}
+        <BarActionsContext.Provider value={{ byId, statuses, readonly, onOpen, onPatch, onDelete }}><Gantt taskTemplate={BarLabel} tasks={shownTasks} links={links} {...range} readonly={readonly} init={init} scales={scales} gridWidth={gridWidth} cellWidth={geometry.cell}
           highlightTime={(date, unit) => unit === "day" ? dayTone(date) : ""} schedule={{ auto: false }} unscheduledTasks
           columns={gridColumns} /></BarActionsContext.Provider>
         </Theme>

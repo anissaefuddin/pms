@@ -146,7 +146,7 @@ test("a stale title edit can be discarded and Delete opens a confirmation", asyn
   await page.getByRole("button", { name: "Discard my changes" }).click();
   await expect(page.getByRole("textbox", { name: "Name", exact: true })).toHaveValue("Updated by teammate");
   await page.getByRole("textbox", { name: "Name", exact: true }).fill("Reviewed");
-  await page.getByRole("textbox", { name: "Name", exact: true }).press("Enter");
+  await page.locator("form", { has: page.getByRole("textbox", { name: "Name", exact: true }) }).getByRole("button", { name: "Save", exact: true }).click(); // the button must submit too, not only Enter
   await page.keyboard.press("Escape"); // the detail panel is modal; the header title is visible once it closes
   await expect(page.getByRole("heading", { name: "Reviewed", level: 1 })).toBeVisible();
   await page.getByRole("button", { name: "Info" }).click(); // item actions live in the detail panel
@@ -203,4 +203,19 @@ test("item panel shows counters, coloured status and assignee avatars (UIP2-A)",
   await expect(counters).toContainText("2 comments");
   await expect(page.getByRole("button", { name: /Assignees/ }).getByRole("img", { name: "Grace Hopper" })).toBeVisible();
   await expect(page.getByLabel("Status", { exact: true })).toHaveClass(/bg-green-100/);
+});
+
+test("an Editor takes a task but cannot pick someone else", async ({ page }) => {
+  let item = { ...baseItem, type: "task", my_capabilities: ["view", "comment", "change_status", "attach", "edit", "create"], assignees: [] as object[] };
+  const { calls } = await mockSpaces(page, { me: { ...me, user_type: "regular" }, extra: {
+    [`GET ${itemPath}`]: () => ({ headers: { ETag: `"${item.version}"` }, body: item }),
+    [`GET ${itemPath}/children`]: { body: { items: [] } },
+    [`PATCH ${itemPath}`]: () => { item = { ...item, version: 2, assignees: [{ id: me.id, name: "Ada Lovelace" }] }; return { body: item, headers: { ETag: '"2"' } }; },
+  } });
+  await page.goto(`/tasks/${parentId}`);
+  await page.getByRole("button", { name: /^Assignees/ }).click();
+  await expect(page.getByRole("searchbox", { name: /Assignees/ })).toHaveCount(0);
+  await expect(page.getByText("Only people with Full access can assign someone else.")).toBeVisible();
+  await page.getByRole("button", { name: "Assign to me" }).click();
+  await expect.poll(() => calls.find((call) => call.method === "PATCH")?.body).toEqual({ assignee_ids: [me.id] });
 });

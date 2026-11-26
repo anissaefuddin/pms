@@ -186,7 +186,7 @@ func TestAuditExportIsFormulaSafeAndAudited(t *testing.T) {
 		t.Fatalf("export = %d %v", status, header)
 	}
 	lines := strings.Split(strings.TrimSpace(body), "\n")
-	if lines[0] != "time,actor,action,target_type,target_id,ip,details" || len(lines) != 2 {
+	if lines[0] != "time,actor,action,target_type,target_id,ip,details,request_id" || len(lines) != 2 {
 		t.Fatalf("csv = %q", body)
 	}
 	if !strings.Contains(lines[1], `"'=hyperlink(`) || strings.Contains(lines[1], ",=hyperlink") {
@@ -195,5 +195,29 @@ func TestAuditExportIsFormulaSafeAndAudited(t *testing.T) {
 	// Reading the trail in bulk leaves a mark, with the row count.
 	if e := lastAudit(t, f, admin, "audit.exported"); e["details"].(map[string]any)["rows"] != 1.0 || e["actor_id"] != admin.id {
 		t.Fatalf("export entry = %v", e)
+	}
+}
+
+// DEF-014: one id leads from the response header to the audit entry, in the list, the filter and the export; entries recorded
+// before the column existed stay readable.
+func TestAuditEntryCarriesTheRequestID(t *testing.T) {
+	f := newFixture(t)
+	admin, member := f.person("admin"), f.person("regular")
+	f.exec("INSERT INTO audit_events(actor_id,actor_name,action) VALUES ($1,'old','user.type_changed')", admin.id)
+	got := f.call(admin, "POST", "/users/"+member.id+"/deactivate", nil, "X-Request-ID", "trace-def-014")
+	f.want(got, 200, "deactivate")
+	if got.header.Get("X-Request-ID") != "trace-def-014" {
+		t.Fatalf("header = %q", got.header.Get("X-Request-ID"))
+	}
+	list := f.call(admin, "GET", "/audit-events?request_id=trace-def-014", nil)
+	if list.status != 200 || len(list.items()) != 1 || list.items()[0]["action"] != "user.deactivated" || list.items()[0]["request_id"] != "trace-def-014" {
+		t.Fatalf("by request id: %v", list.body)
+	}
+	old := f.call(admin, "GET", "/audit-events?action=user.type_changed", nil)
+	if old.status != 200 || len(old.items()) != 1 || old.items()[0]["request_id"] != "" {
+		t.Fatalf("an older entry: %v", old.body)
+	}
+	if status, _, body := f.rawGet(admin, "/audit-events/export?request_id=trace-def-014"); status != 200 || !strings.Contains(body, "trace-def-014") {
+		t.Fatalf("export: %d %s", status, body)
 	}
 }

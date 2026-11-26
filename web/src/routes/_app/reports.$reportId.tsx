@@ -113,7 +113,8 @@ function ResultView({ result, pending, error, layout, query, metricLabel }: {
   const { t } = useTranslation();
   if (pending) return <p role="status" className="text-sm text-muted-foreground">{t("reports.result.loading")}</p>;
   if (error) return <p role="alert" className="text-sm text-destructive">{(error as ApiError).status === 422 ? t("reports.result.tooLarge") : t("reports.result.error")}</p>;
-  if (!result || result.rows.length === 0) return <p role="status" className="text-sm text-muted-foreground">{t("reports.result.empty")}</p>;
+  // A partial cost with nothing known is not "no data".
+  if (!result || result.rows.length === 0) return <p role="status" className="text-sm text-muted-foreground">{t(result?.cost_status === "partial" ? "reports.result.partialCost" : "reports.result.empty")}</p>;
   const label = (dimension: string | undefined, key: string, text: string) => !text && !key ? t("reports.value.none")
     : dimension && ENUM_DIMENSIONS.includes(dimension) ? t(`reports.value.${key}`, { defaultValue: text }) : text;
   const max = Math.max(1, ...result.rows.map((row) => row.value));

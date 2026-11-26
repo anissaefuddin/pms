@@ -12,6 +12,7 @@ import { progressPercent } from "@/lib/upload-progress";
 import { FileProofing } from "@/components/file-proofing";
 import { reviewStateFor, type ApprovalLike } from "@/lib/file-review";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { formatDateTime, useProfile } from "@/lib/profile";
 
 type Attachment = components["schemas"]["Attachment"];
 type Version = components["schemas"]["AttachmentVersion"];
@@ -166,6 +167,7 @@ export function ItemAttachments({ item, userId }: { item: Item; userId: string }
 
 function VersionHistory({ itemId, attachmentId, canComment }: { itemId: string; attachmentId: string; canComment: boolean }) {
   const { t } = useTranslation();
+  const profile = useProfile();
   const { data, isPending, isError } = useQuery({
     queryKey: ["attachment-versions", attachmentId],
     queryFn: () => api<{ items: Version[] }>(`${attachmentPath(attachmentId)}/versions`),
@@ -189,7 +191,7 @@ function VersionHistory({ itemId, attachmentId, canComment }: { itemId: string; 
       <a className="underline" href={`${attachmentPath(attachmentId)}/versions/${v.version}/download`} download>
         {t("items.versionLabel", { version: v.version })} {v.filename}
       </a>
-      <span className="text-muted-foreground">{v.uploader.name} · {new Date(v.created_at).toLocaleString()}{v.is_current ? ` · ${t("items.currentVersion")}` : ""}</span>
+      <span className="text-muted-foreground">{[v.uploader.name, formatDateTime(v.created_at, profile), v.is_current && t("items.currentVersion")].filter(Boolean).join(" · ")}</span>
       <span className="rounded bg-muted px-1.5 text-xs" data-review-state={reviewStateFor(approvals.data?.items, attachmentId, v.version, load, withdrawn).state}>
         {t(`items.reviewState.${reviewStateFor(approvals.data?.items, attachmentId, v.version, load, withdrawn).state}`)}
       </span>

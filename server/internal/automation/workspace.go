@@ -153,6 +153,9 @@ type SpaceWorkspaceRule struct {
 
 // WorkspaceRulesForSpace lists the enabled workspace rules that target a Space, for people who can edit that Space.
 func WorkspaceRulesForSpace(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID string) ([]SpaceWorkspaceRule, error) {
+	if _, err := uuid.Parse(spaceID); err != nil {
+		return nil, items.ErrNotFound // DEF-021
+	}
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return nil, err

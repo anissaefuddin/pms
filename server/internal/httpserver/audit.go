@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/spaces"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -85,9 +86,9 @@ func (s *Server) auditIn(ctx context.Context, db execer, r *http.Request, actor,
 	if r != nil {
 		ip = s.clientIP(r)
 	}
-	_, err = db.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,ip,details)
-VALUES (NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NULLIF($1,'')::uuid), $2), $3, $4, $5, $6, $7)`,
-		actor, clip(label, 200), ev.Action, ev.TargetType, clip(ev.TargetID, 80), clip(ip, 64), raw)
+	_, err = db.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,ip,details,request_id)
+VALUES (NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NULLIF($1,'')::uuid), $2), $3, $4, $5, $6, $7, $8)`,
+		actor, clip(label, 200), ev.Action, ev.TargetType, clip(ev.TargetID, 80), clip(ip, 64), raw, reqid.From(ctx))
 	return err
 }
 
@@ -95,7 +96,7 @@ VALUES (NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NU
 // shortcut: best effort, so a database hiccup can lose a login entry; move to the caller's transaction if login ever writes one.
 func (s *Server) audit(r *http.Request, actor, label string, ev auditEvent) {
 	if err := s.auditIn(r.Context(), s.pool, r, actor, label, ev); err != nil && r.Context().Err() == nil {
-		slog.Error("audit event lost", "action", ev.Action, "error", err)
+		slog.ErrorContext(r.Context(), "audit event lost", "action", ev.Action, "error", err)
 	}
 }
 
@@ -114,10 +115,12 @@ type auditRow struct {
 	TargetID   string          `json:"target_id"`
 	IP         string          `json:"ip"`
 	Details    json.RawMessage `json:"details"`
+	RequestID  string          `json:"request_id"`
 }
 
 type auditFilter struct {
 	action, category string
+	requestID        string
 	actor            *uuid.UUID
 	from, to         *time.Time
 	before           int64
@@ -125,9 +128,9 @@ type auditFilter struct {
 
 func parseAuditFilter(r *http.Request) (auditFilter, string) {
 	q := r.URL.Query()
-	f := auditFilter{action: q.Get("action"), category: q.Get("category")}
-	if len(f.action) > 80 || len(f.category) > 40 {
-		return f, "action or category is too long"
+	f := auditFilter{action: q.Get("action"), category: q.Get("category"), requestID: q.Get("request_id")}
+	if len(f.action) > 80 || len(f.category) > 40 || len(f.requestID) > 64 {
+		return f, "action, category or request_id is too long"
 	}
 	if raw := q.Get("actor_id"); raw != "" {
 		id, err := uuid.Parse(raw)
@@ -156,14 +159,15 @@ func parseAuditFilter(r *http.Request) (auditFilter, string) {
 }
 
 func (s *Server) queryAudit(ctx context.Context, f auditFilter, limit int) ([]auditRow, error) {
-	rows, err := s.pool.Query(ctx, `SELECT id, at, actor_id::text, actor_name, action, target_type, target_id, ip, details FROM audit_events
+	rows, err := s.pool.Query(ctx, `SELECT id, at, actor_id::text, actor_name, action, target_type, target_id, ip, details, request_id FROM audit_events
 WHERE ($1::bigint = 0 OR id < $1)
   AND ($2 = '' OR action = $2)
   AND ($3 = '' OR action LIKE replace(replace(replace($3,'\','\\'),'%','\%'),'_','\_') || '.%')
   AND ($4::uuid IS NULL OR actor_id = $4)
   AND ($5::timestamptz IS NULL OR at >= $5)
   AND ($6::timestamptz IS NULL OR at <= $6)
-ORDER BY id DESC LIMIT $7`, f.before, f.action, f.category, f.actor, f.from, f.to, limit)
+  AND ($8 = '' OR request_id = $8)
+ORDER BY id DESC LIMIT $7`, f.before, f.action, f.category, f.actor, f.from, f.to, limit, f.requestID)
 	if err != nil {
 		return nil, err
 	}
@@ -189,7 +193,7 @@ func (s *Server) listAudit(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := s.queryAudit(r.Context(), f, limit+1)
 	if err != nil {
-		slog.Error("list audit", "error", err)
+		slog.ErrorContext(r.Context(), "list audit", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -214,7 +218,7 @@ func (s *Server) exportAudit(w http.ResponseWriter, r *http.Request) {
 	}
 	rows, err := s.queryAudit(r.Context(), f, auditExportMax)
 	if err != nil {
-		slog.Error("export audit", "error", err)
+		slog.ErrorContext(r.Context(), "export audit", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -222,9 +226,9 @@ func (s *Server) exportAudit(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "text/csv; charset=utf-8")
 	w.Header().Set("Content-Disposition", `attachment; filename="audit-events.csv"`)
 	out := csv.NewWriter(w)
-	_ = out.Write([]string{"time", "actor", "action", "target_type", "target_id", "ip", "details"})
+	_ = out.Write([]string{"time", "actor", "action", "target_type", "target_id", "ip", "details", "request_id"})
 	for _, e := range rows {
-		_ = out.Write([]string{e.At.UTC().Format(time.RFC3339), csvCell(e.ActorName), e.Action, e.TargetType, csvCell(e.TargetID), e.IP, csvCell(string(e.Details))})
+		_ = out.Write([]string{e.At.UTC().Format(time.RFC3339), csvCell(e.ActorName), e.Action, e.TargetType, csvCell(e.TargetID), e.IP, csvCell(string(e.Details)), csvCell(e.RequestID)})
 	}
 	out.Flush()
 }

@@ -20,6 +20,8 @@ func (s *Server) spaceRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/spaces", s.requireUser(s.listSpaces))
 	mux.HandleFunc("POST /api/v1/spaces", s.requireUser(s.createSpace))
 	mux.HandleFunc("GET /api/v1/space-templates", s.requireUser(s.listSpaceTemplates))
+	mux.HandleFunc("POST /api/v1/space-templates", s.requireUser(s.saveSpaceTemplate))
+	mux.HandleFunc("DELETE /api/v1/space-templates/{templateId}", s.requireUser(s.deleteSpaceTemplate))
 	mux.HandleFunc("GET /api/v1/item-types", s.requireUser(s.listItemTypes))
 	mux.HandleFunc("POST /api/v1/item-types", s.requireUser(s.createItemType))
 	mux.HandleFunc("PATCH /api/v1/item-types/{typeId}", s.requireUser(s.updateItemType))
@@ -66,7 +68,7 @@ func writeSpaceError(w http.ResponseWriter, err error) {
 	case errors.As(err, &invalid):
 		writeError(w, http.StatusUnprocessableEntity, invalid.Message)
 	default:
-		slog.Error("spaces", "error", err)
+		slog.ErrorContext(logContext(w), "spaces", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 	}
 }
@@ -309,7 +311,7 @@ func (s *Server) listUsers(w http.ResponseWriter, r *http.Request) {
 	q := r.URL.Query()
 	users, next, err := s.directory.Users(r.Context(), actorOf(r), q.Get("q"), q.Get("status"), q.Get("user_type"), limit, offset)
 	if err != nil {
-		slog.Error("list users", "error", err)
+		slog.ErrorContext(r.Context(), "list users", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}
@@ -324,7 +326,7 @@ func (s *Server) listUsers(w http.ResponseWriter, r *http.Request) {
 func (s *Server) listGroups(w http.ResponseWriter, r *http.Request) {
 	groups, err := s.directory.Groups(r.Context(), actorOf(r))
 	if err != nil {
-		slog.Error("list groups", "error", err)
+		slog.ErrorContext(r.Context(), "list groups", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 		return
 	}

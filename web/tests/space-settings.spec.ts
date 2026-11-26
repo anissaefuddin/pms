@@ -157,3 +157,12 @@ test("Space item types empty state names the next step when the Space has no cus
   await expect(page.getByText("No custom item types in this Space yet")).toBeVisible();
   await expect(page.getByRole("button", { name: "New custom item type" })).toBeVisible();
 });
+
+test("Full access saves the Space as a template; without it the section is absent", async ({ page }) => {
+  const { calls } = await mockSpaces(page, { extra: { "POST /space-templates": { status: 201, body: {} } } });
+  await page.goto(`/spaces/${marketing.id}/settings/general`);
+  await page.getByRole("textbox", { name: "Save as" }).fill("Delivery kit");
+  await page.getByRole("button", { name: "Save as template" }).click();
+  await expect(page.getByText("Template saved.")).toBeVisible();
+  expect(calls.find((call) => call.method === "POST" && call.path === "/space-templates")?.body).toEqual({ space_id: marketing.id, name: "Delivery kit" });
+});

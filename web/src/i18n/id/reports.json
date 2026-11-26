@@ -119,6 +119,7 @@
   "value.none": "(tidak ada)",
   "result.title": "Hasil",
   "result.total": "Total: {{count}}",
+  "result.partialCost": "Sebagian: sebagian waktu yang disetujui belum punya tarif atau tidak terlihat oleh Anda, jadi angka ini subtotal yang diketahui, bukan biaya penuh.",
   "result.totalMoney": "Total: {{amount}}",
   "result.empty": "Tidak ada data yang cocok dengan laporan ini.",
   "result.loading": "Menjalankan laporan…",

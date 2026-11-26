@@ -13,6 +13,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/security"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 )
 
 func (s *Server) publicDashboardRoutes(mux *http.ServeMux) {
@@ -30,27 +31,52 @@ type dashboardLinkBody struct {
 	Token       string     `json:"token,omitempty"`
 }
 
+func isSerialization(err error) bool {
+	var pgErr *pgconn.PgError
+	return errors.As(err, &pgErr) && (pgErr.Code == "40001" || pgErr.Code == "40P01")
+}
+
+// retrySerialization runs attempt, a whole transaction that is safe to repeat, again while it fails on a serialization
+// conflict, waiting a little longer each time so that the other transaction can finish.
+func retrySerialization(ctx context.Context, attempt func() error) error {
+	err := attempt()
+	for wait := 20 * time.Millisecond; wait <= 640*time.Millisecond && isSerialization(err) && ctx.Err() == nil; wait *= 2 {
+		time.Sleep(wait)
+		err = attempt()
+	}
+	return err
+}
+
 func (s *Server) linkTx(w http.ResponseWriter, r *http.Request, need policy.Capability, run func(ctx context.Context, tx pgx.Tx, id uuid.UUID) (any, int, error)) {
 	id, ok := dashboardID(w, r, "dashboardId")
 	if !ok {
 		return
 	}
 	ctx := r.Context()
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		writeDashboardError(w, err)
-		return
+	options := pgx.TxOptions{IsoLevel: pgx.Serializable}
+	if r.Method == http.MethodGet { // only reads, so it must not be one side of a conflict
+		options = pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly}
 	}
-	defer tx.Rollback(ctx)
-	if _, err = readDashboard(ctx, tx, actorOf(r), id, need); err != nil {
-		writeDashboardError(w, err)
-		return
+	var value any
+	var status int
+	attempt := func() error {
+		tx, err := s.pool.BeginTx(ctx, options)
+		if err != nil {
+			return err
+		}
+		defer tx.Rollback(ctx)
+		if _, err = readDashboard(ctx, tx, actorOf(r), id, need); err != nil {
+			return err
+		}
+		value, status, err = run(ctx, tx, id)
+		if err == nil {
+			err = tx.Commit(ctx)
+		}
+		return err
 	}
-	value, status, err := run(ctx, tx, id)
-	if err == nil {
-		err = tx.Commit(ctx)
-	}
-	if err != nil {
+	// The link carries no version to be stale, and run writes the same thing every time, so a serialization conflict with a
+	// save of the dashboard is simply tried again (DEF-039).
+	if err := retrySerialization(ctx, attempt); err != nil {
 		writeDashboardError(w, err)
 		return
 	}

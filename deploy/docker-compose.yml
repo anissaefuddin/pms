@@ -3,6 +3,10 @@ services:
     image: ${PMS_IMAGE:?Set PMS_IMAGE to an immutable GHCR tag}
     restart: unless-stopped
     environment:
+      # Image identity for GET /api/v1/version; the deploy scripts fill ID and digest. Empty is reported as "unavailable". Do not set them in .env.
+      PMS_IMAGE_REF: ${PMS_IMAGE:-}
+      PMS_IMAGE_ID: ${PMS_IMAGE_ID:-}
+      PMS_IMAGE_DIGEST: ${PMS_IMAGE_DIGEST:-}
       DB_HOST: postgres
       DB_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
       PUBLIC_URL: ${PUBLIC_URL:?Set PUBLIC_URL}

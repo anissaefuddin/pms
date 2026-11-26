@@ -1,4 +1,5 @@
 import { formatNumber, formatDate, useProfile } from "@/lib/profile";
+import { useLocationName } from "@/lib/space-queries";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { AlertTriangle, Diamond, CalendarDays, ChevronDown, ChevronRight, EyeOff, ListTree, MoreHorizontal, PanelLeftClose, PanelLeftOpen, Plus, Rows3 } from "lucide-react";
@@ -7,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { canAssignOthers } from "@/components/item-user-picker";
+import { toast } from "sonner";
 import { CustomFieldDisplay } from "@/components/custom-field-editor";
 import { AvatarStack } from "@/components/ui/avatar-stack";
 import { StatusChip, tintOf } from "@/components/ui/status-chip";
@@ -106,6 +109,7 @@ export function ItemBoard({ items, statuses, customFields, columns: shown, swiml
     const statusChanged = !!columnId && columnId !== item.status?.id && item.my_capabilities.includes("change_status");
     if (swimlanes && lane.key !== from) {
       if (!item.my_capabilities.includes("edit")) return;
+      if (lane.key && lane.key !== profile?.id && !canAssignOthers(item.my_capabilities)) return void toast.error(t("items.assignSelfOnly"));
       const ids = item.assignees.map((person) => person.id).filter((id) => id !== from);
       const update: ItemUpdate = { assignee_ids: lane.key ? [...new Set([...ids, lane.key])] : ids, ...(statusChanged ? { status_id: columnId } : {}) };
       const name = (key: string) => item.assignees.find((person) => person.id === key)?.name ?? lanes.find((entry) => entry.key === key)?.name ?? t("views.unassigned");
@@ -169,6 +173,7 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
 }) {
   const { t } = useTranslation();
   const profile = useProfile();
+  const locationName = useLocationName();
   const canMove = item.my_capabilities.includes("change_status");
   const draggable = (canMove || item.my_capabilities.includes("edit")) && !pending;
   const [childrenOpen, setChildrenOpen] = useState(false);
@@ -178,7 +183,7 @@ function Card({ item, lane, now, fields, shown, compact, showStatus, statuses, p
     shown.includes("importance") && t(`items.importance.${item.importance ?? "normal"}`),
     shown.includes("days_in_status") && item.status_changed_at && t("views.card.daysInStatus", { count: Math.max(0, Math.floor((now - Date.parse(item.status_changed_at)) / DAY)) }),
     shown.includes("author") && item.created_by && t("views.card.author", { name: item.created_by.name }),
-    shown.includes("locations") && item.locations.map((loc) => loc.space_name).filter(Boolean).join(", "),
+    shown.includes("locations") && item.locations.map(locationName).filter(Boolean).join(", "),
   ].filter(Boolean);
   const milestone = item.is_milestone ? <span className="inline-flex items-center gap-1 rounded bg-muted px-1.5 py-0.5 text-xs font-medium text-foreground"><Diamond aria-hidden className="size-3" />{t("views.milestone")}</span> : null;
   return <li className="rounded-lg border bg-card shadow-xs" style={{ contentVisibility: "auto", containIntrinsicSize: "120px" }}

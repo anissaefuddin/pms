@@ -35,7 +35,7 @@ func writeConnectorError(w http.ResponseWriter, err error) {
 		// These messages come from the connector package and never carry the remote body or the token.
 		writeProblem(w, http.StatusBadGateway, "provider_error", err.Error())
 	default:
-		slog.Error("connector operation failed", "error", err)
+		slog.ErrorContext(logContext(w), "connector operation failed", "error", err)
 		writeError(w, http.StatusBadGateway, "connector operation failed")
 	}
 }

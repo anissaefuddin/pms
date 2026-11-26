@@ -170,6 +170,8 @@
   "requests.back": "Kembali ke formulir permintaan",
   "requests.notFound.title": "Formulir tidak ditemukan",
   "requests.notFound.description": "Formulir ini tidak ada atau tidak tersedia untuk Anda.",
+  "requests.assignment.without_others": "Permintaan Anda akan dibuat tanpa penanggung jawab selain Anda sendiri. Pengguna dengan akses Full dapat menetapkan penanggung jawab setelah permintaan dikirim.",
+  "requests.assignment.choices_ignored": "Orang yang Anda pilih di sini tidak akan ditugaskan. Pengguna dengan akses Full dapat menetapkan penanggung jawab setelah permintaan dikirim.",
   "requests.sent": "Permintaan terkirim",
   "requests.sentDescription": "Permintaan Anda {{title}} sudah diterima.",
   "requests.another": "Kirim permintaan lain",

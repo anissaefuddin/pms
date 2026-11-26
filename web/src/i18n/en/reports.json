@@ -119,6 +119,7 @@
   "value.none": "(none)",
   "result.title": "Result",
   "result.total": "Total: {{count}}",
+  "result.partialCost": "Partial: some approved time has no rate or is not visible to you, so these figures are a known subtotal, not the full cost.",
   "result.totalMoney": "Total: {{amount}}",
   "result.empty": "No data matches this report.",
   "result.loading": "Running the report…",

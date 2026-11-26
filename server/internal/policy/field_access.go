@@ -14,7 +14,7 @@ const (
 
 // HiddenCustomFieldIDs returns the restricted custom fields the actor may not read (need "view") or may not write (need "edit").
 // Fields with no grant rows are never listed: they inherit item access.
-func HiddenCustomFieldIDs(ctx context.Context, tx pgx.Tx, actor Actor, need string) ([]string, error) {
+func HiddenCustomFieldIDs(ctx context.Context, tx DB, actor Actor, need string) ([]string, error) {
 	allowed := []string{FieldGrantView, FieldGrantEdit}
 	if need == FieldGrantEdit {
 		allowed = []string{FieldGrantEdit}

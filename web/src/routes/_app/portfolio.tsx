@@ -1,7 +1,7 @@
 import { useTranslation } from "react-i18next";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { Suspense, lazy, useEffect, useMemo, useRef, useState } from "react";
 import { api } from "@/lib/api";
 import type { Item } from "@/lib/items";
 import { Button } from "@/components/ui/button";
@@ -15,11 +15,11 @@ type Project = { id: string; title: string };
 type Dependency = { id: string; predecessor_id: string; successor_id: string; type: string; lag: number };
 type Timeline = { projects: Project[]; items: { project_id: string; item: Item }[]; dependencies: Dependency[] };
 
-const day = 86_400_000;
-const atDay = (value?: string | null) => value ? Date.parse(`${value}T00:00:00Z`) : undefined;
+const ItemGantt = lazy(() => import("@/components/item-gantt").then((module) => ({ default: module.ItemGantt })));
 
 function Portfolio() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const initial = new URLSearchParams(window.location.search).get("projects") ?? "";
   const [projectIDs, setProjectIDs] = useState(() => [...new Set(initial.split(",").map(id => id.trim()).filter(Boolean))].slice(0, 20));
   const [selected, setSelected] = useState<Project[]>(() => projectIDs.map(id => ({ id, title: id })));
@@ -38,9 +38,10 @@ function Portfolio() {
     queryKey: ["portfolio", projectIDs], enabled: projectIDs.length > 0, retry: false,
     queryFn: () => api<Timeline>("/api/v1/portfolio/timeline", { method: "POST", body: JSON.stringify({ project_ids: projectIDs }) }),
   });
-  const range = useMemo(() => {
-    const dates = (timeline.data?.items ?? []).flatMap(({ item }) => [atDay(item.start_date), atDay(item.due_date)]).filter((x): x is number => x !== undefined);
-    return dates.length ? { first: Math.min(...dates), last: Math.max(...dates) } : undefined;
+  // The Gantt reads each level below a project itself, so every row passes the same access check as the project page.
+  const roots = useMemo(() => {
+    const ids = new Set(timeline.data?.projects.map((project) => project.id));
+    return timeline.data?.items.map(({ item }) => item).filter((item) => ids.has(item.id)) ?? [];
   }, [timeline.data]);
   const projectByID = new Map(timeline.data?.projects.map(x => [x.id, x.title]));
   const itemByID = new Map(timeline.data?.items.map(x => [x.item.id, x.item.title]));
@@ -87,22 +88,11 @@ function Portfolio() {
     {timeline.isPending && projectIDs.length > 0 && <p role="status">{t("settings.portfolio.loadingPortfolio")}</p>}
     {timeline.error && <p role="alert">{timeline.error.message}</p>}
     {timeline.data && <>
-      <section aria-label={t("settings.portfolio.portfolioTimeline")} tabIndex={0} className="overflow-x-auto rounded-lg border focus-visible:outline-2 focus-visible:outline-ring">
-        <div className="min-w-[720px] divide-y">
-          {timeline.data.items.map(({ project_id: projectID, item }) => {
-            const start = atDay(item.start_date) ?? atDay(item.due_date);
-            const due = atDay(item.due_date) ?? start;
-            const span = range ? Math.max(1, (range.last - range.first) / day + 1) : 1;
-            const left = start && range ? ((start - range.first) / day / span) * 100 : 0;
-            const width = start && due ? Math.max(1.5, ((due - start) / day + 1) / span * 100) : 0;
-            return <div key={item.id} className="grid grid-cols-[16rem_1fr] items-center gap-3 p-2 text-sm">
-              <div className="truncate"><span className="text-muted-foreground">{projectByID.get(projectID)} · </span>{item.title}</div>
-              <div role="img" className="relative h-6 rounded bg-muted" aria-label={t("settings.portfolio.itemRange", { title: item.title, start: item.start_date ?? t("settings.portfolio.unscheduled"), due: item.due_date ?? t("settings.portfolio.unscheduled") })}>
-                {width > 0 && <div className="absolute top-1 h-4 rounded bg-primary" style={{ left: `${left}%`, width: `${width}%` }} />}
-              </div>
-            </div>;
-          })}
-        </div>
+      <section aria-label={t("settings.portfolio.portfolioTimeline")}>
+        <Suspense fallback={<p role="status">{t("settings.portfolio.loadingPortfolio")}</p>}>
+          <ItemGantt key={projectIDs.join()} items={roots} statuses={[]} customFields={[]} columns={["status", "start_date", "due_date"]} spaceId="" readonly
+            onOpen={(item) => void navigate({ to: "/tasks/$itemId", params: { itemId: item.id } })} onDelete={() => {}} onPatch={async () => {}} />
+        </Suspense>
       </section>
       <section><h2 className="font-semibold">{t("settings.portfolio.crossProjectDependencies")}</h2>
         {timeline.data.dependencies.length === 0 ? <p className="text-sm text-muted-foreground">{t("settings.portfolio.noDependencyConnectsTheSelectedProjects")}</p> :

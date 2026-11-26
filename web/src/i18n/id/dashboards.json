@@ -186,8 +186,6 @@
   "overview.kpi.projects": "Proyek aktif",
   "overview.kpi.overdue": "Tugas terlambat",
   "overview.kpi.completed": "Selesai minggu ini",
-  "overview.kpi.atRisk": "Proyek berisiko",
-  "overview.kpi.atRiskHint": "Belum tersedia",
   "overview.health.heading": "Ruang menurut kesehatan",
   "overview.health.attention": "Perlu perhatian",
   "overview.health.on_track": "Sesuai rencana",

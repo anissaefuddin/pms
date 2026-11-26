@@ -2,6 +2,7 @@
 # Hand-over bundle for the client (USR-04): full database dump, all stored files and readable CSVs, with checksums.
 # Run it while the app is stopped or idle, then run ./backup.sh for the final backup before ./decommission.sh.
 set -eu
+umask 077 # the bundle is the whole workspace: hand it over deliberately (chmod/chown), never by default
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 cd "$script_dir"

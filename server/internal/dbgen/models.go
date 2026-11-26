@@ -507,15 +507,18 @@ type Account struct {
 }
 
 type Activity struct {
-	ID        int64              `json:"id"`
-	ItemID    pgtype.UUID        `json:"item_id"`
-	ActorID   pgtype.UUID        `json:"actor_id"`
-	Action    string             `json:"action"`
-	Changes   []byte             `json:"changes"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
-	Auto      bool               `json:"auto"`
-	Via       string             `json:"via"`
-	RuleID    pgtype.UUID        `json:"rule_id"`
+	ID               int64              `json:"id"`
+	ItemID           pgtype.UUID        `json:"item_id"`
+	ActorID          pgtype.UUID        `json:"actor_id"`
+	Action           string             `json:"action"`
+	Changes          []byte             `json:"changes"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+	Auto             bool               `json:"auto"`
+	Via              string             `json:"via"`
+	RuleID           pgtype.UUID        `json:"rule_id"`
+	WorkflowID       pgtype.UUID        `json:"workflow_id"`
+	WorkflowRevision pgtype.Int4        `json:"workflow_revision"`
+	RequestID        string             `json:"request_id"`
 }
 
 type ApiKey struct {
@@ -631,6 +634,7 @@ type AuditEvent struct {
 	TargetID   string             `json:"target_id"`
 	Ip         string             `json:"ip"`
 	Details    []byte             `json:"details"`
+	RequestID  string             `json:"request_id"`
 }
 
 type AutomationLimit struct {
@@ -1194,6 +1198,14 @@ type ResourceUserSkill struct {
 	SkillID pgtype.UUID `json:"skill_id"`
 }
 
+type SavedSpaceTemplate struct {
+	ID            pgtype.UUID        `json:"id"`
+	CreatedBy     pgtype.UUID        `json:"created_by"`
+	SourceSpaceID pgtype.UUID        `json:"source_space_id"`
+	Body          []byte             `json:"body"`
+	CreatedAt     pgtype.Timestamptz `json:"created_at"`
+}
+
 type ScimToken struct {
 	ID              pgtype.UUID        `json:"id"`
 	Name            string             `json:"name"`
@@ -1332,17 +1344,32 @@ type StatusTransition struct {
 }
 
 type TimeEntry struct {
-	ID           pgtype.UUID `json:"id"`
-	ItemID       pgtype.UUID `json:"item_id"`
-	UserID       pgtype.UUID `json:"user_id"`
-	EntryDate    pgtype.Date `json:"entry_date"`
-	Minutes      int32       `json:"minutes"`
-	Category     string      `json:"category"`
-	Comment      string      `json:"comment"`
-	BillingType  string      `json:"billing_type"`
-	Locked       bool        `json:"locked"`
-	Version      int32       `json:"version"`
-	RateSnapshot pgtype.Int8 `json:"rate_snapshot"`
+	ID           pgtype.UUID        `json:"id"`
+	ItemID       pgtype.UUID        `json:"item_id"`
+	UserID       pgtype.UUID        `json:"user_id"`
+	EntryDate    pgtype.Date        `json:"entry_date"`
+	Minutes      int32              `json:"minutes"`
+	Category     string             `json:"category"`
+	Comment      string             `json:"comment"`
+	BillingType  string             `json:"billing_type"`
+	Locked       bool               `json:"locked"`
+	Version      int32              `json:"version"`
+	RateSnapshot pgtype.Int8        `json:"rate_snapshot"`
+	Status       string             `json:"status"`
+	SubmittedAt  pgtype.Timestamptz `json:"submitted_at"`
+	ReviewedBy   pgtype.UUID        `json:"reviewed_by"`
+	ReviewedAt   pgtype.Timestamptz `json:"reviewed_at"`
+	ReviewNote   string             `json:"review_note"`
+}
+
+type TimeEntryHistory struct {
+	ID      int64              `json:"id"`
+	EntryID pgtype.UUID        `json:"entry_id"`
+	ActorID pgtype.UUID        `json:"actor_id"`
+	Action  string             `json:"action"`
+	Note    string             `json:"note"`
+	Minutes int32              `json:"minutes"`
+	At      pgtype.Timestamptz `json:"at"`
 }
 
 type User struct {
@@ -1497,6 +1524,13 @@ type Workflow struct {
 	Name      string             `json:"name"`
 	IsDefault bool               `json:"is_default"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type WorkflowRevision struct {
+	WorkflowID pgtype.UUID        `json:"workflow_id"`
+	Revision   int32              `json:"revision"`
+	Definition []byte             `json:"definition"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
 
 type WorkspaceBrandAsset struct {

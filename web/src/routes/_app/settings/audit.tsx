@@ -17,7 +17,7 @@ export const Route = createFileRoute("/_app/settings/audit")({ component: AuditP
 
 export const AUDIT_CATEGORIES = ["auth", "user", "share", "role", "sso", "scim", "policy", "api_key", "webhook", "oauth", "audit"] as const;
 const COLUMNS = ["time", "actor", "action", "target", "ip", "details"] as const;
-const CSV_HEADER = ["id", "at", "actor_id", "actor_name", "action", "target_type", "target_id", "ip", "details"];
+const CSV_HEADER = ["id", "at", "actor_id", "actor_name", "action", "target_type", "target_id", "ip", "details", "request_id"];
 const select = "mt-1 block h-9 rounded-md border border-input bg-background px-2";
 const CELL = "py-1.5 pr-4";
 const DRAWER = "sm:max-w-lg";
@@ -119,6 +119,7 @@ function EventFields({ event }: { event: AuditEvent }) {
     [t("audit.field.targetType"), event.target_type],
     [t("audit.field.targetId"), event.target_id],
     [t("audit.field.ip"), event.ip],
+    [t("audit.field.requestId"), event.request_id || t("audit.noRequestId")],
   ];
   return <dl>
     {fields.map(([label, value]) => <div key={label} className={FIELD}><dt className="text-muted-foreground">{label}</dt><dd className={FIELD_VALUE}>{value}</dd></div>)}
@@ -130,11 +131,11 @@ function EventFields({ event }: { event: AuditEvent }) {
 
 // Search runs over the loaded rows only; it matches what the table shows (label, code, actor, target, IP, details).
 function searchText(event: AuditEvent, label: string) {
-  return [label, event.action, event.actor_name, event.target_type, event.target_id, event.ip, JSON.stringify(event.details)].join(" ").toLowerCase();
+  return [label, event.action, event.actor_name, event.target_type, event.target_id, event.ip, event.request_id, JSON.stringify(event.details)].join(" ").toLowerCase();
 }
 
 function downloadCsv(rows: AuditEvent[]) {
-  const csv = toCsv([CSV_HEADER, ...rows.map((e) => [e.id, e.at, e.actor_id ?? "", e.actor_name, e.action, e.target_type, e.target_id, e.ip, JSON.stringify(e.details)])]);
+  const csv = toCsv([CSV_HEADER, ...rows.map((e) => [e.id, e.at, e.actor_id ?? "", e.actor_name, e.action, e.target_type, e.target_id, e.ip, JSON.stringify(e.details), e.request_id])]);
   const url = URL.createObjectURL(new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8" }));
   const link = document.createElement("a");
   link.href = url;

@@ -87,7 +87,7 @@ func (s *Server) ipAllowed(r *http.Request) bool {
 	p, err := s.loadPolicy(r.Context())
 	if err != nil {
 		if r.Context().Err() == nil {
-			slog.Error("access policy", "error", err)
+			slog.ErrorContext(r.Context(), "access policy", "error", err)
 		}
 		return true
 	}

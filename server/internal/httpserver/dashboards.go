@@ -126,7 +126,7 @@ func writeDashboardError(w http.ResponseWriter, err error) {
 	case errors.As(err, &invalid):
 		writeError(w, 422, invalid.Error())
 	default:
-		slog.Error("dashboard operation", "error", err)
+		slog.ErrorContext(logContext(w), "dashboard operation", "error", err)
 		writeError(w, 500, "internal error")
 	}
 }

@@ -12,7 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { ItemUserPicker, type PersonOption } from "@/components/item-user-picker";
+import { ItemUserPicker, assignSelfOnly, type PersonOption } from "@/components/item-user-picker";
 import { ProjectProgress } from "@/components/project-progress";
 import { CustomFieldDisplay, CustomFieldEditor } from "@/components/custom-field-editor";
 import { AvatarStack } from "@/components/ui/avatar-stack";
@@ -134,7 +134,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
           {isExpanded ? <ChevronDown /> : <ChevronRight />}
         </Button>}
         <TypeGlyph item={item} className="size-4 text-muted-foreground" />
-        {!!path?.length && <span className="max-w-48 shrink-0 truncate text-xs text-muted-foreground" title={path.map((step) => step.title).join(" › ")}>{path.map((step) => step.title).join(" › ")}</span>}
+        {!!path?.length && <span className="min-w-0 max-w-48 truncate text-xs text-muted-foreground" title={path.map((step) => step.title).join(" › ")}>{path.map((step) => step.title).join(" › ")}</span>}
         {editing?.id === item.id && editing.field === "title"
           ? <form className="min-w-0 flex-1" onSubmit={(event) => {
             event.preventDefault();
@@ -145,7 +145,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
             <Input name="title" aria-label={t("items.name")} defaultValue={item.title} maxLength={500} required autoFocus
               onKeyDown={(event) => { if (event.key === "Escape") setEditing(undefined); }} />
           </form>
-          : <Button variant="ghost" size="sm" className="min-w-0 justify-start" title={item.title}
+          : <Button variant="ghost" size="sm" className="min-w-0 shrink justify-start" title={item.title}
               onClick={() => onOpen(item)}><span className="truncate">{item.title}</span></Button>}
         {canEditTitle && <Button size="icon-sm" variant="ghost" className="opacity-0 transition-opacity group-hover/table-row:opacity-100 group-focus-within/table-row:opacity-100 [@media(hover:none)]:opacity-100" aria-label={t("views.editTitle", { name: item.title })}
           onClick={() => setEditing({ id: item.id, field: "title" })}><Pencil /></Button>}
@@ -192,7 +192,7 @@ export function ItemTable({ initialExpanded, onExpandedChange, items, statuses, 
         const { item } = row.original;
         const value = item.fields?.[field.id];
         const display = profile ? <CustomFieldDisplay field={field} value={value} people={peopleOf(item, field, value)} profile={profile} /> : null;
-        return item.my_capabilities.includes("edit") && !field.archived_at && field.type !== "formula" && profile
+        return item.my_capabilities.includes("edit") && !field.archived_at && field.type !== "formula" && field.access !== "view" && profile
           ? <Button variant="ghost" size="sm" className="max-w-full justify-start truncate" aria-label={`${field.name}: ${item.title}`}
             onClick={() => setEditing({ id: item.id, field: fieldColumn(field.id) as `field:${string}` })}>{display}</Button>
           : display;
@@ -413,10 +413,11 @@ function FieldEdit({ field, item, locale, pending, onSave, onCancel }: {
 function AssigneeEdit({ item, onSave, onCancel }: { item: Item; onSave: (people: PersonOption[]) => void; onCancel: () => void }) {
   const { t } = useTranslation();
   const [selected, setSelected] = useState(item.assignees);
+  const profile = useProfile();
   return <Dialog open onOpenChange={(open) => { if (!open) onCancel(); }}>
     <DialogContent>
       <DialogTitle>{t("items.assignees")}</DialogTitle>
-      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} />
+      <ItemUserPicker label={t("items.assignees")} multiple selected={selected} onChange={setSelected} selfOnly={assignSelfOnly(profile, item.my_capabilities)} />
       <div className="flex gap-2">
         <Button size="sm" onClick={() => onSave(selected)}>{t("items.save")}</Button>
         <Button size="sm" variant="ghost" onClick={onCancel}>{t("items.cancel")}</Button>

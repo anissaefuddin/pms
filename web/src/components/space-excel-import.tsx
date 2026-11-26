@@ -59,7 +59,7 @@ function ImportForm({ spaceId, busy, setBusy, onClose }: {
   const [step, setStep] = useState(0);
   const [error, setError] = useState("");
   const preview = validated?.preview;
-  const fieldChoices = (fieldPage?.items ?? []).filter((field) => !field.archived_at);
+  const fieldChoices = (fieldPage?.items ?? []).filter((field) => !field.archived_at && field.access !== "none" && field.access !== "view");
   const targets = [
     ...itemColumns.map((id) => ({ id, label: t(`excel.column.${id}`) })),
     ...fieldChoices.map((field) => ({ id: `field:${field.id}`, label: field.name })),

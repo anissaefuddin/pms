@@ -140,5 +140,15 @@ ORDER BY e.at DESC, e.kind DESC, e.id DESC LIMIT $7`,
 		encoded := base64.RawURLEncoding.EncodeToString(data)
 		next = &encoded
 	}
+	ids, changes := make([]string, len(out)), make([]json.RawMessage, len(out))
+	for i, e := range out {
+		ids[i], changes[i] = e.Item.ID, e.Changes
+	}
+	if err := RedactHistory(ctx, tx, actor, ids, changes); err != nil {
+		return nil, nil, err
+	}
+	for i := range out {
+		out[i].Changes = changes[i]
+	}
 	return out, next, tx.Commit(ctx)
 }

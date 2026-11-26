@@ -16,6 +16,8 @@ test("A Task created in the Board is the same in the Table and in the server dat
   // 1. Board: quick create in the "In Progress" column of the project.
   await page.goto(`/items/${project}`);
   await page.getByRole("radio", { name: "Board" }).click();
+  // The Board hides empty columns by default; "In Progress" has no card yet.
+  await page.getByRole("button", { name: /empty/i, pressed: true }).click();
   const column = page.getByRole("region", { name: "In Progress", exact: true });
   await column.getByRole("button", { name: "Add item" }).click();
   await page.getByPlaceholder("Task name").fill("Cross view task");

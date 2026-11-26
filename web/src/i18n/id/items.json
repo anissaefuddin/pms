@@ -97,6 +97,8 @@
   "parentLink": "Kembali ke induk",
   "browseChildren": "Telusuri di dalam",
   "searchUsers": "Cari pengguna aktif",
+  "assignToMe": "Tugaskan ke saya",
+  "assignSelfOnly": "Hanya pemegang akses Penuh yang bisa menugaskan orang lain.",
   "remove": "Hapus {{name}}",
   "customFields": {
     "title": "Field kustom",

@@ -1,4 +1,4 @@
-import { useProfile, formatNumber } from "@/lib/profile";
+import { useProfile, formatNumber, useAppVersion } from "@/lib/profile";
 import { useEffect, useRef, useState, type KeyboardEvent, type ReactNode } from "react";
 import { Maximize2, Minimize2, MoreHorizontal, Shapes, Bell, Blocks, ChevronDown, CircleHelp, Languages, Layers, LogOut, MessageSquare, Palette, Plus, Settings, Sliders, SquareCheck, Folder, FolderKanban, ClipboardList, Trash2, UserPlus } from "lucide-react";
 import { Link, useNavigate } from "@tanstack/react-router";
@@ -81,6 +81,7 @@ export function SidebarFooter({ collapsed = false, inbox = true }: { collapsed?:
 /** Profile menu. It lives in the sidebar footer, not in the top bar. */
 /** Profile control: avatar plus a dropdown indicator. Compact (collapsed sidebar) shows the avatar only. */
 export function ProfileMenu({ compact = false, footer = false }: { compact?: boolean; footer?: boolean }) {
+  const appVersion = useAppVersion();
   const { t, i18n } = useTranslation();
   const profile = useProfile();
   const navigate = useNavigate();
@@ -149,7 +150,7 @@ export function ProfileMenu({ compact = false, footer = false }: { compact?: boo
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
           <DropdownMenuItem onClick={logout} className="text-destructive focus:text-destructive"><LogOut />{t("nav.profile.logout")}</DropdownMenuItem>
-          <p className="px-2 pt-2 text-[11px] text-muted-foreground">{t("nav.appVersion", { version: __APP_VERSION__ })}</p>
+          <p className="px-2 pt-2 text-[11px] text-muted-foreground">{t("nav.appVersion", { version: appVersion })}</p>
         </DropdownMenuContent>
       </DropdownMenu>
       <FeedbackDialog open={feedback} onOpenChange={setFeedback} />

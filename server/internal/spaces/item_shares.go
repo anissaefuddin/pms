@@ -3,7 +3,9 @@ package spaces
 import (
 	"context"
 	"errors"
+	"slices"
 
+	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/jackc/pgx/v5"
@@ -45,6 +47,19 @@ WHERE l.item_id=$1 AND l.deleted_root_id IS NULL AND s.kind='personal')`, id).Sc
 		if current != *version {
 			return nil, 0, ErrVersionConflict
 		}
+		// Giving someone a role that includes sharing hands out the right to assign, so it takes what assigning takes (DEF-041).
+		// Read before the write: the new share must not count for itself.
+		if err := items.LockGrants(ctx, tx, actor.ID); err != nil {
+			return nil, 0, itemShareConflict(err)
+		}
+		mayDelegate, err := items.CanReassign(ctx, tx, actor, id)
+		if err != nil {
+			return nil, 0, err
+		}
+		before, err := delegates(ctx, tx, id)
+		if err != nil {
+			return nil, 0, err
+		}
 		if err = tx.QueryRow(ctx, "UPDATE items SET version=version+1 WHERE id=$1 AND version=$2 RETURNING version", id, current).Scan(&current); err != nil {
 			if errors.Is(err, pgx.ErrNoRows) {
 				return nil, 0, ErrVersionConflict
@@ -54,12 +69,32 @@ WHERE l.item_id=$1 AND l.deleted_root_id IS NULL AND s.kind='personal')`, id).Sc
 		if err = writeTargetShares(ctx, tx, id, "item", actor, want, caps, batch); err != nil {
 			return nil, 0, itemShareConflict(err)
 		}
+		after, err := delegates(ctx, tx, id)
+		if err != nil {
+			return nil, 0, err
+		}
+		for _, principal := range after {
+			if !mayDelegate && !slices.Contains(before, principal) {
+				return nil, 0, ErrForbidden
+			}
+		}
 	}
 	rows, err := readTargetShares(ctx, tx, actor, id, "item")
 	if err != nil {
 		return nil, 0, err
 	}
 	return rows, current, itemShareConflict(tx.Commit(ctx))
+}
+
+// delegates lists who holds a direct share on the Item that includes sharing.
+func delegates(ctx context.Context, tx pgx.Tx, id string) ([]string, error) {
+	rows, err := tx.Query(ctx, `SELECT sh.principal_type::text || ':' || sh.principal_id::text FROM shares sh
+LEFT JOIN custom_roles cr ON cr.id=sh.custom_role_id
+WHERE sh.target_type='item' AND sh.target_id=$1::uuid AND ((sh.custom_role_id IS NULL AND sh.role='full') OR cr.caps_mask & 128 <> 0)`, id)
+	if err != nil {
+		return nil, err
+	}
+	return pgx.CollectRows(rows, pgx.RowTo[string])
 }
 
 func itemShareConflict(err error) error {

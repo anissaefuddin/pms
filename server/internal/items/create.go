@@ -36,6 +36,15 @@ func Create(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields 
 	}
 	var item Detail
 	err := inSerializable(ctx, pool, parentLockKeys(fields), func(tx pgx.Tx) (err error) {
+		// Checked again inside the writing transaction, with the grants held (DEF-049).
+		if len(assigneesOtherThan(fields, actor.ID)) > 0 {
+			if err := lockGrants(ctx, tx, actor.ID); err != nil {
+				return err
+			}
+			if err := authorizeAssignments(ctx, tx, actor, fields); err != nil {
+				return err
+			}
+		}
 		item, err = create(ctx, tx, actor, fields, batch)
 		return err
 	}, func() {
@@ -201,6 +210,23 @@ func createWithCustomFields(ctx context.Context, tx pgx.Tx, actor policy.Actor, 
 	if raw, ok := fields["default_view_type"]; ok {
 		if json.Unmarshal(raw, &view) != nil || view == nil || !slices.Contains(DefaultViewTypes, *view) || kind == "task" {
 			return Detail{}, Invalid("default_view_type must be one of table, board, gantt, calendar, files, chart on a project or folder")
+		}
+	}
+
+	// A share that includes sharing hands out the right to assign, so it takes what assigning takes (DEF-044).
+	for _, share := range shares {
+		if policy.ValidRole(share.Role) && policy.RoleCaps(policy.Role(share.Role)).Has(policy.Share) {
+			if err := lockGrants(ctx, tx, actor.ID); err != nil {
+				return Detail{}, err
+			}
+			ok, err := CanAssignOthers(ctx, tx, actor, locations)
+			if err != nil {
+				return Detail{}, err
+			}
+			if !ok {
+				return Detail{}, ErrForbidden
+			}
+			break
 		}
 	}
 
@@ -490,33 +516,140 @@ func spaceDefaultWorkflow(ctx context.Context, tx pgx.Tx, spaceID uuid.UUID, kin
 	return wf, err
 }
 
-// AuthorizeAssignments is W3 for a direct create (POST /items): assigning someone else needs Space Admin in each location.
-// Workspace admins are not checked here (an interpretation to confirm). Forms, blueprints, and automation do not call it,
-// so an intake form can still assign its team.
+// AuthorizeAssignments is W3 for a direct create (POST /items): until LENS has an assign capability, assigning someone else
+// needs a Space Admin or a project manager, meaning Full access (share) on each location of a shared Space.
+// Forms, blueprints, and automation do not call it: each decides from the rights of the person who is behind it.
 func AuthorizeAssignments(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, fields map[string]json.RawMessage) error {
-	if actor.Type == policy.Admin {
-		return nil
-	}
+	return authorizeAssignments(ctx, pool, actor, fields)
+}
+
+func authorizeAssignments(ctx context.Context, db policy.DB, actor policy.Actor, fields map[string]json.RawMessage) error {
 	others := assigneesOtherThan(fields, actor.ID)
 	if len(others) == 0 {
 		return nil
 	}
-	var locations []struct {
-		SpaceID string `json:"space_id"`
-	}
+	var locations []Location
 	if raw, ok := fields["locations"]; ok {
 		_ = json.Unmarshal(raw, &locations)
 	}
+	ok, err := CanAssignOthers(ctx, db, actor, locations)
+	if err == nil && !ok {
+		err = ErrAssignForbidden
+	}
+	return err
+}
+
+// CanAssignOthers reports whether the actor may give a Task to someone else in every one of these places: Full access (share) to a
+// shared Space. The Workspace role never stands in for it.
+func CanAssignOthers(ctx context.Context, db policy.DB, actor policy.Actor, locations []Location) (bool, error) {
 	for _, loc := range locations {
-		isAdmin, err := policy.IsSpaceAdmin(ctx, pool, actor.ID, loc.SpaceID)
+		space, _, err := policy.SpaceAccessFor(ctx, db, actor, loc.SpaceID.String())
 		if err != nil {
-			return err
+			return false, err
 		}
-		if !isAdmin {
-			return ErrForbidden
+		caps, err := locationCaps(ctx, db, actor, loc)
+		if err != nil {
+			return false, err
+		}
+		if space.Kind == "personal" || !caps.Has(policy.Share) {
+			return false, nil
+		}
+		if loc.ParentID != nil { // a folder placed twice grants only if every way up from it does
+			parent := loc.ParentID.String()
+			every, err := policy.SharedOnEveryPath(ctx, db, actor, loc.SpaceID.String(), []string{parent})
+			if err != nil || !every[parent] {
+				return false, err
+			}
 		}
 	}
-	return nil
+	return len(locations) > 0, nil
+}
+
+// CanReassign is the same rule for an existing Item: Full access on every way up from the Item, in every shared Space of the Item
+// that the actor can see, and in at least one. A personal Space gives no say, so placing a Task in one's own Space adds nothing. Another place where the actor is only
+// an Editor is enough to refuse, so adding a Space of one's own as a second location adds nothing either.
+func CanReassign(ctx context.Context, db policy.DB, actor policy.Actor, itemID string) (bool, error) {
+	allowed, err := CanReassignMany(ctx, db, actor, []string{itemID})
+	return allowed[itemID], err
+}
+
+// CanReassignMany answers CanReassign for many Items with one permission query per Space, not one per Item.
+func CanReassignMany(ctx context.Context, db policy.DB, actor policy.Actor, itemIDs []string) (map[string]bool, error) {
+	allowed := map[string]bool{}
+	if len(itemIDs) == 0 {
+		return allowed, nil
+	}
+	rows, err := db.Query(ctx, `SELECT l.space_id::text, array_agg(DISTINCT l.item_id::text)
+FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.kind='shared' AND s.deleted_at IS NULL
+WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_id IS NULL GROUP BY l.space_id`, itemIDs)
+	if err != nil {
+		return nil, err
+	}
+	type place struct {
+		Space string
+		Items []string
+	}
+	places, err := pgx.CollectRows(rows, pgx.RowToStructByPos[place])
+	if err != nil {
+		return nil, err
+	}
+	refused := map[string]bool{}
+	for _, p := range places {
+		caps, err := policy.ItemsCaps(ctx, db, actor, p.Items, &p.Space)
+		if err != nil {
+			return nil, err
+		}
+		every, err := policy.SharedOnEveryPath(ctx, db, actor, p.Space, p.Items)
+		if err != nil {
+			return nil, err
+		}
+		for _, id := range p.Items {
+			switch c := caps[id]; {
+			case !c.Has(policy.View):
+			case c.Has(policy.Share) && every[id]:
+				allowed[id] = true
+			default:
+				refused[id] = true
+			}
+		}
+	}
+	for id := range refused {
+		delete(allowed, id)
+	}
+	return allowed, nil
+}
+
+// FormSubmitter says what a person sending a request form may decide about assignees. editor: works in the destination without Full
+// access, so nobody but themself is assigned. member: can see the destination but not edit it, so the form's own preset stands and
+// their own picks of others do not. Neither: someone outside the Space, for whom assigning the team is what an intake form is for.
+func FormSubmitter(ctx context.Context, db policy.DB, actor policy.Actor, location Location) (editor, member bool, err error) {
+	caps, err := locationCaps(ctx, db, actor, location)
+	if err != nil || !caps.Has(policy.View) {
+		return false, false, err
+	}
+	ok, err := CanAssignOthers(ctx, db, actor, []Location{location})
+	if err != nil || ok {
+		return false, false, err
+	}
+	return caps.Has(policy.Edit), !caps.Has(policy.Edit), nil
+}
+
+// requireReassign applies the rule to an edit: without it a person may take or leave a Task, not give it to someone else. A change
+// made by an automation rule counts as its owner's, with the owner's rights at the time it runs.
+func requireReassign(ctx context.Context, tx pgx.Tx, actor policy.Actor, itemID string, assignees []uuid.UUID) error {
+	var addsOthers bool
+	if err := tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM unnest($2::uuid[]) u WHERE u<>$3::uuid
+ AND NOT EXISTS(SELECT 1 FROM item_assignees a WHERE a.item_id=$1::uuid AND a.user_id=u))`, itemID, assignees, actor.ID).Scan(&addsOthers); err != nil || !addsOthers {
+		return err
+	}
+	if err := lockGrants(ctx, tx, actor.ID); err != nil {
+		return err
+	}
+	ok, err := CanReassign(ctx, tx, actor, itemID)
+	if err == nil && !ok {
+		err = ErrAssignForbidden
+	}
+	return err
 }
 
 // assigneesOtherThan lists the assignees of a create (assignee_ids and assignee_allocations) that are not the actor.

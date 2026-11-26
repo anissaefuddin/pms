@@ -29,14 +29,16 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
     queryFn: () => api<{ items: CustomField[] }>(`/api/v1/spaces/${spaceId}/custom-fields`),
   })) });
   const fields = queries.flatMap((query) => query.data?.items ?? [])
-    .filter((field) => (!field.archived_at || item.fields?.[field.id] != null) &&
+    .filter((field) => field.access !== "none" && (!field.archived_at || item.fields?.[field.id] != null) &&
       (item.type === "project" || !field.config?.project_budget));
   const budgetFields = fields.filter((field) => field.config?.project_budget);
   const actual = useQuery({
     queryKey: ["time-entries", "summary", item.id], enabled: budgetFields.length > 0,
-    queryFn: ({ signal }) => api<{ actual_minutes: number; actual_cost_minor?: number; scope: "project" | "permitted_entries" }>(
+    queryFn: ({ signal }) => api<{ actual_minutes: number; actual_cost_minor?: number; cost_status: "full" | "partial" | "unauthorized"; known_cost_minor?: number; budgets?: { field_id: string; variance_minor: number | null; utilization_percent: number | null }[]; scope: "project" | "permitted_entries" }>(
       `/api/v1/items/${item.id}/time-summary`, { signal }),
   });
+  const money = (field: CustomField, minor: number) => formatCustomNumber(field, minor / 100, i18n.language);
+  const budgetOf = (id: string) => actual.data?.budgets?.find((budget) => budget.field_id === id);
   const pending = queries.some((query) => query.isPending);
   const failed = queries.filter((query) => query.isError);
   const editingField = fields.find((field) => field.id === editing && !field.archived_at);
@@ -79,12 +81,18 @@ export function ItemCustomFields({ item, profile, editable, disabled, onEdit, on
                 {t(actual.data.scope === "project" ? "time.actual" : "time.actualVisible", { duration: formatMinutes(actual.data.actual_minutes) })}
               </p>}
               {field.config?.project_budget && actual.data?.actual_cost_minor != null && <p className="text-sm text-muted-foreground">
-                {t("time.actualCost", { cost: formatCustomNumber(field, actual.data.actual_cost_minor / 100, i18n.language) })}
-                {typeof value === "number" && value > 0 && ` · ${t("time.budgetUsed", { percent: Math.round(actual.data.actual_cost_minor / 100 / value * 100) })}`}
+                {t("time.actualCost", { cost: money(field, actual.data.actual_cost_minor) })}
+                {budgetOf(field.id)?.utilization_percent != null && ` · ${t("time.budgetUsed", { percent: budgetOf(field.id)!.utilization_percent })}`}
+              </p>}
+              {field.config?.project_budget && budgetOf(field.id)?.variance_minor != null && <p className={budgetOf(field.id)!.variance_minor! < 0 ? "text-sm text-destructive" : "text-sm text-muted-foreground"}>
+                {t(budgetOf(field.id)!.variance_minor! < 0 ? "time.budgetOver" : "time.budgetLeft", { amount: money(field, Math.abs(budgetOf(field.id)!.variance_minor!)) })}
+              </p>}
+              {field.config?.project_budget && actual.data?.cost_status === "partial" && <p className="text-sm text-muted-foreground">
+                {actual.data.known_cost_minor != null && `${t("time.knownCost", { cost: money(field, actual.data.known_cost_minor) })} `}{t("time.costPartial")}
               </p>}
               {field.config?.project_budget && actual.isError && <FormError message={actual.error.message} />}
             </div>
-            {editable && !field.archived_at && field.type !== "formula" && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}
+            {editable && !field.archived_at && field.type !== "formula" && field.access !== "view" && <Button type="button" size="sm" variant="outline" disabled={disabled || !!editingField}
               ref={(button) => {
                 if (button && returnFocus.current === field.id) {
                   button.focus();

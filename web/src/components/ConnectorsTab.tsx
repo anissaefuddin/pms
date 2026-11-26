@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { api } from "@/lib/api";
+import { formatDateTime, useProfile } from "@/lib/profile";
 import { useSpaces } from "@/lib/space-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -111,7 +112,8 @@ function AddConnector({ kinds, onDone }: { kinds: string[]; onDone: () => void }
 }
 
 function InstallList({ items, toggle, sync }: { items: Install[]; toggle: (c: Install) => void; sync: (id: string) => void }) {
-  const { t, i18n } = useTranslation();
+  const { t } = useTranslation();
+  const profile = useProfile();
   return <ul className="grid gap-4 lg:grid-cols-2">
     {items.map((c) => {
       // Status is derived from what the server reports: a failed last sync wins over enabled or disabled.
@@ -129,7 +131,7 @@ function InstallList({ items, toggle, sync }: { items: Install[]; toggle: (c: In
         {c.last_sync_ok === false && c.last_sync_message && <p role="alert" className="rounded-md bg-red-500/10 px-3 py-2 text-sm">{c.last_sync_message}</p>}
         <p className="text-xs text-muted-foreground" role="status">
           {c.last_sync_at
-            ? t(c.last_sync_ok ? "settings.apps.connectors.syncOk" : "settings.apps.connectors.syncFailed", { when: new Date(c.last_sync_at).toLocaleString(i18n.language), message: c.last_sync_message ?? "" })
+            ? t(c.last_sync_ok ? "settings.apps.connectors.syncOk" : "settings.apps.connectors.syncFailed", { when: formatDateTime(c.last_sync_at, profile), message: c.last_sync_message ?? "" })
             : t("settings.apps.connectors.neverSynced")}
         </p>
         <p className="text-xs text-muted-foreground">{t(c.secret_names.includes("refresh_token") ? "settings.apps.connectors.authRefresh" : "settings.apps.connectors.authToken")}</p>

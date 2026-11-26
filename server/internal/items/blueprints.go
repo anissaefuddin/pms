@@ -11,6 +11,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -267,9 +268,9 @@ func Audit(ctx context.Context, tx pgx.Tx, actor policy.Actor, action, targetTyp
 	if err != nil {
 		return err
 	}
-	_, err = tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details)
-VALUES(NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NULLIF($1,'')::uuid),''), $2, $3, $4, $5)`,
-		actor.ID, action, targetType, targetID, raw)
+	_, err = tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details,request_id)
+VALUES(NULLIF($1,'')::uuid, COALESCE((SELECT email::text FROM users WHERE id=NULLIF($1,'')::uuid),''), $2, $3, $4, $5, $6)`,
+		actor.ID, action, targetType, targetID, raw, reqid.From(ctx))
 	return err
 }
 
@@ -412,6 +413,8 @@ type BlueprintUse struct {
 	FinishDate *string `json:"finish_date"`
 	// Overrides replace the blueprint's defaults on the root item (a form's answers win over the blueprint).
 	Overrides map[string]json.RawMessage `json:"-"`
+	// OnlyAssignee keeps just this person among the blueprint's assignees: set for someone who may not assign others.
+	OnlyAssignee string `json:"-"`
 }
 
 // UseBlueprintTx is UseBlueprint inside the caller's transaction.
@@ -448,6 +451,18 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 	}
 	if err := validateBlueprintTree(tree); err != nil { // refused before anything is written
 		return Detail{}, err
+	}
+	if actor.Form == nil { // a form submission decides this from the submitter's own rights
+		if err := lockGrants(ctx, tx, actor.ID); err != nil {
+			return Detail{}, err
+		}
+		ok, err := CanAssignOthers(ctx, tx, actor, use.Locations)
+		if err != nil {
+			return Detail{}, err
+		}
+		if !ok {
+			use.OnlyAssignee = actor.ID
+		}
 	}
 	anchor, err := blueprintAnchor(tree, use.StartDate, use.FinishDate)
 	if err != nil {
@@ -492,7 +507,7 @@ func useBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.UU
 		fields["importance"] = marshalJSON(n.Importance)
 		assignees := []uuid.UUID{}
 		for _, u := range n.AssigneeIDs {
-			if active[u] {
+			if active[u] && (use.OnlyAssignee == "" || u.String() == use.OnlyAssignee) {
 				assignees = append(assignees, u)
 			}
 		}
@@ -723,6 +738,11 @@ func editBlueprint(ctx context.Context, tx pgx.Tx, actor policy.Actor, id uuid.U
 		}
 		if err := validateEditedGraph(parsed); err != nil {
 			return nil, err
+		}
+		if spaceID != nil {
+			if err := requireBlueprintAssignAuthority(ctx, tx, actor, id, *spaceID, parsed); err != nil {
+				return nil, err
+			}
 		}
 		for i, n := range parsed.Nodes {
 			if n.StatusID == nil {

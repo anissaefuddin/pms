@@ -162,6 +162,7 @@ function Inbox() {
           {selected.snippet && <p className="whitespace-pre-wrap text-sm">{selected.snippet}</p>}
           {reportIdOf(selected) && <ImportReport reportId={reportIdOf(selected)!} />}
           <time className="block text-xs text-muted-foreground" dateTime={selected.created_at}>{formatDateTime(selected.created_at, profile)}</time>
+          {selected.kind.startsWith("timesheet_") && <Link className="text-sm underline" to="/timesheets">{t("nav.inbox.openTimesheets")}</Link>}
           {selected.item_id && <Link className="text-sm underline" to="/tasks/$itemId" params={{ itemId: selected.item_id }}>{t("nav.inbox.open")}</Link>}
           {!selected.item_id && selected.space_id && <Link className="text-sm underline" to="/spaces/$spaceId" params={{ spaceId: selected.space_id }}>{t("nav.inbox.open")}</Link>}
         </div> : <p className="text-sm text-muted-foreground">{t("nav.inbox.select")}</p>}

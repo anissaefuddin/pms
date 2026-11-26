@@ -171,6 +171,8 @@
   "requests.back": "Back to request forms",
   "requests.notFound.title": "Form not found",
   "requests.notFound.description": "This form does not exist or is not available to you.",
+  "requests.assignment.without_others": "Your request will be created without an assignee other than yourself. A user with Full access can assign it after submission.",
+  "requests.assignment.choices_ignored": "People you choose here will not be assigned. A user with Full access can assign the request after submission.",
   "requests.sent": "Request sent",
   "requests.sentDescription": "Your request {{title}} was received.",
   "requests.another": "Submit another request",

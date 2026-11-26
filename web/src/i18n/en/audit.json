@@ -25,6 +25,8 @@
   "field.targetType": "Target type",
   "field.targetId": "Target ID",
   "field.ip": "IP address",
+  "field.requestId": "Request ID",
+  "noRequestId": "Not recorded",
   "col.open": "Open",
   "loading": "Loading audit events…",
   "error": "The audit trail could not be loaded.",

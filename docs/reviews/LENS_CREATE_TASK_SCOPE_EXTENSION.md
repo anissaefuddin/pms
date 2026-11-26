@@ -115,6 +115,7 @@
 - Cross-Space: ditolak jika tidak punya hak yang diperlukan di Space tujuan.
 - Backend wajib memvalidasi Create dan Assign. Menyembunyikan tombol di frontend tidak cukup.
 - **Perlu dicek:** daftar kapabilitas LENS saat ini (`view, comment, change_status, attach, edit, create, delete, share, use_blueprint, create_blueprint, manage_blueprint`) belum punya "assign". Sesuai keputusan, jika Assign belum ada, assignment ke orang lain dibatasi ke Space Admin dan Project Manager sampai permission itu didefinisikan.
+- **Implementasi:** Project Manager dibaca sebagai pemegang akses Full (`share`) pada lokasi tujuan. Penolakan menyebut sebabnya. Personal Space tetap tidak menerima assignee lain.
 
 **W4: rentang tanggal dan alokasi default (APPROVED)**
 

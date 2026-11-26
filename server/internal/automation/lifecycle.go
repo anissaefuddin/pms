@@ -7,6 +7,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -75,8 +76,8 @@ func audit(ctx context.Context, tx pgx.Tx, actor policy.Actor, action, ruleID st
 		details = map[string]any{}
 	}
 	raw, _ := json.Marshal(details)
-	_, err := tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details)
-VALUES ($1::uuid, COALESCE((SELECT email::text FROM users WHERE id=$1::uuid), 'Automation Bot'), $2, 'automation_rule', $3, $4)`, id, action, ruleID, raw)
+	_, err := tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details,request_id)
+VALUES ($1::uuid, COALESCE((SELECT email::text FROM users WHERE id=$1::uuid), 'Automation Bot'), $2, 'automation_rule', $3, $4, $5)`, id, action, ruleID, raw, reqid.From(ctx))
 	return err
 }
 
@@ -158,6 +159,13 @@ func TransferOwner(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, 
 	defer tx.Rollback(ctx)
 	rule, err := manage(ctx, tx, actor, ruleID, true)
 	if err != nil {
+		return Rule{}, err
+	}
+	current, err := ruleDefinitions(ctx, tx, rule.ID)
+	if err != nil {
+		return Rule{}, err
+	}
+	if err := requireAssignAuthority(ctx, tx, actor, rule, current...); err != nil {
 		return Rule{}, err
 	}
 	// A workspace rule has no Space of its own: its new owner must be active, and each run still checks access to its Space.

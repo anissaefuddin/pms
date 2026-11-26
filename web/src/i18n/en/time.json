@@ -65,5 +65,37 @@
   "filteredTotal": "Total for the filtered entries: {{time}}",
   "billableTotal": "Billable: {{time}}",
   "nonBillableTotal": "Non-billable: {{time}}",
-  "pageOnlyTotal": "On this page only: {{time}}"
+  "pageOnlyTotal": "On this page only: {{time}}",
+  "submitWeek_one": "Submit {{count}} entry",
+  "submitWeek_other": "Submit {{count}} entries",
+  "status": {
+    "draft": "Draft",
+    "submitted": "Submitted",
+    "approved": "Approved",
+    "rejected": "Rejected"
+  },
+  "review": {
+    "title": "Time to review",
+    "note": "Note (optional)",
+    "noteFor": "Note for {{label}}",
+    "approve": "Approve",
+    "approveFor": "Approve {{label}}",
+    "reject": "Reject",
+    "rejectFor": "Reject {{label}}",
+    "more": "More entries appear after you review these."
+  },
+  "costPartial": "Actual cost is not shown: some time is not visible to you or has no rate.",
+  "history": {
+    "title": "History",
+    "for": "History of {{label}}",
+    "empty": "No approval steps recorded.",
+    "submitted": "Submitted",
+    "approved": "Approved",
+    "rejected": "Rejected",
+    "locked": "Locked",
+    "unlocked": "Unlocked"
+  },
+  "budgetOver": "Over budget by {{amount}}",
+  "budgetLeft": "Remaining budget: {{amount}}",
+  "knownCost": "Known cost subtotal: {{cost}}."
 }

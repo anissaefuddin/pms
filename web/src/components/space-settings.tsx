@@ -228,6 +228,7 @@ function GeneralTab({ space, me, onDirtyChange }: { space: Space; me?: CurrentUs
             <Button type="button" size="sm" variant="outline" onClick={() => void reload()}>{t("spaces.conflict.reload")}</Button>
           </div>}
           {personal && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.general.personalReadOnly")}</p>}
+          {space.has_active_admin === false && <p role="note" className="text-sm text-warning-foreground">{t("spaces.spaceSettings.general.noActiveAdmin")}</p>}
           {space.archived && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.general.archivedNote")}</p>}
           {!personal && !space.archived && !canEdit && <p className="text-sm text-muted-foreground">{t("spaces.spaceSettings.general.readOnly")}</p>}
           <fieldset disabled={!canEdit || busy} className="space-y-4">
@@ -259,8 +260,37 @@ function GeneralTab({ space, me, onDirtyChange }: { space: Space; me?: CurrentUs
           </SettingsRow>
         </SettingsSection>
       </form>
+      {!personal && <TemplateSection space={space} me={me} />}
       {!personal && <LifecycleSection space={space} me={me} />}
     </div>
+  );
+}
+
+/** Save this Space's structure as a template. Full access, and a user type that may create Spaces. */
+function TemplateSection({ space, me }: { space: Space; me?: CurrentUser }) {
+  const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [name, setName] = useState(space.name);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState("");
+  if (!space.my_capabilities?.includes("share") || (me?.user_type !== "admin" && me?.user_type !== "regular")) return null;
+  return (
+    <SettingsSection title={t("spaces.template.saveTitle")} description={t("spaces.template.saveHint")}>
+      <form className="flex flex-wrap items-end gap-2" onSubmit={async (event) => {
+        event.preventDefault();
+        setBusy(true); setError("");
+        try {
+          await api("/api/v1/space-templates", { method: "POST", body: JSON.stringify({ space_id: space.id, name: name.trim() }) });
+          await queryClient.invalidateQueries({ queryKey: ["space-templates"] });
+          toast.success(t("spaces.template.savedToast"));
+        } catch (e) { setError((e as Error).message); } finally { setBusy(false); }
+      }}>
+        <label className="min-w-48 flex-1 space-y-1 text-sm">{t("spaces.template.name")}
+          <Input value={name} onChange={(event) => setName(event.target.value)} maxLength={120} required /></label>
+        <Button type="submit" disabled={busy || !name.trim()}>{t("spaces.template.save")}</Button>
+      </form>
+      <FormError message={error} />
+    </SettingsSection>
   );
 }
 

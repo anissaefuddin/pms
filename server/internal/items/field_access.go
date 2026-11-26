@@ -2,6 +2,8 @@ package items
 
 import (
 	"context"
+	"encoding/json"
+	"reflect"
 	"slices"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
@@ -31,7 +33,7 @@ type FieldGrant struct {
 }
 
 // HiddenFieldIDs returns the restricted custom fields the actor may not read (need "view") or may not write (need "edit").
-func HiddenFieldIDs(ctx context.Context, tx pgx.Tx, actor policy.Actor, need string) ([]string, error) {
+func HiddenFieldIDs(ctx context.Context, tx policy.DB, actor policy.Actor, need string) ([]string, error) {
 	return policy.HiddenCustomFieldIDs(ctx, tx, actor, need)
 }
 
@@ -147,4 +149,89 @@ func nonNilStrings(s []string) []string {
 		return []string{}
 	}
 	return s
+}
+
+// RedactHistory removes from activity changes, in place, the custom field values the actor cannot read on the item itself: a
+// restricted field, a formula that reads one, or a field that applies only in a Space the actor cannot see. itemIDs[i] is the
+// item of changes[i]. A change left with nothing to show loses its "fields" key.
+func RedactHistory(ctx context.Context, db policy.DB, actor policy.Actor, itemIDs []string, changes []json.RawMessage) error {
+	type valueChange struct {
+		From map[string]json.RawMessage `json:"from"`
+		To   map[string]json.RawMessage `json:"to"`
+	}
+	type entry struct {
+		at     int
+		all    map[string]json.RawMessage
+		change valueChange
+	}
+	var entries []entry
+	var items, fields []string
+	for i, raw := range changes {
+		e := entry{at: i}
+		if err := json.Unmarshal(raw, &e.all); err != nil {
+			return err
+		}
+		if e.all["fields"] == nil {
+			continue
+		}
+		if err := json.Unmarshal(e.all["fields"], &e.change); err != nil {
+			return err
+		}
+		entries, items = append(entries, e), append(items, itemIDs[i])
+		for _, side := range []map[string]json.RawMessage{e.change.From, e.change.To} {
+			for id := range side {
+				fields = append(fields, id)
+			}
+		}
+	}
+	if len(entries) == 0 {
+		return nil
+	}
+	hidden, err := HiddenFieldIDs(ctx, db, actor, GrantView)
+	if err != nil {
+		return err
+	}
+	spaces, err := policy.VisibleSpaces(ctx, db, actor, "")
+	if err != nil {
+		return err
+	}
+	var spaceIDs []string
+	for _, s := range spaces {
+		if s.Caps.Has(policy.View) {
+			spaceIDs = append(spaceIDs, s.ID)
+		}
+	}
+	// The same rule as the item read (readDetails).
+	rows, err := db.Query(ctx, `SELECT DISTINCT l.item_id::text || f.id::text FROM custom_fields f
+JOIN item_locations l ON l.item_id = ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_id IS NULL
+  AND l.space_id = ANY(ARRAY(SELECT unnest($3::text[])::uuid))
+WHERE f.id::text = ANY($2::text[]) AND NOT (f.id::text = ANY($4::text[]))
+  AND NOT (f.type='formula' AND EXISTS(SELECT 1 FROM custom_fields h WHERE h.id::text = ANY($4::text[])
+    AND h.space_id IS NOT DISTINCT FROM f.space_id AND position(lower(h.name) IN lower(f.config->>'expression'))>0))
+  AND custom_field_applies(l.item_id, f.id, l.space_id)`, items, nonNilStrings(fields), nonNilStrings(spaceIDs), hidden)
+	if err != nil {
+		return err
+	}
+	readable, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return err
+	}
+	for _, e := range entries {
+		for _, side := range []map[string]json.RawMessage{e.change.From, e.change.To} {
+			for id := range side {
+				if !slices.Contains(readable, itemIDs[e.at]+id) {
+					delete(side, id)
+				}
+			}
+		}
+		if reflect.DeepEqual(e.change.From, e.change.To) {
+			delete(e.all, "fields")
+		} else if e.all["fields"], err = json.Marshal(e.change); err != nil {
+			return err
+		}
+		if changes[e.at], err = json.Marshal(e.all); err != nil {
+			return err
+		}
+	}
+	return nil
 }

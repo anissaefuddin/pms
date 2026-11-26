@@ -25,6 +25,8 @@
   "field.targetType": "Jenis target",
   "field.targetId": "ID target",
   "field.ip": "Alamat IP",
+  "field.requestId": "ID permintaan",
+  "noRequestId": "Tidak tercatat",
   "col.open": "Buka",
   "loading": "Memuat event audit…",
   "error": "Jejak audit tidak dapat dimuat.",

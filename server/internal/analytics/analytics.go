@@ -88,6 +88,9 @@ type Result struct {
 	// Operational is set on an operational aggregate (A1.3). Suppressed counts groups hidden for being too small.
 	Operational bool `json:"operational,omitempty"`
 	Suppressed  int  `json:"suppressed,omitempty"`
+	// CostStatus is set on a cost result only. "partial": some approved billable time has no rate, or sits on a task the caller
+	// has no Full access to; the figures are then the known subtotal, never the complete cost.
+	CostStatus string `json:"cost_status,omitempty"`
 }
 
 // fieldRef stands for the parameter that carries the custom field id; build replaces it.
@@ -99,8 +102,9 @@ var metrics = map[string]map[string]string{ // reporting_on → metric → SQL m
 	"tasks":    {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField, "completion_percent": "1", "avg_field": "1"},
 	"projects": {"count": "1", "effort_minutes": "COALESCE(i.effort_minutes,0)", "sum_field": sumField, "completion_percent": "1", "avg_field": "1"},
 	"time_entries": {"utilization": "te.minutes", "minutes": "te.minutes", "billable_minutes": "CASE WHEN te.billing_type='billable' THEN te.minutes ELSE 0 END", "count": "1",
-		// Money in minor units: minutes x the rate snapshot of the entry, billable only (same rule as the project panel). Administrators only, see Run.
-		"actual_cost_minor": "CASE WHEN te.billing_type='billable' THEN round(te.minutes*COALESCE(te.rate_snapshot,0)/60.0) ELSE 0 END"},
+		// Money in minor units: minutes x the rate snapshot of the entry, approved and billable only (same rule as the project panel). Administrators only, see Run.
+		// NULL means approved billable time that has no rate: unknown, not free.
+		"actual_cost_minor": "CASE WHEN te.billing_type='billable' AND te.status='approved' THEN round(te.minutes*te.rate_snapshot/60.0) ELSE 0 END"},
 }
 
 type dim struct{ join, key, label string }
@@ -280,6 +284,8 @@ func (q Query) Validate() error {
 type hit struct {
 	itemID, gKey, gLabel, bKey, bLabel string
 	value                              float64
+	user                               string // only on a cost query
+	countable, unpriced                bool
 }
 
 // Run answers the query for actor: SQL selects candidate rows from a closed set of predicates, then the policy engine
@@ -380,7 +386,7 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 	if err != nil {
 		return Result{}, mapErr(err)
 	}
-	visible := map[string]bool{}
+	visible, managed := map[string]bool{}, map[string]bool{}
 	for start := 0; !operational && start < len(hits); {
 		ids := []string{}
 		for ; start < len(hits) && len(ids) < 1000; start++ {
@@ -394,15 +400,39 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 		}
 		for _, id := range ids {
 			visible[id] = caps[id].Has(policy.View)
+			managed[id] = caps[id].Contains(policy.RoleCaps(policy.Full))
 		}
 	}
 	type key struct{ g, b string }
 	sums, groups, breaks := map[key]float64{}, map[string]Label{}, map[string]Label{}
 	members := map[string]map[string]bool{} // distinct items per group, for the operational privacy threshold
 	var total float64
+	unknown, priced := map[key]bool{}, map[key]bool{} // cost only: a group with nothing priced is left out, not shown as 0
+	costStatus := ""
+	if q.Metric == "actual_cost_minor" {
+		costStatus = "full"
+	}
 	for _, h := range hits {
 		if !operational && !visible[h.itemID] {
 			continue
+		}
+		// The same rule as the project panel: someone else's time is costed only with Full access to the task.
+		if costStatus != "" {
+			if !managed[h.itemID] && h.user != actor.ID {
+				if h.countable {
+					costStatus = "partial"
+					unknown[key{h.gKey, h.bKey}] = true
+				}
+				continue
+			}
+			if h.unpriced { // unknown, not free: no row of zero for it
+				costStatus = "partial"
+				unknown[key{h.gKey, h.bKey}] = true
+				continue
+			}
+			if h.countable {
+				priced[key{h.gKey, h.bKey}] = true
+			}
 		}
 		sums[key{h.gKey, h.bKey}] += h.value
 		if members[h.gKey] == nil {
@@ -411,6 +441,11 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 		members[h.gKey][h.itemID] = true
 		groups[h.gKey] = Label{h.gKey, h.gLabel}
 		breaks[h.bKey] = Label{h.bKey, h.bLabel}
+	}
+	for k := range unknown {
+		if !priced[k] {
+			delete(sums, k)
+		}
 	}
 	suppressed := 0
 	if operational {
@@ -435,7 +470,7 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 			return Result{}, mapErr(err)
 		}
 	}
-	out := Result{Rows: []Row{}, Total: total, Operational: operational, Suppressed: suppressed}
+	out := Result{Rows: []Row{}, Total: total, Operational: operational, Suppressed: suppressed, CostStatus: costStatus}
 	for k, v := range sums {
 		row := Row{Group: groups[k.g], Value: v}
 		if q.BreakBy != "" {
@@ -490,9 +525,18 @@ func candidates(ctx context.Context, tx pgx.Tx, actor policy.Actor, q Query) ([]
 	var hits []hit
 	for rows.Next() {
 		var h hit
-		if err := rows.Scan(&h.itemID, &h.gKey, &h.gLabel, &h.bKey, &h.bLabel, &h.value); err != nil {
+		var value *float64
+		dest := []any{&h.itemID, &h.gKey, &h.gLabel, &h.bKey, &h.bLabel, &value}
+		if q.Metric == "actual_cost_minor" {
+			dest = append(dest, &h.user, &h.countable)
+		}
+		if err := rows.Scan(dest...); err != nil {
 			return nil, err
 		}
+		if value != nil {
+			h.value = *value
+		}
+		h.unpriced = value == nil
 		hits = append(hits, h)
 	}
 	if err := rows.Err(); err != nil {
@@ -516,6 +560,9 @@ func build(q Query, actor policy.Actor, list *listSpec) (string, []any) {
 		b = dim{key: "''", label: "''"}
 	}
 	selectList := "i.id::text, " + g.key + ", " + g.label + ", " + b.key + ", " + b.label + ", (" + measure + ")::float8"
+	if q.Metric == "actual_cost_minor" && list == nil {
+		selectList += ", te.user_id::text, (te.billing_type='billable' AND te.status='approved')"
+	}
 	order, limit := "", MaxRows+1
 	if list != nil {
 		g, b = dim{}, dim{}

@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -39,7 +40,7 @@ func adminWriteError(w http.ResponseWriter, err error) {
 	case errors.Is(err, pgx.ErrNoRows):
 		writeError(w, 404, "not found")
 	default:
-		slog.Error("admin operation failed", "error", err)
+		slog.ErrorContext(logContext(w), "admin operation failed", "error", err)
 		writeError(w, 500, "could not complete admin operation")
 	}
 }
@@ -159,6 +160,31 @@ type inviteShare struct {
 	Role string `json:"role"`
 }
 
+// mayInviteInto is the rule of the share endpoints: Share on the target, and nothing beyond one's own rights there.
+func mayInviteInto(ctx context.Context, tx pgx.Tx, actor policy.Actor, share inviteShare) error {
+	var caps policy.Caps
+	var err error
+	if share.Type == "space" {
+		var access policy.SpaceAccess
+		access, _, err = policy.SpaceAccessFor(ctx, tx, actor, share.ID)
+		caps = access.Caps
+	} else {
+		caps, err = policy.ItemCaps(ctx, tx, actor, share.ID)
+	}
+	if err != nil {
+		return err
+	}
+	role := policy.RoleCaps(policy.Role(share.Role))
+	ok := caps.Has(policy.Share) && caps.Contains(role)
+	if ok && share.Type == "item" && role.Has(policy.Share) {
+		ok, err = items.CanReassign(ctx, tx, actor, share.ID)
+	}
+	if err == nil && !ok {
+		err = adminError{403, "forbidden", "you can only invite people into what you may share yourself"}
+	}
+	return err
+}
+
 func (s *Server) adminInvite(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Email    string          `json:"email"`
@@ -201,6 +227,12 @@ func (s *Server) adminInvite(w http.ResponseWriter, r *http.Request) {
 VALUES($1,$2,$3,$4) RETURNING id::text`, in.Email, in.UserType, in.Message, actorOf(r).ID).Scan(&id); err != nil {
 			return err
 		}
+		// An invitation grants no more than the inviter could grant by sharing (D-17.1, DEF-045). Checked before any share is written.
+		for _, share := range in.Share {
+			if err := mayInviteInto(ctx, tx, actorOf(r), share); err != nil {
+				return err
+			}
+		}
 		for _, share := range in.Share {
 			if _, err := tx.Exec(ctx, `INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by)
 VALUES($1,$2,'user',$3,$4,$5)`, share.Type, share.ID, id, share.Role, actorOf(r).ID); err != nil {
@@ -209,6 +241,19 @@ VALUES($1,$2,'user',$3,$4,$5)`, share.Type, share.ID, id, share.Role, actorOf(r)
 					return adminError{422, "validation_failed", "invalid or duplicate invitation share"}
 				}
 				return err
+			}
+		}
+		// The locked-Space rule of the share endpoints (D-95), read after every share of this invitation exists (DEF-047).
+		for _, share := range in.Share {
+			if share.Type != "item" {
+				continue
+			}
+			ok, err := policy.LockedAllows(ctx, tx, share.ID, "user", id)
+			if err != nil {
+				return err
+			}
+			if !ok {
+				return adminError{403, "forbidden", policy.ErrLockedSpace.Error()}
 			}
 		}
 		if err := s.mail.InviteTx(ctx, tx, id); err != nil {

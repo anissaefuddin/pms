@@ -201,6 +201,8 @@ func writeItemError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, items.ErrNotFound):
 		writeError(w, http.StatusNotFound, "not found")
+	case errors.Is(err, items.ErrAssignForbidden):
+		writeError(w, http.StatusForbidden, err.Error())
 	case errors.Is(err, items.ErrForbidden):
 		writeError(w, http.StatusForbidden, "item operation forbidden")
 	case errors.Is(err, items.ErrConflict):
@@ -231,7 +233,7 @@ func writeItemError(w http.ResponseWriter, err error) {
 	case errors.As(err, &invalid):
 		writeError(w, http.StatusUnprocessableEntity, invalid.Error())
 	default:
-		slog.Error("item operation", "error", err)
+		slog.ErrorContext(logContext(w), "item operation", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 	}
 }

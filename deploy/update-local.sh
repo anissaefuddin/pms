@@ -18,11 +18,13 @@ set -a
 set +a
 current=${PMS_IMAGE:-}
 
+full_commit=$(git -C "$repo" rev-parse HEAD)
 commit=$(git -C "$repo" rev-parse --short=12 HEAD)
 tag=$commit
 if [ -n "$(git -C "$repo" status --porcelain)" ]; then
   [ "${ALLOW_DIRTY:-0}" = 1 ] || { echo "Working tree has uncommitted changes: commit them or set ALLOW_DIRTY=1." >&2; exit 1; }
   tag=$commit-dirty-$(git -C "$repo" diff HEAD | { sha256sum 2>/dev/null || shasum -a 256; } | cut -c1-8)
+  full_commit=$full_commit-dirty
 fi
 image=${PMS_LOCAL_REPO:-pms-local}:$tag
 
@@ -34,7 +36,9 @@ fi
 if docker image inspect "$image" >/dev/null 2>&1; then
   echo "Image $image already built."
 else
-  docker build -f "${BUILD_FILE:-$repo/Dockerfile}" --build-arg "VERSION=$tag" -t "$image" "${BUILD_CONTEXT:-$repo}"
+  # Application version comes from web/package.json (as released); the commit is reported separately.
+  version=$(sed -n 's/^  "version": "\([^"]*\)".*/\1/p' "$repo/web/package.json" 2>/dev/null || true)
+  docker build -f "${BUILD_FILE:-$repo/Dockerfile}" --build-arg "VERSION=${version:-dev}" --build-arg "COMMIT=$full_commit" -t "$image" "${BUILD_CONTEXT:-$repo}"
 fi
 
 backup_output=$(./backup.sh)
@@ -43,6 +47,8 @@ stamp=$(printf '%s\n' "$backup_output" | sed -n 's/^Backup completed: //p')
 [ -n "$stamp" ] || { echo "Backup did not report a timestamp; not updating." >&2; exit 1; }
 
 # --pull never: the image only exists locally, a pull would fail.
+export_image_identity "$image"
+PMS_IMAGE_DIGEST= # built here: it has no registry manifest, even when Docker records a RepoDigest for it
 if PMS_IMAGE=$image docker compose up -d --pull never app && wait_ready; then
   if [ "${NO_PERSIST:-0}" != 1 ] && [ -f .env ]; then
     tmp=$(mktemp)

@@ -691,7 +691,7 @@ paths:
       summary: Tukar code (+ code_verifier) atau refresh_token dengan token; form-urlencoded, klien memakai client_id dan client_secret. Token disimpan sebagai hash
       security: []
       responses:
-        '200': { description: access_token, refresh_token, token_type, expires_in, scope }
+        '200': { description: 'access_token, refresh_token, token_type, expires_in, scope' }
         '400': { description: invalid_grant atau unsupported_grant_type }
         '401': { description: invalid_client }
   /oauth/grants:
@@ -1037,6 +1037,33 @@ paths:
                         id: { type: string, format: uuid }
                         title: { type: string }
                         type: { type: string, enum: [project, folder, task] }
+  /me/created:
+    get:
+      operationId: listCreatedByMe
+      summary: Item buatan pemanggil di semua tingkat yang masih dapat dilihat, terbaru dulu (NAV-02)
+      parameters:
+        - { name: cursor, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Daftar; halaman bisa pendek walau next_cursor terisi karena akses diperiksa setelah halaman dibaca
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor]
+                properties:
+                  next_cursor: { type: string, format: uuid, nullable: true }
+                  items:
+                    type: array
+                    maxItems: 200
+                    items:
+                      type: object
+                      required: [id, title, type]
+                      properties:
+                        id: { type: string, format: uuid }
+                        title: { type: string }
+                        type: { type: string, enum: [project, folder, task] }
+        '422': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/star:
     parameters:
       - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -1327,7 +1354,7 @@ paths:
       summary: "SCIM: deprovision (sesi dicabut, seat bebas; baris dan riwayat tetap)"
       security: []
       responses:
-        '204': { description: Berhasil, tanpa isi }
+        '204': { description: 'Berhasil, tanpa isi' }
         '400': { $ref: '#/components/responses/Problem' }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
@@ -1422,7 +1449,7 @@ paths:
       summary: "SCIM: hapus grup beserta share-nya"
       security: []
       responses:
-        '204': { description: Berhasil, tanpa isi }
+        '204': { description: 'Berhasil, tanpa isi' }
         '400': { $ref: '#/components/responses/Problem' }
         '401': { $ref: '#/components/responses/Problem' }
         '403': { $ref: '#/components/responses/Problem' }
@@ -1485,7 +1512,7 @@ paths:
               properties:
                 email: { type: string, maxLength: 254 }
       responses:
-        '202': { description: Diterima; bila alamat milik pengguna aktif, kode dikirim (satu per menit per orang) }
+        '202': { description: 'Diterima; bila alamat milik pengguna aktif, kode dikirim (satu per menit per orang)' }
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '429': { $ref: '#/components/responses/RateLimited' }
@@ -1721,7 +1748,7 @@ paths:
         - { name: next, in: query, schema: { type: string, maxLength: 500 }, description: Hanya jalur relatif di situs ini; selain itu menjadi / }
         - { name: link, in: query, schema: { type: string, enum: ['1'] } }
       responses:
-        '302': { description: Pengalihan ke penyedia identitas, atau ke /login tanpa sesi bila link=1 }
+        '302': { description: 'Pengalihan ke penyedia identitas, atau ke /login tanpa sesi bila link=1' }
         '404': { $ref: '#/components/responses/Problem' }
         '429': { $ref: '#/components/responses/RateLimited' }
   /auth/sso/{kind}/callback:
@@ -1808,8 +1835,8 @@ paths:
       operationId: listAuditEvents
       summary: Jejak audit keamanan (hanya admin), terbaru dulu
       parameters:
-        - { name: action, in: query, schema: { type: string, maxLength: 80 }, description: Aksi persis, misalnya auth.login }
-        - { name: category, in: query, schema: { type: string, maxLength: 40 }, description: Area, misalnya auth, user, share, role, sso, api_key }
+        - { name: action, in: query, schema: { type: string, maxLength: 80 }, description: 'Aksi persis, misalnya auth.login' }
+        - { name: category, in: query, schema: { type: string, maxLength: 40 }, description: 'Area, misalnya auth, user, share, role, sso, api_key' }
         - { name: actor_id, in: query, schema: { type: string, format: uuid } }
         - { name: from, in: query, schema: { type: string, format: date-time } }
         - { name: to, in: query, schema: { type: string, format: date-time } }
@@ -2347,11 +2374,27 @@ paths:
             application/json:
               schema:
                 type: object
-                required: [actual_minutes, scope]
+                required: [actual_minutes, approved_minutes, pending_minutes, scope, cost_status, budgets]
                 properties:
                   actual_minutes: { type: integer, format: int64 }
+                  approved_minutes: { type: integer, format: int64, description: Bagian yang sudah disetujui }
+                  pending_minutes: { type: integer, format: int64, description: Draf dan diajukan }
+                  known_cost_minor: { type: integer, format: int64, description: Subtotal yang diketahui bila cost_status partial; hanya administrator }
+                  budgets:
+                    type: array
+                    items:
+                      type: object
+                      required: [field_id, name, currency, planned_minor, variance_minor, utilization_percent]
+                      properties:
+                        field_id: { type: string, format: uuid }
+                        name: { type: string }
+                        currency: { type: string }
+                        planned_minor: { type: integer, format: int64, nullable: true }
+                        variance_minor: { type: integer, format: int64, nullable: true, description: planned - actual; negatif berarti melebihi anggaran; null bila biaya tidak lengkap }
+                        utilization_percent: { type: number, nullable: true, description: 'null bila anggaran kosong atau nol, atau biaya tidak lengkap' }
                   scope: { type: string, enum: [project, permitted_entries] }
-                  actual_cost_minor: { type: integer, format: int64, description: 'Actual cost (satuan minor per jam x menit/60, entry billable, rate snapshot); hanya untuk administrator' }
+                  cost_status: { type: string, enum: [full, partial, unauthorized], description: 'partial: sebagian entry tidak terlihat atau belum punya tarif, sehingga angka tidak dikirim' }
+                  actual_cost_minor: { type: integer, format: int64, description: 'Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)' }
         '404': { $ref: '#/components/responses/Problem' }
   /items/{itemId}/time-entries:
     parameters:
@@ -2420,6 +2463,96 @@ paths:
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/submit:
+    post:
+      operationId: submitTimeEntries
+      summary: Ajukan time entry draf dan ditolak milik sendiri dalam satu periode untuk direview
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [from, to]
+              properties:
+                from: { type: string, format: date }
+                to: { type: string, format: date }
+      responses:
+        '200':
+          description: Jumlah entry yang diajukan
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [submitted]
+                properties:
+                  submitted: { type: integer }
+        '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/review:
+    get:
+      operationId: listTimeEntriesToReview
+      summary: Entry orang lain yang diajukan pada task dengan akses penuh, terlama dulu
+      parameters:
+        - { name: offset, in: query, schema: { type: integer, minimum: 0 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TimeEntryPage' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /time-entries/{entryId}/history:
+    parameters:
+      - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      operationId: getTimeEntryHistory
+      summary: Riwayat pengajuan, persetujuan, penolakan, dan kunci satu entry
+      responses:
+        '200':
+          description: Urut dari yang paling lama
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items:
+                    type: array
+                    items:
+                      type: object
+                      required: [action, actor_name, note, minutes, at]
+                      properties:
+                        action: { type: string, enum: [submitted, approved, rejected, locked, unlocked] }
+                        actor_name: { type: string }
+                        note: { type: string }
+                        minutes: { type: integer }
+                        at: { type: string, format: date-time }
+        '404': { $ref: '#/components/responses/Problem' }
+  /time-entries/{entryId}/review:
+    parameters:
+      - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      operationId: reviewTimeEntry
+      summary: Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
+      parameters:
+        - { $ref: '#/components/parameters/IfMatch' }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [decision]
+              properties:
+                decision: { type: string, enum: [approved, rejected] }
+                note: { type: string, maxLength: 1000 }
+      responses:
+        '200': { $ref: '#/components/responses/TimeEntry' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '428': { $ref: '#/components/responses/Problem' }
   /time-entries/{entryId}:
     parameters:
       - { name: entryId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -3024,7 +3157,7 @@ paths:
         '200':
           description: Image bytes
           content:
-            application/octet-stream: { schema: { type: string, format: binary }, description: Runtime Content-Type adalah image/png, image/jpeg, atau image/webp }
+            application/octet-stream: { schema: { type: string, format: binary, description: 'Runtime Content-Type adalah image/png, image/jpeg, atau image/webp' } }
         '404': { $ref: '#/components/responses/Problem' }
     put:
       tags: [users]
@@ -3033,7 +3166,7 @@ paths:
       requestBody:
         required: true
         content:
-          application/octet-stream: { schema: { type: string, format: binary }, description: PNG, JPEG, atau WebP; tipe divalidasi dari bytes }
+          application/octet-stream: { schema: { type: string, format: binary, description: 'PNG, JPEG, atau WebP; tipe divalidasi dari bytes' } }
       responses:
         '200':
           description: Updated Workspace
@@ -3898,7 +4031,7 @@ paths:
     get:
       tags: [spaces]
       operationId: listSpaceTemplates
-      summary: Template Space bawaan per kategori (SPC-18)
+      summary: Template Space bawaan per kategori (SPC-18) dan template tersimpan milik sendiri atau dari Space yang terlihat
       responses:
         '200':
           description: OK
@@ -3911,6 +4044,40 @@ paths:
                   items:
                     type: array
                     items: { $ref: '#/components/schemas/SpaceTemplate' }
+    post:
+      tags: [spaces]
+      operationId: saveSpaceTemplate
+      summary: Simpan struktur dan konfigurasi Space sebagai template (akses penuh); tanpa orang, tanggal, status, nilai field, komentar, file, waktu, form, otomatisasi, dan anggota
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [space_id, name]
+              properties:
+                space_id: { type: string, format: uuid }
+                name: { type: string, minLength: 1, maxLength: 120 }
+                description: { type: string, maxLength: 500 }
+      responses:
+        '201':
+          description: Tersimpan
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SpaceTemplate' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /space-templates/{templateId}:
+    delete:
+      tags: [spaces]
+      operationId: deleteSpaceTemplate
+      summary: Hapus template tersimpan milik sendiri; Space yang dibuat darinya tidak berubah
+      parameters:
+        - { name: templateId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204': { description: Dihapus }
+        '404': { $ref: '#/components/responses/Problem' }
   /space-templates/{templateId}/spaces:
     post:
       tags: [spaces]
@@ -4495,7 +4662,7 @@ paths:
               properties:
                 predecessor_id: { type: string, format: uuid }
                 type: { $ref: '#/components/schemas/DependencyType' }
-                lag: { type: integer, format: int32, default: 0, description: Lag dalam hari kerja, boleh negatif }
+                lag: { type: integer, format: int32, default: 0, description: 'Lag dalam hari kerja, boleh negatif' }
       responses:
         '201':
           description: Dibuat
@@ -4550,7 +4717,7 @@ paths:
               additionalProperties: false
               properties:
                 type: { $ref: '#/components/schemas/DependencyType' }
-                lag: { type: integer, format: int32, description: Lag dalam hari kerja, boleh negatif }
+                lag: { type: integer, format: int32, description: 'Lag dalam hari kerja, boleh negatif' }
       responses:
         '200':
           description: Diperbarui
@@ -5348,9 +5515,9 @@ paths:
         - { name: limit, in: query, schema: { type: integer, minimum: 1, maximum: 50, default: 10 }, description: Maksimum per grup }
         - { name: assigned_to_me, in: query, schema: { type: boolean, default: false }, description: Hanya item yang ditugaskan ke saya (NAV-07) }
         - { name: status_group, in: query, schema: { type: string, enum: [active, completed, deferred, cancelled] }, description: Hanya item dengan grup status ini (NAV-07) }
-        - { name: type_key, in: query, schema: { type: string }, description: Hanya item (dan komentar pada item) bertipe ini, mis. bug (S8.1.5) }
+        - { name: type_key, in: query, schema: { type: string }, description: 'Hanya item (dan komentar pada item) bertipe ini, mis. bug (S8.1.5)' }
         - { name: sort, in: query, schema: { type: string, enum: [relevance, date_modified], default: relevance } }
-        - { name: offset, in: query, schema: { type: integer, minimum: 0, maximum: 10000, default: 0 }, description: Lewati sekian hasil yang boleh dilihat per grup, untuk paginasi }
+        - { name: offset, in: query, schema: { type: integer, minimum: 0, maximum: 10000, default: 0 }, description: 'Lewati sekian hasil yang boleh dilihat per grup, untuk paginasi' }
       responses:
         '200':
           description: OK
@@ -5475,6 +5642,28 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '404': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
+  /workflows/{workflowId}/revisions/{revision}:
+    get:
+      operationId: getWorkflowRevision
+      summary: Salinan beku aturan workflow pada satu revisi (administrator)
+      parameters:
+        - { name: workflowId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: revision, in: path, required: true, schema: { type: integer, minimum: 1 } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [workflow_id, revision, created_at, definition]
+                properties:
+                  workflow_id: { type: string, format: uuid }
+                  revision: { type: integer }
+                  created_at: { type: string, format: date-time }
+                  definition: { type: object, additionalProperties: true }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /workflows/{workflowId}/statuses:
     parameters:
       - { name: workflowId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -6268,6 +6457,18 @@ paths:
             text/event-stream:
               schema: { $ref: '#/components/schemas/RealtimeEvent' }
         '401': { $ref: '#/components/responses/Problem' }
+  /version:
+    get:
+      tags: [system]
+      operationId: getVersion
+      summary: Identitas build yang sedang berjalan; `image` hanya untuk admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/VersionInfo' }
+        '401': { $ref: '#/components/responses/Problem' }
   /healthz:
     get:
       tags: [system]
@@ -6285,6 +6486,490 @@ paths:
       responses:
         '200': { description: Siap }
         '503': { description: Belum siap }
+
+  /me/avatar:
+    get:
+      tags: [auth]
+      operationId: getMyAvatar
+      summary: Foto profil pemanggil
+      responses:
+        '200':
+          description: OK
+          content:
+            application/octet-stream: { schema: { type: string, format: binary, description: 'PNG, JPEG, atau WebP' } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [auth]
+      operationId: saveMyAvatar
+      summary: Ganti foto profil (PNG, JPEG, WebP; maksimum 2 MB)
+      requestBody:
+        required: true
+        content:
+          application/octet-stream: { schema: { type: string, format: binary, description: 'PNG, JPEG, atau WebP' } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401': { $ref: '#/components/responses/Problem' }
+        '413': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    delete:
+      tags: [auth]
+      operationId: removeMyAvatar
+      summary: Hapus foto profil
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Me'
+        '401': { $ref: '#/components/responses/Problem' }
+  /spaces/registry:
+    get:
+      tags: [spaces]
+      operationId: listSpaceRegistry
+      summary: Daftar Space yang sudah terlihat oleh pemanggil, dengan hitungan dan admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object, additionalProperties: true } }
+        '401': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/field-choices:
+    get:
+      tags: [spaces]
+      operationId: listSpaceFieldChoices
+      summary: Field Workspace dan apakah Space ini memakainya (akses Full)
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object, required: [id, name, type, assigned], properties: { id: { type: string, format: uuid }, name: { type: string }, type: { type: string }, assigned: { type: boolean } } } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/fields:
+    get:
+      tags: [spaces]
+      operationId: listSpaceViewFields
+      summary: Field yang berlaku pada view Space; field yang tidak boleh dibaca tidak ikut
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/CustomField' } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /custom-fields/{fieldId}/grants:
+    get:
+      tags: [custom-fields]
+      operationId: listWorkspaceFieldGrants
+      summary: Grant akses field Workspace (pengelola field)
+      parameters:
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object, required: [subject_kind, subject_id, level], properties: { subject_kind: { type: string, enum: [user, group] }, subject_id: { type: string, format: uuid }, level: { type: string, enum: [view, edit, none] }, subject_name: { type: string } } } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [custom-fields]
+      operationId: setWorkspaceFieldGrants
+      summary: Ganti grant field Workspace; daftar kosong menghapus pembatasan
+      parameters:
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [grants]
+              properties:
+                grants: { type: array, maxItems: 500, items: { type: object, required: [subject_kind, subject_id, level], properties: { subject_kind: { type: string, enum: [user, group] }, subject_id: { type: string, format: uuid }, level: { type: string, enum: [view, edit, none] }, subject_name: { type: string } } } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object, required: [subject_kind, subject_id, level], properties: { subject_kind: { type: string, enum: [user, group] }, subject_id: { type: string, format: uuid }, level: { type: string, enum: [view, edit, none] }, subject_name: { type: string } } } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /custom-fields/{fieldId}/impact:
+    get:
+      tags: [custom-fields]
+      operationId: getWorkspaceFieldImpact
+      summary: Jumlah pemakaian field Workspace sebelum diarsipkan
+      parameters:
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, item_types, status_guards, views, request_forms, automations, blueprints, widgets, relations, formulas]
+                properties:
+                  items: { type: integer }
+                  item_types: { type: integer }
+                  status_guards: { type: integer }
+                  views: { type: integer }
+                  request_forms: { type: integer }
+                  automations: { type: integer }
+                  blueprints: { type: integer }
+                  widgets: { type: integer }
+                  relations: { type: integer }
+                  formulas: { type: array, nullable: true, items: { type: string } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /custom-fields/{fieldId}/restore:
+    post:
+      tags: [custom-fields]
+      operationId: restoreWorkspaceField
+      summary: Pulihkan field Workspace yang diarsipkan
+      parameters:
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/custom-fields/{fieldId}/grants:
+    get:
+      tags: [custom-fields]
+      operationId: listSpaceFieldGrants
+      summary: Grant akses field Space (pengelola field)
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object, required: [subject_kind, subject_id, level], properties: { subject_kind: { type: string, enum: [user, group] }, subject_id: { type: string, format: uuid }, level: { type: string, enum: [view, edit, none] }, subject_name: { type: string } } } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    put:
+      tags: [custom-fields]
+      operationId: setSpaceFieldGrants
+      summary: Ganti grant field Space; daftar kosong menghapus pembatasan
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [grants]
+              properties:
+                grants: { type: array, maxItems: 500, items: { type: object, required: [subject_kind, subject_id, level], properties: { subject_kind: { type: string, enum: [user, group] }, subject_id: { type: string, format: uuid }, level: { type: string, enum: [view, edit, none] }, subject_name: { type: string } } } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object, required: [subject_kind, subject_id, level], properties: { subject_kind: { type: string, enum: [user, group] }, subject_id: { type: string, format: uuid }, level: { type: string, enum: [view, edit, none] }, subject_name: { type: string } } } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/custom-fields/{fieldId}/impact:
+    get:
+      tags: [custom-fields]
+      operationId: getSpaceFieldImpact
+      summary: Jumlah pemakaian field Space sebelum diarsipkan
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, item_types, status_guards, views, request_forms, automations, blueprints, widgets, relations, formulas]
+                properties:
+                  items: { type: integer }
+                  item_types: { type: integer }
+                  status_guards: { type: integer }
+                  views: { type: integer }
+                  request_forms: { type: integer }
+                  automations: { type: integer }
+                  blueprints: { type: integer }
+                  widgets: { type: integer }
+                  relations: { type: integer }
+                  formulas: { type: array, nullable: true, items: { type: string } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/custom-fields/{fieldId}/restore:
+    post:
+      tags: [custom-fields]
+      operationId: restoreSpaceField
+      summary: Pulihkan field Space yang diarsipkan
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CustomField'
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/custom-fields/{fieldId}/assignments:
+    get:
+      tags: [custom-fields]
+      operationId: listFieldAssignments
+      summary: Tempat field berlaku di Space
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { type: object, required: [field_id, space_id, scope_kind, scope_id, scope_name, created_at], properties: { field_id: { type: string, format: uuid }, space_id: { type: string, format: uuid }, scope_kind: { type: string, enum: [space, project, folder] }, scope_id: { type: string, format: uuid }, scope_name: { type: string }, created_at: { type: string, format: date-time } } } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [custom-fields]
+      operationId: assignField
+      summary: Berlakukan field di Space, project, atau folder (akses Full)
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [scope_kind, scope_id]
+              properties:
+                scope_kind: { type: string, enum: [space, project, folder] }
+                scope_id: { type: string, format: uuid }
+      responses:
+        '201':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [field_id, space_id, scope_kind, scope_id, scope_name, created_at]
+                properties:
+                  field_id: { type: string }
+                  space_id: { type: string }
+                  scope_kind: { type: string }
+                  scope_id: { type: string }
+                  scope_name: { type: string }
+                  created_at: { type: string }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/custom-fields/{fieldId}/assignments/{scopeKind}/{scopeId}:
+    delete:
+      tags: [custom-fields]
+      operationId: unassignField
+      summary: Cabut field dari tempat itu; nilai tersimpan tidak dihapus
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: fieldId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: scopeKind, in: path, required: true, schema: { type: string, enum: [space, project, folder] } }
+        - { name: scopeId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '204':
+          description: OK
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /item-types/usage:
+    get:
+      tags: [spaces]
+      operationId: getItemTypeUsage
+      summary: Jumlah item hidup per tipe (administrator)
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: object, additionalProperties: { type: integer } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/item-types/usage:
+    get:
+      tags: [spaces]
+      operationId: getSpaceItemTypeUsage
+      summary: Jumlah item per tipe dalam satu Space
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: object, additionalProperties: { type: integer } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /analytics/operational:
+    post:
+      tags: [reports]
+      operationId: runOperationalAnalytics
+      summary: Agregat Workspace tanpa baris item dan tanpa biaya; grup kecil disembunyikan
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/AnalyticsQuery' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AnalyticsResult'
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+        '503': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/excel-templates/{kind}:
+    get:
+      tags: [excel]
+      operationId: getExcelTemplate
+      summary: Unduh template impor Excel
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: kind, in: path, required: true, schema: { type: string } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/vnd.openxmlformats-officedocument.spreadsheetml.sheet: { schema: { type: string, format: binary } }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/excel-imports/{reportId}:
+    get:
+      tags: [excel]
+      operationId: getSpaceExcelImportReport
+      summary: Laporan impor milik pemanggil
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: reportId, in: path, required: true, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                additionalProperties: true
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /spaces/{spaceId}/excel-destinations:
+    get:
+      tags: [excel]
+      operationId: listExcelDestinations
+      summary: Project dan folder tujuan impor
+      parameters:
+        - { name: spaceId, in: path, required: true, schema: { type: string, format: uuid } }
+        - { name: parent, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items, next_cursor]
+                properties:
+                  items: { type: array, items: { type: object, required: [id, title, type, can_create], properties: { id: { type: string, format: uuid }, title: { type: string }, type: { type: string }, can_create: { type: boolean } } } }
+                  next_cursor: { type: string, nullable: true }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
 
 components:
   securitySchemes:
@@ -6455,6 +7140,23 @@ components:
                 items: { $ref: '#/components/schemas/Share' }
 
   schemas:
+    VersionInfo:
+      type: object
+      required: [version]
+      properties:
+        version: { type: string }
+        commit: { type: string, description: 'Hanya admin. Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build' }
+        built_at: { type: string, description: 'Hanya admin. Waktu build (UTC); "unknown" bila tidak diberikan' }
+        image:
+          type: object
+          description: Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan.
+          required: [ref, id, registry_digest]
+          properties:
+            ref: { type: string, description: 'Referensi image yang dikonfigurasi (biasanya tag, bukan bukti isi)' }
+            id: { type: string, description: ID image lokal di host (sha256) }
+            registry_digest: { type: string, description: Digest manifest registry; hanya untuk image yang ditarik dari registry }
+        schema: { type: integer, description: 'Hanya admin. Versi migrasi database' }
+        platform: { type: string, description: 'Hanya admin. OS/arsitektur proses yang berjalan' }
     OverviewTimelineNode:
       type: object
       required: [id, title, type, status_group, in_range, children]
@@ -6817,6 +7519,7 @@ components:
       required: [rows, total]
       properties:
         total: { type: number }
+        cost_status: { type: string, enum: [full, partial], description: 'Hanya pada metrik biaya. partial: sebagian waktu yang disetujui belum punya tarif atau tidak boleh dilihat; angka adalah subtotal yang diketahui' }
         rows:
           type: array
           items:
@@ -7038,7 +7741,7 @@ components:
         last_login_at: { type: string, format: date-time, nullable: true }
     AuditEvent:
       type: object
-      required: [id, at, actor_id, actor_name, action, target_type, target_id, ip, details]
+      required: [id, at, actor_id, actor_name, action, target_type, target_id, ip, details, request_id]
       properties:
         id: { type: integer, format: int64 }
         at: { type: string, format: date-time }
@@ -7049,6 +7752,7 @@ components:
         target_id: { type: string }
         ip: { type: string }
         details: { type: object, additionalProperties: true }
+        request_id: { type: string, description: Sama dengan X-Request-ID dan log aplikasi; kosong untuk event lama dan pekerjaan latar }
     AuditPage:
       type: object
       required: [items, next_cursor]
@@ -7070,7 +7774,7 @@ components:
         show_labels: { type: boolean, description: "Untuk pie, column, bar, line, area, dan burndown" }
         description: { type: string, maxLength: 500, description: Keterangan singkat di bawah judul widget (DASH-04) }
         pie_style: { type: string, enum: [classic, donut, ring], description: Khusus pie }
-        list: { type: string, enum: [todo_this_week, to_review, completed, assigned_to_me], description: Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya }
+        list: { type: string, enum: [todo_this_week, to_review, completed, assigned_to_me], description: 'Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya' }
         template: { type: string, enum: [my_tasks, overdue, followed, backlog, starred], description: Khusus task_list (DASH-02) }
         query: { $ref: '#/components/schemas/AnalyticsQuery' }
     DashboardWidgetInput:
@@ -7146,7 +7850,7 @@ components:
       allOf:
         - { $ref: '#/components/schemas/TimeEntryFields' }
         - type: object
-          required: [id, item_id, user_id, date, minutes, category, comment, billing_type, locked, version]
+          required: [id, item_id, user_id, date, minutes, category, comment, billing_type, locked, version, status, review_note]
           properties:
             id: { type: string, format: uuid }
             item_id: { type: string, format: uuid }
@@ -7158,6 +7862,8 @@ components:
             billing_type: { type: string, enum: [billable, non_billable] }
             locked: { type: boolean }
             version: { type: integer }
+            status: { type: string, enum: [draft, submitted, approved, rejected] }
+            review_note: { type: string, maxLength: 1000 }
             item_title: { type: string }
             user_name: { type: string }
     TimeEntryPage:
@@ -7474,7 +8180,7 @@ components:
       enum: [shared, personal]
     SpaceTemplate:
       type: object
-      required: [id, name, category, description, version, compatible, counts]
+      required: [id, name, category, description, version, compatible, saved, mine, counts]
       properties:
         id: { type: string }
         name: { type: string }
@@ -7482,6 +8188,8 @@ components:
         description: { type: string }
         version: { type: integer }
         compatible: { type: boolean, description: false bila template ditulis untuk versi PMS yang lebih baru }
+        saved: { type: boolean, description: Dibuat dari sebuah Space; false untuk template bawaan }
+        mine: { type: boolean, description: Disimpan oleh pemanggil dan dapat dihapusnya }
         counts:
           type: object
           required: [projects, tasks, views, forms, custom_fields]
@@ -7505,6 +8213,7 @@ components:
         archived: { type: boolean, description: 'Archived space: hanya bisa dibaca; item dan konfigurasi tetap (D-03)' }
         icon_key: { type: string, nullable: true, description: 'Kunci ikon dari katalog GET /space-icons (D-04)' }
         is_space_admin: { type: boolean, description: 'Explicit Space Admin; tidak diberikan oleh share Full saja (D-SA1)' }
+        has_active_admin: { type: boolean, description: Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan }
         my_capabilities:
           type: array
           items: { $ref: '#/components/schemas/Capability' }
@@ -8174,6 +8883,7 @@ components:
         id: { type: string, format: uuid }
         name: { type: string }
         description: { type: string }
+        assignment_notice: { type: string, enum: ['', without_others, choices_ignored], description: Kiriman pengguna ini tidak akan menugaskan orang lain; kosong bila tidak relevan }
         definition: { $ref: '#/components/schemas/FormDefinition' }
     FormSubmitted:
       type: object
@@ -8415,6 +9125,7 @@ components:
             space_id: { type: string, format: uuid }
             position: { type: integer, minimum: 0 }
             archived_at: { type: string, format: date-time, nullable: true }
+            access: { type: string, enum: [edit, view, none], description: Akses pemanggil ke nilai field; hanya pada daftar. Field dengan none hanya dikirim ke pengelolanya }
             options:
               type: array
               items: { $ref: '#/components/schemas/CustomFieldOption' }
@@ -8489,7 +9200,7 @@ components:
         completed_at: { type: string, format: date-time, nullable: true }
         importance: { type: string, enum: [high, normal, low], description: Prioritas item (D-36) }
         status_changed_at: { type: string, format: date-time, description: Terakhir status berubah (days in status di kartu Board) }
-        cover_attachment_id: { type: string, format: uuid, description: Lampiran gambar pertama yang masih ada, untuk sampul kartu }
+        cover_attachment_id: { type: string, format: uuid, description: 'Lampiran gambar pertama yang masih ada, untuk sampul kartu' }
         version: { type: integer }
         created_by: { $ref: '#/components/schemas/UserRef' }
         created_at: { type: string, format: date-time }
@@ -8516,7 +9227,7 @@ components:
       properties:
         id: { type: string, format: uuid, description: 'ID item dari klien (UUIDv7) untuk create yang idempoten. Retry dengan id yang sama setelah respons hilang tidak membuat item kedua: server membalas 409 dan klien memeriksa item itu.' }
         type: { $ref: '#/components/schemas/ItemType' }
-        type_key: { type: string, description: Kunci tipe item aktif, mis. bug }
+        type_key: { type: string, description: 'Kunci tipe item aktif, mis. bug' }
         title: { type: string, minLength: 1, maxLength: 500 }
         description: { $ref: '#/components/schemas/RichText' }
         status_id: { type: string, format: uuid, description: Default status pertama workflow container }
@@ -8556,7 +9267,7 @@ components:
         predecessor_id: { type: string, format: uuid }
         successor_id: { type: string, format: uuid }
         type: { $ref: '#/components/schemas/DependencyType' }
-        lag: { type: integer, format: int32, description: Lag dalam hari kerja, boleh negatif }
+        lag: { type: integer, format: int32, description: 'Lag dalam hari kerja, boleh negatif' }
     ScheduleItemVersion:
       type: object
       required: [id, version]
@@ -8688,7 +9399,7 @@ components:
         content_type: { type: string, description: Hasil deteksi server }
         size_bytes: { type: integer, format: int64 }
         link_url: { type: string, nullable: true, description: Terisi untuk lampiran tautan (tanpa berkas) }
-        version: { type: integer, minimum: 1, description: Nomor versi terbaru; filename, ukuran dan unduhan mengikuti versi ini }
+        version: { type: integer, minimum: 1, description: 'Nomor versi terbaru; filename, ukuran dan unduhan mengikuti versi ini' }
         uploader: { $ref: '#/components/schemas/UserRef' }
         created_at: { type: string, format: date-time }
     AttachmentVersion:
@@ -8763,6 +9474,15 @@ components:
               from: {}
               to: {}
         created_at: { type: string, format: date-time }
+        workflow:
+          type: object
+          nullable: true
+          description: Revisi aturan workflow saat status diubah; null untuk entry lain dan perubahan lama
+          required: [id, revision]
+          properties:
+            id: { type: string, format: uuid }
+            revision: { type: integer, minimum: 1 }
+        request_id: { type: string }
     ActivityPage:
       allOf:
         - $ref: '#/components/schemas/Page'
@@ -8805,7 +9525,7 @@ components:
     # ── Inbox & search ──
     NotificationKind:
       type: string
-      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated, import_summary]
+      enum: [mention, assigned, status_changed, comment, shared, approval_requested, approval_decided, automation, approval_reminder, approval_escalated, import_summary, timesheet_submitted, timesheet_approved, timesheet_rejected, timesheet_locked]
     Notification:
       type: object
       required: [id, kind, created_at]

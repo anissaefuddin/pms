@@ -305,6 +305,15 @@ func SaveDraft(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, rule
 	if err != nil {
 		return Version{}, err
 	}
+	if actor.ID != rule.OwnerID {
+		current, err := ruleDefinitions(ctx, tx, rule.ID)
+		if err != nil {
+			return Version{}, err
+		}
+		if err := requireAssignAuthority(ctx, tx, actor, rule, append(current, raw)...); err != nil {
+			return Version{}, err
+		}
+	}
 	if err := validateForScope(def, rule.Scope); err != nil {
 		return Version{}, items.InvalidField{Field: "definition", Message: err.Error()}
 	}
@@ -339,6 +348,15 @@ func Publish(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, ruleID
 	rule, err := manage(ctx, tx, actor, ruleID, true)
 	if err != nil {
 		return Rule{}, err
+	}
+	if actor.ID != rule.OwnerID {
+		current, err := ruleDefinitions(ctx, tx, rule.ID)
+		if err != nil {
+			return Rule{}, err
+		}
+		if err := requireAssignAuthority(ctx, tx, actor, rule, current...); err != nil {
+			return Rule{}, err
+		}
 	}
 	var draft string
 	err = tx.QueryRow(ctx, "SELECT id::text FROM automation_rule_versions WHERE rule_id=$1 AND status='draft'", rule.ID).Scan(&draft)
@@ -475,6 +493,9 @@ func Get(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, ruleID str
 
 // List returns the rules of a Space for people who can edit it, with the registry columns (A2).
 func List(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, spaceID string) ([]Rule, error) {
+	if _, err := uuid.Parse(spaceID); err != nil {
+		return nil, items.ErrNotFound // DEF-021
+	}
 	tx, err := pool.Begin(ctx)
 	if err != nil {
 		return nil, err

@@ -6,6 +6,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -54,8 +55,8 @@ func SetLimits(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, next
 		return Limits{}, err
 	}
 	raw, _ := json.Marshal(map[string]any{"before": before, "after": next})
-	if _, err := tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details)
-VALUES ($1::uuid, COALESCE((SELECT email::text FROM users WHERE id=$1::uuid),''), 'automation_limits.updated', 'automation_limits', '1', $2)`, actor.ID, raw); err != nil {
+	if _, err := tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,details,request_id)
+VALUES ($1::uuid, COALESCE((SELECT email::text FROM users WHERE id=$1::uuid),''), 'automation_limits.updated', 'automation_limits', '1', $2, $3)`, actor.ID, raw, reqid.From(ctx)); err != nil {
 		return Limits{}, err
 	}
 	return next, tx.Commit(ctx)

@@ -46,17 +46,7 @@ func (s *Server) attachmentRoutes(mux *http.ServeMux) {
 }
 
 func (s *Server) attachmentStore() storage.Storage {
-	switch s.cfg.Storage {
-	case "s3":
-		return storage.S3(s.cfg.S3URL, s.cfg.S3Region, s.cfg.S3AccessKey, s.cfg.S3SecretKey)
-	case "pydio":
-		return storage.Pydio(s.cfg.PydioURL, s.cfg.PydioToken)
-	}
-	dir := s.cfg.FilesDir
-	if dir == "" {
-		dir = "/data/files"
-	}
-	return storage.LocalStorage{Dir: dir}
+	return storage.FromConfig(s.cfg)
 }
 
 func attachmentAccess(r *http.Request, db policy.DB, id uuid.UUID, need policy.Capability) (policy.Caps, error) {
@@ -120,10 +110,17 @@ func (s *Server) attachmentLimit() int64 {
 // POST /attachments/{id}/versions (next version of an existing file).
 func (s *Server) uploadAttachment(w http.ResponseWriter, r *http.Request) {
 	var existing *uuid.UUID
-	id, err := uuid.Parse(r.PathValue("itemId"))
-	if raw := r.PathValue("attachmentId"); raw != "" {
-		var aid uuid.UUID
-		if aid, err = uuid.Parse(raw); err == nil {
+	var id uuid.UUID
+	var err error
+	if raw := r.PathValue("attachmentId"); raw == "" {
+		if id, err = uuid.Parse(r.PathValue("itemId")); err != nil {
+			err = items.ErrNotFound // a malformed id names nothing (DEF-021)
+		}
+	} else {
+		aid, perr := uuid.Parse(raw)
+		if perr != nil {
+			err = items.ErrNotFound
+		} else {
 			existing = &aid
 			var link *string
 			err = s.pool.QueryRow(r.Context(), "SELECT item_id,link_url FROM attachments WHERE id=$1 AND deleted_at IS NULL", aid).Scan(&id, &link)

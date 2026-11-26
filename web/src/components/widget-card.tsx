@@ -24,7 +24,10 @@ export function WidgetBody({ type, config, data, pending, error }: { type: Widge
   if (!data) return null;
   if (data.kind === "tasks") return <TaskList items={data.items ?? []} />;
   if (!config.query || !data.result) return <p className="text-sm text-muted-foreground">{t("dashboards.widget.notReady")}</p>;
-  return <Series type={type} config={config} query={config.query} result={data.result} />;
+  const series = <Series type={type} config={config} query={config.query} result={data.result} />;
+  // A table says it itself; a chart or pivot needs the note beside it.
+  return data.result.cost_status === "partial" && (type === "indicator" || (data.result.rows.length > 0 && (type === "pivot" || isChart(type))))
+    ? <><p role="status" className="text-xs text-muted-foreground">{t("reports.result.partialCost")}</p>{series}</> : series;
 }
 
 /** Rows are the group, columns the break; every row and column carries its total (DASH-03B). */
@@ -66,14 +69,18 @@ function TaskList({ items }: { items: NonNullable<WidgetData["items"]> }) {
 function Series({ type, config, query, result }: { type: WidgetType; config: WidgetConfig; query: AnalyticsQuery; result: NonNullable<WidgetData["result"]> }) {
   const { t } = useTranslation();
   const labels = useResultLabels(query);
-  if (type === "indicator") return <p className="text-4xl font-semibold tabular-nums" aria-label={t("dashboards.widget.indicator", { metric: labels.metric, count: result.total })}>
-    {result.total}<span className="ml-2 block text-sm font-normal text-muted-foreground">{labels.metric}</span></p>;
+  const { i18n } = useTranslation();
+  // Money comes in minor units; a partial cost with nothing known is not a zero.
+  const total = query.metric !== "actual_cost_minor" ? result.total : result.cost_status === "partial" && result.total === 0 ? "—"
+    : new Intl.NumberFormat(i18n.language, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(result.total / 100);
+  if (type === "indicator") return <p className="text-4xl font-semibold tabular-nums" aria-label={t("dashboards.widget.indicator", { metric: labels.metric, count: total as number })}>
+    {total}<span className="ml-2 block text-sm font-normal text-muted-foreground">{labels.metric}</span></p>;
   if (type === "completion") return <div className="space-y-1">
     <p className="text-3xl font-semibold tabular-nums">{result.total}%</p>
     <div role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={result.total} aria-label={labels.metric} className="h-3 overflow-hidden rounded bg-muted">
       <div className="h-full bg-primary" style={{ width: `${Math.min(100, Math.max(0, result.total))}%` }} /></div>
     <p className="text-sm text-muted-foreground">{labels.metric}</p></div>;
-  if (result.rows.length === 0) return <p role="status" className="text-sm text-muted-foreground">{t("reports.result.empty")}</p>;
+  if (result.rows.length === 0) return <p role="status" className="text-sm text-muted-foreground">{t(result.cost_status === "partial" ? "reports.result.partialCost" : "reports.result.empty")}</p>;
   if (type === "pivot") return <PivotTable result={result} query={query} />;
   if (!isChart(type)) return <ResultTable result={result} query={query} />;
   const label = (key: string, text: string, field: "group" | "break") => labels.value(field === "group" ? query.group_by : query.break_by, key, text);

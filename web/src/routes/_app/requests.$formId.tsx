@@ -9,7 +9,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 
 export const Route = createFileRoute("/_app/requests/$formId")({ component: Fill });
 
-type Fill = { id: string; name: string; description: string; definition: FormDefinition };
+type Fill = { id: string; name: string; description: string; definition: FormDefinition; assignment_notice?: "" | "without_others" | "choices_ignored" };
 const BANNERS = ["form_unavailable", "file_type_blocked", "file_too_large"];
 
 function Fill() {
@@ -60,6 +60,7 @@ function Fill() {
     {back}
     <header><h1 className="workspace-title">{form.data.name}</h1>
       {form.data.description && <p className="text-sm text-muted-foreground">{form.data.description}</p>}</header>
+    {form.data.assignment_notice && <p role="note" className="rounded-lg border border-warning bg-warning-subtle p-3 text-sm">{t(`forms.requests.assignment.${form.data.assignment_notice}`)}</p>}
     {banner && <p ref={bannerRef} tabIndex={-1} role="alert" className="rounded-lg border border-destructive p-3 text-sm font-medium">{banner}</p>}
     <FormRenderer key={round} headingLevel={2} definition={form.data.definition} answers={answers} onAnswersChange={setAnswers}
       onSubmit={(files) => void submit(files)} submitting={busy} serverErrors={serverErrors} />

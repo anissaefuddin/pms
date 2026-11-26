@@ -2,6 +2,7 @@ package items
 
 import (
 	"context"
+	"maps"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
@@ -14,7 +15,7 @@ type Location struct {
 	ParentID *uuid.UUID `json:"parent_item_id"`
 }
 
-func locationCaps(ctx context.Context, tx pgx.Tx, actor policy.Actor, loc Location) (policy.Caps, error) {
+func locationCaps(ctx context.Context, tx policy.DB, actor policy.Actor, loc Location) (policy.Caps, error) {
 	if loc.SpaceID == uuid.Nil || (loc.ParentID != nil && *loc.ParentID == uuid.Nil) {
 		return 0, Invalid("location IDs must be UUIDs")
 	}
@@ -139,6 +140,21 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			restricted = true
 		}
 	}
+	// Move is never another way to assign (DEF-032, DEF-041, DEC-10); see mayCarryInto. Boundaries are read before anything changes.
+	others, err := carriesOthers(ctx, tx, itemID, actor.ID)
+	if err != nil {
+		return Detail{}, err
+	}
+	boundaries, scopes := map[string]bool{}, map[string]bool{}
+	atSource := false
+	if others { // read before anything moves: taking such work to another boundary needs the right where it is now (DEC-10)
+		if err := lockGrants(ctx, tx, actor.ID); err != nil {
+			return Detail{}, err
+		}
+		if atSource, err = CanReassign(ctx, tx, actor, id); err != nil {
+			return Detail{}, err
+		}
+	}
 	existing := map[[2]uuid.UUID]bool{}
 	var remove, kept int
 	for _, loc := range current {
@@ -146,6 +162,16 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 		placement, err := locationCaps(ctx, tx, actor, loc)
 		if err != nil {
 			return Detail{}, err
+		}
+		if others && placement.Has(policy.View) {
+			b, err := boundary(ctx, tx, loc)
+			if err != nil {
+				return Detail{}, err
+			}
+			boundaries[b] = true
+			if wanted[key(loc)] {
+				scopes[b] = true
+			}
 		}
 		switch {
 		case !placement.Has(policy.View) || wanted[key(loc)]:
@@ -177,6 +203,16 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 		}
 		if !placement.Has(policy.Create) {
 			return Detail{}, ErrForbidden
+		}
+		if others {
+			b, err := boundary(ctx, tx, loc)
+			if err != nil {
+				return Detail{}, err
+			}
+			scopes[b] = true
+			if err := mayCarryInto(ctx, tx, actor, loc, boundaries); err != nil {
+				return Detail{}, err
+			}
 		}
 		resolved := uuid.Nil
 		if loc.ParentID != nil {
@@ -212,6 +248,9 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 			}
 			return Detail{}, writeError(err)
 		}
+	}
+	if others && !atSource && !maps.Equal(boundaries, scopes) {
+		return Detail{}, ErrAssignForbidden
 	}
 	if kept+len(want)-countExisting(want, existing, key) < 1 {
 		return Detail{}, Invalid("an item needs at least one location")

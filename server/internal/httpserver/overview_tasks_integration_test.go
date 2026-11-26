@@ -38,15 +38,16 @@ func TestWorkspaceOverviewTasksFilters(t *testing.T) {
 	ovItem(f, admin.id, "task", "Shipped report", "completed", due(-1), "now()", alpha)
 	ovItem(f, admin.id, "task", "Far away", "deferred", due(200), "", alpha)
 	f.exec("INSERT INTO item_assignees(item_id,user_id) VALUES ($1,$2)", overdue, member.id)
+	ovItem(f, admin.id, "task", "Undated", "active", "", "", beta) // DEF-005: no due date is not overdue, and not an error
 
-	all := []string{"Beta launch", "Far away", "Overdue report", "Shipped report"}
+	all := []string{"Beta launch", "Far away", "Overdue report", "Shipped report", "Undated"}
 	if got := ovTaskTitles(t, f, member, ""); strings.Join(got, "|") != strings.Join(all, "|") {
 		t.Fatalf("all tasks = %v, want %v", got, all)
 	}
 	if got := ovTaskTitles(t, f, member, "?space_id="+alpha); strings.Join(got, "|") != "Far away|Overdue report|Shipped report" {
 		t.Fatalf("one Space = %v", got)
 	}
-	if got := ovTaskTitles(t, f, member, "?space_id="+alpha+"&space_id="+beta); len(got) != 4 {
+	if got := ovTaskTitles(t, f, member, "?space_id="+alpha+"&space_id="+beta); len(got) != 5 {
 		t.Fatalf("two Spaces = %v", got)
 	}
 	if got := ovTaskTitles(t, f, member, "?status=completed"); strings.Join(got, "|") != "Shipped report" {

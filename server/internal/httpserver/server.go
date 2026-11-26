@@ -11,7 +11,9 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"path/filepath"
 	"regexp"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -19,11 +21,14 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/buildinfo"
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/directory"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
+	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/anissaefuddin/pms/server/internal/realtime"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/security"
 	"github.com/anissaefuddin/pms/server/internal/spaces"
 	"github.com/anissaefuddin/pms/server/web"
@@ -138,6 +143,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	// Paths follow api/openapi.yaml (servers.url = /api/v1). Keep them in sync with the contract.
 	mux.HandleFunc("GET /api/v1/healthz", s.healthz)
 	mux.HandleFunc("GET /api/v1/readyz", s.readyz)
+	mux.HandleFunc("GET /api/v1/version", s.requireUser(s.version))
 	mux.HandleFunc("POST /api/v1/auth/login", s.login)
 	mux.HandleFunc("POST /api/v1/auth/logout", s.requireUser(s.logout))
 	mux.HandleFunc("GET /api/v1/me", s.requireUser(s.me))
@@ -240,7 +246,7 @@ func jobCount(pool *pgxpool.Pool, state string) float64 {
 	defer cancel()
 	var count float64
 	if err := pool.QueryRow(ctx, "SELECT count(*)::float8 FROM river_job WHERE state=$1", state).Scan(&count); err != nil {
-		slog.Error("collect job metric", "state", state, "error", err)
+		slog.ErrorContext(ctx, "collect job metric", "state", state, "error", err)
 		return 0
 	}
 	return count
@@ -252,11 +258,25 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), time.Second)
 	defer cancel()
 	if err := database.Ready(ctx, s.pool); err != nil {
-		slog.Error("not ready", "error", err)
+		slog.ErrorContext(r.Context(), "not ready", "error", err)
 		writeError(w, http.StatusServiceUnavailable, "database unavailable or migrations pending")
 		return
 	}
 	w.WriteHeader(http.StatusOK)
+}
+
+// version identifies the build for any signed-in user; image identity is infrastructure detail for admins only.
+func (s *Server) version(w http.ResponseWriter, r *http.Request) {
+	info := buildinfo.Current()
+	if actorOf(r).Type != policy.Admin {
+		info = buildinfo.Info{Version: info.Version} // diagnostics are for administrators
+	} else {
+		info.Platform = runtime.GOOS + "/" + runtime.GOARCH
+		if err := s.pool.QueryRow(r.Context(), "SELECT COALESCE(max(version_id),0) FROM schema_migrations WHERE is_applied").Scan(&info.Schema); err != nil {
+			slog.ErrorContext(r.Context(), "schema version", "error", err)
+		}
+	}
+	writeJSON(w, http.StatusOK, info)
 }
 
 // loadMe builds the Me payload from the users row.
@@ -419,7 +439,7 @@ func (s *Server) forgotPassword(w http.ResponseWriter, r *http.Request) {
 				err = tx.Commit(r.Context())
 			}
 			if err != nil {
-				slog.Error("queue reset email", "error", err)
+				slog.ErrorContext(r.Context(), "queue reset email", "error", err)
 			}
 		}
 	}
@@ -793,6 +813,9 @@ func writeError(w http.ResponseWriter, status int, message string) {
 }
 
 func writeProblem(w http.ResponseWriter, status int, code, message string) {
+	if sw := observed(w); sw != nil && status >= http.StatusInternalServerError {
+		sw.category, sw.detail, sw.source = code, message, errorSource()
+	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]any{"type": "about:blank", "title": http.StatusText(status), "status": status, "code": code, "detail": message, "request_id": w.Header().Get("X-Request-ID")})
@@ -803,9 +826,50 @@ func writeJSON(w http.ResponseWriter, status int, value any) {
 	_ = json.NewEncoder(w).Encode(value)
 }
 
+// logContext is the request's context for code that only has the response writer, such as the shared error writers.
+func logContext(w http.ResponseWriter) context.Context {
+	ctx := context.Background()
+	if sw := observed(w); sw != nil {
+		ctx = context.WithoutCancel(sw.ctx)
+	}
+	return reqid.With(ctx, w.Header().Get("X-Request-ID"))
+}
+
+// observed finds the access log's writer under whatever wrapped it, or nil outside a request.
+func observed(w http.ResponseWriter) *statusWriter {
+	for {
+		switch v := w.(type) {
+		case *statusWriter:
+			return v
+		case interface{ Unwrap() http.ResponseWriter }:
+			w = v.Unwrap()
+		default:
+			return nil
+		}
+	}
+}
+
+// errorSource is the file and line that asked for the error response, past the shared error writers.
+func errorSource() string {
+	pcs := make([]uintptr, 8)
+	frames := runtime.CallersFrames(pcs[:runtime.Callers(3, pcs)])
+	for {
+		frame, more := frames.Next()
+		if !strings.HasSuffix(frame.Function, ".writeError") && !strings.HasSuffix(frame.Function, ".writeProblem") {
+			return filepath.Base(frame.File) + ":" + strconv.Itoa(frame.Line)
+		}
+		if !more {
+			return ""
+		}
+	}
+}
+
 type statusWriter struct {
 	http.ResponseWriter
 	status int
+	ctx    context.Context
+	// Set by writeProblem for a 5xx: the problem code, the message the client got, and who asked for it.
+	category, detail, source string
 }
 
 func (w *statusWriter) Unwrap() http.ResponseWriter { return w.ResponseWriter }
@@ -817,7 +881,9 @@ func (w *statusWriter) WriteHeader(status int) {
 func (s *Server) observe(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		start := time.Now()
-		sw := &statusWriter{ResponseWriter: w, status: 200}
+		ctx, logged := reqid.Track(r.Context())
+		r = r.WithContext(ctx)
+		sw := &statusWriter{ResponseWriter: w, status: 200, ctx: ctx}
 		next.ServeHTTP(sw, r)
 		route := r.Pattern
 		if route == "" {
@@ -825,6 +891,12 @@ func (s *Server) observe(next http.Handler) http.Handler {
 		}
 		s.requests.WithLabelValues(r.Method, route, fmt.Sprint(sw.status)).Inc()
 		s.duration.WithLabelValues(r.Method, route).Observe(time.Since(start).Seconds())
+		// Every failed request leaves one ERROR line (DEF-030). 503 is left out: it is an expected state (not ready,
+		// not configured) that probes would repeat without end.
+		if sw.status >= http.StatusInternalServerError && sw.status != http.StatusServiceUnavailable && !logged.Load() {
+			slog.ErrorContext(reqid.With(ctx, w.Header().Get("X-Request-ID")), "server error", "method", r.Method, "route", route,
+				"status", sw.status, "category", sw.category, "detail", sw.detail, "source", sw.source)
+		}
 		slog.Info("request", "request_id", w.Header().Get("X-Request-ID"), "method", r.Method, "route", route, "status", sw.status, "duration_ms", time.Since(start).Milliseconds())
 	})
 }
@@ -834,7 +906,7 @@ func recoverPanic(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		defer func() {
 			if v := recover(); v != nil {
-				slog.Error("handler panic", "request_id", w.Header().Get("X-Request-ID"), "route", r.Pattern, "panic", fmt.Sprint(v), "stack", string(debug.Stack()))
+				slog.ErrorContext(r.Context(), "handler panic", "route", r.Pattern, "panic", fmt.Sprint(v), "stack", string(debug.Stack()))
 				writeError(w, http.StatusInternalServerError, "internal error")
 			}
 		}()
@@ -861,7 +933,9 @@ func (s *Server) requestID(next http.Handler) http.Handler {
 			id = plain[:16]
 		}
 		w.Header().Set("X-Request-ID", id)
-		next.ServeHTTP(w, r)
+		inner := r.WithContext(reqid.With(r.Context(), id))
+		next.ServeHTTP(w, inner)
+		r.Pattern = inner.Pattern // the access log outside reads the matched route from its own request
 	})
 }
 

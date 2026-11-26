@@ -20,7 +20,7 @@ import { FormError } from "@/components/auth/form-error";
 import { CreateItemDialog } from "@/components/create-item-dialog";
 import { ProjectExcelExport } from "@/components/project-excel-export";
 import { SaveBlueprintDialog } from "@/components/save-blueprint-dialog";
-import { ItemUserPicker } from "@/components/item-user-picker";
+import { ItemUserPicker, assignSelfOnly } from "@/components/item-user-picker";
 import { ItemDates } from "@/components/item-dates";
 import { ItemEffort } from "@/components/item-effort";
 import { ItemLocations } from "@/components/item-locations";
@@ -29,7 +29,7 @@ import { ItemActivity } from "@/components/item-activity";
 import { ItemBlocks } from "@/components/item-blocks";
 import { ItemCustomFields } from "@/components/item-custom-fields";
 import { ContainerFieldAssignments } from "@/components/container-field-assignments";
-import { useSpaces } from "@/lib/space-queries";
+import { useLocationName, useSpaces } from "@/lib/space-queries";
 import { can } from "@/lib/spaces";
 import { ItemAttachments } from "@/components/item-attachments";
 import { AvatarStack } from "@/components/ui/avatar-stack";
@@ -88,6 +88,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
   const [assigningFields, setAssigningFields] = useState(false);
   // Field assignments are for Space managers (Full role), and they name the Space of the item's first location.
   const spaces = useSpaces();
+  const locationName = useLocationName();
   const fieldSpaceId = item.locations[0]?.space_id ?? "";
   const canManageFields = !!spaces.data?.some((space) => space.id === fieldSpaceId && can(space, "share"));
   const canSaveBlueprint = !!spaces.data?.some((space) => space.kind === "shared" && can(space, "create_blueprint"));
@@ -190,7 +191,8 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
   }
   const datesText = [item.start_date, item.due_date].filter(Boolean).map((day) => formatDate(day!, me)).join(" – ") || t("items.chips.noDates");
   const assigneesText = item.assignees.map((person) => person.name).join(", ") || t("items.chips.noAssignee");
-  const locationText = [item.locations[0]?.space_name, item.locations.length > 1 ? `+${item.locations.length - 1}` : ""].filter(Boolean).join(" ");
+  const spaceName = item.locations.map(locationName).find(Boolean);
+  const locationText = [spaceName, item.locations.length > 1 ? `+${item.locations.length - 1}` : ""].filter(Boolean).join(" ");
 
   return <article className="space-y-5">
     {parentId && !parent.isError && <Button size="sm" variant="ghost" onClick={() => onOpen(parentId)}>{parent.data?.item.title ?? t("items.parentLink")}</Button>}
@@ -237,7 +239,7 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
     }}>
       <label className="min-w-0 flex-1"><span className="sr-only">{t("items.name")}</span>
         <Input className="text-xl font-semibold" ref={titleInput} name="title" defaultValue={item.title} onChange={() => beginDraft("title")} maxLength={500} required /></label>
-      <Button disabled={busy || stale}>{t("items.save")}</Button>
+      <Button type="submit" disabled={busy || stale}>{t("items.save")}</Button>
     </form>}
     <div className="flex flex-wrap items-center gap-2" role="group" aria-label={t("items.chips.group")}>
       {canStatus ? <select aria-label={t("items.status")} className={`${chipClass} border-transparent font-medium ${tintOf(item.status?.color)}`} value={item.status?.id ?? ""}
@@ -255,10 +257,10 @@ function ItemEditor({ detail, me, onOpen, onDeleted, onFullDetails, reset }: Omi
           initialDue={item.due_date} onEdit={() => beginDraft("start_date")} onChange={saveDates} />
       }>{datesText}</PopoverChip> : datesText !== t("items.chips.noDates") && <span className={chipClass}>{datesText}</span>}
       {canEdit ? <PopoverChip disabled={busy || stale} label={t("items.chips.assignees", { value: assigneesText })} content={
-        <ItemUserPicker multiple label={t("items.assignees")} selected={item.assignees}
+        <ItemUserPicker multiple label={t("items.assignees")} selected={item.assignees} selfOnly={assignSelfOnly(me, item.my_capabilities)}
           onChange={(people) => void save({ assignee_ids: people.map((person) => person.id) })} />
       }><AvatarStack people={item.assignees} max={2} />{assigneesText}</PopoverChip> : item.assignees.length > 0 && <span className={chipClass}><AvatarStack people={item.assignees} max={2} />{assigneesText}</span>}
-      {item.locations.length > 0 && <PopoverChip label={t("items.chips.locations", { value: locationText })} content={
+      {spaceName && <PopoverChip label={t("items.chips.locations", { value: locationText })} content={
         <ItemLocations item={item} editable={canEdit} disabled={busy || stale} />
       }>{locationText}</PopoverChip>}
     </div>

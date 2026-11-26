@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
-import { api } from "@/lib/api";
+import { api, type CurrentUser } from "@/lib/api";
 import { useDebounced } from "@/lib/space-queries";
 import type { User } from "@/lib/spaces";
 import { Button } from "@/components/ui/button";
@@ -9,7 +9,14 @@ import { Input } from "@/components/ui/input";
 
 export type PersonOption = { id: string; name: string; status?: User["status"] };
 
-export function ItemUserPicker({ label, selected, onChange, multiple = false, disabled = false, maxSelected, autoFocus }: {
+/** W3: giving a task to someone else needs Full access; an Editor may only take or leave it. The server enforces the same rule. */
+export const canAssignOthers = (caps: readonly string[] | undefined) => !!caps?.includes("share");
+
+/** The `selfOnly` value for a task's assignee picker: undefined when the person may assign anyone. */
+export const assignSelfOnly = (me: CurrentUser | undefined, caps: readonly string[] | undefined): PersonOption | undefined =>
+  me && !canAssignOthers(caps) ? { id: me.id, name: `${me.first_name} ${me.last_name}`.trim() } : undefined;
+
+export function ItemUserPicker({ label, selected, onChange, multiple = false, disabled = false, maxSelected, autoFocus, selfOnly }: {
   label: string;
   selected: PersonOption[];
   onChange: (selected: PersonOption[]) => void;
@@ -17,6 +24,8 @@ export function ItemUserPicker({ label, selected, onChange, multiple = false, di
   disabled?: boolean;
   maxSelected?: number;
   autoFocus?: boolean;
+  /** When set, only this person can be added: no directory search. */
+  selfOnly?: PersonOption;
 }) {
   const { t } = useTranslation();
   const [value, setValue] = useState("");
@@ -75,8 +84,12 @@ export function ItemUserPicker({ label, selected, onChange, multiple = false, di
   return <fieldset className="space-y-2">
     <legend className="font-medium">{label}</legend>
     <div className="flex flex-wrap gap-1">{selected.map(chip)}</div>
-    <Input type="search" autoFocus={autoFocus} aria-label={`${label}: ${t("items.searchUsers")}`} placeholder={t("items.searchUsers")} value={value} disabled={!canSearch}
-      onChange={(event) => setValue(event.target.value)} />
+    {selfOnly ? <>
+      {!selected.some((entry) => entry.id === selfOnly.id) && <Button type="button" size="sm" variant="ghost" disabled={disabled}
+        onClick={() => onChange([...selected, selfOnly])}>{t("items.assignToMe")}</Button>}
+      <p className="text-sm text-muted-foreground">{t("items.assignSelfOnly")}</p>
+    </> : <Input type="search" autoFocus={autoFocus} aria-label={`${label}: ${t("items.searchUsers")}`} placeholder={t("items.searchUsers")} value={value} disabled={!canSearch}
+      onChange={(event) => setValue(event.target.value)} />}
     {users.isError && <p role="status" className="text-sm text-muted-foreground">{t("items.usersUnavailable")}</p>}
     {results.map((user) => <Button key={user.id} type="button" variant="ghost" size="sm" onClick={() => chooseResult(user)}>
       {`${user.first_name} ${user.last_name}`.trim()}

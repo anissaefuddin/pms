@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 // ItemCaps resolves live locations and ancestors in the same Space. A foreign
@@ -118,4 +119,33 @@ WHERE l.space_id=$1::uuid AND l.deleted_root_id IS NULL AND l.item_id=ANY($2::uu
 		out[id] = formCaps
 	}
 	return out, rows.Err()
+}
+
+// VisibleItemSpace names the first Space, in the item's location order, that the actor can see; "" when they see none. Use it
+// for anything sent to a person: seeing a multi-location item does not disclose its other Spaces.
+func VisibleItemSpace(ctx context.Context, db DB, actor Actor, itemID string) (string, error) {
+	spaces, err := VisibleSpaces(ctx, db, actor, "")
+	if err != nil {
+		return "", err
+	}
+	names := map[string]string{}
+	for _, s := range spaces {
+		if s.Caps.Has(View) {
+			names[s.ID] = s.Name
+		}
+	}
+	rows, err := db.Query(ctx, "SELECT space_id::text FROM item_locations WHERE item_id=$1::uuid AND deleted_root_id IS NULL ORDER BY rank, space_id", itemID)
+	if err != nil {
+		return "", err
+	}
+	ids, err := pgx.CollectRows(rows, pgx.RowTo[string])
+	if err != nil {
+		return "", err
+	}
+	for _, id := range ids {
+		if name, ok := names[id]; ok {
+			return name, nil
+		}
+	}
+	return "", nil
 }

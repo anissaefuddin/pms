@@ -5,7 +5,7 @@ import { FormError } from "@/components/auth/form-error";
 import { Button } from "@/components/ui/button";
 import { api } from "@/lib/api";
 import { getItem, itemKeys, listItems, type Item } from "@/lib/items";
-import { useSpaces } from "@/lib/space-queries";
+import { useLocationName, useSpaces } from "@/lib/space-queries";
 
 type Location = Item["locations"][number];
 
@@ -20,6 +20,7 @@ export function ItemLocations({ item, editable, disabled }: { item: Item; editab
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const spaces = useSpaces();
+  const locationName = useLocationName();
   const parentIds = [...new Set(item.locations.flatMap((loc) => loc.parent_item_id ? [loc.parent_item_id] : []))];
   const parents = useQueries({ queries: parentIds.map((id) => ({ queryKey: itemKeys.detail(id), queryFn: () => getItem(id) })) });
   const parentTitle = new Map(parentIds.map((id, index) => [id, parents[index].data?.item.title]));
@@ -42,7 +43,7 @@ export function ItemLocations({ item, editable, disabled }: { item: Item; editab
     finally { setBusy(false); }
   }
   const current = item.locations.map((loc) => ({ space_id: loc.space_id, parent_item_id: loc.parent_item_id ?? null }));
-  const label = (loc: Location) => [loc.space_name, loc.parent_item_id ? parentTitle.get(loc.parent_item_id) ?? "…" : undefined].filter(Boolean).join(" / ");
+  const label = (loc: Location) => [locationName(loc), loc.parent_item_id ? parentTitle.get(loc.parent_item_id) ?? "…" : undefined].filter(Boolean).join(" / ");
 
   return <section aria-labelledby={heading} className="space-y-2 border-t pt-4">
     <h3 id={heading} className="font-medium">{t("items.locations.title")}</h3>

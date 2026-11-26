@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/security"
 	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/google/uuid"
@@ -42,8 +43,8 @@ func (s *Server) twoFactorOn() bool { return len(s.cfg.TwoFactorKey) == 32 }
 // securityEvent notes a security-relevant change. It is part of the caller's transaction, so it cannot be skipped.
 func securityEvent(ctx context.Context, tx pgx.Tx, actor, target, action string) error {
 	// The trail lives in audit_events (migration 00300); security_events only keeps what was recorded before it.
-	_, err := tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id)
-VALUES($1::uuid, COALESCE((SELECT email::text FROM users WHERE id=$1::uuid),''), 'auth.'||$3, 'user', $2)`, actor, target, action)
+	_, err := tx.Exec(ctx, `INSERT INTO audit_events(actor_id,actor_name,action,target_type,target_id,request_id)
+VALUES($1::uuid, COALESCE((SELECT email::text FROM users WHERE id=$1::uuid),''), 'auth.'||$3, 'user', $2, $4)`, actor, target, action, reqid.From(ctx))
 	return err
 }
 
@@ -146,7 +147,7 @@ func (s *Server) loginSecondStep(w http.ResponseWriter, r *http.Request) {
 	}
 	ok, err := s.checkSecondFactor(ctx, tx, userID, in.Code)
 	if err != nil {
-		slog.Error("second factor", "error", err)
+		slog.ErrorContext(r.Context(), "second factor", "error", err)
 		writeError(w, 500, "could not check the code")
 		return
 	}
@@ -488,6 +489,6 @@ func (s *Server) twoFactorAdminReset(w http.ResponseWriter, r *http.Request) {
 		writeError(w, 500, "could not reset two-factor authentication")
 		return
 	}
-	slog.Warn("two-factor authentication reset by an administrator", "actor", actor.ID, "target", target.String(), "had_2fa", had)
+	slog.WarnContext(r.Context(), "two-factor authentication reset by an administrator", "actor", actor.ID, "target", target.String(), "had_2fa", had)
 	w.WriteHeader(http.StatusNoContent)
 }

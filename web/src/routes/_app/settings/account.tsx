@@ -19,7 +19,7 @@ type Account = components["schemas"]["Account"];
 type Tab = "general" | "branding" | "members";
 const tabs: Tab[] = ["general", "branding", "members"];
 const imageTypes = ["image/png", "image/jpeg", "image/webp"];
-const brandColors = ["#0F766E", "#2563EB", "#7C3AED", "#EA580C"];
+const brandColors = ["#0F766E", "#2563EB", "#7C3AED", "#EA580C"]; // allow-hex: brand colour choices are data, not theme tokens
 
 function AccountRoute() {
   const { t } = useTranslation();
@@ -62,7 +62,34 @@ function GeneralTab({ account, me }: { account: Account; me: CurrentUser }) {
     <WorkspacePreview account={account} />
     <WorkspaceForm account={account} fields="general" />
     <dl className="border-t pt-4 text-sm"><dt className="text-muted-foreground">{t("settings.account.created")}</dt><dd className="font-medium">{formatDate(account.created_at, me)}</dd></dl>
+    <SystemInfo />
   </div>;
+}
+
+/** Build and deployment identity of the running server (DEF-019). Tag, image ID and registry digest are different things. */
+function SystemInfo() {
+  const { t } = useTranslation();
+  const info = useQuery({ queryKey: ["version"], staleTime: Infinity, queryFn: () => api<components["schemas"]["VersionInfo"]>("/api/v1/version") }).data;
+  if (!info) return null;
+  const rows: [string, string | undefined][] = [
+    ["version", info.version], ["commit", info.commit], ["builtAt", info.built_at], ["imageRef", info.image?.ref], ["imageId", info.image?.id],
+    ["registryDigest", info.image?.registry_digest], ["schema", info.schema?.toString()], ["platform", info.platform],
+  ];
+  const shown = (value?: string) => !value || value === "unavailable" || value === "unknown" ? t("settings.system.unavailable") : value;
+  const short = (value: string) => value.replace(/^(sha256:[0-9a-f]{12})[0-9a-f]{52}$/, "$1…").replace(/^([0-9a-f]{12})[0-9a-f]{28}$/, "$1…");
+  async function copy() {
+    try {
+      await navigator.clipboard.writeText(rows.map(([key, value]) => `${key}: ${value || "unavailable"}`).join("\n"));
+      toast.success(t("settings.system.copied"));
+    } catch { toast.error(t("settings.system.copyFailed")); }
+  }
+  return <SettingsSection title={t("settings.system.title")} description={t("settings.system.description")}>
+    <dl className="divide-y rounded-lg border text-sm">{rows.map(([key, value]) => <div key={key} className="flex flex-wrap items-center justify-between gap-2 px-3 py-2">
+      <dt className="text-muted-foreground">{t(`settings.system.${key}`)}</dt>
+      <dd className="font-mono break-all" title={value}>{short(shown(value))}</dd>
+    </div>)}</dl>
+    <Button type="button" variant="outline" onClick={copy}>{t("settings.system.copy")}</Button>
+  </SettingsSection>;
 }
 
 function BrandingTab({ account }: { account: Account }) {

@@ -279,6 +279,24 @@ func (e AnalyticsQueryReportingOn) Valid() bool {
 	}
 }
 
+// Defines values for AnalyticsResultCostStatus.
+const (
+	AnalyticsResultCostStatusFull    AnalyticsResultCostStatus = "full"
+	AnalyticsResultCostStatusPartial AnalyticsResultCostStatus = "partial"
+)
+
+// Valid indicates whether the value is a known member of the AnalyticsResultCostStatus enum.
+func (e AnalyticsResultCostStatus) Valid() bool {
+	switch e {
+	case AnalyticsResultCostStatusFull:
+		return true
+	case AnalyticsResultCostStatusPartial:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ApiKeyScope.
 const (
 	ApiKeyScopeRead  ApiKeyScope = "read"
@@ -789,6 +807,27 @@ func (e ConnectorConflictResolution) Valid() bool {
 	case ConnectorConflictResolutionItem:
 		return true
 	case ConnectorConflictResolutionRemote:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for CustomFieldAccess.
+const (
+	CustomFieldAccessEdit CustomFieldAccess = "edit"
+	CustomFieldAccessNone CustomFieldAccess = "none"
+	CustomFieldAccessView CustomFieldAccess = "view"
+)
+
+// Valid indicates whether the value is a known member of the CustomFieldAccess enum.
+func (e CustomFieldAccess) Valid() bool {
+	switch e {
+	case CustomFieldAccessEdit:
+		return true
+	case CustomFieldAccessNone:
+		return true
+	case CustomFieldAccessView:
 		return true
 	default:
 		return false
@@ -1362,6 +1401,27 @@ func (e FormElementKind) Valid() bool {
 	case FormElementKindSingleChoice:
 		return true
 	case FormElementKindSingleLine:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for FormFillAssignmentNotice.
+const (
+	FormFillAssignmentNoticeChoicesIgnored FormFillAssignmentNotice = "choices_ignored"
+	FormFillAssignmentNoticeEmpty          FormFillAssignmentNotice = ""
+	FormFillAssignmentNoticeWithoutOthers  FormFillAssignmentNotice = "without_others"
+)
+
+// Valid indicates whether the value is a known member of the FormFillAssignmentNotice enum.
+func (e FormFillAssignmentNotice) Valid() bool {
+	switch e {
+	case FormFillAssignmentNoticeChoicesIgnored:
+		return true
+	case FormFillAssignmentNoticeEmpty:
+		return true
+	case FormFillAssignmentNoticeWithoutOthers:
 		return true
 	default:
 		return false
@@ -1946,17 +2006,21 @@ func (e NotificationReferenceKind) Valid() bool {
 
 // Defines values for NotificationKind.
 const (
-	NotificationKindApprovalDecided   NotificationKind = "approval_decided"
-	NotificationKindApprovalEscalated NotificationKind = "approval_escalated"
-	NotificationKindApprovalReminder  NotificationKind = "approval_reminder"
-	NotificationKindApprovalRequested NotificationKind = "approval_requested"
-	NotificationKindAssigned          NotificationKind = "assigned"
-	NotificationKindAutomation        NotificationKind = "automation"
-	NotificationKindComment           NotificationKind = "comment"
-	NotificationKindImportSummary     NotificationKind = "import_summary"
-	NotificationKindMention           NotificationKind = "mention"
-	NotificationKindShared            NotificationKind = "shared"
-	NotificationKindStatusChanged     NotificationKind = "status_changed"
+	NotificationKindApprovalDecided    NotificationKind = "approval_decided"
+	NotificationKindApprovalEscalated  NotificationKind = "approval_escalated"
+	NotificationKindApprovalReminder   NotificationKind = "approval_reminder"
+	NotificationKindApprovalRequested  NotificationKind = "approval_requested"
+	NotificationKindAssigned           NotificationKind = "assigned"
+	NotificationKindAutomation         NotificationKind = "automation"
+	NotificationKindComment            NotificationKind = "comment"
+	NotificationKindImportSummary      NotificationKind = "import_summary"
+	NotificationKindMention            NotificationKind = "mention"
+	NotificationKindShared             NotificationKind = "shared"
+	NotificationKindStatusChanged      NotificationKind = "status_changed"
+	NotificationKindTimesheetApproved  NotificationKind = "timesheet_approved"
+	NotificationKindTimesheetLocked    NotificationKind = "timesheet_locked"
+	NotificationKindTimesheetRejected  NotificationKind = "timesheet_rejected"
+	NotificationKindTimesheetSubmitted NotificationKind = "timesheet_submitted"
 )
 
 // Valid indicates whether the value is a known member of the NotificationKind enum.
@@ -1983,6 +2047,14 @@ func (e NotificationKind) Valid() bool {
 	case NotificationKindShared:
 		return true
 	case NotificationKindStatusChanged:
+		return true
+	case NotificationKindTimesheetApproved:
+		return true
+	case NotificationKindTimesheetLocked:
+		return true
+	case NotificationKindTimesheetRejected:
+		return true
+	case NotificationKindTimesheetSubmitted:
 		return true
 	default:
 		return false
@@ -2646,6 +2718,30 @@ func (e TimeEntryBillingType) Valid() bool {
 	}
 }
 
+// Defines values for TimeEntryStatus.
+const (
+	TimeEntryStatusApproved  TimeEntryStatus = "approved"
+	TimeEntryStatusDraft     TimeEntryStatus = "draft"
+	TimeEntryStatusRejected  TimeEntryStatus = "rejected"
+	TimeEntryStatusSubmitted TimeEntryStatus = "submitted"
+)
+
+// Valid indicates whether the value is a known member of the TimeEntryStatus enum.
+func (e TimeEntryStatus) Valid() bool {
+	switch e {
+	case TimeEntryStatusApproved:
+		return true
+	case TimeEntryStatusDraft:
+		return true
+	case TimeEntryStatusRejected:
+		return true
+	case TimeEntryStatusSubmitted:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for TimeEntryFieldsBillingType.
 const (
 	TimeEntryFieldsBillingTypeBillable    TimeEntryFieldsBillingType = "billable"
@@ -2982,6 +3078,123 @@ func (e ResolveConnectorConflictJSONBodyResolution) Valid() bool {
 	}
 }
 
+// Defines values for ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel.
+const (
+	ListWorkspaceFieldGrants200JSONResponseBodyItemsLevelEdit ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel = "edit"
+	ListWorkspaceFieldGrants200JSONResponseBodyItemsLevelNone ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel = "none"
+	ListWorkspaceFieldGrants200JSONResponseBodyItemsLevelView ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel = "view"
+)
+
+// Valid indicates whether the value is a known member of the ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel enum.
+func (e ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel) Valid() bool {
+	switch e {
+	case ListWorkspaceFieldGrants200JSONResponseBodyItemsLevelEdit:
+		return true
+	case ListWorkspaceFieldGrants200JSONResponseBodyItemsLevelNone:
+		return true
+	case ListWorkspaceFieldGrants200JSONResponseBodyItemsLevelView:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind.
+const (
+	ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind = "group"
+	ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindUser  ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind enum.
+func (e ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind) Valid() bool {
+	switch e {
+	case ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup:
+		return true
+	case ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetWorkspaceFieldGrantsJSONBodyGrantsLevel.
+const (
+	SetWorkspaceFieldGrantsJSONBodyGrantsLevelEdit SetWorkspaceFieldGrantsJSONBodyGrantsLevel = "edit"
+	SetWorkspaceFieldGrantsJSONBodyGrantsLevelNone SetWorkspaceFieldGrantsJSONBodyGrantsLevel = "none"
+	SetWorkspaceFieldGrantsJSONBodyGrantsLevelView SetWorkspaceFieldGrantsJSONBodyGrantsLevel = "view"
+)
+
+// Valid indicates whether the value is a known member of the SetWorkspaceFieldGrantsJSONBodyGrantsLevel enum.
+func (e SetWorkspaceFieldGrantsJSONBodyGrantsLevel) Valid() bool {
+	switch e {
+	case SetWorkspaceFieldGrantsJSONBodyGrantsLevelEdit:
+		return true
+	case SetWorkspaceFieldGrantsJSONBodyGrantsLevelNone:
+		return true
+	case SetWorkspaceFieldGrantsJSONBodyGrantsLevelView:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind.
+const (
+	SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKindGroup SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind = "group"
+	SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKindUser  SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind enum.
+func (e SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind) Valid() bool {
+	switch e {
+	case SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKindGroup:
+		return true
+	case SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel.
+const (
+	SetWorkspaceFieldGrants200JSONResponseBodyItemsLevelEdit SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel = "edit"
+	SetWorkspaceFieldGrants200JSONResponseBodyItemsLevelNone SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel = "none"
+	SetWorkspaceFieldGrants200JSONResponseBodyItemsLevelView SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel = "view"
+)
+
+// Valid indicates whether the value is a known member of the SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel enum.
+func (e SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel) Valid() bool {
+	switch e {
+	case SetWorkspaceFieldGrants200JSONResponseBodyItemsLevelEdit:
+		return true
+	case SetWorkspaceFieldGrants200JSONResponseBodyItemsLevelNone:
+		return true
+	case SetWorkspaceFieldGrants200JSONResponseBodyItemsLevelView:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind.
+const (
+	SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind = "group"
+	SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindUser  SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind enum.
+func (e SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind) Valid() bool {
+	switch e {
+	case SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup:
+		return true
+	case SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListProjectTimeEntriesParamsBillingType.
 const (
 	ListProjectTimeEntriesParamsBillingTypeBillable    ListProjectTimeEntriesParamsBillingType = "billable"
@@ -3027,6 +3240,27 @@ func (e ListProjectTimeEntriesParamsSort) Valid() bool {
 	}
 }
 
+// Defines values for GetProjectTimeSummary200JSONResponseBodyCostStatus.
+const (
+	GetProjectTimeSummary200JSONResponseBodyCostStatusFull         GetProjectTimeSummary200JSONResponseBodyCostStatus = "full"
+	GetProjectTimeSummary200JSONResponseBodyCostStatusPartial      GetProjectTimeSummary200JSONResponseBodyCostStatus = "partial"
+	GetProjectTimeSummary200JSONResponseBodyCostStatusUnauthorized GetProjectTimeSummary200JSONResponseBodyCostStatus = "unauthorized"
+)
+
+// Valid indicates whether the value is a known member of the GetProjectTimeSummary200JSONResponseBodyCostStatus enum.
+func (e GetProjectTimeSummary200JSONResponseBodyCostStatus) Valid() bool {
+	switch e {
+	case GetProjectTimeSummary200JSONResponseBodyCostStatusFull:
+		return true
+	case GetProjectTimeSummary200JSONResponseBodyCostStatusPartial:
+		return true
+	case GetProjectTimeSummary200JSONResponseBodyCostStatusUnauthorized:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for GetProjectTimeSummary200JSONResponseBodyScope.
 const (
 	GetProjectTimeSummary200JSONResponseBodyScopePermittedEntries GetProjectTimeSummary200JSONResponseBodyScope = "permitted_entries"
@@ -3039,6 +3273,27 @@ func (e GetProjectTimeSummary200JSONResponseBodyScope) Valid() bool {
 	case GetProjectTimeSummary200JSONResponseBodyScopePermittedEntries:
 		return true
 	case GetProjectTimeSummary200JSONResponseBodyScopeProject:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListCreatedByMe200JSONResponseBodyItemsType.
+const (
+	ListCreatedByMe200JSONResponseBodyItemsTypeFolder  ListCreatedByMe200JSONResponseBodyItemsType = "folder"
+	ListCreatedByMe200JSONResponseBodyItemsTypeProject ListCreatedByMe200JSONResponseBodyItemsType = "project"
+	ListCreatedByMe200JSONResponseBodyItemsTypeTask    ListCreatedByMe200JSONResponseBodyItemsType = "task"
+)
+
+// Valid indicates whether the value is a known member of the ListCreatedByMe200JSONResponseBodyItemsType enum.
+func (e ListCreatedByMe200JSONResponseBodyItemsType) Valid() bool {
+	switch e {
+	case ListCreatedByMe200JSONResponseBodyItemsTypeFolder:
+		return true
+	case ListCreatedByMe200JSONResponseBodyItemsTypeProject:
+		return true
+	case ListCreatedByMe200JSONResponseBodyItemsTypeTask:
 		return true
 	default:
 		return false
@@ -3203,19 +3458,19 @@ func (e GetOverview200JSONResponseBodySpacesEffectiveAccess) Valid() bool {
 
 // Defines values for GetOverview200JSONResponseBodySpacesHealth.
 const (
-	Attention GetOverview200JSONResponseBodySpacesHealth = "attention"
-	Empty     GetOverview200JSONResponseBodySpacesHealth = "empty"
-	OnTrack   GetOverview200JSONResponseBodySpacesHealth = "on_track"
+	GetOverview200JSONResponseBodySpacesHealthAttention GetOverview200JSONResponseBodySpacesHealth = "attention"
+	GetOverview200JSONResponseBodySpacesHealthEmpty     GetOverview200JSONResponseBodySpacesHealth = "empty"
+	GetOverview200JSONResponseBodySpacesHealthOnTrack   GetOverview200JSONResponseBodySpacesHealth = "on_track"
 )
 
 // Valid indicates whether the value is a known member of the GetOverview200JSONResponseBodySpacesHealth enum.
 func (e GetOverview200JSONResponseBodySpacesHealth) Valid() bool {
 	switch e {
-	case Attention:
+	case GetOverview200JSONResponseBodySpacesHealthAttention:
 		return true
-	case Empty:
+	case GetOverview200JSONResponseBodySpacesHealthEmpty:
 		return true
-	case OnTrack:
+	case GetOverview200JSONResponseBodySpacesHealthOnTrack:
 		return true
 	default:
 		return false
@@ -3513,6 +3768,186 @@ func (e ImportAutomationRuleJSONBodyFormat) Valid() bool {
 	}
 }
 
+// Defines values for ListFieldAssignments200JSONResponseBodyItemsScopeKind.
+const (
+	ListFieldAssignments200JSONResponseBodyItemsScopeKindFolder  ListFieldAssignments200JSONResponseBodyItemsScopeKind = "folder"
+	ListFieldAssignments200JSONResponseBodyItemsScopeKindProject ListFieldAssignments200JSONResponseBodyItemsScopeKind = "project"
+	ListFieldAssignments200JSONResponseBodyItemsScopeKindSpace   ListFieldAssignments200JSONResponseBodyItemsScopeKind = "space"
+)
+
+// Valid indicates whether the value is a known member of the ListFieldAssignments200JSONResponseBodyItemsScopeKind enum.
+func (e ListFieldAssignments200JSONResponseBodyItemsScopeKind) Valid() bool {
+	switch e {
+	case ListFieldAssignments200JSONResponseBodyItemsScopeKindFolder:
+		return true
+	case ListFieldAssignments200JSONResponseBodyItemsScopeKindProject:
+		return true
+	case ListFieldAssignments200JSONResponseBodyItemsScopeKindSpace:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for AssignFieldJSONBodyScopeKind.
+const (
+	AssignFieldJSONBodyScopeKindFolder  AssignFieldJSONBodyScopeKind = "folder"
+	AssignFieldJSONBodyScopeKindProject AssignFieldJSONBodyScopeKind = "project"
+	AssignFieldJSONBodyScopeKindSpace   AssignFieldJSONBodyScopeKind = "space"
+)
+
+// Valid indicates whether the value is a known member of the AssignFieldJSONBodyScopeKind enum.
+func (e AssignFieldJSONBodyScopeKind) Valid() bool {
+	switch e {
+	case AssignFieldJSONBodyScopeKindFolder:
+		return true
+	case AssignFieldJSONBodyScopeKindProject:
+		return true
+	case AssignFieldJSONBodyScopeKindSpace:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for UnassignFieldParamsScopeKind.
+const (
+	UnassignFieldParamsScopeKindFolder  UnassignFieldParamsScopeKind = "folder"
+	UnassignFieldParamsScopeKindProject UnassignFieldParamsScopeKind = "project"
+	UnassignFieldParamsScopeKindSpace   UnassignFieldParamsScopeKind = "space"
+)
+
+// Valid indicates whether the value is a known member of the UnassignFieldParamsScopeKind enum.
+func (e UnassignFieldParamsScopeKind) Valid() bool {
+	switch e {
+	case UnassignFieldParamsScopeKindFolder:
+		return true
+	case UnassignFieldParamsScopeKindProject:
+		return true
+	case UnassignFieldParamsScopeKindSpace:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListSpaceFieldGrants200JSONResponseBodyItemsLevel.
+const (
+	ListSpaceFieldGrants200JSONResponseBodyItemsLevelEdit ListSpaceFieldGrants200JSONResponseBodyItemsLevel = "edit"
+	ListSpaceFieldGrants200JSONResponseBodyItemsLevelNone ListSpaceFieldGrants200JSONResponseBodyItemsLevel = "none"
+	ListSpaceFieldGrants200JSONResponseBodyItemsLevelView ListSpaceFieldGrants200JSONResponseBodyItemsLevel = "view"
+)
+
+// Valid indicates whether the value is a known member of the ListSpaceFieldGrants200JSONResponseBodyItemsLevel enum.
+func (e ListSpaceFieldGrants200JSONResponseBodyItemsLevel) Valid() bool {
+	switch e {
+	case ListSpaceFieldGrants200JSONResponseBodyItemsLevelEdit:
+		return true
+	case ListSpaceFieldGrants200JSONResponseBodyItemsLevelNone:
+		return true
+	case ListSpaceFieldGrants200JSONResponseBodyItemsLevelView:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind.
+const (
+	ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind = "group"
+	ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKindUser  ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind enum.
+func (e ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind) Valid() bool {
+	switch e {
+	case ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup:
+		return true
+	case ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetSpaceFieldGrantsJSONBodyGrantsLevel.
+const (
+	SetSpaceFieldGrantsJSONBodyGrantsLevelEdit SetSpaceFieldGrantsJSONBodyGrantsLevel = "edit"
+	SetSpaceFieldGrantsJSONBodyGrantsLevelNone SetSpaceFieldGrantsJSONBodyGrantsLevel = "none"
+	SetSpaceFieldGrantsJSONBodyGrantsLevelView SetSpaceFieldGrantsJSONBodyGrantsLevel = "view"
+)
+
+// Valid indicates whether the value is a known member of the SetSpaceFieldGrantsJSONBodyGrantsLevel enum.
+func (e SetSpaceFieldGrantsJSONBodyGrantsLevel) Valid() bool {
+	switch e {
+	case SetSpaceFieldGrantsJSONBodyGrantsLevelEdit:
+		return true
+	case SetSpaceFieldGrantsJSONBodyGrantsLevelNone:
+		return true
+	case SetSpaceFieldGrantsJSONBodyGrantsLevelView:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetSpaceFieldGrantsJSONBodyGrantsSubjectKind.
+const (
+	SetSpaceFieldGrantsJSONBodyGrantsSubjectKindGroup SetSpaceFieldGrantsJSONBodyGrantsSubjectKind = "group"
+	SetSpaceFieldGrantsJSONBodyGrantsSubjectKindUser  SetSpaceFieldGrantsJSONBodyGrantsSubjectKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the SetSpaceFieldGrantsJSONBodyGrantsSubjectKind enum.
+func (e SetSpaceFieldGrantsJSONBodyGrantsSubjectKind) Valid() bool {
+	switch e {
+	case SetSpaceFieldGrantsJSONBodyGrantsSubjectKindGroup:
+		return true
+	case SetSpaceFieldGrantsJSONBodyGrantsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetSpaceFieldGrants200JSONResponseBodyItemsLevel.
+const (
+	SetSpaceFieldGrants200JSONResponseBodyItemsLevelEdit SetSpaceFieldGrants200JSONResponseBodyItemsLevel = "edit"
+	SetSpaceFieldGrants200JSONResponseBodyItemsLevelNone SetSpaceFieldGrants200JSONResponseBodyItemsLevel = "none"
+	SetSpaceFieldGrants200JSONResponseBodyItemsLevelView SetSpaceFieldGrants200JSONResponseBodyItemsLevel = "view"
+)
+
+// Valid indicates whether the value is a known member of the SetSpaceFieldGrants200JSONResponseBodyItemsLevel enum.
+func (e SetSpaceFieldGrants200JSONResponseBodyItemsLevel) Valid() bool {
+	switch e {
+	case SetSpaceFieldGrants200JSONResponseBodyItemsLevelEdit:
+		return true
+	case SetSpaceFieldGrants200JSONResponseBodyItemsLevelNone:
+		return true
+	case SetSpaceFieldGrants200JSONResponseBodyItemsLevelView:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind.
+const (
+	SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind = "group"
+	SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKindUser  SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind = "user"
+)
+
+// Valid indicates whether the value is a known member of the SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind enum.
+func (e SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind) Valid() bool {
+	switch e {
+	case SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKindGroup:
+		return true
+	case SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKindUser:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for RestoreSpace200JSONResponseBodyWarnings.
 const (
 	NoFullAccessHolder RestoreSpace200JSONResponseBodyWarnings = "no_full_access_holder"
@@ -3633,6 +4068,51 @@ func (e UpdateTimeEntryJSONBodyBillingType) Valid() bool {
 	}
 }
 
+// Defines values for GetTimeEntryHistory200JSONResponseBodyItemsAction.
+const (
+	GetTimeEntryHistory200JSONResponseBodyItemsActionApproved  GetTimeEntryHistory200JSONResponseBodyItemsAction = "approved"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionLocked    GetTimeEntryHistory200JSONResponseBodyItemsAction = "locked"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionRejected  GetTimeEntryHistory200JSONResponseBodyItemsAction = "rejected"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionSubmitted GetTimeEntryHistory200JSONResponseBodyItemsAction = "submitted"
+	GetTimeEntryHistory200JSONResponseBodyItemsActionUnlocked  GetTimeEntryHistory200JSONResponseBodyItemsAction = "unlocked"
+)
+
+// Valid indicates whether the value is a known member of the GetTimeEntryHistory200JSONResponseBodyItemsAction enum.
+func (e GetTimeEntryHistory200JSONResponseBodyItemsAction) Valid() bool {
+	switch e {
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionApproved:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionLocked:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionRejected:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionSubmitted:
+		return true
+	case GetTimeEntryHistory200JSONResponseBodyItemsActionUnlocked:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ReviewTimeEntryJSONBodyDecision.
+const (
+	ReviewTimeEntryJSONBodyDecisionApproved ReviewTimeEntryJSONBodyDecision = "approved"
+	ReviewTimeEntryJSONBodyDecisionRejected ReviewTimeEntryJSONBodyDecision = "rejected"
+)
+
+// Valid indicates whether the value is a known member of the ReviewTimeEntryJSONBodyDecision enum.
+func (e ReviewTimeEntryJSONBodyDecision) Valid() bool {
+	switch e {
+	case ReviewTimeEntryJSONBodyDecisionApproved:
+		return true
+	case ReviewTimeEntryJSONBodyDecisionRejected:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListWebhookDeliveries200JSONResponseBodyItemsStatus.
 const (
 	ListWebhookDeliveries200JSONResponseBodyItemsStatusFailed  ListWebhookDeliveries200JSONResponseBodyItemsStatus = "failed"
@@ -3743,6 +4223,13 @@ type Activity struct {
 	} `json:"changes"`
 	CreatedAt time.Time `json:"created_at"`
 	Id        int64     `json:"id"`
+	RequestId *string   `json:"request_id,omitempty"`
+
+	// Workflow Revisi aturan workflow saat status diubah; null untuk entry lain dan perubahan lama
+	Workflow *struct {
+		Id       openapi_types.UUID `json:"id"`
+		Revision int                `json:"revision"`
+	} `json:"workflow,omitempty"`
 }
 
 // ActivityPage defines model for ActivityPage.
@@ -3829,13 +4316,18 @@ type AnalyticsQueryReportingOn string
 
 // AnalyticsResult defines model for AnalyticsResult.
 type AnalyticsResult struct {
-	Rows []struct {
+	// CostStatus Hanya pada metrik biaya. partial: sebagian waktu yang disetujui belum punya tarif atau tidak boleh dilihat; angka adalah subtotal yang diketahui
+	CostStatus *AnalyticsResultCostStatus `json:"cost_status,omitempty"`
+	Rows       []struct {
 		Break *AnalyticsLabel `json:"break"`
 		Group AnalyticsLabel  `json:"group"`
 		Value float32         `json:"value"`
 	} `json:"rows"`
 	Total float32 `json:"total"`
 }
+
+// AnalyticsResultCostStatus Hanya pada metrik biaya. partial: sebagian waktu yang disetujui belum punya tarif atau tidak boleh dilihat; angka adalah subtotal yang diketahui
+type AnalyticsResultCostStatus string
 
 // ApiKey defines model for ApiKey.
 type ApiKey struct {
@@ -3981,7 +4473,7 @@ type Attachment struct {
 	SizeBytes int64   `json:"size_bytes"`
 	Uploader  UserRef `json:"uploader"`
 
-	// Version Nomor versi terbaru; filename
+	// Version Nomor versi terbaru; filename, ukuran dan unduhan mengikuti versi ini
 	Version *int `json:"version,omitempty"`
 }
 
@@ -4030,15 +4522,18 @@ type AttachmentVersion struct {
 // AuditEvent defines model for AuditEvent.
 type AuditEvent struct {
 	// Action Bentuk "area.verb"
-	Action     string                 `json:"action"`
-	ActorId    *openapi_types.UUID    `json:"actor_id"`
-	ActorName  string                 `json:"actor_name"`
-	At         time.Time              `json:"at"`
-	Details    map[string]interface{} `json:"details"`
-	Id         int64                  `json:"id"`
-	Ip         string                 `json:"ip"`
-	TargetId   string                 `json:"target_id"`
-	TargetType string                 `json:"target_type"`
+	Action    string                 `json:"action"`
+	ActorId   *openapi_types.UUID    `json:"actor_id"`
+	ActorName string                 `json:"actor_name"`
+	At        time.Time              `json:"at"`
+	Details   map[string]interface{} `json:"details"`
+	Id        int64                  `json:"id"`
+	Ip        string                 `json:"ip"`
+
+	// RequestId Sama dengan X-Request-ID dan log aplikasi; kosong untuk event lama dan pekerjaan latar
+	RequestId  string `json:"request_id"`
+	TargetId   string `json:"target_id"`
+	TargetType string `json:"target_type"`
 }
 
 // AuditPage defines model for AuditPage.
@@ -4334,6 +4829,8 @@ type CreateMenu struct {
 
 // CustomField defines model for CustomField.
 type CustomField struct {
+	// Access Akses pemanggil ke nilai field; hanya pada daftar. Field dengan none hanya dikirim ke pengelolanya
+	Access     *CustomFieldAccess  `json:"access,omitempty"`
 	ArchivedAt *time.Time          `json:"archived_at,omitempty"`
 	Config     *CustomFieldConfig  `json:"config,omitempty"`
 	Id         openapi_types.UUID  `json:"id"`
@@ -4343,6 +4840,9 @@ type CustomField struct {
 	SpaceId    openapi_types.UUID  `json:"space_id"`
 	Type       CustomFieldType     `json:"type"`
 }
+
+// CustomFieldAccess Akses pemanggil ke nilai field; hanya pada daftar. Field dengan none hanya dikirim ke pengelolanya
+type CustomFieldAccess string
 
 // CustomFieldConfig defines model for CustomFieldConfig.
 type CustomFieldConfig struct {
@@ -4563,7 +5063,7 @@ type DashboardWidgetConfig struct {
 	// Description Keterangan singkat di bawah judul widget (DASH-04)
 	Description *string `json:"description,omitempty"`
 
-	// List Khusus task_list (DASH-01); gunakan list atau template
+	// List Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya
 	List *DashboardWidgetConfigList `json:"list,omitempty"`
 
 	// PieStyle Khusus pie
@@ -4580,7 +5080,7 @@ type DashboardWidgetConfig struct {
 	Template *DashboardWidgetConfigTemplate `json:"template,omitempty"`
 }
 
-// DashboardWidgetConfigList Khusus task_list (DASH-01); gunakan list atau template
+// DashboardWidgetConfigList Khusus task_list (DASH-01); gunakan list atau template, bukan keduanya
 type DashboardWidgetConfigList string
 
 // DashboardWidgetConfigPieStyle Khusus pie
@@ -4765,11 +5265,16 @@ type FormElementKind string
 
 // FormFill defines model for FormFill.
 type FormFill struct {
-	Definition  FormDefinition     `json:"definition"`
-	Description string             `json:"description"`
-	Id          openapi_types.UUID `json:"id"`
-	Name        string             `json:"name"`
+	// AssignmentNotice Kiriman pengguna ini tidak akan menugaskan orang lain; kosong bila tidak relevan
+	AssignmentNotice *FormFillAssignmentNotice `json:"assignment_notice,omitempty"`
+	Definition       FormDefinition            `json:"definition"`
+	Description      string                    `json:"description"`
+	Id               openapi_types.UUID        `json:"id"`
+	Name             string                    `json:"name"`
 }
+
+// FormFillAssignmentNotice Kiriman pengguna ini tidak akan menugaskan orang lain; kosong bila tidak relevan
+type FormFillAssignmentNotice string
 
 // FormInput defines model for FormInput.
 type FormInput struct {
@@ -4919,7 +5424,7 @@ type Item struct {
 	CommentCount    *int           `json:"comment_count,omitempty"`
 	CompletedAt     *time.Time     `json:"completed_at,omitempty"`
 
-	// CoverAttachmentId Lampiran gambar pertama yang masih ada
+	// CoverAttachmentId Lampiran gambar pertama yang masih ada, untuk sampul kartu
 	CoverAttachmentId *openapi_types.UUID  `json:"cover_attachment_id,omitempty"`
 	CreatedAt         time.Time            `json:"created_at"`
 	CreatedBy         *UserRef             `json:"created_by,omitempty"`
@@ -5024,7 +5529,7 @@ type ItemCreate struct {
 	Title    string              `json:"title"`
 	Type     *ItemType           `json:"type,omitempty"`
 
-	// TypeKey Kunci tipe item aktif
+	// TypeKey Kunci tipe item aktif, mis. bug
 	TypeKey *string `json:"type_key,omitempty"`
 
 	// WorkflowId Workflow untuk item root (tanpa parent). Prioritas: workflow_id, default Item Type, default Space untuk task atau project, lalu default Workspace. Anak item tidak boleh menyebut workflow_id (B)
@@ -5038,7 +5543,7 @@ type ItemCreateDefaultViewType string
 type ItemDependency struct {
 	Id openapi_types.UUID `json:"id"`
 
-	// Lag Lag dalam hari kerja
+	// Lag Lag dalam hari kerja, boleh negatif
 	Lag           int32              `json:"lag"`
 	PredecessorId openapi_types.UUID `json:"predecessor_id"`
 	SuccessorId   openapi_types.UUID `json:"successor_id"`
@@ -5050,7 +5555,7 @@ type ItemDependencyMutation struct {
 	AffectedItems *[]ScheduleItemChange `json:"affected_items,omitempty"`
 	Id            openapi_types.UUID    `json:"id"`
 
-	// Lag Lag dalam hari kerja
+	// Lag Lag dalam hari kerja, boleh negatif
 	Lag           int32              `json:"lag"`
 	PredecessorId openapi_types.UUID `json:"predecessor_id"`
 	SuccessorId   openapi_types.UUID `json:"successor_id"`
@@ -5072,7 +5577,7 @@ type ItemPatchResult struct {
 	CommentCount    *int                  `json:"comment_count,omitempty"`
 	CompletedAt     *time.Time            `json:"completed_at,omitempty"`
 
-	// CoverAttachmentId Lampiran gambar pertama yang masih ada
+	// CoverAttachmentId Lampiran gambar pertama yang masih ada, untuk sampul kartu
 	CoverAttachmentId *openapi_types.UUID             `json:"cover_attachment_id,omitempty"`
 	CreatedAt         time.Time                       `json:"created_at"`
 	CreatedBy         *UserRef                        `json:"created_by,omitempty"`
@@ -5550,7 +6055,7 @@ type ProjectFile struct {
 	SizeBytes    int64                    `json:"size_bytes"`
 	Uploader     UserRef                  `json:"uploader"`
 
-	// Version Nomor versi terbaru; filename
+	// Version Nomor versi terbaru; filename, ukuran dan unduhan mengikuti versi ini
 	Version *int `json:"version,omitempty"`
 }
 
@@ -5859,7 +6364,7 @@ type SearchResults struct {
 		CommentCount    *int           `json:"comment_count,omitempty"`
 		CompletedAt     *time.Time     `json:"completed_at,omitempty"`
 
-		// CoverAttachmentId Lampiran gambar pertama yang masih ada
+		// CoverAttachmentId Lampiran gambar pertama yang masih ada, untuk sampul kartu
 		CoverAttachmentId *openapi_types.UUID                `json:"cover_attachment_id,omitempty"`
 		CreatedAt         time.Time                          `json:"created_at"`
 		CreatedBy         *UserRef                           `json:"created_by,omitempty"`
@@ -5986,6 +6491,9 @@ type Space struct {
 	Archived    *bool   `json:"archived,omitempty"`
 	Description *string `json:"description,omitempty"`
 
+	// HasActiveAdmin Hanya pada pembacaan satu Space shared; false berarti arsip dan penunjukan admin belum bisa dilakukan
+	HasActiveAdmin *bool `json:"has_active_admin,omitempty"`
+
 	// IconKey Kunci ikon dari katalog GET /space-icons (D-04)
 	IconKey *string            `json:"icon_key,omitempty"`
 	Id      openapi_types.UUID `json:"id"`
@@ -6083,8 +6591,14 @@ type SpaceTemplate struct {
 	} `json:"counts"`
 	Description string `json:"description"`
 	Id          string `json:"id"`
-	Name        string `json:"name"`
-	Version     int    `json:"version"`
+
+	// Mine Disimpan oleh pemanggil dan dapat dihapusnya
+	Mine bool   `json:"mine"`
+	Name string `json:"name"`
+
+	// Saved Dibuat dari sebuah Space; false untuk template bawaan
+	Saved   bool `json:"saved"`
+	Version int  `json:"version"`
 }
 
 // SpaceUpdate defines model for SpaceUpdate.
@@ -6254,6 +6768,8 @@ type TimeEntry struct {
 	ItemTitle   *string              `json:"item_title,omitempty"`
 	Locked      bool                 `json:"locked"`
 	Minutes     int                  `json:"minutes"`
+	ReviewNote  string               `json:"review_note"`
+	Status      TimeEntryStatus      `json:"status"`
 	UserId      openapi_types.UUID   `json:"user_id"`
 	UserName    *string              `json:"user_name,omitempty"`
 	Version     int                  `json:"version"`
@@ -6261,6 +6777,9 @@ type TimeEntry struct {
 
 // TimeEntryBillingType defines model for TimeEntry.BillingType.
 type TimeEntryBillingType string
+
+// TimeEntryStatus defines model for TimeEntry.Status.
+type TimeEntryStatus string
 
 // TimeEntryFields defines model for TimeEntryFields.
 type TimeEntryFields struct {
@@ -6350,6 +6869,34 @@ type UtilizationRow struct {
 	Name           string             `json:"name"`
 	Planned        int32              `json:"planned"`
 	PlannedPercent float32            `json:"planned_percent"`
+}
+
+// VersionInfo defines model for VersionInfo.
+type VersionInfo struct {
+	// BuiltAt Hanya admin. Waktu build (UTC); "unknown" bila tidak diberikan
+	BuiltAt *string `json:"built_at,omitempty"`
+
+	// Commit Hanya admin. Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build
+	Commit *string `json:"commit,omitempty"`
+
+	// Image Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan.
+	Image *struct {
+		// Id ID image lokal di host (sha256)
+		Id string `json:"id"`
+
+		// Ref Referensi image yang dikonfigurasi (biasanya tag, bukan bukti isi)
+		Ref string `json:"ref"`
+
+		// RegistryDigest Digest manifest registry; hanya untuk image yang ditarik dari registry
+		RegistryDigest string `json:"registry_digest"`
+	} `json:"image,omitempty"`
+
+	// Platform Hanya admin. OS/arsitektur proses yang berjalan
+	Platform *string `json:"platform,omitempty"`
+
+	// Schema Hanya admin. Versi migrasi database
+	Schema  *int   `json:"schema,omitempty"`
+	Version string `json:"version"`
 }
 
 // View defines model for View.
@@ -6636,10 +7183,10 @@ type UpdateAttachmentAnnotationJSONBody struct {
 
 // ListAuditEventsParams defines parameters for ListAuditEvents.
 type ListAuditEventsParams struct {
-	// Action Aksi persis
+	// Action Aksi persis, misalnya auth.login
 	Action *string `form:"action,omitempty" json:"action,omitempty"`
 
-	// Category Area
+	// Category Area, misalnya auth, user, share, role, sso, api_key
 	Category *string             `form:"category,omitempty" json:"category,omitempty"`
 	ActorId  *openapi_types.UUID `form:"actor_id,omitempty" json:"actor_id,omitempty"`
 	From     *time.Time          `form:"from,omitempty" json:"from,omitempty"`
@@ -6854,6 +7401,34 @@ type LinkConnectorItemJSONBody struct {
 	ItemId     openapi_types.UUID `json:"item_id"`
 }
 
+// ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel defines parameters for ListWorkspaceFieldGrants.
+type ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel string
+
+// ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind defines parameters for ListWorkspaceFieldGrants.
+type ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind string
+
+// SetWorkspaceFieldGrantsJSONBody defines parameters for SetWorkspaceFieldGrants.
+type SetWorkspaceFieldGrantsJSONBody struct {
+	Grants []struct {
+		Level       SetWorkspaceFieldGrantsJSONBodyGrantsLevel       `json:"level"`
+		SubjectId   openapi_types.UUID                               `json:"subject_id"`
+		SubjectKind SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind `json:"subject_kind"`
+		SubjectName *string                                          `json:"subject_name,omitempty"`
+	} `json:"grants"`
+}
+
+// SetWorkspaceFieldGrantsJSONBodyGrantsLevel defines parameters for SetWorkspaceFieldGrants.
+type SetWorkspaceFieldGrantsJSONBodyGrantsLevel string
+
+// SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind defines parameters for SetWorkspaceFieldGrants.
+type SetWorkspaceFieldGrantsJSONBodyGrantsSubjectKind string
+
+// SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel defines parameters for SetWorkspaceFieldGrants.
+type SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel string
+
+// SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind defines parameters for SetWorkspaceFieldGrants.
+type SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind string
+
 // DeleteCustomRoleParams defines parameters for DeleteCustomRole.
 type DeleteCustomRoleParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -6923,7 +7498,7 @@ type QueryDependenciesJSONBody struct {
 
 // UpdateItemDependencyJSONBody defines parameters for UpdateItemDependency.
 type UpdateItemDependencyJSONBody struct {
-	// Lag Lag dalam hari kerja
+	// Lag Lag dalam hari kerja, boleh negatif
 	Lag  *int32          `json:"lag,omitempty"`
 	Type *DependencyType `json:"type,omitempty"`
 }
@@ -7044,7 +7619,7 @@ type CreateCommentJSONBody struct {
 
 // CreateItemDependencyJSONBody defines parameters for CreateItemDependency.
 type CreateItemDependencyJSONBody struct {
-	// Lag Lag dalam hari kerja
+	// Lag Lag dalam hari kerja, boleh negatif
 	Lag           *int32             `json:"lag,omitempty"`
 	PredecessorId openapi_types.UUID `json:"predecessor_id"`
 	Type          DependencyType     `json:"type"`
@@ -7095,6 +7670,9 @@ type ListProjectTimeEntriesParamsBillingType string
 // ListProjectTimeEntriesParamsSort defines parameters for ListProjectTimeEntries.
 type ListProjectTimeEntriesParamsSort string
 
+// GetProjectTimeSummary200JSONResponseBodyCostStatus defines parameters for GetProjectTimeSummary.
+type GetProjectTimeSummary200JSONResponseBodyCostStatus string
+
 // GetProjectTimeSummary200JSONResponseBodyScope defines parameters for GetProjectTimeSummary.
 type GetProjectTimeSummary200JSONResponseBodyScope string
 
@@ -7120,6 +7698,14 @@ type CreateGanttSnapshotJSONBody struct {
 type EnableTwoFactorJSONBody struct {
 	Code string `json:"code"`
 }
+
+// ListCreatedByMeParams defines parameters for ListCreatedByMe.
+type ListCreatedByMeParams struct {
+	Cursor *openapi_types.UUID `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// ListCreatedByMe200JSONResponseBodyItemsType defines parameters for ListCreatedByMe.
+type ListCreatedByMe200JSONResponseBodyItemsType string
 
 // ListMyRequestsParams defines parameters for ListMyRequests.
 type ListMyRequestsParams struct {
@@ -7388,11 +7974,11 @@ type SearchParams struct {
 	// StatusGroup Hanya item dengan grup status ini (NAV-07)
 	StatusGroup *SearchParamsStatusGroup `form:"status_group,omitempty" json:"status_group,omitempty"`
 
-	// TypeKey Hanya item (dan komentar pada item) bertipe ini
+	// TypeKey Hanya item (dan komentar pada item) bertipe ini, mis. bug (S8.1.5)
 	TypeKey *string           `form:"type_key,omitempty" json:"type_key,omitempty"`
 	Sort    *SearchParamsSort `form:"sort,omitempty" json:"sort,omitempty"`
 
-	// Offset Lewati sekian hasil yang boleh dilihat per grup
+	// Offset Lewati sekian hasil yang boleh dilihat per grup, untuk paginasi
 	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
 }
 
@@ -7406,6 +7992,13 @@ type SearchParamsSort string
 type ReplaceWorkScheduleParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
 	IfMatch IfMatch `json:"If-Match"`
+}
+
+// SaveSpaceTemplateJSONBody defines parameters for SaveSpaceTemplate.
+type SaveSpaceTemplateJSONBody struct {
+	Description *string            `json:"description,omitempty"`
+	Name        string             `json:"name"`
+	SpaceId     openapi_types.UUID `json:"space_id"`
 }
 
 // CreateSpaceFromTemplateJSONBody defines parameters for CreateSpaceFromTemplate.
@@ -7493,6 +8086,54 @@ type SetSpaceCreateMenuJSONBody struct {
 // SetSpaceCreateMenuParams defines parameters for SetSpaceCreateMenu.
 type SetSpaceCreateMenuParams struct {
 	IfMatch string `json:"If-Match"`
+}
+
+// ListFieldAssignments200JSONResponseBodyItemsScopeKind defines parameters for ListFieldAssignments.
+type ListFieldAssignments200JSONResponseBodyItemsScopeKind string
+
+// AssignFieldJSONBody defines parameters for AssignField.
+type AssignFieldJSONBody struct {
+	ScopeId   openapi_types.UUID           `json:"scope_id"`
+	ScopeKind AssignFieldJSONBodyScopeKind `json:"scope_kind"`
+}
+
+// AssignFieldJSONBodyScopeKind defines parameters for AssignField.
+type AssignFieldJSONBodyScopeKind string
+
+// UnassignFieldParamsScopeKind defines parameters for UnassignField.
+type UnassignFieldParamsScopeKind string
+
+// ListSpaceFieldGrants200JSONResponseBodyItemsLevel defines parameters for ListSpaceFieldGrants.
+type ListSpaceFieldGrants200JSONResponseBodyItemsLevel string
+
+// ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind defines parameters for ListSpaceFieldGrants.
+type ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind string
+
+// SetSpaceFieldGrantsJSONBody defines parameters for SetSpaceFieldGrants.
+type SetSpaceFieldGrantsJSONBody struct {
+	Grants []struct {
+		Level       SetSpaceFieldGrantsJSONBodyGrantsLevel       `json:"level"`
+		SubjectId   openapi_types.UUID                           `json:"subject_id"`
+		SubjectKind SetSpaceFieldGrantsJSONBodyGrantsSubjectKind `json:"subject_kind"`
+		SubjectName *string                                      `json:"subject_name,omitempty"`
+	} `json:"grants"`
+}
+
+// SetSpaceFieldGrantsJSONBodyGrantsLevel defines parameters for SetSpaceFieldGrants.
+type SetSpaceFieldGrantsJSONBodyGrantsLevel string
+
+// SetSpaceFieldGrantsJSONBodyGrantsSubjectKind defines parameters for SetSpaceFieldGrants.
+type SetSpaceFieldGrantsJSONBodyGrantsSubjectKind string
+
+// SetSpaceFieldGrants200JSONResponseBodyItemsLevel defines parameters for SetSpaceFieldGrants.
+type SetSpaceFieldGrants200JSONResponseBodyItemsLevel string
+
+// SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind defines parameters for SetSpaceFieldGrants.
+type SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind string
+
+// ListExcelDestinationsParams defines parameters for ListExcelDestinations.
+type ListExcelDestinationsParams struct {
+	Parent *openapi_types.UUID `form:"parent,omitempty" json:"parent,omitempty"`
 }
 
 // StartSpaceExcelExportJSONBody defines parameters for StartSpaceExcelExport.
@@ -7596,6 +8237,17 @@ type CreateTimeEntryJSONBody struct {
 // CreateTimeEntryJSONBodyBillingType defines parameters for CreateTimeEntry.
 type CreateTimeEntryJSONBodyBillingType string
 
+// ListTimeEntriesToReviewParams defines parameters for ListTimeEntriesToReview.
+type ListTimeEntriesToReviewParams struct {
+	Offset *int `form:"offset,omitempty" json:"offset,omitempty"`
+}
+
+// SubmitTimeEntriesJSONBody defines parameters for SubmitTimeEntries.
+type SubmitTimeEntriesJSONBody struct {
+	From openapi_types.Date `json:"from"`
+	To   openapi_types.Date `json:"to"`
+}
+
 // DeleteTimeEntryParams defines parameters for DeleteTimeEntry.
 type DeleteTimeEntryParams struct {
 	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
@@ -7619,6 +8271,24 @@ type UpdateTimeEntryParams struct {
 
 // UpdateTimeEntryJSONBodyBillingType defines parameters for UpdateTimeEntry.
 type UpdateTimeEntryJSONBodyBillingType string
+
+// GetTimeEntryHistory200JSONResponseBodyItemsAction defines parameters for GetTimeEntryHistory.
+type GetTimeEntryHistory200JSONResponseBodyItemsAction string
+
+// ReviewTimeEntryJSONBody defines parameters for ReviewTimeEntry.
+type ReviewTimeEntryJSONBody struct {
+	Decision ReviewTimeEntryJSONBodyDecision `json:"decision"`
+	Note     *string                         `json:"note,omitempty"`
+}
+
+// ReviewTimeEntryParams defines parameters for ReviewTimeEntry.
+type ReviewTimeEntryParams struct {
+	// IfMatch Versi yang diedit, dalam tanda kutip (mis. `"7"`)
+	IfMatch IfMatch `json:"If-Match"`
+}
+
+// ReviewTimeEntryJSONBodyDecision defines parameters for ReviewTimeEntry.
+type ReviewTimeEntryJSONBodyDecision string
 
 // ListUsersParams defines parameters for ListUsers.
 type ListUsersParams struct {
@@ -7694,6 +8364,9 @@ type RenameAccountJSONRequestBody RenameAccountJSONBody
 
 // TransferAccountOwnershipJSONRequestBody defines body for TransferAccountOwnership for application/json ContentType.
 type TransferAccountOwnershipJSONRequestBody TransferAccountOwnershipJSONBody
+
+// RunOperationalAnalyticsJSONRequestBody defines body for RunOperationalAnalytics for application/json ContentType.
+type RunOperationalAnalyticsJSONRequestBody = AnalyticsQuery
 
 // RunAnalyticsQueryJSONRequestBody defines body for RunAnalyticsQuery for application/json ContentType.
 type RunAnalyticsQueryJSONRequestBody = AnalyticsQuery
@@ -7793,6 +8466,9 @@ type CreateWorkspaceCustomFieldJSONRequestBody = CustomFieldCreate
 
 // UpdateWorkspaceCustomFieldJSONRequestBody defines body for UpdateWorkspaceCustomField for application/json ContentType.
 type UpdateWorkspaceCustomFieldJSONRequestBody = CustomFieldUpdate
+
+// SetWorkspaceFieldGrantsJSONRequestBody defines body for SetWorkspaceFieldGrants for application/json ContentType.
+type SetWorkspaceFieldGrantsJSONRequestBody SetWorkspaceFieldGrantsJSONBody
 
 // CreateCustomRoleJSONRequestBody defines body for CreateCustomRole for application/json ContentType.
 type CreateCustomRoleJSONRequestBody = CustomRoleInput
@@ -7983,6 +8659,9 @@ type ScimPutUserApplicationScimPlusJSONRequestBody = ScimResource
 // ReplaceWorkScheduleJSONRequestBody defines body for ReplaceWorkSchedule for application/json ContentType.
 type ReplaceWorkScheduleJSONRequestBody = WorkScheduleInput
 
+// SaveSpaceTemplateJSONRequestBody defines body for SaveSpaceTemplate for application/json ContentType.
+type SaveSpaceTemplateJSONRequestBody SaveSpaceTemplateJSONBody
+
 // CreateSpaceFromTemplateJSONRequestBody defines body for CreateSpaceFromTemplate for application/json ContentType.
 type CreateSpaceFromTemplateJSONRequestBody CreateSpaceFromTemplateJSONBody
 
@@ -8022,6 +8701,12 @@ type CreateCustomFieldJSONRequestBody = CustomFieldCreate
 // UpdateCustomFieldJSONRequestBody defines body for UpdateCustomField for application/json ContentType.
 type UpdateCustomFieldJSONRequestBody = CustomFieldUpdate
 
+// AssignFieldJSONRequestBody defines body for AssignField for application/json ContentType.
+type AssignFieldJSONRequestBody AssignFieldJSONBody
+
+// SetSpaceFieldGrantsJSONRequestBody defines body for SetSpaceFieldGrants for application/json ContentType.
+type SetSpaceFieldGrantsJSONRequestBody SetSpaceFieldGrantsJSONBody
+
 // SetSpaceDefaultWorkflowsJSONRequestBody defines body for SetSpaceDefaultWorkflows for application/json ContentType.
 type SetSpaceDefaultWorkflowsJSONRequestBody = SpaceDefaultWorkflows
 
@@ -8049,8 +8734,14 @@ type UpdateStatusJSONRequestBody = StatusPatch
 // CreateTimeEntryJSONRequestBody defines body for CreateTimeEntry for application/json ContentType.
 type CreateTimeEntryJSONRequestBody CreateTimeEntryJSONBody
 
+// SubmitTimeEntriesJSONRequestBody defines body for SubmitTimeEntries for application/json ContentType.
+type SubmitTimeEntriesJSONRequestBody SubmitTimeEntriesJSONBody
+
 // UpdateTimeEntryJSONRequestBody defines body for UpdateTimeEntry for application/json ContentType.
 type UpdateTimeEntryJSONRequestBody UpdateTimeEntryJSONBody
+
+// ReviewTimeEntryJSONRequestBody defines body for ReviewTimeEntry for application/json ContentType.
+type ReviewTimeEntryJSONRequestBody ReviewTimeEntryJSONBody
 
 // InviteUserJSONRequestBody defines body for InviteUser for application/json ContentType.
 type InviteUserJSONRequestBody = InviteRequest
@@ -8381,6 +9072,9 @@ type ServerInterface interface {
 	// TransferAccountOwnership Serahkan kepemilikan akun ke admin aktif lain (SET-09); hanya pemilik; butuh password, atau login dalam 15 menit terakhir bila tanpa password
 	// (POST /account/ownership)
 	TransferAccountOwnership(w http.ResponseWriter, r *http.Request)
+	// RunOperationalAnalytics Agregat Workspace tanpa baris item dan tanpa biaya; grup kecil disembunyikan
+	// (POST /analytics/operational)
+	RunOperationalAnalytics(w http.ResponseWriter, r *http.Request)
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(w http.ResponseWriter, r *http.Request)
@@ -8621,6 +9315,18 @@ type ServerInterface interface {
 	// UpdateWorkspaceCustomField Ubah custom field Workspace; hanya administrator akun
 	// (PATCH /custom-fields/{fieldId})
 	UpdateWorkspaceCustomField(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID)
+	// ListWorkspaceFieldGrants Grant akses field Workspace (pengelola field)
+	// (GET /custom-fields/{fieldId}/grants)
+	ListWorkspaceFieldGrants(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID)
+	// SetWorkspaceFieldGrants Ganti grant field Workspace; daftar kosong menghapus pembatasan
+	// (PUT /custom-fields/{fieldId}/grants)
+	SetWorkspaceFieldGrants(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID)
+	// GetWorkspaceFieldImpact Jumlah pemakaian field Workspace sebelum diarsipkan
+	// (GET /custom-fields/{fieldId}/impact)
+	GetWorkspaceFieldImpact(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID)
+	// RestoreWorkspaceField Pulihkan field Workspace yang diarsipkan
+	// (POST /custom-fields/{fieldId}/restore)
+	RestoreWorkspaceField(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID)
 	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
 	// (GET /custom-roles)
 	ListCustomRoles(w http.ResponseWriter, r *http.Request)
@@ -8765,6 +9471,9 @@ type ServerInterface interface {
 	// CreateItemType Buat tipe item kustom (hanya admin)
 	// (POST /item-types)
 	CreateItemType(w http.ResponseWriter, r *http.Request)
+	// GetItemTypeUsage Jumlah item hidup per tipe (administrator)
+	// (GET /item-types/usage)
+	GetItemTypeUsage(w http.ResponseWriter, r *http.Request)
 	// UpdateItemType Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah
 	// (PATCH /item-types/{typeId})
 	UpdateItemType(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID)
@@ -8897,6 +9606,18 @@ type ServerInterface interface {
 	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
 	// (POST /me/2fa/setup)
 	SetupTwoFactor(w http.ResponseWriter, r *http.Request)
+	// RemoveMyAvatar Hapus foto profil
+	// (DELETE /me/avatar)
+	RemoveMyAvatar(w http.ResponseWriter, r *http.Request)
+	// GetMyAvatar Foto profil pemanggil
+	// (GET /me/avatar)
+	GetMyAvatar(w http.ResponseWriter, r *http.Request)
+	// SaveMyAvatar Ganti foto profil (PNG, JPEG, WebP; maksimum 2 MB)
+	// (PUT /me/avatar)
+	SaveMyAvatar(w http.ResponseWriter, r *http.Request)
+	// ListCreatedByMe Item buatan pemanggil di semua tingkat yang masih dapat dilihat, terbaru dulu (NAV-02)
+	// (GET /me/created)
+	ListCreatedByMe(w http.ResponseWriter, r *http.Request, params ListCreatedByMeParams)
 	// ListMyIdentities Identitas SSO yang tertaut ke pemanggil
 	// (GET /me/identities)
 	ListMyIdentities(w http.ResponseWriter, r *http.Request)
@@ -9119,9 +9840,15 @@ type ServerInterface interface {
 	// ListSpaceIcons Katalog kunci ikon Space (D-04)
 	// (GET /space-icons)
 	ListSpaceIcons(w http.ResponseWriter, r *http.Request)
-	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
+	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18) dan template tersimpan milik sendiri atau dari Space yang terlihat
 	// (GET /space-templates)
 	ListSpaceTemplates(w http.ResponseWriter, r *http.Request)
+	// SaveSpaceTemplate Simpan struktur dan konfigurasi Space sebagai template (akses penuh); tanpa orang, tanggal, status, nilai field, komentar, file, waktu, form, otomatisasi, dan anggota
+	// (POST /space-templates)
+	SaveSpaceTemplate(w http.ResponseWriter, r *http.Request)
+	// DeleteSpaceTemplate Hapus template tersimpan milik sendiri; Space yang dibuat darinya tidak berubah
+	// (DELETE /space-templates/{templateId})
+	DeleteSpaceTemplate(w http.ResponseWriter, r *http.Request, templateId openapi_types.UUID)
 	// CreateSpaceFromTemplate Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18)
 	// (POST /space-templates/{templateId}/spaces)
 	CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request, templateId string)
@@ -9134,6 +9861,9 @@ type ServerInterface interface {
 	// DiscoverSpaces Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul
 	// (GET /spaces/discover)
 	DiscoverSpaces(w http.ResponseWriter, r *http.Request, params DiscoverSpacesParams)
+	// ListSpaceRegistry Daftar Space yang sudah terlihat oleh pemanggil, dengan hitungan dan admin
+	// (GET /spaces/registry)
+	ListSpaceRegistry(w http.ResponseWriter, r *http.Request)
 	// DeleteSpace Hapus Space beserta isinya ke Recycle bin; Personal space tidak bisa dihapus
 	// (DELETE /spaces/{spaceId})
 	DeleteSpace(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -9203,6 +9933,27 @@ type ServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(w http.ResponseWriter, r *http.Request, spaceId SpaceId, fieldId openapi_types.UUID)
+	// ListFieldAssignments Tempat field berlaku di Space
+	// (GET /spaces/{spaceId}/custom-fields/{fieldId}/assignments)
+	ListFieldAssignments(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID)
+	// AssignField Berlakukan field di Space, project, atau folder (akses Full)
+	// (POST /spaces/{spaceId}/custom-fields/{fieldId}/assignments)
+	AssignField(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID)
+	// UnassignField Cabut field dari tempat itu; nilai tersimpan tidak dihapus
+	// (DELETE /spaces/{spaceId}/custom-fields/{fieldId}/assignments/{scopeKind}/{scopeId})
+	UnassignField(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID, scopeKind UnassignFieldParamsScopeKind, scopeId openapi_types.UUID)
+	// ListSpaceFieldGrants Grant akses field Space (pengelola field)
+	// (GET /spaces/{spaceId}/custom-fields/{fieldId}/grants)
+	ListSpaceFieldGrants(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID)
+	// SetSpaceFieldGrants Ganti grant field Space; daftar kosong menghapus pembatasan
+	// (PUT /spaces/{spaceId}/custom-fields/{fieldId}/grants)
+	SetSpaceFieldGrants(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID)
+	// GetSpaceFieldImpact Jumlah pemakaian field Space sebelum diarsipkan
+	// (GET /spaces/{spaceId}/custom-fields/{fieldId}/impact)
+	GetSpaceFieldImpact(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID)
+	// RestoreSpaceField Pulihkan field Space yang diarsipkan
+	// (POST /spaces/{spaceId}/custom-fields/{fieldId}/restore)
+	RestoreSpaceField(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID)
 	// GetSpaceDefaultWorkflows Workflow default Space untuk root Task dan Project (B)
 	// (GET /spaces/{spaceId}/default-workflows)
 	GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
@@ -9212,18 +9963,36 @@ type ServerInterface interface {
 	// GetSpaceDeleteImpact Pratinjau dampak hapus Space (D). Hanya membaca
 	// (GET /spaces/{spaceId}/delete-impact)
 	GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// ListExcelDestinations Project dan folder tujuan impor
+	// (GET /spaces/{spaceId}/excel-destinations)
+	ListExcelDestinations(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, params ListExcelDestinationsParams)
 
 	// (POST /spaces/{spaceId}/excel-exports)
 	StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 
 	// (POST /spaces/{spaceId}/excel-imports)
 	ImportProjectExcel(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// GetSpaceExcelImportReport Laporan impor milik pemanggil
+	// (GET /spaces/{spaceId}/excel-imports/{reportId})
+	GetSpaceExcelImportReport(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, reportId openapi_types.UUID)
+	// GetExcelTemplate Unduh template impor Excel
+	// (GET /spaces/{spaceId}/excel-templates/{kind})
+	GetExcelTemplate(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, kind string)
+	// ListSpaceFieldChoices Field Workspace dan apakah Space ini memakainya (akses Full)
+	// (GET /spaces/{spaceId}/field-choices)
+	ListSpaceFieldChoices(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID)
+	// ListSpaceViewFields Field yang berlaku pada view Space; field yang tidak boleh dibaca tidak ikut
+	// (GET /spaces/{spaceId}/fields)
+	ListSpaceViewFields(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID)
 	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
 	// (GET /spaces/{spaceId}/forms)
 	ListSpaceForms(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
 	// CreateForm Buat form (FORM-01, FORM-02); butuh edit pada Space dan hak membuat item di tujuan
 	// (POST /spaces/{spaceId}/forms)
 	CreateForm(w http.ResponseWriter, r *http.Request, spaceId SpaceId)
+	// GetSpaceItemTypeUsage Jumlah item per tipe dalam satu Space
+	// (GET /spaces/{spaceId}/item-types/usage)
+	GetSpaceItemTypeUsage(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID)
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(w http.ResponseWriter, r *http.Request, spaceId SpaceId, params ListSpaceRootItemsParams)
@@ -9278,6 +10047,12 @@ type ServerInterface interface {
 	// CreateTimeEntry Catat waktu sendiri untuk task dan tanggal
 	// (POST /time-entries)
 	CreateTimeEntry(w http.ResponseWriter, r *http.Request)
+	// ListTimeEntriesToReview Entry orang lain yang diajukan pada task dengan akses penuh, terlama dulu
+	// (GET /time-entries/review)
+	ListTimeEntriesToReview(w http.ResponseWriter, r *http.Request, params ListTimeEntriesToReviewParams)
+	// SubmitTimeEntries Ajukan time entry draf dan ditolak milik sendiri dalam satu periode untuk direview
+	// (POST /time-entries/submit)
+	SubmitTimeEntries(w http.ResponseWriter, r *http.Request)
 
 	// (DELETE /time-entries/{entryId})
 	DeleteTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params DeleteTimeEntryParams)
@@ -9287,6 +10062,12 @@ type ServerInterface interface {
 	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
 	// (PATCH /time-entries/{entryId})
 	UpdateTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params UpdateTimeEntryParams)
+	// GetTimeEntryHistory Riwayat pengajuan, persetujuan, penolakan, dan kunci satu entry
+	// (GET /time-entries/{entryId}/history)
+	GetTimeEntryHistory(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID)
+	// ReviewTimeEntry Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
+	// (POST /time-entries/{entryId}/review)
+	ReviewTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params ReviewTimeEntryParams)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(w http.ResponseWriter, r *http.Request, params ListUsersParams)
@@ -9323,6 +10104,9 @@ type ServerInterface interface {
 	// GetUtilization Utilization planned vs actual per orang (RSC-06); menit terencana = effort task + booking, aktual = time entry
 	// (GET /utilization)
 	GetUtilization(w http.ResponseWriter, r *http.Request, params GetUtilizationParams)
+	// GetVersion Identitas build yang sedang berjalan; `image` hanya untuk admin
+	// (GET /version)
+	GetVersion(w http.ResponseWriter, r *http.Request)
 	// CreateView Tambah view (VIEW-08)
 	// (POST /views)
 	CreateView(w http.ResponseWriter, r *http.Request)
@@ -9362,6 +10146,9 @@ type ServerInterface interface {
 	// RenameWorkflow Ubah nama workflow (admin saja)
 	// (PATCH /workflows/{workflowId})
 	RenameWorkflow(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
+	// GetWorkflowRevision Salinan beku aturan workflow pada satu revisi (administrator)
+	// (GET /workflows/{workflowId}/revisions/{revision})
+	GetWorkflowRevision(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID, revision int)
 	// ReorderStatuses Urutkan status; harus memuat semua status workflow, dan status pertama harus Active
 	// (PUT /workflows/{workflowId}/status-order)
 	ReorderStatuses(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID)
@@ -9580,6 +10367,20 @@ func (siw *ServerInterfaceWrapper) TransferAccountOwnership(w http.ResponseWrite
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.TransferAccountOwnership(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RunOperationalAnalytics operation middleware
+func (siw *ServerInterfaceWrapper) RunOperationalAnalytics(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RunOperationalAnalytics(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -11842,6 +12643,110 @@ func (siw *ServerInterfaceWrapper) UpdateWorkspaceCustomField(w http.ResponseWri
 	handler.ServeHTTP(w, r)
 }
 
+// ListWorkspaceFieldGrants operation middleware
+func (siw *ServerInterfaceWrapper) ListWorkspaceFieldGrants(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListWorkspaceFieldGrants(w, r, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetWorkspaceFieldGrants operation middleware
+func (siw *ServerInterfaceWrapper) SetWorkspaceFieldGrants(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetWorkspaceFieldGrants(w, r, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkspaceFieldImpact operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkspaceFieldImpact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkspaceFieldImpact(w, r, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RestoreWorkspaceField operation middleware
+func (siw *ServerInterfaceWrapper) RestoreWorkspaceField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreWorkspaceField(w, r, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListCustomRoles operation middleware
 func (siw *ServerInterfaceWrapper) ListCustomRoles(w http.ResponseWriter, r *http.Request) {
 
@@ -13214,6 +14119,20 @@ func (siw *ServerInterfaceWrapper) CreateItemType(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateItemType(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetItemTypeUsage operation middleware
+func (siw *ServerInterfaceWrapper) GetItemTypeUsage(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetItemTypeUsage(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -14608,6 +15527,81 @@ func (siw *ServerInterfaceWrapper) SetupTwoFactor(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.SetupTwoFactor(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RemoveMyAvatar operation middleware
+func (siw *ServerInterfaceWrapper) RemoveMyAvatar(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RemoveMyAvatar(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetMyAvatar operation middleware
+func (siw *ServerInterfaceWrapper) GetMyAvatar(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetMyAvatar(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SaveMyAvatar operation middleware
+func (siw *ServerInterfaceWrapper) SaveMyAvatar(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveMyAvatar(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListCreatedByMe operation middleware
+func (siw *ServerInterfaceWrapper) ListCreatedByMe(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListCreatedByMeParams
+
+	// ------------- Optional query parameter "cursor" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "cursor", r.URL.Query(), &params.Cursor, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "cursor"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "cursor", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListCreatedByMe(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -16928,6 +17922,46 @@ func (siw *ServerInterfaceWrapper) ListSpaceTemplates(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// SaveSpaceTemplate operation middleware
+func (siw *ServerInterfaceWrapper) SaveSpaceTemplate(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SaveSpaceTemplate(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// DeleteSpaceTemplate operation middleware
+func (siw *ServerInterfaceWrapper) DeleteSpaceTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "templateId" -------------
+	var templateId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "templateId", r.PathValue("templateId"), &templateId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "templateId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.DeleteSpaceTemplate(w, r, templateId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateSpaceFromTemplate operation middleware
 func (siw *ServerInterfaceWrapper) CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request) {
 
@@ -17006,6 +18040,20 @@ func (siw *ServerInterfaceWrapper) DiscoverSpaces(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.DiscoverSpaces(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceRegistry operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceRegistry(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceRegistry(w, r)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -17742,6 +18790,269 @@ func (siw *ServerInterfaceWrapper) UpdateCustomField(w http.ResponseWriter, r *h
 	handler.ServeHTTP(w, r)
 }
 
+// ListFieldAssignments operation middleware
+func (siw *ServerInterfaceWrapper) ListFieldAssignments(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListFieldAssignments(w, r, spaceId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// AssignField operation middleware
+func (siw *ServerInterfaceWrapper) AssignField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.AssignField(w, r, spaceId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UnassignField operation middleware
+func (siw *ServerInterfaceWrapper) UnassignField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "scopeKind" -------------
+	var scopeKind UnassignFieldParamsScopeKind
+
+	err = runtime.BindStyledParameterWithOptions("simple", "scopeKind", r.PathValue("scopeKind"), &scopeKind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scopeKind", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "scopeId" -------------
+	var scopeId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "scopeId", r.PathValue("scopeId"), &scopeId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scopeId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UnassignField(w, r, spaceId, fieldId, scopeKind, scopeId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceFieldGrants operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceFieldGrants(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceFieldGrants(w, r, spaceId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SetSpaceFieldGrants operation middleware
+func (siw *ServerInterfaceWrapper) SetSpaceFieldGrants(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SetSpaceFieldGrants(w, r, spaceId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpaceFieldImpact operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceFieldImpact(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceFieldImpact(w, r, spaceId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RestoreSpaceField operation middleware
+func (siw *ServerInterfaceWrapper) RestoreSpaceField(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "fieldId" -------------
+	var fieldId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "fieldId", r.PathValue("fieldId"), &fieldId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "fieldId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RestoreSpaceField(w, r, spaceId, fieldId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetSpaceDefaultWorkflows operation middleware
 func (siw *ServerInterfaceWrapper) GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request) {
 
@@ -17820,6 +19131,48 @@ func (siw *ServerInterfaceWrapper) GetSpaceDeleteImpact(w http.ResponseWriter, r
 	handler.ServeHTTP(w, r)
 }
 
+// ListExcelDestinations operation middleware
+func (siw *ServerInterfaceWrapper) ListExcelDestinations(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListExcelDestinationsParams
+
+	// ------------- Optional query parameter "parent" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "parent", r.URL.Query(), &params.Parent, runtime.BindQueryParameterOptions{Type: "string", Format: "uuid"})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "parent"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "parent", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListExcelDestinations(w, r, spaceId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // StartSpaceExcelExport operation middleware
 func (siw *ServerInterfaceWrapper) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request) {
 
@@ -17872,6 +19225,128 @@ func (siw *ServerInterfaceWrapper) ImportProjectExcel(w http.ResponseWriter, r *
 	handler.ServeHTTP(w, r)
 }
 
+// GetSpaceExcelImportReport operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceExcelImportReport(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "reportId" -------------
+	var reportId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "reportId", r.PathValue("reportId"), &reportId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "reportId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceExcelImportReport(w, r, spaceId, reportId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetExcelTemplate operation middleware
+func (siw *ServerInterfaceWrapper) GetExcelTemplate(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "kind" -------------
+	var kind string
+
+	err = runtime.BindStyledParameterWithOptions("simple", "kind", r.PathValue("kind"), &kind, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "kind", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetExcelTemplate(w, r, spaceId, kind)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceFieldChoices operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceFieldChoices(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceFieldChoices(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListSpaceViewFields operation middleware
+func (siw *ServerInterfaceWrapper) ListSpaceViewFields(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListSpaceViewFields(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // ListSpaceForms operation middleware
 func (siw *ServerInterfaceWrapper) ListSpaceForms(w http.ResponseWriter, r *http.Request) {
 
@@ -17915,6 +19390,32 @@ func (siw *ServerInterfaceWrapper) CreateForm(w http.ResponseWriter, r *http.Req
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateForm(w, r, spaceId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetSpaceItemTypeUsage operation middleware
+func (siw *ServerInterfaceWrapper) GetSpaceItemTypeUsage(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "spaceId" -------------
+	var spaceId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "spaceId", r.PathValue("spaceId"), &spaceId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "spaceId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetSpaceItemTypeUsage(w, r, spaceId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -18626,6 +20127,53 @@ func (siw *ServerInterfaceWrapper) CreateTimeEntry(w http.ResponseWriter, r *htt
 	handler.ServeHTTP(w, r)
 }
 
+// ListTimeEntriesToReview operation middleware
+func (siw *ServerInterfaceWrapper) ListTimeEntriesToReview(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListTimeEntriesToReviewParams
+
+	// ------------- Optional query parameter "offset" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "offset", r.URL.Query(), &params.Offset, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "offset"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "offset", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListTimeEntriesToReview(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// SubmitTimeEntries operation middleware
+func (siw *ServerInterfaceWrapper) SubmitTimeEntries(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.SubmitTimeEntries(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // DeleteTimeEntry operation middleware
 func (siw *ServerInterfaceWrapper) DeleteTimeEntry(w http.ResponseWriter, r *http.Request) {
 
@@ -18751,6 +20299,86 @@ func (siw *ServerInterfaceWrapper) UpdateTimeEntry(w http.ResponseWriter, r *htt
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.UpdateTimeEntry(w, r, entryId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetTimeEntryHistory operation middleware
+func (siw *ServerInterfaceWrapper) GetTimeEntryHistory(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetTimeEntryHistory(w, r, entryId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ReviewTimeEntry operation middleware
+func (siw *ServerInterfaceWrapper) ReviewTimeEntry(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "entryId" -------------
+	var entryId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "entryId", r.PathValue("entryId"), &entryId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "entryId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ReviewTimeEntryParams
+
+	headers := r.Header
+
+	// ------------- Required header parameter "If-Match" -------------
+	if valueList, found := headers[http.CanonicalHeaderKey("If-Match")]; found {
+		var IfMatch IfMatch
+		n := len(valueList)
+		if n != 1 {
+			siw.ErrorHandlerFunc(w, r, &TooManyValuesForParamError{ParamName: "If-Match", Count: n})
+			return
+		}
+
+		err = runtime.BindStyledParameterWithOptions("simple", "If-Match", valueList[0], &IfMatch, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationHeader, Explode: false, Required: true, Type: "string", Format: ""})
+		if err != nil {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "If-Match", Err: err})
+			return
+		}
+
+		params.IfMatch = IfMatch
+
+	} else {
+		err := fmt.Errorf("Header parameter If-Match is required, but not found")
+		siw.ErrorHandlerFunc(w, r, &RequiredHeaderError{ParamName: "If-Match", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ReviewTimeEntry(w, r, entryId, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19153,6 +20781,20 @@ func (siw *ServerInterfaceWrapper) GetUtilization(w http.ResponseWriter, r *http
 	handler.ServeHTTP(w, r)
 }
 
+// GetVersion operation middleware
+func (siw *ServerInterfaceWrapper) GetVersion(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetVersion(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // CreateView operation middleware
 func (siw *ServerInterfaceWrapper) CreateView(w http.ResponseWriter, r *http.Request) {
 
@@ -19422,6 +21064,41 @@ func (siw *ServerInterfaceWrapper) RenameWorkflow(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.RenameWorkflow(w, r, workflowId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetWorkflowRevision operation middleware
+func (siw *ServerInterfaceWrapper) GetWorkflowRevision(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "workflowId" -------------
+	var workflowId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "workflowId", r.PathValue("workflowId"), &workflowId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "workflowId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "revision" -------------
+	var revision int
+
+	err = runtime.BindStyledParameterWithOptions("simple", "revision", r.PathValue("revision"), &revision, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "integer", Format: "", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "revision", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetWorkflowRevision(w, r, workflowId, revision)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -19731,6 +21408,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/resource-bookings/{bookingId}", wrapper.DeleteResourceBooking)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/analytics/query", wrapper.RunAnalyticsQuery)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/stars", wrapper.ListStars)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/created", wrapper.ListCreatedByMe)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/items/{itemId}/star", wrapper.UnstarItem)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/items/{itemId}/star", wrapper.StarItem)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/report-templates", wrapper.ListReportTemplates)
@@ -19808,6 +21486,10 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/time-entries", wrapper.ListProjectTimeEntries)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries", wrapper.ListTimeEntries)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries", wrapper.CreateTimeEntry)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries/submit", wrapper.SubmitTimeEntries)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/review", wrapper.ListTimeEntriesToReview)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/{entryId}/history", wrapper.GetTimeEntryHistory)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/time-entries/{entryId}/review", wrapper.ReviewTimeEntry)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.DeleteTimeEntry)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.GetTimeEntry)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/time-entries/{entryId}", wrapper.UpdateTimeEntry)
@@ -19888,6 +21570,8 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/automation/events/{eventId}/replay", wrapper.ReplayAutomationEvent)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/automation-rules/dry-run", wrapper.DryRunAutomation)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/space-templates", wrapper.ListSpaceTemplates)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates", wrapper.SaveSpaceTemplate)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/space-templates/{templateId}", wrapper.DeleteSpaceTemplate)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/space-templates/{templateId}/spaces", wrapper.CreateSpaceFromTemplate)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces", wrapper.ListSpaces)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces", wrapper.CreateSpace)
@@ -19976,6 +21660,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/workflows", wrapper.CreateWorkflow)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/workflows/{workflowId}", wrapper.DeleteWorkflow)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/workflows/{workflowId}", wrapper.RenameWorkflow)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/workflows/{workflowId}/revisions/{revision}", wrapper.GetWorkflowRevision)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/workflows/{workflowId}/statuses", wrapper.CreateStatus)
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/workflows/{workflowId}/status-order", wrapper.ReorderStatuses)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/statuses/{statusId}", wrapper.DeleteStatus)
@@ -20013,8 +21698,32 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/forms/{formId}/definition", wrapper.GetFormDefinition)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/forms/{formId}/submissions", wrapper.SubmitForm)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/events", wrapper.StreamEvents)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/version", wrapper.GetVersion)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/healthz", wrapper.Healthz)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/readyz", wrapper.Readyz)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/me/avatar", wrapper.RemoveMyAvatar)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/me/avatar", wrapper.GetMyAvatar)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/me/avatar", wrapper.SaveMyAvatar)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/registry", wrapper.ListSpaceRegistry)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/field-choices", wrapper.ListSpaceFieldChoices)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/fields", wrapper.ListSpaceViewFields)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-fields/{fieldId}/grants", wrapper.ListWorkspaceFieldGrants)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/custom-fields/{fieldId}/grants", wrapper.SetWorkspaceFieldGrants)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/custom-fields/{fieldId}/impact", wrapper.GetWorkspaceFieldImpact)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/custom-fields/{fieldId}/restore", wrapper.RestoreWorkspaceField)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}/grants", wrapper.ListSpaceFieldGrants)
+	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}/grants", wrapper.SetSpaceFieldGrants)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}/impact", wrapper.GetSpaceFieldImpact)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}/restore", wrapper.RestoreSpaceField)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}/assignments", wrapper.ListFieldAssignments)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}/assignments", wrapper.AssignField)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/spaces/{spaceId}/custom-fields/{fieldId}/assignments/{scopeKind}/{scopeId}", wrapper.UnassignField)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/item-types/usage", wrapper.GetItemTypeUsage)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/item-types/usage", wrapper.GetSpaceItemTypeUsage)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/analytics/operational", wrapper.RunOperationalAnalytics)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/excel-templates/{kind}", wrapper.GetExcelTemplate)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/excel-imports/{reportId}", wrapper.GetSpaceExcelImportReport)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/spaces/{spaceId}/excel-destinations", wrapper.ListExcelDestinations)
 
 	return m
 }
@@ -20621,6 +22330,86 @@ func (response TransferAccountOwnership429ApplicationProblemPlusJSONResponse) Vi
 		w.Header().Set("Retry-After", fmt.Sprint(*response.Headers.RetryAfter))
 	}
 	w.WriteHeader(429)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunOperationalAnalyticsRequestObject struct {
+	Body *RunOperationalAnalyticsJSONRequestBody
+}
+
+type RunOperationalAnalyticsResponseObject interface {
+	VisitRunOperationalAnalyticsResponse(w http.ResponseWriter) error
+}
+
+type RunOperationalAnalytics200JSONResponse AnalyticsResult
+
+func (response RunOperationalAnalytics200JSONResponse) VisitRunOperationalAnalyticsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunOperationalAnalytics401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RunOperationalAnalytics401ApplicationProblemPlusJSONResponse) VisitRunOperationalAnalyticsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunOperationalAnalytics403ApplicationProblemPlusJSONResponse Problem
+
+func (response RunOperationalAnalytics403ApplicationProblemPlusJSONResponse) VisitRunOperationalAnalyticsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunOperationalAnalytics422ApplicationProblemPlusJSONResponse Problem
+
+func (response RunOperationalAnalytics422ApplicationProblemPlusJSONResponse) VisitRunOperationalAnalyticsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RunOperationalAnalytics503ApplicationProblemPlusJSONResponse Problem
+
+func (response RunOperationalAnalytics503ApplicationProblemPlusJSONResponse) VisitRunOperationalAnalyticsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(503)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -25050,6 +26839,338 @@ func (response UpdateWorkspaceCustomField422ApplicationProblemPlusJSONResponse) 
 	return err
 }
 
+type ListWorkspaceFieldGrantsRequestObject struct {
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type ListWorkspaceFieldGrantsResponseObject interface {
+	VisitListWorkspaceFieldGrantsResponse(w http.ResponseWriter) error
+}
+
+type ListWorkspaceFieldGrants200JSONResponse struct {
+	Items []struct {
+		Level       ListWorkspaceFieldGrants200JSONResponseBodyItemsLevel       `json:"level"`
+		SubjectId   openapi_types.UUID                                          `json:"subject_id"`
+		SubjectKind ListWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind `json:"subject_kind"`
+		SubjectName *string                                                     `json:"subject_name,omitempty"`
+	} `json:"items"`
+}
+
+func (response ListWorkspaceFieldGrants200JSONResponse) VisitListWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWorkspaceFieldGrants401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListWorkspaceFieldGrants401ApplicationProblemPlusJSONResponse) VisitListWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWorkspaceFieldGrants403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListWorkspaceFieldGrants403ApplicationProblemPlusJSONResponse) VisitListWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListWorkspaceFieldGrants404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListWorkspaceFieldGrants404ApplicationProblemPlusJSONResponse) VisitListWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetWorkspaceFieldGrantsRequestObject struct {
+	FieldId openapi_types.UUID `json:"fieldId"`
+	Body    *SetWorkspaceFieldGrantsJSONRequestBody
+}
+
+type SetWorkspaceFieldGrantsResponseObject interface {
+	VisitSetWorkspaceFieldGrantsResponse(w http.ResponseWriter) error
+}
+
+type SetWorkspaceFieldGrants200JSONResponse struct {
+	Items []struct {
+		Level       SetWorkspaceFieldGrants200JSONResponseBodyItemsLevel       `json:"level"`
+		SubjectId   openapi_types.UUID                                         `json:"subject_id"`
+		SubjectKind SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind `json:"subject_kind"`
+		SubjectName *string                                                    `json:"subject_name,omitempty"`
+	} `json:"items"`
+}
+
+func (response SetWorkspaceFieldGrants200JSONResponse) VisitSetWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetWorkspaceFieldGrants401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetWorkspaceFieldGrants401ApplicationProblemPlusJSONResponse) VisitSetWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetWorkspaceFieldGrants403ApplicationProblemPlusJSONResponse Problem
+
+func (response SetWorkspaceFieldGrants403ApplicationProblemPlusJSONResponse) VisitSetWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetWorkspaceFieldGrants404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetWorkspaceFieldGrants404ApplicationProblemPlusJSONResponse) VisitSetWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetWorkspaceFieldGrants422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetWorkspaceFieldGrants422ApplicationProblemPlusJSONResponse) VisitSetWorkspaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceFieldImpactRequestObject struct {
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type GetWorkspaceFieldImpactResponseObject interface {
+	VisitGetWorkspaceFieldImpactResponse(w http.ResponseWriter) error
+}
+
+type GetWorkspaceFieldImpact200JSONResponse struct {
+	Automations  int       `json:"automations"`
+	Blueprints   int       `json:"blueprints"`
+	Formulas     *[]string `json:"formulas"`
+	ItemTypes    int       `json:"item_types"`
+	Items        int       `json:"items"`
+	Relations    int       `json:"relations"`
+	RequestForms int       `json:"request_forms"`
+	StatusGuards int       `json:"status_guards"`
+	Views        int       `json:"views"`
+	Widgets      int       `json:"widgets"`
+}
+
+func (response GetWorkspaceFieldImpact200JSONResponse) VisitGetWorkspaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceFieldImpact401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetWorkspaceFieldImpact401ApplicationProblemPlusJSONResponse) VisitGetWorkspaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceFieldImpact403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetWorkspaceFieldImpact403ApplicationProblemPlusJSONResponse) VisitGetWorkspaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkspaceFieldImpact404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetWorkspaceFieldImpact404ApplicationProblemPlusJSONResponse) VisitGetWorkspaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreWorkspaceFieldRequestObject struct {
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type RestoreWorkspaceFieldResponseObject interface {
+	VisitRestoreWorkspaceFieldResponse(w http.ResponseWriter) error
+}
+
+type RestoreWorkspaceField200JSONResponse CustomField
+
+func (response RestoreWorkspaceField200JSONResponse) VisitRestoreWorkspaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreWorkspaceField401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RestoreWorkspaceField401ApplicationProblemPlusJSONResponse) VisitRestoreWorkspaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreWorkspaceField403ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreWorkspaceField403ApplicationProblemPlusJSONResponse) VisitRestoreWorkspaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreWorkspaceField404ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreWorkspaceField404ApplicationProblemPlusJSONResponse) VisitRestoreWorkspaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreWorkspaceField409ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreWorkspaceField409ApplicationProblemPlusJSONResponse) VisitRestoreWorkspaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreWorkspaceField422ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreWorkspaceField422ApplicationProblemPlusJSONResponse) VisitRestoreWorkspaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListCustomRolesRequestObject struct {
 }
 
@@ -27882,6 +30003,59 @@ func (response CreateItemType422ApplicationProblemPlusJSONResponse) VisitCreateI
 	return err
 }
 
+type GetItemTypeUsageRequestObject struct {
+}
+
+type GetItemTypeUsageResponseObject interface {
+	VisitGetItemTypeUsageResponse(w http.ResponseWriter) error
+}
+
+type GetItemTypeUsage200JSONResponse struct {
+	Items map[string]int `json:"items"`
+}
+
+func (response GetItemTypeUsage200JSONResponse) VisitGetItemTypeUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetItemTypeUsage401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetItemTypeUsage401ApplicationProblemPlusJSONResponse) VisitGetItemTypeUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetItemTypeUsage403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetItemTypeUsage403ApplicationProblemPlusJSONResponse) VisitGetItemTypeUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type UpdateItemTypeRequestObject struct {
 	TypeId openapi_types.UUID `json:"typeId"`
 	Body   *UpdateItemTypeJSONRequestBody
@@ -29564,10 +31738,34 @@ type GetProjectTimeSummaryResponseObject interface {
 }
 
 type GetProjectTimeSummary200JSONResponse struct {
-	// ActualCostMinor Actual cost (satuan minor per jam x menit/60, entry billable, rate snapshot); hanya untuk administrator
-	ActualCostMinor *int64                                        `json:"actual_cost_minor,omitempty"`
-	ActualMinutes   int64                                         `json:"actual_minutes"`
-	Scope           GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
+	// ActualCostMinor Actual cost (satuan minor per jam x menit/60, entry billable yang disetujui, rate snapshot); hanya untuk administrator yang melihat seluruh entry (scope project)
+	ActualCostMinor *int64 `json:"actual_cost_minor,omitempty"`
+	ActualMinutes   int64  `json:"actual_minutes"`
+
+	// ApprovedMinutes Bagian yang sudah disetujui
+	ApprovedMinutes int64 `json:"approved_minutes"`
+	Budgets         []struct {
+		Currency     string             `json:"currency"`
+		FieldId      openapi_types.UUID `json:"field_id"`
+		Name         string             `json:"name"`
+		PlannedMinor *int64             `json:"planned_minor"`
+
+		// UtilizationPercent null bila anggaran kosong atau nol, atau biaya tidak lengkap
+		UtilizationPercent *float32 `json:"utilization_percent"`
+
+		// VarianceMinor planned - actual; negatif berarti melebihi anggaran; null bila biaya tidak lengkap
+		VarianceMinor *int64 `json:"variance_minor"`
+	} `json:"budgets"`
+
+	// CostStatus partial: sebagian entry tidak terlihat atau belum punya tarif, sehingga angka tidak dikirim
+	CostStatus GetProjectTimeSummary200JSONResponseBodyCostStatus `json:"cost_status"`
+
+	// KnownCostMinor Subtotal yang diketahui bila cost_status partial; hanya administrator
+	KnownCostMinor *int64 `json:"known_cost_minor,omitempty"`
+
+	// PendingMinutes Draf dan diajukan
+	PendingMinutes int64                                         `json:"pending_minutes"`
+	Scope          GetProjectTimeSummary200JSONResponseBodyScope `json:"scope"`
 }
 
 func (response GetProjectTimeSummary200JSONResponse) VisitGetProjectTimeSummaryResponse(w http.ResponseWriter) error {
@@ -30287,6 +32485,211 @@ func (response SetupTwoFactor503ApplicationProblemPlusJSONResponse) VisitSetupTw
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveMyAvatarRequestObject struct {
+}
+
+type RemoveMyAvatarResponseObject interface {
+	VisitRemoveMyAvatarResponse(w http.ResponseWriter) error
+}
+
+type RemoveMyAvatar200JSONResponse Me
+
+func (response RemoveMyAvatar200JSONResponse) VisitRemoveMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RemoveMyAvatar401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RemoveMyAvatar401ApplicationProblemPlusJSONResponse) VisitRemoveMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMyAvatarRequestObject struct {
+}
+
+type GetMyAvatarResponseObject interface {
+	VisitGetMyAvatarResponse(w http.ResponseWriter) error
+}
+
+type GetMyAvatar200ApplicationoctetStreamResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetMyAvatar200ApplicationoctetStreamResponse) VisitGetMyAvatarResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/octet-stream")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetMyAvatar401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetMyAvatar401ApplicationProblemPlusJSONResponse) VisitGetMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetMyAvatar404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetMyAvatar404ApplicationProblemPlusJSONResponse) VisitGetMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveMyAvatarRequestObject struct {
+	Body io.Reader
+}
+
+type SaveMyAvatarResponseObject interface {
+	VisitSaveMyAvatarResponse(w http.ResponseWriter) error
+}
+
+type SaveMyAvatar200JSONResponse Me
+
+func (response SaveMyAvatar200JSONResponse) VisitSaveMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveMyAvatar401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveMyAvatar401ApplicationProblemPlusJSONResponse) VisitSaveMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveMyAvatar413ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveMyAvatar413ApplicationProblemPlusJSONResponse) VisitSaveMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(413)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveMyAvatar422ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveMyAvatar422ApplicationProblemPlusJSONResponse) VisitSaveMyAvatarResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCreatedByMeRequestObject struct {
+	Params ListCreatedByMeParams
+}
+
+type ListCreatedByMeResponseObject interface {
+	VisitListCreatedByMeResponse(w http.ResponseWriter) error
+}
+
+type ListCreatedByMe200JSONResponse struct {
+	Items []struct {
+		Id    openapi_types.UUID                          `json:"id"`
+		Title string                                      `json:"title"`
+		Type  ListCreatedByMe200JSONResponseBodyItemsType `json:"type"`
+	} `json:"items"`
+	NextCursor *openapi_types.UUID `json:"next_cursor"`
+}
+
+func (response ListCreatedByMe200JSONResponse) VisitListCreatedByMeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListCreatedByMe422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListCreatedByMe422ApplicationProblemPlusJSONResponse) VisitListCreatedByMeResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -34926,6 +37329,104 @@ func (response ListSpaceTemplates200JSONResponse) VisitListSpaceTemplatesRespons
 	return err
 }
 
+type SaveSpaceTemplateRequestObject struct {
+	Body *SaveSpaceTemplateJSONRequestBody
+}
+
+type SaveSpaceTemplateResponseObject interface {
+	VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error
+}
+
+type SaveSpaceTemplate201JSONResponse SpaceTemplate
+
+func (response SaveSpaceTemplate201JSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveSpaceTemplate403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SaveSpaceTemplate403ApplicationProblemPlusJSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveSpaceTemplate404ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveSpaceTemplate404ApplicationProblemPlusJSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SaveSpaceTemplate422ApplicationProblemPlusJSONResponse Problem
+
+func (response SaveSpaceTemplate422ApplicationProblemPlusJSONResponse) VisitSaveSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type DeleteSpaceTemplateRequestObject struct {
+	TemplateId openapi_types.UUID `json:"templateId"`
+}
+
+type DeleteSpaceTemplateResponseObject interface {
+	VisitDeleteSpaceTemplateResponse(w http.ResponseWriter) error
+}
+
+type DeleteSpaceTemplate204Response struct {
+}
+
+func (response DeleteSpaceTemplate204Response) VisitDeleteSpaceTemplateResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type DeleteSpaceTemplate404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response DeleteSpaceTemplate404ApplicationProblemPlusJSONResponse) VisitDeleteSpaceTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type CreateSpaceFromTemplateRequestObject struct {
 	TemplateId string `json:"templateId"`
 	Body       *CreateSpaceFromTemplateJSONRequestBody
@@ -35130,6 +37631,45 @@ func (response DiscoverSpaces403ApplicationProblemPlusJSONResponse) VisitDiscove
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceRegistryRequestObject struct {
+}
+
+type ListSpaceRegistryResponseObject interface {
+	VisitListSpaceRegistryResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceRegistry200JSONResponse struct {
+	Items []map[string]interface{} `json:"items"`
+}
+
+func (response ListSpaceRegistry200JSONResponse) VisitListSpaceRegistryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceRegistry401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceRegistry401ApplicationProblemPlusJSONResponse) VisitListSpaceRegistryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -36532,6 +39072,584 @@ func (response UpdateCustomField422ApplicationProblemPlusJSONResponse) VisitUpda
 	return err
 }
 
+type ListFieldAssignmentsRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type ListFieldAssignmentsResponseObject interface {
+	VisitListFieldAssignmentsResponse(w http.ResponseWriter) error
+}
+
+type ListFieldAssignments200JSONResponse struct {
+	Items []struct {
+		CreatedAt time.Time                                             `json:"created_at"`
+		FieldId   openapi_types.UUID                                    `json:"field_id"`
+		ScopeId   openapi_types.UUID                                    `json:"scope_id"`
+		ScopeKind ListFieldAssignments200JSONResponseBodyItemsScopeKind `json:"scope_kind"`
+		ScopeName string                                                `json:"scope_name"`
+		SpaceId   openapi_types.UUID                                    `json:"space_id"`
+	} `json:"items"`
+}
+
+func (response ListFieldAssignments200JSONResponse) VisitListFieldAssignmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFieldAssignments401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListFieldAssignments401ApplicationProblemPlusJSONResponse) VisitListFieldAssignmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFieldAssignments403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListFieldAssignments403ApplicationProblemPlusJSONResponse) VisitListFieldAssignmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListFieldAssignments404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListFieldAssignments404ApplicationProblemPlusJSONResponse) VisitListFieldAssignmentsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AssignFieldRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+	Body    *AssignFieldJSONRequestBody
+}
+
+type AssignFieldResponseObject interface {
+	VisitAssignFieldResponse(w http.ResponseWriter) error
+}
+
+type AssignField201JSONResponse struct {
+	CreatedAt string `json:"created_at"`
+	FieldId   string `json:"field_id"`
+	ScopeId   string `json:"scope_id"`
+	ScopeKind string `json:"scope_kind"`
+	ScopeName string `json:"scope_name"`
+	SpaceId   string `json:"space_id"`
+}
+
+func (response AssignField201JSONResponse) VisitAssignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AssignField401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response AssignField401ApplicationProblemPlusJSONResponse) VisitAssignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AssignField403ApplicationProblemPlusJSONResponse Problem
+
+func (response AssignField403ApplicationProblemPlusJSONResponse) VisitAssignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AssignField404ApplicationProblemPlusJSONResponse Problem
+
+func (response AssignField404ApplicationProblemPlusJSONResponse) VisitAssignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AssignField409ApplicationProblemPlusJSONResponse Problem
+
+func (response AssignField409ApplicationProblemPlusJSONResponse) VisitAssignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type AssignField422ApplicationProblemPlusJSONResponse Problem
+
+func (response AssignField422ApplicationProblemPlusJSONResponse) VisitAssignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnassignFieldRequestObject struct {
+	SpaceId   openapi_types.UUID           `json:"spaceId"`
+	FieldId   openapi_types.UUID           `json:"fieldId"`
+	ScopeKind UnassignFieldParamsScopeKind `json:"scopeKind"`
+	ScopeId   openapi_types.UUID           `json:"scopeId"`
+}
+
+type UnassignFieldResponseObject interface {
+	VisitUnassignFieldResponse(w http.ResponseWriter) error
+}
+
+type UnassignField204Response struct {
+}
+
+func (response UnassignField204Response) VisitUnassignFieldResponse(w http.ResponseWriter) error {
+	w.WriteHeader(204)
+	return nil
+}
+
+type UnassignField401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UnassignField401ApplicationProblemPlusJSONResponse) VisitUnassignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnassignField403ApplicationProblemPlusJSONResponse Problem
+
+func (response UnassignField403ApplicationProblemPlusJSONResponse) VisitUnassignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UnassignField404ApplicationProblemPlusJSONResponse Problem
+
+func (response UnassignField404ApplicationProblemPlusJSONResponse) VisitUnassignFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldGrantsRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type ListSpaceFieldGrantsResponseObject interface {
+	VisitListSpaceFieldGrantsResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceFieldGrants200JSONResponse struct {
+	Items []struct {
+		Level       ListSpaceFieldGrants200JSONResponseBodyItemsLevel       `json:"level"`
+		SubjectId   openapi_types.UUID                                      `json:"subject_id"`
+		SubjectKind ListSpaceFieldGrants200JSONResponseBodyItemsSubjectKind `json:"subject_kind"`
+		SubjectName *string                                                 `json:"subject_name,omitempty"`
+	} `json:"items"`
+}
+
+func (response ListSpaceFieldGrants200JSONResponse) VisitListSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldGrants401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceFieldGrants401ApplicationProblemPlusJSONResponse) VisitListSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldGrants403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceFieldGrants403ApplicationProblemPlusJSONResponse) VisitListSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldGrants404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceFieldGrants404ApplicationProblemPlusJSONResponse) VisitListSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceFieldGrantsRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+	Body    *SetSpaceFieldGrantsJSONRequestBody
+}
+
+type SetSpaceFieldGrantsResponseObject interface {
+	VisitSetSpaceFieldGrantsResponse(w http.ResponseWriter) error
+}
+
+type SetSpaceFieldGrants200JSONResponse struct {
+	Items []struct {
+		Level       SetSpaceFieldGrants200JSONResponseBodyItemsLevel       `json:"level"`
+		SubjectId   openapi_types.UUID                                     `json:"subject_id"`
+		SubjectKind SetSpaceFieldGrants200JSONResponseBodyItemsSubjectKind `json:"subject_kind"`
+		SubjectName *string                                                `json:"subject_name,omitempty"`
+	} `json:"items"`
+}
+
+func (response SetSpaceFieldGrants200JSONResponse) VisitSetSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceFieldGrants401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SetSpaceFieldGrants401ApplicationProblemPlusJSONResponse) VisitSetSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceFieldGrants403ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceFieldGrants403ApplicationProblemPlusJSONResponse) VisitSetSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceFieldGrants404ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceFieldGrants404ApplicationProblemPlusJSONResponse) VisitSetSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SetSpaceFieldGrants422ApplicationProblemPlusJSONResponse Problem
+
+func (response SetSpaceFieldGrants422ApplicationProblemPlusJSONResponse) VisitSetSpaceFieldGrantsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceFieldImpactRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type GetSpaceFieldImpactResponseObject interface {
+	VisitGetSpaceFieldImpactResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceFieldImpact200JSONResponse struct {
+	Automations  int       `json:"automations"`
+	Blueprints   int       `json:"blueprints"`
+	Formulas     *[]string `json:"formulas"`
+	ItemTypes    int       `json:"item_types"`
+	Items        int       `json:"items"`
+	Relations    int       `json:"relations"`
+	RequestForms int       `json:"request_forms"`
+	StatusGuards int       `json:"status_guards"`
+	Views        int       `json:"views"`
+	Widgets      int       `json:"widgets"`
+}
+
+func (response GetSpaceFieldImpact200JSONResponse) VisitGetSpaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceFieldImpact401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceFieldImpact401ApplicationProblemPlusJSONResponse) VisitGetSpaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceFieldImpact403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSpaceFieldImpact403ApplicationProblemPlusJSONResponse) VisitGetSpaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceFieldImpact404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSpaceFieldImpact404ApplicationProblemPlusJSONResponse) VisitGetSpaceFieldImpactResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceFieldRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	FieldId openapi_types.UUID `json:"fieldId"`
+}
+
+type RestoreSpaceFieldResponseObject interface {
+	VisitRestoreSpaceFieldResponse(w http.ResponseWriter) error
+}
+
+type RestoreSpaceField200JSONResponse CustomField
+
+func (response RestoreSpaceField200JSONResponse) VisitRestoreSpaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceField401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RestoreSpaceField401ApplicationProblemPlusJSONResponse) VisitRestoreSpaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceField403ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpaceField403ApplicationProblemPlusJSONResponse) VisitRestoreSpaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceField404ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpaceField404ApplicationProblemPlusJSONResponse) VisitRestoreSpaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceField409ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpaceField409ApplicationProblemPlusJSONResponse) VisitRestoreSpaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RestoreSpaceField422ApplicationProblemPlusJSONResponse Problem
+
+func (response RestoreSpaceField422ApplicationProblemPlusJSONResponse) VisitRestoreSpaceFieldResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetSpaceDefaultWorkflowsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -36671,6 +39789,81 @@ func (response GetSpaceDeleteImpact404ApplicationProblemPlusJSONResponse) VisitG
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListExcelDestinationsRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	Params  ListExcelDestinationsParams
+}
+
+type ListExcelDestinationsResponseObject interface {
+	VisitListExcelDestinationsResponse(w http.ResponseWriter) error
+}
+
+type ListExcelDestinations200JSONResponse struct {
+	Items []struct {
+		CanCreate bool               `json:"can_create"`
+		Id        openapi_types.UUID `json:"id"`
+		Title     string             `json:"title"`
+		Type      string             `json:"type"`
+	} `json:"items"`
+	NextCursor *string `json:"next_cursor"`
+}
+
+func (response ListExcelDestinations200JSONResponse) VisitListExcelDestinationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListExcelDestinations401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListExcelDestinations401ApplicationProblemPlusJSONResponse) VisitListExcelDestinationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListExcelDestinations404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListExcelDestinations404ApplicationProblemPlusJSONResponse) VisitListExcelDestinationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListExcelDestinations422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListExcelDestinations422ApplicationProblemPlusJSONResponse) VisitListExcelDestinationsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -36839,6 +40032,259 @@ func (response ImportProjectExcel422ApplicationProblemPlusJSONResponse) VisitImp
 	return err
 }
 
+type GetSpaceExcelImportReportRequestObject struct {
+	SpaceId  openapi_types.UUID `json:"spaceId"`
+	ReportId openapi_types.UUID `json:"reportId"`
+}
+
+type GetSpaceExcelImportReportResponseObject interface {
+	VisitGetSpaceExcelImportReportResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceExcelImportReport200JSONResponse map[string]interface{}
+
+func (response GetSpaceExcelImportReport200JSONResponse) VisitGetSpaceExcelImportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceExcelImportReport401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceExcelImportReport401ApplicationProblemPlusJSONResponse) VisitGetSpaceExcelImportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceExcelImportReport404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSpaceExcelImportReport404ApplicationProblemPlusJSONResponse) VisitGetSpaceExcelImportReportResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetExcelTemplateRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+	Kind    string             `json:"kind"`
+}
+
+type GetExcelTemplateResponseObject interface {
+	VisitGetExcelTemplateResponse(w http.ResponseWriter) error
+}
+
+type GetExcelTemplate200ApplicationvndOpenxmlformatsOfficedocumentSpreadsheetmlSheetResponse struct {
+	Body          io.Reader
+	ContentLength int64
+}
+
+func (response GetExcelTemplate200ApplicationvndOpenxmlformatsOfficedocumentSpreadsheetmlSheetResponse) VisitGetExcelTemplateResponse(w http.ResponseWriter) error {
+
+	w.Header().Set("Content-Type", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+	if response.ContentLength != 0 {
+		w.Header().Set("Content-Length", fmt.Sprint(response.ContentLength))
+	}
+	w.WriteHeader(200)
+
+	if closer, ok := response.Body.(io.ReadCloser); ok {
+		defer closer.Close()
+	}
+	_, err := io.Copy(w, response.Body)
+	return err
+}
+
+type GetExcelTemplate401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetExcelTemplate401ApplicationProblemPlusJSONResponse) VisitGetExcelTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetExcelTemplate404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetExcelTemplate404ApplicationProblemPlusJSONResponse) VisitGetExcelTemplateResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldChoicesRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+}
+
+type ListSpaceFieldChoicesResponseObject interface {
+	VisitListSpaceFieldChoicesResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceFieldChoices200JSONResponse struct {
+	Items []struct {
+		Assigned bool               `json:"assigned"`
+		Id       openapi_types.UUID `json:"id"`
+		Name     string             `json:"name"`
+		Type     string             `json:"type"`
+	} `json:"items"`
+}
+
+func (response ListSpaceFieldChoices200JSONResponse) VisitListSpaceFieldChoicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldChoices401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceFieldChoices401ApplicationProblemPlusJSONResponse) VisitListSpaceFieldChoicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldChoices403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceFieldChoices403ApplicationProblemPlusJSONResponse) VisitListSpaceFieldChoicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceFieldChoices404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceFieldChoices404ApplicationProblemPlusJSONResponse) VisitListSpaceFieldChoicesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceViewFieldsRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+}
+
+type ListSpaceViewFieldsResponseObject interface {
+	VisitListSpaceViewFieldsResponse(w http.ResponseWriter) error
+}
+
+type ListSpaceViewFields200JSONResponse struct {
+	Items []CustomField `json:"items"`
+}
+
+func (response ListSpaceViewFields200JSONResponse) VisitListSpaceViewFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceViewFields401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListSpaceViewFields401ApplicationProblemPlusJSONResponse) VisitListSpaceViewFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceViewFields403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceViewFields403ApplicationProblemPlusJSONResponse) VisitListSpaceViewFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListSpaceViewFields404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListSpaceViewFields404ApplicationProblemPlusJSONResponse) VisitListSpaceViewFieldsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ListSpaceFormsRequestObject struct {
 	SpaceId SpaceId `json:"spaceId"`
 }
@@ -36980,6 +40426,74 @@ func (response CreateForm422ApplicationProblemPlusJSONResponse) VisitCreateFormR
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceItemTypeUsageRequestObject struct {
+	SpaceId openapi_types.UUID `json:"spaceId"`
+}
+
+type GetSpaceItemTypeUsageResponseObject interface {
+	VisitGetSpaceItemTypeUsageResponse(w http.ResponseWriter) error
+}
+
+type GetSpaceItemTypeUsage200JSONResponse struct {
+	Items map[string]int `json:"items"`
+}
+
+func (response GetSpaceItemTypeUsage200JSONResponse) VisitGetSpaceItemTypeUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceItemTypeUsage401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetSpaceItemTypeUsage401ApplicationProblemPlusJSONResponse) VisitGetSpaceItemTypeUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceItemTypeUsage403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSpaceItemTypeUsage403ApplicationProblemPlusJSONResponse) VisitGetSpaceItemTypeUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetSpaceItemTypeUsage404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetSpaceItemTypeUsage404ApplicationProblemPlusJSONResponse) VisitGetSpaceItemTypeUsageResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -38017,6 +41531,84 @@ func (response CreateTimeEntry422ApplicationProblemPlusJSONResponse) VisitCreate
 	return err
 }
 
+type ListTimeEntriesToReviewRequestObject struct {
+	Params ListTimeEntriesToReviewParams
+}
+
+type ListTimeEntriesToReviewResponseObject interface {
+	VisitListTimeEntriesToReviewResponse(w http.ResponseWriter) error
+}
+
+type ListTimeEntriesToReview200JSONResponse TimeEntryPage
+
+func (response ListTimeEntriesToReview200JSONResponse) VisitListTimeEntriesToReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListTimeEntriesToReview422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListTimeEntriesToReview422ApplicationProblemPlusJSONResponse) VisitListTimeEntriesToReviewResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitTimeEntriesRequestObject struct {
+	Body *SubmitTimeEntriesJSONRequestBody
+}
+
+type SubmitTimeEntriesResponseObject interface {
+	VisitSubmitTimeEntriesResponse(w http.ResponseWriter) error
+}
+
+type SubmitTimeEntries200JSONResponse struct {
+	Submitted int `json:"submitted"`
+}
+
+func (response SubmitTimeEntries200JSONResponse) VisitSubmitTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type SubmitTimeEntries422ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response SubmitTimeEntries422ApplicationProblemPlusJSONResponse) VisitSubmitTimeEntriesResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type DeleteTimeEntryRequestObject struct {
 	EntryId openapi_types.UUID `json:"entryId"`
 	Params  DeleteTimeEntryParams
@@ -38221,6 +41813,151 @@ func (response UpdateTimeEntry422ApplicationProblemPlusJSONResponse) VisitUpdate
 type UpdateTimeEntry428ApplicationProblemPlusJSONResponse Problem
 
 func (response UpdateTimeEntry428ApplicationProblemPlusJSONResponse) VisitUpdateTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(428)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTimeEntryHistoryRequestObject struct {
+	EntryId openapi_types.UUID `json:"entryId"`
+}
+
+type GetTimeEntryHistoryResponseObject interface {
+	VisitGetTimeEntryHistoryResponse(w http.ResponseWriter) error
+}
+
+type GetTimeEntryHistory200JSONResponse struct {
+	Items []struct {
+		Action    GetTimeEntryHistory200JSONResponseBodyItemsAction `json:"action"`
+		ActorName string                                            `json:"actor_name"`
+		At        time.Time                                         `json:"at"`
+		Minutes   int                                               `json:"minutes"`
+		Note      string                                            `json:"note"`
+	} `json:"items"`
+}
+
+func (response GetTimeEntryHistory200JSONResponse) VisitGetTimeEntryHistoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetTimeEntryHistory404ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetTimeEntryHistory404ApplicationProblemPlusJSONResponse) VisitGetTimeEntryHistoryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntryRequestObject struct {
+	EntryId openapi_types.UUID `json:"entryId"`
+	Params  ReviewTimeEntryParams
+	Body    *ReviewTimeEntryJSONRequestBody
+}
+
+type ReviewTimeEntryResponseObject interface {
+	VisitReviewTimeEntryResponse(w http.ResponseWriter) error
+}
+
+type ReviewTimeEntry200JSONResponse struct{ TimeEntryJSONResponse }
+
+func (response ReviewTimeEntry200JSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response.Body); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	if response.Headers.ETag != nil {
+		w.Header().Set("ETag", fmt.Sprint(*response.Headers.ETag))
+	}
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ReviewTimeEntry403ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry404ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry404ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry409ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry409ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry422ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry422ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ReviewTimeEntry428ApplicationProblemPlusJSONResponse Problem
+
+func (response ReviewTimeEntry428ApplicationProblemPlusJSONResponse) VisitReviewTimeEntryResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -38800,6 +42537,43 @@ func (response GetUtilization422ApplicationProblemPlusJSONResponse) VisitGetUtil
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetVersionRequestObject struct {
+}
+
+type GetVersionResponseObject interface {
+	VisitGetVersionResponse(w http.ResponseWriter) error
+}
+
+type GetVersion200JSONResponse VersionInfo
+
+func (response GetVersion200JSONResponse) VisitGetVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetVersion401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetVersion401ApplicationProblemPlusJSONResponse) VisitGetVersionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -39519,6 +43293,64 @@ func (response RenameWorkflow422ApplicationProblemPlusJSONResponse) VisitRenameW
 	return err
 }
 
+type GetWorkflowRevisionRequestObject struct {
+	WorkflowId openapi_types.UUID `json:"workflowId"`
+	Revision   int                `json:"revision"`
+}
+
+type GetWorkflowRevisionResponseObject interface {
+	VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error
+}
+
+type GetWorkflowRevision200JSONResponse struct {
+	CreatedAt  time.Time              `json:"created_at"`
+	Definition map[string]interface{} `json:"definition"`
+	Revision   int                    `json:"revision"`
+	WorkflowId openapi_types.UUID     `json:"workflow_id"`
+}
+
+func (response GetWorkflowRevision200JSONResponse) VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkflowRevision403ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetWorkflowRevision403ApplicationProblemPlusJSONResponse) VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetWorkflowRevision404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetWorkflowRevision404ApplicationProblemPlusJSONResponse) VisitGetWorkflowRevisionResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type ReorderStatusesRequestObject struct {
 	WorkflowId openapi_types.UUID `json:"workflowId"`
 	Body       *ReorderStatusesJSONRequestBody
@@ -39779,6 +43611,9 @@ type StrictServerInterface interface {
 	// TransferAccountOwnership Serahkan kepemilikan akun ke admin aktif lain (SET-09); hanya pemilik; butuh password, atau login dalam 15 menit terakhir bila tanpa password
 	// (POST /account/ownership)
 	TransferAccountOwnership(ctx context.Context, request TransferAccountOwnershipRequestObject) (TransferAccountOwnershipResponseObject, error)
+	// RunOperationalAnalytics Agregat Workspace tanpa baris item dan tanpa biaya; grup kecil disembunyikan
+	// (POST /analytics/operational)
+	RunOperationalAnalytics(ctx context.Context, request RunOperationalAnalyticsRequestObject) (RunOperationalAnalyticsResponseObject, error)
 	// RunAnalyticsQuery Jalankan kueri skema tertutup (widget dan report); hanya Item yang dapat dilihat pemanggil dihitung
 	// (POST /analytics/query)
 	RunAnalyticsQuery(ctx context.Context, request RunAnalyticsQueryRequestObject) (RunAnalyticsQueryResponseObject, error)
@@ -40019,6 +43854,18 @@ type StrictServerInterface interface {
 	// UpdateWorkspaceCustomField Ubah custom field Workspace; hanya administrator akun
 	// (PATCH /custom-fields/{fieldId})
 	UpdateWorkspaceCustomField(ctx context.Context, request UpdateWorkspaceCustomFieldRequestObject) (UpdateWorkspaceCustomFieldResponseObject, error)
+	// ListWorkspaceFieldGrants Grant akses field Workspace (pengelola field)
+	// (GET /custom-fields/{fieldId}/grants)
+	ListWorkspaceFieldGrants(ctx context.Context, request ListWorkspaceFieldGrantsRequestObject) (ListWorkspaceFieldGrantsResponseObject, error)
+	// SetWorkspaceFieldGrants Ganti grant field Workspace; daftar kosong menghapus pembatasan
+	// (PUT /custom-fields/{fieldId}/grants)
+	SetWorkspaceFieldGrants(ctx context.Context, request SetWorkspaceFieldGrantsRequestObject) (SetWorkspaceFieldGrantsResponseObject, error)
+	// GetWorkspaceFieldImpact Jumlah pemakaian field Workspace sebelum diarsipkan
+	// (GET /custom-fields/{fieldId}/impact)
+	GetWorkspaceFieldImpact(ctx context.Context, request GetWorkspaceFieldImpactRequestObject) (GetWorkspaceFieldImpactResponseObject, error)
+	// RestoreWorkspaceField Pulihkan field Workspace yang diarsipkan
+	// (POST /custom-fields/{fieldId}/restore)
+	RestoreWorkspaceField(ctx context.Context, request RestoreWorkspaceFieldRequestObject) (RestoreWorkspaceFieldResponseObject, error)
 	// ListCustomRoles Peran kustom (dibaca semua pengguna agar dapat dipilih di dialog Share)
 	// (GET /custom-roles)
 	ListCustomRoles(ctx context.Context, request ListCustomRolesRequestObject) (ListCustomRolesResponseObject, error)
@@ -40163,6 +44010,9 @@ type StrictServerInterface interface {
 	// CreateItemType Buat tipe item kustom (hanya admin)
 	// (POST /item-types)
 	CreateItemType(ctx context.Context, request CreateItemTypeRequestObject) (CreateItemTypeResponseObject, error)
+	// GetItemTypeUsage Jumlah item hidup per tipe (administrator)
+	// (GET /item-types/usage)
+	GetItemTypeUsage(ctx context.Context, request GetItemTypeUsageRequestObject) (GetItemTypeUsageResponseObject, error)
 	// UpdateItemType Ubah atau nonaktifkan tipe item (hanya admin); data item lama tidak berubah
 	// (PATCH /item-types/{typeId})
 	UpdateItemType(ctx context.Context, request UpdateItemTypeRequestObject) (UpdateItemTypeResponseObject, error)
@@ -40295,6 +44145,18 @@ type StrictServerInterface interface {
 	// SetupTwoFactor Mulai pendaftaran 2FA; mengembalikan secret dan tautan otpauth untuk kode QR. Belum aktif sampai dikonfirmasi
 	// (POST /me/2fa/setup)
 	SetupTwoFactor(ctx context.Context, request SetupTwoFactorRequestObject) (SetupTwoFactorResponseObject, error)
+	// RemoveMyAvatar Hapus foto profil
+	// (DELETE /me/avatar)
+	RemoveMyAvatar(ctx context.Context, request RemoveMyAvatarRequestObject) (RemoveMyAvatarResponseObject, error)
+	// GetMyAvatar Foto profil pemanggil
+	// (GET /me/avatar)
+	GetMyAvatar(ctx context.Context, request GetMyAvatarRequestObject) (GetMyAvatarResponseObject, error)
+	// SaveMyAvatar Ganti foto profil (PNG, JPEG, WebP; maksimum 2 MB)
+	// (PUT /me/avatar)
+	SaveMyAvatar(ctx context.Context, request SaveMyAvatarRequestObject) (SaveMyAvatarResponseObject, error)
+	// ListCreatedByMe Item buatan pemanggil di semua tingkat yang masih dapat dilihat, terbaru dulu (NAV-02)
+	// (GET /me/created)
+	ListCreatedByMe(ctx context.Context, request ListCreatedByMeRequestObject) (ListCreatedByMeResponseObject, error)
 	// ListMyIdentities Identitas SSO yang tertaut ke pemanggil
 	// (GET /me/identities)
 	ListMyIdentities(ctx context.Context, request ListMyIdentitiesRequestObject) (ListMyIdentitiesResponseObject, error)
@@ -40517,9 +44379,15 @@ type StrictServerInterface interface {
 	// ListSpaceIcons Katalog kunci ikon Space (D-04)
 	// (GET /space-icons)
 	ListSpaceIcons(ctx context.Context, request ListSpaceIconsRequestObject) (ListSpaceIconsResponseObject, error)
-	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18)
+	// ListSpaceTemplates Template Space bawaan per kategori (SPC-18) dan template tersimpan milik sendiri atau dari Space yang terlihat
 	// (GET /space-templates)
 	ListSpaceTemplates(ctx context.Context, request ListSpaceTemplatesRequestObject) (ListSpaceTemplatesResponseObject, error)
+	// SaveSpaceTemplate Simpan struktur dan konfigurasi Space sebagai template (akses penuh); tanpa orang, tanggal, status, nilai field, komentar, file, waktu, form, otomatisasi, dan anggota
+	// (POST /space-templates)
+	SaveSpaceTemplate(ctx context.Context, request SaveSpaceTemplateRequestObject) (SaveSpaceTemplateResponseObject, error)
+	// DeleteSpaceTemplate Hapus template tersimpan milik sendiri; Space yang dibuat darinya tidak berubah
+	// (DELETE /space-templates/{templateId})
+	DeleteSpaceTemplate(ctx context.Context, request DeleteSpaceTemplateRequestObject) (DeleteSpaceTemplateResponseObject, error)
 	// CreateSpaceFromTemplate Buat Space dari template dalam satu transaksi; request_id yang sama mengembalikan Space yang sudah dibuat (SPC-18)
 	// (POST /space-templates/{templateId}/spaces)
 	CreateSpaceFromTemplate(ctx context.Context, request CreateSpaceFromTemplateRequestObject) (CreateSpaceFromTemplateResponseObject, error)
@@ -40532,6 +44400,9 @@ type StrictServerInterface interface {
 	// DiscoverSpaces Space Public yang belum diikuti (D-01). Space Private tidak pernah muncul
 	// (GET /spaces/discover)
 	DiscoverSpaces(ctx context.Context, request DiscoverSpacesRequestObject) (DiscoverSpacesResponseObject, error)
+	// ListSpaceRegistry Daftar Space yang sudah terlihat oleh pemanggil, dengan hitungan dan admin
+	// (GET /spaces/registry)
+	ListSpaceRegistry(ctx context.Context, request ListSpaceRegistryRequestObject) (ListSpaceRegistryResponseObject, error)
 	// DeleteSpace Hapus Space beserta isinya ke Recycle bin; Personal space tidak bisa dihapus
 	// (DELETE /spaces/{spaceId})
 	DeleteSpace(ctx context.Context, request DeleteSpaceRequestObject) (DeleteSpaceResponseObject, error)
@@ -40601,6 +44472,27 @@ type StrictServerInterface interface {
 	// UpdateCustomField Ubah nama, urutan, atau opsi definisi; opsi yang dipakai dipertahankan
 	// (PATCH /spaces/{spaceId}/custom-fields/{fieldId})
 	UpdateCustomField(ctx context.Context, request UpdateCustomFieldRequestObject) (UpdateCustomFieldResponseObject, error)
+	// ListFieldAssignments Tempat field berlaku di Space
+	// (GET /spaces/{spaceId}/custom-fields/{fieldId}/assignments)
+	ListFieldAssignments(ctx context.Context, request ListFieldAssignmentsRequestObject) (ListFieldAssignmentsResponseObject, error)
+	// AssignField Berlakukan field di Space, project, atau folder (akses Full)
+	// (POST /spaces/{spaceId}/custom-fields/{fieldId}/assignments)
+	AssignField(ctx context.Context, request AssignFieldRequestObject) (AssignFieldResponseObject, error)
+	// UnassignField Cabut field dari tempat itu; nilai tersimpan tidak dihapus
+	// (DELETE /spaces/{spaceId}/custom-fields/{fieldId}/assignments/{scopeKind}/{scopeId})
+	UnassignField(ctx context.Context, request UnassignFieldRequestObject) (UnassignFieldResponseObject, error)
+	// ListSpaceFieldGrants Grant akses field Space (pengelola field)
+	// (GET /spaces/{spaceId}/custom-fields/{fieldId}/grants)
+	ListSpaceFieldGrants(ctx context.Context, request ListSpaceFieldGrantsRequestObject) (ListSpaceFieldGrantsResponseObject, error)
+	// SetSpaceFieldGrants Ganti grant field Space; daftar kosong menghapus pembatasan
+	// (PUT /spaces/{spaceId}/custom-fields/{fieldId}/grants)
+	SetSpaceFieldGrants(ctx context.Context, request SetSpaceFieldGrantsRequestObject) (SetSpaceFieldGrantsResponseObject, error)
+	// GetSpaceFieldImpact Jumlah pemakaian field Space sebelum diarsipkan
+	// (GET /spaces/{spaceId}/custom-fields/{fieldId}/impact)
+	GetSpaceFieldImpact(ctx context.Context, request GetSpaceFieldImpactRequestObject) (GetSpaceFieldImpactResponseObject, error)
+	// RestoreSpaceField Pulihkan field Space yang diarsipkan
+	// (POST /spaces/{spaceId}/custom-fields/{fieldId}/restore)
+	RestoreSpaceField(ctx context.Context, request RestoreSpaceFieldRequestObject) (RestoreSpaceFieldResponseObject, error)
 	// GetSpaceDefaultWorkflows Workflow default Space untuk root Task dan Project (B)
 	// (GET /spaces/{spaceId}/default-workflows)
 	GetSpaceDefaultWorkflows(ctx context.Context, request GetSpaceDefaultWorkflowsRequestObject) (GetSpaceDefaultWorkflowsResponseObject, error)
@@ -40610,18 +44502,36 @@ type StrictServerInterface interface {
 	// GetSpaceDeleteImpact Pratinjau dampak hapus Space (D). Hanya membaca
 	// (GET /spaces/{spaceId}/delete-impact)
 	GetSpaceDeleteImpact(ctx context.Context, request GetSpaceDeleteImpactRequestObject) (GetSpaceDeleteImpactResponseObject, error)
+	// ListExcelDestinations Project dan folder tujuan impor
+	// (GET /spaces/{spaceId}/excel-destinations)
+	ListExcelDestinations(ctx context.Context, request ListExcelDestinationsRequestObject) (ListExcelDestinationsResponseObject, error)
 
 	// (POST /spaces/{spaceId}/excel-exports)
 	StartSpaceExcelExport(ctx context.Context, request StartSpaceExcelExportRequestObject) (StartSpaceExcelExportResponseObject, error)
 
 	// (POST /spaces/{spaceId}/excel-imports)
 	ImportProjectExcel(ctx context.Context, request ImportProjectExcelRequestObject) (ImportProjectExcelResponseObject, error)
+	// GetSpaceExcelImportReport Laporan impor milik pemanggil
+	// (GET /spaces/{spaceId}/excel-imports/{reportId})
+	GetSpaceExcelImportReport(ctx context.Context, request GetSpaceExcelImportReportRequestObject) (GetSpaceExcelImportReportResponseObject, error)
+	// GetExcelTemplate Unduh template impor Excel
+	// (GET /spaces/{spaceId}/excel-templates/{kind})
+	GetExcelTemplate(ctx context.Context, request GetExcelTemplateRequestObject) (GetExcelTemplateResponseObject, error)
+	// ListSpaceFieldChoices Field Workspace dan apakah Space ini memakainya (akses Full)
+	// (GET /spaces/{spaceId}/field-choices)
+	ListSpaceFieldChoices(ctx context.Context, request ListSpaceFieldChoicesRequestObject) (ListSpaceFieldChoicesResponseObject, error)
+	// ListSpaceViewFields Field yang berlaku pada view Space; field yang tidak boleh dibaca tidak ikut
+	// (GET /spaces/{spaceId}/fields)
+	ListSpaceViewFields(ctx context.Context, request ListSpaceViewFieldsRequestObject) (ListSpaceViewFieldsResponseObject, error)
 	// ListSpaceForms Form di Space (butuh kemampuan edit pada Space; FORM-05)
 	// (GET /spaces/{spaceId}/forms)
 	ListSpaceForms(ctx context.Context, request ListSpaceFormsRequestObject) (ListSpaceFormsResponseObject, error)
 	// CreateForm Buat form (FORM-01, FORM-02); butuh edit pada Space dan hak membuat item di tujuan
 	// (POST /spaces/{spaceId}/forms)
 	CreateForm(ctx context.Context, request CreateFormRequestObject) (CreateFormResponseObject, error)
+	// GetSpaceItemTypeUsage Jumlah item per tipe dalam satu Space
+	// (GET /spaces/{spaceId}/item-types/usage)
+	GetSpaceItemTypeUsage(ctx context.Context, request GetSpaceItemTypeUsageRequestObject) (GetSpaceItemTypeUsageResponseObject, error)
 	// ListSpaceRootItems Item di root Space (SPC-02, SPC-04)
 	// (GET /spaces/{spaceId}/items)
 	ListSpaceRootItems(ctx context.Context, request ListSpaceRootItemsRequestObject) (ListSpaceRootItemsResponseObject, error)
@@ -40676,6 +44586,12 @@ type StrictServerInterface interface {
 	// CreateTimeEntry Catat waktu sendiri untuk task dan tanggal
 	// (POST /time-entries)
 	CreateTimeEntry(ctx context.Context, request CreateTimeEntryRequestObject) (CreateTimeEntryResponseObject, error)
+	// ListTimeEntriesToReview Entry orang lain yang diajukan pada task dengan akses penuh, terlama dulu
+	// (GET /time-entries/review)
+	ListTimeEntriesToReview(ctx context.Context, request ListTimeEntriesToReviewRequestObject) (ListTimeEntriesToReviewResponseObject, error)
+	// SubmitTimeEntries Ajukan time entry draf dan ditolak milik sendiri dalam satu periode untuk direview
+	// (POST /time-entries/submit)
+	SubmitTimeEntries(ctx context.Context, request SubmitTimeEntriesRequestObject) (SubmitTimeEntriesResponseObject, error)
 
 	// (DELETE /time-entries/{entryId})
 	DeleteTimeEntry(ctx context.Context, request DeleteTimeEntryRequestObject) (DeleteTimeEntryResponseObject, error)
@@ -40685,6 +44601,12 @@ type StrictServerInterface interface {
 	// UpdateTimeEntry Pemilik mengubah data entry, pengguna dengan akses penuh mengubah lock secara terpisah
 	// (PATCH /time-entries/{entryId})
 	UpdateTimeEntry(ctx context.Context, request UpdateTimeEntryRequestObject) (UpdateTimeEntryResponseObject, error)
+	// GetTimeEntryHistory Riwayat pengajuan, persetujuan, penolakan, dan kunci satu entry
+	// (GET /time-entries/{entryId}/history)
+	GetTimeEntryHistory(ctx context.Context, request GetTimeEntryHistoryRequestObject) (GetTimeEntryHistoryResponseObject, error)
+	// ReviewTimeEntry Setujui atau tolak entry orang lain (akses penuh pada task); menolak entry yang disetujui membukanya kembali
+	// (POST /time-entries/{entryId}/review)
+	ReviewTimeEntry(ctx context.Context, request ReviewTimeEntryRequestObject) (ReviewTimeEntryResponseObject, error)
 	// ListUsers Daftar user (USR-03); admin melihat semua status, lainnya hanya yang aktif
 	// (GET /users)
 	ListUsers(ctx context.Context, request ListUsersRequestObject) (ListUsersResponseObject, error)
@@ -40721,6 +44643,9 @@ type StrictServerInterface interface {
 	// GetUtilization Utilization planned vs actual per orang (RSC-06); menit terencana = effort task + booking, aktual = time entry
 	// (GET /utilization)
 	GetUtilization(ctx context.Context, request GetUtilizationRequestObject) (GetUtilizationResponseObject, error)
+	// GetVersion Identitas build yang sedang berjalan; `image` hanya untuk admin
+	// (GET /version)
+	GetVersion(ctx context.Context, request GetVersionRequestObject) (GetVersionResponseObject, error)
 	// CreateView Tambah view (VIEW-08)
 	// (POST /views)
 	CreateView(ctx context.Context, request CreateViewRequestObject) (CreateViewResponseObject, error)
@@ -40760,6 +44685,9 @@ type StrictServerInterface interface {
 	// RenameWorkflow Ubah nama workflow (admin saja)
 	// (PATCH /workflows/{workflowId})
 	RenameWorkflow(ctx context.Context, request RenameWorkflowRequestObject) (RenameWorkflowResponseObject, error)
+	// GetWorkflowRevision Salinan beku aturan workflow pada satu revisi (administrator)
+	// (GET /workflows/{workflowId}/revisions/{revision})
+	GetWorkflowRevision(ctx context.Context, request GetWorkflowRevisionRequestObject) (GetWorkflowRevisionResponseObject, error)
 	// ReorderStatuses Urutkan status; harus memuat semua status workflow, dan status pertama harus Active
 	// (PUT /workflows/{workflowId}/status-order)
 	ReorderStatuses(ctx context.Context, request ReorderStatusesRequestObject) (ReorderStatusesResponseObject, error)
@@ -41074,6 +45002,37 @@ func (sh *strictHandler) TransferAccountOwnership(w http.ResponseWriter, r *http
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(TransferAccountOwnershipResponseObject); ok {
 		if err := validResponse.VisitTransferAccountOwnershipResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RunOperationalAnalytics operation middleware
+func (sh *strictHandler) RunOperationalAnalytics(w http.ResponseWriter, r *http.Request) {
+	var request RunOperationalAnalyticsRequestObject
+
+	var body RunOperationalAnalyticsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RunOperationalAnalytics(ctx, request.(RunOperationalAnalyticsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RunOperationalAnalytics")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RunOperationalAnalyticsResponseObject); ok {
+		if err := validResponse.VisitRunOperationalAnalyticsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -43363,6 +47322,117 @@ func (sh *strictHandler) UpdateWorkspaceCustomField(w http.ResponseWriter, r *ht
 	}
 }
 
+// ListWorkspaceFieldGrants operation middleware
+func (sh *strictHandler) ListWorkspaceFieldGrants(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID) {
+	var request ListWorkspaceFieldGrantsRequestObject
+
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListWorkspaceFieldGrants(ctx, request.(ListWorkspaceFieldGrantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListWorkspaceFieldGrants")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListWorkspaceFieldGrantsResponseObject); ok {
+		if err := validResponse.VisitListWorkspaceFieldGrantsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetWorkspaceFieldGrants operation middleware
+func (sh *strictHandler) SetWorkspaceFieldGrants(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID) {
+	var request SetWorkspaceFieldGrantsRequestObject
+
+	request.FieldId = fieldId
+
+	var body SetWorkspaceFieldGrantsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetWorkspaceFieldGrants(ctx, request.(SetWorkspaceFieldGrantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetWorkspaceFieldGrants")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetWorkspaceFieldGrantsResponseObject); ok {
+		if err := validResponse.VisitSetWorkspaceFieldGrantsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkspaceFieldImpact operation middleware
+func (sh *strictHandler) GetWorkspaceFieldImpact(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID) {
+	var request GetWorkspaceFieldImpactRequestObject
+
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkspaceFieldImpact(ctx, request.(GetWorkspaceFieldImpactRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkspaceFieldImpact")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkspaceFieldImpactResponseObject); ok {
+		if err := validResponse.VisitGetWorkspaceFieldImpactResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreWorkspaceField operation middleware
+func (sh *strictHandler) RestoreWorkspaceField(w http.ResponseWriter, r *http.Request, fieldId openapi_types.UUID) {
+	var request RestoreWorkspaceFieldRequestObject
+
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreWorkspaceField(ctx, request.(RestoreWorkspaceFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreWorkspaceField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RestoreWorkspaceFieldResponseObject); ok {
+		if err := validResponse.VisitRestoreWorkspaceFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListCustomRoles operation middleware
 func (sh *strictHandler) ListCustomRoles(w http.ResponseWriter, r *http.Request) {
 	var request ListCustomRolesRequestObject
@@ -44732,6 +48802,30 @@ func (sh *strictHandler) CreateItemType(w http.ResponseWriter, r *http.Request) 
 	}
 }
 
+// GetItemTypeUsage operation middleware
+func (sh *strictHandler) GetItemTypeUsage(w http.ResponseWriter, r *http.Request) {
+	var request GetItemTypeUsageRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetItemTypeUsage(ctx, request.(GetItemTypeUsageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetItemTypeUsage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetItemTypeUsageResponseObject); ok {
+		if err := validResponse.VisitGetItemTypeUsageResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // UpdateItemType operation middleware
 func (sh *strictHandler) UpdateItemType(w http.ResponseWriter, r *http.Request, typeId openapi_types.UUID) {
 	var request UpdateItemTypeRequestObject
@@ -46001,6 +50095,106 @@ func (sh *strictHandler) SetupTwoFactor(w http.ResponseWriter, r *http.Request) 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(SetupTwoFactorResponseObject); ok {
 		if err := validResponse.VisitSetupTwoFactorResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RemoveMyAvatar operation middleware
+func (sh *strictHandler) RemoveMyAvatar(w http.ResponseWriter, r *http.Request) {
+	var request RemoveMyAvatarRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RemoveMyAvatar(ctx, request.(RemoveMyAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RemoveMyAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RemoveMyAvatarResponseObject); ok {
+		if err := validResponse.VisitRemoveMyAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetMyAvatar operation middleware
+func (sh *strictHandler) GetMyAvatar(w http.ResponseWriter, r *http.Request) {
+	var request GetMyAvatarRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetMyAvatar(ctx, request.(GetMyAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetMyAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetMyAvatarResponseObject); ok {
+		if err := validResponse.VisitGetMyAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SaveMyAvatar operation middleware
+func (sh *strictHandler) SaveMyAvatar(w http.ResponseWriter, r *http.Request) {
+	var request SaveMyAvatarRequestObject
+
+	request.Body = r.Body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveMyAvatar(ctx, request.(SaveMyAvatarRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveMyAvatar")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveMyAvatarResponseObject); ok {
+		if err := validResponse.VisitSaveMyAvatarResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListCreatedByMe operation middleware
+func (sh *strictHandler) ListCreatedByMe(w http.ResponseWriter, r *http.Request, params ListCreatedByMeParams) {
+	var request ListCreatedByMeRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListCreatedByMe(ctx, request.(ListCreatedByMeRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListCreatedByMe")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListCreatedByMeResponseObject); ok {
+		if err := validResponse.VisitListCreatedByMeResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -48071,6 +52265,63 @@ func (sh *strictHandler) ListSpaceTemplates(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// SaveSpaceTemplate operation middleware
+func (sh *strictHandler) SaveSpaceTemplate(w http.ResponseWriter, r *http.Request) {
+	var request SaveSpaceTemplateRequestObject
+
+	var body SaveSpaceTemplateJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SaveSpaceTemplate(ctx, request.(SaveSpaceTemplateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SaveSpaceTemplate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SaveSpaceTemplateResponseObject); ok {
+		if err := validResponse.VisitSaveSpaceTemplateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// DeleteSpaceTemplate operation middleware
+func (sh *strictHandler) DeleteSpaceTemplate(w http.ResponseWriter, r *http.Request, templateId openapi_types.UUID) {
+	var request DeleteSpaceTemplateRequestObject
+
+	request.TemplateId = templateId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.DeleteSpaceTemplate(ctx, request.(DeleteSpaceTemplateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "DeleteSpaceTemplate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(DeleteSpaceTemplateResponseObject); ok {
+		if err := validResponse.VisitDeleteSpaceTemplateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // CreateSpaceFromTemplate operation middleware
 func (sh *strictHandler) CreateSpaceFromTemplate(w http.ResponseWriter, r *http.Request, templateId string) {
 	var request CreateSpaceFromTemplateRequestObject
@@ -48178,6 +52429,30 @@ func (sh *strictHandler) DiscoverSpaces(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(DiscoverSpacesResponseObject); ok {
 		if err := validResponse.VisitDiscoverSpacesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceRegistry operation middleware
+func (sh *strictHandler) ListSpaceRegistry(w http.ResponseWriter, r *http.Request) {
+	var request ListSpaceRegistryRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceRegistry(ctx, request.(ListSpaceRegistryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceRegistry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceRegistryResponseObject); ok {
+		if err := validResponse.VisitListSpaceRegistryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -48868,6 +53143,211 @@ func (sh *strictHandler) UpdateCustomField(w http.ResponseWriter, r *http.Reques
 	}
 }
 
+// ListFieldAssignments operation middleware
+func (sh *strictHandler) ListFieldAssignments(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request ListFieldAssignmentsRequestObject
+
+	request.SpaceId = spaceId
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListFieldAssignments(ctx, request.(ListFieldAssignmentsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListFieldAssignments")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListFieldAssignmentsResponseObject); ok {
+		if err := validResponse.VisitListFieldAssignmentsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// AssignField operation middleware
+func (sh *strictHandler) AssignField(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request AssignFieldRequestObject
+
+	request.SpaceId = spaceId
+	request.FieldId = fieldId
+
+	var body AssignFieldJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.AssignField(ctx, request.(AssignFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "AssignField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(AssignFieldResponseObject); ok {
+		if err := validResponse.VisitAssignFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UnassignField operation middleware
+func (sh *strictHandler) UnassignField(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID, scopeKind UnassignFieldParamsScopeKind, scopeId openapi_types.UUID) {
+	var request UnassignFieldRequestObject
+
+	request.SpaceId = spaceId
+	request.FieldId = fieldId
+	request.ScopeKind = scopeKind
+	request.ScopeId = scopeId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UnassignField(ctx, request.(UnassignFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UnassignField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UnassignFieldResponseObject); ok {
+		if err := validResponse.VisitUnassignFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceFieldGrants operation middleware
+func (sh *strictHandler) ListSpaceFieldGrants(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request ListSpaceFieldGrantsRequestObject
+
+	request.SpaceId = spaceId
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceFieldGrants(ctx, request.(ListSpaceFieldGrantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceFieldGrants")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceFieldGrantsResponseObject); ok {
+		if err := validResponse.VisitListSpaceFieldGrantsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SetSpaceFieldGrants operation middleware
+func (sh *strictHandler) SetSpaceFieldGrants(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request SetSpaceFieldGrantsRequestObject
+
+	request.SpaceId = spaceId
+	request.FieldId = fieldId
+
+	var body SetSpaceFieldGrantsJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SetSpaceFieldGrants(ctx, request.(SetSpaceFieldGrantsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SetSpaceFieldGrants")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SetSpaceFieldGrantsResponseObject); ok {
+		if err := validResponse.VisitSetSpaceFieldGrantsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpaceFieldImpact operation middleware
+func (sh *strictHandler) GetSpaceFieldImpact(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request GetSpaceFieldImpactRequestObject
+
+	request.SpaceId = spaceId
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceFieldImpact(ctx, request.(GetSpaceFieldImpactRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceFieldImpact")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceFieldImpactResponseObject); ok {
+		if err := validResponse.VisitGetSpaceFieldImpactResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RestoreSpaceField operation middleware
+func (sh *strictHandler) RestoreSpaceField(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, fieldId openapi_types.UUID) {
+	var request RestoreSpaceFieldRequestObject
+
+	request.SpaceId = spaceId
+	request.FieldId = fieldId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RestoreSpaceField(ctx, request.(RestoreSpaceFieldRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RestoreSpaceField")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RestoreSpaceFieldResponseObject); ok {
+		if err := validResponse.VisitRestoreSpaceFieldResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // GetSpaceDefaultWorkflows operation middleware
 func (sh *strictHandler) GetSpaceDefaultWorkflows(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request GetSpaceDefaultWorkflowsRequestObject
@@ -48953,6 +53433,33 @@ func (sh *strictHandler) GetSpaceDeleteImpact(w http.ResponseWriter, r *http.Req
 	}
 }
 
+// ListExcelDestinations operation middleware
+func (sh *strictHandler) ListExcelDestinations(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, params ListExcelDestinationsParams) {
+	var request ListExcelDestinationsRequestObject
+
+	request.SpaceId = spaceId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListExcelDestinations(ctx, request.(ListExcelDestinationsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListExcelDestinations")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListExcelDestinationsResponseObject); ok {
+		if err := validResponse.VisitListExcelDestinationsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // StartSpaceExcelExport operation middleware
 func (sh *strictHandler) StartSpaceExcelExport(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request StartSpaceExcelExportRequestObject
@@ -49022,6 +53529,112 @@ func (sh *strictHandler) ImportProjectExcel(w http.ResponseWriter, r *http.Reque
 	}
 }
 
+// GetSpaceExcelImportReport operation middleware
+func (sh *strictHandler) GetSpaceExcelImportReport(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, reportId openapi_types.UUID) {
+	var request GetSpaceExcelImportReportRequestObject
+
+	request.SpaceId = spaceId
+	request.ReportId = reportId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceExcelImportReport(ctx, request.(GetSpaceExcelImportReportRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceExcelImportReport")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceExcelImportReportResponseObject); ok {
+		if err := validResponse.VisitGetSpaceExcelImportReportResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetExcelTemplate operation middleware
+func (sh *strictHandler) GetExcelTemplate(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID, kind string) {
+	var request GetExcelTemplateRequestObject
+
+	request.SpaceId = spaceId
+	request.Kind = kind
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetExcelTemplate(ctx, request.(GetExcelTemplateRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetExcelTemplate")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetExcelTemplateResponseObject); ok {
+		if err := validResponse.VisitGetExcelTemplateResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceFieldChoices operation middleware
+func (sh *strictHandler) ListSpaceFieldChoices(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID) {
+	var request ListSpaceFieldChoicesRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceFieldChoices(ctx, request.(ListSpaceFieldChoicesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceFieldChoices")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceFieldChoicesResponseObject); ok {
+		if err := validResponse.VisitListSpaceFieldChoicesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListSpaceViewFields operation middleware
+func (sh *strictHandler) ListSpaceViewFields(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID) {
+	var request ListSpaceViewFieldsRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListSpaceViewFields(ctx, request.(ListSpaceViewFieldsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListSpaceViewFields")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListSpaceViewFieldsResponseObject); ok {
+		if err := validResponse.VisitListSpaceViewFieldsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // ListSpaceForms operation middleware
 func (sh *strictHandler) ListSpaceForms(w http.ResponseWriter, r *http.Request, spaceId SpaceId) {
 	var request ListSpaceFormsRequestObject
@@ -49074,6 +53687,32 @@ func (sh *strictHandler) CreateForm(w http.ResponseWriter, r *http.Request, spac
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateFormResponseObject); ok {
 		if err := validResponse.VisitCreateFormResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetSpaceItemTypeUsage operation middleware
+func (sh *strictHandler) GetSpaceItemTypeUsage(w http.ResponseWriter, r *http.Request, spaceId openapi_types.UUID) {
+	var request GetSpaceItemTypeUsageRequestObject
+
+	request.SpaceId = spaceId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetSpaceItemTypeUsage(ctx, request.(GetSpaceItemTypeUsageRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetSpaceItemTypeUsage")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetSpaceItemTypeUsageResponseObject); ok {
+		if err := validResponse.VisitGetSpaceItemTypeUsageResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -49584,6 +54223,63 @@ func (sh *strictHandler) CreateTimeEntry(w http.ResponseWriter, r *http.Request)
 	}
 }
 
+// ListTimeEntriesToReview operation middleware
+func (sh *strictHandler) ListTimeEntriesToReview(w http.ResponseWriter, r *http.Request, params ListTimeEntriesToReviewParams) {
+	var request ListTimeEntriesToReviewRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListTimeEntriesToReview(ctx, request.(ListTimeEntriesToReviewRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListTimeEntriesToReview")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListTimeEntriesToReviewResponseObject); ok {
+		if err := validResponse.VisitListTimeEntriesToReviewResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// SubmitTimeEntries operation middleware
+func (sh *strictHandler) SubmitTimeEntries(w http.ResponseWriter, r *http.Request) {
+	var request SubmitTimeEntriesRequestObject
+
+	var body SubmitTimeEntriesJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.SubmitTimeEntries(ctx, request.(SubmitTimeEntriesRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "SubmitTimeEntries")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(SubmitTimeEntriesResponseObject); ok {
+		if err := validResponse.VisitSubmitTimeEntriesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
 // DeleteTimeEntry operation middleware
 func (sh *strictHandler) DeleteTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params DeleteTimeEntryParams) {
 	var request DeleteTimeEntryRequestObject
@@ -49664,6 +54360,66 @@ func (sh *strictHandler) UpdateTimeEntry(w http.ResponseWriter, r *http.Request,
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(UpdateTimeEntryResponseObject); ok {
 		if err := validResponse.VisitUpdateTimeEntryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetTimeEntryHistory operation middleware
+func (sh *strictHandler) GetTimeEntryHistory(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID) {
+	var request GetTimeEntryHistoryRequestObject
+
+	request.EntryId = entryId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetTimeEntryHistory(ctx, request.(GetTimeEntryHistoryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetTimeEntryHistory")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetTimeEntryHistoryResponseObject); ok {
+		if err := validResponse.VisitGetTimeEntryHistoryResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ReviewTimeEntry operation middleware
+func (sh *strictHandler) ReviewTimeEntry(w http.ResponseWriter, r *http.Request, entryId openapi_types.UUID, params ReviewTimeEntryParams) {
+	var request ReviewTimeEntryRequestObject
+
+	request.EntryId = entryId
+	request.Params = params
+
+	var body ReviewTimeEntryJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ReviewTimeEntry(ctx, request.(ReviewTimeEntryRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ReviewTimeEntry")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ReviewTimeEntryResponseObject); ok {
+		if err := validResponse.VisitReviewTimeEntryResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -49993,6 +54749,30 @@ func (sh *strictHandler) GetUtilization(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetUtilizationResponseObject); ok {
 		if err := validResponse.VisitGetUtilizationResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetVersion operation middleware
+func (sh *strictHandler) GetVersion(w http.ResponseWriter, r *http.Request) {
+	var request GetVersionRequestObject
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetVersion(ctx, request.(GetVersionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetVersion")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetVersionResponseObject); ok {
+		if err := validResponse.VisitGetVersionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {
@@ -50370,6 +55150,33 @@ func (sh *strictHandler) RenameWorkflow(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(RenameWorkflowResponseObject); ok {
 		if err := validResponse.VisitRenameWorkflowResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetWorkflowRevision operation middleware
+func (sh *strictHandler) GetWorkflowRevision(w http.ResponseWriter, r *http.Request, workflowId openapi_types.UUID, revision int) {
+	var request GetWorkflowRevisionRequestObject
+
+	request.WorkflowId = workflowId
+	request.Revision = revision
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetWorkflowRevision(ctx, request.(GetWorkflowRevisionRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetWorkflowRevision")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetWorkflowRevisionResponseObject); ok {
+		if err := validResponse.VisitGetWorkflowRevisionResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

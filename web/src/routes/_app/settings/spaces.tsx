@@ -2,6 +2,7 @@ import { useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { api } from "@/lib/api";
+import { formatDate, useProfile } from "@/lib/profile";
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { MoreHorizontal } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -44,6 +45,7 @@ type SortKey = "name" | "created" | "activity" | "projects";
  */
 function SpacesManagement() {
   const { t } = useTranslation();
+  const profile = useProfile();
   const queryClient = useQueryClient();
   const registry = useQuery({
     queryKey: ["spaces-registry"],
@@ -156,8 +158,8 @@ function SpacesManagement() {
               <td className="px-3 py-2.5 tabular-nums">{row.projects}</td>
               {columns.has(COLUMN.description) && <td className="max-w-xs truncate px-3 py-2.5 text-muted-foreground">{row.description ?? ""}</td>}
               {columns.has(COLUMN.tools) && <td className="px-3 py-2.5 tabular-nums">{row.tools}</td>}
-              {columns.has(COLUMN.created) && <td className="px-3 py-2.5">{formatDate(row.created_at)}</td>}
-              {columns.has(COLUMN.activity) && <td className="px-3 py-2.5">{row.last_activity ? formatDate(row.last_activity) : t("spaces.spaceSettings.registry.noActivity")}</td>}
+              {columns.has(COLUMN.created) && <td className="px-3 py-2.5">{formatDate(row.created_at, profile)}</td>}
+              {columns.has(COLUMN.activity) && <td className="px-3 py-2.5">{row.last_activity ? formatDate(row.last_activity, profile) : t("spaces.spaceSettings.registry.noActivity")}</td>}
               <td className="px-3 py-2.5 text-end">
                 <span className="inline-flex flex-wrap justify-end gap-1">
                   {/* One menu per row: the actions follow the Space's effective capabilities. */}
@@ -205,10 +207,6 @@ function groupRows(rows: Row[], by: "visibility" | "status", t: (key: string) =>
   const map = new Map<string, Row[]>();
   for (const row of rows) map.set(label(row), [...(map.get(label(row)) ?? []), row]);
   return [...map.entries()].map(([name, list]) => ({ label: name, rows: list }));
-}
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
 }
 
 type DiscoverItem = { id: string; name: string; description: string | null; icon_key: string | null };

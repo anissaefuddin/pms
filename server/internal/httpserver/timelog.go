@@ -127,12 +127,42 @@ func (s *Server) projectTimeSummary(w http.ResponseWriter, r *http.Request) {
 		timeEntryError(w, err)
 		return
 	}
-	var minutes, cost int64
-	// Actual Cost = sum(hours x rate snapshot) of billable entries, in minor units; only an administrator is told.
+	var minutes, approved, pending, cost int64
+	var unpriced bool
+	// Actual Cost = sum(hours x rate snapshot) of approved billable entries, in minor units; only an administrator is told.
 	err = tx.QueryRow(ctx, projectTimeScope+`
-SELECT COALESCE(sum(e.minutes),0),COALESCE(round(sum(CASE WHEN e.billing_type='billable' THEN e.minutes*COALESCE(e.rate_snapshot,0) END)::numeric/60),0)::bigint
+SELECT COALESCE(sum(e.minutes),0),COALESCE(sum(e.minutes) FILTER (WHERE e.status='approved'),0),COALESCE(sum(e.minutes) FILTER (WHERE e.status IN ('draft','submitted')),0),
+ COALESCE(sum(CASE WHEN e.billing_type='billable' AND e.status='approved' THEN round(e.minutes*e.rate_snapshot/60.0) END),0)::bigint,
+ COALESCE(bool_or(e.billing_type='billable' AND e.status='approved' AND e.rate_snapshot IS NULL),false)
 FROM scoped_tasks t JOIN time_entries e ON e.item_id=t.item_id
-WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan(&minutes, &cost)
+WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan(&minutes, &approved, &pending, &cost, &unpriced)
+	if err != nil {
+		timeEntryError(w, err)
+		return
+	}
+	// A shared placement outside the caller's Full access, seen or not, may hold work this total leaves out.
+	var elsewhere bool
+	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.kind='shared' AND s.deleted_at IS NULL
+WHERE l.item_id=$1::uuid AND l.deleted_root_id IS NULL AND NOT (l.space_id::text = ANY($2::text[])))`, project, full).Scan(&elsewhere); err != nil {
+		timeEntryError(w, err)
+		return
+	}
+	scope := "permitted_entries"
+	if len(spaces) == len(full) && !elsewhere {
+		scope = "project"
+	}
+	out := map[string]any{"actual_minutes": minutes, "approved_minutes": approved, "pending_minutes": pending, "scope": scope}
+	// A cost over part of the entries, or with an entry nobody priced, is a wrong cost: it is named partial and no figure is sent.
+	switch {
+	case actor.Type != policy.Admin:
+		out["cost_status"] = "unauthorized"
+	case scope != "project" || unpriced:
+		// The known subtotal is of the entries this person may see and that have a rate; it is never offered as the cost.
+		out["cost_status"], out["known_cost_minor"] = "partial", cost
+	default:
+		out["cost_status"], out["actual_cost_minor"] = "full", cost
+	}
+	budgets, err := projectBudgets(ctx, tx, actor, project, spaces, out)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}
@@ -140,13 +170,6 @@ WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan
 		timeEntryError(w, err)
 		return
 	}
-	scope := "permitted_entries"
-	if len(spaces) == len(full) {
-		scope = "project"
-	}
-	out := map[string]any{"actual_minutes": minutes, "scope": scope}
-	if actor.Type == policy.Admin {
-		out["actual_cost_minor"] = cost
-	}
+	out["budgets"] = budgets
 	writeJSON(w, 200, out)
 }

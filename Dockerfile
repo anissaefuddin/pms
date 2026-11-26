@@ -14,8 +14,12 @@ RUN --mount=type=cache,target=/go/pkg/mod go mod download
 COPY server ./server
 COPY --from=web /src/web/dist ./server/web/dist
 ARG VERSION=dev
+ARG COMMIT=unknown
+# BUILD_TIME is normally left empty: the time of this build step is used.
+ARG BUILD_TIME=
 RUN --mount=type=cache,target=/go/pkg/mod --mount=type=cache,target=/root/.cache/go-build \
-    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X main.version=${VERSION}" -o /out/pms ./server/cmd/pms
+    pkg=github.com/anissaefuddin/pms/server/internal/buildinfo; \
+    CGO_ENABLED=0 go build -trimpath -ldflags="-s -w -X $pkg.Version=${VERSION} -X $pkg.Commit=${COMMIT} -X $pkg.BuiltAt=${BUILD_TIME:-$(date -u +%Y-%m-%dT%H:%M:%SZ)}" -o /out/pms ./server/cmd/pms
 
 FROM alpine:3.23 AS runtime
 RUN apk add --no-cache ca-certificates tzdata poppler-utils \

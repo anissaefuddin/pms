@@ -98,7 +98,7 @@ func writeRoleError(w http.ResponseWriter, err error) {
 	case errors.As(err, &pg) && (pg.Code == "40001" || pg.Code == "40P01"):
 		writeError(w, http.StatusConflict, "role changed; reload and try again")
 	default:
-		slog.Error("custom role", "error", err)
+		slog.ErrorContext(logContext(w), "custom role", "error", err)
 		writeError(w, http.StatusInternalServerError, "internal error")
 	}
 }

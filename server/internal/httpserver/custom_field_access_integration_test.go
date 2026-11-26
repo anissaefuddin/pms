@@ -1,7 +1,10 @@
 package httpserver_test
 
 import (
+	"encoding/json"
+	"fmt"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -111,5 +114,98 @@ func TestCustomFieldAccessGrants(t *testing.T) {
 	lifted := f.call(editor, http.MethodGet, "/items/"+itemID, nil)
 	if values, _ := lifted.body["fields"].(map[string]any); values[sid] != float64(5000) {
 		t.Fatalf("with no grants the field inherits item access again: %v", lifted.body["fields"])
+	}
+}
+
+// DEF-003: history and the stream show a custom field value only to someone who can read it on the item: not a restricted field,
+// not a formula that reads it, and not a field of a Space the reader cannot see.
+func TestCustomFieldHistoryHidesWhatTheItemHides(t *testing.T) {
+	f := newFixture(t)
+	owner, reader := f.person("regular"), f.person("regular")
+	space, other := f.spaceWithoutAdmins("Payroll history"), f.spaceWithoutAdmins("Elsewhere")
+	f.share(space, "user", owner.id, "full")
+	f.share(other, "user", owner.id, "full")
+	f.share(space, "user", reader.id, "read")
+	field := func(in, name string, body map[string]any) string {
+		body["name"] = name
+		made := f.call(owner, http.MethodPost, "/spaces/"+in+"/custom-fields", body)
+		f.want(made, 201, name)
+		return made.body["id"].(string)
+	}
+	salary := field(space, "Salary", map[string]any{"type": "number"})
+	bonus := field(space, "Bonus", map[string]any{"type": "formula", "config": map[string]any{"expression": "[Salary]*2"}})
+	plain := field(space, "Plain", map[string]any{"type": "text"})
+	foreign := field(other, "Foreign", map[string]any{"type": "text"})
+	item := f.call(owner, http.MethodPost, "/items", map[string]any{"type": "task", "title": "Offer", "locations": []map[string]any{{"space_id": space}, {"space_id": other}}})
+	f.want(item, 201, "item")
+	id := item.body["id"].(string)
+	f.want(f.call(owner, http.MethodPut, "/spaces/"+space+"/custom-fields/"+salary+"/grants",
+		map[string]any{"grants": []map[string]any{{"subject_kind": "user", "subject_id": owner.id, "level": "edit"}}}), 200, "restrict Salary")
+	f.want(f.call(owner, http.MethodPatch, "/items/"+id, map[string]any{"fields": map[string]any{salary: 987654, plain: "open text", foreign: "client text"}}, "If-Match", `"1"`), 200, "fill")
+	f.want(f.call(owner, http.MethodPatch, "/items/"+id, map[string]any{"fields": map[string]any{salary: 987655}}, "If-Match", `"2"`), 200, "hidden-only change")
+
+	for _, path := range []string{"/items/" + id + "/activity", "/stream"} {
+		full, _ := json.Marshal(f.call(owner, http.MethodGet, path, nil).body)
+		for _, want := range []string{salary, "987654", bonus, plain, "client text"} {
+			if !strings.Contains(string(full), want) {
+				t.Fatalf("%s: the grant holder keeps the full history, missing %s: %s", path, want, full)
+			}
+		}
+		seen, _ := json.Marshal(f.call(reader, http.MethodGet, path, nil).body)
+		if !strings.Contains(string(seen), "open text") {
+			t.Fatalf("%s: an unrestricted value stays visible: %s", path, seen)
+		}
+		for _, secret := range []string{salary, "987654", "987655", bonus, "1975308", foreign, "client text"} {
+			if strings.Contains(string(seen), secret) {
+				t.Fatalf("%s leaks %s: %s", path, secret, seen)
+			}
+		}
+	}
+}
+
+// DEF-016: a person without a view grant is not sent the definition of a restricted field or of a formula that reads it; a view grant
+// is marked read-only; the person who manages fields still sees it, marked as not theirs to read.
+func TestCustomFieldDefinitionsFollowTheGrants(t *testing.T) {
+	f := newFixture(t)
+	owner, editor, viewer, manager := f.person("regular"), f.person("regular"), f.person("regular"), f.person("regular")
+	space := f.spaceWithoutAdmins("Definitions")
+	f.share(space, "user", owner.id, "full")
+	f.share(space, "user", manager.id, "full")
+	f.share(space, "user", editor.id, "editor")
+	f.share(space, "user", viewer.id, "editor")
+	field := func(body map[string]any) string {
+		made := f.call(owner, http.MethodPost, "/spaces/"+space+"/custom-fields", body)
+		f.want(made, 201, "field")
+		return made.body["id"].(string)
+	}
+	salary := field(map[string]any{"name": "Salary", "type": "number"})
+	field(map[string]any{"name": "Bonus", "type": "formula", "config": map[string]any{"expression": "[Salary]*2"}})
+	field(map[string]any{"name": "Plain", "type": "text"})
+	f.want(f.call(owner, http.MethodPut, "/spaces/"+space+"/custom-fields/"+salary+"/grants", map[string]any{"grants": []map[string]any{
+		{"subject_kind": "user", "subject_id": owner.id, "level": "edit"}, {"subject_kind": "user", "subject_id": viewer.id, "level": "view"}}}), 200, "restrict")
+	access := func(p *person, path string) string {
+		list := f.call(p, http.MethodGet, "/spaces/"+space+path, nil)
+		f.want(list, 200, path)
+		out := ""
+		for _, row := range list.items() {
+			out += row["name"].(string) + "=" + fmt.Sprint(row["access"]) + " "
+		}
+		return out
+	}
+	for _, c := range []struct {
+		p          *person
+		list, used string
+	}{
+		{owner, "Salary=edit Bonus=view Plain=edit ", "Salary=edit Bonus=view Plain=edit "},
+		{viewer, "Salary=view Bonus=view Plain=edit ", "Salary=view Bonus=view Plain=edit "},
+		{editor, "Plain=edit ", "Plain=edit "},
+		{manager, "Salary=none Bonus=none Plain=edit ", "Plain=edit "},
+	} {
+		if got := access(c.p, "/custom-fields"); got != c.list {
+			t.Errorf("definitions = %q, want %q", got, c.list)
+		}
+		if got := access(c.p, "/fields"); got != c.used {
+			t.Errorf("view fields = %q, want %q", got, c.used)
+		}
 	}
 }

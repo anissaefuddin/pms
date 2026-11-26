@@ -83,7 +83,7 @@ func (s *Server) otpRequest(w http.ResponseWriter, r *http.Request) {
 	var id, locale string
 	if err := s.pool.QueryRow(r.Context(), "SELECT id::text,locale FROM users WHERE email=$1 AND status='active'", email).Scan(&id, &locale); err == nil {
 		if err := s.issueCode(r, id, email, locale); err != nil {
-			slog.Error("issue sign-in code", "error", err)
+			slog.ErrorContext(r.Context(), "issue sign-in code", "error", err)
 		}
 	}
 	w.WriteHeader(http.StatusAccepted)
@@ -179,7 +179,7 @@ SELECT id FROM login_codes WHERE user_id=$1 AND used_at IS NULL AND expires_at>n
 RETURNING id::text,code_hash,attempts`, userID).Scan(&id, &hash, &attempts)
 	if err != nil {
 		if err != pgx.ErrNoRows {
-			slog.Error("check sign-in code", "error", err)
+			slog.ErrorContext(r.Context(), "check sign-in code", "error", err)
 		}
 		return userID, false
 	}

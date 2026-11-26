@@ -25,8 +25,10 @@ type Option struct {
 
 type Field struct {
 	Name    string   `json:"name"`
-	Type    string   `json:"type"` // single_select or multi_select
+	Type    string   `json:"type"`
 	Options []Option `json:"options"`
+	// Config is the field's settings (items.CustomFieldConfig); only a saved template has it.
+	Config json.RawMessage `json:"config,omitempty"`
 }
 
 type Task struct {
@@ -39,6 +41,18 @@ type Project struct {
 	Title       string `json:"title"`
 	DefaultView string `json:"default_view,omitempty"` // table, board, gantt, calendar, files or chart
 	Tasks       []Task `json:"tasks"`
+}
+
+// Node is one item of a saved template, with everything below it.
+type Node struct {
+	Type         string `json:"type"`
+	Title        string `json:"title"`
+	Importance   string `json:"importance,omitempty"`
+	DurationDays *int   `json:"duration_days,omitempty"`
+	Milestone    bool   `json:"milestone,omitempty"`
+	DefaultView  string `json:"default_view,omitempty"`
+	WorkflowID   string `json:"workflow_id,omitempty"` // the default workflow of a project or folder
+	Children     []Node `json:"children,omitempty"`
 }
 
 type View struct {
@@ -68,6 +82,11 @@ type Template struct {
 	Projects     []Project `json:"projects"`
 	Views        []View    `json:"views"`
 	Forms        []Form    `json:"forms"`
+	// Items and DefaultWorkflows (base type to workflow id) belong to saved templates; Saved and Mine are set on load.
+	Items            []Node            `json:"items,omitempty"`
+	DefaultWorkflows map[string]string `json:"default_workflows,omitempty"`
+	Saved            bool              `json:"-"`
+	Mine             bool              `json:"-"`
 }
 
 // Summary is what the picker shows.
@@ -78,6 +97,8 @@ type Summary struct {
 	Description string `json:"description"`
 	Version     int    `json:"version"`
 	Compatible  bool   `json:"compatible"`
+	Saved       bool   `json:"saved"` // made from a Space; false for the built-in ones
+	Mine        bool   `json:"mine"`  // the caller saved it and may delete it
 	Counts      struct {
 		Projects     int `json:"projects"`
 		Tasks        int `json:"tasks"`
@@ -88,11 +109,24 @@ type Summary struct {
 }
 
 func (t Template) Summary() Summary {
-	s := Summary{ID: t.ID, Name: t.Name, Category: t.Category, Description: t.Description, Version: t.Version, Compatible: t.Format <= Format}
+	s := Summary{ID: t.ID, Name: t.Name, Category: t.Category, Description: t.Description, Version: t.Version, Compatible: t.Format <= Format, Saved: t.Saved, Mine: t.Mine}
 	s.Counts.Projects, s.Counts.Views, s.Counts.Forms, s.Counts.CustomFields = len(t.Projects), len(t.Views), len(t.Forms), len(t.CustomFields)
 	for _, p := range t.Projects {
 		s.Counts.Tasks += len(p.Tasks)
 	}
+	var count func([]Node)
+	count = func(nodes []Node) {
+		for _, n := range nodes {
+			switch n.Type {
+			case "project":
+				s.Counts.Projects++
+			case "task":
+				s.Counts.Tasks++
+			}
+			count(n.Children)
+		}
+	}
+	count(t.Items)
 	return s
 }
 

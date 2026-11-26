@@ -72,3 +72,39 @@ test("the table supports standard keyboard row navigation", async ({ page }) => 
   await page.keyboard.press("Home");
   await expect(grid.getByRole("row").nth(1)).toHaveAttribute("aria-current", "true");
 });
+
+// DEF-022: a long name and its subitem counter stay inside the Name column.
+const longTitle = "Replace the entire cooling water circulation pipeline for the northern processing unit including valves and instrumentation";
+for (const width of [390, 768, 1024, 1440, 1920]) {
+  test(`a long item name does not overlap the next column at ${width}px`, async ({ page }) => {
+    await page.setViewportSize({ width, height: 900 });
+    await mockSpaces(page, { extra: { ...extra, [`GET ${path}/items`]: { body: { items: [{ ...ita, title: longTitle, child_count: 3 }] } } } });
+    await page.goto(path);
+    const row = page.getByRole("table").getByRole("row").nth(1);
+    const cell = row.getByRole("cell").nth(1);
+    const name = cell.getByRole("button", { name: longTitle, exact: true });
+    await expect(name).toHaveAttribute("title", longTitle);
+    const edge = (await cell.boundingBox())!;
+    for (const part of [name, cell.getByText("3 subitems")]) {
+      const box = (await part.boundingBox())!;
+      expect(box.x + box.width).toBeLessThanOrEqual(edge.x + edge.width + 0.5);
+    }
+    expect((await name.boundingBox())!.width).toBeGreaterThan(20);
+  });
+}
+
+test("a long breadcrumb path in a search result leaves the item name readable", async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 });
+  await mockSpaces(page, { extra: { ...extra,
+    "GET /search": { body: { items: [{ ...hazop, title: longTitle, path: [{ id: ita.id, title: longTitle, type: "project" }] }], comments: [], users: [] } } } });
+  await page.goto(path);
+  await page.getByRole("button", { name: "Filter", exact: true }).click();
+  await page.getByRole("searchbox").or(page.getByPlaceholder(/filter|search/i)).first().fill("cooling");
+  const cell = page.getByRole("table").getByRole("row").nth(1).getByRole("cell").nth(1);
+  const name = cell.getByRole("button", { name: longTitle, exact: true });
+  await expect(name).toBeVisible();
+  const edge = (await cell.boundingBox())!;
+  const box = (await name.boundingBox())!;
+  expect(box.width).toBeGreaterThan(60);
+  expect(box.x + box.width).toBeLessThanOrEqual(edge.x + edge.width + 0.5);
+});

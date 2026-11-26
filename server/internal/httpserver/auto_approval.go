@@ -8,6 +8,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 )
@@ -34,7 +35,7 @@ func startStatusApproval(ctx context.Context, tx pgx.Tx, actor policy.Actor, ite
 		}
 	}
 	if len(allowed) == 0 {
-		slog.Warn("status approval skipped: no configured approver can access the item", "item", itemID, "status", statusID)
+		slog.WarnContext(ctx, "status approval skipped: no configured approver can access the item", "item", itemID, "status", statusID)
 		return nil
 	}
 	id, err := uuid.NewV7()
@@ -71,8 +72,8 @@ WHERE i.id=$1 AND i.status_id=$3 AND i.deleted_at IS NULL RETURNING $3::text`, i
 	if err != nil {
 		return err
 	}
-	if _, err = tx.Exec(ctx, `INSERT INTO activity(item_id,actor_id,action,changes) VALUES ($1,$2::uuid,'update',jsonb_build_object('status_id',jsonb_build_object('from',$3::text,'to',$4::text),'reason','approval_'||$5::text))`,
-		itemID, actor.ID, from, target.String(), result); err != nil {
+	if _, err = tx.Exec(ctx, `INSERT INTO activity(item_id,actor_id,action,changes,request_id) VALUES ($1,$2::uuid,'update',jsonb_build_object('status_id',jsonb_build_object('from',$3::text,'to',$4::text),'reason','approval_'||$5::text),$6)`,
+		itemID, actor.ID, from, target.String(), result, reqid.From(ctx)); err != nil {
 		return err
 	}
 	return events.Emit(ctx, tx, events.Event{Type: events.ItemStatusChanged, ItemID: itemID.String(), ActorID: actor.ID, Payload: map[string]any{"from": from, "to": target.String(), "reason": "approval"}})
