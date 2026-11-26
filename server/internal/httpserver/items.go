@@ -201,10 +201,10 @@ func writeItemError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, items.ErrNotFound):
 		writeError(w, http.StatusNotFound, "not found")
-	case errors.Is(err, items.ErrForbidden):
-		writeError(w, http.StatusForbidden, "item operation forbidden")
 	case errors.Is(err, items.ErrAssignForbidden):
 		writeError(w, http.StatusForbidden, err.Error())
+	case errors.Is(err, items.ErrForbidden):
+		writeError(w, http.StatusForbidden, "item operation forbidden")
 	case errors.Is(err, items.ErrConflict):
 		writeError(w, http.StatusConflict, "the Item changed; reload and try again")
 	case errors.Is(err, errApprovalFinal):

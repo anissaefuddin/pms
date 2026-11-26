@@ -139,6 +139,18 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 			restricted = true
 		}
 	}
+	// Assignment rights do not travel (DEF-032): other people's assignments, on the item or below it, enter a new Space only with
+	// someone who may assign there. Without this a move out, an assignment, and a move back gets round the rule.
+	var carriesOthers bool
+	if err = tx.QueryRow(ctx, `WITH RECURSIVE sub(id) AS (SELECT $1::uuid
+UNION SELECT l.item_id FROM item_locations l JOIN sub ON l.parent_item_id=sub.id WHERE l.deleted_root_id IS NULL)
+SELECT EXISTS(SELECT 1 FROM item_assignees a JOIN sub ON a.item_id=sub.id WHERE a.user_id<>$2::uuid)`, itemID, actor.ID).Scan(&carriesOthers); err != nil {
+		return Detail{}, err
+	}
+	heldIn := map[uuid.UUID]bool{}
+	for _, loc := range current {
+		heldIn[loc.SpaceID] = true
+	}
 	existing := map[[2]uuid.UUID]bool{}
 	var remove, kept int
 	for _, loc := range current {
@@ -177,6 +189,15 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 		}
 		if !placement.Has(policy.Create) {
 			return Detail{}, ErrForbidden
+		}
+		if carriesOthers && !heldIn[loc.SpaceID] {
+			ok, err := CanAssignOthers(ctx, tx, actor, []Location{loc})
+			if err != nil {
+				return Detail{}, err
+			}
+			if !ok {
+				return Detail{}, ErrAssignForbidden
+			}
 		}
 		resolved := uuid.Nil
 		if loc.ParentID != nil {

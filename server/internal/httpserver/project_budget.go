@@ -20,7 +20,7 @@ type projectBudget struct {
 }
 
 // projectBudgets lists the budget fields the caller may read on this project.
-func projectBudgets(ctx context.Context, tx pgx.Tx, actor policy.Actor, project string, summary map[string]any) ([]projectBudget, error) {
+func projectBudgets(ctx context.Context, tx pgx.Tx, actor policy.Actor, project string, visible []string, summary map[string]any) ([]projectBudget, error) {
 	hidden, err := items.HiddenFieldIDs(ctx, tx, actor, items.GrantView)
 	if err != nil {
 		return nil, err
@@ -34,8 +34,8 @@ func projectBudgets(ctx context.Context, tx pgx.Tx, actor policy.Actor, project 
  CASE WHEN $3::bigint IS NOT NULL AND (i.fields->>f.id::text)::numeric>0 THEN round($3::numeric/((i.fields->>f.id::text)::numeric*100)*100,1)::float8 END
 FROM items i JOIN custom_fields f ON f.archived_at IS NULL AND (f.config->>'project_budget')::boolean
 WHERE i.id=$1::uuid AND NOT (f.id::text = ANY($2::text[]))
-  AND EXISTS(SELECT 1 FROM item_locations l WHERE l.item_id=i.id AND l.deleted_root_id IS NULL AND custom_field_applies(i.id, f.id, l.space_id))
-ORDER BY f.position, f.id`, project, hidden, cost)
+  AND EXISTS(SELECT 1 FROM item_locations l WHERE l.item_id=i.id AND l.deleted_root_id IS NULL AND l.space_id::text = ANY($4::text[]) AND custom_field_applies(i.id, f.id, l.space_id))
+ORDER BY f.position, f.id`, project, hidden, cost, visible)
 	if err != nil {
 		return nil, err
 	}

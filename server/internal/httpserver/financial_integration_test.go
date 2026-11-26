@@ -131,6 +131,11 @@ func TestFinancialFiguresAgreeAcrossConsumers(t *testing.T) {
 	if a := analytics(finance); a.body["cost_status"] != "partial" || a.body["total"] != known {
 		t.Fatalf("analytics with a missing rate: %v", a.body)
 	}
+	// A person whose approved time has no rate at all is not listed with a cost of zero.
+	f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type,status) VALUES ($1,$2,'2026-11-28',30,'billable','approved')", task, full.id)
+	if a := analytics(finance); len(a.body["rows"].([]any)) != 1 {
+		t.Fatalf("an unknown cost is shown as a row: %v", a.body["rows"])
+	}
 	if body := export(); !strings.Contains(body, "PARTIAL") {
 		t.Fatalf("export must say it is partial: %s", body)
 	}

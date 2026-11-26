@@ -140,8 +140,15 @@ WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan
 		timeEntryError(w, err)
 		return
 	}
+	// A shared placement outside the caller's Full access, seen or not, may hold work this total leaves out.
+	var elsewhere bool
+	if err = tx.QueryRow(ctx, `SELECT EXISTS(SELECT 1 FROM item_locations l JOIN spaces s ON s.id=l.space_id AND s.kind='shared' AND s.deleted_at IS NULL
+WHERE l.item_id=$1::uuid AND l.deleted_root_id IS NULL AND NOT (l.space_id::text = ANY($2::text[])))`, project, full).Scan(&elsewhere); err != nil {
+		timeEntryError(w, err)
+		return
+	}
 	scope := "permitted_entries"
-	if len(spaces) == len(full) {
+	if len(spaces) == len(full) && !elsewhere {
 		scope = "project"
 	}
 	out := map[string]any{"actual_minutes": minutes, "approved_minutes": approved, "pending_minutes": pending, "scope": scope}
@@ -155,7 +162,7 @@ WHERE t.can_manage OR e.user_id=$4::uuid`, project, spaces, full, actor.ID).Scan
 	default:
 		out["cost_status"], out["actual_cost_minor"] = "full", cost
 	}
-	budgets, err := projectBudgets(ctx, tx, actor, project, out)
+	budgets, err := projectBudgets(ctx, tx, actor, project, spaces, out)
 	if err == nil {
 		err = tx.Commit(ctx)
 	}

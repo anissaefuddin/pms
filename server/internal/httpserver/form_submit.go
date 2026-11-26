@@ -401,6 +401,9 @@ func (s *Server) submitForm(w http.ResponseWriter, r *http.Request) {
 	case errors.As(err, &problems):
 		writeFieldErrors(w, problems)
 		return
+	case errors.Is(err, items.ErrAssignForbidden):
+		writeFormError(w, err)
+		return
 	case errors.Is(err, items.ErrNotFound) || errors.Is(err, items.ErrForbidden):
 		writeProblem(w, http.StatusUnprocessableEntity, formUnavailableCode, "this form can no longer create items; contact the form owner")
 		return

@@ -22,9 +22,17 @@ import (
 var (
 	ErrForbidden = errors.New("item operation forbidden")
 	// ErrAssignForbidden is W3: the caller may create here, but not assign other people.
-	ErrAssignForbidden = errors.New("assigning other people needs Full access or the Space Admin role here")
-	ErrConflict        = errors.New("item version conflict")
+	ErrAssignForbidden error = assignForbidden{}
+	ErrConflict              = errors.New("item version conflict")
 )
+
+// assignForbidden is a refusal like any other ErrForbidden (automation records it as denied), with its own message.
+type assignForbidden struct{}
+
+func (assignForbidden) Error() string {
+	return "assigning other people needs Full access or the Space Admin role here"
+}
+func (assignForbidden) Is(target error) bool { return target == ErrForbidden }
 
 type Invalid string
 

@@ -423,8 +423,9 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 				}
 				continue
 			}
-			if h.unpriced {
+			if h.unpriced { // unknown, not free: no row of zero for it
 				costStatus = "partial"
+				continue
 			}
 		}
 		sums[key{h.gKey, h.bKey}] += h.value
