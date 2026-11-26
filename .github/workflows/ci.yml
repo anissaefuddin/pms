@@ -63,6 +63,19 @@ jobs:
           git diff --exit-code -- server/internal/apigen server/internal/dbgen web/src/api || { echo "Generated code is stale: run 'make generate' and commit"; exit 1; }
       - name: Build container
         run: docker build --build-arg VERSION="$GITHUB_REF_NAME" --build-arg COMMIT="$GITHUB_SHA" -t pms:test .
+      - name: Container starts, migrates and is ready (amd64)
+        run: scripts/image-smoke.sh pms:test amd64 | tee image-smoke.txt
+      - name: Deploy script tests
+        run: sh deploy/test/backup-hardening.sh && sh deploy/test/decommission-audit.sh
+      - name: Save the tested image
+        run: docker save pms:test | gzip > pms-image-amd64.tar.gz && sha256sum pms-image-amd64.tar.gz >> image-smoke.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pms-image-amd64-${{ github.sha }}
+          path: |
+            pms-image-amd64.tar.gz
+            image-smoke.txt
+          retention-days: 14
 
   # Its own job so it can be named as a required check (S1.1.4) without waiting for the whole suite; a repository setting, not code,
   # makes it block merges, and GitHub refuses that setting on a private repository without a paid plan (HTTP 403).
