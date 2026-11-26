@@ -2025,6 +2025,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/clients/eligible": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource */
+        get: operations["listEligibleClients"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/clients/{clientId}": {
         parameters: {
             query?: never;
@@ -6920,6 +6937,15 @@ export interface components {
         ClientUpdate: {
             name?: string;
             short_name?: string | null;
+        };
+        /** @description Metadata pilihan minimum. Tidak berisi membership, audit, atau data resource */
+        ClientOption: {
+            /** Format: uuid */
+            id: string;
+            code: string;
+            name: string;
+            /** @description Hanya bila ada */
+            short_name?: string;
         };
         ClientMembership: {
             /** Format: uuid */
@@ -12155,6 +12181,37 @@ export interface operations {
             401: components["responses"]["Problem"];
             403: components["responses"]["Problem"];
             409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    listEligibleClients: {
+        parameters: {
+            query?: {
+                scope?: "membership" | "administrative";
+                /** @description Cari nama */
+                q?: string;
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ClientOption"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
             422: components["responses"]["Problem"];
         };
     };

@@ -425,3 +425,62 @@ Otorisasi: Product Owner, hanya B2-07 (Customer Management UI di Settings). B2-0
 - Tes berjalan dengan API ter-mock, bukan backend nyata. Tes otorisasi backend ada di §14.
 - Pencegahan submit ganda saat request masih berjalan (UI-21) diterapkan dengan tombol disabled dan tidak diuji secara terpisah.
 - Pengarsipan belum mengubah akses ke proyek atau item. Ini dinyatakan di dialog dan dikerjakan di B3.
+
+## 16. Bukti eksekusi B2-08 dan penutupan B2 (Eligibility dan Customer Picker, 27 Nov 2026)
+
+Otorisasi: Product Owner, hanya B2-08 (lookup kelayakan dan Customer Picker yang dapat dipakai ulang; ADR §7h). Tidak ada migrasi, tidak ada perubahan pada delapan operasi Customer Management, dan picker belum dipasang di form Space atau Project.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Domain lookup | DONE | `server/internal/clients/eligibility.go`: `ListEligible` (membership, SQL) dan `ListActiveForAdmin` (administrative) |
+| Endpoint | DONE | `GET /api/v1/clients/eligible` (`httpserver/clients_api.go`), `requireUser`; administrative memakai `requireAdmin` |
+| Batas administrative | DONE | Non-admin mendapat 403 dan tidak ada query (EL-09; PK-06) |
+| Picker yang dapat dipakai ulang | DONE | `web/src/components/customer-picker.tsx`, aturan murni di `web/src/lib/customer-picker.ts` |
+| OpenAPI dan generated | DONE | `api/openapi.yaml`: `listEligibleClients`, skema `ClientOption`. `server/internal/apigen/openapi.gen.go` dan `web/src/api/schema.d.ts` hanya bertambah (214 dan 57 baris, 0 dihapus) |
+| Terjemahan EN dan ID | DONE | 10 kunci `settings.customers.picker.*` di `i18n/en` dan `i18n/id` |
+
+**Keputusan keamanan**
+
+1. Filter kelayakan ada di database: `EXISTS` pada membership aktif, `status='active'`, `user_type IN ('admin','regular')`, dan `status='active'` pada pengguna, semuanya sebelum pencarian dan `LIMIT`. Daftar tidak diambil penuh lalu disaring di klien.
+2. Identitas pemanggil hanya dari sesi atau API key. Tidak ada parameter `user_id`.
+3. Pencarian memakai parameter dan pola ILIKE yang di-escape (`%` dan `_` tetap literal). `q` dibatasi 100 karakter.
+4. Kelayakan bukan izin. Tidak ada kontrol izin baru, tidak ada akses Space atau item, dan tidak ada audit untuk lookup (EL-14).
+5. Tidak ada cache server. Pencabutan berlaku pada permintaan berikutnya. Cache klien (`staleTime` 30 detik, dihapus saat logout) dapat menampilkan opsi lama selama maksimal 30 detik. Pemilihan yang tidak lagi valid akan ditolak di B3.
+
+**Perintah dan hasil**
+
+| Perintah | Hasil |
+|---|---|
+| `PMS_TEST_DATABASE_URL=… go test ./internal/httpserver -run TestCustomerEligibilityLookup -count=1 -v` | PASS: 15 kasus EL. EL-04 dan EL-05 berada di satu subtest; EL-08 juga memeriksa bahwa lookup tidak membuat membership (EL-14), dan EL-14 punya subtest sendiri |
+| `go test ./internal/httpserver -run 'TestClientAPIRefusesNonAdministrators\|TestClientAPIContract\|TestClientAuditTrail\|TestClientManagementGrantsNoContentAccess'` | PASS (regresi API Customer dan sweep endpoint) |
+| `go test . -run Architecture` (paket server) | PASS |
+| Mutasi: hapus `m.status='active'` dari SQL membership | EL-04 GAGAL, sebagaimana diharapkan. Berkas dikembalikan dan diverifikasi identik |
+| `npm test` (unit, termasuk `customer-picker.test.ts`) | 127 PASS, 0 FAIL |
+| `npx playwright test tests/customer-picker.spec.ts` | 10 PASS (PK-01 sampai PK-10) |
+| Mutasi: hapus ID pengguna dari cache key | PK-08 GAGAL, sebagaimana diharapkan. Berkas dikembalikan |
+| `npx playwright test tests/customers.spec.ts` (regresi UI Customer) | 6 PASS |
+| `npm run typecheck`, `npx eslint` pada berkas yang diubah, `node scripts/check-no-hex.mjs`, `npm run build` | lulus (0 error lint; peringatan "file ignored" untuk `lib/*.ts` seperti biasa) |
+| `go tool oapi-codegen --config api/oapi-codegen.yaml api/openapi.yaml` (dari akar repo), `npm run generate` | generated diperbarui; diff hanya penambahan |
+
+**Cakupan tes PK-01..PK-10.** Harness uji di `web/tests/fixtures/customer-picker/` adalah fixture khusus tes. Harness ini tidak ada di router, tidak ikut build produksi (Vite hanya membangun `index.html`), dan memanggil API yang di-mock. Harness dipakai agar picker bisa diuji tanpa rute demo atau halaman Settings baru. PK-01 sampai PK-05 dan PK-10 berjalan di browser. PK-06 dan PK-08 berjalan di browser dan aturan murninya juga diuji di unit. PK-07 berjalan di browser dan unit. PK-09 diuji di browser dan kesetaraan kunci EN/ID diuji di unit.
+
+**Cakupan EL-01..EL-15.** Pengujian memakai database nyata dan sesi nyata. Tes ini belum menjalankan browser terhadap backend nyata.
+
+**Batas**
+
+- Picker menampilkan paling banyak 50 opsi per permintaan. Pencarian berjalan di SQL sebelum `LIMIT`, jadi setiap customer yang eligible dapat dicari. Hasil yang lebih dari 50 harus dipersempit dengan pencarian. Tidak ada cursor.
+- Query membership memakai `client_memberships_active_user_idx`. Rencana eksekusinya belum diverifikasi dengan `EXPLAIN`.
+- Picker belum dipasang di form produksi. Integrasi dilakukan di B3.
+- Tidak ada enforcement klien pada Space, item, atau resource. Itu B3.
+
+**Status B2 setelah B2-08**
+
+| ID | Status |
+|---|---|
+| B2-01 dan B2-02 | DONE: skema (§12) |
+| B2-03 | DONE: domain service (§13) |
+| B2-04, B2-05, B2-06 | DONE: otorisasi, audit, API (§14) |
+| B2-07 | DONE: UI Settings (§15) |
+| B2-08 | DONE: lookup kelayakan dan picker (§16) |
+
+**Penutupan B2:** implementasi B2 selesai. AC-03 tetap PASS. AC-04 tetap PARTIAL sampai B3 karena membership belum menjadi gerbang akses resource. Verifikasi integrasi frontend dan backend yang hidup belum dilakukan dan tertunda. Client ownership belum diimplementasi. Status produksi: NOT READY.

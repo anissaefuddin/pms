@@ -3117,6 +3117,24 @@ func (e ListClientsParamsStatus) Valid() bool {
 	}
 }
 
+// Defines values for ListEligibleClientsParamsScope.
+const (
+	Administrative ListEligibleClientsParamsScope = "administrative"
+	Membership     ListEligibleClientsParamsScope = "membership"
+)
+
+// Valid indicates whether the value is a known member of the ListEligibleClientsParamsScope enum.
+func (e ListEligibleClientsParamsScope) Valid() bool {
+	switch e {
+	case Administrative:
+		return true
+	case Membership:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResolveConnectorConflictJSONBodyResolution.
 const (
 	ResolveConnectorConflictJSONBodyResolutionItem   ResolveConnectorConflictJSONBodyResolution = "item"
@@ -4867,6 +4885,16 @@ type ClientMembershipStatus string
 // ClientMembershipGrant defines model for ClientMembershipGrant.
 type ClientMembershipGrant struct {
 	UserId openapi_types.UUID `json:"user_id"`
+}
+
+// ClientOption Metadata pilihan minimum. Tidak berisi membership, audit, atau data resource
+type ClientOption struct {
+	Code string             `json:"code"`
+	Id   openapi_types.UUID `json:"id"`
+	Name string             `json:"name"`
+
+	// ShortName Hanya bila ada
+	ShortName *string `json:"short_name,omitempty"`
 }
 
 // ClientUpdate Hanya name dan short_name. Kirim short_name kosong untuk menghapusnya. Field lain (termasuk code dan id) ditolak
@@ -7496,6 +7524,18 @@ type ListClientsParams struct {
 // ListClientsParamsStatus defines parameters for ListClients.
 type ListClientsParamsStatus string
 
+// ListEligibleClientsParams defines parameters for ListEligibleClients.
+type ListEligibleClientsParams struct {
+	Scope *ListEligibleClientsParamsScope `form:"scope,omitempty" json:"scope,omitempty"`
+
+	// Q Cari nama
+	Q     *string `form:"q,omitempty" json:"q,omitempty"`
+	Limit *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListEligibleClientsParamsScope defines parameters for ListEligibleClients.
+type ListEligibleClientsParamsScope string
+
 // ListClientMembersParams defines parameters for ListClientMembers.
 type ListClientMembersParams struct {
 	IncludeRevoked *bool `form:"include_revoked,omitempty" json:"include_revoked,omitempty"`
@@ -9437,6 +9477,9 @@ type ServerInterface interface {
 	// CreateClient Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
 	// (POST /clients)
 	CreateClient(w http.ResponseWriter, r *http.Request)
+	// ListEligibleClients Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource
+	// (GET /clients/eligible)
+	ListEligibleClients(w http.ResponseWriter, r *http.Request, params ListEligibleClientsParams)
 	// GetClient Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
 	// (GET /clients/{clientId})
 	GetClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
@@ -12473,6 +12516,65 @@ func (siw *ServerInterfaceWrapper) CreateClient(w http.ResponseWriter, r *http.R
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.CreateClient(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListEligibleClients operation middleware
+func (siw *ServerInterfaceWrapper) ListEligibleClients(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListEligibleClientsParams
+
+	// ------------- Optional query parameter "scope" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "scope", r.URL.Query(), &params.Scope, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "scope"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "scope", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListEligibleClients(w, r, params)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -21984,6 +22086,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/types", wrapper.ListUserTypes)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients", wrapper.ListClients)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients", wrapper.CreateClient)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients/eligible", wrapper.ListEligibleClients)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients/{clientId}", wrapper.GetClient)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/clients/{clientId}", wrapper.UpdateClient)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients/{clientId}/archive", wrapper.ArchiveClient)
@@ -26619,6 +26722,88 @@ func (response CreateClient409ApplicationProblemPlusJSONResponse) VisitCreateCli
 type CreateClient422ApplicationProblemPlusJSONResponse Problem
 
 func (response CreateClient422ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClientsRequestObject struct {
+	Params ListEligibleClientsParams
+}
+
+type ListEligibleClientsResponseObject interface {
+	VisitListEligibleClientsResponse(w http.ResponseWriter) error
+}
+
+type ListEligibleClients200JSONResponse struct {
+	Items []ClientOption `json:"items"`
+}
+
+func (response ListEligibleClients200JSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListEligibleClients400ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients401ApplicationProblemPlusJSONResponse Problem
+
+func (response ListEligibleClients401ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListEligibleClients403ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListEligibleClients422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListEligibleClients422ApplicationProblemPlusJSONResponse) VisitListEligibleClientsResponse(w http.ResponseWriter) error {
 
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(response); err != nil {
@@ -45108,6 +45293,9 @@ type StrictServerInterface interface {
 	// CreateClient Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
 	// (POST /clients)
 	CreateClient(ctx context.Context, request CreateClientRequestObject) (CreateClientResponseObject, error)
+	// ListEligibleClients Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource
+	// (GET /clients/eligible)
+	ListEligibleClients(ctx context.Context, request ListEligibleClientsRequestObject) (ListEligibleClientsResponseObject, error)
 	// GetClient Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
 	// (GET /clients/{clientId})
 	GetClient(ctx context.Context, request GetClientRequestObject) (GetClientResponseObject, error)
@@ -48229,6 +48417,32 @@ func (sh *strictHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(CreateClientResponseObject); ok {
 		if err := validResponse.VisitCreateClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListEligibleClients operation middleware
+func (sh *strictHandler) ListEligibleClients(w http.ResponseWriter, r *http.Request, params ListEligibleClientsParams) {
+	var request ListEligibleClientsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListEligibleClients(ctx, request.(ListEligibleClientsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListEligibleClients")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListEligibleClientsResponseObject); ok {
+		if err := validResponse.VisitListEligibleClientsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

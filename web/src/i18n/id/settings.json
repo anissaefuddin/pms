@@ -851,5 +851,15 @@
   "customers.members.search": "Cari orang",
   "customers.members.noEligible": "Tidak ada orang yang memenuhi syarat.",
   "customers.members.grant": "Tambah",
-  "customers.members.grantFor": "Tambah {{name}}"
+  "customers.members.grantFor": "Tambah {{name}}",
+  "customers.picker.search": "Cari berdasarkan nama atau kode",
+  "customers.picker.selected": "Dipilih: {{name}} ({{code}})",
+  "customers.picker.unconfirmed": "Sebelumnya dipilih: {{name}} ({{code}}). Ketersediaan belum dikonfirmasi.",
+  "customers.picker.unconfirmedNoName": "Pelanggan yang dipilih sebelumnya. Ketersediaan belum dikonfirmasi.",
+  "customers.picker.unavailable": "Pelanggan yang dipilih tidak tersedia untuk Anda. Pilih yang lain atau hapus pilihan.",
+  "customers.picker.clear": "Hapus pilihan",
+  "customers.picker.loading": "Memuat pelanggan…",
+  "customers.picker.empty": "Belum ada pelanggan yang tersedia untuk Anda.",
+  "customers.picker.adminOnly": "Akses administrator diperlukan untuk melihat semua pelanggan.",
+  "customers.picker.truncated": "Menampilkan {{count}} pelanggan pertama. Cari untuk mempersempit daftar."
 }

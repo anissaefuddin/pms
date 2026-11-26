@@ -20,6 +20,8 @@ import (
 func (s *Server) clientRoutes(mux *http.ServeMux) {
 	admin := func(h http.HandlerFunc) http.HandlerFunc { return s.requireUser(requireAdmin(h)) }
 	mux.HandleFunc("GET /api/v1/clients", admin(s.listClients))
+	// B2-08: the literal "eligible" segment outranks {id}. Membership lookup is open to any signed-in user; see eligibleClients.
+	mux.HandleFunc("GET /api/v1/clients/eligible", s.requireUser(s.eligibleClients))
 	mux.HandleFunc("POST /api/v1/clients", admin(s.createClient))
 	mux.HandleFunc("GET /api/v1/clients/{id}", admin(s.getClient))
 	mux.HandleFunc("PATCH /api/v1/clients/{id}", admin(s.updateClient))
@@ -271,4 +273,57 @@ func (s *Server) revokeClientMember(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, membershipView(m))
+}
+
+type clientOptionOut struct {
+	ID        string  `json:"id"`
+	Code      string  `json:"code"`
+	Name      string  `json:"name"`
+	ShortName *string `json:"short_name,omitempty"`
+}
+
+// eligibleClients returns picker options (B2-08). The default scope is membership: any signed-in user sees only the active
+// customers they hold an active membership for. scope=administrative is the configuration lookup and needs Workspace Admin.
+// Neither scope grants membership, Space access or item access.
+func (s *Server) eligibleClients(w http.ResponseWriter, r *http.Request) {
+	scope := r.URL.Query().Get("scope")
+	if scope == "administrative" {
+		requireAdmin(s.lookupActiveClients)(w, r)
+		return
+	}
+	if scope != "" && scope != "membership" {
+		writeError(w, http.StatusBadRequest, "scope must be membership or administrative")
+		return
+	}
+	s.writeOptions(w, r, func(ctx context.Context, search string, limit int) ([]clients.Option, error) {
+		return clients.New(s.pool).ListEligible(ctx, actorOf(r).ID, search, limit)
+	})
+}
+
+func (s *Server) lookupActiveClients(w http.ResponseWriter, r *http.Request) {
+	s.writeOptions(w, r, func(ctx context.Context, search string, limit int) ([]clients.Option, error) {
+		return clients.New(s.pool).ListActiveForAdmin(ctx, search, limit)
+	})
+}
+
+func (s *Server) writeOptions(w http.ResponseWriter, r *http.Request, list func(context.Context, string, int) ([]clients.Option, error)) {
+	limit := 0
+	if raw := r.URL.Query().Get("limit"); raw != "" {
+		n, err := strconv.Atoi(raw)
+		if err != nil {
+			writeError(w, http.StatusBadRequest, "limit must be an integer")
+			return
+		}
+		limit = n
+	}
+	items, err := list(r.Context(), r.URL.Query().Get("q"), limit)
+	if err != nil {
+		clientError(w, r, err)
+		return
+	}
+	out := make([]clientOptionOut, 0, len(items))
+	for _, o := range items {
+		out = append(out, clientOptionOut{ID: o.ID, Code: o.Code, Name: o.Name, ShortName: o.ShortName})
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"items": out})
 }

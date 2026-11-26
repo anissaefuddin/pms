@@ -1,9 +1,11 @@
 import type { components } from "@/api/schema";
 import { ApiError, api } from "@/lib/api";
+import { CUSTOMER_PICKER_LIMIT, eligibleCustomersKey, type CustomerLookupScope } from "@/lib/customer-picker";
 
 // Customer Master (B2-07). Types come from the generated OpenAPI schema; nothing here is hand-copied.
 export type Customer = components["schemas"]["Client"];
 export type CustomerMembership = components["schemas"]["ClientMembership"];
+export type CustomerOption = components["schemas"]["ClientOption"];
 export type CustomerFilter = "active" | "archived";
 
 /** The backend returns at most this many customers per request and has no cursor (B2-06). */
@@ -13,11 +15,19 @@ export const customerKeys = {
   list: (filter: CustomerFilter) => ["clients", filter] as const,
   detail: (id: string) => ["client", id] as const,
   members: (id: string, history: boolean) => ["client-members", id, history] as const,
+  eligible: eligibleCustomersKey,
 };
 
 export function listCustomers(filter: CustomerFilter) {
   // "active" and "archived" map to the API status filter; the list is always the first page of at most 200.
   return api<{ items: Customer[] }>(`/api/v1/clients?status=${filter}&limit=${CUSTOMER_PAGE_LIMIT}`);
+}
+
+/** Picker options (B2-08). The membership scope is the default; administrative is for configuration screens only. */
+export function listEligibleCustomers(scope: CustomerLookupScope, search: string) {
+  const params = new URLSearchParams({ scope, limit: String(CUSTOMER_PICKER_LIMIT) });
+  if (search) params.set("q", search);
+  return api<{ items: CustomerOption[] }>(`/api/v1/clients/eligible?${params}`);
 }
 
 export function getCustomer(id: string) {

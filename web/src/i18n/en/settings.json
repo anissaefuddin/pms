@@ -856,5 +856,15 @@
   "customers.members.search": "Search people",
   "customers.members.noEligible": "No eligible people found.",
   "customers.members.grant": "Add",
-  "customers.members.grantFor": "Add {{name}}"
+  "customers.members.grantFor": "Add {{name}}",
+  "customers.picker.search": "Search by name or code",
+  "customers.picker.selected": "Selected: {{name}} ({{code}})",
+  "customers.picker.unconfirmed": "Previously selected: {{name}} ({{code}}). Availability not confirmed.",
+  "customers.picker.unconfirmedNoName": "Previously selected customer. Availability not confirmed.",
+  "customers.picker.unavailable": "The selected customer is not available to you. Choose another or clear the selection.",
+  "customers.picker.clear": "Clear selection",
+  "customers.picker.loading": "Loading customers…",
+  "customers.picker.empty": "No customers are available to you yet.",
+  "customers.picker.adminOnly": "Administrator access is required to browse all customers.",
+  "customers.picker.truncated": "Showing the first {{count}} customers. Search to narrow the list."
 }

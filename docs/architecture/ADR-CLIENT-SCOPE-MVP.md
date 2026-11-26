@@ -317,6 +317,21 @@ Product Owner menyetujui **B2-07 saja**: halaman Pelanggan di Settings untuk del
 
 **Bukti:** `web/tests/customers.spec.ts` (6 tes), lihat MVP_SCOPE §15.
 
+## 7h. Lookup kelayakan dan Customer Picker B2-08 (27 Nov 2026, Prompt #011)
+
+Product Owner menyetujui **B2-08 saja**: lookup kelayakan customer dan picker yang dapat dipakai ulang. Tidak ada migrasi, tidak ada perubahan izin pada delapan operasi yang ada, dan picker belum dipasang di form Space atau Project.
+
+- **Endpoint:** `GET /api/v1/clients/eligible`. Segmen literal ini mengalahkan `/clients/{id}` (EL-15). Parameter: `scope` (`membership`, default, atau `administrative`), `q` (maksimal 100 karakter, dicocokkan pada nama, kode, dan nama pendek), dan `limit` (default 50, maksimal 200).
+- **Mode membership (default):** untuk setiap pengguna yang masuk. Hanya customer aktif dengan membership aktif untuk pemanggil, dan pemanggil harus aktif dengan `user_type` admin atau regular. Filter ini ada di SQL (`eligibleOptionsSQL`), sebelum pencarian dan `LIMIT`. Membership yang dicabut dan baris riwayat tidak memenuhi syarat. Bentuk `EXISTS` menjaga satu baris per customer setelah cabut dan beri ulang.
+- **Mode administrative:** memakai `requireAdmin`, guard yang sama dengan endpoint admin. Mengembalikan semua customer aktif. Lookup ini tidak membuat membership, akses Space, atau akses item (EL-08, EL-14).
+- **Identitas:** diambil dari sesi atau API key (`actorOf`). Tidak ada user ID dari body atau query.
+- **Respons:** `{items:[{id, code, name, short_name?}]}`. Tidak ada data membership, audit, jumlah resource, Space, atau Project (EL-12).
+- **Error:** 401 tanpa sesi; 403 untuk administrative oleh non-admin; 400 untuk `scope` tidak dikenal; 422 untuk `limit` atau `q` di luar batas; 500 generik untuk kegagalan database.
+- **Picker:** `web/src/components/customer-picker.tsx`. Hanya menampilkan opsi dari lookup. Cache key `["clients","eligible",userId,scope,q]` memisahkan pengguna dan mode. Logout sudah memanggil `queryClient.clear()`. Pilihan yang tidak lagi tersedia tampil sebagai "tidak tersedia", tidak diganti, dan tidak diklaim valid (`selectionStatus`).
+- **Tidak ada izin baru.** Kelayakan bukan izin konten. Enforcement ownership tetap di B3, dan picker harus dipakai ulang di sana.
+
+**Bukti:** lihat MVP_SCOPE §16.
+
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).

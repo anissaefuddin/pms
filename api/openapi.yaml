@@ -2917,6 +2917,29 @@ paths:
         '403': { $ref: '#/components/responses/Problem' }
         '409': { $ref: '#/components/responses/Problem' }
         '422': { $ref: '#/components/responses/Problem' }
+  /clients/eligible:
+    get:
+      tags: [clients]
+      operationId: listEligibleClients
+      summary: Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource
+      parameters:
+        - { name: scope, in: query, required: false, schema: { type: string, enum: [membership, administrative], default: membership } }
+        - { name: q, in: query, required: false, schema: { type: string, maxLength: 100 }, description: Cari nama, kode, atau nama pendek }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ClientOption' } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
   /clients/{clientId}:
     parameters:
       - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
@@ -9187,6 +9210,15 @@ components:
       properties:
         name: { type: string, minLength: 1 }
         short_name: { type: string, nullable: true }
+    ClientOption:
+      type: object
+      description: Metadata pilihan minimum. Tidak berisi membership, audit, atau data resource
+      required: [id, code, name]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string }
+        name: { type: string }
+        short_name: { type: string, description: Hanya bila ada }
     ClientMembership:
       type: object
       required: [id, client_id, user_id, status, granted_at, granted_by]
