@@ -113,6 +113,8 @@ B1, B2, spike B4 dan OPS boleh paralel setelah B0. **Migrasi dan perubahan `poli
 
 ### B1 — Solution Registry statis, tanpa UI (S)
 
+> **Status 27 Nov 2026:** B1-01, B1-02, B1-03, B1-05 (sebagian), dan B1-06 dikerjakan lokal. B1-04 ditunda. Bukti dan keterbatasan: [MVP_SCOPE §11](MVP_SCOPE.md#11-bukti-eksekusi-b1-27-nov-2026).
+
 | ID | Task | Detail dan lokasi | Selesai bila |
 |---|---|---|---|
 | B1-01 | Paket registry | `server/internal/solutions`: tipe `Definition{ID, Name, Required, Enabled, Capabilities}`, `Builtin()` mengembalikan salinan immutable berisi tepat satu `pms` ("Projects", required, enabled, `work_management`). Capability adalah metadata, **bukan** kapabilitas RBAC | Unit test SOL-01: tepat satu aktif, ID kosong/duplikat ditolak |

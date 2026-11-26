@@ -244,3 +244,41 @@ B0 ──► OPS ─────────────────────
 - Tidak ada AC yang ditandai PASS.
 - Tidak ada keputusan yang ditandai APPROVED.
 - Ukuran dan urutan adalah usulan.
+
+---
+
+## 11. Bukti eksekusi B1 (27 Nov 2026)
+
+Otorisasi: Product Owner, hanya B1 (lihat ADR §7b). Tidak ada batch lain yang dikerjakan.
+
+| Task | Status | Bukti |
+|---|---|---|
+| B1-01 Registry statis | DONE (lokal) | `server/internal/solutions/solutions.go`: `Builtin()` berisi tepat satu `pms`, salinan independen. Tes `TestBuiltinContainsOnlyTheActivePMSContract`, `TestBuiltinReturnsIndependentCopies`, `TestValidateRejectsInvalidRegistries` (9 kasus) |
+| B1-02 Validasi startup | DONE (lokal) | `server/cmd/pms/main.go`: `checkSolutions` dipanggil di `run()` untuk command `serve`, **sebelum** `database.Open` (yang menjalankan migrasi). Tes `TestCheckSolutionsGatesTheStart` |
+| B1-03 Aturan arsitektur | DONE (lokal) | `server/architecture_test.go`: `solutions` ditambahkan ke `isPlatform`. `TestPackageDependencies` lulus. Uji negatif (paket probe sementara yang mengimpor paket bisnis) gagal sesuai harapan, lalu paket probe dihapus |
+| B1-04 Ekspos operator | DEFERRED | Tidak dibutuhkan (keputusan PO) |
+| B1-05 Navigasi tidak berubah | PARTIAL | Tidak ada berkas frontend atau OpenAPI yang berubah. Smoke navigasi runtime **tidak dijalankan**: tidak ada lingkungan uji lokal yang disiapkan untuk ini. Tidak diklaim PASS |
+| B1-06 Kontrak ekstensi | DONE (dokumen) | ADR §7a |
+
+**Hasil verifikasi:**
+
+| Perintah | Hasil |
+|---|---|
+| `go test ./server/internal/solutions` | ok (3 tes utama, semua subtes lulus) |
+| `go test ./server/cmd/pms` | ok (`TestCheckSolutionsGatesTheStart`) |
+| `go test ./server -run '^TestPackageDependencies$'` | ok |
+| Uji negatif aturan arsitektur | Gagal sesuai harapan (probe dihapus) |
+| `go build ./server/cmd/pms` (ke path sementara) | ok |
+| `go vet` paket yang diubah | ok |
+| `gofmt -l` berkas yang diubah | kosong |
+| `git diff --check` | ok |
+
+**Berkas yang berubah:** `server/internal/solutions/solutions.go` (baru), `server/internal/solutions/solutions_test.go` (baru), `server/cmd/pms/main.go` (+15 baris), `server/cmd/pms/main_test.go` (baru), `server/architecture_test.go` (1 baris), dokumen ADR dan scope.
+
+**Penyimpangan dari rencana:** validasi dipasang di `run()` sebelum `database.Open`, bukan di awal `serve()`. Alasan: `database.Open` sudah menjalankan migrasi, dan registry yang tidak valid harus menghentikan start sebelum itu.
+
+**AC-02:** PARTIAL. Registry dan validasi lulus tes. Bagian navigasi runtime belum diverifikasi.
+
+**Keterbatasan:** `TestCheckSolutionsGatesTheStart` menguji fungsi yang dipanggil `run()`, bukan `run()` itu sendiri. Tidak ada tes integrasi yang menjalankan binary dengan registry tidak valid. Tes semacam itu belum dibuat.
+
+**CI historis:** `TestReportSubscriptionsAreDeliveredOncePerSlotWithTheSubscribersRights` tetap terbuka dan tidak disentuh.

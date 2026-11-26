@@ -3,7 +3,7 @@
 | | |
 |---|---|
 | **ID** | ADR-CLIENT-SCOPE-MVP (usulan) |
-| **Status** | **PROPOSED.** Belum disetujui Product Owner. Tidak ada keputusan di dokumen ini yang berlaku sebagai APPROVED |
+| **Status** | **PROPOSED.** Belum disetujui Product Owner secara keseluruhan. Satu bagian disetujui untuk implementasi B1 (lihat §10) |
 | **Tanggal** | 27 November 2026 |
 | **Basis** | Rencana MVP v0.2 (`docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md`), B0-01..B0-05 (`docs/roadmap/PMS_PLATFORM_IMPACT_ASSESSMENT.md`, `docs/qa/releases/v0.14.0/CANDIDATE.md`) |
 | **Baseline kode** | Rilis `v0.13.0` = `72f9902`. Cabang kerja `docs/restructure-mvp-roadmap` @ HEAD saat dokumen ini ditulis (lihat MVP_SCOPE.md §1) |
@@ -39,9 +39,9 @@ Setiap keputusan diberi status. **Tidak ada** yang APPROVED.
 |---|---|---|
 | ARCH-01 | Tetap Go, PostgreSQL, React/Vite. Satu modular monolith dan satu deployment (`deploy/`) | PROPOSED |
 | ARCH-02 | **D-01 dipertahankan.** Instance adalah batas tenant. Tidak ada entitas Tenant | PROPOSED |
-| ARCH-03 | **Amandemen D-55 (usulan).** Fondasi klien dan registry statis dimajukan ke MVP ini. Business Object Registry runtime tetap ditunda setelah AIMS. Acuan: `DECISIONS.md` D-55 (cakupan rilis 1.0 = M0–M12, M13 backlog) | PROPOSED, perlu amandemen formal |
+| ARCH-03 | **Amandemen D-55 (usulan).** Fondasi klien dan registry statis dimajukan ke MVP ini. Business Object Registry runtime tetap ditunda sampai kebutuhan vertical slice AIMS terbukti; bukan urutan wajib sesudah AIMS. Acuan: `DECISIONS.md` D-55 (cakupan rilis 1.0 = M0–M12, M13 backlog) | Bagian registry statis: **DISETUJUI untuk implementasi B1** (PO, 27 Nov 2026). Bagian lain: PROPOSED, perlu amandemen formal |
 | ARCH-04 | PMS satu-satunya solution aktif. Tidak ada Solution Switcher | PROPOSED |
-| ARCH-05 | Solution Registry statis (paket `server/internal/solutions`, B1). ID `pms`, nama "Projects", `Required` dan `Enabled` = true, capability metadata `work_management`. Didefinisikan di kode, salinan immutable, divalidasi saat start | PROPOSED |
+| ARCH-05 | Solution Registry statis (paket `server/internal/solutions`, B1). ID `pms`, nama "Projects", `Required` dan `Enabled` = true, capability metadata `work_management`. Didefinisikan di kode, salinan immutable, divalidasi saat start | **DISETUJUI untuk B1** (PO, 27 Nov 2026). Terimplementasi di `server/internal/solutions` dan divalidasi di `run()` sebelum `database.Open` |
 | ARCH-06 | Tidak ada registry database, installer, atau runtime plugin dinamis | PROPOSED |
 | ARCH-07 | URL, shell aplikasi, sidebar, dan route default (`/dashboards`) tidak berubah | PROPOSED |
 | ARCH-08 | **Capability metadata registry tidak memberi izin RBAC.** Hanya dokumentasi dan validasi start | PROPOSED |
@@ -189,6 +189,20 @@ Sesuai aturan, ID yang ada **dipertahankan** dan ketidaksesuaian dicatat. Tidak 
 5. Rujukan DEC-06/DEC-10 dan D-08 diperbaiki di dokumen yang masih memakainya.
 
 ---
+
+## 7a. Kontrak ekstensi solution (B1-06)
+
+- `pms` adalah solution pertama dan satu-satunya yang terdaftar. Tidak ada solution kedua di build ini.
+- Solution kedua hanya boleh ditambahkan lewat **registrasi tepercaya di kode**: entri di `solutions.Builtin()` dan aturan yang sesuai di `solutions.Validate`, dengan tes. Tidak ada pemuatan dinamis.
+- Metadata statis (ID, nama, capability) **tidak memberi izin**. Izin tetap di `policy`. ARCH-08 berlaku.
+- Solution Switcher hanya diperkenalkan ketika ada lebih dari satu solution aktif (rencana §13).
+- Business Object Registry runtime tetap ditunda sampai vertical slice AIMS direncanakan (lihat ARCH-03).
+
+## 7b. Otorisasi Product Owner (27 Nov 2026)
+
+Product Owner menyetujui **implementasi B1 saja**: B1-01, B1-02, B1-03, B1-05, B1-06, dan bagian registry statis dari amandemen D-55. B1-04 ditunda karena tidak ada kebutuhan API operator untuk MVP ini.
+
+Persetujuan ini **tidak** mencakup: Client Scope ADR secara keseluruhan, K-20..K-29, kesiapan migrasi, kesiapan produksi, atau batch B2 dan seterusnya.
 
 ## 8. Referensi
 

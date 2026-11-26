@@ -26,6 +26,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/reportdigest"
 	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/seed"
+	"github.com/anissaefuddin/pms/server/internal/solutions"
 	"github.com/anissaefuddin/pms/server/internal/twofactor"
 	"github.com/anissaefuddin/pms/server/internal/webhooks"
 	"github.com/jackc/pgx/v5"
@@ -54,6 +55,12 @@ func run() error {
 	cfg, err := config.Load()
 	if err != nil {
 		return err
+	}
+	// Before database.Open: opening the pool applies pending migrations, so an invalid registry must stop the start first.
+	if command == "serve" {
+		if err := checkSolutions(solutions.Builtin); err != nil {
+			return err
+		}
 	}
 	pool, err := database.Open(ctx, cfg.DatabaseURL)
 	if err != nil {
@@ -99,6 +106,14 @@ func run() error {
 	default:
 		return fmt.Errorf("unknown command %q (use serve, migrate, bootstrap, or version)", command)
 	}
+}
+
+// checkSolutions validates the static solution registry the server would run with (ARCH-05).
+func checkSolutions(defs func() []solutions.Definition) error {
+	if err := solutions.Validate(defs()); err != nil {
+		return fmt.Errorf("invalid solution registry, refusing to start: %w", err)
+	}
+	return nil
 }
 
 func serve(ctx context.Context, pool *pgxpool.Pool, cfg config.Config) error {
