@@ -10,6 +10,7 @@ import (
 	"time"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/clients"
 	"github.com/anissaefuddin/pms/server/internal/reqid"
 	"github.com/anissaefuddin/pms/server/internal/spaces"
 	"github.com/google/uuid"
@@ -53,6 +54,11 @@ const (
 	auditOAuthAppRemoved   = "oauth.app_removed"
 	auditOAuthGrantRevoked = "oauth.grant_revoked"
 	auditCustomFieldGrants = "custom_field.grants_changed"
+	auditClientCreated     = clients.ActionCreated
+	auditClientUpdated     = clients.ActionUpdated
+	auditClientArchived    = clients.ActionArchived
+	auditClientGranted     = clients.ActionMemberGranted
+	auditClientRevoked     = clients.ActionMemberRevoked
 )
 
 type auditEvent struct {

@@ -21,7 +21,29 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
+// Audit actions. The HTTP layer writes them with the same names that audit_events stores.
+const (
+	ActionCreated       = "client.created"
+	ActionUpdated       = "client.updated"
+	ActionArchived      = "client.archived"
+	ActionMemberGranted = "client.member_granted"
+	ActionMemberRevoked = "client.member_revoked"
+)
+
+// Event is one real state change. It is recorded by a Recorder in the same transaction as the change, so a change
+// cannot commit without its event. Events are not emitted for operations that change nothing.
+type Event struct {
+	Action     string
+	CustomerID string
+	UserID     string // membership events only
+	Details    map[string]any
+}
+
+// Recorder writes an event inside the caller's transaction. An error aborts the mutation. It is required.
+type Recorder func(ctx context.Context, tx pgx.Tx, ev Event) error
+
 var (
+	ErrNoRecorder     = errors.New("clients: an audit recorder is required")
 	ErrNotFound       = errors.New("customer not found")
 	ErrUserNotFound   = errors.New("user not found")
 	ErrIneligibleUser = errors.New("user is not eligible for client membership")
@@ -162,7 +184,10 @@ func mapCustomerError(err error) error {
 }
 
 // Create stores a new active customer. Duplicate codes are rejected by the unique constraint, which is the final authority.
-func (s *Service) Create(ctx context.Context, actor string, in CreateInput) (Customer, error) {
+func (s *Service) Create(ctx context.Context, actor string, in CreateInput, rec Recorder) (Customer, error) {
+	if rec == nil {
+		return Customer{}, ErrNoRecorder
+	}
 	code, err := NormalizeCode(in.Code)
 	if err != nil {
 		return Customer{}, err
@@ -178,10 +203,21 @@ func (s *Service) Create(ctx context.Context, actor string, in CreateInput) (Cus
 	if _, err := uuid.Parse(actor); err != nil {
 		return Customer{}, ErrUserNotFound
 	}
-	c, err := scanCustomer(s.pool.QueryRow(ctx,
+	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return Customer{}, err
+	}
+	defer tx.Rollback(ctx)
+	c, err := scanCustomer(tx.QueryRow(ctx,
 		`INSERT INTO clients(code,name,short_name,created_by) VALUES ($1,$2,$3,$4::uuid) RETURNING `+customerColumns,
 		code, name, short, actor))
 	if err != nil {
+		return Customer{}, mapCustomerError(err)
+	}
+	if err := rec(ctx, tx, Event{Action: ActionCreated, CustomerID: c.ID, Details: map[string]any{"code": c.Code}}); err != nil {
+		return Customer{}, fmt.Errorf("clients: record audit: %w", err)
+	}
+	if err := tx.Commit(ctx); err != nil {
 		return Customer{}, mapCustomerError(err)
 	}
 	return c, nil
@@ -234,7 +270,10 @@ func (s *Service) List(ctx context.Context, filter Filter, limit int) ([]Custome
 }
 
 // Update changes name and short name. An archived customer is read-only, so it is rejected, not silently restored.
-func (s *Service) Update(ctx context.Context, actor, id string, in UpdateInput) (Customer, error) {
+func (s *Service) Update(ctx context.Context, actor, id string, in UpdateInput, rec Recorder) (Customer, error) {
+	if rec == nil {
+		return Customer{}, ErrNoRecorder
+	}
 	if _, err := uuid.Parse(id); err != nil {
 		return Customer{}, ErrNotFound
 	}
@@ -257,17 +296,24 @@ func (s *Service) Update(ctx context.Context, actor, id string, in UpdateInput) 
 		return Customer{}, err
 	}
 	defer tx.Rollback(ctx)
-	var status string
-	if err := tx.QueryRow(ctx, `SELECT status FROM clients WHERE id=$1::uuid FOR UPDATE`, id).Scan(&status); errors.Is(err, pgx.ErrNoRows) {
+	cur, err := scanCustomer(tx.QueryRow(ctx, `SELECT `+customerColumns+` FROM clients WHERE id=$1::uuid FOR UPDATE`, id))
+	if errors.Is(err, pgx.ErrNoRows) {
 		return Customer{}, ErrNotFound
 	} else if err != nil {
 		return Customer{}, mapCustomerError(err)
 	}
-	if status == "archived" {
+	if cur.Status == "archived" {
 		return Customer{}, ErrArchived
 	}
-	if name == nil && in.ShortName == nil {
-		return s.getIn(ctx, tx, id)
+	var changed []string
+	if name != nil && *name != cur.Name {
+		changed = append(changed, "name")
+	}
+	if in.ShortName != nil && !sameOptional(short, cur.ShortName) {
+		changed = append(changed, "short_name")
+	}
+	if len(changed) == 0 {
+		return cur, nil // nothing differs: no write, no event
 	}
 	c, err := scanCustomer(tx.QueryRow(ctx,
 		`UPDATE clients SET name=COALESCE($2,name), short_name=CASE WHEN $4::boolean THEN NULL WHEN $3::text IS NOT NULL THEN $3 ELSE short_name END, updated_at=now()
@@ -276,22 +322,27 @@ func (s *Service) Update(ctx context.Context, actor, id string, in UpdateInput) 
 	if err != nil {
 		return Customer{}, mapCustomerError(err)
 	}
+	if err := rec(ctx, tx, Event{Action: ActionUpdated, CustomerID: id, Details: map[string]any{"fields": changed}}); err != nil {
+		return Customer{}, fmt.Errorf("clients: record audit: %w", err)
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return Customer{}, mapCustomerError(err)
 	}
 	return c, nil
 }
 
-func (s *Service) getIn(ctx context.Context, tx pgx.Tx, id string) (Customer, error) {
-	c, err := scanCustomer(tx.QueryRow(ctx, `SELECT `+customerColumns+` FROM clients WHERE id=$1::uuid`, id))
-	if err != nil {
-		return Customer{}, mapCustomerError(err)
+func sameOptional(a, b *string) bool {
+	if a == nil || b == nil {
+		return a == b
 	}
-	return c, nil
+	return *a == *b
 }
 
 // Archive makes the customer read-only and keeps every membership row. Archiving twice keeps the first archive metadata.
-func (s *Service) Archive(ctx context.Context, actor, id string) (Customer, error) {
+func (s *Service) Archive(ctx context.Context, actor, id string, rec Recorder) (Customer, error) {
+	if rec == nil {
+		return Customer{}, ErrNoRecorder
+	}
 	if _, err := uuid.Parse(id); err != nil {
 		return Customer{}, ErrNotFound
 	}
@@ -310,13 +361,20 @@ func (s *Service) Archive(ctx context.Context, actor, id string) (Customer, erro
 		return Customer{}, mapCustomerError(err)
 	}
 	if status == "archived" {
-		return s.getIn(ctx, tx, id) // unchanged: the original archive metadata stays
+		cur, err := scanCustomer(tx.QueryRow(ctx, `SELECT `+customerColumns+` FROM clients WHERE id=$1::uuid`, id))
+		if err != nil {
+			return Customer{}, mapCustomerError(err)
+		}
+		return cur, nil // unchanged: the original archive metadata stays, no event
 	}
 	c, err := scanCustomer(tx.QueryRow(ctx,
 		`UPDATE clients SET status='archived', archived_at=now(), archived_by=$2::uuid, updated_at=now()
 		 WHERE id=$1::uuid RETURNING `+customerColumns, id, actor))
 	if err != nil {
 		return Customer{}, mapCustomerError(err)
+	}
+	if err := rec(ctx, tx, Event{Action: ActionArchived, CustomerID: id}); err != nil {
+		return Customer{}, fmt.Errorf("clients: record audit: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return Customer{}, mapCustomerError(err)

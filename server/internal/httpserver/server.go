@@ -178,6 +178,7 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	mux.HandleFunc("POST /api/v1/notifications/read-all", s.requireUser(func(w http.ResponseWriter, r *http.Request) { s.bulkNotifications(w, r, false) }))
 	mux.HandleFunc("POST /api/v1/notifications/archive-all", s.requireUser(func(w http.ResponseWriter, r *http.Request) { s.bulkNotifications(w, r, true) }))
 	s.adminRoutes(mux)
+	s.clientRoutes(mux)
 	s.spaceRoutes(mux)
 	s.viewRoutes(mux)
 	s.dashboardRoutes(mux)

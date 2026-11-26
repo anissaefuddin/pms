@@ -344,3 +344,47 @@ Otorisasi: Product Owner, hanya domain service B2-03 (ADR §7e). Tidak ada endpo
 **Pemeriksaan mutasi:** penguncian `FOR SHARE` pada grant dihapus sementara. MEM-11 gagal, dan dikembalikan. Tes konkurensi ini memang menangkap kesalahan penguncian.
 
 **Batas:** tidak ada pemeriksaan otorisasi (B2-04). Tidak ada audit (B2-05). Tidak ada rute (B2-06). Tidak ada tes migrasi baru. Tidak ada tes lintas klien pada resource (B3).
+
+---
+
+## 14. Bukti eksekusi B2-04..06 (authorization, audit, API, 27 Nov 2026)
+
+Otorisasi: Product Owner, untuk B2-04, B2-05, dan B2-06 (ADR §7f). B2-07 dan B2-08 belum dikerjakan, dan tidak ada enforcement klien di Space atau item (B3).
+
+| Task | Status | Bukti |
+|---|---|---|
+| B2-04 Authorization | DONE | `requireUser(requireAdmin(...))` pada 8 operasi (`httpserver/clients_api.go`). API-01..06 |
+| B2-05 Audit | DONE | Lima aksi di `audit.go`. Event ditulis dalam transaksi yang sama (`clients.Recorder`). AUD-01..07 |
+| B2-06 REST API dan OpenAPI | DONE | 8 operasi di `api/openapi.yaml`. Go dan TypeScript digenerate ulang dengan alat yang ada. API-07..17 |
+| AC-03 | **PASS** (tingkat CRUD dan audit) | Stabil dan kanonik (CL-01, CL-07), duplikat ditolak (CL-03, API-09), arsip menjaga riwayat (CL-08, API-12), CRUD diaudit (AUD-01) |
+| AC-04 | **PARTIAL** | Membership diaudit (AUD-01). Membership tanpa grant tidak memberi akses konten **untuk admin** (AUD-07). Pengujian membership-pengguna-biasa terhadap resource menunggu B3 |
+
+**Hasil tes** (`PMS_TEST_DATABASE_URL` menunjuk ke PostgreSQL lokal, database uji dibuat dan dihapus oleh harness. Tidak ada staging atau production):
+
+| Perintah | PASS | FAIL | SKIP |
+|---|---:|---:|---:|
+| `go test ./server/internal/clients -count=1 -v` (domain, termasuk konkurensi) | 26 | 0 | 0 |
+| `go test ./server/internal/httpserver -run '^(TestClientAPIRefusesNonAdministrators\|TestClientAPIContract\|TestClientAuditTrail\|TestClientManagementGrantsNoContentAccess)$' -v` | 21 | 0 | 0 |
+| Regresi: `TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds`, `TestAbandonedRequestIsNotAServerError`, `TestAuthorizationFinalRegressionExplicitAccessOnly`, `TestAudit*`, `TestAdmin*` | 14 | 0 | 0 |
+| `go test ./server -run '^TestPackageDependencies$' -v` | 1 | 0 | 0 |
+| `go build ./server/...`, `go vet` paket yang diubah, `gofmt -l` | lulus | — | — |
+
+Angka di atas adalah hasil dari perintah yang dijalankan sebelum commit. Perintah tidak memakai cache.
+
+**Pemeriksaan mutasi.** Dua mutasi sementara dibuat dan dikembalikan:
+
+- `FOR SHARE` pada grant dihapus: MEM-11 gagal (grant tidak menunggu arsip).
+- Audit dalam transaksi gagal (trigger uji pada `audit_events`): AUD-05 memastikan klien tidak tercommit.
+
+**Temuan selama pengerjaan (dan koreksi):**
+
+- Generator `oapi-codegen` pertama kali tampak tidak memuat operasi baru. Ternyata itu pengamatan keliru atas file yang belum diperbarui. Setelah dijalankan ulang dengan konfigurasi resmi, file memuat 45 kecocokan untuk operasi klien. Setelah itu diverifikasi bahwa tidak ada baris lama yang hilang.
+- Satu tes AUD-03 gagal karena saya mengirim nama yang berbeda dan menganggapnya "nama sama". Kodenya benar: perubahan nama menulis `client.updated`. Tes diperbaiki.
+- Run tanpa `PMS_TEST_DATABASE_URL` (semua tes di-skip) tidak dipakai sebagai bukti. Hanya run dengan env yang diset dan output verbose yang dihitung.
+
+**Keterbatasan:**
+
+- Daftar klien belum punya cursor. Batasnya 200 per halaman.
+- Tidak ada Customer Picker (B2-08) dan belum ada pengaturan UI (B2-07).
+- Belum ada enforcement klien pada Space, item, atau resource. Itu B3.
+- AC-04 tetap PARTIAL sampai B3 membuktikan pengguna dengan membership tapi tanpa grant tidak bisa membaca konten klien.

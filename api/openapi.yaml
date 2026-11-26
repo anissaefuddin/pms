@@ -21,6 +21,7 @@ tags:
   - { name: auth, description: "Login, session, password, undangan" }
   - { name: users, description: "Profil, user, grup, seat" }
   - { name: spaces, description: "Space dan sharing" }
+  - { name: clients, description: "Customer Master dan membership klien (B2; hanya Workspace Admin)" }
   - { name: settings, description: "Pengaturan workspace" }
   - { name: items, description: "Project, folder, task" }
   - { name: views, description: "Definisi view Table dan Board" }
@@ -2874,6 +2875,165 @@ paths:
                       type: array
                       items: { $ref: '#/components/schemas/Capability' }
         '403': { $ref: '#/components/responses/Problem' }
+  /clients:
+    get:
+      tags: [clients]
+      operationId: listClients
+      summary: Daftar klien (Customer Master). Hanya Workspace Admin
+      parameters:
+        - { name: status, in: query, required: false, schema: { type: string, enum: [all, active, archived], default: all } }
+        - { $ref: '#/components/parameters/Limit' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/Client' } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [clients]
+      operationId: createClient
+      summary: Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientCreate' }
+      responses:
+        '201':
+          description: Dibuat
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [clients]
+      operationId: getClient
+      summary: Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    patch:
+      tags: [clients]
+      operationId: updateClient
+      summary: Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientUpdate' }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}/archive:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+    post:
+      tags: [clients]
+      operationId: archiveClient
+      summary: Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Client' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}/members:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [clients]
+      operationId: listClientMembers
+      summary: Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin
+      parameters:
+        - { name: include_revoked, in: query, required: false, schema: { type: boolean, default: false } }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [items]
+                properties:
+                  items: { type: array, items: { $ref: '#/components/schemas/ClientMembership' } }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+    post:
+      tags: [clients]
+      operationId: grantClientMember
+      summary: Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ClientMembershipGrant' }
+      responses:
+        '200':
+          description: Membership aktif (baru atau sudah ada)
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientMembership' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
+        '409': { $ref: '#/components/responses/Problem' }
+        '422': { $ref: '#/components/responses/Problem' }
+  /clients/{clientId}/members/{userId}:
+    parameters:
+      - { name: clientId, in: path, required: true, schema: { type: string, format: uuid } }
+      - { name: userId, in: path, required: true, schema: { type: string, format: uuid } }
+    delete:
+      tags: [clients]
+      operationId: revokeClientMember
+      summary: Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+      responses:
+        '200':
+          description: Membership yang dicabut
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ClientMembership' }
+        '400': { $ref: '#/components/responses/Problem' }
+        '401': { $ref: '#/components/responses/Problem' }
+        '403': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /users/invitations:
     post:
       tags: [users]
@@ -8998,6 +9158,54 @@ components:
         size: { type: integer, format: int64, description: Byte; tidak ada untuk folder }
         modified_at: { type: string, format: date-time }
         url: { type: string, description: Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna }
+    Client:
+      type: object
+      required: [id, code, name, status, created_at, created_by, updated_at]
+      properties:
+        id: { type: string, format: uuid }
+        code: { type: string, description: Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah }
+        name: { type: string }
+        short_name: { type: string, nullable: true }
+        status: { type: string, enum: [active, archived] }
+        created_at: { type: string, format: date-time }
+        created_by: { type: string, format: uuid }
+        updated_at: { type: string, format: date-time }
+        archived_at: { type: string, format: date-time, nullable: true }
+        archived_by: { type: string, format: uuid, nullable: true }
+    ClientCreate:
+      type: object
+      required: [code, name]
+      additionalProperties: false
+      properties:
+        code: { type: string, minLength: 1 }
+        name: { type: string, minLength: 1 }
+        short_name: { type: string, nullable: true }
+    ClientUpdate:
+      type: object
+      additionalProperties: false
+      description: Hanya name dan short_name. Kirim short_name kosong untuk menghapusnya. Field lain (termasuk code dan id) ditolak
+      properties:
+        name: { type: string, minLength: 1 }
+        short_name: { type: string, nullable: true }
+    ClientMembership:
+      type: object
+      required: [id, client_id, user_id, status, granted_at, granted_by]
+      properties:
+        id: { type: string, format: uuid }
+        client_id: { type: string, format: uuid }
+        user_id: { type: string, format: uuid }
+        user_name: { type: string, description: Hanya pada daftar }
+        status: { type: string, enum: [active, revoked] }
+        granted_at: { type: string, format: date-time }
+        granted_by: { type: string, format: uuid }
+        revoked_at: { type: string, format: date-time, nullable: true }
+        revoked_by: { type: string, format: uuid, nullable: true }
+    ClientMembershipGrant:
+      type: object
+      required: [user_id]
+      additionalProperties: false
+      properties:
+        user_id: { type: string, format: uuid }
     GanttSnapshot:
       type: object
       required: [id, project_id, name, show_assignees, expires_at, created_at]

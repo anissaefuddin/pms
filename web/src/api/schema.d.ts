@@ -2007,6 +2007,103 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/clients": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Daftar klien (Customer Master). Hanya Workspace Admin */
+        get: operations["listClients"];
+        put?: never;
+        /** Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin */
+        post: operations["createClient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{clientId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        /** Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin */
+        get: operations["getClient"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        /** Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin */
+        patch: operations["updateClient"];
+        trace?: never;
+    };
+    "/clients/{clientId}/archive": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /** Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin */
+        post: operations["archiveClient"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{clientId}/members": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        /** Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin */
+        get: operations["listClientMembers"];
+        put?: never;
+        /** Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin */
+        post: operations["grantClientMember"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/clients/{clientId}/members/{userId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        /** Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin */
+        delete: operations["revokeClientMember"];
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/users/invitations": {
         parameters: {
             query?: never;
@@ -6793,6 +6890,60 @@ export interface components {
             modified_at?: string;
             /** @description Alamat entri di Cells; dibuka dengan hak akses Pydio pengguna */
             url: string;
+        };
+        Client: {
+            /** Format: uuid */
+            id: string;
+            /** @description Kode kanonik (huruf besar */
+            code: string;
+            name: string;
+            short_name?: string | null;
+            /** @enum {string} */
+            status: "active" | "archived";
+            /** Format: date-time */
+            created_at: string;
+            /** Format: uuid */
+            created_by: string;
+            /** Format: date-time */
+            updated_at: string;
+            /** Format: date-time */
+            archived_at?: string | null;
+            /** Format: uuid */
+            archived_by?: string | null;
+        };
+        ClientCreate: {
+            code: string;
+            name: string;
+            short_name?: string | null;
+        };
+        /** @description Hanya name dan short_name. Kirim short_name kosong untuk menghapusnya. Field lain (termasuk code dan id) ditolak */
+        ClientUpdate: {
+            name?: string;
+            short_name?: string | null;
+        };
+        ClientMembership: {
+            /** Format: uuid */
+            id: string;
+            /** Format: uuid */
+            client_id: string;
+            /** Format: uuid */
+            user_id: string;
+            /** @description Hanya pada daftar */
+            user_name?: string;
+            /** @enum {string} */
+            status: "active" | "revoked";
+            /** Format: date-time */
+            granted_at: string;
+            /** Format: uuid */
+            granted_by: string;
+            /** Format: date-time */
+            revoked_at?: string | null;
+            /** Format: uuid */
+            revoked_by?: string | null;
+        };
+        ClientMembershipGrant: {
+            /** Format: uuid */
+            user_id: string;
         };
         GanttSnapshot: {
             /** Format: uuid */
@@ -11947,6 +12098,237 @@ export interface operations {
                 };
             };
             403: components["responses"]["Problem"];
+        };
+    };
+    listClients: {
+        parameters: {
+            query?: {
+                status?: "all" | "active" | "archived";
+                limit?: components["parameters"]["Limit"];
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["Client"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    createClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientCreate"];
+            };
+        };
+        responses: {
+            /** @description Dibuat */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    getClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    updateClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientUpdate"];
+            };
+        };
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    archiveClient: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["Client"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    listClientMembers: {
+        parameters: {
+            query?: {
+                include_revoked?: boolean;
+            };
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        items: components["schemas"]["ClientMembership"][];
+                    };
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+        };
+    };
+    grantClientMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["ClientMembershipGrant"];
+            };
+        };
+        responses: {
+            /** @description Membership aktif (baru atau sudah ada) */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientMembership"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
+            409: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
+        };
+    };
+    revokeClientMember: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                clientId: string;
+                userId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Membership yang dicabut */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["ClientMembership"];
+                };
+            };
+            400: components["responses"]["Problem"];
+            401: components["responses"]["Problem"];
+            403: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     inviteUser: {

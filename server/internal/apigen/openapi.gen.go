@@ -795,6 +795,42 @@ func (e Capability) Valid() bool {
 	}
 }
 
+// Defines values for ClientStatus.
+const (
+	ClientStatusActive   ClientStatus = "active"
+	ClientStatusArchived ClientStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ClientStatus enum.
+func (e ClientStatus) Valid() bool {
+	switch e {
+	case ClientStatusActive:
+		return true
+	case ClientStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ClientMembershipStatus.
+const (
+	ClientMembershipStatusActive  ClientMembershipStatus = "active"
+	ClientMembershipStatusRevoked ClientMembershipStatus = "revoked"
+)
+
+// Valid indicates whether the value is a known member of the ClientMembershipStatus enum.
+func (e ClientMembershipStatus) Valid() bool {
+	switch e {
+	case ClientMembershipStatusActive:
+		return true
+	case ClientMembershipStatusRevoked:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ConnectorConflictResolution.
 const (
 	ConnectorConflictResolutionItem   ConnectorConflictResolution = "item"
@@ -3060,6 +3096,27 @@ func (e GetBlueprint200JSONResponseBodyScope) Valid() bool {
 	}
 }
 
+// Defines values for ListClientsParamsStatus.
+const (
+	ListClientsParamsStatusActive   ListClientsParamsStatus = "active"
+	ListClientsParamsStatusAll      ListClientsParamsStatus = "all"
+	ListClientsParamsStatusArchived ListClientsParamsStatus = "archived"
+)
+
+// Valid indicates whether the value is a known member of the ListClientsParamsStatus enum.
+func (e ListClientsParamsStatus) Valid() bool {
+	switch e {
+	case ListClientsParamsStatusActive:
+		return true
+	case ListClientsParamsStatusAll:
+		return true
+	case ListClientsParamsStatusArchived:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ResolveConnectorConflictJSONBodyResolution.
 const (
 	ResolveConnectorConflictJSONBodyResolutionItem   ResolveConnectorConflictJSONBodyResolution = "item"
@@ -4762,6 +4819,61 @@ type BlueprintTreeNodesType string
 
 // Capability defines model for Capability.
 type Capability string
+
+// Client defines model for Client.
+type Client struct {
+	ArchivedAt *time.Time          `json:"archived_at,omitempty"`
+	ArchivedBy *openapi_types.UUID `json:"archived_by,omitempty"`
+
+	// Code Kode kanonik (huruf besar
+	Code      string             `json:"code"`
+	CreatedAt time.Time          `json:"created_at"`
+	CreatedBy openapi_types.UUID `json:"created_by"`
+	Id        openapi_types.UUID `json:"id"`
+	Name      string             `json:"name"`
+	ShortName *string            `json:"short_name,omitempty"`
+	Status    ClientStatus       `json:"status"`
+	UpdatedAt time.Time          `json:"updated_at"`
+}
+
+// ClientStatus defines model for Client.Status.
+type ClientStatus string
+
+// ClientCreate defines model for ClientCreate.
+type ClientCreate struct {
+	Code      string  `json:"code"`
+	Name      string  `json:"name"`
+	ShortName *string `json:"short_name,omitempty"`
+}
+
+// ClientMembership defines model for ClientMembership.
+type ClientMembership struct {
+	ClientId  openapi_types.UUID     `json:"client_id"`
+	GrantedAt time.Time              `json:"granted_at"`
+	GrantedBy openapi_types.UUID     `json:"granted_by"`
+	Id        openapi_types.UUID     `json:"id"`
+	RevokedAt *time.Time             `json:"revoked_at,omitempty"`
+	RevokedBy *openapi_types.UUID    `json:"revoked_by,omitempty"`
+	Status    ClientMembershipStatus `json:"status"`
+	UserId    openapi_types.UUID     `json:"user_id"`
+
+	// UserName Hanya pada daftar
+	UserName *string `json:"user_name,omitempty"`
+}
+
+// ClientMembershipStatus defines model for ClientMembership.Status.
+type ClientMembershipStatus string
+
+// ClientMembershipGrant defines model for ClientMembershipGrant.
+type ClientMembershipGrant struct {
+	UserId openapi_types.UUID `json:"user_id"`
+}
+
+// ClientUpdate Hanya name dan short_name. Kirim short_name kosong untuk menghapusnya. Field lain (termasuk code dan id) ditolak
+type ClientUpdate struct {
+	Name      *string `json:"name,omitempty"`
+	ShortName *string `json:"short_name,omitempty"`
+}
 
 // Comment defines model for Comment.
 type Comment struct {
@@ -7375,6 +7487,20 @@ type PreviewBlueprintJSONBody struct {
 	Title *string `json:"title,omitempty"`
 }
 
+// ListClientsParams defines parameters for ListClients.
+type ListClientsParams struct {
+	Status *ListClientsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Limit  *Limit                   `form:"limit,omitempty" json:"limit,omitempty"`
+}
+
+// ListClientsParamsStatus defines parameters for ListClients.
+type ListClientsParamsStatus string
+
+// ListClientMembersParams defines parameters for ListClientMembers.
+type ListClientMembersParams struct {
+	IncludeRevoked *bool `form:"include_revoked,omitempty" json:"include_revoked,omitempty"`
+}
+
 // UpdateCommentJSONBody defines parameters for UpdateComment.
 type UpdateCommentJSONBody struct {
 	// Body Dokumen ProseMirror JSON (TipTap). Server memvalidasi node dan mark yang diizinkan.
@@ -8472,6 +8598,15 @@ type CreateItemsFromBlueprintJSONRequestBody CreateItemsFromBlueprintJSONBody
 // PreviewBlueprintJSONRequestBody defines body for PreviewBlueprint for application/json ContentType.
 type PreviewBlueprintJSONRequestBody PreviewBlueprintJSONBody
 
+// CreateClientJSONRequestBody defines body for CreateClient for application/json ContentType.
+type CreateClientJSONRequestBody = ClientCreate
+
+// UpdateClientJSONRequestBody defines body for UpdateClient for application/json ContentType.
+type UpdateClientJSONRequestBody = ClientUpdate
+
+// GrantClientMemberJSONRequestBody defines body for GrantClientMember for application/json ContentType.
+type GrantClientMemberJSONRequestBody = ClientMembershipGrant
+
 // UpdateCommentJSONRequestBody defines body for UpdateComment for application/json ContentType.
 type UpdateCommentJSONRequestBody UpdateCommentJSONBody
 
@@ -9296,6 +9431,30 @@ type ServerInterface interface {
 	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
 	// (GET /branding)
 	GetWorkspaceBranding(w http.ResponseWriter, r *http.Request)
+	// ListClients Daftar klien (Customer Master). Hanya Workspace Admin
+	// (GET /clients)
+	ListClients(w http.ResponseWriter, r *http.Request, params ListClientsParams)
+	// CreateClient Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
+	// (POST /clients)
+	CreateClient(w http.ResponseWriter, r *http.Request)
+	// GetClient Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
+	// (GET /clients/{clientId})
+	GetClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// UpdateClient Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin
+	// (PATCH /clients/{clientId})
+	UpdateClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// ArchiveClient Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin
+	// (POST /clients/{clientId}/archive)
+	ArchiveClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// ListClientMembers Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin
+	// (GET /clients/{clientId}/members)
+	ListClientMembers(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, params ListClientMembersParams)
+	// GrantClientMember Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (POST /clients/{clientId}/members)
+	GrantClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID)
+	// RevokeClientMember Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (DELETE /clients/{clientId}/members/{userId})
+	RevokeClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, userId openapi_types.UUID)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(w http.ResponseWriter, r *http.Request, commentId openapi_types.UUID)
@@ -12254,6 +12413,247 @@ func (siw *ServerInterfaceWrapper) GetWorkspaceBranding(w http.ResponseWriter, r
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.GetWorkspaceBranding(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListClients operation middleware
+func (siw *ServerInterfaceWrapper) ListClients(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListClientsParams
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "limit" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "limit", r.URL.Query(), &params.Limit, runtime.BindQueryParameterOptions{Type: "integer", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "limit"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "limit", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListClients(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// CreateClient operation middleware
+func (siw *ServerInterfaceWrapper) CreateClient(w http.ResponseWriter, r *http.Request) {
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.CreateClient(w, r)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetClient operation middleware
+func (siw *ServerInterfaceWrapper) GetClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetClient(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// UpdateClient operation middleware
+func (siw *ServerInterfaceWrapper) UpdateClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.UpdateClient(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ArchiveClient operation middleware
+func (siw *ServerInterfaceWrapper) ArchiveClient(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ArchiveClient(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// ListClientMembers operation middleware
+func (siw *ServerInterfaceWrapper) ListClientMembers(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListClientMembersParams
+
+	// ------------- Optional query parameter "include_revoked" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "include_revoked", r.URL.Query(), &params.IncludeRevoked, runtime.BindQueryParameterOptions{Type: "boolean", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "include_revoked"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "include_revoked", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListClientMembers(w, r, clientId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GrantClientMember operation middleware
+func (siw *ServerInterfaceWrapper) GrantClientMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GrantClientMember(w, r, clientId)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// RevokeClientMember operation middleware
+func (siw *ServerInterfaceWrapper) RevokeClientMember(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "clientId" -------------
+	var clientId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "clientId", r.PathValue("clientId"), &clientId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "clientId", Err: err})
+		return
+	}
+
+	// ------------- Path parameter "userId" -------------
+	var userId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "userId", r.PathValue("userId"), &userId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "userId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.RevokeClientMember(w, r, clientId, userId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -21582,6 +21982,14 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodPut+" "+options.BaseURL+"/settings/work-schedule", wrapper.ReplaceWorkSchedule)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users", wrapper.ListUsers)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/types", wrapper.ListUserTypes)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients", wrapper.ListClients)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients", wrapper.CreateClient)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients/{clientId}", wrapper.GetClient)
+	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/clients/{clientId}", wrapper.UpdateClient)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients/{clientId}/archive", wrapper.ArchiveClient)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/clients/{clientId}/members", wrapper.ListClientMembers)
+	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/clients/{clientId}/members", wrapper.GrantClientMember)
+	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/clients/{clientId}/members/{userId}", wrapper.RevokeClientMember)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/users/invitations", wrapper.InviteUser)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/users/{userId}", wrapper.GetUser)
 	m.HandleFunc(http.MethodPatch+" "+options.BaseURL+"/users/{userId}", wrapper.UpdateUser)
@@ -26042,6 +26450,724 @@ func (response GetWorkspaceBranding200JSONResponse) VisitGetWorkspaceBrandingRes
 	}
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientsRequestObject struct {
+	Params ListClientsParams
+}
+
+type ListClientsResponseObject interface {
+	VisitListClientsResponse(w http.ResponseWriter) error
+}
+
+type ListClients200JSONResponse struct {
+	Items []Client `json:"items"`
+}
+
+func (response ListClients200JSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListClients400ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients401ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClients401ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClients403ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClients422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClients422ApplicationProblemPlusJSONResponse) VisitListClientsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClientRequestObject struct {
+	Body *CreateClientJSONRequestBody
+}
+
+type CreateClientResponseObject interface {
+	VisitCreateClientResponse(w http.ResponseWriter) error
+}
+
+type CreateClient201JSONResponse Client
+
+func (response CreateClient201JSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(201)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response CreateClient400ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient401ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient403ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient409ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient409ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type CreateClient422ApplicationProblemPlusJSONResponse Problem
+
+func (response CreateClient422ApplicationProblemPlusJSONResponse) VisitCreateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClientRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+}
+
+type GetClientResponseObject interface {
+	VisitGetClientResponse(w http.ResponseWriter) error
+}
+
+type GetClient200JSONResponse Client
+
+func (response GetClient200JSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetClient400ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response GetClient401ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response GetClient403ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetClient404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetClient404ApplicationProblemPlusJSONResponse) VisitGetClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClientRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	Body     *UpdateClientJSONRequestBody
+}
+
+type UpdateClientResponseObject interface {
+	VisitUpdateClientResponse(w http.ResponseWriter) error
+}
+
+type UpdateClient200JSONResponse Client
+
+func (response UpdateClient200JSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response UpdateClient400ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient401ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient403ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient404ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient404ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient409ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient409ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type UpdateClient422ApplicationProblemPlusJSONResponse Problem
+
+func (response UpdateClient422ApplicationProblemPlusJSONResponse) VisitUpdateClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClientRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+}
+
+type ArchiveClientResponseObject interface {
+	VisitArchiveClientResponse(w http.ResponseWriter) error
+}
+
+type ArchiveClient200JSONResponse Client
+
+func (response ArchiveClient200JSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ArchiveClient400ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient401ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveClient401ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient403ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveClient403ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ArchiveClient404ApplicationProblemPlusJSONResponse Problem
+
+func (response ArchiveClient404ApplicationProblemPlusJSONResponse) VisitArchiveClientResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembersRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	Params   ListClientMembersParams
+}
+
+type ListClientMembersResponseObject interface {
+	VisitListClientMembersResponse(w http.ResponseWriter) error
+}
+
+type ListClientMembers200JSONResponse struct {
+	Items []ClientMembership `json:"items"`
+}
+
+func (response ListClientMembers200JSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListClientMembers400ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers401ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClientMembers401ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers403ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClientMembers403ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListClientMembers404ApplicationProblemPlusJSONResponse Problem
+
+func (response ListClientMembers404ApplicationProblemPlusJSONResponse) VisitListClientMembersResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMemberRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	Body     *GrantClientMemberJSONRequestBody
+}
+
+type GrantClientMemberResponseObject interface {
+	VisitGrantClientMemberResponse(w http.ResponseWriter) error
+}
+
+type GrantClientMember200JSONResponse ClientMembership
+
+func (response GrantClientMember200JSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GrantClientMember400ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember401ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember401ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember403ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember403ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember404ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember404ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember409ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember409ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(409)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GrantClientMember422ApplicationProblemPlusJSONResponse Problem
+
+func (response GrantClientMember422ApplicationProblemPlusJSONResponse) VisitGrantClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMemberRequestObject struct {
+	ClientId openapi_types.UUID `json:"clientId"`
+	UserId   openapi_types.UUID `json:"userId"`
+}
+
+type RevokeClientMemberResponseObject interface {
+	VisitRevokeClientMemberResponse(w http.ResponseWriter) error
+}
+
+type RevokeClientMember200JSONResponse ClientMembership
+
+func (response RevokeClientMember200JSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember400ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response RevokeClientMember400ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(400)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember401ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeClientMember401ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember403ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeClientMember403ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(403)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type RevokeClientMember404ApplicationProblemPlusJSONResponse Problem
+
+func (response RevokeClientMember404ApplicationProblemPlusJSONResponse) VisitRevokeClientMemberResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -43976,6 +45102,30 @@ type StrictServerInterface interface {
 	// GetWorkspaceBranding Identitas visual Workspace yang aman untuk halaman publik dan aplikasi
 	// (GET /branding)
 	GetWorkspaceBranding(ctx context.Context, request GetWorkspaceBrandingRequestObject) (GetWorkspaceBrandingResponseObject, error)
+	// ListClients Daftar klien (Customer Master). Hanya Workspace Admin
+	// (GET /clients)
+	ListClients(ctx context.Context, request ListClientsRequestObject) (ListClientsResponseObject, error)
+	// CreateClient Buat klien baru dengan kode unik yang dinormalisasi (trim, huruf besar). Hanya Workspace Admin
+	// (POST /clients)
+	CreateClient(ctx context.Context, request CreateClientRequestObject) (CreateClientResponseObject, error)
+	// GetClient Ambil satu klien, termasuk yang diarsipkan. Hanya Workspace Admin
+	// (GET /clients/{clientId})
+	GetClient(ctx context.Context, request GetClientRequestObject) (GetClientResponseObject, error)
+	// UpdateClient Ubah nama dan nama pendek. Kode dan ID tidak bisa diubah. Klien arsip tidak bisa diubah. Hanya Workspace Admin
+	// (PATCH /clients/{clientId})
+	UpdateClient(ctx context.Context, request UpdateClientRequestObject) (UpdateClientResponseObject, error)
+	// ArchiveClient Arsipkan klien. Riwayat membership tetap. Mengarsipkan ulang tidak mengubah metadata awal. Hanya Workspace Admin
+	// (POST /clients/{clientId}/archive)
+	ArchiveClient(ctx context.Context, request ArchiveClientRequestObject) (ArchiveClientResponseObject, error)
+	// ListClientMembers Membership klien. Hanya yang aktif, kecuali include_revoked=true. Hanya Workspace Admin
+	// (GET /clients/{clientId}/members)
+	ListClientMembers(ctx context.Context, request ListClientMembersRequestObject) (ListClientMembersResponseObject, error)
+	// GrantClientMember Beri kelayakan klien kepada pengguna aktif (admin atau staf). Membership bukan izin resource. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (POST /clients/{clientId}/members)
+	GrantClientMember(ctx context.Context, request GrantClientMemberRequestObject) (GrantClientMemberResponseObject, error)
+	// RevokeClientMember Cabut membership aktif. Riwayat tetap. Mengulang tidak mengubah apa pun. Hanya Workspace Admin
+	// (DELETE /clients/{clientId}/members/{userId})
+	RevokeClientMember(ctx context.Context, request RevokeClientMemberRequestObject) (RevokeClientMemberResponseObject, error)
 	// DeleteComment Hapus komentar sendiri (atau semua bila `full`)
 	// (DELETE /comments/{commentId})
 	DeleteComment(ctx context.Context, request DeleteCommentRequestObject) (DeleteCommentResponseObject, error)
@@ -47022,6 +48172,235 @@ func (sh *strictHandler) GetWorkspaceBranding(w http.ResponseWriter, r *http.Req
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetWorkspaceBrandingResponseObject); ok {
 		if err := validResponse.VisitGetWorkspaceBrandingResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListClients operation middleware
+func (sh *strictHandler) ListClients(w http.ResponseWriter, r *http.Request, params ListClientsParams) {
+	var request ListClientsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListClients(ctx, request.(ListClientsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListClients")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListClientsResponseObject); ok {
+		if err := validResponse.VisitListClientsResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// CreateClient operation middleware
+func (sh *strictHandler) CreateClient(w http.ResponseWriter, r *http.Request) {
+	var request CreateClientRequestObject
+
+	var body CreateClientJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.CreateClient(ctx, request.(CreateClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "CreateClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(CreateClientResponseObject); ok {
+		if err := validResponse.VisitCreateClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetClient operation middleware
+func (sh *strictHandler) GetClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request GetClientRequestObject
+
+	request.ClientId = clientId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetClient(ctx, request.(GetClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetClientResponseObject); ok {
+		if err := validResponse.VisitGetClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// UpdateClient operation middleware
+func (sh *strictHandler) UpdateClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request UpdateClientRequestObject
+
+	request.ClientId = clientId
+
+	var body UpdateClientJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.UpdateClient(ctx, request.(UpdateClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "UpdateClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(UpdateClientResponseObject); ok {
+		if err := validResponse.VisitUpdateClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ArchiveClient operation middleware
+func (sh *strictHandler) ArchiveClient(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request ArchiveClientRequestObject
+
+	request.ClientId = clientId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ArchiveClient(ctx, request.(ArchiveClientRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ArchiveClient")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ArchiveClientResponseObject); ok {
+		if err := validResponse.VisitArchiveClientResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListClientMembers operation middleware
+func (sh *strictHandler) ListClientMembers(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, params ListClientMembersParams) {
+	var request ListClientMembersRequestObject
+
+	request.ClientId = clientId
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListClientMembers(ctx, request.(ListClientMembersRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListClientMembers")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListClientMembersResponseObject); ok {
+		if err := validResponse.VisitListClientMembersResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GrantClientMember operation middleware
+func (sh *strictHandler) GrantClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID) {
+	var request GrantClientMemberRequestObject
+
+	request.ClientId = clientId
+
+	var body GrantClientMemberJSONRequestBody
+	if err := runtime.BindJSONBody(r, &body); err != nil {
+		sh.options.RequestErrorHandlerFunc(w, r, fmt.Errorf("can't decode JSON body: %w", err))
+		return
+	}
+	request.Body = &body
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GrantClientMember(ctx, request.(GrantClientMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GrantClientMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GrantClientMemberResponseObject); ok {
+		if err := validResponse.VisitGrantClientMemberResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// RevokeClientMember operation middleware
+func (sh *strictHandler) RevokeClientMember(w http.ResponseWriter, r *http.Request, clientId openapi_types.UUID, userId openapi_types.UUID) {
+	var request RevokeClientMemberRequestObject
+
+	request.ClientId = clientId
+	request.UserId = userId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.RevokeClientMember(ctx, request.(RevokeClientMemberRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "RevokeClientMember")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(RevokeClientMemberResponseObject); ok {
+		if err := validResponse.VisitRevokeClientMemberResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

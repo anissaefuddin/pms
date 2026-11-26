@@ -272,6 +272,38 @@ Product Owner menyetujui **domain service B2-03 saja**: paket `server/internal/c
 
 **Pemeriksaan mutasi:** tanpa `FOR SHARE` pada grant, MEM-11 gagal ("the grant never waited on the client lock"). Dengan penguncian dikembalikan, lulus.
 
+## 7f. Authorization, audit, dan API B2-04..06 (27 Nov 2026, Prompt #009)
+
+Product Owner menyetujui **B2-04, B2-05, dan B2-06**: manajemen klien hanya untuk Workspace Admin, membership hanya untuk admin dan staf aktif (partner ditunda), setiap mutasi wajib punya identitas actor.
+
+**Authorization (B2-04).** Setiap operasi memakai `requireUser(requireAdmin(...))`, yaitu guard admin yang sudah ada (`httpserver/admin.go`). Urutan: sesi dulu (401), lalu kapabilitas admin (403), baru data diperiksa. Membership, Space Admin, dan grant resource **tidak** memberi akses manajemen. Actor selalu dari sesi, tidak pernah dari body.
+
+**Audit (B2-05).** Lima aksi `client.created`, `client.updated`, `client.archived`, `client.member_granted`, `client.member_revoked`, terdaftar di `httpserver/audit.go` dan didefinisikan di paket `clients`.
+
+- Domain menerima `Recorder` yang dipanggil **di dalam transaksi yang sama** dengan mutasi, sebelum commit. Jika audit gagal, mutasi di-rollback (AUD-05). Tidak ada mutasi yang tercommit tanpa audit-nya.
+- Event hanya ditulis saat keadaan berubah. Grant ulang, revoke ulang, arsip ulang, dan PATCH yang nilainya sama tidak menulis event (AUD-03).
+- Detail memuat hanya data non-rahasia: kode, nama field yang berubah, ID membership, ID pengguna target.
+
+**API (B2-06).** Delapan operasi di `api/openapi.yaml`: `GET/POST /clients`, `GET/PATCH /clients/{clientId}`, `POST /clients/{clientId}/archive`, `GET/POST /clients/{clientId}/members`, `DELETE /clients/{clientId}/members/{userId}`. Tidak ada hapus atau unarchive.
+
+| Kondisi | Respons |
+|---|---|
+| Tidak ada sesi | 401 |
+| Bukan admin | 403 |
+| UUID tidak valid, body tidak valid, field tidak dikenal (termasuk `code` atau `id` pada PATCH) | 400 |
+| Klien atau pengguna tidak ditemukan, membership belum pernah ada | 404 |
+| Kode duplikat, klien diarsipkan | 409 |
+| Input domain tidak valid, pengguna tidak layak (`user_not_eligible`), limit di luar batas | 422 |
+| Kesalahan database tak terduga | 500 `internal error`, dicatat di log, detail tidak ditampilkan |
+
+Grant dan revoke mengembalikan 200. Grant ulang yang masih aktif mengembalikan baris yang sama. Daftar anggota memakai `include_revoked=true` untuk menyertakan riwayat.
+
+**Artefak generated.** `server/internal/apigen/openapi.gen.go` dan `web/src/api/schema.d.ts` digenerate ulang dengan alat yang sudah ada (`go tool oapi-codegen`, `npm run generate`). Generator menghasilkan ulang tanpa perubahan lain: diverifikasi dengan membandingkan hasil dengan spec HEAD (cocok) dan generate dua kali (identik). Di `schema.d.ts` tidak ada baris yang dihapus. Di Go, git menampilkan banyak blok yang berpindah urutan. Semua baris lama masih ada dalam file baru.
+
+**Batas.** Tidak ada Customer Picker (B2-08). Tidak ada enforcement klien pada Space, item, atau resource (B3). Daftar klien belum punya cursor: batas 200 per halaman, dan pengguna dengan lebih banyak klien perlu paginasi (B2-07 atau berikutnya).
+
+**Tes:** `server/internal/httpserver/clients_api_integration_test.go`. Hasil ada di MVP_SCOPE §14.
+
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).

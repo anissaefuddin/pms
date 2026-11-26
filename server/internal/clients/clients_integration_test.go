@@ -11,6 +11,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/clients"
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/testdb"
+	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -23,6 +24,9 @@ type env struct {
 	svc    *clients.Service
 	admin  string // active admin: a valid actor
 	admin2 string
+	mu     sync.Mutex
+	events []clients.Event
+	rec    clients.Recorder // records events; safe for concurrent use
 }
 
 func newEnv(t *testing.T) *env {
@@ -34,6 +38,12 @@ func newEnv(t *testing.T) *env {
 	}
 	t.Cleanup(pool.Close)
 	e := &env{t: t, pool: pool, svc: clients.New(pool)}
+	e.rec = func(_ context.Context, _ pgx.Tx, ev clients.Event) error {
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		e.events = append(e.events, ev)
+		return nil
+	}
 	e.admin = e.user("admin-a@example.com", "admin", "active")
 	e.admin2 = e.user("admin-b@example.com", "admin", "active")
 	return e
@@ -61,7 +71,7 @@ func (e *env) count(sql string, args ...any) int {
 
 func (e *env) customer(code string) clients.Customer {
 	e.t.Helper()
-	c, err := e.svc.Create(context.Background(), e.admin, clients.CreateInput{Code: code, Name: "Customer " + code})
+	c, err := e.svc.Create(context.Background(), e.admin, clients.CreateInput{Code: code, Name: "Customer " + code}, e.rec)
 	if err != nil {
 		e.t.Fatalf("create %s: %v", code, err)
 	}
@@ -81,7 +91,7 @@ func TestCustomerLifecycle(t *testing.T) {
 	ctx := context.Background()
 
 	t.Run("CL-01 create and canonical identity", func(t *testing.T) {
-		c, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: "  acme-holding ", Name: " ACME Holding ", ShortName: strp("  ACME  ")})
+		c, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: "  acme-holding ", Name: " ACME Holding ", ShortName: strp("  ACME  ")}, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -99,7 +109,7 @@ func TestCustomerLifecycle(t *testing.T) {
 
 	t.Run("CL-02 code and name whitespace validation", func(t *testing.T) {
 		for _, code := range []string{"", "   ", "\t", "\n \t"} {
-			if _, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: code, Name: "X"}); !isInvalid(err, "code") {
+			if _, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: code, Name: "X"}, e.rec); !isInvalid(err, "code") {
 				t.Fatalf("code %q: err = %v, want invalid code", code, err)
 			}
 		}
@@ -107,14 +117,14 @@ func TestCustomerLifecycle(t *testing.T) {
 
 	t.Run("CL-03 duplicate normalized code is rejected by the database", func(t *testing.T) {
 		e.customer("DUP-CODE")
-		if _, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: " dup-code ", Name: "Other"}); !errors.Is(err, clients.ErrDuplicateCode) {
+		if _, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: " dup-code ", Name: "Other"}, e.rec); !errors.Is(err, clients.ErrDuplicateCode) {
 			t.Fatalf("err = %v, want ErrDuplicateCode", err)
 		}
 	})
 
 	t.Run("CL-04 blank name rejected", func(t *testing.T) {
 		for _, name := range []string{"", "  ", "\t"} {
-			if _, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: "NAME-" + name, Name: name}); !isInvalid(err, "name") {
+			if _, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: "NAME-" + name, Name: name}, e.rec); !isInvalid(err, "name") {
 				t.Fatalf("name %q: err = %v, want invalid name", name, err)
 			}
 		}
@@ -123,7 +133,7 @@ func TestCustomerLifecycle(t *testing.T) {
 	t.Run("CL-05 list by state, and Get distinguishes archived and missing", func(t *testing.T) {
 		live := e.customer("LIST-LIVE")
 		old := e.customer("LIST-OLD")
-		if _, err := e.svc.Archive(ctx, e.admin, old.ID); err != nil {
+		if _, err := e.svc.Archive(ctx, e.admin, old.ID, e.rec); err != nil {
 			t.Fatal(err)
 		}
 		activeOnly, err := e.svc.List(ctx, clients.Active, 0)
@@ -182,18 +192,18 @@ func TestCustomerUpdateAndArchive(t *testing.T) {
 
 	t.Run("CL-06 update changes only name and short name", func(t *testing.T) {
 		c := e.customer("UPD-ONE")
-		got, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{Name: strp("Renamed"), ShortName: strp("  R  ")})
+		got, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{Name: strp("Renamed"), ShortName: strp("  R  ")}, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
 		if got.Name != "Renamed" || got.ShortName == nil || *got.ShortName != "R" || got.Code != c.Code || got.ID != c.ID || got.CreatedBy != c.CreatedBy {
 			t.Fatalf("after update = %+v", got)
 		}
-		cleared, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{ShortName: strp("   ")})
+		cleared, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{ShortName: strp("   ")}, e.rec)
 		if err != nil || cleared.ShortName != nil || cleared.Name != "Renamed" {
 			t.Fatalf("blank short name must clear it and keep the name: %+v, %v", cleared, err)
 		}
-		if _, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{Name: strp("  ")}); !isInvalid(err, "name") {
+		if _, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{Name: strp("  ")}, e.rec); !isInvalid(err, "name") {
 			t.Fatalf("blank name: err = %v", err)
 		}
 	})
@@ -215,11 +225,11 @@ func TestCustomerUpdateAndArchive(t *testing.T) {
 
 	t.Run("CL-08 archive keeps identity and membership history", func(t *testing.T) {
 		c := e.customer("ARCH-KEEP")
-		m, err := e.svc.Grant(ctx, e.admin, c.ID, e.user("member-arch@example.com", "regular", "active"))
+		m, err := e.svc.Grant(ctx, e.admin, c.ID, e.user("member-arch@example.com", "regular", "active"), e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
-		archived, err := e.svc.Archive(ctx, e.admin, c.ID)
+		archived, err := e.svc.Archive(ctx, e.admin, c.ID, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -234,11 +244,11 @@ func TestCustomerUpdateAndArchive(t *testing.T) {
 
 	t.Run("CL-09 repeated archive keeps the first archive metadata", func(t *testing.T) {
 		c := e.customer("ARCH-TWICE")
-		first, err := e.svc.Archive(ctx, e.admin, c.ID)
+		first, err := e.svc.Archive(ctx, e.admin, c.ID, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
-		second, err := e.svc.Archive(ctx, e.admin2, c.ID)
+		second, err := e.svc.Archive(ctx, e.admin2, c.ID, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -249,14 +259,14 @@ func TestCustomerUpdateAndArchive(t *testing.T) {
 
 	t.Run("CL-10 archived customer rejects metadata change and new grants", func(t *testing.T) {
 		c := e.customer("ARCH-RO")
-		if _, err := e.svc.Archive(ctx, e.admin, c.ID); err != nil {
+		if _, err := e.svc.Archive(ctx, e.admin, c.ID, e.rec); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{Name: strp("Nope")}); !errors.Is(err, clients.ErrArchived) {
+		if _, err := e.svc.Update(ctx, e.admin, c.ID, clients.UpdateInput{Name: strp("Nope")}, e.rec); !errors.Is(err, clients.ErrArchived) {
 			t.Fatalf("update archived: err = %v, want ErrArchived", err)
 		}
 		user := e.user("member-ro@example.com", "regular", "active")
-		if _, err := e.svc.Grant(ctx, e.admin, c.ID, user); !errors.Is(err, clients.ErrArchived) {
+		if _, err := e.svc.Grant(ctx, e.admin, c.ID, user, e.rec); !errors.Is(err, clients.ErrArchived) {
 			t.Fatalf("grant to archived: err = %v, want ErrArchived", err)
 		}
 		if n := e.count(`SELECT count(*)::int FROM client_memberships WHERE client_id=$1::uuid`, c.ID); n != 0 {
@@ -274,7 +284,7 @@ func TestMembership(t *testing.T) {
 
 	var first clients.Membership
 	t.Run("MEM-01 grant creates one active membership with actor metadata", func(t *testing.T) {
-		m, err := e.svc.Grant(ctx, e.admin, c.ID, member)
+		m, err := e.svc.Grant(ctx, e.admin, c.ID, member, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -285,7 +295,7 @@ func TestMembership(t *testing.T) {
 	})
 
 	t.Run("MEM-02 repeated grant is idempotent and keeps the original actor and time", func(t *testing.T) {
-		again, err := e.svc.Grant(ctx, e.admin2, c.ID, member)
+		again, err := e.svc.Grant(ctx, e.admin2, c.ID, member, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -298,13 +308,13 @@ func TestMembership(t *testing.T) {
 	})
 
 	t.Run("MEM-03 invalid customer or user rejected", func(t *testing.T) {
-		if _, err := e.svc.Grant(ctx, e.admin, "00000000-0000-4000-8000-000000000404", member); !errors.Is(err, clients.ErrNotFound) {
+		if _, err := e.svc.Grant(ctx, e.admin, "00000000-0000-4000-8000-000000000404", member, e.rec); !errors.Is(err, clients.ErrNotFound) {
 			t.Fatalf("missing customer: %v", err)
 		}
-		if _, err := e.svc.Grant(ctx, e.admin, c.ID, "00000000-0000-4000-8000-000000000404"); !errors.Is(err, clients.ErrUserNotFound) {
+		if _, err := e.svc.Grant(ctx, e.admin, c.ID, "00000000-0000-4000-8000-000000000404", e.rec); !errors.Is(err, clients.ErrUserNotFound) {
 			t.Fatalf("missing user: %v", err)
 		}
-		if _, err := e.svc.Grant(ctx, e.admin, c.ID, "not-a-uuid"); !errors.Is(err, clients.ErrUserNotFound) {
+		if _, err := e.svc.Grant(ctx, e.admin, c.ID, "not-a-uuid", e.rec); !errors.Is(err, clients.ErrUserNotFound) {
 			t.Fatalf("malformed user: %v", err)
 		}
 	})
@@ -323,7 +333,7 @@ func TestMembership(t *testing.T) {
 			{"admin", "admin", "active", true},
 		} {
 			id := e.user(tc.name+"@example.com", tc.userType, tc.status)
-			_, err := e.svc.Grant(ctx, e.admin, c.ID, id)
+			_, err := e.svc.Grant(ctx, e.admin, c.ID, id, e.rec)
 			if tc.ok && err != nil {
 				t.Fatalf("%s: %v", tc.name, err)
 			}
@@ -334,7 +344,7 @@ func TestMembership(t *testing.T) {
 	})
 
 	t.Run("MEM-05 revoke keeps the grant and records revocation", func(t *testing.T) {
-		m, err := e.svc.Revoke(ctx, e.admin2, c.ID, member)
+		m, err := e.svc.Revoke(ctx, e.admin2, c.ID, member, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -344,12 +354,12 @@ func TestMembership(t *testing.T) {
 	})
 
 	t.Run("MEM-06 repeated revoke does not rewrite history", func(t *testing.T) {
-		before, err := e.svc.Revoke(ctx, e.admin2, c.ID, member)
+		before, err := e.svc.Revoke(ctx, e.admin2, c.ID, member, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
 		time.Sleep(10 * time.Millisecond)
-		after, err := e.svc.Revoke(ctx, e.admin, c.ID, member)
+		after, err := e.svc.Revoke(ctx, e.admin, c.ID, member, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -359,7 +369,7 @@ func TestMembership(t *testing.T) {
 	})
 
 	t.Run("MEM-07 regrant creates a new row and keeps the old one", func(t *testing.T) {
-		regrant, err := e.svc.Grant(ctx, e.admin, c.ID, member)
+		regrant, err := e.svc.Grant(ctx, e.admin, c.ID, member, e.rec)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -376,10 +386,10 @@ func TestMembership(t *testing.T) {
 
 	t.Run("MEM-08 active and history lists are distinct", func(t *testing.T) {
 		other := e.user("member-list@example.com", "regular", "active")
-		if _, err := e.svc.Grant(ctx, e.admin, c.ID, other); err != nil {
+		if _, err := e.svc.Grant(ctx, e.admin, c.ID, other, e.rec); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := e.svc.Revoke(ctx, e.admin, c.ID, other); err != nil {
+		if _, err := e.svc.Revoke(ctx, e.admin, c.ID, other, e.rec); err != nil {
 			t.Fatal(err)
 		}
 		active, err := e.svc.ListMembers(ctx, c.ID, false)
@@ -411,10 +421,10 @@ func TestMembership(t *testing.T) {
 	t.Run("MEM-09 membership creates no shares, admins or resource roles", func(t *testing.T) {
 		before := e.count(`SELECT (SELECT count(*) FROM shares)+(SELECT count(*) FROM space_admins)+(SELECT count(*) FROM custom_roles)`)
 		other := e.user("member-noshare@example.com", "regular", "active")
-		if _, err := e.svc.Grant(ctx, e.admin, c.ID, other); err != nil {
+		if _, err := e.svc.Grant(ctx, e.admin, c.ID, other, e.rec); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := e.svc.Revoke(ctx, e.admin, c.ID, other); err != nil {
+		if _, err := e.svc.Revoke(ctx, e.admin, c.ID, other, e.rec); err != nil {
 			t.Fatal(err)
 		}
 		if after := e.count(`SELECT (SELECT count(*) FROM shares)+(SELECT count(*) FROM space_admins)+(SELECT count(*) FROM custom_roles)`); after != before {
@@ -425,19 +435,19 @@ func TestMembership(t *testing.T) {
 	t.Run("MEM-12 revoke works for an archived customer and for a deactivated user", func(t *testing.T) {
 		arch := e.customer("MEM-ARCH")
 		u := e.user("member-deact@example.com", "regular", "active")
-		if _, err := e.svc.Grant(ctx, e.admin, arch.ID, u); err != nil {
+		if _, err := e.svc.Grant(ctx, e.admin, arch.ID, u, e.rec); err != nil {
 			t.Fatal(err)
 		}
-		if _, err := e.svc.Archive(ctx, e.admin, arch.ID); err != nil {
+		if _, err := e.svc.Archive(ctx, e.admin, arch.ID, e.rec); err != nil {
 			t.Fatal(err)
 		}
 		if _, err := e.pool.Exec(ctx, `UPDATE users SET status='deactivated' WHERE id=$1::uuid`, u); err != nil {
 			t.Fatal(err)
 		}
-		if m, err := e.svc.Revoke(ctx, e.admin, arch.ID, u); err != nil || m.Status != "revoked" {
+		if m, err := e.svc.Revoke(ctx, e.admin, arch.ID, u, e.rec); err != nil || m.Status != "revoked" {
 			t.Fatalf("revoke archived customer / deactivated user: %+v, %v", m, err)
 		}
-		if _, err := e.svc.Revoke(ctx, e.admin, arch.ID, "00000000-0000-4000-8000-000000000ab1"); !errors.Is(err, clients.ErrNotMember) {
+		if _, err := e.svc.Revoke(ctx, e.admin, arch.ID, "00000000-0000-4000-8000-000000000ab1", e.rec); !errors.Is(err, clients.ErrNotMember) {
 			t.Fatalf("never a member: err = %v, want ErrNotMember", err)
 		}
 	})
@@ -454,7 +464,7 @@ func TestConcurrentCreateKeepsOneCode(t *testing.T) {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
-			_, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: "RACE-CODE", Name: "Race"})
+			_, err := e.svc.Create(ctx, e.admin, clients.CreateInput{Code: "RACE-CODE", Name: "Race"}, e.rec)
 			mu.Lock()
 			defer mu.Unlock()
 			switch {
@@ -486,7 +496,7 @@ func TestConcurrentGrantsLeaveOneActiveMembership(t *testing.T) {
 		wg.Add(1)
 		go func(i int) {
 			defer wg.Done()
-			m, err := e.svc.Grant(ctx, e.admin, c.ID, member)
+			m, err := e.svc.Grant(ctx, e.admin, c.ID, member, e.rec)
 			ids[i], errs[i] = m.ID, err
 		}(i)
 	}
@@ -522,7 +532,7 @@ func TestGrantWaitsForArchiveAndIsRefused(t *testing.T) {
 	}
 	done := make(chan error, 1)
 	go func() {
-		_, err := e.svc.Grant(ctx, e.admin, c.ID, member)
+		_, err := e.svc.Grant(ctx, e.admin, c.ID, member, e.rec)
 		done <- err
 	}()
 	deadline := time.Now().Add(10 * time.Second)

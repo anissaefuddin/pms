@@ -3,6 +3,7 @@ package clients
 import (
 	"context"
 	"errors"
+	"fmt"
 
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -60,7 +61,10 @@ LIMIT $3`, clientID, history, maxMembers)
 
 // Grant makes a user eligible for a client. Repeating an active grant returns the existing row unchanged.
 // Two concurrent grants race on the partial unique index; the loser returns the winner's row.
-func (s *Service) Grant(ctx context.Context, actor, clientID, userID string) (Membership, error) {
+func (s *Service) Grant(ctx context.Context, actor, clientID, userID string, rec Recorder) (Membership, error) {
+	if rec == nil {
+		return Membership{}, ErrNoRecorder
+	}
 	if _, err := uuid.Parse(clientID); err != nil {
 		return Membership{}, ErrNotFound
 	}
@@ -72,7 +76,7 @@ func (s *Service) Grant(ctx context.Context, actor, clientID, userID string) (Me
 	}
 	// Two attempts: the second one only runs after a lost race, and then finds the active row the winner committed.
 	for attempt := 0; attempt < 2; attempt++ {
-		m, retry, err := s.grantOnce(ctx, actor, clientID, userID)
+		m, retry, err := s.grantOnce(ctx, actor, clientID, userID, rec)
 		if retry {
 			continue
 		}
@@ -81,7 +85,7 @@ func (s *Service) Grant(ctx context.Context, actor, clientID, userID string) (Me
 	return Membership{}, errors.New("clients: grant did not settle after a lost race")
 }
 
-func (s *Service) grantOnce(ctx context.Context, actor, clientID, userID string) (Membership, bool, error) {
+func (s *Service) grantOnce(ctx context.Context, actor, clientID, userID string, rec Recorder) (Membership, bool, error) {
 	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{})
 	if err != nil {
 		return Membership{}, false, err
@@ -126,6 +130,9 @@ func (s *Service) grantOnce(ctx context.Context, actor, clientID, userID string)
 	if err != nil {
 		return Membership{}, false, mapCustomerError(err)
 	}
+	if err := rec(ctx, tx, Event{Action: ActionMemberGranted, CustomerID: clientID, UserID: userID, Details: map[string]any{"membership_id": m.ID}}); err != nil {
+		return Membership{}, false, fmt.Errorf("clients: record audit: %w", err)
+	}
 	if err := tx.Commit(ctx); err != nil {
 		return Membership{}, false, mapCustomerError(err)
 	}
@@ -135,7 +142,10 @@ func (s *Service) grantOnce(ctx context.Context, actor, clientID, userID string)
 // Revoke ends an active membership and keeps the row. A repeated revoke returns the revoked row unchanged.
 // Revoking is allowed for an archived customer and for a user who is no longer eligible.
 // ErrNotMember means the pair has never had a membership.
-func (s *Service) Revoke(ctx context.Context, actor, clientID, userID string) (Membership, error) {
+func (s *Service) Revoke(ctx context.Context, actor, clientID, userID string, rec Recorder) (Membership, error) {
+	if rec == nil {
+		return Membership{}, ErrNoRecorder
+	}
 	if _, err := uuid.Parse(clientID); err != nil {
 		return Membership{}, ErrNotFound
 	}
@@ -182,6 +192,9 @@ func (s *Service) Revoke(ctx context.Context, actor, clientID, userID string) (M
 		active.ID, actor))
 	if err != nil {
 		return Membership{}, mapCustomerError(err)
+	}
+	if err := rec(ctx, tx, Event{Action: ActionMemberRevoked, CustomerID: clientID, UserID: userID, Details: map[string]any{"membership_id": revoked.ID}}); err != nil {
+		return Membership{}, fmt.Errorf("clients: record audit: %w", err)
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return Membership{}, mapCustomerError(err)
