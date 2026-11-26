@@ -110,6 +110,12 @@ func TestFinancialFiguresAgreeAcrossConsumers(t *testing.T) {
 	if a := analytics(adminNone); a.status != 200 || a.body["total"] != float64(0) || len(a.body["rows"].([]any)) != 0 {
 		t.Errorf("admin without a grant sees no money: %v", a.body)
 	}
+	// Nor does their own draft turn the others' hidden cost into a row of zero (DEF-046).
+	f.exec("INSERT INTO time_entries(item_id,user_id,entry_date,minutes,billing_type,status) VALUES ($1,$2,'2026-11-30',30,'billable','draft')", task, adminEditor.id)
+	if a := f.call(adminEditor, "POST", "/analytics/query", map[string]any{"reporting_on": "time_entries", "metric": "actual_cost_minor"}); a.status != 200 || len(a.body["rows"].([]any)) != 0 || a.body["cost_status"] != "partial" {
+		t.Errorf("a hidden cost plus an own draft is not a cost of zero: %v", a.body)
+	}
+	f.exec("DELETE FROM time_entries WHERE user_id=$1", adminEditor.id)
 	s := summary(adminEditor)
 	if s["cost_status"] != "partial" || s["actual_cost_minor"] != nil || s["known_cost_minor"] != float64(0) {
 		t.Errorf("admin with Editor, panel: %v", s)

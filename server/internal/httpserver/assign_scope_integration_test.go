@@ -200,3 +200,41 @@ func TestAFolderCannotBeTurnedIntoADirectShare(t *testing.T) {
 	}
 	c.move(c.full, only, 200, "Full on the Space may move it", "")
 }
+
+// DEF-044 (final review B1): creating something with initial shares hands out rights too.
+func TestCreateWithSharesCannotDelegateFromAFolder(t *testing.T) {
+	c := newScopeCast(t)
+	f := c.f
+	holder := c.folder("Holder", "")
+	c.move(c.editor, holder, 200, "folder also under G", "", c.g)
+	create := func(p *person, parent, role string) reply {
+		return f.call(p, "POST", "/items", map[string]any{"type": "folder", "title": "P", "locations": []map[string]any{c.at(parent)},
+			"shares": []map[string]any{{"principal_type": "user", "principal_id": c.editor.id, "role": role}}})
+	}
+	before := f.queryID("SELECT count(*)||'/'||(SELECT count(*) FROM shares)||'/'||(SELECT count(*) FROM notifications) FROM items")
+	f.want(create(c.editor, holder, "full"), 403, "a Full share from a folder placed in two ways")
+	if after := f.queryID("SELECT count(*)||'/'||(SELECT count(*) FROM shares)||'/'||(SELECT count(*) FROM notifications) FROM items"); after != before {
+		t.Fatalf("refused, yet something was written: %s -> %s", before, after)
+	}
+	f.want(create(c.editor, holder, "editor"), 201, "a share that does not include sharing")
+	f.want(create(c.editor, c.g, "full"), 201, "inside G only, where the folder's Full covers every way up")
+}
+
+// DEF-045: an invitation grants no more than the inviter could grant by sharing (D-17.1).
+func TestInvitationSharesNeedTheInvitersOwnRight(t *testing.T) {
+	f := newFixture(t)
+	outsider, owner := f.unlinkedAdmin(), f.unlinkedAdmin()
+	space := f.spaceWithoutAdmins("Closed")
+	f.share(space, "user", owner.id, "full")
+	invite := func(p *person, email, role string) reply {
+		return f.call(p, "POST", "/users/invitations", map[string]any{"email": email, "user_type": "regular", "share": []map[string]any{{"target_type": "space", "target_id": space, "role": role}}})
+	}
+	for _, role := range []string{"full", "read"} {
+		f.want(invite(outsider, role+"@example.com", role), 403, "admin without access invites into the Space as "+role)
+	}
+	if n := f.queryID("SELECT count(*)::text FROM users WHERE email LIKE '%@example.com' AND email IN ('full@example.com','read@example.com')"); n != "0" {
+		t.Fatalf("refused invitations left accounts: %s", n)
+	}
+	f.want(invite(owner, "guest@example.com", "editor"), 201, "admin with Full on it")
+	f.want(f.call(outsider, "POST", "/users/invitations", map[string]any{"email": "plain@example.com", "user_type": "regular"}), 201, "no share, no condition")
+}

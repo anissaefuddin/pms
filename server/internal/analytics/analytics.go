@@ -421,6 +421,7 @@ func runGrouped(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, q Q
 			if !managed[h.itemID] && h.user != actor.ID {
 				if h.countable {
 					costStatus = "partial"
+					unknown[key{h.gKey, h.bKey}] = true
 				}
 				continue
 			}

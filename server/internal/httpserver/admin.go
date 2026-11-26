@@ -11,6 +11,7 @@ import (
 	"strings"
 	"unicode/utf8"
 
+	"github.com/anissaefuddin/pms/server/internal/items"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
@@ -159,6 +160,31 @@ type inviteShare struct {
 	Role string `json:"role"`
 }
 
+// mayInviteInto is the rule of the share endpoints: Share on the target, and nothing beyond one's own rights there.
+func mayInviteInto(ctx context.Context, tx pgx.Tx, actor policy.Actor, share inviteShare) error {
+	var caps policy.Caps
+	var err error
+	if share.Type == "space" {
+		var access policy.SpaceAccess
+		access, _, err = policy.SpaceAccessFor(ctx, tx, actor, share.ID)
+		caps = access.Caps
+	} else {
+		caps, err = policy.ItemCaps(ctx, tx, actor, share.ID)
+	}
+	if err != nil {
+		return err
+	}
+	role := policy.RoleCaps(policy.Role(share.Role))
+	ok := caps.Has(policy.Share) && caps.Contains(role)
+	if ok && share.Type == "item" && role.Has(policy.Share) {
+		ok, err = items.CanReassign(ctx, tx, actor, share.ID)
+	}
+	if err == nil && !ok {
+		err = adminError{403, "forbidden", "you can only invite people into what you may share yourself"}
+	}
+	return err
+}
+
 func (s *Server) adminInvite(w http.ResponseWriter, r *http.Request) {
 	var in struct {
 		Email    string          `json:"email"`
@@ -200,6 +226,12 @@ func (s *Server) adminInvite(w http.ResponseWriter, r *http.Request) {
 		if err := tx.QueryRow(ctx, `INSERT INTO users(email,user_type,invitation_message,invited_by)
 VALUES($1,$2,$3,$4) RETURNING id::text`, in.Email, in.UserType, in.Message, actorOf(r).ID).Scan(&id); err != nil {
 			return err
+		}
+		// An invitation grants no more than the inviter could grant by sharing (D-17.1, DEF-045). Checked before any share is written.
+		for _, share := range in.Share {
+			if err := mayInviteInto(ctx, tx, actorOf(r), share); err != nil {
+				return err
+			}
 		}
 		for _, share := range in.Share {
 			if _, err := tx.Exec(ctx, `INSERT INTO shares(target_type,target_id,principal_type,principal_id,role,created_by)
