@@ -4983,10 +4983,10 @@ export interface components {
     schemas: {
         VersionInfo: {
             version: string;
-            /** @description Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build */
-            commit: string;
-            /** @description Waktu build (UTC); "unknown" bila tidak diberikan */
-            built_at: string;
+            /** @description Hanya admin. Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build */
+            commit?: string;
+            /** @description Hanya admin. Waktu build (UTC); "unknown" bila tidak diberikan */
+            built_at?: string;
             /** @description Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan. */
             image?: {
                 /** @description Referensi image yang dikonfigurasi (biasanya tag, bukan bukti isi) */
@@ -4996,6 +4996,10 @@ export interface components {
                 /** @description Digest manifest registry; hanya untuk image yang ditarik dari registry */
                 registry_digest: string;
             };
+            /** @description Hanya admin. Versi migrasi database */
+            schema?: number;
+            /** @description Hanya admin. OS/arsitektur proses yang berjalan */
+            platform?: string;
         };
         OverviewTimelineNode: {
             /** Format: uuid */

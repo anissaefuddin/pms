@@ -6873,11 +6873,11 @@ type UtilizationRow struct {
 
 // VersionInfo defines model for VersionInfo.
 type VersionInfo struct {
-	// BuiltAt Waktu build (UTC); "unknown" bila tidak diberikan
-	BuiltAt string `json:"built_at"`
+	// BuiltAt Hanya admin. Waktu build (UTC); "unknown" bila tidak diberikan
+	BuiltAt *string `json:"built_at,omitempty"`
 
-	// Commit Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build
-	Commit string `json:"commit"`
+	// Commit Hanya admin. Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build
+	Commit *string `json:"commit,omitempty"`
 
 	// Image Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan.
 	Image *struct {
@@ -6890,6 +6890,12 @@ type VersionInfo struct {
 		// RegistryDigest Digest manifest registry; hanya untuk image yang ditarik dari registry
 		RegistryDigest string `json:"registry_digest"`
 	} `json:"image,omitempty"`
+
+	// Platform Hanya admin. OS/arsitektur proses yang berjalan
+	Platform *string `json:"platform,omitempty"`
+
+	// Schema Hanya admin. Versi migrasi database
+	Schema  *int   `json:"schema,omitempty"`
 	Version string `json:"version"`
 }
 

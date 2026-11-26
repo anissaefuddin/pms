@@ -12,6 +12,7 @@ import (
 	"net/http"
 	"net/url"
 	"regexp"
+	"runtime"
 	"runtime/debug"
 	"strconv"
 	"strings"
@@ -267,7 +268,12 @@ func (s *Server) readyz(w http.ResponseWriter, r *http.Request) {
 func (s *Server) version(w http.ResponseWriter, r *http.Request) {
 	info := buildinfo.Current()
 	if actorOf(r).Type != policy.Admin {
-		info.Image = nil
+		info = buildinfo.Info{Version: info.Version} // diagnostics are for administrators
+	} else {
+		info.Platform = runtime.GOOS + "/" + runtime.GOARCH
+		if err := s.pool.QueryRow(r.Context(), "SELECT COALESCE(max(version_id),0) FROM schema_migrations WHERE is_applied").Scan(&info.Schema); err != nil {
+			slog.ErrorContext(r.Context(), "schema version", "error", err)
+		}
 	}
 	writeJSON(w, http.StatusOK, info)
 }

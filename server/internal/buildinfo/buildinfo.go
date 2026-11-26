@@ -26,9 +26,12 @@ type Image struct {
 
 type Info struct {
 	Version string `json:"version"`
-	Commit  string `json:"commit"`
-	BuiltAt string `json:"built_at"`
+	Commit  string `json:"commit,omitempty"`
+	BuiltAt string `json:"built_at,omitempty"`
 	Image   *Image `json:"image,omitempty"`
+	// Schema and Platform are filled by the version endpoint for administrators.
+	Schema   int64  `json:"schema,omitempty"`
+	Platform string `json:"platform,omitempty"`
 }
 
 func Current() Info {

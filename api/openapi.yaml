@@ -7142,11 +7142,11 @@ components:
   schemas:
     VersionInfo:
       type: object
-      required: [version, commit, built_at]
+      required: [version]
       properties:
         version: { type: string }
-        commit: { type: string, description: 'Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build' }
-        built_at: { type: string, description: 'Waktu build (UTC); "unknown" bila tidak diberikan' }
+        commit: { type: string, description: 'Hanya admin. Git commit SHA yang dibangun; "unknown" bila tidak diberikan saat build' }
+        built_at: { type: string, description: 'Hanya admin. Waktu build (UTC); "unknown" bila tidak diberikan' }
         image:
           type: object
           description: Hanya admin. Diisi skrip deploy; "unavailable" bila tidak diberikan.
@@ -7155,6 +7155,8 @@ components:
             ref: { type: string, description: 'Referensi image yang dikonfigurasi (biasanya tag, bukan bukti isi)' }
             id: { type: string, description: ID image lokal di host (sha256) }
             registry_digest: { type: string, description: Digest manifest registry; hanya untuk image yang ditarik dari registry }
+        schema: { type: integer, description: 'Hanya admin. Versi migrasi database' }
+        platform: { type: string, description: 'Hanya admin. OS/arsitektur proses yang berjalan' }
     OverviewTimelineNode:
       type: object
       required: [id, title, type, status_group, in_range, children]

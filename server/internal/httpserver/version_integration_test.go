@@ -15,18 +15,16 @@ func TestVersionReportsBuildAndOnlySuppliedImageIdentity(t *testing.T) {
 
 	r := f.call(member, "GET", "/version", nil)
 	f.want(r, 200, "member")
-	for _, key := range []string{"version", "commit", "built_at"} {
-		if s, _ := r.body[key].(string); s == "" {
-			t.Fatalf("member: %s missing in %v", key, r.body)
-		}
-	}
-	if _, ok := r.body["image"]; ok {
-		t.Fatalf("member sees image identity: %v", r.body)
+	if s, _ := r.body["version"].(string); s == "" || len(r.body) != 1 {
+		t.Fatalf("a member is told the version and nothing else: %v", r.body)
 	}
 
 	image := func() map[string]any {
 		r := f.call(admin, "GET", "/version", nil)
 		f.want(r, 200, "admin")
+		if r.body["commit"] == nil || r.body["built_at"] == nil || r.body["platform"] == nil || r.body["schema"].(float64) < 360 {
+			t.Fatalf("admin diagnostics: %v", r.body)
+		}
 		m, ok := r.body["image"].(map[string]any)
 		if !ok {
 			t.Fatalf("admin: no image object in %v", r.body)
