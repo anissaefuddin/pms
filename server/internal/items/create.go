@@ -524,12 +524,19 @@ func CanAssignOthers(ctx context.Context, db policy.DB, actor policy.Actor, loca
 		if space.Kind == "personal" || !caps.Has(policy.Share) {
 			return false, nil
 		}
+		if loc.ParentID != nil { // a folder placed twice grants only if every way up from it does
+			parent := loc.ParentID.String()
+			every, err := policy.SharedOnEveryPath(ctx, db, actor, loc.SpaceID.String(), []string{parent})
+			if err != nil || !every[parent] {
+				return false, err
+			}
+		}
 	}
 	return len(locations) > 0, nil
 }
 
-// CanReassign is the same rule for an existing Item: Full access in every shared place of the Item that the actor can see, and in at
-// least one. A personal Space gives no say, so placing a Task in one's own Space adds nothing. Another place where the actor is only
+// CanReassign is the same rule for an existing Item: Full access on every way up from the Item, in every shared Space of the Item
+// that the actor can see, and in at least one. A personal Space gives no say, so placing a Task in one's own Space adds nothing. Another place where the actor is only
 // an Editor is enough to refuse, so adding a Space of one's own as a second location adds nothing either.
 func CanReassign(ctx context.Context, db policy.DB, actor policy.Actor, itemID string) (bool, error) {
 	allowed, err := CanReassignMany(ctx, db, actor, []string{itemID})
@@ -562,10 +569,14 @@ WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_i
 		if err != nil {
 			return nil, err
 		}
+		every, err := policy.SharedOnEveryPath(ctx, db, actor, p.Space, p.Items)
+		if err != nil {
+			return nil, err
+		}
 		for _, id := range p.Items {
 			switch c := caps[id]; {
 			case !c.Has(policy.View):
-			case c.Has(policy.Share):
+			case c.Has(policy.Share) && every[id]:
 				allowed[id] = true
 			default:
 				refused[id] = true

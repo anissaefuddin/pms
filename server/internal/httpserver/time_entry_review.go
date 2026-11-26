@@ -3,6 +3,7 @@ package httpserver
 import (
 	"context"
 	"net/http"
+	"slices"
 	"strconv"
 	"strings"
 	"time"
@@ -55,15 +56,14 @@ SELECT item_id::text FROM sent`, actor.ID, in.From, in.To, ids)
 		sent, err = pgx.CollectRows(rows, pgx.RowTo[string])
 	}
 	batch := s.notificationBatch()
-	told := map[string]bool{}
-	for _, item := range sent { // one notice per Task, however many days were sent
-		if err != nil || told[item] {
-			continue
-		}
-		told[item] = true
-		var reviewers []notifications.Principal
-		if reviewers, err = timeReviewers(ctx, tx, item); err == nil {
-			_, err = batch.Record(ctx, tx, actor, "timesheet_submitted", notifications.Target{Item: item}, in.From+" - "+in.To, reviewers, nil)
+	tasks := slices.Compact(slices.Sorted(slices.Values(sent))) // one notice per Task, however many days were sent
+	var reviewers map[string][]notifications.Principal
+	if err == nil && len(tasks) > 0 {
+		reviewers, err = timeReviewers(ctx, tx, tasks)
+	}
+	for _, task := range tasks {
+		if err == nil {
+			_, err = batch.Record(ctx, tx, actor, "timesheet_submitted", notifications.Target{Item: task}, in.From+" - "+in.To, reviewers[task], nil)
 		}
 	}
 	if err == nil {
