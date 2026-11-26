@@ -261,3 +261,23 @@ Belum diverifikasi di lingkungan ini: semua tes Go integrasi (butuh database tes
 - **DEC-10 — Move bukan jalur lain untuk assign (APPROVED, Product Owner, 26 Nov 2026).** Menugaskan orang lain butuh hak share di setiap jalur dari item ke Space (`policy.SharedOnEveryPath`); hak dari satu folder tidak berlaku di luar folder itu. Move atau restore yang membawa assignee orang lain, atau share langsung yang mencakup share, ke batas otorisasi baru (Space atau kumpulan folder/project ber-share yang berbeda) ditolak utuh kecuali pelaku boleh assign di tujuan. Memberi share langsung yang mencakup share butuh hak yang sama dengan assign. Tidak ada unassign diam-diam.
 - **DEC-10 klarifikasi (APPROVED, Product Owner, 26 Nov 2026).** Full di tujuan saja tidak memberi kewenangan memindahkan item keluar dari sumbernya. Bila item (atau turunannya) membawa assignee orang lain atau share langsung yang mencakup share, dan Move mengubah batas otorisasinya (menambah atau melepas), pelaku harus boleh assign di sumber, dan juga di setiap tujuan baru. Sesudah Move yang sah, assignment mengikuti hak efektif di tujuan. Restore mengikuti aturan yang sama pada tempat item mendarat.
 - **DEF-043 (DEFERRED_APPROVED, Product Owner, 26 Nov 2026).** Sisa optimasi query submit timesheet ditunda ke minor release berikutnya. Baseline: 100 entry, 20 reviewer: 6.142 statement, 1,1 s (Postgres lokal). Target penerimaan: submit 100 entry di bawah 2.000 statement dan di bawah 500 ms pada kondisi yang sama.
+
+## 9. PROPOSED — Platform Ready MVP (usulan AI, menunggu PO, 27 Nov 2026)
+
+Bagian ini hanya referensi. **Tidak ada yang APPROVED.** Detail ada di [ADR-CLIENT-SCOPE-MVP](../architecture/ADR-CLIENT-SCOPE-MVP.md) dan [MVP_SCOPE](../roadmap/MVP_SCOPE.md).
+
+- **K-20 — Customer diturunkan dari owner Space, bukan field Customer.** PROPOSED.
+- **K-21 — Identitas listing Pydio.** Utamakan identitas pengguna terdelegasi. Token layanan bersama tidak otomatis aman. PROPOSED, menunggu spike.
+- **K-22 — Referensi folder Pydio.** Pakai field Workspace `Pydio Folder`, satu per project. PROPOSED.
+- **K-23 — Nama kolom kepemilikan klien.** `items.owner_id` sudah berarti pengguna. PROPOSED.
+- **K-24 — Status UNRESOLVED.** NULL tidak pernah berarti INTERNAL. PROPOSED.
+- **K-25 — Personal Space** tidak boleh punya lokasi item klien. PROPOSED.
+- **K-26 — Blueprint dan automation tingkat akun** tidak memberi akses lintas klien. PROPOSED.
+- **K-27 — Request form** routing lintas Space hanya dalam ruang lingkup kompatibel. PROPOSED.
+- **K-28 — Otoritas INTERNAL.** Butuh persetujuan PO atau pemilik bisnis yang ditunjuk (nama belum ditentukan). PROPOSED.
+- **K-29 — Referensi polimorfik** (`shares.target_id`, dll.): FK atau cek aplikasi. PROPOSED.
+- **D-55 amandemen (usulan).** Fondasi klien dan registry statis dimajukan. BOR runtime tetap ditunda. PROPOSED, butuh keputusan formal.
+
+**Catatan ketidaksesuaian ID (dipertahankan, tidak diubah):**
+- Aturan assignment "Full di setiap jalur" tercatat di **DEC-10** (APPROVED, 26 Nov). **DEC-06 Rev.1** adalah keputusan biaya, bukan assignment. Rencana dan dokumen RC3 yang mengutip DEC-06 untuk assignment perlu diperbaiki.
+- **D-08** di bagian 1 ini adalah "Isi PRD v0.3". Keputusan Pydio dari blueprint LENS dirujuk sebagai "D-08 (blueprint LENS)".

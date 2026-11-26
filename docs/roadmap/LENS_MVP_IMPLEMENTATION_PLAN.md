@@ -6,7 +6,7 @@
 | **Tanggal** | 27 November 2026 |
 | **Sumber utama** | [PMS-MVP-IMP-002 v0.1](sources/PMS_PLATFORM_READY_MVP_IMPLEMENTATION_PLAN.md) (27 Nov) |
 | **Sumber pendukung** | [C-lite+ Architecture v0.2](https://docs.maloka.app/doc/lens-unified-platform-c-lite-architecture-bZPEK9VvTj) · [Analisa kelayakan, pembaruan 26 Nov](https://docs.maloka.app/doc/analisa-ide-lens-hybrid-platform-kelayakan-kelebihan-kekurangan-dan-risiko-hdeEW5YDcj) · [checkpoint v0.13.0](../current/README.md) |
-| **Baseline kode** | `v0.13.0` = `72f9902`. Branch kerja saat dokumen ini ditulis: `docs/restructure-mvp-roadmap` @ `c4f7afc` (4 commit di atas v0.13.0, belum di-push, lihat §3) |
+| **Baseline kode** | `v0.13.0` = `72f9902`. Branch kerja `docs/restructure-mvp-roadmap`, 6 commit di atas v0.13.0 (sampai `336b290`, checkpoint audit 27 Nov). Belum di-push: cabang remote tidak ada. Scope dan ADR: [MVP_SCOPE.md](MVP_SCOPE.md), [ADR-CLIENT-SCOPE-MVP](../architecture/ADR-CLIENT-SCOPE-MVP.md) (keduanya PROPOSED). Lihat §3 |
 | **Target** | Produksi **internal**, PMS satu-satunya solution aktif, tanpa Solution Switcher |
 | **Versi rilis** | `0.x.y` sampai pemilik produk menyetujui MVP 1. Usulan kandidat: `v0.14.0` |
 
@@ -156,7 +156,7 @@ Registry customer sendiri **bukan** isolasi. Filter, label, atau menu tersembuny
 | B3-04 | Gerbang Space | `policy/engine.go` `visibleSpaces`/`SpaceAccessFor`/`CanOnSpace`: Space `client` hanya untuk pemegang membership aktif; `unresolved` ditolak di mode enforcement; internal tetap memakai grant eksplisit (bukan bypass semua klien). Workspace Admin tidak dikecualikan | AC-05, AC-07 |
 | B3-05 | Gerbang item per lokasi | `policy/item.go` `itemsCaps`: buang lokasi yang Space-nya tidak eligible **sebelum** menggabungkan cap; buang lokasi yang owner Space-nya ≠ `items.client_id`. `share_paths.go`: share langsung juga lewat gerbang membership | AC-07, AC-29 C-lite+ |
 | B3-06 | Aturan assign tidak melemah | Penyaringan lokasi tidak boleh menghapus path restriktif sehingga assign "naik" (Full di semua path relevan, DEC-06 Rev.1). Tes eksplisit untuk item multi-lokasi | AC-06 |
-| B3-07 | Revoke dan cache | `policyCache` di `httpserver` diinvalidasi saat membership/owner berubah; token publik/file yang sudah terbit ditinjau (lihat B3-17) | AC-14 C-lite+, AC-10 |
+| B3-07 | Revoke dan cache | **Dikoreksi (audit B0-03).** `policyCache` (`httpserver/access_policy.go:33`) hanya untuk IP allowlist dan OTP, bukan otorisasi, dan tidak diubah di sini. Tidak ada cache keputusan Space atau item yang perlu diinvalidasi: pastikan pencabutan membership berlaku langsung pada pembacaan berikutnya. Token publik dan file yang sudah terbit ditinjau (lihat B3-17) | AC-14 C-lite+, AC-10 |
 
 **B3c — Jalur tulis (same-owner)**
 
