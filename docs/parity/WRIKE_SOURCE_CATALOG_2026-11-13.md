@@ -7,7 +7,7 @@ Retest 14 Nov 2026 mencocokkan seluruh WFP-001–106 dengan register dan matriks
 ## Sumber dan batas
 
 - Tabel perbandingan resmi: <https://www.wrike.com/comparison-table/>. Halaman harga: <https://www.wrike.com/pricing/>. Keduanya dibaca otomatis (ekstraksi teks) pada tanggal di atas; tanda centang pada halaman diterjemahkan menjadi daftar paket. Tanda `*` pada fitur AI mengikuti sumber (fitur kuota AI Elite). Hasil bacaan otomatis perlu dicocokkan sekali oleh manusia dengan halaman asli sebelum pembekuan.
-- Bukan pengujian pada akun berbayar. Perilaku rinci tiap fitur (bukan hanya ketersediaan per paket) tetap bersumber dari help center dan [Wrike_Feature_Scanning.md](../Wrike_Feature_Scanning.md).
+- Bukan pengujian pada akun berbayar. Perilaku rinci tiap fitur (bukan hanya ketersediaan per paket) tetap bersumber dari help center dan [Wrike_Feature_Scanning.md](Wrike_Feature_Scanning.md).
 - Paket yang ada: **Free, Team, Business, Pinnacle, Apex.** Halaman harga tidak mencantumkan paket **Enterprise**; baris register yang menyebut "Enterprise" dikoreksi di bawah.
 - Harga acuan: Free $0, Team $10 dan Business $25 per pengguna per bulan (tahunan); Pinnacle dan Apex lewat sales. Batas pengguna: Free tanpa batas, Team 2 sampai 15, Business 5 sampai 200, Pinnacle dan Apex tanpa batas. Penyimpanan: Free 2 GB per akun, Team 2 GB, Business 5 GB, Pinnacle 15 GB, Apex 50 GB per pengguna.
 
@@ -57,7 +57,7 @@ Retest 14 Nov 2026 mencocokkan seluruh WFP-001–106 dengan register dan matriks
 
 ## B. Rekonsiliasi WFP-001 sampai WFP-106
 
-Sumber register: [PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md](../PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md) §4. Kolom "Paket register" adalah klaim awal; "Temuan resmi" dari bagian A.
+Sumber register: [PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md](PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md) §4. Kolom "Paket register" adalah klaim awal; "Temuan resmi" dari bagian A.
 
 - **CONFIRMED:** paket register sama dengan tabel resmi. **RESOLVED:** register menulis Verify; paket kini diketahui. **CORRECTED:** register keliru. **AMBIGUOUS:** sumber memuat dua baris yang bisa sepadan, butuh keputusan manusia. **NOT_IN_TABLE:** tabel resmi tidak memuat baris sepadan; ketersediaan tetap harus dibuktikan dari help center atau akun uji, jangan diasumsikan.
 
@@ -183,4 +183,4 @@ Ringkasan: 24 CONFIRMED, 42 RESOLVED, 8 CORRECTED, 1 AMBIGUOUS, 31 NOT_IN_TABLE 
 
 ## D. Rekonsiliasi dengan flow screen
 
-Tiap baris WFP dipetakan ke kelompok screen di [ANALISA_FITUR_SCREEN.md](../ANALISA_FITUR_SCREEN.md) dan [screens](../screens/) melalui kolom Capability. Rekonsiliasi item per item dengan tangkapan layar belum dilakukan manusia; yang tersedia di sini adalah rekonsiliasi atas sumber resmi paket. Sisa pekerjaan S7.2.1: pencocokan hasil bacaan otomatis dengan halaman asli, review pemilik produk, pembekuan dan tag.
+Tiap baris WFP dipetakan ke kelompok screen di [ANALISA_FITUR_SCREEN.md](ANALISA_FITUR_SCREEN.md) dan [screens](../screens/) melalui kolom Capability. Rekonsiliasi item per item dengan tangkapan layar belum dilakukan manusia; yang tersedia di sini adalah rekonsiliasi atas sumber resmi paket. Sisa pekerjaan S7.2.1: pencocokan hasil bacaan otomatis dengan halaman asli, review pemilik produk, pembekuan dan tag.

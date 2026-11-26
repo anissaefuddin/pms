@@ -8,7 +8,7 @@ Skala: P0 Critical, P1 High, P2 Medium. Status: CONFIRMED, SUSPECTED, NOT TESTED
 |---|---|---|---|---|
 | — | P0 | — | Tidak ditemukan | — |
 | S-1 | P1 | DESIGN DECISION | Space Admin bertipe external, collaborator, viewer tidak bisa kelola anggota, padahal UI menjanjikan | `spaces/spaces.go:414`, `policy/policy.go:106-112` |
-| S-2 | P2 | CONFIRMED (dokumen) | ARCHITECTURE §6.2 poin 5 bertentangan dengan D-17; nomor D-05 dipakai untuk dua hal | `ARCHITECTURE.md:131-141`, `docs/DECISIONS.md` |
+| S-2 | P2 | CONFIRMED (dokumen) | ARCHITECTURE §6.2 poin 5 bertentangan dengan D-17; nomor D-05 dipakai untuk dua hal | `ARCHITECTURE.md:131-141`, `docs/architecture/DECISIONS.md` |
 | S-4 | P2 | CONFIRMED, DIPERBAIKI | Pemegang `share` tanpa `delete` bisa mencabut share `full` pada item | `spaces/spaces.go:526-531` |
 | S-5 | P2 | NOT TESTED | Audit log move belum diverifikasi | `items/location.go` |
 | — | — | NOT A BUG | Siklus move ditolak (hipotesis awal dibantah oleh probe) | `items/location.go:207` |

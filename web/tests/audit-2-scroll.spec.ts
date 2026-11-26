@@ -52,7 +52,7 @@ for (const [width, height] of [[1440, 900], [1280, 800], [768, 1024], [390, 844]
       }
       expect((await new AxeBuilder({ page }).include("main").analyze()).violations).toEqual([]);
       if (process.env.PMS_AUDIT_RETEST) {
-        await page.screenshot({ path: `../docs/ui-audit-2-retest-evidence/${route}-${width}.png`, fullPage: true, animations: "disabled" });
+        await page.screenshot({ path: `../docs/quality/ui-audit/ui-audit-2-retest-evidence/${route}-${width}.png`, fullPage: true, animations: "disabled" });
       }
     });
   }

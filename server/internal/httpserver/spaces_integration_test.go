@@ -24,7 +24,7 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-// The capability tables of docs/ARCHITECTURE.md §6.1, typed in by hand and independent of package policy.
+// The capability tables of docs/architecture/ARCHITECTURE.md §6.1, typed in by hand and independent of package policy.
 var (
 	docRoleCaps = map[string][]string{
 		"read":    {"view"},

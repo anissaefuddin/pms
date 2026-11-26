@@ -41,7 +41,7 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 - Web (later): `routes/_app/settings/item-types.tsx` (drag across sections, Space usage), `tests/pilot-live.spec.ts`.
 - Web: `routes/_app.tsx`, `routes/_app/settings/item-types.tsx`, `routes/_app/spaces_.$spaceId.item-types.tsx` (new), `routes/_app/spaces.$spaceId.tsx`, `components/topbar.tsx`, `components/create-item-dialog.tsx`, `i18n/{en,id}/settings.json`, `routeTree.gen.ts`.
 - Tests: `tests/m8.spec.ts`, `tests/custom-fields.spec.ts`, `tests/batch5-visual.spec.ts` (new).
-- Docs: `docs/RELEASE_CLEANUP.md` (new), this report.
+- Docs: `docs/operations/RELEASE_CLEANUP.md` (new), this report.
 
 ## 3. Security findings
 
@@ -60,11 +60,11 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 
 ## 5. Outstanding defects
 
-1. **Flaky tests.** `TestBrowserCollaboration` (mention delivery) was fixed in `df48d7b`, but its root cause is not confirmed. `ownership.spec.ts:51` and `reports.spec.ts:169` each failed once in a full run and passed alone. All three are tracked in `docs/RELEASE_CLEANUP.md`.
+1. **Flaky tests.** `TestBrowserCollaboration` (mention delivery) was fixed in `df48d7b`, but its root cause is not confirmed. `ownership.spec.ts:51` and `reports.spec.ts:169` each failed once in a full run and passed alone. All three are tracked in `docs/operations/RELEASE_CLEANUP.md`.
 2. **Email for requester status** has no automated test and has not been checked on dev-lens.
 3. **Keyboard-only drag** is not built. The up/down buttons are the keyboard path.
 4. **Formulas on Workspace fields** stay refused. Decided 17 Nov 2026: a Workspace field cannot use a formula, because a formula could read Space fields that a Workspace type does not own.
-5. **`scope_test`** is inactive on dev-lens and not deleted. Decision pending (see `docs/RELEASE_CLEANUP.md`).
+5. **`scope_test`** is inactive on dev-lens and not deleted. Decision pending (see `docs/operations/RELEASE_CLEANUP.md`).
 
 ## 6. Release readiness
 
@@ -73,4 +73,4 @@ Date: 17 Nov 2026. Branch `feat/m12c-ui-clean` (PR #18). Commits in scope: `0665
 Before a wider release:
 - Run the live checks on dev-lens (email, Space item types, request status in the inbox).
 - Fix or explain the two flaky tests.
-- Decide on `scope_test` (see `docs/RELEASE_CLEANUP.md`).
+- Decide on `scope_test` (see `docs/operations/RELEASE_CLEANUP.md`).

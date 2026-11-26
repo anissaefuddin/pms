@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-// D-01 visibility and join, D-03 archive, D-04 icon, D-SA1 explicit admins (see docs/SPACE_MANAGEMENT_ANALISA.md).
+// D-01 visibility and join, D-03 archive, D-04 icon, D-SA1 explicit admins (see docs/features/space-management/SPACE_MANAGEMENT_ANALISA.md).
 func TestSpaceGovernance(t *testing.T) {
 	f := newFixture(t)
 	owner := f.person("regular")

@@ -1,6 +1,6 @@
 # LENS — Roadmap Peningkatan RBAC (diperbarui 20 Nov 2026)
 
-Keputusan produk: **D-17.1 Explicit Access Only: APPROVED.** Workspace Admin tidak otomatis mendapat `full` atau akses ke konten Shared Space. Lihat `docs/DECISIONS.md`.
+Keputusan produk: **D-17.1 Explicit Access Only: APPROVED.** Workspace Admin tidak otomatis mendapat `full` atau akses ke konten Shared Space. Lihat `docs/architecture/DECISIONS.md`.
 
 Estimasi dalam hari kerja engineering (HK).
 

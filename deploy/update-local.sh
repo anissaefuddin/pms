@@ -65,6 +65,6 @@ echo "Update to $image FAILED. Rolling back to ${current:-the previous image} wi
 if ./restore.sh "$stamp" --force; then
   echo "Rolled back to ${current:-previous image}. See: docker compose logs app" >&2
 else
-  echo "AUTOMATIC ROLLBACK FAILED. Backup set $stamp is intact; follow restore.sh output and docs/PILOT_RUNBOOK.md." >&2
+  echo "AUTOMATIC ROLLBACK FAILED. Backup set $stamp is intact; follow restore.sh output and docs/operations/PILOT_RUNBOOK.md." >&2
 fi
 exit 1

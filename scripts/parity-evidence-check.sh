@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Fails when a test named in docs/parity/PARITY_TEST_EVIDENCE.md (`go:Name`, `pw:file.spec.ts`) does not exist, or the summary disagrees with the table.
-# It proves the names exist, not that the tests pass (see docs/TESTING.md).
+# It proves the names exist, not that the tests pass (see docs/quality/TESTING.md).
 set -euo pipefail
 cd "$(dirname "$0")/.."
 doc=docs/parity/PARITY_TEST_EVIDENCE.md

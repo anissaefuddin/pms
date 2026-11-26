@@ -46,6 +46,6 @@ Space Admin diimplementasikan sebagai **flag eksplisit**, bukan share role, dan 
 
 **S-2 (P2, DOKUMEN): dua sumber yang tidak sepakat soal Admin di Space shared.**
 - ARCHITECTURE §6.2 poin 5: admin otomatis `full`. Kode dan D-17 opsi A: tidak ada hak implisit.
-- Nomor keputusan: `apigen/openapi.gen.go:5644` dan `spaces/members.go` menulis "D-05", tetapi `docs/DECISIONS.md` memakai D-05 untuk hal lain. Referensi perlu dirapikan.
+- Nomor keputusan: `apigen/openapi.gen.go:5644` dan `spaces/members.go` menulis "D-05", tetapi `docs/architecture/DECISIONS.md` memakai D-05 untuk hal lain. Referensi perlu dirapikan.
 
 **S-3 (NOT TESTED): kelompok SPA-08, SPA-10, dan hak Space Admin atas archive, delete, dan transfer.** Belum dijalankan.

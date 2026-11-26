@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// Blueprint hardening (BP-B0/B1, see docs/BLUEPRINT_ANALISA.md): cross-Space copies (X1), restricted fields (X2),
+// Blueprint hardening (BP-B0/B1, see docs/features/blueprint/BLUEPRINT_ANALISA.md): cross-Space copies (X1), restricted fields (X2),
 // hierarchy limits without silent truncation (X3), invalid stored trees (no partial mutation), audit events, and finish_date (X4).
 
 func hardeningSetup(t *testing.T, f *fixture) (admin, alice, bob *person, source, library, target string) {

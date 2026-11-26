@@ -17,7 +17,7 @@ import (
 	"github.com/jackc/pgx/v5/pgconn"
 )
 
-// Audit actions ("area.verb"). Keep this list and docs/DECISIONS.md D-90 in step.
+// Audit actions ("area.verb"). Keep this list and docs/architecture/DECISIONS.md D-90 in step.
 const (
 	auditLogin             = "auth.login"
 	auditLoginFailed       = "auth.login_failed"

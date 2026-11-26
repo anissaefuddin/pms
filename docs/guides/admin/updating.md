@@ -12,7 +12,7 @@ Run from `deploy/` on the server: `./update.sh ghcr.io/anissaefuddin/pms:VERSION
 Migrations only move forward, so the old image cannot just be started again over the new schema. If the app is not ready, the script prints `./restore.sh <stamp> --force`. Because `deploy/.env` still names the old image, the restore brings back the old image with the pre-update data. Anything created after the update is lost ([backup-restore.md](backup-restore.md)).
 
 ## After updating
-Check, in order: readiness, sign in, the log for `PMS_2FA_KEY`/`PMS_SSO_KEY`/`PMS_CONNECTOR_KEY is not set` warnings, and one realistic workflow. Version-specific checks are in [PILOT_RUNBOOK.md](../../PILOT_RUNBOOK.md).
+Check, in order: readiness, sign in, the log for `PMS_2FA_KEY`/`PMS_SSO_KEY`/`PMS_CONNECTOR_KEY is not set` warnings, and one realistic workflow. Version-specific checks are in [PILOT_RUNBOOK.md](../../operations/PILOT_RUNBOOK.md).
 
 ## Troubleshooting
 - Not ready within 60 s: a slow migration can exceed the window. **Unverified:** how long the largest migrations take; read `docker compose logs app` before restoring.

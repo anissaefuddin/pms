@@ -108,7 +108,7 @@ jobs:
           test "$passed" -ge 23 && test "$skipped" -eq 0 && test "$failed" -eq 0
         env: { PMS_TEST_DATABASE_URL: "postgres://pms:pms@localhost:5432/pms_test?sslmode=disable" }
 
-  # S12.2.1: the twelve parity scenarios (docs/PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md, E2E-PAR-01..12) in three visible groups.
+  # S12.2.1: the twelve parity scenarios (docs/parity/PMS_WRIKE_PARITY_DEVELOPMENT_BASELINE.md, E2E-PAR-01..12) in three visible groups.
   # Each pattern names the tests that carry the scenario; a pattern that matches nothing fails (-run with no match passes, so the
   # step counts what ran).
   parity-e2e:

@@ -1,6 +1,6 @@
 # Tinjauan keamanan permukaan M8–M12 (S12.2.3 prasyarat, penutup S6.3.3)
 
-Tanggal 14 Nov 2026. Cabang `claude/security-review-m12-723239`. Skala keparahan mengikuti [UAT.md](../UAT.md) (S1 Blocker … S4 Saran).
+Tanggal 14 Nov 2026. Cabang `claude/security-review-m12-723239`. Skala keparahan mengikuti [UAT.md](../quality/UAT.md) (S1 Blocker … S4 Saran).
 
 ## Ringkasan
 
@@ -50,7 +50,7 @@ Tanggal 14 Nov 2026. Cabang `claude/security-review-m12-723239`. Skala keparahan
 - **Kripto**: argon2id dengan `ConstantTimeCompare`, nol `math/rand` di kode produksi, token acak dari `crypto/rand`, hanya hash token tersimpan.
 - **Form→Blueprint**: Blueprint harus berada di Space form pada saat pengiriman.
 - **Runtime**: image Alpine 3.23.8, `USER pms` (uid 100), port 8080, tanpa rahasia dalam Dockerfile; metrics di port internal terpisah (404 pada port aplikasi).
-- **Pemindai**: lihat bagian bukti di [TESTING.md](../TESTING.md).
+- **Pemindai**: lihat bagian bukti di [TESTING.md](../quality/TESTING.md).
 
 ## Risiko operasional untuk klien
 
