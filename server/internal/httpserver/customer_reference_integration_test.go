@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-// MVP-02 (docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md §3.1): the R1 customer reference is a Workspace single_select field
+// MVP-02 (docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md §3): the R1 customer reference is a Workspace single_select field
 // "Customer" assigned to each customer Space, filled on projects, and reported with analytics group_by=field. This pins the
 // recipe the operators follow, so a change that breaks it fails here before it reaches the instance.
 func TestCustomerReferenceRecipe(t *testing.T) {

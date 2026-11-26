@@ -2,7 +2,7 @@
 
 | | |
 |---|---|
-| **Fase** | R1 D2 ([rencana](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#31-butir-kerja)) |
+| **Fase** | R1 D2 ([rencana](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#3-status-pekerjaan-yang-sudah-ada-di-branch)) |
 | **Mekanisme** | Seed otomatis `PMS_SEED=project-master`, dijalankan saat aplikasi start (paket `server/internal/seed`, migrasi `00362_seed_runs`) |
 | **Bukti otomatis** | `TestProjectMasterSeed`, `TestParse` di `server/internal/seed/seed_test.go` |
 

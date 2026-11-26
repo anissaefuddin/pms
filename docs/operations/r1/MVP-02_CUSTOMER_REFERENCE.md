@@ -1,8 +1,10 @@
 # MVP-02 — Customer reference (R1, tanpa kode)
 
+> **Digantikan oleh B2/B5 di [rencana MVP v0.2](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#b2--customer-master-dan-membership-m) (27 Nov).** Customer kini entitas native (`clients`) dan customer project diturunkan dari owner Space (K-20). Jangan konfigurasi field ini di staging bila v0.2 disetujui; prosedur ini hanya fallback bila pemilik produk memilih rilis R1-saja.
+
 | | |
 |---|---|
-| **Fase** | R1 D2 ([rencana](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#31-butir-kerja)) |
+| **Fase** | R1 D2 ([rencana](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#3-status-pekerjaan-yang-sudah-ada-di-branch)) |
 | **Versi** | v0.13.0 |
 | **Pelaksana** | Workspace Admin yang juga punya akses **Full** di tiap Space customer (D-17.1) |
 | **Bukti otomatis** | `TestCustomerReferenceRecipe` di `server/internal/httpserver/customer_reference_integration_test.go`: field dibuat, ditugaskan ke dua Space customer, diisi di project, ditolak di Space yang tidak ditugaskan, dan dashboard per customer tidak membocorkan customer lain ke user tanpa grant |

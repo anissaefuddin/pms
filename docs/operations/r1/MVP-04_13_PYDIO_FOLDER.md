@@ -1,8 +1,10 @@
 # MVP-04 + MVP-13 — Tautan folder Pydio dan daftar file read-only (R1)
 
+> **Lanjutan di B4 [rencana MVP v0.2](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#b4--referensi-dan-integrasi-pydio-m).** Yang masih harus dikerjakan: validasi tautan saat tulis (B4-02), spike Cells nyata (B4-04), keputusan model identitas K-21 (B4-05), hardening redirect/log (B4-06), live gate (B4-07). Listing hanya boleh aktif di production setelah AC-15 lulus.
+
 | | |
 |---|---|
-| **Fase** | R1 D2 ([rencana](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#31-butir-kerja)) |
+| **Fase** | R1 D2 ([rencana](../../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md#3-status-pekerjaan-yang-sudah-ada-di-branch)) |
 | **MVP-04** | Field Workspace `Pydio Folder` (text) dibuat oleh seed `project-master` ([MVP-03](MVP-03_PROJECT_MASTER.md)). Di panel item, nilai yang berupa satu alamat `http(s)://` tampil sebagai tautan yang membuka tab baru |
 | **MVP-13** | Tombol **Show Pydio files** di bawah tautan: daftar isi folder (nama, ukuran, waktu ubah), read-only, lewat `GET /api/v1/items/{itemId}/pydio-files?field={fieldId}` |
 | **Bukti otomatis** | Go: `server/internal/pydio` (`TestFolderKeepsLinksInsideTheRoots`, `TestListSignsTheGatewayRequestAndShapesEntries`), `TestPydioFilesFollowItemAndFieldAccess`, `TestSignV4MatchesTheAWSExample`, endpoint sweep. Web: 3 tes di `web/tests/item-custom-fields.spec.ts`, unit `webLink` |

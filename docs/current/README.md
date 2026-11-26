@@ -66,6 +66,8 @@ Perubahan perilaku v0.13.0 yang perlu dikomunikasikan ke pengguna: editor hanya 
 
 ## 5. Pekerjaan terbuka yang dibawa ke rencana berikutnya
 
+> Sejak 27 Nov, rencana aktif adalah [MVP Platform Ready v0.2](../roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md). Di branch `docs/restructure-mvp-roadmap` sudah ada MVP-02 (digantikan B2), seed MVP-03, dan tautan/listing Pydio MVP-04/13 (basis B4). Tabel di bawah adalah status v0.13.0.
+
 | ID | Butir | Target |
 |---|---|---|
 | UPG-1 | Upgrade staging ke v0.13.0 dan smoke test | R1 D1 |

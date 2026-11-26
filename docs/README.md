@@ -4,7 +4,7 @@ Mulai dari sini. Untuk melanjutkan pengembangan, baca berurutan:
 
 1. [current/README.md](current/README.md) — **checkpoint v0.13.0**: status terbukti, fakta kode penting, pekerjaan terbuka
 2. [current/IMPLEMENTATION_MAP.md](current/IMPLEMENTATION_MAP.md) — peta paket backend, halaman frontend, fitur per milestone
-3. [roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md](roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md) — rencana roadmap MVP (R1 → P4)
+3. [roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md](roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md) — rencana MVP Platform Ready v0.2 (batch B0–B6, task detail)
 4. [architecture/DECISIONS.md](architecture/DECISIONS.md) — keputusan yang berlaku
 
 ## Struktur folder
@@ -12,7 +12,7 @@ Mulai dari sini. Untuk melanjutkan pengembangan, baca berurutan:
 | Folder | Isi | Dokumen kunci |
 |---|---|---|
 | [current/](current/) | Snapshot implementasi saat ini. Diperbarui tiap checkpoint/rilis | README, IMPLEMENTATION_MAP |
-| [roadmap/](roadmap/) | Rencana ke depan | LENS_MVP_IMPLEMENTATION_PLAN |
+| [roadmap/](roadmap/) | Rencana ke depan; dokumen sumber di `sources/` | LENS_MVP_IMPLEMENTATION_PLAN (v0.2), sources/PMS_PLATFORM_READY_MVP_IMPLEMENTATION_PLAN |
 | [roadmap/history/](roadmap/history/) | Rencana dan backlog M0–M13 yang sudah dieksekusi | TASKS, BACKLOG, TRACEABILITY_M7_M12 |
 | [product/](product/) | Kebutuhan produk dan spesifikasi UI | PRD, SITEMAP, UI_SPEC, WORKFLOWS, DESIGN_SYSTEM |
 | [architecture/](architecture/) | Arsitektur, skema, keputusan | ARCHITECTURE, DATABASE, DECISIONS, MIGRATION_PLAN_G06 |

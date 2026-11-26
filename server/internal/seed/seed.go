@@ -31,7 +31,7 @@ type definition struct {
 var zero = 0
 
 var seeds = map[string]definition{
-	// MVP-03/MVP-04 (docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md §3.1): contract reference and the project's Pydio folder.
+	// MVP-03/MVP-04 (docs/roadmap/LENS_MVP_IMPLEMENTATION_PLAN.md §3): contract reference and the project's Pydio folder.
 	// The contract value is visible only to the Contract Managers group. Not project_budget: that flag feeds budget reports,
 	// a contract is not a budget. Pydio Folder is a text field; the item panel shows an http(s) value as a link.
 	// A seed runs once per database, so a field added here later does not reach instances that already ran it.
