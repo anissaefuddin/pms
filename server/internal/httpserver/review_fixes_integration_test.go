@@ -113,3 +113,23 @@ IF nextval('link_fault') = 1 THEN RAISE serialization_failure; END IF; RETURN NE
 		t.Fatalf("no token: %v", link.body)
 	}
 }
+
+// DEF-040: a new comment carries no version either, so a serialization conflict is retried, and leaves exactly one comment.
+func TestNewCommentRetriesASerializationConflict(t *testing.T) {
+	f := newFixture(t)
+	admin := f.person("admin")
+	space := f.spaceWithoutAdmins("Comments")
+	f.share(space, "user", admin.id, "full")
+	made := f.call(admin, "POST", "/items", map[string]any{"type": "task", "title": "T", "locations": []map[string]string{{"space_id": space}}})
+	f.want(made, 201, "task")
+	id := made.body["id"].(string)
+	f.exec("CREATE SEQUENCE comment_fault")
+	f.exec(`CREATE FUNCTION comment_fault() RETURNS trigger LANGUAGE plpgsql AS $$ BEGIN
+IF nextval('comment_fault') = 1 THEN RAISE serialization_failure; END IF; RETURN NEW; END $$`)
+	f.exec("CREATE TRIGGER comment_fault BEFORE INSERT ON comments FOR EACH ROW EXECUTE FUNCTION comment_fault()")
+	body := map[string]any{"body": map[string]any{"type": "doc", "content": []any{map[string]any{"type": "paragraph", "content": []any{map[string]any{"type": "text", "text": "Hello"}}}}}}
+	f.want(f.call(admin, "POST", "/items/"+id+"/comments", body), 201, "comment after one conflict")
+	if n := f.queryID("SELECT count(*)::text FROM comments WHERE item_id=$1", id); n != "1" {
+		t.Fatalf("comments: %s", n)
+	}
+}

@@ -13,7 +13,6 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
-	"github.com/jackc/pgx/v5/pgconn"
 )
 
 const commentJSON = `jsonb_build_object('id',c.id,'item_id',c.item_id,'body',c.body,
@@ -140,31 +139,41 @@ func (s *Server) writeComment(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 	ctx := r.Context()
-	tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
-	if err != nil {
-		writeItemError(w, err)
-		return
-	}
-	defer tx.Rollback(ctx)
-	itemID := id.String()
-	if !creating {
-		err = tx.QueryRow(ctx, "SELECT item_id::text FROM comments WHERE id=$1", id).Scan(&itemID)
-		if errors.Is(err, pgx.ErrNoRows) {
-			err = items.ErrNotFound
-		}
+	var itemID string
+	var batch *notifications.Batch
+	var result items.Detail
+	attempt := func() error {
+		tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 		if err != nil {
-			writeItemError(w, err)
-			return
+			return err
 		}
+		defer tx.Rollback(ctx)
+		itemID = id.String()
+		if !creating {
+			err = tx.QueryRow(ctx, "SELECT item_id::text FROM comments WHERE id=$1", id).Scan(&itemID)
+			if errors.Is(err, pgx.ErrNoRows) {
+				err = items.ErrNotFound
+			}
+			if err != nil {
+				return err
+			}
+		}
+		batch = s.notificationBatch()
+		result, err = mutateComment(ctx, tx, actorOf(r), id, creating, deleting, version, input.Body, plain, mentions, batch)
+		if err == nil {
+			err = tx.Commit(ctx)
+		}
+		return err
 	}
-	batch := s.notificationBatch()
-	result, err := mutateComment(ctx, tx, actorOf(r), id, creating, deleting, version, input.Body, plain, mentions, batch)
-	if err == nil {
-		err = tx.Commit(ctx)
+	// A new comment names no version, so a serialization conflict with another change to the Item is tried again (DEF-040). An
+	// edit or delete keeps its conflict answer.
+	if creating {
+		err = retrySerialization(ctx, attempt)
+	} else {
+		err = attempt()
 	}
 	if err != nil {
-		var pgErr *pgconn.PgError
-		if errors.As(err, &pgErr) && pgErr.Code == "40001" {
+		if isSerialization(err) {
 			err = items.ErrConflict
 		}
 		writeItemError(w, err)

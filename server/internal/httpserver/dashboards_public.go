@@ -36,34 +36,47 @@ func isSerialization(err error) bool {
 	return errors.As(err, &pgErr) && (pgErr.Code == "40001" || pgErr.Code == "40P01")
 }
 
+// retrySerialization runs attempt, a whole transaction that is safe to repeat, again while it fails on a serialization
+// conflict, waiting a little longer each time so that the other transaction can finish.
+func retrySerialization(ctx context.Context, attempt func() error) error {
+	err := attempt()
+	for wait := 20 * time.Millisecond; wait <= 640*time.Millisecond && isSerialization(err) && ctx.Err() == nil; wait *= 2 {
+		time.Sleep(wait)
+		err = attempt()
+	}
+	return err
+}
+
 func (s *Server) linkTx(w http.ResponseWriter, r *http.Request, need policy.Capability, run func(ctx context.Context, tx pgx.Tx, id uuid.UUID) (any, int, error)) {
 	id, ok := dashboardID(w, r, "dashboardId")
 	if !ok {
 		return
 	}
 	ctx := r.Context()
-	attempt := func() (any, int, error) {
-		tx, err := s.pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
+	options := pgx.TxOptions{IsoLevel: pgx.Serializable}
+	if r.Method == http.MethodGet { // only reads, so it must not be one side of a conflict
+		options = pgx.TxOptions{IsoLevel: pgx.RepeatableRead, AccessMode: pgx.ReadOnly}
+	}
+	var value any
+	var status int
+	attempt := func() error {
+		tx, err := s.pool.BeginTx(ctx, options)
 		if err != nil {
-			return nil, 0, err
+			return err
 		}
 		defer tx.Rollback(ctx)
 		if _, err = readDashboard(ctx, tx, actorOf(r), id, need); err != nil {
-			return nil, 0, err
+			return err
 		}
-		value, status, err := run(ctx, tx, id)
+		value, status, err = run(ctx, tx, id)
 		if err == nil {
 			err = tx.Commit(ctx)
 		}
-		return value, status, err
+		return err
 	}
 	// The link carries no version to be stale, and run writes the same thing every time, so a serialization conflict with a
 	// save of the dashboard is simply tried again (DEF-039).
-	value, status, err := attempt()
-	for retry := 0; retry < 3 && isSerialization(err); retry++ {
-		value, status, err = attempt()
-	}
-	if err != nil {
+	if err := retrySerialization(ctx, attempt); err != nil {
 		writeDashboardError(w, err)
 		return
 	}
