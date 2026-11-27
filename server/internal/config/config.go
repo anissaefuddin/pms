@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/base64"
+	"encoding/json"
 	"fmt"
 	"net"
 	"net/url"
@@ -52,6 +53,10 @@ type Config struct {
 	// token, LinkRoots the top folders (workspace slug[/path]) a link may point into. Empty URL = feature off.
 	PydioLinkURL, PydioLinkToken string
 	PydioLinkRoots               []string
+	// PydioCustomerRoots (PMS_PYDIO_CUSTOMER_ROOTS, JSON {"<customer code>": ["<workspace>/<path>", ...]}) is the approved
+	// per-Customer root mapping (PROMPT #033). A Customer without an entry gets no document link: the global roots do not prove
+	// that a folder belongs to a Customer. Empty = no mapping.
+	PydioCustomerRoots map[string][]string
 }
 
 func Load() (Config, error) {
@@ -117,6 +122,28 @@ func Load() (Config, error) {
 				}
 			}
 		}
+	}
+	if raw := strings.TrimSpace(os.Getenv("PMS_PYDIO_CUSTOMER_ROOTS")); raw != "" {
+		var mapping map[string][]string
+		if err := json.Unmarshal([]byte(raw), &mapping); err != nil {
+			return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS must be a JSON object of Customer code to root list")
+		}
+		for code, roots := range mapping {
+			if strings.TrimSpace(code) == "" || len(roots) == 0 {
+				return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS: each Customer needs a code and at least one root")
+			}
+			for _, root := range roots {
+				if root == "" || strings.HasPrefix(root, "/") || strings.HasSuffix(root, "/") || strings.Contains(root, "\\") {
+					return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS entries must be workspace paths without leading or trailing slashes")
+				}
+				for _, seg := range strings.Split(root, "/") {
+					if seg == "" || seg == "." || seg == ".." {
+						return Config{}, fmt.Errorf("PMS_PYDIO_CUSTOMER_ROOTS entries must not contain empty or dot segments")
+					}
+				}
+			}
+		}
+		cfg.PydioCustomerRoots = mapping
 	}
 	// Listing is a separate, optional capability: it needs the origin, the roots and a read-only Pydio credential (PROMPT #028).
 	if cfg.PydioListing && (cfg.PydioLinkURL == "" || cfg.PydioLinkToken == "" || len(cfg.PydioLinkRoots) == 0) {

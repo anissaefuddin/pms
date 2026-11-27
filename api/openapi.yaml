@@ -592,6 +592,27 @@ paths:
         '422': { $ref: '#/components/responses/Problem' }
         '502': { $ref: '#/components/responses/Problem' }
         '503': { $ref: '#/components/responses/Problem' }
+  /items/{itemId}/pydio-reference:
+    parameters:
+      - { name: itemId, in: path, required: true, schema: { type: string, format: uuid } }
+    get:
+      tags: [items]
+      operationId: getPydioReference
+      summary: Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+      description: Status diputuskan server. Folder tidak pernah dikembalikan pada status lain. Item tanpa akses mendapat 404.
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [state]
+                properties:
+                  state: { type: string, enum: [linked, not_configured, roots_unavailable, invalid] }
+                  open_url: { type: string, description: Hanya pada status linked }
+        '401': { $ref: '#/components/responses/Problem' }
+        '404': { $ref: '#/components/responses/Problem' }
   /items/{projectId}/gantt-snapshots:
     parameters:
       - { name: projectId, in: path, required: true, schema: { type: string, format: uuid } }

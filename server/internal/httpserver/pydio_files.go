@@ -13,6 +13,7 @@ import (
 
 func (s *Server) pydioRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /api/v1/items/{itemId}/pydio-files", s.requireUser(s.listPydioFiles))
+	mux.HandleFunc("GET /api/v1/items/{itemId}/pydio-reference", s.requireUser(s.getPydioReference))
 }
 
 // listPydioFiles lists the Pydio folder a text field of the item links to (MVP-13). The link is read through items.Get,

@@ -3288,6 +3288,30 @@ func (e SetWorkspaceFieldGrants200JSONResponseBodyItemsSubjectKind) Valid() bool
 	}
 }
 
+// Defines values for GetPydioReference200JSONResponseBodyState.
+const (
+	GetPydioReference200JSONResponseBodyStateInvalid          GetPydioReference200JSONResponseBodyState = "invalid"
+	GetPydioReference200JSONResponseBodyStateLinked           GetPydioReference200JSONResponseBodyState = "linked"
+	GetPydioReference200JSONResponseBodyStateNotConfigured    GetPydioReference200JSONResponseBodyState = "not_configured"
+	GetPydioReference200JSONResponseBodyStateRootsUnavailable GetPydioReference200JSONResponseBodyState = "roots_unavailable"
+)
+
+// Valid indicates whether the value is a known member of the GetPydioReference200JSONResponseBodyState enum.
+func (e GetPydioReference200JSONResponseBodyState) Valid() bool {
+	switch e {
+	case GetPydioReference200JSONResponseBodyStateInvalid:
+		return true
+	case GetPydioReference200JSONResponseBodyStateLinked:
+		return true
+	case GetPydioReference200JSONResponseBodyStateNotConfigured:
+		return true
+	case GetPydioReference200JSONResponseBodyStateRootsUnavailable:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListProjectTimeEntriesParamsBillingType.
 const (
 	ListProjectTimeEntriesParamsBillingTypeBillable    ListProjectTimeEntriesParamsBillingType = "billable"
@@ -7867,6 +7891,9 @@ type ListPydioFilesParams struct {
 	Field openapi_types.UUID `form:"field" json:"field"`
 }
 
+// GetPydioReference200JSONResponseBodyState defines parameters for GetPydioReference.
+type GetPydioReference200JSONResponseBodyState string
+
 // ReorderItemJSONBody defines parameters for ReorderItem.
 type ReorderItemJSONBody struct {
 	// AfterItemId Taruh setelah item ini; null berarti paling atas
@@ -9817,6 +9844,9 @@ type ServerInterface interface {
 	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
 	// (GET /items/{itemId}/pydio-files)
 	ListPydioFiles(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID, params ListPydioFilesParams)
+	// GetPydioReference Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+	// (GET /items/{itemId}/pydio-reference)
+	GetPydioReference(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID)
 	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
 	// (GET /items/{itemId}/relations)
 	ListItemRelations(w http.ResponseWriter, r *http.Request, itemId ItemId)
@@ -15510,6 +15540,32 @@ func (siw *ServerInterfaceWrapper) ListPydioFiles(w http.ResponseWriter, r *http
 
 	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		siw.Handler.ListPydioFiles(w, r, itemId, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
+// GetPydioReference operation middleware
+func (siw *ServerInterfaceWrapper) GetPydioReference(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// ------------- Path parameter "itemId" -------------
+	var itemId openapi_types.UUID
+
+	err = runtime.BindStyledParameterWithOptions("simple", "itemId", r.PathValue("itemId"), &itemId, runtime.BindStyledParameterOptions{ParamLocation: runtime.ParamLocationPath, Explode: false, Required: true, Type: "string", Format: "uuid", ValueIsUnescaped: true})
+	if err != nil {
+		siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "itemId", Err: err})
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.GetPydioReference(w, r, itemId)
 	}))
 
 	for _, middleware := range siw.HandlerMiddlewares {
@@ -22002,6 +22058,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/connectors/{connectorId}/conflicts", wrapper.ListConnectorConflicts)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/connector-conflicts/{conflictId}/resolve", wrapper.ResolveConnectorConflict)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/pydio-files", wrapper.ListPydioFiles)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{itemId}/pydio-reference", wrapper.GetPydioReference)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.ListGanttSnapshots)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/items/{projectId}/gantt-snapshots", wrapper.CreateGanttSnapshot)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/gantt-snapshots/{snapshotId}", wrapper.RevokeGanttSnapshot)
@@ -32883,6 +32940,62 @@ func (response ListPydioFiles503ApplicationProblemPlusJSONResponse) VisitListPyd
 	}
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(503)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioReferenceRequestObject struct {
+	ItemId openapi_types.UUID `json:"itemId"`
+}
+
+type GetPydioReferenceResponseObject interface {
+	VisitGetPydioReferenceResponse(w http.ResponseWriter) error
+}
+
+type GetPydioReference200JSONResponse struct {
+	// OpenUrl Hanya pada status linked
+	OpenUrl *string                                   `json:"open_url,omitempty"`
+	State   GetPydioReference200JSONResponseBodyState `json:"state"`
+}
+
+func (response GetPydioReference200JSONResponse) VisitGetPydioReferenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioReference401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response GetPydioReference401ApplicationProblemPlusJSONResponse) VisitGetPydioReferenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type GetPydioReference404ApplicationProblemPlusJSONResponse Problem
+
+func (response GetPydioReference404ApplicationProblemPlusJSONResponse) VisitGetPydioReferenceResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(404)
 	_, err := buf.WriteTo(w)
 	return err
 }
@@ -45636,6 +45749,9 @@ type StrictServerInterface interface {
 	// ListPydioFiles Daftar isi folder Pydio yang ditautkan field text item (MVP-13; baca-saja, metadata saja)
 	// (GET /items/{itemId}/pydio-files)
 	ListPydioFiles(ctx context.Context, request ListPydioFilesRequestObject) (ListPydioFilesResponseObject, error)
+	// GetPydioReference Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+	// (GET /items/{itemId}/pydio-reference)
+	GetPydioReference(ctx context.Context, request GetPydioReferenceRequestObject) (GetPydioReferenceResponseObject, error)
 	// ListItemRelations Target field relasi sebuah item; target tanpa hak View hanya dihitung, tidak diberi nama (CUST-05)
 	// (GET /items/{itemId}/relations)
 	ListItemRelations(ctx context.Context, request ListItemRelationsRequestObject) (ListItemRelationsResponseObject, error)
@@ -51311,6 +51427,32 @@ func (sh *strictHandler) ListPydioFiles(w http.ResponseWriter, r *http.Request, 
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(ListPydioFilesResponseObject); ok {
 		if err := validResponse.VisitListPydioFilesResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// GetPydioReference operation middleware
+func (sh *strictHandler) GetPydioReference(w http.ResponseWriter, r *http.Request, itemId openapi_types.UUID) {
+	var request GetPydioReferenceRequestObject
+
+	request.ItemId = itemId
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.GetPydioReference(ctx, request.(GetPydioReferenceRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "GetPydioReference")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(GetPydioReferenceResponseObject); ok {
+		if err := validResponse.VisitGetPydioReferenceResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

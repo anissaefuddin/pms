@@ -202,3 +202,23 @@ func TestStandaloneLinkConfiguration(t *testing.T) {
 		}
 	}
 }
+
+// PROMPT #033: the approved Customer root mapping is strict JSON with the same root rules as the global roots.
+func TestPydioCustomerRootsMapping(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("PMS_PYDIO_CUSTOMER_ROOTS", "")
+	if cfg, err := Load(); err != nil || cfg.PydioCustomerRoots != nil {
+		t.Fatalf("no mapping must mean no mapping: %v %v", cfg.PydioCustomerRoots, err)
+	}
+	t.Setenv("PMS_PYDIO_CUSTOMER_ROOTS", `{"QA-CUST-A": ["projects/ptm", "common-files/Clients"]}`)
+	cfg, err := Load()
+	if err != nil || len(cfg.PydioCustomerRoots["QA-CUST-A"]) != 2 {
+		t.Fatalf("a valid mapping must load: %v %v", cfg.PydioCustomerRoots, err)
+	}
+	for _, bad := range []string{`not json`, `{"": ["projects"]}`, `{"A": []}`, `{"A": ["/projects"]}`, `{"A": ["projects/../x"]}`, `{"A": ["projects\\x"]}`} {
+		t.Setenv("PMS_PYDIO_CUSTOMER_ROOTS", bad)
+		if _, err := Load(); err == nil {
+			t.Fatalf("PMS_PYDIO_CUSTOMER_ROOTS=%s must be refused", bad)
+		}
+	}
+}

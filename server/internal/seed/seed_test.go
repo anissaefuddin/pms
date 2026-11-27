@@ -125,3 +125,23 @@ func TestProjectCodeSeed(t *testing.T) {
 		t.Fatalf("Project Code grants = %d, want none: project editors see the field with the item", n)
 	}
 }
+
+// The seeded Pydio Folder is the canonical document reference: it carries the pydio_folder flag so writes are checked.
+func TestPydioFolderSeedIsCanonical(t *testing.T) {
+	ctx := context.Background()
+	pool, err := database.Open(ctx, testdb.NewMigrated(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer pool.Close()
+	if err := seed.Apply(ctx, pool, []string{"project-master"}); err != nil {
+		t.Fatal(err)
+	}
+	var flagged int
+	if err := pool.QueryRow(ctx, "SELECT count(*) FROM custom_fields WHERE space_id IS NULL AND name='Pydio Folder' AND type='text' AND config->>'pydio_folder'='true'").Scan(&flagged); err != nil {
+		t.Fatal(err)
+	}
+	if flagged != 1 {
+		t.Fatalf("the seeded Pydio Folder must carry pydio_folder=true, got %d", flagged)
+	}
+}

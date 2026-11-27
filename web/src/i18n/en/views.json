@@ -408,5 +408,16 @@
     "any": "Any",
     "none": "Unassigned",
     "mine": "Mine"
+  },
+  "documents": {
+    "title": "Documents",
+    "loading": "Checking the document reference…",
+    "loadError": "The document reference could not be loaded.",
+    "linked": "Folder linked to this project.",
+    "open": "Open in Pydio",
+    "notConfigured": "No document folder is set for this project.",
+    "rootsUnavailable": "Document links are not available for this Customer yet: no approved folder mapping is configured.",
+    "invalid": "The stored folder reference is not valid. An administrator needs to correct it.",
+    "configure": "Configure"
   }
 }

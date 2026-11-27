@@ -419,6 +419,28 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/items/{itemId}/pydio-reference": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        /**
+         * Status bagian dokumen project (PROMPT 033). Hanya status "linked" yang membawa alamat, dan hanya setelah validasi terhadap root Customer yang disetujui
+         * @description Status diputuskan server. Folder tidak pernah dikembalikan pada status lain. Item tanpa akses mendapat 404.
+         */
+        get: operations["getPydioReference"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/items/{projectId}/gantt-snapshots": {
         parameters: {
             query?: never;
@@ -8604,6 +8626,35 @@ export interface operations {
             422: components["responses"]["Problem"];
             502: components["responses"]["Problem"];
             503: components["responses"]["Problem"];
+        };
+    };
+    getPydioReference: {
+        parameters: {
+            query?: never;
+            header?: never;
+            path: {
+                itemId: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": {
+                        /** @enum {string} */
+                        state: "linked" | "not_configured" | "roots_unavailable" | "invalid";
+                        /** @description Hanya pada status linked */
+                        open_url?: string;
+                    };
+                };
+            };
+            401: components["responses"]["Problem"];
+            404: components["responses"]["Problem"];
         };
     };
     listGanttSnapshots: {

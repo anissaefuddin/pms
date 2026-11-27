@@ -13,6 +13,8 @@ services:
       COOKIE_SECURE: ${COOKIE_SECURE:-true}
       TRUST_PROXY: "true" # Traefik overwrites X-Forwarded-For; the app port is not published
       MAX_SEATS: ${MAX_SEATS:-25}
+      # Approved Customer Pydio roots (JSON). Empty = no document links for any Customer.
+      PMS_PYDIO_CUSTOMER_ROOTS: ${PMS_PYDIO_CUSTOMER_ROOTS:-}
       SMTP_HOST: ${SMTP_HOST:-}
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}

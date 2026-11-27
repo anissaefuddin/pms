@@ -402,5 +402,16 @@
     "any": "Semua",
     "none": "Belum ditugaskan",
     "mine": "Milik saya"
+  },
+  "documents": {
+    "title": "Dokumen",
+    "loading": "Memeriksa referensi dokumen…",
+    "loadError": "Referensi dokumen tidak dapat dimuat.",
+    "linked": "Folder terhubung dengan project ini.",
+    "open": "Buka di Pydio",
+    "notConfigured": "Belum ada folder dokumen untuk project ini.",
+    "rootsUnavailable": "Tautan dokumen belum tersedia untuk Customer ini: belum ada pemetaan folder yang disetujui.",
+    "invalid": "Referensi folder yang tersimpan tidak valid. Administrator perlu memperbaikinya.",
+    "configure": "Atur"
   }
 }
