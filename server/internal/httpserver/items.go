@@ -148,6 +148,10 @@ func (s *Server) reorderItem(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) replaceItemLocations(w http.ResponseWriter, r *http.Request) {
+	version, ok := ifMatchVersion(w, r) // LOCK-01: same If-Match contract as PATCH /items/{id}
+	if !ok {
+		return
+	}
 	var input struct {
 		Locations []items.Location `json:"locations"`
 	}
@@ -155,7 +159,7 @@ func (s *Server) replaceItemLocations(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	id := r.PathValue("itemId")
-	item, err := items.ReplaceLocations(r.Context(), s.pool, actorOf(r), id, input.Locations)
+	item, err := items.ReplaceLocations(r.Context(), s.pool, actorOf(r), id, version, input.Locations)
 	if err == nil {
 		s.publishItem(r, "item.updated", id, id, item.Version)
 	}

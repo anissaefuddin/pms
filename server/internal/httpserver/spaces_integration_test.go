@@ -218,6 +218,20 @@ type reply struct {
 
 func (f *fixture) call(p *person, method, path string, body any, headers ...string) reply {
 	f.t.Helper()
+	if method == http.MethodPut && strings.HasSuffix(path, "/locations") {
+		// LOCK-01: a location edit carries the version the caller read. Tests that do not set If-Match read the current version,
+		// as the web client does; the stale-version tests pass their own header.
+		sent := false
+		for i := 0; i+1 < len(headers); i += 2 {
+			sent = sent || headers[i] == "If-Match"
+		}
+		if !sent {
+			// An unknown item is answered 404 before any version is compared, so a placeholder is fine for it.
+			version := "1"
+			_ = f.pool.QueryRow(f.ctx, "SELECT version::text FROM items WHERE id=$1", strings.Split(path, "/")[2]).Scan(&version)
+			headers = append(headers, "If-Match", `"`+version+`"`)
+		}
+	}
 	var rdr *bytes.Reader
 	if body != nil {
 		b, _ := json.Marshal(body)

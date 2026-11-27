@@ -96,8 +96,7 @@ func (w *Worker) deliver(ctx context.Context, args Args) error {
 		return err
 	}
 	if w.cfg.SMTPHost == "" {
-		// Log mode for instances without SMTP; the link is a one-time secret, so only run like this on trusted logs.
-		slog.Warn("SMTP is not configured; email logged instead of sent", "to", args.To, "subject", subject, "url", args.URL)
+		logUnsentEmail(args, subject)
 		return nil
 	}
 	sender := w.cfg.SMTPFrom
@@ -410,4 +409,10 @@ FROM users u JOIN reports r ON r.id=$2::uuid WHERE u.id=$1::uuid AND u.status='a
 		return false, err
 	}
 	return found && access.Caps.Has(policy.View), nil
+}
+
+// logUnsentEmail records that a message was not sent, without its link, recipient address or body (LOG-01). The link is a one-time
+// secret and the address is personal data; the template and subject are enough to follow the queue.
+func logUnsentEmail(args Args, subject string) {
+	slog.Warn("SMTP is not configured; email not sent", "template", args.Template, "subject", subject)
 }

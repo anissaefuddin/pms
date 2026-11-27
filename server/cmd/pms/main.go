@@ -104,7 +104,8 @@ func run() error {
 		}
 		slog.Info("instance bootstrapped", "admin_id", result.AdminID, "admin_email", *email)
 		if cfg.SMTPHost == "" {
-			slog.Warn("SMTP is not configured: give the administrator this link to activate the account (valid 7 days)", "url", fmt.Sprintf("%s/invitations/%s", cfg.PublicURL, result.InviteToken))
+			// Command output for the operator, not the application log: the one-time link must not reach container logs (LOG-01).
+			fmt.Fprintf(os.Stdout, "SMTP is not configured. Give the administrator this one-time link to activate the account (valid 7 days):\n%s/invitations/%s\n", cfg.PublicURL, result.InviteToken)
 		}
 		return nil
 	default:

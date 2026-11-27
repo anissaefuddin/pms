@@ -66,7 +66,8 @@ func rankBetween(left, right string) string {
 
 // ReplaceLocations sets the locations the actor can see. Locations hidden from the actor stay, so the Item always keeps at least one.
 // New locations need Create there, removed ones need Edit, and the Item keeps a single workflow.
-func ReplaceLocations(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id string, want []Location) (Detail, error) {
+// version is the item version the caller edited (If-Match). A stale version is refused with ErrConflict before anything changes (LOCK-01).
+func ReplaceLocations(ctx context.Context, pool *pgxpool.Pool, actor policy.Actor, id string, version int, want []Location) (Detail, error) {
 	itemID, err := uuid.Parse(id)
 	if err != nil {
 		return Detail{}, ErrNotFound
@@ -76,13 +77,13 @@ func ReplaceLocations(ctx context.Context, pool *pgxpool.Pool, actor policy.Acto
 	}
 	var detail Detail
 	err = inSerializable(ctx, pool, locationLockKeys(want), func(tx pgx.Tx) (err error) {
-		detail, err = replaceLocations(ctx, tx, actor, id, itemID, want)
+		detail, err = replaceLocations(ctx, tx, actor, id, itemID, version, want)
 		return err
 	}, func() {})
 	return detail, writeError(err)
 }
 
-func replaceLocations(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, itemID uuid.UUID, want []Location) (Detail, error) {
+func replaceLocations(ctx context.Context, tx pgx.Tx, actor policy.Actor, id string, itemID uuid.UUID, version int, want []Location) (Detail, error) {
 	caps, err := policy.ItemCaps(ctx, tx, actor, id)
 	if err != nil {
 		return Detail{}, err
@@ -96,11 +97,17 @@ func replaceLocations(ctx context.Context, tx pgx.Tx, actor policy.Actor, id str
 	// B3-08: the item's stable ownership is authoritative. The row is locked, so a concurrent move, archive or restore waits.
 	var itemScope string
 	var itemClient *string
-	if err := tx.QueryRow(ctx, "SELECT scope_state, client_id::text FROM items WHERE id=$1 AND deleted_at IS NULL FOR UPDATE", itemID).Scan(&itemScope, &itemClient); err != nil {
+	var rowVersion int
+	if err := tx.QueryRow(ctx, "SELECT scope_state, client_id::text, version FROM items WHERE id=$1 AND deleted_at IS NULL FOR UPDATE", itemID).Scan(&itemScope, &itemClient, &rowVersion); err != nil {
 		if errors.Is(err, pgx.ErrNoRows) {
 			return Detail{}, ErrNotFound
 		}
 		return Detail{}, err // a serialization conflict is a retryable conflict (409), not a missing item
+	}
+	// LOCK-01: checked under the row lock, so two writers with the same version cannot both commit. 0 means no client precondition
+	// (internal automation); versions start at 1, so the HTTP path always passes a real version.
+	if version != 0 && rowVersion != version {
+		return Detail{}, ErrConflict
 	}
 	own, err := storedOwnership(itemScope, itemClient)
 	if err != nil {
@@ -308,7 +315,7 @@ WHERE i.scope_state IS DISTINCT FROM $2 OR i.client_id IS DISTINCT FROM $3::uuid
 	if kept+len(want)-countExisting(want, existing, key) < 1 {
 		return Detail{}, Invalid("an item needs at least one location")
 	}
-	if _, err = tx.Exec(ctx, "UPDATE items SET updated_at=now() WHERE id=$1", itemID); err != nil {
+	if _, err = tx.Exec(ctx, "UPDATE items SET updated_at=now(), version=version+1 WHERE id=$1", itemID); err != nil {
 		return Detail{}, err
 	}
 	var after []byte
