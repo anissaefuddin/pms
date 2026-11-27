@@ -422,3 +422,15 @@ Belum:
 - Off-host backup, penjadwalan backup, escrow `.env`, penerima alert, dan target RPO/RTO: EXTERNAL_BLOCKED.
 - Rotasi password admin: belum (prasyarat keamanan eksternal).
 - 19 project aktif tanpa owner tetap Unassigned (tidak ada perubahan `owner_id`).
+
+## 15. PROMPT #034 — Portfolio konsolidasi dan verifikasi rilis (2026-11-27)
+
+Kandidat: `pms:candidate-b3bfa8cec81ce7f0600eefc9b4b77f6bdb490118`, revisi `0.14.0-candidate.b3bfa8ce…`, image ID `sha256:68eb1310…` (build awal `229b6a55…` diganti karena defect daftar opsi kosong). Schema 364. Health healthy, 0 restart, readiness 200. Checkpoint sebelum deploy `20261127T080200Z`. Commit lokal: `229b6a5`, `b3bfa8c`, `5d32049`. Push: **SKIPPED**.
+
+Hasil:
+- Monitor proyek terkonsolidasi (`GET /api/v1/portfolio/projects`) dan tampilannya di halaman Portfolio. Live: pm-a 5 proyek, pm-b 2, outsider 0, reader hanya Customer A dan Internal.
+- Tes otorisasi monitor: 4 tes lulus.
+- Migrasi dan paket terkait (clientscope, pydio, webhooks, automation): lulus.
+- Temuan: konektor GitHub `Bebas` aktif dan sinkron berhasil pada 08:01. Penonaktifan ditolak oleh pemeriksa otomatis; keputusan pemilik diperlukan.
+
+Lihat `ACCEPTANCE.md` untuk status per kriteria.
