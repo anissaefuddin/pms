@@ -248,6 +248,8 @@ Tidak termasuk: proxy isi file, tulis/overwrite, sinkron, provisioning folder ot
 
 > **Status PROMPT #026 (blocker lokal B3 ditutup):** PARTIAL untuk B3 implementasi dan verifikasi lokal; B4 development GO bersyarat. Stars, baselines, directory, automation terjadwal, report subscription, FILE-07, dan konflik automation/template dites. Belum: isolasi karantina per resource, portfolio/laporan lintas Customer, tinjauan konektor end-to-end. Operasional EXTERNAL_BLOCKED. Produksi: NOT READY. Rincian di `docs/qa/releases/v0.14.0/B3_CLOSURE.md` §11.
 
+> **Status PROMPT #027 (B4):** link-first lokal COMPLETE dengan batas (bagian dokumen UI belum; konfigurasi tautan masih memerlukan token). Listing Pydio OFF. AC-14 live dan B4-07 EXTERNAL_BLOCKED. Storage Pydio ditolak saat start. Laporan: `docs/qa/releases/v0.14.0/B4_INTEGRATION_REPORT.md`. B5: NO-GO.
+
 ### OPS — Backup, restore, monitoring, deployment (paralel sejak B0)
 
 | ID | Task | Detail | Selesai bila |

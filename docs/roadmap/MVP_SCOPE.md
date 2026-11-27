@@ -792,3 +792,10 @@ Status: **PARTIAL.** Rincian per task di `docs/qa/releases/v0.14.0/B3_CLOSURE.md
 - Konflik automation dan template terdeteksi; alasan per resource tersimpan di audit; apply tetap ditolak seluruhnya.
 - Batas: isolasi karantina per resource, portfolio dan laporan lintas Customer, tinjauan konektor end-to-end.
 - B4: GO bersyarat (lihat `B3_CLOSURE.md` §11). Pydio listing tetap OFF.
+
+## 27. Integrasi Pydio B4 (PROMPT #027)
+
+- Link-first lokal: referensi dokumen per project tervalidasi (PY-05..09), otorisasi item, eligibilitas Customer, dan grant field (PY-01..04), pembacaan dengan listing OFF (PY-11, PY-12), legacy tidak dapat ditindak (PY-13). Lihat `B4_INTEGRATION_REPORT.md` §8.
+- Listing OFF secara default. Redirect hanya ke origin yang sama. Verifikasi live (B4-07) EXTERNAL_BLOCKED.
+- Storage Pydio ditolak saat start (PY-14).
+- Belum: bagian dokumen di UI; konfigurasi tautan mandiri dari token; PY-10 end-to-end untuk impor dan blueprint; identitas delegasi.

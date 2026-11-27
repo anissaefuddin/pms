@@ -620,3 +620,9 @@ Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MV
 **Keputusan.** Digest laporan diperiksa ulang saat dikirim oleh worker surat, bukan hanya saat diantrikan. Pemeriksaan sama dengan `canRead`: subscriber aktif dan dapat membaca Space laporan. Konflik automation (container di Customer lain) dan template (dibuat oleh bukan anggota Customer sumber) menolak seluruh rencana migrasi, dan setiap record tercatat sebagai alasan karantina di audit.
 
 **Batas.** Isolasi karantina per resource tidak ada; rilis dilakukan dengan memperbaiki record dan menjalankan mapping baru yang tervalidasi. Tidak ada trigger immutability ownership di database.
+
+## 7s. Integrasi Pydio B4 (PROMPT #027) — link-first LOCAL COMPLETE dengan batas
+
+**Keputusan.** Referensi dokumen per project adalah field teks kustom ber-flag `pydio_folder` (UUID field sebagai identitas, tanpa tipe baru dan tanpa migrasi). Nilainya divalidasi secara struktural di jalur normalisasi field tunggal. Origin dan root berasal dari `PMS_PYDIO_LINK_URL` dan `PMS_PYDIO_LINK_ROOTS`, terpisah dari listing (`PMS_PYDIO_LISTING`, OFF). Storage `PMS_STORAGE=pydio` ditolak saat start.
+
+**Batas.** Bagian dokumen di UI belum dibuat. Konfigurasi tautan masih memerlukan token dan roots. Verifikasi live dan identitas delegasi belum dilakukan. Lihat `docs/qa/releases/v0.14.0/B4_INTEGRATION_REPORT.md`.
