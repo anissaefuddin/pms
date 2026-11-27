@@ -57,3 +57,13 @@ Dua jalur dijalankan pada set `20261127T070201Z`:
 | Rotasi password admin | Pemilik | Belum |
 | Akun dan folder Pydio uji yang disetujui; root Customer | Pemilik / Pydio | EXTERNAL_BLOCKED |
 | CI jarak jauh, STG-14, dan regresi rilis final | Tim | Belum |
+
+## PROMPT #035 (2026-11-27): pembaruan operasi
+
+- Jadwal backup 02:17 UTC: crontab terpasang 07:58 UTC hari ini; eksekusi pertama 2026-11-28 02:17 UTC. Belum terbukti berjalan.
+- Restore drill `20261127T080200Z`: lulus, 4 detik. Checksum valid. Lampiran: 39 file di backup dan di live.
+- Retensi: `backup.sh` menghapus set lokal lebih tua dari 14 hari. Usulan 7/4/3 belum diterapkan. Keputusan pemilik diperlukan.
+- Off-host backup dan escrow konfigurasi: EXTERNAL_BLOCKED. Tujuan, akses, dan kunci escrow belum disetujui.
+- Alert: BLOCKED. Tidak ada penerima.
+- Konektor GitHub "Bebas": masih aktif dan sinkron setiap 5 menit. HUMAN_ACTION_REQUIRED (P0).
+- Repositori: PUBLIK (`gh repo view`). Tidak diubah.

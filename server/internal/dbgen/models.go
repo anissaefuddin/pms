@@ -726,6 +726,30 @@ type BlueprintUse struct {
 	UsedAt      pgtype.Timestamptz `json:"used_at"`
 }
 
+type Client struct {
+	ID         pgtype.UUID        `json:"id"`
+	Code       string             `json:"code"`
+	Name       string             `json:"name"`
+	ShortName  pgtype.Text        `json:"short_name"`
+	Status     string             `json:"status"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	CreatedBy  pgtype.UUID        `json:"created_by"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	ArchivedAt pgtype.Timestamptz `json:"archived_at"`
+	ArchivedBy pgtype.UUID        `json:"archived_by"`
+}
+
+type ClientMembership struct {
+	ID        pgtype.UUID        `json:"id"`
+	ClientID  pgtype.UUID        `json:"client_id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	Status    string             `json:"status"`
+	GrantedAt pgtype.Timestamptz `json:"granted_at"`
+	GrantedBy pgtype.UUID        `json:"granted_by"`
+	RevokedAt pgtype.Timestamptz `json:"revoked_at"`
+	RevokedBy pgtype.UUID        `json:"revoked_by"`
+}
+
 type Comment struct {
 	ID        pgtype.UUID        `json:"id"`
 	ItemID    pgtype.UUID        `json:"item_id"`
@@ -969,6 +993,8 @@ type Item struct {
 	StatusChangedAt   pgtype.Timestamptz `json:"status_changed_at"`
 	Importance        string             `json:"importance"`
 	TypeID            pgtype.UUID        `json:"type_id"`
+	ClientID          pgtype.UUID        `json:"client_id"`
+	ScopeState        string             `json:"scope_state"`
 }
 
 type ItemAssignee struct {
@@ -1226,6 +1252,11 @@ type SecurityEvent struct {
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 
+type SeedRun struct {
+	Name      string             `json:"name"`
+	AppliedAt pgtype.Timestamptz `json:"applied_at"`
+}
+
 type Session struct {
 	TokenHash         []byte             `json:"token_hash"`
 	UserID            pgtype.UUID        `json:"user_id"`
@@ -1263,6 +1294,8 @@ type Space struct {
 	ArchivedAt       pgtype.Timestamptz `json:"archived_at"`
 	ArchivedBy       pgtype.UUID        `json:"archived_by"`
 	IconKey          pgtype.Text        `json:"icon_key"`
+	ClientID         pgtype.UUID        `json:"client_id"`
+	ScopeState       string             `json:"scope_state"`
 }
 
 type SpaceAdmin struct {

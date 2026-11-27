@@ -434,3 +434,7 @@ Hasil:
 - Temuan: konektor GitHub `Bebas` aktif dan sinkron berhasil pada 08:01. Penonaktifan ditolak oleh pemeriksa otomatis; keputusan pemilik diperlukan.
 
 Lihat `ACCEPTANCE.md` untuk status per kriteria.
+
+## §16 PROMPT #035 (2026-11-27)
+
+Tidak ada redeploy. Kandidat tetap `pms:candidate-b3bfa8cec81ce7f0600eefc9b4b77f6bdb490118`, healthy, schema 364, readyz 200. Pemeriksaan read-only: `ops-check.sh` exit 0; `restore-test.sh 20261127T080200Z` lulus (4 detik). Konektor "Bebas" tetap aktif (HUMAN_ACTION_REQUIRED). Tidak ada perubahan data staging. Hasil lengkap ada di ACCEPTANCE.md (PROMPT #035).

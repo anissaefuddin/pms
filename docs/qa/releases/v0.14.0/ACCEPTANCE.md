@@ -29,7 +29,7 @@ Status: **PASS** (dijalankan dan lulus), **FAIL**, **BLOCKED** (prasyarat ekster
 | Runbook deploy dan pemulihan | PASS (dokumen) | `docs/ops/DEPLOY_AND_RECOVERY_RUNBOOK.md` | Dokumen | Dibuat dari prosedur yang sudah dijalankan | Belum diuji ulang oleh orang lain | Tinjau operasi |
 | Tes frontend | PASS | typecheck, lint, token check, build, 127 tes unit | Lokal | Lulus | Tes E2E Playwright penuh belum dijalankan | Dijalankan di CI jarak jauh |
 | Browser UAT | PASS (terbatas) | Portfolio, dokumen, Read Only, Limited, dan alur project | Staging | Lihat STAGING_REHEARSAL.md §14 | Tidak semua alur UI dijalankan ulang | Tidak ada |
-| Pengecekan CI jarak jauh (repositori privat) | **BLOCKED** | Tidak ada CI jarak jauh yang bisa dihubungi tanpa push | - | - | Belum ada bukti CI | CI jarak jauh |
+| Pengecekan CI jarak jauh | **BLOCKED** | `gh repo view`: repositori `anissaefuddin/pms` berstatus **PUBLIC** (diverifikasi PROMPT #035). Tidak ada push dari sesi ini | - | - | Belum ada bukti CI; repositori publik dan berisi riwayat yang belum diaudit | Keputusan visibilitas dan audit riwayat sebelum push |
 | Persetujuan produksi | **BLOCKED** | - | - | Belum ada | - | Persetujuan produk eksplisit |
 
 ## Keputusan GO
@@ -42,3 +42,34 @@ Status: **PASS** (dijalankan dan lulus), **FAIL**, **BLOCKED** (prasyarat ekster
 ## Catatan percobaan yang ditolak
 
 Penonaktifan konektor `github` "Bebas" pada staging dicoba melalui endpoint admin yang ada, tetapi permintaan ditolak oleh pemeriksa otomatis (kategori tindakan yang tidak diinginkan). Tidak ada upaya lain yang dilakukan. Konektor tetap aktif sampai pemilik memutuskan.
+
+## PROMPT #035 — penutupan blocker rilis (2026-11-27)
+
+Baseline yang diverifikasi: staging menjalankan `pms:candidate-b3bfa8cec81ce7f0600eefc9b4b77f6bdb490118` (healthy, restarts 0, readyz 200, schema 364, `SMTP_HOST` kosong, `PMS_PUBLIC_LINKS` dan `PMS_PYDIO_LISTING` tidak diatur, `PMS_PYDIO_CUSTOMER_ROOTS` kosong). HEAD lokal setelah perubahan ini: lihat commit dokumentasi. Push: **SKIPPED**.
+
+| Gerbang | Status | Bukti atau tindakan yang diperlukan |
+|---|---|---|
+| Penahanan konektor GitHub "Bebas" | **HUMAN_ACTION_REQUIRED** (P0) | Masih `enabled=t`. Sinkronisasi terjadwal berjalan **setiap 5 menit** (`next_sync_at` berulang); sinkron terakhir OK 11:00 UTC. Tidak ada job `connector_sync` yang tertunda (61 selesai). Penonaktifan lewat endpoint admin ditolak pemeriksa pada percobaan sebelumnya dan tidak dicoba ulang tanpa persetujuan. Tindakan pemilik: nonaktifkan lewat endpoint admin yang disetujui, lalu verifikasi `sync` ditolak dan tidak ada job baru. Pemeriksaan kode: `RunDue`, `Sync`, dan `Secret` memeriksa `enabled`; webhook masuk konektor memakai `Secret` yang sama. |
+| Rotasi password admin | **HUMAN_ACTION_REQUIRED** | Tidak diminta atau diproses di chat. Pemilik merotasi lewat jalur aman, mencabut sesi lama, dan membatasi akses log lama yang memuat tautan aktivasi. |
+| Backup off-host | **EXTERNAL_BLOCKED** | `BACKUP_REMOTE` dan `BACKUP_RSYNC_DEST` belum diatur. Tidak ada tujuan yang disetujui. |
+| Escrow konfigurasi | **EXTERNAL_BLOCKED** | Belum ada tujuan dan kunci escrow yang disetujui. `.env` tidak masuk backup. |
+| Retensi backup | **HUMAN_ACTION_REQUIRED** | Usulan 7 harian, 4 mingguan, 3 bulanan belum diterapkan. `backup.sh` saat ini menghapus set lokal berumur lebih dari `BACKUP_RETENTION_DAYS=14`. Tidak ada artefak yang dihapus dalam sesi ini. Keputusan pemilik diperlukan sebelum penghapusan pertama. |
+| Jadwal backup 02:17 | **PASS (terpasang), belum terbukti berjalan** | Crontab `17 2 * * * ... ./backup.sh` dipasang 2026-11-27 07:58 UTC. Belum ada `cron-backup.log` dan belum ada set 02:17; eksekusi pertama 2026-11-28 02:17 UTC. Verifikasi besok. |
+| Verifikasi restore | **PASS** | `restore-test.sh 20261127T080200Z` lulus dalam 4 detik (users=43), database sementara dibuang. Checksum set valid. Tar lampiran terbaca: 39 file, sama dengan direktori file live (39). Baris DB: 25 attachment, 31 versi. |
+| Monitoring dan alert | **BLOCKED** (alert) / **PASS** (pemeriksaan) | `ops-check.sh` exit 0: readiness 200, container healthy restarts 0, disk 61%, PostgreSQL menerima koneksi, backup usia 3 jam dengan checksum valid, ERROR 15 menit terakhir 0. Tidak ada penerima alert yang disetujui. |
+| Pydio: ACL live atau pengecualian lingkup | **BLOCKED** (AC-14) | Tidak ada akun atau folder uji yang disetujui, dan `PMS_PYDIO_CUSTOMER_ROOTS` kosong. Tidak ada tebakan root. Pengecualian lingkup diusulkan untuk persetujuan pemilik: rilis tanpa tautan Pydio live, dengan tautan tidak aktif dan semua gerbang lain lulus. Persetujuan tidak diberikan. |
+| Mapping operasional | **HUMAN_ACTION_REQUIRED** | Tidak ada mapping Customer, Project Manager, atau Space yang disetujui. 18 Space unresolved dan 19 proyek tanpa owner tidak diubah. Input pilot tetap mengikuti PROJECT_ONBOARDING_CHECKLIST.md. |
+| Verifikasi backend terintegrasi | **PASS** | `gofmt` 0 file tidak terformat; `go vet ./server/...` OK; `go test -count=1 ./server/...` 32 paket ok, 0 FAIL (dijalankan ulang setelah regenerasi). Dijalankan di database `pms_test` lokal. |
+| Generated code konsisten | **FAIL → PASS (diperbaiki)** | `server/internal/dbgen/models.go` tertinggal dari migrasi (tidak memuat `Client`, `ClientMembership`, `Item.ClientID`). Diregenerasi dengan `sqlc generate` v1.31.1. `oapi-codegen` tidak menghasilkan perubahan. Build dan vet lulus setelah regenerasi. |
+| Frontend: lint, token check, typecheck, build, unit test | **PASS** | `npm run generate`, `lint`, `lint:tokens`, `typecheck`, `build`, `npm test` = 127 pass, 0 fail. |
+| Playwright E2E inti | **DEFERRED** | Suite memuat 168 spec dan butuh backend hidup dengan fixture. Tidak dijalankan dalam sesi ini; tidak diklaim lulus. Dijalankan di CI jarak jauh setelah push. |
+| STG-14 (token lama) | **PASS (terisolasi)** | Tidak diulang di staging; link publik tetap OFF. |
+| CI jarak jauh | **BLOCKED** | Repositori publik (lihat baris di atas). Tidak ada push. |
+| Persetujuan produksi | **NOT READY** | Lihat keputusan GO di bawah. |
+
+Catatan: kedua suite backend dijalankan dua kali. Eksekusi pertama lulus terhadap `models.go` lama; setelah regenerasi, eksekusi kedua juga lulus (`GO_TEST2_EXIT=0`). Hasil yang dilaporkan adalah eksekusi kedua.
+
+### Keputusan GO (diperbarui)
+
+- Produksi: **NO-GO**. Gerbang wajib yang masih terbuka: konektor aktif (P0), rotasi password admin, backup off-host dan escrow, retensi, alert, keputusan Pydio live atau pengecualian lingkup, mapping operasional, persetujuan RPO/RTO, CI jarak jauh, dan persetujuan produk.
+- Staging: tidak ada perubahan candidate. Tidak ada redeploy dalam PROMPT #035 karena tidak ada koreksi aplikasi yang memblokir rilis. Perbaikan `models.go` hanya memengaruhi kode generasi dan tidak mengubah perilaku runtime.
