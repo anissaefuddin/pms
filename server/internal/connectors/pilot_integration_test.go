@@ -45,6 +45,8 @@ func newPilot(t *testing.T) *pilot {
 			t.Fatal(err)
 		}
 	}
+	// Fixtures insert items with raw SQL and no ownership. They are internal by intent; explicit unresolved rows stay unresolved.
+	exec("ALTER TABLE items ALTER COLUMN scope_state SET DEFAULT 'internal'; ALTER TABLE spaces ALTER COLUMN scope_state SET DEFAULT 'internal'")
 	p := &pilot{t: t, gh: &fakeGitHub{issues: map[int]*ghIssue{}}, gcal: &fakeGoogle{events: map[string]map[string]any{}}}
 	if err := pool.QueryRow(ctx, `INSERT INTO users(email,user_type,first_name,last_name,password_hash,status) VALUES ('a@example.com','admin','A','A','x','active') RETURNING id::text`).Scan(&p.admin); err != nil {
 		t.Fatal(err)
