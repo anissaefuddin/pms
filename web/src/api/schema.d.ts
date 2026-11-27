@@ -607,6 +607,23 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/portfolio/projects": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /** Monitor proyek terkonsolidasi (PROMPT 034). Hanya proyek yang boleh dilihat pengguna; ringkasan dan opsi filter dihitung dari data yang diizinkan */
+        get: operations["listPortfolioProjects"];
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/portfolio/timeline": {
         parameters: {
             query?: never;
@@ -8953,6 +8970,38 @@ export interface operations {
                 };
             };
             404: components["responses"]["Problem"];
+        };
+    };
+    listPortfolioProjects: {
+        parameters: {
+            query?: {
+                /** @description id Customer, atau internal untuk proyek tanpa Customer */
+                customer?: string;
+                /** @description id user Project Manager, atau none */
+                owner?: string;
+                health?: "green" | "yellow" | "red" | "none";
+                status?: "active" | "completed" | "deferred" | "cancelled";
+                q?: string;
+                sort?: "title" | "finish" | "progress" | "health" | "overdue" | "updated" | "customer" | "owner";
+                order?: "asc" | "desc";
+            };
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description OK */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": Record<string, never>;
+                };
+            };
+            401: components["responses"]["Problem"];
+            422: components["responses"]["Problem"];
         };
     };
     getPortfolioTimeline: {

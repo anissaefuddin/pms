@@ -419,5 +419,65 @@
     "rootsUnavailable": "Document links are not available for this Customer yet: no approved folder mapping is configured.",
     "invalid": "The stored folder reference is not valid. An administrator needs to correct it.",
     "configure": "Configure"
+  },
+  "monitor": {
+    "title": "Project monitor",
+    "loading": "Loading projects…",
+    "loadError": "The project monitor could not be loaded.",
+    "total": "Projects",
+    "health": "Health",
+    "healthCounts": "Green {{green}} · Yellow {{yellow}} · Red {{red}} · Not set {{none}}",
+    "overdueTasks": "Overdue tasks",
+    "lateProjects": "Projects with overdue tasks",
+    "unassignedCount": "Unassigned",
+    "search": "Search",
+    "searchPlaceholder": "Project name or code",
+    "customer": "Customer",
+    "owner": "Project Manager",
+    "healthFilter": "Health",
+    "statusFilter": "Status",
+    "sort": "Sort by",
+    "descending": "Descending",
+    "any": "All",
+    "unassigned": "Unassigned",
+    "unavailable": "Not available",
+    "empty": "No projects match these filters.",
+    "internal": "Internal",
+    "archived": "archived",
+    "healthOption": {
+      "green": "Green",
+      "yellow": "Yellow",
+      "red": "Red",
+      "none": "Not set"
+    },
+    "statusOption": {
+      "active": "Active",
+      "completed": "Completed",
+      "deferred": "Deferred",
+      "cancelled": "Cancelled"
+    },
+    "sortOption": {
+      "title": "Name",
+      "customer": "Customer",
+      "owner": "Project Manager",
+      "finish": "Finish date",
+      "progress": "Progress",
+      "health": "Health",
+      "overdue": "Overdue tasks",
+      "updated": "Last update"
+    },
+    "col": {
+      "code": "Code",
+      "project": "Project",
+      "customer": "Customer",
+      "owner": "Project Manager",
+      "status": "Status",
+      "progress": "Progress",
+      "health": "Health",
+      "start": "Start",
+      "finish": "Finish",
+      "overdue": "Overdue",
+      "updated": "Last update"
+    }
   }
 }

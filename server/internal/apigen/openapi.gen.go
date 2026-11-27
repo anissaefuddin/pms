@@ -3741,6 +3741,108 @@ func (e GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess) Valid() boo
 	}
 }
 
+// Defines values for ListPortfolioProjectsParamsHealth.
+const (
+	ListPortfolioProjectsParamsHealthGreen  ListPortfolioProjectsParamsHealth = "green"
+	ListPortfolioProjectsParamsHealthNone   ListPortfolioProjectsParamsHealth = "none"
+	ListPortfolioProjectsParamsHealthRed    ListPortfolioProjectsParamsHealth = "red"
+	ListPortfolioProjectsParamsHealthYellow ListPortfolioProjectsParamsHealth = "yellow"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsHealth enum.
+func (e ListPortfolioProjectsParamsHealth) Valid() bool {
+	switch e {
+	case ListPortfolioProjectsParamsHealthGreen:
+		return true
+	case ListPortfolioProjectsParamsHealthNone:
+		return true
+	case ListPortfolioProjectsParamsHealthRed:
+		return true
+	case ListPortfolioProjectsParamsHealthYellow:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPortfolioProjectsParamsStatus.
+const (
+	ListPortfolioProjectsParamsStatusActive    ListPortfolioProjectsParamsStatus = "active"
+	ListPortfolioProjectsParamsStatusCancelled ListPortfolioProjectsParamsStatus = "cancelled"
+	ListPortfolioProjectsParamsStatusCompleted ListPortfolioProjectsParamsStatus = "completed"
+	ListPortfolioProjectsParamsStatusDeferred  ListPortfolioProjectsParamsStatus = "deferred"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsStatus enum.
+func (e ListPortfolioProjectsParamsStatus) Valid() bool {
+	switch e {
+	case ListPortfolioProjectsParamsStatusActive:
+		return true
+	case ListPortfolioProjectsParamsStatusCancelled:
+		return true
+	case ListPortfolioProjectsParamsStatusCompleted:
+		return true
+	case ListPortfolioProjectsParamsStatusDeferred:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPortfolioProjectsParamsSort.
+const (
+	ListPortfolioProjectsParamsSortCustomer ListPortfolioProjectsParamsSort = "customer"
+	ListPortfolioProjectsParamsSortFinish   ListPortfolioProjectsParamsSort = "finish"
+	ListPortfolioProjectsParamsSortHealth   ListPortfolioProjectsParamsSort = "health"
+	ListPortfolioProjectsParamsSortOverdue  ListPortfolioProjectsParamsSort = "overdue"
+	ListPortfolioProjectsParamsSortOwner    ListPortfolioProjectsParamsSort = "owner"
+	ListPortfolioProjectsParamsSortProgress ListPortfolioProjectsParamsSort = "progress"
+	ListPortfolioProjectsParamsSortTitle    ListPortfolioProjectsParamsSort = "title"
+	ListPortfolioProjectsParamsSortUpdated  ListPortfolioProjectsParamsSort = "updated"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsSort enum.
+func (e ListPortfolioProjectsParamsSort) Valid() bool {
+	switch e {
+	case ListPortfolioProjectsParamsSortCustomer:
+		return true
+	case ListPortfolioProjectsParamsSortFinish:
+		return true
+	case ListPortfolioProjectsParamsSortHealth:
+		return true
+	case ListPortfolioProjectsParamsSortOverdue:
+		return true
+	case ListPortfolioProjectsParamsSortOwner:
+		return true
+	case ListPortfolioProjectsParamsSortProgress:
+		return true
+	case ListPortfolioProjectsParamsSortTitle:
+		return true
+	case ListPortfolioProjectsParamsSortUpdated:
+		return true
+	default:
+		return false
+	}
+}
+
+// Defines values for ListPortfolioProjectsParamsOrder.
+const (
+	Asc  ListPortfolioProjectsParamsOrder = "asc"
+	Desc ListPortfolioProjectsParamsOrder = "desc"
+)
+
+// Valid indicates whether the value is a known member of the ListPortfolioProjectsParamsOrder enum.
+func (e ListPortfolioProjectsParamsOrder) Valid() bool {
+	switch e {
+	case Asc:
+		return true
+	case Desc:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for ListRecycleBinParamsSort.
 const (
 	ListRecycleBinParamsSortDeletedAt ListRecycleBinParamsSort = "deleted_at"
@@ -8128,6 +8230,32 @@ type GetOverviewTimelineParams struct {
 // GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess defines parameters for GetOverviewTimeline.
 type GetOverviewTimeline200JSONResponseBodySpacesEffectiveAccess string
 
+// ListPortfolioProjectsParams defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParams struct {
+	// Customer id Customer, atau internal untuk proyek tanpa Customer
+	Customer *string `form:"customer,omitempty" json:"customer,omitempty"`
+
+	// Owner id user Project Manager, atau none
+	Owner  *string                            `form:"owner,omitempty" json:"owner,omitempty"`
+	Health *ListPortfolioProjectsParamsHealth `form:"health,omitempty" json:"health,omitempty"`
+	Status *ListPortfolioProjectsParamsStatus `form:"status,omitempty" json:"status,omitempty"`
+	Q      *string                            `form:"q,omitempty" json:"q,omitempty"`
+	Sort   *ListPortfolioProjectsParamsSort   `form:"sort,omitempty" json:"sort,omitempty"`
+	Order  *ListPortfolioProjectsParamsOrder  `form:"order,omitempty" json:"order,omitempty"`
+}
+
+// ListPortfolioProjectsParamsHealth defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsHealth string
+
+// ListPortfolioProjectsParamsStatus defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsStatus string
+
+// ListPortfolioProjectsParamsSort defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsSort string
+
+// ListPortfolioProjectsParamsOrder defines parameters for ListPortfolioProjects.
+type ListPortfolioProjectsParamsOrder string
+
 // GetPortfolioTimelineJSONBody defines parameters for GetPortfolioTimeline.
 type GetPortfolioTimelineJSONBody struct {
 	ProjectIds []openapi_types.UUID `json:"project_ids"`
@@ -9997,6 +10125,9 @@ type ServerInterface interface {
 	// GetOverviewTimeline Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
 	// (GET /overview/timeline)
 	GetOverviewTimeline(w http.ResponseWriter, r *http.Request, params GetOverviewTimelineParams)
+	// ListPortfolioProjects Monitor proyek terkonsolidasi (PROMPT 034). Hanya proyek yang boleh dilihat pengguna; ringkasan dan opsi filter dihitung dari data yang diizinkan
+	// (GET /portfolio/projects)
+	ListPortfolioProjects(w http.ResponseWriter, r *http.Request, params ListPortfolioProjectsParams)
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(w http.ResponseWriter, r *http.Request)
@@ -17210,6 +17341,117 @@ func (siw *ServerInterfaceWrapper) GetOverviewTimeline(w http.ResponseWriter, r 
 	handler.ServeHTTP(w, r)
 }
 
+// ListPortfolioProjects operation middleware
+func (siw *ServerInterfaceWrapper) ListPortfolioProjects(w http.ResponseWriter, r *http.Request) {
+
+	var err error
+	_ = err
+
+	// Parameter object where we will unmarshal all parameters from the context
+	var params ListPortfolioProjectsParams
+
+	// ------------- Optional query parameter "customer" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "customer", r.URL.Query(), &params.Customer, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "customer"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "customer", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "owner" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "owner", r.URL.Query(), &params.Owner, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "owner"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "owner", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "health" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "health", r.URL.Query(), &params.Health, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "health"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "health", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "status" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "status", r.URL.Query(), &params.Status, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "status"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "status", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "q" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "q", r.URL.Query(), &params.Q, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "q"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "q", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "sort" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "sort", r.URL.Query(), &params.Sort, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "sort"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "sort", Err: err})
+		}
+		return
+	}
+
+	// ------------- Optional query parameter "order" -------------
+
+	err = runtime.BindQueryParameterWithOptions("form", true, false, "order", r.URL.Query(), &params.Order, runtime.BindQueryParameterOptions{Type: "string", Format: ""})
+	if err != nil {
+		var requiredError *runtime.RequiredParameterError
+		if errors.As(err, &requiredError) {
+			siw.ErrorHandlerFunc(w, r, &RequiredParamError{ParamName: "order"})
+		} else {
+			siw.ErrorHandlerFunc(w, r, &InvalidParamFormatError{ParamName: "order", Err: err})
+		}
+		return
+	}
+
+	handler := http.Handler(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		siw.Handler.ListPortfolioProjects(w, r, params)
+	}))
+
+	for _, middleware := range siw.HandlerMiddlewares {
+		handler = middleware(handler)
+	}
+
+	handler.ServeHTTP(w, r)
+}
+
 // GetPortfolioTimeline operation middleware
 func (siw *ServerInterfaceWrapper) GetPortfolioTimeline(w http.ResponseWriter, r *http.Request) {
 
@@ -22071,6 +22313,7 @@ func HandlerWithOptions(si ServerInterface, options StdHTTPServerOptions) http.H
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/oauth/grants", wrapper.ListOAuthGrants)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/oauth/grants/{id}", wrapper.RevokeOAuthGrant)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/public/gantt/{token}", wrapper.GetPublicGanttSnapshot)
+	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/portfolio/projects", wrapper.ListPortfolioProjects)
 	m.HandleFunc(http.MethodPost+" "+options.BaseURL+"/portfolio/timeline", wrapper.GetPortfolioTimeline)
 	m.HandleFunc(http.MethodDelete+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.DeleteDashboardPublicLink)
 	m.HandleFunc(http.MethodGet+" "+options.BaseURL+"/dashboards/{dashboardId}/public-link", wrapper.GetDashboardPublicLink)
@@ -35260,6 +35503,58 @@ func (response GetOverviewTimeline422ApplicationProblemPlusJSONResponse) VisitGe
 	return err
 }
 
+type ListPortfolioProjectsRequestObject struct {
+	Params ListPortfolioProjectsParams
+}
+
+type ListPortfolioProjectsResponseObject interface {
+	VisitListPortfolioProjectsResponse(w http.ResponseWriter) error
+}
+
+type ListPortfolioProjects200JSONResponse map[string]interface{}
+
+func (response ListPortfolioProjects200JSONResponse) VisitListPortfolioProjectsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(200)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPortfolioProjects401ApplicationProblemPlusJSONResponse struct {
+	ProblemApplicationProblemPlusJSONResponse
+}
+
+func (response ListPortfolioProjects401ApplicationProblemPlusJSONResponse) VisitListPortfolioProjectsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(401)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
+type ListPortfolioProjects422ApplicationProblemPlusJSONResponse Problem
+
+func (response ListPortfolioProjects422ApplicationProblemPlusJSONResponse) VisitListPortfolioProjectsResponse(w http.ResponseWriter) error {
+
+	var buf bytes.Buffer
+	if err := json.NewEncoder(&buf).Encode(response); err != nil {
+		return err
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(422)
+	_, err := buf.WriteTo(w)
+	return err
+}
+
 type GetPortfolioTimelineRequestObject struct {
 	Body *GetPortfolioTimelineJSONRequestBody
 }
@@ -45902,6 +46197,9 @@ type StrictServerInterface interface {
 	// GetOverviewTimeline Project dan Task yang jatuh tempo dalam rentang tanggal, dikelompokkan per Space yang bisa dilihat pengguna (read-only)
 	// (GET /overview/timeline)
 	GetOverviewTimeline(ctx context.Context, request GetOverviewTimelineRequestObject) (GetOverviewTimelineResponseObject, error)
+	// ListPortfolioProjects Monitor proyek terkonsolidasi (PROMPT 034). Hanya proyek yang boleh dilihat pengguna; ringkasan dan opsi filter dihitung dari data yang diizinkan
+	// (GET /portfolio/projects)
+	ListPortfolioProjects(ctx context.Context, request ListPortfolioProjectsRequestObject) (ListPortfolioProjectsResponseObject, error)
 	// GetPortfolioTimeline Timeline gabungan 1 sampai 20 project yang terlihat, dengan dependensi lintas project (SCH-01); project tersembunyi dijawab 404
 	// (POST /portfolio/timeline)
 	GetPortfolioTimeline(ctx context.Context, request GetPortfolioTimelineRequestObject) (GetPortfolioTimelineResponseObject, error)
@@ -52815,6 +53113,32 @@ func (sh *strictHandler) GetOverviewTimeline(w http.ResponseWriter, r *http.Requ
 		sh.options.ResponseErrorHandlerFunc(w, r, err)
 	} else if validResponse, ok := response.(GetOverviewTimelineResponseObject); ok {
 		if err := validResponse.VisitGetOverviewTimelineResponse(w); err != nil {
+			sh.options.ResponseErrorHandlerFunc(w, r, err)
+		}
+	} else if response != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, fmt.Errorf("unexpected response type: %T", response))
+	}
+}
+
+// ListPortfolioProjects operation middleware
+func (sh *strictHandler) ListPortfolioProjects(w http.ResponseWriter, r *http.Request, params ListPortfolioProjectsParams) {
+	var request ListPortfolioProjectsRequestObject
+
+	request.Params = params
+
+	handler := func(ctx context.Context, w http.ResponseWriter, r *http.Request, request interface{}) (interface{}, error) {
+		return sh.ssi.ListPortfolioProjects(ctx, request.(ListPortfolioProjectsRequestObject))
+	}
+	for _, middleware := range sh.middlewares {
+		handler = middleware(handler, "ListPortfolioProjects")
+	}
+
+	response, err := handler(r.Context(), w, r, request)
+
+	if err != nil {
+		sh.options.ResponseErrorHandlerFunc(w, r, err)
+	} else if validResponse, ok := response.(ListPortfolioProjectsResponseObject); ok {
+		if err := validResponse.VisitListPortfolioProjectsResponse(w); err != nil {
 			sh.options.ResponseErrorHandlerFunc(w, r, err)
 		}
 	} else if response != nil {

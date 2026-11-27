@@ -413,5 +413,65 @@
     "rootsUnavailable": "Tautan dokumen belum tersedia untuk Customer ini: belum ada pemetaan folder yang disetujui.",
     "invalid": "Referensi folder yang tersimpan tidak valid. Administrator perlu memperbaikinya.",
     "configure": "Atur"
+  },
+  "monitor": {
+    "title": "Monitor proyek",
+    "loading": "Memuat proyek…",
+    "loadError": "Monitor proyek tidak dapat dimuat.",
+    "total": "Proyek",
+    "health": "Kesehatan",
+    "healthCounts": "Hijau {{green}} · Kuning {{yellow}} · Merah {{red}} · Belum diatur {{none}}",
+    "overdueTasks": "Tugas terlambat",
+    "lateProjects": "Proyek dengan tugas terlambat",
+    "unassignedCount": "Belum ditugaskan",
+    "search": "Cari",
+    "searchPlaceholder": "Nama atau kode proyek",
+    "customer": "Customer",
+    "owner": "Project Manager",
+    "healthFilter": "Kesehatan",
+    "statusFilter": "Status",
+    "sort": "Urutkan",
+    "descending": "Menurun",
+    "any": "Semua",
+    "unassigned": "Belum ditugaskan",
+    "unavailable": "Tidak tersedia",
+    "empty": "Tidak ada proyek yang cocok dengan filter ini.",
+    "internal": "Internal",
+    "archived": "diarsipkan",
+    "healthOption": {
+      "green": "Hijau",
+      "yellow": "Kuning",
+      "red": "Merah",
+      "none": "Belum diatur"
+    },
+    "statusOption": {
+      "active": "Aktif",
+      "completed": "Selesai",
+      "deferred": "Ditunda",
+      "cancelled": "Dibatalkan"
+    },
+    "sortOption": {
+      "title": "Nama",
+      "customer": "Customer",
+      "owner": "Project Manager",
+      "finish": "Tanggal selesai",
+      "progress": "Progres",
+      "health": "Kesehatan",
+      "overdue": "Tugas terlambat",
+      "updated": "Pembaruan terakhir"
+    },
+    "col": {
+      "code": "Kode",
+      "project": "Proyek",
+      "customer": "Customer",
+      "owner": "Project Manager",
+      "status": "Status",
+      "progress": "Progres",
+      "health": "Kesehatan",
+      "start": "Mulai",
+      "finish": "Selesai",
+      "overdue": "Terlambat",
+      "updated": "Pembaruan terakhir"
+    }
   }
 }
