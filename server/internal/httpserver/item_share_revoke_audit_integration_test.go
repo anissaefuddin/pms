@@ -16,7 +16,7 @@ func TestItemShareRevokeAboveOwnCapabilitiesIsRefused(t *testing.T) {
 	space := f.space("Shared")
 	f.share(space, "user", admin.id, "full") // the admin creates this Space's content as an explicit member
 	f.share(space, "user", actor.id, "read") // the actor can see the Space and reach the item
-	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Plan',$1) RETURNING id::text", admin.id)
+	item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Plan',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 	path := "/items/" + item + "/shares"
 

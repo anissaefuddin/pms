@@ -506,6 +506,37 @@ Product Owner mengotorisasi B3-SC dan penyelesaian B3-04. Ini menutup F1: `space
 
 **Regresi tes Space:** tes yang gagal karena F1 sekarang mengirim kepemilikan eksplisit dalam payload API (sesuai instruksi, tidak diganti dengan fixture). Penggantian `UPDATE spaces` sementara di `TestMovingWorkDoesNotCarryAssignmentRights` dihapus.
 
+## 7n. Eligibility item B3-05 dan penegakan penugasan B3-06 (27 Nov 2026, Prompt #021) — COMPLETE pada tingkat policy pusat
+
+Product Owner mengotorisasi B3-05 dan B3-06. Prinsip: kepemilikan item stabil adalah otoritas, eligibility klien dievaluasi sebelum union permission, membership bukan grant resource, dan Workspace Admin tidak melewati membership.
+
+**B3-05 (`policy/item.go`).** Konstanta `itemGate` dipasang pada anchor `ancestry` di `itemsCaps` (dan pada jalur form). Sebuah lokasi hanya ikut menyumbang jika:
+- item `client` dan lokasinya berada di Space `client` dengan `client_id` yang sama, dan aktor memiliki membership `active` pada Customer itu, dengan pengguna `active` bertipe admin atau regular; atau
+- item `internal` dan lokasinya berada di Space `internal` (`client_id` NULL).
+Item atau Space `unresolved`, dan kombinasi yang tidak konsisten, tidak cocok dengan cabang mana pun. Rekursi ke induk mensyaratkan kepemilikan yang sama dengan akar. Personal Space tetap milik pemiliknya. Grant share (langsung, grup, dan warisan) hanya berlaku melalui lokasi yang lolos gate, sehingga share item tidak dapat memotong eligibility. Arsip Customer tidak diperiksa, sehingga akses historis anggota aktif tetap ada.
+
+**Jalur "Full on every path" (`policy/share_paths.go`).** `SharedOnEveryPath` memanggil `eligibleItems` untuk setiap item di jalur (termasuk induk), dan jalur yang tidak lolos gate dianggap tidak ada. Dengan demikian item atau folder yang tidak memenuhi syarat tidak dapat membuat aksi serah terima tampak aman. Pemeriksaan `CanAssignOthers`, `CanReassignMany`, dan `SharedOnEveryPath` yang ada tidak berubah selain ini. DEC-10 dan D-W3.1 tetap, dan `policy/engine.go` tidak berubah pada batch ini.
+
+**B3-06 (`items/assignee_eligibility.go`, `items/patch.go`).** Dalam `applyFields` (dijalankan untuk create dan PATCH), assignee baru pada item `client` harus memiliki membership aktif di Customer item. Membership dibaca `FOR SHARE`, sehingga revoke (yang mengunci `FOR UPDATE`) menunggu. Assignee yang sudah ada tidak diperiksa ulang, sehingga assignee yang sudah dicabut tetap dapat dihapus (AS-11). Item internal tidak berubah. Penolakan memakai 422 `assignee_ineligible` tanpa menyebut orang atau Customer. Tidak ada membership, share, atau Space Admin yang dibuat otomatis.
+
+**Tes:** `server/internal/httpserver/item_eligibility_integration_test.go`: IT-01..15 (15 PASS), ML-01..08 (8 PASS), AS-01..12 (12 PASS), dan AS-13 (1 PASS, pengikatan dengan revoke melalui `items.CreateTx`).
+
+**Kontrol negatif (setiap kali dipulihkan dan diverifikasi identik):**
+- Gate item dibuat `TRUE`: IT-03, IT-04, IT-05, IT-07, IT-08, IT-09, IT-13, IT-14, ML-02..ML-07 gagal.
+- Kompatibilitas lokasi client dihapus: ML-02 dan ML-03 gagal.
+- Syarat jalur penuh (ancestor harus punya Share) dilonggarkan: `TestAFolderGivesNoAssignmentSayOutsideItself` gagal.
+
+**Koreksi fixture (hanya fixture uji, tidak ada asersi yang dilemahkan):** `INSERT INTO items` mentah tanpa ownership di fungsi-fungsi yang gagal kini memakai `scope_state='internal'` secara eksplisit. Helper bersama `customFieldItem`, `scheduledItem`, dan `dependencyItem` dibuat internal setelah dipastikan tidak ada pemanggil dengan Space client. Benchmark scheduling 500 tugas juga dibuat eksplisit. Dua asersi diubah secara sadar:
+- CRT-08: induk `unresolved` tidak terlihat, sehingga anak mendapat 404 (sebelumnya 422). Penolakan tetap terjadi.
+- CRT-09 dan CRT-10: induk client tidak terlihat di Space yang lokasinya tidak kompatibel, sehingga 404 (sebelumnya 422). Penolakan tetap terjadi.
+
+**Penolakan yang tidak dilakukan:** tidak ada perubahan pada `items.owner_id`, migrasi, OpenAPI, frontend, atau kebijakan share.
+
+**Sisa dan risiko (dicatat):**
+- Banyak pembacaan `items` langsung di luar `policy` (sekitar 40 berkas, termasuk `spaces/item_shares.go`, `analytics`, `overview`, `views`, `automation`, `connectors`, `housekeeping`). `list`, `search`, `stream`, dan `overview` memanggil policy pusat, sehingga tercakup. Sisanya belum diverifikasi satu per satu.
+- Assignee yang ditambahkan otomatis oleh aksi status (`autoAssign`) dan jalur `assignee` di luar `applyFields` belum diperiksa eligibility-nya.
+- Mutasi lintas tabel lokasi (move, copy, restore, tambah lokasi) belum ditegakkan (B3-08/09). Ketidakkonsistenan lokasi dapat terjadi lewat jalur itu.
+- Suite penuh tidak dijalankan. Gate item menyentuh semua pembacaan item, sehingga regresi di luar grup ini tetap mungkin.
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).

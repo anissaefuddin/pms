@@ -105,7 +105,7 @@ func TestItemActivityAndFollowers(t *testing.T) {
 	space := f.space("Hist")
 	f.share(space, "user", admin.id, "full") // A1.2: the admin creates this Space's content as an explicit member
 	f.share(space, "user", reader.id, "read")
-	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','History',$1) RETURNING id::text", admin.id)
+	item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','History',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space)
 	for i := range 3 {
 		f.exec("INSERT INTO activity(item_id,actor_id,action,changes) VALUES ($1,$2,'item.updated',$3::jsonb)", item, admin.id, `{"title":{"from":"a","to":"b`+string(rune('0'+i))+`"}}`)

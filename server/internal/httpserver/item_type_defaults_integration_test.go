@@ -171,7 +171,7 @@ func TestItemTypeInExportSearchAndReports(t *testing.T) {
 	d := newTypeDefaultsEnv(t)
 	e, f := d.e, d.e.f
 	startExcelWorker(t, f)
-	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Root',$1) RETURNING id::text", e.admin.id)
+	project := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','Root',$1,'internal') RETURNING id::text", e.admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", project, e.space)
 	mk := func(key, title string) string {
 		got := f.call(e.editor, "POST", "/items", map[string]any{"type_key": key, "title": title, "locations": []map[string]any{{"space_id": e.space, "parent_item_id": project}}})

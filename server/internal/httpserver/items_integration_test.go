@@ -14,7 +14,7 @@ func TestGetItemDetail(t *testing.T) {
 	second := f.space("Second")
 	group := f.group("Readers", reader)
 	f.share(second, "group", group, "full")
-	id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Plan',$1) RETURNING id::text", creator.id)
+	id := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Plan',$1,'internal') RETURNING id::text", creator.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'a'),($1,$3,'a')", id, first, second)
 
 	reply := f.call(reader, http.MethodGet, "/items/"+id, nil)

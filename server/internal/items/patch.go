@@ -370,6 +370,10 @@ WHERE i.id=$2::uuid AND next.id=$1
 		}
 	}
 	if replaceAssignees {
+		// B3-06: a client-owned item gains only assignees who are active members of its Customer. Create and PATCH both pass here.
+		if err := patchAssignees(ctx, tx, id, assignees); err != nil {
+			return err
+		}
 		if incrementVersion {
 			if err := requireReassign(ctx, tx, actor, id, assignees); err != nil {
 				return err

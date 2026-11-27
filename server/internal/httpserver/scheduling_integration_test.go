@@ -17,8 +17,8 @@ import (
 func scheduledItem(f *fixture, actor *person, space, title, start, due string, duration int) string {
 	f.t.Helper()
 	id := f.queryID(`
-INSERT INTO items(type,title,created_by,start_date,due_date,duration_days,is_milestone)
-VALUES ('task',$1,$2,$3::text::date,$4::text::date,$5,$5=0) RETURNING id::text`, title, actor.id, start, due, duration)
+INSERT INTO items(type,title,created_by,start_date,due_date,duration_days,is_milestone,scope_state)
+VALUES ('task',$1,$2,$3::text::date,$4::text::date,$5,$5=0,'internal') RETURNING id::text`, title, actor.id, start, due, duration)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
 	return id
 }
@@ -437,8 +437,8 @@ func TestScheduling500TaskPerformance(t *testing.T) {
 	space := f.space("Scheduling benchmark")
 	f.exec(`
 WITH tasks AS (
-  INSERT INTO items(type,title,created_by,start_date,due_date,duration_days)
-  SELECT 'task','Scheduling task ' || n,$1,DATE '2026-01-05',DATE '2026-01-05',1
+  INSERT INTO items(type,title,created_by,start_date,due_date,duration_days,scope_state)
+  SELECT 'task','Scheduling task ' || n,$1,DATE '2026-01-05',DATE '2026-01-05',1,'internal'
   FROM generate_series(1,500) n
   RETURNING id
 )

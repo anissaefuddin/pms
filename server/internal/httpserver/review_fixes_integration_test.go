@@ -82,7 +82,7 @@ func TestProjectCostAcrossSpaces(t *testing.T) {
 	seen, hidden := f.spaceWithoutAdmins("Seen"), f.spaceWithoutAdmins("Hidden")
 	f.share(seen, "user", finance.id, "full")
 	f.share(hidden, "user", manager.id, "full")
-	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", finance.id)
+	project := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','P',$1,'internal') RETURNING id::text", finance.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A'),($1,$3,'B')", project, seen, hidden)
 	budget := f.call(manager, "POST", "/spaces/"+hidden+"/custom-fields", map[string]any{"name": "Hidden budget", "type": "currency", "config": map[string]any{"currency": "IDR", "project_budget": true}})
 	f.want(budget, 201, "budget in the hidden Space")

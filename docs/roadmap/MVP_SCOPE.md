@@ -663,3 +663,43 @@ Otorisasi: Product Owner (B3-SC, koreksi bootstrap General, integrasi Customer P
 - Space produksi `unresolved` yang sudah ada tetap tidak terlihat sampai pemetaan operasional (B3-18/19). Pemetaan belum diverifikasi.
 - B3-02 PARTIAL (invarian lintas tabel pada mutasi). AC-04, AC-07, AC-09, AC-10, dan AC-13 belum PASS. Isolasi klien belum lengkap. Kesiapan produksi NOT READY.
 - OWN-DB-16 (`shares`, `custom_field_grants`) tetap di B3-22.
+
+## 22. Bukti eksekusi B3-05 dan B3-06 (eligibility item dan penugasan, 27 Nov 2026, Prompt #021) — COMPLETE pada tingkat policy pusat
+
+Otorisasi: Product Owner (ADR §7n). Tidak ada migrasi, perubahan OpenAPI, atau frontend. Tidak ada B3-07 atau tugas lanjutan.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Gate kepemilikan item sebelum union permission | DONE | `policy/item.go` `itemGate` pada anchor `itemsCaps`; IT-01..15 |
+| Eligibility membership klien per item | DONE | IT-02..IT-05, IT-07..IT-10, IT-14 |
+| Lokasi tidak kompatibel tidak menyumbang | DONE | ML-02..ML-07 |
+| Jalur form dan Personal | DONE | IT-12, ML-06 |
+| Full on every path lewat gate | DONE | `policy/share_paths.go` `eligibleItems`; AS-01..AS-06 |
+| Target assignee harus anggota Customer | DONE | `items/assignee_eligibility.go`; AS-08, AS-09, AS-12 |
+| Revoke dan stale assignee | DONE | AS-11, AS-13 |
+| Tidak ada membership atau grant otomatis | DONE | AS-10 |
+| Metadata lokasi ditolak tidak bocor | DONE | ML-08 |
+
+**Hasil verifikasi** (binary akhir, setiap tes dijalankan sendiri, `PMS_TEST_SCALE=1`, `PMS_TEST_BROWSER=1`, `PMS_TEST_SCHEDULING_PERFORMANCE=1`):
+
+| Grup | PASS | FAIL | SKIP | PANIC |
+|---|---:|---:|---:|---:|
+| IT-01..15 | 15 subtest | 0 | 0 | 0 |
+| ML-01..08 | 8 subtest | 0 | 0 | 0 |
+| AS-01..12 dan AS-13 | 12 + 1 | 0 | 0 | 0 |
+| SP-01..28 | 28 subtest | 0 | 0 | 0 |
+| SC-01..17 | 14 subtest | 0 | 0 | 0 |
+| Tes Space terkait (78) | 78 | 0 | 0 | 0 |
+| Pembuatan dan hierarki (39) | 39 | 0 | 0 | 0 |
+| Penugasan dan privasi (22) | 22 | 0 | 0 | 0 |
+| CRT-01..19 | 23 entri | 0 | 0 | 0 |
+| Item, sharing, lokasi, otorisasi, penugasan, dan scheduling (90 tes) | 90 | 0 | 0 | 0 |
+| Policy, bootstrap, items, architecture | ok | 0 | 0 | 0 |
+
+Build, vet, gofmt, dan `git diff --check` lulus. Kontrol negatif dijelaskan di ADR §7n.
+
+**Keterbatasan:**
+- Suite penuh tidak dijalankan. Gate item menyentuh semua pembacaan item, dan fixture yang sudah disesuaikan hanya di grup yang disebut di atas.
+- Pembacaan `items` langsung di luar policy belum diverifikasi satu per satu (ADR §7n).
+- Mutasi lokasi lintas tabel (B3-08/09) belum ditegakkan, sehingga B3-02 tetap PARTIAL.
+- AC-04, AC-05, AC-07, AC-09, dan AC-10 hanya mendapat bukti parsial dari tes di atas. Isolasi klien belum lengkap. Kesiapan produksi NOT READY.

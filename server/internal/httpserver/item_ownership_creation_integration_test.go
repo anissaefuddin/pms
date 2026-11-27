@@ -165,7 +165,8 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 		unresolved := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','crt08-unresolved',$1,'unresolved') RETURNING id::text", creator.id)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'a')", unresolved, internal)
 		r := f.call(creator, "POST", "/items", itemBody("task", "crt08-child", internal, unresolved))
-		f.want(r, http.StatusUnprocessableEntity, "unresolved parent")
+		// B3-05 fails closed: an unresolved item is not visible, so the parent is not found (404), before ownership is checked.
+		f.want(r, http.StatusNotFound, "unresolved parent is not visible (B3-05 fails closed)")
 		if f.itemCount("crt08-child") != 0 {
 			t.Fatal("a refused child was written")
 		}
@@ -177,7 +178,8 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 		// later mutation paths must prevent; it is written here directly so the create guard is tested on its own.
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'zz')", parent, internal)
 		r := f.call(creator, "POST", "/items", itemBody("task", "crt09-child", internal, parent))
-		f.want(r, http.StatusUnprocessableEntity, "mismatch")
+		// B3-05: the parent is not visible in the internal Space (its location there is incompatible), so the create is not found (404).
+		f.want(r, http.StatusNotFound, "mismatch: parent not visible in that Space (B3-05)")
 		if f.itemCount("crt09-child") != 0 {
 			t.Fatal("a mismatched child was written")
 		}
@@ -187,7 +189,8 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 		f := f.on(t)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'zz')", parent, personal)
 		r := f.call(creator, "POST", "/items", itemBody("task", "crt10-child", personal, parent))
-		f.want(r, http.StatusUnprocessableEntity, "client parent in personal")
+		// B3-05: a client parent is not visible in a Personal Space, so the create is not found (404).
+		f.want(r, http.StatusNotFound, "client parent not visible in a personal Space (B3-05)")
 		if f.itemCount("crt10-child") != 0 {
 			t.Fatal("a client-owned child was written into a Personal Space")
 		}

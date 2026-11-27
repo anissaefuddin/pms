@@ -23,11 +23,11 @@ func TestCustomFieldAssignments(t *testing.T) {
 	f.want(local, 201, "Space field")
 	localID := local.body["id"].(string)
 
-	project := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Launch',$1) RETURNING id::text", owner.id)
+	project := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','Launch',$1,'internal') RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", project, space)
-	task := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Inside',$1) RETURNING id::text", owner.id)
+	task := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Inside',$1,'internal') RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", task, space, project)
-	outside := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Outside',$1) RETURNING id::text", owner.id)
+	outside := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Outside',$1,'internal') RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'V')", outside, space)
 	f.exec("UPDATE items SET fields=jsonb_build_object($2::text,'north',$3::text,'phase one') WHERE id IN ($1,$4)", task, wsID, localID, outside)
 

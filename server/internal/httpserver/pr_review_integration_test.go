@@ -40,7 +40,7 @@ func TestInvitationCannotOpenAnItemOfALockedSpace(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	space := f.spaceWithoutAdmins("Locked")
-	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','P',$1) RETURNING id::text", admin.id)
+	item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','P',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'A')", item, space)
 	f.share2(item, admin.id, "full") // may share the item, but does not reach the Space
 	f.exec("UPDATE spaces SET locked=true WHERE id=$1", space)

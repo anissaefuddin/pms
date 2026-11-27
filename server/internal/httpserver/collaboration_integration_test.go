@@ -70,7 +70,7 @@ func TestCollaborationAccessAndAttachmentLifecycle(t *testing.T) {
 	space := f.space("Collaboration")
 	f.share(space, "user", reader.id, "read")
 	f.share(space, "user", owner.id, "full") // A1.2: the owner creates the item and its comments as an explicit member
-	item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Notes',$1) RETURNING id::text", owner.id)
+	item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Notes',$1,'internal') RETURNING id::text", owner.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 	path := "/items/" + item
 	valid := map[string]any{"body": map[string]any{"type": "doc", "content": []any{map[string]any{"type": "paragraph", "content": []any{map[string]any{"type": "text", "text": "Hello"}}}}}}

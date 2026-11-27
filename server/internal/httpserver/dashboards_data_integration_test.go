@@ -15,8 +15,8 @@ func TestWidgetDataPresetsAndCustomQueries(t *testing.T) {
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")
 	task := func(space, title, status, due string) string {
-		id := f.queryID(`INSERT INTO items(type,title,created_by,status_id,due_date,completed_at)
-VALUES ('task',$1,$2,$3::uuid,NULLIF($4,'')::date, CASE WHEN $3::text=$5::text THEN now() END) RETURNING id::text`, title, admin.id, status, due, done)
+		id := f.queryID(`INSERT INTO items(type,title,created_by,status_id,due_date,completed_at,scope_state)
+VALUES ('task',$1,$2,$3::uuid,NULLIF($4,'')::date, CASE WHEN $3::text=$5::text THEN now() END,'internal') RETURNING id::text`, title, admin.id, status, due, done)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
 		return id
 	}
@@ -164,7 +164,7 @@ func TestStarsAndStarredWidget(t *testing.T) {
 	active := f.queryID("SELECT id::text FROM statuses WHERE grp='active' ORDER BY name LIMIT 1")
 	done := f.queryID("SELECT id::text FROM statuses WHERE grp='completed' ORDER BY name LIMIT 1")
 	task := func(space, title, status string) string {
-		id := f.queryID(`INSERT INTO items(type,title,created_by,status_id) VALUES ('task',$1,$2,$3) RETURNING id::text`, title, admin.id, status)
+		id := f.queryID(`INSERT INTO items(type,title,created_by,status_id,scope_state) VALUES ('task',$1,$2,$3,'internal') RETURNING id::text`, title, admin.id, status)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", id, space)
 		return id
 	}
@@ -267,7 +267,7 @@ func TestCreatedByMeListsEveryDepth(t *testing.T) {
 	child(other, "Not mine")
 	gone := child(me, "Deleted")
 	f.exec("UPDATE items SET deleted_at=now() WHERE id=$1", gone)
-	hidden := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Out of reach',$1) RETURNING id::text", me.id)
+	hidden := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Out of reach',$1,'internal') RETURNING id::text", me.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", hidden, closed)
 	list := f.call(me, "GET", "/me/created", nil)
 	f.want(list, 200, "created")
@@ -279,7 +279,7 @@ func TestCreatedByMeListsEveryDepth(t *testing.T) {
 		t.Fatalf("created = %v (%v)", titles, list.body["next_cursor"])
 	}
 	for i := 0; i < 205; i++ {
-		f.exec("WITH i AS (INSERT INTO items(type,title,created_by) VALUES ('task','Bulk',$1) RETURNING id) INSERT INTO item_locations(item_id,space_id,rank) SELECT id,$2::uuid,'U'||$3::text FROM i", me.id, open, fmt.Sprint(i))
+		f.exec("WITH i AS (INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Bulk',$1,'internal') RETURNING id) INSERT INTO item_locations(item_id,space_id,rank) SELECT id,$2::uuid,'U'||$3::text FROM i", me.id, open, fmt.Sprint(i))
 	}
 	first := f.call(me, "GET", "/me/created", nil)
 	second := f.call(me, "GET", "/me/created?cursor="+fmt.Sprint(first.body["next_cursor"]), nil)

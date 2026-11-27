@@ -209,6 +209,8 @@ func writeItemError(w http.ResponseWriter, err error) {
 		writeError(w, http.StatusConflict, "the Item changed; reload and try again")
 	case errors.Is(err, items.ErrCustomerArchived):
 		writeProblem(w, http.StatusConflict, "customer_archived", "the customer is archived and receives no new work")
+	case errors.Is(err, items.ErrAssigneeIneligible):
+		writeProblem(w, http.StatusUnprocessableEntity, "assignee_ineligible", "an assignee must be an active member of this item's customer")
 	case errors.Is(err, items.ErrOwnershipUnresolved):
 		writeProblem(w, http.StatusUnprocessableEntity, "ownership_unresolved", "the destination has no verified ownership yet")
 	case errors.Is(err, items.ErrOwnershipMismatch):

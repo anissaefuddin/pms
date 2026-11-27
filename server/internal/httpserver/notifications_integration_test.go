@@ -143,7 +143,7 @@ func TestNotificationReplayChecksCurrentAccess(t *testing.T) {
 	closeReady()
 	notify := func(space string) string {
 		t.Helper()
-		item := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Review',$1) RETURNING id::text", admin.id)
+		item := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Review',$1,'internal') RETURNING id::text", admin.id)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, space)
 		res := f.call(admin, "PATCH", "/items/"+item, map[string]any{"assignee_ids": []string{member.id}}, "If-Match", `"1"`)
 		if res.status != 200 {

@@ -140,7 +140,7 @@ func TestItemTypesCRUDDefaultsAndChildRules(t *testing.T) {
 	f.want(f.call(admin, "PATCH", "/item-types/"+bug.body["id"].(string), map[string]any{"key": "other"}, "If-Match", `"3"`), 422, "key is fixed")
 	f.want(f.call(admin, "PATCH", "/item-types/"+uuid.NewString(), map[string]any{"name": "x"}, "If-Match", `"1"`), 404, "unknown")
 	// Items created the old way (no type at all in the row) are still typed after the migration.
-	legacy := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('task','Legacy',$1) RETURNING id::text", admin.id)
+	legacy := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('task','Legacy',$1,'internal') RETURNING id::text", admin.id)
 	f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'Z')", legacy, space)
 	if got := f.call(admin, "GET", "/items/"+legacy, nil); got.status != 200 || got.body["item_type"].(map[string]any)["key"] != "task" {
 		t.Fatalf("legacy item: %+v", got)

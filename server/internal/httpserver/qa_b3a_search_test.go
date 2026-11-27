@@ -15,7 +15,7 @@ func TestSearchHierarchyPathAndOffset(t *testing.T) {
 	space := f.space("Hier")
 	f.share(space, "user", member.id, "read")
 	item := func(kind, title string, parent *string) string {
-		id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1,$2,$3) RETURNING id::text", kind, title, admin.id)
+		id := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ($1,$2,$3,'internal') RETURNING id::text", kind, title, admin.id)
 		f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", id, space, parent)
 		return id
 	}
@@ -75,22 +75,22 @@ func TestSearchHierarchyBenchmark(t *testing.T) {
 			admin, member := f.person("admin"), f.person("regular")
 			space := f.space("Bench")
 			f.share(space, "user", member.id, "read")
-			root := f.queryID("INSERT INTO items(type,title,created_by) VALUES ('project','Bench root',$1) RETURNING id::text", admin.id)
+			root := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','Bench root',$1,'internal') RETURNING id::text", admin.id)
 			f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", root, space)
 			// 10 folders, each with sub-folders, the rest are leaf tasks spread under the sub-folders
 			f.exec(`WITH folders AS (
-  INSERT INTO items(type,title,created_by) SELECT 'folder','Folder '||g,$1 FROM generate_series(1,10) g RETURNING id,title
+  INSERT INTO items(type,title,created_by,scope_state) SELECT 'folder','Folder '||g,$1,'internal' FROM generate_series(1,10) g RETURNING id,title
 ), placed AS (
   INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) SELECT id,$2,$3,'U' FROM folders RETURNING item_id
 ) SELECT count(*) FROM placed`, admin.id, space, root)
 			f.exec(`WITH subs AS (
-  INSERT INTO items(type,title,created_by) SELECT 'folder','Sub '||p.title||'.'||g,$1 FROM items p, generate_series(1,5) g WHERE p.title LIKE 'Folder %' RETURNING id,title
+  INSERT INTO items(type,title,created_by,scope_state) SELECT 'folder','Sub '||p.title||'.'||g,$1,'internal' FROM items p, generate_series(1,5) g WHERE p.title LIKE 'Folder %' RETURNING id,title
 ), placed AS (
   INSERT INTO item_locations(item_id,space_id,parent_item_id,rank)
   SELECT s.id,$2,(SELECT id FROM items WHERE title=split_part(substr(s.title,5),'.',1)),'U' FROM subs s RETURNING item_id
 ) SELECT count(*) FROM placed`, admin.id, space)
 			f.exec(`WITH tasks AS (
-  INSERT INTO items(type,title,created_by) SELECT 'task','HAZOP item '||g,$1 FROM generate_series(1,$3::int) g RETURNING id,seq
+  INSERT INTO items(type,title,created_by,scope_state) SELECT 'task','HAZOP item '||g,$1,'internal' FROM generate_series(1,$3::int) g RETURNING id,seq
 ) INSERT INTO item_locations(item_id,space_id,parent_item_id,rank)
 SELECT t.id,$2,(SELECT id FROM items WHERE title LIKE 'Sub Folder %' ORDER BY title OFFSET (t.seq % 50) LIMIT 1),'U' FROM tasks t`, admin.id, space, n)
 			f.exec("ANALYZE items")
