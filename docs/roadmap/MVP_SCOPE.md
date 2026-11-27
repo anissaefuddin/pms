@@ -556,3 +556,110 @@ Build (`go build ./...`), `go vet` (`items`, `httpserver`, `clients`), `gofmt`, 
 - Tidak ada pengujian konkurensi lintas mutasi. Itu tugas B3-08 dan B3-09.
 - OWN-DB-16 (`shares`, `custom_field_grants`) belum lengkap dan dialihkan ke B3-22.
 - Isolasi klien belum selesai. AC-04, AC-07, AC-09, AC-10, dan AC-13 tetap terbuka. Kesiapan produksi NOT READY.
+
+## 19. Bukti eksekusi B3-04 (eligibility Space pusat, 27 Nov 2026) — PARTIAL
+
+Otorisasi: Product Owner, hanya B3-04 (ADR §7k). Tidak ada perubahan `item.go`, SharedOnEveryPath, migrasi, atau B3-05.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Predikat eligibility di query Space pusat | DONE | `policy/engine.go` `spaceRows`, dipakai `VisibleSpaces`, `SpaceAccessFor`, `CanOnSpace` |
+| Membership tidak memberi izin resource | DONE | SP-01..03, SP-07, SP-14, SP-27 |
+| Workspace Admin dan Space Admin tidak melewati eligibility | DONE | SP-08..SP-12 |
+| Internal dan Personal Space tidak berubah | DONE | SP-17, SP-18 |
+| Unresolved fail-closed | DONE | SP-16 |
+| Customer diarsipkan: akses historis anggota aktif | DONE | SP-19, SP-20 |
+| Revocation langsung | DONE | SP-06, SP-26 (kontrol negatif) |
+| Daftar, lookup, dan kueri kapabilitas konsisten | DONE | SP-21..SP-25 |
+| Bypass item (`item.go`) | PENDING B3-05 | |
+| Regresi tes Space lama | FAIL (blocker) | Lihat di bawah |
+
+**Hasil tes:**
+- `TestClientSpaceEligibility` (SP-01..SP-28): 28 subtest PASS.
+- Kontrol negatif (membership revoked diterima): SP-06, SP-20, SP-26 gagal. Engine dikembalikan identik.
+- Paket `policy`: `go test ./internal/policy/` ok.
+- Pengukuran regresi pada binary akhir: 78 tes Space terkait 24 PASS dan 54 gagal/panic. 39 tes pembuatan dan hierarki 31 PASS, 8 FAIL. 22 tes penugasan dan privasi 15 PASS, 7 FAIL. CRT-01..19: 23 entri PASS.
+
+**Perubahan fixture (hanya tes CRT, tidak ada asersi yang dilemahkan):**
+- Membership ditambahkan untuk kreator yang dimaksud pada Customer tempat item dibuat (CRT-01..19, dan viewer di `TestOwnershipDoesNotChangeCreatePermissions`).
+- CRT-07: ekspektasi berubah dari 422 `ownership_unresolved` menjadi 404. Space unresolved sekarang tidak terlihat, sehingga penolakan terjadi lebih awal dan gagal tertutup. Pemeriksaan B3-03 tetap berlaku untuk induk unresolved (CRT-08).
+- CRT-17: `defer tx.Rollback` ditambahkan. Tanpa itu, kegagalan meninggalkan koneksi terkunci dan `pool.Close` menggantung.
+
+**Temuan harness:** `f.want` dan `f.call` melaporkan ke `t` induk. Dari dalam subtest, kegagalan menghentikan subtest berikutnya. `fixture.on(t)` dipakai di tes SP. Pola yang sama ada di tes CRT lain dan perlu diperiksa di tugas regresi.
+
+**Belum selesai:**
+- Regresi 54 tes Space lama, 8 tes pembuatan, dan 7 tes penugasan. Penyebabnya adalah fixture `unresolved` dan membership yang belum ada. Perlu tugas regresi terpisah dengan keputusan membership per tes.
+- Pembuatan Space bersama dengan ownership masih pending.
+- Bypass item (B3-05) dan pembacaan `spaces` langsung di luar policy.
+- OWN-DB-16 tetap di B3-22.
+- B3-02 tetap PARTIAL. AC-04, AC-05, AC-07, AC-09, AC-10, dan AC-13 tetap terbuka. Isolasi klien belum selesai. Operasional belum diverifikasi. Kesiapan produksi NOT READY.
+
+## 20. Pembaruan B3-04: konvensi fixture dan ledger regresi (27 Nov 2026, Prompt #019) — PARTIAL
+
+Otorisasi: Product Owner, penyelesaian B3-04 dengan remediasi regresi dan konsolidasi fixture (ADR §7l). Tidak ada perubahan produksi.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Default `f.space` dan `f.spaceWithoutAdmins` = ownership internal eksplisit | DONE | `spaces_integration_test.go` |
+| `f.unresolvedSpace` untuk negatif | DONE | SP-16 |
+| Helper membership eksplisit | DONE | `f.addMember`, `f.revokeMember` |
+| Harness: subtest memakai `t` sendiri | DONE untuk SP dan CRT | `fixture.on(t)` |
+| SP-01..28 | 28/28 PASS | `TestClientSpaceEligibility` |
+| CRT-01..19 | 23/23 entri PASS | 5 fungsi, 18 subtest |
+| Policy | ok | `go test ./internal/policy/` |
+| Tes Space terkait | 70/78 PASS (7 FAIL, 1 PANIC) | Semua pembuatan Space lewat API |
+| Pembuatan dan hierarki | 37/39 PASS (2 FAIL) | Sama |
+| Penugasan dan privasi | 18/22 PASS (4 FAIL) | Sama |
+| Ownership-aware shared Space creation (B3-SC) | PENDING, wajib sebelum penutupan B3 | |
+
+**Kesimpulan:** grup wajib belum 100% hijau, sehingga B3-04 belum di-commit. Penyebab sisa 12 tes adalah satu hal: pembuatan shared Space lewat API ditolak karena pembuat tidak melihat Space `unresolved` yang baru. Ini bukan kegagalan fixture. Perbaikannya ada di B3-SC.
+
+**Keterbatasan:**
+- Hanya grup yang ditentukan yang dijalankan. Perubahan default `f.space` (dipakai di 134 berkas) belum diuji di seluruh suite. Ini risiko yang belum diverifikasi.
+- Subtest tes lain di luar SP dan CRT masih memakai pola harness lama.
+- B3-02 PARTIAL. AC-04 PARTIAL. Bypass item (B3-05) terbuka. Bypass SQL langsung di luar policy terbuka. OWN-DB-16 ada di B3-22. Operasional belum diverifikasi. Kesiapan produksi NOT READY.
+
+## 21. Bukti penutupan B3-SC dan B3-04 (27 Nov 2026, Prompt #020) — COMPLETE untuk tingkat policy dan creation pusat
+
+Otorisasi: Product Owner (B3-SC, koreksi bootstrap General, integrasi Customer Picker di Create Space, penyelesaian regresi B3-04). Keputusan dan kontrak: ADR §7m. Tidak ada migrasi baru. Tidak ada B3-05 atau B3-06.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Kontrak `scope_state` dan `client_id` pada create dan template | DONE | OpenAPI `SpaceCreate`, `createSpaceFromTemplate`; artefak Go dan TS diregenerasi |
+| Validasi kombinasi, state, Customer, membership | DONE | SC-01..SC-11 |
+| Admin tidak melewati eligibility | DONE | SC-09 (kontrol negatif terbukti) |
+| Transaksi atomik, tanpa Space yatim | DONE | SC-11; validasi sebelum INSERT, rollback penuh |
+| Serialisasi dengan arsip dan revoke | DONE | SC-16, SC-17 (tunggu-kunci deterministik) |
+| Ownership tidak berubah lewat PATCH | DONE | SC-12 |
+| General bootstrap `internal` eksplisit, idempoten | DONE | `bootstrap_integration_test.go` (TestBootstrapCreatesFoundationOnce) |
+| Personal tetap privat | DONE | SC-15, SP-18 |
+| Create Space UI dengan Customer Picker membership | DONE | `space-create-ownership.spec.ts` (5 PASS) |
+| F1 (HTTP 500 pada pembuatan) | RESOLVED | Pembuatan valid sekarang 201; yang tidak valid mendapat 4xx yang jelas |
+
+**Hasil verifikasi (binary akhir, setiap tes dijalankan sendiri dengan `-test.v`, `PMS_TEST_SCALE=1`, `PMS_TEST_BROWSER=1`):**
+
+| Grup | PASS | FAIL | SKIP | PANIC |
+|---|---:|---:|---:|---:|
+| SP-01..28 (`TestClientSpaceEligibility`) | 28 subtest | 0 | 0 | 0 |
+| Tes Space terkait (78) | 78 | 0 | 0 | 0 |
+| Pembuatan dan hierarki (39) | 39 | 0 | 0 | 0 |
+| Penugasan dan privasi (22) | 22 | 0 | 0 | 0 |
+| CRT-01..19 | 23 entri | 0 | 0 | 0 |
+| SC-01..17 (`TestSpaceCreationOwnership`) | 14 subtest | 0 | 0 | 0 |
+| Bootstrap | 2 | 0 | 0 | 0 |
+| Policy, architecture | ok | 0 | 0 | 0 |
+| Frontend Space create (`spaces.spec.ts` 19, `space-create-ownership.spec.ts` 5) | 24 | 0 | 0 | 0 |
+| Frontend onboarding (3) dan a11y Space (6) | 9 | 0 | 0 | 0 |
+
+**Rekonsiliasi 12 dan 14:** 14 entri gagal di Prompt #019 (8 di grup Space, 2 di pembuatan, 4 di penugasan) berasal dari 12 tes unik. Semuanya memanggil `POST /spaces` atau template. Setelah kontrak mewajibkan ownership dan payload tes mengirimnya secara eksplisit, ke-12 tes lulus. Asersi 201 tetap ada, dan `UPDATE` sementara sudah dihapus.
+
+**Build dan lint:** `go build ./...`, `go vet` (`spaces`, `httpserver`, `bootstrap`, `policy`), gofmt, `npm run typecheck`, `npx eslint` pada berkas yang diubah, `npm run build`, `check-no-hex`, dan `git diff --check` lulus. Generator dijalankan dari root repositori; tidak ada file salah tempat.
+
+**Keterbatasan:**
+- Frontend diuji dengan API ter-mock. Ini verifikasi antarmuka, bukan integrasi hidup.
+- Tidak ada suite penuh yang dijalankan. Perubahan default `f.space` (dipakai di 134 berkas) belum diverifikasi di seluruh suite. Ini risiko yang masih terbuka.
+- Bypass item (B3-05): `policy/item.go` tidak memakai predikat Space. Akses item lewat share di Space client tetap terbuka.
+- Pembacaan `spaces` langsung di luar policy (`spaces/`, `automation/`, `analytics/`, `housekeeping/`) tetap bypass terbuka.
+- Space produksi `unresolved` yang sudah ada tetap tidak terlihat sampai pemetaan operasional (B3-18/19). Pemetaan belum diverifikasi.
+- B3-02 PARTIAL (invarian lintas tabel pada mutasi). AC-04, AC-07, AC-09, AC-10, dan AC-13 belum PASS. Isolasi klien belum lengkap. Kesiapan produksi NOT READY.
+- OWN-DB-16 (`shares`, `custom_field_grants`) tetap di B3-22.

@@ -6136,11 +6136,23 @@ export interface components {
              */
             project?: string | null;
         };
+        /** @description Pemilihan kepemilikan wajib (B3-SC). Tidak ada default; tanpa scope_state permintaan ditolak */
         SpaceCreate: {
             name: string;
             description?: string;
+            scope_state: components["schemas"]["SpaceScopeState"];
+            /**
+             * Format: uuid
+             * @description Wajib untuk client; harus Customer aktif tempat pembuat menjadi anggota aktif
+             */
+            client_id?: string | null;
             shares?: components["schemas"]["ShareInput"][];
         };
+        /**
+         * @description internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+         * @enum {string}
+         */
+        SpaceScopeState: "internal" | "client";
         SpaceUpdate: {
             name?: string;
             description?: string | null;
@@ -14168,6 +14180,12 @@ export interface operations {
                     request_id: string;
                     /** @description Default nama template */
                     name?: string;
+                    scope_state: components["schemas"]["SpaceScopeState"];
+                    /**
+                     * Format: uuid
+                     * @description Wajib untuk scope_state client; kosong untuk internal
+                     */
+                    client_id?: string | null;
                 };
             };
         };

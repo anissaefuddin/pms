@@ -117,7 +117,7 @@ func TestItemTypeDefaultsApplyToSpaceTemplates(t *testing.T) {
 	admin, regular := f.person("admin"), f.person("regular")
 	task := f.queryID("SELECT id::text FROM item_type_defs WHERE is_builtin AND key='task'")
 	f.want(f.call(admin, "PATCH", "/item-types/"+task, map[string]any{"defaults": map[string]any{"importance": "high"}}, "If-Match", `"1"`), 200, "task defaults")
-	made := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": uuid.NewString(), "name": "Templated"})
+	made := f.call(regular, "POST", "/space-templates/project-management/spaces", map[string]any{"scope_state": "internal", "request_id": uuid.NewString(), "name": "Templated"})
 	f.want(made, 201, "template space")
 	if f.queryID(`SELECT count(*)::text FROM items i JOIN item_locations l ON l.item_id=i.id WHERE l.space_id=$1 AND i.type='task' AND i.importance='high'`, made.body["id"]) == "0" {
 		t.Fatal("template tasks without an explicit importance must take the type default")

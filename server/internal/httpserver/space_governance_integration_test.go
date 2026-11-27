@@ -120,7 +120,7 @@ func TestSpaceRegistryShowsOnlyWhatTheCallerCanSee(t *testing.T) {
 func TestSpaceCreatorIsTheFirstSpaceAdmin(t *testing.T) {
 	f := newFixture(t)
 	creator, member := f.person("regular"), f.person("regular")
-	made := f.call(creator, "POST", "/spaces", map[string]any{"name": "Fresh"})
+	made := f.call(creator, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Fresh"})
 	f.want(made, 201, "create")
 	if made.body["is_space_admin"] != true {
 		t.Fatalf("the creator must be a Space Admin: %v", made.body)
@@ -137,7 +137,7 @@ func TestSpaceCreatorIsTheFirstSpaceAdmin(t *testing.T) {
 func TestSpaceStaysActiveWithoutAnActiveAdmin(t *testing.T) {
 	f := newFixture(t)
 	admin, creator, member, reader := f.person("admin"), f.person("regular"), f.person("regular"), f.person("regular")
-	made := f.call(creator, "POST", "/spaces", map[string]any{"name": "Survives"})
+	made := f.call(creator, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Survives"})
 	f.want(made, 201, "create")
 	space := made.body["id"].(string)
 	f.share(space, "user", member.id, "full")

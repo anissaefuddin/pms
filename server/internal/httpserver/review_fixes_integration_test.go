@@ -10,10 +10,9 @@ import (
 func TestMovingWorkDoesNotCarryAssignmentRights(t *testing.T) {
 	c := newInternalAssignCast(t)
 	f := c.f
-	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Mine"})
+	own := f.call(c.editor, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Mine"})
 	f.want(own, 201, "own space")
 	mine := own.body["id"].(string)
-	f.exec("UPDATE spaces SET scope_state='internal' WHERE id=$1", mine) // B3-03 fixture: the API-made Space is explicitly internal
 	f.share(mine, "user", c.teammate.id, "editor")
 	in := func(space string) map[string]any {
 		return map[string]any{"locations": []map[string]any{{"space_id": space}}}

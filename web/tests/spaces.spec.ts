@@ -58,10 +58,12 @@ test.describe("create Space", () => {
     await expect(dialog.getByText("Includes 1 project, 4 tasks")).toBeVisible();
     await expect(dialog.getByLabel("Description")).toHaveCount(0);
     await dialog.getByLabel("Name").fill("Website relaunch");
+    await dialog.getByRole("radio", { name: /^Internal/ }).check();
     await dialog.getByRole("button", { name: "Create Space" }).click();
     await expect(dialog).toBeHidden();
     const body = calls.find((c) => c.method === "POST" && c.path === "/space-templates/project-management/spaces")?.body as Record<string, string>;
     expect(body.name).toBe("Website relaunch");
+    expect(body.scope_state).toBe("internal");
     expect(body.request_id).toMatch(/^[0-9a-f-]{36}$/);
     expect(calls.some((c) => c.method === "POST" && c.path === "/spaces")).toBe(false);
   });
@@ -71,13 +73,14 @@ test.describe("create Space", () => {
     await page.getByRole("button", { name: "New Space" }).click();
     const dialog = page.getByRole("dialog", { name: "New Space" });
     await dialog.getByLabel("Name").fill("Research");
+    await dialog.getByRole("radio", { name: /^Internal/ }).check();
     await dialog.locator("summary").click();
     await dialog.getByLabel("Add people or groups").fill("gra");
     await dialog.getByRole("button", { name: "Add Grace Hopper" }).click();
     await dialog.getByRole("button", { name: "Create Space" }).click();
     await expect(dialog).toBeHidden();
     expect(calls.find((c) => c.method === "POST" && c.path === "/spaces")?.body).toEqual({
-      name: "Research", shares: [{ principal_type: "user", principal_id: grace.id, role: "read" }],
+      name: "Research", scope_state: "internal", shares: [{ principal_type: "user", principal_id: grace.id, role: "read" }],
     });
   });
   test("posts the form, lands on the new Space", async ({ page }) => {
@@ -92,8 +95,12 @@ test.describe("create Space", () => {
     await dialog.getByLabel("Name").fill("Research");
     await dialog.getByLabel("Description").fill("Lab notes");
     await dialog.getByRole("button", { name: "Create Space" }).click();
+    await expect(dialog.getByRole("alert")).toHaveText("Choose whether this Space is internal or belongs to a Customer");
+    expect(calls.some((c) => c.method === "POST")).toBe(false);
+    await dialog.getByRole("radio", { name: /^Internal/ }).check();
+    await dialog.getByRole("button", { name: "Create Space" }).click();
     await expect(dialog).toBeHidden();
-    expect(calls.find((c) => c.method === "POST" && c.path === "/spaces")?.body).toEqual({ name: "Research", description: "Lab notes" });
+    expect(calls.find((c) => c.method === "POST" && c.path === "/spaces")?.body).toEqual({ name: "Research", description: "Lab notes", scope_state: "internal" });
     await expect(page.getByRole("heading", { name: "Research", level: 1 })).toBeVisible();
     await expect(sidebar(page).getByRole("link", { name: "Research" })).toBeVisible();
   });
@@ -104,6 +111,7 @@ test.describe("create Space", () => {
     await page.getByRole("button", { name: "New Space" }).click();
     const dialog = page.getByRole("dialog");
     await dialog.getByLabel("Name").fill("Marketing");
+    await dialog.getByRole("radio", { name: /^Internal/ }).check();
     await dialog.getByRole("button", { name: "Create Space" }).click();
     await expect(dialog.getByRole("alert")).toHaveText("name already used");
   });

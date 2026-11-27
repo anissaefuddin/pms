@@ -12,7 +12,7 @@ func TestFullAtTheDestinationDoesNotTransferOthersWork(t *testing.T) {
 	c := newInternalScopeCast(t)
 	f := c.f
 	task := c.make("task", "theirs", "", c.teammate.id)
-	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Mine"})
+	own := f.call(c.editor, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Mine"})
 	f.want(own, 201, "own space")
 	mine := map[string]any{"space_id": own.body["id"]}
 	put := func(p *person, locations ...map[string]any) reply {

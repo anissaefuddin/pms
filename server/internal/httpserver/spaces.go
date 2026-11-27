@@ -101,12 +101,14 @@ func (s *Server) createSpace(w http.ResponseWriter, r *http.Request) {
 		Name        string              `json:"name"`
 		Description string              `json:"description"`
 		Shares      []spaces.ShareInput `json:"shares"`
+		ScopeState  string              `json:"scope_state"`
+		ClientID    *string             `json:"client_id"`
 	}
 	if !decode(w, r, &input) {
 		return
 	}
 	batch := s.notificationBatch()
-	space, err := s.spaces.Create(r.Context(), actorOf(r), spaces.CreateInput{Name: input.Name, Description: input.Description, Shares: input.Shares}, batch)
+	space, err := s.spaces.Create(r.Context(), actorOf(r), spaces.CreateInput{Name: input.Name, Description: input.Description, Shares: input.Shares, ScopeState: input.ScopeState, ClientID: clientIDOf(input.ClientID)}, batch)
 	if err != nil {
 		writeSpaceError(w, err)
 		return
@@ -331,4 +333,12 @@ func (s *Server) listGroups(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, 200, map[string]any{"items": groups})
+}
+
+// clientIDOf returns the client_id text, or "" when the field is absent or null. The service validates the value.
+func clientIDOf(id *string) string {
+	if id == nil {
+		return ""
+	}
+	return *id
 }

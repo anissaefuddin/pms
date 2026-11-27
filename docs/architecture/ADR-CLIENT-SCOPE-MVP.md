@@ -415,6 +415,97 @@ Hasil: 39 dari 39 tes lama PASS dengan kedua variabel uji diaktifkan. 23 entri C
 - B3-02 tetap PARTIAL: invarian lintas tabel pada jalur mutasi (move, copy, restore, tambah lokasi) belum ditegakkan.
 - OWN-DB-16 (`shares` dan `custom_field_grants`) tetap menjadi celah ringan, dialihkan ke B3-22.
 
+## 7k. Eligibility Space pusat B3-04 (27 Nov 2026, Prompt #018) — STATUS: PARTIAL, lihat §7l
+
+Product Owner menyetujui **B3-04 saja**.
+
+- **Fungsi yang berubah:** satu predikat SQL di `spaceRows` (`server/internal/policy/engine.go`). Ketiga titik masuk memakai query ini: `VisibleSpaces` (daftar), `SpaceAccessFor`, dan `CanOnSpace`. Tidak ada evaluator kedua, dan tidak ada filter di frontend.
+- **Urutan otorisasi:** predikat kelayakan dievaluasi di WHERE, sebelum share, grup, Space Admin, dan batas tipe pengguna. Setelah itu aturan resource yang ada tidak berubah.
+- **Aturan:** Space internal dan Personal Space lolos tanpa membership (aturan lama tetap). Space client-owned memerlukan `client_memberships` aktif untuk Customer-nya dan pengguna aktif bertipe admin atau regular. Status Customer tidak diperiksa, sehingga Customer yang diarsipkan tetap memberi akses historis bagi anggota aktif. Ownership `unresolved` atau tidak konsisten tidak cocok dengan cabang mana pun dan disembunyikan (fail closed).
+- **Membership tidak memberi izin:** tidak ada share, Space Admin, atau peran yang dibuat. Admin tanpa membership tidak mendapat akses konten.
+- **Revocation:** membaca membership saat ini di setiap permintaan. Tidak ada cache server.
+
+**Bypass yang tersisa (dicatat, tidak diperbaiki di batch ini):**
+- `policy/item.go` (`itemCaps`) bergabung langsung ke `spaces` dan tidak memanggil predikat. Akses item melalui share item di Space client tetap terbuka. Ini dependensi B3-05, dan `item.go` dilarang diubah di batch ini.
+- Pembacaan `FROM spaces` langsung di luar policy: `spaces/spaces.go`, `spaces/registry.go`, `spaces/governance.go`, `httpserver/create_menu.go`, `httpserver/server.go`, `automation/workspace.go`, `automation/engine.go`, `analytics/analytics.go`, `housekeeping/housekeeping.go`, dan `items/*` yang memakai `spaces` langsung. Ini perlu diverifikasi di B3-05, B3-06, dan B3-22.
+
+**Bukti tes:** `server/internal/httpserver/space_client_eligibility_integration_test.go`, `TestClientSpaceEligibility`, dengan SP-01..SP-28 sebagai subtest (28 PASS). Kontrol negatif: jika membership revoked diterima, SP-06, SP-20, dan SP-26 gagal. File dikembalikan dan dicocokkan byte per byte.
+
+**Regresi yang belum selesai (blocker):** predikat ini membuat Space bersama yang masih `unresolved`, serta tes yang membuat anggota tanpa membership, menjadi tidak terlihat. Pengukuran pada binary akhir:
+- Tes Space terkait (78 kandidat): 53 FAIL, 1 PANIC, 24 PASS (pengukuran sebelum fixture CRT diperbarui).
+- Tes pembuatan dan hierarki lama (39): 31 PASS, 8 FAIL.
+- Tes penugasan dan privasi (22): 15 PASS, 7 FAIL.
+- CRT-01..19: 5 fungsi dan 18 subtest PASS setelah fixture membership diperbaiki.
+
+Penyebab kegagalan: Space dengan ownership `unresolved` dibuat lewat helper uji yang ada (`f.space`, `spaceWithoutAdmins`, API `POST /spaces`), atau aktor tidak punya membership. Perbaikannya membutuhkan keputusan membership per tes dan perubahan helper bersama. Ini di luar batas fixture yang diotorisasi, sehingga harus menjadi tugas regresi terpisah.
+
+## 7l. Konvensi fixture Space uji dan ledger regresi B3-04 (27 Nov 2026, Prompt #019) — STATUS: SUPERSEDED oleh §7m
+
+Product Owner mengotorisasi perubahan default helper uji. Helper berikut ada di `server/internal/httpserver/spaces_integration_test.go` dan `item_ownership_creation_integration_test.go`. Keduanya hanya berlaku untuk tes, dan tidak ada kode produksi yang berubah.
+
+| Helper | Perilaku akhir |
+|---|---|
+| `f.space(name)` | Shared Space dengan ownership `internal` eksplisit dan share admin otomatis (sama seperti sebelumnya) |
+| `f.spaceWithoutAdmins(name)` | Shared Space `internal` eksplisit, tanpa share admin otomatis |
+| `f.internalSpace(name)` | Sama dengan `f.space` |
+| `f.scopedSpace(name, scope, client)` | Space dengan ownership yang ditentukan: `internal`, `client` + Customer, atau `unresolved` |
+| `f.unresolvedSpace(name)` | Space `unresolved` eksplisit untuk tes negatif (fail closed) |
+| `f.addMember(admin, client, user)` / `f.revokeMember(...)` | Membership eksplisit per aktor dan Customer, lewat API admin |
+
+**Mengapa aman:** `f.space` dan `f.spaceWithoutAdmins` hanya dipakai oleh tes. Default kepemilikan internal tidak mengubah izin: grant, share, Space Admin, dan tipe pengguna tetap sama. Tes yang secara eksplisit ingin menguji kepemilikan memakai `f.unresolvedSpace` atau `f.scopedSpace` (SP-16, CRT-07, CRT-08). Produksi tidak berubah: default `spaces.scope_state` tetap `unresolved`.
+
+**Konsekuensi produksi yang dicatat (bukan diperbaiki di batch ini):** `spaces.Create` memanggil pemeriksaan keterlihatan setelah INSERT. Space bersama baru di produksi bersifat `unresolved`, sehingga pembuat tidak melihat Space yang baru dibuatnya. Akibatnya `POST /api/v1/spaces` mengembalikan 500 (`created space is not visible to its creator`). Space `General` dari bootstrap juga dibuat `unresolved`, sehingga tidak terlihat oleh siapa pun. Ini perlu diselesaikan oleh **B3-SC** (ownership-aware shared Space creation), yang wajib sebelum penutupan B3.
+
+**Ledger regresi (pengukuran pada binary akhir):**
+
+| Grup | PASS | FAIL | PANIC | Penyebab |
+|---|---:|---:|---:|---|
+| Tes Space terkait (78) | 70 | 7 | 1 | Semua: pembuatan Space lewat API ditolak (500, tidak terlihat oleh pembuat) |
+| Pembuatan dan hierarki (39) | 37 | 2 | 0 | Sama, lewat API |
+| Penugasan dan privasi (22) | 18 | 4 | 0 | Sama, lewat API (`own space`) |
+| SP-01..28 | 28 | 0 | 0 | — |
+| CRT-01..19 | 23 | 0 | 0 | — |
+| Policy (`internal/policy`) | ok | 0 | 0 | — |
+
+Dua belas tes unik gagal (tujuh FAIL, satu PANIC, lalu bayangan di grup lain). Semuanya memanggil `POST /spaces`, template, atau pembuatan Space lain lewat API, lalu menerima 500. Tes tersebut tidak dapat lulus tanpa perubahan produksi (B3-SC) atau penggantian pembuatan API dengan fixture, dan penggantian itu menghapus asersi 201 yang diminta. Keduanya tidak dilakukan.
+
+**Harness:** `f.want` dan `f.call` melaporkan ke `t` induk. Subtest pada SP dan CRT sekarang memakai `base.on(t)` atau `f.on(t)`. Tes lain di luar grup ini masih memakai pola lama dan perlu diperiksa di tugas regresi terpisah.
+
+**B3-SC** (wajib sebelum penutupan B3): pembuatan shared Space dengan ownership yang diverifikasi, termasuk Space `General` bootstrap dan jalur template. Tanpa itu, pembuatan Space lewat API tidak berfungsi di bawah B3-04.
+
+## 7m. B3-SC: pembuatan shared Space dengan ownership eksplisit (27 Nov 2026, Prompt #020) — COMPLETE
+
+Product Owner mengotorisasi B3-SC dan penyelesaian B3-04. Ini menutup F1: `spaces.Create` menyisipkan Space `unresolved`, lalu pemeriksaan visibilitas gagal dan menghasilkan HTTP 500.
+
+**Kontrak API:** `POST /api/v1/spaces` dan `POST /api/v1/space-templates/{id}/spaces` mewajibkan `scope_state` (`internal` atau `client`). `client_id` wajib untuk `client` dan dilarang untuk `internal`. Tidak ada default dan tidak ada fallback internal untuk pemanggil lama. `unresolved` dan nilai lain ditolak (422). OpenAPI `SpaceCreate` dan `createSpaceFromTemplate` diperbarui, lalu artefak Go dan TypeScript diregenerasi dari root repositori.
+
+**Validasi dan transaksi** (`spaces.ownershipForNewSpace`, dalam transaksi yang sama dengan INSERT):
+- Customer dibaca `FOR SHARE` dan harus ada serta `active`. Customer diarsipkan ditolak (422).
+- Membership pembuat dibaca `FOR SHARE`, dengan `status='active'`, pengguna aktif, dan tipe admin atau regular. Tidak ada membership: 403. Admin tanpa membership juga 403, sehingga Workspace Admin tidak melewati eligibility.
+- Urutan kunci: Customer, lalu membership. Revoke memakai urutan yang sama (`FOR UPDATE` pada membership), sehingga keduanya saling menunggu.
+- Semua validasi dilakukan sebelum INSERT. Kegagalan apa pun me-rollback seluruh transaksi, termasuk share dan baris `space_admins`. Tidak ada commit terpisah.
+- Visibilitas pembuat diperiksa dalam transaksi yang sama. Pembuat mendapat share `full` dan baris `space_admins` seperti sebelumnya, dan kini hanya setelah ownership valid.
+
+**Caller dan jalur:**
+- `POST /spaces` (`httpserver/spaces.go`): meneruskan `scope_state` dan `client_id`.
+- Instansiasi template (`httpserver/space_templates.go`): sama. Replay dengan `request_id` yang sama tidak diubah.
+- Onboarding (`web/src/components/onboarding-wizard.tsx`): mengirim `internal` secara eksplisit untuk Space workspace pertama.
+- Dialog Space (`web/src/components/space-dialog.tsx`): pilihan kepemilikan wajib (radio, tanpa default). Pilihan Customer memakai `CustomerPicker` (B2-08, lookup membership, juga untuk admin). Pindah ke Internal menghapus `client_id`. Backend tetap memvalidasi ulang.
+- Bootstrap General (`bootstrap/bootstrap.go`): `scope_state='internal'` secara eksplisit. Bootstrap tetap idempoten. Space General lama tidak diubah.
+- Personal Space: tetap `internal` melalui trigger 00364 (tidak berubah).
+- PATCH: `scope_state` dan `client_id` ditolak sebagai field yang tidak dikenal (422). Ownership hanya berubah lewat migrasi terkendali.
+
+**Yang belum selesai (dicatat):**
+- Space yang sudah ada di produksi dengan `unresolved` (termasuk General lama) tetap tidak terlihat sampai dipetakan (B3-18/19).
+- Specialized creation lain: tidak ada jalur lain yang membuat `spaces` di luar `CreateTx`, `bootstrap`, dan `server.go` (Personal). Pembacaan `spaces` langsung di luar policy tetap menjadi bypass terbuka (lihat §7k).
+- Tampilan metadata kepemilikan di halaman pengaturan Space belum dibuat. Tidak wajib untuk penutupan.
+
+**Tes:** `server/internal/httpserver/space_creation_ownership_integration_test.go` (SC-01..SC-12, SC-15..SC-17: 14 subtest PASS). SC-13 dan SC-14 ada di `bootstrap_integration_test.go` (assert General `internal`, idempotensi). Kontrol negatif: menghapus pemeriksaan membership menggagalkan SC-08, SC-09, SC-11, dan SC-17. File dikembalikan identik.
+
+**Frontend:** `web/tests/space-create-ownership.spec.ts` (5 PASS, mocked API). Tes Space yang ada (`spaces.spec.ts`) diperbarui untuk memilih kepemilikan. Tes `onboarding.spec.ts` dan `screens.a11y.spec.ts` (Space) juga PASS.
+
+**Regresi tes Space:** tes yang gagal karena F1 sekarang mengirim kepemilikan eksplisit dalam payload API (sesuai instruksi, tidak diganti dengan fixture). Penggantian `UPDATE spaces` sementara di `TestMovingWorkDoesNotCarryAssignmentRights` dihapus.
+
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).

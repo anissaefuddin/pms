@@ -84,6 +84,7 @@ func TestRootItemsTakeTheOwnershipOfTheirSpace(t *testing.T) {
 	admin := f.person("admin")
 	creator := f.person("regular")
 	client := f.createClient(admin, "CRT-A")["id"].(string)
+	f.addMember(admin, client, creator) // B3-04: the creator is an active member of this Customer
 	spaceA := f.scopedSpace("Client A", "client", client)
 	internal := f.scopedSpace("Internal", "internal", "")
 	f.share(spaceA, "user", creator.id, "full")
@@ -101,6 +102,7 @@ func TestRootItemsTakeTheOwnershipOfTheirSpace(t *testing.T) {
 	}
 	for _, tc := range cases {
 		t.Run(tc.id+" "+tc.kind, func(t *testing.T) {
+			f := f.on(t)
 			r := f.call(creator, "POST", "/items", itemBody(tc.kind, tc.title, tc.space, ""))
 			f.want(r, http.StatusCreated, tc.id+" create")
 			id := r.body["id"].(string)
@@ -111,6 +113,7 @@ func TestRootItemsTakeTheOwnershipOfTheirSpace(t *testing.T) {
 	}
 
 	t.Run("CRT-12 owner_id keeps its user meaning and CRT-13 the initial location is persisted with the item", func(t *testing.T) {
+		f := f.on(t)
 		r := f.call(creator, "POST", "/items", itemBody("task", "crt13-persist", spaceA, ""))
 		f.want(r, http.StatusCreated, "create")
 		id := r.body["id"].(string)
@@ -134,6 +137,7 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 	admin := f.person("admin")
 	creator := f.person("regular")
 	client := f.createClient(admin, "CRT-B")["id"].(string)
+	f.addMember(admin, client, creator)
 	spaceA := f.scopedSpace("Client A", "client", client)
 	internal := f.scopedSpace("Internal", "internal", "")
 	f.share(spaceA, "user", creator.id, "full")
@@ -145,6 +149,7 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 	parent := parentRes.body["id"].(string)
 
 	t.Run("CRT-04 child in the same client Space takes the parent's ownership", func(t *testing.T) {
+		f := f.on(t)
 		r := f.call(creator, "POST", "/items", itemBody("task", "crt04-child", spaceA, parent))
 		f.want(r, http.StatusCreated, "child")
 		if got := f.ownershipOf(r.body["id"].(string)); got != "client/"+client {
@@ -156,6 +161,7 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 	})
 
 	t.Run("CRT-08 an unresolved parent refuses a child", func(t *testing.T) {
+		f := f.on(t)
 		unresolved := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ('project','crt08-unresolved',$1,'unresolved') RETURNING id::text", creator.id)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'a')", unresolved, internal)
 		r := f.call(creator, "POST", "/items", itemBody("task", "crt08-child", internal, unresolved))
@@ -166,6 +172,7 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 	})
 
 	t.Run("CRT-09 a parent and destination with different ownership are refused", func(t *testing.T) {
+		f := f.on(t)
 		// A child needs its parent placed in the destination Space. That placement is the cross-table state (ADR §7i) that
 		// later mutation paths must prevent; it is written here directly so the create guard is tested on its own.
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'zz')", parent, internal)
@@ -177,6 +184,7 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 	})
 
 	t.Run("CRT-10 a client-owned parent cannot place a child in a Personal Space", func(t *testing.T) {
+		f := f.on(t)
 		f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'zz')", parent, personal)
 		r := f.call(creator, "POST", "/items", itemBody("task", "crt10-child", personal, parent))
 		f.want(r, http.StatusUnprocessableEntity, "client parent in personal")
@@ -186,6 +194,7 @@ func TestChildItemsInheritTheParentOwnership(t *testing.T) {
 	})
 
 	t.Run("CRT-16 locations must share one ownership", func(t *testing.T) {
+		f := f.on(t)
 		body := map[string]any{"type": "task", "title": "crt16-mixed", "locations": []map[string]any{{"space_id": spaceA}, {"space_id": internal}}}
 		f.want(f.call(creator, "POST", "/items", body), http.StatusUnprocessableEntity, "mixed locations")
 		if f.itemCount("crt16-mixed") != 0 {
@@ -200,9 +209,11 @@ func TestRefusedCreatesLeaveNoPartialState(t *testing.T) {
 	admin := f.person("admin")
 	creator := f.person("regular")
 	client := f.createClient(admin, "CRT-C")["id"].(string)
+	f.addMember(admin, client, creator)
 	spaceA := f.scopedSpace("Client A", "client", client)
 	unresolved := f.scopedSpace("Legacy", "unresolved", "")
 	other := f.createClient(admin, "CRT-D")["id"].(string)
+	f.addMember(admin, other, creator) // an active member, so the archive rule is what refuses the create
 	f.share(spaceA, "user", creator.id, "full")
 	f.share(unresolved, "user", creator.id, "full")
 
@@ -211,14 +222,16 @@ func TestRefusedCreatesLeaveNoPartialState(t *testing.T) {
 	}
 
 	t.Run("CRT-07 unresolved Space refuses creation and writes nothing", func(t *testing.T) {
+		f := f.on(t)
 		before := snapshot()
-		f.want(f.call(creator, "POST", "/items", itemBody("task", "crt07", unresolved, "")), http.StatusUnprocessableEntity, "unresolved")
+		f.want(f.call(creator, "POST", "/items", itemBody("task", "crt07", unresolved, "")), http.StatusNotFound, "unresolved Space is not visible (B3-04 fails closed)")
 		if got := snapshot(); got != before {
 			t.Fatalf("refused create changed rows: %s -> %s", before, got)
 		}
 	})
 
 	t.Run("CRT-11 an archived Customer receives no new work", func(t *testing.T) {
+		f := f.on(t)
 		f.want(f.call(admin, "POST", "/clients/"+other+"/archive", nil), http.StatusOK, "archive")
 		archivedSpace := f.scopedSpace("Archived Client", "client", other)
 		f.share(archivedSpace, "user", creator.id, "full")
@@ -234,6 +247,7 @@ func TestRefusedCreatesLeaveNoPartialState(t *testing.T) {
 	})
 
 	t.Run("CRT-14 a refusal after validation leaves no item, location, or follower", func(t *testing.T) {
+		f := f.on(t)
 		before := snapshot()
 		body := map[string]any{"type": "task", "title": "crt14", "locations": []map[string]any{{"space_id": spaceA}}, "unknown_field": "x"}
 		f.want(f.call(creator, "POST", "/items", body), http.StatusUnprocessableEntity, "unknown field")
@@ -243,6 +257,7 @@ func TestRefusedCreatesLeaveNoPartialState(t *testing.T) {
 	})
 
 	t.Run("CRT-15 caller-supplied ownership is refused, not applied", func(t *testing.T) {
+		f := f.on(t)
 		before := snapshot()
 		body := itemBody("task", "crt15", spaceA, "")
 		body["client_id"] = other
@@ -266,6 +281,7 @@ func TestCreateAndCustomerArchiveAreSerialized(t *testing.T) {
 	admin := f.person("admin")
 	creator := f.person("regular")
 	client := f.createClient(admin, "CRT-E")["id"].(string)
+	f.addMember(admin, client, creator)
 	space := f.scopedSpace("Client E", "client", client)
 	f.share(space, "user", creator.id, "full")
 	archive := func() error {
@@ -274,11 +290,13 @@ func TestCreateAndCustomerArchiveAreSerialized(t *testing.T) {
 	}
 
 	t.Run("CRT-17 a create that starts while an archive waits for it succeeds, and a later create fails", func(t *testing.T) {
+		f := f.on(t)
 		// An open create holds the Customer row FOR SHARE. The archive must wait for it.
 		tx, err := f.pool.BeginTx(f.ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 		if err != nil {
 			t.Fatal(err)
 		}
+		defer tx.Rollback(f.ctx) // no-op after Commit; releases the Customer lock on a failed path
 		actor := policy.Actor{ID: creator.id, Type: policy.Regular}
 		fields := map[string]json.RawMessage{"type": json.RawMessage(`"task"`), "title": json.RawMessage(`"crt17-open"`),
 			"locations": json.RawMessage(fmt.Sprintf(`[{"space_id":"%s"}]`, space))}
@@ -310,8 +328,10 @@ func TestCreateAndCustomerArchiveAreSerialized(t *testing.T) {
 	})
 
 	t.Run("CRT-18 concurrent children under one parent keep distinct ranks and locations", func(t *testing.T) {
+		f := f.on(t)
 		// Its own Customer: CRT-17 archives the one above, and an archived Customer receives no new work.
 		clientF := f.createClient(admin, "CRT-E18")["id"].(string)
+		f.addMember(admin, clientF, creator)
 		space := f.scopedSpace("Client E18", "client", clientF)
 		f.share(space, "user", creator.id, "full")
 		client := clientF
@@ -343,7 +363,9 @@ func TestCreateAndCustomerArchiveAreSerialized(t *testing.T) {
 	})
 
 	t.Run("CRT-19 creation holds the Customer row for its whole transaction", func(t *testing.T) {
+		f := f.on(t)
 		client := f.createClient(admin, "CRT-E19")["id"].(string)
+		f.addMember(admin, client, creator)
 		space := f.scopedSpace("Client E19", "client", client)
 		f.share(space, "user", creator.id, "full")
 		tx, err := f.pool.BeginTx(f.ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
@@ -374,6 +396,7 @@ func TestOwnershipDoesNotChangeCreatePermissions(t *testing.T) {
 	admin := f.person("admin")
 	viewer := f.person("regular")
 	client := f.createClient(admin, "CRT-F")["id"].(string)
+	f.addMember(admin, client, viewer)
 	space := f.scopedSpace("Client F", "client", client)
 	f.share(space, "user", viewer.id, "read")
 

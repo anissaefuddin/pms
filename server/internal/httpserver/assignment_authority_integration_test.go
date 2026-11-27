@@ -83,7 +83,7 @@ func TestSecondLocationDoesNotGrantAssignment(t *testing.T) {
 	f := c.f
 	task := f.call(c.full, "POST", "/items", map[string]any{"type": "task", "title": "Shared work", "locations": []map[string]string{{"space_id": c.space}}})
 	id := task.body["id"].(string)
-	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Mine"})
+	own := f.call(c.editor, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Mine"})
 	f.want(own, 201, "own space")
 	personal := f.queryID("SELECT id::text FROM spaces WHERE kind='personal' AND owner_id=$1", c.editor.id)
 	for _, extra := range []string{own.body["id"].(string), personal} {

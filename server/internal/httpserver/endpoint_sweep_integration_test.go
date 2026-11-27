@@ -156,7 +156,7 @@ func TestItemActivityAndFollowers(t *testing.T) {
 // idorFixture builds a private Space with one of each resource kind the contract addresses by id.
 func idorFixture(t *testing.T, f *fixture, owner *person) map[string]string {
 	t.Helper()
-	made := f.call(owner, "POST", "/space-templates/project-management/spaces", map[string]any{"request_id": uuid.NewString()})
+	made := f.call(owner, "POST", "/space-templates/project-management/spaces", map[string]any{"scope_state": "internal", "request_id": uuid.NewString()})
 	f.want(made, 201, "template")
 	space := made.body["id"].(string)
 	board := f.call(owner, "POST", "/dashboards", map[string]any{"space_id": space, "name": "Private board"})

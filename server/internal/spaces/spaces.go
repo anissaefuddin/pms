@@ -11,6 +11,7 @@ import (
 
 	"github.com/anissaefuddin/pms/server/internal/notifications"
 	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgxpool"
@@ -138,6 +139,10 @@ type CreateInput struct {
 	Name        string
 	Description string
 	Shares      []ShareInput
+	// ScopeState is the explicit ownership choice every ordinary shared Space needs (B3-SC): "internal" or "client".
+	// There is no default. ClientID is set only for "client" and must name an active Customer the creator belongs to.
+	ScopeState string
+	ClientID   string
 }
 
 func validateText(name, description string) error {
@@ -165,6 +170,49 @@ func (s *Service) Create(ctx context.Context, actor policy.Actor, in CreateInput
 	return space, tx.Commit(ctx)
 }
 
+// ownershipForNewSpace validates the explicit ownership of a new shared Space and returns the client to store (nil for internal).
+// It runs in the creating transaction. The Customer row is read FOR SHARE, so an archive waits for this create or has already
+// committed; the membership row is read FOR SHARE, so a revoke (FOR UPDATE on that row) waits too. The lock order is the Customer,
+// then the membership, the same order Customer membership revoke uses. Nothing is written before this check passes.
+func ownershipForNewSpace(ctx context.Context, tx pgx.Tx, actor policy.Actor, scope, clientID string) (*string, error) {
+	switch scope {
+	case "internal":
+		if clientID != "" {
+			return nil, ValidationError{"an internal Space has no Customer; leave client_id out"}
+		}
+		return nil, nil
+	case "client":
+		id, err := uuid.Parse(clientID)
+		if err != nil {
+			return nil, ValidationError{"a client Space needs a valid client_id"}
+		}
+		var status string
+		err = tx.QueryRow(ctx, "SELECT status FROM clients WHERE id=$1 FOR SHARE", id).Scan(&status)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, ValidationError{"the Customer does not exist"}
+		}
+		if err != nil {
+			return nil, err
+		}
+		if status != "active" {
+			return nil, ValidationError{"the Customer is archived and receives no new Spaces"}
+		}
+		var one int
+		err = tx.QueryRow(ctx, `SELECT 1 FROM client_memberships m JOIN users u ON u.id = m.user_id
+WHERE m.client_id=$1 AND m.user_id=$2 AND m.status='active' AND u.status='active' AND u.user_type IN ('admin','regular') FOR SHARE`,
+			id, actor.ID).Scan(&one)
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, forbidden("you must be an active member of this Customer to create its Space")
+		}
+		if err != nil {
+			return nil, err
+		}
+		client := id.String()
+		return &client, nil
+	}
+	return nil, ValidationError{"scope_state is required: internal or client"}
+}
+
 // CreateTx is Create inside the caller's transaction, for flows that fill the new Space before committing.
 func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput, batch *notifications.Batch) (Space, error) {
 	if actor.Type != policy.Admin && actor.Type != policy.Regular {
@@ -184,8 +232,13 @@ func CreateTx(ctx context.Context, tx pgx.Tx, actor policy.Actor, in CreateInput
 	if !hasCreator {
 		shares = append(shares, ShareInput{PrincipalType: "user", PrincipalID: actor.ID, Role: string(policy.Full)})
 	}
+	clientID, err := ownershipForNewSpace(ctx, tx, actor, in.ScopeState, in.ClientID)
+	if err != nil {
+		return Space{}, err
+	}
 	var id string
-	if err := tx.QueryRow(ctx, "INSERT INTO spaces(name,description,kind) VALUES ($1,$2,'shared') RETURNING id::text", strings.TrimSpace(in.Name), in.Description).Scan(&id); err != nil {
+	if err := tx.QueryRow(ctx, "INSERT INTO spaces(name,description,kind,scope_state,client_id) VALUES ($1,$2,'shared',$3,$4::uuid) RETURNING id::text",
+		strings.TrimSpace(in.Name), in.Description, in.ScopeState, clientID).Scan(&id); err != nil {
 		return Space{}, err
 	}
 	// The creator is the owner of the new Space, so granting any role is within their power.

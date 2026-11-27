@@ -121,7 +121,7 @@ func TestMoveKeepsOrChecksTheAssignmentScope(t *testing.T) {
 
 	parent := c.make("task", "parent", "")
 	sub := c.make("task", "sub", parent, c.teammate.id)
-	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Elsewhere"})
+	own := f.call(c.editor, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Elsewhere"})
 	f.want(own, 201, "own space")
 	elsewhere := map[string]any{"locations": []map[string]any{{"space_id": own.body["id"]}}}
 	before := c.state(parent, sub)

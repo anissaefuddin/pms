@@ -2652,6 +2652,24 @@ func (e SpaceMemberSourcesKind) Valid() bool {
 	}
 }
 
+// Defines values for SpaceScopeState.
+const (
+	SpaceScopeStateClient   SpaceScopeState = "client"
+	SpaceScopeStateInternal SpaceScopeState = "internal"
+)
+
+// Valid indicates whether the value is a known member of the SpaceScopeState enum.
+func (e SpaceScopeState) Valid() bool {
+	switch e {
+	case SpaceScopeStateClient:
+		return true
+	case SpaceScopeStateInternal:
+		return true
+	default:
+		return false
+	}
+}
+
 // Defines values for StatusActorRule.
 const (
 	StatusActorRuleAdmin    StatusActorRule = "admin"
@@ -6694,11 +6712,16 @@ type SpaceBookmarkInput struct {
 	Url         string  `json:"url"`
 }
 
-// SpaceCreate defines model for SpaceCreate.
+// SpaceCreate Pemilihan kepemilikan wajib (B3-SC). Tidak ada default; tanpa scope_state permintaan ditolak
 type SpaceCreate struct {
-	Description *string       `json:"description,omitempty"`
-	Name        string        `json:"name"`
-	Shares      *[]ShareInput `json:"shares,omitempty"`
+	// ClientId Wajib untuk client; harus Customer aktif tempat pembuat menjadi anggota aktif
+	ClientId    *openapi_types.UUID `json:"client_id,omitempty"`
+	Description *string             `json:"description,omitempty"`
+	Name        string              `json:"name"`
+
+	// ScopeState internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+	ScopeState SpaceScopeState `json:"scope_state"`
+	Shares     *[]ShareInput   `json:"shares,omitempty"`
 }
 
 // SpaceDefaultWorkflows defines model for SpaceDefaultWorkflows.
@@ -6738,6 +6761,9 @@ type SpaceMember struct {
 
 // SpaceMemberSourcesKind defines model for SpaceMember.Sources.Kind.
 type SpaceMemberSourcesKind string
+
+// SpaceScopeState internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+type SpaceScopeState string
 
 // SpaceTemplate defines model for SpaceTemplate.
 type SpaceTemplate struct {
@@ -8198,11 +8224,17 @@ type SaveSpaceTemplateJSONBody struct {
 
 // CreateSpaceFromTemplateJSONBody defines parameters for CreateSpaceFromTemplate.
 type CreateSpaceFromTemplateJSONBody struct {
+	// ClientId Wajib untuk scope_state client; kosong untuk internal
+	ClientId *openapi_types.UUID `json:"client_id,omitempty"`
+
 	// Name Default nama template
 	Name *string `json:"name,omitempty"`
 
 	// RequestId Kunci idempotensi dari klien
 	RequestId openapi_types.UUID `json:"request_id"`
+
+	// ScopeState internal (tanpa client_id) atau client (dengan client_id). unresolved tidak dapat dikirim
+	ScopeState SpaceScopeState `json:"scope_state"`
 }
 
 // DiscoverSpacesParams defines parameters for DiscoverSpaces.

@@ -155,6 +155,7 @@ func (f *fixture) person(userType string) *person {
 	return &person{id: id, userType: userType, cookie: &http.Cookie{Name: "pms_session", Value: token}}
 }
 
+// space is the synthetic shared Space for normal PMS behavior: explicit internal ownership, with the automatic admin shares.
 func (f *fixture) space(name string) string {
 	f.t.Helper()
 	id := f.spaceWithoutAdmins(name)
@@ -173,9 +174,17 @@ func (f *fixture) unlinkedAdmin() *person {
 }
 
 // spaceWithoutAdmins creates a shared Space with no automatic admin share, for tests that assert a Workspace admin is denied.
+// Its synthetic ownership is explicitly INTERNAL (B3-04 fixture convention, ADR §7l): ownership is not what these tests check.
 func (f *fixture) spaceWithoutAdmins(name string) string {
 	f.t.Helper()
-	return f.queryID("INSERT INTO spaces(name,kind) VALUES ($1,'shared') RETURNING id::text", name)
+	return f.queryID("INSERT INTO spaces(name,kind,scope_state) VALUES ($1,'shared','internal') RETURNING id::text", name)
+}
+
+// unresolvedSpace creates a shared Space whose ownership is not yet verified. It is refused for every actor (fail closed),
+// so use it only for negative tests that assert this refusal.
+func (f *fixture) unresolvedSpace(name string) string {
+	f.t.Helper()
+	return f.queryID("INSERT INTO spaces(name,kind,scope_state) VALUES ($1,'shared','unresolved') RETURNING id::text", name)
 }
 
 func (f *fixture) group(name string, members ...*person) string {
@@ -329,14 +338,14 @@ func TestSpaceAccessRules(t *testing.T) {
 	owner, other, admin := f.person("regular"), f.person("regular"), f.person("admin")
 
 	// create: creator gets full access and the first version
-	created := f.call(owner, "POST", "/spaces", map[string]any{"name": "  Marketing  ", "description": "Plans"})
+	created := f.call(owner, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "  Marketing  ", "description": "Plans"})
 	f.want(created, 201, "create")
 	space := created.body["id"].(string)
 	if created.header.Get("ETag") != `"1"` || created.body["name"] != "Marketing" || created.body["kind"] != "shared" || !reflect.DeepEqual(created.caps(), docRoleCaps["full"]) {
 		t.Fatalf("created space: %v etag=%q", created.body, created.header.Get("ETag"))
 	}
 	for _, ut := range []string{"external", "collaborator", "viewer"} {
-		f.want(f.call(f.person(ut), "POST", "/spaces", map[string]any{"name": "Nope"}), 403, ut+" cannot create")
+		f.want(f.call(f.person(ut), "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Nope"}), 403, ut+" cannot create")
 	}
 	for _, bad := range []map[string]any{{"name": ""}, {"name": "   "}, {"name": strings.Repeat("n", 121)}, {"name": "ok", "description": strings.Repeat("d", 1001)}} {
 		f.want(f.call(owner, "POST", "/spaces", bad), 422, fmt.Sprint("create with ", len(fmt.Sprint(bad))))
@@ -424,7 +433,7 @@ func TestSpaceAccessRules(t *testing.T) {
 func TestSharesAreUnionedAndCappedAndValidated(t *testing.T) {
 	f := newFixture(t)
 	owner, member, viewer, ext := f.person("regular"), f.person("regular"), f.person("viewer"), f.person("external")
-	space := f.call(owner, "POST", "/spaces", map[string]any{"name": "Team"}).body["id"].(string)
+	space := f.call(owner, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Team"}).body["id"].(string)
 	staff := f.group("Staff", member, viewer)
 	deactivated := f.person("regular")
 	f.exec("UPDATE users SET status='deactivated' WHERE id=$1", deactivated.id)
@@ -484,7 +493,7 @@ func TestSharesAreUnionedAndCappedAndValidated(t *testing.T) {
 	f.want(f.call(member, "PUT", "/spaces/"+space+"/shares", map[string]any{"shares": []any{}}, "If-Match", `"1"`), 403, "reader cannot change shares")
 
 	// creating with shares keeps the creator as full
-	both := f.call(owner, "POST", "/spaces", map[string]any{"name": "Joint", "shares": []any{sh("user", member.id, "limited")}})
+	both := f.call(owner, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Joint", "shares": []any{sh("user", member.id, "limited")}})
 	f.want(both, 201, "create with shares")
 	rows := f.call(owner, "GET", "/spaces/"+both.body["id"].(string)+"/shares", nil).items()
 	if len(rows) != 2 {
@@ -549,7 +558,7 @@ func TestDirectoryListing(t *testing.T) {
 func TestSharesReviewFindings(t *testing.T) {
 	f := newFixture(t)
 	owner, member, outsider, ext := f.person("regular"), f.person("regular"), f.person("regular"), f.person("external")
-	space := f.call(owner, "POST", "/spaces", map[string]any{"name": "Team"}).body["id"].(string)
+	space := f.call(owner, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Team"}).body["id"].(string)
 	staff := f.group("Staff", member)
 	f.share(space, "group", staff, "editor")
 	f.share(space, "user", ext.id, "read")
@@ -594,7 +603,7 @@ func TestSharesReviewFindings(t *testing.T) {
 	etag := f.call(owner, "GET", "/spaces/"+space, nil).header.Get("ETag")
 	f.want(f.call(owner, "PATCH", "/spaces/"+space, map[string]any{}, "If-Match", etag), 422, "empty patch")
 	f.want(f.call(owner, "PATCH", "/spaces/"+space, map[string]any{"name": "x"}, "If-Match", `"3000000000"`), 409, "version beyond int range on PATCH")
-	lower := f.call(owner, "POST", "/spaces", map[string]any{"name": "Mine", "shares": []any{map[string]any{"principal_type": "user", "principal_id": owner.id, "role": "read"}}})
+	lower := f.call(owner, "POST", "/spaces", map[string]any{"scope_state": "internal", "name": "Mine", "shares": []any{map[string]any{"principal_type": "user", "principal_id": owner.id, "role": "read"}}})
 	f.want(lower, 201, "create listing the creator as reader")
 	if !reflect.DeepEqual(lower.caps(), docRoleCaps["full"]) {
 		t.Fatalf("the creator must stay full: %v", lower.caps())

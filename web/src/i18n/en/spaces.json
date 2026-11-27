@@ -424,5 +424,13 @@
   "spaceSettings.breadcrumb": "Breadcrumb",
   "spaceSettings.blueprints.emptyTitle": "No blueprints yet",
   "spaceSettings.backAll": "Back to all Spaces",
-  "spaceSettings.backSpace": "Back to Space"
+  "spaceSettings.backSpace": "Back to Space",
+  "form.ownership.label": "Ownership",
+  "form.ownership.internal": "Internal",
+  "form.ownership.internalHint": "Shared inside the workspace, not tied to a Customer.",
+  "form.ownership.customer": "Customer",
+  "form.ownership.customerHint": "Visible only to members of the chosen Customer.",
+  "form.ownership.customerPick": "Customer for this Space",
+  "form.ownership.required": "Choose whether this Space is internal or belongs to a Customer",
+  "form.ownership.customerRequired": "Choose the Customer for this Space"
 }
