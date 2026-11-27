@@ -703,3 +703,49 @@ Build, vet, gofmt, dan `git diff --check` lulus. Kontrol negatif dijelaskan di A
 - Pembacaan `items` langsung di luar policy belum diverifikasi satu per satu (ADR §7n).
 - Mutasi lokasi lintas tabel (B3-08/09) belum ditegakkan, sehingga B3-02 tetap PARTIAL.
 - AC-04, AC-05, AC-07, AC-09, dan AC-10 hanya mendapat bukti parsial dari tes di atas. Isolasi klien belum lengkap. Kesiapan produksi NOT READY.
+
+## 23. Bukti eksekusi B3-07, B3-08, dan penutupan terbatas B3-06 (27 Nov 2026, Prompt #022) — COMPLETE pada tingkat policy dan mutasi pusat
+
+Otorisasi: Product Owner (ADR §7o). Tidak ada migrasi, perubahan OpenAPI, atau frontend. Tidak ada B3-09 atau tugas lanjutan.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Inspeksi cache otorisasi | DONE | `policyCache` hanya IP/OTP; keputusan resource membaca basis data per permintaan |
+| Revocation langsung untuk item dan Space | DONE | RV-01, RV-02, RV-04, RV-07 |
+| Share langsung dan grup tidak melewati revoke | DONE | RV-03 |
+| Regrant memulihkan hanya akses yang sah | DONE | RV-05, RV-06 (share dan riwayat tetap) |
+| Assignment baru ke orang yang dicabut ditolak | DONE | RV-08 |
+| Move, tambah lokasi, reparent, lokasi tidak kompatibel, subtree | DONE | LOC-01..09, LOC-16 |
+| Restore | DONE | LOC-10, LOC-11 |
+| Reorder tidak menembus validasi | DONE | LOC-12 |
+| Permission sumber dan tujuan tetap | DONE | LOC-13, LOC-14 |
+| Kepemilikan tidak berubah | DONE | LOC-15 |
+| Customer diarsipkan | DONE | LOC-17 (baru dan historis) |
+| Konkurensi arsip, revoke, dan move | DONE | CON-1..3 |
+| Full on every path, fail closed | DONE | AF-1..AF-2 |
+| Auto-assign status dalam transaksi | DONE (defense-in-depth) | AF-3, AF-4 |
+| Jalur automation dengan aktor lain | OPEN, B3-13 | Belum diverifikasi |
+
+**Hasil verifikasi** (binary akhir, setiap tes dijalankan sendiri, `PMS_TEST_SCALE=1`, `PMS_TEST_BROWSER=1`, `PMS_TEST_SCHEDULING_PERFORMANCE=1`):
+
+| Grup | PASS | FAIL | SKIP | PANIC |
+|---|---:|---:|---:|---:|
+| RV-01..08 (`TestMembershipRevocationTakesEffectAtOnce`) | 8 subtest | 0 | 0 | 0 |
+| LOC-01..17 (`TestMutationsKeepStableOwnership`) | 17 subtest | 0 | 0 | 0 |
+| CON-1..3 (`TestMutationsAreSerializedWithArchiveAndRevoke`) | 3 subtest | 0 | 0 | 0 |
+| AF-1..4 (`TestAssignmentFollowUpFailsClosed`) | 4 subtest | 0 | 0 | 0 |
+| Tes move, lokasi, reparent, recycle, restore, workflow, auto, assign (± 170 tes, termasuk race) | 170 | 0 | 0 | 0 |
+| Item, sharing, lokasi, otorisasi, penugasan, scheduling (+65) | 65 | 0 | 0 | 0 |
+| IT, ML, AS, AS-13 (Prompt #021) | 4 | 0 | 0 | 0 |
+| Policy, items, bootstrap, spaces, architecture | ok | 0 | 0 | 0 |
+
+Kontrol negatif (kepatuhan lokasi dihapus): LOC-02, LOC-03, LOC-05, LOC-06, dan LOC-16 gagal. Berkas dipulihkan identik.
+
+Build, vet, gofmt, dan `git diff --check` lulus. Tidak ada nama tes wajib yang belum dijalankan (0 nama terlewat).
+
+**Keterbatasan:**
+- Suite penuh tidak dijalankan. Gate lokasi dan revoke menyentuh banyak jalur.
+- Jalur di luar policy yang membaca `items` langsung belum diverifikasi (ADR §7n).
+- Copy, template, blueprint, dan dependensi belum ditegakkan (B3-09/10).
+- Temuan automation (B3-13) tetap terbuka.
+- B3-02 PARTIAL. AC-04, AC-05, AC-07, AC-09, dan AC-10 hanya mendapat bukti parsial. Isolasi klien belum lengkap. Kesiapan produksi NOT READY.

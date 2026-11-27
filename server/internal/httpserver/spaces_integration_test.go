@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/anissaefuddin/pms/server/internal/twofactor"
+	"github.com/google/uuid"
 	"net/http"
 	"net/http/httptest"
 	"reflect"
@@ -144,7 +145,7 @@ func (f *fixture) queryID(sql string, args ...any) string {
 func (f *fixture) person(userType string) *person {
 	f.t.Helper()
 	f.n++
-	email := fmt.Sprintf("%s%d@example.com", userType, f.n)
+	email := fmt.Sprintf("%s-%s@example.com", userType, uuid.NewString()) // unique across copied fixtures (fixture.on)
 	id := f.queryID("INSERT INTO users(email,first_name,last_name,password_hash,user_type,status) VALUES ($1,'T','User','x',$2::user_type,'active') RETURNING id::text", email, userType)
 	f.exec("INSERT INTO spaces(name,kind,owner_id) VALUES ('Personal','personal',$1)", id)
 	if userType == "admin" {

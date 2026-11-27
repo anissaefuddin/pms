@@ -603,6 +603,25 @@ WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_i
 		return nil, err
 	}
 	refused := map[string]bool{}
+	// B3-06 fail closed: an item with a live location its own ownership does not match cannot be reliably assigned on, whatever the
+	// actor's grants say. Ordinary permission on the item is not affected; only handing it to someone else is refused.
+	mismatch, err := db.Query(ctx, `SELECT DISTINCT l.item_id::text FROM item_locations l JOIN items i ON i.id=l.item_id JOIN spaces s ON s.id=l.space_id
+WHERE l.item_id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND l.deleted_root_id IS NULL AND `+policy.PlacementMismatchSQL, itemIDs)
+	if err != nil {
+		return nil, err
+	}
+	for mismatch.Next() {
+		var id string
+		if err := mismatch.Scan(&id); err != nil {
+			mismatch.Close()
+			return nil, err
+		}
+		refused[id] = true
+	}
+	mismatch.Close()
+	if err := mismatch.Err(); err != nil {
+		return nil, err
+	}
 	for _, p := range places {
 		caps, err := policy.ItemsCaps(ctx, db, actor, p.Items, &p.Space)
 		if err != nil {

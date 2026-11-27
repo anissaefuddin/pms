@@ -384,6 +384,14 @@ WHERE i.id=$2::uuid AND next.id=$1
 		}
 	}
 	if autoAssign {
+		// B3-06: the performer becomes an assignee in this same transaction, so the membership check applies to them too.
+		performer, err := uuid.Parse(actor.ID)
+		if err != nil {
+			return ErrNotFound
+		}
+		if err := patchAssignees(ctx, tx, id, []uuid.UUID{performer}); err != nil {
+			return err
+		}
 		for _, table := range []string{"item_assignees", "item_followers"} {
 			if _, err := tx.Exec(ctx, "INSERT INTO "+table+"(item_id,user_id) VALUES($1::uuid,$2::uuid) ON CONFLICT DO NOTHING", id, actor.ID); err != nil {
 				return err

@@ -2,6 +2,7 @@ package items
 
 import (
 	"context"
+	"errors"
 	"maps"
 
 	"github.com/anissaefuddin/pms/server/internal/policy"
@@ -92,6 +93,31 @@ func replaceLocations(ctx context.Context, tx pgx.Tx, actor policy.Actor, id str
 	if !caps.Has(policy.Edit) {
 		return Detail{}, ErrForbidden
 	}
+	// B3-08: the item's stable ownership is authoritative. The row is locked, so a concurrent move, archive or restore waits.
+	var itemScope string
+	var itemClient *string
+	if err := tx.QueryRow(ctx, "SELECT scope_state, client_id::text FROM items WHERE id=$1 AND deleted_at IS NULL FOR UPDATE", itemID).Scan(&itemScope, &itemClient); err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Detail{}, ErrNotFound
+		}
+		return Detail{}, err // a serialization conflict is a retryable conflict (409), not a missing item
+	}
+	own, err := storedOwnership(itemScope, itemClient)
+	if err != nil {
+		return Detail{}, err
+	}
+	if own.scope == "client" { // B3-06/B3-07: the actor's membership is read FOR SHARE, so a revoke waits or has already committed
+		actorID, err := uuid.Parse(actor.ID)
+		if err != nil {
+			return Detail{}, ErrNotFound
+		}
+		if err := checkNewAssignees(ctx, tx, "", own, []uuid.UUID{actorID}); err != nil {
+			if errors.Is(err, ErrAssigneeIneligible) {
+				return Detail{}, ErrNotFound // no longer a member: the item is no longer visible to the actor
+			}
+			return Detail{}, err
+		}
+	}
 	var kind string
 	var workflow uuid.UUID
 	if err = tx.QueryRow(ctx, `SELECT i.type::text, COALESCE(s.workflow_id,(SELECT id FROM workflows WHERE is_default))
@@ -156,7 +182,7 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 		}
 	}
 	existing := map[[2]uuid.UUID]bool{}
-	var remove, kept int
+	var remove, kept, added int
 	for _, loc := range current {
 		existing[key(loc)] = true
 		placement, err := locationCaps(ctx, tx, actor, loc)
@@ -204,6 +230,15 @@ FROM items i LEFT JOIN statuses s ON s.id=i.status_id WHERE i.id=$1 AND i.delete
 		if !placement.Has(policy.Create) {
 			return Detail{}, ErrForbidden
 		}
+		// B3-08: the new location must carry the item's stable ownership. Archived and unresolved destinations are refused here too.
+		destination, err := creationOwnership(ctx, tx, []Location{loc})
+		if err != nil {
+			return Detail{}, err
+		}
+		if destination != own {
+			return Detail{}, ErrOwnershipMismatch
+		}
+		added++
 		if others {
 			b, err := boundary(ctx, tx, loc)
 			if err != nil {
@@ -251,6 +286,24 @@ WHERE space_id=$1 AND parent_item_id IS NOT DISTINCT FROM $2::uuid AND deleted_r
 	}
 	if others && !atSource && !maps.Equal(boundaries, scopes) {
 		return Detail{}, ErrAssignForbidden
+	}
+	// B3-08: a subtree moves with its root, so every descendant must carry the same stable ownership.
+	if added > 0 {
+		var bad int
+		var client any
+		if own.client != "" {
+			client = own.client
+		}
+		if err := tx.QueryRow(ctx, `WITH RECURSIVE sub(item_id) AS (
+  SELECT l.item_id FROM item_locations l WHERE l.parent_item_id=$1 AND l.deleted_root_id IS NULL
+  UNION SELECT l.item_id FROM sub s JOIN item_locations l ON l.parent_item_id=s.item_id AND l.deleted_root_id IS NULL
+) SELECT count(*)::int FROM items i JOIN sub s ON s.item_id=i.id AND i.deleted_at IS NULL
+WHERE i.scope_state IS DISTINCT FROM $2 OR i.client_id IS DISTINCT FROM $3::uuid`, itemID, own.scope, client).Scan(&bad); err != nil {
+			return Detail{}, err
+		}
+		if bad > 0 {
+			return Detail{}, ErrOwnershipMismatch
+		}
 	}
 	if kept+len(want)-countExisting(want, existing, key) < 1 {
 		return Detail{}, Invalid("an item needs at least one location")

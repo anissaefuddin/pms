@@ -119,3 +119,15 @@ func resolveOwnership(ctx context.Context, tx pgx.Tx, scope string, client *stri
 	}
 	return ownership{}, ErrOwnershipMismatch // an inconsistent stored state is refused; the table constraints should prevent it
 }
+
+// storedOwnership is the item's own stable ownership as stored. Unlike resolveOwnership it does not refuse an archived Customer,
+// because an existing item keeps its history. Unresolved or inconsistent storage is refused, never guessed.
+func storedOwnership(scope string, client *string) (ownership, error) {
+	switch {
+	case scope == "internal" && client == nil:
+		return ownership{scope: "internal"}, nil
+	case scope == "client" && client != nil:
+		return ownership{scope: "client", client: *client}, nil
+	}
+	return ownership{}, ErrOwnershipUnresolved
+}

@@ -537,6 +537,35 @@ Item atau Space `unresolved`, dan kombinasi yang tidak konsisten, tidak cocok de
 - Assignee yang ditambahkan otomatis oleh aksi status (`autoAssign`) dan jalur `assignee` di luar `applyFields` belum diperiksa eligibility-nya.
 - Mutasi lintas tabel lokasi (move, copy, restore, tambah lokasi) belum ditegakkan (B3-08/09). Ketidakkonsistenan lokasi dapat terjadi lewat jalur itu.
 - Suite penuh tidak dijalankan. Gate item menyentuh semua pembacaan item, sehingga regresi di luar grup ini tetap mungkin.
+## 7o. Revocasi membership B3-07 dan mutasi lokasi B3-08 (27 Nov 2026, Prompt #022) — COMPLETE pada tingkat policy dan mutasi pusat
+
+Product Owner mengotorisasi B3-07, B3-08, dan penutupan terbatas B3-06. D-17.1, DEC-10, dan D-W3.1 tetap berlaku.
+
+**B3-07: cache otorisasi.** Inspeksi menemukan satu-satunya cache proses, `httpserver/access_policy.go` (`policyCache`, TTL 10 detik), dan hanya menyimpan pengaturan IP allowlist dan OTP. Cache itu tidak dipakai oleh keputusan resource, dan tidak diubah. Keputusan resource (`policy.ItemCaps`, `SpaceAccessFor`, `CanOnSpace`, `SharedOnEveryPath`, dan `assignee` check) membaca basis data pada setiap permintaan. Identitas dan tipe pengguna dibaca dari sesi (`users` join `sessions`) pada setiap permintaan. Tidak ada cache permission, snapshot sesi, atau hasil yang dihitung sebelumnya. Revoke berlaku pada permintaan berikutnya. Jalur lain (token file, realtime, notifikasi, dan job latar) tetap menjadi tugas masing-masing.
+
+**B3-06 follow-up.** `CanReassignMany` sebelumnya mengabaikan lokasi yang tidak bisa dilihat aktor. Akibatnya Full pada satu lokasi valid dapat lolos walau item punya lokasi unresolved atau tidak konsisten. Kini item dengan lokasi live yang tidak cocok dengan kepemilikannya ditolak untuk serah terima (fail closed). Permission biasa atas item tidak berubah (AF-1, AF-2). Auto-assign status dilakukan lewat `patchAssignees` dalam transaksi yang sama. Performer harus sudah lolos gate Edit, sehingga secara praktis anggota. Pemeriksaan ini adalah defense-in-depth. Jalur automation yang memakai aktor lain belum diverifikasi, dan dicatat sebagai temuan B3-13 yang terbuka, tidak ditutup diam-diam.
+
+**B3-08: mutasi.**
+- `replaceLocations` (move, tambah lokasi, reparent, dan hapus): baris item dikunci `FOR UPDATE`. Kepemilikan stabil dibaca dari item. Untuk item client, membership aktor dibaca `FOR SHARE` (`checkNewAssignees`). Setiap lokasi baru harus menghasilkan kepemilikan yang sama dengan item (`creationOwnership`, yang juga menolak Customer diarsipkan dan lokasi unresolved). Setelah lokasi baru ditambahkan, semua keturunan harus memiliki kepemilikan yang sama (subtree). Penolakan terjadi sebelum commit, sehingga tidak ada lokasi parsial.
+- `Restore` (recycle-bin): setelah lokasi dan item dipulihkan, placement yang dipulihkan diperiksa dengan `PlacementMismatchSQL`. Pulih ke Customer yang diarsipkan ditolak (409). Membership aktor dibaca `FOR SHARE` untuk setiap Customer yang terlibat.
+- `Reorder`: hanya mengubah `rank` dalam satu parent dan Space. Tidak mengubah lokasi atau parent (diverifikasi pada kode), sehingga cukup dengan gate `ItemCapsInSpace` yang ada (LOC-12).
+- Kepemilikan `items.client_id` dan `items.scope_state` tidak pernah diubah oleh mutasi ini (LOC-15). `owner_id` tidak disentuh.
+
+**Perilaku siklus hidup Customer:** lokasi baru aktif di Customer diarsipkan ditolak (409). Riwayat tetap dapat dibaca (LOC-17). Restore ke Customer diarsipkan ditolak (LOC-11).
+
+**Konkurensi:** item dikunci FOR UPDATE di awal mutasi. Customer dibaca FOR SHARE saat ownership dihitung (archive menunggu). Membership dibaca FOR SHARE (revoke menunggu). Urutan: item, lalu membership, lalu Space dan Customer. Kesalahan serialisasi dikembalikan sebagai konflik (409), bukan 404. Bug ini ditemukan lewat `TestConcurrentMovesRecordExactlyTheSuccessfulOnes` dan sudah diperbaiki.
+
+**Fixture:** `fixture.person` memakai alamat unik berbasis UUID. Sebelumnya `fixture.on(t)` menyalin penghitung dan menghasilkan alamat duplikat. Ini perbaikan harness, tidak mengubah asersi.
+
+**Tes:** `server/internal/httpserver/item_mutation_ownership_integration_test.go`: RV-01..08 (8 PASS), LOC-01..17 (17 PASS; LOC-18 dicakup oleh LOC-04), CON-1..3 (3 PASS, dengan tunggu-kunci dan Customer tersendiri pada CON-1), AF-1..4 (4 PASS).
+
+**Kontrol negatif:** kepatuhan lokasi dihapus pada `replaceLocations`: LOC-02, LOC-03, LOC-05, LOC-06, dan LOC-16 gagal. File dipulihkan identik.
+
+**Sisa dan batas:**
+- Pembacaan `items` langsung di luar policy tetap terbuka (lihat ADR §7n).
+- Copy, template, blueprint, duplicate, dan relasi dependensi belum ditegakkan (B3-09/10).
+- Temuan automation dan workflow tetap terbuka (B3-13).
+- B3-02 PARTIAL. Verifikasi lintas tabel tidak diklaim selesai.
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).

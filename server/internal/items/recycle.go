@@ -300,6 +300,11 @@ WHERE l.ctid=f.tid AND (f.rn>1 OR EXISTS (
 			return Detail{}, writeError(err)
 		}
 	}
+	// B3-08: a restored item must carry its stable ownership in every live Space, and no archived Customer may receive it back.
+	// The actor's membership of each client is read FOR SHARE, so a revoke waits or has already committed.
+	if err := restoreOwnership(ctx, tx, actor, restored); err != nil {
+		return Detail{}, err
+	}
 	out, err := readDetail(ctx, tx, actor, id)
 	if err != nil {
 		return Detail{}, writeError(err)
@@ -337,6 +342,47 @@ WHERE l.item_id=$1::uuid AND l.parent_item_id IS NULL AND l.deleted_root_id IS N
 	}
 	if !ok {
 		return ErrAssignForbidden
+	}
+	return nil
+}
+
+// restoreOwnership checks the restored items after their placements are written, inside the restore transaction.
+func restoreOwnership(ctx context.Context, tx pgx.Tx, actor policy.Actor, restored []string) error {
+	if len(restored) == 0 {
+		return nil
+	}
+	var mismatched int
+	if err := tx.QueryRow(ctx, `SELECT count(*)::int FROM items i JOIN item_locations l ON l.item_id=i.id AND l.deleted_root_id IS NULL
+JOIN spaces s ON s.id=l.space_id WHERE i.id=ANY($1::uuid[]) AND `+policy.PlacementMismatchSQL, restored).Scan(&mismatched); err != nil {
+		return err
+	}
+	if mismatched > 0 {
+		return ErrOwnershipMismatch
+	}
+	rows, err := tx.Query(ctx, `SELECT c.id::text, c.status FROM items i JOIN clients c ON c.id=i.client_id
+WHERE i.id=ANY($1::uuid[]) FOR SHARE OF c`, restored)
+	if err != nil {
+		return err
+	}
+	type customer struct{ ID, Status string }
+	customers, err := pgx.CollectRows(rows, pgx.RowToStructByPos[customer])
+	if err != nil {
+		return err
+	}
+	actorID, err := uuid.Parse(actor.ID)
+	if err != nil {
+		return ErrNotFound
+	}
+	for _, c := range customers {
+		if c.Status == "archived" {
+			return ErrCustomerArchived
+		}
+		if err := checkNewAssignees(ctx, tx, "", ownership{scope: "client", client: c.ID}, []uuid.UUID{actorID}); err != nil {
+			if errors.Is(err, ErrAssigneeIneligible) {
+				return ErrNotFound
+			}
+			return err
+		}
 	}
 	return nil
 }

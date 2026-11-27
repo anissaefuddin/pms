@@ -96,6 +96,12 @@ WHERE (sh.principal_type = 'user' AND sh.principal_id = $1::uuid)
        (SELECT group_id FROM group_members WHERE user_id = $1::uuid))
 `
 
+// PlacementMismatchSQL is true for a live placement whose Space does not carry the item's stable ownership (B3-08). Items with
+// unresolved or inconsistent ownership never match, so they are reported too. Expects the item as i, its Space as s, and its
+// placement as l. It is the negation of the compatibility rule that itemGate applies to the Space.
+const PlacementMismatchSQL = `NOT ((i.scope_state = 'internal' AND i.client_id IS NULL AND s.scope_state = 'internal' AND s.client_id IS NULL)
+  OR (i.scope_state = 'client' AND i.client_id IS NOT NULL AND s.scope_state = 'client' AND s.client_id = i.client_id))`
+
 func itemsCaps(ctx context.Context, db DB, actor Actor, itemIDs []string, spaceID *string, deleted, includeDeletedSpaces bool) (map[string]Caps, error) {
 	if actor.Form != nil {
 		return formItemsCaps(ctx, db, actor, itemIDs, spaceID, deleted)
