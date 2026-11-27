@@ -64,3 +64,12 @@ Pilot operasional, Project Manager acceptance, verifikasi ACL Pydio live, migras
 - B5 lokal: belum selesai. Tidak ada gerbang B5 yang terpenuhi.
 - OPS: **NO-GO.**
 - Produksi: NOT READY.
+
+## Status PROMPT #033 (2026-11-27)
+
+- Bagian dokumen Pydio di halaman project: **selesai** (status diputuskan server; tanpa pemetaan Customer, status `roots_unavailable`). Verifikasi live: `not_configured`; Read Only dan Limited tidak diubah.
+- Project Master: seed `project-code` aktif di staging; field Project Code ditugaskan ke Space QA sintetis. Seed `project-master` tercatat dan memberi flag `pydio_folder` pada Pydio Folder.
+- Portfolio dan overview: filter Customer di overview Space; filter Project Manager di daftar item. **Belum** ada tampilan monitoring gabungan per project.
+- Owner: 19 project aktif belum punya owner (Unassigned). Tidak ada penugasan otomatis. Daftar tindak lanjut ada di `PROJECT_ONBOARDING_CHECKLIST.md`.
+- Operasi: lihat `OPS_READINESS_REPORT.md` dan `docs/ops/DEPLOY_AND_RECOVERY_RUNBOOK.md`. Off-host backup dan alert: EXTERNAL_BLOCKED.
+- Pydio live: BLOCKED (akun dan folder uji, pemetaan root Customer).

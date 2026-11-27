@@ -393,3 +393,9 @@ Sumber: [backlog RC3](../qa/releases/v0.13.0/POST_RELEASE_IMPROVEMENT_BACKLOG.md
 ## 11. Batas dokumen
 
 Disusun dari PMS-MVP-IMP-002, C-lite+ v0.2, analisa kelayakan, dan pembacaan kode pada branch `c4f7afc` (nama berkas, fungsi `policy`, migrasi terakhir `00362`). Belum ada audit penuh (B0-03), belum dilihat: data Space nyata, staging/production, enam kasus QA BLOCKED, kapabilitas Pydio staging, kapasitas tim. Nama tabel, migrasi, endpoint, paket, dan perintah CLI adalah usulan yang disesuaikan setelah B0.
+
+## Catatan status PROMPT #033 (2026-11-27)
+
+- B4-01..03 (dokumen): selesai di kode dan staging. Verifikasi live Pydio (B4-04, B4-07, DMS-02..08, DMS-10): **BLOCKED** menunggu akun, folder, dan pemetaan root Customer yang disetujui.
+- B5-01, B5-02, B5-04, B5-05: selesai di kode dan staging. B5-03 dan B5-06: sebagian (lihat `MVP_SCOPE.md`). B5-07: rekonsiliasi sintetis selesai; impor data nyata belum.
+- OPS-01, OPS-03, OPS-04 (dengan alert EXTERNAL_BLOCKED), OPS-05: selesai. OPS-02: EXTERNAL_BLOCKED.

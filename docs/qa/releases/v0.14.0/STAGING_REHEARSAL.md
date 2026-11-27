@@ -398,3 +398,27 @@ Legacy Space `QA | …` yang unresolved tidak ikut dihitung. Angka ini cocok den
 - Verifikasi browser ulang untuk Read Only pada build ini belum dilakukan. Logikanya diuji lewat typecheck dan perubahan kode.
 - Tinjau 24 project tanpa owner (keputusan pemilik).
 - Operasional: backup off-host (OPS-02), rehearsal Docker recovery, RPO/RTO, CI jarak jauh, STG-14, dan rilis final.
+
+## 14. PROMPT #033 — penyelesaian fungsional dan kesiapan OPS (2026-11-27)
+
+Kandidat: `pms:candidate-2d99c1002827e7a71f61c743bd1a7e135e5648e5`, revisi `0.14.0-candidate.2d99c100…` (dari `/api/v1/version`). Sebelumnya `pms:candidate-036e633e…`. Schema 364, tidak ada migrasi baru. Health `healthy`, 0 restart, readiness 200, `SMTP_HOST` kosong. Checkpoint sebelum deploy `20261127T074109Z` (checksum OK). Commit lokal: `2d99c10`. Push: **SKIPPED**.
+
+Yang diubah pada deploy ini:
+- Konfigurasi `PMS_SEED=project-master,project-code` diteruskan lewat compose staging (sebelumnya tidak diteruskan). Seed sudah tercatat: `project-master`, `project-code`.
+- `PMS_PYDIO_CUSTOMER_ROOTS` diteruskan dengan nilai kosong (tidak ada pemetaan yang disetujui).
+- Field `Project Code` ditugaskan ke Space sintetis QA (enam Space) lewat endpoint penugasan yang ada. Field itu hanya terlihat setelah ditugaskan. Kode uji `QA-AIA-001` dibaca kembali.
+
+Verifikasi:
+- Seed pada salinan database terbaru (`pms_seedcheck`, dibuang setelahnya): start pertama menambah 4 field, 1 grant, 1 grup, 2 seed run. Klien, membership, item, owner, user, dan space admin tidak berubah. Start kedua tidak menambah apa pun. Ditemukan dan diperbaiki: field Pydio Folder hasil seed tidak punya flag `pydio_folder`.
+- Pydio: status dokumen `not_configured` untuk A1 (tidak ada nilai). `roots_unavailable` untuk Customer tanpa pemetaan. Tautan hanya `linked` setelah validasi terhadap root yang disetujui. Folder tidak pernah dikembalikan di status lain. Tes: `TestProjectDocumentStatesAreServerDecided`, `TestCustomerRoots…` (config).
+- Browser sebagai `qa-pm-a`: header project dan bagian Dokumen tampil; tombol Configure tampil karena punya hak edit.
+- Browser sebagai `qa-reader-a` (Read Only): tidak ada tombol New item dan tidak ada baris Add item. Status nonaktif. Item tetap terlihat.
+- Drill pemulihan (OPS-03) dan `ops-check.sh` lulus. Rincian di `docs/qa/releases/v0.14.0/OPS_READINESS_REPORT.md`.
+- Tes regresi paket terdampak lulus setelah kontrak OpenAPI dilengkapi (`TestOpenAPIMatchesRegisteredRoutes`).
+
+Belum:
+- Pydio live: DMS-02..08 dan DMS-10 tetap BLOCKED. Belum ada akun dan folder uji yang disetujui, dan belum ada pemetaan root Customer.
+- Portfolio: filter Customer ada di overview Space; filter Project Manager ada di daftar item project. Belum ada tampilan monitoring tunggal per project dengan semua kolom (Customer, PM, health, overdue) di satu tabel.
+- Off-host backup, penjadwalan backup, escrow `.env`, penerima alert, dan target RPO/RTO: EXTERNAL_BLOCKED.
+- Rotasi password admin: belum (prasyarat keamanan eksternal).
+- 19 project aktif tanpa owner tetap Unassigned (tidak ada perubahan `owner_id`).
