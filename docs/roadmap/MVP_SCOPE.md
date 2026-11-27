@@ -773,3 +773,14 @@ Build, vet, gofmt, dan `git diff --check` lulus. Tidak ada nama tes wajib yang b
 - Move, restore, dan lokasi lintas klien sudah tercakup B3-08. Batch ini tidak mengubahnya.
 - Automation (B3-13), Request Form (B3-12), sharing (B3-11), dan Excel import (B3-14) tidak disentuh.
 - B3-02 tetap PARTIAL. Verifikasi pembacaan langsung di luar policy belum selesai. Kesiapan produksi NOT READY.
+
+## 25. Penutupan keamanan lokal B3 (PROMPT #025)
+
+Status: **PARTIAL.** Rincian per task di `docs/qa/releases/v0.14.0/B3_CLOSURE.md`; matriks AC di `AUTHZ_TRACEABILITY.md`.
+
+- **AC-12 (file dan export):** FILE-01..06 dan FILE-08 terverifikasi pada `TestFileAccessFollowsCurrentCustomerAccess`, dengan kontrol negatif. FILE-09/10 dicakup tes link publik default OFF. Thumbnail tidak ada sebagai endpoint.
+- **Pydio listing:** default OFF melalui `PMS_PYDIO_LISTING`, dicek sebelum item dibaca (`TestPydioListingIsOffByDefault`).
+- **Migrasi:** audit persisten per perubahan dalam transaksi yang sama; refusal tercatat dalam transaksi sendiri; konflik form terdeteksi; rollback saat audit gagal (`internal/clientscope`).
+- **Tidak selesai:** karantina per resource; automation terjadwal dan report subscription; tinjauan jalur baca langsung (`stars`, `resource_directory`, `baselines`) sudah dari sumber tetapi belum ada tes lintas Customer khusus.
+- **Operasional:** EXTERNAL_BLOCKED (mapping, apply, backup off-host, RPO/RTO, Docker restore, alert). Lihat `B3_CLOSURE.md` §7.
+- **B4:** NO-GO bersyarat (tiga syarat di `B3_CLOSURE.md` §8).

@@ -606,3 +606,11 @@ Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MV
 - Status kandidat: `docs/qa/releases/v0.14.0/CANDIDATE.md`
 - Keputusan repo: `docs/architecture/DECISIONS.md`
 - ADR yang ada: `docs/parity/adr/ADR-REG-registry-and-typed-relations.md`, `ADR-CIT-custom-item-types.md`, `ADR-AUT-domain-events-and-automation.md`, `ADR-IDP-identity-adapters.md`
+
+## 7q. Penutupan keamanan lokal B3 (PROMPT #025) — PARTIAL
+
+**Keputusan.** Pydio listing dinonaktifkan secara default di server (`PMS_PYDIO_LISTING`), dicek sebelum item atau field dibaca. Listing hanya boleh diaktifkan setelah identitas dan ACL Pydio terverifikasi pada tes live (B4-07). Akses file dan export dinilai ulang terhadap membership dan grant saat ini untuk setiap permintaan, termasuk preview dan riwayat versi.
+
+**Migrasi.** Setiap perubahan ownership yang nyata menulis satu baris `audit_events` (`client_scope.classify`) dalam transaksi yang sama. Penolakan (konflik) dicatat dalam transaksi terpisah (`client_scope.refused`). Form dengan destinasi lintas pemilik dihitung sebagai konflik. Karantina per resource belum ada; resource ambigu tetap `unresolved`, yang tertutup di semua handler.
+
+**Batas.** Tidak ada trigger immutability ownership di database. Penulis ownership di kode produksi hanya tool migrasi (dicari, tidak ada yang lain). Lihat `B3_CLOSURE.md` §5 untuk daftar terbuka.
