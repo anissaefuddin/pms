@@ -484,3 +484,34 @@ Otorisasi: Product Owner, hanya B2-08 (lookup kelayakan dan Customer Picker yang
 | B2-08 | DONE: lookup kelayakan dan picker (§16) |
 
 **Penutupan B2:** implementasi B2 selesai. AC-03 tetap PASS. AC-04 tetap PARTIAL sampai B3 karena membership belum menjadi gerbang akses resource. Verifikasi integrasi frontend dan backend yang hidup belum dilakukan dan tertunda. Client ownership belum diimplementasi. Status produksi: NOT READY.
+
+## 17. Bukti eksekusi B3-01 dan B3-02 fondasi (Skema kepemilikan, 27 Nov 2026)
+
+Otorisasi: Product Owner, hanya B3-01 dan B3-02 (ADR §7i). Tidak ada enforcement kebijakan, create, move, copy, restore, atau backfill operasional. Remote checkpoint masih BLOCKED (Prompt #013).
+
+| Item | Status | Bukti |
+|---|---|---|
+| B3-01 kolom `client_id` dan `scope_state` pada `spaces` dan `items` | DONE | `server/migrations/00364_client_scope.sql` |
+| Constraint baris (state, konsistensi client, Personal Space internal, FK) | DONE | OWN-DB-05 sampai OWN-DB-12, OWN-DB-17 |
+| Baris lama tetap `unresolved`; Personal Space lama `internal` | DONE | OWN-DB-03, OWN-DB-04, OWN-DB-17 (lama) |
+| Customer tidak bisa dihapus saat dirujuk; arsip mempertahankan referensi | DONE | OWN-DB-13, OWN-DB-14 |
+| Owner, hierarki, lokasi, dan `space_admins` tidak berubah | DONE | OWN-DB-15, OWN-DB-16 (`items.owner_id`, `item_locations`, `space_admins`, dan nama serta jenis Space) |
+| Down dan up pada basis data sementara | DONE | OWN-DB-18 |
+| Protokol transaksi lintas tabel | DOCUMENTED (ADR §7i) | Belum diterapkan pada jalur mutasi |
+| Enforcement lintas tabel pada mutasi | PARTIAL | Menunggu B3-03, B3-08, dan B3-09 |
+
+**Perintah dan hasil** (basis data uji lokal yang terisolasi):
+
+| Perintah | Hasil |
+|---|---|
+| `go test ./internal/database/ -run 'TestOwnership\|TestCustomerLifecycle' -count=1 -v` | PASS: 18 kasus OWN-DB, 0 FAIL, 0 SKIP |
+| `go test ./internal/database/ -run 'TestClientsMigrationUpDownFromThePreviousSchema\|TestClientIdentityConstraints\|TestClientMembershipConstraints\|TestMembershipRevokeAndRegrantKeepHistory\|TestDeletesAreRestrictedWhenMembershipHistoryExists'` | PASS. Satu perubahan pada test: `provider.Down` menjadi `provider.DownTo(ctx, clientsVersion-1)`, karena sekarang ada 00364 yang harus ikut diturunkan |
+| `go test ./internal/database/ -run 'TestUpgradeFromTheEarlySchemaKeepsEveryRow\|TestSchemaRules\|TestOpenRefusesOldBaselineDatabase\|TestSpaceAdminBackfill\|TestOpenConcurrentlyOnEmptyDatabase\|TestItemLocationRejectsCycle\|TestItemEffortMigration'` | PASS (regresi migrasi yang ada) |
+
+**Keterbatasan:**
+- Tes OWN-DB-15 dan OWN-DB-16 memeriksa `items.owner_id`, `item_locations`, `space_admins`, dan nama serta jenis Space. Tabel `shares` dan `custom_field_grants` tidak dibandingkan secara terpisah.
+- Pengujian konkurensi belum ada. Protokol di ADR §7i belum dibuktikan.
+- Belum ada item `client`, jadi invarian lintas tabel belum bisa dilanggar. Itu tidak membuktikan enforcement.
+- Klasifikasi operasional (pemetaan data nyata ke Customer) **belum diverifikasi**.
+- Isolasi klien belum diimplementasikan. AC-04, AC-07, AC-09, dan AC-10 belum PASS.
+- Remote checkpoint dan CI masih BLOCKED.

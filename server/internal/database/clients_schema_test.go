@@ -126,7 +126,7 @@ func TestClientsMigrationUpDownFromThePreviousSchema(t *testing.T) {
 	}
 
 	// DB-16: the down migration removes the new objects; the up migration brings them back.
-	if _, err := provider.Down(ctx); err != nil {
+	if _, err := provider.DownTo(ctx, clientsVersion-1); err != nil { // reverts 00364 and 00363
 		t.Fatalf("down migration 00363: %v", err)
 	}
 	var gone bool

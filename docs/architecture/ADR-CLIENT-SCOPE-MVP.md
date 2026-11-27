@@ -332,6 +332,51 @@ Product Owner menyetujui **B2-08 saja**: lookup kelayakan customer dan picker ya
 
 **Bukti:** lihat MVP_SCOPE §16.
 
+## 7i. Skema kepemilikan B3-01 dan fondasi constraint B3-02 (27 Nov 2026, Prompt #014)
+
+Product Owner menyetujui **B3-01 dan B3-02 saja**, dengan K-23, K-24, dan K-25, serta bagian fondasi D-55. Tidak ada enforcement kebijakan, tidak ada perubahan create, move, copy, atau restore, dan tidak ada backfill operasional.
+
+**Migrasi:** `server/migrations/00364_client_scope.sql` (aditif).
+
+- **Kolom:** `spaces.client_id`, `items.client_id` (uuid, nullable, FK ke `clients` dengan `ON DELETE RESTRICT`), dan `scope_state` (`text NOT NULL DEFAULT 'unresolved'`) pada kedua tabel.
+- **Nilai state:** `client` (wajib `client_id`), `internal` (`client_id` harus NULL), dan `unresolved` (`client_id` harus NULL). Nilai lain ditolak. NULL ditolak oleh `NOT NULL`.
+- **Constraint:** `spaces_scope_state_valid`, `spaces_scope_matches_client`, `spaces_personal_is_internal` (`kind <> 'personal' OR scope_state = 'internal'`), `items_scope_state_valid`, dan `items_scope_matches_client`. Semua CHECK dirancang tanpa jebakan NULL, karena kolom yang diuji selalu non-NULL atau diuji dengan `IS [NOT] NULL`.
+- **Trigger Personal Space:** `spaces_personal_scope_internal` memaksa `scope_state = 'internal'` untuk `kind = 'personal'`. Kode yang ada membuat Personal Space dengan `INSERT ... kind='personal'` tanpa field kepemilikan (`httpserver/server.go`). Trigger ini memenuhi K-25 tanpa mengubah kode itu. Trigger tidak pernah menetapkan `client`.
+- **Baris lama:** semua Space dan item lama berstatus `unresolved` dengan `client_id` NULL. Tidak ada tebakan dari nama Space, nama Project, label custom field, atau lokasi. Personal Space lama ditandai `internal` karena identitasnya sudah pasti dari `kind`. Item lama di Personal Space **tidak** diklasifikasikan otomatis, karena item itu bisa memiliki lokasi lain. Pembaruan ini memakai `DISABLE TRIGGER spaces_set_updated_at` sementara, sehingga `updated_at` tidak berubah.
+- **Indeks:** `spaces_client_idx` dan `items_client_idx` (non-partial). Keduanya dipakai untuk pemeriksaan FK `RESTRICT` saat Customer dihapus. Pola ini mengikuti `client_memberships_client_idx`. Tidak ada indeks komposit spekulatif.
+- **Arsip:** mengarsipkan Customer tidak mengubah `client_id`, dan penghapusan Customer yang masih dirujuk ditolak (OWN-DB-13, OWN-DB-14).
+- **Down:** menghapus constraint, trigger, fungsi, indeks, dan kolom yang baru saja ditambahkan. Tidak memakai `CASCADE`. Hanya diuji pada basis data sementara. Rollback produksi tetap milik B3-21 dan B6.
+
+**Invarian lintas tabel (B3-02 lapisan B). Belum ditegakkan.** Setiap lokasi item aktif harus berada di Space dengan kepemilikan yang kompatibel:
+
+| Kepemilikan item | Kepemilikan Space | Hasil |
+|---|---|---|
+| Client A | Client A | Kompatibel |
+| Client A | Client B | Tidak kompatibel |
+| Client A | Internal | Tidak kompatibel |
+| Internal | Client A | Tidak kompatibel |
+| Internal | Internal | Kompatibel secara kepemilikan; izin tetap diperiksa |
+| Client | Personal Space | Tidak kompatibel |
+| Unresolved | Apa pun | Tidak memenuhi syarat untuk penulisan normal setelah enforcement |
+
+Invarian ini tidak bisa berupa CHECK sederhana, karena menyangkut dua tabel dan dapat berubah secara bersamaan. Saat ini belum ada item `client`, jadi pelanggaran belum mungkin terjadi pada data yang ada. Pelanggaran bisa terjadi begitu jalur create atau move mengisi kepemilikan.
+
+**Protokol transaksi (didokumentasikan; belum diterapkan pada semua jalur mutasi):**
+
+1. Tentukan item dan Space tujuan dari input. Belum mengunci.
+2. Kunci Space tujuan dengan `SELECT ... FOR SHARE`. Perubahan kepemilikan Space kelak memakai `FOR UPDATE`.
+3. Kunci baris item yang terlibat dengan `FOR UPDATE`, diurutkan menurut `id`. Ini konsisten dengan `items/patch.go` dan `items/reorder.go`.
+4. Baca ulang kepemilikan dalam transaksi yang sama: `items.client_id/scope_state`, serta `spaces.kind/client_id/scope_state`.
+5. Validasi dengan tabel kompatibilitas di atas. Jika gagal, tolak.
+6. Tulis `item_locations`. Trigger `lock_item_location_edges` sudah mengambil advisory lock `5102005`, sehingga penulisan lokasi sudah diserialisasi.
+7. Commit. Konflik serialization ditangani dengan transaksi serializable dan retry, seperti pola DEF-049 pada `items/lock_grants.go`.
+
+Urutan kunci tetap: Space (`FOR SHARE`) sebelum item (`FOR UPDATE`, menurut `id`). Perubahan kepemilikan terkendali harus memakai urutan yang sama. **Belum diverifikasi terhadap semua jalur** (`custom_fields.go` juga mengunci Space dengan `FOR UPDATE`). Verifikasi konkurensi menjadi tugas B3-08, B3-09, dan B3-22.
+
+**Yang belum selesai:** enforcement pada create (B3-03), move, copy, restore, dan location (B3-08, B3-09), migrasi kepemilikan terkendali, dan AC-09 atau AC-10. Operasional belum dipetakan. Pada titik ini client isolation **belum** diimplementasikan. Kolom `client_id` saja tidak menegakkan isolasi.
+
+**Bukti:** `server/internal/database/ownership_schema_test.go` (OWN-DB-02 sampai OWN-DB-18, 18 kasus lewat 4 grup), lihat MVP_SCOPE §17.
+
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).
