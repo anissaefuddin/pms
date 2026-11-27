@@ -175,3 +175,30 @@ func TestPydioLinkOriginMustBeHTTPS(t *testing.T) {
 		t.Fatalf("an https origin must load: %v", err)
 	}
 }
+
+// PROMPT #028 Wave 1: link-first needs an https origin and approved roots, not a Pydio credential. Listing is separate and stricter.
+func TestStandaloneLinkConfiguration(t *testing.T) {
+	t.Setenv("DATABASE_URL", "postgres://x")
+	t.Setenv("PMS_PYDIO_LINK_URL", "https://dms.example.com")
+	t.Setenv("PMS_PYDIO_LINK_TOKEN", "")
+	t.Setenv("PMS_PYDIO_LINK_ROOTS", "projects,common-files/Clients")
+	t.Setenv("PMS_PYDIO_LISTING", "false")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatalf("link-only configuration must load without a Pydio credential: %v", err)
+	}
+	if cfg.PydioListing {
+		t.Fatal("listing must stay OFF by default")
+	}
+	t.Setenv("PMS_PYDIO_LISTING", "true")
+	if _, err := Load(); err == nil {
+		t.Fatal("listing without a credential must be refused")
+	}
+	t.Setenv("PMS_PYDIO_LISTING", "false")
+	for _, roots := range []string{"projects/../x", "projects//x", "projects\\x", ""} {
+		t.Setenv("PMS_PYDIO_LINK_ROOTS", roots)
+		if _, err := Load(); err == nil {
+			t.Fatalf("roots %q must be refused", roots)
+		}
+	}
+}

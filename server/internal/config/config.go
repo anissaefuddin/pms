@@ -103,10 +103,24 @@ func Load() (Config, error) {
 		if err != nil || (u.Scheme != "https" && u.Scheme != "http") || u.Host == "" || u.Path != "" || u.RawQuery != "" {
 			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL must be the Cells address without a path, for example https://dms.example.com")
 		}
-		// Deny by default: without roots a link could point anywhere the token can read.
-		if cfg.PydioLinkToken == "" || len(cfg.PydioLinkRoots) == 0 {
-			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL needs PMS_PYDIO_LINK_TOKEN and PMS_PYDIO_LINK_ROOTS")
+		// Deny by default: without roots a link could point anywhere. Link-first needs no Pydio credential (B4 standalone linking).
+		if len(cfg.PydioLinkRoots) == 0 {
+			return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL needs PMS_PYDIO_LINK_ROOTS")
 		}
+		for _, root := range cfg.PydioLinkRoots {
+			if root == "" || strings.HasPrefix(root, "/") || strings.HasSuffix(root, "/") || strings.Contains(root, "\\") {
+				return Config{}, fmt.Errorf("PMS_PYDIO_LINK_ROOTS entries must be workspace paths such as projects, without leading or trailing slashes")
+			}
+			for _, seg := range strings.Split(root, "/") {
+				if seg == "" || seg == "." || seg == ".." {
+					return Config{}, fmt.Errorf("PMS_PYDIO_LINK_ROOTS entries must not contain empty or dot segments")
+				}
+			}
+		}
+	}
+	// Listing is a separate, optional capability: it needs the origin, the roots and a read-only Pydio credential (PROMPT #028).
+	if cfg.PydioListing && (cfg.PydioLinkURL == "" || cfg.PydioLinkToken == "" || len(cfg.PydioLinkRoots) == 0) {
+		return Config{}, fmt.Errorf("PMS_PYDIO_LISTING=true needs PMS_PYDIO_LINK_URL, PMS_PYDIO_LINK_TOKEN and PMS_PYDIO_LINK_ROOTS")
 	}
 	for env, dst := range map[string]*[]byte{"PMS_2FA_KEY": &cfg.TwoFactorKey, "PMS_2FA_KEY_PREVIOUS": &cfg.TwoFactorKeyPrevious, "PMS_OTP_KEY": &cfg.OTPKey, "PMS_SSO_KEY": &cfg.SSOKey, "PMS_SSO_KEY_PREVIOUS": &cfg.SSOKeyPrevious, "PMS_CONNECTOR_KEY": &cfg.ConnectorKey, "PMS_CONNECTOR_KEY_PREVIOUS": &cfg.ConnectorKeyPrevious} {
 		if raw := os.Getenv(env); raw != "" {
