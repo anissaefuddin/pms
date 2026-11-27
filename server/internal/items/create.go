@@ -351,6 +351,15 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 	if err != nil {
 		return Detail{}, err
 	}
+	// B3-03: ownership is derived here, from the destination Space and parent, and checked before anything is written.
+	own, err := creationOwnership(ctx, tx, locations)
+	if err != nil {
+		return Detail{}, err
+	}
+	var ownClient *string
+	if own.client != "" {
+		ownClient = &own.client
+	}
 	id := clientID
 	if id == uuid.Nil {
 		if id, err = uuid.NewV7(); err != nil {
@@ -358,9 +367,9 @@ FROM items i JOIN item_type_defs pt ON pt.id=i.type_id LEFT JOIN statuses s ON s
 		}
 	}
 	if _, err := tx.Exec(ctx, `
-INSERT INTO items(id,type,type_id,title,status_id,created_by,default_workflow_id,default_view_type,completed_at)
-VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN now() END)`,
-		id, kind, status, actor.ID, workflowID, view, completed, itemType.ID); err != nil {
+INSERT INTO items(id,type,type_id,title,status_id,created_by,default_workflow_id,default_view_type,completed_at,scope_state,client_id)
+VALUES($1,$2::item_type,$8::uuid,'Untitled',$3,$4::uuid,$5,$6,CASE WHEN $7::boolean THEN now() END,$9,$10::uuid)`,
+		id, kind, status, actor.ID, workflowID, view, completed, itemType.ID, own.scope, ownClient); err != nil {
 		// A retry of the same client id (lost response) hits the primary key: the caller already has this item.
 		if pgCode(err) == "23505" {
 			return Detail{}, ErrConflict

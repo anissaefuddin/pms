@@ -36,7 +36,7 @@ func TestItemVisibilityBoundaries(t *testing.T) {
 	member := f.person("regular")
 	admin := f.person("admin")
 	privateSpace := f.queryID("SELECT id::text FROM spaces WHERE owner_id=$1 AND kind='personal'", owner.id)
-	sharedSpace := f.space("Team")
+	sharedSpace := f.internalSpace("Team")
 	create := func(space string) string {
 		t.Helper()
 		r := f.call(owner, http.MethodPost, "/items", map[string]any{
@@ -73,7 +73,7 @@ func TestItemLifecycle(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
 	assignee := f.person("regular")
-	space, other := f.space("Work"), f.space("Other")
+	space, other := f.internalSpace("Work"), f.internalSpace("Other")
 	f.share(space, "user", admin.id, "full") // A1.2: the admin creates the lifecycle items in both Spaces
 	f.share(other, "user", admin.id, "full")
 	create := func(title, kind string, locations ...map[string]any) string {
@@ -168,10 +168,10 @@ func TestItemAuthorizationMatrix(t *testing.T) {
 		for _, role := range []string{"read", "limited", "editor", "full"} {
 			for _, source := range []string{"direct", "group", "ancestor", "second_location"} {
 				t.Run(userType+"/"+role+"/"+source, func(t *testing.T) {
-					space := f.spaceWithoutAdmins(t.Name()) // A1: the actor's own share decides
+					space := f.scopedSpace(t.Name(), "internal", "") // A1: the actor's own share decides
 					insert := func(kind string, parent *string) string {
 						t.Helper()
-						id := f.queryID("INSERT INTO items(type,title,created_by) VALUES ($1::item_type,'Matrix',$2) RETURNING id::text", kind, creator.id)
+						id := f.queryID("INSERT INTO items(type,title,created_by,scope_state) VALUES ($1::item_type,'Matrix',$2,'internal') RETURNING id::text", kind, creator.id)
 						f.exec("INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) VALUES ($1,$2,$3,'U')", id, space, parent)
 						return id
 					}
@@ -190,7 +190,7 @@ func TestItemAuthorizationMatrix(t *testing.T) {
 					case "ancestor":
 						f.exec("INSERT INTO shares(target_type,target_id,principal_type,principal_id,role) VALUES ('item',$1,'user',$2,$3::share_role)", *parent, actor.id, role)
 					case "second_location":
-						second := f.spaceWithoutAdmins(t.Name() + " second")
+						second := f.scopedSpace(t.Name()+" second", "internal", "")
 						createSpace = second
 						f.exec("INSERT INTO item_locations(item_id,space_id,rank) VALUES ($1,$2,'U')", item, second)
 						f.share(second, "user", actor.id, role)

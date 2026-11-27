@@ -377,6 +377,44 @@ Urutan kunci tetap: Space (`FOR SHARE`) sebelum item (`FOR UPDATE`, menurut `id`
 
 **Bukti:** `server/internal/database/ownership_schema_test.go` (OWN-DB-02 sampai OWN-DB-18, 18 kasus lewat 4 grup), lihat MVP_SCOPE §17.
 
+## 7j. Kepemilikan saat pembuatan item B3-03 (27 Nov 2026, Prompt #015–#017) — COMPLETE pada tingkat pembuatan pusat
+
+Product Owner menyetujui **B3-03 saja**. Keputusan di bawah diterapkan di jalur create pusat.
+
+- **Sumber kepemilikan:** server, dari Space tujuan (item akar) atau dari induk (anak). Tubuh permintaan tidak bisa mengirim kepemilikan: kunci `client_id` atau `scope_state` ditolak oleh `applyFields` (422, CRT-15).
+- **Kompatibilitas:** setiap lokasi awal harus memberi kepemilikan yang sama. Induk harus cocok dengan Space tujuan.
+- **Ditolak:** `unresolved` (`ownership_unresolved`, 422), ketidakcocokan (`ownership_mismatch`, 422), dan Customer diarsipkan (`customer_archived`, 409). Pesan tidak menyebut nama Customer atau Space.
+- **Penguncian:** Customer dibaca `FOR SHARE` saat status dicek. Ini menutup celah antara pengecekan status dan INSERT. Hanya kunci foreign key (`FOR KEY SHARE`) tidak cukup, karena arsip tidak akan menunggu pengecekan status yang sudah lewat. Urutan: Customer, lalu Space, lalu induk, masing-masing `FOR SHARE`. Arsip memakai `FOR UPDATE` pada baris Customer. Tidak ada urutan kunci yang berlawanan dengan pola yang ada.
+- **Penulisan:** `scope_state` dan `client_id` ditulis eksplisit di INSERT item, dalam transaksi yang sama dengan lokasi.
+
+**Jalur yang melewati fungsi pusat:** tidak ada. Satu-satunya INSERT ke `items` ada di `items/create.go`. Pemanggil: HTTP create, `CreateTx` (form submit, space templates, connector, automation), blueprint (`create`), dan impor Excel (`createWithCustomFields`). Duplikasi atau salin belum ditemukan sebagai jalur terpisah.
+
+**Bukti tes:** `server/internal/httpserver/item_ownership_creation_integration_test.go`. CRT-01..19 lulus (5 grup, 23 entri PASS). Mutasi: menghapus `FOR SHARE` pada Customer membuat CRT-19 gagal, lalu dikembalikan.
+
+**Remediasi fixture (Prompt #016):** 30 fungsi tes yang gagal di Prompt #015 kini memakai ownership eksplisit. Penggantian yang dilakukan:
+- `f.space` menjadi `f.internalSpace` (helper uji, Space internal dengan share admin yang sama seperti `f.space`) di 17 fungsi di 7 berkas.
+- `lockFixture` (`create_lock_integration_test.go`) memakai `f.internalSpace`. Ketiga pemanggilnya termasuk dalam 30 fungsi.
+- `newInternalAssignCast` dan `newInternalScopeCast` (varian explicit dari `newAssignCast` dan `newScopeCast`, tanpa share admin tambahan). Dipakai oleh 9 pemanggil yang gagal. Pemanggil lain (`pr_review`, `review_fixes`, dan `TestAutomationCannotBorrowAssignmentRights`) tetap memakai helper lama.
+- `TestItemAuthorizationMatrix`: Space `scopedSpace` internal, dan item fixture diberi `scope_state='internal'` secara eksplisit.
+- `TestRankingAtScale` dan `TestBrowserCreateNested` (keduanya berjalan hanya dengan `PMS_TEST_SCALE=1` dan `PMS_TEST_BROWSER=1`) memakai `f.internalSpace`. Keduanya sebelumnya tidak berjalan, dan diklasifikasikan PASS secara keliru.
+
+Hasil: 39 dari 39 tes lama PASS dengan kedua variabel uji diaktifkan. 23 entri CRT PASS. Tes arsip Customer di paket `clients` PASS (`TestCustomerUpdateAndArchive`, `TestGrantWaitsForArchiveAndIsRefused`).
+
+**Remediasi lanjutan (Prompt #017):** 8 fungsi regresi penugasan (`pr_review_integration_test.go`, `review_fixes_integration_test.go`, dan `assign_scope` melalui helper) memakai ownership eksplisit. Empat fungsi memakai `f.scopedSpace(..., "internal", "")` sebagai pengganti `f.spaceWithoutAdmins`, sehingga tidak ada share admin tambahan. Tiga fungsi memakai `newInternalScopeCast`, dan satu memakai `newInternalAssignCast`. `TestMovingWorkDoesNotCarryAssignmentRights` juga memerlukan `UPDATE spaces SET scope_state='internal'` pada Space yang dibuat lewat `POST /spaces`, karena Space API bersama tetap `unresolved`. Asersi 201 pada `POST /spaces` tetap ada.
+
+**Status akhir B3-03 (verifikasi):**
+- 39 dari 39 tes pembuatan dan hierarki lama PASS (dengan `PMS_TEST_SCALE=1` dan `PMS_TEST_BROWSER=1`).
+- 23 entri CRT PASS (5 fungsi, 18 subtest), 0 FAIL, 0 SKIP.
+- 22 tes penugasan dan Personal Space PASS (0 FAIL, 0 SKIP, 0 PANIC).
+- 2 tes arsip Customer di paket `clients` PASS.
+- Asersi tidak diubah. Tidak ada tes yang dilemahkan atau di-skip.
+
+**Yang belum selesai:**
+- Pembuatan Space bersama lewat API masih menghasilkan `unresolved`, sehingga item tidak bisa dibuat di Space itu sampai alur ownership-aware Space tersedia.
+- Pemetaan HTTP per jalur pembuatan (form, template, connector, automation, blueprint, impor) belum diverifikasi.
+- B3-02 tetap PARTIAL: invarian lintas tabel pada jalur mutasi (move, copy, restore, tambah lokasi) belum ditegakkan.
+- OWN-DB-16 (`shares` dan `custom_field_grants`) tetap menjadi celah ringan, dialihkan ke B3-22.
+
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).

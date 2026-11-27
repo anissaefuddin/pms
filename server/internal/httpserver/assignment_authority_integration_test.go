@@ -13,11 +13,20 @@ type assignCast struct {
 	space                                    string
 }
 
-func newAssignCast(t *testing.T) assignCast {
+func newAssignCast(t *testing.T) assignCast { return newAssignCastIn(t, false) }
+
+// newInternalAssignCast is newAssignCast with the matrix Space explicitly internal (B3-03 fixture). Shares are unchanged.
+func newInternalAssignCast(t *testing.T) assignCast { return newAssignCastIn(t, true) }
+
+func newAssignCastIn(t *testing.T, internal bool) assignCast {
 	f := newFixture(t)
 	c := assignCast{f: f, full: f.person("regular"), editor: f.person("regular"), adminEditor: f.unlinkedAdmin(), adminRead: f.unlinkedAdmin(),
 		adminFull: f.unlinkedAdmin(), outsiderAdmin: f.unlinkedAdmin(), teammate: f.person("regular"), read: f.person("regular")}
-	c.space = f.spaceWithoutAdmins("Assign matrix")
+	if internal {
+		c.space = f.scopedSpace("Assign matrix", "internal", "")
+	} else {
+		c.space = f.spaceWithoutAdmins("Assign matrix")
+	}
 	for p, role := range map[*person]string{c.full: "full", c.editor: "editor", c.adminEditor: "editor", c.adminRead: "read", c.adminFull: "full", c.teammate: "editor", c.read: "read"} {
 		f.share(c.space, "user", p.id, role)
 	}
@@ -26,7 +35,7 @@ func newAssignCast(t *testing.T) assignCast {
 
 // DEF-028: effective permission decides who may assign, for every kind of account.
 func TestAssignmentFollowsEffectivePermissionNotWorkspaceRole(t *testing.T) {
-	c := newAssignCast(t)
+	c := newInternalAssignCast(t)
 	f := c.f
 	task := f.call(c.full, "POST", "/items", map[string]any{"type": "task", "title": "T", "locations": []map[string]string{{"space_id": c.space}}})
 	f.want(task, 201, "task")
@@ -70,7 +79,7 @@ func TestAssignmentFollowsEffectivePermissionNotWorkspaceRole(t *testing.T) {
 
 // DEF-028: a second location the actor controls, or a personal Space, gives no say over who does the work.
 func TestSecondLocationDoesNotGrantAssignment(t *testing.T) {
-	c := newAssignCast(t)
+	c := newInternalAssignCast(t)
 	f := c.f
 	task := f.call(c.full, "POST", "/items", map[string]any{"type": "task", "title": "Shared work", "locations": []map[string]string{{"space_id": c.space}}})
 	id := task.body["id"].(string)
@@ -116,7 +125,7 @@ func TestAutomationCannotBorrowAssignmentRights(t *testing.T) {
 
 // DEF-028: once a form is open to others, only someone who may assign changes whom it assigns, directly or through a blueprint.
 func TestOpenFormRoutingNeedsAssignmentRight(t *testing.T) {
-	c := newAssignCast(t)
+	c := newInternalAssignCast(t)
 	f := c.f
 	here := []map[string]string{{"space_id": c.space}}
 	source := f.call(c.full, "POST", "/items", map[string]any{"type": "project", "title": "Kit", "locations": here})

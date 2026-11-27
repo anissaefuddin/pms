@@ -515,3 +515,44 @@ Otorisasi: Product Owner, hanya B3-01 dan B3-02 (ADR §7i). Tidak ada enforcemen
 - Klasifikasi operasional (pemetaan data nyata ke Customer) **belum diverifikasi**.
 - Isolasi klien belum diimplementasikan. AC-04, AC-07, AC-09, dan AC-10 belum PASS.
 - Remote checkpoint dan CI masih BLOCKED.
+
+## 18. Bukti eksekusi B3-03 (kepemilikan saat pembuatan item, 27 Nov 2026)
+
+Otorisasi: Product Owner, B3-03 dan enforcement pembuatan dari B3-02 (ADR §7j), termasuk remediasi fixture Prompt #016 dan #017. Tidak ada migrasi baru, tidak ada perubahan kebijakan, dan tidak ada B3-04.
+
+| Item | Status | Bukti |
+|---|---|---|
+| Kepemilikan root dari Space tujuan | DONE | `items/ownership.go` `creationOwnership`, dipanggil dari `items/create.go` |
+| Anak mewarisi induk, induk harus cocok dengan Space | DONE | CRT-04, CRT-09, CRT-10, CRT-16 |
+| Personal Space internal | DONE | CRT-06, CRT-10 |
+| Customer diarsipkan ditolak (409, `customer_archived`) | DONE | CRT-11, CRT-17 |
+| Unresolved ditolak (422, `ownership_unresolved`) | DONE | CRT-07, CRT-08 |
+| Penulisan atomik dan tidak ada sisa parsial | DONE | CRT-13, CRT-14 |
+| Input ownership dari klien ditolak | DONE | CRT-15 |
+| Owner_id tetap referensi pengguna | DONE | CRT-12 |
+| Serialisasi dengan arsip Customer | DONE | CRT-17, CRT-19 (`FOR SHARE` Customer, Space, induk) |
+| Pemetaan HTTP per jalur pembuatan | PENDING | Belum diverifikasi di luar HTTP create |
+| Pembuatan Space bersama dengan ownership | PENDING | Space API bersama tetap `unresolved` |
+| Enforcement lintas tabel pada mutasi (B3-02) | PARTIAL | Menunggu B3-08 dan B3-09 |
+
+**Perintah dan hasil** (basis data uji lokal, binary hasil `go test -c`, setiap tes dijalankan sendiri dengan `-test.v`):
+
+| Grup | PASS | FAIL | SKIP | PANIC |
+|---|---:|---:|---:|---:|
+| 39 tes pembuatan dan hierarki lama | 39 | 0 | 0 | 0 |
+| CRT-01..19 (5 fungsi, 18 subtest) | 23 entri | 0 | 0 | 0 |
+| Penugasan dan Personal Space (22 tes `httpserver`) | 22 | 0 | 0 | 0 |
+| Arsip Customer di `clients` (2 tes) | 2 | 0 | 0 | 0 |
+
+Rekonsiliasi hitung: laporan #016 menjumlahkan 16 PASS dan 8 FAIL dari 24 baris. Itu menggabungkan 22 tes `httpserver` (14 PASS dan 8 gagal) dengan 2 tes `clients` (2 PASS). Setelah remediasi, 22 tes `httpserver` PASS dan 2 tes `clients` PASS, sehingga total 24 PASS.
+
+Build (`go build ./...`), `go vet` (`items`, `httpserver`, `clients`), `gofmt`, dan `git diff --check` lulus.
+
+**Remediasi fixture (Prompt #015, #016, #017):** 30 fungsi di 10 berkas (#016) dan 8 fungsi regresi penugasan di 3 berkas (#017). Dua tes opt-in (`TestRankingAtScale`, `TestBrowserCreateNested`) juga diperbaiki, karena sebelumnya tercatat PASS padahal dilewati. Semua perubahan hanya pada setup fixture. Tidak ada asersi yang diubah. Tidak ada perubahan kode produksi sejak Prompt #015, dan tidak ditemukan product defect.
+
+**Keterbatasan:**
+- Pembuatan Space bersama lewat API masih menghasilkan `unresolved`. Production tidak boleh dideploy sebelum alur ownership-aware Space selesai.
+- Jalur pembuatan selain HTTP create (form, template, connector, automation, blueprint, impor) memakai error yang sama, tetapi pemetaan HTTP per jalur belum diverifikasi.
+- Tidak ada pengujian konkurensi lintas mutasi. Itu tugas B3-08 dan B3-09.
+- OWN-DB-16 (`shares`, `custom_field_grants`) belum lengkap dan dialihkan ke B3-22.
+- Isolasi klien belum selesai. AC-04, AC-07, AC-09, AC-10, dan AC-13 tetap terbuka. Kesiapan produksi NOT READY.

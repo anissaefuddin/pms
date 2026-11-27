@@ -126,6 +126,8 @@ B1, B2, spike B4 dan OPS boleh paralel setelah B0. **Migrasi dan perubahan `poli
 
 ### B2 — Customer Master dan membership (M)
 
+> **Status 27 Nov 2026:** B3-03 selesai pada tingkat pembuatan pusat: kepemilikan diturunkan server dari Space atau induk, dan ditolak jika unresolved, tidak cocok, atau Customer diarsipkan (CRT-01..19, 23 entri PASS; regresi penugasan 22 PASS). B3-02 tetap PARTIAL karena enforcement lintas tabel pada mutasi belum ada. Pembuatan Space bersama dengan ownership masih pending. Bukti: [MVP_SCOPE §18](MVP_SCOPE.md#18-bukti-eksekusi-b3-03-kepemilikan-saat-pembuatan-item-27-nov-2026).
+>
 > **Status 27 Nov 2026:** B3-01 dan B3-02 fondasi selesai di tingkat skema (`00364_client_scope.sql`, 18 tes OWN-DB PASS). Kolom dan constraint baris sudah ada. Protokol lintas tabel didokumentasikan (ADR §7i), tetapi enforcement pada jalur mutasi belum ada, sehingga B3-02 tetap PARTIAL. Operasional belum diverifikasi. Bukti: [MVP_SCOPE §17](MVP_SCOPE.md#17-bukti-eksekusi-b3-01-dan-b3-02-fondasi-skema-kepemilikan-27-nov-2026).
 >
 > **Status 27 Nov 2026:** B2-08 selesai: lookup kelayakan `GET /api/v1/clients/eligible` (membership default, administrative hanya Workspace Admin) dan Customer Picker yang dapat dipakai ulang. Tes EL-01..EL-15 dan PK-01..PK-10 lulus. B2 secara implementasi selesai. AC-04 tetap PARTIAL sampai B3. Bukti: [MVP_SCOPE §16](MVP_SCOPE.md#16-bukti-eksekusi-b2-08-dan-penutupan-b2-eligibility-dan-customer-picker-27-nov-2026).

@@ -8,11 +8,12 @@ import (
 
 // DEF-032 (review H1): assignment rights cannot be carried from one Space into another by moving the work.
 func TestMovingWorkDoesNotCarryAssignmentRights(t *testing.T) {
-	c := newAssignCast(t)
+	c := newInternalAssignCast(t)
 	f := c.f
 	own := f.call(c.editor, "POST", "/spaces", map[string]any{"name": "Mine"})
 	f.want(own, 201, "own space")
 	mine := own.body["id"].(string)
+	f.exec("UPDATE spaces SET scope_state='internal' WHERE id=$1", mine) // B3-03 fixture: the API-made Space is explicitly internal
 	f.share(mine, "user", c.teammate.id, "editor")
 	in := func(space string) map[string]any {
 		return map[string]any{"locations": []map[string]any{{"space_id": space}}}
@@ -42,7 +43,7 @@ func TestMovingWorkDoesNotCarryAssignmentRights(t *testing.T) {
 func TestStatusChangesDoNotQueueOnTheWorkflow(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.spaceWithoutAdmins("Revisions")
+	space := f.scopedSpace("Revisions", "internal", "")
 	f.share(space, "user", admin.id, "full")
 	task := func(title string) string {
 		made := f.call(admin, "POST", "/items", map[string]any{"type": "task", "title": title, "locations": []map[string]string{{"space_id": space}}})
@@ -118,7 +119,7 @@ IF nextval('link_fault') = 1 THEN RAISE serialization_failure; END IF; RETURN NE
 func TestNewCommentRetriesASerializationConflict(t *testing.T) {
 	f := newFixture(t)
 	admin := f.person("admin")
-	space := f.spaceWithoutAdmins("Comments")
+	space := f.scopedSpace("Comments", "internal", "")
 	f.share(space, "user", admin.id, "full")
 	made := f.call(admin, "POST", "/items", map[string]any{"type": "task", "title": "T", "locations": []map[string]string{{"space_id": space}}})
 	f.want(made, 201, "task")
