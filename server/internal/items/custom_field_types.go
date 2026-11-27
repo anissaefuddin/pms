@@ -313,8 +313,10 @@ func validateNewRelationTargets(ctx context.Context, tx pgx.Tx, actor policy.Act
 	if slices.Contains(added, itemID) {
 		return InvalidField{"fields." + field.ID, field.Name + ": an item cannot relate to itself"}
 	}
-	rows, err := tx.Query(ctx, `SELECT i.id::text FROM items i JOIN item_type_defs t ON t.id=i.type_id
-WHERE i.id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND i.deleted_at IS NULL AND ($2='' OR t.key=$2) ORDER BY i.id FOR SHARE OF i`, added, field.Config.TargetTypeKey)
+	// A target must share the source's stable owner (B3-10); a mismatch reads as unavailable, like a hidden item.
+	rows, err := tx.Query(ctx, `SELECT i.id::text FROM items i JOIN item_type_defs t ON t.id=i.type_id JOIN items src ON src.id=$3::uuid
+WHERE i.id=ANY(ARRAY(SELECT unnest($1::text[])::uuid)) AND i.deleted_at IS NULL AND ($2='' OR t.key=$2) AND `+sameOwnerSQL("i", "src")+`
+ORDER BY i.id FOR SHARE OF i`, added, field.Config.TargetTypeKey, itemID)
 	if err != nil {
 		return err
 	}

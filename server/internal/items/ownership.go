@@ -3,6 +3,7 @@ package items
 import (
 	"context"
 	"errors"
+	"fmt"
 	"slices"
 
 	"github.com/jackc/pgx/v5"
@@ -25,6 +26,25 @@ var (
 type ownership struct {
 	scope  string
 	client string
+}
+
+// sameOwnerSQL is true when items a and b share one resolved stable owner (B3-10). An unresolved end never matches, so a
+// relation with such an end is incompatible: it can neither be created nor propagate scheduling.
+func sameOwnerSQL(a, b string) string {
+	return fmt.Sprintf("%[1]s.scope_state IN ('internal','client') AND %[1]s.scope_state=%[2]s.scope_state AND %[1]s.client_id IS NOT DISTINCT FROM %[2]s.client_id", a, b)
+}
+
+// requireSameOwner refuses a dependency whose two items do not share one stable owner (B3-10). Only create and update check
+// it; delete does not, so an incompatible legacy link can still be removed.
+func requireSameOwner(ctx context.Context, tx pgx.Tx, a, b string) error {
+	var same bool
+	if err := tx.QueryRow(ctx, "SELECT "+sameOwnerSQL("x", "y")+" FROM items x JOIN items y ON y.id=$2::uuid WHERE x.id=$1::uuid", a, b).Scan(&same); err != nil {
+		return err
+	}
+	if !same {
+		return ErrOwnershipMismatch
+	}
+	return nil
 }
 
 // creationOwnership derives the single ownership every initial location of a new item must share. A root takes its Space's

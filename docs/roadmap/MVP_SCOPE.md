@@ -96,9 +96,9 @@ Status yang dipakai: **NOT STARTED** (belum dikerjakan), **PARTIAL** (ada bukti 
 | AC-06 | B3-06 | Full/Editor/Read/Limited dan assignment semua jalur | CI `authorization-matrix` (`-run 'Authorization\|…\|SpaceAdmin\|ItemShare\|Move…'`); `httpserver/assignment_authority_integration_test.go`; `items/assign_error_test.go` | Tes jalur restriktif multi-lokasi (AUTHZ-05) | NOT STARTED |
 | AC-07 | B3-04, B3-05, B3-15 | Klien A tidak bisa URL, API, lookup, list, atau count klien B | `httpserver/endpoint_sweep_integration_test.go` `TestEveryProtectedEndpointChecksTheSessionAndSurvivesUnknownIds` (sesi dan ID tak dikenal, belum lintas klien) | Fixture negatif B3-22 | NOT STARTED |
 | AC-08 | B3-15, B3-16 | Search, Portfolio, Workload, laporan, notifikasi tidak bocor | `httpserver/search_integration_test.go`, `portfolio_integration_test.go`, `workload_integration_test.go`, `overview_integration_test.go` (ada, belum lintas klien) | Tes lintas klien B3-15 | NOT STARTED |
-| AC-09 | B3-08, B3-10 | Lokasi, move, restore, copy, dependensi, relasi lintas klien ditolak | `httpserver/move_race_integration_test.go`, `move_parent_child_regression_integration_test.go`, `move_audit_integration_test.go` (ada, belum lintas klien) | Tes lintas klien B3-08, B3-10 | NOT STARTED |
+| AC-09 | B3-08, B3-10 | Lokasi, move, restore, copy, dependensi, relasi lintas klien ditolak | `httpserver/move_race_integration_test.go`, `move_parent_child_regression_integration_test.go`, `move_audit_integration_test.go`, `copy_relation_ownership_integration_test.go` (DR-01..06, RelationTargets) | Lintas klien untuk dependensi dan relasi ada; move/restore lintas klien belum dicakup semua | PARTIAL |
 | AC-10 | B3-02, B3-07, B3-11 | Share grup, membership dicabut, mutasi paralel tidak menembus constraint | `httpserver/item_share_revoke_audit_integration_test.go`, `item_shares_integration_test.go` (ada) | Tes konkurensi dan pencabutan membership | NOT STARTED |
-| AC-11 | B3-09, B3-12..14, B3-17 | Blueprint, form, import, automation, job, webhook memakai scope sama | `form_submission_scope_integration_test.go`, `automation_workspace_integration_test.go`, `webhooks_integration_test.go`, `blueprint_hardening_integration_test.go` (ada) | Tes lintas klien per jalur | NOT STARTED |
+| AC-11 | B3-09, B3-12..14, B3-17 | Blueprint, form, import, automation, job, webhook memakai scope sama | `copy_relation_ownership_integration_test.go` (BP-01..04, blueprint), `form_submission_scope_integration_test.go`, `automation_workspace_integration_test.go`, `webhooks_integration_test.go`, `blueprint_hardening_integration_test.go` (ada) | Blueprint dan template tercakup; form, import, automation, job, webhook belum | PARTIAL |
 | AC-12 | B3-17 | Lampiran, preview, ekspor, tautan mengikuti scope dan revoke | `attachment_*_integration_test.go` (5 berkas), `attachment_versions_integration_test.go` | Tes scope dan revoke lampiran | NOT STARTED |
 | AC-13 | B3-18, B3-19 | Rekonsiliasi pemetaan; UNRESOLVED dikarantina; tidak ada ID/file hilang | — | Laporan dry-run dan rekonsiliasi (B3-18/19) | **BLOCKED.** Data operasional NOT VERIFIED |
 | AC-14 | B4-02..04 | Tautan Pydio hanya untuk pengguna berhak; ACL Pydio terkonfirmasi | `httpserver/pydio_files_integration_test.go` `TestPydioFilesFollowItemAndFieldAccess`; `server/internal/pydio/pydio_test.go` `TestFolderKeepsLinksInsideTheRoots` | Validasi tulis (B4-02); spike live (B4-04) | PARTIAL (tes palsu, belum Cells nyata) |
@@ -749,3 +749,27 @@ Build, vet, gofmt, dan `git diff --check` lulus. Tidak ada nama tes wajib yang b
 - Copy, template, blueprint, dan dependensi belum ditegakkan (B3-09/10).
 - Temuan automation (B3-13) tetap terbuka.
 - B3-02 PARTIAL. AC-04, AC-05, AC-07, AC-09, dan AC-10 hanya mendapat bukti parsial. Isolasi klien belum lengkap. Kesiapan produksi NOT READY.
+
+## 24. Bukti eksekusi B3-09 dan B3-10 (27 Nov 2026, Prompt #023) — COMPLETE pada tingkat policy dan mutasi pusat
+
+**Cakupan:** blueprint, template Space, dependensi, scheduling, dan relasi field. Tidak ada endpoint duplikasi item. Detail keputusan ada di ADR §7p.
+
+**Tes baru:** `server/internal/httpserver/copy_relation_ownership_integration_test.go`
+- DR-01..06 (6 PASS): dependensi lintas pemilik dan lintas Customer ditolak (422). Dependensi dalam satu Customer diterima. Endpoint unresolved gagal tertutup (404). Tautan lama lintas pemilik bisa dihapus tetapi tidak diedit (422). Scheduling merambat pada tepi yang sama pemilik dan tidak merambat pada tepi lama lintas pemilik.
+- BP-01..04 (4 PASS): salinan blueprint mengambil pemilik tujuan, membuang penugasan non-anggota, menolak Customer arsip (409 `customer_archived`), menolak tujuan unresolved, dan menolak salinan lintas pemilik secara utuh.
+- `TestRelationTargetsShareOwner` (1 PASS): relasi field lintas pemilik ditolak (422) dan tidak tertulis.
+
+**Kontrol negatif (masing-masing gagal saat dimatikan, lalu dipulihkan dan dibuktikan identik):**
+- Cek dependensi `requireSameOwner` dimatikan: DR-01, DR-02 gagal.
+- Filter penugasan blueprint dimatikan: BP-01 gagal.
+- Cek relasi `sameOwnerSQL` dimatikan: `TestRelationTargetsShareOwner` gagal.
+
+**Regresi:**
+- `go test` pada `internal/items`, `internal/policy`, `internal/spaces`: lulus.
+- `internal/httpserver`: 56 tes gagal. Daftar yang sama gagal pada HEAD `3a034b6` tanpa perubahan ini, jadi tidak disebabkan B3-09/10. Penyebabnya fixture yang memasukkan item lewat SQL dengan `scope_state` default `unresolved`, dan drift OpenAPI pada skema `Client` (`openapi_drift_test.go`). Keduanya belum diperbaiki di batch ini.
+- `go vet` dan `gofmt -l` bersih pada paket yang diubah.
+
+**Sisa dan batas:**
+- Move, restore, dan lokasi lintas klien sudah tercakup B3-08. Batch ini tidak mengubahnya.
+- Automation (B3-13), Request Form (B3-12), sharing (B3-11), dan Excel import (B3-14) tidak disentuh.
+- B3-02 tetap PARTIAL. Verifikasi pembacaan langsung di luar policy belum selesai. Kesiapan produksi NOT READY.

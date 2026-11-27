@@ -566,6 +566,34 @@ Product Owner mengotorisasi B3-07, B3-08, dan penutupan terbatas B3-06. D-17.1, 
 - Copy, template, blueprint, duplicate, dan relasi dependensi belum ditegakkan (B3-09/10).
 - Temuan automation dan workflow tetap terbuka (B3-13).
 - B3-02 PARTIAL. Verifikasi lintas tabel tidak diklaim selesai.
+## 7p. Kepemilikan copy, blueprint, template, dependensi, dan relasi B3-09/10 (27 Nov 2026, Prompt #023) — COMPLETE pada tingkat policy dan mutasi pusat
+
+**Jalur salinan.** Tidak ada endpoint duplikasi item. Jalur salinan yang ada: instansiasi blueprint (`items/blueprints.go`), template Space (`httpserver/space_templates.go`), dan template tersimpan (`space_template_save.go`). Pemilik salinan selalu pemilik Space tujuan, tidak pernah pemilik sumber.
+
+**Blueprint.** `useBlueprint` memanggil `creationOwnership` sebelum menulis apa pun. Customer tujuan yang diarsipkan ditolak (409 `customer_archived`), tujuan yang belum resolved ditolak, dan lokasi lintas pemilik ditolak (422). Penugasan dicek dengan `checkNewAssignees` terhadap Customer tujuan. Non-anggota dibuang diam-diam, sama seperti anggota yang sudah dinonaktifkan. Salinan tidak ditolak secara keseluruhan karena satu penugasan.
+
+**Template Space.** `spaces.CreateTx` sudah memeriksa Customer arsip dan membership (SC-07, B3-SC). Template hanya membawa judul, field, view publik, dan workflow default. Template tidak membawa penugasan, relasi, atau referensi ke record Space lama, sehingga tidak ada referensi lintas klien yang perlu disanitasi.
+
+**Dependensi.** `CreateDependency` dan `UpdateDependency` memanggil `requireSameOwner` setelah `authorizeDependency`. Kedua ujung harus berpemilik stabil sama. Mismatch menghasilkan 422 (`ErrOwnershipMismatch`); ujung yang tidak terlihat atau unresolved menghasilkan 404 (fail-closed). `DeleteDependency` tidak memanggil cek ini, sehingga tautan lama yang tidak kompatibel tetap bisa dihapus.
+
+**Scheduling.** `reschedule` menyaring tepi dengan `sameOwnerSQL`, baik pada rekursi penelusuran maupun pada predecessor di hasil akhir. Tepi lintas pemilik atau unresolved tidak merambatkan perubahan tanggal. Tepi yang sama pemilik tetap merambat (kontrol positif DR-06).
+
+**Relasi field.** `validateNewRelationTargets` mensyaratkan target berpemilik sama dengan item sumber (`sameOwnerSQL`). Target yang tidak sama dibaca sebagai tidak tersedia, sama seperti item tersembunyi, sehingga nama atau id tidak bisa diintip lewat field ini.
+
+**Tes:** `server/internal/httpserver/copy_relation_ownership_integration_test.go`: DR-01..06 (6 PASS), BP-01..04 (4 PASS), dan `TestRelationTargetsShareOwner` (1 PASS). Hasil lengkap ada di bagian bukti MVP_SCOPE §24.
+
+**Kontrol negatif:**
+- Cek kepemilikan dependensi dimatikan (`requireSameOwner` selalu lulus): DR-01 dan DR-02 gagal.
+- Filter kelayakan penugasan blueprint dimatikan: BP-01 gagal.
+- Cek kepemilikan relasi dimatikan (`sameOwnerSQL` diganti TRUE): relasi lintas pemilik diterima dan tes gagal.
+Setiap file dipulihkan dari salinan cadangan dan dibuktikan identik, lalu build dijalankan ulang.
+
+**Sisa dan batas:**
+- Jalur pembacaan `items` langsung di luar policy tetap terbuka (ADR §7n).
+- 56 tes httpserver lain gagal, tetapi kegagalan yang sama terjadi pada HEAD `3a034b6` tanpa perubahan ini. Penyebabnya fixture yang membuat item lewat SQL dengan `scope_state` default `unresolved`, serta drift OpenAPI pada skema `Client`. Ini bukan regresi B3-09/10, tetapi belum diperbaiki.
+- Automation (B3-13), Request Form (B3-12), sharing (B3-11), dan Excel import (B3-14) tidak disentuh.
+- B3-02 tetap PARTIAL. Kesiapan produksi NOT READY.
+
 ## 7d. Referensi tes B2-01/02
 
 Tes di `server/internal/database/clients_schema_test.go`: DB-01..DB-16 (lihat MVP_SCOPE §12). Tes domain: `server/internal/clients/clients_integration_test.go` (lihat §7e).
