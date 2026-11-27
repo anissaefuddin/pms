@@ -1,67 +1,96 @@
-# Staging rehearsal — PROMPT #029 (kandidat 0.14.0-candidate.2628f41)
+# Staging rehearsal — PROMPT #029 (Option A, kandidat 0.14.0-candidate.2628f41)
 
-**Status: PARTIAL. Kandidat sudah dibangun dan migrasinya sudah dibuktikan pada clone. Layanan staging TIDAK diganti.**
-Keputusan live swap menunggu persetujuan (lihat §5).
+**Status: PARTIAL. Kandidat berjalan di staging (Opsi A). Smoke dengan akun dan matriks keamanan live belum dijalankan.**
 
 ## 1. Identitas
 
-| Item | Nilai |
+| Item | Sebelum | Sesudah |
+|---|---|---|
+| Host | `staging-host` (198.51.100.10), user `deploy-user` (dikonfirmasi `PUBLIC_URL=https://staging.example.invalid`) | sama |
+| Image | `pms:0.13.0` | `pms:candidate-2628f41` (ID `04471259e823`); `pms version` → `0.14.0-candidate.2628f41` |
+| Skema | 361 | 364 |
+| Database | `pms` (asli) | `pms` (hasil migrasi dan mapping); asli disimpan sebagai `pms_pre_candidate` |
+| Commit | — | `2628f41` (HEAD sumber) |
+| Health | healthy | healthy, 0 restart |
+| Readiness | `/readyz` 200 | `/readyz` 200 (lokal dan publik) |
+
+## 2. Backup
+
+- Backup beku terakhir: `20261127T053614Z` (dibuat setelah app dihentikan). Backup sebelumnya: `20261127T052719Z`, `20261127T053540Z`. Checksum diverifikasi.
+- **Hanya lokal di server.** Tidak ada `BACKUP_REMOTE`. Off-host **BLOCKED**.
+- Salinan lama `pms` tetap ada sebagai database `pms_pre_candidate` (tidak dihapus).
+
+## 3. Mapping dan validasi
+
+Mapping yang disetujui pengguna (nama Customer simulasi):
+
+| Space (nama) | Scope | Customer |
+|---|---|---|
+| ITA Internal | internal | — (Tipe Internal) |
+| WK EEES | client | SIM-CUST-002 (PT Sagara Energi Operasi) |
+| PPN JBB | client | SIM-CUST-003 (PT Nusa Rantai Energi) |
+| Bentu | client | SIM-CUST-004 (PT Rimba Energi Gas) |
+
+Keputusan tambahan pengguna: tiga admin dengan share `full` pada Space di atas ditambahkan sebagai anggota Customer yang sesuai (membership eksplisit, dicatat di tabel `client_memberships` dengan `granted_by`). Tanpa ini dry-run ditolak (`share_recipient_not_member`, 3 kejadian).
+
+Hasil pada clone dari backup `20261127T053540Z` (`pms_opta`):
+- Dry-run: tanpa konflik. Apply: berhasil.
+- Spaces: client 3, internal 25, unresolved 18.
+- Items: client 138, internal 170, unresolved 1683.
+- Audit: `client_scope.classify` per perubahan. Tidak ada penulisan ulang.
+- Jumlah baris dipertahankan: users 34, spaces 46, items 1991, dependencies 50, attachments 21, comments 22.
+
+Space di luar mapping (18 Space: QA dan uji) tetap `unresolved`, sehingga itemnya tidak terlihat oleh pengguna biasa (fail-closed). Ini perilaku yang diharapkan, bukan keputusan untuk mengklasifikasikannya.
+
+## 4. Swap (dilakukan)
+
+1. `docker compose stop app` (freeze) → backup beku → jumlah baris sama dengan snapshot klon.
+2. `ALTER DATABASE pms RENAME TO pms_pre_candidate`; `ALTER DATABASE pms_opta RENAME TO pms`.
+3. `.env` (cadangan `.env.bak-pre-029-20261127`): `PMS_IMAGE=pms:candidate-2628f41`; `SMTP_HOST` dikosongkan (mode log, tidak ada email keluar selama rehearsal).
+4. `docker compose up -d app` → healthy, 0 restart.
+
+## 5. Verifikasi
+
+| Pemeriksaan | Hasil |
 |---|---|
-| Host | `staging-host` (198.51.100.10), user `deploy-user`. Dikonfirmasi lewat `PUBLIC_URL=https://staging.example.invalid` di `.env` compose. |
-| Staging publik | `https://staging.example.invalid/` (HTTP 200, `/readyz` 200) |
-| Versi berjalan (sebelum) | `pms:0.13.0`, digest `sha256:d7aa2fdc…`, healthy, 0 restart |
-| Skema berjalan | migrasi 361 (126 baris tercatat) |
-| Postgres | `postgres:16.10-alpine` (`pms-postgres-1`) |
-| Storage | lokal, volume `pms_pms_files` di `/data/files` |
-| Kandidat | source HEAD `2628f41`, image `pms:candidate-2628f41` (ID `04471259e823`), `pms version` → `0.14.0-candidate.2628f41` |
-| Mesin | x86_64, 4 CPU, RAM 7,8 GiB (3,7 GiB terpakai), disk 46 GiB bebas |
+| `/readyz` lokal dan publik | 200 / 200 |
+| Login page | 200 |
+| `/api/v1/version` tanpa sesi | 401 (sesuai desain) |
+| Error log 10 menit pertama | 0 baris ERROR |
+| Skema database `pms` | 364 |
+| Smoke fungsional dengan akun | **Belum** (perlu akun uji dari Anda; pembuatan fixture adalah penulisan data) |
+| Matriks keamanan STG-01..16 | **Belum** (membutuhkan sesi per peran) |
+| Pydio live (STG Pydio, listing OFF) | **Belum** (tidak ada persetujuan ACL) |
+| Email | Dinonaktifkan sementara (`SMTP_HOST` kosong). Pengiriman live belum diuji |
 
-## 2. Backup (Fase B)
-
-- Dibuat dengan `./backup.sh` (repositori): `20261127T052719Z` (database dump 1,1 MB, files 1,3 MB, manifest, SHA256SUMS).
-- Checksum: OK untuk kedua artefak.
-- **Hanya lokal di server.** `BACKUP_REMOTE`/`BACKUP_RSYNC_DEST` tidak diset. Off-host backup **BLOCKED** (OPS-02) dan dilaporkan terpisah.
-
-## 3. Rehearsal migrasi (Fase D)
-
-- Dump 05:27 di-restore ke database terisolasi `pms_rehearsal` (bukan database live).
-- `pms migrate` kandidat dijalankan terhadap clone: 361 → 364 (`00362_seed_runs`, `00363_clients`, `00364_client_scope`). Tanpa error.
-- Jumlah baris sama sebelum dan sesudah: users 34, spaces 46, items 1991, item_locations 1993, item_dependencies 50, attachments 21, comments 22.
-- Dry-run `client-scope` read-only dengan mapping kosong (tidak ada mapping operasional yang disetujui): tanpa konflik; `items_to_classify` 5, `spaces_unresolved_remaining` 9, `items_unresolved_remaining` 1477.
-- Clone sudah dihapus setelah rehearsal (data bisnis tidak disimpan di luar backup).
-
-## 4. Temuan
-
-| Temuan | Prioritas | Bukti | Rekomendasi |
-|---|---|---|---|
-| Setelah migrasi, seluruh 1991 item dan 22 Space non-pribadi berstatus `unresolved`. Pengguna biasa tidak melihat konten yang ada. | **P0 untuk live swap** | Query clone | Jangan ganti layanan live sebelum keputusan Opsi A/B (§5). |
-| Off-host backup tidak ada | P0 | `BACKUP_REMOTE` tidak diset | OPS-02 |
-| Dry-run mengklasifikasikan 5 item di Space pribadi (sudah internal, K-25) tanpa mapping | P1 (review kebijakan) | Output dry-run | Tinjau apakah item di Space internal boleh diklasifikasi otomatis; prinsip "tanpa klasifikasi otomatis" berlaku. |
-| Versi dan skema staging tidak bisa dibaca lewat API tanpa sesi admin | P2 | — | Sudah terbaca langsung dari database |
-| Live Pydio dan STG-01..16 belum dijalankan | — | — | Menunggu keputusan swap |
-
-## 5. Keputusan yang diperlukan
-
-Staging live masih `pms:0.13.0`. Mengganti ke kandidat tanpa mapping akan menyembunyikan seluruh konten yang ada dari pengguna (fail-closed). Ada dua opsi:
-
-- **Opsi A:** clone yang tervalidasi, hanya bila mapping Customer disetujui secara tertulis.
-- **Opsi B (direkomendasikan):** database sintetis terpisah untuk rehearsal (Customer, pengguna, dan project fiktif), dengan dokumentasi bahwa project historis staging tidak ikut.
-
-Tanpa salah satu keputusan ini, live swap **NO-GO**.
+Antrian job pada database sebelum swap: 434 `completed`, tidak ada pending.
 
 ## 6. Rollback
 
-Jika swap dilakukan nanti: `docker compose stop app` (freeze), backup baru, ubah `PMS_IMAGE` ke kandidat, `docker compose up -d app`, cek `/readyz`. Jika gagal: restore backup dan image `pms:0.13.0` bersama-sama (`restore.sh <stamp> --force`). Jangan menjalankan binary lama di atas skema 364.
+```bash
+cd /home/deploy-user/pms
+docker compose stop app
+docker exec pms-postgres-1 sh -c 'psql -U "$POSTGRES_USER" -d postgres -c "ALTER DATABASE pms RENAME TO pms_failed_candidate" -c "ALTER DATABASE pms_pre_candidate RENAME TO pms"'
+cp -p .env.bak-pre-029-20261127 .env          # mengembalikan PMS_IMAGE=pms:0.13.0 dan SMTP_HOST
+docker compose up -d app
+```
 
-## 7. Yang belum dilakukan
+Migrasi maju tidak boleh dibatalkan dengan binary lama tanpa rollback database. Rollback di atas memakai database asli yang masih utuh.
 
-Deploy live, smoke fungsional (Fase F), matriks keamanan STG-01..16 (Fase G), verifikasi Pydio live (Fase H; belum ada kredensial atau persetujuan ACL), dan pengukuran RPO/RTO.
+## 7. Temuan
+
+| Temuan | Prioritas |
+|---|---|
+| Tidak ada backup off-host | P0 (OPS-02) |
+| Space di luar mapping (18) tidak terlihat oleh pengguna biasa sampai ditangani | P1 (keputusan bisnis) |
+| Planner mengklasifikasikan 5 item pada Space pribadi tanpa mapping (K-25) | P1 (tinjau kebijakan) |
+| Smoke dan matriks keamanan live belum dijalankan | P0 untuk penerimaan staging |
+| Pydio live belum diverifikasi | P1 (AC-14) |
 
 ## 8. Status
 
-- Build kandidat: **VERIFIED**.
-- Migrasi pada clone: **VERIFIED**.
-- Deploy staging: **NOT DONE** (menunggu §5).
+- Deployment staging (Opsi A): **DONE** dengan batas di §5.
+- Smoke fungsional dan matriks keamanan: **BELUM**.
 - Off-host backup: **BLOCKED**.
-- Pydio live: **BLOCKED**.
-- Onboarding: **NO-GO**. Produksi: **NOT READY**.
+- Onboarding operasional: **NO-GO** sampai smoke dan matriks dijalankan.
+- Produksi: **NOT READY**.
