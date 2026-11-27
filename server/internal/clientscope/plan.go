@@ -41,6 +41,15 @@ type Report struct {
 	Conflicts              []Conflict `json:"conflicts"`
 	Digest                 string     `json:"digest"`
 	changes                []Change
+	// findings name each conflicting record by stored identifier. They are written to the durable audit trail, never printed.
+	findings []Finding
+}
+
+// Finding is one record that cannot be classified safely. Kind is the table, ID its stored identifier, Code the reason.
+type Finding struct {
+	Kind string `json:"kind"`
+	ID   string `json:"id"`
+	Code string `json:"code"`
 }
 
 // Plan computes the report inside tx and never writes. Dry-run runs it read-only; apply runs it in the same transaction it writes.
@@ -206,6 +215,57 @@ FROM items i JOIN item_locations l ON l.item_id=i.id AND l.deleted_root_id IS NU
 		itemOwner[id] = planned
 		rep.ItemsToClassify++
 		rep.changes = append(rep.changes, Change{Kind: "item", ID: id, Owner: planned})
+	}
+
+	// Automation rules name a Space and an optional container item by stored id; they have no owner column, so a mismatch cannot be
+	// isolated and refuses the whole plan. A saved template reused from a Customer by someone who is not its member is ambiguous.
+	arows, err := tx.Query(ctx, `SELECT r.id::text, r.space_id::text, COALESCE(r.container_id::text,'') FROM automation_rules r`)
+	if err != nil {
+		return rep, err
+	}
+	type ruleRef struct{ id, space, container string }
+	var rules []ruleRef
+	for arows.Next() {
+		var rr ruleRef
+		if err := arows.Scan(&rr.id, &rr.space, &rr.container); err != nil {
+			arows.Close()
+			return rep, err
+		}
+		rules = append(rules, rr)
+	}
+	arows.Close()
+	for _, rr := range rules {
+		space := spaceOwner[rr.space]
+		if rr.container == "" || !space.known() {
+			continue
+		}
+		if item := itemOwner[rr.container]; item.known() && item != space {
+			conflicts["automation_container_owner_mismatch"]++
+			rep.findings = append(rep.findings, Finding{Kind: "automation_rule", ID: rr.id, Code: "automation_container_owner_mismatch"})
+		}
+	}
+	trows, err := tx.Query(ctx, `SELECT t.id::text, COALESCE(t.source_space_id::text,''), t.created_by::text FROM saved_space_templates t`)
+	if err != nil {
+		return rep, err
+	}
+	type tplRef struct{ id, source, creator string }
+	var templates []tplRef
+	for trows.Next() {
+		var tr tplRef
+		if err := trows.Scan(&tr.id, &tr.source, &tr.creator); err != nil {
+			trows.Close()
+			return rep, err
+		}
+		templates = append(templates, tr)
+	}
+	trows.Close()
+	for _, tr := range templates {
+		source := spaceOwner[tr.source]
+		if source.Scope != "client" || members[source.Client+"|"+tr.creator] {
+			continue
+		}
+		conflicts["template_provenance_ambiguous"]++
+		rep.findings = append(rep.findings, Finding{Kind: "saved_template", ID: tr.id, Code: "template_provenance_ambiguous"})
 	}
 
 	// Links and access must stay inside one owner. Unknown ends are fail-closed, not conflicts.

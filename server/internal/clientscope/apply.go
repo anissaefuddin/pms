@@ -88,5 +88,13 @@ func recordRefusal(ctx context.Context, pool *pgxpool.Pool, run string, rep Repo
 	}); err != nil {
 		return err
 	}
+	// Each record that blocked the plan gets its own durable reason, in the same committed refusal (quarantine evidence).
+	for _, f := range rep.findings {
+		if err := items.Audit(ctx, tx, policy.Actor{}, "client_scope.quarantine", f.Kind, f.ID, map[string]any{
+			"run_id": run, "reason": f.Code, "mapping_digest": rep.MappingDigest, "status": "refused",
+		}); err != nil {
+			return err
+		}
+	}
 	return tx.Commit(ctx)
 }
