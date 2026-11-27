@@ -130,3 +130,20 @@ func TestPydioLinkNeedsTokenAndRoots(t *testing.T) {
 		t.Fatal("a link URL with a path must fail the start")
 	}
 }
+
+// B3-17: public links are off unless PMS_PUBLIC_LINKS is exactly "true".
+func TestPublicLinksDefaultOff(t *testing.T) {
+	t.Setenv("PMS_PUBLIC_LINKS", "")
+	t.Setenv("DATABASE_URL", "postgres://u:p@localhost:5432/x?sslmode=disable")
+	cfg, err := Load()
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.PublicLinks {
+		t.Fatal("public links must be off by default")
+	}
+	t.Setenv("PMS_PUBLIC_LINKS", "true")
+	if cfg, err = Load(); err != nil || !cfg.PublicLinks {
+		t.Fatalf("PMS_PUBLIC_LINKS=true must enable public links: %v", err)
+	}
+}

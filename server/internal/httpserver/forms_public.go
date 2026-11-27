@@ -23,6 +23,9 @@ const externalRequesterID = "00000000-0000-4000-8000-0000000000e1"
 type externalRequester struct{ Token, Name, Email string }
 
 func (s *Server) publicFormRoutes(mux *http.ServeMux) {
+	if !s.cfg.PublicLinks { // B3-17: public forms are off by default
+		return
+	}
 	mux.HandleFunc("POST /api/v1/forms/{formId}/public-link", s.requireUser(s.rotatePublicLink))
 	mux.HandleFunc("DELETE /api/v1/forms/{formId}/public-link", s.requireUser(s.revokePublicLink))
 	// No requireUser: these never read the session cookie, so a page on another site cannot act as a signed-in user.

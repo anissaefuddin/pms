@@ -90,9 +90,11 @@ func newFixture(t *testing.T) *fixture {
 	return newFixtureWithSeats(t, 1000)
 }
 
+// The shared fixture turns public links on, so public-link tests exercise the enabled path. Default-off is tested with
+// newFixtureWith(t, n, nil), which keeps the production default (B3-17).
 func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 	t.Helper()
-	return newFixtureWith(t, maxSeats, nil)
+	return newFixtureWith(t, maxSeats, func(c *config.Config) { c.PublicLinks = true })
 }
 
 func newFixtureWith(t *testing.T, maxSeats int, tweak func(*config.Config)) *fixture {

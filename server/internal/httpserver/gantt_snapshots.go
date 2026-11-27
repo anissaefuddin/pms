@@ -24,7 +24,9 @@ func (s *Server) GanttSnapshotRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /api/v1/items/{projectId}/gantt-snapshots", s.requireUser(s.createGanttSnapshot))
 	mux.HandleFunc("DELETE /api/v1/gantt-snapshots/{snapshotId}", s.requireUser(s.revokeGanttSnapshot))
 	// No requireUser: a stranger holds the token, and no cookie is read.
-	mux.HandleFunc("GET /api/v1/public/gantt/{token}", s.getPublicGanttSnapshot)
+	if s.cfg.PublicLinks { // B3-17: public Gantt snapshots are off by default
+		mux.HandleFunc("GET /api/v1/public/gantt/{token}", s.getPublicGanttSnapshot)
+	}
 }
 
 type ganttSnapshotItem struct {
