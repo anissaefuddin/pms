@@ -160,7 +160,7 @@ WHERE i.type='project' AND i.deleted_at IS NULL
 		}
 	}
 	if len(visible) == 0 {
-		return PortfolioMonitor{Items: []PortfolioRow{}, Summary: summarize(nil), Options: PortfolioOptions{}}, nil
+		return PortfolioMonitor{Items: []PortfolioRow{}, Summary: summarize(nil), Options: PortfolioOptions{Customers: []PortfolioCustomer{}, Owners: []PortfolioOwner{}}}, nil
 	}
 
 	if len(inputs) > 0 {

@@ -125,7 +125,16 @@ func TestPortfolioMonitorRefusesUnknownFilters(t *testing.T) {
 	f.want(f.call(user, "GET", "/portfolio/projects?health=purple", nil), http.StatusUnprocessableEntity, "unknown health")
 	f.want(f.call(user, "GET", "/portfolio/projects?status=lost", nil), http.StatusUnprocessableEntity, "unknown status")
 	f.want(f.call(user, "GET", "/portfolio/projects?sort=secret", nil), http.StatusUnprocessableEntity, "unknown sort")
-	f.want(f.call(user, "GET", "/portfolio/projects", nil), http.StatusOK, "the monitor for a user with no projects")
+	empty := f.call(user, "GET", "/portfolio/projects", nil)
+	f.want(empty, http.StatusOK, "the monitor for a user with no projects")
+	// Empty lists are arrays, never null: the page maps over them.
+	options := empty.body["options"].(map[string]any)
+	if _, ok := options["customers"].([]any); !ok {
+		t.Fatalf("options.customers must be an empty array, got %v", options["customers"])
+	}
+	if _, ok := options["owners"].([]any); !ok {
+		t.Fatalf("options.owners must be an empty array, got %v", options["owners"])
+	}
 }
 
 // Fail closed: a project in an unresolved legacy Space is not in anyone's monitor, the administrator's included.
