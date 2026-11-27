@@ -27,7 +27,8 @@ func TestItemLocationRejectsCycle(t *testing.T) {
 		_, err := pool.Exec(ctx, sql)
 		return err
 	}
-	if err := exec("INSERT INTO items(type,title,created_by) SELECT 'task',name,id FROM users CROSS JOIN (VALUES ('A'), ('B')) AS titles(name)"); err != nil {
+	// Raw fixture rows are internal by intent: they sit in the internal General Space (an unresolved row would be hidden).
+	if err := exec("INSERT INTO items(type,title,created_by,scope_state) SELECT 'task',name,id,'internal' FROM users CROSS JOIN (VALUES ('A'), ('B')) AS titles(name)"); err != nil {
 		t.Fatal(err)
 	}
 	const link = "INSERT INTO item_locations(item_id,space_id,parent_item_id,rank) SELECT child.id,s.id,parent.id,'a' FROM items child CROSS JOIN items parent CROSS JOIN spaces s WHERE "
