@@ -18,6 +18,11 @@ func (s *Server) pydioRoutes(mux *http.ServeMux) {
 // listPydioFiles lists the Pydio folder a text field of the item links to (MVP-13). The link is read through items.Get,
 // so it follows item access and field grants: whoever cannot see the value cannot list the folder either.
 func (s *Server) listPydioFiles(w http.ResponseWriter, r *http.Request) {
+	// Checked first, so a disabled instance reveals nothing: not the field, the item, or the link (B3-17 Workstream C).
+	if !s.cfg.PydioListing {
+		writeProblem(w, http.StatusServiceUnavailable, "pydio_listing_disabled", "Pydio file listing is disabled until identity and ACL are verified (B4-07)")
+		return
+	}
 	fieldID := r.URL.Query().Get("field")
 	if _, err := uuid.Parse(fieldID); err != nil {
 		writeItemError(w, items.ErrNotFound)

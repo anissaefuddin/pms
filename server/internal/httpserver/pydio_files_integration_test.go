@@ -35,6 +35,7 @@ func TestPydioFilesFollowItemAndFieldAccess(t *testing.T) {
 	off := newFixture(t)
 	f := newFixtureWith(t, 1000, func(c *config.Config) {
 		c.PydioLinkURL, c.PydioLinkToken, c.PydioLinkRoots = gw.URL, "svc-token", []string{"projects"}
+		c.PydioListing = true // listing is an explicit opt-in (Workstream C); this test exercises the enabled path
 	})
 	admin, member, outsider := f.person("admin"), f.person("regular"), f.person("regular")
 	space := f.space("PTM")

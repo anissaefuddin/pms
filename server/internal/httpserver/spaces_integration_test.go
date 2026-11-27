@@ -94,7 +94,7 @@ func newFixture(t *testing.T) *fixture {
 // newFixtureWith(t, n, nil), which keeps the production default (B3-17).
 func newFixtureWithSeats(t *testing.T, maxSeats int) *fixture {
 	t.Helper()
-	return newFixtureWith(t, maxSeats, func(c *config.Config) { c.PublicLinks = true })
+	return newFixtureWith(t, maxSeats, func(c *config.Config) { c.PublicLinks, c.PydioListing = true, true })
 }
 
 func newFixtureWith(t *testing.T, maxSeats int, tweak func(*config.Config)) *fixture {

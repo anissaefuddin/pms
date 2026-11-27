@@ -21,7 +21,9 @@ type Config struct {
 	DisableIPAllowlist bool
 	TrustProxy         bool // read X-Forwarded-For; only set behind a proxy that overwrites it
 	// PublicLinks (PMS_PUBLIC_LINKS) is off by default. Public dashboards, forms and Gantt snapshots are served only when it is true (B3-17).
-	PublicLinks    bool
+	PublicLinks bool
+	// PydioListing (PMS_PYDIO_LISTING) is off by default. The Pydio folder listing stays disabled until identity and ACL are verified (B4-07).
+	PydioListing   bool
 	MaxSeats       int
 	SMTPHost       string
 	SMTPPort       string
@@ -60,7 +62,7 @@ func Load() (Config, error) {
 	cfg := Config{
 		DatabaseURL: os.Getenv("DATABASE_URL"), ListenAddress: value("LISTEN_ADDRESS", ":8080"), MetricsAddress: value("METRICS_ADDRESS", ":9090"),
 		PublicURL:    strings.TrimRight(value("PUBLIC_URL", "http://localhost:8080"), "/"),
-		CookieSecure: value("COOKIE_SECURE", "false") == "true", TrustProxy: value("TRUST_PROXY", "false") == "true", PublicLinks: value("PMS_PUBLIC_LINKS", "false") == "true", DisableIPAllowlist: value("PMS_DISABLE_IP_ALLOWLIST", "false") == "true", MaxSeats: maxSeats,
+		CookieSecure: value("COOKIE_SECURE", "false") == "true", TrustProxy: value("TRUST_PROXY", "false") == "true", PublicLinks: value("PMS_PUBLIC_LINKS", "false") == "true", PydioListing: value("PMS_PYDIO_LISTING", "false") == "true", DisableIPAllowlist: value("PMS_DISABLE_IP_ALLOWLIST", "false") == "true", MaxSeats: maxSeats,
 		SMTPHost: os.Getenv("SMTP_HOST"), SMTPPort: value("SMTP_PORT", "587"), SMTPUser: os.Getenv("SMTP_USER"),
 		SMTPPassword: os.Getenv("SMTP_PASSWORD"), SMTPFrom: value("SMTP_FROM", "PMS <noreply@localhost>"),
 		BackupAlertURL: os.Getenv("BACKUP_ALERT_URL"),
