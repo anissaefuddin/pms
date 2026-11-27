@@ -78,6 +78,10 @@ func Load() (Config, error) {
 	cfg.S3AccessKey, cfg.S3SecretKey = os.Getenv("PMS_S3_ACCESS_KEY"), os.Getenv("PMS_S3_SECRET_KEY")
 	cfg.PydioURL, cfg.PydioToken = strings.TrimRight(os.Getenv("PMS_PYDIO_URL"), "/"), os.Getenv("PMS_PYDIO_TOKEN")
 	switch {
+	case cfg.Storage == "pydio":
+		// B4-08: the Pydio storage backend signs requests with a fixed gateway secret and is not verified against a live gateway, so it
+		// cannot be enabled. Attachments stay on local or S3 storage. Pydio links are configured separately (PMS_PYDIO_LINK_URL).
+		return Config{}, fmt.Errorf("PMS_STORAGE=pydio is not supported in this release (B4-08); use local or s3")
 	case cfg.Storage == "local":
 	case cfg.Storage == "s3" && cfg.S3URL != "" && cfg.S3AccessKey != "" && cfg.S3SecretKey != "":
 	case cfg.Storage == "pydio" && cfg.PydioURL != "" && cfg.PydioToken != "":
@@ -85,6 +89,10 @@ func Load() (Config, error) {
 		return Config{}, fmt.Errorf("PMS_STORAGE must be local, s3 (needs PMS_S3_URL, PMS_S3_ACCESS_KEY, PMS_S3_SECRET_KEY) or pydio (needs PMS_PYDIO_URL, PMS_PYDIO_TOKEN)")
 	}
 	cfg.PydioLinkURL, cfg.PydioLinkToken = strings.TrimRight(os.Getenv("PMS_PYDIO_LINK_URL"), "/"), os.Getenv("PMS_PYDIO_LINK_TOKEN")
+	// B4-02: production folder references are https only. The origin comes from the operator and is checked once, here.
+	if cfg.PydioLinkURL != "" && !strings.HasPrefix(strings.ToLower(cfg.PydioLinkURL), "https://") {
+		return Config{}, fmt.Errorf("PMS_PYDIO_LINK_URL must use https (B4-02)")
+	}
 	for _, root := range strings.Split(os.Getenv("PMS_PYDIO_LINK_ROOTS"), ",") {
 		if root = strings.Trim(strings.TrimSpace(root), "/"); root != "" {
 			cfg.PydioLinkRoots = append(cfg.PydioLinkRoots, root)
