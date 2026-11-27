@@ -15,6 +15,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/automation"
 	"github.com/anissaefuddin/pms/server/internal/bootstrap"
 	"github.com/anissaefuddin/pms/server/internal/buildinfo"
+	"github.com/anissaefuddin/pms/server/internal/clientscope"
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/connectors"
 	"github.com/anissaefuddin/pms/server/internal/connectors/gcal"
@@ -74,6 +75,9 @@ func run() error {
 		// database.Open above already applied pending migrations; running it again is a no-op.
 		slog.Info("migrations are up to date")
 		return nil
+	case "client-scope":
+		// B3-18 dry-run and B3-19 apply of the ownership migration. The mapping is operator-approved; this command never guesses one.
+		return clientscope.Run(ctx, pool, os.Args[2:], os.Stdout)
 	case "bootstrap":
 		flags := flag.NewFlagSet("bootstrap", flag.ContinueOnError)
 		account := flags.String("account", "", "account name")
