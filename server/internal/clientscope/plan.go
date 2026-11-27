@@ -130,6 +130,21 @@ WHERE m.status='active' AND u.status='active' AND u.user_type IN ('admin','regul
 		}
 	}
 
+	// A Request Form's destination must share the form's owner. A mismatch is a conflict, not a guess (closure report B3-18).
+	frows, err := tx.Query(ctx, `SELECT space_id::text, COALESCE(response->'location'->>'space_id','') FROM request_forms`)
+	if err != nil {
+		return rep, err
+	}
+	for frows.Next() {
+		var formSpace, destination string
+		_ = frows.Scan(&formSpace, &destination)
+		form, dest := spaceOwner[formSpace], spaceOwner[destination]
+		if destination != "" && form.known() && dest.known() && form != dest {
+			conflicts["form_destination_owner_mismatch"]++
+		}
+	}
+	frows.Close()
+
 	// Items inherit from their live placements. Every placement must resolve to the same owner.
 	itemOwner := map[string]Owner{}
 	itemCurrent := map[string]Owner{}

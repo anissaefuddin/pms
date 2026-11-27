@@ -5,6 +5,9 @@ import (
 	"errors"
 	"fmt"
 
+	"github.com/anissaefuddin/pms/server/internal/items"
+	"github.com/anissaefuddin/pms/server/internal/policy"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -19,9 +22,11 @@ func DryRun(ctx context.Context, pool *pgxpool.Pool, m Mapping) (Report, error) 
 	return Plan(ctx, tx, m)
 }
 
-// Apply classifies the reviewed changes in one serializable transaction. It refuses when the plan no longer matches the dry-run
-// digest, when any conflict remains, or when a row is no longer 'unresolved'. Nothing else is touched. Returns the reconciliation.
+// Apply classifies the reviewed changes in one serializable transaction. Each real ownership change writes its audit row in that same
+// transaction, so an audit failure rolls the change back. It refuses when the plan no longer matches the dry-run digest, or when any
+// conflict remains; a refusal is recorded in its own committed transaction. Rows not 'unresolved' are never touched.
 func Apply(ctx context.Context, pool *pgxpool.Pool, m Mapping, expectedDigest string) (Report, error) {
+	run := uuid.NewString()
 	tx, err := pool.BeginTx(ctx, pgx.TxOptions{IsoLevel: pgx.Serializable})
 	if err != nil {
 		return Report{}, err
@@ -35,6 +40,10 @@ func Apply(ctx context.Context, pool *pgxpool.Pool, m Mapping, expectedDigest st
 		return rep, errors.New("the plan no longer matches the reviewed dry-run digest; run dry-run again")
 	}
 	if len(rep.Conflicts) > 0 {
+		_ = tx.Rollback(ctx)
+		if err := recordRefusal(ctx, pool, run, rep); err != nil {
+			return rep, err
+		}
 		return rep, errors.New("conflicts remain; nothing was applied")
 	}
 	for _, c := range rep.changes {
@@ -53,10 +62,31 @@ func Apply(ctx context.Context, pool *pgxpool.Pool, m Mapping, expectedDigest st
 		if tag.RowsAffected() != 1 {
 			return rep, errors.New("a record changed during apply; nothing was committed")
 		}
+		if err := items.Audit(ctx, tx, policy.Actor{}, "client_scope.classify", c.Kind, c.ID, map[string]any{
+			"run_id": run, "previous_scope": "unresolved", "scope": c.Scope, "client_id": c.Client,
+			"mapping_digest": rep.MappingDigest, "plan_digest": rep.Digest, "operator": "pms client-scope",
+		}); err != nil {
+			return rep, err
+		}
 	}
 	if err := tx.Commit(ctx); err != nil {
 		return rep, err
 	}
 	// Reconciliation is read-only and runs after the commit, so it reports what is really stored now.
 	return DryRun(ctx, pool, m)
+}
+
+// recordRefusal writes the refusal as durable evidence. It is its own transaction, because the apply transaction was rolled back.
+func recordRefusal(ctx context.Context, pool *pgxpool.Pool, run string, rep Report) error {
+	tx, err := pool.BeginTx(ctx, pgx.TxOptions{})
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback(ctx)
+	if err := items.Audit(ctx, tx, policy.Actor{}, "client_scope.refused", "migration", run, map[string]any{
+		"run_id": run, "mapping_digest": rep.MappingDigest, "plan_digest": rep.Digest, "conflicts": rep.Conflicts,
+	}); err != nil {
+		return err
+	}
+	return tx.Commit(ctx)
 }
