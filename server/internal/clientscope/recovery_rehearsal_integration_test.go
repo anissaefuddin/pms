@@ -96,9 +96,9 @@ func run(t *testing.T, name string, args ...string) {
 func scopeCounts(t *testing.T, ctx context.Context, pool *pgxpool.Pool) string {
 	t.Helper()
 	var out string
-	if err := pool.QueryRow(ctx, `SELECT COALESCE(string_agg(k||':'||n, ','), '') FROM (
+	if err := pool.QueryRow(ctx, `SELECT COALESCE(string_agg(k||':'||n, ',' ORDER BY k), '') FROM (
 SELECT 'spaces.'||scope_state||'.'||COALESCE(client_id::text,'-') AS k, count(*) AS n FROM spaces GROUP BY 1
-UNION ALL SELECT 'items.'||scope_state||'.'||COALESCE(client_id::text,'-'), count(*) FROM items GROUP BY 1) s ORDER BY 1`).Scan(&out); err != nil {
+UNION ALL SELECT 'items.'||scope_state||'.'||COALESCE(client_id::text,'-'), count(*) FROM items GROUP BY 1) s`).Scan(&out); err != nil {
 		t.Fatal(err)
 	}
 	return out
