@@ -799,3 +799,9 @@ Status: **PARTIAL.** Rincian per task di `docs/qa/releases/v0.14.0/B3_CLOSURE.md
 - Listing OFF secara default. Redirect hanya ke origin yang sama. Verifikasi live (B4-07) EXTERNAL_BLOCKED.
 - Storage Pydio ditolak saat start (PY-14).
 - Belum: bagian dokumen di UI; konfigurasi tautan mandiri dari token; PY-10 end-to-end untuk impor dan blueprint; identitas delegasi.
+
+## 28. B4 closure dan status B5 (PROMPT #028)
+
+- Tautan standalone tanpa kredensial Pydio; listing tetap OFF; storage Pydio ditolak.
+- PY-10 (impor dan blueprint) dan verifikasi Portfolio/laporan lintas Customer dijalankan.
+- B5-01..10: belum dikerjakan kecuali verifikasi Portfolio dan laporan. Lihat `B5_OPERATIONAL_READINESS.md`.
