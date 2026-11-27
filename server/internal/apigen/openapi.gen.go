@@ -4861,7 +4861,7 @@ type Client struct {
 	ArchivedAt *time.Time          `json:"archived_at,omitempty"`
 	ArchivedBy *openapi_types.UUID `json:"archived_by,omitempty"`
 
-	// Code Kode kanonik (huruf besar
+	// Code Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah
 	Code      string             `json:"code"`
 	CreatedAt time.Time          `json:"created_at"`
 	CreatedBy openapi_types.UUID `json:"created_by"`
@@ -7554,7 +7554,7 @@ type ListClientsParamsStatus string
 type ListEligibleClientsParams struct {
 	Scope *ListEligibleClientsParamsScope `form:"scope,omitempty" json:"scope,omitempty"`
 
-	// Q Cari nama
+	// Q Cari nama, kode, atau nama pendek
 	Q     *string `form:"q,omitempty" json:"q,omitempty"`
 	Limit *Limit  `form:"limit,omitempty" json:"limit,omitempty"`
 }

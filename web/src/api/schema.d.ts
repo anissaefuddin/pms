@@ -6923,7 +6923,7 @@ export interface components {
         Client: {
             /** Format: uuid */
             id: string;
-            /** @description Kode kanonik (huruf besar */
+            /** @description Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah */
             code: string;
             name: string;
             short_name?: string | null;
@@ -12200,7 +12200,7 @@ export interface operations {
         parameters: {
             query?: {
                 scope?: "membership" | "administrative";
-                /** @description Cari nama */
+                /** @description Cari nama, kode, atau nama pendek */
                 q?: string;
                 limit?: components["parameters"]["Limit"];
             };

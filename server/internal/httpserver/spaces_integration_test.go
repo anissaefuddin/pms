@@ -108,6 +108,11 @@ func newFixtureWith(t *testing.T, maxSeats int, tweak func(*config.Config)) *fix
 		t.Fatal(err)
 	}
 	t.Cleanup(pool.Close)
+	// Test fixtures insert many rows with raw SQL and no ownership. They are internal by intent, so the default is set on the
+	// test database only. Explicit unresolved rows still name 'unresolved' and keep their fail-closed behaviour.
+	if _, err := pool.Exec(ctx, "ALTER TABLE items ALTER COLUMN scope_state SET DEFAULT 'internal'; ALTER TABLE spaces ALTER COLUMN scope_state SET DEFAULT 'internal'"); err != nil {
+		t.Fatal(err)
+	}
 	files := t.TempDir()
 	cfg := config.Config{DatabaseURL: dbURL, PublicURL: publicURL, MaxSeats: maxSeats, TrustProxy: true, FilesDir: files, MaxUploadMB: 1, TwoFactorKey: testTwoFactorKeys.Current, TwoFactorKeyPrevious: testTwoFactorKeys.Previous, OTPKey: bytes.Repeat([]byte{9}, 32), SSOKey: bytes.Repeat([]byte{5}, 32), ConnectorKey: bytes.Repeat([]byte{7}, 32)}
 	if tweak != nil {

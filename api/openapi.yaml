@@ -2924,7 +2924,7 @@ paths:
       summary: Pilihan klien untuk picker. Default berbasis membership aktif (untuk semua pengguna yang masuk). scope=administrative hanya Workspace Admin dan tidak memberi membership atau akses resource
       parameters:
         - { name: scope, in: query, required: false, schema: { type: string, enum: [membership, administrative], default: membership } }
-        - { name: q, in: query, required: false, schema: { type: string, maxLength: 100 }, description: Cari nama, kode, atau nama pendek }
+        - { name: q, in: query, required: false, schema: { type: string, maxLength: 100 }, description: "Cari nama, kode, atau nama pendek" }
         - { $ref: '#/components/parameters/Limit' }
       responses:
         '200':
@@ -9195,7 +9195,7 @@ components:
       required: [id, code, name, status, created_at, created_by, updated_at]
       properties:
         id: { type: string, format: uuid }
-        code: { type: string, description: Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah }
+        code: { type: string, description: "Kode kanonik (huruf besar, tanpa spasi di tepi); tidak bisa diubah" }
         name: { type: string }
         short_name: { type: string, nullable: true }
         status: { type: string, enum: [active, archived] }
