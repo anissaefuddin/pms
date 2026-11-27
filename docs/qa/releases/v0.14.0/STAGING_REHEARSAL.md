@@ -128,3 +128,138 @@ Akun admin staging yang diberikan pemilik dipakai hanya untuk membuat akun dan f
 - URL aktivasi sembilan akun ada di log container. Sudah dipakai, tetapi ini perlu masuk tinjauan keamanan.
 - `qa-management` tidak memiliki kapabilitas `manage_users` dan bukan peran Workspace Admin sungguhan.
 - Basis data `pms_rehearsal2` masih ada dan belum dihapus.
+
+## 10. Hasil PROMPT #030 — penerimaan staging (2026-11-27)
+
+### 10.1 Identitas yang berjalan
+
+| Item | Nilai terverifikasi |
+|---|---|
+| Container | `pms-app-1`, healthy, restart 0, `pms:candidate-2628f41` |
+| Image ID lokal | `sha256:04471259e823…` (build lokal, tanpa repo digest karena tidak ada registry; label revisi OCI tidak ada) |
+| Versi aplikasi | `0.14.0-candidate.2628f41` (dari `/api/v1/version` dengan sesi terautentikasi) |
+| Sumber | `2628f41` adalah leluhur dari HEAD repo `e4a9ba0` |
+| Skema | 364 |
+| Database aktif | `pms` (clone migrasi). Asli: `pms_pre_candidate`, tidak diubah |
+| Database lain | `pms_rehearsal2` masih ada, tidak disentuh |
+
+Preflight: `SMTP_HOST` kosong di file env dan container. Flag `PMS_PUBLIC_LINKS`, `PMS_PYDIO_LISTING`, `PMS_PYDIO_LINK_URL` tidak diset (default OFF). Checkpoint baru `20261127T055250Z` (database dan file) lolos checksum; hanya lokal karena `BACKUP_REMOTE` kosong.
+
+### 10.2 Bukti migrasi
+
+- Persetujuan mapping: pesan "option A" dengan tabel mapping, dan jawaban untuk menambahkan tiga admin sebagai anggota Customer target. Bukti audit: 312 event `client_scope.classify` (308 item, 4 Space), run `7c4a6a7a…`, mapping digest `ec25f812…`.
+- 18 Space tidak terpetakan tetap `unresolved`: 1.682 item, 31 lampiran, 1.595 tautan hierarki utuh. Admin dan `qa-pm-a` mendapat 404 pada Space tersebut. Pencarian admin tidak mengembalikannya.
+- Lima item di Space pribadi: setiap item memiliki tepat satu lokasi (Space pribadinya), berscope `internal`, tanpa `client_id`, tanpa lokasi client atau shared. Audit `client_scope.classify` ada untuk kelimanya. `owner_id` bernilai NULL, dan itu tidak diubah. Konsisten dengan aturan K-25.
+- Item keenam, `r3 quick task psi`, berstatus `unresolved` di dalam Space pribadi internal. Fail-closed dan tersembunyi, tetapi scope-nya tidak mengikuti Space. Tidak diubah. Tercatat sebagai temuan.
+
+### 10.3 Akun dan membership (sesuai tabel PROMPT #030)
+
+| Akun | Membership | Akses terverifikasi |
+|---|---|---|
+| qa-admin (admin) | Tidak ada | Tidak ada akses ke Customer A/B; hanya Space internal lewat share eksplisit |
+| qa-management | A dan B | Read pada Space A1, A2, B1 |
+| qa-pm-a | A | Full pada A1, A2; space admin |
+| qa-pm-b | B | Full pada B1; space admin |
+| qa-editor-a | A | Editor pada A1 |
+| qa-reader-a (viewer) | **Tidak bisa** (lihat 10.6) | Read pada Space internal saja |
+| qa-limited-a (external) | **Tidak bisa** (lihat 10.6) | Limited pada Space internal saja |
+| qa-member-only | A | Tidak ada grant |
+| qa-no-membership | Tidak ada (dicabut) | Share read pada A1 tersisa, akses ditolak (404) |
+
+Akun uji dibuat lewat `POST /users/invitations` dan aktivasi. Undangan tidak dikirim; tautan aktivasi hanya tercatat di log. Kredensial tersimpan di `/home/deploy-user/qa-staging-secrets/synthetic-accounts.tsv` (mode 0600), di luar repo.
+
+Koreksi fixture yang dilakukan dalam sesi ini:
+- `qa-admin` memiliki grant implisit sebagai creator (`space_admins`) pada empat Space QA. Grant itu dipindahkan ke persona anggota lewat `grantSpaceAdmin`, lalu dicabut dari `qa-admin`.
+- Keanggotaan sementara `qa-admin` hanya untuk operasi administrasi, dicabut lagi setelah selesai.
+
+### 10.4 Fixture
+
+- Customer: `QA-CUST-A`, `QA-CUST-B`.
+- Space: `QA Asset Integrity Space`, `QA Pipeline Inspection Space` (Customer A), `QA Process Safety Space` (Customer B), `QA Internal Development Space` (internal).
+- Project: Asset Integrity Assessment, Pipeline Inspection, HAZOP Study, Risk Based Inspection, Internal Development.
+- Task fixture: 37, dengan WBS bertingkat, milestone, status New/In Progress/Completed, task overdue, task tanpa assignee, effort_minutes, dan 16 dependensi FS.
+- Artefak SM: project `QA SM Project`, folder, task bertingkat, dependensi, Space `QA SM Client Space` dan `QA SM Internal Space`, gantt snapshot yang sudah dicabut, dan dua item hasil impor Excel di Customer A.
+- Lampiran sintetis: satu file uji yang diunggah dan diunduh pada STG-12.
+
+### 10.5 Hasil
+
+**Matriks keamanan STG-01..16 (PASS 15, FAIL 0, BLOCKED 1)**
+
+Setiap skenario memakai sesi terautentikasi masing-masing aktor dan memeriksa isi respons, baris database, atau isi file ekspor. Hasil yang penting:
+- Akses lintas Customer ditolak (404) dan badan respons tidak membocorkan judul.
+- Pencarian dan Portfolio tidak mengembalikan record Customer lain. `POST /portfolio/timeline` dengan project tersembunyi mengembalikan 404 untuk seluruh permintaan.
+- STG-05: admin dengan membership tetapi tanpa grant mendapat 404. Hasil awal 200 disebabkan space-admin yang dibuat setup (lihat 10.3), bukan kebocoran.
+- STG-08: sesi yang sudah ada menjadi 404 setelah membership dicabut, dan kembali 200 setelah diberikan lagi.
+- STG-09: pindah lokasi lintas Customer ditolak (404), lokasi tidak berubah.
+- STG-10: dependensi lintas Customer ditolak, 0 baris.
+- STG-11: penugasan non-anggota ditolak (422), 0 baris.
+- STG-12: unduhan lampiran 200 dengan isi cocok untuk pemilik; 404 untuk `qa-pm-b` dan `qa-no-membership`.
+- STG-13: workbook ekspor `qa-pm-a` berisi baris Customer A dan tidak memuat konten B. Ekspor Space A oleh `qa-pm-b` ditolak (404).
+- STG-14: **BLOCKED**. Tidak ada token tautan publik yang pernah diterbitkan, dan tautan publik tidak boleh diaktifkan untuk membuatnya. Endpoint publik yang dinonaktifkan mengembalikan 404.
+- STG-15: listing Pydio mengembalikan 503 `pydio_listing_disabled` untuk `qa-pm-a` dan `qa-management`.
+- STG-16: Space unresolved mengembalikan 404 untuk admin, `qa-pm-a`, dan `qa-management`.
+
+Catatan: STG-09 dan SM-16 awalnya salah menggunakan `If-Match: "1"`. Keduanya diulang dengan ETag yang benar sebelum dicatat.
+
+**Smoke SM-01..20 (PASS 19, PARTIAL 1)**
+
+Pemeriksaan dilakukan lewat API, dengan membaca kembali baris database atau isi respons. **Antarmuka browser belum dijalankan**, sehingga hasil ini belum membuktikan UI.
+- SM-01..11, SM-14..16, SM-20: PASS.
+- SM-12 (gantt): snapshot dibuat dan dicabut. Render tidak diperiksa di browser.
+- SM-13 (kalender): **PARTIAL**. Tidak ada route kalender khusus di API; `/me/todo` mengembalikan 200.
+- SM-17 (impor Excel): pratinjau bersih, commit mengembalikan 201, dua item tersimpan di Customer A.
+- SM-18 (ekspor) dan SM-19 (lampiran): PASS, bukti di STG-12 dan STG-13.
+
+**Pydio DMS-01..10 (PASS 2, BLOCKED 8)**
+- DMS-01: HTTPS 200, verifikasi TLS berhasil. Discovery Cells dapat diakses. Versi Cells tidak tampil di discovery, jadi versi dan edisi belum terkonfirmasi.
+- DMS-09: listing OFF dari sisi PMS (503). Tidak ada permintaan listing ke Pydio.
+- DMS-02..08 dan DMS-10: **BLOCKED**. Prasyarat yang hilang:
+  1. Akun Pydio uji yang disetujui, satu per Customer, dengan token baca-saja.
+  2. URL folder uji yang disetujui. Tidak ada yang diuji terhadap dokumen rahasia.
+  3. Persetujuan pemilik untuk mengisi `PMS_PYDIO_LINK_URL` dan `PMS_PYDIO_LINK_ROOTS` di staging, dengan restart container.
+
+Tidak ada perubahan pada Pydio, ACL, akun, atau dokumen.
+
+**Migrasi dan temuan (ringkasan di 10.6)**
+
+### 10.6 Temuan
+
+| ID | Prioritas | Temuan | Bukti | Rekomendasi |
+|---|---|---|---|---|
+| LOCK-01 | P1 | `PUT /items/{id}/locations` mengabaikan `If-Match`. Tanpa header 200, versi usang 200. `PATCH` sudah benar (409/428). Ini bukan kebocoran akses, tetapi pembaruan lokasi bisa menimpa perubahan orang lain | Probe 10.5 | Terapkan pemeriksaan versi yang sama seperti PATCH, lalu regresi. Belum diperbaiki dalam sesi ini |
+| GRANT-01 | P1 (keputusan) | Membuat Space memberi creator baris `space_admins` dengan akses `full` (untuk tipe `admin`/`regular`). Workspace Admin yang membuat Space tetap mendapat akses konten. Melanggar makna "tanpa grant otomatis" dalam PROMPT | `space_admins`, `policy/item.go` | Putuskan apakah pembuatan Space oleh Workspace Admin boleh memberi akses konten |
+| POLICY-01 | P1 (keputusan) | Tipe `viewer` dan `external` tidak bisa menerima kelayakan Customer (`clients/membership.go:15`). Skenario reader dan limited pada Customer A tidak dapat dijalankan sesuai tabel PROMPT | Percobaan 422 | Putuskan apakah persona baca/terbatas harus berupa tipe lain untuk Customer |
+| DATA-01 | P1 | Item `r3 quick task psi` `unresolved` di dalam Space pribadi internal (fail-closed) | 10.2 | Tinjau sebelum B5. Tidak diubah |
+| OWN-01 | P1 (keputusan) | `owner_id` NULL pada 1.964 dari 1.991 item. Semantik owner Space pribadi belum jelas | Query | Putuskan semantik `owner_id` untuk item pribadi |
+| LOG-01 | P1 (keamanan) | Log container memuat URL aktivasi dan URL notifikasi satu kali (43 baris "logged instead of sent"). Log harus dianggap sensitif | `mail.go:98-101` | Redaksi URL di log, atau tutup log pada rehearsal |
+| CAL-01 | P2 | Tidak ada route kalender khusus. SM-13 hanya partial | SM-13 | Tinjau bersama pemilik fitur |
+| JOB-01 | P2 | Jumlah job `completed` 430, sebelumnya 434 (dugaan: retensi). Belum diverifikasi | Query | Verifikasi kebijakan retensi river |
+| UI-01 | P1 | Browser UI tidak dijalankan. Hasil SM bersifat API-level | — | Jalankan pemeriksaan UI sebelum acceptance akhir |
+
+Tidak ditemukan P0 security (kebocoran, bypass otorisasi, atau pelanggaran kepemilikan) setelah koreksi fixture. STG-05 awal gagal karena fixture, bukan karena produk.
+
+### 10.7 Keputusan
+
+- Delapan belas Space unresolved: tetap unresolved dan tersembunyi, tidak ada klasifikasi otomatis.
+- Lima item Space pribadi: konsisten, tidak diubah. Satu item unresolved lain tercatat sebagai temuan DATA-01.
+- SMTP: **OFF**. Empat puluh tiga job email tercatat di log dan tidak dikirim, tidak ada job pending, tidak ada error. Tidak ada sink SMTP terisolasi yang tersedia. Sebelum SMTP diaktifkan kembali: sink terisolasi, kebijakan untuk antrean yang belum terkirim, dan redaksi log (LOG-01).
+- Public link: OFF. Pydio listing: OFF. Pydio storage: tidak didukung (ditolak saat start). Connector: tidak diuji dalam sesi ini.
+- Data bisnis yang sudah ada: tidak diubah. Hanya fixture `QA` dan artefak SM yang ditulis.
+
+### 10.8 Git dan deployment
+
+- HEAD repo: `e4a9ba0` (dokumen). Kandidat yang berjalan: `2628f41`, leluhur dari HEAD.
+- Commit lokal sesi ini: `e4a9ba0` dan commit dokumen ini. Tidak ada perubahan kode dan tidak ada redeploy.
+- Push: **SKIPPED**. Tidak ada PR, merge, tag, perubahan visibilitas repo, atau deployment produksi.
+
+### 10.9 Acceptance
+
+| Area | Status |
+|---|---|
+| Deployment teknis staging | GO |
+| Rehearsal fungsional staging | CONDITIONAL GO (SM API-level PASS; UI belum; SM-13 partial) |
+| Keamanan staging | CONDITIONAL GO (STG 15 PASS, 1 BLOCKED; tidak ada P0; LOCK-01, GRANT-01, POLICY-01 perlu keputusan) |
+| Pydio live | PARTIAL (DMS-01, DMS-09 PASS; lainnya BLOCKED) |
+| Kesiapan pengembangan B5 | NO-GO sampai keputusan GRANT-01, POLICY-01, OWN-01 |
+| Onboarding operasional | NO-GO (tidak ada backup off-host; LOG-01) |
+| Produksi | NOT READY |
