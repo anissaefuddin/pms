@@ -326,7 +326,7 @@ Browser dijalankan dengan akun sintetis (`qa-pm-a`, `qa-reader-a`, `qa-limited-a
 | Portfolio (SM-14) | PASS: 26 item terjadwal untuk `qa-pm-a` |
 | Membuat task bertingkat lewat UI (SM-07, SM-08) | PASS: `QA UI nested task` tersimpan di bawah project |
 | Status lewat UI (SM-09) | PASS: tersimpan `In Progress` |
-| Tanggal mulai lewat UI (SM-10) | PASS: `2026-12-02` tersimpan. Tanggal selesai belum diuji |
+| Tanggal mulai dan selesai lewat UI (SM-10) | PASS: `2026-12-02` sampai `2026-12-04` tersimpan. Hari Sabtu dinonaktifkan di pemilih tanggal |
 | Penugasan lewat UI (SM-11) | PASS: `qa-editor-a` tersimpan |
 | Membuat Customer Space lewat UI (SM-05) | PASS: scope client, `QA-CUST-A`, creator tercatat sebagai space admin |
 | Read Only (`qa-reader-a`) | Status dropdown nonaktif (4/4). Tombol **New item** terlihat tetapi tidak membuka dialog. Catat sebagai P2 UI |
@@ -336,4 +336,7 @@ Objek uji untuk pembersihan nanti (akun sintetis):
 - Space `QA UI Customer Space`: `3f1c321d-6459-4a15-a939-acd3adfc0fcc`
 - Task `QA UI nested task`: `01a21bad-0e8b-7ad4-8ccb-5382e73e8846`
 
-Belum diuji lewat UI: Project baru (SM-06), tanggal selesai (SM-10), pembuatan task dan penugasan di luar item uji, dan Pydio (tetap BLOCKED).
+| Project baru lewat UI (SM-06) | PASS: `QA UI Project` (tipe project) tersimpan di `QA UI Customer Space` |
+
+Tersisa: pembuatan task dan penugasan di luar item uji, dan Pydio (tetap BLOCKED).
+Objek uji tambahan: project `QA UI Project` (ID dicatat di database, nama unik).
