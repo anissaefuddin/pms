@@ -16,20 +16,22 @@ func TestFolderKeepsLinksInsideTheRoots(t *testing.T) {
 		"https://dms.example.com/projects/PTM-2026/Drawings": "projects/PTM-2026/Drawings",
 		" https://DMS.example.com/projects/ ":                "projects",
 		"https://dms.example.com/common-files/Clients/PHE":   "common-files/Clients/PHE",
-		"https://dms.example.com/projects/A%20B/c?x=1#frag":  "projects/A B/c",
+		"https://dms.example.com/projects/A%20B/c":           "projects/A B/c",
 	} {
 		if got, err := c.Folder(link); err != nil || got != want {
 			t.Errorf("Folder(%q) = %q, %v; want %q", link, got, err, want)
 		}
 	}
 	for _, link := range []string{
-		"https://evil.example.com/projects/x",        // another host
-		"http://dms.example.com/projects/x",          // another scheme
-		"https://dms.example.com/personal-files/x",   // outside the roots
-		"https://dms.example.com/projectsX/x",        // a root is a whole segment
-		"https://dms.example.com/projects/../hr",     // traversal
-		"https://dms.example.com/projects/%2e%2e/hr", // encoded traversal
-		"https://dms.example.com/common-files/HR",    // sibling of a nested root
+		"https://evil.example.com/projects/x",          // another host
+		"https://dms.example.com/projects/x?token=abc", // a query can carry a token (PY-09)
+		"https://dms.example.com/projects/x#frag",      // fragments are not part of a reference
+		"http://dms.example.com/projects/x",            // another scheme
+		"https://dms.example.com/personal-files/x",     // outside the roots
+		"https://dms.example.com/projectsX/x",          // a root is a whole segment
+		"https://dms.example.com/projects/../hr",       // traversal
+		"https://dms.example.com/projects/%2e%2e/hr",   // encoded traversal
+		"https://dms.example.com/common-files/HR",      // sibling of a nested root
 		"javascript:alert(1)",
 	} {
 		if _, err := c.Folder(link); !errors.Is(err, ErrNotAllowed) {

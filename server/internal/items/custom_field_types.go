@@ -28,6 +28,9 @@ type CustomFieldConfig struct {
 	TargetTypeKey string `json:"target_type_key,omitempty"`
 	// Expression is the formula of a Formula field (see formula.go).
 	Expression string `json:"expression,omitempty"`
+	// PydioFolder marks a Text field as the canonical Pydio folder reference of a project (B4-01). Its values are checked by
+	// PydioFolderCheck on every write. The field's stable UUID is the identity; no name matching is used.
+	PydioFolder bool `json:"pydio_folder,omitempty"`
 }
 
 type CustomFieldMarker struct {
@@ -52,6 +55,9 @@ func numericCustomField(kind string) bool {
 }
 
 func validateCustomFieldConfig(kind string, config CustomFieldConfig) error {
+	if config.PydioFolder && kind != "text" {
+		return Invalid("pydio_folder applies only to Text fields")
+	}
 	if config.ProjectBudget != nil && kind != "currency" {
 		return Invalid("project_budget only applies to Currency fields")
 	}
@@ -164,6 +170,12 @@ func normalizeCustomFieldValue(field CustomField, raw json.RawMessage) (json.Raw
 		var value *string
 		if json.Unmarshal(raw, &value) != nil || value == nil || utf8.RuneCountInString(*value) > 5000 || strings.ContainsRune(*value, 0) {
 			return invalid("enter text up to 5000 characters without null bytes")
+		}
+		if field.Config.PydioFolder && *value != "" {
+			// The message never repeats the value: a folder path may be confidential (B4-02).
+			if err := PydioFolderCheck(*value); err != nil {
+				return invalid("enter a folder reference inside the configured Pydio workspace, without credentials")
+			}
 		}
 		return json.Marshal(*value)
 	case "date":

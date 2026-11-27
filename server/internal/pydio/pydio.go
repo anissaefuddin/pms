@@ -12,7 +12,6 @@ import (
 	"io"
 	"net/http"
 	"net/url"
-	"path"
 	"sort"
 	"strings"
 	"time"
@@ -48,23 +47,52 @@ func New(base, token string, roots []string) *Client {
 	if err != nil {
 		return nil
 	}
-	return &Client{Base: u, Token: token, Roots: roots, HTTP: &http.Client{Timeout: 10 * time.Second}, Now: time.Now}
+	// A redirect is followed only to the configured https origin, and at most twice: a listing never leaves that origin (B4-07).
+	check := func(req *http.Request, via []*http.Request) error {
+		if len(via) >= 3 || !strings.EqualFold(req.URL.Scheme, u.Scheme) || !strings.EqualFold(req.URL.Host, u.Host) {
+			return ErrNotAllowed
+		}
+		return nil
+	}
+	return &Client{Base: u, Token: token, Roots: roots, HTTP: &http.Client{Timeout: 10 * time.Second, CheckRedirect: check}, Now: time.Now}
 }
 
 // Folder turns a Cells link (https://dms/<workspace>/<path>) into its gateway key "<workspace>/<path>". The link must be
 // on the configured host and inside one of the roots.
 func (c *Client) Folder(link string) (string, error) {
-	u, err := url.Parse(strings.TrimSpace(link))
-	if err != nil || !strings.EqualFold(u.Scheme, c.Base.Scheme) || !strings.EqualFold(u.Host, c.Base.Host) {
+	return ValidateLink(link, c.Base, c.Roots)
+}
+
+// ValidateLink is the structural check for a canonical Pydio folder reference (PROMPT #027, B4-02). It makes no network request.
+// Only https, the configured host and port, no userinfo, query or fragment, no backslash, no encoded or dot segments, and a whole
+// path segment match under an allowed root. The error never repeats the link or the folder path.
+func ValidateLink(link string, base *url.URL, roots []string) (string, error) {
+	if base == nil {
 		return "", ErrNotAllowed
 	}
-	for _, seg := range strings.Split(u.Path, "/") {
-		if seg == ".." || seg == "." {
+	link = strings.TrimSpace(link)
+	if strings.ContainsAny(link, "\\\x00 \t\r\n") {
+		return "", ErrNotAllowed
+	}
+	u, err := url.Parse(strings.TrimSpace(link))
+	if err != nil || !strings.EqualFold(u.Scheme, base.Scheme) || !strings.EqualFold(u.Host, base.Host) {
+		return "", ErrNotAllowed
+	}
+	if u.User != nil || u.RawQuery != "" || u.ForceQuery || u.Fragment != "" || u.Opaque != "" {
+		return "", ErrNotAllowed // credentials, tokens or fragments never belong in a stored reference
+	}
+	// Encoded separators and encoded dots are ambiguous: refuse them before decoding can turn them into segments.
+	if raw := strings.ToLower(u.EscapedPath()); strings.Contains(raw, "%2f") || strings.Contains(raw, "%5c") || strings.Contains(raw, "%2e") {
+		return "", ErrNotAllowed
+	}
+	segments := strings.Split(strings.Trim(u.Path, "/"), "/")
+	for _, seg := range segments {
+		if seg == "" || seg == "." || seg == ".." {
 			return "", ErrNotAllowed
 		}
 	}
-	key := strings.Trim(path.Clean("/"+u.Path), "/")
-	for _, root := range c.Roots {
+	key := strings.Join(segments, "/")
+	for _, root := range roots {
 		if key == root || strings.HasPrefix(key, root+"/") {
 			return key, nil
 		}

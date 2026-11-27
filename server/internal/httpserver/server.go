@@ -25,6 +25,7 @@ import (
 	"github.com/anissaefuddin/pms/server/internal/config"
 	"github.com/anissaefuddin/pms/server/internal/database"
 	"github.com/anissaefuddin/pms/server/internal/directory"
+	"github.com/anissaefuddin/pms/server/internal/items"
 	mailqueue "github.com/anissaefuddin/pms/server/internal/mail"
 	"github.com/anissaefuddin/pms/server/internal/policy"
 	"github.com/anissaefuddin/pms/server/internal/pydio"
@@ -202,6 +203,14 @@ func New(pool *pgxpool.Pool, cfg config.Config, mail *mailqueue.Queue) http.Hand
 	s.baselineRoutes(mux)
 	s.rateRoutes(mux)
 	s.GanttSnapshotRoutes(mux)
+	// Every Pydio folder reference written by any path is checked against this instance's link settings (B4-02). Listing is separate.
+	items.PydioFolderCheck = func(value string) error {
+		if s.pydio == nil {
+			return items.ErrPydioFolderUnconfigured
+		}
+		_, err := pydio.ValidateLink(value, s.pydio.Base, s.pydio.Roots)
+		return err
+	}
 	s.pydioRoutes(mux)
 	s.connectorRoutes(mux)
 	s.OAuthRoutes(mux)
